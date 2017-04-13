@@ -1,0 +1,85 @@
+
+lrzip comparison
+
+'lrzip lookup-table-4x4x4-step10-solve-UD-centers.txt'
+dwalton@laptop ~/l/r/NxNxN> ls -lh lookup-table-4x4x4-step10-solve-UD-centers.txt*
+-rw-rw-r-- 1 dwalton dwalton 1.2G Mar 27 07:51 lookup-table-4x4x4-step10-solve-UD-centers.txt
+-rw-rw-r-- 1 dwalton dwalton 165M Mar 27 15:49 lookup-table-4x4x4-step10-solve-UD-centers.txt.lrz
+dwalton@laptop ~/l/r/NxNxN>
+
+
+'lrzip -z lookup-table-4x4x4-step10-solve-UD-centers.txt'
+dwalton@laptop ~/l/r/NxNxN> ls -lh lookup-table-4x4x4-step10-solve-UD-centers.txt*
+-rw-rw-r-- 1 dwalton dwalton 1.2G Mar 27 07:51 lookup-table-4x4x4-step10-solve-UD-centers.txt
+-rw-rw-r-- 1 dwalton dwalton 132M Mar 27 16:01 lookup-table-4x4x4-step10-solve-UD-centers.txt.lrz
+dwalton@laptop ~/l/r/NxNxN>
+dwalton@laptop ~/l/r/NxNxN>
+
+
+
+
+- code cleanup
+
+4x4x4 last two edges
+====================
+- Try with and without the tweak that pairs two edges at once. This should be
+  faster most of the time but there are cases where if we do this it always
+  leads to PLL parity. Basically resolve the edges with this enabled and if it
+  cannot find a PLL free solution then try without.
+
+- re-read the "pair 6 edges at once" page
+
+
+
+Misc
+====
+- redo how 5x5x5 centers are solved, it is a mess, use the following instead
+    http://rubik.rthost.org/5x5x5_centres.htm
+
+- redo how 555 edge parity IDs are assigned, this is also a mess at the moment
+
+
+5x5x5 UD center options
+=======================
+Do all three of these and see which approach solves UD centers with the fewest moves.
+Obviously #1 will be more moves than #2 but #2 requires a pretty huge lookup table so
+do this comparison to see if #2 is worth it.
+
+#1 - Solve U centers, then D center edges and corners while preserving U
+#2 - Solve U centers (lookup table), then D center edges and corners while preserving U
+#3 - Solve UD center corners (lookup table), then U center edges while preserving D, then D center edges while preserving U
+#4 - Solve UD center corners (lookup table), then U center edges without preserving D, then D center edges and corners while preserving U
+
+
+5x5x5 last two edges
+====================
+- find the patterns that require multiple parity ID sequences...create new parity IDs
+  from these and once we have them all, drop the "while True" loop in resolve_555_edge_parity()
+  and barf if we ever find a new one
+
+
+solver.py
+=========
+- clean up the use of pos vs square_index
+- clean up the use of wing vs edge
+
+- get_solution_score()
+    - Instead of counting the number of steps in a solution come up with a score for
+      how long we think the robot would take to solve it
+
+- compress_solution()
+    - combine "U U" into U2
+    - remove x,y,z steps
+
+- group_edges() and get_edge_we_can_solve_with_least_moves()
+    DONE - lot of cut-n-paste code
+    - Instead of calling move_wing_to_F_west just rotate xyz to get it there. This
+      should save us 5-10 moves in pairing edges for 4x4x4
+
+- bring in the python kociemba solver?
+
+
+2x2x2 solver
+============
+- ungolf the 2x2x2 solver
+    - wrap your head around how the hell this thing works

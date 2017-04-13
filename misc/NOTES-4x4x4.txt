@@ -1,0 +1,201 @@
+These are the numbers from running --test against the 4x4x4 test cases
+
+4x4x4 original numbers
+======================
+4x4x4 min solution 172 steps
+4x4x4 max solution 415 steps
+4x4x4 avg solution 285 steps
+10.496s to test all 50
+
+
+Look at unpaired edges and do the one that solves
+the most edges in the least amount of moves
+=================================================
+4x4x4 min solution 132 steps
+4x4x4 max solution 335 steps
+4x4x4 avg solution 228 steps
+
+
+OLL/PLL parity avoided...exit on first parity free center setup
+===============================================================
+4x4x4 min solution 120 steps
+4x4x4 max solution 177 steps
+4x4x4 avg solution 148 steps
+real    1m0.480s
+user    0m53.284s
+sys 0m1.980s
+
+
+Simplified some code to make troubleshooting easier
+and to run faster. Without using a centers lookup table.
+===================================================
+4x4x4 min solution 138 steps
+4x4x4 max solution 190 steps
+4x4x4 avg solution 153 steps
+
+10.78user 0.23system 0:11.55elapsed 95%CPU (0avgtext+0avgdata 15568maxresident)k
+
+
+With center lookup table with a depth of 5
+===================================================
+4x4x4 min solution 124 steps
+4x4x4 max solution 190 steps
+4x4x4 avg solution 153 steps
+
+12.66user 2.25system 0:15.34elapsed 97%CPU (0avgtext+0avgdata 388084maxresident)k
+
+
+With center lookup table with a depth of 6
+===================================================
+4x4x4 min solution 126 steps
+4x4x4 max solution 172 steps
+4x4x4 avg solution 149 steps
+
+60.45user 32.45system 1:39.96elapsed 92%CPU (0avgtext+0avgdata 6016192maxresident)k
+
+
+With binary search through lookup table instead of loading into dictionary
+This went from 1m 39s to 15s!!!
+==========================================================================
+4x4x4 min solution 126 steps
+4x4x4 max solution 172 steps
+4x4x4 avg solution 149 steps
+
+14.53user 0.40system 0:15.53elapsed 96%CPU (0avgtext+0avgdata 15684maxresident)k
+
+
+With lookup tables:
+- lookup-table-4x4x4-centers-UD.txt
+- lookup-table-4x4x4-centers-LFRB.txt
+==========================================================================
+4x4x4 min solution 85 steps
+4x4x4 max solution 113 steps
+4x4x4 avg solution 97 steps
+
+9.51user 2.31system 0:12.42elapsed 95%CPU (0avgtext+0avgdata 16692maxresident)k
+
+
+With OLL and PLL detection working
+- group_edges now solves with each of the 12 edges as the first edge to solve
+  and keeps the one with the lowest score.  This makes it a bit slower though.
+==========================================================================
+4x4x4 min solution 83 steps
+4x4x4 max solution 110 steps
+4x4x4 avg solution 93 steps
+
+40s
+
+
+Added pair_six_444_edges()
+==========================================================================
+4x4x4 min solution 73 steps
+4x4x4 max solution 94 steps
+4x4x4 avg solution 83 steps
+
+4.43user 0.06system 0:04.59elapsed 97%CPU (0avgtext+0avgdata 20436maxresident)k
+
+
+Added
+- lookup-table-4x4x4-edges-slice-backward.txt
+- lookup-table-4x4x4-edges-slice-forward.txt
+=============================================
+4x4x4 min solution 66 steps
+4x4x4 max solution 90 steps
+4x4x4 avg solution 75 steps
+
+8.55user 0.34system 0:09.02elapsed 98%CPU (0avgtext+0avgdata 22132maxresident)k
+
+
+Added pair_four_444_edges()
+===========================
+4x4x4 min solution 65 steps
+4x4x4 max solution 88 steps
+4x4x4 avg solution 74 steps
+
+
+Added pair_last_six_edges_444()
+===============================
+4x4x4 min solution 63 steps
+4x4x4 max solution 88 steps
+4x4x4 avg solution 70 steps
+
+
+I forget what I changed :(
+==========================
+4x4x4 min solution 61 steps
+4x4x4 max solution 90 steps
+4x4x4 avg solution 68.0 steps
+4x4x4 avg centers solution 19.0 steps
+4x4x4 avg edges solution 27.0 steps
+
+7.55user 0.28system 0:08.19elapsed 95%CPU (0avgtext+0avgdata 12784maxresident)k
+23576inputs+0outputs (0major+65360minor)pagefaults 0swaps
+
+
+Changed state from dict to list
+===============================
+No change in move count but it does run a bit faster
+6.92user 0.22system 0:07.26elapsed 98%CPU (0avgtext+0avgdata 12712maxresident)k
+
+
+Sometimes accept a PLL edge pairing solution
+============================================
+The max solution drop from 90 to 79...solving PLL takes 12 moves so if all
+effecient edge pairing solutions lead to PLL just accept it and solve the
+PLL.
+
+4x4x4 min solution 59 steps
+4x4x4 max solution 79 steps
+4x4x4 avg solution 67.0 steps
+4x4x4 avg centers solution 19.0 steps
+4x4x4 avg edges solution 27.0 steps
+
+
+Consider number of wings paired by solution to solve centers
+============================================================
+4x4x4 min solution 59 steps
+4x4x4 max solution 75 steps
+4x4x4 avg solution 66.0 steps
+4x4x4 avg centers solution 18.0 steps
+4x4x4 avg edges solution 27.0 steps
+
+
+Use recursion for edge pairing and 4x4x4-edges
+==============================================
+The 4x4x4-edges table was only 9-moves deep here so this was just the beginning
+
+4x4x4 min solution 59 steps (FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU)
+4x4x4 max solution 76 steps (FUBLRFFUBBBFFFRFURFFDDDRFRDDDRFLRDBRBRLFLBULRBUBUURRDUUDLLLRUURBDBLDURLDDRFFBULBULLLDFUFBBDLDUBL)
+4x4x4 avg solution 66.0 steps
+4x4x4 avg centers solution 19.0 steps
+4x4x4 avg edges solution 25.0 steps
+
+13.91user 0.70system 0:14.83elapsed 98%CPU (0avgtext+0avgdata 16640maxresident)
+
+
+Replaced all copy.copy with list slices...small speed improvement
+=================================================================
+13.59user 0.74system 0:14.57elapsed 98%CPU (0avgtext+0avgdata 16068maxresident)k
+
+
+Replaced all range() with xrange()
+==================================
+13.41user 0.62system 0:14.26elapsed 98%CPU (0avgtext+0avgdata 16076maxresident)k
+
+
+
+2017-08-02
+==========
+4x4x4 avg centers solution 19.0 steps
+4x4x4 avg edges solution 25.0 steps
+4x4x4 avg solution 65.0 steps
+4x4x4 min solution 59 steps (FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU)
+4x4x4 max solution 75 steps (FLDRFFBLFDLRURUUFBUBLRUFUDUBULLFRUBLRRRUDFDFDUBBRRDLUFDDRFBDDFBDDDRFDLUDBLRBLFFBUFBLLLURRBBLRULB)
+
+13.22user 0.50system 0:13.98elapsed 98%CPU (0avgtext+0avgdata 15672maxresident)k
+
+
+unroll 4x4x4 state loops
+========================
+11.62user 0.47system 0:12.28elapsed 98%CPU (0avgtext+0avgdata 15740maxresident)k
+

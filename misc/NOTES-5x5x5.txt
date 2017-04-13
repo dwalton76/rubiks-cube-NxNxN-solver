@@ -1,0 +1,26 @@
+
+********************
+Main 5x5x5 test cube
+********************
+
+Baseline
+========
+190 steps to solve centers
+175 steps to group edges
+19 steps to solve 3x3x3
+384 steps total
+
+
+
+
+*************
+50 Test Cubes
+*************
+
+Initial solve for all 50 5x5x5 test cubes...this took some doing
+================================================================
+5x5x5 min solution 327 steps
+5x5x5 max solution 453 steps
+5x5x5 avg solution 387 steps
+1m 3s
+

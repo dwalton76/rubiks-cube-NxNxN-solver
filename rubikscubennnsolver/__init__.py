@@ -3392,7 +3392,7 @@ class RubiksCube(object):
                         break
 
                 # If you comment this out we will keep looking through other combinations
-                # of upper/front/opening_move.  It takes ~3x as long to run and brings the
+                # of upper/front/opening_move.  It takes ~10x as long to run and brings the
                 # 4x4x4 average move count down from 70 to 66...so if you want the solver
                 # to run longer but produce a slightly shorter solution then comment out the
                 # breaks here (and the one above).

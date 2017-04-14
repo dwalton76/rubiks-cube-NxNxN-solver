@@ -629,6 +629,88 @@ class RubiksCube444(RubiksCube):
             for step in steps:
                 self.rotate(step)
             return True
+
+        # If we are here it means the unpaired edge on F-east needs to be swapped with
+        # its sister_wing1. In other words F-east and sister-wing1 have the same two
+        # sets of colors and the two of them together would create two paired edges if
+        # we swapped their wings.
+        #
+        # As a work-around, move some other unpaired edge into F-east. There are no
+        # guarantees we won't hit the exact same problem with that edge but that doesn't
+        # happen too often.
+
+        if not self.sideU.north_edge_paired() and self.sideU.has_wing(sister_wing1) != 'north':
+            #log.info("rotate U-north to F-east")
+            self.rotate("F'")
+            self.rotate("U2")
+            self.rotate("F")
+
+        elif not self.sideU.south_edge_paired() and self.sideU.has_wing(sister_wing1) != 'south':
+            #log.info("rotate U-south to F-east")
+            self.rotate("U'")
+            self.rotate("F'")
+            self.rotate("U")
+            self.rotate("F")
+
+        elif not self.sideU.east_edge_paired() and self.sideU.has_wing(sister_wing1) != 'east':
+            #log.info("rotate U-east to F-east")
+            self.rotate("F'")
+            self.rotate("U")
+            self.rotate("F")
+
+        elif not self.sideU.west_edge_paired() and self.sideU.has_wing(sister_wing1) != 'west':
+            #log.info("rotate U-west to F-east")
+            self.rotate("F'")
+            self.rotate("U'")
+            self.rotate("F")
+
+        elif not self.sideD.north_edge_paired() and self.sideD.has_wing(sister_wing1) != 'north':
+            #log.info("rotate D-north to F-east")
+            self.rotate("D")
+            self.rotate("F")
+            self.rotate("D'")
+            self.rotate("F'")
+
+        elif not self.sideD.south_edge_paired() and self.sideD.has_wing(sister_wing1) != 'south':
+            #log.info("rotate D-south to F-east")
+            self.rotate("F")
+            self.rotate("D2")
+            self.rotate("F'")
+
+        elif not self.sideD.east_edge_paired() and self.sideD.has_wing(sister_wing1) != 'east':
+            #log.info("rotate D-east to F-east")
+            self.rotate("F")
+            self.rotate("D'")
+            self.rotate("F'")
+
+        elif not self.sideD.west_edge_paired() and self.sideD.has_wing(sister_wing1) != 'west':
+            #log.info("rotate D-west to F-east")
+            self.rotate("F")
+            self.rotate("D")
+            self.rotate("F'")
+
+        else:
+            raise SolveError("which edge is unpaired?")
+
+        if self.sideF.east_edge_paired():
+            raise SolveError("F-east should not be paired")
+
+        target_wing = self.sideF.edge_east_pos[-1]
+        sister_wing = self.get_wings(target_wing)[0]
+        target_wing_partner_index = 57
+        sister_wing1 = self.get_wings(target_wing)[0]
+        sister_wing1_side = self.get_side_for_index(sister_wing1[0])
+        sister_wing1_neighbor = sister_wing1_side.get_wing_neighbors(sister_wing1[0])[0]
+        sister_wing2 = self.get_wings(sister_wing1_neighbor)[0]
+        sister_wing2_side = self.get_side_for_index(sister_wing2[0])
+        sister_wing2_neighbor = sister_wing2_side.get_wing_neighbors(sister_wing2[0])[0]
+        sister_wing3 = self.get_wings(sister_wing2_neighbor)[0]
+        steps = self.find_moves_to_stage_slice_backward_444((target_wing, target_wing_partner_index), sister_wing1, sister_wing2, sister_wing3)
+
+        if steps:
+            for step in steps:
+                self.rotate(step)
+            return True
         else:
             return False
 
@@ -666,6 +748,7 @@ class RubiksCube444(RubiksCube):
         steps = self.find_moves_to_stage_slice_forward_444((target_wing, target_wing_partner_index), sister_wing1, sister_wing2, sister_wing3)
 
         if not steps:
+            log.info("pair_six_edges_444()    could not find steps to slice forward")
             self.state = copy(original_state)
             self.solution = copy(original_solution)
             return False
@@ -711,6 +794,7 @@ class RubiksCube444(RubiksCube):
             return False
 
         if not self.prep_for_slice_back_444():
+            #raise SolveError("cannot slice back")
             self.state = copy(original_state)
             self.solution = copy(original_solution)
             return False
@@ -909,7 +993,7 @@ class RubiksCube444(RubiksCube):
         current_non_paired_wings_count = self.get_non_paired_wings_count()
         current_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        log.info("pair_four_edges_444()     paired %d wings in %d moves (%d left to pair)" %
+        log.info("pair_four_edges_444()    paired %d wings in %d moves (%d left to pair)" %
             (original_non_paired_wings_count - current_non_paired_wings_count,
              current_solution_len - original_solution_len,
              current_non_paired_wings_count))
@@ -980,7 +1064,7 @@ class RubiksCube444(RubiksCube):
         current_non_paired_wings_count = self.get_non_paired_wings_count()
         current_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        log.info("pair_two_edges_444()      paired %d wings in %d moves (%d left to pair)" %
+        log.info("pair_two_edges_444()    paired %d wings in %d moves (%d left to pair)" %
             (original_non_paired_wings_count - current_non_paired_wings_count,
              current_solution_len - original_solution_len,
              current_non_paired_wings_count))
@@ -1056,7 +1140,7 @@ class RubiksCube444(RubiksCube):
                             wing_to_pair = non_paired_edges[0][0]
 
                         if not self.pair_six_edges_444(wing_to_pair):
-                            log.info("pair_six_edges_444()         returned False")
+                            log.info("pair_six_edges_444()    returned False")
                             self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
 
                     elif len_non_paired_edges == 6 and pair_multiple_edges_at_once:

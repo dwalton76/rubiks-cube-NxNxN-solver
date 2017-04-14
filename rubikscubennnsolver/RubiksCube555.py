@@ -273,7 +273,7 @@ class RubiksCube555(RubiksCube):
                 raise SolveError("LFRB centers-solve %s: FAILED to find entry" % state)
 
     def lookup_table_555_ULFRBD_centers_solve(self):
-        filename = 'lookup-table-5x5x5-step25-ULFRBD-centers-solve.txt'
+        filename = 'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt'
 
         if not os.path.exists(filename):
             print("ERROR: Could not find %s" % filename)
@@ -295,7 +295,7 @@ class RubiksCube555(RubiksCube):
         return False
 
     def get_555_UDLR_centers_solve_len(self):
-        filename = 'lookup-table-5x5x5-step26-UDLR-centers-solve.txt'
+        filename = 'lookup-table-5x5x5-step31-UDLR-centers-solve.txt'
 
         if not os.path.exists(filename):
             print("ERROR: Could not find %s" % filename)

@@ -160,9 +160,8 @@ class RubiksCube555(RubiksCube):
 
         return max(t_centers_solution_len, x_centers_solution_len)
 
-
-    def ida_search_centers_555(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
-        log.info("ida_search_centers_555: cost_to_here %d, threshold %d" % (cost_to_here, threshold))
+    def ida_UD_centers_stage(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
+        log.info("ida_UD_centers_stage: cost_to_here %d, threshold %d" % (cost_to_here, threshold))
 
         for step in moves_5x5x5:
 
@@ -188,7 +187,7 @@ class RubiksCube555(RubiksCube):
             state_end_of_this_step = copy(self.state)
             solution_end_of_this_step = copy(self.solution)
 
-            if self.ida_search_centers_555(cost_to_here+1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
+            if self.ida_UD_centers_stage(cost_to_here+1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
                 return True
 
         return False
@@ -273,6 +272,82 @@ class RubiksCube555(RubiksCube):
             else:
                 raise SolveError("LFRB centers-solve %s: FAILED to find entry" % state)
 
+    def lookup_table_555_ULFRBD_centers_solve(self):
+        filename = 'lookup-table-5x5x5-step25-ULFRBD-centers-solve.txt'
+
+        if not os.path.exists(filename):
+            print("ERROR: Could not find %s" % filename)
+            sys.exit(1)
+
+        with open(filename, 'r') as fh:
+            state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
+            line = get_line_startswith(fh, state + ':')
+
+            if line:
+                (key, steps) = line.split(':')
+                steps = steps.strip().split()
+
+                log.warning("ULFRBD-centers-solve %s: FOUND entry %d steps in (%s), %s" %\
+                        (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
+                for step in steps:
+                    self.rotate(step)
+                return True
+        return False
+
+    def get_555_UDLR_centers_solve_len(self):
+        filename = 'lookup-table-5x5x5-step26-UDLR-centers-solve.txt'
+
+        if not os.path.exists(filename):
+            print("ERROR: Could not find %s" % filename)
+            sys.exit(1)
+
+        with open(filename, 'r') as fh:
+            state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
+            state = state.replace('F','x').replace('B','x')
+            line = get_line_startswith(fh, state + ':')
+
+            if line:
+                (key, steps) = line.split(':')
+                steps = steps.strip().split()
+                return len(steps)
+        raise SolveError("UDLR-centers-solve could not find state %s" % state)
+
+    def ida_ULFRBD_centers_solve(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
+        log.info("ida_ULFRBD_centers_solve: cost_to_here %d, threshold %d" % (cost_to_here, threshold))
+
+        for step in moves_5x5x5:
+
+            # These moves would destroy the staged centers
+            if step in ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"):
+                continue
+
+            # If this step cancels out the previous step then don't bother with this branch
+            if steps_cancel_out(prev_step, step):
+                continue
+
+            self.state = copy(prev_state)
+            self.solution = copy(prev_solution)
+            self.rotate(step)
+
+            # Do we have the cube in a state where there is a match in the lookup table?
+            if self.lookup_table_555_ULFRBD_centers_solve():
+                return True
+
+            cost_to_goal = self.get_555_UDLR_centers_solve_len()
+
+            if (cost_to_here + cost_to_goal) > threshold:
+                #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
+                #    (step1, cost_to_here, cost_to_goal, threshold))
+                continue
+
+            state_end_of_this_step = copy(self.state)
+            solution_end_of_this_step = copy(self.solution)
+
+            if self.ida_ULFRBD_centers_solve(cost_to_here+1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
+                return True
+
+        return False
+
     def group_centers_guts(self):
         self.rotate_U_to_U()
 
@@ -288,16 +363,35 @@ class RubiksCube555(RubiksCube):
             original_solution = copy(self.solution)
 
             for threshold in range(1, 10):
-                if self.ida_search_centers_555(1, threshold, None, original_state, original_solution):
+                if self.ida_UD_centers_stage(1, threshold, None, original_state, original_solution):
                     break
             else:
                 raise SolveError("UD centers-stage FAILED")
 
+        # TODO I'm in the process of rebuilding the LR-centers-stage table...it was 8 million short
         self.lookup_table_555_LR_centers_stage()
-        self.lookup_table_555_UD_centers_solve()
-        self.lookup_table_555_LFRB_centers_solve()
+        log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
+
+        # old way
+        #self.lookup_table_555_UD_centers_solve()
+        #self.lookup_table_555_LFRB_centers_solve()
+
+        # new way using IDA
+        if not self.lookup_table_555_ULFRBD_centers_solve():
+
+            # save cube state
+            original_state = copy(self.state)
+            original_solution = copy(self.solution)
+
+            for threshold in range(1, 10):
+                if self.ida_ULFRBD_centers_solve(1, threshold, None, original_state, original_solution):
+                    break
+            else:
+                raise SolveError("UD centers-stage FAILED")
+
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
-        self.print_cube()
+        #self.print_cube()
+        #sys.exit(0)
 
     def find_moves_to_stage_slice_forward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         log.debug("find_moves_to_stage_slice_forward_555 called with target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %

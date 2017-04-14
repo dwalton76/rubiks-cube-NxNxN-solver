@@ -239,6 +239,46 @@ lookup_table_444_sister_wing_to_B_west = {
 
 class RubiksCube444(RubiksCube):
 
+    def lookup_table_444_UD_centers_solve(self):
+        filename = 'lookup-table-4x4x4-step10-UD-centers-solve.txt'
+        state = self.get_center_corner_state()
+        state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x')
+
+        with open(filename, 'r') as fh:
+            line = get_line_startswith(fh, state + ':')
+
+            if line:
+                (key, steps) = line.split(':')
+                steps = steps.strip().split()
+                log.info("Found UD centers solve %s in lookup table, %d steps in, %s" %\
+                    (state, len(self.solution), ' '.join(steps)))
+
+                for step in steps:
+                    self.rotate(step)
+            else:
+                print("ERROR: Could not find UD solve %s in %s" % (state, filename))
+                sys.exit(1)
+
+    def lookup_table_444_LFRB_centers_solve(self):
+        filename = 'lookup-table-4x4x4-step20-LFRB-centers-solve.txt'
+        state = self.get_center_corner_state()
+
+        with open(filename, 'r') as fh:
+            line = get_line_startswith(fh, state + ':')
+
+            if line:
+                (key, steps) = line.split(':')
+                steps = steps.strip().split()
+                log.info("Found LFRB centers stage %s in lookup table, %d steps in, %s" %\
+                    (state, len(self.solution), ' '.join(steps)))
+
+                for step in steps:
+                    self.rotate(step)
+            else:
+                print("ERROR: Could not find LFRB state %s in %s" % (state, filename))
+                sys.exit(1)
+
+        '''
     def lookup_table_444_UD_centers_stage(self):
         filename = 'lookup-table-4x4x4-step10-UD-centers-stage.txt'
         state = self.get_center_corner_state()
@@ -300,13 +340,17 @@ class RubiksCube444(RubiksCube):
                 self.rotate_F_to_F()
             else:
                 raise SolveError("Did not find %s in %s" % (state, filename))
+        '''
 
     def group_centers_guts(self):
-        self.lookup_table_444_UD_centers_stage()
-        self.lookup_table_444_LR_centers_stage()
+        # old way
+        #self.lookup_table_444_UD_centers_stage()
+        #self.lookup_table_444_LR_centers_stage()
+        #self.lookup_table_444_ULFRBD_centers_solve()
 
-        # Use lookup table to solve ULFRBD centers
-        self.lookup_table_444_ULFRBD_centers_solve()
+        # new way
+        self.lookup_table_444_UD_centers_solve()
+        self.lookup_table_444_LFRB_centers_solve()
 
     def find_moves_to_stage_slice_forward_444(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         # target_wing must go in spot 41

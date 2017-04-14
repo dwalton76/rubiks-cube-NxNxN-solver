@@ -581,7 +581,7 @@ class Side(object):
 
         if squares_per_edge % 2 == 0:
             raise Exception("Cannot call wing_is_middle_of_edge() for an even cube")
-        mid_index = int(float(squares_per_edge/2) - 0.5)
+        mid_index = int((squares_per_edge/2.0) - 0.5)
 
         if (self.edge_north_pos[mid_index] == square_index or
             self.edge_west_pos[mid_index] == square_index or

@@ -640,57 +640,42 @@ class RubiksCube444(RubiksCube):
         # happen too often.
 
         if not self.sideU.north_edge_paired() and self.sideU.has_wing(sister_wing1) != 'north':
-            #log.info("rotate U-north to F-east")
             self.rotate("F'")
             self.rotate("U2")
             self.rotate("F")
-
-        elif not self.sideU.south_edge_paired() and self.sideU.has_wing(sister_wing1) != 'south':
-            #log.info("rotate U-south to F-east")
-            self.rotate("U'")
-            self.rotate("F'")
-            self.rotate("U")
-            self.rotate("F")
-
         elif not self.sideU.east_edge_paired() and self.sideU.has_wing(sister_wing1) != 'east':
-            #log.info("rotate U-east to F-east")
             self.rotate("F'")
             self.rotate("U")
             self.rotate("F")
-
         elif not self.sideU.west_edge_paired() and self.sideU.has_wing(sister_wing1) != 'west':
-            #log.info("rotate U-west to F-east")
             self.rotate("F'")
             self.rotate("U'")
             self.rotate("F")
-
-        elif not self.sideD.north_edge_paired() and self.sideD.has_wing(sister_wing1) != 'north':
-            #log.info("rotate D-north to F-east")
-            self.rotate("D")
-            self.rotate("F")
-            self.rotate("D'")
-            self.rotate("F'")
-
         elif not self.sideD.south_edge_paired() and self.sideD.has_wing(sister_wing1) != 'south':
-            #log.info("rotate D-south to F-east")
             self.rotate("F")
             self.rotate("D2")
             self.rotate("F'")
-
         elif not self.sideD.east_edge_paired() and self.sideD.has_wing(sister_wing1) != 'east':
-            #log.info("rotate D-east to F-east")
             self.rotate("F")
             self.rotate("D'")
             self.rotate("F'")
-
         elif not self.sideD.west_edge_paired() and self.sideD.has_wing(sister_wing1) != 'west':
-            #log.info("rotate D-west to F-east")
             self.rotate("F")
             self.rotate("D")
             self.rotate("F'")
-
+        # Look for these last since they take 4 steps instead of 3
+        elif not self.sideU.south_edge_paired() and self.sideU.has_wing(sister_wing1) != 'south':
+            self.rotate("U'")
+            self.rotate("F'")
+            self.rotate("U")
+            self.rotate("F")
+        elif not self.sideD.north_edge_paired() and self.sideD.has_wing(sister_wing1) != 'north':
+            self.rotate("D")
+            self.rotate("F")
+            self.rotate("D'")
+            self.rotate("F'")
         else:
-            raise SolveError("which edge is unpaired?")
+            raise SolveError("Did not find an unpaired edge")
 
         if self.sideF.east_edge_paired():
             raise SolveError("F-east should not be paired")
@@ -773,16 +758,47 @@ class RubiksCube444(RubiksCube):
 
         if self.sideL.west_edge_paired():
 
-            # The stars aligned and we paired 4 at once so we have to move those
-            # four out of the way via this six step sequence
-            for step in "L R' D U L' R".split():
-                self.rotate(step)
+            # The stars aligned and we paired 4 at once so we cannot rotate L-west around
+            # to F-east, move an unpaired edge to F-east. This preserves the LFRB centers
+            # for the slice back.
+            if not self.sideU.north_edge_paired():
+                self.rotate("F'")
+                self.rotate("U2")
+                self.rotate("F")
+            elif not self.sideU.east_edge_paired():
+                self.rotate("F'")
+                self.rotate("U")
+                self.rotate("F")
+            elif not self.sideU.west_edge_paired():
+                self.rotate("F'")
+                self.rotate("U'")
+                self.rotate("F")
+            elif not self.sideD.south_edge_paired():
+                self.rotate("F")
+                self.rotate("D2")
+                self.rotate("F'")
+            elif not self.sideD.east_edge_paired():
+                self.rotate("F")
+                self.rotate("D'")
+                self.rotate("F'")
+            elif not self.sideD.west_edge_paired():
+                self.rotate("F")
+                self.rotate("D")
+                self.rotate("F'")
+            # Look for these last since they take 4 steps instead of 3
+            elif not self.sideU.south_edge_paired():
+                self.rotate("U'")
+                self.rotate("F'")
+                self.rotate("U")
+                self.rotate("F")
+            elif not self.sideD.north_edge_paired():
+                self.rotate("D")
+                self.rotate("F")
+                self.rotate("D'")
+                self.rotate("F'")
+            else:
+                raise SolveError("Did not find an unpaired edge")
 
-            if self.sideF.east_edge_paired():
-                for x in range(3):
-                    self.rotate_y()
-                    if not self.sideF.east_edge_paired():
-                        break
         else:
             self.rotate_y()
             self.rotate_y()

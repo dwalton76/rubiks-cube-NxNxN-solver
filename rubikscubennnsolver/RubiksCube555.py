@@ -1340,6 +1340,7 @@ class RubiksCube555(RubiksCube):
         min_solution = None
 
         for init_wing_to_pair in original_non_paired_edges:
+            log.info("\n\n\n\n********************** %s ****************************" % pformat(init_wing_to_pair))
 
             while True:
                 non_paired_edges = self.get_non_paired_edges()
@@ -1354,9 +1355,13 @@ class RubiksCube555(RubiksCube):
                     last_six = False
 
                 pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+                # No point going down this init_wing_to_pair's path if the solution is already longer than our minimum
+                if min_solution_length is not None and pre_solution_len > min_solution_length:
+                    break
+
                 pre_non_paired_wings_count = self.get_non_paired_wings_count()
                 attempt_to_pair_six = False
-                log.info("\n\n\n\n")
                 log.warning("%d steps in, %d wings left to pair over %d edges" % (pre_solution_len, pre_non_paired_wings_count, len_non_paired_edges))
 
                 if init_wing_to_pair:
@@ -1400,7 +1405,7 @@ class RubiksCube555(RubiksCube):
                         log.warning("There are no wings where pair_six_edges_555 will return True (last_six %s)" % last_six)
                     else:
                         wing_to_pair = max_wings_paired_wing_to_pair
-                        log.warning("Using %s as next wing_to_pair will pair %d wings in %d moves" % (wing_to_pair, max_wings_paired, max_wing_solution_len))
+                        log.info("Using %s as next wing_to_pair will pair %d wings in %d moves" % (wing_to_pair, max_wings_paired, max_wing_solution_len))
 
                     # Restore state
                     self.state = copy(tmp_state)
@@ -1430,12 +1435,13 @@ class RubiksCube555(RubiksCube):
                 min_solution = copy(self.solution)
                 log.warning("edges solution length %d (NEW MIN)" % min_solution_length)
             else:
-                log.info("edges solution length %d" % min_solution_length)
+                log.info("edges solution length %d (MIN is %d)" % (solution_len, min_solution_length))
 
             # Restore to original state
             self.state = copy(original_state)
             self.solution = copy(original_solution)
 
+            # dwalton
             # remove me...break out of the 'for init_wing_to_pair' loop
             #break
 

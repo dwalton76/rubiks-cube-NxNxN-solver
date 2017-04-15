@@ -206,52 +206,6 @@ class RubiksCube555(RubiksCube):
 
         raise SolveError("LR centers-stage FAILED")
 
-    def lookup_table_555_UD_centers_solve(self):
-        filename = 'lookup-table-5x5x5-step30-solve-UD-centers.txt'
-
-        if not os.path.exists(filename):
-            print("ERROR: Could not find %s" % filename)
-            sys.exit(1)
-
-        with open(filename, 'r') as fh:
-            state = ''.join([self.state[square_index] for side in (self.sideU, self.sideD) for square_index in side.center_pos])
-
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-
-                log.info("UD centers-solve %s: FOUND entry %d steps in, %s" %\
-                    (state, len(self.solution), ' '.join(steps)))
-                for step in steps:
-                    self.rotate(step)
-            else:
-                raise SolveError("UD centers-solve %s: FAILED to find entry" % state)
-
-    def lookup_table_555_LFRB_centers_solve(self):
-        filename = 'lookup-table-5x5x5-step40-solve-LFRB-centers.txt'
-
-        if not os.path.exists(filename):
-            print("ERROR: Could not find %s" % filename)
-            sys.exit(1)
-
-        with open(filename, 'r') as fh:
-            state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-
-                log.info("LFRB centers-solve %s: FOUND entry %d steps in, %s" %\
-                    (state, len(self.solution), ' '.join(steps)))
-                for step in steps:
-                    self.rotate(step)
-            else:
-                raise SolveError("LFRB centers-solve %s: FAILED to find entry" % state)
-
     def lookup_table_555_ULFRBD_centers_solve(self):
         filename = 'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt'
 
@@ -348,15 +302,9 @@ class RubiksCube555(RubiksCube):
             else:
                 raise SolveError("UD centers-stage FAILED")
 
-        # TODO I'm in the process of rebuilding the LR-centers-stage table...it was 8 million short
         self.lookup_table_555_LR_centers_stage()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
-        # old way
-        #self.lookup_table_555_UD_centers_solve()
-        #self.lookup_table_555_LFRB_centers_solve()
-
-        # new way using IDA
         if not self.lookup_table_555_ULFRBD_centers_solve():
 
             # save cube state
@@ -370,8 +318,6 @@ class RubiksCube555(RubiksCube):
                 raise SolveError("UD centers-solve FAILED")
 
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
-        #self.print_cube()
-        #sys.exit(0)
 
     def find_moves_to_stage_slice_forward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         log.debug("find_moves_to_stage_slice_forward_555 called with target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %

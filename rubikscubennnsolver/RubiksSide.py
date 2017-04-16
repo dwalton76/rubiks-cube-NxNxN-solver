@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 from pprint import pformat
 import logging

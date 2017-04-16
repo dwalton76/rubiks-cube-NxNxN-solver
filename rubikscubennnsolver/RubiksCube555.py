@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 from collections import OrderedDict
 from copy import copy
@@ -23,9 +22,6 @@ moves_5x5x5 = moves_4x4x4
 class RubiksCube555(RubiksCube):
 
     def get_state_t_centers(self):
-        """
-        This is currently hard coded for 5x5x5
-        """
         result = []
 
         for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
@@ -46,9 +42,6 @@ class RubiksCube555(RubiksCube):
         return ''.join(result)
 
     def get_state_x_centers(self):
-        """
-        This is currently hard coded for 5x5x5
-        """
         result = []
 
         for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
@@ -68,36 +61,34 @@ class RubiksCube555(RubiksCube):
 
         return ''.join(result)
 
-    def get_t_centers_solution(self, t_centers_state):
+    def lookup_table_555_UD_T_centers(self):
+        t_centers_state = self.get_state_t_centers()
+        t_centers_state = t_centers_state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
         filename = 'lookup-table-5x5x5-step11-stage-UD-T-centers.txt'
-
-        if not os.path.exists(filename):
-            print("ERROR: Could not find %s" % filename)
-            sys.exit(1)
 
         with open(filename, 'r') as fh:
             line = get_line_startswith(fh, t_centers_state + ':')
 
             if line:
-                (key, steps) = line.split(':')
-                return steps.strip().split()
+                (key, steps) = line.strip().split(':')
+                steps = steps.split()
+                return steps
             else:
-                print("ERROR: Could not find T-center %s in %s" % (t_centers_state, filename))
+                log.warning("Could not find T-center %s in %s" % (t_centers_state, filename))
                 sys.exit(1)
 
-    def get_x_centers_solution(self, x_centers_state):
+    def lookup_table_555_UD_X_centers(self):
+        x_centers_state = self.get_state_x_centers()
+        x_centers_state = x_centers_state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
         filename = 'lookup-table-5x5x5-step12-stage-UD-X-centers.txt'
-
-        if not os.path.exists(filename):
-            print("ERROR: Could not find %s" % filename)
-            sys.exit(1)
 
         with open(filename, 'r') as fh:
             line = get_line_startswith(fh, x_centers_state + ':')
 
             if line:
-                (key, steps) = line.split(':')
-                return steps.strip().split()
+                (key, steps) = line.strip().split(':')
+                steps = steps.split()
+                return steps
             else:
                 print("ERROR: Could not find X-center %s in %s" % (x_centers_state, filename))
                 sys.exit(1)
@@ -123,23 +114,6 @@ class RubiksCube555(RubiksCube):
 
         return False
 
-    def get_xt_centers_solution_length_555(self):
-        t_centers = self.get_state_t_centers()
-        t_centers = t_centers.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
-        x_centers = self.get_state_x_centers()
-        x_centers = x_centers.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
-
-        t_centers_solution = self.get_t_centers_solution(t_centers)
-        x_centers_solution = self.get_x_centers_solution(x_centers)
-
-        t_centers_solution_len = len(t_centers_solution)
-        x_centers_solution_len = len(x_centers_solution)
-
-        #log.info("T-centers %s solution is %s, length %d" % (t_centers, ' '.join(t_centers_solution), t_centers_solution_len))
-        #log.info("X-centers %s solution is %s, length %d" % (x_centers, ' '.join(x_centers_solution), x_centers_solution_len))
-
-        return min(t_centers_solution_len, x_centers_solution_len)
-
     def ida_UD_centers_stage(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
         log.info("ida_UD_centers_stage: cost_to_here %d, threshold %d" % (cost_to_here, threshold))
 
@@ -152,22 +126,30 @@ class RubiksCube555(RubiksCube):
             self.state = copy(prev_state)
             self.solution = copy(prev_solution)
             self.rotate(step)
+            self.ida_count += 1
+            # assert cost_to_here+1 == len(self.solution), "cost_to_here %d, solution %s" % (cost_to_here, ' '.join(self.solution))
 
             # Do we have the cube in a state where there is a match in the lookup table?
             if self.lookup_table_555_UD_centers_stage():
                 return True
 
-            cost_to_goal = self.get_xt_centers_solution_length_555()
+            # min() vs. max(): Technically we should use max() here, doing so allows
+            # us to find a shorter solution but it takes much more CPU to do so.
+            # Using min() finds a longer solution (6 steps vs 4 steps for some cubes)
+            # but much faster (1s vs 50s for some cubes).
+            cost_to_goal = max(len(self.lookup_table_555_UD_T_centers()), len(self.lookup_table_555_UD_X_centers()))
+            #cost_to_goal = min(len(self.lookup_table_555_UD_T_centers()), len(self.lookup_table_555_UD_X_centers()))
+            #t_center_solution = self.lookup_table_555_UD_T_centers()
+            #x_center_solution = self.lookup_table_555_UD_X_centers()
+            #cost_to_goal = len(x_center_solution)
 
-            if (cost_to_here + cost_to_goal) > threshold:
-                #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
-                #    (step1, cost_to_here, cost_to_goal, threshold))
+            if (cost_to_here + 1 + cost_to_goal) > threshold:
                 continue
 
             state_end_of_this_step = copy(self.state)
             solution_end_of_this_step = copy(self.solution)
 
-            if self.ida_UD_centers_stage(cost_to_here+1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
+            if self.ida_UD_centers_stage(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
                 return True
 
         return False
@@ -284,6 +266,7 @@ class RubiksCube555(RubiksCube):
 
     def group_centers_guts(self):
         self.rotate_U_to_U()
+        self.ida_count = 0
 
         if not self.lookup_table_555_UD_centers_stage():
 
@@ -297,13 +280,17 @@ class RubiksCube555(RubiksCube):
             original_solution = copy(self.solution)
 
             for threshold in range(1, 10):
-                if self.ida_UD_centers_stage(1, threshold, None, original_state, original_solution):
+                if self.ida_UD_centers_stage(0, threshold, None, original_state, original_solution):
                     break
             else:
                 raise SolveError("UD centers-stage FAILED")
 
+        # dwalton
+        log.warning("ida_count %d" % self.ida_count)
         self.lookup_table_555_LR_centers_stage()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
+        self.print_cube()
+        sys.exit(0)
 
         if not self.lookup_table_555_ULFRBD_centers_solve():
 
@@ -711,7 +698,7 @@ class RubiksCube555(RubiksCube):
 
         if not placed_unpaired_wing:
 
-            # dwalton there are some steps to save here...we only need to move one wing
+            # TODO there are some steps to save here...we only need to move one wing
             # The stars aligned and we paired 4 at once so we have to move those
             # four out of the way via this six step sequence
             for step in "L R' D U L' R".split():
@@ -1363,7 +1350,7 @@ class RubiksCube555(RubiksCube):
                     log.warning("There are no wings where pair_six_wings_555 will return True")
 
                 if len_non_paired_edges > 2:
-                    # dwalton - this scenario needs work, we spend a ton of moves here
+                    # TODO - this scenario needs work, we spend a ton of moves here
 
                     for flip in (False, True):
                         for foo in non_paired_edges:

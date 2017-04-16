@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 
 from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222
@@ -81,6 +81,7 @@ try:
 
             if cube.is_solved():
                 results.append("\033[92m%s PASS\033[0m: %s" % (size, kociemba_string))
+                cube.print_solution()
             else:
                 results.append("\033[91m%s FAIL\033[0m: %s" % (size, kociemba_string))
                 cube.print_cube()

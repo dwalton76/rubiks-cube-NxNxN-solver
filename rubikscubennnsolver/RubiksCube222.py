@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube
 import logging

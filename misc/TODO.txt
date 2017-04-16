@@ -82,5 +82,4 @@ solver.py
 2x2x2 solver
 ============
 - ungolf the 2x2x2 solver
-    - after this, make it work for python3
     - wrap your head around how the hell this thing works

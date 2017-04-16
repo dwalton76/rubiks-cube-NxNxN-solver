@@ -71,8 +71,8 @@ def _read_and_compare(cache, ofs, f, size, tester):
     """
     # TODO(pts): Does increasing the cache size from 2 to 3 or 4 increase the hit
     # rate? Also document it in the article.
-    assert len(cache) <= 2
-    assert 0 <= ofs <= size
+    #assert len(cache) <= 2
+    #assert 0 <= ofs <= size
 
     if cache and cache[0][2] <= ofs <= cache[0][0]:
         cache.reverse()  # Move cache[0] to the end since we've just fetched it.
@@ -90,7 +90,7 @@ def _read_and_compare(cache, ofs, f, size, tester):
         else:
             fofs = 0
 
-        assert 0 <= ofs <= fofs <= size
+        #assert 0 <= ofs <= fofs <= size
 
         if cache and cache[0][0] == fofs:
             cache.reverse()  # Move cache[0] to the end since we've just fetched it.

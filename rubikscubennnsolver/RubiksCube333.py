@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.RubiksCube222 import moves_2x2x2

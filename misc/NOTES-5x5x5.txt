@@ -24,3 +24,11 @@ Initial solve for all 50 5x5x5 test cubes...this took some doing
 5x5x5 avg solution 387 steps
 1m 3s
 
+
+Lookup tables for centers
+edge pairing can do 3 on slice forward and 3 on slice back
+==========================================================
+5x5x5 min solution 107 steps
+5x5x5 max solution 169 steps
+5x5x5 avg solution 130 steps
+Takes a while...10m or so

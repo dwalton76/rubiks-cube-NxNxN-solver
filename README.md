@@ -30,7 +30,7 @@ $ sudo make install
 
 ### Install the rubikscubennnsolver python module
 ```
-$ sudo python3 setup.py install
+$ sudo python2 setup.py install
 ```
 
 ### Install lookup tables

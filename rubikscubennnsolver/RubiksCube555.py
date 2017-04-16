@@ -115,7 +115,7 @@ class RubiksCube555(RubiksCube):
         return False
 
     def ida_UD_centers_stage(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
-        log.info("ida_UD_centers_stage: cost_to_here %d, threshold %d" % (cost_to_here, threshold))
+        # log.info("ida_UD_centers_stage: cost_to_here %d, threshold %d" % (cost_to_here, threshold))
 
         for step in moves_5x5x5:
 
@@ -136,12 +136,8 @@ class RubiksCube555(RubiksCube):
             # min() vs. max(): Technically we should use max() here, doing so allows
             # us to find a shorter solution but it takes much more CPU to do so.
             # Using min() finds a longer solution (6 steps vs 4 steps for some cubes)
-            # but much faster (1s vs 50s for some cubes).
+            # but much faster (1s vs 8s for some cubes).
             cost_to_goal = max(len(self.lookup_table_555_UD_T_centers()), len(self.lookup_table_555_UD_X_centers()))
-            #cost_to_goal = min(len(self.lookup_table_555_UD_T_centers()), len(self.lookup_table_555_UD_X_centers()))
-            #t_center_solution = self.lookup_table_555_UD_T_centers()
-            #x_center_solution = self.lookup_table_555_UD_X_centers()
-            #cost_to_goal = len(x_center_solution)
 
             if (cost_to_here + 1 + cost_to_goal) > threshold:
                 continue
@@ -229,7 +225,6 @@ class RubiksCube555(RubiksCube):
         raise SolveError("UDLR-centers-solve could not find state %s" % state)
 
     def ida_ULFRBD_centers_solve(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
-        log.info("ida_ULFRBD_centers_solve: cost_to_here %d, threshold %d" % (cost_to_here, threshold))
 
         for step in moves_5x5x5:
 
@@ -251,7 +246,7 @@ class RubiksCube555(RubiksCube):
 
             cost_to_goal = self.get_555_UDLR_centers_solve_len()
 
-            if (cost_to_here + cost_to_goal) > threshold:
+            if (cost_to_here + 1 + cost_to_goal) > threshold:
                 #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
                 #    (step1, cost_to_here, cost_to_goal, threshold))
                 continue
@@ -259,14 +254,13 @@ class RubiksCube555(RubiksCube):
             state_end_of_this_step = copy(self.state)
             solution_end_of_this_step = copy(self.solution)
 
-            if self.ida_ULFRBD_centers_solve(cost_to_here+1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
+            if self.ida_ULFRBD_centers_solve(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
                 return True
 
         return False
 
     def group_centers_guts(self):
         self.rotate_U_to_U()
-        self.ida_count = 0
 
         if not self.lookup_table_555_UD_centers_stage():
 
@@ -280,17 +274,15 @@ class RubiksCube555(RubiksCube):
             original_solution = copy(self.solution)
 
             for threshold in range(1, 10):
+                log.info("ida_UD_centers_stage: threshold %d" % threshold)
                 if self.ida_UD_centers_stage(0, threshold, None, original_state, original_solution):
                     break
             else:
                 raise SolveError("UD centers-stage FAILED")
 
-        # dwalton
-        log.warning("ida_count %d" % self.ida_count)
+        # log.warning("ida_count %d" % self.ida_count)
         self.lookup_table_555_LR_centers_stage()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
-        self.print_cube()
-        sys.exit(0)
 
         if not self.lookup_table_555_ULFRBD_centers_solve():
 
@@ -299,7 +291,8 @@ class RubiksCube555(RubiksCube):
             original_solution = copy(self.solution)
 
             for threshold in range(1, 15):
-                if self.ida_ULFRBD_centers_solve(1, threshold, None, original_state, original_solution):
+                log.info("ida_ULFRBD_centers_solve: threshold %d" % threshold)
+                if self.ida_ULFRBD_centers_solve(0, threshold, None, original_state, original_solution):
                     break
             else:
                 raise SolveError("UD centers-solve FAILED")

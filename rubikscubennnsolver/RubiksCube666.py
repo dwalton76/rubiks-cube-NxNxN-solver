@@ -209,7 +209,6 @@ class RubiksCube666(RubiksCube):
                 raise SolveError("get_lookup_table_666_UD_oblique_edge_pairing_right_only could not find %s" % state)
 
     def ida_search_UD_oblique_edge_pairing(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
-        log.info("ida_search_UD_oblique_edge_pairing: cost_to_here %d, threshold %d" % (cost_to_here, threshold))
 
         for step in moves_6x6x6:
 
@@ -232,7 +231,7 @@ class RubiksCube666(RubiksCube):
             cost_to_goal = max(self.get_lookup_table_666_UD_oblique_edge_pairing_left_only(),
                                self.get_lookup_table_666_UD_oblique_edge_pairing_right_only())
 
-            if (cost_to_here + cost_to_goal) > threshold:
+            if (cost_to_here + 1 + cost_to_goal) > threshold:
                 #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
                 #    (step1, cost_to_here, cost_to_goal, threshold))
                 continue
@@ -240,7 +239,7 @@ class RubiksCube666(RubiksCube):
             state_end_of_this_step = copy(self.state)
             solution_end_of_this_step = copy(self.solution)
 
-            if self.ida_search_UD_oblique_edge_pairing(cost_to_here+1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
+            if self.ida_search_UD_oblique_edge_pairing(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
                 return True
 
         return False
@@ -340,6 +339,104 @@ class RubiksCube666(RubiksCube):
         if self.state[209] in ("U", "D"):
             fake_555.state[144] = "U"
 
+    def lookup_table_666_LR_inner_x_centers_oblique_pairing_stage(self):
+        tmp_state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
+        tmp_state = tmp_state.replace('U', 'x').replace('L', 'L').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
+
+        # We need to x out the outer x-centers for each side
+        state = ''
+        for y in range(6):
+            state += 'x' + tmp_state[1:3] + 'x' +\
+                     tmp_state[4:12] +\
+                     'x' + tmp_state[13:15] + 'x'
+            tmp_state = tmp_state[9:]
+
+        filename = 'lookup-table-6x6x6-step30-LR-inner-x-centers-and-oblique-pairing-stage.txt'
+
+        with open(filename, 'r') as fh:
+            line = get_line_startswith(fh, state + ':')
+
+            if line:
+                (key, steps) = line.split(':')
+                steps = steps.strip().split()
+
+                log.warning("LR inner-x-centers-oblique-pairing-stage %s: FOUND entry %d steps in (%s), %s" %\
+                    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
+                for step in steps:
+                    self.rotate(step)
+                return True
+
+        return False
+
+    def lookup_table_666_LR_oblique_pairing_stage(self):
+        tmp_state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
+        tmp_state = tmp_state.replace('U', 'x').replace('L', 'L').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
+
+        # We need to x out the inner and outer x-centers for each side
+        state = ''
+        for y in range(4):
+            state += 'x' + tmp_state[1:3] + 'x' +\
+                     tmp_state[4] + 'xx' + tmp_state[7] +\
+                     tmp_state[8] + 'xx' + tmp_state[11] +\
+                     'x' + tmp_state[13:15] + 'x'
+            tmp_state = tmp_state[16:]
+
+        filename = 'lookup-table-6x6x6-step31-LR-oblique-pairing-stage.txt'
+
+        with open(filename, 'r') as fh:
+            line = get_line_startswith(fh, state + ':')
+
+            if line:
+                (key, steps) = line.split(':')
+                steps = steps.strip().split()
+                #log.warning("LR oblique-pairing-stage %s: FOUND entry %d steps in (%s), %s" %\
+                #    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
+                return steps
+                #for step in steps:
+                #    self.rotate(step)
+                #return True
+            else:
+                # dwalton uncomment this after you've built the full table
+                #raise SolveError("lookup_table_666_LR_oblique_pairing_stage failed to find state %s" % state)
+                return (U"", "U", "U", "U", "U", "U", "U", "U", "U", "U")
+
+        return None
+
+    def ida_search_LR_inner_x_centers_oblique_pairing_stage(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
+
+        for step in moves_6x6x6:
+
+            # These moves would destroy the staged UD centers
+            if step in ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'"):
+                continue
+
+            # If this step cancels out the previous step then don't bother with this branch
+            if steps_cancel_out(prev_step, step):
+                continue
+
+            self.state = copy(prev_state)
+            self.solution = copy(prev_solution)
+            self.rotate(step)
+            self.ida_count += 1
+
+            # Do we have the cube in a state where there is a match in the lookup table?
+            if self.lookup_table_666_LR_inner_x_centers_oblique_pairing_stage():
+                return True
+
+            # dwalton here now
+            cost_to_goal = len(self.lookup_table_666_LR_oblique_pairing_stage())
+
+            if (cost_to_here + 1 + cost_to_goal) > threshold:
+                continue
+
+            state_end_of_this_step = copy(self.state)
+            solution_end_of_this_step = copy(self.solution)
+
+            if self.ida_search_LR_inner_x_centers_oblique_pairing_stage(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
+                return True
+
+        return False
+
     def group_centers_guts(self):
         self.lookup_table_666_UD_inner_x_centers_stage()
         # self.print_cube()
@@ -355,7 +452,8 @@ class RubiksCube666(RubiksCube):
             # until we find a sequence of moves that takes us to a state that IS in the
             # lookup table.
             for threshold in range(1, 10):
-                if self.ida_search_UD_oblique_edge_pairing(1, threshold, None, original_state, original_solution):
+                log.info("ida_search_UD_oblique_edge_pairing: threshold %d" % threshold)
+                if self.ida_search_UD_oblique_edge_pairing(0, threshold, None, original_state, original_solution):
                     break
             else:
                 raise SolveError("UD oblique-edge-pairing-stage FAILED")
@@ -366,8 +464,6 @@ class RubiksCube666(RubiksCube):
         # Create a dummy 5x5x5 cube object that we can use to figure out what steps to
         fake_555 = RubiksCube555('UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB')
         self.populate_fake_555(fake_555)
-
-        # dwalton
 
         if not fake_555.lookup_table_555_UD_centers_stage():
 
@@ -381,22 +477,37 @@ class RubiksCube666(RubiksCube):
             original_solution = copy(fake_555.solution)
 
             for threshold in range(1, 10):
-                if fake_555.ida_search_centers_555(1, threshold, None, original_state, original_solution):
+                log.info("ida_UD_centers_stage: threshold %d" % threshold)
+                if fake_555.ida_UD_centers_stage(0, threshold, None, original_state, original_solution):
                     break
             else:
                 raise SolveError("5x5x5 UD centers-stage FAILED")
 
         for step in fake_555.solution:
             self.rotate(step)
-
-        # UD should be staged by here
-        #self.print_cube()
         log.info("UD staged, %d steps in" % len(self.solution))
 
-        self.lookup_table_666_LR_inner_x_centers_stage()
-        self.print_cube()
-        log.info("LR inner x-centers staged, %d steps in" % len(self.solution))
+        # dwalton
+        if not self.lookup_table_666_LR_inner_x_centers_oblique_pairing_stage():
 
+            # save cube state
+            original_state = copy(self.state)
+            original_solution = copy(self.solution)
+
+            # If we are here (odds are very high we will be) it means that the current
+            # cube state was not in the lookup table.  We must now perform an IDA search
+            # until we find a sequence of moves that takes us to a state that IS in the
+            # lookup table.
+            self.ida_count = 0
+
+            for threshold in range(1, 25):
+                log.info("ida_search_LR_inner_x_centers_oblique_pairing_stage: threshold %d, ida_count %d" % (threshold, self.ida_count))
+                if self.ida_search_LR_inner_x_centers_oblique_pairing_stage(0, threshold, None, original_state, original_solution):
+                    break
+            else:
+                raise SolveError("ida_search_LR_inner_x_centers_oblique_pairing_stage FAILED")
+
+        # Now create another fake_555 cube
+        log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
+        self.print_cube()
         sys.exit(0)
-        #log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
-        #self.print_cube()

@@ -3528,12 +3528,20 @@ class RubiksCube(object):
         The RubiksCube222 and RubiksCube333 child classes will override
         this since they don't need to group centers or edges
         """
-        self.group_centers()
-        self.group_edges()
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-        self.solve_333()
-        self.compress_solution()
+        solved_string = 'U' * self.squares_per_side +\
+                        'L' * self.squares_per_side +\
+                        'F' * self.squares_per_side +\
+                        'R' * self.squares_per_side +\
+                        'B' * self.squares_per_side +\
+                        'D' * self.squares_per_side
+
+        if self.get_state_all() != solved_string:
+            self.group_centers()
+            self.group_edges()
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
+            self.solve_333()
+            self.compress_solution()
 
     def print_solution(self):
         print(' '.join(self.solution))

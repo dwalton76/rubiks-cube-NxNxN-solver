@@ -12,5 +12,7 @@ class RubiksCube333(RubiksCube):
     def solve(self):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
-        self.solve_333()
-        self.compress_solution()
+
+        if self.get_state_all() != 'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD':
+            self.solve_333()
+            self.compress_solution()

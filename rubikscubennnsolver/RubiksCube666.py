@@ -486,6 +486,8 @@ class RubiksCube666(RubiksCube):
         for step in fake_555.solution:
             self.rotate(step)
         log.info("UD staged, %d steps in" % len(self.solution))
+        self.print_cube()
+        sys.exit(1)
 
         # dwalton
         if not self.lookup_table_666_LR_inner_x_centers_oblique_pairing_stage():

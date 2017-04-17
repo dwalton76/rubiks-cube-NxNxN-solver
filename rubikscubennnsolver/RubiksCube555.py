@@ -115,7 +115,6 @@ class RubiksCube555(RubiksCube):
         return False
 
     def ida_UD_centers_stage(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
-        # log.info("ida_UD_centers_stage: cost_to_here %d, threshold %d" % (cost_to_here, threshold))
 
         for step in moves_5x5x5:
 
@@ -133,10 +132,6 @@ class RubiksCube555(RubiksCube):
             if self.lookup_table_555_UD_centers_stage():
                 return True
 
-            # min() vs. max(): Technically we should use max() here, doing so allows
-            # us to find a shorter solution but it takes much more CPU to do so.
-            # Using min() finds a longer solution (6 steps vs 4 steps for some cubes)
-            # but much faster (1s vs 8s for some cubes).
             cost_to_goal = max(len(self.lookup_table_555_UD_T_centers()), len(self.lookup_table_555_UD_X_centers()))
 
             if (cost_to_here + 1 + cost_to_goal) > threshold:

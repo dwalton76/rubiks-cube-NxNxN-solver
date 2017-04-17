@@ -324,6 +324,7 @@ class RubiksCube(object):
         self.steps_to_solve_centers = 0
         self.steps_to_group_edges = 0
         self.steps_to_solve_3x3x3 = 0
+        self.ida_count = 0
 
         # kociemba_string is in URFDLB order so split this apart and re-arrange it to
         # be ULFRBD so that is is sequential with the normal square numbering scheme
@@ -3213,7 +3214,7 @@ class RubiksCube(object):
         result = []
 
         for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in side.pos:
+            for square_index in range(side.min_pos, side.max_pos + 1):
                 result.append(self.state[square_index])
 
         return ''.join(result)
@@ -3222,7 +3223,7 @@ class RubiksCube(object):
         result = []
 
         for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in range(side.min_pos, side.max_pos):
+            for square_index in range(side.min_pos, side.max_pos + 1):
                 if square_index not in side.corner_pos:
                     result.append(self.state[square_index])
 
@@ -3540,7 +3541,13 @@ class RubiksCube(object):
         if self.steps_to_rotate_cube:
             print("%d steps to rotate entire cube" % self.steps_to_rotate_cube)
 
-        print("%d steps to solve centers" % self.steps_to_solve_centers)
-        print("%d steps to group edges" % self.steps_to_group_edges)
-        print("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3)
+        if self.steps_to_solve_centers:
+            print("%d steps to solve centers" % self.steps_to_solve_centers)
+
+        if self.steps_to_group_edges:
+            print("%d steps to group edges" % self.steps_to_group_edges)
+
+        if self.steps_to_solve_3x3x3:
+            print("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3)
+
         print("%d steps total" % len(self.solution))

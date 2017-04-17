@@ -81,7 +81,7 @@ try:
 
             if cube.is_solved():
                 results.append("\033[92m%s PASS\033[0m: %s" % (size, kociemba_string))
-                cube.print_solution()
+                # cube.print_solution()
             else:
                 results.append("\033[91m%s FAIL\033[0m: %s" % (size, kociemba_string))
                 cube.print_cube()
@@ -106,7 +106,7 @@ try:
 
         results.append("%s min solution %s steps" % (size, min_solution))
         results.append("%s max solution %s steps" % (size, max_solution))
-        results.append("%s avg solution %s steps" % (size, int(solution_total/len(test_cases['4x4x4']))))
+        results.append("%s avg solution %s steps" % (size, int(solution_total/len(test_cases[size]))))
         results.append("")
 
     for result in results:

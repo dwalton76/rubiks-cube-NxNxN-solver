@@ -277,9 +277,8 @@ class RubiksCube444(RubiksCube):
                 print("ERROR: Could not find LFRB state %s in %s" % (state, filename))
                 sys.exit(1)
 
-        '''
     def lookup_table_444_UD_centers_stage(self):
-        filename = 'lookup-table-4x4x4-step10-UD-centers-stage.txt'
+        filename = 'lookup-table-4x4x4-step01-UD-centers-stage.txt'
         state = self.get_center_corner_state()
         state = state.replace('U', 'U').replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
@@ -299,7 +298,7 @@ class RubiksCube444(RubiksCube):
                 sys.exit(1)
 
     def lookup_table_444_LR_centers_stage(self):
-        filename = 'lookup-table-4x4x4-step20-LR-centers-stage.txt'
+        filename = 'lookup-table-4x4x4-step02-LR-centers-stage.txt'
         state = self.get_center_corner_state()
         state = state.replace('U', 'U').replace('L', 'L').replace('F', 'F').replace('R', 'L').replace('B', 'F').replace('D', 'U')
 
@@ -318,8 +317,7 @@ class RubiksCube444(RubiksCube):
                 raise SolveError("Could not find LFRB state %s in %s" % (state, filename))
 
     def lookup_table_444_ULFRBD_centers_solve(self):
-        # TODO find a way to pair some edges in the process
-        filename = 'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt'
+        filename = 'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt'
         state = self.get_center_corner_state()
 
         with open(filename, 'r') as fh:
@@ -339,17 +337,24 @@ class RubiksCube444(RubiksCube):
                 self.rotate_F_to_F()
             else:
                 raise SolveError("Did not find %s in %s" % (state, filename))
-        '''
 
     def group_centers_guts(self):
-        # old way
-        #self.lookup_table_444_UD_centers_stage()
-        #self.lookup_table_444_LR_centers_stage()
-        #self.lookup_table_444_ULFRBD_centers_solve()
 
-        # new way
-        self.lookup_table_444_UD_centers_solve()
-        self.lookup_table_444_LFRB_centers_solve()
+        # The UD solve -> LFRB solve approach is only ~1 move shorter on average
+        # than doing UD stage, LR stage, ULFRBD solve.  The UD solve -> LFRB
+        # lookup tables are 5.6G whereas the UD stage, LR stage, ULFRBD solve
+        # lookup tables are only 49M.
+        #
+        # We checked the 49M tables into the github repo but we'll use the 5.6G tables
+        # if the user has them.
+        if (os.path.exists('lookup-table-4x4x4-step10-UD-centers-solve.txt') and
+            os.path.exists('lookup-table-4x4x4-step20-LFRB-centers-solve.txt')):
+            self.lookup_table_444_UD_centers_solve()
+            self.lookup_table_444_LFRB_centers_solve()
+        else:
+            self.lookup_table_444_UD_centers_stage()
+            self.lookup_table_444_LR_centers_stage()
+            self.lookup_table_444_ULFRBD_centers_solve()
 
     def find_moves_to_stage_slice_forward_444(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         # target_wing must go in spot 41

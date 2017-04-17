@@ -87,7 +87,7 @@ ENV/
 
 # Rope project settings
 .ropeproject
-lookup-table*
 
+lookup-table-*.txt
 *.swp
 cache

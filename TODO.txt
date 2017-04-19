@@ -1,0 +1,15 @@
+
+- all of the "def lookup" table functions need to return the steps not exec the steps
+- clean up all of the IDA related function names, make them consistent
+- make the lookup-table.txt filenames consistent
+
+- compress lookup-table-5x5x5-step10-stage-UD-centers.txt ? It is 29G, I think I could get it down to ~2.5G
+    - Need to split this so it is in multiple files, max file size is 100M on github
+    - would need a way to then uncompress it or work with it in its compressed form
+    - same for lookup-table-5x5x5-step20-stage-LR-centers.txt (11G)
+    - same for lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt (9G)
+    - same for lookup-table-5x5x5-step31-UDLR-centers-solve.txt (2G)
+
+- remove the leading UUUU and trailing DDDD from
+    - lookup-table-4x4x4-step02-LR-centers-stage.txt
+    - lookup-table-4x4x4-step20-LFRB-centers-solve.txt

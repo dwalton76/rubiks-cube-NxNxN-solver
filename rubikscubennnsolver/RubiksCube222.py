@@ -19,6 +19,13 @@ moves_2x2x2 = ("U", "U'", "U2",
 class RubiksCube222(RubiksCube):
 
     def solve(self):
+        """
+        lookup-table-2x2x2-solve.txt was constructed using only:
+            U, U', U2, B, B', B2, R, R' and R2
+
+        so we must rotate the LFD corner to be at LFD. Rotating doesn't add
+        to our move count as they are compressed out in compress_solution().
+        """
         state = self.get_state_all()
         filename = 'lookup-table-2x2x2-solve.txt'
 

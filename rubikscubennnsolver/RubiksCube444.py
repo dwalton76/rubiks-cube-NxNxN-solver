@@ -240,7 +240,7 @@ class RubiksCube444(RubiksCube):
 
     def lookup_table_444_UD_centers_solve(self):
         filename = 'lookup-table-4x4x4-step10-UD-centers-solve.txt'
-        state = self.get_center_corner_state()
+        state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
         state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x')
 
         with open(filename, 'r') as fh:
@@ -260,7 +260,7 @@ class RubiksCube444(RubiksCube):
 
     def lookup_table_444_LFRB_centers_solve(self):
         filename = 'lookup-table-4x4x4-step20-LFRB-centers-solve.txt'
-        state = self.get_center_corner_state()
+        state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
 
         with open(filename, 'r') as fh:
             line = get_line_startswith(fh, state + ':')
@@ -279,7 +279,7 @@ class RubiksCube444(RubiksCube):
 
     def lookup_table_444_UD_centers_stage(self):
         filename = 'lookup-table-4x4x4-step01-UD-centers-stage.txt'
-        state = self.get_center_corner_state()
+        state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
         state = state.replace('U', 'U').replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
         with open(filename, 'r') as fh:
@@ -299,8 +299,8 @@ class RubiksCube444(RubiksCube):
 
     def lookup_table_444_LR_centers_stage(self):
         filename = 'lookup-table-4x4x4-step02-LR-centers-stage.txt'
-        state = self.get_center_corner_state()
-        state = state.replace('U', 'U').replace('L', 'L').replace('F', 'F').replace('R', 'L').replace('B', 'F').replace('D', 'U')
+        state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
+        state = state.replace('R', 'L').replace('B', 'F')
 
         with open(filename, 'r') as fh:
             line = get_line_startswith(fh, state + ':')
@@ -318,7 +318,7 @@ class RubiksCube444(RubiksCube):
 
     def lookup_table_444_ULFRBD_centers_solve(self):
         filename = 'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt'
-        state = self.get_center_corner_state()
+        state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
 
         with open(filename, 'r') as fh:
             line = get_line_startswith(fh, state + ':')

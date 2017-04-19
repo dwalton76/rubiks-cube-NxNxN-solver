@@ -22,7 +22,7 @@ The kociemba solver is required to solve the larger cubes that have been
 reduced to 3x3x3.
 
 ```
-$ git clone https://github.com/muodov/kociemba.git
+$ git clone https://github.com/dwalton76/kociemba.git
 $ cd ~/kociemba/kociemba/ckociemba/
 $ make
 $ sudo make install
@@ -33,13 +33,20 @@ $ sudo make install
 $ sudo python2 setup.py install
 ```
 
-### Install lookup tables
+### Install 2x2x2 and 4x4x4 lookup tables
+These are small enough to include in the repo, you just have to unzip them.
+```
+$ gunzip lookup-table*.gz
+```
+
+### Install 5x5x5, 6x6x6, etc lookup tables
 These are large and will take a little while to download but they take days to
-build, it is best to download them. Once you've downloaded them unzip them
-via `gunzip lookup-table*.gz`.
+build, it is best to download them. They are too large to store in the repo so
+I currently have them in a dropbox folder.  If you send me your email address
+I will give you access to the dropbox folder.
 
-
-If you are curious these tables were built using the following:
+Once you've downloaded them unzip them via `gunzip lookup-table*.gz  If you are
+curious, the lookup tables were built using the following:
 https://github.com/dwalton76/rubiks-cube-lookup-tables
 
 

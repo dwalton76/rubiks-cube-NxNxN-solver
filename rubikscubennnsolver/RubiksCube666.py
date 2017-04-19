@@ -244,7 +244,7 @@ class RubiksCube666(RubiksCube):
 
         return False
 
-    def populate_fake_555(self, fake_555):
+    def populate_fake_555_for_UD(self, fake_555):
         for x in range(1, 151):
             fake_555.state[x] = 'x'
 
@@ -264,92 +264,151 @@ class RubiksCube666(RubiksCube):
         # Upper
         if self.state[8] in ("U", "D"):
             fake_555.state[7] = "U"
-
         if self.state[11] in ("U", "D"):
             fake_555.state[9] = "U"
-
         if self.state[26] in ("U", "D"):
             fake_555.state[17] = "U"
-
         if self.state[29] in ("U", "D"):
             fake_555.state[19] = "U"
 
         # Left
         if self.state[44] in ("U", "D"):
             fake_555.state[32] = "U"
-
         if self.state[47] in ("U", "D"):
             fake_555.state[34] = "U"
-
         if self.state[62] in ("U", "D"):
             fake_555.state[42] = "U"
-
         if self.state[65] in ("U", "D"):
             fake_555.state[44] = "U"
 
         # Front
         if self.state[80] in ("U", "D"):
             fake_555.state[57] = "U"
-
         if self.state[83] in ("U", "D"):
             fake_555.state[59] = "U"
-
         if self.state[98] in ("U", "D"):
             fake_555.state[67] = "U"
-
         if self.state[101] in ("U", "D"):
             fake_555.state[69] = "U"
 
         # Right
         if self.state[116] in ("U", "D"):
             fake_555.state[82] = "U"
-
         if self.state[119] in ("U", "D"):
             fake_555.state[84] = "U"
-
         if self.state[134] in ("U", "D"):
             fake_555.state[92] = "U"
-
         if self.state[137] in ("U", "D"):
             fake_555.state[94] = "U"
 
         # Back
         if self.state[152] in ("U", "D"):
             fake_555.state[107] = "U"
-
         if self.state[155] in ("U", "D"):
             fake_555.state[109] = "U"
-
         if self.state[170] in ("U", "D"):
             fake_555.state[117] = "U"
-
         if self.state[173] in ("U", "D"):
             fake_555.state[119] = "U"
 
         # Down
         if self.state[188] in ("U", "D"):
             fake_555.state[132] = "U"
-
         if self.state[191] in ("U", "D"):
             fake_555.state[134] = "U"
-
         if self.state[206] in ("U", "D"):
             fake_555.state[142] = "U"
-
         if self.state[209] in ("U", "D"):
             fake_555.state[144] = "U"
 
+    def populate_fake_555_for_LR(self, fake_555):
+        for x in range(1, 151):
+            fake_555.state[x] = 'x'
+
+        # The LR t-centers are staged
+        fake_555.state[33] = "L"
+        fake_555.state[37] = "L"
+        fake_555.state[38] = "L"
+        fake_555.state[39] = "L"
+        fake_555.state[43] = "L"
+
+        fake_555.state[83] = "L"
+        fake_555.state[87] = "L"
+        fake_555.state[88] = "L"
+        fake_555.state[89] = "L"
+        fake_555.state[93] = "L"
+
+        # Upper
+        if self.state[8] in ("L", "R"):
+            fake_555.state[7] = "L"
+        if self.state[11] in ("L", "R"):
+            fake_555.state[9] = "L"
+        if self.state[26] in ("L", "R"):
+            fake_555.state[17] = "L"
+        if self.state[29] in ("L", "R"):
+            fake_555.state[19] = "L"
+
+        # Left
+        if self.state[44] in ("L", "R"):
+            fake_555.state[32] = "L"
+        if self.state[47] in ("L", "R"):
+            fake_555.state[34] = "L"
+        if self.state[62] in ("L", "R"):
+            fake_555.state[42] = "L"
+        if self.state[65] in ("L", "R"):
+            fake_555.state[44] = "L"
+
+        # Front
+        if self.state[80] in ("L", "R"):
+            fake_555.state[57] = "L"
+        if self.state[83] in ("L", "R"):
+            fake_555.state[59] = "L"
+        if self.state[98] in ("L", "R"):
+            fake_555.state[67] = "L"
+        if self.state[101] in ("L", "R"):
+            fake_555.state[69] = "L"
+
+        # Right
+        if self.state[116] in ("L", "R"):
+            fake_555.state[82] = "L"
+        if self.state[119] in ("L", "R"):
+            fake_555.state[84] = "L"
+        if self.state[134] in ("L", "R"):
+            fake_555.state[92] = "L"
+        if self.state[137] in ("L", "R"):
+            fake_555.state[94] = "L"
+
+        # Back
+        if self.state[152] in ("L", "R"):
+            fake_555.state[107] = "L"
+        if self.state[155] in ("L", "R"):
+            fake_555.state[109] = "L"
+        if self.state[170] in ("L", "R"):
+            fake_555.state[117] = "L"
+        if self.state[173] in ("L", "R"):
+            fake_555.state[119] = "L"
+
+        # Down
+        if self.state[188] in ("L", "R"):
+            fake_555.state[132] = "L"
+        if self.state[191] in ("L", "R"):
+            fake_555.state[134] = "L"
+        if self.state[206] in ("L", "R"):
+            fake_555.state[142] = "L"
+        if self.state[209] in ("L", "R"):
+            fake_555.state[144] = "L"
+
     def lookup_table_666_LR_inner_x_centers_oblique_pairing_stage(self):
-        tmp_state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-        tmp_state = tmp_state.replace('U', 'x').replace('L', 'L').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
+        tmp_state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
+        tmp_state = tmp_state.replace('L', 'L').replace('F', 'x').replace('R', 'L').replace('B', 'x')
 
         # We need to x out the outer x-centers for each side
         state = ''
-        for y in range(6):
+        for y in range(4):
             state += 'x' + tmp_state[1:3] + 'x' +\
                      tmp_state[4:12] +\
                      'x' + tmp_state[13:15] + 'x'
-            tmp_state = tmp_state[9:]
+            tmp_state = tmp_state[16:]
 
         filename = 'lookup-table-6x6x6-step30-LR-inner-x-centers-and-oblique-pairing-stage.txt'
 
@@ -392,13 +451,8 @@ class RubiksCube666(RubiksCube):
                 #log.warning("LR oblique-pairing-stage %s: FOUND entry %d steps in (%s), %s" %\
                 #    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
                 return steps
-                #for step in steps:
-                #    self.rotate(step)
-                #return True
             else:
-                # dwalton uncomment this after you've built the full table
-                #raise SolveError("lookup_table_666_LR_oblique_pairing_stage failed to find state %s" % state)
-                return (U"", "U", "U", "U", "U", "U", "U", "U", "U", "U")
+                raise SolveError("lookup_table_666_LR_oblique_pairing_stage failed to find state %s" % state)
 
         return None
 
@@ -423,7 +477,6 @@ class RubiksCube666(RubiksCube):
             if self.lookup_table_666_LR_inner_x_centers_oblique_pairing_stage():
                 return True
 
-            # dwalton here now
             cost_to_goal = len(self.lookup_table_666_LR_oblique_pairing_stage())
 
             if (cost_to_here + 1 + cost_to_goal) > threshold:
@@ -463,7 +516,7 @@ class RubiksCube666(RubiksCube):
         # At this point we can treat UD centers like 5x5x5 centers
         # Create a dummy 5x5x5 cube object that we can use to figure out what steps to
         fake_555 = RubiksCube555('UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB')
-        self.populate_fake_555(fake_555)
+        self.populate_fake_555_for_UD(fake_555)
 
         if not fake_555.lookup_table_555_UD_centers_stage():
 
@@ -487,9 +540,7 @@ class RubiksCube666(RubiksCube):
             self.rotate(step)
         log.info("UD staged, %d steps in" % len(self.solution))
         self.print_cube()
-        sys.exit(1)
 
-        # dwalton
         if not self.lookup_table_666_LR_inner_x_centers_oblique_pairing_stage():
 
             # save cube state
@@ -509,7 +560,19 @@ class RubiksCube666(RubiksCube):
             else:
                 raise SolveError("ida_search_LR_inner_x_centers_oblique_pairing_stage FAILED")
 
-        # Now create another fake_555 cube
+        log.info("Took %d steps to stage UD centers and LR inner-x-centers and oblique pairs" % len(self.solution))
+        self.print_cube()
+
+        # At this point we can treat UD centers like 5x5x5 centers
+        # Create a dummy 5x5x5 cube object that we can use to figure out what steps to
+        fake_555 = RubiksCube555('UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB')
+        self.populate_fake_555_for_LR(fake_555)
+        fake_555.print_cube()
+
+        fake_555.lookup_table_555_LR_centers_stage()
+        for step in fake_555.solution:
+            self.rotate(step)
+
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
         self.print_cube()
         sys.exit(0)

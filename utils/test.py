@@ -79,7 +79,7 @@ try:
             #for step in solution:
             #    cube.rotate(step)
 
-            if cube.is_solved():
+            if cube.solved():
                 results.append("\033[92m%s PASS\033[0m: %s" % (size, kociemba_string))
                 # cube.print_solution()
             else:

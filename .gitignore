@@ -93,3 +93,4 @@ lookup-table-*.txt
 cache
 lookup-table-4x4x4-step20-LFRB-centers-solve.txt.gz
 lookup-table-6x6x6-step30-LR-inner-x-centers-and-oblique-pairing-stage.txt.gz
+lookup-table-4x4x4-step10-UD-centers-solve.txt.gz

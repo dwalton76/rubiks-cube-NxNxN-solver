@@ -530,7 +530,7 @@ class Side(object):
             return True
         return False
 
-    def is_solved(self):
+    def solved(self):
         """
         Return True if all squares on this side are the same color
         """

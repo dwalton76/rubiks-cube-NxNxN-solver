@@ -416,12 +416,12 @@ class RubiksCube(object):
             return False
         return True
 
-    def is_solved(self):
+    def solved(self):
         """
         Return True if the cube is solved
         """
         for side in self.sides.values():
-            if not side.is_solved():
+            if not side.solved():
                 return False
         return True
 

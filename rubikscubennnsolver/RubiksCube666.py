@@ -457,9 +457,7 @@ class RubiksCube666(RubiksCube):
         return None
 
     def lookup_table_666_UD_centers_solve(self):
-        state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-        state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x')
-
+        state = ''.join([self.state[square_index] for side in (self.sideU, self.sideD) for square_index in side.center_pos])
         filename = 'lookup-table-6x6x6-step40-UD-centers-solve.txt'
 
         with open(filename, 'r') as fh:
@@ -475,6 +473,24 @@ class RubiksCube666(RubiksCube):
                     self.rotate(step)
             else:
                 raise SolveError("UD centers solve could not find %s" % state)
+
+    def lookup_table_666_LR_centers_solve(self):
+        state = ''.join([self.state[square_index] for side in (self.sideL, self.sideR) for square_index in side.center_pos])
+        filename = 'lookup-table-6x6x6-step50-LR-centers-solve.txt'
+
+        with open(filename, 'r') as fh:
+            line = get_line_startswith(fh, state + ':')
+
+            if line:
+                (key, steps) = line.split(':')
+                steps = steps.strip().split()
+
+                log.warning("LR centers solve %s: FOUND entry %d steps in (%s), %s" %\
+                    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
+                for step in steps:
+                    self.rotate(step)
+            else:
+                raise SolveError("LR centers solve could not find %s" % state)
 
     def ida_search_LR_inner_x_centers_oblique_pairing_stage(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
 
@@ -597,6 +613,10 @@ class RubiksCube666(RubiksCube):
         self.print_cube()
 
         self.lookup_table_666_UD_centers_solve()
-        log.info("Took %d steps to stage ULFRBD centers and solve UD centers" % len(self.solution))
+        log.info("Took %d steps to solve UD centers" % len(self.solution))
+        self.print_cube()
+
+        self.lookup_table_666_LR_centers_solve()
+        log.info("Took %d steps to solve LR centers" % len(self.solution))
         self.print_cube()
         sys.exit(0)

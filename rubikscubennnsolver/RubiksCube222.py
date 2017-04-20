@@ -106,15 +106,18 @@ class RubiksCube222(RubiksCube):
         else:
             raise SolveError("Implement this")
 
-        with open(filename, 'r') as fh:
-            while not self.solved():
-                state = self.get_state_all()
-                line = get_line_startswith(fh, state + ':')
+        state = self.get_state_all()
 
-                if line:
-                    (key, step) = line.strip().split(':')
+        # The LFD corner must be at LFD
+        with open(filename, 'r') as fh:
+            line = get_line_startswith(fh, state + ':')
+ 
+            if line:
+                (key, steps) = line.strip().split(':')
+                steps = steps.split()
+                for step in steps:
                     self.rotate(step)
-                else:
-                    raise SolveError("Did not find %s in %s" % (state, filename))
+            else:
+                raise SolveError("Did not find %s in %s" % (state, filename))
 
         self.compress_solution()

@@ -282,25 +282,31 @@ class RubiksCube444(RubiksCube):
         state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
         state = state.replace('U', 'U').replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
+        if state == 'UUUUxxxxxxxxxxxxxxxxUUUU':
+            return
+
         with open(filename, 'r') as fh:
             line = get_line_startswith(fh, state + ':')
 
             if line:
-                (key, steps) = line.split(':')
+                (key, steps) = line.strip().split(':')
                 steps = steps.strip().split()
-                log.info("Found UD centers stage %s in lookup table, %d steps in, %s" %\
-                    (state, len(self.solution), ' '.join(steps)))
 
                 for step in steps:
                     self.rotate(step)
+
+                log.info("Found UD centers stage %s in lookup table, %d steps in, %s" %\
+                    (state, len(self.solution), ' '.join(steps)))
             else:
-                print("ERROR: Could not find UD state %s in %s" % (state, filename))
-                sys.exit(1)
+                raise SolveError("Could not find UD state %s in %s" % (state, filename))
 
     def lookup_table_444_LR_centers_stage(self):
         filename = 'lookup-table-4x4x4-step02-LR-centers-stage.txt'
         state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
         state = state.replace('R', 'L').replace('B', 'F')
+
+        if state == 'LLLLFFFFLLLLFFFF':
+            return
 
         with open(filename, 'r') as fh:
             line = get_line_startswith(fh, state + ':')
@@ -319,6 +325,9 @@ class RubiksCube444(RubiksCube):
     def lookup_table_444_ULFRBD_centers_solve(self):
         filename = 'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt'
         state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
+
+        if state == 'UUUULLLLFFFFRRRRBBBBDDDD':
+            return
 
         with open(filename, 'r') as fh:
             line = get_line_startswith(fh, state + ':')

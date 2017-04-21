@@ -3,7 +3,7 @@ from collections import OrderedDict
 from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.pts_line_bisect import get_line_startswith
-from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out
+from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out, convert_state_to_hex
 from rubikscubennnsolver.RubiksSide import Side, SolveError
 from rubikscubennnsolver.RubiksCube444 import moves_4x4x4
 import logging
@@ -97,22 +97,24 @@ class RubiksCube555(RubiksCube):
         filename = 'lookup-table-5x5x5-step10-stage-UD-centers.txt'
 
         with open(filename, 'r') as fh:
-            state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+            while True:
+                state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
+                state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
-            line = get_line_startswith(fh, state + ':')
+                if state == 'UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU':
+                    return True
 
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
+                # dwalton
+                hex_state = convert_state_to_hex(state)
+                line = get_line_startswith(fh, hex_state + ':')
 
-                log.warning("UD centers-stage %s: FOUND entry %d steps in (%s), %s" %\
-                    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
-                for step in steps:
+                if line:
+                    (key, step) = line.strip().split(':')
                     self.rotate(step)
-                return True
 
-        return False
+                    log.warning("UD centers-stage: FOUND entry %d steps in, %s" % (len(self.solution), step))
+                else:
+                    return False
 
     def ida_UD_centers_stage(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
 
@@ -148,57 +150,45 @@ class RubiksCube555(RubiksCube):
     def lookup_table_555_LR_centers_stage(self):
         filename = 'lookup-table-5x5x5-step20-stage-LR-centers.txt'
 
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
-
         with open(filename, 'r') as fh:
-
-            # rotate_y() to see if any of these states are in the lookup table
-            for rotate_y_count in (0, 2):
-
-                self.state = copy(original_state)
-                self.solution = copy(original_solution)
-
-                for x in range(rotate_y_count):
-                    self.rotate_y()
-
+            while True:
                 state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
                 state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x').replace('R', 'L')
 
-                line = get_line_startswith(fh, state + ':')
+                if state == 'LLLLLLLLLxxxxxxxxxLLLLLLLLLxxxxxxxxx':
+                    break
+
+                hex_state = convert_state_to_hex(state)
+                line = get_line_startswith(fh, hex_state + ':')
 
                 if line:
-                    (key, steps) = line.split(':')
-                    steps = steps.strip().split()
+                    (key, step) = line.strip().split(':')
+                    self.rotate(step)
 
-                    log.warning("LR centers-stage %s: FOUND entry %d steps in, %s" %\
-                        (state, len(self.solution), ' '.join(steps)))
-                    for step in steps:
-                        self.rotate(step)
-                    return True
-
-        raise SolveError("LR centers-stage FAILED")
+                    log.warning("LR centers-stage: FOUND entry %d steps in, %s" % (len(self.solution), step))
+                else:
+                    raise SolveError("LR centers-stage FAILED state %s, hex_state %s" % (state, hex_state))
 
     def lookup_table_555_ULFRBD_centers_solve(self):
         filename = 'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt'
 
-        if not os.path.exists(filename):
-            print("ERROR: Could not find %s" % filename)
-            sys.exit(1)
-
         with open(filename, 'r') as fh:
-            state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-            line = get_line_startswith(fh, state + ':')
+            while True:
+                state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
 
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
+                if state == 'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD':
+                    return True
 
-                log.warning("ULFRBD-centers-solve %s: FOUND entry %d steps in (%s), %s" %\
-                        (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
-                for step in steps:
+                line = get_line_startswith(fh, state + ':')
+
+                if line:
+                    (key, step) = line.strip().split(':')
                     self.rotate(step)
-                return True
+
+                    log.warning("ULFRBD-centers-solve %s: FOUND entry %d steps in (%s), %s" %\
+                        (state, len(self.solution), ' '.join(self.solution), step))
+                else:
+                    return False
         return False
 
     def get_555_UDLR_centers_solve_len(self):

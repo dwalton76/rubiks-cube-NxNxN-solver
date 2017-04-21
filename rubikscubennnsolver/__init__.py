@@ -310,6 +310,16 @@ def apply_rotations(step, rotations):
     return step
 
 
+def convert_state_to_hex(state):
+    """
+    This assumes that state only has "x"s and Us or Ls or Fs or Rs or Bs or Ds
+    """
+    hex_state = hex(int(state.replace('x', '0').replace('U', '1').replace('L', '1').replace('F', '1').replace('R', '1').replace('B', '1').replace('D', '1'), 2))[2:]
+    if hex_state.endswith('L'):
+        hex_state = hex_state[:-1]
+    return hex_state
+
+
 class RubiksCube(object):
 
     def __init__(self, kociemba_string):

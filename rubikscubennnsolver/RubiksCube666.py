@@ -3,7 +3,7 @@ from collections import OrderedDict
 from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.pts_line_bisect import get_line_startswith
-from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out
+from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out, convert_state_to_hex
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 from rubikscubennnsolver.RubiksSide import Side, SolveError
 import logging
@@ -46,10 +46,9 @@ class RubiksCube666(RubiksCube):
                 (key, steps) = line.split(':')
                 steps = steps.strip().split()
 
-                log.warning("UD inner x-centers-stage %s: FOUND entry %d steps in (%s), %s" %\
-                    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
                 for step in steps:
                     self.rotate(step)
+                log.warning("UD inner x-centers-stage: FOUND entry %d steps in, %s" % (len(self.solution), ' '.join(steps)))
             else:
                 raise SolveError("UD inner x-centers-stage could not find %s" % state)
 
@@ -78,51 +77,48 @@ class RubiksCube666(RubiksCube):
                 raise SolveError("LR inner x-centers-stage could not find %s" % state)
 
     def lookup_table_666_UD_oblique_edge_pairing(self):
-        state = 'x' + self.state[9] + self.state[10] + 'x' +\
-                self.state[14] + 'xx' + self.state[17] +\
-                self.state[20] + 'xx' + self.state[23] +\
-                'x' + self.state[27] + self.state[28] + 'x' +\
-               'x' + self.state[45] + self.state[46] + 'x' +\
-                self.state[50] + 'xx' + self.state[53] +\
-                self.state[56] + 'xx' + self.state[59] +\
-                'x' + self.state[63] + self.state[64] + 'x' +\
-               'x' + self.state[81] + self.state[82] + 'x' +\
-                self.state[86] + 'xx' + self.state[89] +\
-                self.state[92] + 'xx' + self.state[95] +\
-                'x' + self.state[99] + self.state[100] + 'x' +\
-               'x' + self.state[117] + self.state[118] + 'x' +\
-                self.state[122] + 'xx' + self.state[125] +\
-                self.state[128] + 'xx' + self.state[131] +\
-                'x' + self.state[135] + self.state[136] + 'x' +\
-               'x' + self.state[153] + self.state[154] + 'x' +\
-                self.state[158] + 'xx' + self.state[161] +\
-                self.state[164] + 'xx' + self.state[167] +\
-                'x' + self.state[171] + self.state[172] + 'x' +\
-               'x' + self.state[189] + self.state[190] + 'x' +\
-                self.state[194] + 'xx' + self.state[197] +\
-                self.state[200] + 'xx' + self.state[203] +\
-                'x' + self.state[207] + self.state[208] + 'x'
-
-        state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
         filename = 'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt'
 
         with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
+            while True:
+                state = 'x' + self.state[9] + self.state[10] + 'x' +\
+                        self.state[14] + 'xx' + self.state[17] +\
+                        self.state[20] + 'xx' + self.state[23] +\
+                        'x' + self.state[27] + self.state[28] + 'x' +\
+                       'x' + self.state[45] + self.state[46] + 'x' +\
+                        self.state[50] + 'xx' + self.state[53] +\
+                        self.state[56] + 'xx' + self.state[59] +\
+                        'x' + self.state[63] + self.state[64] + 'x' +\
+                       'x' + self.state[81] + self.state[82] + 'x' +\
+                        self.state[86] + 'xx' + self.state[89] +\
+                        self.state[92] + 'xx' + self.state[95] +\
+                        'x' + self.state[99] + self.state[100] + 'x' +\
+                       'x' + self.state[117] + self.state[118] + 'x' +\
+                        self.state[122] + 'xx' + self.state[125] +\
+                        self.state[128] + 'xx' + self.state[131] +\
+                        'x' + self.state[135] + self.state[136] + 'x' +\
+                       'x' + self.state[153] + self.state[154] + 'x' +\
+                        self.state[158] + 'xx' + self.state[161] +\
+                        self.state[164] + 'xx' + self.state[167] +\
+                        'x' + self.state[171] + self.state[172] + 'x' +\
+                       'x' + self.state[189] + self.state[190] + 'x' +\
+                        self.state[194] + 'xx' + self.state[197] +\
+                        self.state[200] + 'xx' + self.state[203] +\
+                        'x' + self.state[207] + self.state[208] + 'x'
+                state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
+                if state == 'xUUxUxxUUxxUxUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUxUxxUUxxUxUUx':
+                    return True
 
-                log.warning("UD oblique-edge-pairing-stage %s: FOUND entry %d steps in (%s), %s" %\
-                    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
+                hex_state = convert_state_to_hex(state)
+                line = get_line_startswith(fh, hex_state + ':')
 
-                # TODO we only need to do the steps needed to get the UD oblique edges paired, if we follow the
-                # steps all the way through we will also stage them to sides UD.  Having them staged does tend
-                # to make the IDA for fake_555.lookup_table_555_UD_centers_stage go very quickly though so it
-                # may be better to follow these through the whole way after all...investigate.
-                for step in steps:
+                if line:
+                    (key, step) = line.strip().split(':')
                     self.rotate(step)
-                return True
+                    log.warning("UD oblique-edge-pairing-stage: FOUND entry %d steps in, %s" % (len(self.solution), step))
+                else:
+                    return False
 
         return False
 
@@ -399,31 +395,33 @@ class RubiksCube666(RubiksCube):
             fake_555.state[144] = "L"
 
     def lookup_table_666_LR_inner_x_centers_oblique_pairing_stage(self):
-        tmp_state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
-        tmp_state = tmp_state.replace('L', 'L').replace('F', 'x').replace('R', 'L').replace('B', 'x')
-
-        # We need to x out the outer x-centers for each side
-        state = ''
-        for y in range(4):
-            state += 'x' + tmp_state[1:3] + 'x' +\
-                     tmp_state[4:12] +\
-                     'x' + tmp_state[13:15] + 'x'
-            tmp_state = tmp_state[16:]
-
         filename = 'lookup-table-6x6x6-step30-LR-inner-x-centers-and-oblique-pairing-stage.txt'
 
         with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
+            while True:
+                tmp_state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
+                tmp_state = tmp_state.replace('L', 'L').replace('F', 'x').replace('R', 'L').replace('B', 'x')
 
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
+                # We need to x out the outer x-centers for each side
+                state = ''
+                for y in range(4):
+                    state += 'x' + tmp_state[1:3] + 'x' +\
+                             tmp_state[4:12] +\
+                             'x' + tmp_state[13:15] + 'x'
+                    tmp_state = tmp_state[16:]
 
-                log.warning("LR inner-x-centers-oblique-pairing-stage %s: FOUND entry %d steps in (%s), %s" %\
-                    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
-                for step in steps:
+                if state == 'xLLxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxLLxLLLLLLLLxLLxxxxxxxxxxxxxxxxx':
+                    return True
+
+                hex_state = convert_state_to_hex(state)
+                line = get_line_startswith(fh, hex_state + ':')
+
+                if line:
+                    (key, step) = line.strip().split(':')
                     self.rotate(step)
-                return True
+                    log.warning("LR inner-x-centers-oblique-pairing-stage: FOUND entry %d steps in, %s" % (len(self.solution), step))
+                else:
+                    return False
 
         return False
 
@@ -458,7 +456,7 @@ class RubiksCube666(RubiksCube):
 
     def lookup_table_666_UD_centers_solve(self):
         state = ''.join([self.state[square_index] for side in (self.sideU, self.sideD) for square_index in side.center_pos])
-        filename = 'lookup-table-6x6x6-step40-UD-centers-solve.txt'
+        filename = 'lookup-table-6x6x6-step50-UD-centers-solve.txt'
 
         with open(filename, 'r') as fh:
             line = get_line_startswith(fh, state + ':')
@@ -467,8 +465,7 @@ class RubiksCube666(RubiksCube):
                 (key, steps) = line.split(':')
                 steps = steps.strip().split()
 
-                log.warning("UD centers solve %s: FOUND entry %d steps in (%s), %s" %\
-                    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
+                log.warning("UD centers solve: FOUND entry %d steps in, %s" % (len(self.solution), ' '.join(steps)))
                 for step in steps:
                     self.rotate(step)
             else:
@@ -476,7 +473,7 @@ class RubiksCube666(RubiksCube):
 
     def lookup_table_666_LR_centers_solve(self):
         state = ''.join([self.state[square_index] for side in (self.sideL, self.sideR) for square_index in side.center_pos])
-        filename = 'lookup-table-6x6x6-step50-LR-centers-solve.txt'
+        filename = 'lookup-table-6x6x6-step60-LR-centers-solve.txt'
 
         with open(filename, 'r') as fh:
             line = get_line_startswith(fh, state + ':')
@@ -485,8 +482,7 @@ class RubiksCube666(RubiksCube):
                 (key, steps) = line.split(':')
                 steps = steps.strip().split()
 
-                log.warning("LR centers solve %s: FOUND entry %d steps in (%s), %s" %\
-                    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
+                log.warning("LR centers solve: FOUND entry %d steps in, %s" % (len(self.solution), ' '.join(steps)))
                 for step in steps:
                     self.rotate(step)
             else:
@@ -603,7 +599,7 @@ class RubiksCube666(RubiksCube):
         # Create a dummy 5x5x5 cube object that we can use to figure out what steps to
         fake_555 = RubiksCube555('UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB')
         self.populate_fake_555_for_LR(fake_555)
-        fake_555.print_cube()
+        #fake_555.print_cube()
 
         fake_555.lookup_table_555_LR_centers_stage()
         for step in fake_555.solution:

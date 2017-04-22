@@ -4,7 +4,7 @@ from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.pts_line_bisect import get_line_startswith
 from rubikscubennnsolver.RubiksSide import Side, SolveError
-from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver import RubiksCube, LookupTable
 import logging
 import math
 import os
@@ -101,269 +101,25 @@ lookup_table_444_sister_wing_to_U_west = {
     (79, 94) : "B2 U'",
 }
 
-lookup_table_444_sister_wing_to_R_east = {
-    (2, 67)  : "B'", # U-north
-    (3, 66)  : "R' U R", # U-north
-    (5, 18)  : "L' B2 L", # U-west
-    (9, 19)  : "U B'", # U-west
-    (14, 34) : "R' U' R", # U-south
-    (15, 35) : "U2 B'", # U-south
-    (8, 51)  : "U' B'", # U-east
-    (12, 50) : "F R F'", # U-east
-    (21, 72) : "B R D' R'", # L-west
-    (25, 76) : "B2", # L-west
-    (37, 24) : None, # L-east
-    #(41, 28) : "", # L-east
-    #(40, 53) : "", # R-west
-    #(44, 57) : "", # R-west
-    (56, 69) : "D", # R-east
-    (60, 73) : "B R' U R", # R-east
-    (46, 82) : "D2 B", # D-north
-    (47, 83) : "R D R'", # D-north
-    (30, 89) : "D' B", # D-west
-    (31, 85) : "L B2 L'", # D-west
-    (78, 95) : "B", # D-south
-    (79, 94) : "R D' R'", # D-south
-    (62, 88) : "D B", # D-east
-    (63, 92) : "D B", # D-east
-}
-
-lookup_table_444_sister_wing_to_B_east = {
-    (2, 67)  : "L U' L'", # U-north
-    (3, 66)  : "R B R'", # U-north
-    (5, 18)  : "B' U B", # U-west
-    (9, 19)  : "F L' F'", # U-west
-    (14, 34) : "B' U2 B", # U-south
-    (15, 35) : "L U L'", # U-south
-    (8, 51)  : "L U2 L'", # U-east
-    (12, 50) : "B' U' B", # U-east
-    (21, 72) : "D", # L-west
-    (25, 76) : "B L' D B' L", # L-west
-    (37, 24) : None, # L-east
-    #(41, 28) : "", # L-east
-    #(40, 53) : "", # R-west
-    (44, 57) : None, # R-west
-    #(56, 69) : "", # R-east
-    #(60, 73) : "", # R-east
-    (46, 82) : "L' D' L", # D-north
-    (47, 83) : "B D2 B'", # D-north
-    (30, 89) : "F L F'", # D-west
-    (31, 85) : "B D' B'", # D-west
-    (78, 95) : "L' D L", # D-south
-    (79, 94) : "R B' R'", # D-south
-    (62, 88) : "L' D2 L", # D-east
-    (63, 92) : "B D B'", # D-east
-}
-
-lookup_table_444_sister_wing_to_F_west = {
-    (2, 67)  : "F U2 F'", # U-north
-    (3, 66)  : "L' U' L", # U-north
-    (5, 18)  : "L F L' F'", # U-west
-    (9, 19)  : "F U' F'", # U-west
-    (14, 34) : "L' U L", # U-south
-    (15, 35) : "F' L F L'", # U-south
-    (8, 51)  : "F U F'", # U-east
-    (12, 50) : "L' U2 L", # U-east
-    (21, 72) : "B L D B' L'", # L-west
-    (25, 76) : "B L2 B' L2", # L-west
-    (37, 24) : "D", # L-east
-    (41, 28) : "F L' U F' L", # L-east
-    (40, 53) : None, # R-west
-    #(44, 57) : "", # R-west
-    (56, 69) : "L2 B2 L2 B2", # R-east
-    (60, 73) : "B L' U' B' L", # R-east
-    (46, 82) : "D F' D' F", # D-north
-    (47, 83) : "L D' L'", # D-north
-    (30, 89) : "F' D F", # D-west
-    (31, 85) : "D L D' L'", # D-west
-    (78, 95) : "F' D2 F", # D-south
-    (79, 94) : "L D L'", # D-south
-    (62, 88) : "F' D' F", # D-east
-    (63, 92) : "L D2 L'", # D-east
-}
-
-lookup_table_444_sister_wing_to_L_west = {
-    (2, 67)  : "L U' L'", # U-north
-    (3, 66)  : "B L B' L'", # U-north
-    (5, 18)  : "B' U B", # U-west
-    (9, 19)  : "L' B L B'", # U-west
-    (14, 34) : "B' U2 B", # U-south
-    (15, 35) : "L U L'", # U-south
-    (8, 51)  : "L U2 L'", # U-east
-    (12, 50) : "B' U' B", # U-east
-    (21, 72) : "D", # L-west
-    (25, 76) : "B L' D B' L", # L-west
-    #(37, 24) : "", # L-east
-    #(41, 28) : "", # L-east
-    (40, 53) : None, # R-west
-    #(44, 57) : "", # R-west
-    (56, 69) : "B L U' B' L'", # R-east
-    (60, 73) : "B2 L B2 L'", # R-east
-    (46, 82) : "L' D' L", # D-north
-    (47, 83) : "B D2 B'", # D-north
-    (30, 89) : "D L' D' L", # D-west
-    (31, 85) : "B D' B'", # D-west
-    (78, 95) : "L' D L", # D-south
-    (79, 94) : "B' L B L'", # D-south
-    (62, 88) : "L' D2 L", # D-east
-    (63, 92) : "B D B'", # D-east
-}
-
-lookup_table_444_sister_wing_to_B_west = {
-    (2, 67)  : "B' R B R'", # U-north
-    (3, 66)  : "R' U R", # U-north
-    (5, 18)  : "R' U2 R", # U-west
-    (9, 19)  : "B U B'", # U-west
-    (14, 34) : "R' U' R", # U-south
-    (15, 35) : "B U2 B'", # U-south
-    (8, 51)  : "B U' B'", # U-east
-    (12, 50) : "R B R' B'", # U-east
-    #(21, 72) : "", # L-west
-    #(25, 76) : "", # L-west
-    #(37, 24) : "", # L-east
-    #(41, 28) : "", # L-east
-    (40, 53) : None, # R-west
-    #(44, 57) : "", # R-west
-    (56, 69) : "D", # R-east
-    (60, 73) : "B R' U B' R", # R-east
-    (46, 82) : "B' D2 B", # D-north
-    (47, 83) : "R D R'", # D-north
-    (30, 89) : "B' D' B", # D-west
-    (31, 85) : "R D2 R'", # D-west
-    (78, 95) : "B R B' R'", # D-south
-    (79, 94) : "R D' R'", # D-south
-    (62, 88) : "B' D B", # D-east
-    (63, 92) : "D R D' R'", # D-east
-}
 
 class RubiksCube444(RubiksCube):
 
-    def lookup_table_444_UD_centers_solve(self):
-        filename = 'lookup-table-4x4x4-step10-UD-centers-solve.txt'
-        state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-        state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x')
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-                log.info("Found UD centers solve %s in lookup table, %d steps in, %s" %\
-                    (state, len(self.solution), ' '.join(steps)))
-
-                for step in steps:
-                    self.rotate(step)
-            else:
-                print("ERROR: Could not find UD solve %s in %s" % (state, filename))
-                sys.exit(1)
-
-    def lookup_table_444_LFRB_centers_solve(self):
-        filename = 'lookup-table-4x4x4-step20-LFRB-centers-solve.txt'
-        state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-                log.info("Found LFRB centers stage %s in lookup table, %d steps in, %s" %\
-                    (state, len(self.solution), ' '.join(steps)))
-
-                for step in steps:
-                    self.rotate(step)
-            else:
-                print("ERROR: Could not find LFRB state %s in %s" % (state, filename))
-                sys.exit(1)
-
-    def lookup_table_444_UD_centers_stage(self):
-        filename = 'lookup-table-4x4x4-step01-UD-centers-stage.txt'
-        state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-        state = state.replace('U', 'U').replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
-
-        if state == 'UUUUxxxxxxxxxxxxxxxxUUUU':
-            return
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.strip().split(':')
-                steps = steps.strip().split()
-
-                for step in steps:
-                    self.rotate(step)
-
-                log.info("Found UD centers stage %s in lookup table, %d steps in, %s" %\
-                    (state, len(self.solution), ' '.join(steps)))
-            else:
-                raise SolveError("Could not find UD state %s in %s" % (state, filename))
-
-    def lookup_table_444_LR_centers_stage(self):
-        filename = 'lookup-table-4x4x4-step02-LR-centers-stage.txt'
-        state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
-        state = state.replace('R', 'L').replace('B', 'F')
-
-        if state == 'LLLLFFFFLLLLFFFF':
-            return
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-                log.info("Found LR centers stage %s in lookup table, %d steps in, %s" %\
-                    (state, len(self.solution), ' '.join(steps)))
-
-                for step in steps:
-                    self.rotate(step)
-            else:
-                raise SolveError("Could not find LFRB state %s in %s" % (state, filename))
-
-    def lookup_table_444_ULFRBD_centers_solve(self):
-        filename = 'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt'
-        state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-
-        if state == 'UUUULLLLFFFFRRRRBBBBDDDD':
-            return
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-
-                log.info("Found ULFRDB centers solve %s in lookup table, %d steps in, %s" %\
-                    (state, len(self.solution), ' '.join(steps)))
-
-                for step in steps:
-                    self.rotate(step)
-
-                self.rotate_U_to_U()
-                self.rotate_F_to_F()
-            else:
-                raise SolveError("Did not find %s in %s" % (state, filename))
+    def __init__(self, kociemba_string):
+        RubiksCube.__init__(self, kociemba_string)
+        self.lt_UD_centers_stage = LookupTable(self, 'lookup-table-4x4x4-step01-UD-centers-stage.txt', 'UD-centers-stage', 'UUUUxxxxxxxxxxxxxxxxUUUU')
+        self.lt_LR_centers_stage = LookupTable(self, 'lookup-table-4x4x4-step02-LR-centers-stage.txt', 'LR-centers-stage', 'LLLLFFFFLLLLFFFF')
+        self.lt_ULFRBD_centers_solve = LookupTable(self, 'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt', 'ULFRBD-centers-solve', 'UUUULLLLFFFFRRRRBBBBDDDD')
 
     def group_centers_guts(self):
 
         # The UD solve -> LFRB solve approach is only ~1 move shorter on average
         # than doing UD stage, LR stage, ULFRBD solve.  The UD solve -> LFRB
         # lookup tables are 5.6G whereas the UD stage, LR stage, ULFRBD solve
-        # lookup tables are only 49M.
-        #
-        # We checked the 49M tables into the github repo but we'll use the 5.6G tables
-        # if the user has them.
-        if (os.path.exists('lookup-table-4x4x4-step10-UD-centers-solve.txt') and
-            os.path.exists('lookup-table-4x4x4-step20-LFRB-centers-solve.txt')):
-            self.lookup_table_444_UD_centers_solve()
-            self.lookup_table_444_LFRB_centers_solve()
-        else:
-            self.lookup_table_444_UD_centers_stage()
-            self.lookup_table_444_LR_centers_stage()
-            self.lookup_table_444_ULFRBD_centers_solve()
+        # lookup tables are only 49M...so we use the 49M tables so we can check
+        # them into the github repo.
+        self.lt_UD_centers_stage.solve()
+        self.lt_LR_centers_stage.solve()
+        self.lt_ULFRBD_centers_solve.solve()
 
     def find_moves_to_stage_slice_forward_444(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         # target_wing must go in spot 41
@@ -440,187 +196,6 @@ class RubiksCube444(RubiksCube):
 
         log.debug("find_moves_to_stage_slice_backward_444 could not find %s" % edge_string_to_find)
         return None
-
-        '''
-    def find_moves_to_reach_state(self, wing_to_move, target_face_side):
-        """
-        This was used to build the lookup_table_444_last_two_edges_place_F_east, etc lookup tables
-        """
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
-
-        orig_f_west_top = self.get_wing_value(self.sideF.edge_west_pos[0])
-        orig_f_west_bottom = self.get_wing_value(self.sideF.edge_west_pos[1])
-        orig_f_east_top = self.get_wing_value(self.sideF.edge_east_pos[0])
-        orig_f_east_bottom = self.get_wing_value(self.sideF.edge_east_pos[1])
-
-        orig_r_west_top = self.get_wing_value(self.sideR.edge_west_pos[0])
-        orig_r_west_bottom = self.get_wing_value(self.sideR.edge_west_pos[1])
-        orig_r_east_top = self.get_wing_value(self.sideR.edge_east_pos[0])
-        orig_r_east_bottom = self.get_wing_value(self.sideR.edge_east_pos[1])
-
-        orig_b_west_top = self.get_wing_value(self.sideB.edge_west_pos[0])
-        orig_b_west_bottom = self.get_wing_value(self.sideB.edge_west_pos[1])
-        orig_b_east_top = self.get_wing_value(self.sideB.edge_east_pos[0])
-        orig_b_east_bottom = self.get_wing_value(self.sideB.edge_east_pos[1])
-
-        orig_l_west_top = self.get_wing_value(self.sideL.edge_west_pos[0])
-        orig_l_west_bottom = self.get_wing_value(self.sideL.edge_west_pos[1])
-        orig_l_east_top = self.get_wing_value(self.sideL.edge_east_pos[0])
-        orig_l_east_bottom = self.get_wing_value(self.sideL.edge_east_pos[1])
-
-        orig_center_corner_state = self.get_center_corner_state()
-        wing_to_move_value = sorted(self.get_wing_value(wing_to_move))
-
-        filename = 'utils/all_3x3x3_moves_6_deep.txt'
-        with open(filename, 'r') as fh:
-            self.print_cube()
-            count = 0
-            for line in fh:
-                count += 1
-                steps = line.strip().split()
-
-                for step in steps:
-                    self.rotate(step)
-
-                if count % 10000 == 0:
-                    log.info("count %d, step len %d" % (count, len(steps)))
-
-                # For SLICE-FORWARD
-                if target_face_side == 'F-east':
-                    # Find sequence that moves wing_to_move to (40, 53)
-                    # F-west must not change
-                    f_west_top = self.get_wing_value(self.sideF.edge_west_pos[0])
-                    f_west_bottom = self.get_wing_value(self.sideF.edge_west_pos[1])
-
-                    f_east_top = sorted(self.get_wing_value(self.sideF.edge_east_pos[0]))
-
-                    if (f_west_top == orig_f_west_top and
-                        f_west_bottom == orig_f_west_bottom and
-                        f_east_top == wing_to_move_value):
-                        found_solution = True
-                    else:
-                        found_solution = False
-
-                elif target_face_side == 'R-east':
-                    # Find sequence that moves wing_to_move to (56, 69)
-                    # F-west and R-west must not change
-                    f_west_top = self.get_wing_value(self.sideF.edge_west_pos[0])
-                    f_west_bottom = self.get_wing_value(self.sideF.edge_west_pos[1])
-                    r_west_top = self.get_wing_value(self.sideR.edge_west_pos[0])
-                    r_west_bottom = self.get_wing_value(self.sideR.edge_west_pos[1])
-
-                    r_east_top = sorted(self.get_wing_value(self.sideR.edge_east_pos[0]))
-
-                    if (f_west_top == orig_f_west_top and
-                        f_west_bottom == orig_f_west_bottom and
-                        r_west_top == orig_r_west_top and
-                        r_west_bottom == orig_r_west_bottom and
-                        r_east_top == wing_to_move_value):
-                        found_solution = True
-                    else:
-                        found_solution = False
-
-                elif target_face_side == 'B-east':
-                    # Find sequence that moves wing_to_move to (21, 72)
-                    # F-west, R-west, and B-west edges must not change
-                    f_west_top = self.get_wing_value(self.sideF.edge_west_pos[0])
-                    f_west_bottom = self.get_wing_value(self.sideF.edge_west_pos[1])
-                    r_west_top = self.get_wing_value(self.sideR.edge_west_pos[0])
-                    r_west_bottom = self.get_wing_value(self.sideR.edge_west_pos[1])
-                    b_west_top = self.get_wing_value(self.sideB.edge_west_pos[0])
-                    b_west_bottom = self.get_wing_value(self.sideB.edge_west_pos[1])
-
-                    b_east_top = sorted(self.get_wing_value(self.sideB.edge_east_pos[0]))
-
-                    if (f_west_top == orig_f_west_top and
-                        f_west_bottom == orig_f_west_bottom and
-                        r_west_top == orig_r_west_top and
-                        r_west_bottom == orig_r_west_bottom and
-                        b_west_top == orig_b_west_top and
-                        b_west_bottom == orig_b_west_bottom and
-                        b_east_top == wing_to_move_value):
-                        found_solution = True
-                    else:
-                        found_solution = False
-
-                # For SLICE-BACK
-                elif target_face_side == 'F-west':
-                    # Find sequence that moves wing_to_move to (24, 37)
-                    # F-east must not change
-                    f_east_top = self.get_wing_value(self.sideF.edge_east_pos[0])
-                    f_east_bottom = self.get_wing_value(self.sideF.edge_east_pos[1])
-
-                    center_corner_state = self.get_center_corner_state()
-                    f_west_top = sorted(self.get_wing_value(self.sideF.edge_west_pos[0]))
-
-                    if (f_east_top == orig_f_east_top and
-                        f_east_bottom == orig_f_east_bottom and
-                        center_corner_state == orig_center_corner_state and
-                        f_west_top == wing_to_move_value):
-                        found_solution = True
-                    else:
-                        found_solution = False
-
-                elif target_face_side == 'L-west':
-                    # Find sequence that moves wing_to_move to (21, 72)
-                    # F-east and L-east ust not change
-                    f_east_top = self.get_wing_value(self.sideF.edge_east_pos[0])
-                    f_east_bottom = self.get_wing_value(self.sideF.edge_east_pos[1])
-                    l_east_top = self.get_wing_value(self.sideL.edge_east_pos[0])
-                    l_east_bottom = self.get_wing_value(self.sideL.edge_east_pos[1])
-
-                    center_corner_state = self.get_center_corner_state()
-                    l_west_top = sorted(self.get_wing_value(self.sideL.edge_west_pos[0]))
-
-                    if (f_east_top == orig_f_east_top and
-                        f_east_bottom == orig_f_east_bottom and
-                        l_east_top == orig_l_east_top and
-                        l_east_bottom == orig_l_east_bottom and
-                        center_corner_state == orig_center_corner_state and
-                        l_west_top == wing_to_move_value):
-                        found_solution = True
-                    else:
-                        found_solution = False
-
-                elif target_face_side == 'B-west':
-                    # Find sequence that moves wing_to_move to (56, 69)
-                    # F-east, L-east and B-east must not change
-                    f_east_top = self.get_wing_value(self.sideF.edge_east_pos[0])
-                    f_east_bottom = self.get_wing_value(self.sideF.edge_east_pos[1])
-                    l_east_top = self.get_wing_value(self.sideL.edge_east_pos[0])
-                    l_east_bottom = self.get_wing_value(self.sideL.edge_east_pos[1])
-                    b_east_top = self.get_wing_value(self.sideB.edge_east_pos[0])
-                    b_east_bottom = self.get_wing_value(self.sideB.edge_east_pos[1])
-
-                    center_corner_state = self.get_center_corner_state()
-                    b_west_top = sorted(self.get_wing_value(self.sideB.edge_west_pos[0]))
-
-                    if (f_east_top == orig_f_east_top and
-                        f_east_bottom == orig_f_east_bottom and
-                        l_east_top == orig_l_east_top and
-                        l_east_bottom == orig_l_east_bottom and
-                        b_east_top == orig_b_east_top and
-                        b_east_bottom == orig_b_east_bottom and
-                        center_corner_state == orig_center_corner_state and
-                        b_west_top == wing_to_move_value):
-                        found_solution = True
-                    else:
-                        found_solution = False
-
-                else:
-                    raise ImplementThis("target_face_side %s" % target_face_side)
-
-                self.state = copy(original_state)
-                self.solution = copy(original_solution)
-
-                if found_solution:
-                    log.warning("solution to move %s to %s is %s" % (wing_to_move, target_face_side, ' '.join(steps)))
-                    sys.exit(1)
-
-            log.warning("Explored %d moves in %s but did not find a solution" % (count, filename))
-            sys.exit(1)
-        '''
 
     def prep_for_slice_back_444(self):
 
@@ -1242,3 +817,319 @@ class RubiksCube444(RubiksCube):
             self.solution.append('EDGES_GROUPED')
         else:
             raise SolveError("Could not find a PLL free edge solution")
+
+        '''
+    def find_moves_to_reach_state(self, wing_to_move, target_face_side):
+        """
+        This was used to build the lookup_table_444_last_two_edges_place_F_east, etc lookup tables
+        """
+        original_state = copy(self.state)
+        original_solution = copy(self.solution)
+
+        orig_f_west_top = self.get_wing_value(self.sideF.edge_west_pos[0])
+        orig_f_west_bottom = self.get_wing_value(self.sideF.edge_west_pos[1])
+        orig_f_east_top = self.get_wing_value(self.sideF.edge_east_pos[0])
+        orig_f_east_bottom = self.get_wing_value(self.sideF.edge_east_pos[1])
+
+        orig_r_west_top = self.get_wing_value(self.sideR.edge_west_pos[0])
+        orig_r_west_bottom = self.get_wing_value(self.sideR.edge_west_pos[1])
+        orig_r_east_top = self.get_wing_value(self.sideR.edge_east_pos[0])
+        orig_r_east_bottom = self.get_wing_value(self.sideR.edge_east_pos[1])
+
+        orig_b_west_top = self.get_wing_value(self.sideB.edge_west_pos[0])
+        orig_b_west_bottom = self.get_wing_value(self.sideB.edge_west_pos[1])
+        orig_b_east_top = self.get_wing_value(self.sideB.edge_east_pos[0])
+        orig_b_east_bottom = self.get_wing_value(self.sideB.edge_east_pos[1])
+
+        orig_l_west_top = self.get_wing_value(self.sideL.edge_west_pos[0])
+        orig_l_west_bottom = self.get_wing_value(self.sideL.edge_west_pos[1])
+        orig_l_east_top = self.get_wing_value(self.sideL.edge_east_pos[0])
+        orig_l_east_bottom = self.get_wing_value(self.sideL.edge_east_pos[1])
+
+        orig_center_corner_state = self.get_center_corner_state()
+        wing_to_move_value = sorted(self.get_wing_value(wing_to_move))
+
+        filename = 'utils/all_3x3x3_moves_6_deep.txt'
+        with open(filename, 'r') as fh:
+            self.print_cube()
+            count = 0
+            for line in fh:
+                count += 1
+                steps = line.strip().split()
+
+                for step in steps:
+                    self.rotate(step)
+
+                if count % 10000 == 0:
+                    log.info("count %d, step len %d" % (count, len(steps)))
+
+                # For SLICE-FORWARD
+                if target_face_side == 'F-east':
+                    # Find sequence that moves wing_to_move to (40, 53)
+                    # F-west must not change
+                    f_west_top = self.get_wing_value(self.sideF.edge_west_pos[0])
+                    f_west_bottom = self.get_wing_value(self.sideF.edge_west_pos[1])
+
+                    f_east_top = sorted(self.get_wing_value(self.sideF.edge_east_pos[0]))
+
+                    if (f_west_top == orig_f_west_top and
+                        f_west_bottom == orig_f_west_bottom and
+                        f_east_top == wing_to_move_value):
+                        found_solution = True
+                    else:
+                        found_solution = False
+
+                elif target_face_side == 'R-east':
+                    # Find sequence that moves wing_to_move to (56, 69)
+                    # F-west and R-west must not change
+                    f_west_top = self.get_wing_value(self.sideF.edge_west_pos[0])
+                    f_west_bottom = self.get_wing_value(self.sideF.edge_west_pos[1])
+                    r_west_top = self.get_wing_value(self.sideR.edge_west_pos[0])
+                    r_west_bottom = self.get_wing_value(self.sideR.edge_west_pos[1])
+
+                    r_east_top = sorted(self.get_wing_value(self.sideR.edge_east_pos[0]))
+
+                    if (f_west_top == orig_f_west_top and
+                        f_west_bottom == orig_f_west_bottom and
+                        r_west_top == orig_r_west_top and
+                        r_west_bottom == orig_r_west_bottom and
+                        r_east_top == wing_to_move_value):
+                        found_solution = True
+                    else:
+                        found_solution = False
+
+                elif target_face_side == 'B-east':
+                    # Find sequence that moves wing_to_move to (21, 72)
+                    # F-west, R-west, and B-west edges must not change
+                    f_west_top = self.get_wing_value(self.sideF.edge_west_pos[0])
+                    f_west_bottom = self.get_wing_value(self.sideF.edge_west_pos[1])
+                    r_west_top = self.get_wing_value(self.sideR.edge_west_pos[0])
+                    r_west_bottom = self.get_wing_value(self.sideR.edge_west_pos[1])
+                    b_west_top = self.get_wing_value(self.sideB.edge_west_pos[0])
+                    b_west_bottom = self.get_wing_value(self.sideB.edge_west_pos[1])
+
+                    b_east_top = sorted(self.get_wing_value(self.sideB.edge_east_pos[0]))
+
+                    if (f_west_top == orig_f_west_top and
+                        f_west_bottom == orig_f_west_bottom and
+                        r_west_top == orig_r_west_top and
+                        r_west_bottom == orig_r_west_bottom and
+                        b_west_top == orig_b_west_top and
+                        b_west_bottom == orig_b_west_bottom and
+                        b_east_top == wing_to_move_value):
+                        found_solution = True
+                    else:
+                        found_solution = False
+
+                # For SLICE-BACK
+                elif target_face_side == 'F-west':
+                    # Find sequence that moves wing_to_move to (24, 37)
+                    # F-east must not change
+                    f_east_top = self.get_wing_value(self.sideF.edge_east_pos[0])
+                    f_east_bottom = self.get_wing_value(self.sideF.edge_east_pos[1])
+
+                    center_corner_state = self.get_center_corner_state()
+                    f_west_top = sorted(self.get_wing_value(self.sideF.edge_west_pos[0]))
+
+                    if (f_east_top == orig_f_east_top and
+                        f_east_bottom == orig_f_east_bottom and
+                        center_corner_state == orig_center_corner_state and
+                        f_west_top == wing_to_move_value):
+                        found_solution = True
+                    else:
+                        found_solution = False
+
+                elif target_face_side == 'L-west':
+                    # Find sequence that moves wing_to_move to (21, 72)
+                    # F-east and L-east ust not change
+                    f_east_top = self.get_wing_value(self.sideF.edge_east_pos[0])
+                    f_east_bottom = self.get_wing_value(self.sideF.edge_east_pos[1])
+                    l_east_top = self.get_wing_value(self.sideL.edge_east_pos[0])
+                    l_east_bottom = self.get_wing_value(self.sideL.edge_east_pos[1])
+
+                    center_corner_state = self.get_center_corner_state()
+                    l_west_top = sorted(self.get_wing_value(self.sideL.edge_west_pos[0]))
+
+                    if (f_east_top == orig_f_east_top and
+                        f_east_bottom == orig_f_east_bottom and
+                        l_east_top == orig_l_east_top and
+                        l_east_bottom == orig_l_east_bottom and
+                        center_corner_state == orig_center_corner_state and
+                        l_west_top == wing_to_move_value):
+                        found_solution = True
+                    else:
+                        found_solution = False
+
+                elif target_face_side == 'B-west':
+                    # Find sequence that moves wing_to_move to (56, 69)
+                    # F-east, L-east and B-east must not change
+                    f_east_top = self.get_wing_value(self.sideF.edge_east_pos[0])
+                    f_east_bottom = self.get_wing_value(self.sideF.edge_east_pos[1])
+                    l_east_top = self.get_wing_value(self.sideL.edge_east_pos[0])
+                    l_east_bottom = self.get_wing_value(self.sideL.edge_east_pos[1])
+                    b_east_top = self.get_wing_value(self.sideB.edge_east_pos[0])
+                    b_east_bottom = self.get_wing_value(self.sideB.edge_east_pos[1])
+
+                    center_corner_state = self.get_center_corner_state()
+                    b_west_top = sorted(self.get_wing_value(self.sideB.edge_west_pos[0]))
+
+                    if (f_east_top == orig_f_east_top and
+                        f_east_bottom == orig_f_east_bottom and
+                        l_east_top == orig_l_east_top and
+                        l_east_bottom == orig_l_east_bottom and
+                        b_east_top == orig_b_east_top and
+                        b_east_bottom == orig_b_east_bottom and
+                        center_corner_state == orig_center_corner_state and
+                        b_west_top == wing_to_move_value):
+                        found_solution = True
+                    else:
+                        found_solution = False
+
+                else:
+                    raise ImplementThis("target_face_side %s" % target_face_side)
+
+                self.state = copy(original_state)
+                self.solution = copy(original_solution)
+
+                if found_solution:
+                    log.warning("solution to move %s to %s is %s" % (wing_to_move, target_face_side, ' '.join(steps)))
+                    sys.exit(1)
+
+            log.warning("Explored %d moves in %s but did not find a solution" % (count, filename))
+            sys.exit(1)
+
+lookup_table_444_sister_wing_to_R_east = {
+    (2, 67)  : "B'", # U-north
+    (3, 66)  : "R' U R", # U-north
+    (5, 18)  : "L' B2 L", # U-west
+    (9, 19)  : "U B'", # U-west
+    (14, 34) : "R' U' R", # U-south
+    (15, 35) : "U2 B'", # U-south
+    (8, 51)  : "U' B'", # U-east
+    (12, 50) : "F R F'", # U-east
+    (21, 72) : "B R D' R'", # L-west
+    (25, 76) : "B2", # L-west
+    (37, 24) : None, # L-east
+    #(41, 28) : "", # L-east
+    #(40, 53) : "", # R-west
+    #(44, 57) : "", # R-west
+    (56, 69) : "D", # R-east
+    (60, 73) : "B R' U R", # R-east
+    (46, 82) : "D2 B", # D-north
+    (47, 83) : "R D R'", # D-north
+    (30, 89) : "D' B", # D-west
+    (31, 85) : "L B2 L'", # D-west
+    (78, 95) : "B", # D-south
+    (79, 94) : "R D' R'", # D-south
+    (62, 88) : "D B", # D-east
+    (63, 92) : "D B", # D-east
+}
+
+lookup_table_444_sister_wing_to_B_east = {
+    (2, 67)  : "L U' L'", # U-north
+    (3, 66)  : "R B R'", # U-north
+    (5, 18)  : "B' U B", # U-west
+    (9, 19)  : "F L' F'", # U-west
+    (14, 34) : "B' U2 B", # U-south
+    (15, 35) : "L U L'", # U-south
+    (8, 51)  : "L U2 L'", # U-east
+    (12, 50) : "B' U' B", # U-east
+    (21, 72) : "D", # L-west
+    (25, 76) : "B L' D B' L", # L-west
+    (37, 24) : None, # L-east
+    #(41, 28) : "", # L-east
+    #(40, 53) : "", # R-west
+    (44, 57) : None, # R-west
+    #(56, 69) : "", # R-east
+    #(60, 73) : "", # R-east
+    (46, 82) : "L' D' L", # D-north
+    (47, 83) : "B D2 B'", # D-north
+    (30, 89) : "F L F'", # D-west
+    (31, 85) : "B D' B'", # D-west
+    (78, 95) : "L' D L", # D-south
+    (79, 94) : "R B' R'", # D-south
+    (62, 88) : "L' D2 L", # D-east
+    (63, 92) : "B D B'", # D-east
+}
+
+lookup_table_444_sister_wing_to_F_west = {
+    (2, 67)  : "F U2 F'", # U-north
+    (3, 66)  : "L' U' L", # U-north
+    (5, 18)  : "L F L' F'", # U-west
+    (9, 19)  : "F U' F'", # U-west
+    (14, 34) : "L' U L", # U-south
+    (15, 35) : "F' L F L'", # U-south
+    (8, 51)  : "F U F'", # U-east
+    (12, 50) : "L' U2 L", # U-east
+    (21, 72) : "B L D B' L'", # L-west
+    (25, 76) : "B L2 B' L2", # L-west
+    (37, 24) : "D", # L-east
+    (41, 28) : "F L' U F' L", # L-east
+    (40, 53) : None, # R-west
+    #(44, 57) : "", # R-west
+    (56, 69) : "L2 B2 L2 B2", # R-east
+    (60, 73) : "B L' U' B' L", # R-east
+    (46, 82) : "D F' D' F", # D-north
+    (47, 83) : "L D' L'", # D-north
+    (30, 89) : "F' D F", # D-west
+    (31, 85) : "D L D' L'", # D-west
+    (78, 95) : "F' D2 F", # D-south
+    (79, 94) : "L D L'", # D-south
+    (62, 88) : "F' D' F", # D-east
+    (63, 92) : "L D2 L'", # D-east
+}
+
+lookup_table_444_sister_wing_to_L_west = {
+    (2, 67)  : "L U' L'", # U-north
+    (3, 66)  : "B L B' L'", # U-north
+    (5, 18)  : "B' U B", # U-west
+    (9, 19)  : "L' B L B'", # U-west
+    (14, 34) : "B' U2 B", # U-south
+    (15, 35) : "L U L'", # U-south
+    (8, 51)  : "L U2 L'", # U-east
+    (12, 50) : "B' U' B", # U-east
+    (21, 72) : "D", # L-west
+    (25, 76) : "B L' D B' L", # L-west
+    #(37, 24) : "", # L-east
+    #(41, 28) : "", # L-east
+    (40, 53) : None, # R-west
+    #(44, 57) : "", # R-west
+    (56, 69) : "B L U' B' L'", # R-east
+    (60, 73) : "B2 L B2 L'", # R-east
+    (46, 82) : "L' D' L", # D-north
+    (47, 83) : "B D2 B'", # D-north
+    (30, 89) : "D L' D' L", # D-west
+    (31, 85) : "B D' B'", # D-west
+    (78, 95) : "L' D L", # D-south
+    (79, 94) : "B' L B L'", # D-south
+    (62, 88) : "L' D2 L", # D-east
+    (63, 92) : "B D B'", # D-east
+}
+
+lookup_table_444_sister_wing_to_B_west = {
+    (2, 67)  : "B' R B R'", # U-north
+    (3, 66)  : "R' U R", # U-north
+    (5, 18)  : "R' U2 R", # U-west
+    (9, 19)  : "B U B'", # U-west
+    (14, 34) : "R' U' R", # U-south
+    (15, 35) : "B U2 B'", # U-south
+    (8, 51)  : "B U' B'", # U-east
+    (12, 50) : "R B R' B'", # U-east
+    #(21, 72) : "", # L-west
+    #(25, 76) : "", # L-west
+    #(37, 24) : "", # L-east
+    #(41, 28) : "", # L-east
+    (40, 53) : None, # R-west
+    #(44, 57) : "", # R-west
+    (56, 69) : "D", # R-east
+    (60, 73) : "B R' U B' R", # R-east
+    (46, 82) : "B' D2 B", # D-north
+    (47, 83) : "R D R'", # D-north
+    (30, 89) : "B' D' B", # D-west
+    (31, 85) : "R D2 R'", # D-west
+    (78, 95) : "B R B' R'", # D-south
+    (79, 94) : "R D' R'", # D-south
+    (62, 88) : "B' D B", # D-east
+    (63, 92) : "D R D' R'", # D-east
+}
+        '''

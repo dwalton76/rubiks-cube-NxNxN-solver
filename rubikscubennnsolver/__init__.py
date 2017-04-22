@@ -1,12 +1,4 @@
 
-"""
-Solve any size rubiks cube:
-- For 2x2x2 and 3x3x3 just solve it
-- For 4x4x4 and larger, reduce to 3x3x3 and then solve
-
-This is a work in progress
-"""
-
 from collections import OrderedDict
 from copy import copy
 from pprint import pformat
@@ -318,6 +310,71 @@ def convert_state_to_hex(state):
     if hex_state.endswith('L'):
         hex_state = hex_state[:-1]
     return hex_state
+
+
+# dwalton
+class LookupTable(object):
+
+    def __init__(self, parent, filename, state_type, state_target):
+        self.parent = parent
+
+        if not os.path.exists(filename):
+            print "ERROR: %s does not exist" % filename
+            sys.exit(1)
+        self.filename = filename
+        self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
+
+        supported_state_types = ('all', 'UD-centers-stage', 'LR-centers-stage', 'ULFRBD-centers-solve')
+        assert state_type in supported_state_types, "Valid state_type are %s" % ', '.join(supported_state_types)
+        self.state_type = state_type
+        self.state_target = state_target
+
+    def __str__(self):
+        return self.desc
+
+    def state(self):
+        if self.state_type == 'all':
+            state = self.parent.get_state_all()
+
+        elif self.state_type == 'UD-centers-stage':
+            state = ''.join([self.parent.state[square_index] for side in (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD) for square_index in side.center_pos])
+            state = state.replace('U', 'U').replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == 'LR-centers-stage':
+            state = ''.join([self.parent.state[square_index] for side in (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB) for square_index in side.center_pos])
+            state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')
+
+        elif self.state_type == 'ULFRBD-centers-solve':
+            state = ''.join([self.parent.state[square_index] for side in (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD) for square_index in side.center_pos])
+
+        else:
+            raise Exception("Implement state_type %s" % self.state_type)
+        return state
+
+    def steps(self):
+        """
+        Return the steps found in the lookup table for the current cube state
+        """
+        state = self.state()
+        log.info("%s state %s" % (self, state))
+
+        with open(self.filename, 'r') as fh:
+            line = get_line_startswith(fh, state + ':')
+
+            if line:
+                (_, steps) = line.strip().split(':')
+                log.info("%s found state: %d steps in, steps %s" % (self, len(self.parent.solution), steps))
+                return steps.split()
+        return None
+
+    def solve(self):
+        state = self.state()
+
+        if state == self.state_target:
+            return
+
+        for step in self.steps():
+            self.parent.rotate(step)
 
 
 class RubiksCube(object):

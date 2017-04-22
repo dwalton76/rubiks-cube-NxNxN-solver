@@ -2,22 +2,13 @@
 - all of the "def lookup" table functions need to return the steps not exec the steps
 - clean up all of the IDA related function names, make them consistent
 - make the lookup-table.txt filenames consistent
-
-- compress lookup-table-5x5x5-step10-stage-UD-centers.txt ? It is 29G, I think I could get it down to ~2.5G
-    - Need to split this so it is in multiple files, max file size is 100M on github
-    - would need a way to then uncompress it or work with it in its compressed form
-    - same for lookup-table-5x5x5-step20-stage-LR-centers.txt (11G)
-    - same for lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt (9G)
-    - same for lookup-table-5x5x5-step31-UDLR-centers-solve.txt (2G)
-
-- remove the leading UUUU and trailing DDDD from
-    - lookup-table-4x4x4-step02-LR-centers-stage.txt
-    - lookup-table-4x4x4-step20-LFRB-centers-solve.txt
+- create a class for lookup tables
+- store cube state in a list instead of a dict
+- run vulture
 
 Compress the tables
 - only store the next move to make the tables smaller
 - store the cube state as hex...this can only be done for staging tables
-
 
 Status      Size  Table Name
 ======      ====  ==========
@@ -29,11 +20,11 @@ no change    17M  lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt
 no change   483K  lookup-table-4x4x4-step40-edges-slice-forward.txt
 no change   522K  lookup-table-4x4x4-step50-edges-slice-backward.txt
 
-hex/onestep  24G  lookup-table-5x5x5-step10-stage-UD-centers.txt     (onestep took down to 18G, hex down to 5.5G)
+hex/onestep 5.5G  lookup-table-5x5x5-step10-stage-UD-centers.txt     (onestep took from 24G to 18G, hex down to 5.5G)
 no change    53M  lookup-table-5x5x5-step11-stage-UD-T-centers.txt
 no change    52M  lookup-table-5x5x5-step12-stage-UD-X-centers.txt
-hex/onestep  11G  lookup-table-5x5x5-step20-stage-LR-centers.txt     (onestep took down to 6.2G, hex down to 2.1G)
-onestep     9.2G  lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt (onestep took down to 6.6G)
+hex/onestep 2.1G  lookup-table-5x5x5-step20-stage-LR-centers.txt     (onestep took from 11G to 6.2G, hex down to 2.1G)
+onestep     6.6G  lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt (onestep took from 9.2G to 6.6G)
 no change   2.0G  lookup-table-5x5x5-step31-UDLR-centers-solve.txt
 delete?     2.0G  lookup-table-5x5x5-step32-UDFB-centers-solve.txt
 no change   669K  lookup-table-5x5x5-step60-edges-slice-forward.txt
@@ -44,14 +35,9 @@ hex/onestep  14G  lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt         
 no change    83M  lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
 no change    83M  lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt
 no change   1.5M  lookup-table-6x6x6-step30-LR-inner-x-centers-stage.txt
-                  lookup-table-6x6x6-step40-LR-oblique-edge-pairing.txt
+hex/onestep 8.3G  lookup-table-6x6x6-step40-LR-oblique-edge-pairing.txt (hex is done)
 
-
-hex/onestep  52G  lookup-table-6x6x6-step30-LR-inner-x-centers-and-oblique-pairing-stage.txt (onestep took down to 38G, hex down to 12G)
-hex          15G  lookup-table-6x6x6-step31-LR-oblique-pairing-stage.txt
-
-onestep     1.7G  lookup-table-6x6x6-step50-UD-centers-solve.txt
-                  lookup-table-6x6x6-step60-LFRB-centers-solve.txt
-no change   1.7G  lookup-table-6x6x6-step61-LR-centers-solve.txt
-no change   1.7G  lookup-table-6x6x6-step62-FB-centers-solve.txt
-
+hex/onestep 1.7G  lookup-table-6x6x6-step50-UD-centers-solve.txt
+onestep     4.1G  lookup-table-6x6x6-step60-LFRB-centers-solve.txt
+hex/onestep 1.8G  lookup-table-6x6x6-step61-LR-centers-solve.txt
+hex/onestep 1.8G  lookup-table-6x6x6-step62-FB-centers-solve.txt

@@ -1,9 +1,6 @@
 
-from rubikscubennnsolver.pts_line_bisect import get_line_startswith
-from rubikscubennnsolver import RubiksCube, SolveError
+from rubikscubennnsolver import RubiksCube, SolveError, LookupTable
 import logging
-import subprocess
-import sys
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +15,10 @@ moves_2x2x2 = ("U", "U'", "U2",
 
 class RubiksCube222(RubiksCube):
 
+    def __init__(self, kociemba_string):
+        RubiksCube.__init__(self, kociemba_string)
+        self.lt = LookupTable(self, 'lookup-table-2x2x2-solve.txt', 'all', 'UUUULLLLFFFFRRRRBBBBDDDD')
+
     def solve(self):
         """
         lookup-table-2x2x2-solve.txt was constructed using only:
@@ -26,9 +27,6 @@ class RubiksCube222(RubiksCube):
         so we must rotate the LFD corner to be at LFD. Rotating doesn't add
         to our move count as they are compressed out in compress_solution().
         """
-        state = self.get_state_all()
-        filename = 'lookup-table-2x2x2-solve.txt'
-
         if self.state[16] == 'L' and self.state[19] == 'F' and self.state[24] == 'D':
             self.rotate_y()
             self.rotate_y()
@@ -100,24 +98,9 @@ class RubiksCube222(RubiksCube):
             self.rotate_y_reverse()
         elif self.state[7] == 'L' and self.state[23] == 'F' and self.state[20] == 'D':
             self.rotate_x()
-            #self.print_cube()
-            #sys.exit(0)
-
         else:
             raise SolveError("Implement this")
 
-        state = self.get_state_all()
-
-        # The LFD corner must be at LFD
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
- 
-            if line:
-                (key, steps) = line.strip().split(':')
-                steps = steps.split()
-                for step in steps:
-                    self.rotate(step)
-            else:
-                raise SolveError("Did not find %s in %s" % (state, filename))
-
+        # lt is a LookupTable object for lookup-table-2x2x2-solve.txt
+        self.lt.solve()
         self.compress_solution()

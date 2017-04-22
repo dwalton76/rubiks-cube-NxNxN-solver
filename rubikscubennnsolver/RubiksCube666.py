@@ -69,8 +69,8 @@ class RubiksCube666(RubiksCube):
                 (key, steps) = line.split(':')
                 steps = steps.strip().split()
 
-                log.warning("LR inner x-centers-stage %s: FOUND entry %d steps in (%s), %s" %\
-                    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
+                log.warning("LR inner x-centers-stage: FOUND entry %d steps in, %s" %\
+                    (len(self.solution), ' '.join(steps)))
                 for step in steps:
                     self.rotate(step)
             else:

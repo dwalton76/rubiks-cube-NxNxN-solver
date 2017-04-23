@@ -31,6 +31,8 @@ class RubiksCube444(RubiksCube):
         '''
         24!/(16! * 8!) is 735,471
 
+        lookup-table-4x4x4-step01-UD-centers-stage.txt
+        ==============================================
         1 steps has 5 entries (0 percent)
         2 steps has 82 entries (0 percent)
         3 steps has 1,206 entries (0 percent)
@@ -42,12 +44,17 @@ class RubiksCube444(RubiksCube):
 
         Total: 735,471 entries
         '''
-        self.lt_UD_centers_stage = LookupTable(self, 'lookup-table-4x4x4-step01-UD-centers-stage.txt', 'UD-centers-stage', 'UUUUxxxxxxxxxxxxxxxxUUUU')
+        self.lt_UD_centers_stage = LookupTable(self,
+                                               'lookup-table-4x4x4-step01-UD-centers-stage.txt',
+                                               'UD-centers-stage',
+                                               'UUUUxxxxxxxxxxxxxxxxUUUU')
 
 
         '''
         16!/(8! * 8!) is 12,870
 
+        lookup-table-4x4x4-step02-LR-centers-stage.txt
+        ==============================================
         1 steps has 3 entries (0 percent)
         2 steps has 29 entries (0 percent)
         3 steps has 234 entries (1 percent)
@@ -58,12 +65,17 @@ class RubiksCube444(RubiksCube):
 
         Total: 12,870 entries
         '''
-        self.lt_LR_centers_stage = LookupTable(self, 'lookup-table-4x4x4-step02-LR-centers-stage.txt', 'LR-centers-stage', 'LLLLxxxxLLLLxxxx')
+        self.lt_LR_centers_stage = LookupTable(self,
+                                               'lookup-table-4x4x4-step02-LR-centers-stage.txt',
+                                               'LR-centers-stage',
+                                               'LLLLxxxxLLLLxxxx')
 
 
         '''
         (8!/(4! * 4!))^3 is 343,000
 
+        lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt
+        ==================================================
         1 steps has 7 entries (0 percent)
         2 steps has 99 entries (0 percent)
         3 steps has 996 entries (0 percent)
@@ -78,12 +90,17 @@ class RubiksCube444(RubiksCube):
 
         Total: 343,000 entries
         '''
-        self.lt_ULFRBD_centers_solve = LookupTable(self, 'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt', 'ULFRBD-centers-solve', 'UUUULLLLFFFFRRRRBBBBDDDD')
+        self.lt_ULFRBD_centers_solve = LookupTable(self,
+                                                   'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt',
+                                                   'ULFRBD-centers-solve',
+                                                   'UUUULLLLFFFFRRRRBBBBDDDD')
 
 
         '''
         22*20*18 is 7920
 
+        lookup-table-4x4x4-step40-edges-slice-forward.txt
+        =================================================
         1 steps has 7 entries (0 percent)
         2 steps has 42 entries (0 percent)
         3 steps has 299 entries (3 percent)
@@ -94,13 +111,18 @@ class RubiksCube444(RubiksCube):
 
         Total: 7,920 entries
         '''
-        self.lt_edge_slice_forward = LookupTable(self, 'lookup-table-4x4x4-step40-edges-slice-forward.txt', '444-edges-slice-forward', None)
+        self.lt_edge_slice_forward = LookupTable(self,
+                                                 'lookup-table-4x4x4-step40-edges-slice-forward.txt',
+                                                 '444-edges-slice-forward',
+                                                 None)
 
 
         '''
         22*20*18 is 7920
         No idea why I am one entry short (should be 7920 total)...oh well
 
+        lookup-table-4x4x4-step50-edges-slice-backward.txt
+        ==================================================
         1 steps has 1 entries (0 percent)
         3 steps has 36 entries (0 percent)
         4 steps has 66 entries (0 percent)
@@ -112,7 +134,10 @@ class RubiksCube444(RubiksCube):
 
         Total: 7,919 entries
         '''
-        self.lt_edge_slice_backward = LookupTable(self, 'lookup-table-4x4x4-step50-edges-slice-backward.txt', '444-edges-slice-backward', None)
+        self.lt_edge_slice_backward = LookupTable(self,
+                                                  'lookup-table-4x4x4-step50-edges-slice-backward.txt',
+                                                  '444-edges-slice-backward',
+                                                  None)
 
     def group_centers_guts(self):
 
@@ -252,7 +277,6 @@ class RubiksCube444(RubiksCube):
                 else:
                     state.append('x')
 
-        # dwalton
         return ''.join(state)
 
     def find_moves_to_stage_slice_forward_444(self, target_wing, sister_wing1, sister_wing2, sister_wing3):

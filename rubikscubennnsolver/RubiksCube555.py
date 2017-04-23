@@ -22,9 +22,9 @@ moves_5x5x5 = moves_4x4x4
 class RubiksCube555(RubiksCube):
     """
     5x5x5 strategy
-    - IDA stage UD centers to sides U or D
+    - stage UD centers to sides U or D (use IDA)
     - stage LR centers to sides L or R...this in turn stages FB centers to sides F or B
-    - IDA solve all centers
+    - solve all centers (use IDA)
     - pair edges
     - solve as 3x3x3
     """
@@ -39,6 +39,8 @@ class RubiksCube555(RubiksCube):
         X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
         is 0.0000013596729171 which is a decent percentage for IDA.
 
+        lookup-table-5x5x5-step10-UD-centers-state.txt
+        ==============================================
         1 steps has 5 entries (0 percent)
         2 steps has 98 entries (0 percent)
         3 steps has 2,036 entries (0 percent)
@@ -50,6 +52,8 @@ class RubiksCube555(RubiksCube):
         Total: 328,877,780 entries
 
 
+        lookup-table-5x5x5-step11-UD-T-centers-stage.txt
+        ================================================
         T-centers - 24!/(16! * 8!) is 735,471
 
         1 steps has 5 entries (0 percent)
@@ -64,6 +68,8 @@ class RubiksCube555(RubiksCube):
         Total: 735,471 entries
 
 
+        lookup-table-5x5x5-step12-UD-X-centers-stage.txt
+        ================================================
         X-centers - 24!/(16! * 8!) is 735,471
 
         1 steps has 5 entries (0 percent)
@@ -109,6 +115,8 @@ class RubiksCube555(RubiksCube):
         L and R as one color so 8! on the bottom.
         (16!/(8! * 8!)))^2 is 165,636,900
 
+        lookup-table-5x5x5-step20-LR-centers-stage.txt
+        ==============================================
         1 steps has 3 entries (0 percent)
         2 steps has 33 entries (0 percent)
         3 steps has 374 entries (0 percent)
@@ -136,6 +144,8 @@ class RubiksCube555(RubiksCube):
         IDA and build the table 8 steps deep. A table to solve only the UDLR sides
         will be our prune table.
 
+        lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
+        ==================================================
         1 steps has 7 entries (0 percent)
         2 steps has 99 entries (0 percent)
         3 steps has 1,134 entries (0 percent)
@@ -148,10 +158,12 @@ class RubiksCube555(RubiksCube):
         Total: 120,345,286 entries
 
 
-        Our UDLR prune table is  (8!/(4! * 4!))^6 or  24,010,000
+        Our UDLR prune table is (8!/(4! * 4!))^4 or 24,010,000
         24,010,000/117,649,000,000 is 0.0002040816326531 which is a very good percentage
         for IDA, the search should be very fast
 
+        lookup-table-5x5x5-step31-UDLR-centers-solve.txt
+        ================================================
         1 steps has 7 entries (0 percent)
         2 steps has 71 entries (0 percent)
         3 steps has 630 entries (0 percent)
@@ -187,6 +199,44 @@ class RubiksCube555(RubiksCube):
                                                     # prune tables
                                                     (self.lt_UDLR_centers_solve, ))
 
+        '''
+        lookup-table-5x5x5-step60-edges-slice-forward.txt
+        =================================================
+        1 steps has 7 entries (0 percent)
+        2 steps has 42 entries (0 percent)
+        3 steps has 299 entries (3 percent)
+        4 steps has 1306 entries (16 percent)
+        5 steps has 3449 entries (43 percent)
+        6 steps has 2617 entries (33 percent)
+        7 steps has 200 entries (2 percent)
+
+        Total: 7920 entries
+        '''
+        self.lt_edge_slice_forward = LookupTable(self,
+                                                 'lookup-table-5x5x5-step60-edges-slice-forward.txt',
+                                                 '555-edges-slice-forward',
+                                                 None)
+
+        '''
+        lookup-table-5x5x5-step70-edges-slice-backward.txt
+        ==================================================
+        1 steps has 1 entries (0 percent)
+        3 steps has 36 entries (0 percent)
+        4 steps has 66 entries (0 percent)
+        5 steps has 334 entries (4 percent)
+        6 steps has 1369 entries (17 percent)
+        7 steps has 3505 entries (44 percent)
+        8 steps has 2539 entries (32 percent)
+        9 steps has 69 entries (0 percent)
+
+        Total: 7919 entries
+        '''
+        self.lt_edge_slice_backward = LookupTable(self,
+                                                  'lookup-table-5x5x5-step70-edges-slice-backward.txt',
+                                                  '555-edges-slice-backward',
+                                                  None)
+
+
     def group_centers_guts(self):
         self.rotate_U_to_U()
         self.lt_UD_centers_stage.solve()
@@ -199,103 +249,50 @@ class RubiksCube555(RubiksCube):
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 
         # dwalton remove this
-        self.print_cube()
-        sys.exit(0)
+        #self.print_cube()
+        #sys.exit(0)
+
+    def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
+        state = []
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            for square_index in sorted(side.edge_pos):
+                if square_index == target_wing[0]:
+                    state.append('A')
+
+                elif square_index == target_wing[1]:
+                    state.append('B')
+
+                elif square_index == sister_wing1[0]:
+                    state.append('C')
+
+                elif square_index == sister_wing1[1]:
+                    state.append('D')
+
+                elif square_index == sister_wing2[0]:
+                    state.append('E')
+
+                elif square_index == sister_wing2[1]:
+                    state.append('F')
+
+                elif square_index == sister_wing3[0]:
+                    state.append('G')
+
+                elif square_index == sister_wing3[1]:
+                    state.append('H')
+
+                else:
+                    state.append('x')
+
+        return ''.join(state)
 
     def find_moves_to_stage_slice_forward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
-        log.debug("find_moves_to_stage_slice_forward_555 called with target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %
-            (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3)))
+        state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
+        return self.lt_edge_slice_forward.steps(state)
 
-        foo = []
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in sorted(side.edge_pos):
-                if square_index == target_wing[0]:
-                    foo.append('A')
-
-                elif square_index == target_wing[1]:
-                    foo.append('B')
-
-                elif square_index == sister_wing1[0]:
-                    foo.append('C')
-
-                elif square_index == sister_wing1[1]:
-                    foo.append('D')
-
-                elif square_index == sister_wing2[0]:
-                    foo.append('E')
-
-                elif square_index == sister_wing2[1]:
-                    foo.append('F')
-
-                elif square_index == sister_wing3[0]:
-                    foo.append('G')
-
-                elif square_index == sister_wing3[1]:
-                    foo.append('H')
-
-                else:
-                    foo.append('x')
-
-        edge_string_to_find = ''.join(foo)
-        filename = 'lookup-table-5x5x5-step60-edges-slice-forward.txt'
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, edge_string_to_find + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-                log.debug("find_moves_to_stage_slice_forward_555 found %s" % ' '.join(steps))
-                return steps
-
-        log.debug("find_moves_to_stage_slice_forward_555 could not find %s" % edge_string_to_find)
-        return None
 
     def find_moves_to_stage_slice_backward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
-        foo = []
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in sorted(side.edge_pos):
-                if square_index == target_wing[0]:
-                    foo.append('A')
-
-                elif square_index == target_wing[1]:
-                    foo.append('B')
-
-                elif square_index == sister_wing1[0]:
-                    foo.append('C')
-
-                elif square_index == sister_wing1[1]:
-                    foo.append('D')
-
-                elif square_index == sister_wing2[0]:
-                    foo.append('E')
-
-                elif square_index == sister_wing2[1]:
-                    foo.append('F')
-
-                elif square_index == sister_wing3[0]:
-                    foo.append('G')
-
-                elif square_index == sister_wing3[1]:
-                    foo.append('H')
-
-                else:
-                    foo.append('x')
-
-        edge_string_to_find = ''.join(foo)
-        filename = 'lookup-table-5x5x5-step70-edges-slice-backward.txt'
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, edge_string_to_find + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-                log.debug("find_moves_to_stage_slice_backward_555 found %s" % ' '.join(steps))
-                return steps
-
-        log.debug("find_moves_to_stage_slice_backward_555 could not find %s" % edge_string_to_find)
-        return None
+        state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
+        return self.lt_edge_slice_backward.steps(state)
 
     def get_sister_wings_slice_backward_555(self):
         results = (None, None, None, None)

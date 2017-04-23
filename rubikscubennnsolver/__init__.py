@@ -391,6 +391,10 @@ class LookupTable(object):
             state = ''.join(state)
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
+        elif self.state_type == 'UDLR-centers-solve':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
+            state = state.replace('F', 'x').replace('B', 'x')
+
         else:
             raise Exception("Implement state_type %s" % self.state_type)
 
@@ -427,6 +431,9 @@ class LookupTable(object):
 
             if state == self.state_target:
                 break
+
+            # dwalton
+            log.info("state %s vs state_target %s" % (state, self.state_target))
 
             for step in self.steps(state):
                 self.parent.rotate(step)
@@ -501,7 +508,7 @@ class LookupTableIDA(LookupTable):
             if state == self.state_target:
                 break
 
-            # log.info("state %s vs state_target %s" % (state, self.state_target))
+            log.info("state %s vs state_target %s" % (state, self.state_target))
             steps = self.steps()
 
             if steps:

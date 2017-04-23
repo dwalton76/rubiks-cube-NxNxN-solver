@@ -34,9 +34,9 @@ class RubiksCube555(RubiksCube):
 
         '''
         There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
-        We cannot build a table this large so we will build it to 7 moves deep and use
+        We cannot build a table that large so we will build it 7 moves deep and use
         IDA with T-centers and X-centers as our prune tables. Both the T-centers and
-        X-centers prune tables will have 735,471 entries so 735,471/540,917,591,841
+        X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
         is 0.0000013596729171 which is a decent percentage for IDA.
 
         1 steps has 5 entries (0 percent)
@@ -92,133 +92,115 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_centers_stage = LookupTableIDA(self,
                                                  'lookup-table-5x5x5-step10-UD-centers-state.txt',
                                                  'UD-centers-stage',
-                                                 '3fe000000001ff',
+                                                 '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
                                                  True, # state_hex
                                                  moves_5x5x5,
                                                  (), # illegal_moves
-                                                 (self.lt_UD_T_centers_stage, self.lt_UD_X_centers_stage)) # prune tables
+
+                                                 # prune tables
+                                                 (self.lt_UD_T_centers_stage,
+                                                  self.lt_UD_X_centers_stage))
+
+
+        '''
+        Stage LR centers to sides L or R, this will automagically stage
+        the F and B centers to sides F or B. 4 T-centers and 4 X-centers
+        on 4 sides (ignore U and D since they are solved) but we treat
+        L and R as one color so 8! on the bottom.
+        (16!/(8! * 8!)))^2 is 165,636,900
+
+        1 steps has 3 entries (0 percent)
+        2 steps has 33 entries (0 percent)
+        3 steps has 374 entries (0 percent)
+        4 steps has 3,839 entries (0 percent)
+        5 steps has 39,265 entries (0 percent)
+        6 steps has 387,443 entries (0 percent)
+        7 steps has 3,374,792 entries (2 percent)
+        8 steps has 20,853,556 entries (12 percent)
+        9 steps has 65,566,534 entries (39 percent)
+        10 steps has 67,002,863 entries (40 percent)
+        11 steps has 8,425,578 entries (5 percent)
+        12 steps has 12,790 entries (0 percent)
+
+        Total: 165,667,070 entries
+        '''
+        self.lt_LR_centers_stage = LookupTable(self,
+                                               'lookup-table-5x5x5-step20-LR-centers-stage.txt',
+                                               'LR-centers-stage',
+                                               'ff803fe00', # LLLLLLLLLxxxxxxxxxLLLLLLLLLxxxxxxxxx
+                                               True) # state_hex
+
+        '''
+        The centers are all staged so there are (8!/(4! * 4!))^6 or 117,649,000,000
+        permutations to solve the centers. This is too large for us to build so use
+        IDA and build the table 8 steps deep. A table to solve only the UDLR sides
+        will be our prune table.
+
+        1 steps has 7 entries (0 percent)
+        2 steps has 99 entries (0 percent)
+        3 steps has 1,134 entries (0 percent)
+        4 steps has 12,183 entries (0 percent)
+        5 steps has 128,730 entries (0 percent)
+        6 steps has 1,291,295 entries (1 percent)
+        7 steps has 12,250,688 entries (10 percent)
+        8 steps has 106,661,150 entries (88 percent)
+
+        Total: 120,345,286 entries
+
+
+        Our UDLR prune table is  (8!/(4! * 4!))^6 or  24,010,000
+        24,010,000/117,649,000,000 is 0.0002040816326531 which is a very good percentage
+        for IDA, the search should be very fast
+
+        1 steps has 7 entries (0 percent)
+        2 steps has 71 entries (0 percent)
+        3 steps has 630 entries (0 percent)
+        4 steps has 4,639 entries (0 percent)
+        5 steps has 32,060 entries (0 percent)
+        6 steps has 198,779 entries (0 percent)
+        7 steps has 1,011,284 entries (4 percent)
+        8 steps has 3,826,966 entries (15 percent)
+        9 steps has 8,611,512 entries (35 percent)
+        10 steps has 8,194,244 entries (34 percent)
+        11 steps has 2,062,640 entries (8 percent)
+        12 steps has 67,152 entries (0 percent)
+        13 steps has 16 entries (0 percent)
+
+        Total: 24,010,000 entries
+        '''
+        self.lt_UDLR_centers_solve = LookupTable(self,
+                                                 'lookup-table-5x5x5-step31-UDLR-centers-solve.txt',
+                                                 'UDLR-centers-solve',
+                                                 None,
+                                                 False) # state_hex
+
+        self.lt_ULFRB_centers_solve = LookupTableIDA(self,
+                                                    'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
+                                                    'ULFRBD-centers-solve',
+                                                    'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
+                                                    False, # state_hex
+                                                    moves_5x5x5,
+
+                                                    # These moves would destroy the staged centers
+                                                    ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),
+
+                                                    # prune tables
+                                                    (self.lt_UDLR_centers_solve, ))
 
     def group_centers_guts(self):
         self.rotate_U_to_U()
         self.lt_UD_centers_stage.solve()
-        # dwalton remove this
-        #self.print_cube()
-        #sys.exit(0)
+        log.info("Took %d steps to stage UD centers" % len(self.solution))
 
-        self.lookup_table_555_LR_centers_stage()
+        self.lt_LR_centers_stage.solve()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
-        if not self.lookup_table_555_ULFRBD_centers_solve():
-
-            # save cube state
-            original_state = copy(self.state)
-            original_solution = copy(self.solution)
-
-            for threshold in range(1, 15):
-                log.info("ida_ULFRBD_centers_solve: threshold %d" % threshold)
-                if self.ida_ULFRBD_centers_solve(0, threshold, None, original_state, original_solution):
-                    break
-            else:
-                raise SolveError("UD centers-solve FAILED")
-
+        self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 
-    def lookup_table_555_LR_centers_stage(self):
-        filename = 'lookup-table-5x5x5-step20-LR-centers-stage.txt'
-
-        with open(filename, 'r') as fh:
-            while True:
-                state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
-                state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x').replace('R', 'L')
-
-                if state == 'LLLLLLLLLxxxxxxxxxLLLLLLLLLxxxxxxxxx':
-                    break
-
-                hex_state = convert_state_to_hex(state)
-                line = get_line_startswith(fh, hex_state + ':')
-
-                if line:
-                    (key, step) = line.strip().split(':')
-                    self.rotate(step)
-
-                    log.warning("LR centers-stage: FOUND entry %d steps in, %s" % (len(self.solution), step))
-                else:
-                    raise SolveError("LR centers-stage FAILED state %s, hex_state %s" % (state, hex_state))
-
-    def lookup_table_555_ULFRBD_centers_solve(self):
-        filename = 'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt'
-
-        with open(filename, 'r') as fh:
-            while True:
-                state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-
-                if state == 'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD':
-                    return True
-
-                line = get_line_startswith(fh, state + ':')
-
-                if line:
-                    (key, step) = line.strip().split(':')
-                    self.rotate(step)
-
-                    log.warning("ULFRBD-centers-solve %s: FOUND entry %d steps in (%s), %s" %\
-                        (state, len(self.solution), ' '.join(self.solution), step))
-                else:
-                    return False
-        return False
-
-    def get_555_UDLR_centers_solve_len(self):
-        filename = 'lookup-table-5x5x5-step31-UDLR-centers-solve.txt'
-
-        if not os.path.exists(filename):
-            print("ERROR: Could not find %s" % filename)
-            sys.exit(1)
-
-        with open(filename, 'r') as fh:
-            state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-            state = state.replace('F','x').replace('B','x')
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-                return len(steps)
-        raise SolveError("UDLR-centers-solve could not find state %s" % state)
-
-    def ida_ULFRBD_centers_solve(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
-
-        for step in moves_5x5x5:
-
-            # These moves would destroy the staged centers
-            if step in ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"):
-                continue
-
-            # If this step cancels out the previous step then don't bother with this branch
-            if steps_cancel_out(prev_step, step):
-                continue
-
-            self.state = copy(prev_state)
-            self.solution = copy(prev_solution)
-            self.rotate(step)
-
-            # Do we have the cube in a state where there is a match in the lookup table?
-            if self.lookup_table_555_ULFRBD_centers_solve():
-                return True
-
-            cost_to_goal = self.get_555_UDLR_centers_solve_len()
-
-            if (cost_to_here + 1 + cost_to_goal) > threshold:
-                #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
-                #    (step1, cost_to_here, cost_to_goal, threshold))
-                continue
-
-            state_end_of_this_step = copy(self.state)
-            solution_end_of_this_step = copy(self.solution)
-
-            if self.ida_ULFRBD_centers_solve(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
-                return True
-
-        return False
+        # dwalton remove this
+        self.print_cube()
+        sys.exit(0)
 
     def find_moves_to_stage_slice_forward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         log.debug("find_moves_to_stage_slice_forward_555 called with target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %

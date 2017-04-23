@@ -1,4 +1,5 @@
 
+- add lookup-table comments/stats from README to code
 - all of the "def lookup" table functions need to return the steps not exec the steps
 - clean up all of the IDA related function names, make them consistent
 - make the lookup-table.txt filenames consistent

@@ -16,13 +16,102 @@ moves_4x4x4 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2",
 
 
 class RubiksCube444(RubiksCube):
+    """
+    4x4x4 strategy
+    - stage UD centers to sides U or D
+    - stage LR centers to sides L or R...this in turn stages FB centers to sides F or B
+    - solve all centers
+    - pair edges
+    - solve as 3x3x3
+    """
 
     def __init__(self, kociemba_string):
         RubiksCube.__init__(self, kociemba_string)
+
+        '''
+        24!/(16! * 8!) is 735,471
+
+        1 steps has 5 entries (0 percent)
+        2 steps has 82 entries (0 percent)
+        3 steps has 1,206 entries (0 percent)
+        4 steps has 14,116 entries (1 percent)
+        5 steps has 123,404 entries (16 percent)
+        6 steps has 422,508 entries (57 percent)
+        7 steps has 173,254 entries (23 percent)
+        8 steps has 896 entries (0 percent)
+
+        Total: 735,471 entries
+        '''
         self.lt_UD_centers_stage = LookupTable(self, 'lookup-table-4x4x4-step01-UD-centers-stage.txt', 'UD-centers-stage', 'UUUUxxxxxxxxxxxxxxxxUUUU')
+
+
+        '''
+        16!/(8! * 8!) is 12,870
+
+        1 steps has 3 entries (0 percent)
+        2 steps has 29 entries (0 percent)
+        3 steps has 234 entries (1 percent)
+        4 steps has 1,246 entries (9 percent)
+        5 steps has 4,466 entries (34 percent)
+        6 steps has 6,236 entries (48 percent)
+        7 steps has 656 entries (5 percent)
+
+        Total: 12,870 entries
+        '''
         self.lt_LR_centers_stage = LookupTable(self, 'lookup-table-4x4x4-step02-LR-centers-stage.txt', 'LR-centers-stage', 'LLLLFFFFLLLLFFFF')
+
+
+        '''
+        (8!/(4! * 4!))^3 is 343,000
+
+        1 steps has 7 entries (0 percent)
+        2 steps has 99 entries (0 percent)
+        3 steps has 996 entries (0 percent)
+        4 steps has 6,477 entries (1 percent)
+        5 steps has 23,540 entries (6 percent)
+        6 steps has 53,537 entries (15 percent)
+        7 steps has 86,464 entries (25 percent)
+        8 steps has 83,240 entries (24 percent)
+        9 steps has 54,592 entries (15 percent)
+        10 steps has 29,568 entries (8 percent)
+        11 steps has 4,480 entries (1 percent)
+
+        Total: 343,000 entries
+        '''
         self.lt_ULFRBD_centers_solve = LookupTable(self, 'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt', 'ULFRBD-centers-solve', 'UUUULLLLFFFFRRRRBBBBDDDD')
+
+
+        '''
+        22*20*18 is 7920
+
+        1 steps has 7 entries (0 percent)
+        2 steps has 42 entries (0 percent)
+        3 steps has 299 entries (3 percent)
+        4 steps has 1,306 entries (16 percent)
+        5 steps has 3,449 entries (43 percent)
+        6 steps has 2,617 entries (33 percent)
+        7 steps has 200 entries (2 percent)
+
+        Total: 7,920 entries
+        '''
         self.lt_edge_slice_forward = LookupTable(self, 'lookup-table-4x4x4-step40-edges-slice-forward.txt', '444-edges-slice-forward', None)
+
+
+        '''
+        22*20*18 is 7920
+        No idea why I am one entry short (should be 7920 total)...oh well
+
+        1 steps has 1 entries (0 percent)
+        3 steps has 36 entries (0 percent)
+        4 steps has 66 entries (0 percent)
+        5 steps has 334 entries (4 percent)
+        6 steps has 1,369 entries (17 percent)
+        7 steps has 3,505 entries (44 percent)
+        8 steps has 2,539 entries (32 percent)
+        9 steps has 69 entries (0 percent)
+
+        Total: 7,919 entries
+        '''
         self.lt_edge_slice_backward = LookupTable(self, 'lookup-table-4x4x4-step50-edges-slice-backward.txt', '444-edges-slice-backward', None)
 
     def group_centers_guts(self):

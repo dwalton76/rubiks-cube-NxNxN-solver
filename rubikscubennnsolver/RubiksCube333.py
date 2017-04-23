@@ -6,6 +6,7 @@ import logging
 log = logging.getLogger(__name__)
 
 moves_3x3x3 = moves_2x2x2
+solved_3x3x3 = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
 
 class RubiksCube333(RubiksCube):
 

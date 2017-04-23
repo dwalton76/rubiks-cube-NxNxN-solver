@@ -318,6 +318,9 @@ class LookupTable(object):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.sides_LFRB = (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB)
+        self.sides_UD = (self.parent.sideU, self.parent.sideD)
+        self.sides_LR = (self.parent.sideL, self.parent.sideR)
+        self.sides_FB = (self.parent.sideF, self.parent.sideB)
 
         if not os.path.exists(filename):
             print "ERROR: %s does not exist" % filename
@@ -340,9 +343,21 @@ class LookupTable(object):
             state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
+        elif self.state_type == 'UD-centers-solve':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_UD for square_index in side.center_pos])
+
         elif self.state_type == 'LR-centers-stage':
             state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
             state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')
+
+        elif self.state_type == 'LR-centers-solve':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_LR for square_index in side.center_pos])
+
+        elif self.state_type == 'LFRB-centers-solve':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
+
+        elif self.state_type == 'FB-centers-solve':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_FB for square_index in side.center_pos])
 
         elif self.state_type == 'ULFRBD-centers-solve':
             state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
@@ -395,8 +410,120 @@ class LookupTable(object):
             state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
             state = state.replace('F', 'x').replace('B', 'x')
 
+        elif self.state_type == '666-UD-inner-X-centers-stage':
+            state = 'xxxxx' + self.parent.state[15] + self.parent.state[16] + 'xx' + self.parent.state[21] + self.parent.state[22]  + 'xxxxx' +\
+                    'xxxxx' + self.parent.state[51] + self.parent.state[52] + 'xx' + self.parent.state[57] + self.parent.state[58]  + 'xxxxx' +\
+                    'xxxxx' + self.parent.state[87] + self.parent.state[88] + 'xx' + self.parent.state[93] + self.parent.state[94]  + 'xxxxx' +\
+                    'xxxxx' + self.parent.state[123] + self.parent.state[124] + 'xx' + self.parent.state[129] + self.parent.state[130]  + 'xxxxx' +\
+                    'xxxxx' + self.parent.state[159] + self.parent.state[160] + 'xx' + self.parent.state[165] + self.parent.state[166]  + 'xxxxx' +\
+                    'xxxxx' + self.parent.state[195] + self.parent.state[196] + 'xx' + self.parent.state[201] + self.parent.state[202]  + 'xxxxx'
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == '666-UD-oblique-edge-pairing':
+            state = 'x' + self.parent.state[9] + self.parent.state[10] + 'x' +\
+                    self.parent.state[14] + 'xx' + self.parent.state[17] +\
+                    self.parent.state[20] + 'xx' + self.parent.state[23] +\
+                    'x' + self.parent.state[27] + self.parent.state[28] + 'x' +\
+                    'x' + self.parent.state[45] + self.parent.state[46] + 'x' +\
+                    self.parent.state[50] + 'xx' + self.parent.state[53] +\
+                    self.parent.state[56] + 'xx' + self.parent.state[59] +\
+                    'x' + self.parent.state[63] + self.parent.state[64] + 'x' +\
+                    'x' + self.parent.state[81] + self.parent.state[82] + 'x' +\
+                    self.parent.state[86] + 'xx' + self.parent.state[89] +\
+                    self.parent.state[92] + 'xx' + self.parent.state[95] +\
+                    'x' + self.parent.state[99] + self.parent.state[100] + 'x' +\
+                    'x' + self.parent.state[117] + self.parent.state[118] + 'x' +\
+                    self.parent.state[122] + 'xx' + self.parent.state[125] +\
+                    self.parent.state[128] + 'xx' + self.parent.state[131] +\
+                    'x' + self.parent.state[135] + self.parent.state[136] + 'x' +\
+                    'x' + self.parent.state[153] + self.parent.state[154] + 'x' +\
+                    self.parent.state[158] + 'xx' + self.parent.state[161] +\
+                    self.parent.state[164] + 'xx' + self.parent.state[167] +\
+                    'x' + self.parent.state[171] + self.parent.state[172] + 'x' +\
+                    'x' + self.parent.state[189] + self.parent.state[190] + 'x' +\
+                    self.parent.state[194] + 'xx' + self.parent.state[197] +\
+                    self.parent.state[200] + 'xx' + self.parent.state[203] +\
+                    'x' + self.parent.state[207] + self.parent.state[208] + 'x'
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == '666-UD-oblique-edge-pairing-left-only':
+            state = 'x' + self.parent.state[9] + 'xx' +\
+                    'xxx' + self.parent.state[17] +\
+                    self.parent.state[20] + 'xxx' +\
+                    'xx' + self.parent.state[28] + 'x' +\
+                    'x' + self.parent.state[45] + 'xx' +\
+                    'xxx' + self.parent.state[53] +\
+                    self.parent.state[56] + 'xxx' +\
+                    'xx' + self.parent.state[64] + 'x' +\
+                    'x' + self.parent.state[81] + 'xx' +\
+                    'xxx' + self.parent.state[89] +\
+                    self.parent.state[92] + 'xxx' +\
+                    'xx' + self.parent.state[100] + 'x' +\
+                    'x' + self.parent.state[117] + 'xx' +\
+                    'xxx' + self.parent.state[125] +\
+                    self.parent.state[128] + 'xxx' +\
+                    'xx' + self.parent.state[136] + 'x' +\
+                    'x' + self.parent.state[153] + 'xx' +\
+                    'xxx' + self.parent.state[161] +\
+                    self.parent.state[164] + 'xxx' +\
+                    'xx' + self.parent.state[172] + 'x' +\
+                    'x' + self.parent.state[189] + 'xx' +\
+                    'xxx' + self.parent.state[197] +\
+                    self.parent.state[200] + 'xxx' +\
+                    'xx' + self.parent.state[208] + 'x'
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == '666-UD-oblique-edge-pairing-right-only':
+            state = 'xx' + self.parent.state[10] + 'x' +\
+                    self.parent.state[14] + 'xxx' +\
+                    'xxx' + self.parent.state[23] +\
+                    'x' + self.parent.state[27] + 'xx' +\
+                    'xx' + self.parent.state[46] + 'x' +\
+                    self.parent.state[50] + 'xxx' +\
+                    'xxx' + self.parent.state[59] +\
+                    'x' + self.parent.state[63] + 'xx' +\
+                    'xx' + self.parent.state[82] + 'x' +\
+                    self.parent.state[86] + 'xxx' +\
+                    'xxx' + self.parent.state[95] +\
+                    'x' + self.parent.state[99] + 'xx' +\
+                    'xx' + self.parent.state[118] + 'x' +\
+                    self.parent.state[122] + 'xxx' +\
+                    'xxx' + self.parent.state[131] +\
+                    'x' + self.parent.state[135] + 'xx' +\
+                    'xx' + self.parent.state[154] + 'x' +\
+                    self.parent.state[158] + 'xxx' +\
+                    'xxx' + self.parent.state[167] +\
+                    'x' + self.parent.state[171] + 'xx' +\
+                    'xx' + self.parent.state[190] + 'x' +\
+                    self.parent.state[194] + 'xxx' +\
+                    'xxx' + self.parent.state[203] +\
+                    'x' + self.parent.state[207] + 'xx'
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == '666-LR-inner-X-centers-stage':
+            state = 'xxxxx' + self.parent.state[15] + self.parent.state[16] + 'xx' + self.parent.state[21] + self.parent.state[22]  + 'xxxxx' +\
+                    'xxxxx' + self.parent.state[51] + self.parent.state[52] + 'xx' + self.parent.state[57] + self.parent.state[58]  + 'xxxxx' +\
+                    'xxxxx' + self.parent.state[87] + self.parent.state[88] + 'xx' + self.parent.state[93] + self.parent.state[94]  + 'xxxxx' +\
+                    'xxxxx' + self.parent.state[123] + self.parent.state[124] + 'xx' + self.parent.state[129] + self.parent.state[130]  + 'xxxxx' +\
+                    'xxxxx' + self.parent.state[159] + self.parent.state[160] + 'xx' + self.parent.state[165] + self.parent.state[166]  + 'xxxxx' +\
+                    'xxxxx' + self.parent.state[195] + self.parent.state[196] + 'xx' + self.parent.state[201] + self.parent.state[202]  + 'xxxxx'
+            state = state.replace('U', 'x').replace('L', 'L').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
+
+        elif self.state_type == '666-LR-oblique-edge-pairing':
+            tmp_state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
+            tmp_state = tmp_state.replace('U', 'x').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
+    
+            # We need to x out the inner and outer x-centers for each side
+            state = ''
+            for y in range(4):
+                state += 'x' + tmp_state[1:3] + 'x' +\
+                         tmp_state[4] + 'xx' + tmp_state[7] +\
+                         tmp_state[8] + 'xx' + tmp_state[11] +\
+                         'x' + tmp_state[13:15] + 'x'
+                tmp_state = tmp_state[16:]
+
         else:
-            raise Exception("Implement state_type %s" % self.state_type)
+            raise ImplementThis("state_type %s" % self.state_type)
 
         if self.state_hex:
             state = convert_state_to_hex(state)

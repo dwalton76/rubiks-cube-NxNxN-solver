@@ -11,6 +11,7 @@ moves_2x2x2 = ("U", "U'", "U2",
                "R" , "R'", "R2",
                "B" , "B'", "B2",
                "D" , "D'", "D2")
+solved_2x2x2 = 'UUUURRRRFFFFDDDDLLLLBBBB'
 
 
 class RubiksCube222(RubiksCube):

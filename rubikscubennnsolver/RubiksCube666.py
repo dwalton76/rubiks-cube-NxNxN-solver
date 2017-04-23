@@ -3,8 +3,8 @@ from collections import OrderedDict
 from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.pts_line_bisect import get_line_startswith
-from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out, convert_state_to_hex
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555
+from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out, convert_state_to_hex, LookupTable, LookupTableIDA
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksSide import Side, SolveError
 import logging
 import math
@@ -16,7 +16,6 @@ import sys
 
 log = logging.getLogger(__name__)
 
-# "Uw2": ["U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2", "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2", "F", "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2", "R", "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2", "B", "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2", "D", "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2"],
 
 moves_6x6x6 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
                "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2",
@@ -24,288 +23,290 @@ moves_6x6x6 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
                "R" , "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2",
                "B" , "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",
                "D" , "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2")
-
+solved_6x6x6 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 
 class RubiksCube666(RubiksCube):
+    """
+    6x6x6 strategy
+    - stage UD centers to sides U or D (use IDA)
+    - stage LR centers to sides L or R...this in turn stages FB centers to sides F or B
+    - solve all centers (use IDA)
+    - pair edges
+    - solve as 3x3x3
+    """
 
-    def lookup_table_666_UD_inner_x_centers_stage(self):
-        state = 'xxxxx' + self.state[15] + self.state[16] + 'xx' + self.state[21] + self.state[22]  + 'xxxxx' +\
-                'xxxxx' + self.state[51] + self.state[52] + 'xx' + self.state[57] + self.state[58]  + 'xxxxx' +\
-                'xxxxx' + self.state[87] + self.state[88] + 'xx' + self.state[93] + self.state[94]  + 'xxxxx' +\
-                'xxxxx' + self.state[123] + self.state[124] + 'xx' + self.state[129] + self.state[130]  + 'xxxxx' +\
-                'xxxxx' + self.state[159] + self.state[160] + 'xx' + self.state[165] + self.state[166]  + 'xxxxx' +\
-                'xxxxx' + self.state[195] + self.state[196] + 'xx' + self.state[201] + self.state[202]  + 'xxxxx'
-        state = state.replace('U', 'U').replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
-        filename = 'lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt'
+    def __init__(self, kociemba_string):
+        RubiksCube.__init__(self, kociemba_string)
 
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
+        '''
+        Stage the inner X-centers
+        24!/(8!*16!) is 735,471
 
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
+        lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt
+        ======================================================
+        1 steps has 5 entries (0 percent)
+        2 steps has 80 entries (0 percent)
+        3 steps has 1,160 entries (0 percent)
+        4 steps has 13,726 entries (1 percent)
+        5 steps has 121,796 entries (16 percent)
+        6 steps has 423,136 entries (57 percent)
+        7 steps has 174,656 entries (23 percent)
+        8 steps has 912 entries (0 percent)
 
-                for step in steps:
-                    self.rotate(step)
-                log.warning("UD inner x-centers-stage: FOUND entry %d steps in, %s" % (len(self.solution), ' '.join(steps)))
-            else:
-                raise SolveError("UD inner x-centers-stage could not find %s" % state)
+        Total: 735,471 entries
+        '''
+        self.lt_UD_inner_x_centers_stage = LookupTable(self,
+                                                      'lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt',
+                                                      '666-UD-inner-X-centers-stage',
+                                                      'xxxxxUUxxUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUxxUUxxxxx', #
+                                                      False) # state_hex
 
-    def lookup_table_666_LR_inner_x_centers_stage(self):
-        state = 'xxxxx' + self.state[15] + self.state[16] + 'xx' + self.state[21] + self.state[22]  + 'xxxxx' +\
-                'xxxxx' + self.state[51] + self.state[52] + 'xx' + self.state[57] + self.state[58]  + 'xxxxx' +\
-                'xxxxx' + self.state[87] + self.state[88] + 'xx' + self.state[93] + self.state[94]  + 'xxxxx' +\
-                'xxxxx' + self.state[123] + self.state[124] + 'xx' + self.state[129] + self.state[130]  + 'xxxxx' +\
-                'xxxxx' + self.state[159] + self.state[160] + 'xx' + self.state[165] + self.state[166]  + 'xxxxx' +\
-                'xxxxx' + self.state[195] + self.state[196] + 'xx' + self.state[201] + self.state[202]  + 'xxxxx'
-        state = state.replace('U', 'x').replace('L', 'L').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
-        filename = 'lookup-table-6x6x6-step30-LR-inner-x-centers-stage.txt'
+        '''
+        Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
+        (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
+        IDA and build it 7 steps deep.
 
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
+        Our prune tables will be so solve on the left or right oblique edges. Each of these
+        tables are 24!/(8!*16!) or 735,471
+        735471/540917591841 is 0.0000013596729171
 
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
+        lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt
+        =====================================================
 
-                log.warning("LR inner x-centers-stage: FOUND entry %d steps in, %s" %\
-                    (len(self.solution), ' '.join(steps)))
-                for step in steps:
-                    self.rotate(step)
-            else:
-                raise SolveError("LR inner x-centers-stage could not find %s" % state)
+        1 steps has 5 entries (0 percent)
+        2 steps has 82 entries (0 percent)
+        3 steps has 1434 entries (0 percent)
+        4 steps has 24,198 entries (0 percent)
+        5 steps has 405,916 entries (0 percent)
+        6 steps has 6,839,392 entries (5 percent)
+        7 steps has 116,031,874 entries (94 percent)
 
-    def lookup_table_666_LR_oblique_pairing_stage(self):
-        tmp_state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
-        tmp_state = tmp_state.replace('U', 'x').replace('L', 'L').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
+        Total: 123,302,901 entries
 
-        # We need to x out the inner and outer x-centers for each side
-        state = ''
-        for y in range(4):
-            state += 'x' + tmp_state[1:3] + 'x' +\
-                     tmp_state[4] + 'xx' + tmp_state[7] +\
-                     tmp_state[8] + 'xx' + tmp_state[11] +\
-                     'x' + tmp_state[13:15] + 'x'
-            tmp_state = tmp_state[16:]
 
-        filename = 'lookup-table-6x6x6-step40-LR-oblique-pairing.txt'
-        hex_state = convert_state_to_hex(state)
+        lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
+        ===============================================================
+        1 steps has 5 entries (0 percent)
+        2 steps has 82 entries (0 percent)
+        3 steps has 1,198 entries (0 percent)
+        4 steps has 13,818 entries (1 percent)
+        5 steps has 115,638 entries (15 percent)
+        6 steps has 399,478 entries (54 percent)
+        7 steps has 204,612 entries (27 percent)
+        8 steps has 640 entries (0 percent)
 
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, hex_state + ':')
+        Total: 735,471 entries
 
-            if line:
-                (key, steps) = line.strip().split(':')
-                steps = steps.split()
 
-                for step in steps:
-                    self.rotate(step)
-                log.warning("LR oblique-pairing-stage: FOUND entry %d steps in, %s" %\
-                    (len(self.solution), ' '.join(steps)))
-            else:
-                raise SolveError("lookup_table_666_LR_oblique_pairing_stage failed to find state %s" % state)
+        lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt
+        ================================================================
+        1 steps has 5 entries (0 percent)
+        2 steps has 82 entries (0 percent)
+        3 steps has 1,198 entries (0 percent)
+        4 steps has 13,818 entries (1 percent)
+        5 steps has 115,638 entries (15 percent)
+        6 steps has 399,478 entries (54 percent)
+        7 steps has 204,612 entries (27 percent)
+        8 steps has 640 entries (0 percent)
 
-    def lookup_table_666_UD_oblique_edge_pairing(self):
-        filename = 'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt'
+        Total: 735,471 entries
+        '''
+        self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
+                                                                'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
+                                                                '666-UD-oblique-edge-pairing-left-only',
+                                                                None,
+                                                                False) # state_hex
 
-        with open(filename, 'r') as fh:
-            while True:
-                state = 'x' + self.state[9] + self.state[10] + 'x' +\
-                        self.state[14] + 'xx' + self.state[17] +\
-                        self.state[20] + 'xx' + self.state[23] +\
-                        'x' + self.state[27] + self.state[28] + 'x' +\
-                       'x' + self.state[45] + self.state[46] + 'x' +\
-                        self.state[50] + 'xx' + self.state[53] +\
-                        self.state[56] + 'xx' + self.state[59] +\
-                        'x' + self.state[63] + self.state[64] + 'x' +\
-                       'x' + self.state[81] + self.state[82] + 'x' +\
-                        self.state[86] + 'xx' + self.state[89] +\
-                        self.state[92] + 'xx' + self.state[95] +\
-                        'x' + self.state[99] + self.state[100] + 'x' +\
-                       'x' + self.state[117] + self.state[118] + 'x' +\
-                        self.state[122] + 'xx' + self.state[125] +\
-                        self.state[128] + 'xx' + self.state[131] +\
-                        'x' + self.state[135] + self.state[136] + 'x' +\
-                       'x' + self.state[153] + self.state[154] + 'x' +\
-                        self.state[158] + 'xx' + self.state[161] +\
-                        self.state[164] + 'xx' + self.state[167] +\
-                        'x' + self.state[171] + self.state[172] + 'x' +\
-                       'x' + self.state[189] + self.state[190] + 'x' +\
-                        self.state[194] + 'xx' + self.state[197] +\
-                        self.state[200] + 'xx' + self.state[203] +\
-                        'x' + self.state[207] + self.state[208] + 'x'
-                state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+        self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
+                                                                'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
+                                                                '666-UD-oblique-edge-pairing-right-only',
+                                                                None,
+                                                                False) # state_hex
 
-                if state == 'xUUxUxxUUxxUxUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUxUxxUUxxUxUUx':
-                    return True
+        self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
+                                                         'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt',
+                                                         '666-UD-oblique-edge-pairing',
 
-                hex_state = convert_state_to_hex(state)
-                line = get_line_startswith(fh, hex_state + ':')
+                                                         # xUUxUxxUUxxUxUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUxUxxUUxxUxUUx
+                                                         '699600000000000000006996',
 
-                if line:
-                    (key, step) = line.strip().split(':')
-                    self.rotate(step)
-                    log.warning("UD oblique-edge-pairing-stage: FOUND entry %d steps in, %s" % (len(self.solution), step))
-                else:
-                    return False
+                                                         True, # state_hex
+                                                         moves_6x6x6,
 
-        return False
+                                                         # These would break up the staged UD inner x-centers
+                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"),
 
-    def get_lookup_table_666_UD_oblique_edge_pairing_left_only(self):
-        state = 'x' + self.state[9] + 'xx' +\
-                'xxx' + self.state[17] +\
-                self.state[20] + 'xxx' +\
-                'xx' + self.state[28] + 'x' +\
-                'x' + self.state[45] + 'xx' +\
-                'xxx' + self.state[53] +\
-                self.state[56] + 'xxx' +\
-                'xx' + self.state[64] + 'x' +\
-                'x' + self.state[81] + 'xx' +\
-                'xxx' + self.state[89] +\
-                self.state[92] + 'xxx' +\
-                'xx' + self.state[100] + 'x' +\
-                'x' + self.state[117] + 'xx' +\
-                'xxx' + self.state[125] +\
-                self.state[128] + 'xxx' +\
-                'xx' + self.state[136] + 'x' +\
-                'x' + self.state[153] + 'xx' +\
-                'xxx' + self.state[161] +\
-                self.state[164] + 'xxx' +\
-                'xx' + self.state[172] + 'x' +\
-                'x' + self.state[189] + 'xx' +\
-                'xxx' + self.state[197] +\
-                self.state[200] + 'xxx' +\
-                'xx' + self.state[208] + 'x'
+                                                         # prune tables
+                                                         (self.lt_UD_oblique_edge_pairing_left_only,
+                                                          self.lt_UD_oblique_edge_pairing_right_only))
+        '''
+        16!/(8!*8!) is 12,870
 
-        state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
-        filename = 'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'
+        lookup-table-6x6x6-step30-LR-inner-x-centers-stage.txt
+        ======================================================
+        1 steps has 3 entries (0 percent)
+        2 steps has 29 entries (0 percent)
+        3 steps has 234 entries (1 percent)
+        4 steps has 1,246 entries (9 percent)
+        5 steps has 4,466 entries (34 percent)
+        6 steps has 6,236 entries (48 percent)
+        7 steps has 656 entries (5 percent)
 
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
+        Total: 12,870 entries
+        '''
+        self.lt_LR_inner_x_centers_stage = LookupTable(self,
+                                                      'lookup-table-6x6x6-step30-LR-inner-x-centers-stage.txt',
+                                                      '666-LR-inner-X-centers-stage',
+                                                      'xxxxxxxxxxxxxxxxxxxxxLLxxLLxxxxxxxxxxxxxxxxxxxxxxxxxxLLxxLLxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+                                                      False) # state_hex
 
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-                #log.warning("UD oblique-edge-pairing-left-only-stage %s: FOUND entry %d steps in (%s), %s" %\
-                #    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
-                return len(steps)
-            else:
-                raise SolveError("get_lookup_table_666_UD_oblique_edge_pairing_left_only could not find %s" % state)
+        '''
+        (16!/(8!*8!))^2 is 165,636,900
 
-    def get_lookup_table_666_UD_oblique_edge_pairing_right_only(self):
-        state = 'xx' + self.state[10] + 'x' +\
-                self.state[14] + 'xxx' +\
-                'xxx' + self.state[23] +\
-                'x' + self.state[27] + 'xx' +\
-                'xx' + self.state[46] + 'x' +\
-                self.state[50] + 'xxx' +\
-                'xxx' + self.state[59] +\
-                'x' + self.state[63] + 'xx' +\
-                'xx' + self.state[82] + 'x' +\
-                self.state[86] + 'xxx' +\
-                'xxx' + self.state[95] +\
-                'x' + self.state[99] + 'xx' +\
-                'xx' + self.state[118] + 'x' +\
-                self.state[122] + 'xxx' +\
-                'xxx' + self.state[131] +\
-                'x' + self.state[135] + 'xx' +\
-                'xx' + self.state[154] + 'x' +\
-                self.state[158] + 'xxx' +\
-                'xxx' + self.state[167] +\
-                'x' + self.state[171] + 'xx' +\
-                'xx' + self.state[190] + 'x' +\
-                self.state[194] + 'xxx' +\
-                'xxx' + self.state[203] +\
-                'x' + self.state[207] + 'xx'
+        lookup-table-6x6x6-step40-LR-oblique-pairing.txt
+        ================================================
+        1 steps has 3 entries (0 percent)
+        2 steps has 29 entries (0 percent)
+        3 steps has 286 entries (0 percent)
+        4 steps has 2,052 entries (0 percent)
+        5 steps has 16,348 entries (0 percent)
+        6 steps has 127,859 entries (0 percent)
+        7 steps has 844,265 entries (0 percent)
+        8 steps has 4,623,635 entries (2 percent)
+        9 steps has 19,020,012 entries (11 percent)
+        10 steps has 47,546,288 entries (28 percent)
+        11 steps has 61,806,216 entries (37 percent)
+        12 steps has 28,890,242 entries (17 percent)
+        13 steps has 2,722,462 entries (1 percent)
+        14 steps has 40,242 entries (0 percent)
+        15 steps has 148 entries (0 percent)
 
-        state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
-        filename = 'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'
+        Total: 165,640,087 entries
+        '''
+        self.lt_LR_oblique_edge_pairing = LookupTable(self,
+                                                      'lookup-table-6x6x6-step40-LR-oblique-pairing.txt',
+                                                      '666-LR-oblique-edge-pairing',
+                                                      '6996000069960000',
+                                                      True) # state_hex
 
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
 
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-                #log.warning("UD oblique-edge-pairing-left-only-stage %s: FOUND entry %d steps in (%s), %s" %\
-                #    (state, len(self.solution), ' '.join(self.solution), ' '.join(steps)))
-                return len(steps)
-            else:
-                raise SolveError("get_lookup_table_666_UD_oblique_edge_pairing_right_only could not find %s" % state)
+        '''
+        lookup-table-6x6x6-step50-UD-centers-solve.txt
+        ==============================================
+        (8!/(4!*4!))^4 is 24,010,000
 
-    def ida_search_UD_oblique_edge_pairing(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
+        1 steps has 8 entries (0 percent)
+        2 steps has 47 entries (0 percent)
+        3 steps has 283 entries (0 percent)
+        4 steps has 1,690 entries (0 percent)
+        5 steps has 9,675 entries (0 percent)
+        6 steps has 51,350 entries (0 percent)
+        7 steps has 255,725 entries (1 percent)
+        8 steps has 1,165,284 entries (4 percent)
+        9 steps has 4,337,586 entries (18 percent)
+        10 steps has 9,785,424 entries (40 percent)
+        11 steps has 7,457,560 entries (31 percent)
+        12 steps has 936,888 entries (3 percent)
+        13 steps has 8,480 entries (0 percent)
 
-        for step in moves_6x6x6:
+        Total: 24,010,000 entries
+        '''
+        self.lt_UD_centers_solve = LookupTable(self,
+                                               'lookup-table-6x6x6-step50-UD-centers-solve.txt',
+                                               'UD-centers-solve',
+                                               'UUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDD',
+                                               False) # state_hex
 
-            # If this step cancels out the previous step then don't bother with this branch
-            if steps_cancel_out(prev_step, step):
-                continue
 
-            # These would break up the staged UD inner x-centers
-            if step in ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"):
-                continue
+        '''
+        lookup-table-6x6x6-step61-LR-centers-solve.txt
+        ==============================================
+        1 steps has 7 entries (0 percent)
+        2 steps has 41 entries (0 percent)
+        3 steps has 230 entries (0 percent)
+        4 steps has 1,308 entries (0 percent)
+        5 steps has 7,234 entries (0 percent)
+        6 steps has 36,454 entries (0 percent)
+        7 steps has 175,690 entries (0 percent)
+        8 steps has 800,122 entries (3 percent)
+        9 steps has 3,117,090 entries (12 percent)
+        10 steps has 8,125,772 entries (33 percent)
+        11 steps has 9,093,004 entries (37 percent)
+        12 steps has 2,594,984 entries (10 percent)
+        13 steps has 58,064 entries (0 percent)
 
-            self.state = copy(prev_state)
-            self.solution = copy(prev_solution)
-            self.rotate(step)
+        Total: 24,010,000 entries
+        '''
+        self.lt_LR_centers_solve = LookupTable(self,
+                                               'lookup-table-6x6x6-step61-LR-centers-solve.txt',
+                                               'LR-centers-solve',
+                                               'LLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRR',
+                                               False) # state_hex
 
-            # Do we have the cube in a state where there is a match in the lookup table?
-            if self.lookup_table_666_UD_oblique_edge_pairing():
-                return True
+        '''
+        (8!/(4!*4!))^8 is 576,480,100,000,000 so we must use IDA
+        24010000/576480100000000 is 0.0000000416493128
 
-            cost_to_goal = max(self.get_lookup_table_666_UD_oblique_edge_pairing_left_only(),
-                               self.get_lookup_table_666_UD_oblique_edge_pairing_right_only())
+        lookup-table-6x6x6-step60-LFRB-centers-solve.txt
+        ================================================
+        1 steps has 5 entries (0 percent)
+        2 steps has 54 entries (0 percent)
+        3 steps has 420 entries (0 percent)
+        4 steps has 2,903 entries (0 percent)
+        5 steps has 21,388 entries (0 percent)
+        6 steps has 145,567 entries (0 percent)
+        7 steps has 951,636 entries (2 percent)
+        8 steps has 6,082,238 entries (13 percent)
+        9 steps has 38,169,564 entries (84 percent)
 
-            if (cost_to_here + 1 + cost_to_goal) > threshold:
-                #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
-                #    (step1, cost_to_here, cost_to_goal, threshold))
-                continue
+        Total: 45,373,775 entries
 
-            state_end_of_this_step = copy(self.state)
-            solution_end_of_this_step = copy(self.solution)
 
-            if self.ida_search_UD_oblique_edge_pairing(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
-                return True
+        lookup-table-6x6x6-step62-FB-centers-solve.txt
+        ==============================================
+        1 steps has 5 entries (0 percent)
+        2 steps has 26 entries (0 percent)
+        3 steps has 94 entries (0 percent)
+        4 steps has 440 entries (0 percent)
+        5 steps has 1,680 entries (0 percent)
+        6 steps has 7,026 entries (0 percent)
+        7 steps has 26,072 entries (0 percent)
+        8 steps has 98,147 entries (0 percent)
+        9 steps has 349,870 entries (1 percent)
+        10 steps has 1,180,438 entries (4 percent)
+        11 steps has 3,429,688 entries (14 percent)
+        12 steps has 7,384,342 entries (30 percent)
+        13 steps has 8,471,512 entries (35 percent)
+        14 steps has 2,936,552 entries (12 percent)
+        15 steps has 123,980 entries (0 percent)
+        16 steps has 141 entries (0 percent)
+        17 steps has 4 entries (0 percent)
 
-        return False
+        Total: 24,010,017 entries
+        '''
 
-    def ida_LFRB_centers_solve(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
+        self.lt_FB_centers_solve = LookupTable(self,
+                                               'lookup-table-6x6x6-step62-FB-centers-solve.txt',
+                                               'FB-centers-solve',
+                                               'FFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBB',
+                                               False) # state_hex
 
-        for step in moves_6x6x6:
+        self.lt_LFRB_centers_solve = LookupTableIDA(self,
+                                                    'lookup-table-6x6x6-step60-LFRB-centers-solve.txt',
+                                                    'LFRB-centers-solve',
+                                                    'LLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBB',
 
-            # If this step cancels out the previous step then don't bother with this branch
-            if steps_cancel_out(prev_step, step):
-                continue
+                                                    False, # state_hex
+                                                    moves_6x6x6,
 
-            if step in ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-                        "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-                        "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"):                              # do not mess up solved UD
-                continue
+                                                    ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
+                                                     "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
+                                                     "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
 
-            self.state = copy(prev_state)
-            self.solution = copy(prev_solution)
-            self.rotate(step)
-
-            # Do we have the cube in a state where there is a match in the lookup table?
-            if self.lookup_table_666_LFRB_centers_solve():
-                return True
-
-            cost_to_goal = max(len(self.lookup_table_666_LR_centers_solve(return_steps=True)),
-                               len(self.lookup_table_666_FB_centers_solve(return_steps=True)))
-
-            if (cost_to_here + 1 + cost_to_goal) > threshold:
-                #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
-                #    (step1, cost_to_here, cost_to_goal, threshold))
-                continue
-
-            state_end_of_this_step = copy(self.state)
-            solution_end_of_this_step = copy(self.solution)
-
-            if self.ida_LFRB_centers_solve(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
-                return True
-
-        return False
+                                                    # prune tables
+                                                    (self.lt_LR_centers_solve,
+                                                     self.lt_FB_centers_solve))
 
     def populate_fake_555_for_UD(self, fake_555):
         for x in range(1, 151):
@@ -461,172 +462,51 @@ class RubiksCube666(RubiksCube):
         if self.state[209] in ("L", "R"):
             fake_555.state[144] = "L"
 
-    def lookup_table_666_UD_centers_solve(self):
-        state = ''.join([self.state[square_index] for side in (self.sideU, self.sideD) for square_index in side.center_pos])
-        filename = 'lookup-table-6x6x6-step50-UD-centers-solve.txt'
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-
-                log.warning("UD centers solve: FOUND entry %d steps in, %s" % (len(self.solution), ' '.join(steps)))
-                for step in steps:
-                    self.rotate(step)
-            else:
-                raise SolveError("UD centers solve could not find %s" % state)
-
-    def lookup_table_666_LR_centers_solve(self, return_steps=False):
-        state = ''.join([self.state[square_index] for side in (self.sideL, self.sideR) for square_index in side.center_pos])
-        filename = 'lookup-table-6x6x6-step61-LR-centers-solve.txt'
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-
-                if return_steps:
-                    return steps
-
-                log.warning("LR centers solve: FOUND entry %d steps in, %s" % (len(self.solution), ' '.join(steps)))
-                for step in steps:
-                    self.rotate(step)
-            else:
-                raise SolveError("LR centers solve could not find %s" % state)
-
-    def lookup_table_666_FB_centers_solve(self, return_steps=False):
-        state = ''.join([self.state[square_index] for side in (self.sideF, self.sideB) for square_index in side.center_pos])
-        filename = 'lookup-table-6x6x6-step62-FB-centers-solve.txt'
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-
-                if return_steps:
-                    return steps
-
-                log.warning("FB centers solve: FOUND entry %d steps in, %s" % (len(self.solution), ' '.join(steps)))
-                for step in steps:
-                    self.rotate(step)
-            else:
-                raise SolveError("FB centers solve could not find %s" % state)
-
-    def lookup_table_666_LFRB_centers_solve(self):
-        state = ''.join([self.state[square_index] for side in (self.sideL, self.sideF, self.sideR, self.sideB) for square_index in side.center_pos])
-        filename = 'lookup-table-6x6x6-step60-LFRB-centers-solve.txt'
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-
-                log.warning("LFRB centers solve: FOUND entry %d steps in, %s" % (len(self.solution), ' '.join(steps)))
-                for step in steps:
-                    self.rotate(step)
-                return True
-            else:
-                return False
-
     def group_centers_guts(self):
-        self.lookup_table_666_UD_inner_x_centers_stage()
-        # self.print_cube()
+        self.lt_UD_inner_x_centers_stage.solve()
+        self.lt_UD_oblique_edge_pairing.solve()
 
-        if not self.lookup_table_666_UD_oblique_edge_pairing():
-
-            # save cube state
-            original_state = copy(self.state)
-            original_solution = copy(self.solution)
-
-            # If we are here (odds are very high we will be) it means that the current
-            # cube state was not in the lookup table.  We must now perform an IDA search
-            # until we find a sequence of moves that takes us to a state that IS in the
-            # lookup table.
-            for threshold in range(1, 10):
-                log.info("ida_search_UD_oblique_edge_pairing: threshold %d" % threshold)
-                if self.ida_search_UD_oblique_edge_pairing(0, threshold, None, original_state, original_solution):
-                    break
-            else:
-                raise SolveError("UD oblique-edge-pairing-stage FAILED")
-
-        self.print_cube()
 
         # At this point we can treat UD centers like 5x5x5 centers
         # Create a dummy 5x5x5 cube object that we can use to figure out what steps to
-        fake_555 = RubiksCube555('UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB')
+        fake_555 = RubiksCube555(solved_5x5x5)
         self.populate_fake_555_for_UD(fake_555)
-
-        if not fake_555.lookup_table_555_UD_centers_stage():
-
-            # If we are here (odds are very high we will be) it means that the current
-            # cube state was not in the lookup table.  We must now perform an IDA search
-            # until we find a sequence of moves that takes us to a state that IS in the
-            # lookup table.
-
-            # save cube state
-            original_state = copy(fake_555.state)
-            original_solution = copy(fake_555.solution)
-
-            for threshold in range(1, 10):
-                log.info("ida_UD_centers_stage: threshold %d" % threshold)
-                if fake_555.ida_UD_centers_stage(0, threshold, None, original_state, original_solution):
-                    break
-            else:
-                raise SolveError("5x5x5 UD centers-stage FAILED")
+        fake_555.lt_UD_centers_stage.solve()
 
         for step in fake_555.solution:
             self.rotate(step)
         log.info("UD staged, %d steps in" % len(self.solution))
         self.print_cube()
 
-        self.lookup_table_666_LR_inner_x_centers_stage()
-        self.lookup_table_666_LR_oblique_pairing_stage()
+        self.lt_LR_inner_x_centers_stage.solve()
+        self.lt_LR_oblique_edge_pairing.solve()
 
         log.info("Took %d steps to stage UD centers and LR inner-x-centers and oblique pairs" % len(self.solution))
         self.print_cube()
 
+
         # At this point we can treat UD centers like 5x5x5 centers
         # Create a dummy 5x5x5 cube object that we can use to figure out what steps to
-        fake_555 = RubiksCube555('UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB')
+        fake_555 = RubiksCube555(solved_5x5x5)
         self.populate_fake_555_for_LR(fake_555)
-        #fake_555.print_cube()
 
-        fake_555.lookup_table_555_LR_centers_stage()
+        fake_555.lt_LR_centers_stage.solve()
         for step in fake_555.solution:
             self.rotate(step)
-
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
         self.print_cube()
 
-        self.lookup_table_666_UD_centers_solve()
+
+        self.lt_UD_centers_solve.solve()
         log.info("Took %d steps to solve UD centers" % len(self.solution))
         self.print_cube()
 
-        self.lookup_table_666_LR_centers_solve()
+
+        self.lt_LR_centers_solve.solve()
         log.info("Took %d steps to solve LR centers" % len(self.solution))
         self.print_cube()
 
-        if not self.lookup_table_666_LFRB_centers_solve():
-
-            # save cube state
-            original_state = copy(self.state)
-            original_solution = copy(self.solution)
-
-            for threshold in range(1, 50):
-                log.info("ida_LFRB_centers_solve: threshold %d" % threshold)
-                if self.ida_LFRB_centers_solve(0, threshold, None, original_state, original_solution):
-                    break
-            else:
-                raise SolveError("6x6x6x LFRB centers solve FAILED")
-
+        self.lt_LFRB_centers_solve.solve()
         log.info("Took %d steps to solve centers" % len(self.solution))
         self.print_cube()
         sys.exit(0)

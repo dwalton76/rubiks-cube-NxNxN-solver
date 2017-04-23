@@ -115,13 +115,13 @@ class RubiksCube666(RubiksCube):
         self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
                                                                 '666-UD-oblique-edge-pairing-left-only',
-                                                                None,
+                                                                'xUxxxxxUUxxxxxUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUxxxxxUUxxxxxUx',
                                                                 False) # state_hex
 
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
                                                                 '666-UD-oblique-edge-pairing-right-only',
-                                                                None,
+                                                                'xxUxUxxxxxxUxUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUxUxxxxxxUxUxx',
                                                                 False) # state_hex
 
         self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
@@ -464,8 +464,16 @@ class RubiksCube666(RubiksCube):
 
     def group_centers_guts(self):
         self.lt_UD_inner_x_centers_stage.solve()
-        self.lt_UD_oblique_edge_pairing.solve()
 
+        # If you uncomment these the IDA search will go much faster but at the tradeoff
+        # of adding moves to the solution (increases from 83 to 93 in our base example).
+        #
+        # These are our two prune tables so if we go ahead and solve for one of them we
+        # get the cube in a state that is much closer to being a match for the table we
+        # are doing and IDA search against.
+        #self.lt_UD_oblique_edge_pairing_left_only.solve()
+        #self.lt_UD_oblique_edge_pairing_right_only.solve()
+        self.lt_UD_oblique_edge_pairing.solve()
 
         # At this point we can treat UD centers like 5x5x5 centers
         # Create a dummy 5x5x5 cube object that we can use to figure out what steps to

@@ -58,7 +58,7 @@ class RubiksCube444(RubiksCube):
 
         Total: 12,870 entries
         '''
-        self.lt_LR_centers_stage = LookupTable(self, 'lookup-table-4x4x4-step02-LR-centers-stage.txt', 'LR-centers-stage', 'LLLLFFFFLLLLFFFF')
+        self.lt_LR_centers_stage = LookupTable(self, 'lookup-table-4x4x4-step02-LR-centers-stage.txt', 'LR-centers-stage', 'LLLLxxxxLLLLxxxx')
 
 
         '''

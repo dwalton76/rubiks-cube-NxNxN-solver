@@ -3,7 +3,7 @@ from collections import OrderedDict
 from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.pts_line_bisect import get_line_startswith
-from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out, convert_state_to_hex
+from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out, convert_state_to_hex, LookupTable, LookupTableIDA
 from rubikscubennnsolver.RubiksSide import Side, SolveError
 from rubikscubennnsolver.RubiksCube444 import moves_4x4x4
 import logging
@@ -20,135 +20,111 @@ moves_5x5x5 = moves_4x4x4
 
 
 class RubiksCube555(RubiksCube):
+    """
+    5x5x5 strategy
+    - IDA stage UD centers to sides U or D
+    - stage LR centers to sides L or R...this in turn stages FB centers to sides F or B
+    - IDA solve all centers
+    - pair edges
+    - solve as 3x3x3
+    """
 
-    def get_state_t_centers(self):
-        result = []
+    def __init__(self, kociemba_string):
+        RubiksCube.__init__(self, kociemba_string)
 
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+        '''
+        There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
+        We cannot build a table this large so we will build it to 7 moves deep and use
+        IDA with T-centers and X-centers as our prune tables. Both the T-centers and
+        X-centers prune tables will have 735,471 entries so 735,471/540,917,591,841
+        is 0.0000013596729171 which is a decent percentage for IDA.
 
-            # [7, 8, 9, 12, 13, 14, 17, 18, 19]
-            #  X  T  X   T  TX   T   X   T   X
-            #  0  1  2   3   4   5   6   7   8
-            result.append('x')
-            result.append(self.state[side.center_pos[1]])
-            result.append('x')
-            result.append(self.state[side.center_pos[3]])
-            result.append(self.state[side.center_pos[4]])
-            result.append(self.state[side.center_pos[5]])
-            result.append('x')
-            result.append(self.state[side.center_pos[7]])
-            result.append('x')
+        1 steps has 5 entries (0 percent)
+        2 steps has 98 entries (0 percent)
+        3 steps has 2,036 entries (0 percent)
+        4 steps has 41,096 entries (0 percent)
+        5 steps has 824,950 entries (0 percent)
+        6 steps has 16,300,291 entries (4 percent)
+        7 steps has 311,709,304 entries (94 percent)
 
-        return ''.join(result)
+        Total: 328,877,780 entries
 
-    def get_state_x_centers(self):
-        result = []
 
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+        T-centers - 24!/(16! * 8!) is 735,471
 
-            # [7, 8, 9, 12, 13, 14, 17, 18, 19]
-            #  X  T  X   T  TX   T   X   T   X
-            #  0  1  2   3   4   5   6   7   8
-            result.append(self.state[side.center_pos[0]])
-            result.append('x')
-            result.append(self.state[side.center_pos[2]])
-            result.append('x')
-            result.append(self.state[side.center_pos[4]])
-            result.append('x')
-            result.append(self.state[side.center_pos[6]])
-            result.append('x')
-            result.append(self.state[side.center_pos[8]])
+        1 steps has 5 entries (0 percent)
+        2 steps has 66 entries (0 percent)
+        3 steps has 900 entries (0 percent)
+        4 steps has 9,626 entries (1 percent)
+        5 steps has 80,202 entries (10 percent)
+        6 steps has 329,202 entries (44 percent)
+        7 steps has 302,146 entries (41 percent)
+        8 steps has 13,324 entries (1 percent)
 
-        return ''.join(result)
+        Total: 735,471 entries
 
-    def lookup_table_555_UD_T_centers(self):
-        t_centers_state = self.get_state_t_centers()
-        t_centers_state = t_centers_state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
-        filename = 'lookup-table-5x5x5-step11-stage-UD-T-centers.txt'
 
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, t_centers_state + ':')
+        X-centers - 24!/(16! * 8!) is 735,471
 
-            if line:
-                (key, steps) = line.strip().split(':')
-                steps = steps.split()
-                return steps
+        1 steps has 5 entries (0 percent)
+        2 steps has 82 entries (0 percent)
+        3 steps has 1,206 entries (0 percent)
+        4 steps has 14,116 entries (1 percent)
+        5 steps has 123,404 entries (16 percent)
+        6 steps has 422,508 entries (57 percent)
+        7 steps has 173,254 entries (23 percent)
+        8 steps has 896 entries (0 percent)
+
+        Total: 735,471 entries
+        '''
+        self.lt_UD_T_centers_stage = LookupTable(self,
+                                                 'lookup-table-5x5x5-step11-UD-T-centers-stage.txt',
+                                                 'UD-T-centers-stage',
+                                                 None,
+                                                 False) # state_hex
+
+        self.lt_UD_X_centers_stage = LookupTable(self,
+                                                 'lookup-table-5x5x5-step12-UD-X-centers-stage.txt',
+                                                 'UD-X-centers-stage',
+                                                 None,
+                                                 False) # state_hex
+
+        self.lt_UD_centers_stage = LookupTableIDA(self,
+                                                 'lookup-table-5x5x5-step10-UD-centers-state.txt',
+                                                 'UD-centers-stage',
+                                                 '3fe000000001ff',
+                                                 True, # state_hex
+                                                 moves_5x5x5,
+                                                 (), # illegal_moves
+                                                 (self.lt_UD_T_centers_stage, self.lt_UD_X_centers_stage)) # prune tables
+
+    def group_centers_guts(self):
+        self.rotate_U_to_U()
+        self.lt_UD_centers_stage.solve()
+        # dwalton remove this
+        #self.print_cube()
+        #sys.exit(0)
+
+        self.lookup_table_555_LR_centers_stage()
+        log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
+
+        if not self.lookup_table_555_ULFRBD_centers_solve():
+
+            # save cube state
+            original_state = copy(self.state)
+            original_solution = copy(self.solution)
+
+            for threshold in range(1, 15):
+                log.info("ida_ULFRBD_centers_solve: threshold %d" % threshold)
+                if self.ida_ULFRBD_centers_solve(0, threshold, None, original_state, original_solution):
+                    break
             else:
-                log.warning("Could not find T-center %s in %s" % (t_centers_state, filename))
-                sys.exit(1)
+                raise SolveError("UD centers-solve FAILED")
 
-    def lookup_table_555_UD_X_centers(self):
-        x_centers_state = self.get_state_x_centers()
-        x_centers_state = x_centers_state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
-        filename = 'lookup-table-5x5x5-step12-stage-UD-X-centers.txt'
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, x_centers_state + ':')
-
-            if line:
-                (key, steps) = line.strip().split(':')
-                steps = steps.split()
-                return steps
-            else:
-                print("ERROR: Could not find X-center %s in %s" % (x_centers_state, filename))
-                sys.exit(1)
-
-    def lookup_table_555_UD_centers_stage(self):
-        filename = 'lookup-table-5x5x5-step10-stage-UD-centers.txt'
-
-        with open(filename, 'r') as fh:
-            while True:
-                state = ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_pos])
-                state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
-
-                if state == 'UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU':
-                    return True
-
-                # dwalton
-                hex_state = convert_state_to_hex(state)
-                line = get_line_startswith(fh, hex_state + ':')
-
-                if line:
-                    (key, step) = line.strip().split(':')
-                    self.rotate(step)
-
-                    log.warning("UD centers-stage: FOUND entry %d steps in, %s" % (len(self.solution), step))
-                else:
-                    return False
-
-    def ida_UD_centers_stage(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
-
-        for step in moves_5x5x5:
-
-            # If this step cancels out the previous step then don't bother with this branch
-            if steps_cancel_out(prev_step, step):
-                continue
-
-            self.state = copy(prev_state)
-            self.solution = copy(prev_solution)
-            self.rotate(step)
-            self.ida_count += 1
-            # assert cost_to_here+1 == len(self.solution), "cost_to_here %d, solution %s" % (cost_to_here, ' '.join(self.solution))
-
-            # Do we have the cube in a state where there is a match in the lookup table?
-            if self.lookup_table_555_UD_centers_stage():
-                return True
-
-            cost_to_goal = max(len(self.lookup_table_555_UD_T_centers()), len(self.lookup_table_555_UD_X_centers()))
-
-            if (cost_to_here + 1 + cost_to_goal) > threshold:
-                continue
-
-            state_end_of_this_step = copy(self.state)
-            solution_end_of_this_step = copy(self.solution)
-
-            if self.ida_UD_centers_stage(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
-                return True
-
-        return False
+        log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 
     def lookup_table_555_LR_centers_stage(self):
-        filename = 'lookup-table-5x5x5-step20-stage-LR-centers.txt'
+        filename = 'lookup-table-5x5x5-step20-LR-centers-stage.txt'
 
         with open(filename, 'r') as fh:
             while True:
@@ -243,46 +219,6 @@ class RubiksCube555(RubiksCube):
                 return True
 
         return False
-
-    def group_centers_guts(self):
-        self.rotate_U_to_U()
-
-        if not self.lookup_table_555_UD_centers_stage():
-
-            # If we are here (odds are very high we will be) it means that the current
-            # cube state was not in the lookup table.  We must now perform an IDA search
-            # until we find a sequence of moves that takes us to a state that IS in the
-            # lookup table.
-
-            # save cube state
-            original_state = copy(self.state)
-            original_solution = copy(self.solution)
-
-            for threshold in range(1, 10):
-                log.info("ida_UD_centers_stage: threshold %d" % threshold)
-                if self.ida_UD_centers_stage(0, threshold, None, original_state, original_solution):
-                    break
-            else:
-                raise SolveError("UD centers-stage FAILED")
-
-        # log.warning("ida_count %d" % self.ida_count)
-        self.lookup_table_555_LR_centers_stage()
-        log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
-
-        if not self.lookup_table_555_ULFRBD_centers_solve():
-
-            # save cube state
-            original_state = copy(self.state)
-            original_solution = copy(self.solution)
-
-            for threshold in range(1, 15):
-                log.info("ida_ULFRBD_centers_solve: threshold %d" % threshold)
-                if self.ida_ULFRBD_centers_solve(0, threshold, None, original_state, original_solution):
-                    break
-            else:
-                raise SolveError("UD centers-solve FAILED")
-
-        log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 
     def find_moves_to_stage_slice_forward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         log.debug("find_moves_to_stage_slice_forward_555 called with target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %

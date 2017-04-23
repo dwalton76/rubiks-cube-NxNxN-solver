@@ -312,10 +312,9 @@ def convert_state_to_hex(state):
     return hex_state
 
 
-# dwalton
 class LookupTable(object):
 
-    def __init__(self, parent, filename, state_type, state_target):
+    def __init__(self, parent, filename, state_type, state_target, state_hex=False):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.sides_LFRB = (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB)
@@ -325,11 +324,9 @@ class LookupTable(object):
             sys.exit(1)
         self.filename = filename
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
-
-        supported_state_types = ('all', 'UD-centers-stage', 'LR-centers-stage', 'ULFRBD-centers-solve', '444-edges-slice-forward', '444-edges-slice-backward')
-        assert state_type in supported_state_types, "%s is not among valid state_type %s" % (state_type, ', '.join(supported_state_types))
         self.state_type = state_type
         self.state_target = state_target
+        self.state_hex = state_hex
 
     def __str__(self):
         return self.desc
@@ -341,7 +338,7 @@ class LookupTable(object):
 
         elif self.state_type == 'UD-centers-stage':
             state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
-            state = state.replace('U', 'U').replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
         elif self.state_type == 'LR-centers-stage':
             state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
@@ -350,8 +347,55 @@ class LookupTable(object):
         elif self.state_type == 'ULFRBD-centers-solve':
             state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
 
+        elif self.state_type == 'UD-T-centers-stage':
+            # This is currently hard coded for 5x5x5
+            state = []
+
+            for side in self.sides_all:
+
+                # [7, 8, 9, 12, 13, 14, 17, 18, 19]
+                #  X  T  X   T  TX   T   X   T   X
+                #  0  1  2   3   4   5   6   7   8
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[1]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[3]])
+                state.append(self.parent.state[side.center_pos[4]])
+                state.append(self.parent.state[side.center_pos[5]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[7]])
+                state.append('x')
+
+            state = ''.join(state)
+            state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == 'UD-X-centers-stage':
+            # This is currently hard coded for 5x5x5
+            state = []
+
+            for side in self.sides_all:
+
+                # [7, 8, 9, 12, 13, 14, 17, 18, 19]
+                #  X  T  X   T  TX   T   X   T   X
+                #  0  1  2   3   4   5   6   7   8
+                state.append(self.parent.state[side.center_pos[0]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[2]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[4]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[6]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[8]])
+
+            state = ''.join(state)
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
         else:
             raise Exception("Implement state_type %s" % self.state_type)
+
+        if self.state_hex:
+            state = convert_state_to_hex(state)
 
         return state
 
@@ -361,29 +405,124 @@ class LookupTable(object):
         """
         if state is None:
             state = self.state()
-        log.info("%s state %s" % (self, state))
+        #log.info("%s state %s" % (self, state))
 
         with open(self.filename, 'r') as fh:
             line = get_line_startswith(fh, state + ':')
 
             if line:
                 (_, steps) = line.strip().split(':')
-                log.info("%s found state: %d steps in, steps %s" % (self, len(self.parent.solution), steps))
+                #log.info("%s found state: %d steps in, steps %s" % (self, len(self.parent.solution), steps))
                 return steps.split()
         return []
 
     def steps_length(self, state=None):
         return len(self.steps(state))
 
-    def solve(self, state=None):
-        if state is None:
+    def solve(self):
+        assert self.state_target is not None, "state_target is None"
+
+        while True:
             state = self.state()
 
-        if state == self.state_target:
-            return
+            if state == self.state_target:
+                break
 
-        for step in self.steps(state):
+            for step in self.steps(state):
+                self.parent.rotate(step)
+
+
+class LookupTableIDA(LookupTable):
+    """
+    """
+
+    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables):
+        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex)
+        self.moves_all = moves_all
+        self.moves_illegal = moves_illegal
+        self.ida_count = 0
+        self.prune_tables = prune_tables
+
+    def ida_cost(self):
+        costs = []
+
+        for pt in self.prune_tables:
+            costs.append(pt.steps_length())
+
+        return max(costs)
+
+    def ida_search(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
+
+        for step in self.moves_all:
+
+            if step in self.moves_illegal:
+                continue
+
+            # If this step cancels out the previous step then don't bother with this branch
+            if steps_cancel_out(prev_step, step):
+                continue
+
+            self.parent.state = copy(prev_state)
+            self.parent.solution = copy(prev_solution)
             self.parent.rotate(step)
+            self.ida_count += 1
+            # assert cost_to_here+1 == len(self.solution), "cost_to_here %d, solution %s" % (cost_to_here, ' '.join(self.solution))
+
+            # Do we have the cube in a state where there is a match in the lookup table?
+            steps = self.steps()
+            if steps:
+                #log.info("match IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
+                #        (step, cost_to_here, cost_to_goal, threshold))
+                for step in steps:
+                    self.parent.rotate(step)
+                return True
+
+            cost_to_goal = self.ida_cost()
+
+            if (cost_to_here + 1 + cost_to_goal) > threshold:
+                #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
+                #        (step, cost_to_here, cost_to_goal, threshold))
+                continue
+
+            state_end_of_this_step = copy(self.parent.state)
+            solution_end_of_this_step = copy(self.parent.solution)
+
+            if self.ida_search(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
+                return True
+
+        return False
+
+    def solve(self):
+        assert self.state_target is not None, "state_target is None"
+
+        while True:
+            state = self.state()
+
+            if state == self.state_target:
+                break
+
+            # log.info("state %s vs state_target %s" % (state, self.state_target))
+            steps = self.steps()
+
+            if steps:
+                for step in steps:
+                    self.parent.rotate(step)
+            else:
+                # If we are here (odds are very high we will be) it means that the current
+                # cube state was not in the lookup table.  We must now perform an IDA search
+                # until we find a sequence of moves that takes us to a state that IS in the
+                # lookup table.
+
+                # save cube state
+                original_state = copy(self.parent.state)
+                original_solution = copy(self.parent.solution)
+
+                for threshold in range(1, 20):
+                    log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
+                    if self.ida_search(0, threshold, None, original_state, original_solution):
+                        break
+                else:
+                    raise SolveError("%s FAILED" % self)
 
 
 class RubiksCube(object):

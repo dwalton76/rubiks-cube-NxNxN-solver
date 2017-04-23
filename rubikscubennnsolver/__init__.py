@@ -317,6 +317,8 @@ class LookupTable(object):
 
     def __init__(self, parent, filename, state_type, state_target):
         self.parent = parent
+        self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
+        self.sides_LFRB = (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB)
 
         if not os.path.exists(filename):
             print "ERROR: %s does not exist" % filename
@@ -324,8 +326,8 @@ class LookupTable(object):
         self.filename = filename
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
 
-        supported_state_types = ('all', 'UD-centers-stage', 'LR-centers-stage', 'ULFRBD-centers-solve')
-        assert state_type in supported_state_types, "Valid state_type are %s" % ', '.join(supported_state_types)
+        supported_state_types = ('all', 'UD-centers-stage', 'LR-centers-stage', 'ULFRBD-centers-solve', '444-edges-slice-forward', '444-edges-slice-backward')
+        assert state_type in supported_state_types, "%s is not among valid state_type %s" % (state_type, ', '.join(supported_state_types))
         self.state_type = state_type
         self.state_target = state_target
 
@@ -333,29 +335,32 @@ class LookupTable(object):
         return self.desc
 
     def state(self):
+
         if self.state_type == 'all':
             state = self.parent.get_state_all()
 
         elif self.state_type == 'UD-centers-stage':
-            state = ''.join([self.parent.state[square_index] for side in (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD) for square_index in side.center_pos])
+            state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
             state = state.replace('U', 'U').replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
         elif self.state_type == 'LR-centers-stage':
-            state = ''.join([self.parent.state[square_index] for side in (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB) for square_index in side.center_pos])
+            state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
             state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')
 
         elif self.state_type == 'ULFRBD-centers-solve':
-            state = ''.join([self.parent.state[square_index] for side in (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD) for square_index in side.center_pos])
+            state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
 
         else:
             raise Exception("Implement state_type %s" % self.state_type)
+
         return state
 
-    def steps(self):
+    def steps(self, state=None):
         """
         Return the steps found in the lookup table for the current cube state
         """
-        state = self.state()
+        if state is None:
+            state = self.state()
         log.info("%s state %s" % (self, state))
 
         with open(self.filename, 'r') as fh:
@@ -365,15 +370,19 @@ class LookupTable(object):
                 (_, steps) = line.strip().split(':')
                 log.info("%s found state: %d steps in, steps %s" % (self, len(self.parent.solution), steps))
                 return steps.split()
-        return None
+        return []
 
-    def solve(self):
-        state = self.state()
+    def steps_length(self, state=None):
+        return len(self.steps(state))
+
+    def solve(self, state=None):
+        if state is None:
+            state = self.state()
 
         if state == self.state_target:
             return
 
-        for step in self.steps():
+        for step in self.steps(state):
             self.parent.rotate(step)
 
 

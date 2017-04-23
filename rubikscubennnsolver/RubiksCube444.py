@@ -1,19 +1,11 @@
-
-from collections import OrderedDict
 from copy import copy
 from pprint import pformat
-from rubikscubennnsolver.pts_line_bisect import get_line_startswith
-from rubikscubennnsolver.RubiksSide import Side, SolveError
+from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver import RubiksCube, LookupTable
 import logging
-import math
-import os
-import random
-import re
-import subprocess
-import sys
 
 log = logging.getLogger(__name__)
+
 
 moves_4x4x4 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2",
                "L", "L'", "L2", "Lw", "Lw'", "Lw2",
@@ -21,85 +13,6 @@ moves_4x4x4 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2",
                "R" , "R'", "R2", "Rw", "Rw'", "Rw2",
                "B" , "B'", "B2", "Bw", "Bw'", "Bw2",
                "D" , "D'", "D2", "Dw", "Dw'", "Dw2")
-
-# Move a wing to (44, 57)
-lookup_table_444_last_two_edges_place_F_east = {
-    (2, 67)  : "B' R2",
-    (3, 66)  : "U R'",
-    (5, 18)  : "U2 R'",
-    (9, 19)  : "U B' R2",
-    (14, 34) : "U' R'",
-    (15, 35) : "U F' U' F",
-    (8, 51)  : "F' U F",
-    (12, 50) : "R'",
-    (21, 72) : "B' U R'",
-    (25, 76) : "B2 R2",
-    (30, 89) : "F D F'",
-    (31, 85) : "D2 R",
-    (40, 53) : "R U' B' R2",
-    (44, 57) : "",
-    (46, 82) : "D F D' F'",
-    (47, 83) : "D R",
-    (56, 69) : "R2",
-    (60, 73) : "B U R'",
-    (62, 88) : "F D' F'",
-    (63, 92) : "R",
-    (78, 95) : "B R2",
-    (79, 94) : "D' R",
-}
-
-# Move a wing to (40, 53)
-lookup_table_444_sister_wing_to_F_east = {
-    (2, 67)  : "U R'",
-    (3, 66)  : "B' R2",
-    (5, 18)  : "U B' R2",
-    (9, 19)  : "U2 R'",
-    (14, 34) : "L F L'",
-    (15, 35) : "U' R'",
-    (8, 51)  : "R'",
-    (12, 50) : "F' U F",
-    (21, 72) : "B2 R2",
-    (25, 76) : "B D' R",
-    (30, 89) : "D2 R",
-    (31, 85) : "F D F'",
-    (40, 53) : "",
-    (44, 57) : "F D F' R",
-    (46, 82) : "D R",
-    (47, 83) : "D2 B R2",
-    (56, 69) : "B U R'",
-    (60, 73) : "R2",
-    (62, 88) : "R",
-    (63, 92) : "F D' F'",
-    (78, 95) : "D' R",
-    (79, 94) : "B R2",
-}
-
-# Move a wing to (5, 18)
-lookup_table_444_sister_wing_to_U_west = {
-    (2, 67)  : "L' B L",
-    (3, 66)  : "U'",
-    (5, 18)  : "",
-    (9, 19)  : "L' B' L U'",
-    (14, 34) : "U",
-    (15, 35) : "F' L' F",
-    (8, 51)  : "U' B F L F'",
-    (12, 50) : "U2",
-    (21, 72) : "B' U'",
-    (25, 76) : "L U L' U'",
-    (30, 89) : "L B' L' U'",
-    (31, 85) : "D' B2 U'",
-    (37, 24) : None,
-    #(40, 53) : "",
-    #(44, 57) : "",
-    (46, 82) : "F L' F'",
-    (47, 83) : "D2 B2 U'",
-    (56, 69) : "R' U2 R",
-    (60, 73) : "B U'",
-    (62, 88) : "R' B R U'",
-    (63, 92) : "D B2 U'",
-    (78, 95) : "B2 U'",
-    (79, 94) : "B2 U'",
-}
 
 
 class RubiksCube444(RubiksCube):
@@ -109,93 +22,169 @@ class RubiksCube444(RubiksCube):
         self.lt_UD_centers_stage = LookupTable(self, 'lookup-table-4x4x4-step01-UD-centers-stage.txt', 'UD-centers-stage', 'UUUUxxxxxxxxxxxxxxxxUUUU')
         self.lt_LR_centers_stage = LookupTable(self, 'lookup-table-4x4x4-step02-LR-centers-stage.txt', 'LR-centers-stage', 'LLLLFFFFLLLLFFFF')
         self.lt_ULFRBD_centers_solve = LookupTable(self, 'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt', 'ULFRBD-centers-solve', 'UUUULLLLFFFFRRRRBBBBDDDD')
+        self.lt_edge_slice_forward = LookupTable(self, 'lookup-table-4x4x4-step40-edges-slice-forward.txt', '444-edges-slice-forward', None)
+        self.lt_edge_slice_backward = LookupTable(self, 'lookup-table-4x4x4-step50-edges-slice-backward.txt', '444-edges-slice-backward', None)
 
     def group_centers_guts(self):
 
         # The UD solve -> LFRB solve approach is only ~1 move shorter on average
         # than doing UD stage, LR stage, ULFRBD solve.  The UD solve -> LFRB
-        # lookup tables are 5.6G whereas the UD stage, LR stage, ULFRBD solve
-        # lookup tables are only 49M...so we use the 49M tables so we can check
+        # lookup tables are 5.6G where the UD stage, LR stage, ULFRBD solve
+        # lookup tables are only 49M...we use the 49M tables so we can check
         # them into the github repo.
         self.lt_UD_centers_stage.solve()
         self.lt_LR_centers_stage.solve()
         self.lt_ULFRBD_centers_solve.solve()
 
-    def find_moves_to_stage_slice_forward_444(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
-        # target_wing must go in spot 41
-        # sister_wing1 must go in spot (40, 53)
-        # sister_wing2 must go in spot (56, 69)
-        # sister_wing3 must go in spot (72, 21)
-        foo = []
+    def group_edges(self):
+
+        # save cube state
+        original_state = copy(self.state)
+        original_solution = copy(self.solution)
+        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+        # There are 12 edges, cycle through all 12 in terms of which edge we try to pair first.
+        # Remember the one that results in the shortest solution that is free of PLL parity.
+        original_non_paired_edges = self.get_non_paired_edges()
+        min_solution_length = None
+        min_solution_state = None
+        min_solution = None
+
+        # There are some cubes where I always hit PLL parity when I pair multiple
+        # edges at a time, so try with this capability first and if we fail to find
+        # a PLL free solution then turn it off.
+        for pair_multiple_edges_at_once in (True, False):
+            for init_wing_to_pair in original_non_paired_edges:
+                log.info("init_wing_to_pair %20s" % pformat(init_wing_to_pair))
+
+                while True:
+                    non_paired_edges = self.get_non_paired_edges()
+                    len_non_paired_edges = len(non_paired_edges)
+
+                    if len_non_paired_edges > 6:
+                        if init_wing_to_pair:
+                            wing_to_pair = init_wing_to_pair[0]
+                            init_wing_to_pair = None
+                        else:
+                            wing_to_pair = non_paired_edges[0][0]
+
+                        if not self.pair_six_edges_444(wing_to_pair):
+                            log.info("pair_six_edges_444()    returned False")
+                            self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
+
+                    elif len_non_paired_edges == 6 and pair_multiple_edges_at_once:
+                        # When there are 6 pairs left you can pair 2 on the slice forward
+                        # and the final 4 on the slice back. When you pair the 2 on the slice
+                        # forward the edge on the back left side must be unpaired (if it is
+                        # paired we will unpair it)
+                        if init_wing_to_pair:
+                            wing_to_pair = init_wing_to_pair[0]
+                            init_wing_to_pair = None
+                        else:
+                            wing_to_pair = non_paired_edges[0][0]
+
+                        if not self.pair_last_six_edges_444():
+                            log.info("pair_last_six_edges_444() returned False")
+
+                            if not self.pair_four_edges_444(wing_to_pair):
+                                log.info("pair_four_edges_444() returned False")
+                                self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
+
+                    elif len_non_paired_edges > 2:
+                        if init_wing_to_pair:
+                            wing_to_pair = init_wing_to_pair[0]
+                            init_wing_to_pair = None
+                        else:
+                            wing_to_pair = non_paired_edges[0][0]
+
+                        self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
+
+                    elif len_non_paired_edges == 2:
+                        wing_to_pair = non_paired_edges[0][0]
+                        self.pair_last_two_edges_444(wing_to_pair)
+
+                    else:
+                        break
+
+                solution_len_minus_rotates = self.get_solution_len_minus_rotates(self.solution)
+
+                if self.edge_solution_leads_to_pll_parity():
+                    log.info("edges solution length %d, leads to PLL parity" % (solution_len_minus_rotates - original_solution_len))
+                else:
+                    if min_solution_length is None or solution_len_minus_rotates < min_solution_length:
+                        min_solution_length = solution_len_minus_rotates
+                        min_solution_state = copy(self.state)
+                        min_solution = copy(self.solution)
+                        log.warning("edges solution length %d (NEW MIN)" % (solution_len_minus_rotates - original_solution_len))
+                    else:
+                        log.info("edges solution length %d" % (solution_len_minus_rotates - original_solution_len))
+                log.info('')
+
+                # Restore to original state
+                self.state = copy(original_state)
+                self.solution = copy(original_solution)
+
+            # If we were able to find a PLL free solution when pair_multiple_edges_at_once
+            # was True then break, there is not point trying with pair_multiple_edges_at_once
+            # False since those solutions will all be longer
+            if min_solution_length:
+                break
+            else:
+                log.warning("Could not find PLL free edge solution with pair_multiple_edges_at_once True")
+
+        if min_solution_length:
+            self.state = copy(min_solution_state)
+            self.solution = copy(min_solution)
+
+            if self.get_non_paired_edges_count():
+                raise SolveError("All edges should be resolved")
+
+            self.solution.append('EDGES_GROUPED')
+        else:
+            raise SolveError("Could not find a PLL free edge solution")
+
+    def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
+        state = []
         for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
             for square_index in sorted(side.edge_pos):
 
                 if square_index in (target_wing[0], target_wing[1]):
-                    foo.append('A')
+                    state.append('A')
 
                 elif square_index in (sister_wing1[0], sister_wing1[1]):
-                    foo.append('B')
+                    state.append('B')
 
                 elif square_index in (sister_wing2[0], sister_wing2[1]):
-                    foo.append('C')
+                    state.append('C')
 
                 elif square_index in (sister_wing3[0], sister_wing3[1]):
-                    foo.append('D')
+                    state.append('D')
 
                 else:
-                    foo.append('x')
+                    state.append('x')
 
-        edge_string_to_find = ''.join(foo)
-        filename = 'lookup-table-4x4x4-step40-edges-slice-forward.txt'
+        # dwalton
+        return ''.join(state)
 
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, edge_string_to_find + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-                return steps
-
-        log.debug("find_moves_to_stage_slice_forward_444 could not find %s" % edge_string_to_find)
-        return None
+    def find_moves_to_stage_slice_forward_444(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
+        """
+        target_wing must go in spot 41
+        sister_wing1 must go in spot (40, 53)
+        sister_wing2 must go in spot (56, 69)
+        sister_wing3 must go in spot (72, 21)
+        """
+        state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
+        return self.lt_edge_slice_forward.steps(state)
 
     def find_moves_to_stage_slice_backward_444(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
-        # target_wing must go in spot (44, 57)
-        # sister_wing1 must go in spot (24, 37)
-        # sister_wing2 must go in spot (72, 21))
-        # sister_wing3 must go in spot (56, 69)
-        foo = []
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in sorted(side.edge_pos):
-
-                if square_index in (target_wing[0], target_wing[1]):
-                    foo.append('A')
-
-                elif square_index in (sister_wing1[0], sister_wing1[1]):
-                    foo.append('B')
-
-                elif square_index in (sister_wing2[0], sister_wing2[1]):
-                    foo.append('C')
-
-                elif square_index in (sister_wing3[0], sister_wing3[1]):
-                    foo.append('D')
-
-                else:
-                    foo.append('x')
-
-        edge_string_to_find = ''.join(foo)
-        filename = 'lookup-table-4x4x4-step50-edges-slice-backward.txt'
-
-        with open(filename, 'r') as fh:
-            line = get_line_startswith(fh, edge_string_to_find + ':')
-
-            if line:
-                (key, steps) = line.split(':')
-                steps = steps.strip().split()
-                return steps
-
-        log.debug("find_moves_to_stage_slice_backward_444 could not find %s" % edge_string_to_find)
-        return None
+        """
+        target_wing must go in spot (44, 57)
+        sister_wing1 must go in spot (24, 37)
+        sister_wing2 must go in spot (72, 21))
+        sister_wing3 must go in spot (56, 69)
+        """
+        state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
+        return self.lt_edge_slice_backward.steps(state)
 
     def prep_for_slice_back_444(self):
 
@@ -711,114 +700,89 @@ class RubiksCube444(RubiksCube):
              current_solution_len - original_solution_len,
              current_non_paired_wings_count))
 
-    def group_edges(self):
 
-        # save cube state
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
-        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
+# Move a wing to (44, 57)
+lookup_table_444_last_two_edges_place_F_east = {
+    (2, 67)  : "B' R2",
+    (3, 66)  : "U R'",
+    (5, 18)  : "U2 R'",
+    (9, 19)  : "U B' R2",
+    (14, 34) : "U' R'",
+    (15, 35) : "U F' U' F",
+    (8, 51)  : "F' U F",
+    (12, 50) : "R'",
+    (21, 72) : "B' U R'",
+    (25, 76) : "B2 R2",
+    (30, 89) : "F D F'",
+    (31, 85) : "D2 R",
+    (40, 53) : "R U' B' R2",
+    (44, 57) : "",
+    (46, 82) : "D F D' F'",
+    (47, 83) : "D R",
+    (56, 69) : "R2",
+    (60, 73) : "B U R'",
+    (62, 88) : "F D' F'",
+    (63, 92) : "R",
+    (78, 95) : "B R2",
+    (79, 94) : "D' R",
+}
 
-        # There are 12 edges, cycle through all 12 in terms of which edge we try to pair first.
-        # Remember the one that results in the shortest solution that is free of PLL parity.
-        original_non_paired_edges = self.get_non_paired_edges()
-        min_solution_length = None
-        min_solution_state = None
-        min_solution = None
+# Move a wing to (40, 53)
+lookup_table_444_sister_wing_to_F_east = {
+    (2, 67)  : "U R'",
+    (3, 66)  : "B' R2",
+    (5, 18)  : "U B' R2",
+    (9, 19)  : "U2 R'",
+    (14, 34) : "L F L'",
+    (15, 35) : "U' R'",
+    (8, 51)  : "R'",
+    (12, 50) : "F' U F",
+    (21, 72) : "B2 R2",
+    (25, 76) : "B D' R",
+    (30, 89) : "D2 R",
+    (31, 85) : "F D F'",
+    (40, 53) : "",
+    (44, 57) : "F D F' R",
+    (46, 82) : "D R",
+    (47, 83) : "D2 B R2",
+    (56, 69) : "B U R'",
+    (60, 73) : "R2",
+    (62, 88) : "R",
+    (63, 92) : "F D' F'",
+    (78, 95) : "D' R",
+    (79, 94) : "B R2",
+}
 
-        # There are some cubes where I always hit PLL parity when I pair multiple
-        # edges at a time, so try with this capability first and if we fail to find
-        # a PLL free solution then turn it off.
-        for pair_multiple_edges_at_once in (True, False):
-            for init_wing_to_pair in original_non_paired_edges:
-                log.info("init_wing_to_pair %20s" % pformat(init_wing_to_pair))
+# Move a wing to (5, 18)
+lookup_table_444_sister_wing_to_U_west = {
+    (2, 67)  : "L' B L",
+    (3, 66)  : "U'",
+    (5, 18)  : "",
+    (9, 19)  : "L' B' L U'",
+    (14, 34) : "U",
+    (15, 35) : "F' L' F",
+    (8, 51)  : "U' B F L F'",
+    (12, 50) : "U2",
+    (21, 72) : "B' U'",
+    (25, 76) : "L U L' U'",
+    (30, 89) : "L B' L' U'",
+    (31, 85) : "D' B2 U'",
+    (37, 24) : None,
+    #(40, 53) : "",
+    #(44, 57) : "",
+    (46, 82) : "F L' F'",
+    (47, 83) : "D2 B2 U'",
+    (56, 69) : "R' U2 R",
+    (60, 73) : "B U'",
+    (62, 88) : "R' B R U'",
+    (63, 92) : "D B2 U'",
+    (78, 95) : "B2 U'",
+    (79, 94) : "B2 U'",
+}
 
-                while True:
-                    non_paired_edges = self.get_non_paired_edges()
-                    len_non_paired_edges = len(non_paired_edges)
 
-                    if len_non_paired_edges > 6:
-                        if init_wing_to_pair:
-                            wing_to_pair = init_wing_to_pair[0]
-                            init_wing_to_pair = None
-                        else:
-                            wing_to_pair = non_paired_edges[0][0]
-
-                        if not self.pair_six_edges_444(wing_to_pair):
-                            log.info("pair_six_edges_444()    returned False")
-                            self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
-
-                    elif len_non_paired_edges == 6 and pair_multiple_edges_at_once:
-                        # When there are 6 pairs left you can pair 2 on the slice forward
-                        # and the final 4 on the slice back. When you pair the 2 on the slice
-                        # forward the edge on the back left side must be unpaired (if it is
-                        # paired we will unpair it)
-                        if init_wing_to_pair:
-                            wing_to_pair = init_wing_to_pair[0]
-                            init_wing_to_pair = None
-                        else:
-                            wing_to_pair = non_paired_edges[0][0]
-
-                        if not self.pair_last_six_edges_444():
-                            log.info("pair_last_six_edges_444() returned False")
-
-                            if not self.pair_four_edges_444(wing_to_pair):
-                                log.info("pair_four_edges_444() returned False")
-                                self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
-
-                    elif len_non_paired_edges > 2:
-                        if init_wing_to_pair:
-                            wing_to_pair = init_wing_to_pair[0]
-                            init_wing_to_pair = None
-                        else:
-                            wing_to_pair = non_paired_edges[0][0]
-
-                        self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
-
-                    elif len_non_paired_edges == 2:
-                        wing_to_pair = non_paired_edges[0][0]
-                        self.pair_last_two_edges_444(wing_to_pair)
-
-                    else:
-                        break
-
-                solution_len_minus_rotates = self.get_solution_len_minus_rotates(self.solution)
-
-                if self.edge_solution_leads_to_pll_parity():
-                    log.info("edges solution length %d, leads to PLL parity" % (solution_len_minus_rotates - original_solution_len))
-                else:
-                    if min_solution_length is None or solution_len_minus_rotates < min_solution_length:
-                        min_solution_length = solution_len_minus_rotates
-                        min_solution_state = copy(self.state)
-                        min_solution = copy(self.solution)
-                        log.warning("edges solution length %d (NEW MIN)" % (solution_len_minus_rotates - original_solution_len))
-                    else:
-                        log.info("edges solution length %d" % (solution_len_minus_rotates - original_solution_len))
-                log.info('')
-
-                # Restore to original state
-                self.state = copy(original_state)
-                self.solution = copy(original_solution)
-
-            # If we were able to find a PLL free solution when pair_multiple_edges_at_once
-            # was True then break, there is not point trying with pair_multiple_edges_at_once
-            # False since those solutions will all be longer
-            if min_solution_length:
-                break
-            else:
-                log.warning("Could not find PLL free edge solution with pair_multiple_edges_at_once True")
-
-        if min_solution_length:
-            self.state = copy(min_solution_state)
-            self.solution = copy(min_solution)
-
-            if self.get_non_paired_edges_count():
-                raise SolveError("All edges should be resolved")
-
-            self.solution.append('EDGES_GROUPED')
-        else:
-            raise SolveError("Could not find a PLL free edge solution")
-
-        '''
+# Code below here is no longer...maybe I am saving it for a rainy day
+'''
     def find_moves_to_reach_state(self, wing_to_move, target_face_side):
         """
         This was used to build the lookup_table_444_last_two_edges_place_F_east, etc lookup tables
@@ -1132,4 +1096,4 @@ lookup_table_444_sister_wing_to_B_west = {
     (62, 88) : "B' D B", # D-east
     (63, 92) : "D R D' R'", # D-east
 }
-        '''
+'''

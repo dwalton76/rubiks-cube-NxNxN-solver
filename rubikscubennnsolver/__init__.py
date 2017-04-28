@@ -3,7 +3,7 @@ from collections import OrderedDict
 from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.pts_line_bisect import get_line_startswith
-from rubikscubennnsolver.RubiksSide import Side, SolveError
+from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis
 import logging
 import math
 import os
@@ -13,14 +13,6 @@ import subprocess
 import sys
 
 log = logging.getLogger(__name__)
-
-
-class StuckInALoop(Exception):
-    pass
-
-
-class ImplementThis(Exception):
-    pass
 
 
 def get_cube_layout(size):
@@ -1475,9 +1467,10 @@ class RubiksCube(object):
         #log.info("get_wings returning %s\n" % pformat(wings))
         return wings
 
-    def get_wing_in_middle_of_edge(self, pos1):
-        wings = self.get_wings(pos1)
+    def get_wing_in_middle_of_edge(self, pos1, remove_if_in_same_edge=False):
+        wings = self.get_wings(pos1, remove_if_in_same_edge)
 
+        # dwalton
         for wing in wings:
             wing_side = self.get_side_for_index(wing[0])
             if wing_side.wing_is_middle_of_edge(wing[0]):
@@ -3907,3 +3900,36 @@ class RubiksCube(object):
             print("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3)
 
         print("%d steps total" % len(self.solution))
+
+    def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
+        state = [] 
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            for square_index in sorted(side.edge_pos):
+                if square_index == target_wing[0]:
+                    state.append('A')
+
+                elif square_index == target_wing[1]:
+                    state.append('B')
+
+                elif square_index == sister_wing1[0]:
+                    state.append('C')
+
+                elif square_index == sister_wing1[1]:
+                    state.append('D')
+
+                elif square_index == sister_wing2[0]:
+                    state.append('E')
+
+                elif square_index == sister_wing2[1]:
+                    state.append('F')
+
+                elif square_index == sister_wing3[0]:
+                    state.append('G')
+
+                elif square_index == sister_wing3[1]:
+                    state.append('H')
+
+                else:
+                    state.append('x')
+
+        return ''.join(state)

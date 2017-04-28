@@ -31,6 +31,14 @@ class SolveError(Exception):
     pass
 
 
+class StuckInALoop(Exception):
+    pass 
+
+
+class ImplementThis(Exception):
+    pass 
+
+
 class Side(object):
 
     def __init__(self, parent, name):
@@ -579,13 +587,33 @@ class Side(object):
         squares_per_edge = len(self.edge_north_pos)
 
         if squares_per_edge % 2 == 0:
-            raise Exception("Cannot call wing_is_middle_of_edge() for an even cube")
-        mid_index = int((squares_per_edge/2.0) - 0.5)
+            if self.size == 4:
+                raise Exception("Cannot call wing_is_middle_of_edge() for 4x4x4")
+            elif self.size == 6:
 
-        if (self.edge_north_pos[mid_index] == square_index or
-            self.edge_west_pos[mid_index] == square_index or
-            self.edge_south_pos[mid_index] == square_index or
-            self.edge_east_pos[mid_index] == square_index):
-            return True
+                if (square_index in self.edge_north_pos[1:-1] or
+                    square_index in self.edge_west_pos[1:-1] or
+                    square_index in self.edge_south_pos[1:-1] or
+                    square_index in self.edge_east_pos[1:-1]):
+                    return True
+
+                # dwalton
+                '''
+                log.info("target: %s" % square_index)
+                log.info("north: %s" % pformat(self.edge_north_pos))
+                log.info("west : %s" % pformat(self.edge_west_pos))
+                log.info("south: %s" % pformat(self.edge_south_pos))
+                log.info("east : %s" % pformat(self.edge_east_pos))
+                '''
+            else:
+                raise ImplementThis("wing_is_middle_of_edge for %dx%dx%d" % (self.size, self.size, self.size))
+        else:
+            mid_index = int((squares_per_edge/2.0) - 0.5)
+
+            if (self.edge_north_pos[mid_index] == square_index or
+                self.edge_west_pos[mid_index] == square_index or
+                self.edge_south_pos[mid_index] == square_index or
+                self.edge_east_pos[mid_index] == square_index):
+                return True
 
         return False

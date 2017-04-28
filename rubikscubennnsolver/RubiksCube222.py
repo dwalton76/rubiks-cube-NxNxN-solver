@@ -18,6 +18,26 @@ class RubiksCube222(RubiksCube):
 
     def __init__(self, kociemba_string):
         RubiksCube.__init__(self, kociemba_string)
+
+        '''
+        lookup-table-2x2x2-solve.txt
+        ============================
+        Solve 2x2x2 using only U, U', U2, B, B', B2, R, R' and R2
+
+        1 steps has 9 entries (0 percent)
+        2 steps has 55 entries (0 percent)
+        3 steps has 321 entries (0 percent)
+        4 steps has 1,847 entries (0 percent)
+        5 steps has 9,992 entries (0 percent)
+        6 steps has 50,136 entries (1 percent)
+        7 steps has 227,536 entries (6 percent)
+        8 steps has 870,072 entries (23 percent)
+        9 steps has 1,887,748 entries (51 percent)
+        10 steps has 623,800 entries (16 percent)
+        11 steps has 2,644 entries (0 percent)
+
+        Total: 3,674,160 entries
+        '''
         self.lt = LookupTable(self, 'lookup-table-2x2x2-solve.txt', 'all', 'UUUULLLLFFFFRRRRBBBBDDDD')
 
     def solve(self):

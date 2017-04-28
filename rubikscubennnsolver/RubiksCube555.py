@@ -249,43 +249,6 @@ class RubiksCube555(RubiksCube):
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 
-        # dwalton remove this
-        #self.print_cube()
-        #sys.exit(0)
-
-    def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
-        state = []
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in sorted(side.edge_pos):
-                if square_index == target_wing[0]:
-                    state.append('A')
-
-                elif square_index == target_wing[1]:
-                    state.append('B')
-
-                elif square_index == sister_wing1[0]:
-                    state.append('C')
-
-                elif square_index == sister_wing1[1]:
-                    state.append('D')
-
-                elif square_index == sister_wing2[0]:
-                    state.append('E')
-
-                elif square_index == sister_wing2[1]:
-                    state.append('F')
-
-                elif square_index == sister_wing3[0]:
-                    state.append('G')
-
-                elif square_index == sister_wing3[1]:
-                    state.append('H')
-
-                else:
-                    state.append('x')
-
-        return ''.join(state)
-
     def find_moves_to_stage_slice_forward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
         return self.lt_edge_slice_forward.steps(state)

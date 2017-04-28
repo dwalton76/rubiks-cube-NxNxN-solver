@@ -556,11 +556,10 @@ class LookupTable(object):
         while True:
             state = self.state()
 
+            log.debug("state %s vs state_target %s" % (state, self.state_target))
+
             if state == self.state_target:
                 break
-
-            # dwalton
-            log.info("state %s vs state_target %s" % (state, self.state_target))
 
             for step in self.steps(state):
                 self.parent.rotate(step)
@@ -635,7 +634,7 @@ class LookupTableIDA(LookupTable):
             if state == self.state_target:
                 break
 
-            log.info("state %s vs state_target %s" % (state, self.state_target))
+            log.debug("state %s vs state_target %s" % (state, self.state_target))
             steps = self.steps()
 
             if steps:

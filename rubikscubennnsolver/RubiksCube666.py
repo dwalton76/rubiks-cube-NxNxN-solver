@@ -472,7 +472,7 @@ class RubiksCube666(RubiksCube):
         # get the cube in a state that is much closer to being a match for the table we
         # are doing and IDA search against.
         #self.lt_UD_oblique_edge_pairing_left_only.solve()
-        #self.lt_UD_oblique_edge_pairing_right_only.solve()
+        self.lt_UD_oblique_edge_pairing_right_only.solve()
         self.lt_UD_oblique_edge_pairing.solve()
 
         # At this point we can treat UD centers like 5x5x5 centers

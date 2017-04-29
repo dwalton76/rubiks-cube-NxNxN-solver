@@ -36,8 +36,11 @@ class RubiksCube666(RubiksCube):
     - solve as 3x3x3
     """
 
-    def __init__(self, kociemba_string):
+    def __init__(self, kociemba_string, debug=False):
         RubiksCube.__init__(self, kociemba_string)
+
+        if debug:
+            log.setLevel(logging.DEBUG)
 
         '''
         Stage the inner X-centers

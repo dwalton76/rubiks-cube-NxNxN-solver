@@ -16,8 +16,11 @@ solved_2x2x2 = 'UUUURRRRFFFFDDDDLLLLBBBB'
 
 class RubiksCube222(RubiksCube):
 
-    def __init__(self, kociemba_string):
-        RubiksCube.__init__(self, kociemba_string)
+    def __init__(self, kociemba_string, debug=False):
+        RubiksCube.__init__(self, kociemba_string, debug)
+
+        if debug:
+            log.setLevel(logging.DEBUG)
 
         '''
         lookup-table-2x2x2-solve.txt

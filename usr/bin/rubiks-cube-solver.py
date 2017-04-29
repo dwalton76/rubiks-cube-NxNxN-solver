@@ -29,6 +29,8 @@ logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelNam
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--print-steps', default=False, action='store_true')
+parser.add_argument('--debug', default=False, action='store_true')
 
 # 2x2x2
 #parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
@@ -60,21 +62,24 @@ parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
 
 args = parser.parse_args()
 
+if args.debug:
+    log.setLevel(logging.DEBUG)
+
 try:
     if len(args.state) == 24:
-        cube = RubiksCube222(args.state)
+        cube = RubiksCube222(args.state, args.debug)
 
     elif len(args.state) == 54:
-        cube = RubiksCube333(args.state)
+        cube = RubiksCube333(args.state, args.debug)
 
     elif len(args.state) == 96:
-        cube = RubiksCube444(args.state)
+        cube = RubiksCube444(args.state, args.debug)
 
     elif len(args.state) == 150:
-        cube = RubiksCube555(args.state)
+        cube = RubiksCube555(args.state, args.debug)
 
     elif len(args.state) == 216:
-        cube = RubiksCube666(args.state)
+        cube = RubiksCube666(args.state, args.debug)
 
     else:
         print("ERROR: add support for cubes with %d facelets" % len(args.state))
@@ -118,23 +123,22 @@ try:
 
     # Uncomment to print the solution step by step
     len_steps = len(solution)
-    print_steps = False
 
     for (i, step) in enumerate(solution):
 
-        if print_steps:
-            print("Phase: %s" % cube.phase())
+        if args.print_steps:
+            print("Phase     : %s" % cube.phase())
             print("Move %d/%d: %s" % (i+1, len_steps, step))
 
         cube.rotate(step)
 
-        if print_steps:
+        if args.print_steps:
             cube.print_cube()
             print("\n\n\n\n")
             sleep(1)
             os.system('clear')
 
-    if print_steps:
+    if args.print_steps:
         cube.print_cube()
 
     if not cube.solved():

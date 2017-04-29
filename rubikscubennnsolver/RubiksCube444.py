@@ -26,8 +26,11 @@ class RubiksCube444(RubiksCube):
     - solve as 3x3x3
     """
 
-    def __init__(self, kociemba_string):
-        RubiksCube.__init__(self, kociemba_string)
+    def __init__(self, kociemba_string, debug=False):
+        RubiksCube.__init__(self, kociemba_string, debug)
+
+        if debug:
+            log.setLevel(logging.DEBUG)
 
         '''
         24!/(16! * 8!) is 735,471

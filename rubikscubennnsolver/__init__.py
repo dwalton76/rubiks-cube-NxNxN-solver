@@ -652,7 +652,7 @@ class LookupTableIDA(LookupTable):
 
 class RubiksCube(object):
 
-    def __init__(self, kociemba_string):
+    def __init__(self, kociemba_string, debug=False):
         init_state = ['dummy', ]
         init_state.extend(list(kociemba_string))
         self.squares_per_side = int((len(init_state) - 1)/6)
@@ -666,6 +666,9 @@ class RubiksCube(object):
         self.steps_to_solve_3x3x3 = 0
         self.ida_count = 0
         self._phase = None
+
+        if debug:
+            log.setLevel(logging.DEBUG)
 
         # kociemba_string is in URFDLB order so split this apart and re-arrange it to
         # be ULFRBD so that is is sequential with the normal square numbering scheme

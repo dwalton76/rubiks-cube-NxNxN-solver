@@ -30,8 +30,11 @@ class RubiksCube555(RubiksCube):
     - solve as 3x3x3
     """
 
-    def __init__(self, kociemba_string):
+    def __init__(self, kociemba_string, debug=False):
         RubiksCube.__init__(self, kociemba_string)
+
+        if debug:
+            log.setLevel(logging.DEBUG)
 
         '''
         There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841

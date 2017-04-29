@@ -665,6 +665,7 @@ class RubiksCube(object):
         self.steps_to_group_edges = 0
         self.steps_to_solve_3x3x3 = 0
         self.ida_count = 0
+        self._phase = None
 
         # kociemba_string is in URFDLB order so split this apart and re-arrange it to
         # be ULFRBD so that is is sequential with the normal square numbering scheme
@@ -1470,7 +1471,6 @@ class RubiksCube(object):
     def get_wing_in_middle_of_edge(self, pos1, remove_if_in_same_edge=False):
         wings = self.get_wings(pos1, remove_if_in_same_edge)
 
-        # dwalton
         for wing in wings:
             wing_side = self.get_side_for_index(wing[0])
             if wing_side.wing_is_middle_of_edge(wing[0]):
@@ -3034,6 +3034,21 @@ class RubiksCube(object):
                     if self.state[prev_pos] != self.state[pos]:
                         return False
                 prev_pos = pos
+        return True
+
+    # dwalton
+    def UD_centers_staged(self):
+        for side in (self.sideU, self.sideD):
+            for pos in side.center_pos:
+                if self.state[pos] not in ('U', 'D'):
+                    return False
+        return True
+
+    def LR_centers_staged(self):
+        for side in (self.sideL, self.sideR):
+            for pos in side.center_pos:
+                if self.state[pos] not in ('L', 'R'):
+                    return False
         return True
 
     def reverse_steps(self, steps):

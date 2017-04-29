@@ -14,8 +14,10 @@ from rubikscubennnsolver.RubiksCube333 import RubiksCube333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666
+from time import sleep
 import argparse
 import logging
+import os
 import sys
 
 logging.basicConfig(level=logging.INFO,
@@ -35,8 +37,8 @@ parser = argparse.ArgumentParser()
 
 # 3x3x3
 #parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
+#    default='RRBBUFBFBRLRRRFRDDURUBFBBRFLUDUDFLLFFLLLLDFBDDDUUBDLUU')
     #default='UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB') # solved
-    #default='RRBBUFBFBRLRRRFRDDURUBFBBRFLUDUDFLLFFLLLLDFBDDDUUBDLUU')
 
 # 4x4x4
 #parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
@@ -45,15 +47,15 @@ parser = argparse.ArgumentParser()
     #default='UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB') # solved
 
 # 5x5x5
-#parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
-#    default='RFFFUDUDURBFULULFDBLRLDUFDBLUBBBDDURLRDRFRUDDBFUFLFURRLDFRRRUBFUUDUFLLBLBBULDDRRUFUUUBUDFFDRFLRBBLRFDLLUUBBRFRFRLLBFRLBRRFRBDLLDDFBLRDLFBBBLBLBDUUFDDD')
+parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
+    default='RFFFUDUDURBFULULFDBLRLDUFDBLUBBBDDURLRDRFRUDDBFUFLFURRLDFRRRUBFUUDUFLLBLBBULDDRRUFUUUBUDFFDRFLRBBLRFDLLUUBBRFRFRLLBFRLBRRFRBDLLDDFBLRDLFBBBLBLBDUUFDDD')
     #default='UDLFDLDDLUFDUBRLBDLFLRBFRBLBBFUDURDULRRBRLFUURBUFLUBDUDRURRRBUFUFFFRUFFLDUURURFFULFFRLFDBRRFRDDBRFBBLBRDFBBBBUDDLLLDBUULUDULDLDDLBRRLRLUBBFFBDLFBDDLFR')
     #default='DFFURRULDLDLURLBDDRRBFRURFBFBFRBDLBBFRBLRFBRBBFLULDLBLULLFRUBUFLDFFLDULDDLUURRDRFBRLULUDRBDUUUBBRFFDBDFURDBBDDRULBUDRDLLLBDRFDLRDLLFDBBUFBRURFFUFFUUFU') # ida_UD_centers_stage on this one takes forever
     #default='UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB') # solved
 
 # 6x6x6
-parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
-    default='FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL')
+#parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
+#    default='FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL')
     #default='UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB') # solved
 
 args = parser.parse_args()
@@ -114,8 +116,20 @@ try:
     else:
         raise Exception("Implement cube with %d facelets" % len(args.state))
 
-    for step in solution:
+    # Uncomment to print the solution step by step
+    '''
+    len_steps = len(solution)
+    for (i, step) in enumerate(solution):
+        # Clear the screen
+        print("Phase: %s" % cube.phase())
+        print("Move %d/%d: %s" % (i+1, len_steps, step))
         cube.rotate(step)
+        cube.print_cube()
+        print("\n\n\n\n")
+        sleep(1)
+        os.system('clear')
+    cube.print_cube()
+    '''
 
     if not cube.solved():
         kociemba_string = cube.get_kociemba_string(False)

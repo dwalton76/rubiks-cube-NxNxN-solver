@@ -10,6 +10,9 @@ solved_3x3x3 = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
 
 class RubiksCube333(RubiksCube):
 
+    def phase(self):
+        return 'Solve 3x3x3'
+
     def solve(self):
         self.rotate_U_to_U()
         self.rotate_F_to_F()

@@ -40,6 +40,9 @@ class RubiksCube222(RubiksCube):
         '''
         self.lt = LookupTable(self, 'lookup-table-2x2x2-solve.txt', 'all', 'UUUULLLLFFFFRRRRBBBBDDDD')
 
+    def phase(self):
+        return 'Solve 2x2x2'
+
     def solve(self):
         """
         lookup-table-2x2x2-solve.txt was constructed using only:

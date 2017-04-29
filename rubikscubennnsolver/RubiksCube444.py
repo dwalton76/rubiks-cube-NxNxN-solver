@@ -814,6 +814,30 @@ class RubiksCube444(RubiksCube):
              current_solution_len - original_solution_len,
              current_non_paired_wings_count))
 
+    def phase(self):
+        if self._phase is None:
+            self._phase = 'Stage UD centers'
+            return self._phase
+
+        if self._phase == 'Stage UD centers':
+            if self.UD_centers_staged():
+                self._phase = 'Stage LR centers'
+            return self._phase
+
+        if self._phase == 'Stage LR centers':
+            if self.LR_centers_staged():
+                self._phase = 'Solve Centers'
+
+        if self._phase == 'Solve Centers':
+            if self.centers_solved():
+                self._phase = 'Pair Edges'
+
+        if self._phase == 'Pair Edges':
+            if not self.get_non_paired_edges():
+                self._phase = 'Solve 3x3x3'
+
+        return self._phase
+
 
 # Move a wing to (44, 57)
 lookup_table_444_last_two_edges_place_F_east = {

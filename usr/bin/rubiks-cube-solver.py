@@ -41,14 +41,14 @@ parser = argparse.ArgumentParser()
     #default='UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB') # solved
 
 # 4x4x4
-#parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
-#    default='FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU')
+parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
+    default='FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU')
     #default='LFBDUFLDBUBBFDFBLDLFRDFRRURFDFDLULUDLBLUUDRDUDUBBFFRBDFRRRRRRRLFBLLRDLDFBUBLFBLRLURUUBLBDUFUUFBD')
     #default='UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB') # solved
 
 # 5x5x5
-parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
-    default='RFFFUDUDURBFULULFDBLRLDUFDBLUBBBDDURLRDRFRUDDBFUFLFURRLDFRRRUBFUUDUFLLBLBBULDDRRUFUUUBUDFFDRFLRBBLRFDLLUUBBRFRFRLLBFRLBRRFRBDLLDDFBLRDLFBBBLBLBDUUFDDD')
+#parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
+#    default='RFFFUDUDURBFULULFDBLRLDUFDBLUBBBDDURLRDRFRUDDBFUFLFURRLDFRRRUBFUUDUFLLBLBBULDDRRUFUUUBUDFFDRFLRBBLRFDLLUUBBRFRFRLLBFRLBRRFRBDLLDDFBLRDLFBBBLBLBDUUFDDD')
     #default='UDLFDLDDLUFDUBRLBDLFLRBFRBLBBFUDURDULRRBRLFUURBUFLUBDUDRURRRBUFUFFFRUFFLDUURURFFULFFRLFDBRRFRDDBRFBBLBRDFBBBBUDDLLLDBUULUDULDLDDLBRRLRLUBBFFBDLFBDDLFR')
     #default='DFFURRULDLDLURLBDDRRBFRURFBFBFRBDLBBFRBLRFBRBBFLULDLBLULLFRUBUFLDFFLDULDDLUURRDRFBRLULUDRBDUUUBBRFFDBDFURDBBDDRULBUDRDLLLBDRFDLRDLLFDBBUFBRURFFUFFUUFU') # ida_UD_centers_stage on this one takes forever
     #default='UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB') # solved
@@ -117,19 +117,25 @@ try:
         raise Exception("Implement cube with %d facelets" % len(args.state))
 
     # Uncomment to print the solution step by step
-    '''
     len_steps = len(solution)
+    print_steps = False
+
     for (i, step) in enumerate(solution):
-        # Clear the screen
-        print("Phase: %s" % cube.phase())
-        print("Move %d/%d: %s" % (i+1, len_steps, step))
+
+        if print_steps:
+            print("Phase: %s" % cube.phase())
+            print("Move %d/%d: %s" % (i+1, len_steps, step))
+
         cube.rotate(step)
+
+        if print_steps:
+            cube.print_cube()
+            print("\n\n\n\n")
+            sleep(1)
+            os.system('clear')
+
+    if print_steps:
         cube.print_cube()
-        print("\n\n\n\n")
-        sleep(1)
-        os.system('clear')
-    cube.print_cube()
-    '''
 
     if not cube.solved():
         kociemba_string = cube.get_kociemba_string(False)

@@ -3036,7 +3036,6 @@ class RubiksCube(object):
                 prev_pos = pos
         return True
 
-    # dwalton
     def UD_centers_staged(self):
         for side in (self.sideU, self.sideD):
             for pos in side.center_pos:

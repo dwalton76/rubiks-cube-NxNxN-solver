@@ -3222,6 +3222,11 @@ class RubiksCube(object):
         for step in steps:
             self.rotate(step)
 
+        if not self.solved():
+            self.print_cube()
+            print("We hit either OLL or PLL parity")
+            sys.exit(1)
+
     def get_corner_swap_count(self, debug=False):
 
         needed_corners = [

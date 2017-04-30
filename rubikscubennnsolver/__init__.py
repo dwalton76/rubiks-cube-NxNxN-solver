@@ -1267,9 +1267,6 @@ class RubiksCube(object):
         else:
             raise Exception("Unsupported action %s" % action)
 
-    def print_cube_layout(self):
-        print(get_cube_layout(self.size) + '\n')
-
     def print_cube(self):
         color_codes = {
           'U': 97, # Wh
@@ -2873,34 +2870,6 @@ class RubiksCube(object):
         while self.sideB.north_wing_paired():
             self.rotate_B()
 
-    def find_wing(self, wing_to_find):
-
-        U_edge = self.sideU.has_wing(wing_to_find)
-
-        if U_edge:
-            return (self.sideU, U_edge)
-
-
-        B_edge = self.sideB.has_wing(wing_to_find)
-
-        if B_edge:
-            return (self.sideB, B_edge)
-
-
-        D_edge = self.sideD.has_wing(wing_to_find)
-
-        if D_edge:
-            return (self.sideD, D_edge)
-
-
-        F_edge = self.sideF.has_wing(wing_to_find)
-
-        if F_edge:
-            return (self.sideF, F_edge)
-
-        raise Exception("We should not be here")
-
-
     def make_U_west_have_unpaired_edge(self):
         if not self.sideU.west_edge_paired():
             return
@@ -2945,12 +2914,6 @@ class RubiksCube(object):
     def rotate_U(self):
         self.rotate("U")
 
-    def rotate_F(self):
-        self.rotate("F")
-
-    def rotate_F_reverse(self):
-        self.rotate("F'")
-
     def rotate_D(self):
         self.rotate("D")
 
@@ -2975,60 +2938,6 @@ class RubiksCube(object):
     def get_center_corner_state(self):
         return ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_corner_pos])
 
-    def get_edges_state(self, value, to_check):
-        state = []
-
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in sorted(side.edge_pos):
-                square_value = self.state[square_index]
-                partner_index = side.get_wing_partner(square_index)
-                partner_value = self.state[partner_index]
-
-                foo = "%s%s" % (square_value, partner_value)
-                bar = "%s%s" % (partner_value, square_value)
-
-                if foo in to_check or bar in to_check:
-                    if value is not None:
-                        state.append(value)
-                    else:
-                        state.append(square_value)
-                else:
-                    state.append('x')
-
-        return ''.join(state)
-
-    def get_center_UF_state(self, target):
-        u_centers = []
-        for square_index in self.sideU.center_corner_pos:
-            if self.state[square_index] == target:
-                u_centers.append('1')
-            else:
-                u_centers.append('0')
-        u_centers = ''.join(u_centers)
-
-        f_centers = []
-        for square_index in self.sideF.center_corner_pos:
-            if self.state[square_index] == target:
-                f_centers.append('1')
-            else:
-                f_centers.append('0')
-        f_centers = ''.join(f_centers)
-
-        return (u_centers, f_centers)
-
-    def get_centers_solved_count(self):
-        count = 6
-
-        for side in self.sides.values():
-            prev_pos = None
-            for pos in side.center_pos:
-                if prev_pos is not None:
-                    if self.state[prev_pos] != self.state[pos]:
-                        count -= 1
-                        break
-                prev_pos = pos
-        return count
-
     def centers_solved(self):
         for side in self.sides.values():
             prev_pos = None
@@ -3052,18 +2961,6 @@ class RubiksCube(object):
                 if self.state[pos] not in ('L', 'R'):
                     return False
         return True
-
-    def reverse_steps(self, steps):
-        results = []
-        for step in reversed(steps):
-            if step.endswith("2"):
-                pass
-            elif step.endswith("'"):
-                step = step[0:-1]
-            else:
-                step += "'"
-            results.append(step)
-        return results
 
     def rotate_side_X_to_Y(self, x, y):
         #assert x in ('U', 'L', 'F', 'R', 'B', 'D'), "Invalid side %s" % x
@@ -3118,23 +3015,11 @@ class RubiksCube(object):
             if count > 30:
                 raise StuckInALoop("rotate %s to %s, %s, pos_to_check %s, state at pos_to_check %s" % (x, y, side, pos_to_check, self.state[pos_to_check]))
 
-    def rotate_U_to_L(self):
-        self.rotate_side_X_to_Y('U', 'L')
-
     def rotate_U_to_U(self):
         self.rotate_side_X_to_Y('U', 'U')
 
-    def rotate_R_to_U(self):
-        self.rotate_side_X_to_Y('R', 'U')
-
     def rotate_F_to_F(self):
         self.rotate_side_X_to_Y('F', 'F')
-
-    def rotate_L_to_U(self):
-        self.rotate_side_X_to_Y('L', 'U')
-
-    def rotate_L_to_L(self):
-        self.rotate_side_X_to_Y('L', 'L')
 
     def all_center_corners_solved(self):
         for side in self.sides.values():
@@ -3582,16 +3467,6 @@ class RubiksCube(object):
 
         return ''.join(result)
 
-    def get_state_edges_and_centers(self):
-        result = []
-
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in range(side.min_pos, side.max_pos + 1):
-                if square_index not in side.corner_pos:
-                    result.append(self.state[square_index])
-
-        return ''.join(result)
-
     def group_centers_guts(self):
         raise ImplementThis("Child class must imlement group_centers_guts")
 
@@ -3604,7 +3479,6 @@ class RubiksCube(object):
         # save cube state
         original_state = copy(self.state)
         original_solution = copy(self.solution)
-        original_solution_len = len(self.solution)
 
         for upper_side_name in ('U', 'D', 'L', 'F', 'R', 'B'):
             for front_side_name in ('F', 'R', 'B', 'L', 'U', 'D'):

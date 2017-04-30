@@ -312,45 +312,6 @@ class RubiksCube666(RubiksCube):
                                                     (self.lt_LR_centers_solve,
                                                      self.lt_FB_centers_solve))
 
-        '''
-        lookup-table-6x6x6-step70-edges-slice-forward.txt
-        =================================================
-        1 steps has 13 entries (0 percent)
-        2 steps has 138 entries (0 percent)
-        3 steps has 1,440 entries (0 percent)
-        4 steps has 11,009 entries (5 percent)
-        5 steps has 51,100 entries (26 percent)
-        6 steps has 96,002 entries (50 percent)
-        7 steps has 30,338 entries (15 percent)
-        8 steps has 40 entries (0 percent)
-
-        Total: 190,080 entries
-        '''
-        self.lt_edge_slice_forward = LookupTable(self,
-                                                 'lookup-table-6x6x6-step70-edges-slice-forward.txt',
-                                                 '666-edges-slice-forward',
-                                                 None)
-
-        '''
-        lookup-table-6x6x6-step80-edges-slice-backward.txt
-        ==================================================
-        1 steps has 13 entries (0 percent)
-        2 steps has 138 entries (0 percent)
-        3 steps has 1,440 entries (0 percent)
-        4 steps has 11,009 entries (5 percent)
-        5 steps has 51,100 entries (26 percent)
-        6 steps has 96,002 entries (50 percent)
-        7 steps has 30,338 entries (15 percent)
-        8 steps has 40 entries (0 percent)
-
-        Total: 190,080 entries
-        '''
-        self.lt_edge_slice_backward = LookupTable(self,
-                                                  'lookup-table-6x6x6-step80-edges-slice-backward.txt',
-                                                  '666-edges-slice-backward',
-                                                  None)
-
-
     def populate_fake_555_for_UD(self, fake_555):
         for x in range(1, 151):
             fake_555.state[x] = 'x'

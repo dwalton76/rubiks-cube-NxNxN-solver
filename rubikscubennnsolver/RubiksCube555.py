@@ -271,7 +271,6 @@ class RubiksCube555(RubiksCube):
         # Work with the wing at the bottom of the F-east edge
         # Move the sister wing to F-west
         target_wing = (self.sideF.edge_east_pos[-1], self.sideR.edge_west_pos[-1])
-        target_wing_side = self.get_side_for_index(target_wing[0])
 
         # Do we need to reverse sister_wing1?
         for sister_wing1_reverse in (True, False):
@@ -283,7 +282,6 @@ class RubiksCube555(RubiksCube):
 
             sister_wing2 = None
             sister_wing3 = None
-            #log.info("target_wing %s on %s" % (pformat(target_wing), target_wing_side))
             #log.info("sister_wing1 %s on %s" % (pformat(sister_wing1), sister_wing1_side))
 
             for sister_wing1_use_first_neighbor in (True, False):
@@ -317,7 +315,6 @@ class RubiksCube555(RubiksCube):
 
                             if sister_wing3_reverse:
                                 sister_wing3 = tuple(list(reversed(sister_wing3)))
-                            sister_wing3_side = self.get_side_for_index(sister_wing3[0])
 
                             # log.info("sister_wing2_use_first_neighbor %s, sister_wing3 %s on %s" %
                             #    (sister_wing2_use_first_neighbor, pformat(sister_wing3), sister_wing3_side))
@@ -380,7 +377,6 @@ class RubiksCube555(RubiksCube):
         # Work with the wing at the bottom of the F-west edge
         # Move the sister wing to F-east
         target_wing = (self.sideL.edge_east_pos[-1], self.sideF.edge_west_pos[-1])
-        target_wing_side = self.get_side_for_index(target_wing[0])
 
         for sister_wing1_reverse in (True, False):
             sister_wing1 = self.get_wing_in_middle_of_edge(target_wing[0])
@@ -391,7 +387,6 @@ class RubiksCube555(RubiksCube):
 
             sister_wing2 = None
             sister_wing3 = None
-            #log.info("target_wing %s on %s" % (pformat(target_wing), target_wing_side))
             #log.info("sister_wing1 %s, reverse %s, %s" % (pformat(sister_wing1), sister_wing1_reverse, sister_wing1_side))
 
             for sister_wing1_use_first_neighbor in (True, False):
@@ -438,7 +433,6 @@ class RubiksCube555(RubiksCube):
 
                             if sister_wing3_reverse:
                                 sister_wing3 = tuple(list(reversed(sister_wing3)))
-                            sister_wing3_side = self.get_side_for_index(sister_wing3[0])
 
                             # log.info("sister_wing2_use_first_neighbor %s, sister_wing3 %s, reverse %s, %s" %
                             #    (sister_wing2_use_first_neighbor, pformat(sister_wing3), sister_wing3_reverse, sister_wing3_side))

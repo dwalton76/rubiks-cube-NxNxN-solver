@@ -155,6 +155,11 @@ class RubiksCube444(RubiksCube):
         self.lt_ULFRBD_centers_solve.solve()
 
     def group_edges(self):
+        original_non_paired_edges = self.get_non_paired_edges()
+
+        if not original_non_paired_edges:
+            self.solution.append('EDGES_GROUPED')
+            return
 
         # save cube state
         original_state = copy(self.state)
@@ -163,10 +168,10 @@ class RubiksCube444(RubiksCube):
 
         # There are 12 edges, cycle through all 12 in terms of which edge we try to pair first.
         # Remember the one that results in the shortest solution that is free of PLL parity.
-        original_non_paired_edges = self.get_non_paired_edges()
         min_solution_length = None
         min_solution_state = None
         min_solution = None
+        min_solution_has_pll = True
 
         # There are some cubes where I always hit PLL parity when I pair multiple
         # edges at a time, so try with this capability first and if we fail to find
@@ -225,17 +230,33 @@ class RubiksCube444(RubiksCube):
                         break
 
                 solution_len_minus_rotates = self.get_solution_len_minus_rotates(self.solution)
+                leads_to_pll = self.edge_solution_leads_to_pll_parity()
+                new_min = False
 
-                if self.edge_solution_leads_to_pll_parity():
+                if leads_to_pll:
                     log.info("edges solution length %d, leads to PLL parity" % (solution_len_minus_rotates - original_solution_len))
-                else:
-                    if min_solution_length is None or solution_len_minus_rotates < min_solution_length:
-                        min_solution_length = solution_len_minus_rotates
-                        min_solution_state = copy(self.state)
-                        min_solution = copy(self.solution)
-                        log.warning("edges solution length %d (NEW MIN)" % (solution_len_minus_rotates - original_solution_len))
+
+                if min_solution_length is None:
+                    new_min = True
+
+                elif min_solution_has_pll:
+                    if leads_to_pll:
+                        if solution_len_minus_rotates < min_solution_length:
+                            new_min = True
                     else:
-                        log.info("edges solution length %d" % (solution_len_minus_rotates - original_solution_len))
+                        new_min = True
+
+                elif not leads_to_pll and solution_len_minus_rotates < min_solution_length:
+                    new_min = True
+
+                if new_min:
+                    min_solution_has_pll = leads_to_pll
+                    min_solution_length = solution_len_minus_rotates
+                    min_solution_state = copy(self.state)
+                    min_solution = copy(self.solution)
+                    log.warning("edges solution length %d (NEW MIN)" % (solution_len_minus_rotates - original_solution_len))
+                else:
+                    log.info("edges solution length %d" % (solution_len_minus_rotates - original_solution_len))
                 log.info('')
 
                 # Restore to original state
@@ -245,21 +266,18 @@ class RubiksCube444(RubiksCube):
             # If we were able to find a PLL free solution when pair_multiple_edges_at_once
             # was True then break, there is not point trying with pair_multiple_edges_at_once
             # False since those solutions will all be longer
-            if min_solution_length:
+            if min_solution_length and not min_solution_has_pll:
                 break
             else:
                 log.warning("Could not find PLL free edge solution with pair_multiple_edges_at_once True")
 
-        if min_solution_length:
-            self.state = copy(min_solution_state)
-            self.solution = copy(min_solution)
+        self.state = copy(min_solution_state)
+        self.solution = copy(min_solution)
 
-            if self.get_non_paired_edges_count():
-                raise SolveError("All edges should be resolved")
+        if self.get_non_paired_edges_count():
+            raise SolveError("All edges should be resolved")
 
-            self.solution.append('EDGES_GROUPED')
-        else:
-            raise SolveError("Could not find a PLL free edge solution")
+        self.solution.append('EDGES_GROUPED')
 
     def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = []

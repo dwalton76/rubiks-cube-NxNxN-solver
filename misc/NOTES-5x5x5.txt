@@ -32,3 +32,16 @@ edge pairing can do 3 on slice forward and 3 on slice back
 5x5x5 max solution 169 steps
 5x5x5 avg solution 130 steps
 Takes a while...10m or so
+
+
+Use 4x4x4 to pair outer edges first
+This takes more moves than the old way but the code is a
+million times cleaner and it runs in 1min instead of 10min
+==========================================================
+5x5x5 min solution 124 steps
+5x5x5 max solution 190 steps
+5x5x5 avg solution 146 steps
+
+59.08user 3.60system 1:02.79elapsed 99%CPU (0avgtext+0avgdata 13604maxresident)k
+0inputs+0outputs (0major+97490minor)pagefaults 0swaps
+

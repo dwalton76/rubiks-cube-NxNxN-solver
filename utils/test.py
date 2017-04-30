@@ -20,6 +20,7 @@ logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelNam
 parser = argparse.ArgumentParser()
 parser.add_argument('--size', type=str, default='4x4x4')
 parser.add_argument('--test-cubes', type=str, default='test_cubes.json')
+parser.add_argument('--start', type=int, default=0)
 args = parser.parse_args()
 
 try:
@@ -50,9 +51,15 @@ try:
 
         kociemba_strings = test_cases[size]
         num_test_cases = len(kociemba_strings)
+        num_test_cases_executed = 0
 
         for (index, kociemba_string) in enumerate(kociemba_strings):
+
+            if index < args.start:
+                continue
+
             log.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
+            num_test_cases_executed += 1
 
             # solve the cube
             if size == '2x2x2':
@@ -106,7 +113,7 @@ try:
 
         results.append("%s min solution %s steps" % (size, min_solution))
         results.append("%s max solution %s steps" % (size, max_solution))
-        results.append("%s avg solution %s steps" % (size, int(solution_total/len(test_cases[size]))))
+        results.append("%s avg solution %s steps" % (size, int(solution_total/num_test_cases_executed)))
         results.append("")
 
     for result in results:

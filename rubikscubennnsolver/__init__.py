@@ -1267,6 +1267,9 @@ class RubiksCube(object):
         else:
             raise Exception("Unsupported action %s" % action)
 
+    def print_cube_layout(self):
+        print(get_cube_layout(self.size) + '\n')
+
     def print_cube(self):
         color_codes = {
           'U': 97, # Wh

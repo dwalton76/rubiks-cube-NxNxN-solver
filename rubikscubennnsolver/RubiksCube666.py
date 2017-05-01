@@ -617,6 +617,9 @@ class RubiksCube666(RubiksCube):
         fake_444.group_edges()
 
         for step in fake_444.solution:
+            if step == 'EDGES_GROUPED':
+                continue
+
             if step.startswith('4'):
                 step = '6' + step[1:]
             elif step.startswith('3'):
@@ -727,6 +730,8 @@ class RubiksCube666(RubiksCube):
         fake_444.group_edges()
 
         for step in fake_444.solution:
+            if step == 'EDGES_GROUPED':
+                continue
 
             if step.startswith('4'):
                 step = '6' + step[1:]
@@ -858,6 +863,8 @@ class RubiksCube666(RubiksCube):
         fake_555.group_edges()
 
         for step in fake_555.solution:
+            if step == 'EDGES_GROUPED':
+                continue
 
             if step.startswith('5'):
                 step = '6' + step[1:]
@@ -876,6 +883,7 @@ class RubiksCube666(RubiksCube):
         """
         self.pair_inside_edges()
         self.pair_outside_edges_via_555()
+        self.solution.append('EDGES_GROUPED')
 
     def phase(self):
         if self._phase is None:

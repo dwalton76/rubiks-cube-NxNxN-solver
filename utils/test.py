@@ -5,9 +5,11 @@ from rubikscubennnsolver.RubiksCube222 import RubiksCube222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555
+from rubikscubennnsolver.RubiksCube666 import RubiksCube666
 import argparse
 import json
 import logging
+import sys
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)12s %(levelname)8s: %(message)s')
@@ -74,8 +76,12 @@ try:
             elif size == '5x5x5':
                 cube = RubiksCube555(kociemba_string)
 
+            elif size == '6x6x6':
+                cube = RubiksCube555(kociemba_string)
+
             else:
-                raise ImplementThis("Add support for %s" % size)
+                print("ERROR: Add support for %s" % size)
+                sys.exit(1)
 
             cube.solve()
             solution = cube.solution

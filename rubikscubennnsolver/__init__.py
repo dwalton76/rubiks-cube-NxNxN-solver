@@ -3606,7 +3606,7 @@ class RubiksCube(object):
                         raise SolveError("centers should be solved but they are not")
 
                     # Do not consider any center solution that leads to OLL parity
-                    if self.size == 4 and self.center_solution_leads_to_oll_parity():
+                    if self.is_even() and self.center_solution_leads_to_oll_parity():
                         log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
 
                     # Do not consider any solution that pairs an edge...it is easier

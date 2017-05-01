@@ -487,13 +487,13 @@ class RubiksCube666(RubiksCube):
 
         for step in fake_555.solution:
             self.rotate(step)
-        log.info("UD staged, %d steps in" % len(self.solution))
+        log.info("UD staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         #self.print_cube()
 
         self.lt_LR_inner_x_centers_stage.solve()
         self.lt_LR_oblique_edge_pairing.solve()
 
-        log.info("Took %d steps to stage UD centers and LR inner-x-centers and oblique pairs" % len(self.solution))
+        log.info("Took %d steps to stage UD centers and LR inner-x-centers and oblique pairs" % self.get_solution_len_minus_rotates(self.solution))
         #self.print_cube()
 
 
@@ -505,22 +505,22 @@ class RubiksCube666(RubiksCube):
         fake_555.lt_LR_centers_stage.solve()
         for step in fake_555.solution:
             self.rotate(step)
-        log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
+        log.info("Took %d steps to stage ULFRBD centers" % self.get_solution_len_minus_rotates(self.solution))
         #self.print_cube()
 
 
         self.lt_UD_centers_solve.solve()
-        log.info("Took %d steps to solve UD centers" % len(self.solution))
+        log.info("Took %d steps to solve UD centers" % self.get_solution_len_minus_rotates(self.solution))
         #self.print_cube()
 
 
         self.lt_LR_centers_solve.solve()
-        log.info("Took %d steps to solve LR centers" % len(self.solution))
+        log.info("Took %d steps to solve LR centers" % self.get_solution_len_minus_rotates(self.solution))
         #self.print_cube()
 
 
         self.lt_LFRB_centers_solve.solve()
-        log.info("Took %d steps to solve centers" % len(self.solution))
+        log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
 
     def pair_inside_edges(self):
@@ -628,7 +628,7 @@ class RubiksCube666(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        log.warning("Inside edges are paired, %d steps in" % len(self.solution))
+        log.warning("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def pair_outside_edges(self):
         """
@@ -736,7 +736,7 @@ class RubiksCube666(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        log.warning("Outside edges are paired, %d steps in" % len(self.solution))
+        log.warning("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def pair_outside_edges_via_555(self):
         fake_555 = RubiksCube555(solved_5x5x5)
@@ -867,7 +867,7 @@ class RubiksCube666(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        log.warning("Outside edges are paired, %d steps in" % len(self.solution))
+        log.warning("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_edges(self):
         """

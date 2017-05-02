@@ -52,6 +52,7 @@ class RubiksCube777(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+    def lt_init(self):
         '''
         Stage the inner X-centers
         24!/(8!*16!) is 735,471
@@ -76,6 +77,7 @@ class RubiksCube777(RubiksCube):
                                                       'TBD', #
                                                       False) # state_hex
         '''
+        pass
 
     def create_fake_555_centers(self):
 
@@ -170,6 +172,7 @@ class RubiksCube777(RubiksCube):
             self.rotate(step)
 
     def group_centers_guts(self):
+        self.lt_init()
         self.group_inside_UD_centers()
 
         self.print_cube()

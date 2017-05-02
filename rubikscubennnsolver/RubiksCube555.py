@@ -36,6 +36,7 @@ class RubiksCube555(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+    def lt_init(self):
         '''
         There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
         We cannot build a table that large so we will build it 7 moves deep and use
@@ -241,6 +242,7 @@ class RubiksCube555(RubiksCube):
                                                   None)
 
     def group_centers_guts(self):
+        self.lt_init()
         self.rotate_U_to_U()
         self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))

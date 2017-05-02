@@ -22,6 +22,10 @@ class RubiksCube222(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+    def phase(self):
+        return 'Solve 2x2x2'
+
+    def solve(self):
         '''
         lookup-table-2x2x2-solve.txt
         ============================
@@ -43,17 +47,13 @@ class RubiksCube222(RubiksCube):
         '''
         self.lt = LookupTable(self, 'lookup-table-2x2x2-solve.txt', 'all', 'UUUULLLLFFFFRRRRBBBBDDDD')
 
-    def phase(self):
-        return 'Solve 2x2x2'
-
-    def solve(self):
-        """
+        '''
         lookup-table-2x2x2-solve.txt was constructed using only:
             U, U', U2, B, B', B2, R, R' and R2
 
         so we must rotate the LFD corner to be at LFD. Rotating doesn't add
         to our move count as they are compressed out in compress_solution().
-        """
+        '''
         if self.state[16] == 'L' and self.state[19] == 'F' and self.state[24] == 'D':
             self.rotate_y()
             self.rotate_y()

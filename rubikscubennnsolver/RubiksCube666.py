@@ -43,6 +43,7 @@ class RubiksCube666(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+    def lt_init(self):
         '''
         Stage the inner X-centers
         24!/(8!*16!) is 735,471
@@ -467,6 +468,7 @@ class RubiksCube666(RubiksCube):
             fake_555.state[144] = "L"
 
     def group_centers_guts(self):
+        self.lt_init()
         self.lt_UD_inner_x_centers_stage.solve()
 
         # If you uncomment these the IDA search will go much faster but at the tradeoff

@@ -32,6 +32,11 @@ class RubiksCube444(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+    def lt_init(self):
+        """
+        lookup-tables init
+        """
+
         '''
         24!/(16! * 8!) is 735,471
 
@@ -144,6 +149,7 @@ class RubiksCube444(RubiksCube):
                                                   None)
 
     def group_centers_guts(self):
+        self.lt_init()
 
         # The UD solve -> LFRB solve approach is only ~1 move shorter on average
         # than doing UD stage, LR stage, ULFRBD solve.  The UD solve -> LFRB

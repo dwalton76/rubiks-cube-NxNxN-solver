@@ -731,20 +731,25 @@ class RubiksCube555(RubiksCube):
         # No 7 at https://i.imgur.com/wsTqj.png
         if self.flip_two_edge_elements():
 
-            # Scenario 1, 5, 6, 7 or 8?
             pattern_id = self.get_two_edge_pattern_id()
 
             # No 6 on https://imgur.com/r/all/wsTqj
+            # Exchange places and flip both centers
+            # 8 moves
             if pattern_id == 6:
                 for step in "Uw2 Rw2 F2 Uw2 U2 F2 Rw2 Uw2".split():
                     self.rotate(step)
 
             # No 7 on https://imgur.com/r/all/wsTqj
+            # Exchange places, no flipping
+            # 10 moves
             elif pattern_id == 7:
                 for step in "F2 Rw D2 Rw' F2 U2 F2 Lw B2 Lw'".split():
                     self.rotate(step)
 
             # No 8 on https://imgur.com/r/all/wsTqj
+            # Exchange places, flip one center
+            # 14 moves
             elif pattern_id == 8:
                 for step in "Rw2 B2 Rw' U2 Rw' U2 B2 Rw' B2 Rw B2 Rw' B2 Rw2".split():
                     self.rotate(step)

@@ -4,14 +4,11 @@ DONE - all of the "def lookup" table functions need to return the steps not exec
 DONE - clean up all of the IDA related function names, make them consistent
 DONE - make the lookup-table.txt filenames consistent
 DONE - create a class for lookup tables
-- store cube state in a list instead of a dict
+DONE - run vulture and remove tons of dead code
+DONE - start combining 5x5x5 and 6x6x6 edge pairing code...this needs lots of cleanup
+DONE Compress the tables
 - get 6x6x6 edges working
-- run vulture and remove tons of dead code
-- start combining 5x5x5 and 6x6x6 edge pairing code...this needs lots of cleanup
 
-Compress the tables
-- only store the next move to make the tables smaller
-- store the cube state as hex...this can only be done for staging tables
 
 Status      Size  Table Name
 ======      ====  ==========

@@ -31,6 +31,8 @@ try:
         test_cases = json.load(fh)
 
     solution_total = 0
+    centers_solution_total = 0
+    edges_solution_total = 0
     min_solution = None
     max_solution = None
 
@@ -110,6 +112,8 @@ try:
 
             solution_length = len(cube.solution)
             solution_total += solution_length
+            centers_solution_total += cube.steps_to_solve_centers
+            edges_solution_total += cube.steps_to_group_edges
 
             if min_solution is None or solution_length < min_solution:
                 min_solution = solution_length
@@ -119,7 +123,9 @@ try:
 
         results.append("%s min solution %s steps" % (size, min_solution))
         results.append("%s max solution %s steps" % (size, max_solution))
-        results.append("%s avg solution %s steps" % (size, int(solution_total/num_test_cases_executed)))
+        results.append("%s avg solution %s steps" % (size, float(solution_total/num_test_cases_executed)))
+        results.append("%s avg centers solution %s steps" % (size, float(centers_solution_total/num_test_cases_executed)))
+        results.append("%s avg edges solution %s steps" % (size, float(edges_solution_total/num_test_cases_executed)))
         results.append("")
 
     for result in results:

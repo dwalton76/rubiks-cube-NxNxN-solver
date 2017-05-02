@@ -315,7 +315,7 @@ class LookupTable(object):
         self.sides_FB = (self.parent.sideF, self.parent.sideB)
 
         if not os.path.exists(filename):
-            print "ERROR: %s does not exist" % filename
+            print("ERROR: %s does not exist" % filename)
             sys.exit(1)
         self.filename = filename
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')

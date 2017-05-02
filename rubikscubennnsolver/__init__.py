@@ -315,8 +315,13 @@ class LookupTable(object):
         self.sides_FB = (self.parent.sideF, self.parent.sideB)
 
         if not os.path.exists(filename):
-            print("ERROR: %s does not exist" % filename)
-            sys.exit(1)
+            if os.path.exists(filename + '.gz'):
+                log.warning("gunzip --keep %s.gz" % filename)
+                subprocess.call(['gunzip', '--keep', filename + '.gz'])
+            else:
+                print("ERROR: %s does not exist" % filename)
+                sys.exit(1)
+
         self.filename = filename
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
         self.state_type = state_type
@@ -548,7 +553,7 @@ class LookupTable(object):
         while True:
             state = self.state()
 
-            log.debug("state %s vs state_target %s" % (state, self.state_target))
+            log.info("%s: state %s vs state_target %s" % (self.state_type, state, self.state_target))
 
             if state == self.state_target:
                 break

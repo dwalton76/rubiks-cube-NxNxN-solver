@@ -3789,7 +3789,7 @@ class RubiksCube(object):
             self.compress_solution()
 
     def print_solution(self):
-        print(' '.join(self.solution))
+        print("\nSolution: %s" % ' '.join(self.solution))
 
         if self.steps_to_rotate_cube:
             print("%d steps to rotate entire cube" % self.steps_to_rotate_cube)

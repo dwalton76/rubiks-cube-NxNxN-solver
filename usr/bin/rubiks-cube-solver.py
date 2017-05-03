@@ -104,7 +104,6 @@ try:
     print("%d steps" % len(cube.solution))
     '''
 
-    print("\nSolution")
     cube.print_solution()
 
     # Now put the cube back in its initial state and verify the solution solves it

@@ -78,17 +78,16 @@ class RubiksCube666(RubiksCube):
 
         lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt
         =====================================================
-
         1 steps has 5 entries (0 percent)
         2 steps has 82 entries (0 percent)
-        3 steps has 1434 entries (0 percent)
-        4 steps has 24,198 entries (0 percent)
-        5 steps has 405,916 entries (0 percent)
-        6 steps has 6,839,392 entries (5 percent)
-        7 steps has 116,031,874 entries (94 percent)
+        3 steps has 1,434 entries (0 percent)
+        4 steps has 24,202 entries (0 percent)
+        5 steps has 406,482 entries (0 percent)
+        6 steps has 6,847,666 entries (0 percent)
+        7 steps has 116,149,794 entries (6 percent)
+        8 steps has 1,719,464,888 entries (93 percent)
 
-        Total: 123,302,901 entries
-
+        Total: 1,842,894,553 entries
 
         lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
         ===============================================================

@@ -227,19 +227,22 @@ class RubiksCube666(RubiksCube):
         '''
         lookup-table-6x6x6-step61-LR-centers-solve.txt
         ==============================================
-        1 steps has 7 entries (0 percent)
-        2 steps has 41 entries (0 percent)
-        3 steps has 230 entries (0 percent)
-        4 steps has 1,308 entries (0 percent)
-        5 steps has 7,234 entries (0 percent)
-        6 steps has 36,454 entries (0 percent)
-        7 steps has 175,690 entries (0 percent)
-        8 steps has 800,122 entries (3 percent)
-        9 steps has 3,117,090 entries (12 percent)
-        10 steps has 8,125,772 entries (33 percent)
-        11 steps has 9,093,004 entries (37 percent)
-        12 steps has 2,594,984 entries (10 percent)
-        13 steps has 58,064 entries (0 percent)
+        1 steps has 5 entries (0 percent)
+        2 steps has 26 entries (0 percent)
+        3 steps has 94 entries (0 percent)
+        4 steps has 440 entries (0 percent)
+        5 steps has 1,680 entries (0 percent)
+        6 steps has 7,026 entries (0 percent)
+        7 steps has 26,072 entries (0 percent)
+        8 steps has 98,147 entries (0 percent)
+        9 steps has 349,870 entries (1 percent)
+        10 steps has 1,180,438 entries (4 percent)
+        11 steps has 3,429,688 entries (14 percent)
+        12 steps has 7,384,342 entries (30 percent)
+        13 steps has 8,471,512 entries (35 percent)
+        14 steps has 2,936,552 entries (12 percent)
+        15 steps has 123,980 entries (0 percent)
+        16 steps has 128 entries (0 percent)
 
         Total: 24,010,000 entries
         '''
@@ -285,12 +288,10 @@ class RubiksCube666(RubiksCube):
         13 steps has 8,471,512 entries (35 percent)
         14 steps has 2,936,552 entries (12 percent)
         15 steps has 123,980 entries (0 percent)
-        16 steps has 141 entries (0 percent)
-        17 steps has 4 entries (0 percent)
+        16 steps has 128 entries (0 percent)
 
-        Total: 24,010,017 entries
+        Total: 24,010,000 entries
         '''
-
         self.lt_FB_centers_solve = LookupTable(self,
                                                'lookup-table-6x6x6-step62-FB-centers-solve.txt',
                                                'FB-centers-solve',

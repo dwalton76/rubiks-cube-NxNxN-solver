@@ -44,7 +44,7 @@ class RubiksCube555(RubiksCube):
         X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
         is 0.0000013596729171 which is a decent percentage for IDA.
 
-        lookup-table-5x5x5-step10-UD-centers-state.txt
+        lookup-table-5x5x5-step10-UD-centers-stage.txt
         ==============================================
         1 steps has 5 entries (0 percent)
         2 steps has 98 entries (0 percent)
@@ -101,7 +101,7 @@ class RubiksCube555(RubiksCube):
                                                  False) # state_hex
 
         self.lt_UD_centers_stage = LookupTableIDA(self,
-                                                 'lookup-table-5x5x5-step10-UD-centers-state.txt',
+                                                 'lookup-table-5x5x5-step10-UD-centers-stage.txt',
                                                  'UD-centers-stage',
                                                  '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
                                                  True, # state_hex

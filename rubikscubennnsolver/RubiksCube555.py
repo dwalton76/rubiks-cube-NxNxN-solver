@@ -125,17 +125,17 @@ class RubiksCube555(RubiksCube):
         1 steps has 3 entries (0 percent)
         2 steps has 33 entries (0 percent)
         3 steps has 374 entries (0 percent)
-        4 steps has 3,839 entries (0 percent)
-        5 steps has 39,265 entries (0 percent)
-        6 steps has 387,443 entries (0 percent)
-        7 steps has 3,374,792 entries (2 percent)
-        8 steps has 20,853,556 entries (12 percent)
-        9 steps has 65,566,534 entries (39 percent)
-        10 steps has 67,002,863 entries (40 percent)
-        11 steps has 8,425,578 entries (5 percent)
-        12 steps has 12,790 entries (0 percent)
+        4 steps has 3,838 entries (0 percent)
+        5 steps has 39,254 entries (0 percent)
+        6 steps has 387,357 entries (0 percent)
+        7 steps has 3,374,380 entries (2 percent)
+        8 steps has 20,851,334 entries (12 percent)
+        9 steps has 65,556,972 entries (39 percent)
+        10 steps has 66,986,957 entries (40 percent)
+        11 steps has 8,423,610 entries (5 percent)
+        12 steps has 12,788 entries (0 percent)
 
-        Total: 165,667,070 entries
+        Total: 165,636,900 entries
         '''
         self.lt_LR_centers_stage = LookupTable(self,
                                                'lookup-table-5x5x5-step20-LR-centers-stage.txt',

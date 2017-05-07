@@ -484,6 +484,7 @@ class RubiksCube666(RubiksCube):
         # At this point we can treat UD centers like 5x5x5 centers
         # Create a dummy 5x5x5 cube object that we can use to figure out what steps to
         fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555.lt_init()
         self.populate_fake_555_for_UD(fake_555)
         fake_555.lt_UD_centers_stage.solve()
 
@@ -502,6 +503,7 @@ class RubiksCube666(RubiksCube):
         # At this point we can treat UD centers like 5x5x5 centers
         # Create a dummy 5x5x5 cube object that we can use to figure out what steps to
         fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555.lt_init()
         self.populate_fake_555_for_LR(fake_555)
 
         fake_555.lt_LR_centers_stage.solve()
@@ -527,6 +529,7 @@ class RubiksCube666(RubiksCube):
 
     def pair_inside_edges(self):
         fake_444 = RubiksCube444(solved_4x4x4)
+        fake_444.lt_init()
 
         # The corners don't matter but it does make troubleshooting easier if they match
         '''
@@ -640,6 +643,7 @@ class RubiksCube666(RubiksCube):
         This is not used at the moment...maybe someday
         """
         fake_444 = RubiksCube444(solved_4x4x4)
+        fake_444.lt_init()
 
         # The corners don't matter but it does make troubleshooting easier if they match
         '''
@@ -747,6 +751,7 @@ class RubiksCube666(RubiksCube):
 
     def pair_outside_edges_via_555(self):
         fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555.lt_init()
 
         # The corners don't matter but it does make troubleshooting easier if they match
         '''

@@ -1,46 +1,18 @@
 
-DONE - add lookup-table comments/stats from README to code
-DONE - all of the "def lookup" table functions need to return the steps not exec the steps
-DONE - clean up all of the IDA related function names, make them consistent
-DONE - make the lookup-table.txt filenames consistent
-DONE - create a class for lookup tables
-DONE - run vulture and remove tons of dead code
-DONE - start combining 5x5x5 and 6x6x6 edge pairing code...this needs lots of cleanup
-DONE Compress the tables
-- get 6x6x6 edges working
+
+5x5x5
+=====
+There are 5 scenarios that the last two edges can be in so there should be 25
+scenarios that the last 4 edges can be in.  We need to do lookup tables to
+solve 4 edges at a time, this should save us a lot of steps on edge pairing.
 
 
-Status      Size  Table Name
-======      ====  ==========
-no change    98M  lookup-table-2x2x2-solve.txt
+6x6x6
+=====
+When we solve the LFRB centers today we:
+- solve LR
+- use IDA to solve LFRB
+where solving LR is one prune table and solving FB is the other.
 
-no change    31M  lookup-table-4x4x4-step01-UD-centers-stage.txt
-no change   424K  lookup-table-4x4x4-step02-LR-centers-stage.txt
-no change    17M  lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt
-no change   483K  lookup-table-4x4x4-step40-edges-slice-forward.txt
-no change   522K  lookup-table-4x4x4-step50-edges-slice-backward.txt
-
-hex/onestep 5.5G  lookup-table-5x5x5-step10-stage-UD-centers.txt     (onestep took from 24G to 18G, hex down to 5.5G)
-no change    53M  lookup-table-5x5x5-step11-stage-UD-T-centers.txt
-no change    52M  lookup-table-5x5x5-step12-stage-UD-X-centers.txt
-hex/onestep 2.1G  lookup-table-5x5x5-step20-stage-LR-centers.txt     (onestep took from 11G to 6.2G, hex down to 2.1G)
-onestep     6.6G  lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt (onestep took from 9.2G to 6.6G)
-no change   2.0G  lookup-table-5x5x5-step31-UDLR-centers-solve.txt
-no change   669K  lookup-table-5x5x5-step60-edges-slice-forward.txt
-no change   708K  lookup-table-5x5x5-step70-edges-slice-backward.txt
-
-
-no change    85M  lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt
-hex/onestep 3.2G  lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt            (onestep took from 15Gto 12G, hex down to 3.2G)
-no change    83M  lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
-no change    83M  lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt
-no change   1.5M  lookup-table-6x6x6-step30-LR-inner-x-centers-stage.txt
-hex/onestep 3.3G  lookup-table-6x6x6-step40-LR-oblique-edge-pairing.txt (hex was done initially, onesstep took from 8.3G to 3.3G)
-
-onestep     856M  lookup-table-6x6x6-step50-UD-centers-solve.txt (onestep took from 1.7G to 856M)
-onestep     2.9G  lookup-table-6x6x6-step60-LFRB-centers-solve.txt (onestep took from 4.1G to 2.9G)
-no change   1.8G  lookup-table-6x6x6-step61-LR-centers-solve.txt
-no change   1.8G  lookup-table-6x6x6-step62-FB-centers-solve.txt
-
-no change    21M  lookup-table-6x6x6-step70-edges-slice-forward.txt
-no change    21M  lookup-table-6x6x6-step80-edges-slice-backward.txt
+Instead of solving LR all the way, what if at each step we check to see
+if the cube is in a state that is in the LFRB IDA table?

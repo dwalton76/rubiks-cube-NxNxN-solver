@@ -54,30 +54,56 @@ class RubiksCube777(RubiksCube):
 
     def lt_init(self):
         '''
-        Stage the inner X-centers
+        lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
+        =====================================================
+        '''
+
+        '''
         24!/(8!*16!) is 735,471
 
-        lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt
-        ======================================================
+        lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt
+        =================================================================
         1 steps has 5 entries (0 percent)
-        2 steps has 80 entries (0 percent)
-        3 steps has 1,160 entries (0 percent)
-        4 steps has 13,726 entries (1 percent)
-        5 steps has 121,796 entries (16 percent)
-        6 steps has 423,136 entries (57 percent)
-        7 steps has 174,656 entries (23 percent)
-        8 steps has 912 entries (0 percent)
+        2 steps has 64 entries (0 percent)
+        3 steps has 820 entries (0 percent)
+        4 steps has 8,504 entries (1 percent)
+        5 steps has 66,983 entries (9 percent)
+        6 steps has 260,716 entries (35 percent)
+        7 steps has 254,717 entries (34 percent)
+        8 steps has 136,861 entries (18 percent)
+        9 steps has 6,801 entries (0 percent)
 
         Total: 735,471 entries
         '''
+        self.lt_UD_oblique_edge_pairing_middle_only = LookupTable(self,
+                                                                  'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
+                                                                  '777-UD-oblique-edge-pairing-middle-only',
+                                                                  'TBD', #
+                                                                  True) # state_hex
+
         '''
-        self.lt_UD_inner_x_centers_stage = LookupTable(self,
-                                                      'lookup-table-7x7x7-step10-UD-inner-x-centers-stage.txt',
-                                                      '777-UD-inner-X-centers-stage',
-                                                      'TBD', #
-                                                      False) # state_hex
+        24!/(8!*16!) is 735,471
+
+        lookup-table-7x7x7-step12-UD-oblique-edge-pairing-outside-only.txt
+        ==================================================================
+        1 steps has 5 entries (0 percent)
+        2 steps has 66 entries (0 percent)
+        3 steps has 894 entries (0 percent)
+        4 steps has 9,629 entries (0 percent)
+        5 steps has 80,576 entries (5 percent)
+        6 steps has 336,775 entries (23 percent)
+        7 steps has 374,788 entries (26 percent)
+        8 steps has 319,824 entries (22 percent)
+        9 steps has 279,940 entries (19 percent)
+        10 steps has 12,166 entries (0 percent)
+
+        Total: 1,414,663 entries
         '''
-        pass
+        self.lt_UD_oblique_edge_pairing_outside_only = LookupTable(self,
+                                                                   'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-outside-only.txt',
+                                                                   '777-UD-oblique-edge-pairing-outside-only',
+                                                                   'TBD', #
+                                                                   True) # state_hex
 
     def create_fake_555_centers(self):
 

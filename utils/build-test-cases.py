@@ -71,3 +71,13 @@ for x in range(50):
     test_cases["7x7x7"].append(ks)
 
 print(json.dumps(test_cases, indent=4, sort_keys=True))
+
+# Build cube in:
+# https://www.speedsolving.com/forum/threads/arnauds-5x5x5-edge-pairing-method-examples.1447/
+'''
+cube = RubiksCube(solved_555)
+for step in "Rw U Rw' U Rw U2 Rw' F' U Lw' U2 Lw U Lw' U Lw L2 R2 F2 B2 Rw U Rw' U Rw U2 Rw' F' U Lw' U2 Lw U Lw' U Lw L R' F2 D' B2 Rw U Rw' U Rw U2 Rw' F' U Lw' U2 Lw U Lw' U Lw".split():
+    cube.rotate(step)
+ks = cube.get_kociemba_string(True)
+print(ks)
+'''

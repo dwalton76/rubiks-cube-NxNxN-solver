@@ -298,10 +298,14 @@ def convert_state_to_hex(state):
     """
     This assumes that state only has "x"s and Us or Ls or Fs or Rs or Bs or Ds
     """
-    hex_state = hex(int(state.replace('x', '0').replace('U', '1').replace('L', '1').replace('F', '1').replace('R', '1').replace('B', '1').replace('D', '1'), 2))[2:]
+    state = state.replace('x', '0').replace('U', '1').replace('L', '1').replace('F', '1').replace('R', '1').replace('B', '1').replace('D', '1')
+    hex_width = int(math.ceil(len(state)/4.0))
+    hex_state = hex(int(state, 2))[2:]
+
     if hex_state.endswith('L'):
         hex_state = hex_state[:-1]
-    return hex_state
+
+    return hex_state.zfill(hex_width)
 
 
 class LookupTable(object):
@@ -509,7 +513,7 @@ class LookupTable(object):
         elif self.state_type == '666-LR-oblique-edge-pairing':
             tmp_state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
             tmp_state = tmp_state.replace('U', 'x').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
-    
+
             # We need to x out the inner and outer x-centers for each side
             state = ''
             for y in range(4):
@@ -3806,7 +3810,7 @@ class RubiksCube(object):
         print("%d steps total" % len(self.solution))
 
     def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
-        state = [] 
+        state = []
         for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
             for square_index in sorted(side.edge_pos):
                 if square_index == target_wing[0]:

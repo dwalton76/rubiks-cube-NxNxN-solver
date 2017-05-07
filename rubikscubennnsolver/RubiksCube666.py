@@ -176,17 +176,17 @@ class RubiksCube666(RubiksCube):
         4 steps has 2,052 entries (0 percent)
         5 steps has 16,348 entries (0 percent)
         6 steps has 127,859 entries (0 percent)
-        7 steps has 844,265 entries (0 percent)
-        8 steps has 4,623,635 entries (2 percent)
-        9 steps has 19,020,012 entries (11 percent)
-        10 steps has 47,546,288 entries (28 percent)
-        11 steps has 61,806,216 entries (37 percent)
-        12 steps has 28,890,242 entries (17 percent)
+        7 steps has 844,248 entries (0 percent)
+        8 steps has 4,623,585 entries (2 percent)
+        9 steps has 19,019,322 entries (11 percent)
+        10 steps has 47,544,426 entries (28 percent)
+        11 steps has 61,805,656 entries (37 percent)
+        12 steps has 28,890,234 entries (17 percent)
         13 steps has 2,722,462 entries (1 percent)
         14 steps has 40,242 entries (0 percent)
         15 steps has 148 entries (0 percent)
 
-        Total: 165,640,087 entries
+        Total: 165,636,900 entries
         '''
         self.lt_LR_oblique_edge_pairing = LookupTable(self,
                                                       'lookup-table-6x6x6-step40-LR-oblique-pairing.txt',

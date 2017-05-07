@@ -6,6 +6,8 @@ There are 5 scenarios that the last two edges can be in so there should be 25
 scenarios that the last 4 edges can be in.  We need to do lookup tables to
 solve 4 edges at a time, this should save us a lot of steps on edge pairing.
 
+This will be in pair_multiple_edges_555()
+
 
 6x6x6
 =====

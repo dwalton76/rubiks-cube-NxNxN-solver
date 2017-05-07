@@ -1049,93 +1049,169 @@ class RubiksCube555(RubiksCube):
         log.warning("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_edges(self):
-
         self.pair_outside_edges()
         self.print_cube()
 
-        while True:
-            non_paired_edges = self.get_non_paired_edges()
-            pre_non_paired_edges_count = len(non_paired_edges)
-            pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            log.info("")
-            log.info("")
-            log.info("")
-            log.warning("%d steps in, %d edges left to pair" % (pre_solution_len, pre_non_paired_edges_count))
+        original_non_paired_edges = self.get_non_paired_edges()
+        if not original_non_paired_edges:
+            self.solution.append('EDGES_GROUPED')
+            return
+        original_non_paired_edges_count = len(original_non_paired_edges)
 
-            if pre_non_paired_edges_count == 0:
-                break
+        # save cube state
+        original_state = copy(self.state)
+        original_solution = copy(self.solution)
+        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-            self.print_cube()
+        # There are 12 edges, cycle through all 12 in terms of which edge we try to pair first.
+        # Remember the one that results in the shortest solution that is free of PLL parity.
+        min_solution_length = None
+        min_solution_state = None
+        min_solution = None
+        min_solution_has_pll = True
 
-            # cycle through the unpaired wings and find the wing where pair_multiple_edges_555
-            # pairs the most in the least number of moves
-            tmp_state = copy(self.state)
-            tmp_solution = copy(self.solution)
+        # If you are working on improving edge pairing it is a little easier to
+        # troubleshoot if you are not cycling through all 12 edges as your
+        # "init_wing_to_pair" so set the following to False.
+        use_init_wing_to_pair = True
 
-            min_moves_per_paired_wing = None
-            max_edges_paired = None
-            max_edges_paired_wing_to_pair = None
-            max_wing_solution_len = None
+        for init_wing_to_pair in original_non_paired_edges:
+            # log.info("init_wing_to_pair %20s" % pformat(init_wing_to_pair))
 
-            for foo in non_paired_edges:
-                wing_to_pair = foo[0]
+            if use_init_wing_to_pair:
+                if self.pair_multiple_edges_555(init_wing_to_pair[0], original_non_paired_edges_count):
+                    pass
+                elif self.pair_one_edge_555(init_wing_to_pair[0]):
+                    pass
+                else:
+                    raise SolveError("Could not pair a single edge")
 
-                if self.pair_multiple_edges_555(wing_to_pair, pre_non_paired_edges_count):
-                    post_non_paired_edges_count = self.get_non_paired_edges_count()
-                    edges_paired = pre_non_paired_edges_count - post_non_paired_edges_count
-                    post_solution_len = self.get_solution_len_minus_rotates(self.solution)
-                    wing_solution_len = post_solution_len - pre_solution_len
+            while True:
+                non_paired_edges = self.get_non_paired_edges()
+                pre_non_paired_edges_count = len(non_paired_edges)
+                pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
+                log.info("")
+                log.info("")
+                log.info("")
+                log.warning("%d steps in, %d edges left to pair" % (pre_solution_len, pre_non_paired_edges_count))
 
-                    if edges_paired > 0:
-                        moves_per_paired_wing = float(wing_solution_len/edges_paired)
+                if pre_non_paired_edges_count == 0:
+                    break
 
-                        if (min_moves_per_paired_wing is None or
-                            moves_per_paired_wing < min_moves_per_paired_wing or
-                            (moves_per_paired_wing == min_moves_per_paired_wing and edges_paired > max_edges_paired)):
-                            max_edges_paired = edges_paired
-                            max_edges_paired_wing_to_pair = wing_to_pair
-                            max_wing_solution_len = wing_solution_len
-                            min_moves_per_paired_wing = moves_per_paired_wing
+                # self.print_cube()
 
-                # Restore state
-                self.state = copy(tmp_state)
-                self.solution = copy(tmp_solution)
+                # cycle through the unpaired wings and find the wing where pair_multiple_edges_555
+                # pairs the most in the least number of moves
+                tmp_state = copy(self.state)
+                tmp_solution = copy(self.solution)
 
-            if max_edges_paired:
-                wing_to_pair = max_edges_paired_wing_to_pair
-                log.info("Using %s as next wing_to_pair will pair %d edges in %d moves" % (wing_to_pair, max_edges_paired, max_wing_solution_len))
-                self.pair_multiple_edges_555(wing_to_pair, pre_non_paired_edges_count)
-
-            # see which wing we can pair two at a time with the least moves
-            else:
-                log.warning("There are no wings where pair_multiple_edges_555 will return True")
+                min_moves_per_paired_wing = None
+                max_edges_paired = None
+                max_edges_paired_wing_to_pair = None
+                max_wing_solution_len = None
 
                 for foo in non_paired_edges:
                     wing_to_pair = foo[0]
 
-                    if self.pair_one_edge_555(wing_to_pair):
+                    if self.pair_multiple_edges_555(wing_to_pair, pre_non_paired_edges_count):
                         post_non_paired_edges_count = self.get_non_paired_edges_count()
                         edges_paired = pre_non_paired_edges_count - post_non_paired_edges_count
                         post_solution_len = self.get_solution_len_minus_rotates(self.solution)
                         wing_solution_len = post_solution_len - pre_solution_len
 
-                        if (max_edges_paired is None or
-                            edges_paired > max_edges_paired or
-                            (edges_paired == max_edges_paired and wing_solution_len < max_wing_solution_len)):
-                            max_edges_paired = edges_paired
-                            max_edges_paired_wing_to_pair = wing_to_pair
-                            max_wing_solution_len = wing_solution_len
+                        if edges_paired > 0:
+                            moves_per_paired_wing = float(wing_solution_len/edges_paired)
+
+                            if (min_moves_per_paired_wing is None or
+                                moves_per_paired_wing < min_moves_per_paired_wing or
+                                (moves_per_paired_wing == min_moves_per_paired_wing and edges_paired > max_edges_paired)):
+                                max_edges_paired = edges_paired
+                                max_edges_paired_wing_to_pair = wing_to_pair
+                                max_wing_solution_len = wing_solution_len
+                                min_moves_per_paired_wing = moves_per_paired_wing
 
                     # Restore state
                     self.state = copy(tmp_state)
                     self.solution = copy(tmp_solution)
 
-                if max_edges_paired_wing_to_pair is None:
-                    raise SolveError("pair_one_edge_555 failed")
+                if max_edges_paired:
+                    wing_to_pair = max_edges_paired_wing_to_pair
+                    log.info("Using %s as next wing_to_pair will pair %d edges in %d moves" % (wing_to_pair, max_edges_paired, max_wing_solution_len))
+                    self.pair_multiple_edges_555(wing_to_pair, pre_non_paired_edges_count)
 
-                wing_to_pair = max_edges_paired_wing_to_pair
-                log.info("Using %s as next wing_to_pair will pair %s wings in %s moves" % (wing_to_pair, max_edges_paired, max_wing_solution_len))
-                self.pair_one_edge_555(wing_to_pair)
+                # see which wing we can pair two at a time with the least moves
+                else:
+                    log.warning("There are no wings where pair_multiple_edges_555 will return True")
+
+                    for foo in non_paired_edges:
+                        wing_to_pair = foo[0]
+
+                        if self.pair_one_edge_555(wing_to_pair):
+                            post_non_paired_edges_count = self.get_non_paired_edges_count()
+                            edges_paired = pre_non_paired_edges_count - post_non_paired_edges_count
+                            post_solution_len = self.get_solution_len_minus_rotates(self.solution)
+                            wing_solution_len = post_solution_len - pre_solution_len
+
+                            if (max_edges_paired is None or
+                                edges_paired > max_edges_paired or
+                                (edges_paired == max_edges_paired and wing_solution_len < max_wing_solution_len)):
+                                max_edges_paired = edges_paired
+                                max_edges_paired_wing_to_pair = wing_to_pair
+                                max_wing_solution_len = wing_solution_len
+
+                        # Restore state
+                        self.state = copy(tmp_state)
+                        self.solution = copy(tmp_solution)
+
+                    if max_edges_paired_wing_to_pair is None:
+                        raise SolveError("pair_one_edge_555 failed")
+
+                    wing_to_pair = max_edges_paired_wing_to_pair
+                    log.info("Using %s as next wing_to_pair will pair %s wings in %s moves" % (wing_to_pair, max_edges_paired, max_wing_solution_len))
+                    self.pair_one_edge_555(wing_to_pair)
+
+            solution_len_minus_rotates = self.get_solution_len_minus_rotates(self.solution)
+            leads_to_pll = self.edge_solution_leads_to_pll_parity()
+            new_min = False
+
+            if leads_to_pll:
+                log.info("edges solution length %d, leads to PLL parity" % (solution_len_minus_rotates - original_solution_len))
+
+            if min_solution_length is None:
+                new_min = True
+
+            elif min_solution_has_pll:
+                if leads_to_pll:
+                    if solution_len_minus_rotates < min_solution_length:
+                        new_min = True
+                else:
+                    new_min = True
+
+            elif not leads_to_pll and solution_len_minus_rotates < min_solution_length:
+                new_min = True
+
+            if new_min:
+                min_solution_has_pll = leads_to_pll
+                min_solution_length = solution_len_minus_rotates
+                min_solution_state = copy(self.state)
+                min_solution = copy(self.solution)
+                log.warning("edges solution length %d (NEW MIN)" % (solution_len_minus_rotates - original_solution_len))
+            else:
+                log.info("edges solution length %d" % (solution_len_minus_rotates - original_solution_len))
+            log.info('')
+
+            # restore state
+            self.state = copy(original_state)
+            self.solution = copy(original_solution)
+
+            if not use_init_wing_to_pair:
+                break
+
+        self.state = copy(min_solution_state)
+        self.solution = copy(min_solution)
+
+        if self.get_non_paired_edges_count():
+            raise SolveError("All edges should be resolved")
 
         self.solution.append('EDGES_GROUPED')
 

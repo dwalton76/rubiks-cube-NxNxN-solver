@@ -1409,7 +1409,7 @@ class RubiksCube(object):
         for side in self.sides.values():
             if square_index >= side.min_pos and square_index <= side.max_pos:
                 return side
-        raise SolveError("We should not be here, square_index %d" % square_index)
+        raise SolveError("We should not be here, square_index %s" % pformat(square_index))
 
     def get_non_paired_wings(self):
         return (self.sideU.non_paired_wings(True, True, True, True) +

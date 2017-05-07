@@ -61,3 +61,13 @@ Changed state from dict to list
 No change in move count but it does run 6s faster
 38.03user 3.12system 0:41.25elapsed 99%CPU (0avgtext+0avgdata 12836maxresident)k
 
+
+Use init_wing_to_pair approach...saves 6 steps but doubles the time
+===================================================================
+5x5x5 min solution 119 steps
+5x5x5 max solution 153 steps
+5x5x5 avg solution 135.0 steps
+5x5x5 avg centers solution 36.0 steps
+5x5x5 avg edges solution 78.0 steps
+
+81.05user 4.18system 1:25.34elapsed 99%CPU (0avgtext+0avgdata 12972maxresident)k

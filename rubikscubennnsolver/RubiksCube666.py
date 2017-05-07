@@ -162,8 +162,8 @@ class RubiksCube666(RubiksCube):
         self.lt_LR_inner_x_centers_stage = LookupTable(self,
                                                       'lookup-table-6x6x6-step30-LR-inner-x-centers-stage.txt',
                                                       '666-LR-inner-X-centers-stage',
-                                                      'xxxxxxxxxxxxxxxxxxxxxLLxxLLxxxxxxxxxxxxxxxxxxxxxxxxxxLLxxLLxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-                                                      False) # state_hex
+                                                      '000006600000066000000000',
+                                                      True) # state_hex
 
         '''
         (16!/(8!*8!))^2 is 165,636,900

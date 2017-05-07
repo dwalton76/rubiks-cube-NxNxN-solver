@@ -43,14 +43,21 @@ million times cleaner and it runs in 1min instead of 10min
 5x5x5 avg solution 146 steps
 
 59.08user 3.60system 1:02.79elapsed 99%CPU (0avgtext+0avgdata 13604maxresident)k
-0inputs+0outputs (0major+97490minor)pagefaults 0swaps
 
 
 More 5x5x5 edge pairing cleanup
 ===============================
-5x5x5 min solution 118 steps
-5x5x5 max solution 166 steps
-5x5x5 avg solution 141 steps
+5x5x5 min solution 121 steps
+5x5x5 max solution 172 steps
+5x5x5 avg solution 141.0 steps
+5x5x5 avg centers solution 36.0 steps
+5x5x5 avg edges solution 84.0 steps
 
-40.99user 3.12system 0:44.22elapsed 99%CPU (0avgtext+0avgdata 13468maxresident)k
-0inputs+0outputs (0major+71613minor)pagefaults 0swaps
+44.12user 3.97system 0:59.96elapsed 80%CPU (0avgtext+0avgdata 13264maxresident)k
+
+
+Changed state from dict to list
+===============================
+No change in move count but it does run 6s faster
+38.03user 3.12system 0:41.25elapsed 99%CPU (0avgtext+0avgdata 12836maxresident)k
+

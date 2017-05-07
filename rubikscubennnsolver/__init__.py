@@ -600,7 +600,7 @@ class LookupTableIDA(LookupTable):
             self.parent.solution = copy(prev_solution)
             self.parent.rotate(step)
             self.ida_count += 1
-            # assert cost_to_here+1 == len(self.solution), "cost_to_here %d, solution %s" % (cost_to_here, ' '.join(self.solution))
+            # assert cost_to_here+1 == len(self.parent.solution), "cost_to_here %d, solution %s" % (cost_to_here, ' '.join(self.parent.solution))
 
             # Do we have the cube in a state where there is a match in the lookup table?
             steps = self.steps()
@@ -635,8 +635,8 @@ class LookupTableIDA(LookupTable):
             if state == self.state_target:
                 break
 
-            log.debug("state %s vs state_target %s" % (state, self.state_target))
             steps = self.steps()
+            log.debug("state %s vs state_target %s" % (state, self.state_target))
 
             if steps:
                 for step in steps:
@@ -689,9 +689,9 @@ class RubiksCube(object):
         foo.extend(init_state[(self.squares_per_side * 5) + 1 : (self.squares_per_side * 6) + 1]) # B
         foo.extend(init_state[(self.squares_per_side * 3) + 1 : (self.squares_per_side * 4) + 1]) # D
 
-        self.state = {}
+        self.state = ['placeholder', ]
         for (square_index, side_name) in enumerate(foo):
-            self.state[square_index+1] = side_name
+            self.state.append(side_name)
 
         self.sides = OrderedDict()
         self.sides['U'] = Side(self, 'U')
@@ -1298,9 +1298,13 @@ class RubiksCube(object):
         for x in range(self.size * 3):
             rows.append([])
 
-        for square_index in sorted(self.state.keys()):
+        for (square_index, square_state) in enumerate(self.state):
+
+            # ignore the placeholder
+            if square_index == 0:
+                continue
+
             side_name = side_names[side_name_index]
-            square_state = self.state[square_index]
             color = color_codes.get(square_state, None)
 
             # end of the row

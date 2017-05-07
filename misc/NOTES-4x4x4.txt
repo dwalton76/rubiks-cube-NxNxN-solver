@@ -119,3 +119,20 @@ Added pair_last_six_edges_444()
 4x4x4 max solution 88 steps
 4x4x4 avg solution 70 steps
 
+
+I forget what I changed :(
+==========================
+4x4x4 min solution 61 steps
+4x4x4 max solution 90 steps
+4x4x4 avg solution 68.0 steps
+4x4x4 avg centers solution 19.0 steps
+4x4x4 avg edges solution 27.0 steps
+
+7.55user 0.28system 0:08.19elapsed 95%CPU (0avgtext+0avgdata 12784maxresident)k
+23576inputs+0outputs (0major+65360minor)pagefaults 0swaps
+
+
+Changed state from dict to list
+===============================
+No change in move count but it does run a bit faster
+6.92user 0.22system 0:07.26elapsed 98%CPU (0avgtext+0avgdata 12712maxresident)k

@@ -658,6 +658,26 @@ class LookupTableIDA(LookupTable):
                 else:
                     raise SolveError("%s FAILED" % self)
 
+def orbit_matches(edges_per_side, orbit, edge_index):
+    if orbit is None:
+        return True
+
+    if orbit == 0:
+        if edge_index == 0 or edge_index == edges_per_side-1:
+            return True
+        return False
+
+    if orbit == 1:
+        if edge_index == 1 or edge_index == edges_per_side-2:
+            return True
+        return False
+
+    raise ImplementThis("orbit_matches for %d" % orbit)
+    # It should be this...
+    if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
+        return True
+    return False
+
 
 class RubiksCube(object):
 
@@ -3182,122 +3202,141 @@ class RubiksCube(object):
             return True
         return False
 
-    def get_edge_swap_count(self, edges_paired, debug=False):
+    def get_edge_swap_count(self, edges_paired, orbit, debug=False):
         needed_edges = []
         to_check = []
 
+        # should not happen
+        if edges_paired and orbit is not None:
+            raise Exception("edges_paired is True and orbit is %s" % orbit)
+
+        edges_per_side = len(self.sideU.edge_north_pos)
+
         # Upper
-        for (foo_index, square_index) in enumerate(self.sideU.edge_north_pos):
-            to_check.append(square_index)
+        for (edge_index, square_index) in enumerate(self.sideU.edge_north_pos):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('UB')
                 break
             else:
-                needed_edges.append('UB%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('UB%d' % edge_index)
 
-        for (foo_index, square_index) in enumerate(reversed(self.sideU.edge_west_pos)):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(reversed(self.sideU.edge_west_pos)):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('UL')
                 break
             else:
-                needed_edges.append('UL%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('UL%d' % edge_index)
 
-        for (foo_index, square_index) in enumerate(self.sideU.edge_south_pos):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(self.sideU.edge_south_pos):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('UF')
                 break
             else:
-                needed_edges.append('UF%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('UF%d' % edge_index)
 
-        for (foo_index, square_index) in enumerate(self.sideU.edge_east_pos):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(self.sideU.edge_east_pos):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('UR')
                 break
             else:
-                needed_edges.append('UR%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('UR%d' % edge_index)
 
 
         # Left
-        for (foo_index, square_index) in enumerate(reversed(self.sideL.edge_west_pos)):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(reversed(self.sideL.edge_west_pos)):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('LB')
                 break
             else:
-                needed_edges.append('LB%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('LB%d' % edge_index)
 
-        for (foo_index, square_index) in enumerate(self.sideL.edge_east_pos):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(self.sideL.edge_east_pos):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('LF')
                 break
             else:
-                needed_edges.append('LF%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('LF%d' % edge_index)
 
 
         # Right
-        for (foo_index, square_index) in enumerate(reversed(self.sideR.edge_west_pos)):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(reversed(self.sideR.edge_west_pos)):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('RF')
                 break
             else:
-                needed_edges.append('RF%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('RF%d' % edge_index)
 
-        for (foo_index, square_index) in enumerate(self.sideR.edge_east_pos):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(self.sideR.edge_east_pos):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('RB')
                 break
             else:
-                needed_edges.append('RB%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('RB%d' % edge_index)
 
         # Down
-        for (foo_index, square_index) in enumerate(self.sideD.edge_north_pos):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(self.sideD.edge_north_pos):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('DF')
                 break
             else:
-                needed_edges.append('DF%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('DF%d' % edge_index)
 
-        for (foo_index, square_index) in enumerate(reversed(self.sideD.edge_west_pos)):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(reversed(self.sideD.edge_west_pos)):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('DL')
                 break
             else:
-                needed_edges.append('DL%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('DL%d' % edge_index)
 
-        for (foo_index, square_index) in enumerate(self.sideD.edge_south_pos):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(self.sideD.edge_south_pos):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('DB')
                 break
             else:
-                needed_edges.append('DB%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('DB%d' % edge_index)
 
-        for (foo_index, square_index) in enumerate(self.sideD.edge_east_pos):
-            to_check.append(square_index)
-
+        for (edge_index, square_index) in enumerate(self.sideD.edge_east_pos):
             if edges_paired:
+                to_check.append(square_index)
                 needed_edges.append('DR')
                 break
             else:
-                needed_edges.append('DR%d' % foo_index)
+                if orbit_matches(edges_per_side, orbit, edge_index):
+                    to_check.append(square_index)
+                    needed_edges.append('DR%d' % edge_index)
 
         if debug:
             to_check_str = ''
@@ -3434,13 +3473,13 @@ class RubiksCube(object):
             log.info("current edges: %s" % ' '.join(current_edges))
         return get_swap_count(needed_edges, current_edges, debug)
 
-    def edge_swaps_even(self, edges_paired, debug):
-        if self.get_edge_swap_count(edges_paired, debug) % 2 == 0:
+    def edge_swaps_even(self, edges_paired, orbit, debug):
+        if self.get_edge_swap_count(edges_paired, orbit, debug) % 2 == 0:
             return True
         return False
 
-    def edge_swaps_odd(self, edges_paired, debug):
-        if self.get_edge_swap_count(edges_paired, debug) % 2 == 1:
+    def edge_swaps_odd(self, edges_paired, orbit, debug):
+        if self.get_edge_swap_count(edges_paired, orbit, debug) % 2 == 1:
             return True
         return False
 
@@ -3448,7 +3487,7 @@ class RubiksCube(object):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-        if self.edge_swaps_even(True, debug) == self.corner_swaps_even(debug):
+        if self.edge_swaps_even(edges_paired=True, orbit=None, debug=debug) == self.corner_swaps_even(debug):
             if debug:
                 log.info("Predict we are free of PLL parity")
             return False
@@ -3465,14 +3504,17 @@ class RubiksCube(object):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-        # OLL Parity - "...is caused by solving the centers such that the edge permutation is odd"
-        # http://www.speedcubing.com/chris/4speedsolve3.html
-        if self.edge_swaps_odd(False, debug):
-            log.debug("Predict we have OLL parity")
-            return True
-        else:
-            log.debug("Predict we are free of OLL parity")
-            return False
+        orbits = (self.size - 2) / 2
+
+        for orbit in xrange(orbits):
+            # OLL Parity - "...is caused by solving the centers such that the edge permutation is odd"
+            # http://www.speedcubing.com/chris/4speedsolve3.html
+            if self.edge_swaps_odd(False, orbit, debug):
+                log.debug("Predict we have OLL parity")
+                return True
+
+        log.debug("Predict we are free of OLL parity")
+        return False
 
     def get_state_all(self):
         result = []
@@ -3622,7 +3664,7 @@ class RubiksCube(object):
                     if self.is_even() and self.center_solution_leads_to_oll_parity():
                         log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
 
-                    # Do not consider any solution that pairs an edge...it is easier
+                    # Do not consider any solution that pairs an edge for 4x4x4...it is easier
                     # to handle the scenario where all edges are unpaired
                     elif self.size == 4 and self.get_non_paired_edges_count() != 12:
                         log.info("%s on top, %s in front, opening move %4s: %d edges unpaired" %

@@ -4,7 +4,6 @@ from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.pts_line_bisect import get_line_startswith
 from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out, convert_state_to_hex, LookupTable, LookupTableIDA
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6, moves_6x6x6
 from rubikscubennnsolver.RubiksSide import Side, SolveError
@@ -26,6 +25,7 @@ class RubiksCube777(RubiksCube):
     """
     For 7x7x7 centers
     - stage the UD inside 9 centers via 5x5x5
+    # dwalton
     - UD oblique edges
         - pair the two outside oblique edges via 6x6x6
         - build a lookup table to pair the middle oblique edges with the two
@@ -57,6 +57,13 @@ class RubiksCube777(RubiksCube):
         lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
         =====================================================
         '''
+        self.lt_UD_oblique_edge_pairing = LookupTable(self,
+                                                      'lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
+                                                      '777-UD-oblique-edge-pairing-middle-only',
+                                                      'TBD', #
+                                                      True) # state_hex
+        # The following may not be needed, not sure yet but lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt is way smaller than
+        # I would have predicted so not sure if it will work.
 
         '''
         24!/(8!*16!) is 735,471
@@ -109,6 +116,7 @@ class RubiksCube777(RubiksCube):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
         fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555.lt_init()
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
@@ -185,7 +193,6 @@ class RubiksCube777(RubiksCube):
         fake_555 = self.create_fake_555_centers()
         fake_555.lt_UD_centers_stage.solve()
 
-        # dwalton
         for step in fake_555.solution:
 
             if step.startswith('5'):
@@ -200,8 +207,15 @@ class RubiksCube777(RubiksCube):
     def group_centers_guts(self):
         self.lt_init()
         self.group_inside_UD_centers()
-
         self.print_cube()
+
+        # dwalton
+        # - pair the two outside oblique edges via 6x6x6
+
+        # RubiksCube666
+
+        # self.lt_UD_oblique_edge_pairing.solve()
+        log.info("HERE 999")
         sys.exit(0)
 
     def group_edges(self):

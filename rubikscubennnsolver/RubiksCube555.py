@@ -1207,6 +1207,9 @@ class RubiksCube555(RubiksCube):
             if not use_init_wing_to_pair:
                 break
 
+        if min_solution_has_pll:
+            log.warning("Could not find a PLL free solution")
+
         self.state = copy(min_solution_state)
         self.solution = copy(min_solution)
 

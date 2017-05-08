@@ -3121,6 +3121,134 @@ class RubiksCube(object):
         log.debug('kociemba string: %s' % kociemba_string)
         return kociemba_string
 
+    def solve_PLL(self):
+        if self.state[self.sideU.edge_south_pos[0]] != 'U':
+            raise ImplementThis()
+        elif self.state[self.sideU.edge_north_pos[0]] != 'U':
+            raise ImplementThis()
+        elif self.state[self.sideU.edge_west_pos[0]] != 'U':
+            raise ImplementThis()
+        elif self.state[self.sideU.edge_east_pos[0]] != 'U':
+            raise ImplementThis()
+
+        elif self.state[self.sideL.edge_north_pos[0]] != 'L':
+            raise ImplementThis()
+        elif self.state[self.sideL.edge_south_pos[0]] != 'L':
+            self.rotate_x()
+            self.rotate_x()
+            self.rotate_y_reverse()
+        elif self.state[self.sideL.edge_east_pos[0]] != 'L':
+            raise ImplementThis()
+        elif self.state[self.sideL.edge_west_pos[0]] != 'L':
+            raise ImplementThis()
+
+        elif self.state[self.sideF.edge_north_pos[0]] != 'F':
+            raise ImplementThis()
+        elif self.state[self.sideF.edge_south_pos[0]] != 'F':
+            raise ImplementThis()
+        elif self.state[self.sideF.edge_east_pos[0]] != 'F':
+            raise ImplementThis()
+        elif self.state[self.sideF.edge_west_pos[0]] != 'F':
+            raise ImplementThis()
+
+        elif self.state[self.sideR.edge_north_pos[0]] != 'R':
+            raise ImplementThis()
+        elif self.state[self.sideR.edge_south_pos[0]] != 'R':
+            raise ImplementThis()
+        elif self.state[self.sideR.edge_east_pos[0]] != 'R':
+            raise ImplementThis()
+        elif self.state[self.sideR.edge_west_pos[0]] != 'R':
+            raise ImplementThis()
+
+        elif self.state[self.sideB.edge_north_pos[0]] != 'B':
+            raise ImplementThis()
+        elif self.state[self.sideB.edge_south_pos[0]] != 'B':
+            raise ImplementThis()
+        elif self.state[self.sideB.edge_east_pos[0]] != 'B':
+            raise ImplementThis()
+        elif self.state[self.sideB.edge_west_pos[0]] != 'B':
+            raise ImplementThis()
+
+        elif self.state[self.sideD.edge_north_pos[0]] != 'D':
+            raise ImplementThis()
+        elif self.state[self.sideD.edge_south_pos[0]] != 'D':
+            raise ImplementThis()
+        elif self.state[self.sideD.edge_east_pos[0]] != 'D':
+            raise ImplementThis()
+        elif self.state[self.sideD.edge_west_pos[0]] != 'D':
+            raise ImplementThis()
+        else:
+            raise Exception("we should not be here")
+
+
+        if self.state[self.sideF.edge_north_pos[0]] == 'F':
+            raise SolveError("F-north should have PLL edge")
+
+        if self.state[self.sideU.edge_south_pos[0]] != self.state[self.sideU.corner_pos[0]]:
+            raise ImplementThis("sideU edge_south_pos[%d] is %s" % (self.sideU.edge_south_pos[0], self.state[self.sideU.edge_south_pos[0]]))
+        elif self.state[self.sideU.edge_north_pos[0]] != self.state[self.sideU.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideU.edge_west_pos[0]] != self.state[self.sideU.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideU.edge_east_pos[0]] != self.state[self.sideU.corner_pos[0]]:
+            raise ImplementThis()
+
+        elif self.state[self.sideL.edge_north_pos[0]] != self.state[self.sideL.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideL.edge_south_pos[0]] != self.state[self.sideL.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideL.edge_east_pos[0]] != self.state[self.sideL.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideL.edge_west_pos[0]] != self.state[self.sideL.corner_pos[0]]:
+            raise ImplementThis()
+
+        elif self.state[self.sideF.edge_south_pos[0]] != self.state[self.sideF.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideF.edge_east_pos[0]] != self.state[self.sideF.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideF.edge_west_pos[0]] != self.state[self.sideF.corner_pos[0]]:
+            raise ImplementThis()
+
+        elif self.state[self.sideR.edge_north_pos[0]] != self.state[self.sideR.corner_pos[0]]:
+            self.rotate_y()
+            pll_id = 2
+        elif self.state[self.sideR.edge_south_pos[0]] != self.state[self.sideR.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideR.edge_east_pos[0]] != self.state[self.sideR.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideR.edge_west_pos[0]] != self.state[self.sideR.corner_pos[0]]:
+            raise ImplementThis()
+
+        elif self.state[self.sideB.edge_north_pos[0]] != self.state[self.sideB.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideB.edge_south_pos[0]] != self.state[self.sideB.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideB.edge_east_pos[0]] != self.state[self.sideB.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideB.edge_west_pos[0]] != self.state[self.sideB.corner_pos[0]]:
+            raise ImplementThis()
+
+        elif self.state[self.sideD.edge_north_pos[0]] != self.state[self.sideD.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideD.edge_south_pos[0]] != self.state[self.sideD.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideD.edge_east_pos[0]] != self.state[self.sideD.corner_pos[0]]:
+            raise ImplementThis()
+        elif self.state[self.sideD.edge_west_pos[0]] != self.state[self.sideD.corner_pos[0]]:
+            raise ImplementThis()
+        else:
+            raise Exception("we should not be here")
+
+        # http://www.speedcubing.com/chris/4speedsolve3.html
+        log.warning("Solved PLL ID %d" % pll_id)
+
+        if pll_id == 2:
+            pll_solution = "L2 D %dFw2 %dLw2 F2 %dLw2 L2 F2 %dLw2 %dFw2 D' L2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
+            for step in pll_solution.split():
+                self.rotate(step)
+        else:
+            raise ImplementThis()
+
     def solve_333(self):
         kociemba_string = self.get_kociemba_string(False)
 
@@ -3144,9 +3272,11 @@ class RubiksCube(object):
             self.rotate(step)
 
         if not self.solved():
-            self.print_cube()
-            print("We hit either OLL or PLL parity")
-            sys.exit(1)
+            self.solve_PLL()
+
+            if not self.solved():
+                print("We hit either OLL or PLL parity and could not solve it")
+                sys.exit(1)
 
     def get_corner_swap_count(self, debug=False):
 

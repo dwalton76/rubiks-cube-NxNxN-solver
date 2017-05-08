@@ -523,6 +523,39 @@ class LookupTable(object):
                          'x' + tmp_state[13:15] + 'x'
                 tmp_state = tmp_state[16:]
 
+        elif self.state_type == '777-UD-oblique-edge-pairing':
+            state = 'x' + self.parent.state[10] + self.parent.state[11] + self.parent.state[12] + 'x' +\
+                    self.parent.state[16] + 'xxx' + self.parent.state[20] +\
+                    self.parent.state[23] + 'xxx' + self.parent.state[27] +\
+                    self.parent.state[30] + 'xxx' + self.parent.state[34] +\
+                    'x' + self.parent.state[38] + self.parent.state[39] + self.parent.state[40] + 'x' +\
+                    'x' + self.parent.state[59] + self.parent.state[60] + self.parent.state[61] + 'x' +\
+                    self.parent.state[65] + 'xxx' + self.parent.state[69] +\
+                    self.parent.state[72] + 'xxx' + self.parent.state[76] +\
+                    self.parent.state[79] + 'xxx' + self.parent.state[83] +\
+                    'x' + self.parent.state[87] + self.parent.state[88] + self.parent.state[89] + 'x' +\
+                    'x' + self.parent.state[108] + self.parent.state[109] + self.parent.state[110] + 'x' +\
+                    self.parent.state[114] + 'xxx' + self.parent.state[118] +\
+                    self.parent.state[121] + 'xxx' + self.parent.state[125] +\
+                    self.parent.state[128] + 'xxx' + self.parent.state[132] +\
+                    'x' + self.parent.state[136] + self.parent.state[137] + self.parent.state[138] + 'x' +\
+                    'x' + self.parent.state[157] + self.parent.state[158] + self.parent.state[159] + 'x' +\
+                    self.parent.state[163] + 'xxx' + self.parent.state[167] +\
+                    self.parent.state[170] + 'xxx' + self.parent.state[174] +\
+                    self.parent.state[177] + 'xxx' + self.parent.state[181] +\
+                    'x' + self.parent.state[185] + self.parent.state[186] + self.parent.state[187] + 'x' +\
+                    'x' + self.parent.state[206] + self.parent.state[207] + self.parent.state[208] + 'x' +\
+                    self.parent.state[212] + 'xxx' + self.parent.state[216] +\
+                    self.parent.state[219] + 'xxx' + self.parent.state[223] +\
+                    self.parent.state[226] + 'xxx' + self.parent.state[230] +\
+                    'x' + self.parent.state[234] + self.parent.state[235] + self.parent.state[236] + 'x' +\
+                    'x' + self.parent.state[255] + self.parent.state[256] + self.parent.state[257] + 'x' +\
+                    self.parent.state[261] + 'xxx' + self.parent.state[265] +\
+                    self.parent.state[268] + 'xxx' + self.parent.state[272] +\
+                    self.parent.state[275] + 'xxx' + self.parent.state[279] +\
+                    'x' + self.parent.state[283] + self.parent.state[284] + self.parent.state[285] + 'x'
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
         else:
             raise ImplementThis("state_type %s" % self.state_type)
 

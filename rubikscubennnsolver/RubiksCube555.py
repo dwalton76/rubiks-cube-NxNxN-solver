@@ -1030,8 +1030,8 @@ class RubiksCube555(RubiksCube):
         fake_444.state[94] = self.state[147]
         fake_444.state[95] = self.state[149]
 
-        self.print_cube()
-        fake_444.print_cube()
+        #self.print_cube()
+        #fake_444.print_cube()
         fake_444.group_edges()
 
         for step in fake_444.solution:
@@ -1045,12 +1045,12 @@ class RubiksCube555(RubiksCube):
 
             self.rotate(step)
 
-        self.print_cube()
+        #self.print_cube()
         log.warning("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_edges(self):
         self.pair_outside_edges()
-        self.print_cube()
+        #self.print_cube()
 
         original_non_paired_edges = self.get_non_paired_edges()
         if not original_non_paired_edges:
@@ -1097,8 +1097,6 @@ class RubiksCube555(RubiksCube):
 
                 if pre_non_paired_edges_count == 0:
                     break
-
-                # self.print_cube()
 
                 # cycle through the unpaired wings and find the wing where pair_multiple_edges_555
                 # pairs the most in the least number of moves

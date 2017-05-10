@@ -411,6 +411,13 @@ class LookupTable(object):
             state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
             state = state.replace('F', 'x').replace('B', 'x')
 
+        elif self.state_type == '4x4x4-edges-solve-last-two':
+            # get edges and centers
+            # - x out the paired edges
+            # - convert one unpaired edge to LF
+            # - convert one unpaired edge to FR
+            pass
+
         elif self.state_type == '666-UD-inner-X-centers-stage':
             state = 'xxxxx' + self.parent.state[15] + self.parent.state[16] + 'xx' + self.parent.state[21] + self.parent.state[22]  + 'xxxxx' +\
                     'xxxxx' + self.parent.state[51] + self.parent.state[52] + 'xx' + self.parent.state[57] + self.parent.state[58]  + 'xxxxx' +\
@@ -421,84 +428,86 @@ class LookupTable(object):
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
         elif self.state_type == '666-UD-oblique-edge-pairing':
-            state = 'x' + self.parent.state[9] + self.parent.state[10] + 'x' +\
-                    self.parent.state[14] + 'xx' + self.parent.state[17] +\
-                    self.parent.state[20] + 'xx' + self.parent.state[23] +\
-                    'x' + self.parent.state[27] + self.parent.state[28] + 'x' +\
-                    'x' + self.parent.state[45] + self.parent.state[46] + 'x' +\
-                    self.parent.state[50] + 'xx' + self.parent.state[53] +\
-                    self.parent.state[56] + 'xx' + self.parent.state[59] +\
-                    'x' + self.parent.state[63] + self.parent.state[64] + 'x' +\
-                    'x' + self.parent.state[81] + self.parent.state[82] + 'x' +\
-                    self.parent.state[86] + 'xx' + self.parent.state[89] +\
-                    self.parent.state[92] + 'xx' + self.parent.state[95] +\
-                    'x' + self.parent.state[99] + self.parent.state[100] + 'x' +\
-                    'x' + self.parent.state[117] + self.parent.state[118] + 'x' +\
-                    self.parent.state[122] + 'xx' + self.parent.state[125] +\
-                    self.parent.state[128] + 'xx' + self.parent.state[131] +\
-                    'x' + self.parent.state[135] + self.parent.state[136] + 'x' +\
-                    'x' + self.parent.state[153] + self.parent.state[154] + 'x' +\
-                    self.parent.state[158] + 'xx' + self.parent.state[161] +\
-                    self.parent.state[164] + 'xx' + self.parent.state[167] +\
-                    'x' + self.parent.state[171] + self.parent.state[172] + 'x' +\
-                    'x' + self.parent.state[189] + self.parent.state[190] + 'x' +\
-                    self.parent.state[194] + 'xx' + self.parent.state[197] +\
-                    self.parent.state[200] + 'xx' + self.parent.state[203] +\
-                    'x' + self.parent.state[207] + self.parent.state[208] + 'x'
+            state = self.parent.state[9] + self.parent.state[10] +\
+                    self.parent.state[14] + self.parent.state[17] +\
+                    self.parent.state[20] + self.parent.state[23] +\
+                    self.parent.state[27] + self.parent.state[28] +\
+                    self.parent.state[45] + self.parent.state[46] +\
+                    self.parent.state[50] + self.parent.state[53] +\
+                    self.parent.state[56] + self.parent.state[59] +\
+                    self.parent.state[63] + self.parent.state[64] +\
+                    self.parent.state[81] + self.parent.state[82] +\
+                    self.parent.state[86] + self.parent.state[89] +\
+                    self.parent.state[92] + self.parent.state[95] +\
+                    self.parent.state[99] + self.parent.state[100] +\
+                    self.parent.state[117] + self.parent.state[118] +\
+                    self.parent.state[122] + self.parent.state[125] +\
+                    self.parent.state[128] + self.parent.state[131] +\
+                    self.parent.state[135] + self.parent.state[136] +\
+                    self.parent.state[153] + self.parent.state[154] +\
+                    self.parent.state[158] + self.parent.state[161] +\
+                    self.parent.state[164] + self.parent.state[167] +\
+                    self.parent.state[171] + self.parent.state[172] +\
+                    self.parent.state[189] + self.parent.state[190] +\
+                    self.parent.state[194] + self.parent.state[197] +\
+                    self.parent.state[200] + self.parent.state[203] +\
+                    self.parent.state[207] + self.parent.state[208]
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
         elif self.state_type == '666-UD-oblique-edge-pairing-left-only':
-            state = 'x' + self.parent.state[9] + 'xx' +\
-                    'xxx' + self.parent.state[17] +\
-                    self.parent.state[20] + 'xxx' +\
-                    'xx' + self.parent.state[28] + 'x' +\
-                    'x' + self.parent.state[45] + 'xx' +\
-                    'xxx' + self.parent.state[53] +\
-                    self.parent.state[56] + 'xxx' +\
-                    'xx' + self.parent.state[64] + 'x' +\
-                    'x' + self.parent.state[81] + 'xx' +\
-                    'xxx' + self.parent.state[89] +\
-                    self.parent.state[92] + 'xxx' +\
-                    'xx' + self.parent.state[100] + 'x' +\
-                    'x' + self.parent.state[117] + 'xx' +\
-                    'xxx' + self.parent.state[125] +\
-                    self.parent.state[128] + 'xxx' +\
-                    'xx' + self.parent.state[136] + 'x' +\
-                    'x' + self.parent.state[153] + 'xx' +\
-                    'xxx' + self.parent.state[161] +\
-                    self.parent.state[164] + 'xxx' +\
-                    'xx' + self.parent.state[172] + 'x' +\
-                    'x' + self.parent.state[189] + 'xx' +\
-                    'xxx' + self.parent.state[197] +\
-                    self.parent.state[200] + 'xxx' +\
-                    'xx' + self.parent.state[208] + 'x'
+            state = self.parent.state[9] + 'x' +\
+                    'x' + self.parent.state[17] +\
+                    self.parent.state[20] + 'x' +\
+                    'x' + self.parent.state[28] +\
+                    self.parent.state[45] + 'x' +\
+                    'x' + self.parent.state[53] +\
+                    self.parent.state[56] + 'x' +\
+                    'x' + self.parent.state[64] +\
+                    self.parent.state[81] + 'x' +\
+                    'x' + self.parent.state[89] +\
+                    self.parent.state[92] + 'x' +\
+                    'x' + self.parent.state[100]+\
+                    self.parent.state[117] + 'x' +\
+                    'x' + self.parent.state[125] +\
+                    self.parent.state[128] + 'x' +\
+                    'x' + self.parent.state[136] +\
+                    self.parent.state[153] + 'x' +\
+                    'x' + self.parent.state[161] +\
+                    self.parent.state[164] + 'x' +\
+                    'x' + self.parent.state[172] +\
+                    self.parent.state[189] + 'x' +\
+                    'x' + self.parent.state[197] +\
+                    self.parent.state[200] + 'x' +\
+                    'x' + self.parent.state[208]
+
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
         elif self.state_type == '666-UD-oblique-edge-pairing-right-only':
-            state = 'xx' + self.parent.state[10] + 'x' +\
-                    self.parent.state[14] + 'xxx' +\
-                    'xxx' + self.parent.state[23] +\
-                    'x' + self.parent.state[27] + 'xx' +\
-                    'xx' + self.parent.state[46] + 'x' +\
-                    self.parent.state[50] + 'xxx' +\
-                    'xxx' + self.parent.state[59] +\
-                    'x' + self.parent.state[63] + 'xx' +\
-                    'xx' + self.parent.state[82] + 'x' +\
-                    self.parent.state[86] + 'xxx' +\
-                    'xxx' + self.parent.state[95] +\
-                    'x' + self.parent.state[99] + 'xx' +\
-                    'xx' + self.parent.state[118] + 'x' +\
-                    self.parent.state[122] + 'xxx' +\
-                    'xxx' + self.parent.state[131] +\
-                    'x' + self.parent.state[135] + 'xx' +\
-                    'xx' + self.parent.state[154] + 'x' +\
-                    self.parent.state[158] + 'xxx' +\
-                    'xxx' + self.parent.state[167] +\
-                    'x' + self.parent.state[171] + 'xx' +\
-                    'xx' + self.parent.state[190] + 'x' +\
-                    self.parent.state[194] + 'xxx' +\
-                    'xxx' + self.parent.state[203] +\
-                    'x' + self.parent.state[207] + 'xx'
+            state = 'x' + self.parent.state[10] +\
+                    self.parent.state[14] + 'x' +\
+                    'x' + self.parent.state[23] +\
+                    self.parent.state[27] + 'x' +\
+                    'x' + self.parent.state[46] +\
+                    self.parent.state[50] + 'x' +\
+                    'x' + self.parent.state[59] +\
+                    self.parent.state[63] + 'x' +\
+                    'x' + self.parent.state[82] +\
+                    self.parent.state[86] + 'x' +\
+                    'x' + self.parent.state[95] +\
+                    self.parent.state[99] + 'x' +\
+                    'x' + self.parent.state[118] +\
+                    self.parent.state[122] + 'x' +\
+                    'x' + self.parent.state[131] +\
+                    self.parent.state[135] + 'x' +\
+                    'x' + self.parent.state[154] +\
+                    self.parent.state[158] + 'x' +\
+                    'x' + self.parent.state[167] +\
+                    self.parent.state[171] + 'x' +\
+                    'x' + self.parent.state[190] +\
+                    self.parent.state[194] + 'x' +\
+                    'x' + self.parent.state[203] +\
+                    self.parent.state[207] + 'x'
+
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
         elif self.state_type == '666-LR-inner-X-centers-stage':
@@ -669,7 +678,7 @@ class LookupTableIDA(LookupTable):
                 break
 
             steps = self.steps()
-            log.debug("state %s vs state_target %s" % (state, self.state_target))
+            log.info("state %s vs state_target %s" % (state, self.state_target))
 
             if steps:
                 for step in steps:

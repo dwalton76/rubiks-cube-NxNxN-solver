@@ -89,6 +89,19 @@ class RubiksCube666(RubiksCube):
 
         Total: 1,842,894,553 entries
 
+
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 82 entries (0 percent, 16.40x previous step)
+        3 steps has 1,434 entries (0 percent, 17.49x previous step)
+        4 steps has 24,198 entries (0 percent, 16.87x previous step)
+        5 steps has 405,916 entries (0 percent, 16.77x previous step)
+        6 steps has 6,839,392 entries (5 percent, 16.85x previous step)
+        7 steps has 116,031,874 entries (94 percent, 16.97x previous step)
+
+        Total: 123,302,901 entries
+
+
+
         lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
         ===============================================================
         1 steps has 5 entries (0 percent)
@@ -119,21 +132,21 @@ class RubiksCube666(RubiksCube):
         self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
                                                                 '666-UD-oblique-edge-pairing-left-only',
-                                                                'xUxxxxxUUxxxxxUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUxxxxxUUxxxxxUx',
-                                                                False) # state_hex
+                                                                '990000000099',
+                                                                True) # state_hex
 
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
                                                                 '666-UD-oblique-edge-pairing-right-only',
-                                                                'xxUxUxxxxxxUxUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUxUxxxxxxUxUxx',
-                                                                False) # state_hex
+                                                                '660000000066',
+                                                                True) # state_hex
 
         self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
                                                          'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt',
                                                          '666-UD-oblique-edge-pairing',
 
                                                          # xUUxUxxUUxxUxUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUxUxxUUxxUxUUx
-                                                         '699600000000000000006996',
+                                                         'ff00000000ff',
 
                                                          True, # state_hex
                                                          moves_6x6x6,

@@ -148,6 +148,11 @@ class RubiksCube444(RubiksCube):
                                                   '444-edges-slice-backward',
                                                   None)
 
+        #self.lt_edges_solve_last_two = LookupTable(self,
+        #                                          'lookup-table-4x4x4-step60-edges-solve-last-two.txt',
+        #                                          '444-edges-solve-last-two',
+        #                                          'TBD')
+
     def group_centers_guts(self):
         self.lt_init()
 
@@ -810,6 +815,11 @@ class RubiksCube444(RubiksCube):
             (original_non_paired_wings_count, current_non_paired_wings_count))
 
     def pair_last_two_edges_444(self, edge):
+
+        # dwalton - first stage them
+        # LF and FR are the two edges in the table
+        #self.lt_edges_solve_last_two.solve()
+        #raise SolveError("at pair_last_two_edges_444")
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
         original_non_paired_wings_count = self.get_non_paired_wings_count()
 

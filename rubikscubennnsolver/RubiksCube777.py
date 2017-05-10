@@ -56,6 +56,19 @@ class RubiksCube777(RubiksCube):
         '''
         lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
         =====================================================
+        1 steps has 5 entries (0 percent)
+        2 steps has 66 entries (0 percent)
+        3 steps has 909 entries (0 percent)
+        4 steps has 9,872 entries (0 percent)
+        5 steps has 83,899 entries (1 percent)
+        6 steps has 375,372 entries (5 percent)
+        7 steps has 706,493 entries (10 percent)
+        8 steps has 1,844,302 entries (26 percent)
+        9 steps has 2,634,913 entries (38 percent)
+        10 steps has 1,187,886 entries (17 percent)
+        11 steps has 49,583 entries (0 percent)
+
+        Total: 6,893,300 entries
         '''
         self.lt_UD_oblique_edge_pairing = LookupTable(self,
                                                       'lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',

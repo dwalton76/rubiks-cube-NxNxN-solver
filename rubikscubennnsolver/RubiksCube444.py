@@ -148,10 +148,111 @@ class RubiksCube444(RubiksCube):
                                                   '444-edges-slice-backward',
                                                   None)
 
+        # dwalton
+        '''
+        lookup-table-4x4x4-step60-edges-stage-last-two.txt
+        ==================================================
+        1 steps has 8 entries (12 percent, 0.00x previous step)
+        2 steps has 37 entries (56 percent, 4.62x previous step)
+        3 steps has 21 entries (31 percent, 0.57x previous step)
+
+        Total: 66 entries
+
+
+        lookup-table-4x4x4-step61-edges-solve-last-two.txt
+        ==================================================
+        1 steps has 10 entries (0 percent, 0.00x previous step)
+        2 steps has 58 entries (0 percent, 5.80x previous step)
+        3 steps has 344 entries (0 percent, 5.93x previous step)
+        4 steps has 1759 entries (0 percent, 5.11x previous step)
+        5 steps has 8721 entries (0 percent, 4.96x previous step)
+        6 steps has 39502 entries (0 percent, 4.53x previous step)
+        7 steps has 170102 entries (4 percent, 4.31x previous step)
+        8 steps has 628062 entries (14 percent, 3.69x previous step)
+        9 steps has 1632564 entries (38 percent, 2.60x previous step)
+        10 steps has 1585364 entries (37 percent, 0.97x previous step)
+        11 steps has 166762 entries (3 percent, 0.11x previous step)
+        12 steps has 352 entries (0 percent, 0.00x previous step)
+
+        Total: 4233600 entries
+
+
+        lookup-table-4x4x4-step62-edges-solve-last-two.txt
+        ==================================================
+        # centers are ok and unpaired wings are at F-west and F-east
+        1 steps has 2 entries (8 percent, 0.00x previous step)
+        8 steps has 20 entries (83 percent, 10.00x previous step)
+        10 steps has 2 entries (8 percent, 0.10x previous step)
+
+        Total: 24 entries
+        '''
+        #self.lt_edges_stage_last_two = LookupTable(self,
+        #                                          'lookup-table-4x4x4-step60-edges-stage-last-two.txt',
+        #                                          '444-edges-stage-last-two',
+        #                                          'TBD')
+
         #self.lt_edges_solve_last_two = LookupTable(self,
-        #                                          'lookup-table-4x4x4-step60-edges-solve-last-two.txt',
+        #                                          'lookup-table-4x4x4-step61-edges-stage-last-two.txt',
         #                                          '444-edges-solve-last-two',
         #                                          'TBD')
+
+
+
+        '''
+        lookup-table-4x4x4-step70-edges-stage-last-four.txt
+        ===================================================
+        1 steps has 5 entries (1 percent, 0.00x previous step)
+        2 steps has 50 entries (10 percent, 10.00x previous step)
+        3 steps has 286 entries (57 percent, 5.72x previous step)
+        4 steps has 152 entries (30 percent, 0.53x previous step)
+        5 steps has 2 entries (0 percent, 0.01x previous step)
+
+        Total: 495 entries
+
+
+        lookup-table-4x4x4-step71-edges-solve-last-four.txt
+        ===================================================
+        1 steps has 10 entries (0 percent, 0.00x previous step)
+        2 steps has 68 entries (0 percent, 6.80x previous step)
+        3 steps has 402 entries (0 percent, 5.91x previous step)
+        4 steps has 2,119 entries (0 percent, 5.27x previous step)
+        5 steps has 10,624 entries (0 percent, 5.01x previous step)
+        6 steps has 49,683 entries (0 percent, 4.68x previous step)
+        7 steps has 223,256 entries (0 percent, 4.49x previous step)
+        8 steps has 940,282 entries (0 percent, 4.21x previous step)
+        9 steps has 3,557,208 entries (3 percent, 3.78x previous step)
+        10 steps has 1,1041,242 entries (10 percent, 3.10x previous step)
+        11 steps has 23,225,609 entries (22 percent, 2.10x previous step)
+        12 steps has 29,926,617 entries (29 percent, 1.29x previous step)
+        13 steps has 25,450,320 entries (25 percent, 0.85x previous step)
+        14 steps has 6,982,976 entries (6 percent, 0.27x previous step)
+        15 steps has 195,952 entries (0 percent, 0.03x previous step)
+        16 steps has 32 entries (0 percent, 0.00x previous step)
+
+        Total: 101,606,400 entries
+
+
+        lookup-table-4x4x4-step72-edges-solve-last-four.txt
+        ===================================================
+        # centers are ok and unpaired wings are at F-west, F-east, B-west and B-east
+        1 steps has 4 entries (0 percent, 0.00x previous step)
+        2 steps has 11 entries (0 percent, 2.75x previous step)
+        3 steps has 8 entries (0 percent, 0.73x previous step)
+        4 steps has 1 entries (0 percent, 0.12x previous step)
+        6 steps has 44 entries (0 percent, 44.00x previous step)
+        7 steps has 328 entries (0 percent, 7.45x previous step)
+        8 steps has 762 entries (1 percent, 2.32x previous step)
+        9 steps has 1,224 entries (3 percent, 1.61x previous step)
+        10 steps has 2,820 entries (6 percent, 2.30x previous step)
+        11 steps has 6,310 entries (15 percent, 2.24x previous step)
+        12 steps has 10,148 entries (25 percent, 1.61x previous step)
+        13 steps has 13,620 entries (33 percent, 1.34x previous step)
+        14 steps has 4,808 entries (11 percent, 0.35x previous step)
+        15 steps has 228 entries (0 percent, 0.05x previous step)
+        16 steps has 4 entries (0 percent, 0.02x previous step)
+
+        Total: 40320 entries
+        '''
 
     def group_centers_guts(self):
         self.lt_init()

@@ -72,34 +72,22 @@ class RubiksCube666(RubiksCube):
         (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
         IDA and build it 7 steps deep.
 
-        Our prune tables will be so solve on the left or right oblique edges. Each of these
+        Our prune tables will be to solve on the left or right oblique edges. Each of these
         tables are 24!/(8!*16!) or 735,471
         735471/540917591841 is 0.0000013596729171
 
         lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt
         =====================================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 82 entries (0 percent)
-        3 steps has 1,434 entries (0 percent)
-        4 steps has 24,202 entries (0 percent)
-        5 steps has 406,482 entries (0 percent)
-        6 steps has 6,847,666 entries (0 percent)
-        7 steps has 116,149,794 entries (6 percent)
-        8 steps has 1,719,464,888 entries (93 percent)
-
-        Total: 1,842,894,553 entries
-
-
         1 steps has 5 entries (0 percent, 0.00x previous step)
         2 steps has 82 entries (0 percent, 16.40x previous step)
-        3 steps has 1,434 entries (0 percent, 17.49x previous step)
+        3 steps has 1434 entries (0 percent, 17.49x previous step)
         4 steps has 24,198 entries (0 percent, 16.87x previous step)
         5 steps has 405,916 entries (0 percent, 16.77x previous step)
-        6 steps has 6,839,392 entries (5 percent, 16.85x previous step)
-        7 steps has 116,031,874 entries (94 percent, 16.97x previous step)
+        6 steps has 6,839,392 entries (0 percent, 16.85x previous step)
+        7 steps has 116,031,874 entries (13 percent, 16.97x previous step)
+        8 steps has 767,856,232 entries (86 percent, 6.62x previous step)
 
-        Total: 123,302,901 entries
-
+        Total: 891,159,133 entries
 
 
         lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
@@ -204,7 +192,7 @@ class RubiksCube666(RubiksCube):
         self.lt_LR_oblique_edge_pairing = LookupTable(self,
                                                       'lookup-table-6x6x6-step40-LR-oblique-pairing.txt',
                                                       '666-LR-oblique-edge-pairing',
-                                                      '6996000069960000',
+                                                      'ff00ff00',
                                                       True) # state_hex
 
 

@@ -1,4 +1,7 @@
 
+upload 5x5x5 gz files to dropbox
+upload 6x6x6 gz files to evb
+
 
 5x5x5
 =====

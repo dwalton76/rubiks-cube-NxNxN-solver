@@ -520,17 +520,23 @@ class LookupTable(object):
             state = state.replace('U', 'x').replace('L', 'L').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
 
         elif self.state_type == '666-LR-oblique-edge-pairing':
-            tmp_state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
-            tmp_state = tmp_state.replace('U', 'x').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
-
-            # We need to x out the inner and outer x-centers for each side
-            state = ''
-            for y in range(4):
-                state += 'x' + tmp_state[1:3] + 'x' +\
-                         tmp_state[4] + 'xx' + tmp_state[7] +\
-                         tmp_state[8] + 'xx' + tmp_state[11] +\
-                         'x' + tmp_state[13:15] + 'x'
-                tmp_state = tmp_state[16:]
+            state = self.parent.state[45] + self.parent.state[46] +\
+                    self.parent.state[50] + self.parent.state[53] +\
+                    self.parent.state[56] + self.parent.state[59] +\
+                    self.parent.state[63] + self.parent.state[64] +\
+                    self.parent.state[81] + self.parent.state[82] +\
+                    self.parent.state[86] + self.parent.state[89] +\
+                    self.parent.state[92] + self.parent.state[95] +\
+                    self.parent.state[99] + self.parent.state[100] +\
+                    self.parent.state[117] + self.parent.state[118] +\
+                    self.parent.state[122] + self.parent.state[125] +\
+                    self.parent.state[128] + self.parent.state[131] +\
+                    self.parent.state[135] + self.parent.state[136] +\
+                    self.parent.state[153] + self.parent.state[154] +\
+                    self.parent.state[158] + self.parent.state[161] +\
+                    self.parent.state[164] + self.parent.state[167] +\
+                    self.parent.state[171] + self.parent.state[172]
+            state = state.replace('U', 'x').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
 
         elif self.state_type == '777-UD-oblique-edge-pairing':
             state = 'x' + self.parent.state[10] + self.parent.state[11] + self.parent.state[12] + 'x' +\

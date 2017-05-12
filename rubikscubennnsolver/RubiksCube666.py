@@ -258,17 +258,18 @@ class RubiksCube666(RubiksCube):
 
         lookup-table-6x6x6-step60-LFRB-centers-solve.txt
         ================================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 54 entries (0 percent)
-        3 steps has 420 entries (0 percent)
-        4 steps has 2,903 entries (0 percent)
-        5 steps has 21,388 entries (0 percent)
-        6 steps has 145,567 entries (0 percent)
-        7 steps has 951,636 entries (2 percent)
-        8 steps has 6,082,238 entries (13 percent)
-        9 steps has 38,169,564 entries (84 percent)
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 54 entries (0 percent, 10.80x previous step)
+        3 steps has 420 entries (0 percent, 7.78x previous step)
+        4 steps has 2,903 entries (0 percent, 6.91x previous step)
+        5 steps has 21,388 entries (0 percent, 7.37x previous step)
+        6 steps has 145,568 entries (0 percent, 6.81x previous step)
+        7 steps has 951,636 entries (0 percent, 6.54x previous step)
+        8 steps has 6,082,238 entries (2 percent, 6.39x previous step)
+        9 steps has 38,169,564 entries (15 percent, 6.28x previous step)
+        10 steps has 202,253,182 entries (81 percent, 5.30x previous step)
 
-        Total: 45,373,775 entries
+        Total: 247,626,958 entries
 
 
         lookup-table-6x6x6-step62-FB-centers-solve.txt

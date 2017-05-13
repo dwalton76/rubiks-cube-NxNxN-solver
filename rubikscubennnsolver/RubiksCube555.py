@@ -935,8 +935,13 @@ class RubiksCube555(RubiksCube):
             self.rotate("Dw")
             self.rotate_y()
 
-            for step in "U' L' U L 3Uw' Uw".split():
+            for step in "U' L' U L".split():
                 self.rotate(step)
+
+            # 3Uw' Uw
+            self.rotate("Uw")
+            self.rotate("Dw'")
+            self.rotate_y_reverse()
         else:
             raise SolveError("sister_wing %s is in the wrong position" % str(sister_wing))
 

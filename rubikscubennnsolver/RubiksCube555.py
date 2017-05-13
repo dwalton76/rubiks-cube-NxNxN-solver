@@ -1064,11 +1064,9 @@ class RubiksCube555(RubiksCube):
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
         # There are 12 edges, cycle through all 12 in terms of which edge we try to pair first.
-        # Remember the one that results in the shortest solution that is free of PLL parity.
         min_solution_length = None
         min_solution_state = None
         min_solution = None
-        min_solution_has_pll = True
 
         # If you are working on improving edge pairing it is a little easier to
         # troubleshoot if you are not cycling through all 12 edges as your
@@ -1169,27 +1167,14 @@ class RubiksCube555(RubiksCube):
                     self.pair_one_edge_555(wing_to_pair)
 
             solution_len_minus_rotates = self.get_solution_len_minus_rotates(self.solution)
-            leads_to_pll = self.edge_solution_leads_to_pll_parity()
             new_min = False
-
-            if leads_to_pll:
-                log.info("edges solution length %d, leads to PLL parity" % (solution_len_minus_rotates - original_solution_len))
 
             if min_solution_length is None:
                 new_min = True
-
-            elif min_solution_has_pll:
-                if leads_to_pll:
-                    if solution_len_minus_rotates < min_solution_length:
-                        new_min = True
-                else:
-                    new_min = True
-
-            elif not leads_to_pll and solution_len_minus_rotates < min_solution_length:
+            elif solution_len_minus_rotates < min_solution_length:
                 new_min = True
 
             if new_min:
-                min_solution_has_pll = leads_to_pll
                 min_solution_length = solution_len_minus_rotates
                 min_solution_state = copy(self.state)
                 min_solution = copy(self.solution)
@@ -1204,9 +1189,6 @@ class RubiksCube555(RubiksCube):
 
             if not use_init_wing_to_pair:
                 break
-
-        if min_solution_has_pll:
-            log.warning("Could not find a PLL free solution")
 
         self.state = copy(min_solution_state)
         self.solution = copy(min_solution)

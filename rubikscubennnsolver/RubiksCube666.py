@@ -64,13 +64,13 @@ class RubiksCube666(RubiksCube):
         self.lt_UD_inner_x_centers_stage = LookupTable(self,
                                                       'lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt',
                                                       '666-UD-inner-X-centers-stage',
-                                                      'xxxxxUUxxUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUxxUUxxxxx', #
-                                                      False) # state_hex
+                                                      '066000000000000000000660',
+                                                      True) # state_hex
 
         '''
         Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
         (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
-        IDA and build it 7 steps deep.
+        IDA and build it 8 steps deep.
 
         Our prune tables will be to solve on the left or right oblique edges. Each of these
         tables are 24!/(8!*16!) or 735,471
@@ -473,12 +473,12 @@ class RubiksCube666(RubiksCube):
         self.lt_init()
         self.lt_UD_inner_x_centers_stage.solve()
 
-        # If you uncomment these the IDA search will go much faster but at the tradeoff
-        # of adding moves to the solution (increases from 83 to 93 in our base example).
-        #
         # These are our two prune tables so if we go ahead and solve for one of them we
         # get the cube in a state that is much closer to being a match for the table we
-        # are doing and IDA search against.
+        # are doing an IDA search against.
+        #
+        # This isn't technically required but it makes a HUGE difference in how fast we
+        # can find a solution...like 160s vs 10s kind of difference.
         #self.lt_UD_oblique_edge_pairing_left_only.solve()
         self.lt_UD_oblique_edge_pairing_right_only.solve()
         self.lt_UD_oblique_edge_pairing.solve()

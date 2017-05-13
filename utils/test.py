@@ -9,6 +9,7 @@ from rubikscubennnsolver.RubiksCube666 import RubiksCube666
 import argparse
 import json
 import logging
+import os
 import sys
 
 logging.basicConfig(level=logging.INFO,
@@ -62,6 +63,7 @@ try:
             if index < args.start:
                 continue
 
+            os.system('clear')
             log.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
             num_test_cases_executed += 1
 
@@ -79,7 +81,7 @@ try:
                 cube = RubiksCube555(kociemba_string)
 
             elif size == '6x6x6':
-                cube = RubiksCube555(kociemba_string)
+                cube = RubiksCube666(kociemba_string)
 
             else:
                 print("ERROR: Add support for %s" % size)

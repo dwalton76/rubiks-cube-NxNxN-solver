@@ -3228,7 +3228,6 @@ class RubiksCube(object):
         else:
             raise Exception("we should not be here")
 
-
         if self.state[self.sideF.edge_north_pos[0]] == 'F':
             raise SolveError("F-north should have PLL edge")
 

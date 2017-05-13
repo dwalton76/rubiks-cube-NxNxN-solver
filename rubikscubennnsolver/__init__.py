@@ -624,6 +624,7 @@ class LookupTableIDA(LookupTable):
         self.moves_illegal = moves_illegal
         self.ida_count = 0
         self.prune_tables = prune_tables
+        self.visited_states = set()
 
     def ida_cost(self):
         costs = []
@@ -651,7 +652,8 @@ class LookupTableIDA(LookupTable):
             # assert cost_to_here+1 == len(self.parent.solution), "cost_to_here %d, solution %s" % (cost_to_here, ' '.join(self.parent.solution))
 
             # Do we have the cube in a state where there is a match in the lookup table?
-            steps = self.steps()
+            state = self.state()
+            steps = self.steps(state)
             if steps:
                 #log.info("match IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
                 #        (step, cost_to_here, cost_to_goal, threshold))
@@ -665,6 +667,11 @@ class LookupTableIDA(LookupTable):
                 #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
                 #        (step, cost_to_here, cost_to_goal, threshold))
                 continue
+
+            # speed experiment...this should cut out some ida_search calls
+            if state in self.visited_states:
+                continue
+            self.visited_states.add(state)
 
             state_end_of_this_step = copy(self.parent.state)
             solution_end_of_this_step = copy(self.parent.solution)

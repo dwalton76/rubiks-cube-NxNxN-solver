@@ -310,8 +310,11 @@ class RubiksCube555(RubiksCube):
                         pre_non_paired_edges_count = self.get_non_paired_edges_count()
                         for step in steps:
                             self.rotate(step)
-                        self.rotate("3Uw'")
+                        #
+                        #self.rotate("3Uw'")
+                        #self.rotate("Uw")
                         self.rotate("Uw")
+                        self.rotate("Dw'")
                         post_non_paired_edges_count = self.get_non_paired_edges_count()
 
                         # F-east must pair
@@ -411,8 +414,11 @@ class RubiksCube555(RubiksCube):
                     if steps:
                         for step in steps:
                             self.rotate(step)
-                        self.rotate("3Uw")
+                        # dwalton
+                        #self.rotate("3Uw")
+                        #self.rotate("Uw'")
                         self.rotate("Uw'")
+                        self.rotate("Dw")
                         post_non_paired_edges_count = self.get_non_paired_edges_count()
 
                         # F-west must pair

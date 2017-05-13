@@ -310,11 +310,10 @@ class RubiksCube555(RubiksCube):
                         pre_non_paired_edges_count = self.get_non_paired_edges_count()
                         for step in steps:
                             self.rotate(step)
-                        #
-                        #self.rotate("3Uw'")
-                        #self.rotate("Uw")
+                        # 3Uw' Uw
                         self.rotate("Uw")
                         self.rotate("Dw'")
+                        self.rotate_y_reverse()
                         post_non_paired_edges_count = self.get_non_paired_edges_count()
 
                         # F-east must pair
@@ -414,11 +413,10 @@ class RubiksCube555(RubiksCube):
                     if steps:
                         for step in steps:
                             self.rotate(step)
-                        # dwalton
-                        #self.rotate("3Uw")
-                        #self.rotate("Uw'")
+                        # 3Uw Uw'
                         self.rotate("Uw'")
                         self.rotate("Dw")
+                        self.rotate_y()
                         post_non_paired_edges_count = self.get_non_paired_edges_count()
 
                         # F-west must pair
@@ -799,8 +797,9 @@ class RubiksCube555(RubiksCube):
         # At this point we are setup to slice forward and pair 3 edges
         #log.info("PREP-FOR-3Uw-SLICE (end)....SLICE (begin), %d left to pair" % self.get_non_paired_edges_count())
         #self.print_cube()
-        self.rotate("3Uw")
         self.rotate("Uw'")
+        self.rotate("Dw")
+        self.rotate_y()
         #log.info("SLICE (end), %d left to pair" % self.get_non_paired_edges_count())
         #self.print_cube()
 
@@ -870,9 +869,9 @@ class RubiksCube555(RubiksCube):
 
         #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_edges_count())
         #self.print_cube()
-
-        self.rotate("3Uw'")
-        self.rotate("2Uw")
+        self.rotate("Uw")
+        self.rotate("Dw'")
+        self.rotate_y_reverse()
 
         #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_edges_count())
         #self.print_cube()
@@ -931,7 +930,12 @@ class RubiksCube555(RubiksCube):
             self.make_U_west_have_unpaired_wing()
 
         if sister_wing[0] == 65:
-            for step in "3Uw Uw' U' L' U L 3Uw' Uw".split():
+            # 3Uw Uw'
+            self.rotate("Uw'")
+            self.rotate("Dw")
+            self.rotate_y()
+
+            for step in "U' L' U L 3Uw' Uw".split():
                 self.rotate(step)
         else:
             raise SolveError("sister_wing %s is in the wrong position" % str(sister_wing))

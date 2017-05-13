@@ -1086,7 +1086,10 @@ class RubiksCube555(RubiksCube):
         # If you are working on improving edge pairing it is a little easier to
         # troubleshoot if you are not cycling through all 12 edges as your
         # "init_wing_to_pair" so set the following to False.
-        use_init_wing_to_pair = True
+        #
+        # NOTE: I set this to False because if it is True it takes a long time
+        # to compute the solution on a beaglebone black
+        use_init_wing_to_pair = False
 
         for init_wing_to_pair in original_non_paired_edges:
             # log.info("init_wing_to_pair %20s" % pformat(init_wing_to_pair))

@@ -148,7 +148,6 @@ class RubiksCube444(RubiksCube):
                                                   '444-edges-slice-backward',
                                                   None)
 
-        # dwalton
         '''
         lookup-table-4x4x4-step60-edges-stage-last-two.txt
         ==================================================

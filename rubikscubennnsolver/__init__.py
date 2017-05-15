@@ -604,14 +604,18 @@ class LookupTable(object):
 
         while True:
             state = self.state()
-
             log.info("%s: state %s vs state_target %s" % (self.state_type, state, self.state_target))
 
             if state == self.state_target:
                 break
 
-            for step in self.steps(state):
-                self.parent.rotate(step)
+            steps = self.steps(state)
+
+            if steps:
+                for step in steps:
+                    self.parent.rotate(step)
+            else:
+                raise SolveError("No steps found for state %s" % state)
 
 
 class LookupTableIDA(LookupTable):

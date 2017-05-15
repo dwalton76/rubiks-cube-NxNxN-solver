@@ -3718,6 +3718,11 @@ class RubiksCube(object):
 
     def group_centers(self):
 
+        if self.centers_solved():
+            log.info("group center solution: centers are already solved")
+            self.solution.append('CENTERS_SOLVED')
+            return
+
         min_solution_length = None
         min_solution_state = None
         min_solution = None
@@ -3843,8 +3848,7 @@ class RubiksCube(object):
                     if opening_move:
                         self.rotate(opening_move)
 
-                    if not self.centers_solved():
-                        self.group_centers_guts()
+                    self.group_centers_guts()
 
                     if not self.centers_solved():
                         raise SolveError("centers should be solved but they are not")
@@ -3855,7 +3859,7 @@ class RubiksCube(object):
 
                     # Do not consider any solution that pairs an edge for 4x4x4...it is easier
                     # to handle the scenario where all edges are unpaired
-                    elif self.size == 4 and self.get_solution_len_minus_rotates(self.solution) > 0 and self.get_non_paired_edges_count() != 12:
+                    elif self.size == 4 and self.get_non_paired_edges_count() != 12:
                         log.info("%s on top, %s in front, opening move %4s: %d edges unpaired, solution %s" %
                             (upper_side_name, front_side_name, opening_move, self.get_non_paired_edges_count(), ' '.join(self.solution)))
 

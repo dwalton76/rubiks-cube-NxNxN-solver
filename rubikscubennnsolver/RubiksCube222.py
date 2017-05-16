@@ -132,7 +132,7 @@ class RubiksCube222(RubiksCube):
                         try:
                             result = ''.join('RUF'[x / 4] + " 2'"[x % 4] for x in data[0][s] + data[1][s][::-1])
                         except IndexError:
-                            print "Cube is already solved"
+                            print("Cube is already solved")
                             sys.exit(0)
 
                         result = result.replace('2', '2 ')

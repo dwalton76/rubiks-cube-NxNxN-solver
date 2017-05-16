@@ -3158,23 +3158,36 @@ class RubiksCube(object):
                     foo.append(self.state[square_index])
 
         else:
-            for side_name in ('U', 'R', 'F', 'D', 'L', 'B'):
-                side = self.sides[side_name]
+            if self.size == 2:
+                for side_name in ('U', 'R', 'F', 'D', 'L', 'B'):
+                    side = self.sides[side_name]
 
-                # first row
-                foo.append(self.state[side.corner_pos[0]])
-                foo.append(self.state[side.edge_north_pos[0]])
-                foo.append(self.state[side.corner_pos[1]])
+                    # first row
+                    foo.append(self.state[side.corner_pos[0]])
+                    foo.append(self.state[side.corner_pos[1]])
 
-                # second row
-                foo.append(self.state[side.edge_west_pos[0]])
-                foo.append(self.state[side.center_corner_pos[0]])
-                foo.append(self.state[side.edge_east_pos[0]])
+                    # second row
+                    foo.append(self.state[side.corner_pos[2]])
+                    foo.append(self.state[side.corner_pos[3]])
 
-                # third row
-                foo.append(self.state[side.corner_pos[2]])
-                foo.append(self.state[side.edge_south_pos[0]])
-                foo.append(self.state[side.corner_pos[3]])
+            else:
+                for side_name in ('U', 'R', 'F', 'D', 'L', 'B'):
+                    side = self.sides[side_name]
+
+                    # first row
+                    foo.append(self.state[side.corner_pos[0]])
+                    foo.append(self.state[side.edge_north_pos[0]])
+                    foo.append(self.state[side.corner_pos[1]])
+
+                    # second row
+                    foo.append(self.state[side.edge_west_pos[0]])
+                    foo.append(self.state[side.center_corner_pos[0]])
+                    foo.append(self.state[side.edge_east_pos[0]])
+
+                    # third row
+                    foo.append(self.state[side.corner_pos[2]])
+                    foo.append(self.state[side.edge_south_pos[0]])
+                    foo.append(self.state[side.corner_pos[3]])
 
         kociemba_string = ''.join(foo)
         log.debug('kociemba string: %s' % kociemba_string)

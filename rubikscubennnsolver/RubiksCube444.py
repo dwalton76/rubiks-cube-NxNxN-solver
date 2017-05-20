@@ -163,15 +163,13 @@ class RubiksCube444(RubiksCube):
         lookup-table-4x4x4-step61-edges-solve-last-two.txt
         ==================================================
         # centers are ok and unpaired wings are at F-west and F-east
-        7 steps has 8 entries (8 percent, 0.00x previous step)
-        8 steps has 8 entries (8 percent, 1.00x previous step)
-        9 steps has 8 entries (8 percent, 1.00x previous step)
-        10 steps has 4 entries (4 percent, 0.50x previous step)
-        11 steps has 44 entries (45 percent, 11.00x previous step)
-        12 steps has 14 entries (14 percent, 0.32x previous step)
-        13 steps has 10 entries (10 percent, 0.71x previous step)
+        7 steps has 8 entries (15 percent, 0.00x previous step)
+        8 steps has 8 entries (15 percent, 1.00x previous step)
+        9 steps has 4 entries (7 percent, 0.50x previous step)
+        11 steps has 28 entries (53 percent, 7.00x previous step)
+        12 steps has 4 entries (7 percent, 0.14x previous step)
 
-        Total: 96 entries
+        Total: 52 entries
         '''
         self.lt_edges_stage_last_two = LookupTable(self,
                                                   'lookup-table-4x4x4-step60-edges-stage-last-two.txt',

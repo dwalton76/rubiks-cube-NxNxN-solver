@@ -411,7 +411,7 @@ class LookupTable(object):
             state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
             state = state.replace('F', 'x').replace('B', 'x')
 
-        elif self.state_type == '444-edges-stage-last-two':
+        elif self.state_type in ('444-edges-stage-last-two', '444-edges-stage-last-four'):
 
             # backup parent state
             original_state = copy(self.parent.state)
@@ -509,6 +509,131 @@ class LookupTable(object):
                         self.parent.state[pos2] = 'R'
                     else:
                         raise SolveError("%s not in new_LL %s or new_RR %s" % (pformat(pos1_pos2_state), pformat(new_LL), pformat(new_RR)))
+
+                # 'state' is the state of centers and edges
+                #
+                # Our cube could be rotated so that U is not on the top and F is not at
+                # the front but the lookup table was contructed with U on top and F on
+                # the front so when we build the state put U on the top and F on the front.
+                # It doesn't matter that our cube is rotated in some other way because all
+                # entries in the lookup table preserve the centers.
+                state = []
+                for side in self.sides_all:
+                    for square_index in range(side.min_pos, side.max_pos+1):
+
+                        if square_index in side.corner_pos:
+                            pass
+
+                        elif square_index in side.center_pos:
+                            if side == self.parent.sideU:
+                                state.append('U')
+                            elif side == self.parent.sideL:
+                                state.append('L')
+                            elif side == self.parent.sideF:
+                                state.append('F')
+                            elif side == self.parent.sideR:
+                                state.append('R')
+                            elif side == self.parent.sideB:
+                                state.append('B')
+                            elif side == self.parent.sideD:
+                                state.append('D')
+
+                        else:
+                            state.append(self.parent.state[square_index])
+
+                state = ''.join(state)
+
+                # restore parent state to original
+                self.parent.state = copy(original_state)
+                self.parent.solution = copy(original_solution)
+
+        elif self.state_type == '444-edges-solve-last-four':
+            """
+            This assumes 444-edges-stage-last-four has been used to stage the last
+            four unpaired edges to F-west, F-east, B-west and B-east
+            """
+
+            # build a list of paired edges
+            paired = []
+            for side in self.sides_all:
+                paired.extend(side.paired_wings(True, True, True, True))
+            paired = list(set(paired))
+
+            if len(paired) == 24:
+                state = 'xxxUUxxUUxxxxxxLLxxLLxxxxxxFFxxFFxxxxxxRRxxRRxxxxxxBBxxBBxxxxxxDDxxDDxxx'
+            else:
+                # backup parent state
+                original_state = copy(self.parent.state)
+                original_solution = copy(self.parent.solution)
+
+                # x the paired edges
+                for (pos1, pos2) in paired:
+                    self.parent.state[pos1[0]] = 'x'
+                    self.parent.state[pos1[1]] = 'x'
+                    self.parent.state[pos2[0]] = 'x'
+                    self.parent.state[pos2[1]] = 'x'
+
+                # The unpaired edges must be re-mapped to LL, FF, RR and BB as those were the
+                # edges used to build the lookup table. Figure out which pair will be
+                # the LL, which will be the RR, etc
+                new_LL = None
+                new_FF = None
+                new_RR = None
+                new_BB = None
+                for (pos1, pos2) in ((28, 41), (24, 37), (40, 53), (44, 57), (56, 69), (60, 73), (72, 21), (76, 25)):
+                    pos1_state = self.parent.state[pos1]
+                    pos2_state = self.parent.state[pos2]
+
+                    if new_LL is None:
+                        new_LL = (pos1_state, pos2_state)
+                        continue
+                    if (pos1_state, pos2_state) == new_LL or (pos2_state, pos1_state) == new_LL:
+                        continue
+
+                    if new_FF is None:
+                        new_FF = (pos1_state, pos2_state)
+                        continue
+                    if (pos1_state, pos2_state) == new_FF or (pos2_state, pos1_state) == new_FF:
+                        continue
+
+                    if new_RR is None:
+                        new_RR = (pos1_state, pos2_state)
+                        continue
+                    if (pos1_state, pos2_state) == new_RR or (pos2_state, pos1_state) == new_RR:
+                        continue
+
+                    if new_BB is None:
+                        new_BB = (pos1_state, pos2_state)
+                        continue
+                    if (pos1_state, pos2_state) == new_BB or (pos2_state, pos1_state) == new_BB:
+                        continue
+
+                # Now re-map them
+                for (pos1, pos2) in ((28, 41), (24, 37), (40, 53), (44, 57), (56, 69), (60, 73), (72, 21), (76, 25)):
+                    pos1_state = self.parent.state[pos1]
+                    pos2_state = self.parent.state[pos2]
+                    pos1_pos2_state = (pos1_state, pos2_state)
+                    pos2_pos1_state = (pos2_state, pos1_state)
+
+                    if pos1_pos2_state == new_LL or pos2_pos1_state == new_LL:
+                        self.parent.state[pos1] = 'L'
+                        self.parent.state[pos2] = 'L'
+
+                    elif pos1_pos2_state == new_FF or pos2_pos1_state == new_FF:
+                        self.parent.state[pos1] = 'F'
+                        self.parent.state[pos2] = 'F'
+
+                    elif pos1_pos2_state == new_RR or pos2_pos1_state == new_RR:
+                        self.parent.state[pos1] = 'R'
+                        self.parent.state[pos2] = 'R'
+
+                    elif pos1_pos2_state == new_BB or pos2_pos1_state == new_BB:
+                        self.parent.state[pos1] = 'B'
+                        self.parent.state[pos2] = 'B'
+
+                    else:
+                        raise SolveError("%s not in new_LL %s, new_FF %s, new_RR %s, new_BB %s" %
+                            (pformat(pos1_pos2_state), pformat(new_LL), pformat(new_FF), pformat(new_RR), pformat(new_BB)))
 
                 # 'state' is the state of centers and edges
                 #

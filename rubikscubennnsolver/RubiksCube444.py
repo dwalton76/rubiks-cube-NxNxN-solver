@@ -163,13 +163,9 @@ class RubiksCube444(RubiksCube):
         lookup-table-4x4x4-step61-edges-solve-last-two.txt
         ==================================================
         # centers are ok and unpaired wings are at F-west and F-east
-        7 steps has 8 entries (15 percent, 0.00x previous step)
-        8 steps has 8 entries (15 percent, 1.00x previous step)
-        9 steps has 4 entries (7 percent, 0.50x previous step)
-        11 steps has 28 entries (53 percent, 7.00x previous step)
-        12 steps has 4 entries (7 percent, 0.14x previous step)
+        9 steps has 4 entries (100 percent, 0.00x previous step)
 
-        Total: 52 entries
+        Total: 4 entries
         '''
         self.lt_edges_stage_last_two = LookupTable(self,
                                                   'lookup-table-4x4x4-step60-edges-stage-last-two.txt',
@@ -198,24 +194,26 @@ class RubiksCube444(RubiksCube):
         lookup-table-4x4x4-step71-edges-solve-last-four.txt
         ===================================================
         # centers are ok and unpaired wings are at F-west, F-east, B-west and B-east
-        1 steps has 4 entries (0 percent, 0.00x previous step)
-        2 steps has 11 entries (0 percent, 2.75x previous step)
-        3 steps has 8 entries (0 percent, 0.73x previous step)
-        4 steps has 1 entries (0 percent, 0.12x previous step)
-        6 steps has 44 entries (0 percent, 44.00x previous step)
-        7 steps has 328 entries (0 percent, 7.45x previous step)
-        8 steps has 762 entries (1 percent, 2.32x previous step)
-        9 steps has 1,224 entries (3 percent, 1.61x previous step)
-        10 steps has 2,820 entries (6 percent, 2.30x previous step)
-        11 steps has 6,310 entries (15 percent, 2.24x previous step)
-        12 steps has 10,148 entries (25 percent, 1.61x previous step)
-        13 steps has 13,620 entries (33 percent, 1.34x previous step)
-        14 steps has 4,808 entries (11 percent, 0.35x previous step)
-        15 steps has 228 entries (0 percent, 0.05x previous step)
-        16 steps has 4 entries (0 percent, 0.02x previous step)
+        6 steps has 20 entries (1 percent, 0.00x previous step)
+        7 steps has 74 entries (5 percent, 3.70x previous step)
+        8 steps has 62 entries (4 percent, 0.84x previous step)
+        9 steps has 212 entries (14 percent, 3.42x previous step)
+        10 steps has 596 entries (41 percent, 2.81x previous step)
+        11 steps has 346 entries (24 percent, 0.58x previous step)
+        12 steps has 129 entries (8 percent, 0.37x previous step)
+        13 steps has 1 entries (0 percent, 0.01x previous step)
 
-        Total: 40,320 entries
+        Total: 1,440 entries
         '''
+        self.lt_edges_stage_last_four = LookupTable(self,
+                                                   'lookup-table-4x4x4-step70-edges-stage-last-four.txt',
+                                                   '444-edges-stage-last-four',
+                                                   'xxxxxxxxxxLLLLxxxxLLLLxxxxLLLLxxxxLLLLxxxxxxxxxx')
+
+        self.lt_edges_solve_last_four = LookupTable(self,
+                                                   'lookup-table-4x4x4-step71-edges-solve-last-four.txt',
+                                                   '444-edges-solve-last-four',
+                                                   'xxxUUxxUUxxxxxxLLxxLLxxxxxxFFxxFFxxxxxxRRxxRRxxxxxxBBxxBBxxxxxxDDxxDDxxx')
 
     def group_centers_guts(self):
         self.lt_init()
@@ -288,6 +286,14 @@ class RubiksCube444(RubiksCube):
                                 log.info("pair_four_edges_444() returned False")
                                 self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
 
+                    elif len_non_paired_edges == 4:
+                        wing_to_pair = non_paired_edges[0][0]
+                        self.pair_last_four_edges_444(wing_to_pair)
+
+                    elif len_non_paired_edges == 2:
+                        wing_to_pair = non_paired_edges[0][0]
+                        self.pair_last_two_edges_444(wing_to_pair)
+
                     elif len_non_paired_edges > 2:
                         if init_wing_to_pair:
                             wing_to_pair = init_wing_to_pair[0]
@@ -296,10 +302,6 @@ class RubiksCube444(RubiksCube):
                             wing_to_pair = non_paired_edges[0][0]
 
                         self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
-
-                    elif len_non_paired_edges == 2:
-                        wing_to_pair = non_paired_edges[0][0]
-                        self.pair_last_two_edges_444(wing_to_pair)
 
                     else:
                         break
@@ -877,6 +879,27 @@ class RubiksCube444(RubiksCube):
 
         raise SolveError("Went from %d to %d non_paired_edges" %
             (original_non_paired_wings_count, current_non_paired_wings_count))
+
+    def pair_last_four_edges_444(self, edge):
+        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        original_non_paired_wings_count = self.get_non_paired_wings_count()
+
+        # rotate unpaired edge to F-west
+        self.rotate_edge_to_F_west(edge)
+
+        self.lt_edges_stage_last_four.solve()
+        self.lt_edges_solve_last_four.solve()
+
+        current_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        current_non_paired_wings_count = self.get_non_paired_wings_count()
+
+        log.info("pair_last_four_edges_444() paired %d wings in %d moves (%d left to pair)" %
+            (original_non_paired_wings_count - current_non_paired_wings_count,
+             current_solution_len - original_solution_len,
+             current_non_paired_wings_count))
+
+        if current_non_paired_wings_count:
+            raise SolveError("Failed to pair last four edges")
 
     def pair_last_two_edges_444(self, edge):
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)

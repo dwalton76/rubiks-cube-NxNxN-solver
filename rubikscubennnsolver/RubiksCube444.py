@@ -151,36 +151,6 @@ class RubiksCube444(RubiksCube):
 
         # edges experiment
         '''
-        lookup-table-4x4x4-step60-edges-stage-last-two.txt
-        ==================================================
-        1 steps has 8 entries (12 percent, 0.00x previous step)
-        2 steps has 37 entries (56 percent, 4.62x previous step)
-        3 steps has 21 entries (31 percent, 0.57x previous step)
-
-        Total: 66 entries
-
-
-        lookup-table-4x4x4-step61-edges-solve-last-two.txt
-        ==================================================
-        # centers are ok and unpaired wings are at F-west and F-east
-        9 steps has 4 entries (100 percent, 0.00x previous step)
-
-        Total: 4 entries
-
-        vs the old standby of "Dw R F' U R' F Dw'" but sometimes you first had
-        to do "R F' U R' F" to flip the F-east sister wing around
-        '''
-        self.lt_edges_stage_last_two = LookupTable(self,
-                                                   'lookup-table-4x4x4-step60-edges-stage-last-two.txt',
-                                                   '444-edges-stage-last-two',
-                                                   'xxxxxxxxxxxLxLxxxxLLLLxxxxLxLxxxxxxxxxxxxxxxxxxx')
-
-        self.lt_edges_solve_last_two = LookupTable(self,
-                                                   'lookup-table-4x4x4-step61-edges-solve-last-two.txt',
-                                                   '444-edges-solve-last-two',
-                                                   'xxxUUxxUUxxxxxxLLxxLLxxxxxxFFxxFFxxxxxxRRxxRRxxxxxxBBxxBBxxxxxxDDxxDDxxx')
-
-        '''
         lookup-table-4x4x4-step70-edges-stage-last-four.txt
         ===================================================
         1 steps has 5 entries (1 percent, 0.00x previous step)
@@ -916,7 +886,6 @@ class RubiksCube444(RubiksCube):
             (original_non_paired_wings_count, current_non_paired_wings_count))
 
     def pair_last_four_edges_444(self, edge):
-        # dwalton reference
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
         original_non_paired_wings_count = self.get_non_paired_wings_count()
 
@@ -938,17 +907,42 @@ class RubiksCube444(RubiksCube):
             raise SolveError("Failed to pair last four edges")
 
     def pair_last_two_edges_444(self, edge):
+        """
+        At one point I looked into using two lookup tables to do this:
+        - the first to stage edges to F-west and F-east
+        - the second to solve the two staged edges
+
+        The first stage took 1 or steps and the 2nd stage took either 7 or 10, it
+        was 10 if the wing at F-east was turned the wrong way and needed to be
+        rotated around. It wasn't worth it...what I have below works just find and
+        takes between 7 to 11 steps total.
+        """
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
         original_non_paired_wings_count = self.get_non_paired_wings_count()
 
         # rotate unpaired edge to F-west
         self.rotate_edge_to_F_west(edge)
 
-        self.lt_edges_stage_last_two.solve()
-        self.lt_edges_solve_last_two.solve()
+        pos1 = self.sideF.edge_west_pos[-1]
 
-        current_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        # Put the other unpaired edge on F east...this uses a small lookup table
+        # that I built manually. This puts the sister wing at F-east in the correct
+        # orientation (it will not need to be flipped). We used to just move the
+        # sister wing to F-east but then sometimes we would need to "R F' U R' F"
+        # to flip it around.
+        sister_wing = self.get_wings(pos1)[0]
+
+        steps = lookup_table_444_last_two_edges_place_F_east[sister_wing]
+        for step in steps.split():
+            self.rotate(step)
+
+        # "Solving the last 4 edge blocks" in
+        # http://www.rubiksplace.com/cubes/4x4/
+        for step in ("Dw", "R", "F'", "U", "R'", "F", "Dw'"):
+            self.rotate(step)
+
         current_non_paired_wings_count = self.get_non_paired_wings_count()
+        current_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
         log.info("pair_last_two_edges_444() paired %d wings in %d moves (%d left to pair)" %
             (original_non_paired_wings_count - current_non_paired_wings_count,
@@ -982,6 +976,32 @@ class RubiksCube444(RubiksCube):
 
         return self._phase
 
+
+# Move a wing to (44, 57)
+lookup_table_444_last_two_edges_place_F_east = {
+    (2, 67)  : "B' R2",
+    (3, 66)  : "U R'",
+    (5, 18)  : "U2 R'",
+    (9, 19)  : "U B' R2",
+    (14, 34) : "U' R'",
+    (15, 35) : "U F' U' F",
+    (8, 51)  : "F' U F",
+    (12, 50) : "R'",
+    (21, 72) : "B' U R'",
+    (25, 76) : "B2 R2",
+    (30, 89) : "F D F'",
+    (31, 85) : "D2 R",
+    (40, 53) : "R U' B' R2",
+    (44, 57) : "",
+    (46, 82) : "D F D' F'",
+    (47, 83) : "D R",
+    (56, 69) : "R2",
+    (60, 73) : "B U R'",
+    (62, 88) : "F D' F'",
+    (63, 92) : "R",
+    (78, 95) : "B R2",
+    (79, 94) : "D' R",
+}
 
 # Move a wing to (40, 53)
 lookup_table_444_sister_wing_to_F_east = {
@@ -1217,32 +1237,6 @@ lookup_table_444_sister_wing_to_U_west = {
 
             log.warning("Explored %d moves in %s but did not find a solution" % (count, filename))
             sys.exit(1)
-
-# Move a wing to (44, 57)
-lookup_table_444_last_two_edges_place_F_east = {
-    (2, 67)  : "B' R2",
-    (3, 66)  : "U R'",
-    (5, 18)  : "U2 R'",
-    (9, 19)  : "U B' R2",
-    (14, 34) : "U' R'",
-    (15, 35) : "U F' U' F",
-    (8, 51)  : "F' U F",
-    (12, 50) : "R'",
-    (21, 72) : "B' U R'",
-    (25, 76) : "B2 R2",
-    (30, 89) : "F D F'",
-    (31, 85) : "D2 R",
-    (40, 53) : "R U' B' R2",
-    (44, 57) : "",
-    (46, 82) : "D F D' F'",
-    (47, 83) : "D R",
-    (56, 69) : "R2",
-    (60, 73) : "B U R'",
-    (62, 88) : "F D' F'",
-    (63, 92) : "R",
-    (78, 95) : "B R2",
-    (79, 94) : "D' R",
-}
 
 lookup_table_444_sister_wing_to_R_east = {
     (2, 67)  : "B'", # U-north

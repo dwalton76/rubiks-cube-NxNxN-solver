@@ -32,7 +32,7 @@ class RubiksCube777(RubiksCube):
           outside oblique edges. The restriction being that if you do a 3L move
           you must also do a 3R' in order to keep the two outside oblique edges
           paired up. So it is a slice of the layer in the middle. This table
-          should be (24!/(8!*16!))^2
+          should be (24!/(8!*16!))^2 or 540,917,591,800
     - stage the rest of the UD centers via 5x5x5
     - stage the LR inside 9 centers via 5x5x5
     - LR oblique edges...use the same strategy as UD oblique edges
@@ -83,15 +83,17 @@ class RubiksCube777(RubiksCube):
 
         lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt
         =================================================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 64 entries (0 percent)
-        3 steps has 820 entries (0 percent)
-        4 steps has 8,504 entries (1 percent)
-        5 steps has 66,983 entries (9 percent)
-        6 steps has 260,716 entries (35 percent)
-        7 steps has 254,717 entries (34 percent)
-        8 steps has 136,861 entries (18 percent)
-        9 steps has 6,801 entries (0 percent)
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 64 entries (0 percent, 12.80x previous step)
+        3 steps has 810 entries (0 percent, 12.66x previous step)
+        4 steps has 8,269 entries (1 percent, 10.21x previous step)
+        5 steps has 62,762 entries (8 percent, 7.59x previous step)
+        6 steps has 225,675 entries (30 percent, 3.60x previous step)
+        7 steps has 246,365 entries (33 percent, 1.09x previous step)
+        8 steps has 157,432 entries (21 percent, 0.64x previous step)
+        9 steps has 32,131 entries (4 percent, 0.20x previous step)
+        10 steps has 1,925 entries (0 percent, 0.06x previous step)
+        11 steps has 33 entries (0 percent, 0.02x previous step)
 
         Total: 735,471 entries
         '''
@@ -226,7 +228,6 @@ class RubiksCube777(RubiksCube):
         for x in range(1, 217):
             fake_666.state[x] = 'x'
 
-        # dwalton
         # Upper
         fake_666.state[8] = self.state[9]
         fake_666.state[9] = self.state[10]
@@ -245,7 +246,7 @@ class RubiksCube777(RubiksCube):
         fake_666.state[28] = self.state[40]
         fake_666.state[29] = self.state[41]
 
-        # Left 
+        # Left
         fake_666.state[44] = self.state[58]
         fake_666.state[45] = self.state[59]
         fake_666.state[46] = self.state[61]
@@ -341,6 +342,7 @@ class RubiksCube777(RubiksCube):
 
     def group_outside_UD_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
+        fake_666.lt_UD_oblique_edge_pairing_right_only.solve()
         fake_666.lt_UD_oblique_edge_pairing.solve()
 
         for step in fake_666.solution:
@@ -353,15 +355,16 @@ class RubiksCube777(RubiksCube):
     def group_centers_guts(self):
         self.lt_init()
         self.group_inside_UD_centers()
+        log.info("HERE 10")
         self.print_cube()
 
-        # dwalton
         self.group_outside_UD_oblique_edges()
+        log.info("HERE 20")
         self.print_cube()
 
         self.lt_UD_oblique_edge_pairing.solve()
-        self.print_cube()
         log.info("HERE 999")
+        self.print_cube()
         sys.exit(0)
 
     def group_edges(self):

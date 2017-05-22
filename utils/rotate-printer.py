@@ -59,7 +59,7 @@ for (size, solved_state) in (
 
     elif size == 6 or size == 7:
         steps = ("U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
-                 "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3L'", "3L2",
+                 "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2",
                  "F", "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2",
                  "R", "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2",
                  "B", "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",

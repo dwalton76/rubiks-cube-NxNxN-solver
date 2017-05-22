@@ -1840,7 +1840,9 @@ class RubiksCube(object):
         case statements used by lookup-table-builder.c
         """
         print("    } else if (strcmp(step, \"%s\") == 0) {" % case)
-        for (key, value) in self.state.items():
+        for (key, value) in enumerate(self.state[1:]):
+            key += 1
+
             if str(key) != str(value):
                 print("        cube[%s] = cube_tmp[%s];" % (key, value))
         print("")
@@ -1851,7 +1853,8 @@ class RubiksCube(object):
         if/elif statements used by rotate.py
         """
         print('    elif action == "%s":' % case)
-        for (key, value) in self.state.items():
+        for (key, value) in enumerate(self.state[1:]):
+            key += 1
             if str(key) != str(value):
                 print("        cube[%s] = cube_tmp[%s]" % (key, value))
 

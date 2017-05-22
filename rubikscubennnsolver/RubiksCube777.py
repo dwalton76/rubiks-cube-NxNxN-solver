@@ -25,19 +25,25 @@ class RubiksCube777(RubiksCube):
     """
     For 7x7x7 centers
     - stage the UD inside 9 centers via 5x5x5
-    # dwalton
     - UD oblique edges
         - pair the two outside oblique edges via 6x6x6
         - build a lookup table to pair the middle oblique edges with the two
-          outside oblique edges. The restriction being that if you do a 3L move
-          you must also do a 3R' in order to keep the two outside oblique edges
-          paired up. So it is a slice of the layer in the middle. This table
-          should be (24!/(8!*16!))^2 or 540,917,591,800
+          outside oblique edges. The restriction being that if you do a 3Lw move
+          you must also do a 3Rw' in order to keep the two outside oblique edges
+          paired up...so it is a slice of the layer in the middle. This table
+          should be (24!/(8!*16!))^2 or 540,917,591,800 so use IDA.
     - stage the rest of the UD centers via 5x5x5
     - stage the LR inside 9 centers via 5x5x5
     - LR oblique edges...use the same strategy as UD oblique edges
     - stage the rest of the LR centers via 5x5x5
-    - solve the UD centers...this is (8!/(4!*4!))^6 or 117 billion
+
+    dwalton can we use a 5x5x5 to solve the staged centers? Would need to
+        - create solid pairs of the oblique edges (8!/(4!*4!))^3 or 343,000
+        - solve the 4 inner x-center...8!/(4!*4!) or 70
+        - so (8!/(4!*4!))^4 or 24,010,000 total
+        - how to create this table?
+
+    - solve the UD centers...this is (8!/(4!*4!))^6 or 117 billion so use IDA
     - solve the LR centers
     - solve the LR and FB centers
 
@@ -56,27 +62,25 @@ class RubiksCube777(RubiksCube):
         '''
         lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
         =====================================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 66 entries (0 percent)
-        3 steps has 909 entries (0 percent)
-        4 steps has 9,872 entries (0 percent)
-        5 steps has 83,899 entries (1 percent)
-        6 steps has 375,372 entries (5 percent)
-        7 steps has 706,493 entries (10 percent)
-        8 steps has 1,844,302 entries (26 percent)
-        9 steps has 2,634,913 entries (38 percent)
-        10 steps has 1,187,886 entries (17 percent)
-        11 steps has 49,583 entries (0 percent)
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 66 entries (0 percent, 13.20x previous step)
+        3 steps has 916 entries (0 percent, 13.88x previous step)
+        4 steps has 10,132 entries (0 percent, 11.06x previous step)
+        5 steps has 92,070 entries (1 percent, 9.09x previous step)
+        6 steps has 559,180 entries (9 percent, 6.07x previous step)
+        7 steps has 3,862,400 entries (64 percent, 6.91x previous step)
+        8 steps has 1,364,953 entries (22 percent, 0.35x previous step)
+        9 steps has 71,695 entries (1 percent, 0.05x previous step)
+        10 steps has 156 entries (0 percent, 0.00x previous step)
 
-        Total: 6,893,300 entries
+        Total: 5,961,573 entries
         '''
+        # dwalton this needs to be LookupTableIDA
         self.lt_UD_oblique_edge_pairing = LookupTable(self,
                                                       'lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
                                                       '777-UD-oblique-edge-pairing',
                                                       'TBD',
                                                       True) # state_hex
-        # The following may not be needed, not sure yet but lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt is way smaller than
-        # I would have predicted so not sure if it will work.
 
         '''
         24!/(8!*16!) is 735,471
@@ -84,48 +88,46 @@ class RubiksCube777(RubiksCube):
         lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt
         =================================================================
         1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 64 entries (0 percent, 12.80x previous step)
-        3 steps has 810 entries (0 percent, 12.66x previous step)
-        4 steps has 8,269 entries (1 percent, 10.21x previous step)
-        5 steps has 62,762 entries (8 percent, 7.59x previous step)
-        6 steps has 225,675 entries (30 percent, 3.60x previous step)
-        7 steps has 246,365 entries (33 percent, 1.09x previous step)
-        8 steps has 157,432 entries (21 percent, 0.64x previous step)
-        9 steps has 32,131 entries (4 percent, 0.20x previous step)
-        10 steps has 1,925 entries (0 percent, 0.06x previous step)
-        11 steps has 33 entries (0 percent, 0.02x previous step)
+        2 steps has 66 entries (0 percent, 13.20x previous step)
+        3 steps has 850 entries (0 percent, 12.88x previous step)
+        4 steps has 8,753 entries (1 percent, 10.30x previous step)
+        5 steps has 67,758 entries (9 percent, 7.74x previous step)
+        6 steps has 243,959 entries (33 percent, 3.60x previous step)
+        7 steps has 257,410 entries (34 percent, 1.06x previous step)
+        8 steps has 135,684 entries (18 percent, 0.53x previous step)
+        9 steps has 20,177 entries (2 percent, 0.15x previous step)
+        10 steps has 801 entries (0 percent, 0.04x previous step)
+        11 steps has 8 entries (0 percent, 0.01x previous step)
 
         Total: 735,471 entries
         '''
-        #self.lt_UD_oblique_edge_pairing_middle_only = LookupTable(self,
-        #                                                          'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
-        #                                                          '777-UD-oblique-edge-pairing-middle-only',
-        #                                                          'TBD', #
-        #                                                          True) # state_hex
+        self.lt_UD_oblique_edge_pairing_middle_only = LookupTable(self,
+                                                                  'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
+                                                                  '777-UD-oblique-edge-pairing-middle-only',
+                                                                  'TBD',
+                                                                  True) # state_hex
 
         '''
         24!/(8!*16!) is 735,471
 
         lookup-table-7x7x7-step12-UD-oblique-edge-pairing-outside-only.txt
         ==================================================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 66 entries (0 percent)
-        3 steps has 894 entries (0 percent)
-        4 steps has 9,629 entries (0 percent)
-        5 steps has 80,576 entries (5 percent)
-        6 steps has 336,775 entries (23 percent)
-        7 steps has 374,788 entries (26 percent)
-        8 steps has 319,824 entries (22 percent)
-        9 steps has 279,940 entries (19 percent)
-        10 steps has 12,166 entries (0 percent)
+        1 steps has 4 entries (0 percent, 0.00x previous step)
+        2 steps has 67 entries (0 percent, 16.75x previous step)
+        3 steps has 900 entries (0 percent, 13.43x previous step)
+        4 steps has 9,626 entries (1 percent, 10.70x previous step)
+        5 steps has 80,202 entries (10 percent, 8.33x previous step)
+        6 steps has 329,202 entries (44 percent, 4.10x previous step)
+        7 steps has 302,146 entries (41 percent, 0.92x previous step)
+        8 steps has 13,324 entries (1 percent, 0.04x previous step)
 
-        Total: 1,414,663 entries
+        Total: 735,471 entries
         '''
-        #self.lt_UD_oblique_edge_pairing_outside_only = LookupTable(self,
-        #                                                           'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-outside-only.txt',
-        #                                                           '777-UD-oblique-edge-pairing-outside-only',
-        #                                                           'TBD', #
-        #                                                           True) # state_hex
+        self.lt_UD_oblique_edge_pairing_outside_only = LookupTable(self,
+                                                                   'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-outside-only.txt',
+                                                                   '777-UD-oblique-edge-pairing-outside-only',
+                                                                   'TBD',
+                                                                   True) # state_hex
 
     def create_fake_555_centers(self):
 

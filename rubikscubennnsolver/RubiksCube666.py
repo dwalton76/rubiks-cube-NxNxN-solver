@@ -3,10 +3,11 @@ from collections import OrderedDict
 from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.pts_line_bisect import get_line_startswith
-from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out, convert_state_to_hex, LookupTable, LookupTableIDA
+from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out, convert_state_to_hex
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksSide import Side, SolveError
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
 import logging
 import math
 import os
@@ -50,14 +51,14 @@ class RubiksCube666(RubiksCube):
 
         lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt
         ======================================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 80 entries (0 percent)
-        3 steps has 1,160 entries (0 percent)
-        4 steps has 13,726 entries (1 percent)
-        5 steps has 121,796 entries (16 percent)
-        6 steps has 423,136 entries (57 percent)
-        7 steps has 174,656 entries (23 percent)
-        8 steps has 912 entries (0 percent)
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 82 entries (0 percent, 16.40x previous step)
+        3 steps has 1,206 entries (0 percent, 14.71x previous step)
+        4 steps has 14,116 entries (1 percent, 11.70x previous step)
+        5 steps has 123,404 entries (16 percent, 8.74x previous step)
+        6 steps has 422,508 entries (57 percent, 3.42x previous step)
+        7 steps has 173,254 entries (23 percent, 0.41x previous step)
+        8 steps has 896 entries (0 percent, 0.01x previous step)
 
         Total: 735,471 entries
         '''
@@ -83,37 +84,23 @@ class RubiksCube666(RubiksCube):
         3 steps has 1,434 entries (0 percent, 17.49x previous step)
         4 steps has 24,198 entries (0 percent, 16.87x previous step)
         5 steps has 405,916 entries (0 percent, 16.77x previous step)
-        6 steps has 6,839,392 entries (0 percent, 16.85x previous step)
-        7 steps has 116,031,874 entries (6 percent, 16.97x previous step)
-        8 steps has 1,719,093,744 entries (93 percent, 14.82x previous step)
+        6 steps has 6,839,392 entries (5 percent, 16.85x previous step)
+        7 steps has 116,031,874 entries (94 percent, 16.97x previous step)
 
-        Total: 1,842,396,645 entries
+        Total: 123,302,901 entries
 
 
         lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
-        ===============================================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 82 entries (0 percent)
-        3 steps has 1,198 entries (0 percent)
-        4 steps has 13,818 entries (1 percent)
-        5 steps has 115,638 entries (15 percent)
-        6 steps has 399,478 entries (54 percent)
-        7 steps has 204,612 entries (27 percent)
-        8 steps has 640 entries (0 percent)
-
-        Total: 735,471 entries
-
-
         lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt
         ================================================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 82 entries (0 percent)
-        3 steps has 1,198 entries (0 percent)
-        4 steps has 13,818 entries (1 percent)
-        5 steps has 115,638 entries (15 percent)
-        6 steps has 399,478 entries (54 percent)
-        7 steps has 204,612 entries (27 percent)
-        8 steps has 640 entries (0 percent)
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 82 entries (0 percent, 16.40x previous step)
+        3 steps has 1,198 entries (0 percent, 14.61x previous step)
+        4 steps has 13,818 entries (1 percent, 11.53x previous step)
+        5 steps has 115,638 entries (15 percent, 8.37x previous step)
+        6 steps has 399,478 entries (54 percent, 3.45x previous step)
+        7 steps has 204,612 entries (27 percent, 0.51x previous step)
+        8 steps has 640 entries (0 percent, 0.00x previous step)
 
         Total: 735,471 entries
         '''
@@ -201,19 +188,19 @@ class RubiksCube666(RubiksCube):
         ==============================================
         (8!/(4!*4!))^4 is 24,010,000
 
-        1 steps has 8 entries (0 percent)
-        2 steps has 47 entries (0 percent)
-        3 steps has 283 entries (0 percent)
-        4 steps has 1,690 entries (0 percent)
-        5 steps has 9,675 entries (0 percent)
-        6 steps has 51,350 entries (0 percent)
-        7 steps has 255,725 entries (1 percent)
-        8 steps has 1,165,284 entries (4 percent)
-        9 steps has 4,337,586 entries (18 percent)
-        10 steps has 9,785,424 entries (40 percent)
-        11 steps has 7,457,560 entries (31 percent)
-        12 steps has 936,888 entries (3 percent)
-        13 steps has 8,480 entries (0 percent)
+        1 steps has 9 entries (0 percent, 0.00x previous step)
+        2 steps has 51 entries (0 percent, 5.67x previous step)
+        3 steps has 312 entries (0 percent, 6.12x previous step)
+        4 steps has 1,836 entries (0 percent, 5.88x previous step)
+        5 steps has 10,304 entries (0 percent, 5.61x previous step)
+        6 steps has 53,430 entries (0 percent, 5.19x previous step)
+        7 steps has 260,212 entries (1 percent, 4.87x previous step)
+        8 steps has 1,168,198 entries (4 percent, 4.49x previous step)
+        9 steps has 4,332,400 entries (18 percent, 3.71x previous step)
+        10 steps has 9,780,512 entries (40 percent, 2.26x previous step)
+        11 steps has 7,457,368 entries (31 percent, 0.76x previous step)
+        12 steps has 936,888 entries (3 percent, 0.13x previous step)
+        13 steps has 8,480 entries (0 percent, 0.01x previous step)
 
         Total: 24,010,000 entries
         '''
@@ -227,22 +214,22 @@ class RubiksCube666(RubiksCube):
         '''
         lookup-table-6x6x6-step61-LR-centers-solve.txt
         ==============================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 26 entries (0 percent)
-        3 steps has 94 entries (0 percent)
-        4 steps has 440 entries (0 percent)
-        5 steps has 1,680 entries (0 percent)
-        6 steps has 7,026 entries (0 percent)
-        7 steps has 26,072 entries (0 percent)
-        8 steps has 98,147 entries (0 percent)
-        9 steps has 349,870 entries (1 percent)
-        10 steps has 1,180,438 entries (4 percent)
-        11 steps has 3,429,688 entries (14 percent)
-        12 steps has 7,384,342 entries (30 percent)
-        13 steps has 8,471,512 entries (35 percent)
-        14 steps has 2,936,552 entries (12 percent)
-        15 steps has 123,980 entries (0 percent)
-        16 steps has 128 entries (0 percent)
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 26 entries (0 percent, 5.20x previous step)
+        3 steps has 94 entries (0 percent, 3.62x previous step)
+        4 steps has 440 entries (0 percent, 4.68x previous step)
+        5 steps has 1,680 entries (0 percent, 3.82x previous step)
+        6 steps has 7,026 entries (0 percent, 4.18x previous step)
+        7 steps has 26,072 entries (0 percent, 3.71x previous step)
+        8 steps has 98,147 entries (0 percent, 3.76x previous step)
+        9 steps has 349,870 entries (1 percent, 3.56x previous step)
+        10 steps has 1,180,438 entries (4 percent, 3.37x previous step)
+        11 steps has 3,429,688 entries (14 percent, 2.91x previous step)
+        12 steps has 7,384,342 entries (30 percent, 2.15x previous step)
+        13 steps has 8,471,512 entries (35 percent, 1.15x previous step)
+        14 steps has 2,936,552 entries (12 percent, 0.35x previous step)
+        15 steps has 123,980 entries (0 percent, 0.04x previous step)
+        16 steps has 128 entries (0 percent, 0.00x previous step)
 
         Total: 24,010,000 entries
         '''
@@ -263,13 +250,12 @@ class RubiksCube666(RubiksCube):
         3 steps has 420 entries (0 percent, 7.78x previous step)
         4 steps has 2,903 entries (0 percent, 6.91x previous step)
         5 steps has 21,388 entries (0 percent, 7.37x previous step)
-        6 steps has 145,568 entries (0 percent, 6.81x previous step)
-        7 steps has 951,636 entries (0 percent, 6.54x previous step)
-        8 steps has 6,082,238 entries (2 percent, 6.39x previous step)
-        9 steps has 38,169,564 entries (15 percent, 6.28x previous step)
-        10 steps has 202,253,182 entries (81 percent, 5.30x previous step)
+        6 steps has 145,567 entries (0 percent, 6.81x previous step)
+        7 steps has 951,636 entries (2 percent, 6.54x previous step)
+        8 steps has 6,082,238 entries (13 percent, 6.39x previous step)
+        9 steps has 38,169,564 entries (84 percent, 6.28x previous step)
 
-        Total: 247,626,958 entries
+        Total: 45,373,775 entries
 
 
         lookup-table-6x6x6-step62-FB-centers-solve.txt
@@ -484,7 +470,8 @@ class RubiksCube666(RubiksCube):
         self.lt_UD_oblique_edge_pairing.solve()
 
         # At this point we can treat UD centers like 5x5x5 centers
-        # Create a dummy 5x5x5 cube object that we can use to figure out what steps to
+        # Create a dummy 5x5x5 cube object that we can use to find the steps to
+        # solve the UD centers
         fake_555 = RubiksCube555(solved_5x5x5)
         fake_555.lt_init()
         self.populate_fake_555_for_UD(fake_555)

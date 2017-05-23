@@ -974,6 +974,72 @@ class LookupTable(object):
                     'x' + self.parent.state[283] + self.parent.state[284] + self.parent.state[285] + 'x'
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
+        elif self.state_type == '777-UD-oblique-edge-pairing-middle-only':
+            state = 'xx' + self.parent.state[11] + 'xx' +\
+                    'xxxxx' +\
+                    self.parent.state[23] + 'xxx' + self.parent.state[27] +\
+                    'xxxxx' +\
+                    'xx' + self.parent.state[39] + 'xx' +\
+                    'xx' + self.parent.state[60] + 'xx' +\
+                    'xxxxx' +\
+                    self.parent.state[72] + 'xxx' + self.parent.state[76] +\
+                    'xxxxx' +\
+                    'xx' + self.parent.state[87] + self.parent.state[88] + 'xx' +\
+                    'xx' + self.parent.state[109] + 'xx' +\
+                    'xxxxx' +\
+                    self.parent.state[121] + 'xxx' + self.parent.state[125] +\
+                    'xxxxx' +\
+                    'xx' + self.parent.state[136] + self.parent.state[137] + 'xx' +\
+                    'xx' + self.parent.state[158] + 'xx' +\
+                    'xxxxx' +\
+                    self.parent.state[170] + 'xxx' + self.parent.state[174] +\
+                    'xxxxx' +\
+                    'xx' + self.parent.state[186] + 'xx' +\
+                    'xx' + self.parent.state[207] + 'xx' +\
+                    'xxxxx' +\
+                    self.parent.state[219] + 'xxx' + self.parent.state[223] +\
+                    'xxxxx' +\
+                    'xx' + self.parent.state[235] + 'xx' +\
+                    'xx' + self.parent.state[256] + 'xx' +\
+                    'xxxxx' +\
+                    self.parent.state[268] + 'xxx' + self.parent.state[272] +\
+                    'xxxxx' +\
+                    'xx' + self.parent.state[284] + 'xx'
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == '777-UD-oblique-edge-pairing-outside-only':
+            state = 'x' + self.parent.state[10] + 'x' + self.parent.state[12] + 'x' +\
+                    self.parent.state[16] + 'xxx' + self.parent.state[20] +\
+                    'xxxxx' +\
+                    self.parent.state[30] + 'xxx' + self.parent.state[34] +\
+                    'x' + self.parent.state[38] + 'x' + self.parent.state[40] + 'x' +\
+                    'x' + self.parent.state[59] + 'x' + self.parent.state[61] + 'x' +\
+                    self.parent.state[65] + 'xxx' + self.parent.state[69] +\
+                    'xxxxx' +\
+                    self.parent.state[79] + 'xxx' + self.parent.state[83] +\
+                    'x' + self.parent.state[87] + 'x' + self.parent.state[89] + 'x' +\
+                    'x' + self.parent.state[108] + 'x' + self.parent.state[110] + 'x' +\
+                    self.parent.state[114] + 'xxx' + self.parent.state[118] +\
+                    'xxxxx' +\
+                    self.parent.state[128] + 'xxx' + self.parent.state[132] +\
+                    'x' + self.parent.state[136] + 'x' + self.parent.state[138] + 'x' +\
+                    'x' + self.parent.state[157] + 'x' + self.parent.state[159] + 'x' +\
+                    self.parent.state[163] + 'xxx' + self.parent.state[167] +\
+                    'xxxxx' +\
+                    self.parent.state[177] + 'xxx' + self.parent.state[181] +\
+                    'x' + self.parent.state[185] + 'x' + self.parent.state[187] + 'x' +\
+                    'x' + self.parent.state[206] + 'x' + self.parent.state[208] + 'x' +\
+                    self.parent.state[212] + 'xxx' + self.parent.state[216] +\
+                    'xxxxx' +\
+                    self.parent.state[226] + 'xxx' + self.parent.state[230] +\
+                    'x' + self.parent.state[234] + 'x' + self.parent.state[236] + 'x' +\
+                    'x' + self.parent.state[255] + 'x' + self.parent.state[257] + 'x' +\
+                    self.parent.state[261] + 'xxx' + self.parent.state[265] +\
+                    'xxxxx' +\
+                    self.parent.state[275] + 'xxx' + self.parent.state[279] +\
+                    'x' + self.parent.state[283] + 'x' + self.parent.state[285] + 'x'
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
         else:
             raise ImplementThis("state_type %s" % self.state_type)
 
@@ -1017,7 +1083,7 @@ class LookupTable(object):
             # log.info("steps: %s" % ' '.join(steps))
 
             if not steps:
-                raise SolveError("state %s does not have steps" % state)
+                raise SolveError("%s: state %s does not have steps" % (self.filename, state))
 
             for step in steps:
                 self.parent.rotate(step)

@@ -1,6 +1,7 @@
 
+
 upload 5x5x5 gz files to dropbox
-upload 6x6x6 gz files to evb
+upload 6x6x6 gz files to dropbox
 
 
 5x5x5
@@ -14,10 +15,18 @@ This will be in pair_multiple_edges_555()
 
 6x6x6
 =====
-When we solve the LFRB centers today we:
-- solve LR
-- use IDA to solve LFRB
-where solving LR is one prune table and solving FB is the other.
+Centers solving needs to be made more generic so larger even cubes can reduce
+their centers to a 6x6x6.
+- Reduce all centers to a 5x5x5 and use the 5x5x5 solver
+    - stage UD inner x-centers
+    - stage UD oblique edges
+    - solve UD inner x-centers and oblique edges...(8!/(4!*4!))^3 is 343000
+    - UD is reduced to 5x5x5
 
-Instead of solving LR all the way, what if at each step we check to see
-if the cube is in a state that is in the LFRB IDA table?
+    - stage LR inner x-centers
+    - stage LR oblique edges
+    - solve LR inner x-centers and oblique edges...(8!/(4!*4!))^3 is 343000
+    - LR is reduced to 5x5x5
+
+    - solve FB inner x-centers and oblique edges...(8!/(4!*4!))^3 is 343000
+    - FB is reduced to 5x5x5

@@ -38,12 +38,6 @@ class RubiksCube777(RubiksCube):
     - LR oblique edges...use the same strategy as UD oblique edges
     - stage the rest of the LR centers via 5x5x5
 
-    dwalton can we use a 5x5x5 to solve the staged centers? Would need to
-        - create solid pairs of the oblique edges (8!/(4!*4!))^3 or 343,000
-        - solve the 4 inner x-centers and t-centers...(8!/(4!*4!))^2 or 4900
-        - so (8!/(4!*4!))^5 or 1,680,700,000
-        - use IDA with two prune tables
-
     - solve the UD centers...this is (8!/(4!*4!))^6 or 117 billion so use IDA
     - solve the LR centers
     - solve the LR and FB centers
@@ -181,7 +175,7 @@ class RubiksCube777(RubiksCube):
                                                             False) # state_hex
 
         '''
-        dwalton something here does not look right...I only built part of this tables but
+        dwalton something here does not look right...I only built part of this table but
         the numbers are dropping like crazy when it should have 1,680,700,000 entries if
         you built it out the whole way. Need to investigate.
 

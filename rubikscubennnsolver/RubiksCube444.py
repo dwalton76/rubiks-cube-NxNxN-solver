@@ -2,7 +2,7 @@ from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver import RubiksCube
-from rubikscubennnsolver.LookupTable import LookupTable
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
 import logging
 import sys
 

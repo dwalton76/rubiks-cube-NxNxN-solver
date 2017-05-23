@@ -91,7 +91,9 @@ ENV/
 lookup-table-*.txt
 *.swp
 cache
+lookup-table-2x2x2-solve.txt.gz
 lookup-table-4x4x4-step20-LFRB-centers-solve.txt.gz
 lookup-table-4x4x4-step10-UD-centers-solve.txt.gz
 lookup-table-5x5x5-*
 lookup-table-6x6x6-*
+lookup-table-7x7x7-*

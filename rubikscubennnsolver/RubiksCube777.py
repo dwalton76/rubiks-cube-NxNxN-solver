@@ -39,9 +39,9 @@ class RubiksCube777(RubiksCube):
 
     dwalton can we use a 5x5x5 to solve the staged centers? Would need to
         - create solid pairs of the oblique edges (8!/(4!*4!))^3 or 343,000
-        - solve the 4 inner x-center...8!/(4!*4!) or 70
-        - so (8!/(4!*4!))^4 or 24,010,000 total
-        - how to create this table?
+        - solve the 4 inner x-centers and t-centers...(8!/(4!*4!))^2 or 4900
+        - so (8!/(4!*4!))^5 or 1,680,700,000
+        - use IDA with two prune tables
 
     - solve the UD centers...this is (8!/(4!*4!))^6 or 117 billion so use IDA
     - solve the LR centers
@@ -135,6 +135,90 @@ class RubiksCube777(RubiksCube):
                                                          # prune tables
                                                          (self.lt_UD_oblique_edge_pairing_middle_only,
                                                           self.lt_UD_oblique_edge_pairing_outside_only))
+
+        '''
+        lookup-table-7x7x7-step21-UD-centers-reduce-to-5x5x5-oblique-only.txt
+        =====================================================================
+        1 steps has 9 entries (0 percent, 0.00x previous step)
+        2 steps has 48 entries (0 percent, 5.33x previous step)
+        3 steps has 276 entries (0 percent, 5.75x previous step)
+        4 steps has 1572 entries (0 percent, 5.70x previous step)
+        5 steps has 8134 entries (2 percent, 5.17x previous step)
+        6 steps has 33187 entries (9 percent, 4.08x previous step)
+        7 steps has 94826 entries (27 percent, 2.86x previous step)
+        8 steps has 141440 entries (41 percent, 1.49x previous step)
+        9 steps has 59620 entries (17 percent, 0.42x previous step)
+        10 steps has 3808 entries (1 percent, 0.06x previous step)
+        11 steps has 80 entries (0 percent, 0.02x previous step)
+
+        Total: 343000 entries
+        '''
+        self.lt_UD_centers_to_555_oblique_only = LookupTable(self,
+                                                             'lookup-table-7x7x7-step21-UD-centers-reduce-to-5x5x5-oblique-only.txt',
+                                                             '777-UD-centers-reduce-to-555-oblique-only',
+                                                             'TBD',
+                                                             False) # state_hex
+
+        '''
+        lookup-table-7x7x7-step22-UD-centers-reduce-to-5x5x5-center-only.txt
+        ====================================================================
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 22 entries (0 percent, 4.40x previous step)
+        3 steps has 82 entries (1 percent, 3.73x previous step)
+        4 steps has 292 entries (5 percent, 3.56x previous step)
+        5 steps has 986 entries (20 percent, 3.38x previous step)
+        6 steps has 2001 entries (40 percent, 2.03x previous step)
+        7 steps has 1312 entries (26 percent, 0.66x previous step)
+        8 steps has 200 entries (4 percent, 0.15x previous step)
+
+        Total: 4900 entries
+        '''
+        self.lt_UD_centers_to_555_center_only = LookupTable(self,
+                                                            'lookup-table-7x7x7-step22-UD-centers-reduce-to-5x5x5-center-only.txt',
+                                                             '777-UD-centers-reduce-to-555-center-only',
+                                                            'TBD',
+                                                            False) # state_hex
+
+        '''
+        dwalton something here does not look right...I only built part of this tables but
+        the numbers are dropping like crazy when it should have 1,680,700,000 entries if
+        you built it out the whole way. Need to investigate.
+
+        - create solid pairs of the oblique edges (8!/(4!*4!))^3 or 343,000
+        - solve the 4 inner x-centers and t-centers...(8!/(4!*4!))^2 or 4900
+        - so (8!/(4!*4!))^5 or 1,680,700,000
+        - use IDA with two prune tables
+
+        lookup-table-7x7x7-step20-UD-centers-reduce-to-5x5x5.txt
+        ========================================================
+        1 steps has 9 entries (0 percent, 0.00x previous step)
+        2 steps has 64 entries (0 percent, 7.11x previous step)
+        3 steps has 412 entries (0 percent, 6.44x previous step)
+        4 steps has 2,643 entries (0 percent, 6.42x previous step)
+        5 steps has 17,408 entries (0 percent, 6.59x previous step)
+        6 steps has 110,881 entries (0 percent, 6.37x previous step)
+        7 steps has 688,216 entries (0 percent, 6.21x previous step)
+        8 steps has 4,078,714 entries (4 percent, 5.93x previous step)
+        9 steps has 22,258,476 entries (27 percent, 5.46x previous step)
+        10 steps has 37,673,279 entries (45 percent, 1.69x previous step)
+        11 steps has 17,119,723 entries (20 percent, 0.45x previous step)
+
+        Total: 81,949,825 entries
+        '''
+        self.lt_UD_centers_to_555 = LookupTableIDA(self,
+                                                   'lookup-table-7x7x7-step20-UD-centers-reduce-to-5x5x5.txt',
+                                                   '777-UD-centers-reduce-to-555',
+                                                   'TBD',
+                                                   False, # state_hex
+                                                   moves_7x7x7,
+
+                                                   ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # do not mess up UD 5x5x5 centers
+                                                    "Rw",  "Rw'",  "Lw",  "Lw'",  "Fw",  "Fw'",  "Bw",  "Bw'"), # do not mess up UD oblique edges
+
+                                                   # prune tables
+                                                   (self.lt_UD_centers_to_555_oblique_only,
+                                                    self.lt_UD_centers_to_555_center_only))
+
 
     def create_fake_555_centers(self):
 
@@ -364,16 +448,19 @@ class RubiksCube777(RubiksCube):
     def group_centers_guts(self):
         self.lt_init()
         self.group_inside_UD_centers()
-        log.info("HERE 10")
-        self.print_cube()
+        #self.print_cube()
 
         self.group_outside_UD_oblique_edges()
-        log.info("HERE 20")
-        self.print_cube()
+        #self.print_cube()
 
         self.lt_UD_oblique_edge_pairing.solve()
-        log.info("HERE 999")
+        #self.print_cube()
+
+
+        self.lt_UD_centers_to_555.solve()
         self.print_cube()
+        log.info("UD staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        # dwalton
         sys.exit(0)
 
     def group_edges(self):

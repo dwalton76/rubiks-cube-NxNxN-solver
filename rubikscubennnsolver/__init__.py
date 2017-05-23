@@ -706,7 +706,6 @@ class LookupTable(object):
                 new_UU = None
                 new_DD = None
 
-                # dwalton
                 for (pos1, pos2) in ((28, 41), (24, 37), (40, 53), (44, 57), (56, 69), (60, 73), (72, 21), (76, 25), (2, 67), (3, 66), (14, 34), (15, 35)):
                     pos1_state = self.parent.state[pos1]
                     pos2_state = self.parent.state[pos2]
@@ -1039,6 +1038,102 @@ class LookupTable(object):
                     self.parent.state[275] + 'xxx' + self.parent.state[279] +\
                     'x' + self.parent.state[283] + 'x' + self.parent.state[285] + 'x'
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == '777-UD-centers-reduce-to-555':
+            state = 'x' + self.parent.state[10] + self.parent.state[11] + self.parent.state[12] + 'x' +\
+                    self.parent.state[16] + 'xxx' + self.parent.state[20] +\
+                    self.parent.state[23] + 'xxx' + self.parent.state[27] +\
+                    self.parent.state[30] + 'xxx' + self.parent.state[34] +\
+                    'x' + self.parent.state[38] + self.parent.state[39] + self.parent.state[40] + 'x' +\
+                    'x' + self.parent.state[59] + self.parent.state[60] + self.parent.state[61] + 'x' +\
+                    self.parent.state[65] + 'xxx' + self.parent.state[69] +\
+                    self.parent.state[72] + 'xxx' + self.parent.state[76] +\
+                    self.parent.state[79] + 'xxx' + self.parent.state[83] +\
+                    'x' + self.parent.state[87] + self.parent.state[88] + self.parent.state[89] + 'x' +\
+                    'x' + self.parent.state[108] + self.parent.state[109] + self.parent.state[110] + 'x' +\
+                    self.parent.state[114] + 'xxx' + self.parent.state[118] +\
+                    self.parent.state[121] + 'xxx' + self.parent.state[125] +\
+                    self.parent.state[128] + 'xxx' + self.parent.state[132] +\
+                    'x' + self.parent.state[136] + self.parent.state[137] + self.parent.state[138] + 'x' +\
+                    'x' + self.parent.state[157] + self.parent.state[158] + self.parent.state[159] + 'x' +\
+                    self.parent.state[163] + 'xxx' + self.parent.state[167] +\
+                    self.parent.state[170] + 'xxx' + self.parent.state[174] +\
+                    self.parent.state[177] + 'xxx' + self.parent.state[181] +\
+                    'x' + self.parent.state[185] + self.parent.state[186] + self.parent.state[187] + 'x' +\
+                    'x' + self.parent.state[206] + self.parent.state[207] + self.parent.state[208] + 'x' +\
+                    self.parent.state[212] + 'xxx' + self.parent.state[216] +\
+                    self.parent.state[219] + 'xxx' + self.parent.state[223] +\
+                    self.parent.state[226] + 'xxx' + self.parent.state[230] +\
+                    'x' + self.parent.state[234] + self.parent.state[235] + self.parent.state[236] + 'x' +\
+                    'x' + self.parent.state[255] + self.parent.state[256] + self.parent.state[257] + 'x' +\
+                    self.parent.state[261] + 'xxx' + self.parent.state[265] +\
+                    self.parent.state[268] + 'xxx' + self.parent.state[272] +\
+                    self.parent.state[275] + 'xxx' + self.parent.state[279] +\
+                    'x' + self.parent.state[283] + self.parent.state[284] + self.parent.state[285] + 'x'
+
+        elif self.state_type == '777-UD-centers-reduce-to-555-oblique-only':
+            state = 'x' + self.parent.state[10] + self.parent.state[11] + self.parent.state[12] + 'x' +\
+                    self.parent.state[16] + 'xxx' + self.parent.state[20] +\
+                    self.parent.state[23] + 'xxx' + self.parent.state[27] +\
+                    self.parent.state[30] + 'xxx' + self.parent.state[34] +\
+                    'x' + self.parent.state[38] + self.parent.state[39] + self.parent.state[40] + 'x' +\
+                    'x' + self.parent.state[59] + self.parent.state[60] + self.parent.state[61] + 'x' +\
+                    self.parent.state[65] + 'xxx' + self.parent.state[69] +\
+                    self.parent.state[72] + 'xxx' + self.parent.state[76] +\
+                    self.parent.state[79] + 'xxx' + self.parent.state[83] +\
+                    'x' + self.parent.state[87] + self.parent.state[88] + self.parent.state[89] + 'x' +\
+                    'x' + self.parent.state[108] + self.parent.state[109] + self.parent.state[110] + 'x' +\
+                    self.parent.state[114] + 'xxx' + self.parent.state[118] +\
+                    self.parent.state[121] + 'xxx' + self.parent.state[125] +\
+                    self.parent.state[128] + 'xxx' + self.parent.state[132] +\
+                    'x' + self.parent.state[136] + self.parent.state[137] + self.parent.state[138] + 'x' +\
+                    'x' + self.parent.state[157] + self.parent.state[158] + self.parent.state[159] + 'x' +\
+                    self.parent.state[163] + 'xxx' + self.parent.state[167] +\
+                    self.parent.state[170] + 'xxx' + self.parent.state[174] +\
+                    self.parent.state[177] + 'xxx' + self.parent.state[181] +\
+                    'x' + self.parent.state[185] + self.parent.state[186] + self.parent.state[187] + 'x' +\
+                    'x' + self.parent.state[206] + self.parent.state[207] + self.parent.state[208] + 'x' +\
+                    self.parent.state[212] + 'xxx' + self.parent.state[216] +\
+                    self.parent.state[219] + 'xxx' + self.parent.state[223] +\
+                    self.parent.state[226] + 'xxx' + self.parent.state[230] +\
+                    'x' + self.parent.state[234] + self.parent.state[235] + self.parent.state[236] + 'x' +\
+                    'x' + self.parent.state[255] + self.parent.state[256] + self.parent.state[257] + 'x' +\
+                    self.parent.state[261] + 'xxx' + self.parent.state[265] +\
+                    self.parent.state[268] + 'xxx' + self.parent.state[272] +\
+                    self.parent.state[275] + 'xxx' + self.parent.state[279] +\
+                    'x' + self.parent.state[283] + self.parent.state[284] + self.parent.state[285] + 'x'
+
+        elif self.state_type == '777-UD-centers-reduce-to-555-center-only':
+            state = 'xxxxx' +\
+                    'x' + self.parent.state[17] + self.parent.state[18] + self.parent.state[19] + 'x' +\
+                    'x' + self.parent.state[24] + self.parent.state[25] + self.parent.state[26] + 'x' +\
+                    'x' + self.parent.state[31] + self.parent.state[32] + self.parent.state[33] + 'x' +\
+                    'xxxxx' +\
+                    'xxxxx' +\
+                    'x' + self.parent.state[66] + self.parent.state[67] + self.parent.state[68] + 'x' +\
+                    'x' + self.parent.state[73] + self.parent.state[74] + self.parent.state[75] + 'x' +\
+                    'x' + self.parent.state[80] + self.parent.state[81] + self.parent.state[82] + 'x' +\
+                    'xxxxx' +\
+                    'xxxxx' +\
+                    'x' + self.parent.state[115] + self.parent.state[116] + self.parent.state[117] + 'x' +\
+                    'x' + self.parent.state[122] + self.parent.state[123] + self.parent.state[124] + 'x' +\
+                    'x' + self.parent.state[129] + self.parent.state[130] + self.parent.state[131] + 'x' +\
+                    'xxxxx' +\
+                    'xxxxx' +\
+                    'x' + self.parent.state[164] + self.parent.state[165] + self.parent.state[166] + 'x' +\
+                    'x' + self.parent.state[171] + self.parent.state[172] + self.parent.state[173] + 'x' +\
+                    'x' + self.parent.state[178] + self.parent.state[179] + self.parent.state[180] + 'x' +\
+                    'xxxxx' +\
+                    'xxxxx' +\
+                    'x' + self.parent.state[213] + self.parent.state[214] + self.parent.state[215] + 'x' +\
+                    'x' + self.parent.state[220] + self.parent.state[221] + self.parent.state[222] + 'x' +\
+                    'x' + self.parent.state[227] + self.parent.state[228] + self.parent.state[229] + 'x' +\
+                    'xxxxx' +\
+                    'xxxxx' +\
+                    'x' + self.parent.state[262] + self.parent.state[263] + self.parent.state[264] + 'x' +\
+                    'x' + self.parent.state[269] + self.parent.state[270] + self.parent.state[271] + 'x' +\
+                    'x' + self.parent.state[276] + self.parent.state[277] + self.parent.state[278] + 'x' +\
+                    'xxxxx'
 
         else:
             raise ImplementThis("state_type %s" % self.state_type)

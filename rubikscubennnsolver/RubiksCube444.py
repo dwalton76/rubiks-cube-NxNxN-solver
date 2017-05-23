@@ -1,7 +1,8 @@
 from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
-from rubikscubennnsolver import RubiksCube, LookupTable
+from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver.LookupTable import LookupTable
 import logging
 import sys
 

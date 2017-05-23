@@ -1,5 +1,6 @@
 
-from rubikscubennnsolver import RubiksCube, SolveError, LookupTable
+from rubikscubennnsolver import RubiksCube, SolveError
+from rubikscubennnsolver.LookupTable import LookupTable
 import logging
 
 log = logging.getLogger(__name__)

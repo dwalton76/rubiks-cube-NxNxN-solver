@@ -106,6 +106,65 @@ class RubiksCube444(RubiksCube):
                                                    'ULFRBD-centers-solve',
                                                    'UUUULLLLFFFFRRRRBBBBDDDD')
 
+        '''
+        lookup-table-4x4x4-step30-ULFRBD-centers-solve-not-staged.txt
+        =============================================================
+        1 steps has 19 entries (0 percent, 0.00x previous step)
+        2 steps has 459 entries (0 percent, 24.16x previous step)
+        3 steps has 10,272 entries (0 percent, 22.38x previous step)
+        4 steps has 218,195 entries (0 percent, 21.24x previous step)
+        5 steps has 4,384,602 entries (4 percent, 20.09x previous step)
+        6 steps has 83,113,883 entries (94 percent, 18.96x previous step)
+
+        Total: 87,727,430 entries
+
+
+        lookup-table-4x4x4-step31-UD-centers-solve.txt
+        lookup-table-4x4x4-step32-LR-centers-solve.txt
+        lookup-table-4x4x4-step33-FB-centers-solve.txt
+        ==============================================
+        1 steps has 13 entries (0 percent, 0.00x previous step)
+        2 steps has 205 entries (0 percent, 15.77x previous step)
+        3 steps has 3,526 entries (0 percent, 17.20x previous step)
+        4 steps has 53,778 entries (0 percent, 15.25x previous step)
+        5 steps has 691,972 entries (1 percent, 12.87x previous step)
+        6 steps has 6,685,690 entries (12 percent, 9.66x previous step)
+        7 steps has 28,771,914 entries (55 percent, 4.30x previous step)
+        8 steps has 15,187,532 entries (29 percent, 0.53x previous step)
+        9 steps has 88,340 entries (0 percent, 0.01x previous step)
+
+        Total: 51,482,970 entries
+        '''
+        self.lt_UD_centers_solve = LookupTable(self,
+                                               'lookup-table-4x4x4-step31-UD-centers-solve.txt',
+                                               'UD-centers-solve',
+                                               None,
+                                               False) # state_hex
+
+        self.lt_LR_centers_solve = LookupTable(self,
+                                               'lookup-table-4x4x4-step32-LR-centers-solve.txt',
+                                               'LR-centers-solve',
+                                               None,
+                                               False) # state_hex
+
+        self.lt_FB_centers_solve = LookupTable(self,
+                                               'lookup-table-4x4x4-step33-FB-centers-solve.txt',
+                                               'FB-centers-solve',
+                                               None,
+                                               False) # state_hex
+
+        self.lt_ULFRBD_centers_solve_not_staged = LookupTableIDA(self,
+                                                                'lookup-table-4x4x4-step30-ULFRBD-centers-solve-not-staged.txt',
+                                                                'ULFRBD-centers-solve',
+                                                                'UUUULLLLFFFFRRRRBBBBDDDD',
+                                                                False, # state_hex
+                                                                moves_4x4x4,
+                                                                (), # illegal_moves
+
+                                                                # prune tables
+                                                                (self.lt_UD_centers_solve,
+                                                                 self.lt_LR_centers_solve,
+                                                                 self.lt_FB_centers_solve))
 
         '''
         22*20*18 is 7920
@@ -150,7 +209,55 @@ class RubiksCube444(RubiksCube):
                                                   '444-edges-slice-backward',
                                                   None)
 
-        # edges experiment
+        '''
+        lookup-table-4x4x4-step60-edges-stage-last-two.txt
+        ==================================================
+        1 steps has 8 entries (12 percent, 0.00x previous step)
+        2 steps has 37 entries (56 percent, 4.62x previous step)
+        3 steps has 21 entries (31 percent, 0.57x previous step)
+
+        Total: 66 entries
+
+
+        lookup-table-4x4x4-step61-edges-solve-last-two.txt
+        ==================================================
+        1 steps has 10 entries (0 percent, 0.00x previous step)
+        2 steps has 58 entries (0 percent, 5.80x previous step)
+        3 steps has 344 entries (0 percent, 5.93x previous step)
+        4 steps has 1759 entries (0 percent, 5.11x previous step)
+        5 steps has 8721 entries (0 percent, 4.96x previous step)
+        6 steps has 39502 entries (0 percent, 4.53x previous step)
+        7 steps has 170102 entries (4 percent, 4.31x previous step)
+        8 steps has 628062 entries (14 percent, 3.69x previous step)
+        9 steps has 1632564 entries (38 percent, 2.60x previous step)
+        10 steps has 1585364 entries (37 percent, 0.97x previous step)
+        11 steps has 166762 entries (3 percent, 0.11x previous step)
+        12 steps has 352 entries (0 percent, 0.00x previous step)
+
+        Total: 4233600 entries
+
+
+        lookup-table-4x4x4-step62-edges-solve-last-two.txt
+        ==================================================
+        # centers are ok and unpaired wings are at F-west and F-east
+        1 steps has 2 entries (8 percent, 0.00x previous step)
+        8 steps has 20 entries (83 percent, 10.00x previous step)
+        10 steps has 2 entries (8 percent, 0.10x previous step)
+
+        Total: 24 entries
+        '''
+        #self.lt_edges_stage_last_two = LookupTable(self,
+        #                                          'lookup-table-4x4x4-step60-edges-stage-last-two.txt',
+        #                                          '444-edges-stage-last-two',
+        #                                          'TBD')
+
+        #self.lt_edges_solve_last_two = LookupTable(self,
+        #                                          'lookup-table-4x4x4-step61-edges-stage-last-two.txt',
+        #                                          '444-edges-solve-last-two',
+        #                                          'TBD')
+
+
+
         '''
         lookup-table-4x4x4-step70-edges-stage-last-four.txt
         ===================================================
@@ -232,6 +339,8 @@ class RubiksCube444(RubiksCube):
         self.lt_UD_centers_stage.solve()
         self.lt_LR_centers_stage.solve()
         self.lt_ULFRBD_centers_solve.solve()
+
+        #self.lt_ULFRBD_centers_solve_not_staged.solve()
 
     def group_edges(self):
         original_non_paired_edges = self.get_non_paired_edges()

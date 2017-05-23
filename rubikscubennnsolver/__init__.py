@@ -2754,23 +2754,36 @@ class RubiksCube(object):
                     foo.append(self.state[square_index])
 
         else:
-            for side_name in ('U', 'R', 'F', 'D', 'L', 'B'):
-                side = self.sides[side_name]
+            if self.size == 2:
+                for side_name in ('U', 'R', 'F', 'D', 'L', 'B'):
+                    side = self.sides[side_name]
 
-                # first row
-                foo.append(self.state[side.corner_pos[0]])
-                foo.append(self.state[side.edge_north_pos[0]])
-                foo.append(self.state[side.corner_pos[1]])
+                    # first row
+                    foo.append(self.state[side.corner_pos[0]])
+                    foo.append(self.state[side.corner_pos[1]])
 
-                # second row
-                foo.append(self.state[side.edge_west_pos[0]])
-                foo.append(self.state[side.center_corner_pos[0]])
-                foo.append(self.state[side.edge_east_pos[0]])
+                    # second row
+                    foo.append(self.state[side.corner_pos[2]])
+                    foo.append(self.state[side.corner_pos[3]])
 
-                # third row
-                foo.append(self.state[side.corner_pos[2]])
-                foo.append(self.state[side.edge_south_pos[0]])
-                foo.append(self.state[side.corner_pos[3]])
+            else:
+                for side_name in ('U', 'R', 'F', 'D', 'L', 'B'):
+                    side = self.sides[side_name]
+
+                    # first row
+                    foo.append(self.state[side.corner_pos[0]])
+                    foo.append(self.state[side.edge_north_pos[0]])
+                    foo.append(self.state[side.corner_pos[1]])
+
+                    # second row
+                    foo.append(self.state[side.edge_west_pos[0]])
+                    foo.append(self.state[side.center_corner_pos[0]])
+                    foo.append(self.state[side.edge_east_pos[0]])
+
+                    # third row
+                    foo.append(self.state[side.corner_pos[2]])
+                    foo.append(self.state[side.edge_south_pos[0]])
+                    foo.append(self.state[side.corner_pos[3]])
 
         kociemba_string = ''.join(foo)
         log.debug('kociemba string: %s' % kociemba_string)
@@ -3314,6 +3327,11 @@ class RubiksCube(object):
 
     def group_centers(self):
 
+        if self.centers_solved():
+            log.info("group center solution: centers are already solved")
+            self.solution.append('CENTERS_SOLVED')
+            return
+
         min_solution_length = None
         min_solution_state = None
         min_solution = None
@@ -3451,8 +3469,8 @@ class RubiksCube(object):
                     # Do not consider any solution that pairs an edge for 4x4x4...it is easier
                     # to handle the scenario where all edges are unpaired
                     elif self.size == 4 and self.get_non_paired_edges_count() != 12:
-                        log.info("%s on top, %s in front, opening move %4s: %d edges unpaired" %
-                            (upper_side_name, front_side_name, opening_move, self.get_non_paired_edges_count()))
+                        log.info("%s on top, %s in front, opening move %4s: %d edges unpaired, solution %s" %
+                            (upper_side_name, front_side_name, opening_move, self.get_non_paired_edges_count(), ' '.join(self.solution)))
 
                     else:
                         center_solution_length = self.get_solution_len_minus_rotates(self.solution)

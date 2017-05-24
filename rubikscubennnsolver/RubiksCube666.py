@@ -183,7 +183,7 @@ class RubiksCube666(RubiksCube):
                                                       True) # state_hex
 
         '''
-        lookup-table-6x6x6-step100-UD-solve-inner-x-center-and-oblique-edges.txt
+        lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt
         ========================================================================
         1 steps has 9 entries (0 percent, 0.00x previous step)
         2 steps has 47 entries (0 percent, 5.22x previous step)
@@ -200,13 +200,13 @@ class RubiksCube666(RubiksCube):
         Total: 343,000 entries
         '''
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable(self,
-                                                                         'lookup-table-6x6x6-step100-UD-solve-inner-x-center-and-oblique-edges.txt',
+                                                                         'lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt',
                                                                          'UD-centers-oblique-edges-solve',
                                                                          'xUUxUUUUUUUUxUUxxDDxDDDDDDDDxDDx',
                                                                          False) # state_hex
 
         '''
-        lookup-table-6x6x6-step111-LR-solve-inner-x-center-and-oblique-edges.txt
+        lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
         ========================================================================
         1 steps has 5 entries (0 percent, 0.00x previous step)
         2 steps has 26 entries (0 percent, 5.20x previous step)
@@ -225,13 +225,13 @@ class RubiksCube666(RubiksCube):
         Total: 343,000 entries
         '''
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable(self,
-                                                                         'lookup-table-6x6x6-step111-LR-solve-inner-x-center-and-oblique-edges.txt',
+                                                                         'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt',
                                                                          'LR-centers-oblique-edges-solve',
                                                                          'xLLxLLLLLLLLxLLxxRRxRRRRRRRRxRRx',
                                                                          False) # state_hex
 
         '''
-        lookup-table-6x6x6-step112-FB-solve-inner-x-center-and-oblique-edges.txt
+        lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
         ========================================================================
         1 steps has 5 entries (0 percent, 0.00x previous step)
         2 steps has 26 entries (0 percent, 5.20x previous step)
@@ -250,13 +250,13 @@ class RubiksCube666(RubiksCube):
         Total: 343,000 entries
         '''
         self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable(self,
-                                                                         'lookup-table-6x6x6-step112-FB-solve-inner-x-center-and-oblique-edges.txt',
+                                                                         'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
                                                                          'FB-centers-oblique-edges-solve',
                                                                          'xFFxFFFFFFFFxFFxxBBxBBBBBBBBxBBx',
                                                                          False) # state_hex
 
         '''
-        lookup-table-6x6x6-step110-LFRB-solve-inner-x-center-and-oblique-edges.txt
+        lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt
         ==========================================================================
         1 steps has 5 entries (0 percent, 0.00x previous step)
         2 steps has 54 entries (0 percent, 10.80x previous step)
@@ -271,7 +271,7 @@ class RubiksCube666(RubiksCube):
         Total: 25,679,911 entries
         '''
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA(self,
-                                                         'lookup-table-6x6x6-step110-LFRB-solve-inner-x-center-and-oblique-edges.txt',
+                                                         'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt',
                                                          'LFRB-centers-oblique-edges-solve',
                                                          'xLLxLLLLLLLLxLLxxFFxFFFFFFFFxFFxxRRxRRRRRRRRxRRxxBBxBBBBBBBBxBBx',
 

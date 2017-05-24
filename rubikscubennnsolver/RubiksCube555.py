@@ -307,14 +307,36 @@ class RubiksCube555(RubiksCube):
         try:
             self.lt_edges_stage_last_four.solve()
             self.lt_edges_solve_last_four.solve()
-            raise Exception("dwalton inspect this one")
-        except NoSteps:
-            # dwalton
-            #raise
+            raise Exception("dwalton inspect this one...it worked :)")
+        except NoSteps as e:
+            # raise e
+
             # restore cube state
             self.state = copy(original_state)
             self.solution = copy(original_solution)
             return False
+
+        # experiment with rotating around...it didn't help (didn't think it would)
+        '''
+        for x in range(6):
+            try:
+                self.lt_edges_stage_last_four.solve()
+                self.lt_edges_solve_last_four.solve()
+                raise Exception("dwalton inspect this one")
+                break
+            except NoSteps as e:
+                if x == 3:
+                    self.rotate_x()
+                    self.rotate_x()
+                else:
+                    self.rotate_y()
+        else:
+            raise e
+            # restore cube state
+            self.state = copy(original_state)
+            self.solution = copy(original_solution)
+            return False
+        '''
 
         current_solution_len = self.get_solution_len_minus_rotates(self.solution)
         current_non_paired_wings_count = self.get_non_paired_wings_count()
@@ -417,8 +439,37 @@ class RubiksCube555(RubiksCube):
         (target_wing, sister_wing1, sister_wing2, sister_wing3) = self.get_sister_wings_slice_backward_555()
 
         if target_wing is None:
-            log.info("prep_for_slice_back_555() failed...get_sister_wings_slice_backward_555")
-            return False
+            # This is not a cube where we can place three edges to be paired on the slice back :(
+
+            # Uncomment this if you want to try out putting any three unpaired
+            # edges in place for the slice back. This doesn't work very well
+            # though because you end up spending moves to put edges in place that
+            # aren't paired on the slice back...so the three you paired on the
+            # slice forward end up having a really have move count.
+            #
+            # Put any three unpaired edges in place
+            '''
+            target_wing = (self.sideF.edge_east_pos[-1], self.sideR.edge_west_pos[-1])
+
+            for wing in self.get_non_paired_wings():
+                if wing == target_wing:
+                    continue
+
+                wing_side = self.get_side_for_index(wing[0][0])
+
+                if wing_side.wing_is_middle_of_edge(wing[0][0]):
+                    if sister_wing1 is None:
+                        sister_wing1 = wing[0]
+                    elif sister_wing2 is None:
+                        sister_wing2 = wing[0]
+                    elif sister_wing3 is None:
+                        sister_wing3 = wing[0]
+                        break
+            '''
+
+            if not sister_wing1 or not sister_wing2 or not sister_wing3:
+                log.info("prep_for_slice_back_555() failed...get_sister_wings_slice_backward_555")
+                return False
 
         steps = self.find_moves_to_stage_slice_backward_555(target_wing, sister_wing1, sister_wing2, sister_wing3)
 

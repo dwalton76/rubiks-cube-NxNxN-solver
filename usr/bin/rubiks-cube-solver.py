@@ -9,6 +9,7 @@ This is a work in progress
 """
 
 from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
+from rubikscubennnsolver.LookupTable import NoSteps
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444
@@ -44,17 +45,17 @@ parser.add_argument('--debug', default=False, action='store_true')
     #default='UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB') # solved
 
 # 4x4x4
-parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
-    default='FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU')
+#parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
+#    default='FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU')
 #    default='RRRRRRRLRRRLRRRFLBBFBBBBBBBBRBBBUUUUUDDDUDDDDDDULLLFLLLRLLLRLFFLBFFBLFFFLFFFBFFFDDDDUUUUUUUUUDDD')
     #default='LFBDUFLDBUBBFDFBLDLFRDFRRURFDFDLULUDLBLUUDRDUDUBBFFRBDFRRRRRRRLFBLLRDLDFBUBLFBLRLURUUBLBDUFUUFBD')
     #default='UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB') # solved
 
 # 5x5x5
-#parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
+parser.add_argument('--state', type=str, help='Cube state in URFDLB order',
     # https://www.speedsolving.com/forum/threads/arnauds-5x5x5-edge-pairing-method-examples.1447/
     # default='LDFRDDUUUUFUUUBLUUUFLDFDRFDDFBBRRRULRRRBFRRRURFRFDUBDRUBFFFUBFFFUUFFFRLDLRFDLBDDLDDDRDDDDUDDDDUULDLFBFLFFULLLRFLLLRLLLLRRBLBBRBULULBBBRUBBBRBBBBULBRFB')
-#    default='RFFFUDUDURBFULULFDBLRLDUFDBLUBBBDDURLRDRFRUDDBFUFLFURRLDFRRRUBFUUDUFLLBLBBULDDRRUFUUUBUDFFDRFLRBBLRFDLLUUBBRFRFRLLBFRLBRRFRBDLLDDFBLRDLFBBBLBLBDUUFDDD')
+    default='RFFFUDUDURBFULULFDBLRLDUFDBLUBBBDDURLRDRFRUDDBFUFLFURRLDFRRRUBFUUDUFLLBLBBULDDRRUFUUUBUDFFDRFLRBBLRFDLLUUBBRFRFRLLBFRLBRRFRBDLLDDFBLRDLFBBBLBLBDUUFDDD')
     #default='UDLFDLDDLUFDUBRLBDLFLRBFRBLBBFUDURDULRRBRLFUURBUFLUBDUDRURRRBUFUFFFRUFFLDUURURFFULFFRLFDBRRFRDDBRFBBLBRDFBBBBUDDLLLDBUULUDULDLDDLBRRLRLUBBFFBDLFBDDLFR')
     #default='DFFURRULDLDLURLBDDRRBFRURFBFBFRBDLBBFRBLRFBRBBFLULDLBLULLFRUBUFLDFFLDULDDLUURRDRFBRLULUDRBDUUUBBRFFDBDFURDBBDDRULBUDRDLLLBDRFDLRDLLFDBBUFBRURFFUFFUUFU') # ida_UD_centers_stage on this one takes forever
     #default='UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB') # solved
@@ -161,17 +162,7 @@ try:
         raise SolveError("cube should be solved but is not, edge parity %d, corner parity %d, kociemba %s" %
             (edge_swap_count, corner_swap_count, kociemba_string))
 
-except ImplementThis:
-    cube.print_cube_layout()
-    cube.print_cube()
-    raise
-
-except SolveError:
-    cube.print_cube_layout()
-    cube.print_cube()
-    raise
-
-except StuckInALoop:
+except (ImplementThis, SolveError, StuckInALoop, NoSteps):
     cube.print_cube_layout()
     cube.print_cube()
     raise

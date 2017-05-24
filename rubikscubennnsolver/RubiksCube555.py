@@ -3,10 +3,10 @@ from collections import OrderedDict
 from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.pts_line_bisect import get_line_startswith
-from rubikscubennnsolver import RubiksCube, ImplementThis, steps_cancel_out, convert_state_to_hex
+from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksSide import Side, SolveError
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_4x4x4, solved_4x4x4
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps
 import logging
 import math
 import os
@@ -242,6 +242,39 @@ class RubiksCube555(RubiksCube):
                                                   '555-edges-slice-backward',
                                                   None)
 
+        '''
+        lookup-table-5x5x5-step90-edges-stage-last-four.txt
+        ===================================================
+        1 steps has 5 entries (1 percent, 0.00x previous step)
+        2 steps has 50 entries (10 percent, 10.00x previous step)
+        3 steps has 286 entries (57 percent, 5.72x previous step)
+        4 steps has 152 entries (30 percent, 0.53x previous step)
+        5 steps has 2 entries (0 percent, 0.01x previous step)
+
+        Total: 495 entries
+
+        lookup-table-5x5x5-step91-edges-solve-last-four.txt
+        ===================================================
+        5 steps has 4 entries (0 percent, 0.00x previous step)
+        6 steps has 95 entries (0 percent, 23.75x previous step)
+        7 steps has 398 entries (1 percent, 4.19x previous step)
+        8 steps has 1217 entries (5 percent, 3.06x previous step)
+        9 steps has 4778 entries (19 percent, 3.93x previous step)
+        10 steps has 17436 entries (72 percent, 3.65x previous step)
+
+        Total: 23928 entries
+        '''
+        self.lt_edges_stage_last_four = LookupTable(self,
+                                                    'lookup-table-5x5x5-step90-edges-stage-last-four.txt',
+                                                    '555-edges-stage-last-four',
+                                                    'xxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx')
+
+        self.lt_edges_solve_last_four = LookupTable(self,
+                                                    'lookup-table-5x5x5-step91-edges-solve-last-four.txt',
+                                                    '555-edges-solve-last-four',
+                                                    'TBD')
+
+
     def group_centers_guts(self):
         self.lt_init()
         self.rotate_U_to_U()
@@ -253,6 +286,42 @@ class RubiksCube555(RubiksCube):
 
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
+
+    def pair_last_four_edges_555(self, edge):
+
+        # save cube state
+        original_state = copy(self.state)
+        original_solution = copy(self.solution)
+
+        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        original_non_paired_wings_count = self.get_non_paired_wings_count()
+
+        # rotate unpaired edge to F-west
+        self.rotate_edge_to_F_west(edge)
+
+        try:
+            self.lt_edges_stage_last_four.solve()
+            self.lt_edges_solve_last_four.solve()
+            raise Exception("dwalton inspect this one")
+        except NoSteps:
+            raise
+            # restore cube state
+            self.state = copy(original_state)
+            self.solution = copy(original_solution)
+            return False
+
+        current_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        current_non_paired_wings_count = self.get_non_paired_wings_count()
+
+        log.info("pair_last_four_edges_555() paired %d wings in %d moves (%d left to pair)" %
+            (original_non_paired_wings_count - current_non_paired_wings_count,
+             current_solution_len - original_solution_len,
+             current_non_paired_wings_count))
+
+        if current_non_paired_wings_count:
+            raise SolveError("Failed to pair last four edges")
+
+        return True
 
     def find_moves_to_stage_slice_forward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
@@ -1128,7 +1197,9 @@ class RubiksCube555(RubiksCube):
                 for foo in non_paired_edges:
                     wing_to_pair = foo[0]
 
-                    if self.pair_multiple_edges_555(wing_to_pair, pre_non_paired_edges_count):
+                    # dwalton
+                    # 113
+                    if (pre_non_paired_edges_count == 4 and self.pair_last_four_edges_555(wing_to_pair)) or self.pair_multiple_edges_555(wing_to_pair, pre_non_paired_edges_count):
                         post_non_paired_edges_count = self.get_non_paired_edges_count()
                         edges_paired = pre_non_paired_edges_count - post_non_paired_edges_count
                         post_solution_len = self.get_solution_len_minus_rotates(self.solution)

@@ -1,12 +1,56 @@
 
 from copy import copy
+from pprint import pformat
 from rubikscubennnsolver.pts_line_bisect import get_line_startswith
 from rubikscubennnsolver.RubiksSide import SolveError
 import logging
+import math
 import os
 
 
 log = logging.getLogger(__name__)
+
+
+class ImplementThis(Exception):
+    pass
+
+
+class NoSteps(Exception):
+    pass
+
+
+def steps_cancel_out(prev_step, step):
+
+    if prev_step is None:
+        return False
+
+    # U2 followed by U2 is a no-op
+    if step == prev_step and step.endswith("2"):
+        return True
+
+    # U' followed by U is a no-op
+    if prev_step.endswith("'") and not step.endswith("'") and step == prev_step[0:-1]:
+        return True
+
+    # U followed by U' is a no-op
+    if not prev_step.endswith("'") and step.endswith("'") and step[0:1] == prev_step:
+        return True
+
+    return False
+
+
+def convert_state_to_hex(state):
+    """
+    This assumes that state only has "x"s and Us or Ls or Fs or Rs or Bs or Ds
+    """
+    state = state.replace('x', '0').replace('U', '1').replace('L', '1').replace('F', '1').replace('R', '1').replace('B', '1').replace('D', '1')
+    hex_width = int(math.ceil(len(state)/4.0))
+    hex_state = hex(int(state, 2))[2:]
+
+    if hex_state.endswith('L'):
+        hex_state = hex_state[:-1]
+
+    return hex_state.zfill(hex_width)
 
 
 class LookupTable(object):
@@ -424,6 +468,190 @@ class LookupTable(object):
                 self.parent.state = copy(original_state)
                 self.parent.solution = copy(original_solution)
 
+        elif self.state_type == '555-edges-stage-last-four':
+
+            # backup parent state
+            original_state = copy(self.parent.state)
+            original_solution = copy(self.parent.solution)
+
+            # build lists of paired and unpaired edges
+            paired = []
+            unpaired = []
+
+            for side in self.sides_all:
+                paired.extend(side.paired_wings(True, True, True, True))
+                unpaired.extend(side.non_paired_wings(True, True, True, True))
+
+            paired = list(set(paired))
+            unpaired = list(set(unpaired))
+            #log.info("paired %s" % pformat(paired))
+            #log.info("unpaired %s" % pformat(unpaired))
+
+            # x the paired edges
+            for (pos1, pos2) in paired:
+                self.parent.state[pos1[0]] = 'x'
+                self.parent.state[pos1[1]] = 'x'
+                self.parent.state[pos2[0]] = 'x'
+                self.parent.state[pos2[1]] = 'x'
+
+            # L the unpaired edges
+            for (pos1, pos2) in unpaired:
+                self.parent.state[pos1[0]] = 'L'
+                self.parent.state[pos1[1]] = 'L'
+                self.parent.state[pos2[0]] = 'L'
+                self.parent.state[pos2[1]] = 'L'
+
+            # 'state' is the state of edges
+            state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.edge_pos])
+
+            # restore parent state to original
+            self.parent.state = copy(original_state)
+            self.parent.solution = copy(original_solution)
+
+        elif self.state_type == '555-edges-solve-last-four':
+            """
+            This assumes 555-edges-stage-last-four has been used to stage the last
+            four unpaired edges to F-west, F-east, B-west and B-east
+            """
+
+            # build a list of paired edges
+            paired = []
+            for side in self.sides_all:
+                paired.extend(side.paired_wings(True, True, True, True))
+            paired = list(set(paired))
+
+            if len(paired) == 48:
+                state = 'xxxxUUUxxxUUUxxxxxxxxLLLxxxLLLxxxxxxxxFFFxxxFFFxxxxxxxxRRRxxxRRRxxxxxxxxBBBxxxBBBxxxxxxxxDDDxxxDDDxxxx'
+            else:
+                # backup parent state
+                original_state = copy(self.parent.state)
+                original_solution = copy(self.parent.solution)
+
+                # x the paired edges
+                for (pos1, pos2) in paired:
+                    self.parent.state[pos1[0]] = 'x'
+                    self.parent.state[pos1[1]] = 'x'
+                    self.parent.state[pos2[0]] = 'x'
+                    self.parent.state[pos2[1]] = 'x'
+
+                # The unpaired edges must be re-mapped to LF, RF, RB and FB as those were the
+                # edges used to build the lookup table. Figure out which pair will be
+                # the LF, which will be the RF, etc
+                new_LF = None
+                new_RF = None
+                new_LB = None
+                new_RB = None
+                for (pos1, pos2) in ((35, 56), (40, 61), (45, 66), (60, 81), (65, 86), (70, 91), (85, 106), (90, 111), (95, 116), (110, 31), (115, 36), (120, 41)):
+                    pos1_state = self.parent.state[pos1]
+                    pos2_state = self.parent.state[pos2]
+
+                    if new_LF is None:
+                        new_LF = (pos1_state, pos2_state)
+                        continue
+                    if (pos1_state, pos2_state) == new_LF or (pos2_state, pos1_state) == new_LF:
+                        continue
+
+                    if new_RF is None:
+                        new_RF = (pos1_state, pos2_state)
+                        continue
+                    if (pos1_state, pos2_state) == new_RF or (pos2_state, pos1_state) == new_RF:
+                        continue
+
+                    if new_LB is None:
+                        new_LB = (pos1_state, pos2_state)
+                        continue
+                    if (pos1_state, pos2_state) == new_LB or (pos2_state, pos1_state) == new_LB:
+                        continue
+
+                    if new_RB is None:
+                        new_RB = (pos1_state, pos2_state)
+                        continue
+                    if (pos1_state, pos2_state) == new_RB or (pos2_state, pos1_state) == new_RB:
+                        continue
+
+                # Now re-map them
+                for (pos1, pos2) in ((35, 56), (40, 61), (45, 66), (60, 81), (65, 86), (70, 91), (85, 106), (90, 111), (95, 116), (110, 31), (115, 36), (120, 41)):
+                    pos1_state = self.parent.state[pos1]
+                    pos2_state = self.parent.state[pos2]
+                    pos1_pos2_state = (pos1_state, pos2_state)
+                    pos2_pos1_state = (pos2_state, pos1_state)
+
+                    if pos1_pos2_state == new_LF:
+                        self.parent.state[pos1] = 'L'
+                        self.parent.state[pos2] = 'F'
+
+                    elif pos2_pos1_state == new_LF:
+                        self.parent.state[pos2] = 'L'
+                        self.parent.state[pos1] = 'F'
+
+                    elif pos1_pos2_state == new_RF:
+                        self.parent.state[pos1] = 'R'
+                        self.parent.state[pos2] = 'F'
+
+                    elif pos2_pos1_state == new_RF:
+                        self.parent.state[pos2] = 'R'
+                        self.parent.state[pos1] = 'F'
+
+                    elif pos1_pos2_state == new_LB:
+                        self.parent.state[pos1] = 'L'
+                        self.parent.state[pos2] = 'B'
+
+                    elif pos2_pos1_state == new_LB:
+                        self.parent.state[pos2] = 'L'
+                        self.parent.state[pos1] = 'B'
+
+                    elif pos1_pos2_state == new_RB:
+                        self.parent.state[pos1] = 'R'
+                        self.parent.state[pos2] = 'B'
+
+                    elif pos2_pos1_state == new_RB:
+                        self.parent.state[pos2] = 'R'
+                        self.parent.state[pos1] = 'B'
+
+                    else:
+                        raise SolveError("%s not in new_LF %s, new_RF %s, new_LB %s, new_RB %s" %
+                            (pformat(pos1_pos2_state), pformat(new_LF), pformat(new_RF), pformat(new_LB), pformat(new_RB)))
+
+                # 'state' is the state of centers and edges
+                #
+                # Our cube could be rotated so that U is not on the top and F is not at
+                # the front but the lookup table was contructed with U on top and F on
+                # the front so when we build the state put U on the top and F on the front.
+                # It doesn't matter that our cube is rotated in some other way because all
+                # entries in the lookup table preserve the centers.
+                state = []
+                for side in self.sides_all:
+                    for square_index in range(side.min_pos, side.max_pos+1):
+
+                        if square_index in side.corner_pos:
+                            pass
+
+                        elif square_index in side.center_pos:
+                            if side == self.parent.sideU:
+                                state.append('U')
+                            elif side == self.parent.sideL:
+                                state.append('L')
+                            elif side == self.parent.sideF:
+                                state.append('F')
+                            elif side == self.parent.sideR:
+                                state.append('R')
+                            elif side == self.parent.sideB:
+                                state.append('B')
+                            elif side == self.parent.sideD:
+                                state.append('D')
+
+                        else:
+                            state.append(self.parent.state[square_index])
+
+                state = ''.join(state)
+
+                # dwalton
+                self.parent.print_cube()
+
+                # restore parent state to original
+                self.parent.state = copy(original_state)
+                self.parent.solution = copy(original_solution)
+
         elif self.state_type == '666-UD-inner-X-centers-stage':
             state = 'xxxxx' + self.parent.state[15] + self.parent.state[16] + 'xx' + self.parent.state[21] + self.parent.state[22]  + 'xxxxx' +\
                     'xxxxx' + self.parent.state[51] + self.parent.state[52] + 'xx' + self.parent.state[57] + self.parent.state[58]  + 'xxxxx' +\
@@ -782,7 +1010,7 @@ class LookupTable(object):
             # log.info("steps: %s" % ' '.join(steps))
 
             if not steps:
-                raise SolveError("%s: state %s does not have steps" % (self.filename, state))
+                raise NoSteps("%s: state %s does not have steps" % (self.filename, state))
 
             for step in steps:
                 self.parent.rotate(step)

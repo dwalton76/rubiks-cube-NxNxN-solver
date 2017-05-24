@@ -120,26 +120,6 @@ def find_index_for_value(list_foo, target, min_index):
     raise SolveError("Did not find %s in list %s" % (target, pformat(list_foo)))
 
 
-def steps_cancel_out(prev_step, step):
-
-    if prev_step is None:
-        return False
-
-    # U2 followed by U2 is a no-op
-    if step == prev_step and step.endswith("2"):
-        return True
-
-    # U' followed by U is a no-op
-    if prev_step.endswith("'") and not step.endswith("'") and step == prev_step[0:-1]:
-        return True
-
-    # U followed by U' is a no-op
-    if not prev_step.endswith("'") and step.endswith("'") and step[0:1] == prev_step:
-        return True
-
-    return False
-
-
 def get_swap_count(listA, listB, debug):
     """
     How many swaps do we have to make in listB for it to match listA
@@ -292,20 +272,6 @@ def apply_rotations(step, rotations):
             raise Exception("%s is an invalid rotation" % rotation)
 
     return step
-
-
-def convert_state_to_hex(state):
-    """
-    This assumes that state only has "x"s and Us or Ls or Fs or Rs or Bs or Ds
-    """
-    state = state.replace('x', '0').replace('U', '1').replace('L', '1').replace('F', '1').replace('R', '1').replace('B', '1').replace('D', '1')
-    hex_width = int(math.ceil(len(state)/4.0))
-    hex_state = hex(int(state, 2))[2:]
-
-    if hex_state.endswith('L'):
-        hex_state = hex_state[:-1]
-
-    return hex_state.zfill(hex_width)
 
 
 def orbit_matches(edges_per_side, orbit, edge_index):

@@ -375,14 +375,12 @@ class RubiksCube666(RubiksCube):
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         #self.print_cube()
 
-        # The UD centers and oblique edges are now staged to sides U or D
-        # - solve the centers and pair the UD edges
-        # - reduce centers to a 5x5x5 and solve the rest using 5x5x5 solver
-        # - delete 6x6x6-UD-centers-solve
-        # - delete 6x6x6-LFRB-centers-solve
-        # - delete 6x6x6-LR-centers-solve
-        # - delete 6x6x6-FB-centers-solve
+        # dwalton reference for 7x7x7
 
+        # Reduce the centers to 5x5x5 centers
+        # - solve the UD centers and pair the UD oblique edges
+        # - solve the LR centers and pair the LR oblique edges
+        # - solve the FB centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
         log.info("UD inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         #self.print_cube()

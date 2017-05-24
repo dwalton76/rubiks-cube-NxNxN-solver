@@ -76,7 +76,7 @@ class RubiksCube777(RubiksCube):
         self.lt_UD_oblique_edge_pairing_middle_only = LookupTable(self,
                                                                   'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
                                                                   '777-UD-oblique-edge-pairing-middle-only',
-                                                                  'TBD',
+                                                                  '08088080000000000000000000000000404404',
                                                                   True) # state_hex
 
         '''
@@ -98,7 +98,7 @@ class RubiksCube777(RubiksCube):
         self.lt_UD_oblique_edge_pairing_outside_only = LookupTable(self,
                                                                    'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-outside-only.txt',
                                                                    '777-UD-oblique-edge-pairing-outside-only',
-                                                                   'TBD',
+                                                                   '15104540000000000000000000000000a8822a',
                                                                    True) # state_hex
         '''
         lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
@@ -131,8 +131,15 @@ class RubiksCube777(RubiksCube):
                                                          (self.lt_UD_oblique_edge_pairing_middle_only,
                                                           self.lt_UD_oblique_edge_pairing_outside_only))
 
+        # dwalton here now
+        self.lt_LR_oblique_edge_pairing = LookupTable(self,
+                                                      'lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt',
+                                                      '777-LR-oblique-edge-pairing',
+                                                      'TBD',
+                                                      True) # state_hex
+
         '''
-        lookup-table-7x7x7-step21-UD-centers-reduce-to-5x5x5-oblique-only.txt
+        lookup-table-7x7x7-step91-UD-centers-reduce-to-5x5x5-oblique-only.txt
         =====================================================================
         1 steps has 9 entries (0 percent, 0.00x previous step)
         2 steps has 48 entries (0 percent, 5.33x previous step)
@@ -149,13 +156,13 @@ class RubiksCube777(RubiksCube):
         Total: 343000 entries
         '''
         self.lt_UD_centers_to_555_oblique_only = LookupTable(self,
-                                                             'lookup-table-7x7x7-step21-UD-centers-reduce-to-5x5x5-oblique-only.txt',
+                                                             'lookup-table-7x7x7-step91-UD-centers-reduce-to-5x5x5-oblique-only.txt',
                                                              '777-UD-centers-reduce-to-555-oblique-only',
                                                              'TBD',
                                                              False) # state_hex
 
         '''
-        lookup-table-7x7x7-step22-UD-centers-reduce-to-5x5x5-center-only.txt
+        lookup-table-7x7x7-step92-UD-centers-reduce-to-5x5x5-center-only.txt
         ====================================================================
         1 steps has 5 entries (0 percent, 0.00x previous step)
         2 steps has 22 entries (0 percent, 4.40x previous step)
@@ -169,7 +176,7 @@ class RubiksCube777(RubiksCube):
         Total: 4900 entries
         '''
         self.lt_UD_centers_to_555_center_only = LookupTable(self,
-                                                            'lookup-table-7x7x7-step22-UD-centers-reduce-to-5x5x5-center-only.txt',
+                                                            'lookup-table-7x7x7-step92-UD-centers-reduce-to-5x5x5-center-only.txt',
                                                              '777-UD-centers-reduce-to-555-center-only',
                                                             'TBD',
                                                             False) # state_hex
@@ -184,7 +191,7 @@ class RubiksCube777(RubiksCube):
         - so (8!/(4!*4!))^5 or 1,680,700,000
         - use IDA with two prune tables
 
-        lookup-table-7x7x7-step20-UD-centers-reduce-to-5x5x5.txt
+        lookup-table-7x7x7-step90-UD-centers-reduce-to-5x5x5.txt
         ========================================================
         1 steps has 9 entries (0 percent, 0.00x previous step)
         2 steps has 64 entries (0 percent, 7.11x previous step)
@@ -201,7 +208,7 @@ class RubiksCube777(RubiksCube):
         Total: 81,949,825 entries
         '''
         self.lt_UD_centers_to_555 = LookupTableIDA(self,
-                                                   'lookup-table-7x7x7-step20-UD-centers-reduce-to-5x5x5.txt',
+                                                   'lookup-table-7x7x7-step90-UD-centers-reduce-to-5x5x5.txt',
                                                    '777-UD-centers-reduce-to-555',
                                                    'TBD',
                                                    False, # state_hex
@@ -295,6 +302,21 @@ class RubiksCube777(RubiksCube):
     def group_inside_UD_centers(self):
         fake_555 = self.create_fake_555_centers()
         fake_555.lt_UD_centers_stage.solve()
+
+        for step in fake_555.solution:
+
+            if step.startswith('5'):
+                step = '7' + step[1:]
+            elif step.startswith('3'):
+                step = '4' + step[1:]
+            elif 'w' in step:
+                step = '3' + step
+
+            self.rotate(step)
+
+    def group_inside_LR_centers(self):
+        fake_555 = self.create_fake_555_centers()
+        fake_555.lt_LR_centers_stage.solve()
 
         for step in fake_555.solution:
 
@@ -440,23 +462,72 @@ class RubiksCube777(RubiksCube):
 
             self.rotate(step)
 
+    def group_outside_LR_oblique_edges(self):
+        fake_666 = self.create_fake_666_centers()
+        fake_666.lt_LR_oblique_edge_pairing.solve()
+
+        for step in fake_666.solution:
+
+            if step.startswith('6'):
+                step = '7' + step[1:]
+
+            self.rotate(step)
+
     def group_centers_guts(self):
         self.lt_init()
+
         self.group_inside_UD_centers()
-        #self.print_cube()
-
         self.group_outside_UD_oblique_edges()
-        #self.print_cube()
-
+        self.lt_UD_oblique_edge_pairing_outside_only.solve()
         self.lt_UD_oblique_edge_pairing.solve()
+        self.print_cube()
+        log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
+        self.group_inside_LR_centers()
+        self.print_cube()
+
+        self.group_outside_LR_oblique_edges()
+        self.print_cube()
+
+        # dwalton here now
+        self.lt_LR_oblique_edge_pairing.solve()
+        log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube()
+        sys.exit(0)
+
+        #self.lt_UD_centers_to_555.solve()
+        #self.print_cube()
+        #log.info("UD staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
+        # Reduce the centers to 5x5x5 centers
+        # - solve the UD centers and pair the UD oblique edges
+        # - solve the LR centers and pair the LR oblique edges
+        # - solve the FB centers and pair the FB oblique edges
+        '''
+        self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
+        log.info("UD inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         #self.print_cube()
 
+        self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
+        #self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
+        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
+        log.info("LRFB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        # self.print_cube()
 
-        self.lt_UD_centers_to_555.solve()
-        self.print_cube()
-        log.info("UD staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        # dwalton
-        sys.exit(0)
+        # At this point the 6x6x6 centers have been reduced to 5x5x5 centers
+        fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555.lt_init()
+        self.populate_fake_555_for_ULFRBD(fake_555)
+        #fake_555.print_cube()
+        fake_555.group_centers_guts()
+
+        for step in fake_555.solution:
+            self.rotate(step)
+
+        log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
+        # self.print_cube()
+
+        '''
 
     def group_edges(self):
         """

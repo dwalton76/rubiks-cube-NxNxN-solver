@@ -33,11 +33,16 @@ class RubiksCube555(RubiksCube):
 
     def __init__(self, kociemba_string, debug=False):
         RubiksCube.__init__(self, kociemba_string)
+        self.lt_init_called = False
 
         if debug:
             log.setLevel(logging.DEBUG)
 
     def lt_init(self):
+        if self.lt_init_called:
+            return
+        self.lt_init_called = True
+
         '''
         There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
         We cannot build a table that large so we will build it 7 moves deep and use
@@ -304,7 +309,8 @@ class RubiksCube555(RubiksCube):
             self.lt_edges_solve_last_four.solve()
             raise Exception("dwalton inspect this one")
         except NoSteps:
-            raise
+            # dwalton
+            #raise
             # restore cube state
             self.state = copy(original_state)
             self.solution = copy(original_solution)
@@ -1134,6 +1140,8 @@ class RubiksCube555(RubiksCube):
         log.warning("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_edges(self):
+        self.lt_init()
+
         self.pair_outside_edges()
         #self.print_cube()
 
@@ -1197,8 +1205,7 @@ class RubiksCube555(RubiksCube):
                 for foo in non_paired_edges:
                     wing_to_pair = foo[0]
 
-                    # dwalton
-                    # 113
+                    # dwalton baseline 5x5x5 takes 113 steps to pair the edges
                     if (pre_non_paired_edges_count == 4 and self.pair_last_four_edges_555(wing_to_pair)) or self.pair_multiple_edges_555(wing_to_pair, pre_non_paired_edges_count):
                         post_non_paired_edges_count = self.get_non_paired_edges_count()
                         edges_paired = pre_non_paired_edges_count - post_non_paired_edges_count

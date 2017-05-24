@@ -2755,9 +2755,12 @@ class RubiksCube(object):
         log.debug('kociemba string: %s' % kociemba_string)
         return kociemba_string
 
-    def solve_PLL(self):
+    def solve_PLL_and_OLL(self):
+        oll_id = None
+        pll_id = None
+
         if self.state[self.sideU.edge_south_pos[0]] != 'U':
-            raise ImplementThis()
+            pass
         elif self.state[self.sideU.edge_north_pos[0]] != 'U':
             raise ImplementThis()
         elif self.state[self.sideU.edge_west_pos[0]] != 'U':
@@ -2818,7 +2821,7 @@ class RubiksCube(object):
             raise SolveError("F-north should have PLL edge")
 
         if self.state[self.sideU.edge_south_pos[0]] != self.state[self.sideU.corner_pos[0]]:
-            raise ImplementThis("sideU edge_south_pos[%d] is %s" % (self.sideU.edge_south_pos[0], self.state[self.sideU.edge_south_pos[0]]))
+            oll_id = 1
         elif self.state[self.sideU.edge_north_pos[0]] != self.state[self.sideU.corner_pos[0]]:
             raise ImplementThis()
         elif self.state[self.sideU.edge_west_pos[0]] != self.state[self.sideU.corner_pos[0]]:
@@ -2873,9 +2876,16 @@ class RubiksCube(object):
             raise Exception("we should not be here")
 
         # http://www.speedcubing.com/chris/4speedsolve3.html
-        log.warning("Solved PLL ID %d" % pll_id)
+        if oll_id == 1:
+            oll_solution = "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
+            log.warning("Solving OLL ID %d: %s" % (oll_id, oll_solution))
+            self.print_cube()
+            for step in oll_solution.split():
+                self.rotate(step)
+            self.print_cube()
 
-        if pll_id == 2:
+        elif pll_id == 2:
+            log.warning("Solving PLL ID %d" % pll_id)
             pll_solution = "L2 D %dFw2 %dLw2 F2 %dLw2 L2 F2 %dLw2 %dFw2 D' L2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
             for step in pll_solution.split():
                 self.rotate(step)
@@ -2905,7 +2915,7 @@ class RubiksCube(object):
             self.rotate(step)
 
         if not self.solved():
-            self.solve_PLL()
+            self.solve_PLL_and_OLL()
 
             if not self.solved():
                 print("We hit either OLL or PLL parity and could not solve it")
@@ -3429,7 +3439,9 @@ class RubiksCube(object):
                         raise SolveError("centers should be solved but they are not")
 
                     # Do not consider any center solution that leads to OLL parity
-                    if self.is_even() and self.center_solution_leads_to_oll_parity():
+                    # dwalton ignore this for a bit
+                    #if self.is_even() and self.center_solution_leads_to_oll_parity():
+                    if self.size == 4 and self.center_solution_leads_to_oll_parity():
                         log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
 
                     # Do not consider any solution that pairs an edge for 4x4x4...it is easier

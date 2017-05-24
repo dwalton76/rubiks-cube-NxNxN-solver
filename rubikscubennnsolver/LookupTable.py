@@ -92,6 +92,55 @@ class LookupTable(object):
         elif self.state_type == 'UD-centers-solve':
             state = ''.join([self.parent.state[square_index] for side in self.sides_UD for square_index in side.center_pos])
 
+        elif self.state_type == 'UD-centers-oblique-edges-solve':
+            state = []
+
+            for side in self.sides_UD:
+                for square_index in side.center_pos:
+                    if square_index in side.center_corner_pos:
+                        state.append('x')
+                    else:
+                        state.append(self.parent.state[square_index])
+
+            state = ''.join(state)
+
+        elif self.state_type == 'LR-centers-oblique-edges-solve':
+            state = []
+
+            for side in self.sides_LR:
+                for square_index in side.center_pos:
+                    if square_index in side.center_corner_pos:
+                        state.append('x')
+                    else:
+                        state.append(self.parent.state[square_index])
+
+            state = ''.join(state)
+
+        elif self.state_type == 'FB-centers-oblique-edges-solve':
+            state = []
+
+            for side in self.sides_FB:
+                for square_index in side.center_pos:
+                    if square_index in side.center_corner_pos:
+                        state.append('x')
+                    else:
+                        state.append(self.parent.state[square_index])
+
+            state = ''.join(state)
+
+        elif self.state_type == 'LFRB-centers-oblique-edges-solve':
+            state = []
+
+            for side in self.sides_LFRB:
+                for square_index in side.center_pos:
+                    if square_index in side.center_corner_pos:
+                        state.append('x')
+                    else:
+                        state.append(self.parent.state[square_index])
+
+            state = ''.join(state)
+
+
         elif self.state_type == 'LR-centers-stage':
             state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
             state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')

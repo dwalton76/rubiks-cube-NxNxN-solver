@@ -243,40 +243,6 @@ class RubiksCube444(RubiksCube):
                                                     '444-edges-solve-last-four',
                                                     'xxxUUxxUUxxxxxxLLxxLLxxxxxxFFxxFFxxxxxxRRxxRRxxxxxxBBxxBBxxxxxxDDxxDDxxx')
 
-        '''
-        lookup-table-4x4x4-step80-edges-stage-last-six.txt
-        ==================================================
-        1 steps has 10 entries (1 percent, 0.00x previous step)
-        2 steps has 76 entries (8 percent, 7.60x previous step)
-        3 steps has 406 entries (43 percent, 5.34x previous step)
-        4 steps has 418 entries (45 percent, 1.03x previous step)
-        5 steps has 14 entries (1 percent, 0.03x previous step)
-
-        Total: 924 entries
-
-        lookup-table-4x4x4-step81-edges-solve-last-six.txt
-        ==================================================
-        6 steps has 24 entries (1 percent, 0.00x previous step)
-        7 steps has 110 entries (4 percent, 4.58x previous step)
-        8 steps has 174 entries (7 percent, 1.58x previous step)
-        9 steps has 444 entries (18 percent, 2.55x previous step)
-        10 steps has 820 entries (34 percent, 1.85x previous step)
-        11 steps has 586 entries (24 percent, 0.71x previous step)
-        12 steps has 193 entries (8 percent, 0.33x previous step)
-        13 steps has 1 entries (0 percent, 0.01x previous step)
-
-        Total: 2,352 entries
-        '''
-        self.lt_edges_stage_last_six = LookupTable(self,
-                                                   'lookup-table-4x4x4-step80-edges-stage-last-six.txt',
-                                                   '444-edges-stage-last-six',
-                                                   'LLxxxxLLxxLLLLxxLLLLLLxxxxLLLLxxLLLLLLxxxxxxxxxx')
-
-        self.lt_edges_solve_last_six = LookupTable(self,
-                                                   'lookup-table-4x4x4-step81-edges-solve-last-six.txt',
-                                                   '444-edges-solve-last-six',
-                                                   'xxxUUxxUUxxxxxxLLxxLLxxxxxxFFxxFFxxxxxxRRxxRRxxxxxxBBxxBBxxxxxxDDxxDDxxx')
-
     def group_centers_guts(self):
         self.lt_init()
 

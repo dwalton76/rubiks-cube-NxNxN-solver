@@ -869,12 +869,7 @@ class LookupTable(object):
                     'xxxxx'
 
         elif self.state_type == '777-LR-oblique-edge-pairing':
-            state = 'x' + self.parent.state[10] + self.parent.state[11] + self.parent.state[12] + 'x' +\
-                    self.parent.state[16] + 'xxx' + self.parent.state[20] +\
-                    self.parent.state[23] + 'xxx' + self.parent.state[27] +\
-                    self.parent.state[30] + 'xxx' + self.parent.state[34] +\
-                    'x' + self.parent.state[38] + self.parent.state[39] + self.parent.state[40] + 'x' +\
-                    'x' + self.parent.state[59] + self.parent.state[60] + self.parent.state[61] + 'x' +\
+            state = 'x' + self.parent.state[59] + self.parent.state[60] + self.parent.state[61] + 'x' +\
                     self.parent.state[65] + 'xxx' + self.parent.state[69] +\
                     self.parent.state[72] + 'xxx' + self.parent.state[76] +\
                     self.parent.state[79] + 'xxx' + self.parent.state[83] +\
@@ -893,13 +888,111 @@ class LookupTable(object):
                     self.parent.state[212] + 'xxx' + self.parent.state[216] +\
                     self.parent.state[219] + 'xxx' + self.parent.state[223] +\
                     self.parent.state[226] + 'xxx' + self.parent.state[230] +\
-                    'x' + self.parent.state[234] + self.parent.state[235] + self.parent.state[236] + 'x' +\
-                    'x' + self.parent.state[255] + self.parent.state[256] + self.parent.state[257] + 'x' +\
-                    self.parent.state[261] + 'xxx' + self.parent.state[265] +\
-                    self.parent.state[268] + 'xxx' + self.parent.state[272] +\
-                    self.parent.state[275] + 'xxx' + self.parent.state[279] +\
-                    'x' + self.parent.state[283] + self.parent.state[284] + self.parent.state[285] + 'x'
+                    'x' + self.parent.state[234] + self.parent.state[235] + self.parent.state[236] + 'x'
             state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x').replace('R', 'L')
+
+        elif self.state_type == '777-LR-oblique-edge-pairing-middle-only':
+            state = 'xx' + self.parent.state[60] + 'xx' +\
+                    'xxxxx' +\
+                    self.parent.state[72] + 'xxx' + self.parent.state[76] +\
+                    'xxxxx' +\
+                    'xx' + self.parent.state[88] + 'xx' +\
+                    'xx' + self.parent.state[109] + 'xx' +\
+                    'xxxxx' +\
+                    self.parent.state[121] + 'xxx' + self.parent.state[125] +\
+                    'xxxxx' +\
+                    'xx' + self.parent.state[137] + 'xx' +\
+                    'xx' + self.parent.state[158] + 'xx' +\
+                    'xxxxx' +\
+                    self.parent.state[170] + 'xxx' + self.parent.state[174] +\
+                    'xxxxx' +\
+                    'xx' + self.parent.state[186] + 'xx' +\
+                    'xx' + self.parent.state[207] + 'xx' +\
+                    'xxxxx' +\
+                    self.parent.state[219] + 'xxx' + self.parent.state[223] +\
+                    'xxxxx' +\
+                    'xx' + self.parent.state[235] + 'xx'
+
+            state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x').replace('R', 'L')
+
+        elif self.state_type == '777-UD-centers-oblique-edges-solve-center-only':
+            state = []
+
+            for side in self.sides_UD:
+                for square_index in side.center_pos:
+                    if square_index in (17, 19, 31, 33, 262, 264, 276, 278,
+                                        18, 24, 26, 32, 263, 269, 271, 277):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
+        elif self.state_type == '777-UD-centers-oblique-edges-solve-edges-only':
+            state = []
+
+            for side in self.sides_UD:
+                for square_index in side.center_pos:
+                    if square_index in (10, 20, 40, 30, 255, 265, 285, 275,
+                                        11, 27, 39, 23, 256, 272, 284, 268,
+                                        12, 34, 38, 16, 257, 279, 283, 261):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
+        elif self.state_type == '777-LR-centers-oblique-edges-solve-center-only':
+            state = []
+
+            for side in self.sides_LR:
+                for square_index in side.center_pos:
+                    if square_index in (66, 67, 68, 73, 74, 75, 80, 81, 82,
+                                        164, 165, 166, 171, 172, 173, 178, 179, 180):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
+        elif self.state_type == '777-LR-centers-oblique-edges-solve-edges-only':
+            state = []
+
+            for side in self.sides_LR:
+                for square_index in side.center_pos:
+                    if square_index in (59, 60, 61, 65, 72, 79, 69, 76, 83, 87, 88, 89,
+                                        157, 158, 159, 163, 170, 177, 167, 174, 181, 185, 186, 187):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
+        elif self.state_type == '777-FB-centers-oblique-edges-solve-center-only':
+            state = []
+
+            for side in self.sides_FB:
+                for square_index in side.center_pos:
+                    if square_index in (115, 116, 117, 122, 123, 124, 129, 130, 131,
+                                        213, 214, 215, 220, 221, 222, 227, 228, 229):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
+        elif self.state_type == '777-FB-centers-oblique-edges-solve-edges-only':
+            state = []
+
+            for side in self.sides_FB:
+                for square_index in side.center_pos:
+                    if square_index in (108, 109, 110, 114, 121, 128, 118, 125, 132, 136, 137, 138,
+                                        206, 207, 208, 212, 219, 226, 216, 223, 230, 234, 235, 236):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
 
         else:
             raise ImplementThis("state_type %s" % self.state_type)
@@ -1047,4 +1140,4 @@ class LookupTableIDA(LookupTable):
                     if self.ida_search(0, threshold, None, original_state, original_solution):
                         break
                 else:
-                    raise SolveError("%s FAILED" % self)
+                    raise SolveError("%s FAILED for state %s" % (self, self.state()))

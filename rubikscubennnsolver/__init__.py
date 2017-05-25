@@ -2760,6 +2760,7 @@ class RubiksCube(object):
         oll_id = None
         pll_id = None
 
+        # rotate one of the hosed edges to U-south
         if self.state[self.sideU.edge_south_pos[0]] != 'U':
             pass
         elif self.state[self.sideU.edge_north_pos[0]] != 'U':
@@ -2822,6 +2823,7 @@ class RubiksCube(object):
         if self.state[self.sideF.edge_north_pos[0]] == 'F':
             raise SolveError("F-north should have PLL edge")
 
+        # rotate the other hosed edges to U-west
         if self.state[self.sideU.edge_south_pos[0]] != self.state[self.sideU.corner_pos[0]]:
             oll_id = 1
         elif self.state[self.sideU.edge_north_pos[0]] != self.state[self.sideU.corner_pos[0]]:
@@ -2882,17 +2884,19 @@ class RubiksCube(object):
             oll_solution = "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
             log.warning("Solving OLL ID %d: %s" % (oll_id, oll_solution))
             self.print_cube()
+
             for step in oll_solution.split():
                 self.rotate(step)
-            self.print_cube()
 
         elif pll_id == 2:
-            log.warning("Solving PLL ID %d" % pll_id)
             pll_solution = "L2 D %dFw2 %dLw2 F2 %dLw2 L2 F2 %dLw2 %dFw2 D' L2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
+            log.warning("Solving PLL ID %d: %s" % (pll_id, pll_solution))
+            self.print_cube()
+
             for step in pll_solution.split():
                 self.rotate(step)
         else:
-            raise ImplementThis()
+            raise ImplementThis("oll_id %s, pll_id %s" % (oll_id, pll_id))
 
     def solve_333(self):
         kociemba_string = self.get_kociemba_string(False)

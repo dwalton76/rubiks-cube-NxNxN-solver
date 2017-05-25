@@ -45,6 +45,10 @@ class RubiksCube666(RubiksCube):
             log.setLevel(logging.DEBUG)
 
     def lt_init(self):
+        if self.lt_init_called:
+            return
+        self.lt_init_called = True
+
         '''
         Stage the inner X-centers
         24!/(8!*16!) is 735,471
@@ -654,6 +658,7 @@ class RubiksCube666(RubiksCube):
         Create a fake 444 to pair the inside edges
         Create a fake 555 to pair the outside edges
         """
+        self.lt_init()
         self.pair_inside_edges()
         self.pair_edges_via_555()
         self.solution.append('EDGES_GROUPED')

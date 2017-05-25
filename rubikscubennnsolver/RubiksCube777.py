@@ -54,6 +54,10 @@ class RubiksCube777(RubiksCube):
             log.setLevel(logging.DEBUG)
 
     def lt_init(self):
+        if self.lt_init_called:
+            return
+        self.lt_init_called = True
+
         '''
         24!/(8!*16!) is 735,471
 
@@ -532,6 +536,7 @@ class RubiksCube777(RubiksCube):
     def group_edges(self):
         """
         """
+        self.lt_init()
         self.solution.append('EDGES_GROUPED')
 
     def phase(self):

@@ -33,7 +33,6 @@ class RubiksCube555(RubiksCube):
 
     def __init__(self, kociemba_string, debug=False):
         RubiksCube.__init__(self, kociemba_string)
-        self.lt_init_called = False
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -771,8 +770,10 @@ class RubiksCube555(RubiksCube):
         for (index, value) in enumerate(sides_in_edges_of_interest):
             edges_of_interest_state = edges_of_interest_state.replace(value, str(index))
 
+        # log.info("edges_of_interest_state: %s" % edges_of_interest_state)
+
         # Exchange places and flip both centers
-        if edges_of_interest_state in ('010202020101', '010232323101', '010222222101', '000121212000', '010202000121'):
+        if edges_of_interest_state in ('010202020101', '010232323101', '010222222101', '000121212000', '010121212101'):
             pattern_id = 6
             self.rotate_x_reverse()
             self.rotate_z()
@@ -782,7 +783,7 @@ class RubiksCube555(RubiksCube):
             pattern_id = 7
 
         # Exchange places, flip one center
-        # The one that has to flip is at U-north
+        # The one that has to flip is at U-north, it needs to be at U-south
         elif edges_of_interest_state in ('010232121303', '000121010202', '010121111202', '010202121000', '010222121202'):
             self.rotate_y()
             self.rotate_y()
@@ -790,7 +791,7 @@ class RubiksCube555(RubiksCube):
 
         # Exchange places, flip one center
         # The one that has to flip is at U-south
-        elif edges_of_interest_state in ('010232303121', '010121212101', '010121202111', '010222202121', '000121202010'):
+        elif edges_of_interest_state in ('010232303121', '010121202111', '010222202121', '000121202010', '010202000121'):
             pattern_id = 8
 
         else:
@@ -993,7 +994,7 @@ class RubiksCube555(RubiksCube):
                  post_slice_forward_non_paired_edges_count,
                  post_slice_forward_solution_len))
 
-            if not edges_paired:
+            if edges_paired < 1:
                 raise SolveError("Failed to pair edges, pattern_id %d" % pattern_id)
 
             return True
@@ -1030,12 +1031,18 @@ class RubiksCube555(RubiksCube):
 
             post_slice_forward_non_paired_edges_count = self.get_non_paired_edges_count()
             post_slice_forward_solution_len = self.get_solution_len_minus_rotates(self.solution)
+            edges_paired = original_non_paired_edges_count - post_slice_forward_non_paired_edges_count
 
-            log.info("pair_multiple_edges_555()    paired %d edges in %d moves on swap two middle elements (%d left to pair, %d steps in)" %
-                (original_non_paired_edges_count - post_slice_forward_non_paired_edges_count,
+            # dwalton we are only pairing one edge??
+            log.info("pair_multiple_edges_555()    paired %d edges in %d moves on swap two middle elements pattern %d (%d left to pair, %d steps in)" %
+                (edges_paired,
                  post_slice_forward_solution_len - original_solution_len,
+                 pattern_id,
                  post_slice_forward_non_paired_edges_count,
                  post_slice_forward_solution_len))
+
+            if edges_paired < 2:
+                raise SolveError("should have paired 2 edges but only paired %d" % edges_paired)
             return True
 
         #log.info("PREP-FOR-3Uw-SLICE (begin)")

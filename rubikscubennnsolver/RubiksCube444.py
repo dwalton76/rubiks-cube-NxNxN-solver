@@ -35,6 +35,10 @@ class RubiksCube444(RubiksCube):
             log.setLevel(logging.DEBUG)
 
     def lt_init(self):
+        if self.lt_init_called:
+            return
+        self.lt_init_called = True
+
         """
         lookup-tables init
         """
@@ -258,6 +262,7 @@ class RubiksCube444(RubiksCube):
         #self.lt_ULFRBD_centers_solve_not_staged.solve()
 
     def group_edges(self):
+        self.lt_init()
         original_non_paired_edges = self.get_non_paired_edges()
 
         if not original_non_paired_edges:

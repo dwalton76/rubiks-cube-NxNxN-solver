@@ -311,6 +311,7 @@ class RubiksCube(object):
         self.steps_to_solve_3x3x3 = 0
         self.ida_count = 0
         self._phase = None
+        self.lt_init_called = False
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -2800,7 +2801,8 @@ class RubiksCube(object):
         elif self.state[self.sideB.edge_north_pos[0]] != 'B':
             raise ImplementThis()
         elif self.state[self.sideB.edge_south_pos[0]] != 'B':
-            raise ImplementThis()
+            self.rotate_x()
+            self.rotate_x()
         elif self.state[self.sideB.edge_east_pos[0]] != 'B':
             raise ImplementThis()
         elif self.state[self.sideB.edge_west_pos[0]] != 'B':

@@ -94,6 +94,18 @@ class LookupTable(object):
         elif self.state_type == 'UD-centers-solve':
             state = ''.join([self.parent.state[square_index] for side in self.sides_UD for square_index in side.center_pos])
 
+        elif self.state_type == 'UD-centers-solve-on-all':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x')
+
+        elif self.state_type == 'LR-centers-solve-on-all':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
+            state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x')
+
+        elif self.state_type == 'FB-centers-solve-on-all':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
+            state = state.replace('U', 'x').replace('L', 'x').replace('R', 'x').replace('D', 'x')
+
         elif self.state_type == 'UD-centers-oblique-edges-solve':
             state = []
 
@@ -144,6 +156,47 @@ class LookupTable(object):
 
         elif self.state_type == 'LR-centers-stage':
             state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
+            state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')
+
+        elif self.state_type == 'LR-centers-stage-on-LFRB':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
+            state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')
+
+        elif self.state_type == 'LR-centers-stage-on-LFRB-x-center-only':
+            state = []
+            for side in self.sides_LFRB:
+
+                # [7, 8, 9, 12, 13, 14, 17, 18, 19]
+                #  X  T  X   T  TX   T   X   T   X
+                #  0  1  2   3   4   5   6   7   8
+                state.append(self.parent.state[side.center_pos[0]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[2]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[4]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[6]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[8]])
+            state = ''.join(state)
+            state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')
+
+        elif self.state_type == 'LR-centers-stage-on-LFRB-t-center-only':
+            state = []
+            for side in self.sides_LFRB:
+                # [7, 8, 9, 12, 13, 14, 17, 18, 19]
+                #  X  T  X   T  TX   T   X   T   X
+                #  0  1  2   3   4   5   6   7   8
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[1]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[3]])
+                state.append(self.parent.state[side.center_pos[4]])
+                state.append(self.parent.state[side.center_pos[5]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[7]])
+                state.append('x')
+            state = ''.join(state)
             state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')
 
         elif self.state_type == 'LR-centers-solve':
@@ -717,6 +770,45 @@ class LookupTable(object):
                     self.parent.state[171] + self.parent.state[172]
             state = state.replace('U', 'x').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
 
+        elif self.state_type == '666-LR-oblique-edge-pairing-left-only':
+            state = self.parent.state[45] + 'x' +\
+                    'x' + self.parent.state[53] +\
+                    self.parent.state[56] + 'x' +\
+                    'x' + self.parent.state[64] +\
+                    self.parent.state[81] + 'x' +\
+                    'x' + self.parent.state[89] +\
+                    self.parent.state[92] + 'x' +\
+                    'x' + self.parent.state[100] +\
+                    self.parent.state[117] + 'x' +\
+                    'x' + self.parent.state[125] +\
+                    self.parent.state[128] + 'x' +\
+                    'x' + self.parent.state[136] +\
+                    self.parent.state[153] + 'x' +\
+                    'x' + self.parent.state[161] +\
+                    self.parent.state[164] + 'x' +\
+                    'x' + self.parent.state[172]
+            state = state.replace('U', 'x').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
+
+        elif self.state_type == '666-LR-oblique-edge-pairing-right-only':
+            state = 'x' + self.parent.state[46] +\
+                    self.parent.state[50] + 'x' +\
+                    'x' + self.parent.state[59] +\
+                    self.parent.state[63] + 'x' +\
+                    'x' + self.parent.state[82] +\
+                    self.parent.state[86] + 'x' +\
+                    'x' + self.parent.state[95] +\
+                    self.parent.state[99] + 'x' +\
+                    'x' + self.parent.state[118] +\
+                    self.parent.state[122] + 'x' +\
+                    'x' + self.parent.state[131] +\
+                    self.parent.state[135] + 'x' +\
+                    'x' + self.parent.state[154] +\
+                    self.parent.state[158] + 'x' +\
+                    'x' + self.parent.state[167] +\
+                    self.parent.state[171] + 'x'
+
+            state = state.replace('U', 'x').replace('F', 'x').replace('R', 'L').replace('B', 'x').replace('D', 'x')
+
         elif self.state_type == '777-UD-oblique-edge-pairing':
             state = 'x' + self.parent.state[10] + self.parent.state[11] + self.parent.state[12] + 'x' +\
                     self.parent.state[16] + 'xxx' + self.parent.state[20] +\
@@ -1092,13 +1184,14 @@ class LookupTableIDA(LookupTable):
     """
     """
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables):
+    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, threshold_to_shortcut=None):
         LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex)
         self.moves_all = moves_all
         self.moves_illegal = moves_illegal
         self.ida_count = 0
         self.prune_tables = prune_tables
         self.visited_states = set()
+        self.threshold_to_shortcut = threshold_to_shortcut
 
     def ida_cost(self):
         costs = []
@@ -1133,7 +1226,11 @@ class LookupTableIDA(LookupTable):
                 #        (step, cost_to_here, cost_to_goal, threshold))
                 for step in steps:
                     self.parent.rotate(step)
+
                 return True
+
+            if (cost_to_here + 1) > threshold:
+                continue
 
             cost_to_goal = self.ida_cost()
 
@@ -1142,10 +1239,12 @@ class LookupTableIDA(LookupTable):
                 #        (step, cost_to_here, cost_to_goal, threshold))
                 continue
 
-            # speed experiment...this should cut out some ida_search calls
-            if state in self.visited_states:
+            # speed experiment...this reduces the time for IDA search by about 20%
+            magic_tuple = (cost_to_here + 1, threshold, step, state)
+
+            if magic_tuple in self.visited_states:
                 continue
-            self.visited_states.add(state)
+            self.visited_states.add(magic_tuple)
 
             state_end_of_this_step = copy(self.parent.state)
             solution_end_of_this_step = copy(self.parent.solution)
@@ -1180,9 +1279,52 @@ class LookupTableIDA(LookupTable):
                 original_state = copy(self.parent.state)
                 original_solution = copy(self.parent.solution)
 
-                for threshold in range(1, 20):
-                    log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
-                    if self.ida_search(0, threshold, None, original_state, original_solution):
-                        break
+                if self.threshold_to_shortcut:
+
+                    for threshold in range(1, self.threshold_to_shortcut):
+                        log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
+                        self.visited_states = set()
+
+                        if self.ida_search(0, threshold, None, original_state, original_solution):
+                            log.info("%s: IDA found match" % self)
+                            break
+
+                    else:
+                        # restore parent state to original
+                        self.parent.state = copy(original_state)
+                        self.parent.solution = copy(original_solution)
+
+                        first_pt = self.prune_tables[0]
+                        log.info("%s: use prune table %s to shortcut IDA search" % (self, first_pt))
+                        first_pt.solve()
+
+                        state = self.state()
+
+                        if state == self.state_target:
+                            log.info("state %s vs state_target %s" % (state, self.state_target))
+                            break
+
+                        # save cube state
+                        original_state = copy(self.parent.state)
+                        original_solution = copy(self.parent.solution)
+
+                        for threshold in range(1, 20):
+                            log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
+                            self.visited_states = set()
+
+                            if self.ida_search(0, threshold, None, original_state, original_solution):
+                                log.info("%s: IDA found match" % self)
+                                break
+                        else:
+                            raise SolveError("%s FAILED for state %s" % (self, self.state()))
+
                 else:
-                    raise SolveError("%s FAILED for state %s" % (self, self.state()))
+                    for threshold in range(1, 20):
+                        log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
+                        self.visited_states = set()
+
+                        if self.ida_search(0, threshold, None, original_state, original_solution):
+                            log.info("%s: IDA found match" % self)
+                            break
+                    else:
+                        raise SolveError("%s FAILED for state %s" % (self, self.state()))

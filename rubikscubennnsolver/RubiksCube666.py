@@ -134,8 +134,10 @@ class RubiksCube666(RubiksCube):
                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"),
 
                                                          # prune tables
-                                                         (self.lt_UD_oblique_edge_pairing_left_only,
-                                                          self.lt_UD_oblique_edge_pairing_right_only))
+                                                         (self.lt_UD_oblique_edge_pairing_right_only,
+                                                          self.lt_UD_oblique_edge_pairing_left_only),
+
+                                                         threshold_to_shortcut=7)
         '''
         16!/(8!*8!) is 12,870
 
@@ -158,7 +160,35 @@ class RubiksCube666(RubiksCube):
                                                       True) # state_hex
 
         '''
+        lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt
+        lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt
+        ==========================================================
+        1 steps has 3 entries (0 percent, 0.00x previous step)
+        2 steps has 29 entries (0 percent, 9.67x previous step)
+        3 steps has 238 entries (1 percent, 8.21x previous step)
+        4 steps has 742 entries (5 percent, 3.12x previous step)
+        5 steps has 1836 entries (14 percent, 2.47x previous step)
+        6 steps has 4405 entries (34 percent, 2.40x previous step)
+        7 steps has 3774 entries (29 percent, 0.86x previous step)
+        8 steps has 1721 entries (13 percent, 0.46x previous step)
+        9 steps has 122 entries (0 percent, 0.07x previous step)
+
+        Total: 12870 entries
+        '''
+        self.lt_LR_oblique_edge_pairing_left_only = LookupTable(self,
+                                                                'lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt',
+                                                                '666-LR-oblique-edge-pairing-left-only',
+                                                                '99009900',
+                                                                True) # state_hex
+
+        self.lt_LR_oblique_edge_pairing_right_only = LookupTable(self,
+                                                                'lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt',
+                                                                '666-LR-oblique-edge-pairing-right-only',
+                                                                '66006600',
+                                                                True) # state_hex
+        '''
         (16!/(8!*8!))^2 is 165,636,900
+        I only built this 8 deep to keep it small thus the IDA
 
         lookup-table-6x6x6-step40-LR-oblique-pairing.txt
         ================================================
@@ -180,11 +210,21 @@ class RubiksCube666(RubiksCube):
 
         Total: 165,636,900 entries
         '''
-        self.lt_LR_oblique_edge_pairing = LookupTable(self,
-                                                      'lookup-table-6x6x6-step40-LR-oblique-pairing.txt',
-                                                      '666-LR-oblique-edge-pairing',
-                                                      'ff00ff00',
-                                                      True) # state_hex
+        self.lt_LR_oblique_edge_pairing = LookupTableIDA(self,
+                                                         'lookup-table-6x6x6-step40-LR-oblique-pairing.txt',
+                                                         '666-LR-oblique-edge-pairing',
+                                                         'ff00ff00',
+                                                          True, # state_hex
+                                                         moves_6x6x6,
+
+                                                         # These would break up the staged UD inner x-centers
+                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # do not mess up UD x-centers
+                                                          "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'",         # do not mess up UD oblique pairs
+                                                          "3Uw", "3Uw'", "3Dw", "3Dw'"),                              # do not mess up LR x-centers
+
+                                                         # prune tables
+                                                         (self.lt_LR_oblique_edge_pairing_left_only,
+                                                          self.lt_LR_oblique_edge_pairing_right_only))
 
         '''
         lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt
@@ -288,7 +328,9 @@ class RubiksCube666(RubiksCube):
 
                                                          # prune tables
                                                          (self.lt_LR_solve_inner_x_centers_and_oblique_edges,
-                                                          self.lt_FB_solve_inner_x_centers_and_oblique_edges))
+                                                          self.lt_FB_solve_inner_x_centers_and_oblique_edges),
+
+                                                         threshold_to_shortcut=13)
 
     def populate_fake_555_for_ULFRBD(self, fake_555):
 
@@ -364,35 +406,18 @@ class RubiksCube666(RubiksCube):
     def group_centers_guts(self):
         self.lt_init()
         self.lt_UD_inner_x_centers_stage.solve()
-
-        # These are our two prune tables so if we go ahead and solve for one of them we
-        # get the cube in a state that is much closer to being a match for the table we
-        # are doing an IDA search against.
-        #
-        # This isn't technically required but it makes a HUGE difference in how fast we
-        # can find a solution...like 160s vs 10s kind of difference.
-        #self.lt_UD_oblique_edge_pairing_left_only.solve()
-        self.lt_UD_oblique_edge_pairing_right_only.solve()
         self.lt_UD_oblique_edge_pairing.solve()
         self.lt_LR_inner_x_centers_stage.solve()
         self.lt_LR_oblique_edge_pairing.solve()
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        #self.print_cube()
-
-        # dwalton reference for 7x7x7
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD centers and pair the UD oblique edges
         # - solve the LR centers and pair the LR oblique edges
         # - solve the FB centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
-        log.info("UD inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        #self.print_cube()
-
-        self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
-        #self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
-        log.info("LRFB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         # self.print_cube()
 
         # At this point the 6x6x6 centers have been reduced to 5x5x5 centers
@@ -406,7 +431,7 @@ class RubiksCube666(RubiksCube):
             self.rotate(step)
 
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
-        # self.print_cube()
+        sys.exit(0)
 
     def pair_inside_edges(self):
         fake_444 = RubiksCube444(solved_4x4x4)

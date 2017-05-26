@@ -111,6 +111,11 @@ class RubiksCube444(RubiksCube):
                                                    'UUUULLLLFFFFRRRRBBBBDDDD')
 
         '''
+        This is an experiment to see if I can solve all centers at once using IDA
+        I let it run for about 5 minutes but it still didn't find a solution...need to let
+        it run overnight. If that doesn't work build the step30 table out to 7-deep.
+
+
         lookup-table-4x4x4-step30-ULFRBD-centers-solve-not-staged.txt
         =============================================================
         1 steps has 19 entries (0 percent, 0.00x previous step)
@@ -141,20 +146,20 @@ class RubiksCube444(RubiksCube):
         '''
         self.lt_UD_centers_solve = LookupTable(self,
                                                'lookup-table-4x4x4-step31-UD-centers-solve.txt',
-                                               'UD-centers-solve',
-                                               None,
+                                               'UD-centers-solve-on-all',
+                                               'UUUUxxxxxxxxxxxxxxxxDDDD',
                                                False) # state_hex
 
         self.lt_LR_centers_solve = LookupTable(self,
                                                'lookup-table-4x4x4-step32-LR-centers-solve.txt',
-                                               'LR-centers-solve',
-                                               None,
+                                               'LR-centers-solve-on-all',
+                                               'xxxxLLLLxxxxRRRRxxxxxxxx',
                                                False) # state_hex
 
         self.lt_FB_centers_solve = LookupTable(self,
                                                'lookup-table-4x4x4-step33-FB-centers-solve.txt',
-                                               'FB-centers-solve',
-                                               None,
+                                               'FB-centers-solve-on-all',
+                                               'xxxxxxxxFFFFxxxxBBBBxxxx',
                                                False) # state_hex
 
         self.lt_ULFRBD_centers_solve_not_staged = LookupTableIDA(self,
@@ -224,6 +229,7 @@ class RubiksCube444(RubiksCube):
         self.lt_LR_centers_stage.solve()
         self.lt_ULFRBD_centers_solve.solve()
 
+        # experiment
         #self.lt_ULFRBD_centers_solve_not_staged.solve()
 
     def group_edges(self):

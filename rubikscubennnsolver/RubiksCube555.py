@@ -37,218 +37,228 @@ class RubiksCube555(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
-        self.lt_UD_T_centers_stage = None
-
     def lt_init(self):
         if self.lt_init_called:
             return
         self.lt_init_called = True
 
-        # Use big tables
-        if os.path.exists('lookup-table-5x5x5-step11-UD-T-centers-stage.txt'):
+        '''
+        lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
+        ================================================
+        T-centers - 24!/(16! * 8!) is 735,471
 
-            '''
-            There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
-            We cannot build a table that large so we will build it 7 moves deep and use
-            IDA with T-centers and X-centers as our prune tables. Both the T-centers and
-            X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
-            is 0.0000013596729171 which is a decent percentage for IDA.
+        1 steps has 5 entries (0 percent)
+        2 steps has 66 entries (0 percent)
+        3 steps has 900 entries (0 percent)
+        4 steps has 9,626 entries (1 percent)
+        5 steps has 80,202 entries (10 percent)
+        6 steps has 329,202 entries (44 percent)
+        7 steps has 302,146 entries (41 percent)
+        8 steps has 13,324 entries (1 percent)
 
-            lookup-table-5x5x5-step10-UD-centers-stage.txt
-            ==============================================
-            1 steps has 5 entries (0 percent)
-            2 steps has 98 entries (0 percent)
-            3 steps has 2,036 entries (0 percent)
-            4 steps has 41,096 entries (0 percent)
-            5 steps has 824,950 entries (0 percent)
-            6 steps has 16,300,291 entries (4 percent)
-            7 steps has 311,709,304 entries (94 percent)
+        Total: 735,471 entries
+        '''
+        self.lt_UD_T_centers_stage = LookupTable(self,
+                                                 'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
+                                                 'UD-T-centers-stage',
+                                                 '174000000000ba',
+                                                 True) # state_hex
 
-            Total: 328,877,780 entries
+        '''
+        lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
+        ================================================
+        X-centers - 24!/(16! * 8!) is 735,471
 
+        1 steps has 5 entries (0 percent)
+        2 steps has 82 entries (0 percent)
+        3 steps has 1,206 entries (0 percent)
+        4 steps has 14,116 entries (1 percent)
+        5 steps has 123,404 entries (16 percent)
+        6 steps has 422,508 entries (57 percent)
+        7 steps has 173,254 entries (23 percent)
+        8 steps has 896 entries (0 percent)
 
-            lookup-table-5x5x5-step11-UD-T-centers-stage.txt
-            ================================================
-            T-centers - 24!/(16! * 8!) is 735,471
+        Total: 735,471 entries
+        '''
+        self.lt_UD_X_centers_stage = LookupTable(self,
+                                                 'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
+                                                 'UD-X-centers-stage',
+                                                 '2aa00000000155',
+                                                 True) # state_hex
 
-            1 steps has 5 entries (0 percent)
-            2 steps has 66 entries (0 percent)
-            3 steps has 900 entries (0 percent)
-            4 steps has 9,626 entries (1 percent)
-            5 steps has 80,202 entries (10 percent)
-            6 steps has 329,202 entries (44 percent)
-            7 steps has 302,146 entries (41 percent)
-            8 steps has 13,324 entries (1 percent)
+        '''
+        There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
+        We cannot build a table that large so we will build it 7 moves deep and use
+        IDA with T-centers and X-centers as our prune tables. Both the T-centers and
+        X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
+        is 0.0000013596729171 which is a decent percentage for IDA.
 
-            Total: 735,471 entries
+        lookup-table-5x5x5-step10-UD-centers-stage.txt
+        ==============================================
+        1 steps has 5 entries (0 percent)
+        2 steps has 98 entries (0 percent)
+        3 steps has 2,036 entries (0 percent)
+        4 steps has 41,096 entries (0 percent)
+        5 steps has 824,950 entries (0 percent)
+        6 steps has 16,300,291 entries (4 percent)
 
+        Total: 17,168,476 entries
+        '''
+        self.lt_UD_centers_stage = LookupTableIDA(self,
+                                                 'lookup-table-5x5x5-step10-UD-centers-stage.txt',
+                                                 'UD-centers-stage',
+                                                 '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
+                                                 True, # state_hex
+                                                 moves_5x5x5,
+                                                 (), # illegal_moves
 
-            lookup-table-5x5x5-step12-UD-X-centers-stage.txt
-            ================================================
-            X-centers - 24!/(16! * 8!) is 735,471
+                                                 # prune tables
+                                                 (self.lt_UD_T_centers_stage,
+                                                  self.lt_UD_X_centers_stage),
 
-            1 steps has 5 entries (0 percent)
-            2 steps has 82 entries (0 percent)
-            3 steps has 1,206 entries (0 percent)
-            4 steps has 14,116 entries (1 percent)
-            5 steps has 123,404 entries (16 percent)
-            6 steps has 422,508 entries (57 percent)
-            7 steps has 173,254 entries (23 percent)
-            8 steps has 896 entries (0 percent)
+                                                 threshold_to_shortcut=8)
 
-            Total: 735,471 entries
-            '''
-            self.lt_UD_T_centers_stage = LookupTable(self,
-                                                     'lookup-table-5x5x5-step11-UD-T-centers-stage.txt',
-                                                     'UD-T-centers-stage',
-                                                     'xUxUUUxUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUxUUUxUx',
-                                                     False) # state_hex
+        '''
+        lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt
+        ============================================================
+        1 steps has 3 entries (0 percent, 0.00x previous step)
+        2 steps has 29 entries (0 percent, 9.67x previous step)
+        3 steps has 234 entries (1 percent, 8.07x previous step)
+        4 steps has 1246 entries (9 percent, 5.32x previous step)
+        5 steps has 4466 entries (34 percent, 3.58x previous step)
+        6 steps has 6236 entries (48 percent, 1.40x previous step)
+        7 steps has 656 entries (5 percent, 0.11x previous step)
 
-            self.lt_UD_X_centers_stage = LookupTable(self,
-                                                     'lookup-table-5x5x5-step12-UD-X-centers-stage.txt',
-                                                     'UD-X-centers-stage',
-                                                     'UxUxUxUxUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUxUxUxUxU',
-                                                     False) # state_hex
+        Total: 12870 entries
+        '''
+        self.lt_LR_centers_stage_x_center_only = LookupTable(self,
+                                                             'lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt',
+                                                             'LR-centers-stage-on-LFRB-x-center-only',
+                                                             'aa802aa00',
+                                                             True) # state_hex
 
-            self.lt_UD_centers_stage = LookupTableIDA(self,
-                                                     'lookup-table-5x5x5-step10-UD-centers-stage.txt',
-                                                     'UD-centers-stage',
-                                                     '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
-                                                     True, # state_hex
-                                                     moves_5x5x5,
-                                                     (), # illegal_moves
+        '''
+        lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt
+        ============================================================
+        1 steps has 3 entries (0 percent, 0.00x previous step)
+        2 steps has 25 entries (0 percent, 8.33x previous step)
+        3 steps has 210 entries (1 percent, 8.40x previous step)
+        4 steps has 722 entries (5 percent, 3.44x previous step)
+        5 steps has 1752 entries (13 percent, 2.43x previous step)
+        6 steps has 4033 entries (31 percent, 2.30x previous step)
+        7 steps has 4014 entries (31 percent, 1.00x previous step)
+        8 steps has 1977 entries (15 percent, 0.49x previous step)
+        9 steps has 134 entries (1 percent, 0.07x previous step)
 
-                                                     # prune tables
-                                                     (self.lt_UD_T_centers_stage,
-                                                      self.lt_UD_X_centers_stage))
+        Total: 12870 entries
+        '''
+        self.lt_LR_centers_stage_t_center_only = LookupTable(self,
+                                                             'lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt',
+                                                             'LR-centers-stage-on-LFRB-t-center-only',
+                                                             '5d0017400',
+                                                             True) # state_hex
 
+        '''
+        Stage LR centers to sides L or R, this will automagically stage
+        the F and B centers to sides F or B. 4 T-centers and 4 X-centers
+        on 4 sides (ignore U and D since they are solved) but we treat
+        L and R as one color so 8! on the bottom.
+        (16!/(8! * 8!)))^2 is 165,636,900
 
-            '''
-            Stage LR centers to sides L or R, this will automagically stage
-            the F and B centers to sides F or B. 4 T-centers and 4 X-centers
-            on 4 sides (ignore U and D since they are solved) but we treat
-            L and R as one color so 8! on the bottom.
-            (16!/(8! * 8!)))^2 is 165,636,900
+        The copy of this table that is checked in to the repo only goes to 7-deep thus the need for IDA.
+        If you build the table out the entire way we'll never use the prune tables and you will get
+        a hit on the first lookup.
 
-            lookup-table-5x5x5-step20-LR-centers-stage.txt
-            ==============================================
-            1 steps has 3 entries (0 percent)
-            2 steps has 33 entries (0 percent)
-            3 steps has 374 entries (0 percent)
-            4 steps has 3,838 entries (0 percent)
-            5 steps has 39,254 entries (0 percent)
-            6 steps has 387,357 entries (0 percent)
-            7 steps has 3,374,380 entries (2 percent)
-            8 steps has 20,851,334 entries (12 percent)
-            9 steps has 65,556,972 entries (39 percent)
-            10 steps has 66,986,957 entries (40 percent)
-            11 steps has 8,423,610 entries (5 percent)
-            12 steps has 12,788 entries (0 percent)
+        lookup-table-5x5x5-step20-LR-centers-stage.txt
+        ==============================================
+        1 steps has 3 entries (0 percent)
+        2 steps has 33 entries (0 percent)
+        3 steps has 374 entries (0 percent)
+        4 steps has 3,838 entries (0 percent)
+        5 steps has 39,254 entries (0 percent)
+        6 steps has 387,357 entries (0 percent)
+        7 steps has 3,374,380 entries (2 percent)
+        8 steps has 20,851,334 entries (12 percent)
+        9 steps has 65,556,972 entries (39 percent)
+        10 steps has 66,986,957 entries (40 percent)
+        11 steps has 8,423,610 entries (5 percent)
+        12 steps has 12,788 entries (0 percent)
 
-            Total: 165,636,900 entries
-            '''
-            self.lt_LR_centers_stage = LookupTable(self,
-                                                   'lookup-table-5x5x5-step20-LR-centers-stage.txt',
-                                                   'LR-centers-stage',
-                                                   'ff803fe00', # LLLLLLLLLxxxxxxxxxLLLLLLLLLxxxxxxxxx
-                                                   True) # state_hex
+        Total: 165,636,900 entries
+        '''
+        self.lt_LR_centers_stage = LookupTableIDA(self,
+                                                  'lookup-table-5x5x5-step20-LR-centers-stage.txt',
+                                                  'LR-centers-stage-on-LFRB',
+                                                  'ff803fe00', # LLLLLLLLLxxxxxxxxxLLLLLLLLLxxxxxxxxx
+                                                  True, # state_hex
+                                                  moves_5x5x5,
+                                                  ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'"), # illegal moves
+                                                  (self.lt_LR_centers_stage_x_center_only,
+                                                   self.lt_LR_centers_stage_t_center_only))
 
-            '''
-            The centers are all staged so there are (8!/(4! * 4!))^6 or 117,649,000,000
-            permutations to solve the centers. This is too large for us to build so use
-            IDA and build the table 8 steps deep. A table to solve only the UDLR sides
-            will be our prune table.
+        '''
+        lookup-table-5x5x5-step31-UD-centers-solve.txt
+        lookup-table-5x5x5-step32-LR-centers-solve.txt
+        lookup-table-5x5x5-step33-FB-centers-solve.txt
+        ==============================================
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 22 entries (0 percent, 4.40x previous step)
+        3 steps has 82 entries (1 percent, 3.73x previous step)
+        4 steps has 292 entries (5 percent, 3.56x previous step)
+        5 steps has 986 entries (20 percent, 3.38x previous step)
+        6 steps has 2001 entries (40 percent, 2.03x previous step)
+        7 steps has 1312 entries (26 percent, 0.66x previous step)
+        8 steps has 200 entries (4 percent, 0.15x previous step)
 
-            lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
-            ==================================================
-            1 steps has 7 entries (0 percent)
-            2 steps has 99 entries (0 percent)
-            3 steps has 1,134 entries (0 percent)
-            4 steps has 12,183 entries (0 percent)
-            5 steps has 128,730 entries (0 percent)
-            6 steps has 1,291,295 entries (1 percent)
-            7 steps has 12,250,688 entries (10 percent)
-            8 steps has 106,661,150 entries (88 percent)
+        Total: 4900 entries
+        '''
+        self.lt_UD_centers_solve = LookupTable(self,
+                                               'lookup-table-5x5x5-step31-UD-centers-solve.txt',
+                                               'UD-centers-solve-on-all',
+                                               'UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxDDDDDDDDD',
+                                               False) # state_hex
 
-            Total: 120,345,286 entries
+        self.lt_LR_centers_solve = LookupTable(self,
+                                               'lookup-table-5x5x5-step32-LR-centers-solve.txt',
+                                               'LR-centers-solve-on-all',
+                                               'xxxxxxxxxLLLLLLLLLxxxxxxxxxRRRRRRRRRxxxxxxxxxxxxxxxxxx',
+                                               False) # state_hex
 
+        self.lt_FB_centers_solve = LookupTable(self,
+                                               'lookup-table-5x5x5-step33-FB-centers-solve.txt',
+                                               'FB-centers-solve-on-all',
+                                               'xxxxxxxxxxxxxxxxxxFFFFFFFFFxxxxxxxxxBBBBBBBBBxxxxxxxxx',
+                                               False) # state_hex
 
-            Our UDLR prune table is (8!/(4! * 4!))^4 or 24,010,000
-            24,010,000/117,649,000,000 is 0.0002040816326531 which is a very good percentage
-            for IDA, the search should be very fast
+        '''
+        lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
+        ==================================================
+        1 steps has 7 entries (0 percent, 0.00x previous step)
+        2 steps has 99 entries (0 percent, 14.14x previous step)
+        3 steps has 1134 entries (0 percent, 11.45x previous step)
+        4 steps has 12183 entries (0 percent, 10.74x previous step)
+        5 steps has 128730 entries (0 percent, 10.57x previous step)
+        6 steps has 1291295 entries (9 percent, 10.03x previous step)
+        7 steps has 12250688 entries (89 percent, 9.49x previous step)
 
-            lookup-table-5x5x5-step31-UDLR-centers-solve.txt
-            ================================================
-            1 steps has 7 entries (0 percent)
-            2 steps has 71 entries (0 percent)
-            3 steps has 630 entries (0 percent)
-            4 steps has 4,639 entries (0 percent)
-            5 steps has 32,060 entries (0 percent)
-            6 steps has 198,779 entries (0 percent)
-            7 steps has 1,011,284 entries (4 percent)
-            8 steps has 3,826,966 entries (15 percent)
-            9 steps has 8,611,512 entries (35 percent)
-            10 steps has 8,194,244 entries (34 percent)
-            11 steps has 2,062,640 entries (8 percent)
-            12 steps has 67,152 entries (0 percent)
-            13 steps has 16 entries (0 percent)
+        Total: 13684136 entries
+        '''
+        self.lt_ULFRB_centers_solve = LookupTableIDA(self,
+                                                    'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
+                                                    'ULFRBD-centers-solve',
+                                                    'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
+                                                    False, # state_hex
+                                                    moves_5x5x5,
 
-            Total: 24,010,000 entries
-            '''
-            self.lt_UDLR_centers_solve = LookupTable(self,
-                                                     'lookup-table-5x5x5-step31-UDLR-centers-solve.txt',
-                                                     'UDLR-centers-solve',
-                                                     'TBD',
-                                                     False) # state_hex
+                                                    # These moves would destroy the staged centers
+                                                    ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),
 
-            self.lt_ULFRB_centers_solve = LookupTableIDA(self,
-                                                        'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
-                                                        'ULFRBD-centers-solve',
-                                                        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
-                                                        False, # state_hex
-                                                        moves_5x5x5,
+                                                    # prune tables
+                                                    (self.lt_UD_centers_solve,
+                                                     self.lt_LR_centers_solve,
+                                                     self.lt_FB_centers_solve),
 
-                                                        # These moves would destroy the staged centers
-                                                        ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),
-
-                                                        # prune tables
-                                                        (self.lt_UDLR_centers_solve, ))
-
-        # Use small tables
-        # This isn't working yet, the lookup-table-5x5x5-step40-UD-centers-stage-to-UFDB.txt table doesn't work
-        else:
-            self.lt_UD_centers_stage_to_UFDB = LookupTable(self,
-                                                           'lookup-table-5x5x5-step40-UD-centers-stage-to-UFDB.txt',
-                                                           'UD-centers-on-LR',
-                                                           '00000',
-                                                           True) # state_hex
-
-            self.lt_UD_centers_stage_from_UFDB_x_center_only = LookupTable(self,
-                                                           'lookup-table-5x5x5-step51-UD-centers-stage-from-UFDB-x-center-only.txt',
-                                                           'UD-centers-on-UFDB-x-center-only',
-                                                           'aa802aa00',
-                                                           True) # state_hex
-
-            self.lt_UD_centers_stage_from_UFDB_t_center_only = LookupTable(self,
-                                                           'lookup-table-5x5x5-step52-UD-centers-stage-from-UFDB-t-center-only.txt',
-                                                           'UD-centers-on-UFDB-t-center-only',
-                                                           'TBD',
-                                                           True) # state_hex
-
-            self.lt_UD_centers_stage_from_UFDB = LookupTableIDA(self,
-                                                        'lookup-table-5x5x5-step50-UD-centers-stage-from-UFDB.txt',
-                                                        'UD-centers-on-UFDB',
-                                                        'TBD',
-                                                        True, # state_hex
-                                                        moves_5x5x5,
-
-                                                        # do not move back to LR
-                                                        ("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
-
-                                                        # prune tables
-                                                        (self.lt_UD_centers_stage_from_UFDB_x_center_only,
-                                                         self.lt_UD_centers_stage_from_UFDB_t_center_only))
-
+                                                    threshold_to_shortcut=8)
 
         '''
         lookup-table-5x5x5-step90-edges-slice-forward.txt
@@ -291,39 +301,14 @@ class RubiksCube555(RubiksCube):
         self.lt_init()
         self.rotate_U_to_U()
 
-        # Use big tables
-        if self.lt_UD_T_centers_stage:
+        self.lt_UD_centers_stage.solve()
+        log.info("Took %d steps to stage UD centers" % len(self.solution))
 
-            # This adds 4 or 5 extra steps but it makes the IDA lookup much much faster
-            self.lt_UD_T_centers_stage.solve()
-            self.lt_UD_centers_stage.solve()
-            log.info("Took %d steps to stage UD centers" % len(self.solution))
+        self.lt_LR_centers_stage.solve()
+        log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
-            self.lt_LR_centers_stage.solve()
-            log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
-
-            self.lt_ULFRB_centers_solve.solve()
-            log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
-
-        # Use small tables
-        else:
-            self.lt_UD_centers_stage_to_UFDB.solve()
-
-            log.info("HERE 10")
-            self.print_cube()
-            #self.print_solution()
-            #sys.exit(0)
-
-            self.lt_UD_centers_stage_from_UFDB_x_center_only.solve()
-            log.info("HERE 20")
-            self.print_cube()
-            self.print_solution()
-
-            self.lt_UD_centers_stage_from_UFDB_t_center_only.solve()
-            self.print_cube()
-            sys.exit(0)
-
-            self.lt_UD_centers_stage_from_UFDB.solve()
+        self.lt_ULFRB_centers_solve.solve()
+        log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 
     def find_moves_to_stage_slice_forward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
@@ -369,7 +354,7 @@ class RubiksCube555(RubiksCube):
                 # We need to re-pick sister_wing2 if it is (65, 86) which is F-east
                 # which is the initial edge we were trying to pair in the first place.
                 if sister_wing2 == (65, 86) or sister_wing2 == (86, 65):
-                    wings_to_avoid = (target_wing, sister_wing1, sister_wing2, 
+                    wings_to_avoid = (target_wing, sister_wing1, sister_wing2,
                                       tuple(list(reversed(sister_wing1))),
                                       tuple(list(reversed(sister_wing2))))
 
@@ -424,7 +409,7 @@ class RubiksCube555(RubiksCube):
 
                     steps = self.find_moves_to_stage_slice_backward_555(target_wing, sister_wing1, sister_wing2, sister_wing3)
 
-                    # dwalton slice backward
+                    # slice backward
                     #log.info("slice back target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s, steps %s" %
                     #    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3), pformat(steps)))
 
@@ -486,6 +471,10 @@ class RubiksCube555(RubiksCube):
         original_state = copy(self.state)
         original_solution = copy(self.solution)
 
+        # TODO this needs to take pre_non_paired_edges_count into account
+        # If it is 6 we only want to pair two on the slice forward
+        # If it is 4 we only want to pair one on the slice forward
+
         # Work with the wing at the bottom of the F-west edge
         # Move the sister wing to F-east
         target_wing = (self.sideL.edge_east_pos[-1], self.sideF.edge_west_pos[-1])
@@ -542,7 +531,7 @@ class RubiksCube555(RubiksCube):
                     if sister_wing3_reverse:
                         sister_wing3 = tuple(list(reversed(sister_wing3)))
 
-                    # dwalton - slice forward
+                    # slice forward
                     steps = self.find_moves_to_stage_slice_forward_555(target_wing, sister_wing1, sister_wing2, sister_wing3)
                     #log.info("slice forward target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s, steps %s" %
                     #    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3), pformat(steps)))
@@ -712,7 +701,7 @@ class RubiksCube555(RubiksCube):
         if target_wing is None:
             log.info("pair_multiple_edges_555() failed...get_sister_wings_slice_forward_555")
             #raise SolveError("pair_multiple_edges_555() failed...get_sister_wings_slice_forward_555")
-    
+
             self.state = copy(original_state)
             self.solution = copy(original_solution)
             return False

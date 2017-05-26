@@ -60,6 +60,7 @@ class LookupTable(object):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.sides_LFRB = (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB)
+        self.sides_UFDB = (self.parent.sideU, self.parent.sideF, self.parent.sideD, self.parent.sideB)
         self.sides_UD = (self.parent.sideU, self.parent.sideD)
         self.sides_LR = (self.parent.sideL, self.parent.sideR)
         self.sides_FB = (self.parent.sideF, self.parent.sideB)
@@ -141,7 +142,6 @@ class LookupTable(object):
 
             state = ''.join(state)
 
-
         elif self.state_type == 'LR-centers-stage':
             state = ''.join([self.parent.state[square_index] for side in self.sides_LFRB for square_index in side.center_pos])
             state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')
@@ -157,6 +157,51 @@ class LookupTable(object):
 
         elif self.state_type == 'ULFRBD-centers-solve':
             state = ''.join([self.parent.state[square_index] for side in self.sides_all for square_index in side.center_pos])
+
+        elif self.state_type == 'UD-centers-on-LR':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_LR for square_index in side.center_pos])
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == 'UD-centers-on-UFDB':
+            state = ''.join([self.parent.state[square_index] for side in self.sides_UFDB for square_index in side.center_pos])
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == 'UD-centers-on-UFDB-x-center-only':
+            state = []
+            for side in self.sides_UFDB:
+
+                # [7, 8, 9, 12, 13, 14, 17, 18, 19]
+                #  X  T  X   T  TX   T   X   T   X
+                #  0  1  2   3   4   5   6   7   8
+                state.append(self.parent.state[side.center_pos[0]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[2]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[4]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[6]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[8]])
+            state = ''.join(state)
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+
+        elif self.state_type == 'UD-centers-on-UFDB-t-center-only':
+            state = []
+            for side in self.sides_UFDB:
+                # [7, 8, 9, 12, 13, 14, 17, 18, 19]
+                #  X  T  X   T  TX   T   X   T   X
+                #  0  1  2   3   4   5   6   7   8
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[1]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[3]])
+                state.append(self.parent.state[side.center_pos[4]])
+                state.append(self.parent.state[side.center_pos[5]])
+                state.append('x')
+                state.append(self.parent.state[side.center_pos[7]])
+                state.append('x')
+            state = ''.join(state)
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
         elif self.state_type == 'UD-T-centers-stage':
             # This is currently hard coded for 5x5x5
@@ -178,7 +223,7 @@ class LookupTable(object):
                 state.append('x')
 
             state = ''.join(state)
-            state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
+            state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
         elif self.state_type == 'UD-X-centers-stage':
             # This is currently hard coded for 5x5x5

@@ -212,41 +212,6 @@ class RubiksCube444(RubiksCube):
                                                   '444-edges-slice-backward',
                                                   None)
 
-        '''
-        lookup-table-4x4x4-step70-edges-stage-last-four.txt
-        ===================================================
-        1 steps has 5 entries (1 percent, 0.00x previous step)
-        2 steps has 50 entries (10 percent, 10.00x previous step)
-        3 steps has 286 entries (57 percent, 5.72x previous step)
-        4 steps has 152 entries (30 percent, 0.53x previous step)
-        5 steps has 2 entries (0 percent, 0.01x previous step)
-
-        Total: 495 entries
-
-
-        lookup-table-4x4x4-step71-edges-solve-last-four.txt
-        ===================================================
-        6 steps has 16 entries (1 percent, 0.00x previous step)
-        7 steps has 60 entries (4 percent, 3.75x previous step)
-        8 steps has 64 entries (4 percent, 1.07x previous step)
-        9 steps has 112 entries (7 percent, 1.75x previous step)
-        10 steps has 366 entries (25 percent, 3.27x previous step)
-        11 steps has 498 entries (34 percent, 1.36x previous step)
-        12 steps has 297 entries (20 percent, 0.60x previous step)
-        13 steps has 27 entries (1 percent, 0.09x previous step)
-
-        Total: 1,440 entries
-        '''
-        self.lt_edges_stage_last_four = LookupTable(self,
-                                                    'lookup-table-4x4x4-step70-edges-stage-last-four.txt',
-                                                    '444-edges-stage-last-four',
-                                                    'xxxxxxxxxxLLLLxxxxLLLLxxxxLLLLxxxxLLLLxxxxxxxxxx')
-
-        self.lt_edges_solve_last_four = LookupTable(self,
-                                                    'lookup-table-4x4x4-step71-edges-solve-last-four.txt',
-                                                    '444-edges-solve-last-four',
-                                                    'xxxUUxxUUxxxxxxLLxxLLxxxxxxFFxxFFxxxxxxRRxxRRxxxxxxBBxxBBxxxxxxDDxxDDxxx')
-
     def group_centers_guts(self):
         self.lt_init()
 
@@ -292,13 +257,16 @@ class RubiksCube444(RubiksCube):
                     non_paired_edges = self.get_non_paired_edges()
                     len_non_paired_edges = len(non_paired_edges)
 
-                    if len_non_paired_edges > 6:
-                        if init_wing_to_pair:
-                            wing_to_pair = init_wing_to_pair[0]
-                            init_wing_to_pair = None
-                        else:
-                            wing_to_pair = non_paired_edges[0][0]
+                    if len_non_paired_edges == 0:
+                        break
 
+                    if init_wing_to_pair:
+                        wing_to_pair = init_wing_to_pair[0]
+                        init_wing_to_pair = None
+                    else:
+                        wing_to_pair = non_paired_edges[0][0]
+
+                    if len_non_paired_edges > 6:
                         if not self.pair_six_edges_444(wing_to_pair):
                             log.info("pair_six_edges_444()    returned False")
 
@@ -307,38 +275,23 @@ class RubiksCube444(RubiksCube):
                                 self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
 
                     elif len_non_paired_edges == 6 and pair_multiple_edges_at_once:
-                        # When there are 6 pairs left you can pair 2 on the slice forward
-                        # and the final 4 on the slice back. When you pair the 2 on the slice
-                        # forward the edge on the back left side must be unpaired (if it is
-                        # paired we will unpair it)
-                        if init_wing_to_pair:
-                            wing_to_pair = init_wing_to_pair[0]
-                            init_wing_to_pair = None
-                        else:
-                            wing_to_pair = non_paired_edges[0][0]
-
                         if not self.pair_last_six_edges_444():
                             log.info("pair_last_six_edges_444() returned False")
 
-                            # Pairing two edges so that we have four left since we have a lookup table to pair the final four
+                            if not self.pair_four_edges_444(wing_to_pair):
+                                log.info("pair_four_edges_444() returned False")
+                                self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
+
+                    elif len_non_paired_edges >= 4:
+                        if not self.pair_four_edges_444(wing_to_pair):
+                            log.info("pair_four_edges_444() returned False")
                             self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
 
-                    elif len_non_paired_edges == 4:
-                        wing_to_pair = non_paired_edges[0][0]
-                        self.pair_last_four_edges_444(wing_to_pair)
-
                     elif len_non_paired_edges == 2:
-                        wing_to_pair = non_paired_edges[0][0]
                         self.pair_last_two_edges_444(wing_to_pair)
 
                     # The scenario where you have 3 unpaired edges
                     elif len_non_paired_edges > 2:
-                        if init_wing_to_pair:
-                            wing_to_pair = init_wing_to_pair[0]
-                            init_wing_to_pair = None
-                        else:
-                            wing_to_pair = non_paired_edges[0][0]
-
                         self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
 
                     else:
@@ -502,7 +455,8 @@ class RubiksCube444(RubiksCube):
             self.rotate("D'")
             self.rotate("F'")
         else:
-            raise SolveError("Did not find an unpaired edge")
+            # If we are here we are down to two unpaired wings
+            return False
 
         if self.sideF.east_edge_paired():
             raise SolveError("F-east should not be paired")
@@ -917,27 +871,6 @@ class RubiksCube444(RubiksCube):
 
         raise SolveError("Went from %d to %d non_paired_edges" %
             (original_non_paired_wings_count, current_non_paired_wings_count))
-
-    def pair_last_four_edges_444(self, edge):
-        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        original_non_paired_wings_count = self.get_non_paired_wings_count()
-
-        # rotate unpaired edge to F-west
-        self.rotate_edge_to_F_west(edge)
-
-        self.lt_edges_stage_last_four.solve()
-        self.lt_edges_solve_last_four.solve()
-
-        current_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        current_non_paired_wings_count = self.get_non_paired_wings_count()
-
-        log.info("pair_last_four_edges_444() paired %d wings in %d moves (%d left to pair)" %
-            (original_non_paired_wings_count - current_non_paired_wings_count,
-             current_solution_len - original_solution_len,
-             current_non_paired_wings_count))
-
-        if current_non_paired_wings_count:
-            raise SolveError("Failed to pair last four edges")
 
     def pair_last_two_edges_444(self, edge):
         """

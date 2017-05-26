@@ -101,13 +101,13 @@ class RubiksCube555(RubiksCube):
             self.lt_UD_T_centers_stage = LookupTable(self,
                                                      'lookup-table-5x5x5-step11-UD-T-centers-stage.txt',
                                                      'UD-T-centers-stage',
-                                                     None,
+                                                     'xUxUUUxUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUxUUUxUx',
                                                      False) # state_hex
 
             self.lt_UD_X_centers_stage = LookupTable(self,
                                                      'lookup-table-5x5x5-step12-UD-X-centers-stage.txt',
                                                      'UD-X-centers-stage',
-                                                     None,
+                                                     'UxUxUxUxUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUxUxUxUxU',
                                                      False) # state_hex
 
             self.lt_UD_centers_stage = LookupTableIDA(self,
@@ -326,6 +326,9 @@ class RubiksCube555(RubiksCube):
 
         # Use big tables
         if self.lt_UD_T_centers_stage:
+
+            # This adds 4 or 5 extra steps but it makes the IDA lookup much much faster
+            self.lt_UD_T_centers_stage.solve()
             self.lt_UD_centers_stage.solve()
             log.info("Took %d steps to stage UD centers" % len(self.solution))
 
@@ -334,7 +337,6 @@ class RubiksCube555(RubiksCube):
 
             self.lt_ULFRB_centers_solve.solve()
             log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
-
 
         # Use small tables
         else:

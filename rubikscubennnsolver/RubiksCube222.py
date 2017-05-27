@@ -60,7 +60,7 @@ class RubiksCube222(RubiksCube):
         # This is the order used by the kociemba 3x3x3 solver so
         # the rubiks-color-resolver uses this order
         normal = self.get_kociemba_string(False)
-        log.warning("NORMAL: %s" % normal)
+        log.info("NORMAL: %s" % normal)
         upper = normal[0:4]
         right = normal[4:8]
         front = normal[8:12]
@@ -146,8 +146,12 @@ class RubiksCube222(RubiksCube):
 
         raise SolveError("Could not find a solution")
 
-    def solve(self):
+    def solve_via_table(self):
         '''
+        For grins I built a full lookup table for 2x2x2, it is too large to put in the
+        repo though and the solver from stackoverflow works just fine but I'll leave
+        this here for a rainy day.
+
         lookup-table-2x2x2-solve.txt
         ============================
         1 steps has 18 entries (0 percent, 0.00x previous step)
@@ -167,3 +171,8 @@ class RubiksCube222(RubiksCube):
         self.lt = LookupTable(self, 'lookup-table-2x2x2-solve.txt', 'all', 'UUUULLLLFFFFRRRRBBBBDDDD')
         self.lt.solve()
         self.compress_solution()
+
+    def solve(self):
+        self.solve_non_table()
+        self.compress_solution()
+

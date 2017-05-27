@@ -1049,6 +1049,29 @@ class LookupTable(object):
                     self.parent.state[219] + 'xxx' + self.parent.state[223] +\
                     'xxxxx' +\
                     'xx' + self.parent.state[235] + 'xx'
+            state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x').replace('R', 'L')
+
+        elif self.state_type == '777-LR-oblique-edge-pairing-outside-only':
+            state = 'x' + self.parent.state[59] + 'x' + self.parent.state[61] + 'x' +\
+                    self.parent.state[65] + 'xxx' + self.parent.state[69] +\
+                    'xxxxx' +\
+                    self.parent.state[79] + 'xxx' + self.parent.state[83] +\
+                    'x' + self.parent.state[87] + 'x' + self.parent.state[89] + 'x' +\
+                    'x' + self.parent.state[108] + 'x' + self.parent.state[110] + 'x' +\
+                    self.parent.state[114] + 'xxx' + self.parent.state[118] +\
+                    'xxxxx' +\
+                    self.parent.state[128] + 'xxx' + self.parent.state[132] +\
+                    'x' + self.parent.state[136] + 'x' + self.parent.state[138] + 'x' +\
+                    'x' + self.parent.state[157] + 'x' + self.parent.state[159] + 'x' +\
+                    self.parent.state[163] + 'xxx' + self.parent.state[167] +\
+                    'xxxxx' +\
+                    self.parent.state[177] + 'xxx' + self.parent.state[181] +\
+                    'x' + self.parent.state[185] + 'x' + self.parent.state[187] + 'x' +\
+                    'x' + self.parent.state[206] + 'x' + self.parent.state[208] + 'x' +\
+                    self.parent.state[212] + 'xxx' + self.parent.state[216] +\
+                    'xxxxx' +\
+                    self.parent.state[226] + 'xxx' + self.parent.state[230] +\
+                    'x' + self.parent.state[234] + 'x' + self.parent.state[236] + 'x'
 
             state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x').replace('R', 'L')
 
@@ -1082,7 +1105,7 @@ class LookupTable(object):
         elif self.state_type == '777-LR-centers-oblique-edges-solve-center-only':
             state = []
 
-            for side in self.sides_LR:
+            for side in self.sides_LFRB:
                 for square_index in side.center_pos:
                     if square_index in (66, 67, 68, 73, 74, 75, 80, 81, 82,
                                         164, 165, 166, 171, 172, 173, 178, 179, 180):
@@ -1095,7 +1118,7 @@ class LookupTable(object):
         elif self.state_type == '777-LR-centers-oblique-edges-solve-edges-only':
             state = []
 
-            for side in self.sides_LR:
+            for side in self.sides_LFRB:
                 for square_index in side.center_pos:
                     if square_index in (59, 60, 61, 65, 72, 79, 69, 76, 83, 87, 88, 89,
                                         157, 158, 159, 163, 170, 177, 167, 174, 181, 185, 186, 187):
@@ -1108,7 +1131,7 @@ class LookupTable(object):
         elif self.state_type == '777-FB-centers-oblique-edges-solve-center-only':
             state = []
 
-            for side in self.sides_FB:
+            for side in self.sides_LFRB:
                 for square_index in side.center_pos:
                     if square_index in (115, 116, 117, 122, 123, 124, 129, 130, 131,
                                         213, 214, 215, 220, 221, 222, 227, 228, 229):
@@ -1121,10 +1144,25 @@ class LookupTable(object):
         elif self.state_type == '777-FB-centers-oblique-edges-solve-edges-only':
             state = []
 
-            for side in self.sides_FB:
+            for side in self.sides_LFRB:
                 for square_index in side.center_pos:
                     if square_index in (108, 109, 110, 114, 121, 128, 118, 125, 132, 136, 137, 138,
                                         206, 207, 208, 212, 219, 226, 216, 223, 230, 234, 235, 236):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
+        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-center-only':
+            state = []
+
+            for side in self.sides_LFRB:
+                for square_index in side.center_pos:
+                    if square_index in (66, 67, 68, 73, 74, 75, 80, 81, 82,
+                                        115, 116, 117, 122, 123, 124, 129, 130, 131,
+                                        213, 214, 215, 220, 221, 222, 227, 228, 229,
+                                        164, 165, 166, 171, 172, 173, 178, 179, 180):
                         state.append(self.parent.state[square_index])
                     else:
                         state.append('x')
@@ -1286,7 +1324,7 @@ class LookupTableIDA(LookupTable):
                         self.visited_states = set()
 
                         if self.ida_search(0, threshold, None, original_state, original_solution):
-                            log.info("%s: IDA found match" % self)
+                            log.info("%s: IDA found match, count %d" % (self, self.ida_count))
                             break
 
                     else:
@@ -1297,6 +1335,7 @@ class LookupTableIDA(LookupTable):
                         first_pt = self.prune_tables[0]
                         log.info("%s: use prune table %s to shortcut IDA search" % (self, first_pt))
                         first_pt.solve()
+                        self.ida_count = 0
 
                         state = self.state()
 
@@ -1313,7 +1352,7 @@ class LookupTableIDA(LookupTable):
                             self.visited_states = set()
 
                             if self.ida_search(0, threshold, None, original_state, original_solution):
-                                log.info("%s: IDA found match" % self)
+                                log.info("%s: IDA found match, count %d" % (self, self.ida_count))
                                 break
                         else:
                             raise SolveError("%s FAILED for state %s" % (self, self.state()))
@@ -1324,7 +1363,7 @@ class LookupTableIDA(LookupTable):
                         self.visited_states = set()
 
                         if self.ida_search(0, threshold, None, original_state, original_solution):
-                            log.info("%s: IDA found match" % self)
+                            log.info("%s: IDA found match, count %d" % (self, self.ida_count))
                             break
                     else:
                         raise SolveError("%s FAILED for state %s" % (self, self.state()))

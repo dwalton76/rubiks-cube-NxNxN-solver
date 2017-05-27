@@ -1,32 +1,5 @@
 
-
-upload 5x5x5 gz files to dropbox
-upload 6x6x6 gz files to dropbox
-
-
-5x5x5
-=====
-There are 5 scenarios that the last two edges can be in so there should be 25
-scenarios that the last 4 edges can be in.  We need to do lookup tables to
-solve 4 edges at a time, this should save us a lot of steps on edge pairing.
-
-This will be in pair_multiple_edges_555()
-
-
-6x6x6
-=====
-Centers solving needs to be made more generic so larger even cubes can reduce
-their centers to a 6x6x6.
-- Reduce all centers to a 5x5x5 and use the 5x5x5 solver
-    - stage UD inner x-centers
-    - stage UD oblique edges
-    - solve UD inner x-centers and oblique edges...(8!/(4!*4!))^3 is 343000
-    - UD is reduced to 5x5x5
-
-    - stage LR inner x-centers
-    - stage LR oblique edges
-    - solve LR inner x-centers and oblique edges...(8!/(4!*4!))^3 is 343000
-    - LR is reduced to 5x5x5
-
-    - solve FB inner x-centers and oblique edges...(8!/(4!*4!))^3 is 343000
-    - FB is reduced to 5x5x5
+5x5x5 edge pairing needs the same improvement that 4x4x4 edge pairing has
+- pair the final 4
+- pair the final 2
+- etc

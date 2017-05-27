@@ -134,8 +134,8 @@ class RubiksCube666(RubiksCube):
                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"),
 
                                                          # prune tables
-                                                         (self.lt_UD_oblique_edge_pairing_right_only,
-                                                          self.lt_UD_oblique_edge_pairing_left_only),
+                                                         (self.lt_UD_oblique_edge_pairing_left_only,
+                                                          self.lt_UD_oblique_edge_pairing_right_only),
 
                                                          threshold_to_shortcut=7)
         '''
@@ -224,7 +224,8 @@ class RubiksCube666(RubiksCube):
 
                                                          # prune tables
                                                          (self.lt_LR_oblique_edge_pairing_left_only,
-                                                          self.lt_LR_oblique_edge_pairing_right_only))
+                                                          self.lt_LR_oblique_edge_pairing_right_only),
+                                                         threshold_to_shortcut=8)
 
         '''
         lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt
@@ -541,8 +542,8 @@ class RubiksCube666(RubiksCube):
             # log.warning("fake_444 step %s" % step)
             self.rotate(step)
 
-        self.print_cube()
-        log.warning("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        #self.print_cube()
+        log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def pair_edges_via_555(self):
         fake_555 = RubiksCube555(solved_5x5x5)
@@ -675,8 +676,8 @@ class RubiksCube666(RubiksCube):
 
             self.rotate(step)
 
-        self.print_cube()
-        log.warning("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        #self.print_cube()
+        log.info("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_edges(self):
         """

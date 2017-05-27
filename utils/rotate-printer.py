@@ -65,15 +65,24 @@ for (size, solved_state) in (
                  "B", "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",
                  "D", "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2")
 
-    print("void")
-    print("rotate_%d%d%d(int *cube, int *cube_tmp, int array_size, char *step)" % (size, size, size))
-    print("{")
-    print("    /* This was contructed using 'solver.py --rotate-printer' */")
-    print("    memcpy(cube_tmp, cube, sizeof(int) * array_size);")
-    print("")
-    for step in steps:
-        cube.rotate(step)
-        cube.print_case_statement_C(step)
-        #cube.print_case_statement_python(step)
-        cube.state = copy(original_state)
-    print("}\n\n")
+    if False:
+        print("void")
+        print("rotate_%d%d%d(int *cube, int *cube_tmp, int array_size, char *step)" % (size, size, size))
+        print("{")
+        print("    /* This was contructed using 'solver.py --rotate-printer' */")
+        print("    memcpy(cube_tmp, cube, sizeof(int) * array_size);")
+        print("")
+        for step in steps:
+            cube.rotate(step)
+            cube.print_case_statement_C(step)
+            cube.state = copy(original_state)
+        print("}\n\n")
+
+    else:
+        print("def rotate_%d%d%d(cube, cube_tmp, step):" % (size, size, size))
+        print("")
+        for step in steps:
+            cube.rotate(step)
+            cube.print_case_statement_python(step)
+            cube.state = copy(original_state)
+        print("\n\n")

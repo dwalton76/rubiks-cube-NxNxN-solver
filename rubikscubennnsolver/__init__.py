@@ -1005,7 +1005,7 @@ class RubiksCube(object):
         This is called via --rotate-printer, it is used to print the
         if/elif statements used by rotate.py
         """
-        print('    elif action == "%s":' % case)
+        print('    elif step == "%s":' % case)
         for (key, value) in enumerate(self.state[1:]):
             key += 1
             if str(key) != str(value):

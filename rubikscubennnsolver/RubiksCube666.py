@@ -432,7 +432,6 @@ class RubiksCube666(RubiksCube):
             self.rotate(step)
 
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
-        sys.exit(0)
 
     def pair_inside_edges(self):
         fake_444 = RubiksCube444(solved_4x4x4)

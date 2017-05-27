@@ -1169,6 +1169,22 @@ class LookupTable(object):
 
             state = ''.join(state)
 
+        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-outside-only':
+            state = []
+
+            for side in self.sides_LFRB:
+                for square_index in side.center_pos:
+                    if square_index in (59, 61, 65, 79, 69, 83, 87, 89,
+                                        157, 159, 163, 177, 167, 181, 185, 187,
+                                        108, 110, 114, 128, 118, 132, 136, 138,
+                                        206, 208, 212, 226, 216, 230, 234, 236):
+
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
         else:
             raise ImplementThis("state_type %s" % self.state_type)
 
@@ -1231,11 +1247,14 @@ class LookupTableIDA(LookupTable):
         self.visited_states = set()
         self.threshold_to_shortcut = threshold_to_shortcut
 
-    def ida_cost(self):
+    def ida_cost(self, max_cost_to_goal):
         costs = []
 
         for pt in self.prune_tables:
-            costs.append(pt.steps_length())
+            cost = pt.steps_length()
+            if cost >= max_cost_to_goal:
+                return cost
+            costs.append(cost)
 
         return max(costs)
 
@@ -1270,13 +1289,16 @@ class LookupTableIDA(LookupTable):
             if (cost_to_here + 1) > threshold:
                 continue
 
-            cost_to_goal = self.ida_cost()
+            max_cost_to_goal = threshold - cost_to_here
+            #max_cost_to_goal = 99
+            cost_to_goal = self.ida_cost(max_cost_to_goal)
 
             if (cost_to_here + 1 + cost_to_goal) > threshold:
                 #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
                 #        (step, cost_to_here, cost_to_goal, threshold))
                 continue
 
+            # dwalton try without this one time
             # speed experiment...this reduces the time for IDA search by about 20%
             magic_tuple = (cost_to_here + 1, threshold, step, state)
 

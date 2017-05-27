@@ -323,6 +323,61 @@ class RubiksCube777(RubiksCube):
                                                                          'xxxxxxxxxxxxxxxxxxxxxxxxxxFFFxFxxxFFxxxFFxxxFxFFFxxxxxxxxxxxxxxxxxxxxxxxxxxxBBBxBxxxBBxxxBBxxxBxBBBx',
                                                                          False) # state_hex
 
+
+        '''
+        lookup-table-7x7x7-step65-LFRB-solve-inner-center-and-oblique-edges-center-only.txt
+        ===================================================================================
+        1 steps has 3 entries (0 percent, 0.00x previous step)
+        2 steps has 25 entries (0 percent, 8.33x previous step)
+        3 steps has 146 entries (0 percent, 5.84x previous step)
+        4 steps has 544 entries (0 percent, 3.73x previous step)
+        5 steps has 2772 entries (0 percent, 5.10x previous step)
+        6 steps has 13681 entries (0 percent, 4.94x previous step)
+        7 steps has 57790 entries (0 percent, 4.22x previous step)
+        8 steps has 227221 entries (0 percent, 3.93x previous step)
+        9 steps has 797842 entries (3 percent, 3.51x previous step)
+        10 steps has 2318392 entries (9 percent, 2.91x previous step)
+        11 steps has 5327072 entries (22 percent, 2.30x previous step)
+        12 steps has 7922750 entries (32 percent, 1.49x previous step)
+        13 steps has 5900762 entries (24 percent, 0.74x previous step)
+        14 steps has 1378088 entries (5 percent, 0.23x previous step)
+        15 steps has 62000 entries (0 percent, 0.04x previous step)
+        16 steps has 912 entries (0 percent, 0.01x previous step)
+
+        Total: 24010000 entries
+        '''
+        self.lt_LFRB_solve_inner_centers_and_oblique_edges_center_only = LookupTable(self,
+                                                                         'lookup-table-7x7x7-step65-LFRB-solve-inner-center-and-oblique-edges-center-only.txt',
+                                                                         '777-LFRB-centers-oblique-edges-solve-center-only',
+                                                                         'xxxxxxLLLxxLLLxxLLLxxxxxxxxxxxxFFFxxFFFxxFFFxxxxxxxxxxxxRRRxxRRRxxRRRxxxxxxxxxxxxBBBxxBBBxxBBBxxxxxx',
+                                                                         False) # state_hex
+
+        '''
+        lookup-table-7x7x7-step66-LFRB-solve-inner-center-and-oblique-edges-outside-only.txt
+        ====================================================================================
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 54 entries (0 percent, 10.80x previous step)
+        3 steps has 420 entries (0 percent, 7.78x previous step)
+        4 steps has 2703 entries (0 percent, 6.44x previous step)
+        5 steps has 18440 entries (0 percent, 6.82x previous step)
+        6 steps has 107830 entries (0 percent, 5.85x previous step)
+        7 steps has 525460 entries (2 percent, 4.87x previous step)
+        8 steps has 2020864 entries (8 percent, 3.85x previous step)
+        9 steps has 5493616 entries (22 percent, 2.72x previous step)
+        10 steps has 8811360 entries (36 percent, 1.60x previous step)
+        11 steps has 5822992 entries (24 percent, 0.66x previous step)
+        12 steps has 1173200 entries (4 percent, 0.20x previous step)
+        13 steps has 33056 entries (0 percent, 0.03x previous step)
+
+        Total: 24010000 entries
+        '''
+        self.lt_LFRB_solve_inner_centers_and_oblique_edges_outside_only = LookupTable(self,
+                                                                         'lookup-table-7x7x7-step66-LFRB-solve-inner-center-and-oblique-edges-outside-only.txt',
+                                                                         '777-LFRB-centers-oblique-edges-solve-outside-only',
+                                                                         'xLxLxLxxxLxxxxxLxxxLxLxLxxFxFxFxxxFxxxxxFxxxFxFxFxxRxRxRxxxRxxxxxRxxxRxRxRxxBxBxBxxxBxxxxxBxxxBxBxBx',
+                                                                         False) # state_hex
+
+
         self.lt_LR_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
                                                          'lookup-table-7x7x7-step60-LR-solve-inner-center-and-oblique-edges.txt',
                                                          'LR-centers-oblique-edges-solve',
@@ -338,7 +393,6 @@ class RubiksCube777(RubiksCube):
                                                          # prune tables
                                                          (self.lt_LR_solve_inner_centers_and_oblique_edges_center_only,
                                                           self.lt_LR_solve_inner_centers_and_oblique_edges_edges_only))
-
 
         '''
         lookup-table-7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges.txt
@@ -356,6 +410,7 @@ class RubiksCube777(RubiksCube):
 
         Total: 129,206,642 entries
         '''
+        # dwalton
         self.lt_LFRB_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
                                                          'lookup-table-7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges.txt',
                                                          'LFRB-centers-oblique-edges-solve',
@@ -370,10 +425,11 @@ class RubiksCube777(RubiksCube):
 
                                                          # prune tables
                                                          (self.lt_LR_solve_inner_centers_and_oblique_edges_center_only,
-                                                          self.lt_LR_solve_inner_centers_and_oblique_edges_edges_only,
                                                           self.lt_FB_solve_inner_centers_and_oblique_edges_center_only,
-                                                          self.lt_FB_solve_inner_centers_and_oblique_edges_edges_only))
-
+                                                          self.lt_LR_solve_inner_centers_and_oblique_edges_edges_only,
+                                                          self.lt_FB_solve_inner_centers_and_oblique_edges_edges_only,
+                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_center_only,
+                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_outside_only))
 
     def create_fake_555_centers(self):
 
@@ -654,19 +710,14 @@ class RubiksCube777(RubiksCube):
         log.info("UD inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
 
-        #self.lt_LR_solve_inner_centers_and_oblique_edges_center_only.solve()
-        #self.lt_LR_solve_inner_centers_and_oblique_edges_edges_only.solve()
-        #self.lt_FB_solve_inner_centers_and_oblique_edges_center_only.solve()
-        #self.lt_FB_solve_inner_centers_and_oblique_edges_edges_only.solve()
+        # Go ahead and solve the LR side, we do this to try to get the cube to a state that is closer to what may be in the IDA table.
+        #self.lt_LR_solve_inner_centers_and_oblique_edges.solve()
+        #self.print_cube()
 
-        self.lt_LR_solve_inner_centers_and_oblique_edges.solve()
-        self.print_cube()
-
-        self.print_solution()
+        # dwalton here now
         self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()
         log.info("LRFB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_solution()
-        # dwalton here now
         self.print_cube()
         sys.exit(0)
 

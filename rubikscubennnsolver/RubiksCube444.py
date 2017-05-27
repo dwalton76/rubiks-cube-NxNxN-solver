@@ -62,7 +62,9 @@ class RubiksCube444(RubiksCube):
         self.lt_UD_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step01-UD-centers-stage.txt',
                                                'UD-centers-stage',
-                                               'UUUUxxxxxxxxxxxxxxxxUUUU')
+                                               'UUUUxxxxxxxxxxxxxxxxUUUU',
+                                                False,
+                                                735471)
 
 
         '''
@@ -83,7 +85,9 @@ class RubiksCube444(RubiksCube):
         self.lt_LR_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step02-LR-centers-stage.txt',
                                                'LR-centers-stage',
-                                               'LLLLxxxxLLLLxxxx')
+                                               'LLLLxxxxLLLLxxxx',
+                                                False,
+                                                12870)
 
 
         '''
@@ -108,7 +112,9 @@ class RubiksCube444(RubiksCube):
         self.lt_ULFRBD_centers_solve = LookupTable(self,
                                                    'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt',
                                                    'ULFRBD-centers-solve',
-                                                   'UUUULLLLFFFFRRRRBBBBDDDD')
+                                                   'UUUULLLLFFFFRRRRBBBBDDDD',
+                                                   False,
+                                                   343000)
 
         '''
         This is an experiment to see if I can solve all centers at once using IDA
@@ -148,25 +154,29 @@ class RubiksCube444(RubiksCube):
                                                'lookup-table-4x4x4-step31-UD-centers-solve.txt',
                                                'UD-centers-solve-on-all',
                                                'UUUUxxxxxxxxxxxxxxxxDDDD',
-                                               False) # state_hex
+                                               False, # state_hex
+                                               51482979)
 
         self.lt_LR_centers_solve = LookupTable(self,
                                                'lookup-table-4x4x4-step32-LR-centers-solve.txt',
                                                'LR-centers-solve-on-all',
                                                'xxxxLLLLxxxxRRRRxxxxxxxx',
-                                               False) # state_hex
+                                               False, # state_hex
+                                               51482970)
 
         self.lt_FB_centers_solve = LookupTable(self,
                                                'lookup-table-4x4x4-step33-FB-centers-solve.txt',
                                                'FB-centers-solve-on-all',
                                                'xxxxxxxxFFFFxxxxBBBBxxxx',
-                                               False) # state_hex
+                                               False, # state_hex
+                                               51482970)
 
         self.lt_ULFRBD_centers_solve_not_staged = LookupTableIDA(self,
                                                                 'lookup-table-4x4x4-step30-ULFRBD-centers-solve-not-staged.txt',
                                                                 'ULFRBD-centers-solve',
                                                                 'UUUULLLLFFFFRRRRBBBBDDDD',
                                                                 False, # state_hex
+                                                                87727430,
                                                                 moves_4x4x4,
                                                                 (), # illegal_moves
 
@@ -193,7 +203,9 @@ class RubiksCube444(RubiksCube):
         self.lt_edge_slice_forward = LookupTable(self,
                                                  'lookup-table-4x4x4-step40-edges-slice-forward.txt',
                                                  '444-edges-slice-forward',
-                                                 None)
+                                                 'TBD',
+                                                 False,
+                                                 7920)
 
         '''
         22*20*18 is 7920
@@ -215,7 +227,9 @@ class RubiksCube444(RubiksCube):
         self.lt_edge_slice_backward = LookupTable(self,
                                                   'lookup-table-4x4x4-step50-edges-slice-backward.txt',
                                                   '444-edges-slice-backward',
-                                                  None)
+                                                  'TBD',
+                                                  False,
+                                                  7919)
 
     def group_centers_guts(self):
         self.lt_init()

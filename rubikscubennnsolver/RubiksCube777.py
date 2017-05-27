@@ -81,7 +81,8 @@ class RubiksCube777(RubiksCube):
                                                                   'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
                                                                   '777-UD-oblique-edge-pairing-middle-only',
                                                                   '08088080000000000000000000000000404404',
-                                                                  True) # state_hex
+                                                                  True, # state_hex
+                                                                  735471)
 
         '''
         24!/(8!*16!) is 735,471
@@ -103,7 +104,8 @@ class RubiksCube777(RubiksCube):
                                                                    'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-outside-only.txt',
                                                                    '777-UD-oblique-edge-pairing-outside-only',
                                                                    '15104540000000000000000000000000a8822a',
-                                                                   True) # state_hex
+                                                                   True, # state_hex
+                                                                   735471)
         '''
         lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
         =====================================================
@@ -126,6 +128,7 @@ class RubiksCube777(RubiksCube):
                                                          '777-UD-oblique-edge-pairing',
                                                          '1d18c5c0000000000000000000000000e8c62e',
                                                          True, # state_hex
+                                                         5961573,
                                                          moves_7x7x7,
 
                                                          # do not mess up UD 5x5x5 centers
@@ -140,19 +143,22 @@ class RubiksCube777(RubiksCube):
                                                       'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
                                                       '777-LR-oblique-edge-pairing-middle-only',
                                                       '2022020000000808808000000',
-                                                      True) # state_hex
+                                                      True, # state_hex
+                                                      12870)
 
         self.lt_LR_oblique_edge_pairing_outside_only = LookupTable(self,
                                                       'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-outside-only.txt',
                                                       '777-LR-oblique-edge-pairing-outside-only',
                                                       '5441150000001510454000000',
-                                                      True) # state_hex
+                                                      True, # state_hex
+                                                      12870)
 
         self.lt_LR_oblique_edge_pairing = LookupTableIDA(self,
                                                       'lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt',
                                                       '777-LR-oblique-edge-pairing',
                                                       '7463170000001d18c5c000000',
                                                       True, # state_hex
+                                                      5044280,
                                                       moves_7x7x7,
 
                                                       ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # do not mess up UD 5x5x5 centers
@@ -200,19 +206,22 @@ class RubiksCube777(RubiksCube):
                                                                          'lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt',
                                                                          '777-UD-centers-oblique-edges-solve-center-only',
                                                                          'xxxxxxUUUxxUxUxxUUUxxxxxxxxxxxxDDDxxDxDxxDDDxxxxxx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         4900)
 
         self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only = LookupTable(self,
                                                                          'lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt',
                                                                          '777-UD-centers-oblique-edges-solve-edges-only',
                                                                          'xUUUxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxDDDx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         343000)
 
         self.lt_UD_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
                                                                          'lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt',
                                                                          'UD-centers-oblique-edges-solve',
                                                                          'xUUUxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxDDDx',
                                                                          False, # state_hex
+                                                                         27156823,
                                                                          moves_7x7x7,
 
                                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
@@ -303,25 +312,29 @@ class RubiksCube777(RubiksCube):
                                                                          'lookup-table-7x7x7-step61-LR-solve-inner-center-and-oblique-edges-center-only.txt',
                                                                          '777-LR-centers-oblique-edges-solve-center-only',
                                                                          'xxxxxxLLLxxLLLxxLLLxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxRRRxxRRRxxRRRxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         4900)
 
         self.lt_LR_solve_inner_centers_and_oblique_edges_edges_only = LookupTable(self,
                                                                          'lookup-table-7x7x7-step62-LR-solve-inner-center-and-oblique-edges-edges-only.txt',
                                                                          '777-LR-centers-oblique-edges-solve-edges-only',
                                                                          'xLLLxLxxxLLxxxLLxxxLxLLLxxxxxxxxxxxxxxxxxxxxxxxxxxxRRRxRxxxRRxxxRRxxxRxRRRxxxxxxxxxxxxxxxxxxxxxxxxxx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         343000)
 
         self.lt_FB_solve_inner_centers_and_oblique_edges_center_only = LookupTable(self,
                                                                          'lookup-table-7x7x7-step63-FB-solve-inner-center-and-oblique-edges-center-only.txt',
                                                                          '777-FB-centers-oblique-edges-solve-center-only',
                                                                          'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxFFFxxFFFxxFFFxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxBBBxxBBBxxBBBxxxxxx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         4900)
 
         self.lt_FB_solve_inner_centers_and_oblique_edges_edges_only = LookupTable(self,
                                                                          'lookup-table-7x7x7-step64-FB-solve-inner-center-and-oblique-edges-edges-only.txt',
                                                                          '777-FB-centers-oblique-edges-solve-edges-only',
                                                                          'xxxxxxxxxxxxxxxxxxxxxxxxxxFFFxFxxxFFxxxFFxxxFxFFFxxxxxxxxxxxxxxxxxxxxxxxxxxxBBBxBxxxBBxxxBBxxxBxBBBx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         343000)
 
 
         '''
@@ -350,7 +363,8 @@ class RubiksCube777(RubiksCube):
                                                                          'lookup-table-7x7x7-step65-LFRB-solve-inner-center-and-oblique-edges-center-only.txt',
                                                                          '777-LFRB-centers-oblique-edges-solve-center-only',
                                                                          'xxxxxxLLLxxLLLxxLLLxxxxxxxxxxxxFFFxxFFFxxFFFxxxxxxxxxxxxRRRxxRRRxxRRRxxxxxxxxxxxxBBBxxBBBxxBBBxxxxxx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         24010000)
 
         '''
         lookup-table-7x7x7-step66-LFRB-solve-inner-center-and-oblique-edges-outside-only.txt
@@ -375,7 +389,8 @@ class RubiksCube777(RubiksCube):
                                                                          'lookup-table-7x7x7-step66-LFRB-solve-inner-center-and-oblique-edges-outside-only.txt',
                                                                          '777-LFRB-centers-oblique-edges-solve-outside-only',
                                                                          'xLxLxLxxxLxxxxxLxxxLxLxLxxFxFxFxxxFxxxxxFxxxFxFxFxxRxRxRxxxRxxxxxRxxxRxRxRxxBxBxBxxxBxxxxxBxxxBxBxBx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         24010000)
 
 
         self.lt_LR_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
@@ -384,6 +399,7 @@ class RubiksCube777(RubiksCube):
                                                          'xLLLxLLLLLLLLLLLLLLLxLLLxxRRRxRRRRRRRRRRRRRRRxRRRx',
 
                                                          False, # state_hex
+                                                         18155169,
                                                          moves_7x7x7,
 
                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
@@ -410,13 +426,13 @@ class RubiksCube777(RubiksCube):
 
         Total: 129,206,642 entries
         '''
-        # dwalton
         self.lt_LFRB_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
                                                          'lookup-table-7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges.txt',
                                                          'LFRB-centers-oblique-edges-solve',
                                                          'xLLLxLLLLLLLLLLLLLLLxLLLxxFFFxFFFFFFFFFFFFFFFxFFFxxRRRxRRRRRRRRRRRRRRRxRRRxxBBBxBBBBBBBBBBBBBBBxBBBx',
 
                                                          False, # state_hex
+                                                         129206642,
                                                          moves_7x7x7,
 
                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers

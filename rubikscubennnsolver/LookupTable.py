@@ -1,7 +1,6 @@
 
 from copy import copy
 from pprint import pformat
-from rubikscubennnsolver.pts_line_bisect import get_line_startswith
 from rubikscubennnsolver.RubiksSide import SolveError
 import logging
 import math
@@ -10,6 +9,29 @@ import sys
 
 
 log = logging.getLogger(__name__)
+
+
+def file_binary_search(filename, fh, target_state, width, linecount):
+    left = 0
+    right = linecount - 1
+    state = None
+    #log.info("%s looking for %s, left %d, right %d, linecount %d" % (filename, target_state, left, right, linecount))
+
+    while state != target_state and left <= right:
+        mid = (left + right) / 2
+        fh.seek(mid * width)
+        #log.info("%s seek to %d looking for %s" % (filename, mid, target_state))
+        state, steps = fh.readline().split(':')
+
+        if target_state > state:
+            left = mid + 1
+        else:
+            right = mid - 1
+
+    if state != target_state:
+        return None
+    else:
+        return state + ':' + steps
 
 
 class ImplementThis(Exception):
@@ -56,7 +78,7 @@ def convert_state_to_hex(state):
 
 class LookupTable(object):
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex=False):
+    def __init__(self, parent, filename, state_type, state_target, state_hex, linecount):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.sides_LFRB = (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB)
@@ -78,6 +100,11 @@ class LookupTable(object):
         self.state_type = state_type
         self.state_target = state_target
         self.state_hex = state_hex
+        self.linecount = linecount
+
+        with open(self.filename) as fh:
+            first_line = next(fh)
+            self.width = len(first_line)
 
     def __str__(self):
         return self.desc
@@ -1202,7 +1229,7 @@ class LookupTable(object):
         #log.info("%s state %s" % (self, state))
 
         with open(self.filename, 'r') as fh:
-            line = get_line_startswith(fh, state + ':')
+            line = file_binary_search(self.filename, fh, state, self.width, self.linecount)
 
             if line:
                 (_, steps) = line.strip().split(':')
@@ -1238,8 +1265,8 @@ class LookupTableIDA(LookupTable):
     """
     """
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, threshold_to_shortcut=None):
-        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex)
+    def __init__(self, parent, filename, state_type, state_target, state_hex, linecount, moves_all, moves_illegal, prune_tables, threshold_to_shortcut=None):
+        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, linecount)
         self.moves_all = moves_all
         self.moves_illegal = moves_illegal
         self.ida_count = 0

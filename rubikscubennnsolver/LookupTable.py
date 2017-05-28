@@ -11,27 +11,90 @@ import sys
 log = logging.getLogger(__name__)
 
 
-def file_binary_search(filename, fh, target_state, width, linecount):
-    left = 0
-    right = linecount - 1
-    state = None
-    #log.info("%s looking for %s, left %d, right %d, linecount %d" % (filename, target_state, left, right, linecount))
+def file_binary_search_guts(filename, fh, state_to_find, width, linecount, init_left, init_right):
 
-    while state != target_state and left <= right:
+    if init_left is None:
+        left = 0
+    else:
+        left = init_left
+
+    if init_right is None:
+        right = linecount - 1
+    else:
+        right = init_right
+
+    #assert state_to_find, "Was asked to find %s" % state_to_find
+    #assert left <= right, "Invalid left %s vs. right %s (left must be <= right)" % (left, right)
+    state = None
+
+    while left <= right:
         mid = (left + right) / 2
         fh.seek(mid * width)
-        #log.info("%s seek to %d looking for %s" % (filename, mid, target_state))
+        #log.info("%s seek to %d looking for %s" % (filename, mid, state_to_find))
         state, steps = fh.readline().split(':')
 
-        if target_state > state:
+        if state == state_to_find:
+            return (mid, steps.strip().split())
+
+        if state_to_find > state:
             left = mid + 1
         else:
             right = mid - 1
 
-    if state != target_state:
-        return None
-    else:
-        return state + ':' + steps
+    return (mid, None)
+
+
+def file_binary_search(filename, fh, state_to_find, width, linecount):
+    (line_number, value) = file_binary_search_guts(filename, fh, state_to_find, width, linecount, None, None)
+    return value
+
+
+def file_binary_search_multiple_keys(filename, fh, states_to_find, width, linecount):
+    results = {}
+    states_to_find = sorted(states_to_find)
+    min_left = None
+    max_right = None
+    #log.info("%s linecount %d, states_to_find:\n%s\n" % (filename, linecount, pformat(states_to_find)))
+
+    while states_to_find:
+        first_state_to_find = states_to_find[0]
+        last_state_to_find = states_to_find[-1]
+
+        if len(states_to_find) == 1:
+            (_, value) = file_binary_search_guts(filename, fh, first_state_to_find, width, linecount, min_left, max_right)
+            results[first_state_to_find] = value
+            #log.info("%s results\n%s\n" % (filename, pformat(results)))
+            return results
+
+        # We sorted states_to_find so find the first state and its linenumber (or the linenumber
+        # where it would be if it were there) and remember that linenumber as the furthest
+        # left we ever need to look in the file when looking for other states.
+        (linenumber, value) = file_binary_search_guts(filename, fh, first_state_to_find, width, linecount, min_left, max_right)
+        results[first_state_to_find] = value
+
+        if value:
+            min_left = linenumber
+        else:
+            if linenumber:
+                min_left = linenumber - 1
+            else:
+                min_left = 0
+
+        # Now do the same with the last state to determine the furthest right we
+        # ever need look when looking for other states
+        (linenumber, value) = file_binary_search_guts(filename, fh, last_state_to_find, width, linecount, min_left, max_right)
+        results[last_state_to_find] = value
+
+        if value:
+            max_right = linenumber
+        else:
+            max_right = min(linenumber + 1, linecount)
+
+        #log.info("%s first state %s, last state %s, min_left %d, max_right %d" % (filename, first_state_to_find, last_state_to_find, min_left, max_right))
+        states_to_find = states_to_find[1:-1]
+
+    #log.info("%s results\n%s\n" % (filename, pformat(results)))
+    return results
 
 
 class ImplementThis(Exception):
@@ -1220,22 +1283,29 @@ class LookupTable(object):
 
         return state
 
-    def steps(self, state=None):
+    def steps(self, state_to_find=None):
         """
         Return the steps found in the lookup table for the current cube state
         """
-        if state is None:
-            state = self.state()
-        #log.info("%s state %s" % (self, state))
+        if state_to_find is None:
+            state_to_find = self.state()
 
-        with open(self.filename, 'r') as fh:
-            line = file_binary_search(self.filename, fh, state, self.width, self.linecount)
+        if isinstance(state_to_find, list):
+            # Return a dictionary where the key is the state and the value is the list of steps
+            with open(self.filename, 'r') as fh:
+                return file_binary_search_multiple_keys(self.filename, fh, state_to_find, self.width, self.linecount)
 
-            if line:
-                (_, steps) = line.strip().split(':')
-                #log.info("%s found state: %d steps in, steps %s" % (self, len(self.parent.solution), steps))
-                return steps.split()
-        return []
+        else:
+            # Return a list of steps that correspond to this state
+            with open(self.filename, 'r') as fh:
+                return file_binary_search(self.filename, fh, state_to_find, self.width, self.linecount)
+                '''
+                steps = file_binary_search(self.filename, fh, state_to_find, self.width, self.linecount)
+
+                if steps:
+                    return steps
+            return []
+                '''
 
     def steps_length(self, state=None):
         return len(self.steps(state))
@@ -1287,6 +1357,13 @@ class LookupTableIDA(LookupTable):
 
     def ida_search(self, cost_to_here, threshold, prev_step, prev_state, prev_solution):
 
+        # We are above the theshold no matter what the prune table costs are
+        if (cost_to_here + 1) > threshold:
+            return False
+
+        # Build a list of the steps we need to explore
+        steps_to_try = []
+
         for step in self.moves_all:
 
             if step in self.moves_illegal:
@@ -1296,29 +1373,52 @@ class LookupTableIDA(LookupTable):
             if steps_cancel_out(prev_step, step):
                 continue
 
+            steps_to_try.append(step)
+
+
+        # Now try each of those steps and record the (state, step, cost_to_goal) tuple
+        # and build a list of states that we need to binary search for
+        states_to_check = []
+        state_step_cost = []
+
+        for step in steps_to_try:
             self.parent.state = copy(prev_state)
             self.parent.solution = copy(prev_solution)
             self.parent.rotate(step)
             self.ida_count += 1
-            # assert cost_to_here+1 == len(self.parent.solution), "cost_to_here %d, solution %s" % (cost_to_here, ' '.join(self.parent.solution))
 
-            # Do we have the cube in a state where there is a match in the lookup table?
+            # get the current state of the cube and the cost_to_goal
             state = self.state()
-            steps = self.steps(state)
+            max_cost_to_goal = threshold - cost_to_here
+            cost_to_goal = self.ida_cost(max_cost_to_goal)
+
+            state_step_cost.append((state, step, cost_to_goal))
+            states_to_check.append(state)
+
+        #states_to_check = sorted(states_to_check)
+        #log.info("states_to_check: %s" % pformat(states_to_check))
+        #log.info("state_step_cost:\n%s\n" % pformat(state_step_cost))
+        steps_for_states = self.steps(states_to_check)
+        #log.info("steps_for_states:\n%s\n" % pformat(steps_for_states))
+
+        for (state, step, cost_to_goal) in state_step_cost:
+            steps = steps_for_states[state]
+
+            # If there is an entry for 'state' in the lookup table then we have
+            # found what we were looking for.  Apply the step needed to put the
+            # cube in the state that is in the lookup tables and then apply the
+            # 'steps' for this state in the lookup table.
             if steps:
+                self.parent.state = copy(prev_state)
+                self.parent.solution = copy(prev_solution)
+                self.parent.rotate(step)
+
                 #log.info("match IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
                 #        (step, cost_to_here, cost_to_goal, threshold))
                 for step in steps:
                     self.parent.rotate(step)
 
                 return True
-
-            if (cost_to_here + 1) > threshold:
-                continue
-
-            max_cost_to_goal = threshold - cost_to_here
-            #max_cost_to_goal = 99
-            cost_to_goal = self.ida_cost(max_cost_to_goal)
 
             if (cost_to_here + 1 + cost_to_goal) > threshold:
                 #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
@@ -1332,6 +1432,12 @@ class LookupTableIDA(LookupTable):
             if magic_tuple in self.visited_states:
                 continue
             self.visited_states.add(magic_tuple)
+
+            # We need to explore this branch further, apply 'step' and make a
+            # recursive ida_search() call
+            self.parent.state = copy(prev_state)
+            self.parent.solution = copy(prev_solution)
+            self.parent.rotate(step)
 
             state_end_of_this_step = copy(self.parent.state)
             solution_end_of_this_step = copy(self.parent.solution)

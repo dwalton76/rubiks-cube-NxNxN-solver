@@ -114,6 +114,51 @@ class RubiksCube444(RubiksCube):
                                                    False)
 
         '''
+        22*20*18 is 7920
+
+        lookup-table-4x4x4-step40-edges-slice-forward.txt
+        =================================================
+        1 steps has 7 entries (0 percent)
+        2 steps has 42 entries (0 percent)
+        3 steps has 299 entries (3 percent)
+        4 steps has 1,306 entries (16 percent)
+        5 steps has 3,449 entries (43 percent)
+        6 steps has 2,617 entries (33 percent)
+        7 steps has 200 entries (2 percent)
+
+        Total: 7,920 entries
+        '''
+        self.lt_edge_slice_forward = LookupTable(self,
+                                                 'lookup-table-4x4x4-step40-edges-slice-forward.txt',
+                                                 '444-edges-slice-forward',
+                                                 'TBD',
+                                                 False)
+
+        '''
+        22*20*18 is 7920
+        No idea why I am one entry short (should be 7920 total)...oh well
+
+        lookup-table-4x4x4-step50-edges-slice-backward.txt
+        ==================================================
+        1 steps has 1 entries (0 percent)
+        3 steps has 36 entries (0 percent)
+        4 steps has 66 entries (0 percent)
+        5 steps has 334 entries (4 percent)
+        6 steps has 1,369 entries (17 percent)
+        7 steps has 3,505 entries (44 percent)
+        8 steps has 2,539 entries (32 percent)
+        9 steps has 69 entries (0 percent)
+
+        Total: 7,919 entries
+        '''
+        self.lt_edge_slice_backward = LookupTable(self,
+                                                  'lookup-table-4x4x4-step50-edges-slice-backward.txt',
+                                                  '444-edges-slice-backward',
+                                                  'TBD',
+                                                  False)
+
+    def lt_init_experiment(self):
+        '''
         This is an experiment to see if I can solve all centers at once using IDA
         I let it run for about 5 minutes but it still didn't find a solution...need to let
         it run overnight. If that doesn't work build the step30 table out to 7-deep.
@@ -178,50 +223,6 @@ class RubiksCube444(RubiksCube):
                                                                 (self.lt_UD_centers_solve,
                                                                  self.lt_LR_centers_solve,
                                                                  self.lt_FB_centers_solve))
-
-        '''
-        22*20*18 is 7920
-
-        lookup-table-4x4x4-step40-edges-slice-forward.txt
-        =================================================
-        1 steps has 7 entries (0 percent)
-        2 steps has 42 entries (0 percent)
-        3 steps has 299 entries (3 percent)
-        4 steps has 1,306 entries (16 percent)
-        5 steps has 3,449 entries (43 percent)
-        6 steps has 2,617 entries (33 percent)
-        7 steps has 200 entries (2 percent)
-
-        Total: 7,920 entries
-        '''
-        self.lt_edge_slice_forward = LookupTable(self,
-                                                 'lookup-table-4x4x4-step40-edges-slice-forward.txt',
-                                                 '444-edges-slice-forward',
-                                                 'TBD',
-                                                 False)
-
-        '''
-        22*20*18 is 7920
-        No idea why I am one entry short (should be 7920 total)...oh well
-
-        lookup-table-4x4x4-step50-edges-slice-backward.txt
-        ==================================================
-        1 steps has 1 entries (0 percent)
-        3 steps has 36 entries (0 percent)
-        4 steps has 66 entries (0 percent)
-        5 steps has 334 entries (4 percent)
-        6 steps has 1,369 entries (17 percent)
-        7 steps has 3,505 entries (44 percent)
-        8 steps has 2,539 entries (32 percent)
-        9 steps has 69 entries (0 percent)
-
-        Total: 7,919 entries
-        '''
-        self.lt_edge_slice_backward = LookupTable(self,
-                                                  'lookup-table-4x4x4-step50-edges-slice-backward.txt',
-                                                  '444-edges-slice-backward',
-                                                  'TBD',
-                                                  False)
 
     def group_centers_guts(self):
         self.lt_init()

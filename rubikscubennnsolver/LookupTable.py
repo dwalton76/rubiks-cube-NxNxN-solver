@@ -6,6 +6,7 @@ from rubikscubennnsolver.rotate_xxx import rotate_222, rotate_444, rotate_555, r
 import logging
 import math
 import os
+import subprocess
 import sys
 
 
@@ -151,7 +152,7 @@ def convert_state_to_hex(state):
 
 class LookupTable(object):
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, linecount):
+    def __init__(self, parent, filename, state_type, state_target, state_hex):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.sides_LFRB = (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB)
@@ -173,11 +174,13 @@ class LookupTable(object):
         self.state_type = state_type
         self.state_target = state_target
         self.state_hex = state_hex
-        self.linecount = linecount
 
         with open(self.filename) as fh:
             first_line = next(fh)
             self.width = len(first_line)
+
+        filesize = os.path.getsize(self.filename)
+        self.linecount = filesize/self.width
 
     def __str__(self):
         return self.desc
@@ -1450,8 +1453,8 @@ class LookupTableIDA(LookupTable):
     """
     """
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, linecount, moves_all, moves_illegal, prune_tables, threshold_to_shortcut=None):
-        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, linecount)
+    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, threshold_to_shortcut=None):
+        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex)
         self.moves_all = moves_all
         self.moves_illegal = moves_illegal
         self.ida_count = 0
@@ -1505,6 +1508,7 @@ class LookupTableIDA(LookupTable):
             self.parent.state = copy(prev_state)
             self.parent.solution = copy(prev_solution)
             state_original = copy(self.parent.state)
+            self.parent.solution.append(step)
 
             # We could just call self.parent.rotate(step) here but the explicit
             # rotate_444, rotate_555, etc are faster.
@@ -1571,8 +1575,8 @@ class LookupTableIDA(LookupTable):
             # cube in the state that is in the lookup tables and then apply the
             # 'steps' for this state in the lookup table.
             if steps:
-                #log.info("match IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
-                #        (step, cost_to_here, cost_to_goal, threshold))
+                #log.info("match IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d, state %s" %
+                #        (step, cost_to_here, cost_to_goal, threshold, state))
                 for step in steps:
                     self.parent.rotate(step)
 
@@ -1610,78 +1614,87 @@ class LookupTableIDA(LookupTable):
 
         return False
 
-    def solve(self):
+    def ida_stage(self):
         assert self.state_target is not None, "state_target is None"
 
-        while True:
-            state = self.state()
+        state = self.state()
+        log.info("state %s vs state_target %s" % (state, self.state_target))
 
-            if state == self.state_target:
-                break
+        # The cube is already in the desired state, nothing to do
+        if state == self.state_target:
+            return
 
-            steps = self.steps()
-            log.info("state %s vs state_target %s" % (state, self.state_target))
+        # The cube is already in a state that is in our lookup table, nothing for IDA to do
+        steps = self.steps()
 
-            if steps:
-                for step in steps:
-                    self.parent.rotate(step)
+        if steps:
+            log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
+            return
+
+        # If we are here (odds are very high we will be) it means that the current
+        # cube state was not in the lookup table.  We must now perform an IDA search
+        # until we find a sequence of moves that takes us to a state that IS in the
+        # lookup table.
+
+        # save cube state
+        original_state = copy(self.parent.state)
+        original_solution = copy(self.parent.solution)
+
+        if self.threshold_to_shortcut:
+
+            for threshold in range(1, self.threshold_to_shortcut):
+                log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
+                self.visited_states = set()
+
+                if self.ida_search(0, threshold, None, original_state, original_solution):
+                    log.info("%s: IDA found match(1), count %d" % (self, self.ida_count))
+                    return
+
             else:
-                # If we are here (odds are very high we will be) it means that the current
-                # cube state was not in the lookup table.  We must now perform an IDA search
-                # until we find a sequence of moves that takes us to a state that IS in the
-                # lookup table.
+                # restore parent state to original
+                self.parent.state = copy(original_state)
+                self.parent.solution = copy(original_solution)
+
+                first_pt = self.prune_tables[0]
+                log.info("%s: use prune table %s to shortcut IDA search" % (self, first_pt))
+                first_pt.solve()
+                self.ida_count = 0
+
+                state = self.state()
+
+                if state == self.state_target:
+                    log.info("state %s vs state_target %s" % (state, self.state_target))
+                    return
 
                 # save cube state
                 original_state = copy(self.parent.state)
                 original_solution = copy(self.parent.solution)
 
-                if self.threshold_to_shortcut:
+                for threshold in range(1, 20):
+                    log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
+                    self.visited_states = set()
 
-                    for threshold in range(1, self.threshold_to_shortcut):
-                        log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
-                        self.visited_states = set()
-
-                        if self.ida_search(0, threshold, None, original_state, original_solution):
-                            log.info("%s: IDA found match, count %d" % (self, self.ida_count))
-                            break
-
-                    else:
-                        # restore parent state to original
-                        self.parent.state = copy(original_state)
-                        self.parent.solution = copy(original_solution)
-
-                        first_pt = self.prune_tables[0]
-                        log.info("%s: use prune table %s to shortcut IDA search" % (self, first_pt))
-                        first_pt.solve()
-                        self.ida_count = 0
-
-                        state = self.state()
-
-                        if state == self.state_target:
-                            log.info("state %s vs state_target %s" % (state, self.state_target))
-                            break
-
-                        # save cube state
-                        original_state = copy(self.parent.state)
-                        original_solution = copy(self.parent.solution)
-
-                        for threshold in range(1, 20):
-                            log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
-                            self.visited_states = set()
-
-                            if self.ida_search(0, threshold, None, original_state, original_solution):
-                                log.info("%s: IDA found match, count %d" % (self, self.ida_count))
-                                break
-                        else:
-                            raise SolveError("%s FAILED for state %s" % (self, self.state()))
-
+                    if self.ida_search(0, threshold, None, original_state, original_solution):
+                        log.info("%s: IDA found match(2), count %d" % (self, self.ida_count))
+                        return
                 else:
-                    for threshold in range(1, 20):
-                        log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
-                        self.visited_states = set()
+                    raise SolveError("%s FAILED for state %s" % (self, self.state()))
 
-                        if self.ida_search(0, threshold, None, original_state, original_solution):
-                            log.info("%s: IDA found match, count %d" % (self, self.ida_count))
-                            break
-                    else:
-                        raise SolveError("%s FAILED for state %s" % (self, self.state()))
+        else:
+            for threshold in range(1, 20):
+                log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
+                self.visited_states = set()
+
+                if self.ida_search(0, threshold, None, original_state, original_solution):
+                    log.info("%s: IDA found match(3), count %d" % (self, self.ida_count))
+                    return
+            else:
+                raise SolveError("%s FAILED for state %s" % (self, self.state()))
+
+    def solve(self):
+        assert self.state_target is not None, "state_target is None"
+
+        if self.ida_stage():
+            return
+
+        LookupTable.solve(self)

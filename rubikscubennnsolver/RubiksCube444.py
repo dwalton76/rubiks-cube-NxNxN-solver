@@ -63,8 +63,7 @@ class RubiksCube444(RubiksCube):
                                                'lookup-table-4x4x4-step01-UD-centers-stage.txt',
                                                'UD-centers-stage',
                                                'f0000f',
-                                                True,
-                                                735471)
+                                                True)
 
 
         '''
@@ -86,8 +85,7 @@ class RubiksCube444(RubiksCube):
                                                'lookup-table-4x4x4-step02-LR-centers-stage.txt',
                                                'LR-centers-stage',
                                                'f0f0',
-                                                True,
-                                                12870)
+                                                True)
 
 
         '''
@@ -113,8 +111,7 @@ class RubiksCube444(RubiksCube):
                                                    'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt',
                                                    'ULFRBD-centers-solve',
                                                    'UUUULLLLFFFFRRRRBBBBDDDD',
-                                                   False,
-                                                   343000)
+                                                   False)
 
         '''
         This is an experiment to see if I can solve all centers at once using IDA
@@ -154,22 +151,19 @@ class RubiksCube444(RubiksCube):
                                                'lookup-table-4x4x4-step31-UD-centers-solve.txt',
                                                'UD-centers-solve-on-all',
                                                'UUUUxxxxxxxxxxxxxxxxDDDD',
-                                               False, # state_hex
-                                               51482979)
+                                               False) # state_hex
 
         self.lt_LR_centers_solve = LookupTable(self,
                                                'lookup-table-4x4x4-step32-LR-centers-solve.txt',
                                                'LR-centers-solve-on-all',
                                                'xxxxLLLLxxxxRRRRxxxxxxxx',
-                                               False, # state_hex
-                                               51482970)
+                                               False) # state_hex
 
         self.lt_FB_centers_solve = LookupTable(self,
                                                'lookup-table-4x4x4-step33-FB-centers-solve.txt',
                                                'FB-centers-solve-on-all',
                                                'xxxxxxxxFFFFxxxxBBBBxxxx',
-                                               False, # state_hex
-                                               51482970)
+                                               False) # state_hex
 
         self.lt_ULFRBD_centers_solve_not_staged = LookupTableIDA(self,
                                                                 'lookup-table-4x4x4-step30-ULFRBD-centers-solve-not-staged.txt',
@@ -204,8 +198,7 @@ class RubiksCube444(RubiksCube):
                                                  'lookup-table-4x4x4-step40-edges-slice-forward.txt',
                                                  '444-edges-slice-forward',
                                                  'TBD',
-                                                 False,
-                                                 7920)
+                                                 False)
 
         '''
         22*20*18 is 7920
@@ -228,8 +221,7 @@ class RubiksCube444(RubiksCube):
                                                   'lookup-table-4x4x4-step50-edges-slice-backward.txt',
                                                   '444-edges-slice-backward',
                                                   'TBD',
-                                                  False,
-                                                  7919)
+                                                  False)
 
     def group_centers_guts(self):
         self.lt_init()

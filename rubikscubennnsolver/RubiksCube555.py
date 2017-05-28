@@ -61,8 +61,7 @@ class RubiksCube555(RubiksCube):
                                                  'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
                                                  'UD-T-centers-stage',
                                                  '174000000000ba',
-                                                 True, # state_hex
-                                                 735471)
+                                                 True) # state_hex
 
         '''
         lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
@@ -84,8 +83,7 @@ class RubiksCube555(RubiksCube):
                                                  'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
                                                  'UD-X-centers-stage',
                                                  '2aa00000000155',
-                                                 True, # state_hex
-                                                 735471)
+                                                 True) # state_hex
 
         '''
         There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
@@ -110,7 +108,6 @@ class RubiksCube555(RubiksCube):
                                                  'UD-centers-stage',
                                                  '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
                                                  True, # state_hex
-                                                 17168476,
                                                  moves_5x5x5,
                                                  (), # illegal_moves
 
@@ -137,8 +134,7 @@ class RubiksCube555(RubiksCube):
                                                              'lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt',
                                                              'LR-centers-stage-on-LFRB-x-center-only',
                                                              'aa802aa00',
-                                                             True, # state_hex
-                                                             12870)
+                                                             True) # state_hex
 
         '''
         lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt
@@ -159,8 +155,7 @@ class RubiksCube555(RubiksCube):
                                                              'lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt',
                                                              'LR-centers-stage-on-LFRB-t-center-only',
                                                              '5d0017400',
-                                                             True, # state_hex
-                                                             12870)
+                                                             True) # state_hex
 
         '''
         Stage LR centers to sides L or R, this will automagically stage
@@ -195,7 +190,6 @@ class RubiksCube555(RubiksCube):
                                                   'LR-centers-stage-on-LFRB',
                                                   'ff803fe00', # LLLLLLLLLxxxxxxxxxLLLLLLLLLxxxxxxxxx
                                                   True, # state_hex
-                                                  3805239,
                                                   moves_5x5x5,
                                                   ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'"), # illegal moves
                                                   (self.lt_LR_centers_stage_x_center_only,
@@ -221,22 +215,19 @@ class RubiksCube555(RubiksCube):
                                                'lookup-table-5x5x5-step31-UD-centers-solve.txt',
                                                'UD-centers-solve-on-all',
                                                'UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxDDDDDDDDD',
-                                               False, # state_hex
-                                               4900)
+                                               False) # state_hex
 
         self.lt_LR_centers_solve = LookupTable(self,
                                                'lookup-table-5x5x5-step32-LR-centers-solve.txt',
                                                'LR-centers-solve-on-all',
                                                'xxxxxxxxxLLLLLLLLLxxxxxxxxxRRRRRRRRRxxxxxxxxxxxxxxxxxx',
-                                               False, # state_hex
-                                               4900)
+                                               False) # state_hex
 
         self.lt_FB_centers_solve = LookupTable(self,
                                                'lookup-table-5x5x5-step33-FB-centers-solve.txt',
                                                'FB-centers-solve-on-all',
                                                'xxxxxxxxxxxxxxxxxxFFFFFFFFFxxxxxxxxxBBBBBBBBBxxxxxxxxx',
-                                               False, # state_hex
-                                               4900)
+                                               False) # state_hex
 
         '''
         lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
@@ -256,7 +247,6 @@ class RubiksCube555(RubiksCube):
                                                     'ULFRBD-centers-solve',
                                                     'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
                                                     False, # state_hex
-                                                    13684136,
                                                     moves_5x5x5,
 
                                                     # These moves would destroy the staged centers
@@ -265,9 +255,7 @@ class RubiksCube555(RubiksCube):
                                                     # prune tables
                                                     (self.lt_UD_centers_solve,
                                                      self.lt_LR_centers_solve,
-                                                     self.lt_FB_centers_solve),
-
-                                                    threshold_to_shortcut=8)
+                                                     self.lt_FB_centers_solve))
 
         '''
         lookup-table-5x5x5-step90-edges-slice-forward.txt
@@ -286,8 +274,7 @@ class RubiksCube555(RubiksCube):
                                                  'lookup-table-5x5x5-step90-edges-slice-forward.txt',
                                                  '555-edges-slice-forward',
                                                  None,
-                                                 False,
-                                                 7920)
+                                                 False)
 
         '''
         lookup-table-5x5x5-step91-edges-slice-backward.txt
@@ -307,8 +294,7 @@ class RubiksCube555(RubiksCube):
                                                   'lookup-table-5x5x5-step91-edges-slice-backward.txt',
                                                   '555-edges-slice-backward',
                                                   None,
-                                                  False,
-                                                  7919)
+                                                  False)
 
     def group_centers_guts(self):
         self.lt_init()
@@ -322,6 +308,8 @@ class RubiksCube555(RubiksCube):
 
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
+        #self.print_cube()
+        #sys.exit(0)
 
     def find_moves_to_stage_slice_forward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)

@@ -69,8 +69,7 @@ class RubiksCube666(RubiksCube):
                                                       'lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt',
                                                       '666-UD-inner-X-centers-stage',
                                                       '066000000000000000000660',
-                                                      True, # state_hex
-                                                      735471)
+                                                      True) # state_hex
 
         '''
         Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
@@ -112,25 +111,19 @@ class RubiksCube666(RubiksCube):
                                                                 'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
                                                                 '666-UD-oblique-edge-pairing-left-only',
                                                                 '990000000099',
-                                                                True, # state_hex
-                                                                735471)
+                                                                True) # state_hex
 
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
                                                                 '666-UD-oblique-edge-pairing-right-only',
                                                                 '660000000066',
-                                                                True, # state_hex
-                                                                735471)
+                                                                True) # state_hex
 
         self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
                                                          'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt',
                                                          '666-UD-oblique-edge-pairing',
-
-                                                         # xUUxUxxUUxxUxUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUxUxxUUxxUxUUx
                                                          'ff00000000ff',
-
                                                          True, # state_hex
-                                                         123302901,
                                                          moves_6x6x6,
 
                                                          # These would break up the staged UD inner x-centers
@@ -160,8 +153,7 @@ class RubiksCube666(RubiksCube):
                                                       'lookup-table-6x6x6-step30-LR-inner-x-centers-stage.txt',
                                                       '666-LR-inner-X-centers-stage',
                                                       '000006600000066000000000',
-                                                      True, # state_hex
-                                                      12870)
+                                                      True) # state_hex
 
         '''
         lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt
@@ -183,15 +175,13 @@ class RubiksCube666(RubiksCube):
                                                                 'lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt',
                                                                 '666-LR-oblique-edge-pairing-left-only',
                                                                 '99009900',
-                                                                True, # state_hex
-                                                                12870)
+                                                                True) # state_hex
 
         self.lt_LR_oblique_edge_pairing_right_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt',
                                                                 '666-LR-oblique-edge-pairing-right-only',
                                                                 '66006600',
-                                                                True, # state_hex
-                                                                12870)
+                                                                True) # state_hex
         '''
         (16!/(8!*8!))^2 is 165,636,900
         I only built this 8 deep to keep it small thus the IDA
@@ -220,8 +210,7 @@ class RubiksCube666(RubiksCube):
                                                          'lookup-table-6x6x6-step40-LR-oblique-pairing.txt',
                                                          '666-LR-oblique-edge-pairing',
                                                          'ff00ff00',
-                                                          True, # state_hex
-                                                         5614410,
+                                                         True, # state_hex
                                                          moves_6x6x6,
 
                                                          # These would break up the staged UD inner x-centers
@@ -255,8 +244,7 @@ class RubiksCube666(RubiksCube):
                                                                          'lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt',
                                                                          'UD-centers-oblique-edges-solve',
                                                                          'xUUxUUUUUUUUxUUxxDDxDDDDDDDDxDDx',
-                                                                         False, # state_hex
-                                                                         343000)
+                                                                         False) # state_hex
 
         '''
         lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
@@ -281,8 +269,7 @@ class RubiksCube666(RubiksCube):
                                                                          'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt',
                                                                          'LR-centers-oblique-edges-solve',
                                                                          'xLLxLLLLLLLLxLLxxRRxRRRRRRRRxRRx',
-                                                                         False, # state_hex
-                                                                         343000)
+                                                                         False) # state_hex
 
         '''
         lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
@@ -307,8 +294,7 @@ class RubiksCube666(RubiksCube):
                                                                          'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
                                                                          'FB-centers-oblique-edges-solve',
                                                                          'xFFxFFFFFFFFxFFxxBBxBBBBBBBBxBBx',
-                                                                         False, # state_hex
-                                                                         343000)
+                                                                         False) # state_hex
 
         '''
         lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt
@@ -329,9 +315,7 @@ class RubiksCube666(RubiksCube):
                                                          'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt',
                                                          'LFRB-centers-oblique-edges-solve',
                                                          'xLLxLLLLLLLLxLLxxFFxFFFFFFFFxFFxxRRxRRRRRRRRxRRxxBBxBBBBBBBBxBBx',
-
                                                          False, # state_hex
-                                                         4793435,
                                                          moves_6x6x6,
 
                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers

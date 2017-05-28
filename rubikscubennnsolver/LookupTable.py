@@ -29,10 +29,19 @@ def file_binary_search_guts(filename, fh, state_to_find, width, linecount, init_
     #assert left <= right, "Invalid left %s vs. right %s (left must be <= right)" % (left, right)
     state = None
 
-    while left <= right:
+    while left <= right and left < linecount:
         mid = left + ((right - left) /2)
         fh.seek(mid * width)
-        #log.info("%s seek to %d looking for %s" % (filename, mid, state_to_find))
+
+        # Use this instead of the 'state, steps = fh.readline...' if you need to debug something
+        '''
+        line = fh.readline()
+        try:
+            state, steps = line.split(':')
+        except Exception as e:
+            log.info("%s left %d, right %d, mid %d, linecount %d, line '%s'" % (filename, left, right, mid, linecount, line))
+            raise e
+        '''
         state, steps = fh.readline().split(':')
 
         if state == state_to_find:
@@ -1480,7 +1489,7 @@ class LookupTableIDA(LookupTable):
             return False
 
         # Build a list of the steps we need to explore
-        steps_to_try = []
+        step_sequences_to_try = []
 
         for step in self.moves_all:
 
@@ -1491,8 +1500,47 @@ class LookupTableIDA(LookupTable):
             if steps_cancel_out(prev_step, step):
                 continue
 
-            steps_to_try.append(step)
+            # Special case, we must preserve the outer UD oblique edges that have already been paired
+            if self.filename in ('lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
+                                 'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
+                                 'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
+                                 'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
+                                 'lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt',
+                                 'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
+                                 'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
+                                 'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt'):
+                if step == "3Rw2":
+                    step = "3Rw2 3Lw2"
 
+                elif step == "3Lw2":
+                    step = "3Lw2 3Rw2"
+
+                elif step == "3Fw2":
+                    step = "3Fw2 3Bw2"
+
+                elif step == "3Bw2":
+                    step = "3Bw2 3Fw2"
+
+                elif step == "3Uw2":
+                    step = "3Uw2 3Dw2"
+
+                elif step == "3Dw2":
+                    step = "3Dw2 3Uw2"
+
+                # "3Uw", "3Uw'", "3Dw", "3Dw'"
+                elif step == "3Uw":
+                    step = "3Uw 3Dw'"
+
+                elif step == "3Uw'":
+                    step = "3Uw' 3Dw"
+
+                elif step == "3Dw":
+                    step = "3Dw 3Uw'"
+
+                elif step == "3Dw'":
+                    step = "3Dw' 3Uw"
+
+            step_sequences_to_try.append(step)
 
         # Now try each of those steps and record the (state, step, cost_to_goal) tuple
         # and build a list of states that we need to binary search for
@@ -1503,37 +1551,39 @@ class LookupTableIDA(LookupTable):
         first_step = True
         pt_costs_by_step = {}
 
-        for step in steps_to_try:
+        for step_sequence in step_sequences_to_try:
             self.ida_count += 1
             self.parent.state = copy(prev_state)
             self.parent.solution = copy(prev_solution)
             state_original = copy(self.parent.state)
-            self.parent.solution.append(step)
 
-            # We could just call self.parent.rotate(step) here but the explicit
-            # rotate_444, rotate_555, etc are faster.
-            if self.parent.size == 2:
-                rotate_222(self.parent.state, state_original, step)
+            for step in step_sequence.split():
+                self.parent.solution.append(step)
 
-            elif self.parent.size == 4:
-                rotate_444(self.parent.state, state_original, step)
+                # We could just call self.parent.rotate(step) here but the explicit
+                # rotate_444, rotate_555, etc are faster.
+                if self.parent.size == 2:
+                    rotate_222(self.parent.state, state_original, step)
 
-            elif self.parent.size == 5:
-                rotate_555(self.parent.state, state_original, step)
+                elif self.parent.size == 4:
+                    rotate_444(self.parent.state, state_original, step)
 
-            elif self.parent.size == 6:
-                rotate_666(self.parent.state, state_original, step)
+                elif self.parent.size == 5:
+                    rotate_555(self.parent.state, state_original, step)
 
-            elif self.parent.size == 7:
-                rotate_777(self.parent.state, state_original, step)
+                elif self.parent.size == 6:
+                    rotate_666(self.parent.state, state_original, step)
 
-            else:
-                raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+                elif self.parent.size == 7:
+                    rotate_777(self.parent.state, state_original, step)
+
+                else:
+                    raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
 
             # get the current state of the cube and the cost_to_goal
             state = self.state()
 
-            pt_costs_by_step[step] = []
+            pt_costs_by_step[step_sequence] = []
 
             for pt in self.prune_tables:
                 if first_step:
@@ -1541,10 +1591,10 @@ class LookupTableIDA(LookupTable):
 
                 pt_state = pt.state()
                 pt_states_to_check[pt.filename].append(pt_state)
-                pt_costs_by_step[step].append((pt.filename, pt_state))
+                pt_costs_by_step[step_sequence].append((pt.filename, pt_state))
 
             first_step = False
-            state_step.append((state, step, copy(self.parent.state), copy(self.parent.solution)))
+            state_step.append((state, step_sequence, copy(self.parent.state), copy(self.parent.solution)))
             states_to_check.append(state)
 
         #states_to_check = sorted(states_to_check)
@@ -1565,7 +1615,7 @@ class LookupTableIDA(LookupTable):
         steps_for_states = self.steps(states_to_check)
         #log.info("steps_for_states:\n%s\n" % pformat(steps_for_states))
 
-        for (state, step, parent_state, parent_solution) in state_step:
+        for (state, step_sequence, parent_state, parent_solution) in state_step:
             steps = steps_for_states[state]
             self.parent.state = parent_state
             self.parent.solution = parent_solution
@@ -1585,8 +1635,11 @@ class LookupTableIDA(LookupTable):
             # extract cost_to_goal from the pt_costs dictionary
             cost_to_goal = 0
 
-            for (pt_filename, pt_state) in pt_costs_by_step[step]:
+            for (pt_filename, pt_state) in pt_costs_by_step[step_sequence]:
                 pt_steps = pt_costs[pt_filename][pt_state]
+
+                if pt_steps is None:
+                    raise SolveError("%s: prune table %s does not have %s" % (self, pt_filename, pt_state))
 
                 len_pt_steps = len(pt_steps)
 
@@ -1599,7 +1652,7 @@ class LookupTableIDA(LookupTable):
                 continue
 
             # speed experiment...this reduces the time for IDA search by about 20%
-            magic_tuple = (cost_to_here + 1, threshold, step, state)
+            magic_tuple = (cost_to_here + 1, threshold, step_sequence, state)
 
             if magic_tuple in self.visited_states:
                 continue
@@ -1609,7 +1662,7 @@ class LookupTableIDA(LookupTable):
             solution_end_of_this_step = copy(self.parent.solution)
 
             # We need to explore this branch further, make a recursive ida_search() call
-            if self.ida_search(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
+            if self.ida_search(cost_to_here + 1, threshold, step_sequence, state_end_of_this_step, solution_end_of_this_step):
                 return True
 
         return False
@@ -1628,7 +1681,7 @@ class LookupTableIDA(LookupTable):
         steps = self.steps()
 
         if steps:
-            log.info("%s: IDA threshold %d, count %d" % (self, threshold, self.ida_count))
+            log.info("%s: IDA count %d, cube is already in a state that is in our lookup table" % (self, self.ida_count))
             return
 
         # If we are here (odds are very high we will be) it means that the current

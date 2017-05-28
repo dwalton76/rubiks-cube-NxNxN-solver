@@ -61,6 +61,8 @@ class RubiksCube777(RubiksCube):
         24!/(8!*16!) is 735,471
 
         lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt
+        lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt
+        lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt
         =================================================================
         1 steps has 5 entries (0 percent, 0.00x previous step)
         2 steps has 66 entries (0 percent, 13.20x previous step)
@@ -83,28 +85,21 @@ class RubiksCube777(RubiksCube):
                                                                   True, # state_hex
                                                                   735471)
 
-        '''
-        24!/(8!*16!) is 735,471
-
-        lookup-table-7x7x7-step12-UD-oblique-edge-pairing-outside-only.txt
-        ==================================================================
-        1 steps has 4 entries (0 percent, 0.00x previous step)
-        2 steps has 67 entries (0 percent, 16.75x previous step)
-        3 steps has 900 entries (0 percent, 13.43x previous step)
-        4 steps has 9,626 entries (1 percent, 10.70x previous step)
-        5 steps has 80,202 entries (10 percent, 8.33x previous step)
-        6 steps has 329,202 entries (44 percent, 4.10x previous step)
-        7 steps has 302,146 entries (41 percent, 0.92x previous step)
-        8 steps has 13,324 entries (1 percent, 0.04x previous step)
-
-        Total: 735,471 entries
-        '''
-        self.lt_UD_oblique_edge_pairing_outside_only = LookupTable(self,
-                                                                   'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-outside-only.txt',
-                                                                   '777-UD-oblique-edge-pairing-outside-only',
-                                                                   '15104540000000000000000000000000a8822a',
+        self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
+                                                                   'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
+                                                                   '777-UD-oblique-edge-pairing-left-only',
+                                                                   'TBD',
                                                                    True, # state_hex
                                                                    735471)
+
+        self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
+                                                                   'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
+                                                                   '777-UD-oblique-edge-pairing-right-only',
+                                                                   'TBD',
+                                                                   True, # state_hex
+                                                                   735471)
+
+
         '''
         lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
         =====================================================
@@ -134,8 +129,9 @@ class RubiksCube777(RubiksCube):
                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"),
 
                                                          # prune tables
-                                                         (self.lt_UD_oblique_edge_pairing_outside_only,
-                                                          self.lt_UD_oblique_edge_pairing_middle_only),
+                                                         (self.lt_UD_oblique_edge_pairing_middle_only,
+                                                          self.lt_UD_oblique_edge_pairing_left_only,
+                                                          self.lt_UD_oblique_edge_pairing_right_only),
                                                          threshold_to_shortcut=3)
 
         self.lt_LR_oblique_edge_pairing_middle_only = LookupTable(self,
@@ -145,10 +141,17 @@ class RubiksCube777(RubiksCube):
                                                       True, # state_hex
                                                       12870)
 
-        self.lt_LR_oblique_edge_pairing_outside_only = LookupTable(self,
-                                                      'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-outside-only.txt',
-                                                      '777-LR-oblique-edge-pairing-outside-only',
-                                                      '5441150000001510454000000',
+        self.lt_LR_oblique_edge_pairing_left_only = LookupTable(self,
+                                                      'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
+                                                      '777-LR-oblique-edge-pairing-left-only',
+                                                      'TBD',
+                                                      True, # state_hex
+                                                      12870)
+
+        self.lt_LR_oblique_edge_pairing_right_only = LookupTable(self,
+                                                      'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt',
+                                                      '777-LR-oblique-edge-pairing-left-only',
+                                                      'TBD',
                                                       True, # state_hex
                                                       12870)
 
@@ -166,7 +169,8 @@ class RubiksCube777(RubiksCube):
 
                                                       # prune tables
                                                       (self.lt_LR_oblique_edge_pairing_middle_only,
-                                                       self.lt_LR_oblique_edge_pairing_outside_only),
+                                                       self.lt_LR_oblique_edge_pairing_left_only,
+                                                       self.lt_LR_oblique_edge_pairing_right_only),
 
                                                       threshold_to_shortcut=8)
 

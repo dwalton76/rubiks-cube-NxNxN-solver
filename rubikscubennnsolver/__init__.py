@@ -2,7 +2,6 @@
 from collections import OrderedDict
 from copy import copy
 from pprint import pformat
-from rubikscubennnsolver.pts_line_bisect import get_line_startswith
 from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis
 import logging
 import math

@@ -2,7 +2,6 @@
 from collections import OrderedDict
 from copy import copy
 from pprint import pformat
-from rubikscubennnsolver.pts_line_bisect import get_line_startswith
 from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5

@@ -62,8 +62,8 @@ class RubiksCube444(RubiksCube):
         self.lt_UD_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step01-UD-centers-stage.txt',
                                                'UD-centers-stage',
-                                               'UUUUxxxxxxxxxxxxxxxxUUUU',
-                                                False,
+                                               'f0000f',
+                                                True,
                                                 735471)
 
 
@@ -85,8 +85,8 @@ class RubiksCube444(RubiksCube):
         self.lt_LR_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step02-LR-centers-stage.txt',
                                                'LR-centers-stage',
-                                               'LLLLxxxxLLLLxxxx',
-                                                False,
+                                               'f0f0',
+                                                True,
                                                 12870)
 
 

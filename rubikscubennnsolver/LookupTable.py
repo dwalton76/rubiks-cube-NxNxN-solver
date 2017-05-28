@@ -28,7 +28,7 @@ def file_binary_search_guts(filename, fh, state_to_find, width, linecount, init_
     state = None
 
     while left <= right:
-        mid = (left + right) / 2
+        mid = left + ((right - left) /2)
         fh.seek(mid * width)
         #log.info("%s seek to %d looking for %s" % (filename, mid, state_to_find))
         state, steps = fh.readline().split(':')
@@ -49,12 +49,14 @@ def file_binary_search(filename, fh, state_to_find, width, linecount):
     return value
 
 
-def file_binary_search_multiple_keys(filename, fh, states_to_find, width, linecount):
+def file_binary_search_multiple_keys(filename, fh, states_to_find, width, linecount, debug=False):
     results = {}
     states_to_find = sorted(states_to_find)
     min_left = None
     max_right = None
-    #log.info("%s linecount %d, states_to_find:\n%s\n" % (filename, linecount, pformat(states_to_find)))
+
+    if debug:
+        log.info("%s linecount %d, states_to_find:\n%s\n" % (filename, linecount, pformat(states_to_find)))
 
     while states_to_find:
         first_state_to_find = states_to_find[0]
@@ -63,7 +65,10 @@ def file_binary_search_multiple_keys(filename, fh, states_to_find, width, lineco
         if len(states_to_find) == 1:
             (_, value) = file_binary_search_guts(filename, fh, first_state_to_find, width, linecount, min_left, max_right)
             results[first_state_to_find] = value
-            #log.info("%s results\n%s\n" % (filename, pformat(results)))
+
+            if debug:
+                log.info("%s results\n%s\n" % (filename, pformat(results)))
+
             return results
 
         # We sorted states_to_find so find the first state and its linenumber (or the linenumber
@@ -90,10 +95,14 @@ def file_binary_search_multiple_keys(filename, fh, states_to_find, width, lineco
         else:
             max_right = min(linenumber + 1, linecount)
 
-        #log.info("%s first state %s, last state %s, min_left %d, max_right %d" % (filename, first_state_to_find, last_state_to_find, min_left, max_right))
+        if debug:
+            log.info("%s first state %s, last state %s, min_left %d, max_right %d" % (filename, first_state_to_find, last_state_to_find, min_left, max_right))
+
         states_to_find = states_to_find[1:-1]
 
-    #log.info("%s results\n%s\n" % (filename, pformat(results)))
+    if debug:
+        log.info("%s results\n%s\n" % (filename, pformat(results)))
+
     return results
 
 
@@ -259,15 +268,15 @@ class LookupTable(object):
                 # [7, 8, 9, 12, 13, 14, 17, 18, 19]
                 #  X  T  X   T  TX   T   X   T   X
                 #  0  1  2   3   4   5   6   7   8
-                state.append(self.parent.state[side.center_pos[0]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[2]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[4]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[6]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[8]])
+                state.extend([self.parent.state[side.center_pos[0]],
+                              'x',
+                              self.parent.state[side.center_pos[2]],
+                              'x',
+                              self.parent.state[side.center_pos[4]],
+                              'x',
+                              self.parent.state[side.center_pos[6]],
+                              'x',
+                              self.parent.state[side.center_pos[8]]])
             state = ''.join(state)
             state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')
 
@@ -277,15 +286,15 @@ class LookupTable(object):
                 # [7, 8, 9, 12, 13, 14, 17, 18, 19]
                 #  X  T  X   T  TX   T   X   T   X
                 #  0  1  2   3   4   5   6   7   8
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[1]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[3]])
-                state.append(self.parent.state[side.center_pos[4]])
-                state.append(self.parent.state[side.center_pos[5]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[7]])
-                state.append('x')
+                state.extend(['x',
+                              self.parent.state[side.center_pos[1]],
+                              'x',
+                              self.parent.state[side.center_pos[3]],
+                              self.parent.state[side.center_pos[4]],
+                              self.parent.state[side.center_pos[5]],
+                              'x',
+                              self.parent.state[side.center_pos[7]],
+                              'x'])
             state = ''.join(state)
             state = state.replace('F', 'x').replace('R', 'L').replace('B', 'x')
 
@@ -355,15 +364,15 @@ class LookupTable(object):
                 # [7, 8, 9, 12, 13, 14, 17, 18, 19]
                 #  X  T  X   T  TX   T   X   T   X
                 #  0  1  2   3   4   5   6   7   8
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[1]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[3]])
-                state.append(self.parent.state[side.center_pos[4]])
-                state.append(self.parent.state[side.center_pos[5]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[7]])
-                state.append('x')
+                state.extend(['x',
+                              self.parent.state[side.center_pos[1]],
+                              'x',
+                              self.parent.state[side.center_pos[3]],
+                              self.parent.state[side.center_pos[4]],
+                              self.parent.state[side.center_pos[5]],
+                              'x',
+                              self.parent.state[side.center_pos[7]],
+                              'x'])
 
             state = ''.join(state)
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
@@ -377,15 +386,15 @@ class LookupTable(object):
                 # [7, 8, 9, 12, 13, 14, 17, 18, 19]
                 #  X  T  X   T  TX   T   X   T   X
                 #  0  1  2   3   4   5   6   7   8
-                state.append(self.parent.state[side.center_pos[0]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[2]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[4]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[6]])
-                state.append('x')
-                state.append(self.parent.state[side.center_pos[8]])
+                state.extend([self.parent.state[side.center_pos[0]],
+                              'x',
+                              self.parent.state[side.center_pos[2]],
+                              'x',
+                              self.parent.state[side.center_pos[4]],
+                              'x',
+                              self.parent.state[side.center_pos[6]],
+                              'x',
+                              self.parent.state[side.center_pos[8]]])
 
             state = ''.join(state)
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
@@ -1299,13 +1308,6 @@ class LookupTable(object):
             # Return a list of steps that correspond to this state
             with open(self.filename, 'r') as fh:
                 return file_binary_search(self.filename, fh, state_to_find, self.width, self.linecount)
-                '''
-                steps = file_binary_search(self.filename, fh, state_to_find, self.width, self.linecount)
-
-                if steps:
-                    return steps
-            return []
-                '''
 
     def steps_length(self, state=None):
         return len(self.steps(state))
@@ -1379,7 +1381,11 @@ class LookupTableIDA(LookupTable):
         # Now try each of those steps and record the (state, step, cost_to_goal) tuple
         # and build a list of states that we need to binary search for
         states_to_check = []
-        state_step_cost = []
+        state_step = []
+        pt_states_to_check = {}
+        costs_to_goal = {}
+        first_step = True
+        pt_costs_by_step = {}
 
         for step in steps_to_try:
             self.parent.state = copy(prev_state)
@@ -1389,30 +1395,48 @@ class LookupTableIDA(LookupTable):
 
             # get the current state of the cube and the cost_to_goal
             state = self.state()
-            max_cost_to_goal = threshold - cost_to_here
-            cost_to_goal = self.ida_cost(max_cost_to_goal)
 
-            state_step_cost.append((state, step, cost_to_goal))
+            pt_costs_by_step[step] = []
+
+            for pt in self.prune_tables:
+                if first_step:
+                    pt_states_to_check[pt.filename] = []
+
+                pt_state = pt.state()
+                pt_states_to_check[pt.filename].append(pt_state)
+                pt_costs_by_step[step].append((pt.filename, pt_state))
+
+            first_step = False
+            state_step.append((state, step, copy(self.parent.state), copy(self.parent.solution)))
             states_to_check.append(state)
 
         #states_to_check = sorted(states_to_check)
         #log.info("states_to_check: %s" % pformat(states_to_check))
-        #log.info("state_step_cost:\n%s\n" % pformat(state_step_cost))
+        #log.info("state_step:\n%s\n" % pformat(state_step))
+        #log.info("pt_states_to_check:\n%s\n" % pformat(pt_states_to_check))
+        #log.info("pt_costs_by_step:\n%s\n" % pformat(pt_costs_by_step))
+        pt_costs = {}
+
+        for pt in self.prune_tables:
+            states_to_find = pt_states_to_check[pt.filename]
+
+            with open(pt.filename, 'r') as fh:
+                pt_costs[pt.filename] = file_binary_search_multiple_keys(pt.filename, fh, states_to_find, pt.width, pt.linecount)
+
+        # This will do a multi-key binary search of all states_to_check
         steps_for_states = self.steps(states_to_check)
         #log.info("steps_for_states:\n%s\n" % pformat(steps_for_states))
 
-        for (state, step, cost_to_goal) in state_step_cost:
+        for (state, step, parent_state, parent_solution) in state_step:
             steps = steps_for_states[state]
+            self.parent.state = parent_state
+            self.parent.solution = parent_solution
 
             # If there is an entry for 'state' in the lookup table then we have
             # found what we were looking for.  Apply the step needed to put the
             # cube in the state that is in the lookup tables and then apply the
             # 'steps' for this state in the lookup table.
             if steps:
-                self.parent.state = copy(prev_state)
-                self.parent.solution = copy(prev_solution)
-                self.parent.rotate(step)
-
                 #log.info("match IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
                 #        (step, cost_to_here, cost_to_goal, threshold))
                 for step in steps:
@@ -1420,12 +1444,21 @@ class LookupTableIDA(LookupTable):
 
                 return True
 
+            # extract cost_to_goal from the pt_costs dictionary
+            cost_to_goal = 0
+
+            for (pt_filename, pt_state) in pt_costs_by_step[step]:
+                pt_steps = pt_costs[pt_filename][pt_state]
+                len_pt_steps = len(pt_steps)
+
+                if len_pt_steps > cost_to_goal:
+                    cost_to_goal = len_pt_steps
+
             if (cost_to_here + 1 + cost_to_goal) > threshold:
                 #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
                 #        (step, cost_to_here, cost_to_goal, threshold))
                 continue
 
-            # dwalton try without this one time
             # speed experiment...this reduces the time for IDA search by about 20%
             magic_tuple = (cost_to_here + 1, threshold, step, state)
 
@@ -1433,15 +1466,10 @@ class LookupTableIDA(LookupTable):
                 continue
             self.visited_states.add(magic_tuple)
 
-            # We need to explore this branch further, apply 'step' and make a
-            # recursive ida_search() call
-            self.parent.state = copy(prev_state)
-            self.parent.solution = copy(prev_solution)
-            self.parent.rotate(step)
-
             state_end_of_this_step = copy(self.parent.state)
             solution_end_of_this_step = copy(self.parent.solution)
 
+            # We need to explore this branch further, make a recursive ida_search() call
             if self.ida_search(cost_to_here + 1, threshold, step, state_end_of_this_step, solution_end_of_this_step):
                 return True
 

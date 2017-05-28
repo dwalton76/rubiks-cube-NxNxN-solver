@@ -2,6 +2,7 @@
 from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
+from rubikscubennnsolver.rotate_xxx import rotate_222, rotate_444, rotate_555, rotate_666, rotate_777
 import logging
 import math
 import os
@@ -1388,10 +1389,30 @@ class LookupTableIDA(LookupTable):
         pt_costs_by_step = {}
 
         for step in steps_to_try:
+            self.ida_count += 1
             self.parent.state = copy(prev_state)
             self.parent.solution = copy(prev_solution)
-            self.parent.rotate(step)
-            self.ida_count += 1
+            state_original = copy(self.parent.state)
+
+            # We could just call self.parent.rotate(step) here but the explicit
+            # rotate_444, rotate_555, etc are faster.
+            if self.parent.size == 2:
+                rotate_222(self.parent.state, state_original, step)
+
+            elif self.parent.size == 4:
+                rotate_444(self.parent.state, state_original, step)
+
+            elif self.parent.size == 5:
+                rotate_555(self.parent.state, state_original, step)
+
+            elif self.parent.size == 6:
+                rotate_666(self.parent.state, state_original, step)
+
+            elif self.parent.size == 7:
+                rotate_777(self.parent.state, state_original, step)
+
+            else:
+                raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
 
             # get the current state of the cube and the cost_to_goal
             state = self.state()

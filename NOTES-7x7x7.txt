@@ -1,0 +1,11 @@
+
+7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges
+- originally took 10 minutes with two of the 24 million PTs
+- 2m 45s with three of the 24 million PTs
+
+Both of those were when we first did self.lt_LR_solve_inner_centers_and_oblique_edges.solve() to
+try get things somewhat in place in hopes that we would be more likely to find a hit in the table.
+I tried it without that call but it didn't find a solution within 20 minutes so I ctrl-C it.
+
+ 
+

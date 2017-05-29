@@ -1378,7 +1378,7 @@ class LookupTable(object):
 
             state = ''.join(state)
 
-        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-center-only':
+        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-inner-t-center-only':
             state = []
 
             for side in self.sides_LFRB:
@@ -1393,7 +1393,34 @@ class LookupTable(object):
 
             state = ''.join(state)
 
-        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-outside-only':
+        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-left-oblique-edge-only':
+            state = []
+
+            for side in self.sides_LFRB:
+                for square_index in side.center_pos:
+                    if square_index in (66, 68, 74, 80, 82, 115, 117, 123, 129, 131, 164, 166, 172, 178, 180, 213, 215, 221, 227, 229,
+                                        59, 69, 79, 89, 108, 118, 128, 138, 157, 167, 177, 187, 206, 216, 226, 236):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
+        # dwalton
+        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-middle-oblique-edge-only':
+            state = []
+
+            for side in self.sides_LFRB:
+                for square_index in side.center_pos:
+                    if square_index in (66, 68, 74, 80, 82, 115, 117, 123, 129, 131, 164, 166, 172, 178, 180, 213, 215, 221, 227, 229,
+                                        60, 72, 76, 88, 109, 121, 125, 137, 158, 170, 174, 186, 207, 219, 223, 235):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
+        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-left-right-oblique-edges-only':
             state = []
 
             for side in self.sides_LFRB:

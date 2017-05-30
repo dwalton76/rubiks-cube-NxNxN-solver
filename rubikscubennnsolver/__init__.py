@@ -2755,20 +2755,92 @@ class RubiksCube(object):
         log.debug('kociemba string: %s' % kociemba_string)
         return kociemba_string
 
-    def solve_PLL_and_OLL(self):
-        oll_id = None
+    def solve_OLL(self):
+
+        # Check all 12 edges, rotate the one with OLL to U-south
+        while True:
+            has_oll = False
+
+            if self.state[self.sideU.corner_pos[2]] == self.state[self.sideF.edge_north_pos[0]]:
+                has_oll = True
+
+            elif self.state[self.sideU.corner_pos[0]] == self.state[self.sideL.edge_north_pos[0]]:
+                has_oll = True
+                self.rotate_y_reverse()
+
+            elif self.state[self.sideU.corner_pos[3]] == self.state[self.sideR.edge_north_pos[0]]:
+                has_oll = True
+                self.rotate_y()
+
+            elif self.state[self.sideU.corner_pos[1]] == self.state[self.sideB.edge_north_pos[0]]:
+                has_oll = True
+                self.rotate_y()
+                self.rotate_y()
+
+            elif self.state[self.sideD.corner_pos[0]] == self.state[self.sideF.edge_south_pos[0]]:
+                has_oll = True
+                self.rotate_x()
+
+            elif self.state[self.sideD.corner_pos[0]] == self.state[self.sideL.edge_south_pos[0]]:
+                has_oll = True
+                self.rotate_y_reverse()
+                self.rotate_x()
+
+            elif self.state[self.sideD.corner_pos[1]] == self.state[self.sideR.edge_south_pos[0]]:
+                has_oll = True
+                self.rotate_y()
+                self.rotate_x()
+
+            elif self.state[self.sideD.corner_pos[2]] == self.state[self.sideB.edge_south_pos[0]]:
+                has_oll = True
+                self.rotate_y()
+                self.rotate_y()
+                self.rotate_x()
+
+            elif self.state[self.sideF.corner_pos[0]] == self.state[self.sideL.edge_east_pos[0]]:
+                has_oll = True
+                self.rotate_z()
+
+            elif self.state[self.sideF.corner_pos[1]] == self.state[self.sideR.edge_west_pos[0]]:
+                has_oll = True
+                self.rotate_z_reverse()
+
+            elif self.state[self.sideB.corner_pos[0]] == self.state[self.sideR.edge_east_pos[0]]:
+                has_oll = True
+                self.rotate_y()
+                self.rotate_z_reverse()
+
+            elif self.state[self.sideB.corner_pos[1]] == self.state[self.sideL.edge_west_pos[0]]:
+                has_oll = True
+                self.rotate_y_reverse()
+                self.rotate_z()
+
+            if has_oll:
+                oll_solution = "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
+                log.warning("Solving OLL %s" % oll_solution)
+                self.print_cube()
+
+                for step in oll_solution.split():
+                    self.rotate(step)
+            else:
+                break
+
+    def solve_PLL(self):
         pll_id = None
+
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
 
         # rotate one of the hosed edges to U-south
         if self.state[self.sideU.edge_south_pos[0]] != 'U':
             pass
         elif self.state[self.sideU.edge_north_pos[0]] != 'U':
-            raise ImplementThis()
+            self.rotate_y()
+            self.rotate_y()
         elif self.state[self.sideU.edge_west_pos[0]] != 'U':
-            raise ImplementThis()
+            self.rotate_y_reverse()
         elif self.state[self.sideU.edge_east_pos[0]] != 'U':
-            raise ImplementThis()
-
+            self.rotate_y()
         elif self.state[self.sideL.edge_north_pos[0]] != 'L':
             raise ImplementThis()
         elif self.state[self.sideL.edge_south_pos[0]] != 'L':
@@ -2776,28 +2848,28 @@ class RubiksCube(object):
             self.rotate_x()
             self.rotate_y_reverse()
         elif self.state[self.sideL.edge_east_pos[0]] != 'L':
-            raise ImplementThis()
+            self.rotate_z()
         elif self.state[self.sideL.edge_west_pos[0]] != 'L':
-            raise ImplementThis()
-
+            self.rotate_y_reverse()
+            self.rotate_z()
         elif self.state[self.sideF.edge_north_pos[0]] != 'F':
             raise ImplementThis()
         elif self.state[self.sideF.edge_south_pos[0]] != 'F':
-            raise ImplementThis()
+            self.rotate_x()
         elif self.state[self.sideF.edge_east_pos[0]] != 'F':
-            raise ImplementThis()
+            self.rotate_z_reverse()
         elif self.state[self.sideF.edge_west_pos[0]] != 'F':
             raise ImplementThis()
-
         elif self.state[self.sideR.edge_north_pos[0]] != 'R':
             raise ImplementThis()
         elif self.state[self.sideR.edge_south_pos[0]] != 'R':
-            raise ImplementThis()
+            self.rotate_y()
+            self.rotate_x()
         elif self.state[self.sideR.edge_east_pos[0]] != 'R':
-            raise ImplementThis()
+            self.rotate_y()
+            self.rotate_z_reverse()
         elif self.state[self.sideR.edge_west_pos[0]] != 'R':
             raise ImplementThis()
-
         elif self.state[self.sideB.edge_north_pos[0]] != 'B':
             raise ImplementThis()
         elif self.state[self.sideB.edge_south_pos[0]] != 'B':
@@ -2807,7 +2879,6 @@ class RubiksCube(object):
             raise ImplementThis()
         elif self.state[self.sideB.edge_west_pos[0]] != 'B':
             raise ImplementThis()
-
         elif self.state[self.sideD.edge_north_pos[0]] != 'D':
             raise ImplementThis()
         elif self.state[self.sideD.edge_south_pos[0]] != 'D':
@@ -2817,6 +2888,7 @@ class RubiksCube(object):
         elif self.state[self.sideD.edge_west_pos[0]] != 'D':
             raise ImplementThis()
         else:
+            self.print_cube()
             raise Exception("we should not be here")
 
         if self.state[self.sideF.edge_north_pos[0]] == 'F':
@@ -2824,14 +2896,13 @@ class RubiksCube(object):
 
         # rotate the other hosed edges to U-west
         if self.state[self.sideU.edge_south_pos[0]] != self.state[self.sideU.corner_pos[0]]:
-            oll_id = 1
+            raise ImplementThis()
         elif self.state[self.sideU.edge_north_pos[0]] != self.state[self.sideU.corner_pos[0]]:
             raise ImplementThis()
         elif self.state[self.sideU.edge_west_pos[0]] != self.state[self.sideU.corner_pos[0]]:
             raise ImplementThis()
         elif self.state[self.sideU.edge_east_pos[0]] != self.state[self.sideU.corner_pos[0]]:
             raise ImplementThis()
-
         elif self.state[self.sideL.edge_north_pos[0]] != self.state[self.sideL.corner_pos[0]]:
             raise ImplementThis()
         elif self.state[self.sideL.edge_south_pos[0]] != self.state[self.sideL.corner_pos[0]]:
@@ -2839,15 +2910,14 @@ class RubiksCube(object):
         elif self.state[self.sideL.edge_east_pos[0]] != self.state[self.sideL.corner_pos[0]]:
             raise ImplementThis()
         elif self.state[self.sideL.edge_west_pos[0]] != self.state[self.sideL.corner_pos[0]]:
-            raise ImplementThis()
-
+            self.rotate_y()
+            pll_id = 2
         elif self.state[self.sideF.edge_south_pos[0]] != self.state[self.sideF.corner_pos[0]]:
             raise ImplementThis()
         elif self.state[self.sideF.edge_east_pos[0]] != self.state[self.sideF.corner_pos[0]]:
             raise ImplementThis()
         elif self.state[self.sideF.edge_west_pos[0]] != self.state[self.sideF.corner_pos[0]]:
             raise ImplementThis()
-
         elif self.state[self.sideR.edge_north_pos[0]] != self.state[self.sideR.corner_pos[0]]:
             self.rotate_y()
             pll_id = 2
@@ -2857,7 +2927,6 @@ class RubiksCube(object):
             raise ImplementThis()
         elif self.state[self.sideR.edge_west_pos[0]] != self.state[self.sideR.corner_pos[0]]:
             raise ImplementThis()
-
         elif self.state[self.sideB.edge_north_pos[0]] != self.state[self.sideB.corner_pos[0]]:
             raise ImplementThis()
         elif self.state[self.sideB.edge_south_pos[0]] != self.state[self.sideB.corner_pos[0]]:
@@ -2866,7 +2935,6 @@ class RubiksCube(object):
             raise ImplementThis()
         elif self.state[self.sideB.edge_west_pos[0]] != self.state[self.sideB.corner_pos[0]]:
             raise ImplementThis()
-
         elif self.state[self.sideD.edge_north_pos[0]] != self.state[self.sideD.corner_pos[0]]:
             raise ImplementThis()
         elif self.state[self.sideD.edge_south_pos[0]] != self.state[self.sideD.corner_pos[0]]:
@@ -2879,23 +2947,16 @@ class RubiksCube(object):
             raise Exception("we should not be here")
 
         # http://www.speedcubing.com/chris/4speedsolve3.html
-        if oll_id == 1:
-            oll_solution = "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
-            log.warning("Solving OLL ID %d: %s" % (oll_id, oll_solution))
-            self.print_cube()
-
-            for step in oll_solution.split():
-                self.rotate(step)
-
-        elif pll_id == 2:
+        if pll_id == 2:
             pll_solution = "L2 D %dFw2 %dLw2 F2 %dLw2 L2 F2 %dLw2 %dFw2 D' L2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
             log.warning("Solving PLL ID %d: %s" % (pll_id, pll_solution))
             self.print_cube()
 
             for step in pll_solution.split():
                 self.rotate(step)
+
         else:
-            raise ImplementThis("oll_id %s, pll_id %s" % (oll_id, pll_id))
+            raise ImplementThis("pll_id %s" % pll_id)
 
     def solve_333(self):
         kociemba_string = self.get_kociemba_string(False)
@@ -2920,11 +2981,14 @@ class RubiksCube(object):
             self.rotate(step)
 
         if not self.solved():
-            self.solve_PLL_and_OLL()
+            self.solve_OLL()
 
             if not self.solved():
-                print("We hit either OLL or PLL parity and could not solve it")
-                sys.exit(1)
+                self.solve_PLL()
+
+                if not self.solved():
+                    print("We hit either OLL or PLL parity and could not solve it")
+                    sys.exit(1)
 
     def get_corner_swap_count(self, debug=False):
 
@@ -3446,14 +3510,8 @@ class RubiksCube(object):
                     # Do not consider any center solution that leads to OLL parity
                     # dwalton ignore this for a bit
                     #if self.is_even() and self.center_solution_leads_to_oll_parity():
-                    if self.size == 4 and self.center_solution_leads_to_oll_parity():
+                    if False and self.size == 4 and self.center_solution_leads_to_oll_parity():
                         log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
-
-                    # Do not consider any solution that pairs an edge for 4x4x4...it is easier
-                    # to handle the scenario where all edges are unpaired
-                    elif self.size == 4 and self.get_non_paired_edges_count() != 12:
-                        log.info("%s on top, %s in front, opening move %4s: %d edges unpaired, solution %s" %
-                            (upper_side_name, front_side_name, opening_move, self.get_non_paired_edges_count(), ' '.join(self.solution)))
 
                     else:
                         center_solution_length = self.get_solution_len_minus_rotates(self.solution)

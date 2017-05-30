@@ -69,7 +69,8 @@ class RubiksCube666(RubiksCube):
                                                       'lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt',
                                                       '666-UD-inner-X-centers-stage',
                                                       '066000000000000000000660',
-                                                      True) # state_hex
+                                                      True,  # state_hex
+                                                      False) # prune table
 
         '''
         Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
@@ -111,13 +112,15 @@ class RubiksCube666(RubiksCube):
                                                                 'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
                                                                 '666-UD-oblique-edge-pairing-left-only',
                                                                 '990000000099',
-                                                                True) # state_hex
+                                                                True, # state_hex
+                                                                True) # prune table
 
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
                                                                 '666-UD-oblique-edge-pairing-right-only',
                                                                 '660000000066',
-                                                                True) # state_hex
+                                                                True, # state_hex
+                                                                True) # prune table
 
         self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
                                                          'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt',
@@ -131,9 +134,7 @@ class RubiksCube666(RubiksCube):
 
                                                          # prune tables
                                                          (self.lt_UD_oblique_edge_pairing_left_only,
-                                                          self.lt_UD_oblique_edge_pairing_right_only),
-
-                                                         threshold_to_shortcut=7)
+                                                          self.lt_UD_oblique_edge_pairing_right_only))
         '''
         16!/(8!*8!) is 12,870
 
@@ -153,7 +154,8 @@ class RubiksCube666(RubiksCube):
                                                       'lookup-table-6x6x6-step30-LR-inner-x-centers-stage.txt',
                                                       '666-LR-inner-X-centers-stage',
                                                       '000006600000066000000000',
-                                                      True) # state_hex
+                                                      True, # state_hex
+                                                      False) # prune table
 
         '''
         lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt
@@ -175,13 +177,15 @@ class RubiksCube666(RubiksCube):
                                                                 'lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt',
                                                                 '666-LR-oblique-edge-pairing-left-only',
                                                                 '99009900',
-                                                                True) # state_hex
+                                                                True, # state_hex
+                                                                True) # prune table
 
         self.lt_LR_oblique_edge_pairing_right_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt',
                                                                 '666-LR-oblique-edge-pairing-right-only',
                                                                 '66006600',
-                                                                True) # state_hex
+                                                                True, # state_hex
+                                                                True) # prune table
         '''
         (16!/(8!*8!))^2 is 165,636,900
         I only built this 8 deep to keep it small thus the IDA
@@ -220,8 +224,7 @@ class RubiksCube666(RubiksCube):
 
                                                          # prune tables
                                                          (self.lt_LR_oblique_edge_pairing_left_only,
-                                                          self.lt_LR_oblique_edge_pairing_right_only),
-                                                         threshold_to_shortcut=8)
+                                                          self.lt_LR_oblique_edge_pairing_right_only))
 
         '''
         lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt
@@ -244,7 +247,8 @@ class RubiksCube666(RubiksCube):
                                                                          'lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt',
                                                                          'UD-centers-oblique-edges-solve',
                                                                          'xUUxUUUUUUUUxUUxxDDxDDDDDDDDxDDx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         False) # prune table
 
         '''
         lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
@@ -269,7 +273,8 @@ class RubiksCube666(RubiksCube):
                                                                          'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt',
                                                                          'LR-centers-oblique-edges-solve',
                                                                          'xLLxLLLLLLLLxLLxxRRxRRRRRRRRxRRx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         True)  # prune table
 
         '''
         lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
@@ -294,7 +299,8 @@ class RubiksCube666(RubiksCube):
                                                                          'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
                                                                          'FB-centers-oblique-edges-solve',
                                                                          'xFFxFFFFFFFFxFFxxBBxBBBBBBBBxBBx',
-                                                                         False) # state_hex
+                                                                         False, # state_hex
+                                                                         True)  # prune table
 
         '''
         lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt
@@ -324,9 +330,7 @@ class RubiksCube666(RubiksCube):
 
                                                          # prune tables
                                                          (self.lt_LR_solve_inner_x_centers_and_oblique_edges,
-                                                          self.lt_FB_solve_inner_x_centers_and_oblique_edges),
-
-                                                         threshold_to_shortcut=13)
+                                                          self.lt_FB_solve_inner_x_centers_and_oblique_edges))
 
     def populate_fake_555_for_ULFRBD(self, fake_555):
 
@@ -402,8 +406,12 @@ class RubiksCube666(RubiksCube):
     def group_centers_guts(self):
         self.lt_init()
         self.lt_UD_inner_x_centers_stage.solve()
+
+        self.lt_UD_oblique_edge_pairing_left_only.solve() # speed up IDA
         self.lt_UD_oblique_edge_pairing.solve()
         self.lt_LR_inner_x_centers_stage.solve()
+
+        self.lt_LR_oblique_edge_pairing_left_only.solve() # speed up IDA
         self.lt_LR_oblique_edge_pairing.solve()
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
@@ -412,6 +420,8 @@ class RubiksCube666(RubiksCube):
         # - solve the LR centers and pair the LR oblique edges
         # - solve the FB centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
+
+        self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
         log.info("inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         # self.print_cube()

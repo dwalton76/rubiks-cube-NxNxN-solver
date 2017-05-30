@@ -61,7 +61,8 @@ class RubiksCube555(RubiksCube):
                                                  'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
                                                  'UD-T-centers-stage',
                                                  '174000000000ba',
-                                                 True) # state_hex
+                                                 True, # state_hex
+                                                 True) # prune table
 
         '''
         lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
@@ -83,7 +84,8 @@ class RubiksCube555(RubiksCube):
                                                  'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
                                                  'UD-X-centers-stage',
                                                  '2aa00000000155',
-                                                 True) # state_hex
+                                                 True, # state_hex
+                                                 True) # prune table
 
         '''
         There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
@@ -113,9 +115,7 @@ class RubiksCube555(RubiksCube):
 
                                                  # prune tables
                                                  (self.lt_UD_T_centers_stage,
-                                                  self.lt_UD_X_centers_stage),
-
-                                                 threshold_to_shortcut=8)
+                                                  self.lt_UD_X_centers_stage))
 
         '''
         lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt
@@ -134,7 +134,8 @@ class RubiksCube555(RubiksCube):
                                                              'lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt',
                                                              'LR-centers-stage-on-LFRB-x-center-only',
                                                              'aa802aa00',
-                                                             True) # state_hex
+                                                             True, # state_hex
+                                                             True) # prune table
 
         '''
         lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt
@@ -155,7 +156,8 @@ class RubiksCube555(RubiksCube):
                                                              'lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt',
                                                              'LR-centers-stage-on-LFRB-t-center-only',
                                                              '5d0017400',
-                                                             True) # state_hex
+                                                             True, # state_hex
+                                                             True) # prune table
 
         '''
         Stage LR centers to sides L or R, this will automagically stage
@@ -215,21 +217,26 @@ class RubiksCube555(RubiksCube):
                                                'lookup-table-5x5x5-step31-UD-centers-solve.txt',
                                                'UD-centers-solve-on-all',
                                                'UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxDDDDDDDDD',
-                                               False) # state_hex
+                                               False, # state_hex
+                                               True) # prune table
 
         self.lt_LR_centers_solve = LookupTable(self,
                                                'lookup-table-5x5x5-step32-LR-centers-solve.txt',
                                                'LR-centers-solve-on-all',
                                                'xxxxxxxxxLLLLLLLLLxxxxxxxxxRRRRRRRRRxxxxxxxxxxxxxxxxxx',
-                                               False) # state_hex
+                                               False, # state_hex
+                                               True) # prune table
 
         self.lt_FB_centers_solve = LookupTable(self,
                                                'lookup-table-5x5x5-step33-FB-centers-solve.txt',
                                                'FB-centers-solve-on-all',
                                                'xxxxxxxxxxxxxxxxxxFFFFFFFFFxxxxxxxxxBBBBBBBBBxxxxxxxxx',
-                                               False) # state_hex
+                                               False, # state_hex
+                                               True) # prune table
 
         '''
+        Would be 117,649,000,000
+
         lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
         ==================================================
         1 steps has 7 entries (0 percent, 0.00x previous step)
@@ -274,7 +281,8 @@ class RubiksCube555(RubiksCube):
                                                  'lookup-table-5x5x5-step90-edges-slice-forward.txt',
                                                  '555-edges-slice-forward',
                                                  None,
-                                                 False)
+                                                 False, # state hex
+                                                 False) # prune table
 
         '''
         lookup-table-5x5x5-step91-edges-slice-backward.txt
@@ -294,18 +302,21 @@ class RubiksCube555(RubiksCube):
                                                   'lookup-table-5x5x5-step91-edges-slice-backward.txt',
                                                   '555-edges-slice-backward',
                                                   None,
-                                                  False)
+                                                  False, # state hex
+                                                  False) # prune table
 
     def group_centers_guts(self):
         self.lt_init()
         self.rotate_U_to_U()
 
+        self.lt_UD_T_centers_stage.solve() # speed up IDA
         self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))
 
         self.lt_LR_centers_stage.solve()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
+        #self.lt_UD_centers_solve.solve() # speed up IDA
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
         #self.print_cube()

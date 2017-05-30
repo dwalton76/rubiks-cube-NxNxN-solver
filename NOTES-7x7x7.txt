@@ -9,3 +9,19 @@ I tried it without that call but it didn't find a solution within 20 minutes so 
 
  
 
+2017-05-29 23:56:24,004 LookupTable.py     INFO: state xLLRxRLLLRRLLLLLLLLLxRRLxxBBBxBFFFFBFFFFBFFFFxFFBxxRLLxRRRRRLRRRRRRRRLxLRLxxFFFxBBBBFBBBBBFBBBFxBFBx vs state_target xLLLxLLLLLLLLLLLLLLLxLLLxxFFFxFFFFFFFFFFFFFFFxFFFxxRRRxRRRRRRRRRRRRRRRxRRRxxBBBxBBBBBBBBBBBBBBBxBBBx
+2017-05-29 23:56:24,275 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 1, count 22, pruned 22
+2017-05-29 23:56:24,317 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 2, count 22, pruned 22
+2017-05-29 23:56:24,355 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 3, count 22, pruned 22
+2017-05-29 23:56:24,395 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 4, count 22, pruned 22
+2017-05-29 23:56:24,437 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 5, count 22, pruned 22
+2017-05-29 23:56:24,472 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 6, count 22, pruned 22
+2017-05-29 23:56:24,526 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 7, count 22, pruned 22
+2017-05-29 23:56:24,563 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 8, count 22, pruned 22
+2017-05-29 23:56:24,600 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 9, count 22, pruned 22
+2017-05-29 23:56:24,822 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 10, count 43, pruned 42
+2017-05-29 23:56:26,686 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11, count 442, pruned 417
+2017-05-29 23:56:57,900 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 12, count 4957, pruned 4590
+2017-05-30 00:01:53,023 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 13, count 67369, pruned 61661
+2017-05-30 00:55:56,251 LookupTable.py     INFO: 7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14, count 683362, pruned 615855
+

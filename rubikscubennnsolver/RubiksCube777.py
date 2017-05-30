@@ -738,8 +738,8 @@ class RubiksCube777(RubiksCube):
         self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_inner_t_center_only.solve()
         self.print_cube()
 
-        self.lt_LR_solve_inner_centers_and_oblique_edges.solve()
-        self.print_cube()
+        #self.lt_LR_solve_inner_centers_and_oblique_edges.solve()
+        #self.print_cube()
 
         self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()
         log.info("LRFB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))

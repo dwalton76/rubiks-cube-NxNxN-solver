@@ -3378,6 +3378,7 @@ class RubiksCube(object):
             return
 
         min_solution_length = None
+        min_solution_leads_to_oll = False
         min_solution_state = None
         min_solution = None
 
@@ -3507,26 +3508,39 @@ class RubiksCube(object):
                     if not self.centers_solved():
                         raise SolveError("centers should be solved but they are not")
 
-                    # Do not consider any center solution that leads to OLL parity
-                    # dwalton ignore this for a bit
+                    # Prefer solutions that do not lead to OLL parity. Note that we do not do this
+                    # for 6x6x6 right now because it takes too long to compute the solution.
                     #if self.is_even() and self.center_solution_leads_to_oll_parity():
-                    if False and self.size == 4 and self.center_solution_leads_to_oll_parity():
+                    if self.size == 4 and self.center_solution_leads_to_oll_parity():
                         log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
-
+                        solution_leads_to_oll = True
                     else:
-                        center_solution_length = self.get_solution_len_minus_rotates(self.solution)
+                        solution_leads_to_oll = False
 
-                        if min_solution_length is None or center_solution_length < min_solution_length:
-                            min_solution = copy(self.solution)
-                            min_solution_state = copy(self.state)
-                            min_solution_length = copy(center_solution_length)
-                            log.info("%s on top, %s in front, opening move %4s: solution length %d, min solution length %s (NEW MIN)" %\
-                                (upper_side_name, front_side_name, opening_move, center_solution_length, min_solution_length))
-                        else:
-                            log.info("%s on top, %s in front, opening move %4s: solution length %d, min solution length %s" %\
-                                (upper_side_name, front_side_name, opening_move, center_solution_length, min_solution_length))
+                    center_solution_length = self.get_solution_len_minus_rotates(self.solution)
 
-                        # We found a parity free solution so break
+                    if min_solution_length is None:
+                        update_min = True
+                    elif min_solution_leads_to_oll and not solution_leads_to_oll:
+                        update_min = True
+                    elif not solution_leads_to_oll and center_solution_length < min_solution_length:
+                        update_min = True
+                    else:
+                        update_min = False
+
+                    if update_min:
+                        min_solution_leads_to_oll = solution_leads_to_oll
+                        min_solution = copy(self.solution)
+                        min_solution_state = copy(self.state)
+                        min_solution_length = copy(center_solution_length)
+                        log.info("%s on top, %s in front, opening move %4s: solution length %d, min solution length %s (NEW MIN)" %\
+                            (upper_side_name, front_side_name, opening_move, center_solution_length, min_solution_length))
+                    else:
+                        log.info("%s on top, %s in front, opening move %4s: solution length %d, min solution length %s" %\
+                            (upper_side_name, front_side_name, opening_move, center_solution_length, min_solution_length))
+
+                    # We found a parity free solution so break
+                    if not min_solution_leads_to_oll:
                         break
 
                 # If you comment this out we will keep looking through other combinations

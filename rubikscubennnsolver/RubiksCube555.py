@@ -316,7 +316,7 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_centers_stage.solve()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
-        #self.lt_UD_centers_solve.solve() # speed up IDA
+        self.lt_UD_centers_solve.solve() # speed up IDA
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
         #self.print_cube()

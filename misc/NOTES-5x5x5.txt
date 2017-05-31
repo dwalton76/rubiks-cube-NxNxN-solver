@@ -71,3 +71,14 @@ Use init_wing_to_pair approach...saves 6 steps but doubles the time
 5x5x5 avg edges solution 78.0 steps
 
 81.05user 4.18system 1:25.34elapsed 99%CPU (0avgtext+0avgdata 12972maxresident)k
+
+
+After lots of misc IDA fixes
+============================
+5x5x5 min solution 113 steps
+5x5x5 max solution 177 steps
+5x5x5 avg solution 141.0 steps
+5x5x5 avg centers solution 40.0 steps
+5x5x5 avg edges solution 79.0 steps
+
+

@@ -1361,6 +1361,35 @@ class LookupTable(object):
 
             state = ''.join(state)
 
+        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-inner-t-center-middle-oblique-edge-only':
+            state = []
+
+            for side in self.sides_LFRB:
+                for square_index in side.center_pos:
+                    if square_index in (66, 68, 74, 80, 82, 115, 117, 123, 129, 131, 164, 166, 172, 178, 180, 213, 215, 221, 227, 229,
+                                        67, 73, 74, 75, 81, 116, 122, 123, 124, 130, 165, 171, 172, 173, 179, 214, 220, 221, 222, 228,
+                                        60, 72, 76, 88, 109, 121, 125, 137, 158, 170, 174, 186, 207, 219, 223, 235):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
+        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-inner-t-center-left-middle-oblique-edge-only':
+            state = []
+
+            for side in self.sides_LFRB:
+                for square_index in side.center_pos:
+                    if square_index in (66, 68, 74, 80, 82, 115, 117, 123, 129, 131, 164, 166, 172, 178, 180, 213, 215, 221, 227, 229,
+                                        67, 73, 74, 75, 81, 116, 122, 123, 124, 130, 165, 171, 172, 173, 179, 214, 220, 221, 222, 228,
+                                        60, 72, 76, 88, 109, 121, 125, 137, 158, 170, 174, 186, 207, 219, 223, 235,
+                                        59, 69, 79, 89, 108, 118, 128, 138, 157, 167, 177, 187, 206, 216, 226, 236):
+                        state.append(self.parent.state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+
         elif self.state_type == '777-LFRB-centers-oblique-edges-solve-left-right-oblique-edges-only':
             state = []
 
@@ -1886,7 +1915,6 @@ class LookupTableIDA(LookupTable):
                 log.info("%s: IDA threshold %d, count %d, pruned %d" % (self, threshold, self.ida_count, self.ida_prune_count))
 
             else:
-                # dwalton reference
                 # restore parent state to original
                 self.parent.state = copy(original_state)
                 self.parent.solution = copy(original_solution)

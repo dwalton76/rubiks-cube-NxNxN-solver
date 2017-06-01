@@ -377,7 +377,7 @@ class RubiksCube777(RubiksCube):
         '''
         self.lt_LFRB_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
                                                          'lookup-table-7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges.txt',
-                                                         'LFRB-centers-oblique-edges-solve',
+                                                         '777-LFRB-centers-oblique-edges-solve',
                                                          'xLLLxLLLLLLLLLLLLLLLxLLLxxFFFxFFFFFFFFFFFFFFFxFFFxxRRRxRRRRRRRRRRRRRRRxRRRxxBBBxBBBBBBBBBBBBBBBxBBBx',
 
                                                          False, # state_hex

@@ -360,49 +360,6 @@ class RubiksCube777(RubiksCube):
                         True)  # prune table
 
         '''
-        This is a partial build
-
-        lookup-table-7x7x7-step60-LR-solve-inner-center-and-oblique-edges.txt
-        =====================================================================
-        1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 26 entries (0 percent, 5.20x previous step)
-        3 steps has 96 entries (0 percent, 3.69x previous step)
-        4 steps has 463 entries (0 percent, 4.82x previous step)
-        5 steps has 2084 entries (0 percent, 4.50x previous step)
-        6 steps has 9819 entries (0 percent, 4.71x previous step)
-        7 steps has 43314 entries (0 percent, 4.41x previous step)
-        8 steps has 192016 entries (0 percent, 4.43x previous step)
-        9 steps has 822604 entries (1 percent, 4.28x previous step)
-        10 steps has 3440953 entries (6 percent, 4.18x previous step)
-        11 steps has 13643789 entries (25 percent, 3.97x previous step)
-        12 steps has 34596360 entries (65 percent, 2.54x previous step)
-
-        Total: 52,751,529 entries
-        '''
-        self.lt_LR_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
-                                                         'lookup-table-7x7x7-step60-LR-solve-inner-center-and-oblique-edges.txt',
-                                                         'LR-centers-oblique-edges-solve',
-                                                         'xLLLxLLLLLLLLLLLLLLLxLLLxxRRRxRRRRRRRRRRRRRRRxRRRx',
-
-                                                         False, # state_hex
-                                                         moves_7x7x7,
-
-                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-                                                          "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
-
-                                                         # dwalton - for just LR
-                                                         # prune tables
-                                                         (self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_inner_t_center_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_left_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_right_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_left_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_middle_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_middle_right_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_left_right_oblique_edge_only))
-
-        '''
         lookup-table-7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges.txt
         =======================================================================
         1 steps has 5 entries (0 percent, 0.00x previous step)
@@ -751,36 +708,23 @@ class RubiksCube777(RubiksCube):
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         #self.print_cube()
 
+        # Solve the UD centers and pair the UD oblique edges
         self.lt_UD_solve_inner_centers_and_oblique_edges.solve()
         self.print_cube()
 
-        # Reduce the centers to 5x5x5 centers
-        # - solve the UD centers and pair the UD oblique edges
-        # - solve the LR centers and pair the LR oblique edges
-        # - solve the FB centers and pair the FB oblique edges
-
-        self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve()
+        # Solve the LFRB centers and pair the LR oblique edges
+        self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve() # speed up IDA
         self.print_cube()
-
-        self.lt_LR_solve_inner_x_center_t_center_left_middle_oblique_edge.solve()
-        self.print_cube()
-
-        # dwalton here now
-        #self.print_cube()
-        #sys.exit(0)
-
-        # Go ahead and solve the LR side, we do this to try to get the cube to
-        # a state that is closer to what may be in the IDA table.
-        #self.lt_LR_solve_inner_centers_and_oblique_edges.solve()
-        #self.print_cube()
 
         self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()
         log.info("LRFB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        self.print_solution()
+        # dwalton here now
         self.print_cube()
         sys.exit(0)
 
         '''
+        # Centers are now reduced to 5x5x5 centers
+
         self.lt_LR_solve_inner_centers_and_oblique_edges.solve()
         #self.lt_FB_solve_inner_centers_and_oblique_edges.solve()
         self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()

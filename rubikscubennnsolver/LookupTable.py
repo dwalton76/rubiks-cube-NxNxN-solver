@@ -4,6 +4,8 @@ from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.rotate_xxx import rotate_222, rotate_444, rotate_555, rotate_666, rotate_777
+import gc
+import json
 import logging
 import math
 import os
@@ -13,6 +15,10 @@ import sys
 
 log = logging.getLogger(__name__)
 
+# NOTE: always use list slicing instead of copy for lists
+# See the 3rd post here:
+# https://stackoverflow.com/questions/2612802/how-to-clone-or-copy-a-list
+# For 100k list copy.copy() took 1.488s where slicing took 0.039s...that is a 38x improvement
 
 class ImplementThis(Exception):
     pass
@@ -98,6 +104,7 @@ class LookupTable(object):
 
         self.filename = filename
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
+        self.scratchpad = self.desc + '.scratchpad'
         self.state_type = state_type
         self.state_target = state_target
         self.state_hex = state_hex
@@ -137,6 +144,7 @@ class LookupTable(object):
         if self.state_type == 'all':
             state = self.parent.get_state_all()
 
+        # dwalton - make 444, 555, etc specific ones of these that do not involve loops
         elif self.state_type == 'UD-centers-stage':
             state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.center_pos])
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
@@ -211,7 +219,7 @@ class LookupTable(object):
             '''
 
         elif self.state_type == '666-LFRB-centers-oblique-edges-solve':
-            state = ''.join(['x', parent_state[45], parent_state[46], 'x', parent_state[50], parent_state[51], parent_state[52], parent_state[53], parent_state[56], parent_state[57], parent_state[58], parent_state[59], 'x', parent_state[63], parent_state[64], 'xx', parent_state[81], parent_state[82], 'x', parent_state[86], parent_state[87], parent_state[88], parent_state[89], parent_state[92], parent_state[93], parent_state[94], parent_state[95], 'x', parent_state[99], parent_state[100], 'xx', parent_state[117], parent_state[118], 'x', parent_state[122], parent_state[123], parent_state[124], parent_state[125], parent_state[128], parent_state[129], parent_state[130], parent_state[131], 'x', parent_state[135], parent_state[136], 'xx', parent_state[153], parent_state[154], 'x', parent_state[158], parent_state[159], parent_state[160], parent_state[161], parent_state[164], parent_state[165], parent_state[166], parent_state[167], 'x', parent_state[171], parent_state[172], 'x']) 
+            state = ''.join(['x', parent_state[45], parent_state[46], 'x', parent_state[50], parent_state[51], parent_state[52], parent_state[53], parent_state[56], parent_state[57], parent_state[58], parent_state[59], 'x', parent_state[63], parent_state[64], 'xx', parent_state[81], parent_state[82], 'x', parent_state[86], parent_state[87], parent_state[88], parent_state[89], parent_state[92], parent_state[93], parent_state[94], parent_state[95], 'x', parent_state[99], parent_state[100], 'xx', parent_state[117], parent_state[118], 'x', parent_state[122], parent_state[123], parent_state[124], parent_state[125], parent_state[128], parent_state[129], parent_state[130], parent_state[131], 'x', parent_state[135], parent_state[136], 'xx', parent_state[153], parent_state[154], 'x', parent_state[158], parent_state[159], parent_state[160], parent_state[161], parent_state[164], parent_state[165], parent_state[166], parent_state[167], 'x', parent_state[171], parent_state[172], 'x'])
 
             '''
             state = []
@@ -720,6 +728,7 @@ class LookupTable(object):
                 parent_state = copy(original_state)
                 self.parent.solution = copy(original_solution)
 
+        # dwalton clean up all of the ones below where we are adding strings together
         elif self.state_type == '666-UD-inner-X-centers-stage':
             state = 'xxxxx' + parent_state[15] + parent_state[16] + 'xx' + parent_state[21] + parent_state[22]  + 'xxxxx' +\
                     'xxxxx' + parent_state[51] + parent_state[52] + 'xx' + parent_state[57] + parent_state[58]  + 'xxxxx' +\
@@ -1161,7 +1170,6 @@ class LookupTable(object):
                     'x' + parent_state[234] + 'xxx'
             state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x').replace('R', 'L')
 
-        # dwalton clean up all of the ones above where we are adding strings together
         elif self.state_type == '777-UD-centers-oblique-edges-solve-center-only':
             state = ''.join(['xxxxxx', parent_state[17], parent_state[18], parent_state[19], 'xx', parent_state[24], 'x', parent_state[26], 'xx', parent_state[31], parent_state[32], parent_state[33], 'xxxxxxxx', 'xxxx', parent_state[262], parent_state[263], parent_state[264], 'xx', parent_state[269], 'x', parent_state[271], 'xx', parent_state[276], parent_state[277], parent_state[278], 'xxxxxx'])
 
@@ -1192,7 +1200,9 @@ class LookupTable(object):
                         # To convert one of these from the old way here to the new way above
                         # - comment out the state.append line above
                         # - uncomment the state.append line below
-                        # - pformat(state) at the end of this loop and clean up that output a little and there you go
+                        # - pformat(state) at the end of this loop and save that to a file foo
+                        # - run utils/fix_foo.py
+                        # - yes this is ugly as hell but I only had to do this a few times ever so didn't clean up the process
                         # state.append("parent_state[%d]" % square_index)
                     else:
                         state.append('x')
@@ -1353,11 +1363,42 @@ class LookupTable(object):
 
             '''
             state = []
-
             for side in sides_LFRB:
                 for square_index in side.center_pos:
                     if square_index in (60, 72, 76, 88, 109, 121, 125, 137, 158, 170, 174, 186, 207, 219, 223, 235,
                                         61, 83, 87, 65, 110, 132, 136, 114, 159, 181, 185, 163, 208, 230, 234, 212):
+                        state.append(parent_state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+            '''
+
+        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-t-center-right-oblique-edge-only':
+            state = ''.join(['xxx', parent_state[61], 'x', parent_state[65], 'x', parent_state[67], 'xxx', parent_state[73], parent_state[74], parent_state[75], 'xxx', parent_state[81], 'x', parent_state[83], 'x', parent_state[87], 'xxxxxx', parent_state[110], 'x', parent_state[114], 'x', parent_state[116], 'xxx', parent_state[122], parent_state[123], parent_state[124], 'xxx', parent_state[130], 'x', parent_state[132], 'x', parent_state[136], 'xxxxxx', parent_state[159], 'x', parent_state[163], 'x', parent_state[165], 'xxx', parent_state[171], parent_state[172], parent_state[173], 'xxx', parent_state[179], 'x', parent_state[181], 'x', parent_state[185], 'xxxxxx', parent_state[208], 'x', parent_state[212], 'x', parent_state[214], 'xxx', parent_state[220], parent_state[221], parent_state[222], 'xxx', parent_state[228], 'x', parent_state[230], 'x', parent_state[234], 'xxx'])
+
+            '''
+            state = []
+            for side in sides_LFRB:
+                for square_index in side.center_pos:
+                    if square_index in (67, 73, 74, 75, 81, 116, 122, 123, 124, 130, 165, 171, 172, 173, 179, 214, 220, 221, 222, 228,
+                                        61, 83, 87, 65, 110, 132, 136, 114, 159, 181, 185, 163, 208, 230, 234, 212):
+                        state.append(parent_state[square_index])
+                    else:
+                        state.append('x')
+
+            state = ''.join(state)
+            '''
+
+        elif self.state_type == '777-LFRB-centers-oblique-edges-solve-left-middle-oblique-edge-only':
+            state = ''.join(['x', parent_state[59], parent_state[60], 'xxxxxx', parent_state[69], parent_state[72], 'xxx', parent_state[76], parent_state[79], 'xxxxxx', parent_state[88], parent_state[89], 'xx', parent_state[108], parent_state[109], 'xxxxxx', parent_state[118], parent_state[121], 'xxx', parent_state[125], parent_state[128], 'xxxxxx', parent_state[137], parent_state[138], 'xx', parent_state[157], parent_state[158], 'xxxxxx', parent_state[167], parent_state[170], 'xxx', parent_state[174], parent_state[177], 'xxxxxx', parent_state[186], parent_state[187], 'xx', parent_state[206], parent_state[207], 'xxxxxx', parent_state[216], parent_state[219], 'xxx', parent_state[223], parent_state[226], 'xxxxxx', parent_state[235], parent_state[236], 'x'])
+
+            '''
+            state = []
+            for side in sides_LFRB:
+                for square_index in side.center_pos:
+                    if square_index in (59, 69, 79, 89, 108, 118, 128, 138, 157, 167, 177, 187, 206, 216, 226, 236,
+                                        60, 72, 76, 88, 109, 121, 125, 137, 158, 170, 174, 186, 207, 219, 223, 235):
                         state.append(parent_state[square_index])
                     else:
                         state.append('x')
@@ -1439,7 +1480,7 @@ class LookupTable(object):
                 min_left = prev_line_number
                 max_right = line_number
                 break
-            
+
             prev_state = state
             prev_line_number = line_number
 
@@ -1556,7 +1597,7 @@ class LookupTable(object):
                 else:
                     results[state] = steps.split()
                 self.cache[state] = results[state]
-        
+
         log.info("%s: done" % self)
         return results
 
@@ -1719,6 +1760,27 @@ class LookupTableIDA(LookupTable):
         original_state = copy(self.parent.state)
         original_solution = copy(self.parent.solution)
 
+        if self.parent.size == 2:
+            rotate_xxx = rotate_222
+        elif self.parent.size == 4:
+            rotate_xxx = rotate_444
+        elif self.parent.size == 5:
+            rotate_xxx = rotate_555
+        elif self.parent.size == 6:
+            rotate_xxx = rotate_666
+        elif self.parent.size == 7:
+            rotate_xxx = rotate_777
+        else:
+            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+
+        states_scratchpad = 'states_scratchpad.txt'
+        pt_states_scratchpad = 'pt_states_scratchpad.txt'
+
+        # Because saving a little number to pt_costs_by_step below takes much less memory than
+        # saving the pt.filename
+        for (index, pt) in enumerate(self.prune_tables):
+            pt.index = index
+
         for threshold in range(1, 20):
 
             # Build a list of moves we can do 1 move deep
@@ -1726,88 +1788,138 @@ class LookupTableIDA(LookupTable):
             # Build a list of moves we can do 3 moves deep, this must build on the 2 move deep list
             # etc
             prev_step_sequences = []
-            #already_checked = set()
 
             for max_step_count in range(1, threshold+1):
                 step_sequences = self.ida_steps_list(prev_step_sequences, threshold, max_step_count)
-                # log.info("%s: step_sequences %s" % (self, pformat(step_sequences)))
-
-                states_to_check = []
-                pt_states_to_check = {}
-                state_step = []
-                costs_to_goal = {}
-                pt_costs_by_step = {}
 
                 if step_sequences:
                     log.info("")
                     log.info("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
                         (self, threshold, len(step_sequences), max_step_count))
 
-                for pt in self.prune_tables:
-                    pt_states_to_check[pt.filename] = []
+                # Once we run out of memory and start swapping we are dead in the water.
+                # If we are processing more than 500k step_sequences save state to the
+                # disk to avoid running out of memory. All of that writing to the disk is
+                # slow so that is why we only do this in extreme cases.
+                if os.path.exists(states_scratchpad):
+                    os.unlink(states_scratchpad)
+
+                if os.path.exists(pt_states_scratchpad):
+                    os.unlink(pt_states_scratchpad)
+                use_scratchpad = False
+
+                states_to_check = []
+                pt_costs_by_step = []
 
                 # Now rotate all of these moves and get the resulting cube for each
                 # Do one gigantic binary search
                 start_time = dt.datetime.now()
                 rotate_count = 0
-                for step_sequence in step_sequences:
 
-                    #if step_sequence in already_checked:
-                    #    continue
-                    #already_checked.add(step_sequence)
-
-                    self.parent.state = copy(original_state)
-                    self.parent.solution = copy(original_solution)
+                for (step_sequence_index, step_sequence) in enumerate(step_sequences):
+                    self.parent.state = original_state[:]
+                    self.parent.solution = original_solution[:]
                     self.ida_count += 1
                     rotate_count += 1
 
                     for step in step_sequence.split():
-                        state_original = copy(self.parent.state)
                         self.parent.solution.append(step)
-
-                        # We could just call self.parent.rotate(step) here but the explicit
-                        # rotate_444, rotate_555, etc are faster.
-                        if self.parent.size == 2:
-                            rotate_222(self.parent.state, state_original, step)
-                        elif self.parent.size == 4:
-                            rotate_444(self.parent.state, state_original, step)
-                        elif self.parent.size == 5:
-                            rotate_555(self.parent.state, state_original, step)
-                        elif self.parent.size == 6:
-                            rotate_666(self.parent.state, state_original, step)
-                        elif self.parent.size == 7:
-                            rotate_777(self.parent.state, state_original, step)
-                        else:
-                            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+                        rotate_xxx(self.parent.state, self.parent.state[:], step)
 
                     # get the current state of the cube
                     state = self.state()
-                    pt_costs_by_step[step_sequence] = []
-
-                    for pt in self.prune_tables:
-                        pt_state = pt.state()
-                        pt_states_to_check[pt.filename].append(pt_state)
-                        pt_costs_by_step[step_sequence].append((pt.filename, pt_state))
-
-                    state_step.append((state, step_sequence))
                     states_to_check.append(state)
+
+                    # Save a list of the pt indexes/states for this step_sequence
+                    tmp_list = []
+                    for pt in self.prune_tables:
+                        tmp_list.append((pt.index, pt.state()))
+                    pt_costs_by_step.append(tmp_list)
+
+                    # does this help with memory issues?
+                    if rotate_count % 500000 == 0:
+                        log.info("%s: rotate count %d" % (self, rotate_count))
+
+                        # Write states to scratchpad to save memory
+                        with open(states_scratchpad, 'a') as fh_states_scratchpad:
+                            fh_states_scratchpad.write("\n".join(states_to_check) + "\n")
+                        log.info("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, states_scratchpad))
+                        states_to_check = []
+
+                        # Write prune table states to scratchpad to save memory
+                        with open(pt_states_scratchpad, 'a') as fh_pt_states_scratchpad:
+                            to_write = []
+                            for list_of_pt_index_pt_state in pt_costs_by_step: # there is one of these per step_sequence
+                                to_write.append(json.dumps(list_of_pt_index_pt_state))
+                            fh_pt_states_scratchpad.write("\n".join(to_write) + "\n")
+                        log.info("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, pt_states_scratchpad))
+                        pt_costs_by_step = []
+
+                        gc.collect()
+                        use_scratchpad = True
+
+                if use_scratchpad:
+                    if states_to_check:
+                        # Write states to scratchpad to save memory
+                        with open(states_scratchpad, 'a') as fh_states_scratchpad:
+                            fh_states_scratchpad.write("\n".join(states_to_check))
+                        log.info("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, states_scratchpad))
+                        states_to_check = []
+
+                    if pt_costs_by_step:
+                        # Write prune table states to scratchpad to save memory
+                        with open(pt_states_scratchpad, 'a') as fh_pt_states_scratchpad:
+                            to_write = []
+                            for list_of_pt_index_pt_state in pt_costs_by_step: # there is one of these per step_sequence
+                                to_write.append(json.dumps(list_of_pt_index_pt_state))
+                            fh_pt_states_scratchpad.write("\n".join(to_write))
+                        log.info("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, pt_states_scratchpad))
+                        pt_costs_by_step = []
+
+                    gc.collect()
+
                 end_time = dt.datetime.now()
+                start_time2 = dt.datetime.now()
 
                 if rotate_count:
                     log.info("%s: IDA threshold %d, rotated %d sequences in %s (max step %d)" %
                         (self, threshold, rotate_count, pretty_time(end_time - start_time), max_step_count))
 
-                self.parent.state = copy(original_state)
-                self.parent.solution = copy(original_solution)
+                self.parent.state = original_state[:]
+                self.parent.solution = original_solution[:]
+
+                # with copy
+                # IDA threshold 14, rotated 215609 sequences in 0:00:18.440573 (max step 4)
+
+                # with slices
+                # IDA threshold 14, rotated 215609 sequences in 0:00:16.131184 (max step 4)
+
+                # with rotate_xxx
+                # IDA threshold 14, rotated 215609 sequences in 0:00:15.804288 (max step 4)
+
+                # first time getting the 1.6 million rotates to not run out of memory
+                # IDA threshold 14, rotated 1644910 sequences in 0:02:26.224329 (max step 5)
+
+                # IDA threshold 14, rotated 1644910 sequences in 0:02:11.353591 (max step 5)
+                # dwalton something with using parent_state instead of self.parent.state break...same with self.parent.solution
+
+                # If not using the scratchpad states_to_check is already populated
+                if use_scratchpad:
+                    states_to_check = []
+                    with open(states_scratchpad, 'r') as fh_states_scratchpad:
+                        for line in fh_states_scratchpad:
+                            states_to_check.append(line.rstrip())
 
                 # This will do a multi-key binary search of all states_to_check
                 steps_for_states = self.steps(states_to_check)
 
                 # There are steps for a state that means our IDA search is done...woohoo!!
-                for (state, step_sequence) in state_step:
+                for (step_sequence_index, state) in enumerate(states_to_check):
                     steps = steps_for_states[state]
 
                     if steps:
+                        step_sequence = step_sequences[step_sequence_index]
+
                         for step in step_sequence.split():
                             self.parent.rotate(step)
 
@@ -1820,38 +1932,76 @@ class LookupTableIDA(LookupTable):
                 # Time to prune some branches, do a multi-key binary search for each prune table
                 pt_costs = {}
                 for pt in self.prune_tables:
-                    states_to_find = pt_states_to_check[pt.filename]
+                    states_to_find = []
+
+                    if use_scratchpad:
+                        with open(pt_states_scratchpad, 'r') as fh_pt_states_scratchpad:
+                            for line in fh_pt_states_scratchpad:
+                                list_of_pt_index_pt_state = json.loads(line.rstrip())
+
+                                for (pt_index, pt_state) in list_of_pt_index_pt_state:
+                                    if pt_index == pt.index:
+                                        states_to_find.append(pt_state)
+                    # dwalton
+                    else:
+                        for list_of_pt_index_pt_state in pt_costs_by_step:
+                            for (pt_index, pt_state) in list_of_pt_index_pt_state:
+                                if pt_index == pt.index:
+                                    states_to_find.append(pt_state)
 
                     with open(pt.filename, 'r') as fh:
-                        pt_costs[pt.filename] = pt.file_binary_search_multiple_keys(fh, states_to_find)
+                        pt_costs[pt.index] = pt.file_binary_search_multiple_keys(fh, states_to_find)
+                    states_to_find = []
 
                 step_sequences_within_cost = []
                 #log.info("%s: state_step %s" % (self, pformat(state_step)))
                 #log.info("%s: pt_costs\n%s\n" % (self, pformat(pt_costs)))
 
-                for (state, step_sequence) in state_step:
+                # There is one line in fh_pt_states_scratchpad per step_sequence_index so step through these together
+                if use_scratchpad:
+                    with open(pt_states_scratchpad, 'r') as fh_pt_states_scratchpad:
 
-                    # extract cost_to_goal from the pt_costs dictionary
-                    cost_to_goal = 0
-                    cost_to_here = len(step_sequence.split())
+                        for (step_sequence_index, state) in enumerate(states_to_check):
+                            step_sequence = step_sequences[step_sequence_index]
 
-                    for (pt_filename, pt_state) in pt_costs_by_step[step_sequence]:
-                        pt_steps = pt_costs[pt_filename][pt_state]
+                            # extract cost_to_goal from the pt_costs dictionary
+                            cost_to_goal = 0
+                            cost_to_here = len(step_sequence.split())
 
-                        if pt_steps is None:
-                            raise SolveError("%s: prune table %s does not have %s" % (self, pt_filename, pt_state))
+                            line = next(fh_pt_states_scratchpad)
+                            list_of_pt_index_pt_state = json.loads(line.rstrip())
 
-                        len_pt_steps = len(pt_steps)
+                            for (pt_index, pt_state) in list_of_pt_index_pt_state:
+                                pt_steps = pt_costs[pt_index][pt_state]
+                                len_pt_steps = len(pt_steps)
 
-                        if len_pt_steps > cost_to_goal:
-                            cost_to_goal = len_pt_steps
+                                if len_pt_steps > cost_to_goal:
+                                    cost_to_goal = len_pt_steps
 
-                    if (cost_to_here + cost_to_goal) > threshold:
-                        #log.info("prune IDA branch at %s, cost_to_here %d, cost_to_goal %d, threshold %d" %
-                        #        (step, cost_to_here, cost_to_goal, threshold))
-                        self.ida_prune_count += 1
-                    else:
-                        step_sequences_within_cost.append(step_sequence)
+                            if (cost_to_here + cost_to_goal) > threshold:
+                                self.ida_prune_count += 1
+                            else:
+                                step_sequences_within_cost.append(step_sequence)
+                # dwalton here now
+                else:
+                    for (step_sequence_index, state) in enumerate(states_to_check):
+                        step_sequence = step_sequences[step_sequence_index]
+
+                        # extract cost_to_goal from the pt_costs dictionary
+                        cost_to_goal = 0
+                        cost_to_here = len(step_sequence.split())
+
+                        for (pt_index, pt_state) in pt_costs_by_step[step_sequence_index]:
+                            pt_steps = pt_costs[pt_index][pt_state]
+                            len_pt_steps = len(pt_steps)
+
+                            if len_pt_steps > cost_to_goal:
+                                cost_to_goal = len_pt_steps
+
+                        if (cost_to_here + cost_to_goal) > threshold:
+                            self.ida_prune_count += 1
+                        else:
+                            step_sequences_within_cost.append(step_sequence)
 
                 #log.info("%s: IDA threshold %d, max_step_count %d, step_sequences\n%s\n" % (self, threshold, max_step_count, pformat(step_sequences)))
                 #log.info("%s: IDA threshold %d, max_step_count %d" % (self, threshold, max_step_count))
@@ -1860,11 +2010,17 @@ class LookupTableIDA(LookupTable):
 
                 #log.info("%s: IDA threshold %d, max_step_count %d, step_sequences_within_cost %d" % (self, threshold, max_step_count, len(step_sequences_within_cost)))
                 prev_step_sequences = copy(step_sequences_within_cost)
-
-                log.debug("%s: IDA threshold %d (max step %d), evaluated %d, pruned %d, keep %d" %\
-                    (self, threshold, max_step_count, self.ida_count, self.ida_prune_count, len(step_sequences_within_cost)))
+                states_to_check = []
+                pt_costs_by_step = []
                 self.ida_count = 0
                 self.ida_prune_count = 0
+                gc.collect()
+
+                if rotate_count:
+                    end_time2 = dt.datetime.now()
+                    log.info("%s: IDA threshold %d (max step %d), evaluated %d, pruned %d, keep %d, in %s" %\
+                        (self, threshold, max_step_count, self.ida_count, self.ida_prune_count, len(step_sequences_within_cost),
+                         pretty_time(end_time2 - start_time2)))
 
         # we should never get to here
         raise SolveError("%s FAILED for state %s" % (self, self.state()))

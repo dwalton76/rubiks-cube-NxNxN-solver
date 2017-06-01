@@ -387,8 +387,14 @@ class RubiksCube777(RubiksCube):
                                                           "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
                                                           "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
 
+                                                         # I know these three work
+                                                         (self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_inner_t_center_only,
+                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only,
+                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_middle_oblique_edge_only))
+
                                                          # dwalton - for LFRB
                                                          # prune tables
+        '''
                                                          (self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_inner_t_center_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_left_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only,
@@ -397,6 +403,7 @@ class RubiksCube777(RubiksCube):
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_middle_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_middle_right_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_left_right_oblique_edge_only))
+        '''
 
         self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge = LookupTableIDA(self,
                                                          'lookup-table-7x7x7-step80-LFRB-inner-x-center-t-center-and-middle-oblique-edges.txt',
@@ -713,7 +720,12 @@ class RubiksCube777(RubiksCube):
         self.print_cube()
 
         # Solve the LFRB centers and pair the LR oblique edges
+        # First solve inner x-centers, inner t-centers and outer t-centers (the middle of oblique edge)
         self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve() # speed up IDA
+        self.print_cube()
+
+        # dwalton experiment
+        self.lt_LR_solve_inner_x_center_t_center_left_middle_oblique_edge.solve()
         self.print_cube()
 
         self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()

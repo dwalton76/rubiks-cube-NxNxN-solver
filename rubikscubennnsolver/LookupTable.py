@@ -213,7 +213,6 @@ class LookupTable(object):
         elif self.state_type == '666-LFRB-centers-oblique-edges-solve':
             state = ''.join(['x', parent_state[45], parent_state[46], 'x', parent_state[50], parent_state[51], parent_state[52], parent_state[53], parent_state[56], parent_state[57], parent_state[58], parent_state[59], 'x', parent_state[63], parent_state[64], 'xx', parent_state[81], parent_state[82], 'x', parent_state[86], parent_state[87], parent_state[88], parent_state[89], parent_state[92], parent_state[93], parent_state[94], parent_state[95], 'x', parent_state[99], parent_state[100], 'xx', parent_state[117], parent_state[118], 'x', parent_state[122], parent_state[123], parent_state[124], parent_state[125], parent_state[128], parent_state[129], parent_state[130], parent_state[131], 'x', parent_state[135], parent_state[136], 'xx', parent_state[153], parent_state[154], 'x', parent_state[158], parent_state[159], parent_state[160], parent_state[161], parent_state[164], parent_state[165], parent_state[166], parent_state[167], 'x', parent_state[171], parent_state[172], 'x']) 
 
-            # dwalton
             '''
             state = []
             for side in sides_LFRB:
@@ -1162,7 +1161,7 @@ class LookupTable(object):
                     'x' + parent_state[234] + 'xxx'
             state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x').replace('R', 'L')
 
-        # dwalton
+        # dwalton clean up all of the ones above where we are adding strings together
         elif self.state_type == '777-UD-centers-oblique-edges-solve-center-only':
             state = ''.join(['xxxxxx', parent_state[17], parent_state[18], parent_state[19], 'xx', parent_state[24], 'x', parent_state[26], 'xx', parent_state[31], parent_state[32], parent_state[33], 'xxxxxxxx', 'xxxx', parent_state[262], parent_state[263], parent_state[264], 'xx', parent_state[269], 'x', parent_state[271], 'xx', parent_state[276], parent_state[277], parent_state[278], 'xxxxxx'])
 
@@ -1727,7 +1726,7 @@ class LookupTableIDA(LookupTable):
             # Build a list of moves we can do 3 moves deep, this must build on the 2 move deep list
             # etc
             prev_step_sequences = []
-            already_checked = set()
+            #already_checked = set()
 
             for max_step_count in range(1, threshold+1):
                 step_sequences = self.ida_steps_list(prev_step_sequences, threshold, max_step_count)
@@ -1739,6 +1738,11 @@ class LookupTableIDA(LookupTable):
                 costs_to_goal = {}
                 pt_costs_by_step = {}
 
+                if step_sequences:
+                    log.info("")
+                    log.info("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
+                        (self, threshold, len(step_sequences), max_step_count))
+
                 for pt in self.prune_tables:
                     pt_states_to_check[pt.filename] = []
 
@@ -1748,9 +1752,9 @@ class LookupTableIDA(LookupTable):
                 rotate_count = 0
                 for step_sequence in step_sequences:
 
-                    if step_sequence in already_checked:
-                        continue
-                    already_checked.add(step_sequence)
+                    #if step_sequence in already_checked:
+                    #    continue
+                    #already_checked.add(step_sequence)
 
                     self.parent.state = copy(original_state)
                     self.parent.solution = copy(original_solution)

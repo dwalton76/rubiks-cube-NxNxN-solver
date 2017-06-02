@@ -1911,7 +1911,8 @@ class LookupTableIDA(LookupTable):
                             self.parent.rotate(step)
 
                         end_time0 = dt.datetime.now()
-                        log.warning("%s: IDA found match in %s" % (self, pretty_time(end_time0 - start_time0)))
+                        log.warning("%s: IDA threshold %d (max step %d), found match in %s, steps %s" %\
+                            (self, threshold, max_step_count, pretty_time(end_time0 - start_time0), step_sequence))
                         return
 
                 # Time to prune some branches, do a multi-key binary search for each prune table
@@ -1997,10 +1998,10 @@ class LookupTableIDA(LookupTable):
                     end_time3 = dt.datetime.now()
 
                     if step_sequences_within_cost:
-                        log.info("%s: IDA threshold %d (max step %d), keep %d, took %s (%s to rotate, %s to search tables)" %\
+                        log.info("%s: IDA threshold %d (max step %d), keep %3d, took %s (%s to rotate %d, %s to search tables)" %\
                             (self, threshold, max_step_count, len(step_sequences_within_cost),
                              pretty_time(end_time3 - start_time1),
-                             pretty_time(end_time2 - start_time2),
+                             pretty_time(end_time2 - start_time2), rotate_count,
                              pretty_time(end_time3 - start_time3)))
 
         # we should never get to here

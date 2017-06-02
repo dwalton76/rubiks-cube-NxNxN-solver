@@ -913,13 +913,9 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
-        # dwalton
-        return
         print(get_cube_layout(self.size) + '\n')
 
     def print_cube(self):
-        # dwalton
-        return
         color_codes = {
           'U': 97, # Wh
           'L': 92, # Gr

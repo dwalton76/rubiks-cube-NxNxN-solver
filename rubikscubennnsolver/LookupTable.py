@@ -99,8 +99,8 @@ class LookupTable(object):
                 log.warning("gunzip --keep %s.gz" % filename)
                 subprocess.call(['gunzip', '--keep', filename + '.gz'])
             else:
-                print("ERROR: %s does not exist" % filename)
-                sys.exit(1)
+                log.warning("ERROR: %s does not exist" % filename)
+                return
 
         self.filename = filename
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
@@ -398,8 +398,6 @@ class LookupTable(object):
 
             paired = list(set(paired))
             unpaired = list(set(unpaired))
-            #log.info("paired %s" % pformat(paired))
-            #log.info("unpaired %s" % pformat(unpaired))
 
             # x the paired edges
             for (pos1, pos2) in paired:
@@ -563,8 +561,6 @@ class LookupTable(object):
 
             paired = list(set(paired))
             unpaired = list(set(unpaired))
-            #log.info("paired %s" % pformat(paired))
-            #log.info("unpaired %s" % pformat(unpaired))
 
             # x the paired edges
             for (pos1, pos2) in paired:
@@ -1436,16 +1432,6 @@ class LookupTable(object):
         while left <= right:
             mid = left + ((right - left) /2)
             fh.seek(mid * width)
-
-            '''
-            # Use this instead of the 'state, steps = fh.readline...' if you need to debug something
-            line = fh.readline()
-            try:
-                state, steps = line.split(':')
-            except Exception as e:
-                log.info("%s left %d, right %d, mid %d, linecount %d, line '%s'" % (self, left, right, mid, self.linecount, line))
-                raise e
-            '''
             line = fh.readline()
             state = line[0:state_width]
             self.guts_cache[mid] = state
@@ -1528,8 +1514,6 @@ class LookupTable(object):
             state_to_find = states_to_find[index]
 
             (min_left, max_right) = self.find_min_left_max_right(state_to_find)
-            #if index % 1000 == 0:
-            #    log.info("%s: index %d, state %s, min_left %s, max_right %s" % (self, index, state_to_find, min_left, max_right))
 
             (line_number, value) = self.file_binary_search_guts(fh, state_to_find, min_left, max_right)
             results[state_to_find] = value
@@ -1538,7 +1522,7 @@ class LookupTable(object):
 
         self.guts_cache = {}
         end_time = dt.datetime.now()
-        log.info("%s: found %d states (another %d were cached) in %s" %
+        log.debug("%s: found %d states (another %d were cached) in %s" %
             (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time)))
         return results
 
@@ -1631,13 +1615,12 @@ class LookupTable(object):
         while True:
             state = self.state()
 
-            log.info("%s: state %s vs state_target %s" % (self.state_type, state, self.state_target))
+            log.debug("%s: state %s vs state_target %s" % (self.state_type, state, self.state_target))
 
             if state == self.state_target:
                 break
 
             steps = self.steps(state)
-            # log.info("steps: %s" % ' '.join(steps))
 
             if not steps:
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
@@ -1737,8 +1720,9 @@ class LookupTableIDA(LookupTable):
         return result
 
     def ida_stage(self):
+        start_time0 = dt.datetime.now()
         state = self.state()
-        log.info("state %s vs state_target %s" % (state, self.state_target))
+        log.debug("state %s vs state_target %s" % (state, self.state_target))
 
         # The cube is already in the desired state, nothing to do
         if state == self.state_target:
@@ -1790,11 +1774,12 @@ class LookupTableIDA(LookupTable):
             prev_step_sequences = []
 
             for max_step_count in range(1, threshold+1):
+                start_time1 = dt.datetime.now()
                 step_sequences = self.ida_steps_list(prev_step_sequences, threshold, max_step_count)
 
                 if step_sequences:
-                    log.info("")
-                    log.info("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
+                    log.debug("")
+                    log.debug("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
                         (self, threshold, len(step_sequences), max_step_count))
 
                 # Once we run out of memory and start swapping we are dead in the water.
@@ -1813,7 +1798,7 @@ class LookupTableIDA(LookupTable):
 
                 # Now rotate all of these moves and get the resulting cube for each
                 # Do one gigantic binary search
-                start_time = dt.datetime.now()
+                start_time2 = dt.datetime.now()
                 rotate_count = 0
 
                 for (step_sequence_index, step_sequence) in enumerate(step_sequences):
@@ -1838,12 +1823,12 @@ class LookupTableIDA(LookupTable):
 
                     # does this help with memory issues?
                     if rotate_count % 500000 == 0:
-                        log.info("%s: rotate count %d" % (self, rotate_count))
+                        log.debug("%s: rotate count %d" % (self, rotate_count))
 
                         # Write states to scratchpad to save memory
                         with open(states_scratchpad, 'a') as fh_states_scratchpad:
                             fh_states_scratchpad.write("\n".join(states_to_check) + "\n")
-                        log.info("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, states_scratchpad))
+                        log.debug("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, states_scratchpad))
                         states_to_check = []
 
                         # Write prune table states to scratchpad to save memory
@@ -1852,7 +1837,7 @@ class LookupTableIDA(LookupTable):
                             for list_of_pt_index_pt_state in pt_costs_by_step: # there is one of these per step_sequence
                                 to_write.append(json.dumps(list_of_pt_index_pt_state))
                             fh_pt_states_scratchpad.write("\n".join(to_write) + "\n")
-                        log.info("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, pt_states_scratchpad))
+                        log.debug("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, pt_states_scratchpad))
                         pt_costs_by_step = []
 
                         gc.collect()
@@ -1863,7 +1848,7 @@ class LookupTableIDA(LookupTable):
                         # Write states to scratchpad to save memory
                         with open(states_scratchpad, 'a') as fh_states_scratchpad:
                             fh_states_scratchpad.write("\n".join(states_to_check))
-                        log.info("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, states_scratchpad))
+                        log.debug("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, states_scratchpad))
                         states_to_check = []
 
                     if pt_costs_by_step:
@@ -1873,18 +1858,17 @@ class LookupTableIDA(LookupTable):
                             for list_of_pt_index_pt_state in pt_costs_by_step: # there is one of these per step_sequence
                                 to_write.append(json.dumps(list_of_pt_index_pt_state))
                             fh_pt_states_scratchpad.write("\n".join(to_write))
-                        log.info("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, pt_states_scratchpad))
+                        log.debug("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, pt_states_scratchpad))
                         pt_costs_by_step = []
 
                     gc.collect()
-
-                end_time = dt.datetime.now()
-                start_time2 = dt.datetime.now()
+                end_time2 = dt.datetime.now()
 
                 if rotate_count:
-                    log.info("%s: IDA threshold %d, rotated %d sequences in %s (max step %d)" %
-                        (self, threshold, rotate_count, pretty_time(end_time - start_time), max_step_count))
+                    log.debug("%s: IDA threshold %d (max step %d) rotated %d sequences in %s" %
+                        (self, threshold, max_step_count, rotate_count, pretty_time(end_time2 - start_time2)))
 
+                start_time3 = dt.datetime.now()
                 self.parent.state = original_state[:]
                 self.parent.solution = original_solution[:]
 
@@ -1926,7 +1910,8 @@ class LookupTableIDA(LookupTable):
                         for step in steps:
                             self.parent.rotate(step)
 
-                        log.warning("%s: IDA found match, count %d" % (self, self.ida_count))
+                        end_time0 = dt.datetime.now()
+                        log.warning("%s: IDA found match in %s" % (self, pretty_time(end_time0 - start_time0)))
                         return
 
                 # Time to prune some branches, do a multi-key binary search for each prune table
@@ -1954,8 +1939,6 @@ class LookupTableIDA(LookupTable):
                     states_to_find = []
 
                 step_sequences_within_cost = []
-                #log.info("%s: state_step %s" % (self, pformat(state_step)))
-                #log.info("%s: pt_costs\n%s\n" % (self, pformat(pt_costs)))
 
                 # There is one line in fh_pt_states_scratchpad per step_sequence_index so step through these together
                 if use_scratchpad:
@@ -2003,12 +1986,6 @@ class LookupTableIDA(LookupTable):
                         else:
                             step_sequences_within_cost.append(step_sequence)
 
-                #log.info("%s: IDA threshold %d, max_step_count %d, step_sequences\n%s\n" % (self, threshold, max_step_count, pformat(step_sequences)))
-                #log.info("%s: IDA threshold %d, max_step_count %d" % (self, threshold, max_step_count))
-                #log.info("%s: step_sequences_within_cost %s" % (self, pformat(step_sequences_within_cost)))
-                #foo = len(step_sequences_within_cost)
-
-                #log.info("%s: IDA threshold %d, max_step_count %d, step_sequences_within_cost %d" % (self, threshold, max_step_count, len(step_sequences_within_cost)))
                 prev_step_sequences = copy(step_sequences_within_cost)
                 states_to_check = []
                 pt_costs_by_step = []
@@ -2017,10 +1994,14 @@ class LookupTableIDA(LookupTable):
                 gc.collect()
 
                 if rotate_count:
-                    end_time2 = dt.datetime.now()
-                    log.info("%s: IDA threshold %d (max step %d), evaluated %d, pruned %d, keep %d, in %s" %\
-                        (self, threshold, max_step_count, self.ida_count, self.ida_prune_count, len(step_sequences_within_cost),
-                         pretty_time(end_time2 - start_time2)))
+                    end_time3 = dt.datetime.now()
+
+                    if step_sequences_within_cost:
+                        log.info("%s: IDA threshold %d (max step %d), keep %d, took %s (%s to rotate, %s to search tables)" %\
+                            (self, threshold, max_step_count, len(step_sequences_within_cost),
+                             pretty_time(end_time3 - start_time1),
+                             pretty_time(end_time2 - start_time2),
+                             pretty_time(end_time3 - start_time3)))
 
         # we should never get to here
         raise SolveError("%s FAILED for state %s" % (self, self.state()))

@@ -132,7 +132,7 @@ class RubiksCube555(RubiksCube):
         '''
         self.lt_LR_centers_stage_x_center_only = LookupTable(self,
                                                              'lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt',
-                                                             'LR-centers-stage-on-LFRB-x-center-only',
+                                                             '555-LR-centers-stage-on-LFRB-x-center-only',
                                                              'aa802aa00',
                                                              True, # state_hex
                                                              True) # prune table
@@ -154,7 +154,7 @@ class RubiksCube555(RubiksCube):
         '''
         self.lt_LR_centers_stage_t_center_only = LookupTable(self,
                                                              'lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt',
-                                                             'LR-centers-stage-on-LFRB-t-center-only',
+                                                             '555-LR-centers-stage-on-LFRB-t-center-only',
                                                              '5d0017400',
                                                              True, # state_hex
                                                              True) # prune table
@@ -189,7 +189,7 @@ class RubiksCube555(RubiksCube):
         '''
         self.lt_LR_centers_stage = LookupTableIDA(self,
                                                   'lookup-table-5x5x5-step20-LR-centers-stage.txt',
-                                                  'LR-centers-stage-on-LFRB',
+                                                  '555-LR-centers-stage-on-LFRB',
                                                   'ff803fe00', # LLLLLLLLLxxxxxxxxxLLLLLLLLLxxxxxxxxx
                                                   True, # state_hex
                                                   moves_5x5x5,
@@ -215,21 +215,21 @@ class RubiksCube555(RubiksCube):
         '''
         self.lt_UD_centers_solve = LookupTable(self,
                                                'lookup-table-5x5x5-step31-UD-centers-solve.txt',
-                                               'UD-centers-solve-on-all',
+                                               '555-UD-centers-solve-on-all',
                                                'UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxDDDDDDDDD',
                                                False, # state_hex
                                                True) # prune table
 
         self.lt_LR_centers_solve = LookupTable(self,
                                                'lookup-table-5x5x5-step32-LR-centers-solve.txt',
-                                               'LR-centers-solve-on-all',
+                                               '555-LR-centers-solve-on-all',
                                                'xxxxxxxxxLLLLLLLLLxxxxxxxxxRRRRRRRRRxxxxxxxxxxxxxxxxxx',
                                                False, # state_hex
                                                True) # prune table
 
         self.lt_FB_centers_solve = LookupTable(self,
                                                'lookup-table-5x5x5-step33-FB-centers-solve.txt',
-                                               'FB-centers-solve-on-all',
+                                               '555-FB-centers-solve-on-all',
                                                'xxxxxxxxxxxxxxxxxxFFFFFFFFFxxxxxxxxxBBBBBBBBBxxxxxxxxx',
                                                False, # state_hex
                                                True) # prune table
@@ -251,7 +251,7 @@ class RubiksCube555(RubiksCube):
         '''
         self.lt_ULFRB_centers_solve = LookupTableIDA(self,
                                                     'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
-                                                    'ULFRBD-centers-solve',
+                                                    '555-ULFRBD-centers-solve',
                                                     'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
                                                     False, # state_hex
                                                     moves_5x5x5,

@@ -61,7 +61,7 @@ class RubiksCube444(RubiksCube):
         '''
         self.lt_UD_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step01-UD-centers-stage.txt',
-                                               'UD-centers-stage',
+                                               '444-UD-centers-stage',
                                                'f0000f',
                                                 True,  # state hex
                                                 False) # prune table
@@ -84,7 +84,7 @@ class RubiksCube444(RubiksCube):
         '''
         self.lt_LR_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step02-LR-centers-stage.txt',
-                                               'LR-centers-stage',
+                                               '444-LR-centers-stage',
                                                'f0f0',
                                                 True,  # state hex
                                                 False) # prune table
@@ -111,7 +111,7 @@ class RubiksCube444(RubiksCube):
         '''
         self.lt_ULFRBD_centers_solve = LookupTable(self,
                                                    'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt',
-                                                   'ULFRBD-centers-solve',
+                                                   '444-ULFRBD-centers-solve',
                                                    'UUUULLLLFFFFRRRRBBBBDDDD',
                                                    False, # state hex
                                                    False) # prune table

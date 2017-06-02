@@ -216,7 +216,7 @@ class RubiksCube777(RubiksCube):
 
         self.lt_UD_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
                                                                          'lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt',
-                                                                         'UD-centers-oblique-edges-solve',
+                                                                         '777-UD-centers-oblique-edges-solve',
                                                                          'xUUUxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxDDDx',
                                                                          False, # state_hex
                                                                          moves_7x7x7,

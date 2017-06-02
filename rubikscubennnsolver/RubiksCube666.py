@@ -245,7 +245,7 @@ class RubiksCube666(RubiksCube):
         '''
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable(self,
                                                                          'lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt',
-                                                                         'UD-centers-oblique-edges-solve',
+                                                                         '666-UD-centers-oblique-edges-solve',
                                                                          'xUUxUUUUUUUUxUUxxDDxDDDDDDDDxDDx',
                                                                          False, # state_hex
                                                                          False) # prune table
@@ -271,7 +271,7 @@ class RubiksCube666(RubiksCube):
         '''
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable(self,
                                                                          'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt',
-                                                                         'LR-centers-oblique-edges-solve',
+                                                                         '666-LR-centers-oblique-edges-solve',
                                                                          'xLLxLLLLLLLLxLLxxRRxRRRRRRRRxRRx',
                                                                          False, # state_hex
                                                                          True)  # prune table
@@ -297,7 +297,7 @@ class RubiksCube666(RubiksCube):
         '''
         self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable(self,
                                                                          'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
-                                                                         'FB-centers-oblique-edges-solve',
+                                                                         '666-FB-centers-oblique-edges-solve',
                                                                          'xFFxFFFFFFFFxFFxxBBxBBBBBBBBxBBx',
                                                                          False, # state_hex
                                                                          True)  # prune table

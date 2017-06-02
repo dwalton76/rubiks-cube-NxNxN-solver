@@ -432,25 +432,6 @@ class RubiksCube777(RubiksCube):
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_middle_oblique_edge_only))
 
-        self.lt_LR_solve_inner_x_center_t_center_left_middle_oblique_edge = LookupTableIDA(self,
-                                                         'lookup-table-7x7x7-step90-LFRB-inner-x-center-t-center-and-left-middle-oblique-edges.txt',
-                                                         '777-LFRB-centers-oblique-edges-solve-inner-x-center-inner-t-center-left-middle-oblique-edge-only',
-                                                         'TBD',
-
-                                                         False, # state_hex
-                                                         moves_7x7x7,
-
-                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-                                                          "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
-
-                                                         # prune tables
-                                                         (self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_inner_t_center_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_left_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_left_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_middle_oblique_edge_only))
-
     def create_fake_555_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
@@ -734,10 +715,7 @@ class RubiksCube777(RubiksCube):
         self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve() # speed up IDA
         self.print_cube()
 
-        # dwalton experiment
-        #self.lt_LR_solve_inner_x_center_t_center_left_middle_oblique_edge.solve()
-        #self.print_cube()
-
+        # dwalton here now
         self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()
         log.info("LRFB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()

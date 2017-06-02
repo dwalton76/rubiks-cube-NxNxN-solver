@@ -59,7 +59,7 @@ class RubiksCube555(RubiksCube):
         '''
         self.lt_UD_T_centers_stage = LookupTable(self,
                                                  'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
-                                                 'UD-T-centers-stage',
+                                                 '555-UD-T-centers-stage',
                                                  '174000000000ba',
                                                  True, # state_hex
                                                  True) # prune table
@@ -82,7 +82,7 @@ class RubiksCube555(RubiksCube):
         '''
         self.lt_UD_X_centers_stage = LookupTable(self,
                                                  'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
-                                                 'UD-X-centers-stage',
+                                                 '555-UD-X-centers-stage',
                                                  '2aa00000000155',
                                                  True, # state_hex
                                                  True) # prune table
@@ -107,7 +107,7 @@ class RubiksCube555(RubiksCube):
         '''
         self.lt_UD_centers_stage = LookupTableIDA(self,
                                                  'lookup-table-5x5x5-step10-UD-centers-stage.txt',
-                                                 'UD-centers-stage',
+                                                 '555-UD-centers-stage',
                                                  '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
                                                  True, # state_hex
                                                  moves_5x5x5,

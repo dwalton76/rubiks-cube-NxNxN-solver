@@ -309,14 +309,15 @@ class RubiksCube555(RubiksCube):
         self.lt_init()
         self.rotate_U_to_U()
 
-        #self.lt_UD_T_centers_stage.solve() # speed up IDA
+        # TODO Exercising the prune table first needs to be a knob or needs to happen dynamically
+        self.lt_UD_T_centers_stage.solve() # speed up IDA
         self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))
 
         self.lt_LR_centers_stage.solve()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
-        #self.lt_UD_centers_solve.solve() # speed up IDA
+        self.lt_UD_centers_solve.solve() # speed up IDA
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 
@@ -515,7 +516,6 @@ class RubiksCube555(RubiksCube):
         original_state = copy(self.state)
         original_solution = copy(self.solution)
 
-        # TODO this needs to take pre_non_paired_edges_count into account
         # If it is 6 we only want to pair two on the slice forward
         # If it is 4 we only want to pair one on the slice forward
 

@@ -194,98 +194,89 @@ class RubiksCube444(RubiksCube):
         min_solution = None
         min_solution_has_pll = True
 
-        # There are some cubes where I always hit PLL parity when I pair multiple
-        # edges at a time, so try with this capability first and if we fail to find
-        # a PLL free solution then turn it off.
-        for pair_multiple_edges_at_once in (True, False):
-            for init_wing_to_pair in original_non_paired_edges:
-                log.info("init_wing_to_pair %20s" % pformat(init_wing_to_pair))
+        for init_wing_to_pair in original_non_paired_edges:
+            log.info("init_wing_to_pair %20s" % pformat(init_wing_to_pair))
 
-                while True:
-                    non_paired_edges = self.get_non_paired_edges()
-                    len_non_paired_edges = len(non_paired_edges)
+            while True:
+                non_paired_edges = self.get_non_paired_edges()
+                len_non_paired_edges = len(non_paired_edges)
 
-                    if len_non_paired_edges == 0:
-                        break
+                if len_non_paired_edges == 0:
+                    break
 
-                    if init_wing_to_pair:
-                        wing_to_pair = init_wing_to_pair[0]
-                        init_wing_to_pair = None
-                    else:
-                        wing_to_pair = non_paired_edges[0][0]
+                if init_wing_to_pair:
+                    wing_to_pair = init_wing_to_pair[0]
+                    init_wing_to_pair = None
+                else:
+                    wing_to_pair = non_paired_edges[0][0]
 
-                    if len_non_paired_edges > 6:
-                        if not self.pair_six_edges_444(wing_to_pair):
-                            log.info("pair_six_edges_444()    returned False")
+                if len_non_paired_edges > 6:
+                    if not self.pair_six_edges_444(wing_to_pair):
+                        log.info("pair_six_edges_444()    returned False")
 
-                            if not self.pair_four_edges_444(wing_to_pair):
-                                log.info("pair_four_edges_444() returned False")
-                                self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
-
-                    elif len_non_paired_edges == 6 and pair_multiple_edges_at_once:
-                        if not self.pair_last_six_edges_444():
-                            log.info("pair_last_six_edges_444() returned False")
-
-                            if not self.pair_four_edges_444(wing_to_pair):
-                                log.info("pair_four_edges_444() returned False")
-                                self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
-
-                    elif len_non_paired_edges >= 4:
                         if not self.pair_four_edges_444(wing_to_pair):
                             log.info("pair_four_edges_444() returned False")
-                            self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
+                            self.pair_two_edges_444(wing_to_pair)
 
-                    elif len_non_paired_edges == 2:
-                        self.pair_last_two_edges_444(wing_to_pair)
+                elif len_non_paired_edges == 6:
+                    if not self.pair_last_six_edges_444():
+                        log.info("pair_last_six_edges_444() returned False")
 
-                    # The scenario where you have 3 unpaired edges
-                    elif len_non_paired_edges > 2:
-                        self.pair_two_edges_444(wing_to_pair, pair_multiple_edges_at_once)
+                        if not self.pair_four_edges_444(wing_to_pair):
+                            log.info("pair_four_edges_444() returned False")
+                            self.pair_two_edges_444(wing_to_pair)
 
-                    else:
-                        break
+                elif len_non_paired_edges >= 4:
+                    if not self.pair_four_edges_444(wing_to_pair):
+                        log.info("pair_four_edges_444() returned False")
+                        self.pair_two_edges_444(wing_to_pair)
 
-                solution_len_minus_rotates = self.get_solution_len_minus_rotates(self.solution)
-                leads_to_pll = self.edge_solution_leads_to_pll_parity()
-                new_min = False
+                elif len_non_paired_edges == 2:
+                    self.pair_last_two_edges_444(wing_to_pair)
 
-                if leads_to_pll:
-                    log.info("edges solution length %d, leads to PLL parity" % (solution_len_minus_rotates - original_solution_len))
+                # The scenario where you have 3 unpaired edges
+                elif len_non_paired_edges > 2:
+                    self.pair_two_edges_444(wing_to_pair)
 
-                if min_solution_length is None:
-                    new_min = True
-
-                elif min_solution_has_pll:
-                    if leads_to_pll:
-                        if solution_len_minus_rotates < min_solution_length:
-                            new_min = True
-                    else:
-                        new_min = True
-
-                elif not leads_to_pll and solution_len_minus_rotates < min_solution_length:
-                    new_min = True
-
-                if new_min:
-                    min_solution_has_pll = leads_to_pll
-                    min_solution_length = solution_len_minus_rotates
-                    min_solution_state = copy(self.state)
-                    min_solution = copy(self.solution)
-                    log.warning("edges solution length %d (NEW MIN)" % (solution_len_minus_rotates - original_solution_len))
                 else:
-                    log.info("edges solution length %d" % (solution_len_minus_rotates - original_solution_len))
-                log.info('')
+                    break
 
-                # Restore to original state
-                self.state = copy(original_state)
-                self.solution = copy(original_solution)
+            solution_len_minus_rotates = self.get_solution_len_minus_rotates(self.solution)
+            leads_to_pll = self.edge_solution_leads_to_pll_parity()
+            new_min = False
 
-            # If we were able to find a PLL free solution when pair_multiple_edges_at_once
-            # was True then break, there is not point trying with pair_multiple_edges_at_once
-            # False since those solutions will all be longer
-            if min_solution_length and not min_solution_has_pll:
-                break
+            if leads_to_pll:
+                log.info("edges solution length %d, leads to PLL parity" % (solution_len_minus_rotates - original_solution_len))
+
+            if min_solution_length is None:
+                new_min = True
+
+            elif min_solution_has_pll:
+                if leads_to_pll:
+                    if solution_len_minus_rotates < min_solution_length:
+                        new_min = True
+                else:
+                    new_min = True
+
+            elif not leads_to_pll and solution_len_minus_rotates < min_solution_length:
+                new_min = True
+
+            if new_min:
+                min_solution_has_pll = leads_to_pll
+                min_solution_length = solution_len_minus_rotates
+                min_solution_state = copy(self.state)
+                min_solution = copy(self.solution)
+                log.warning("edges solution length %d (NEW MIN)" % (solution_len_minus_rotates - original_solution_len))
             else:
-                log.warning("Could not find PLL free edge solution with pair_multiple_edges_at_once True")
+                log.info("edges solution length %d" % (solution_len_minus_rotates - original_solution_len))
+            log.info('')
+
+            # Restore to original state
+            self.state = copy(original_state)
+            self.solution = copy(original_solution)
+
+        if min_solution_length and min_solution_has_pll:
+            log.warning("Could not find an edge paring solution free of PLL")
 
         self.state = copy(min_solution_state)
         self.solution = copy(min_solution)
@@ -749,7 +740,7 @@ class RubiksCube444(RubiksCube):
 
         return True
 
-    def pair_two_edges_444(self, edge, pair_multiple_edges_at_once):
+    def pair_two_edges_444(self, edge):
         original_non_paired_wings_count = self.get_non_paired_wings_count()
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
@@ -778,30 +769,26 @@ class RubiksCube444(RubiksCube):
         for step in steps.split():
             self.rotate(step)
 
-        # Now that that two edges on F are in place, put an unpaired edge at U-west
-        if pair_multiple_edges_at_once:
+        # Now that that two edges on F are in place, put an unpaired edge at U-west.
+        # The unpaired edge that we place at U-west should contain the
+        # sister wing of the wing that is at the bottom of F-east. This
+        # will allow us to pair two wings at once.
+        wing_bottom_F_east = self.sideF.edge_east_pos[-1]
+        sister_wing_bottom_F_east = self.get_wings(wing_bottom_F_east)[0]
 
-            # The unpaired edge that we place at U-west should contain the
-            # sister wing of the wing that is at the bottom of F-east. This
-            # will allow us to pair two wings at once.
-            wing_bottom_F_east = self.sideF.edge_east_pos[-1]
-            sister_wing_bottom_F_east = self.get_wings(wing_bottom_F_east)[0]
+        if sister_wing_bottom_F_east not in lookup_table_444_sister_wing_to_U_west:
+            raise ImplementThis("sister_wing_bottom_F_east %s" % pformat(sister_wing_bottom_F_east))
 
-            if sister_wing_bottom_F_east not in lookup_table_444_sister_wing_to_U_west:
-                raise ImplementThis("sister_wing_bottom_F_east %s" % pformat(sister_wing_bottom_F_east))
+        steps = lookup_table_444_sister_wing_to_U_west[sister_wing_bottom_F_east]
 
-            steps = lookup_table_444_sister_wing_to_U_west[sister_wing_bottom_F_east]
-
-            # If steps is None it means sister_wing_bottom_F_east is at (37, 24)
-            # which is the top wing on F-west. If that is the case we can't pair
-            # two edges at once so just put some random unpaired edge at U-west
-            if steps == None:
-                self.make_U_west_have_unpaired_edge()
-            else:
-                for step in steps.split():
-                    self.rotate(step)
-        else:
+        # If steps is None it means sister_wing_bottom_F_east is at (37, 24)
+        # which is the top wing on F-west. If that is the case we can't pair
+        # two edges at once so just put some random unpaired edge at U-west
+        if steps == None:
             self.make_U_west_have_unpaired_edge()
+        else:
+            for step in steps.split():
+                self.rotate(step)
 
         for step in ("Uw", "L'", "U'", "L", "Uw'"):
             self.rotate(step)

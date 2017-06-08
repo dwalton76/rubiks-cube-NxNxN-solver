@@ -82,3 +82,12 @@ After lots of misc IDA fixes
 5x5x5 avg edges solution 79.0 steps
 
 
+After some 4x4x4 edge pairing fixes
+===================================
+The max solution case went from 177 to 157!!!
+
+5x5x5 min solution 114 steps
+5x5x5 max solution 157 steps
+5x5x5 avg solution 135.0 steps
+5x5x5 avg centers solution 40.0 steps
+5x5x5 avg edges solution 73.0 steps

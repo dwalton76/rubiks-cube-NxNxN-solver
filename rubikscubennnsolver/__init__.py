@@ -3388,6 +3388,7 @@ class RubiksCube(object):
 
         min_solution_length = None
         min_solution_leads_to_oll = False
+        min_solution_non_paired_wings_count = None
         min_solution_state = None
         min_solution = None
 
@@ -3527,12 +3528,17 @@ class RubiksCube(object):
                         solution_leads_to_oll = False
 
                     center_solution_length = self.get_solution_len_minus_rotates(self.solution)
+                    non_paired_wings_count = self.get_non_paired_wings_count()
 
                     if min_solution_length is None:
                         update_min = True
                     elif min_solution_leads_to_oll and not solution_leads_to_oll:
                         update_min = True
-                    elif not solution_leads_to_oll and center_solution_length < min_solution_length:
+                    elif not min_solution_leads_to_oll and solution_leads_to_oll:
+                        update_min = False
+                    elif center_solution_length < min_solution_length:
+                        update_min = True
+                    elif center_solution_length == min_solution_length and non_paired_wings_count < min_solution_non_paired_wings_count:
                         update_min = True
                     else:
                         update_min = False
@@ -3542,14 +3548,19 @@ class RubiksCube(object):
                         min_solution = copy(self.solution)
                         min_solution_state = copy(self.state)
                         min_solution_length = copy(center_solution_length)
-                        log.info("%s on top, %s in front, opening move %4s: solution length %d, min solution length %s (NEW MIN)" %\
-                            (upper_side_name, front_side_name, opening_move, center_solution_length, min_solution_length))
-                    else:
-                        log.info("%s on top, %s in front, opening move %4s: solution length %d, min solution length %s" %\
-                            (upper_side_name, front_side_name, opening_move, center_solution_length, min_solution_length))
+                        min_solution_non_paired_wings_count = non_paired_wings_count
 
-                    # We found a parity free solution so break
-                    if not min_solution_leads_to_oll:
+                        log.warning("%s on top, %s in front, opening move %4s: solution length %d, min solution length %s, non paired wings %d (NEW MIN)" %\
+                            (upper_side_name, front_side_name, opening_move, center_solution_length, min_solution_length, min_solution_non_paired_wings_count))
+                    else:
+                        log.info("%s on top, %s in front, opening move %4s: solution length %d, min solution length %s, non paired wings %d" %\
+                            (upper_side_name, front_side_name, opening_move, center_solution_length, min_solution_length, min_solution_non_paired_wings_count))
+
+                    # We can compute solutions for 4x4x4 centers without using IDA so
+                    # those are very fast, keep exploring all of the 'None' opening_move
+                    # options. For 5x5x5 and larger though go ahead and break out if we
+                    # have an OLL free solution.
+                    if self.size >= 5 and not min_solution_leads_to_oll:
                         break
 
                 # If you comment this out we will keep looking through other combinations

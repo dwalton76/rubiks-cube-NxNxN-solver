@@ -136,3 +136,25 @@ Changed state from dict to list
 ===============================
 No change in move count but it does run a bit faster
 6.92user 0.22system 0:07.26elapsed 98%CPU (0avgtext+0avgdata 12712maxresident)k
+
+
+Sometimes accept a PLL edge pairing solution
+============================================
+The max solution drop from 90 to 79...solving PLL takes 12 moves so if all
+effecient edge pairing solutions lead to PLL just accept it and solve the
+PLL.
+
+4x4x4 min solution 59 steps
+4x4x4 max solution 79 steps
+4x4x4 avg solution 67.0 steps
+4x4x4 avg centers solution 19.0 steps
+4x4x4 avg edges solution 27.0 steps
+
+
+Consider number of wings paired by solution to solve centers
+============================================================
+4x4x4 min solution 59 steps
+4x4x4 max solution 75 steps
+4x4x4 avg solution 66.0 steps
+4x4x4 avg centers solution 18.0 steps
+4x4x4 avg edges solution 27.0 steps

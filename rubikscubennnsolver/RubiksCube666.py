@@ -188,7 +188,7 @@ class RubiksCube666(RubiksCube):
                                                                 True) # prune table
         '''
         (16!/(8!*8!))^2 is 165,636,900
-        I only built this 8 deep to keep it small thus the IDA
+        I only built this 9 deep to keep it small thus the IDA
 
         lookup-table-6x6x6-step40-LR-oblique-pairing.txt
         ================================================

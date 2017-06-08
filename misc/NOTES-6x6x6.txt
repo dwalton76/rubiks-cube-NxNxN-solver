@@ -1,0 +1,11 @@
+
+Initial Numbers
+===============
+6x6x6 min solution 200 steps
+6x6x6 max solution 287 steps
+6x6x6 avg solution 253.0 steps
+6x6x6 avg centers solution 108.0 steps
+6x6x6 avg edges solution 100.0 steps
+
+We currently do not avoid OLL or PLL (it takes too long) so it
+takes us 45 moves to solve 3x3x3 at the end

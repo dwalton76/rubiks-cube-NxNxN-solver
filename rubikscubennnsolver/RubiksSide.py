@@ -457,17 +457,6 @@ class Side(object):
             return False
         return True
 
-    def all_wings_paired(self):
-        north_pairs = self.paired_wings(True, False, False, False)
-        west_pairs = self.paired_wings(False, True, False, False)
-        south_pairs = self.paired_wings(False, False, True, False)
-        east_pairs = self.paired_wings(False, False, False, True)
-
-        if north_pairs and west_pairs and south_pairs and east_pairs:
-            return True
-
-        return False
-
     def north_edge_non_paired(self):
         """
         TODO lots of cut-n-paste code here
@@ -480,6 +469,18 @@ class Side(object):
             if pos3 in self.edge_north_pos:
                 return True
         return False
+
+    def north_edge_non_paired_wings_count(self):
+        return len(self.non_paired_wings(True, False, False, False))
+
+    def west_edge_non_paired_wings_count(self):
+        return len(self.non_paired_wings(False, True, False, False))
+
+    def south_edge_non_paired_wings_count(self):
+        return len(self.non_paired_wings(False, False, True, False))
+
+    def east_edge_non_paired_wings_count(self):
+        return len(self.non_paired_wings(False, False, False, True))
 
     def north_edge_paired(self):
         return not self.north_edge_non_paired()
@@ -597,7 +598,6 @@ class Side(object):
                     square_index in self.edge_east_pos[1:-1]):
                     return True
 
-                # dwalton
                 '''
                 log.info("target: %s" % square_index)
                 log.info("north: %s" % pformat(self.edge_north_pos))

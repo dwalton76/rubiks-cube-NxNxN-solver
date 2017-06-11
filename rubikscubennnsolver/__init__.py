@@ -1052,6 +1052,29 @@ class RubiksCube(object):
                 return side
         raise SolveError("We should not be here, square_index %s" % pformat(square_index))
 
+    def get_edge_colors(self, square_index):
+        side = self.get_side_for_index(square_index)
+        edge_indexes = None
+
+        if square_index in side.edge_north_pos:
+            edge_indexes = side.edge_north_pos
+        elif square_index in side.edge_west_pos:
+            edge_indexes = side.edge_west_pos
+        elif square_index in side.edge_south_pos:
+            edge_indexes = side.edge_south_pos
+        elif square_index in side.edge_east_pos:
+            edge_indexes = side.edge_east_pos
+
+        colors = []
+
+        for edge_index in edge_indexes:
+            partner_index = side.get_wing_partner(edge_index)
+            colors.append(tuple(sorted((self.state[edge_index], self.state[partner_index]))))
+
+        colors = sorted(list(set(colors)))
+        #log.info("%s colors %s" % (square_index, pformat(colors)))
+        return colors
+
     def get_non_paired_wings(self):
         return (self.sideU.non_paired_wings(True, True, True, True) +
                 self.sideF.non_paired_wings(False, True, False, True) +
@@ -2522,20 +2545,6 @@ class RubiksCube(object):
         while self.sideB.north_edge_paired():
             self.rotate_B()
 
-    def make_B_north_have_unpaired_wing(self):
-
-        if not self.sideB.north_wing_paired():
-            return
-
-        # D until we get a non-paired wing to B
-        if self.sideB.all_wings_paired():
-            while self.sideB.south_wing_paired():
-                self.rotate_D()
-
-        # B until a non-paired wing is in on the North side of B
-        while self.sideB.north_wing_paired():
-            self.rotate_B()
-
     def make_U_west_have_unpaired_edge(self):
         if not self.sideU.west_edge_paired():
             return
@@ -2562,17 +2571,6 @@ class RubiksCube(object):
             count += 1
             if count > 4:
                 raise StuckInALoop("")
-
-    def make_U_west_have_unpaired_wing(self):
-        if not self.sideU.west_wing_paired():
-            return
-
-        if self.sideU.all_wings_paired():
-            self.make_B_north_have_unpaired_wing()
-
-        # U until a non-paired edge is in on the West side of U
-        while self.sideU.west_wing_paired():
-            self.rotate_U()
 
     def rotate_B(self):
         self.rotate("B")

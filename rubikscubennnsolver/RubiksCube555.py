@@ -6,6 +6,7 @@ from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksSide import Side, SolveError
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_4x4x4, solved_4x4x4
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps
+import datetime as dt
 import logging
 import math
 import os
@@ -309,7 +310,6 @@ class RubiksCube555(RubiksCube):
         self.lt_init()
         self.rotate_U_to_U()
 
-        # TODO Exercising the prune table first needs to be a knob or needs to happen dynamically
         self.lt_UD_T_centers_stage.solve() # speed up IDA
         self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))
@@ -321,18 +321,13 @@ class RubiksCube555(RubiksCube):
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 
-    def find_moves_to_stage_slice_forward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
-        state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
-        return self.lt_edge_slice_forward.steps(state)
-
-
     def find_moves_to_stage_slice_backward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
         return self.lt_edge_slice_backward.steps(state)
 
     def get_sister_wings_slice_backward_555(self):
         results = (None, None, None, None)
-        max_pair_on_slice_back = None
+        max_pair_on_slice_back = 0
 
         # save cube state
         original_state = copy(self.state)
@@ -346,144 +341,79 @@ class RubiksCube555(RubiksCube):
         for sister_wing1_reverse in (True, False):
             sister_wing1 = self.get_wing_in_middle_of_edge(target_wing[0])
 
-            # target_wings sister_wing1 is on the same edge as the target_wing, it
-            # needs to be flipped around in place. Pick some other non-paired wing
-            # as sister_wing1.
-            if sister_wing1 in ((65, 86), (86, 65)):
-                wings_to_avoid = (target_wing, sister_wing1,
-                                  tuple(list(reversed(sister_wing1))))
-
-                for wing in self.get_non_paired_wings():
-                    wing_side = self.get_side_for_index(wing[0][0])
-
-                    if (wing[0] not in wings_to_avoid and
-                        wing[1] not in wings_to_avoid and
-                        wing_side.wing_is_middle_of_edge(wing[0][0])):
-                        sister_wing1 = wing[0]
-                        break
-
             if sister_wing1_reverse:
                 sister_wing1 = tuple(list(reversed(sister_wing1)))
             sister_wing1_side = self.get_side_for_index(sister_wing1[0])
+
             sister_wing2 = None
             sister_wing3 = None
             #log.info("sister_wing1 %s on %s" % (pformat(sister_wing1), sister_wing1_side))
 
-            neighbors = sister_wing1_side.get_wing_neighbors(sister_wing1[0])
-            sister_wing1_neighbor = neighbors[0]
+            for sister_wing1_use_first_neighbor in (True, False):
+                neighbors = sister_wing1_side.get_wing_neighbors(sister_wing1[0])
 
-            for sister_wing2_reverse in (True, False):
-                sister_wing2 = self.get_wing_in_middle_of_edge(sister_wing1_neighbor)
+                if sister_wing1_use_first_neighbor:
+                    sister_wing1_neighbor = neighbors[0]
+                else:
+                    sister_wing1_neighbor = neighbors[1]
 
-                # Not 100% sure this actually helps...need to check some more use cases
+                for sister_wing2_reverse in (True, False):
+                    sister_wing2 = self.get_wing_in_middle_of_edge(sister_wing1_neighbor)
 
-                # We need to re-pick sister_wing2 if it is (65, 86) which is F-east
-                # which is the initial edge we were trying to pair in the first place.
-                if sister_wing2 == (65, 86) or sister_wing2 == (86, 65):
-                    wings_to_avoid = (target_wing, sister_wing1, sister_wing2,
-                                      tuple(list(reversed(sister_wing1))),
-                                      tuple(list(reversed(sister_wing2))))
+                    if sister_wing2_reverse:
+                        sister_wing2 = tuple(list(reversed(sister_wing2)))
+                    sister_wing2_side = self.get_side_for_index(sister_wing2[0])
 
-                    # We need sister_wing2 to be any unpaired edge that allows us
-                    # to only pair 2 on the slice forward. sister_wing3 must be a
-                    # middle wing.
-                    for wing in self.get_non_paired_wings():
-                        wing_side = self.get_side_for_index(wing[0][0])
+                    #log.info("sister_wing1_use_first_neighbor %s, sister_wing2 %s on %s" %
+                    #     (sister_wing1_use_first_neighbor, pformat(sister_wing2), sister_wing2_side))
 
-                        if (wing[0] not in wings_to_avoid and
-                            wing[1] not in wings_to_avoid and
-                            wing_side.wing_is_middle_of_edge(wing[0][0])):
-                            sister_wing2 = wing[0]
-                            break
+                    for sister_wing2_use_first_neighbor in (True, False):
+                        neighbors = sister_wing2_side.get_wing_neighbors(sister_wing2[0])
 
-                if sister_wing2_reverse:
-                    sister_wing2 = tuple(list(reversed(sister_wing2)))
-                sister_wing2_side = self.get_side_for_index(sister_wing2[0])
-
-                neighbors = sister_wing2_side.get_wing_neighbors(sister_wing2[0])
-                sister_wing2_neighbor = neighbors[0]
-
-                for sister_wing3_reverse in (True, False):
-                    sister_wing3 = self.get_wing_in_middle_of_edge(sister_wing2_neighbor)
-
-                    #log.info("target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %
-                    #    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3)))
-
-                    # We need to re-pick sister_wing3 if it is (65, 86) which is F-east
-                    # which is the initial edge we were trying to pair in the first place.
-                    if (sister_wing3 == (65, 86) or sister_wing3 == (86, 65) or
-                        sister_wing3 == sister_wing1 or sister_wing3 == tuple(list(reversed(sister_wing1))) or
-                        sister_wing3 == sister_wing2 or sister_wing3 == tuple(list(reversed(sister_wing2)))):
-
-                        wings_to_avoid = (target_wing, sister_wing1, sister_wing2, sister_wing3, (86, 65), (65, 86),
-                                          tuple(list(reversed(sister_wing1))),
-                                          tuple(list(reversed(sister_wing2))),
-                                          tuple(list(reversed(sister_wing3))))
-
-                        # We need sister_wing3 to be any unpaired edge that allows us
-                        # to only pair 2 on the slice forward. sister_wing3 must be a
-                        # middle wing.
-                        for wing in self.get_non_paired_wings():
-                            wing_side = self.get_side_for_index(wing[0][0])
-
-                            if (wing[0] not in wings_to_avoid and
-                                wing[1] not in wings_to_avoid and
-                                wing_side.wing_is_middle_of_edge(wing[0][0])):
-                                sister_wing3 = wing[0]
-                                break
+                        if sister_wing2_use_first_neighbor:
+                            sister_wing2_neighbor = neighbors[0]
                         else:
-                            for wing in self.get_paired_wings():
-                                wing_side = self.get_side_for_index(wing[0][0])
+                            sister_wing2_neighbor = neighbors[1]
 
-                                if (wing[0] not in wings_to_avoid and
-                                    wing[1] not in wings_to_avoid and
-                                    wing_side.wing_is_middle_of_edge(wing[0][0])):
-                                    sister_wing3 = wing[0]
-                                    break
+                        for sister_wing3_reverse in (True, False):
+                            sister_wing3 = self.get_wing_in_middle_of_edge(sister_wing2_neighbor)
 
-                            #log.info("slice back target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %
-                            #    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3)))
-                            #raise SolveError("could not find new sister_wing3")
+                            if sister_wing3_reverse:
+                                sister_wing3 = tuple(list(reversed(sister_wing3)))
 
-                    if sister_wing3_reverse:
-                        sister_wing3 = tuple(list(reversed(sister_wing3)))
+                            #log.info("sister_wing2_use_first_neighbor %s, sister_wing3 %s" %
+                            #    (sister_wing2_use_first_neighbor, pformat(sister_wing3)))
 
-                    steps = self.find_moves_to_stage_slice_backward_555(target_wing, sister_wing1, sister_wing2, sister_wing3)
+                            steps = self.find_moves_to_stage_slice_backward_555(target_wing, sister_wing1, sister_wing2, sister_wing3)
 
-                    # slice backward
-                    #log.info("slice back target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s, steps %s" %
-                    #    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3), pformat(steps)))
+                            if steps:
+                                pre_non_paired_wings_count = self.get_non_paired_wings_count()
+                                for step in steps:
+                                    self.rotate(step)
 
-                    if steps:
-                        pre_non_paired_edges_count = self.get_non_paired_edges_count()
-                        for step in steps:
-                            self.rotate(step)
-                        # 3Uw' Uw
-                        self.rotate("Uw")
-                        self.rotate("Dw'")
-                        self.rotate_y_reverse()
-                        post_non_paired_edges_count = self.get_non_paired_edges_count()
+                                # 3Uw' Uw
+                                self.rotate("Uw")
+                                self.rotate("Dw'")
+                                self.rotate_y_reverse()
 
-                        will_pair_on_slice_count = pre_non_paired_edges_count - post_non_paired_edges_count
+                                post_non_paired_wings_count = self.get_non_paired_wings_count()
 
-                        '''
-                        # F-east must pair
-                        if self.state[70] == self.state[65] and self.state[91] == self.state[86]:
-                            will_pair_on_slice_count = pre_non_paired_edges_count - post_non_paired_edges_count
-                        else:
-                            will_pair_on_slice_count = 0
-                        '''
+                                # F-east must pair
+                                if self.state[70] == self.state[65] and self.state[91] == self.state[86]:
+                                    will_pair_on_slice_count = pre_non_paired_wings_count - post_non_paired_wings_count
+                                else:
+                                    will_pair_on_slice_count = 0
 
-                        #log.info("get_sister_wings_slice_backward_555() will_pair_on_slice_count %d via %s" %
-                        #    (will_pair_on_slice_count, ' '.join(steps)))
+                                #log.info("get_sister_wings_slice_backward_555() will_pair_on_slice_count %d via %s" %
+                                #    (will_pair_on_slice_count, ' '.join(steps)))
 
-                        # restore cube state
-                        self.state = copy(original_state)
-                        self.solution = copy(original_solution)
+                                # restore cube state
+                                self.state = copy(original_state)
+                                self.solution = copy(original_solution)
 
-                        if max_pair_on_slice_back is None or will_pair_on_slice_count > max_pair_on_slice_back:
-                            results = (target_wing, sister_wing1, sister_wing2, sister_wing3)
-                            max_pair_on_slice_back = will_pair_on_slice_count
+                                if will_pair_on_slice_count > max_pair_on_slice_back:
+                                    results = (target_wing, sister_wing1, sister_wing2, sister_wing3)
+                                    max_pair_on_slice_back = will_pair_on_slice_count
 
         # log.info("max_pair_on_slice_back is %d" % max_pair_on_slice_back)
         return results
@@ -493,8 +423,7 @@ class RubiksCube555(RubiksCube):
         (target_wing, sister_wing1, sister_wing2, sister_wing3) = self.get_sister_wings_slice_backward_555()
 
         if target_wing is None:
-            # This is not a cube where we can place three edges to be paired on the slice back :(
-            log.warning("prep_for_slice_back_555() failed...get_sister_wings_slice_backward_555")
+            log.info("prep_for_slice_back_555() failed...get_sister_wings_slice_backward_555")
             #raise SolveError("prep_for_slice_back_555() failed...get_sister_wings_slice_backward_555")
             return False
 
@@ -505,19 +434,16 @@ class RubiksCube555(RubiksCube):
                 self.rotate(step)
             return True
         else:
-            log.warning("prep_for_slice_back_555() failed...no steps")
+            log.info("prep_for_slice_back_555() failed...no steps")
             return False
 
-    def get_sister_wings_slice_forward_555(self, pre_non_paired_edges_count):
-        results = (None, None, None, None)
+    def get_sister_wings_slice_forward_555(self, pre_non_paired_wings_count):
+        results = (None, None, None, None, None)
         max_pair_on_slice_forward = 0
 
         # save cube state
         original_state = copy(self.state)
         original_solution = copy(self.solution)
-
-        # If it is 6 we only want to pair two on the slice forward
-        # If it is 4 we only want to pair one on the slice forward
 
         # Work with the wing at the bottom of the F-west edge
         # Move the sister wing to F-east
@@ -529,130 +455,89 @@ class RubiksCube555(RubiksCube):
             if sister_wing1_reverse:
                 sister_wing1 = tuple(list(reversed(sister_wing1)))
             sister_wing1_side = self.get_side_for_index(sister_wing1[0])
+
             sister_wing2 = None
             sister_wing3 = None
+            #log.info("sister_wing1 %s, reverse %s, %s" % (pformat(sister_wing1), sister_wing1_reverse, sister_wing1_side))
 
-            neighbors = sister_wing1_side.get_wing_neighbors(sister_wing1[0])
-            sister_wing1_neighbor = neighbors[0]
+            for sister_wing1_use_first_neighbor in (True, False):
+                neighbors = sister_wing1_side.get_wing_neighbors(sister_wing1[0])
 
-            for sister_wing2_reverse in (True, False):
-                sister_wing2 = self.get_wing_in_middle_of_edge(sister_wing1_neighbor)
+                if sister_wing1_use_first_neighbor:
+                    sister_wing1_neighbor = neighbors[0]
+                else:
+                    sister_wing1_neighbor = neighbors[1]
 
-                #log.info("slice forward target_wing %s, sister_wing1 %s, sister_wing2 %s, pre_non_paired_edges_count %d" %
-                #        (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pre_non_paired_edges_count))
+                for sister_wing2_reverse in (True, False):
+                    sister_wing2 = self.get_wing_in_middle_of_edge(sister_wing1_neighbor)
 
-                if pre_non_paired_edges_count == 4:
-                    wings_to_avoid = (target_wing, sister_wing1, sister_wing2, (40, 61), (61, 40),
-                                      tuple(list(reversed(sister_wing1))),
-                                      tuple(list(reversed(sister_wing2))))
-                    # log.info("wings_to_avoid: %s" % pformat(wings_to_avoid))
+                    if sister_wing2_reverse:
+                        sister_wing2 = tuple(list(reversed(sister_wing2)))
+                    sister_wing2_side = self.get_side_for_index(sister_wing2[0])
 
-                    # We need sister_wing2 to be any unpaired edge that allows us
-                    # to only pair 1 on the slice forward. sister_wing2 must be a
-                    # middle wing.
-                    for wing in self.get_non_paired_wings():
-                        wing_side = self.get_side_for_index(wing[0][0])
+                    # log.info("sister_wing1_use_first_neighbor %s, sister_wing2 %s, reverse %s, %s" %
+                    #   (sister_wing1_use_first_neighbor, pformat(sister_wing2), sister_wing2_reverse, sister_wing2_side))
 
-                        if (wing[0] not in wings_to_avoid and
-                            wing[1] not in wings_to_avoid and
-                            wing_side.wing_is_middle_of_edge(wing[0][0])):
-                            sister_wing2 = wing[0]
-                            break
-                    else:
-                        for wing in self.get_paired_wings():
-                            wing_side = self.get_side_for_index(wing[0][0])
+                    for sister_wing2_use_first_neighbor in (True, False):
+                        neighbors = sister_wing2_side.get_wing_neighbors(sister_wing2[0])
 
-                            if (wing[0] not in wings_to_avoid and
-                                wing[1] not in wings_to_avoid and
-                                wing_side.wing_is_middle_of_edge(wing[0][0])):
-                                sister_wing2 = wing[0]
-                                break
-
-                if sister_wing2_reverse:
-                    sister_wing2 = tuple(list(reversed(sister_wing2)))
-                sister_wing2_side = self.get_side_for_index(sister_wing2[0])
-
-                neighbors = sister_wing2_side.get_wing_neighbors(sister_wing2[0])
-                sister_wing2_neighbor = neighbors[0]
-
-                for sister_wing3_reverse in (True, False):
-                    sister_wing3 = self.get_wing_in_middle_of_edge(sister_wing2_neighbor)
-
-                    # If we are pairing the last six edges then we need sister_wing3 to
-                    # be any unpaired edge that allows us to only pair 2 on the slice forward
-                    #
-                    # We also need to re-pick sister_wing3 if it is (40, 61) which is F-west
-                    # which is the initial edge we were trying to pair in the first place.
-                    if pre_non_paired_edges_count in (4, 6) or sister_wing3 == (40, 61) or sister_wing3 == (61, 40):
-
-                        wings_to_avoid = (target_wing, sister_wing1, sister_wing2, sister_wing3, (40, 61), (61, 40),
-                                          tuple(list(reversed(sister_wing1))),
-                                          tuple(list(reversed(sister_wing2))),
-                                          tuple(list(reversed(sister_wing3))))
-
-                        # We need sister_wing3 to be any unpaired edge that allows us
-                        # to only pair 2 on the slice forward. sister_wing3 must be a
-                        # middle wing.
-                        for wing in self.get_non_paired_wings():
-                            wing_side = self.get_side_for_index(wing[0][0])
-
-                            if (wing[0] not in wings_to_avoid and
-                                wing[1] not in wings_to_avoid and
-                                wing_side.wing_is_middle_of_edge(wing[0][0])):
-                                sister_wing3 = wing[0]
-                                break
+                        if sister_wing2_use_first_neighbor:
+                            sister_wing2_neighbor = neighbors[0]
                         else:
-                            for wing in self.get_paired_wings():
-                                wing_side = self.get_side_for_index(wing[0][0])
+                            sister_wing2_neighbor = neighbors[1]
 
-                                if (wing[0] not in wings_to_avoid and
-                                    wing[1] not in wings_to_avoid and
-                                    wing_side.wing_is_middle_of_edge(wing[0][0])):
-                                    sister_wing3 = wing[0]
-                                    break
+                        for sister_wing3_reverse in (True, False):
 
-                if sister_wing2_reverse:
+                            # If we are pairing the last six wings then we need sister_wing3 to
+                            # be any unpaired edge that allows us to only pair 2 on the slice forward
+                            if pre_non_paired_wings_count == 6:
 
-                    if sister_wing3_reverse:
-                        sister_wing3 = tuple(list(reversed(sister_wing3)))
+                                # We need sister_wing3 to be any unpaired edge that allows us
+                                # to only pair 2 on the slice forward
+                                for wing in self.get_non_paired_wings():
+                                    if (wing[0] not in (target_wing, sister_wing1, sister_wing2, sister_wing3) and
+                                        wing[1] not in (target_wing, sister_wing1, sister_wing2, sister_wing3)):
+                                        sister_wing3 = wing[1]
+                                        break
+                            else:
+                                sister_wing3 = self.get_wing_in_middle_of_edge(sister_wing2_neighbor)
 
-                    # slice forward
-                    steps = self.find_moves_to_stage_slice_forward_555(target_wing, sister_wing1, sister_wing2, sister_wing3)
+                            if sister_wing3_reverse:
+                                sister_wing3 = tuple(list(reversed(sister_wing3)))
 
-                    #log.info("slice forward target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s, steps %s" %
-                    #    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3), pformat(steps)))
+                            # log.info("sister_wing2_use_first_neighbor %s, sister_wing3 %s, reverse %s, %s" %
+                            #    (sister_wing2_use_first_neighbor, pformat(sister_wing3), sister_wing3_reverse, sister_wing3_side))
+                            state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
+                            steps = self.lt_edge_slice_forward.steps(state)
 
-                    if steps:
-                        #self.print_cube()
+                            if steps:
+                                #log.info("target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %
+                                #    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3)))
 
-                        for step in steps:
-                            self.rotate(step)
-                        # 3Uw Uw'
-                        self.rotate("Uw'")
-                        self.rotate("Dw")
-                        self.rotate_y()
-                        post_non_paired_edges_count = self.get_non_paired_edges_count()
+                                # pre_non_paired_wings_count = self.get_non_paired_wings_count()
+                                for step in steps:
+                                    self.rotate(step)
 
-                        # F-west must pair
-                        '''
-                        if self.state[66] == self.state[61] and self.state[45] == self.state[40]:
-                            will_pair_on_slice_count = pre_non_paired_edges_count - post_non_paired_edges_count
-                        else:
-                            will_pair_on_slice_count = 0
-                        '''
-                        will_pair_on_slice_count = pre_non_paired_edges_count - post_non_paired_edges_count
+                                # 3Uw Uw'
+                                self.rotate("Uw'")
+                                self.rotate("Dw")
+                                self.rotate_y()
 
-                        if pre_non_paired_edges_count == 4 and will_pair_on_slice_count != 1:
-                            will_pair_on_slice_count = 0
-                            #raise SolveError("4 unpaired but will pair %d" % will_pair_on_slice_count)
+                                post_non_paired_wings_count = self.get_non_paired_wings_count()
 
-                        # restore cube state
-                        self.state = copy(original_state)
-                        self.solution = copy(original_solution)
+                                # F-west must pair
+                                if self.state[66] == self.state[61] and self.state[45] == self.state[40]:
+                                    will_pair_on_slice_count = pre_non_paired_wings_count - post_non_paired_wings_count
+                                else:
+                                    will_pair_on_slice_count = 0
 
-                        if will_pair_on_slice_count > max_pair_on_slice_forward:
-                            results = (target_wing, sister_wing1, sister_wing2, sister_wing3)
-                            max_pair_on_slice_forward = will_pair_on_slice_count
+                                # restore cube state
+                                self.state = copy(original_state)
+                                self.solution = copy(original_solution)
+
+                                if will_pair_on_slice_count > max_pair_on_slice_forward:
+                                    results = (target_wing, sister_wing1, sister_wing2, sister_wing3, steps)
+                                    max_pair_on_slice_forward = will_pair_on_slice_count
 
         #log.info("max_pair_on_slice_forward is %d" % max_pair_on_slice_forward)
         #if max_pair_on_slice_forward != 3:
@@ -664,556 +549,13 @@ class RubiksCube555(RubiksCube):
         Rotate an unpaired wing to the bottom of F-east (one that can be sliced back)
         """
         for x in range(3):
-            if self.state[70] == self.state[65] and self.state[91] == self.state[86]:
+            if self.state[65] == self.state[70] and self.state[86] == self.state[91]:
                 self.rotate_y()
             else:
                 if self.prep_for_slice_back_555():
                     return True
 
         return False
-
-    def flip_two_edge_elements(self):
-        middle_wing = (self.sideL.edge_east_pos[1], self.sideF.edge_west_pos[1])
-        target_wing = (self.sideL.edge_east_pos[-1], self.sideF.edge_west_pos[-1])
-        sister_wing1 = self.get_wing_in_middle_of_edge(target_wing[0])
-        sister_wing1_side = self.get_side_for_index(sister_wing1[0])
-        neighbors = sister_wing1_side.get_wing_neighbors(sister_wing1[0])
-        sister_wing1_neighbor = neighbors[0]
-        middle_wing_value = sorted(self.get_wing_value(middle_wing))
-        sister_wing_value = sorted(self.get_wing_value(sister_wing1_neighbor))
-
-        if middle_wing_value == sister_wing_value:
-
-            if sister_wing1 == (36, 115):
-                self.rotate_z()
-
-            elif sister_wing1 == (123, 148):
-                self.rotate("B'")
-                self.rotate_z()
-
-            elif sister_wing1 == (98, 140):
-                self.rotate("D")
-                self.rotate("B'")
-                self.rotate_z()
-
-            elif sister_wing1 == (3, 103):
-                self.rotate("F")
-
-            elif sister_wing1 == (15, 78):
-                self.rotate("R'")
-                self.rotate_x()
-                self.rotate_y_reverse()
-
-            elif sister_wing1 == (23, 53):
-                self.rotate("U2")
-                self.rotate("F")
-
-            elif sister_wing1 == (73, 128):
-                self.rotate("D2")
-                self.rotate("B'")
-                self.rotate_z()
-
-            elif sister_wing1 == (48, 136):
-                self.rotate("D'")
-                self.rotate("B'")
-                self.rotate_z()
-
-            elif sister_wing1 == (11, 28):
-                self.rotate("U")
-                self.rotate("F")
-
-            elif sister_wing1 == (65, 86):
-                self.rotate_z_reverse()
-                self.rotate_x()
-
-            elif sister_wing1 == (90, 111):
-                self.rotate("R2")
-                self.rotate_z_reverse()
-                self.rotate_x()
-
-            else:
-                raise ImplementThis("sister_wing1 %s" % pformat(sister_wing1))
-
-            return True
-
-        return False
-
-    def get_two_edge_pattern_id(self):
-
-        # Build a string that represents the pattern of colors for the U-south and U-north edges
-        edges_of_interest = [52, 53, 54, 22, 23, 24, 2, 3, 4, 104, 103, 102]
-        sides_in_edges_of_interest = []
-        edges_of_interest_state = []
-
-        for square_index in edges_of_interest:
-            value = self.state[square_index]
-            edges_of_interest_state.append(value)
-
-            if value not in sides_in_edges_of_interest:
-                sides_in_edges_of_interest.append(value)
-
-        edges_of_interest_state = ''.join(edges_of_interest_state)
-        for (index, value) in enumerate(sides_in_edges_of_interest):
-            edges_of_interest_state = edges_of_interest_state.replace(value, str(index))
-
-        # log.info("edges_of_interest_state: %s" % edges_of_interest_state)
-
-        # Exchange places and flip both centers
-        if edges_of_interest_state in ('010202020101', '010232323101', '010222222101', '000121212000', '010121212101'):
-            pattern_id = 6
-            self.rotate_x_reverse()
-            self.rotate_z()
-
-        # Exchange places, no flipping
-        elif edges_of_interest_state in ('010232101323', '010202101020', '010222101222', '010121101212', '000121000212'):
-            pattern_id = 7
-
-        # Exchange places, flip one center
-        # The one that has to flip is at U-north, it needs to be at U-south
-        elif edges_of_interest_state in ('010232121303', '000121010202', '010121111202', '010202121000', '010222121202'):
-            self.rotate_y()
-            self.rotate_y()
-            pattern_id = 8
-
-        # Exchange places, flip one center
-        # The one that has to flip is at U-south
-        elif edges_of_interest_state in ('010232303121', '010121202111', '010222202121', '000121202010', '010202000121'):
-            pattern_id = 8
-
-        else:
-            raise SolveError("Could not determine 5x5x5 last two edges pattern ID for %s" % edges_of_interest_state)
-
-        return pattern_id
-
-    def pair_multiple_via_slice_forward_backward(self, pre_non_paired_edges_count, original_state, original_solution, original_solution_len, original_non_paired_edges_count):
-        #log.info("PREP-FOR-3Uw-SLICE (begin)")
-        #self.print_cube()
-        (target_wing, sister_wing1, sister_wing2, sister_wing3) = self.get_sister_wings_slice_forward_555(pre_non_paired_edges_count)
-
-        if target_wing is None:
-            log.info("pair_multiple_edges_555() failed...get_sister_wings_slice_forward_555")
-            #raise SolveError("pair_multiple_edges_555() failed...get_sister_wings_slice_forward_555")
-
-            self.state = copy(original_state)
-            self.solution = copy(original_solution)
-            return False
-
-        steps = self.find_moves_to_stage_slice_forward_555(target_wing, sister_wing1, sister_wing2, sister_wing3)
-
-        if not steps:
-            self.state = copy(original_state)
-            self.solution = copy(original_solution)
-            return False
-
-        for step in steps:
-            self.rotate(step)
-
-        # At this point we are setup to slice forward and pair 3 edges
-        #log.info("PREP-FOR-3Uw-SLICE (end)....SLICE (begin), %d left to pair" % self.get_non_paired_edges_count())
-        #self.print_cube()
-        self.rotate("Uw'")
-        self.rotate("Dw")
-        self.rotate_y()
-        #log.info("SLICE (end), %d left to pair" % self.get_non_paired_edges_count())
-        #self.print_cube()
-
-        post_slice_forward_non_paired_edges_count = self.get_non_paired_edges_count()
-        post_slice_forward_solution_len = self.get_solution_len_minus_rotates(self.solution)
-
-        log.info("pair_multiple_edges_555()    paired %d edges in %d moves on slice forward (%d left to pair, %d steps in)" %
-            (original_non_paired_edges_count - post_slice_forward_non_paired_edges_count,
-             post_slice_forward_solution_len - original_solution_len,
-             post_slice_forward_non_paired_edges_count,
-             post_slice_forward_solution_len))
-
-        placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
-
-        if not placed_unpaired_wing:
-
-            # The stars aligned and we paired 4 at once so we cannot rotate L-west around
-            # to F-east, move an unpaired edge to F-east. This preserves the LFRB centers
-            # for the slice back.
-            if not self.sideU.north_edge_paired():
-                self.rotate("F'")
-                self.rotate("U2")
-                self.rotate("F")
-            elif not self.sideU.east_edge_paired():
-                self.rotate("F'")
-                self.rotate("U")
-                self.rotate("F")
-            elif not self.sideU.west_edge_paired():
-                self.rotate("F'")
-                self.rotate("U'")
-                self.rotate("F")
-            elif not self.sideD.south_edge_paired():
-                self.rotate("F")
-                self.rotate("D2")
-                self.rotate("F'")
-            elif not self.sideD.east_edge_paired():
-                self.rotate("F")
-                self.rotate("D'")
-                self.rotate("F'")
-            elif not self.sideD.west_edge_paired():
-                self.rotate("F")
-                self.rotate("D")
-                self.rotate("F'")
-            # Look for these last since they take 4 steps instead of 3
-            elif not self.sideU.south_edge_paired():
-                self.rotate("U'")
-                self.rotate("F'")
-                self.rotate("U")
-                self.rotate("F")
-            elif not self.sideD.north_edge_paired():
-                self.rotate("D")
-                self.rotate("F")
-                self.rotate("D'")
-                self.rotate("F'")
-            else:
-                # This can happen if we pair the final four wings on the slice forward
-                log.info("Did not find an unpaired edge")
-                self.state = copy(original_state)
-                self.solution = copy(original_solution)
-                return False
-
-            placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
-            if not placed_unpaired_wing:
-                self.state = copy(original_state)
-                self.solution = copy(original_solution)
-                return False
-
-        #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_edges_count())
-        #self.print_cube()
-        self.rotate("Uw")
-        self.rotate("Dw'")
-        self.rotate_y_reverse()
-
-        #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_edges_count())
-        #self.print_cube()
-        self.verify_all_centers_solved()
-
-        post_slice_back_non_paired_edges_count = self.get_non_paired_edges_count()
-        post_slice_back_solution_len = self.get_solution_len_minus_rotates(self.solution)
-
-        log.info("pair_multiple_edges_555()    paired %d edges in %d moves on slice back (%d left to pair, %d steps in)" %
-            (post_slice_forward_non_paired_edges_count - post_slice_back_non_paired_edges_count,
-             post_slice_back_solution_len - post_slice_forward_solution_len,
-             post_slice_back_non_paired_edges_count,
-             post_slice_back_solution_len))
-
-        return True
-
-    def flip_wing_in_place(self, original_solution_len, original_non_paired_edges_count):
-        """
-        We need to rotate the middle wing in place, this is needed when it is next to
-        its two sister wings but is just rotated the wrong way
-
-        No 1 is when there is only one edge like this, No 5 is when there are two. Ideally
-        we want the No 5 scenario as it pairs two wings in 9 moves where No 1 pairs 1 wing
-        in 15 moves.
-        """
-        if self.state[56] == self.state[40] and self.state[35] == self.state[61]:
-
-            # U-north
-            if self.state[2] == self.state[103] and self.state[3] == self.state[104]:
-                self.rotate("U")
-                self.rotate("R'")
-                pattern_id = 5
-
-            # U-east
-            elif self.state[10] == self.state[78] and self.state[15] == self.state[79]:
-                self.rotate("R'")
-                pattern_id = 5
-
-            # U-south
-            elif self.state[52] == self.state[23] and self.state[22] == self.state[53]:
-                self.rotate("U'")
-                self.rotate("R'")
-                pattern_id = 5
-
-            # U-west
-            elif self.state[6] == self.state[28] and self.state[11] == self.state[27]:
-                self.rotate("U2")
-                self.rotate("R'")
-                pattern_id = 5
-
-            # L-east
-            elif self.state[31] == self.state[115] and self.state[36] == self.state[110]:
-                self.rotate_y_reverse()
-                pattern_id = 5
-
-            # F-east
-            elif self.state[60] == self.state[86] and self.state[81] == self.state[65]:
-                pattern_id = 5
-
-            # R-east
-            elif self.state[85] == self.state[111] and self.state[90] == self.state[106]:
-                self.rotate("R2")
-                pattern_id = 5
-
-            # D-north
-            elif self.state[72] == self.state[128] and self.state[73] == self.state[127]:
-                self.rotate("D")
-                self.rotate("R")
-                pattern_id = 5
-
-            # D-east
-            elif self.state[135] == self.state[98] and self.state[140] == self.state[97]:
-                self.rotate("R")
-                pattern_id = 5
-
-            # D-south
-            elif self.state[147] == self.state[123] and self.state[148] == self.state[124]:
-                self.rotate("D'")
-                self.rotate("R")
-                pattern_id = 5
-
-            # D-west
-            elif self.state[131] == self.state[48] and self.state[136] == self.state[49]:
-                self.rotate("D2")
-                self.rotate("R")
-                pattern_id = 5
-
-            else:
-
-                # Move any unpaired edge to F-east so we can use pattern_id 5 instead and save ourselves 6 steps
-                if not self.sideR.west_edge_paired():
-                    pattern_id = 5
-
-                elif not self.sideL.west_edge_paired():
-                    self.rotate_y_reverse()
-                    self.rotate_z()
-                    self.rotate_z()
-                    pattern_id = 5
-
-                elif not self.sideR.north_edge_paired():
-                    self.rotate("R'")
-                    pattern_id = 5
-
-                elif not self.sideR.east_edge_paired():
-                    self.rotate("R2")
-                    pattern_id = 5
-
-                elif not self.sideR.south_edge_paired():
-                    self.rotate("R")
-                    pattern_id = 5
-
-                elif not self.sideD.north_edge_paired():
-                    self.rotate("D")
-                    self.rotate("R")
-                    pattern_id = 5
-
-                elif not self.sideD.south_edge_paired():
-                    self.rotate("D'")
-                    self.rotate("R")
-                    pattern_id = 5
-
-                elif not self.sideD.east_edge_paired():
-                    self.rotate("D2")
-                    self.rotate("R")
-                    pattern_id = 5
-
-                elif not self.sideU.north_edge_paired():
-                    self.rotate("U")
-                    self.rotate("R'")
-                    pattern_id = 5
-
-                elif not self.sideU.west_edge_paired():
-                    self.rotate("U2")
-                    self.rotate("R'")
-                    pattern_id = 5
-
-                elif not self.sideU.south_edge_paired():
-                    self.rotate("U'")
-                    self.rotate("R'")
-                    pattern_id = 5
-
-                else:
-                    pattern_id = 1
-
-            # Flip one middle wing in place
-            # No 1 at https://i.imgur.com/wsTqj.png
-            if pattern_id == 1:
-                self.rotate_x()
-                self.rotate_y_reverse()
-
-                for step in "Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2".split():
-                    self.rotate(step)
-
-            # Flip two middle wings in place
-            # No 5 at https://i.imgur.com/wsTqj.png
-            elif pattern_id == 5:
-                for step in "Dw Uw' R F' U R' F Dw' Uw".split():
-                    self.rotate(step)
-
-            post_slice_forward_non_paired_edges_count = self.get_non_paired_edges_count()
-            post_slice_forward_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            edges_paired = original_non_paired_edges_count - post_slice_forward_non_paired_edges_count
-
-            log.info("pair_multiple_edges_555()    paired %d edges in %d moves on flip edge element(s) in place (%d left to pair, %d steps in)" %
-                (edges_paired,
-                 post_slice_forward_solution_len - original_solution_len,
-                 post_slice_forward_non_paired_edges_count,
-                 post_slice_forward_solution_len))
-
-            if edges_paired < 1:
-                raise SolveError("Failed to pair edges, pattern_id %d" % pattern_id)
-
-            return True
-
-        return False
-
-    def pair_multiple_edges_555(self, wing_to_pair, pre_non_paired_edges_count):
-
-        # save cube state
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
-        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        original_non_paired_edges_count = self.get_non_paired_edges_count()
-        self.rotate_edge_to_F_west(wing_to_pair)
-
-        log.info("")
-        log.info("pair_multiple_edges_555() with wing_to_pair %s, (%d left to pair, %d steps in)" %
-            (pformat(wing_to_pair), original_non_paired_edges_count, original_solution_len))
-
-        if self.sideF.west_edge_paired():
-            raise SolveError("F-west should not be paired")
-
-        if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
-            raise SolveError("outside edges have been broken")
-
-        if self.flip_wing_in_place(original_solution_len, original_non_paired_edges_count):
-            return True
-
-        # Flip two edge elements
-        # No 7 at https://i.imgur.com/wsTqj.png
-        if self.flip_two_edge_elements():
-
-            pattern_id = self.get_two_edge_pattern_id()
-
-            # No 6 on https://imgur.com/r/all/wsTqj
-            # Exchange places and flip both centers
-            # 8 moves
-            if pattern_id == 6:
-                for step in "Uw2 Rw2 F2 Uw2 U2 F2 Rw2 Uw2".split():
-                    self.rotate(step)
-
-            # No 7 on https://imgur.com/r/all/wsTqj
-            # Exchange places, no flipping
-            # 10 moves
-            elif pattern_id == 7:
-                for step in "F2 Rw D2 Rw' F2 U2 F2 Lw B2 Lw'".split():
-                    self.rotate(step)
-
-            # No 8 on https://imgur.com/r/all/wsTqj
-            # Exchange places, flip one center
-            # 14 moves
-            elif pattern_id == 8:
-                for step in "Rw2 B2 Rw' U2 Rw' U2 B2 Rw' B2 Rw B2 Rw' B2 Rw2".split():
-                    self.rotate(step)
-
-            else:
-                raise SolveError("unexpected pattern_id %d" % pattern_id)
-
-            post_slice_forward_non_paired_edges_count = self.get_non_paired_edges_count()
-            post_slice_forward_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            edges_paired = original_non_paired_edges_count - post_slice_forward_non_paired_edges_count
-
-            log.info("pair_multiple_edges_555()    paired %d edges in %d moves on swap two middle elements pattern %d (%d left to pair, %d steps in)" %
-                (edges_paired,
-                 post_slice_forward_solution_len - original_solution_len,
-                 pattern_id,
-                 post_slice_forward_non_paired_edges_count,
-                 post_slice_forward_solution_len))
-
-            if edges_paired < 2:
-                raise SolveError("should have paired 2 edges but only paired %d" % edges_paired)
-            return True
-
-        if pre_non_paired_edges_count > 3:
-            if self.pair_multiple_via_slice_forward_backward(pre_non_paired_edges_count, original_state, original_solution, original_solution_len, original_non_paired_edges_count):
-                return True
-            self.rotate_edge_to_F_west(wing_to_pair)
-
-        return False
-
-    def pair_one_edge_555(self, edge):
-        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        original_non_paired_edges_count = self.get_non_paired_edges_count()
-        self.rotate_edge_to_F_west(edge)
-
-        if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
-            raise SolveError("outside edges have been broken")
-
-        log.info("pair_one_edge_555() called (%d left to pair, %d steps in)" % (original_non_paired_edges_count, original_solution_len))
-
-        # Work with the edge at the bottom of the F west side
-        target_wing = self.sideF.edge_west_pos[-1]
-        target_wing_value = self.get_wing_value(target_wing)
-
-        # Move sister wing to F-east
-        sister_wings = self.get_wings(target_wing, remove_if_in_same_edge=True)
-
-        # This is the scenario where the center edge is beside its two siblings it
-        # just needs to be flipped in place.
-        if not sister_wings:
-            self.print_cube()
-            self.rotate_x()
-            self.rotate_y_reverse()
-            self.print_cube()
-
-            for step in "Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2".split():
-                self.rotate(step)
-            return True
-
-        sister_wing = sister_wings[0]
-        self.move_wing_to_F_east(sister_wing)
-
-        # The sister wing is in the right location but does it need to be flipped?
-        sister_wing = self.get_wings_on_edge(target_wing, 'F', 'R')[0]
-        sister_wing_value = self.get_wing_value(sister_wing)
-
-        if target_wing_value != sister_wing_value:
-
-            for step in ("R", "U'", "B'", "R2"):
-                self.rotate(step)
-            sister_wing = self.get_wings_on_edge(target_wing, 'F', 'R')[0]
-            sister_wing_value = self.get_wing_value(sister_wing)
-
-        # If there are no unpaired wings on U,B or D then we cannot pair this wing
-        # without breaking some other already paired wing.
-        if (self.sideU.all_edges_paired() and
-            self.sideB.all_edges_paired() and
-            self.sideD.all_edges_paired()):
-            return False
-
-        else:
-            # Now that that two edges on F are in place, put an unpaired wing at U-west
-            self.make_U_west_have_unpaired_wing()
-
-        if sister_wing[0] == 65:
-            # 3Uw Uw'
-            self.rotate("Uw'")
-            self.rotate("Dw")
-            self.rotate_y()
-
-            for step in "U' L' U L".split():
-                self.rotate(step)
-
-            # 3Uw' Uw
-            self.rotate("Uw")
-            self.rotate("Dw'")
-            self.rotate_y_reverse()
-        else:
-            raise SolveError("sister_wing %s is in the wrong position" % str(sister_wing))
-
-        current_non_paired_edges_count = self.get_non_paired_edges_count()
-        edges_paired = original_non_paired_edges_count - current_non_paired_edges_count
-        log.info("pair_one_edge_555() paired %d edges, added %d steps" %
-            (edges_paired, self.get_solution_len_minus_rotates(self.solution) - original_solution_len))
-
-        if edges_paired <= 0:
-            raise SolveError("went from %d to %d" % (original_non_paired_edges_count, current_non_paired_edges_count))
-        return True
 
     def pair_outside_edges(self):
         fake_444 = RubiksCube444(solved_4x4x4)
@@ -1304,9 +646,6 @@ class RubiksCube555(RubiksCube):
         fake_444.state[92] = self.state[145]
         fake_444.state[94] = self.state[147]
         fake_444.state[95] = self.state[149]
-
-        #self.print_cube()
-        #fake_444.print_cube()
         fake_444.group_edges()
 
         for step in fake_444.solution:
@@ -1317,167 +656,981 @@ class RubiksCube555(RubiksCube):
                 step = '5' + step[1:]
             elif step.startswith('3'):
                 raise ImplementThis('4x4x4 steps starts with 3')
-
             self.rotate(step)
 
-        #self.print_cube()
         log.warning("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-    def group_edges(self):
-        self.lt_init()
+    def get_two_edge_pattern_id(self):
 
-        self.pair_outside_edges()
-        self.print_cube()
+        def colors_in(squares):
+            results = []
+            for x in squares:
+                results.append(self.state[x])
+            return sorted(list(set(results)))
 
-        original_non_paired_edges = self.get_non_paired_edges()
-        if not original_non_paired_edges:
-            self.solution.append('EDGES_GROUPED')
-            return
-        original_non_paired_edges_count = len(original_non_paired_edges)
+        # Build a string that represents the pattern of colors for the U-south and U-north edges
+        edges_of_interest = [52, 53, 54, 22, 23, 24, 2, 3, 4, 104, 103, 102]
+        sides_in_edges_of_interest = []
+        edges_of_interest_state = []
+
+        for square_index in edges_of_interest:
+            value = self.state[square_index]
+            edges_of_interest_state.append(value)
+
+            if value not in sides_in_edges_of_interest:
+                sides_in_edges_of_interest.append(value)
+
+        edges_of_interest_state = ''.join(edges_of_interest_state)
+        for (index, value) in enumerate(sides_in_edges_of_interest):
+            edges_of_interest_state = edges_of_interest_state.replace(value, str(index))
+        #log.info("edges_of_interest_state: %s" % edges_of_interest_state)
+
+        # 1, 5, 6, 7, and 8 are the scenarios where the outsided wings are paired...so these are the only ones
+        # you hit if you use the 4x4x4 edge solver to pair all of the outside wings first. 1 and 5 are handled
+        # via pair_checkboard_edge_555() which has been called by now so we do not need to look for those two scenarios here.
+        #
+        # See https://i.imgur.com/wsTqj.png for these patterns
+
+        # No 6 - Exchange places and flip both centers
+        if edges_of_interest_state in ('010202020101', '010232323101', '010222222101', '000121212000', '010121212101'):
+            pattern_id = 6
+            self.rotate_x_reverse()
+            self.rotate_z()
+
+        # No 7 - Exchange places, no flipping
+        elif edges_of_interest_state in ('010232101323', '010202101020', '010222101222', '010121101212', '000121000212'):
+            pattern_id = 7
+
+        # No 8 regular - Exchange places, flip one center
+        # The one that has to flip is at U-south
+        elif edges_of_interest_state in ('010232303121', '010121202111', '010222202121', '000121202010', '010202000121'):
+            pattern_id = 8
+
+        # No 8 - Exchange places, flip one center
+        # The one that has to flip is at U-north, it needs to be at U-south
+        elif edges_of_interest_state in ('010232121303', '000121010202', '010121111202', '010202121000', '010222121202'):
+            self.rotate_y()
+            self.rotate_y()
+            pattern_id = 8
+
+        # No 2 regular
+        elif edges_of_interest_state in ('001222110222', '010222101222', '001220110002', '000112000221', '001112110221', '001223110332'):
+            pattern_id = 2
+
+        # No 2 but the one at U-south needs to flip around
+        elif edges_of_interest_state in ('011122112001', '011233223001', '011200220001', '011222222001', '000122112000'):
+            self.rotate("F")
+            self.rotate("U'")
+            self.rotate("R")
+            self.rotate_y()
+            pattern_id = 2
+
+        # No 2 but the one at U-north needs to flip around
+        elif edges_of_interest_state in ('001220200011', '001223233011', '001222222011', '001112122011', '000112122000'):
+            self.rotate("U")
+            self.rotate("R")
+            self.rotate("U'")
+            self.rotate("B")
+            pattern_id = 2
+
+        # No 2 that just needs to be rotated around 180 degrees
+        elif edges_of_interest_state in ('011222100222', '011122100211', '011200100022', '011233100322', '000122000211'):
+            self.rotate_y()
+            self.rotate_y()
+            pattern_id = 2
+
+        # No 3 regular
+        elif edges_of_interest_state in ('001223213031', '000112102020', '001222212021', '001220210001', '001112112021'):
+            pattern_id = 3
+            self.rotate_x_reverse()
+            self.rotate_z()
+
+        # No 3 where it just needs to be rotated down and counter clockwise
+        elif edges_of_interest_state in ('010102122000', '011102122011', '012103133022', '012101111022', '012100100022'):
+            self.rotate_x_reverse()
+            self.rotate_z_reverse()
+            pattern_id = 3
+
+        # No 3 where it just needs to be rotated down, clockwise and the F-east edge needs to be flipped
+        elif edges_of_interest_state in ('001220100012', '001223130312', '000112020201', '001112120211', '001222120212'):
+            self.rotate_x_reverse()
+            self.rotate_z()
+            self.rotate("R")
+            self.rotate("F'")
+            self.rotate("U")
+            self.rotate("F")
+            pattern_id = 3
+
+        # No 3 where it just needs to be rotated down, counter clockwise and the F-east edge needs to be flipped
+        elif edges_of_interest_state in ('012221200122', '012321200133', '012121200111', '001210100022', '010201000122'):
+            self.rotate_x_reverse()
+            self.rotate_z_reverse()
+            self.rotate("R")
+            self.rotate("F'")
+            self.rotate("U")
+            self.rotate("F")
+            pattern_id = 3
+
+        # No 4 regular, rotate down and counter clockwise
+        elif edges_of_interest_state in ('011233203021', '000122102010', '011200200021', '011122102011', '011222202021'):
+            pattern_id = 4
+            self.rotate_x_reverse()
+            self.rotate_z_reverse()
+
+        # No 4 where it needs to be rotated down and clockwise
+        elif edges_of_interest_state in ('010201221000', '001210220001', '012321331002', '012221221002', '012121111002'):
+            self.rotate_x_reverse()
+            self.rotate_z()
+            pattern_id = 4
+
+        # No 4 where it needs to be rotated down, clockwise and F-west needs to be flipped
+        elif edges_of_interest_state in ('012103220331', '012100220001', '010102000221', '011102110221', '012101220111'):
+            self.rotate_x_reverse()
+            self.rotate_z()
+            self.rotate("L'")
+            self.rotate("F")
+            self.rotate("U'")
+            self.rotate("F'")
+            pattern_id = 4
+
+        # No 4 where it needs to be rotated down, counter clockwise and F-west needs to be flipped
+        elif edges_of_interest_state in ('011233120302', '011122110201', '000122010201', '011222120202', '011200120002'):
+            self.rotate_x_reverse()
+            self.rotate_z_reverse()
+            self.rotate("L'")
+            self.rotate("F")
+            self.rotate("U'")
+            self.rotate("F'")
+            pattern_id = 4
+
+        # No 9 regular
+        elif edges_of_interest_state in ('001210200021', '012221201022', '010201201020', '012121101012', '012321301032'):
+            pattern_id = 9
+
+        # No 9 where U-north needs to be flipped
+        elif edges_of_interest_state in ('001210120002', '012221220102', '012121210101', '012321230103'):
+            self.rotate("U")
+            self.rotate("R")
+            self.rotate("U'")
+            self.rotate("B")
+            pattern_id = 9
+
+        # No 10 regular
+        elif edges_of_interest_state in ('012103123032', '012100120002', '011102112021', '012101121012', '010102102020'):
+            pattern_id = 10
+
+        # No 10 where U-north needs to be flipped
+        elif edges_of_interest_state in ('011102120211', '012100200021', '012103230321', '012101210121', '010102020201'):
+            self.rotate("U")
+            self.rotate("R")
+            self.rotate("U'")
+            self.rotate("B")
+            pattern_id = 10
+
+        else:
+            raise SolveError("Could not determine 5x5x5 last two edges pattern ID for %s" % edges_of_interest_state)
+
+        return pattern_id
+
+    def position_last_two_edges_555(self):
+        """
+        One unpaired edge is at F-west, position it and its sister edge to U-north and U-south
+        """
+        if self.sideF.west_edge_paired():
+            raise SolveError("F-west should not be paired")
+
+        if not self.sideL.west_edge_paired():
+            self.rotate_z()
+
+        elif not self.sideB.south_edge_paired():
+            self.rotate("B'")
+            self.rotate_z()
+
+        elif not self.sideR.south_edge_paired():
+            self.rotate("D")
+            self.rotate("B'")
+            self.rotate_z()
+
+        elif not self.sideU.north_edge_paired():
+            self.rotate("F")
+
+        elif not self.sideU.east_edge_paired():
+            self.rotate("R'")
+            self.rotate_x()
+            self.rotate_y_reverse()
+
+        elif not self.sideU.south_edge_paired():
+            self.rotate("U2")
+            self.rotate("F")
+
+        elif not self.sideF.south_edge_paired():
+            self.rotate("D2")
+            self.rotate("B'")
+            self.rotate_z()
+
+        elif not self.sideL.south_edge_paired():
+            self.rotate("D'")
+            self.rotate("B'")
+            self.rotate_z()
+
+        elif not self.sideL.north_edge_paired():
+            self.rotate("U")
+            self.rotate("F")
+
+        elif not self.sideR.west_edge_paired():
+            self.rotate_z_reverse()
+            self.rotate_x()
+
+        elif not self.sideR.east_edge_paired():
+            self.rotate("R2")
+            self.rotate_z_reverse()
+            self.rotate_x()
+
+        else:
+            raise ImplementThis("sister_wing1 %s" % pformat(sister_wing1))
+
+        # Assert that U-north and U-south are not paired
+        if self.sideU.north_edge_paired():
+            raise SolveError("U-north should not be paired, sister_wing1 %s" % pformat(sister_wing1))
+
+        if self.sideU.north_edge_paired():
+            raise SolveError("U-south should not be paired, sister_wing1 %s" % pformat(sister_wing1))
+
+    def position_sister_edges_555(self):
+        """
+        One unpaired edge is at F-west, position it and its sister edge to U-north and U-south
+        """
+        if self.sideF.west_edge_paired():
+            raise SolveError("F-west should not be paired")
+
+        target_wing = self.sideF.edge_west_pos[1]
+        sister_wing = self.get_wings(target_wing, remove_if_in_same_edge=True)[0]
+        sister_wing_side = self.get_side_for_index(sister_wing[0])
+
+        if sister_wing[0] in self.sideL.edge_west_pos or sister_wing[0] in self.sideB.edge_east_pos:
+            self.rotate_z()
+
+        elif sister_wing[0] in self.sideB.edge_south_pos or sister_wing[0] in self.sideD.edge_south_pos:
+            self.rotate("B'")
+            self.rotate_z()
+
+        elif sister_wing[0] in self.sideR.edge_south_pos or sister_wing[0] in self.sideD.edge_east_pos:
+            self.rotate("D")
+            self.rotate("B'")
+            self.rotate_z()
+
+        elif sister_wing[0] in self.sideU.edge_north_pos or sister_wing[0] in self.sideB.edge_north_pos:
+            self.rotate("F")
+
+        elif sister_wing[0] in self.sideU.edge_east_pos or sister_wing[0] in self.sideL.edge_north_pos:
+            self.rotate("R'")
+            self.rotate_x()
+            self.rotate_y_reverse()
+
+        elif sister_wing[0] in self.sideU.edge_south_pos or sister_wing[0] in self.sideF.edge_north_pos:
+            self.rotate("U2")
+            self.rotate("F")
+
+        elif sister_wing[0] in self.sideF.edge_south_pos or sister_wing[0] in self.sideD.edge_north_pos:
+            self.rotate("D2")
+            self.rotate("B'")
+            self.rotate_z()
+
+        elif sister_wing[0] in self.sideL.edge_south_pos or sister_wing[0] in self.sideD.edge_west_pos:
+            self.rotate("D'")
+            self.rotate("B'")
+            self.rotate_z()
+
+        elif sister_wing[0] in self.sideL.edge_north_pos or sister_wing[0] in self.sideU.edge_west_pos:
+            self.rotate("U")
+            self.rotate("F")
+
+        elif sister_wing[0] in self.sideR.edge_west_pos or sister_wing[0] in self.sideF.edge_east_pos:
+            self.rotate_z_reverse()
+            self.rotate_x()
+
+        elif sister_wing[0] in self.sideR.edge_east_pos or sister_wing[0] in self.sideB.edge_west_pos:
+            self.rotate("R2")
+            self.rotate_z_reverse()
+            self.rotate_x()
+
+        else:
+            raise ImplementThis("sister_wing %s" % pformat(sister_wing))
+
+        # Assert that U-north and U-south are not paired
+        if self.sideU.north_edge_paired():
+            raise SolveError("U-north should not be paired, sister_wing1 %s" % pformat(sister_wing1))
+
+        if self.sideU.north_edge_paired():
+            raise SolveError("U-south should not be paired, sister_wing1 %s" % pformat(sister_wing1))
+
+    def all_colors_on_two_edges(self):
+        target_wing = self.sideF.edge_west_pos[1]
+        sister_wings = self.get_wings(target_wing, remove_if_in_same_edge=True)
+
+        if not sister_wings:
+            raise SolveError("We should not be here")
+
+        if len(sister_wings) > 1:
+            return False
+
+        sister_wing = sister_wings[0]
+        target_edge_colors = self.get_edge_colors(target_wing)
+        sister_wing_edge_colors = self.get_edge_colors(sister_wing[0])
+        combined_edge_colors = list(set(target_edge_colors + sister_wing_edge_colors))
+
+        if len(combined_edge_colors) == 2:
+            #log.info("all_colors_on_two_edges target %s" % pformat(target_wing))
+            #log.info("all_colors_on_two_edges sister_wing %s" % pformat(sister_wing))
+            #log.info("all_colors_on_two_edges target_edge_colors %s" % pformat(target_edge_colors))
+            #log.info("all_colors_on_two_edges sister_wing_edge_colors %s" % pformat(sister_wing_edge_colors))
+            #log.info("all_colors_on_two_edges combined %s" % pformat(combined_edge_colors))
+            return True
+
+        return False
+
+    def pair_two_sister_edges_555(self, pre_solution_len, pre_non_paired_wings_count, pre_non_paired_edges_count):
+        """
+        This only works when there are only two colors of wings to work with. This
+        is always the case for the last two edges but it can happen prior to that
+        as well.
+        """
+        if pre_non_paired_edges_count == 2:
+            self.position_last_two_edges_555()
+            all_edges_should_pair = True
+        else:
+            if self.all_colors_on_two_edges():
+                self.position_sister_edges_555()
+                all_edges_should_pair = False
+            else:
+                return False
+
+        pattern_id = self.get_two_edge_pattern_id()
+        # log.info("pattern_id: %d" % pattern_id)
+
+        # No 2 on https://imgur.com/r/all/wsTqj
+        # 12 moves, pairs 2
+        if pattern_id == 2:
+            expected_pair_count = 2
+
+            for step in "Lw' U2 Lw' U2 F2 Lw' F2 Rw U2 Rw' U2 Lw2".split():
+                self.rotate(step)
+
+        # No 3 on https://imgur.com/r/all/wsTqj
+        # 7 moves, pairs 3
+        elif pattern_id == 3:
+            expected_pair_count = 3
+
+            for step in "Dw R F' U R' F Dw'".split():
+                self.rotate(step)
+
+        # No 4 on https://imgur.com/r/all/wsTqj
+        # 9 moves, pairs 4
+        elif pattern_id == 4:
+            expected_pair_count = 3
+
+            for step in "Dw' L' U' L F' L F L' Dw".split():
+                self.rotate(step)
+
+        # 6, 7, and 8 are the scenarios where the outsided wings are paired...so these are
+        # the only ones you hit if you use the 4x4x4 edge solver to pair all of the outside
+        # wings first.
+        #
+        # No 6 on https://imgur.com/r/all/wsTqj
+        # 8 moves, pairs 4
+        elif pattern_id == 6:
+            expected_pair_count = 4
+
+            for step in "Uw2 Rw2 F2 Uw2 U2 F2 Rw2 Uw2".split():
+                self.rotate(step)
+
+        # No 7 on https://imgur.com/r/all/wsTqj
+        # 10 moves, pairs 4
+        elif pattern_id == 7:
+            expected_pair_count = 4
+
+            for step in "F2 Rw D2 Rw' F2 U2 F2 Lw B2 Lw'".split():
+                self.rotate(step)
+
+        # No 8 on https://imgur.com/r/all/wsTqj
+        # 14 moves, pairs 4
+        elif pattern_id == 8:
+            expected_pair_count = 4
+
+            for step in "Rw2 B2 Rw' U2 Rw' U2 B2 Rw' B2 Rw B2 Rw' B2 Rw2".split():
+                self.rotate(step)
+
+        # No 9 on https://imgur.com/r/all/wsTqj
+        # 13 moves, pairs 4
+        elif pattern_id == 9:
+            expected_pair_count = 4
+
+            for step in "Lw U2 Lw2 U2 Lw' U2 Lw U2 Lw' U2 Lw2 U2 Lw".split():
+                self.rotate(step)
+
+        # No 10 on https://imgur.com/r/all/wsTqj
+        # 13 moves, pairs 4
+        elif pattern_id == 10:
+            expected_pair_count = 4
+
+            for step in "Rw' U2 Rw2 U2 Rw U2 Rw' U2 Rw U2 Rw2 U2 Rw'".split():
+                self.rotate(step)
+
+        else:
+            raise SolveError("unexpected pattern_id %d" % pattern_id)
+
+        post_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        post_non_paired_edges_count = self.get_non_paired_edges_count()
+        post_non_paired_wings_count = self.get_non_paired_wings_count()
+        wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
+
+        log.info("pair_edge()    paired %d wings in %d moves on last two edges (%d left to pair, %d steps in)" %
+            (wings_paired,
+             post_solution_len - pre_solution_len,
+             post_non_paired_wings_count,
+             post_solution_len))
+
+        if wings_paired < expected_pair_count:
+            raise SolveError("Paired %d wings, expected to pair %d, pattern_id %d" % (wings_paired, expected_pair_count, pattern_id))
+
+        if all_edges_should_pair and post_non_paired_edges_count:
+            raise SolveError("All edges should be paired")
+
+        return True
+
+    def pair_six_wings_555(self, wing_to_pair, pre_non_paired_wings_count):
 
         # save cube state
         original_state = copy(self.state)
         original_solution = copy(self.solution)
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        original_non_paired_wings_count = self.get_non_paired_wings_count()
 
-        # There are 12 edges, cycle through all 12 in terms of which edge we try to pair first.
-        min_solution_length = None
-        min_solution_state = None
-        min_solution = None
+        log.info("pair_six_wings_555() with wing_to_pair %s (%d left to pair, %d steps in)" % (pformat(wing_to_pair), original_non_paired_wings_count, original_solution_len))
+        #self.print_cube()
+        # log.info("PREP-FOR-3Uw-SLICE (begin)")
+        # self.print_cube()
 
-        # If you are working on improving edge pairing it is a little easier to
-        # troubleshoot if you are not cycling through all 12 edges as your
-        # "init_wing_to_pair" so set the following to False.
-        #
-        # NOTE: I set this to False because if it is True it takes a long time
-        # to compute the solution on a beaglebone black
-        use_init_wing_to_pair = False
+        (target_wing, sister_wing1, sister_wing2, sister_wing3, steps) = self.get_sister_wings_slice_forward_555(pre_non_paired_wings_count)
 
-        for init_wing_to_pair in original_non_paired_edges:
-            # log.info("init_wing_to_pair %20s" % pformat(init_wing_to_pair))
+        if target_wing is None:
+            log.info("pair_six_wings_555() failed...get_sister_wings_slice_forward_555")
+            self.state = copy(original_state)
+            self.solution = copy(original_solution)
+            return False
 
-            if use_init_wing_to_pair:
-                if self.pair_multiple_edges_555(init_wing_to_pair[0], original_non_paired_edges_count):
-                    pass
-                elif self.pair_one_edge_555(init_wing_to_pair[0]):
-                    pass
-                else:
-                    raise SolveError("Could not pair a single edge")
+        for step in steps:
+            self.rotate(step)
 
-            while True:
-                non_paired_edges = self.get_non_paired_edges()
-                pre_non_paired_edges_count = len(non_paired_edges)
-                pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
-                log.info("")
-                log.info("")
-                log.info("")
-                log.warning("%d steps in, %d edges left to pair" % (pre_solution_len, pre_non_paired_edges_count))
+        # At this point we are setup to slice forward and pair 3 edges
+        #log.info("PREP-FOR-3Uw-SLICE (end)....SLICE (begin), %d left to pair" % self.get_non_paired_wings_count())
+        #self.print_cube()
+        # 3Uw Uw'
+        self.rotate("Uw'")
+        self.rotate("Dw")
+        self.rotate_y()
 
-                if pre_non_paired_edges_count == 0:
-                    break
+        #log.info("SLICE (end), %d left to pair" % self.get_non_paired_wings_count())
+        #self.print_cube()
 
-                # cycle through the unpaired wings and find the wing where pair_multiple_edges_555
-                # pairs the most in the least number of moves
-                tmp_state = copy(self.state)
-                tmp_solution = copy(self.solution)
+        post_slice_forward_non_paired_wings_count = self.get_non_paired_wings_count()
+        post_slice_forward_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-                min_moves_per_paired_wing = None
-                max_edges_paired = None
-                max_edges_paired_wing_to_pair = None
-                max_wing_solution_len = None
+        log.info("pair_six_wings_555()    paired %d wings in %d moves on slice forward (%d left to pair, %d steps in)" %
+            (original_non_paired_wings_count - post_slice_forward_non_paired_wings_count,
+             post_slice_forward_solution_len - original_solution_len,
+             post_slice_forward_non_paired_wings_count,
+             post_slice_forward_solution_len))
 
-                for foo in non_paired_edges:
-                    wing_to_pair = foo[0]
+        # TODO how do we determine which unpaired edge is the best one to stage at F-east for the slice back?
+        #self.print_cube()
+        #sys.exit(0)
+        placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
 
-                    if self.pair_multiple_edges_555(wing_to_pair, pre_non_paired_edges_count):
+        if not placed_unpaired_wing:
+            log.info("pair_six_wings_555() failed...no unpaired wings to move to F-east")
+            return False
 
-                        post_non_paired_edges_count = self.get_non_paired_edges_count()
-                        edges_paired = pre_non_paired_edges_count - post_non_paired_edges_count
-                        post_solution_len = self.get_solution_len_minus_rotates(self.solution)
-                        wing_solution_len = post_solution_len - pre_solution_len
+        # TODO remove these two checks after running the 50 test cubes
+        if self.sideF.east_edge_paired():
+            raise SolveError("pair_six_wings_555() failed (F-east should not be paired)")
 
-                        if edges_paired > 0:
-                            moves_per_paired_wing = wing_solution_len/(edges_paired * 1.0)
+        if self.state[70] == self.state[65] and self.state[91] == self.state[86]:
+            raise SolveError("Need to rotate this around...but then we may need to 2Uw' instead of 3Uw'")
 
-                            if (min_moves_per_paired_wing is None or
-                                moves_per_paired_wing < min_moves_per_paired_wing or
-                                (moves_per_paired_wing == min_moves_per_paired_wing and edges_paired > max_edges_paired)):
-                                max_edges_paired = edges_paired
-                                max_edges_paired_wing_to_pair = wing_to_pair
-                                max_wing_solution_len = wing_solution_len
-                                min_moves_per_paired_wing = moves_per_paired_wing
+        #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_wings_count())
+        #self.print_cube()
 
-                    # Restore state
-                    self.state = copy(tmp_state)
-                    self.solution = copy(tmp_solution)
+        # 3Uw' Uw
+        self.rotate("Uw")
+        self.rotate("Dw'")
+        self.rotate_y()
 
-                if max_edges_paired:
-                    wing_to_pair = max_edges_paired_wing_to_pair
-                    log.info("Using %s as next wing_to_pair will pair %d edges in %d moves (%s per wing)" % (wing_to_pair, max_edges_paired, max_wing_solution_len, min_moves_per_paired_wing))
-                    self.pair_multiple_edges_555(wing_to_pair, pre_non_paired_edges_count)
+        #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
+        #self.print_cube()
+        self.verify_all_centers_solved()
 
-                # see which wing we can pair two at a time with the least moves
-                else:
-                    log.warning("There are no wings where pair_multiple_edges_555 will return True")
+        post_slice_back_non_paired_wings_count = self.get_non_paired_wings_count()
+        post_slice_back_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        wings_paired = post_slice_forward_non_paired_wings_count - post_slice_back_non_paired_wings_count
 
-                    for foo in non_paired_edges:
-                        wing_to_pair = foo[0]
+        log.info("pair_six_wings_555()    paired %d wings in %d moves on slice back (%d left to pair, %d steps in)" %
+            (post_slice_forward_non_paired_wings_count - post_slice_back_non_paired_wings_count,
+             post_slice_back_solution_len - post_slice_forward_solution_len,
+             post_slice_back_non_paired_wings_count,
+             post_slice_back_solution_len))
 
-                        if self.pair_one_edge_555(wing_to_pair):
-                            post_non_paired_edges_count = self.get_non_paired_edges_count()
-                            edges_paired = pre_non_paired_edges_count - post_non_paired_edges_count
-                            post_solution_len = self.get_solution_len_minus_rotates(self.solution)
-                            wing_solution_len = post_solution_len - pre_solution_len
+        if wings_paired < 1:
+            return False
 
-                            if (max_edges_paired is None or
-                                edges_paired > max_edges_paired or
-                                (edges_paired == max_edges_paired and wing_solution_len < max_wing_solution_len)):
-                                max_edges_paired = edges_paired
-                                max_edges_paired_wing_to_pair = wing_to_pair
-                                max_wing_solution_len = wing_solution_len
+        return True
 
-                        # Restore state
-                        self.state = copy(tmp_state)
-                        self.solution = copy(tmp_solution)
+    def pair_checkboard_edge_555(self, pre_solution_len, pre_non_paired_wings_count):
+        """
+        We need to rotate the middle wing in place, this is needed when it is next to
+        its two sister wings but is just rotated the wrong way
 
-                    if max_edges_paired_wing_to_pair is None:
-                        raise SolveError("pair_one_edge_555 failed")
+        No 1 is when there is only one edge like this, No 5 is when there are two. Ideally
+        we want the No 5 scenario as it pairs two wings in 9 moves where No 1 pairs 1 wing
+        in 15 moves.
+        """
+        if (self.state[35] == self.state[45] and
+            self.state[56] == self.state[66] and
+            self.state[56] == self.state[40] and
+            self.state[35] == self.state[61]):
+            expected_pair_count = None
 
-                    wing_to_pair = max_edges_paired_wing_to_pair
-                    log.info("Using %s as next wing_to_pair will pair %s wings in %s moves" % (wing_to_pair, max_edges_paired, max_wing_solution_len))
-                    self.pair_one_edge_555(wing_to_pair)
+            # F-east
+            if self.state[60] == self.state[86] and self.state[81] == self.state[65] and self.state[60] == self.state[70] and self.state[81] == self.state[91]:
+                pattern_id = 5
+                expected_pair_count = 4
 
-            solution_len_minus_rotates = self.get_solution_len_minus_rotates(self.solution)
-            new_min = False
+            # L-east
+            elif self.state[31] == self.state[115] and self.state[36] == self.state[110] and self.state[31] == self.state[41] and self.state[110] == self.state[120]:
+                self.rotate_y_reverse()
+                pattern_id = 5
+                expected_pair_count = 4
 
-            if min_solution_length is None:
-                new_min = True
-            elif solution_len_minus_rotates < min_solution_length:
-                new_min = True
+            # U-east
+            elif self.state[10] == self.state[78] and self.state[15] == self.state[79] and self.state[10] == self.state[20] and self.state[77] == self.state[79]:
+                self.rotate("R'")
+                pattern_id = 5
+                expected_pair_count = 4
 
-            if new_min:
-                min_solution_length = solution_len_minus_rotates
-                min_solution_state = copy(self.state)
-                min_solution = copy(self.solution)
-                log.warning("edges solution length %d (NEW MIN)" % (solution_len_minus_rotates - original_solution_len))
+            # D-east
+            elif self.state[135] == self.state[98] and self.state[140] == self.state[97] and self.state[135] == self.state[145] and self.state[97] == self.state[99]:
+                self.rotate("R")
+                pattern_id = 5
+                expected_pair_count = 4
+
+            # R-east
+            elif self.state[85] == self.state[111] and self.state[90] == self.state[106] and self.state[85] == self.state[95] and self.state[106] == self.state[116]:
+                self.rotate("R2")
+                pattern_id = 5
+                expected_pair_count = 4
+
+            # U-north
+            elif self.state[2] == self.state[103] and self.state[3] == self.state[104] and self.state[2] == self.state[4] and self.state[102] == self.state[104]:
+                self.rotate("U")
+                self.rotate("R'")
+                pattern_id = 5
+                expected_pair_count = 4
+
+            # U-south
+            elif self.state[52] == self.state[23] and self.state[22] == self.state[53] and self.state[52] == self.state[54] and self.state[22] == self.state[24]:
+                self.rotate("U'")
+                self.rotate("R'")
+                pattern_id = 5
+                expected_pair_count = 4
+
+            # U-west
+            elif self.state[6] == self.state[28] and self.state[11] == self.state[27] and self.state[6] == self.state[16] and self.state[27] == self.state[29]:
+                self.rotate("U2")
+                self.rotate("R'")
+                pattern_id = 5
+                expected_pair_count = 4
+
+            # D-north
+            elif self.state[72] == self.state[128] and self.state[73] == self.state[127] and self.state[72] == self.state[74] and self.state[127] == self.state[129]:
+                self.rotate("D")
+                self.rotate("R")
+                pattern_id = 5
+                expected_pair_count = 4
+
+            # D-south
+            elif self.state[147] == self.state[123] and self.state[148] == self.state[124] and self.state[147] == self.state[149] and self.state[122] == self.state[124]:
+                self.rotate("D'")
+                self.rotate("R")
+                pattern_id = 5
+                expected_pair_count = 4
+
+            # D-west
+            elif self.state[131] == self.state[48] and self.state[136] == self.state[49] and self.state[131] == self.state[141] and self.state[47] == self.state[49]:
+                self.rotate("D2")
+                self.rotate("R")
+                pattern_id = 5
+                expected_pair_count = 4
+
             else:
-                log.info("edges solution length %d" % (solution_len_minus_rotates - original_solution_len))
-            log.info('')
+                expected_pair_count = 2
 
-            # restore state
+                # Move any unpaired edge to F-east so we can use pattern_id 5 instead and save ourselves 6 steps
+                # It must be an edge without any paired wings.
+                if self.sideR.west_edge_non_paired_wings_count() == 2:
+                    pattern_id = 5
+
+                elif self.sideL.west_edge_non_paired_wings_count() == 2:
+                    self.rotate_y_reverse()
+                    self.rotate_z()
+                    self.rotate_z()
+                    pattern_id = 5
+
+                elif self.sideR.north_edge_non_paired_wings_count() == 2:
+                    self.rotate("R'")
+                    pattern_id = 5
+
+                elif self.sideR.east_edge_non_paired_wings_count() == 2:
+                    self.rotate("R2")
+                    pattern_id = 5
+
+                elif self.sideR.south_edge_non_paired_wings_count() == 2:
+                    self.rotate("R")
+                    pattern_id = 5
+
+                elif self.sideD.north_edge_non_paired_wings_count() == 2:
+                    self.rotate("D")
+                    self.rotate("R")
+                    pattern_id = 5
+
+                elif self.sideD.south_edge_non_paired_wings_count() == 2:
+                    self.rotate("D'")
+                    self.rotate("R")
+                    pattern_id = 5
+
+                elif self.sideD.east_edge_non_paired_wings_count() == 2:
+                    self.rotate("D2")
+                    self.rotate("R")
+                    pattern_id = 5
+
+                elif self.sideU.north_edge_non_paired_wings_count() == 2:
+                    self.rotate("U")
+                    self.rotate("R'")
+                    pattern_id = 5
+
+                elif self.sideU.west_edge_non_paired_wings_count() == 2:
+                    self.rotate("U2")
+                    self.rotate("R'")
+                    pattern_id = 5
+
+                elif self.sideU.south_edge_non_paired_wings_count() == 2:
+                    self.rotate("U'")
+                    self.rotate("R'")
+                    pattern_id = 5
+
+                else:
+                    pattern_id = 1
+
+            # Flip one middle wing in place
+            # No 1 at https://i.imgur.com/wsTqj.png
+            if pattern_id == 1:
+                self.rotate_x()
+                self.rotate_y_reverse()
+
+                for step in "Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2".split():
+                    self.rotate(step)
+
+            # Flip two middle wings in place
+            # No 5 at https://i.imgur.com/wsTqj.png
+            elif pattern_id == 5:
+                for step in "Dw Uw' R F' U R' F Dw' Uw".split():
+                    self.rotate(step)
+
+            post_solution_len = self.get_solution_len_minus_rotates(self.solution)
+            post_non_paired_edges_count = self.get_non_paired_edges_count()
+            post_non_paired_wings_count = self.get_non_paired_wings_count()
+            wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
+
+            log.info("pair_checkboard_edge_555() paired %d wings in %d moves (%d left to pair, %d steps in)" %
+                (wings_paired,
+                 post_solution_len - pre_solution_len,
+                 post_non_paired_wings_count,
+                 post_solution_len))
+
+            if wings_paired < expected_pair_count:
+                raise SolveError("Paired %d wings, expected to pair %d" % (wings_paired, expected_pair_count))
+
+            return True
+
+        return False
+
+    def pair_one_wing_555(self):
+        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        original_non_paired_wings_count = self.get_non_paired_wings_count()
+        # self.move_wing_to_F_west(edge)
+
+        if self.sideF.west_edge_paired():
+            raise SolveError("F-west should not be paired")
+
+        log.info("pair_one_wing_555() called (%d left to pair, %d steps in)" % (original_non_paired_wings_count, original_solution_len))
+
+        # Work with the edge at the bottom of F-west
+        target_wing = self.sideF.edge_west_pos[-1]
+        target_wing_value = self.get_wing_value(target_wing)
+        sister_wings = self.get_wings(target_wing, remove_if_in_same_edge=True)
+
+        # This is the scenario where the center edge is beside its two siblings it
+        # just needs to be flipped in place.
+        if not sister_wings:
+            raise SolveError("We should not be here")
+
+        # Move sister wing to F-east...TODO this needs to be smart enough to move it there
+        # so that it doesn't need to be flipped once it is there.  The 4x4x4 edge pairing has this logic.
+        sister_wing = sister_wings[0]
+        self.move_wing_to_F_east(sister_wing)
+
+        # The sister wing is in the right location but does it need to be flipped?
+        sister_wing = self.get_wings_on_edge(target_wing, 'F', 'R')[0]
+        sister_wing_value = self.get_wing_value(sister_wing)
+
+        if target_wing_value != sister_wing_value:
+
+            for step in ("R", "U'", "B'", "R2"):
+                self.rotate(step)
+            sister_wing = self.get_wings_on_edge(target_wing, 'F', 'R')[0]
+            sister_wing_value = self.get_wing_value(sister_wing)
+
+        # If there are no unpaired wings on U,B or D then we cannot pair this wing
+        # without breaking some other already paired wing.
+        if (self.sideU.all_edges_paired() and
+            self.sideB.all_edges_paired() and
+            self.sideD.all_edges_paired()):
+            raise SolveError("pair_one_wing_555() no unpaired wings in U B or D")
+
+        else:
+            # Now that that two edges on F are in place, put an unpaired wing at U-west
+            # TODO this needs to set things up to pair a 2nd wing on the slice back
+            self.make_U_west_have_unpaired_edge()
+
+        if sister_wing[0] == 65:
+            # 3Uw Uw'
+            self.rotate("Uw'")
+            self.rotate("Dw")
+            self.rotate_y()
+
+            for step in "U' L' U L".split():
+                self.rotate(step)
+
+            # 3Uw' Uw
+            self.rotate("Uw")
+            self.rotate("Dw'")
+            self.rotate_y_reverse()
+
+        else:
+            raise SolveError("sister_wing %s is in the wrong position" % str(sister_wing))
+
+        current_non_paired_wings_count = self.get_non_paired_wings_count()
+        wings_paired = original_non_paired_wings_count - current_non_paired_wings_count
+        log.info("pair_one_wing_555() paired %d wings, added %d steps" % (wings_paired, self.get_solution_len_minus_rotates(self.solution) - original_solution_len))
+
+        if wings_paired < 1:
+            raise SolveError("Paired %d wings" % wings_paired)
+
+        if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
+            raise SolveError("outside edges have been broken")
+
+    def pair_edge(self, edge_to_pair):
+        #log.info("pair_edge() with edge_to_pair %s" % pformat(edge_to_pair))
+        pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        pre_non_paired_edges_count = self.get_non_paired_edges_count()
+        pre_non_paired_wings_count = self.get_non_paired_wings_count()
+        self.rotate_edge_to_F_west(edge_to_pair[0])
+        log.info("pair_edge() for %s" % pformat(edge_to_pair))
+
+        if self.sideF.west_edge_paired():
+            raise SolveError("F-west should not be paired")
+
+        if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
+            raise SolveError("outside edges have been broken")
+
+        if self.pair_checkboard_edge_555(pre_solution_len, pre_non_paired_wings_count):
+            return True
+
+        # Flip two edge elements
+        if self.pair_two_sister_edges_555(pre_solution_len, pre_non_paired_wings_count, pre_non_paired_edges_count):
+            return True
+
+        original_state = copy(self.state)
+        original_solution = copy(self.solution)
+
+        if self.sideF.west_edge_paired():
+            raise SolveError("F-west should not be paired")
+
+        if self.pair_six_wings_555(edge_to_pair[0], pre_non_paired_wings_count):
+            post_solution_len = self.get_solution_len_minus_rotates(self.solution)
+            post_non_paired_edges_count = self.get_non_paired_edges_count()
+            post_non_paired_wings_count = self.get_non_paired_wings_count()
+            wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
+
+            if wings_paired < 1:
+                raise SolveError("Paired %d wings" % wings_paired)
+
+            return True
+
+        self.state = copy(original_state)
+        self.solution = copy(original_solution)
+
+        self.pair_one_wing_555()
+        post_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        post_non_paired_edges_count = self.get_non_paired_edges_count()
+        post_non_paired_wings_count = self.get_non_paired_wings_count()
+        wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
+
+        if wings_paired < 1:
+            raise SolveError("Paired %d wings" % wings_paired)
+
+        return True
+
+    def group_edges_recursive(self, depth, edge_to_pair):
+        """
+        This was an experiment...it takes too long to run though...not used right now
+        """
+
+        # Should we both going down this branch or should we prune it?
+        pre_non_paired_wings_count = len(self.get_non_paired_wings())
+        pre_non_paired_edges_count = len(self.get_non_paired_edges())
+        edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
+        estimated_solution_len = edge_solution_len + (2 * pre_non_paired_wings_count)
+
+        if estimated_solution_len >= self.min_edge_solution_len:
+            #log.warning("PRUNE: %s + (2 * %d) > %s" % (edge_solution_len, non_paired_wings_count, self.min_edge_solution_len))
+            return False
+
+        log.info("")
+        log.info("group_edges_recursive(%d) called with edge_to_pair %s (%d edges and %d wings left to pair, min solution len %s, current solution len %d)" %
+            (depth,
+             pformat(edge_to_pair),
+             pre_non_paired_edges_count,
+             pre_non_paired_wings_count,
+             self.min_edge_solution_len,
+             self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len))
+
+        # The only time this will be None is on the initial call
+        if edge_to_pair:
+            self.pair_edge(edge_to_pair)
+
+        non_paired_edges = self.get_non_paired_edges()
+
+        # call group_edges_recursive for each edge left to pair
+        if non_paired_edges:
+
+            if self.min_edge_solution:
+                current_time = dt.datetime.now()
+
+                # delta will be something like 0:00:02.724381
+                delta = str(current_time - self.group_edges_start_time)
+                seconds = int(delta.split('.')[0].split(':')[2])
+                log.info("time spent %s" % delta)
+
+                # If we have been searching for 2 seconds already stop searching
+                if seconds >= 2:
+                    return False
+
+            #wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
+            original_state = copy(self.state)
+            original_solution = copy(self.solution)
+
+            for edge in non_paired_edges:
+                self.group_edges_recursive(depth+1, edge)
+                self.state = copy(original_state)
+                self.solution = copy(original_solution)
+
+        # If there are no edges left to pair, note how many steps it took us to pair them all
+        else:
+            edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
+
+            if edge_solution_len < self.min_edge_solution_len:
+                self.min_edge_solution_len = edge_solution_len
+                self.min_edge_solution = copy(self.solution)
+                self.min_edge_solution_state = copy(self.state)
+                log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
+
+            return True
+
+    def get_best_edge_to_pair(self, non_paired_edges):
+        # dwalton
+        max_wings_paired = 0
+        max_wings_paired_edge = None
+        max_wings_paired_solution_len = None
+
+        pre_non_paired_wings_count = len(self.get_non_paired_wings())
+        original_state = copy(self.state)
+        original_solution = copy(self.solution)
+
+        for edge in non_paired_edges:
+
+            log.info('')
+            pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
+            self.pair_edge(edge)
+            post_non_paired_wings_count = len(self.get_non_paired_wings())
+            post_solution_len = self.get_solution_len_minus_rotates(self.solution)
+            solution_len = post_solution_len - pre_solution_len
+            wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
+
+            if wings_paired > max_wings_paired or (wings_paired == max_wings_paired and solution_len < max_wings_paired_solution_len):
+                max_wings_paired = wings_paired
+                max_wings_paired_edge = edge
+                max_wings_paired_solution_len = solution_len
+
             self.state = copy(original_state)
             self.solution = copy(original_solution)
 
-            if not use_init_wing_to_pair:
+        log.warning("%s will pair %d wings in %d steps" % (max_wings_paired_edge, max_wings_paired, max_wings_paired_solution_len))
+        return max_wings_paired_edge
+
+    def group_edges(self):
+        if not self.get_non_paired_edges():
+            self.solution.append('EDGES_GROUPED')
+            return
+
+        depth = 0
+        self.lt_init()
+        self.pair_outside_edges()
+        self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+        while True:
+            non_paired_edges = self.get_non_paired_edges()
+
+            if not non_paired_edges:
+                self.solution.append('EDGES_GROUPED')
                 break
 
-        self.state = copy(min_solution_state)
-        self.solution = copy(min_solution)
+            edge_to_pair = self.get_best_edge_to_pair(non_paired_edges)
 
-        if self.get_non_paired_edges_count():
-            raise SolveError("All edges should be resolved")
+            pre_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
+            self.pair_edge(edge_to_pair)
 
+            post_non_paired_wings_count = len(self.get_non_paired_wings())
+            post_non_paired_edges_count = len(self.get_non_paired_edges())
+            log.info('%d wings and %d edges left to pair, %d steps in' %
+                (post_non_paired_wings_count,
+                 post_non_paired_edges_count,
+                 self.get_solution_len_minus_rotates(self.solution) - pre_solution_len))
+            log.info('')
+            log.info('')
+            log.info('')
+
+        # Code path for calling self.group_edges_recursive()
+        '''
+        self.min_edge_solution_len = 9999
+        self.min_edge_solution = None
+        self.min_edge_solution_state = None
+
+        self.group_edges_start_time = dt.datetime.now()
+        self.group_edges_recursive(depth, None)
+        self.state = copy(self.min_edge_solution_state)
+        self.solution = copy(self.min_edge_solution)
         self.solution.append('EDGES_GROUPED')
+        '''
 
     def phase(self):
         if self._phase is None:

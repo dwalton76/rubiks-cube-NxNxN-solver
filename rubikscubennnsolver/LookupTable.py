@@ -160,6 +160,50 @@ class LookupTable(object):
             # unroll
             state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.center_pos])
 
+        elif self.state_type == '444-centers-and-unpaired-edges':
+                state = 'x' + ''.join([parent_state[square_index] for square_index in range(1,97)])
+                state_list = list(state)
+
+                for (a, b, c, d) in ((2, 3, 67, 66),
+                                     (5, 9, 18, 19),
+                                     (14, 15, 34, 35),
+                                     (8, 12, 51, 50),
+                                     (24, 28, 37, 41),
+                                     (40, 44, 53, 57),
+                                     (56, 60, 69, 73),
+                                     (72, 76, 21, 25),
+                                     (82, 83, 46, 47),
+                                     (85, 89, 31, 30),
+                                     (94, 95, 79, 78),
+                                     (88, 92, 62, 63)):
+
+                    # If the edge is paired, x it out
+                    if state[a] == state[b] and state[c] == state[d]:
+                        state_list[a] = "x"
+                        state_list[b] = "x"
+                        state_list[c] = "x"
+                        state_list[d] = "x"
+
+                state = ''.join(state_list)
+                state = ''.join((state[2:4],
+                                 state[5:13],
+                                 state[14:16],
+                                 state[18:20],
+                                 state[21:29],
+                                 state[30:32],
+                                 state[34:36],
+                                 state[37:45],
+                                 state[46:48],
+                                 state[50:52],
+                                 state[53:61],
+                                 state[62:64],
+                                 state[66:68],
+                                 state[69:77],
+                                 state[78:80],
+                                 state[82:84],
+                                 state[85:93],
+                                 state[94:96]))
+
         # 5x5x5
         elif self.state_type == '555-UD-centers-solve-on-all':
             # unroll
@@ -253,6 +297,52 @@ class LookupTable(object):
             state = ''.join([parent_state[7], 'x', parent_state[9], 'x', parent_state[13], 'x', parent_state[17], 'x', parent_state[19], parent_state[32], 'x', parent_state[34], 'x', parent_state[38], 'x', parent_state[42], 'x', parent_state[44], parent_state[57], 'x', parent_state[59], 'x', parent_state[63], 'x', parent_state[67], 'x', parent_state[69], parent_state[82], 'x', parent_state[84], 'x', parent_state[88], 'x', parent_state[92], 'x', parent_state[94], parent_state[107], 'x', parent_state[109], 'x', parent_state[113], 'x', parent_state[117], 'x', parent_state[119], parent_state[132], 'x', parent_state[134], 'x', parent_state[138], 'x', parent_state[142], 'x', parent_state[144]])
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
+        elif self.state_type == '555-centers-and-unpaired-edges':
+                state = 'x' + ''.join([parent_state[square_index] for square_index in range(1,151)])
+                state_list = list(state)
+
+                for (a, b, c, d, e, f) in ((2, 3, 4, 104, 103, 102),
+                                           (6, 11, 16, 27, 28, 29),
+                                           (10, 15, 20, 79, 78, 77),
+                                           (22, 23, 24, 52, 53, 54),
+                                           (31, 36, 41, 110, 115, 120),
+                                           (35, 40, 45, 56, 61, 66),
+                                           (60, 65, 70, 81, 86, 91),
+                                           (85, 90, 95, 106, 111, 116),
+                                           (72, 73, 74, 127, 128, 129),
+                                           (131, 136, 141, 49, 48, 47),
+                                           (135, 140, 145, 97, 98, 99),
+                                           (147, 148, 149, 124, 123, 122)):
+
+                    # If the edge is paired, x it out
+                    if (state[a] == state[b] and state[b] == state[c] and
+                        state[d] == state[e] and state[e] == state[f]):
+                        state_list[a] = "x"
+                        state_list[b] = "x"
+                        state_list[c] = "x"
+                        state_list[d] = "x"
+                        state_list[e] = "x"
+                        state_list[f] = "x"
+
+                state = ''.join(state_list)
+                state = ''.join((state[2:5],
+                                 state[6:21],
+                                 state[22:25],
+                                 state[27:30],
+                                 state[31:46],
+                                 state[47:50],
+                                 state[52:55],
+                                 state[56:71],
+                                 state[72:75],
+                                 state[77:80],
+                                 state[81:96],
+                                 state[97:100],
+                                 state[102:105],
+                                 state[106:121],
+                                 state[122:125],
+                                 state[127:130],
+                                 state[131:146],
+                                 state[147:150]))
 
         # 6x6x6
         elif self.state_type == '666-UD-centers-oblique-edges-solve':
@@ -803,11 +893,14 @@ class LookupTable(object):
         state_width = self.state_width
 
         while left <= right:
-            mid = left + ((right - left) /2)
+            mid = int(left + ((right - left) /2))
             fh.seek(mid * width)
             line = fh.readline()
             state = line[0:state_width]
             self.guts_cache[mid] = state
+
+            #if line[state_width] != ':':
+            #    raise Exception("we are off")
 
             if state_to_find > state:
                 left = mid + 1
@@ -988,8 +1081,6 @@ class LookupTable(object):
         while True:
             state = self.state()
 
-            log.debug("%s: state %s vs state_target %s" % (self.state_type, state, self.state_target))
-
             if state == self.state_target:
                 break
 
@@ -997,6 +1088,10 @@ class LookupTable(object):
 
             if not steps:
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
+
+            #if self.filename == 'lookup-table-4x4x4-step101-edges.txt':
+            #    self.parent.print_cube()
+            #    log.warning("%s: steps %s" % (self, ' '.join(steps)))
 
             for step in steps:
                 self.parent.rotate(step)

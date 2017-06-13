@@ -91,3 +91,14 @@ The max solution case went from 177 to 157!!!
 5x5x5 avg solution 135.0 steps
 5x5x5 avg centers solution 40.0 steps
 5x5x5 avg edges solution 73.0 steps
+
+
+Use recursion for edge pairing and 4x4x4-edges
+==============================================
+The 4x4x4-edges table was only 9-moves deep here so this was just the beginning
+
+5x5x5 min solution 118 steps
+5x5x5 max solution 163 steps
+5x5x5 avg solution 141.0 steps
+5x5x5 avg centers solution 40.0 steps
+5x5x5 avg edges solution 80.0 steps

@@ -2955,6 +2955,7 @@ class RubiksCube(object):
 
         # http://www.speedcubing.com/chris/4speedsolve3.html
         if pll_id == 2:
+            # Takes 12 steps
             pll_solution = "L2 D %dFw2 %dLw2 F2 %dLw2 L2 F2 %dLw2 %dFw2 D' L2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
             log.warning("Solving PLL ID %d: %s" % (pll_id, pll_solution))
             self.print_cube()
@@ -3394,6 +3395,14 @@ class RubiksCube(object):
         original_state = copy(self.state)
         original_solution = copy(self.solution)
 
+        # You could set this to False for 4x4x4, for 5x5x5 and larger IDA is used to solve
+        # the centers so it takes much longer...you really don't want to sit there and crank
+        # through all of the upper_side_name/front_side_name/opening_move combinations.
+        #
+        # Even for 4x4x4 it isn't worth it, it only shaves 1 move off of center
+        # solving across our 50 test cubes.
+        break_out_asap = True
+
         for upper_side_name in ('U', 'D', 'L', 'F', 'R', 'B'):
             for front_side_name in ('F', 'R', 'B', 'L', 'U', 'D'):
                 for opening_move in (None, "Uw", "Dw", "Lw", "Fw", "Rw", "Dw", "Uw'", "Dw'", "Lw'", "Fw'", "Rw'", "Dw'"):
@@ -3523,6 +3532,7 @@ class RubiksCube(object):
                         log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
                         solution_leads_to_oll = True
                     else:
+                        log.info("%s on top, %s in front, opening move %4s: free of OLL parity" % (upper_side_name, front_side_name, opening_move))
                         solution_leads_to_oll = False
 
                     center_solution_length = self.get_solution_len_minus_rotates(self.solution)
@@ -3558,19 +3568,31 @@ class RubiksCube(object):
                     # those are very fast, keep exploring all of the 'None' opening_move
                     # options. For 5x5x5 and larger though go ahead and break out if we
                     # have an OLL free solution.
-                    if self.size >= 5 and not min_solution_leads_to_oll:
-                        break
+                    if break_out_asap:
+                        if self.size == 4:
+                            if not min_solution_leads_to_oll:
+                                break
+                        else:
+                            break
 
                 # If you comment this out we will keep looking through other combinations
                 # of upper/front/opening_move.  It takes ~10x as long to run and brings the
                 # 4x4x4 average move count down from 70 to 66...so if you want the solver
                 # to run longer but produce a slightly shorter solution then comment out the
                 # breaks here (and the one above).
-                if min_solution_length is not None:
-                    break
+                if break_out_asap and min_solution_length is not None:
+                    if self.size == 4:
+                        if not min_solution_leads_to_oll:
+                            break
+                    else:
+                        break
 
-            if min_solution_length is not None:
-                break
+            if break_out_asap and min_solution_length is not None:
+                if self.size == 4:
+                    if not min_solution_leads_to_oll:
+                        break
+                else:
+                    break
 
         if min_solution_length is None:
             raise SolveError("Could not find parity free solution for centers")

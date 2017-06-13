@@ -36,6 +36,8 @@ try:
     edges_solution_total = 0
     min_solution = None
     max_solution = None
+    min_solution_kociemba_string = None
+    max_solution_kociemba_string = None
 
     results = []
 
@@ -119,12 +121,14 @@ try:
 
             if min_solution is None or solution_length < min_solution:
                 min_solution = solution_length
+                min_solution_kociemba_string = kociemba_string
 
             if max_solution is None or solution_length > max_solution:
                 max_solution = solution_length
+                max_solution_kociemba_string = kociemba_string
 
-        results.append("%s min solution %s steps" % (size, min_solution))
-        results.append("%s max solution %s steps" % (size, max_solution))
+        results.append("%s min solution %s steps (%s)" % (size, min_solution, min_solution_kociemba_string))
+        results.append("%s max solution %s steps (%s)" % (size, max_solution, max_solution_kociemba_string))
         results.append("%s avg solution %s steps" % (size, float(solution_total/num_test_cases_executed)))
         results.append("%s avg centers solution %s steps" % (size, float(centers_solution_total/num_test_cases_executed)))
         results.append("%s avg edges solution %s steps" % (size, float(edges_solution_total/num_test_cases_executed)))

@@ -306,6 +306,13 @@ class RubiksCube555(RubiksCube):
                                                   False, # state hex
                                                   False) # prune table
 
+        self.lt_edges = LookupTable(self,
+                                    'lookup-table-5x5x5-step101-edges.txt',
+                                    '555-centers-and-unpaired-edges',
+                                    'xxxxUUUxxUUUxxUUUxxxxxxxxLLLxxLLLxxLLLxxxxxxxxFFFxxFFFxxFFFxxxxxxxxRRRxxRRRxxRRRxxxxxxxxBBBxxBBBxxBBBxxxxxxxxDDDxxDDDxxDDDxxxx',
+                                    False, # state_hex
+                                    False) # prune table
+
     def group_centers_guts(self):
         self.lt_init()
         self.rotate_U_to_U()
@@ -1468,8 +1475,6 @@ class RubiksCube555(RubiksCube):
         self.solution = copy(original_solution)
 
         self.pair_one_wing_555()
-        post_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        post_non_paired_edges_count = self.get_non_paired_edges_count()
         post_non_paired_wings_count = self.get_non_paired_wings_count()
         wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
 
@@ -1545,7 +1550,6 @@ class RubiksCube555(RubiksCube):
             return True
 
     def get_best_edge_to_pair(self, non_paired_edges):
-        # dwalton
         max_wings_paired = 0
         max_wings_paired_edge = None
         max_wings_paired_solution_len = None
@@ -1586,12 +1590,22 @@ class RubiksCube555(RubiksCube):
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
         while True:
-            non_paired_edges = self.get_non_paired_edges()
 
-            if not non_paired_edges:
+            if not self.get_non_paired_edges():
                 self.solution.append('EDGES_GROUPED')
                 break
 
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
+
+            # dwalton is the cube in a state that is in the 5x5x5-edges lookup table?
+            try:
+                self.lt_edges.solve()
+                raise SolveError("holy crap this worked")
+            except NoSteps:
+                pass
+
+            non_paired_edges = self.get_non_paired_edges()
             edge_to_pair = self.get_best_edge_to_pair(non_paired_edges)
 
             pre_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
@@ -1603,7 +1617,10 @@ class RubiksCube555(RubiksCube):
                 (post_non_paired_wings_count,
                  post_non_paired_edges_count,
                  self.get_solution_len_minus_rotates(self.solution) - pre_solution_len))
-            #self.print_cube()
+
+            #if post_non_paired_wings_count:
+            #    self.print_cube()
+
             log.info('')
             log.info('')
             log.info('')

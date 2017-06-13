@@ -158,3 +158,17 @@ Consider number of wings paired by solution to solve centers
 4x4x4 avg solution 66.0 steps
 4x4x4 avg centers solution 18.0 steps
 4x4x4 avg edges solution 27.0 steps
+
+
+Use recursion for edge pairing and 4x4x4-edges
+==============================================
+The 4x4x4-edges table was only 9-moves deep here so this was just the beginning
+
+4x4x4 min solution 59 steps (FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU)
+4x4x4 max solution 76 steps (FUBLRFFUBBBFFFRFURFFDDDRFRDDDRFLRDBRBRLFLBULRBUBUURRDUUDLLLRUURBDBLDURLDDRFFBULBULLLDFUFBBDLDUBL)
+4x4x4 avg solution 66.0 steps
+4x4x4 avg centers solution 19.0 steps
+4x4x4 avg edges solution 25.0 steps
+
+13.91user 0.70system 0:14.83elapsed 98%CPU (0avgtext+0avgdata 16640maxresident)
+

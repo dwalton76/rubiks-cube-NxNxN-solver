@@ -30,7 +30,8 @@ for (size, solved_state) in (
     (4, solved_444),
     (5, solved_555),
     (6, solved_666),
-    (7, solved_777)):
+    (7, solved_777)
+    ):
 
     cube = RubiksCube(solved_state)
     max_square_index = size * size * 6
@@ -79,10 +80,28 @@ for (size, solved_state) in (
         print("}\n\n")
 
     else:
-        print("def rotate_%d%d%d(cube, cube_tmp, step):" % (size, size, size))
-        print("")
+        rotate_mapper = {}
+
         for step in steps:
+            step_pretty = step.replace("'", "_prime")
+
+            function_name = "rotate_%d%d%d_%s" % (size, size, size, step_pretty)
+            print("")
+            print("def %s(cube, cube_tmp):" % function_name)
+            rotate_mapper[step] = function_name
+
             cube.rotate(step)
             cube.print_case_statement_python(step)
             cube.state = copy(original_state)
-        print("\n\n")
+            #print("\n\n")
+
+        print("")
+        print("rotate_mapper_%d%d%d = {" % (size, size, size))
+        for step in sorted(rotate_mapper.keys()):
+            print("    \"%s\" : %s," % (step, rotate_mapper[step]))
+        print("}")
+
+        print("")
+        print("def rotate_%d%d%d(cube, cube_tmp, step):" % (size, size, size))
+        print("    rotate_mapper_%d%d%d[step](cube, cube_tmp)" % (size, size, size))
+        print("")

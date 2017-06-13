@@ -317,6 +317,26 @@ class RubiksCube555(RubiksCube):
         self.lt_init()
         self.rotate_U_to_U()
 
+        '''
+        Without IDA speed up
+33 steps to solve centers
+83 steps to group edges
+20 steps to solve 3x3x3
+136 steps total
+
+5.01user 0.52system 0:10.57elapsed 52%CPU (0avgtext+0avgdata 46156maxresident
+
+
+        With IDA speed up...center solution is 7 steps longer but edge
+        solution happened to be 10 steps shorter
+
+40 steps to solve centers
+73 steps to group edges
+21 steps to solve 3x3x3
+134 steps total
+
+0.95user 0.04system 0:00.99elapsed 99%CPU (0avgtext+0avgdata 14052maxresident)k
+        '''
         self.lt_UD_T_centers_stage.solve() # speed up IDA
         self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))
@@ -327,6 +347,8 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_centers_solve.solve() # speed up IDA
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
+
+        self.print_cube()
 
     def find_moves_to_stage_slice_backward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)

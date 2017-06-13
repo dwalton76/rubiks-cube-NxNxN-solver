@@ -120,14 +120,16 @@ class LookupTable(object):
             filesize = os.path.getsize(self.filename)
             self.linecount = filesize/self.width
 
-            # Populate guts_cache with the first and last line of the file
+            # Populate guts_cache with the first line of the file
             self.guts_cache[0] = state
-            fh.seek((self.linecount-1) * self.width)
 
+            # Populate guts_cache with the last line of the file
+            fh.seek((self.linecount-1) * self.width)
             line = fh.readline()
             (state, steps) = line.split(':')
             self.guts_cache[self.linecount] = state
 
+        #log.info("%s: %d entries in guts_cache" % (self, len(self.guts_cache.keys())))
         self.cache = {}
         self.guts_call_count = 0
         self.guts_left_right_range = 0
@@ -921,12 +923,14 @@ class LookupTable(object):
     def find_min_left_max_right(self, state_to_find):
         min_left = None
         max_right = None
+
         line_numbers = sorted(self.guts_cache.keys())
         prev_state = None
         prev_line_number = 0
+        guts_cache = self.guts_cache
 
         for line_number in line_numbers:
-            state = self.guts_cache[line_number]
+            state = guts_cache[line_number]
 
             if prev_state and state_to_find >= prev_state and state_to_find <= state:
                 min_left = prev_line_number
@@ -939,15 +943,16 @@ class LookupTable(object):
         for line_number in line_numbers:
             if line_number < min_left:
                 del self.guts_cache[line_number]
+            elif line_number >= min_left:
+                break
 
-        #log.info("find_min_left_max_right: min_left %s, max_right %s" % (min_left, max_right))
+        #log.info("find_min_left_max_right: min_left(%d) %s, max_right(%d) %s, state_to_find %s" % (min_left_i, min_left, max_right_i, max_right, state_to_find))
         return (min_left, max_right)
 
     def file_binary_search_multiple_keys_low_low_python(self, fh, states_to_find, debug=False):
         results = {}
         min_left = None
         max_right = None
-        self.guts_cache = {}
         self.guts_call_count = 0
         self.guts_left_right_range = 0
 
@@ -986,10 +991,10 @@ class LookupTable(object):
             self.cache[state_to_find] = value
             index += 1
 
-        self.guts_cache = {}
         end_time = dt.datetime.now()
-        log.debug("%s: found %d states (another %d were cached) in %s" %
-            (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time)))
+        #log.info("%s: found %d states (another %d were cached) in %s, %d guts calls, %d avg left->right range, guts_cache has %d entries" %
+        #    (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time),
+        #     self.guts_call_count, int(self.guts_left_right_range/self.guts_call_count), len(self.guts_cache.keys())))
         return results
 
     def file_binary_search_multiple_keys_low_high_C(self, fh, states_to_find, debug=False):
@@ -1227,10 +1232,11 @@ class LookupTableIDA(LookupTable):
 
         states_scratchpad = 'states_scratchpad.txt'
         pt_states_scratchpad = 'pt_states_scratchpad.txt'
+        prune_tables = self.prune_tables
 
         # Because saving a little number to pt_costs_by_step below takes much less memory than
         # saving the pt.filename
-        for (index, pt) in enumerate(self.prune_tables):
+        for (index, pt) in enumerate(prune_tables):
             pt.index = index
 
         for threshold in range(1, 20):
@@ -1275,8 +1281,10 @@ class LookupTableIDA(LookupTable):
                     self.ida_count += 1
                     rotate_count += 1
 
-                    for step in step_sequence.split():
-                        self.parent.solution.append(step)
+                    steps_in_step_sequence = step_sequence.split()
+                    self.parent.solution.extend(steps_in_step_sequence)
+
+                    for step in steps_in_step_sequence:
                         rotate_xxx(self.parent.state, self.parent.state[:], step)
 
                     # get the current state of the cube
@@ -1285,10 +1293,11 @@ class LookupTableIDA(LookupTable):
 
                     # Save a list of the pt indexes/states for this step_sequence
                     tmp_list = []
-                    for pt in self.prune_tables:
+                    for pt in prune_tables:
                         tmp_list.append((pt.index, pt.state()))
                     pt_costs_by_step.append(tmp_list)
 
+                    '''
                     # does this help with memory issues?
                     if rotate_count % 500000 == 0:
                         log.debug("%s: rotate count %d" % (self, rotate_count))
@@ -1330,6 +1339,7 @@ class LookupTableIDA(LookupTable):
                         pt_costs_by_step = []
 
                     gc.collect()
+                    '''
                 end_time2 = dt.datetime.now()
 
                 if rotate_count:
@@ -1385,7 +1395,7 @@ class LookupTableIDA(LookupTable):
 
                 # Time to prune some branches, do a multi-key binary search for each prune table
                 pt_costs = {}
-                for pt in self.prune_tables:
+                for pt in prune_tables:
                     states_to_find = []
 
                     if use_scratchpad:

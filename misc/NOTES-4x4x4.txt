@@ -178,3 +178,7 @@ Replaced all copy.copy with list slices...small speed improvement
 13.59user 0.74system 0:14.57elapsed 98%CPU (0avgtext+0avgdata 16068maxresident)k
 
 
+Replaced all range() with xrange()
+==================================
+13.41user 0.62system 0:14.26elapsed 98%CPU (0avgtext+0avgdata 16076maxresident)k
+

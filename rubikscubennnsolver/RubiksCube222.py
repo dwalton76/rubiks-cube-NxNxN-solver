@@ -123,7 +123,7 @@ class RubiksCube222(RubiksCube):
 
         for h in (0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1):
             for s, x in data[h].items():
-                for y in range(12):
+                for y in xrange(12):
 
                     data[h][s] = x + [y - [1, -1, 1, 3][h * y % 4]]
 

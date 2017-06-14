@@ -39,7 +39,7 @@ test_cases = {
     "7x7x7" : [],
 }
 
-for x in range(50):
+for x in xrange(50):
     cube = RubiksCube(solved_222)
     cube.randomize()
     ks = cube.get_kociemba_string(True)

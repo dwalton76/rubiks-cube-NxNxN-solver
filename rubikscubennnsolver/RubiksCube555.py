@@ -336,14 +336,14 @@ class RubiksCube555(RubiksCube):
 
 0.95user 0.04system 0:00.99elapsed 99%CPU (0avgtext+0avgdata 14052maxresident)k
         '''
-        self.lt_UD_T_centers_stage.solve() # speed up IDA
+        #self.lt_UD_T_centers_stage.solve() # speed up IDA
         self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))
 
         self.lt_LR_centers_stage.solve()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
-        self.lt_UD_centers_solve.solve() # speed up IDA
+        #self.lt_UD_centers_solve.solve() # speed up IDA
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 
@@ -576,7 +576,7 @@ class RubiksCube555(RubiksCube):
         """
         Rotate an unpaired wing to the bottom of F-east (one that can be sliced back)
         """
-        for x in range(3):
+        for x in xrange(3):
             if self.state[65] == self.state[70] and self.state[86] == self.state[91]:
                 self.rotate_y()
             else:

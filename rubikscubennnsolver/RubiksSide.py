@@ -85,7 +85,7 @@ class Side(object):
         self.edge_east_pos = []
         self.center_pos = []
 
-        for position in range(self.min_pos, self.max_pos):
+        for position in xrange(self.min_pos, self.max_pos):
             if position in self.corner_pos:
                 pass
 
@@ -112,7 +112,7 @@ class Side(object):
                 self.edge_east_pos.append(east_edge)
 
                 # Center squares
-                for x in range(west_edge + 1, east_edge):
+                for x in xrange(west_edge + 1, east_edge):
                     self.center_pos.append(x)
 
         self.center_corner_pos = [self.min_pos + self.size + 1,
@@ -179,7 +179,7 @@ class Side(object):
         """
         Used by RubiksCube rotate()
         """
-        return build_2d_list([self.parent.state[square_index] for square_index in range(self.min_pos, self.max_pos + 1)])
+        return build_2d_list([self.parent.state[square_index] for square_index in xrange(self.min_pos, self.max_pos + 1)])
 
     def center_corners_solved(self):
         if self.mid_pos:
@@ -545,7 +545,7 @@ class Side(object):
         """
         prev = None
 
-        for pos in range(self.min_pos, self.max_pos+1):
+        for pos in xrange(self.min_pos, self.max_pos+1):
             current = self.parent.state[pos]
             if prev is not None and current != prev:
                 return False

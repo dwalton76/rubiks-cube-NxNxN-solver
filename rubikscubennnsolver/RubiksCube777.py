@@ -437,7 +437,7 @@ class RubiksCube777(RubiksCube):
         fake_555 = RubiksCube555(solved_5x5x5)
         fake_555.lt_init()
 
-        for x in range(1, 151):
+        for x in xrange(1, 151):
             fake_555.state[x] = 'x'
 
         # Upper
@@ -544,7 +544,7 @@ class RubiksCube777(RubiksCube):
         fake_666 = RubiksCube666(solved_6x6x6)
         fake_666.lt_init()
 
-        for x in range(1, 217):
+        for x in xrange(1, 217):
             fake_666.state[x] = 'x'
 
         # Upper

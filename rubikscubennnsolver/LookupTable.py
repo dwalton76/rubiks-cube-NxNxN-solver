@@ -162,7 +162,7 @@ class LookupTable(object):
             state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.center_pos])
 
         elif self.state_type == '444-centers-and-unpaired-edges':
-                state = 'x' + ''.join([parent_state[square_index] for square_index in range(1,97)])
+                state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1,97)])
                 state_list = list(state)
 
                 for (a, b, c, d) in ((2, 3, 67, 66),
@@ -299,7 +299,7 @@ class LookupTable(object):
             state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x').replace('D', 'U')
 
         elif self.state_type == '555-centers-and-unpaired-edges':
-                state = 'x' + ''.join([parent_state[square_index] for square_index in range(1,151)])
+                state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1,151)])
                 state_list = list(state)
 
                 for (a, b, c, d, e, f) in ((2, 3, 4, 104, 103, 102),
@@ -1238,7 +1238,7 @@ class LookupTableIDA(LookupTable):
         for (index, pt) in enumerate(prune_tables):
             pt.index = index
 
-        for threshold in range(1, 20):
+        for threshold in xrange(1, 20):
 
             # Build a list of moves we can do 1 move deep
             # Build a list of moves we can do 2 moves deep, this must build on the 1 move deep list
@@ -1246,7 +1246,7 @@ class LookupTableIDA(LookupTable):
             # etc
             prev_step_sequences = []
 
-            for max_step_count in range(1, threshold+1):
+            for max_step_count in xrange(1, threshold+1):
                 start_time1 = dt.datetime.now()
                 step_sequences = self.ida_steps_list(prev_step_sequences, threshold, max_step_count)
 

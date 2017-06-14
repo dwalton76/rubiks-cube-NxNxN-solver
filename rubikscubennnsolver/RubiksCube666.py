@@ -333,7 +333,7 @@ class RubiksCube666(RubiksCube):
 
     def populate_fake_555_for_ULFRBD(self, fake_555):
 
-        for x in range(1, 151):
+        for x in xrange(1, 151):
             fake_555.state[x] = 'x'
 
         # Upper

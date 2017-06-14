@@ -1,6 +1,6 @@
 
-from collections import OrderedDict
 from copy import copy
+from collections import OrderedDict
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis
 import logging
@@ -420,7 +420,7 @@ class RubiksCube(object):
         value is that square side name (U, F, etc)
         """
         self.solution.append(action)
-        result = copy(self.state)
+        result = self.state[:]
         # log.info("move %s" % action)
 
         if action[-1] in ("'", "`"):
@@ -485,7 +485,7 @@ class RubiksCube(object):
             for (index, value) in enumerate(face):
                 square_index = min_pos + index
                 result[square_index] = value
-            self.state = copy(result)
+            self.state = result[:]
 
         # If we are rotating the entire self.state we must rotate the opposite face as well
         if rows_to_rotate == self.size:
@@ -520,7 +520,7 @@ class RubiksCube(object):
             for (index, value) in enumerate(face):
                 square_index = opp_min_pos + index
                 result[square_index] = value
-            self.state = copy(result)
+            self.state = result[:]
 
         if side_name == "U":
 
@@ -571,7 +571,7 @@ class RubiksCube(object):
                         for square_index in range(back_first_square, back_last_square + 1):
                             result[square_index] = self.state[square_index - (3 * self.squares_per_side)]
 
-                self.state = copy(result)
+                self.state = result[:]
 
         elif side_name == "L":
 
@@ -642,7 +642,7 @@ class RubiksCube(object):
                         for (index, square_index) in enumerate(range(back_first_square, back_last_square + 1, self.size)):
                             result[square_index] = down_squares[index]
 
-                self.state = copy(result)
+                self.state = result[:]
 
         elif side_name == "F":
 
@@ -713,7 +713,7 @@ class RubiksCube(object):
                         for (index, square_index) in enumerate(range(right_first_square, right_last_square + 1, self.size)):
                             result[square_index] = top_squares[index]
 
-                self.state = copy(result)
+                self.state = result[:]
 
         elif side_name == "R":
 
@@ -785,7 +785,7 @@ class RubiksCube(object):
                         for (index, square_index) in enumerate(range(back_first_square, back_last_square + 1, self.size)):
                             result[square_index] = top_squares[index]
 
-                self.state = copy(result)
+                self.state = result[:]
 
         elif side_name == "B":
 
@@ -856,7 +856,7 @@ class RubiksCube(object):
                         for (index, square_index) in enumerate(range(right_first_square, right_last_square + 1, self.size)):
                             result[square_index] = down_squares[index]
 
-                self.state = copy(result)
+                self.state = result[:]
 
         elif side_name == "D":
 
@@ -907,7 +907,7 @@ class RubiksCube(object):
                         for square_index in range(back_first_square, back_last_square + 1):
                             result[square_index] = self.state[square_index - self.squares_per_side]
 
-                self.state = copy(result)
+                self.state = result[:]
 
         else:
             raise Exception("Unsupported action %s" % action)
@@ -3229,8 +3229,8 @@ class RubiksCube(object):
                 square1_with_x = square1 + 'x'
                 square2_with_x = square2 + 'x'
 
-                original_state = copy(self.state)
-                original_solution = copy(self.solution)
+                original_state = self.state[:]
+                original_solution = self.solution[:]
                 self.state[square_index] = square1_with_x
                 self.state[partner_index] = square2_with_x
 
@@ -3314,8 +3314,8 @@ class RubiksCube(object):
                 else:
                     raise SolveError("Could not find wing %s (%d, %d) among %s" % (wing_str, square_index, partner_index, str(edge_to_check)))
 
-                self.state = copy(original_state)
-                self.solution = copy(original_solution)
+                self.state = original_state[:]
+                self.solution = original_solution[:]
 
             current_edges.append(wing_str)
 
@@ -3392,8 +3392,8 @@ class RubiksCube(object):
         min_solution = None
 
         # save cube state
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
 
         # You could set this to False for 4x4x4, for 5x5x5 and larger IDA is used to solve
         # the centers so it takes much longer...you really don't want to sit there and crank
@@ -3411,8 +3411,8 @@ class RubiksCube(object):
                         continue
 
                     # Put the cube back in its original state
-                    self.state = copy(original_state)
-                    self.solution = copy(original_solution)
+                    self.state = original_state[:]
+                    self.solution = original_solution[:]
 
                     if upper_side_name == 'U':
 
@@ -3553,8 +3553,8 @@ class RubiksCube(object):
 
                     if update_min:
                         min_solution_leads_to_oll = solution_leads_to_oll
-                        min_solution = copy(self.solution)
-                        min_solution_state = copy(self.state)
+                        min_solution = self.solution[:]
+                        min_solution_state = self.state[:]
                         min_solution_length = copy(center_solution_length)
                         min_solution_non_paired_wings_count = non_paired_wings_count
 
@@ -3598,8 +3598,8 @@ class RubiksCube(object):
             raise SolveError("Could not find parity free solution for centers")
 
         log.info("group center solution (%d steps): %s" % (min_solution_length, ' '.join(min_solution)))
-        self.state = copy(min_solution_state)
-        self.solution = copy(min_solution)
+        self.state = min_solution_state[:]
+        self.solution = min_solution[:]
         self.solution.append('CENTERS_SOLVED')
 
     def get_wing_value(self, wing):
@@ -3633,7 +3633,7 @@ class RubiksCube(object):
         moves = set(self.solution)
 
         while True:
-            original_solution_string = copy(solution_string)
+            original_solution_string = solution_string[:]
 
             for move in moves:
                 if move in ('CENTERS_SOLVED', 'EDGES_GROUPED'):

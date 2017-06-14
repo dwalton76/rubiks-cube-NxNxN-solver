@@ -1,6 +1,5 @@
 
 from collections import OrderedDict
-from copy import copy
 from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4

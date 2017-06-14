@@ -1,6 +1,5 @@
 
 import datetime as dt
-from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.rotate_xxx import rotate_222, rotate_444, rotate_555, rotate_666, rotate_777
@@ -1214,8 +1213,8 @@ class LookupTableIDA(LookupTable):
         # lookup table.
 
         # save cube state
-        original_state = copy(self.parent.state)
-        original_solution = copy(self.parent.solution)
+        original_state = self.parent.state[:]
+        original_solution = self.parent.solution[:]
 
         if self.parent.size == 2:
             rotate_xxx = rotate_222
@@ -1463,7 +1462,7 @@ class LookupTableIDA(LookupTable):
                         else:
                             step_sequences_within_cost.append(step_sequence)
 
-                prev_step_sequences = copy(step_sequences_within_cost)
+                prev_step_sequences = step_sequences_within_cost[:]
                 states_to_check = []
                 pt_costs_by_step = []
                 self.ida_count = 0

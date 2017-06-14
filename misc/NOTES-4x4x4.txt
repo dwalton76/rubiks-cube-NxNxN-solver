@@ -172,3 +172,9 @@ The 4x4x4-edges table was only 9-moves deep here so this was just the beginning
 
 13.91user 0.70system 0:14.83elapsed 98%CPU (0avgtext+0avgdata 16640maxresident)
 
+
+Replaced all copy.copy with list slices...small speed improvement
+=================================================================
+13.59user 0.74system 0:14.57elapsed 98%CPU (0avgtext+0avgdata 16068maxresident)k
+
+

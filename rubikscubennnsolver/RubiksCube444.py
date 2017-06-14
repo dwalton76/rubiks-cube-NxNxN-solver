@@ -1,8 +1,8 @@
-from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps
+from subprocess import check_output
 import logging
 import sys
 
@@ -348,8 +348,8 @@ class RubiksCube444(RubiksCube):
         """
 
         # save cube state
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
         original_non_paired_wings_count = self.get_non_paired_wings_count()
 
@@ -373,8 +373,8 @@ class RubiksCube444(RubiksCube):
 
         if not steps:
             log.info("pair_six_edges_444()    could not find steps to slice forward")
-            self.state = copy(original_state)
-            self.solution = copy(original_solution)
+            self.state = original_state[:]
+            self.solution = original_solution[:]
             return False
 
         for step in steps:
@@ -444,14 +444,14 @@ class RubiksCube444(RubiksCube):
 
         if self.sideF.east_edge_paired():
             log.warning("F-east should not be paired")
-            self.state = copy(original_state)
-            self.solution = copy(original_solution)
+            self.state = original_state[:]
+            self.solution = original_solution[:]
             return False
 
         if not self.prep_for_slice_back_444():
             #raise SolveError("cannot slice back")
-            self.state = copy(original_state)
-            self.solution = copy(original_solution)
+            self.state = original_state[:]
+            self.solution = original_solution[:]
             return False
 
         #log.info("PREP-FOR-Uw'-SLICE-BACK (end)...SLICE BACK (begin)")
@@ -480,8 +480,8 @@ class RubiksCube444(RubiksCube):
         - Uw'
         """
         # save cube state
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
         original_non_paired_wings_count = self.get_non_paired_wings_count()
         original_non_paired_edges = self.get_non_paired_edges()
@@ -491,8 +491,8 @@ class RubiksCube444(RubiksCube):
         min_solution = None
 
         for wing_to_pair in original_non_paired_edges:
-            self.state = copy(original_state)
-            self.solution = copy(original_solution)
+            self.state = original_state[:]
+            self.solution = original_solution[:]
             self.rotate_edge_to_F_west(wing_to_pair[0])
 
             # Work with the wing at the bottom of the F-west edge
@@ -583,8 +583,8 @@ class RubiksCube444(RubiksCube):
 
             if min_solution_len is None or post_slice_back_solution_len < min_solution_len:
                 min_solution_len = post_slice_back_solution_len
-                min_solution_state = copy(self.state)
-                min_solution = copy(self.solution)
+                min_solution_state = self.state[:]
+                min_solution = self.solution[:]
                 log.info("pair_last_six_edges_444() paired %d wings in %d moves on slice back (%d left to pair) (NEW MIN %d)" %
                     (post_slice_forward_non_paired_wings_count - post_slice_back_non_paired_wings_count,
                     post_slice_back_solution_len - post_slice_forward_solution_len,
@@ -601,15 +601,15 @@ class RubiksCube444(RubiksCube):
             self.solution = min_solution
             return True
         else:
-            self.state = copy(original_state)
-            self.solution = copy(original_solution)
+            self.state = original_state[:]
+            self.solution = original_solution[:]
             return False
 
     def pair_four_edges_444(self, edge):
 
         # save cube state
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
         original_non_paired_wings_count = self.get_non_paired_wings_count()
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
@@ -639,8 +639,8 @@ class RubiksCube444(RubiksCube):
             self.rotate_y()
 
         if not self.prep_for_slice_back_444():
-            self.state = copy(original_state)
-            self.solution = copy(original_solution)
+            self.state = original_state[:]
+            self.solution = original_solution[:]
             return False
 
         self.rotate("Uw'")
@@ -827,8 +827,8 @@ class RubiksCube444(RubiksCube):
         max_edges_paired_solution_len = None
 
         pre_non_paired_edges_count = len(self.get_non_paired_edges())
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
 
         for edge in non_paired_edges:
 
@@ -873,8 +873,8 @@ class RubiksCube444(RubiksCube):
                 max_edges_paired_edge = edge
                 max_edges_paired_solution_len = solution_len
 
-            self.state = copy(original_state)
-            self.solution = copy(original_solution)
+            self.state = original_state[:]
+            self.solution = original_solution[:]
 
         log.warning("%s will pair %d edges in %d steps, leads to PLL %s" % (max_edges_paired_edge, max_edges_paired, max_edges_paired_solution_len, max_edges_paired_has_pll))
         return max_edges_paired_edge
@@ -886,8 +886,8 @@ class RubiksCube444(RubiksCube):
         pre_non_paired_wings_count = len(self.get_non_paired_wings())
         pre_non_paired_edges_count = len(self.get_non_paired_edges())
         edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-        tmp_state = copy(self.state)
-        tmp_solution = copy(self.solution)
+        tmp_state = self.state[:]
+        tmp_solution = self.solution[:]
 
         log.info("")
         log.info("group_edges_recursive(%d) called with edge_to_pair %s (%d edges and %d wings left to pair, min solution len %s, current solution len %d)" %
@@ -910,8 +910,8 @@ class RubiksCube444(RubiksCube):
 
         except NoSteps:
             # No entry in the lookup table so restore to tmp_state/tmp_solution to undo the rotate UF to UF
-            self.state = copy(tmp_state)
-            self.solution = copy(tmp_solution)
+            self.state = tmp_state[:]
+            self.solution = tmp_solution[:]
 
             # Should we continue down this branch or should we prune it? An estimate
             # of 2 moves to pair an edge is a low estimate so if the current number of
@@ -931,14 +931,14 @@ class RubiksCube444(RubiksCube):
             non_paired_edges = self.get_non_paired_edges()
 
         if non_paired_edges:
-            original_state = copy(self.state)
-            original_solution = copy(self.solution)
+            original_state = self.state[:]
+            original_solution = self.solution[:]
 
             # call group_edges_recursive() for each non-paired edge
             for edge in non_paired_edges:
                 self.group_edges_recursive(depth+1, edge)
-                self.state = copy(original_state)
-                self.solution = copy(original_solution)
+                self.state = original_state[:]
+                self.solution = original_solution[:]
 
         else:
             # There are no edges left to pair, note how many steps it took pair them all
@@ -961,8 +961,8 @@ class RubiksCube444(RubiksCube):
             # Remember the solution that pairs all edges in the least number of moves
             if edge_solution_len < self.min_edge_solution_len:
                 self.min_edge_solution_len = edge_solution_len
-                self.min_edge_solution = copy(self.solution)
-                self.min_edge_solution_state = copy(self.state)
+                self.min_edge_solution = self.solution[:]
+                self.min_edge_solution_state = self.state[:]
                 log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
 
             return True
@@ -981,14 +981,14 @@ class RubiksCube444(RubiksCube):
 
         # group_edges_recursive() is where the magic happens
         self.group_edges_recursive(depth, None)
-        self.state = copy(self.min_edge_solution_state)
-        self.solution = copy(self.min_edge_solution)
+        self.state = self.min_edge_solution_state[:]
+        self.solution = self.min_edge_solution[:]
         self.solution.append('EDGES_GROUPED')
 
         # This is the non-recursive approach...will leave this as a reference
         '''
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
         pll_blacklist = []
         first_edge = None
 
@@ -1001,8 +1001,8 @@ class RubiksCube444(RubiksCube):
                     log.warning('*' * 80)
                     pll_blacklist.append(first_edge)
                     first_edge = None
-                    self.state = copy(original_state)
-                    self.solution = copy(original_solution)
+                    self.state = original_state[:]
+                    self.solution = original_solution[:]
                 else:
                     self.solution.append('EDGES_GROUPED')
                     break
@@ -1011,13 +1011,13 @@ class RubiksCube444(RubiksCube):
             self.rotate_F_to_F()
 
             try:
-                tmp_state = copy(self.state)
-                tmp_solution = copy(self.solution)
+                tmp_state = self.state[:]
+                tmp_solution = self.solution[:]
                 self.lt_edges.solve()
 
                 if self.edge_solution_leads_to_pll_parity():
-                    self.state = copy(tmp_state)
-                    self.solution = copy(tmp_solution)
+                    self.state = tmp_state[:]
+                    self.solution = tmp_solution[:]
                 else:
                     self.solution.append('EDGES_GROUPED')
                     break
@@ -1132,8 +1132,8 @@ lookup_table_444_sister_wing_to_U_west = {
         """
         This was used to build the lookup_table_444_last_two_edges_place_F_east, etc lookup tables
         """
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
 
         orig_f_west_top = self.get_wing_value(self.sideF.edge_west_pos[0])
         orig_f_west_bottom = self.get_wing_value(self.sideF.edge_west_pos[1])
@@ -1297,8 +1297,8 @@ lookup_table_444_sister_wing_to_U_west = {
                 else:
                     raise ImplementThis("target_face_side %s" % target_face_side)
 
-                self.state = copy(original_state)
-                self.solution = copy(original_solution)
+                self.state = original_state[:]
+                self.solution = original_solution[:]
 
                 if found_solution:
                     log.warning("solution to move %s to %s is %s" % (wing_to_move, target_face_side, ' '.join(steps)))

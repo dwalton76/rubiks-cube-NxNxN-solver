@@ -1,6 +1,5 @@
 
 from collections import OrderedDict
-from copy import copy
 from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksSide import Side, SolveError
@@ -359,8 +358,8 @@ class RubiksCube555(RubiksCube):
         max_pair_on_slice_back = 0
 
         # save cube state
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
 
         # Work with the wing at the bottom of the F-east edge
         # Move the sister wing to F-west
@@ -437,8 +436,8 @@ class RubiksCube555(RubiksCube):
                                 #    (will_pair_on_slice_count, ' '.join(steps)))
 
                                 # restore cube state
-                                self.state = copy(original_state)
-                                self.solution = copy(original_solution)
+                                self.state = original_state[:]
+                                self.solution = original_solution[:]
 
                                 if will_pair_on_slice_count > max_pair_on_slice_back:
                                     results = (target_wing, sister_wing1, sister_wing2, sister_wing3)
@@ -471,8 +470,8 @@ class RubiksCube555(RubiksCube):
         max_pair_on_slice_forward = 0
 
         # save cube state
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
 
         # Work with the wing at the bottom of the F-west edge
         # Move the sister wing to F-east
@@ -561,8 +560,8 @@ class RubiksCube555(RubiksCube):
                                     will_pair_on_slice_count = 0
 
                                 # restore cube state
-                                self.state = copy(original_state)
-                                self.solution = copy(original_solution)
+                                self.state = original_state[:]
+                                self.solution = original_solution[:]
 
                                 if will_pair_on_slice_count > max_pair_on_slice_forward:
                                     results = (target_wing, sister_wing1, sister_wing2, sister_wing3, steps)
@@ -1484,8 +1483,8 @@ class RubiksCube555(RubiksCube):
         if self.pair_two_sister_edges_555(pre_solution_len, pre_non_paired_wings_count, pre_non_paired_edges_count):
             return True
 
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
 
         if self.sideF.west_edge_paired():
             raise SolveError("F-west should not be paired")
@@ -1493,8 +1492,8 @@ class RubiksCube555(RubiksCube):
         if self.pair_six_wings_555(edge_to_pair[0], pre_non_paired_wings_count):
             return True
 
-        self.state = copy(original_state)
-        self.solution = copy(original_solution)
+        self.state = original_state[:]
+        self.solution = original_solution[:]
 
         self.pair_one_wing_555()
         post_non_paired_wings_count = self.get_non_paired_wings_count()
@@ -1551,13 +1550,13 @@ class RubiksCube555(RubiksCube):
                     return False
 
             #wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
-            original_state = copy(self.state)
-            original_solution = copy(self.solution)
+            original_state = self.state[:]
+            original_solution = self.solution[:]
 
             for edge in non_paired_edges:
                 self.group_edges_recursive(depth+1, edge)
-                self.state = copy(original_state)
-                self.solution = copy(original_solution)
+                self.state = original_state[:]
+                self.solution = original_solution[:]
 
         # If there are no edges left to pair, note how many steps it took us to pair them all
         else:
@@ -1565,8 +1564,8 @@ class RubiksCube555(RubiksCube):
 
             if edge_solution_len < self.min_edge_solution_len:
                 self.min_edge_solution_len = edge_solution_len
-                self.min_edge_solution = copy(self.solution)
-                self.min_edge_solution_state = copy(self.state)
+                self.min_edge_solution = self.solution[:]
+                self.min_edge_solution_state = self.state[:]
                 log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
 
             return True
@@ -1577,8 +1576,8 @@ class RubiksCube555(RubiksCube):
         max_wings_paired_solution_len = None
 
         pre_non_paired_wings_count = len(self.get_non_paired_wings())
-        original_state = copy(self.state)
-        original_solution = copy(self.solution)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
 
         for edge in non_paired_edges:
 
@@ -1595,8 +1594,8 @@ class RubiksCube555(RubiksCube):
                 max_wings_paired_edge = edge
                 max_wings_paired_solution_len = solution_len
 
-            self.state = copy(original_state)
-            self.solution = copy(original_solution)
+            self.state = original_state[:]
+            self.solution = original_solution[:]
 
         log.warning("%s will pair %d wings in %d steps" % (max_wings_paired_edge, max_wings_paired, max_wings_paired_solution_len))
         return max_wings_paired_edge
@@ -1655,8 +1654,8 @@ class RubiksCube555(RubiksCube):
 
         self.group_edges_start_time = dt.datetime.now()
         self.group_edges_recursive(depth, None)
-        self.state = copy(self.min_edge_solution_state)
-        self.solution = copy(self.min_edge_solution)
+        self.state = self.min_edge_solution_state[:]
+        self.solution = self.min_edge_solution[:]
         self.solution.append('EDGES_GROUPED')
         '''
 

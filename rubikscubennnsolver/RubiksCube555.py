@@ -280,7 +280,7 @@ class RubiksCube555(RubiksCube):
         self.lt_edge_slice_forward = LookupTable(self,
                                                  'lookup-table-5x5x5-step90-edges-slice-forward.txt',
                                                  '555-edges-slice-forward',
-                                                 None,
+                                                 'TBD',
                                                  False, # state hex
                                                  False) # prune table
 
@@ -301,7 +301,7 @@ class RubiksCube555(RubiksCube):
         self.lt_edge_slice_backward = LookupTable(self,
                                                   'lookup-table-5x5x5-step91-edges-slice-backward.txt',
                                                   '555-edges-slice-backward',
-                                                  None,
+                                                  'TBD',
                                                   False, # state hex
                                                   False) # prune table
 

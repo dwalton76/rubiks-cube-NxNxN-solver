@@ -374,6 +374,7 @@ class RubiksCube777(RubiksCube):
                         False, # state_hex
                         True)  # prune table
 
+        # dwalton I am in the middle of building this out to 10 deep
         '''
         lookup-table-7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges.txt
         =======================================================================

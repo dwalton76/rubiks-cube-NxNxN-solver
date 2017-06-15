@@ -92,6 +92,9 @@ class LookupTable(object):
         self.sides_UD = (self.parent.sideU, self.parent.sideD)
         self.sides_LR = (self.parent.sideL, self.parent.sideR)
         self.sides_FB = (self.parent.sideF, self.parent.sideB)
+        self.filename = filename
+        self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
+        self.filename_exists = False
 
         if not os.path.exists(filename):
             if os.path.exists(filename + '.gz'):
@@ -101,14 +104,14 @@ class LookupTable(object):
                 log.warning("ERROR: %s does not exist" % filename)
                 return
 
-        self.filename = filename
-        self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
+        self.filename_exists = True
         self.scratchpad = self.desc + '.scratchpad'
         self.state_type = state_type
         self.state_target = state_target
         self.state_hex = state_hex
         self.prune_table = prune_table
         self.guts_cache = {}
+        assert self.state_target is not None, "state_target is None"
 
         with open(self.filename) as fh:
             first_line = next(fh)
@@ -137,6 +140,10 @@ class LookupTable(object):
         return self.desc
 
     def state(self):
+        if not self.filename_exists:
+            print("File %s does not exist" % self.filename)
+            sys.exit(1)
+
         parent_state = self.parent.state
         sides_all = self.sides_all
         sides_UD = self.sides_UD
@@ -1080,7 +1087,6 @@ class LookupTable(object):
         return len(self.steps(state))
 
     def solve(self):
-        assert self.state_target is not None, "state_target is None"
 
         while True:
             state = self.state()

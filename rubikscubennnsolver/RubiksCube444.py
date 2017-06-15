@@ -28,8 +28,9 @@ class RubiksCube444(RubiksCube):
     - solve as 3x3x3
     """
 
-    def __init__(self, kociemba_string, debug=False):
+    def __init__(self, kociemba_string, avoid_pll=True, debug=False):
         RubiksCube.__init__(self, kociemba_string, debug)
+        self.avoid_pll = avoid_pll
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -944,13 +945,13 @@ class RubiksCube444(RubiksCube):
             # There are no edges left to pair, note how many steps it took pair them all
             edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
 
-            # TODO if we are pairing the outside edges of a 5x5x5 then we do not need to check for PLL
-            # It takes 12 steps to solve PLL parity so add that to the solution length
-            if self.edge_solution_leads_to_pll_parity():
+            # It takes 12 steps to solve PLL parity so add that to the solution length.
+            # If we are pairing the outside edges of a 5x5x5 self.avoid_pll will be False.
+            if self.avoid_pll and self.edge_solution_leads_to_pll_parity():
                 edge_solution_len += 12
 
             # I tried this once for grins but it takes about 20x longer to run and the
-            # avg solution over 50 cubues wasn't any shorter. I think it is because the
+            # avg solution over 50 cubes wasn't any shorter. I think it is because the
             # cubes are basically always scambled to the point where the 3x3x3 phase
             # takes ~20 steps.
             #

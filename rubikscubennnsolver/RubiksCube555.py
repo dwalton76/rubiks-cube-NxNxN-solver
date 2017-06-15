@@ -32,6 +32,10 @@ class RubiksCube555(RubiksCube):
 
     def __init__(self, kociemba_string, debug=False):
         RubiksCube.__init__(self, kociemba_string)
+        # dwalton setting this to False needs some more work
+        # RLBFBDBLUDBRUBUFFRBRBBLDUFBRLURBDLBDFRLDBUURDRBFDFLRUFLUBULUBLFFFURDFUFFFLURRUFFDURDUBLDURFURRBLLLDLBRRUDDDBDRFBLFDLLBFLURLFDRUUBDLRDDBRFBULLLDFUDRDFB has a
+        # scenario where pair_one_wing_555 breaks up the U-south edge and pairs 0 wings
+        self.use_pair_outside_edges = True
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -420,7 +424,8 @@ class RubiksCube555(RubiksCube):
                                     self.rotate(step)
 
                                 # 3Uw' Uw
-                                self.rotate("Uw")
+                                if self.use_pair_outside_edges:
+                                    self.rotate("Uw")
                                 self.rotate("Dw'")
                                 self.rotate_y_reverse()
 
@@ -547,7 +552,8 @@ class RubiksCube555(RubiksCube):
                                     self.rotate(step)
 
                                 # 3Uw Uw'
-                                self.rotate("Uw'")
+                                if self.use_pair_outside_edges:
+                                    self.rotate("Uw'")
                                 self.rotate("Dw")
                                 self.rotate_y()
 
@@ -1133,9 +1139,7 @@ class RubiksCube555(RubiksCube):
         original_non_paired_wings_count = self.get_non_paired_wings_count()
 
         log.info("pair_six_wings_555()")
-        #self.print_cube()
         # log.info("PREP-FOR-3Uw-SLICE (begin)")
-        # self.print_cube()
 
         (target_wing, sister_wing1, sister_wing2, sister_wing3, steps) = self.get_sister_wings_slice_forward_555(pre_non_paired_wings_count)
 
@@ -1148,16 +1152,14 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         # At this point we are setup to slice forward and pair 3 edges
-        #log.info("PREP-FOR-3Uw-SLICE (end)....SLICE (begin), %d left to pair" % self.get_non_paired_wings_count())
-        #self.print_cube()
+        # log.info("PREP-FOR-3Uw-SLICE (end)....SLICE (begin), %d left to pair" % self.get_non_paired_wings_count())
         # 3Uw Uw'
-        self.rotate("Uw'")
+        if self.use_pair_outside_edges:
+            self.rotate("Uw'")
         self.rotate("Dw")
         self.rotate_y()
 
         #log.info("SLICE (end), %d left to pair" % self.get_non_paired_wings_count())
-        #self.print_cube()
-
         post_slice_forward_non_paired_wings_count = self.get_non_paired_wings_count()
         post_slice_forward_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
@@ -1184,14 +1186,13 @@ class RubiksCube555(RubiksCube):
                 return False
 
         #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_wings_count())
-        #self.print_cube()
         # 3Uw' Uw
-        self.rotate("Uw")
+        if self.use_pair_outside_edges:
+            self.rotate("Uw")
         self.rotate("Dw'")
         self.rotate_y()
 
         #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
-        #self.print_cube()
         self.verify_all_centers_solved()
 
         post_slice_back_non_paired_wings_count = self.get_non_paired_wings_count()
@@ -1218,10 +1219,21 @@ class RubiksCube555(RubiksCube):
         we want the No 5 scenario as it pairs two wings in 9 moves where No 1 pairs 1 wing
         in 15 moves.
         """
-        if (self.state[35] == self.state[45] and
-            self.state[56] == self.state[66] and
-            self.state[56] == self.state[40] and
-            self.state[35] == self.state[61]):
+        is_checkerboard = False
+
+        if self.use_pair_outside_edges:
+            if (self.state[35] == self.state[45] and
+                self.state[56] == self.state[66] and
+                self.state[56] == self.state[40] and
+                self.state[35] == self.state[61]):
+                is_checkerboard = True
+        else:
+            if self.state[35] == self.state[61] and self.state[56] == self.state[40]:
+                is_checkerboard = True
+            elif self.state[45] == self.state[61] and self.state[66] == self.state[40]:
+                is_checkerboard = True
+
+        if is_checkerboard:
             expected_pair_count = None
 
             # F-east
@@ -1380,8 +1392,11 @@ class RubiksCube555(RubiksCube):
                  post_non_paired_wings_count,
                  post_solution_len))
 
+            if not self.use_pair_outside_edges:
+                expected_pair_count = int(expected_pair_count/2)
+
             if wings_paired < expected_pair_count:
-                raise SolveError("Paired %d wings, expected to pair %d" % (wings_paired, expected_pair_count))
+                raise SolveError("Paired %d wings, expected to pair %d, pattern_id %d" % (wings_paired, expected_pair_count, pattern_id))
 
             return True
 
@@ -1390,7 +1405,6 @@ class RubiksCube555(RubiksCube):
     def pair_one_wing_555(self):
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
         original_non_paired_wings_count = self.get_non_paired_wings_count()
-        # self.move_wing_to_F_west(edge)
 
         if self.sideF.west_edge_paired():
             raise SolveError("F-west should not be paired")
@@ -1407,21 +1421,44 @@ class RubiksCube555(RubiksCube):
         if not sister_wings:
             raise SolveError("We should not be here")
 
+        # Pick the sister_wing that is in the middle of the edge
+        for x in sister_wings:
+            if x in ((3, 103), (103, 3),
+                     (11, 28), (28, 11),
+                     (15, 78), (78, 15),
+                     (23, 53), (53, 23),
+                     (36, 115), (115, 36),
+                     (40, 61), (61, 40),
+                     (48, 136), (136, 48),
+                     (65, 86), (86, 65),
+                     (73, 128), (128, 73),
+                     (90, 111), (111, 90),
+                     (98, 140), (140, 98),
+                     (123, 148), (148, 123)):
+                sister_wing = x
+                break
+        else:
+            raise SolveError("Could not find sister wing in the middle: %s" % pformat(sister_wings))
+
         # Move sister wing to F-east...TODO this needs to be smart enough to move it there
         # so that it doesn't need to be flipped once it is there.  The 4x4x4 edge pairing has this logic.
-        sister_wing = sister_wings[0]
         self.move_wing_to_F_east(sister_wing)
 
-        # The sister wing is in the right location but does it need to be flipped?
-        sister_wing = self.get_wings_on_edge(target_wing, 'F', 'R')[0]
+        # We must have a sister wing at (65, 86)
+        sister_wings_on_FR_edge = self.get_wings_on_edge(target_wing, 'F', 'R')
+        if (65, 86) not in sister_wings_on_FR_edge:
+            log.info("sister_wings_on_FR_edge %s" % pformat(sister_wings_on_FR_edge))
+            raise SolveError("sister wing should be on FR edge")
+
+        sister_wing = (65, 86)
         sister_wing_value = self.get_wing_value(sister_wing)
 
+        # The sister wing is in the right location but does it need to be flipped?
         if target_wing_value != sister_wing_value:
-
             for step in ("R", "U'", "B'", "R2"):
                 self.rotate(step)
-            sister_wing = self.get_wings_on_edge(target_wing, 'F', 'R')[0]
-            sister_wing_value = self.get_wing_value(sister_wing)
+            #sister_wing = self.get_wings_on_edge(target_wing, 'F', 'R')[0]
+            #sister_wing_value = self.get_wing_value(sister_wing)
 
         # If there are no unpaired wings on U,B or D then we cannot pair this wing
         # without breaking some other already paired wing.
@@ -1437,7 +1474,8 @@ class RubiksCube555(RubiksCube):
 
         if sister_wing[0] == 65:
             # 3Uw Uw'
-            self.rotate("Uw'")
+            if self.use_pair_outside_edges:
+                self.rotate("Uw'")
             self.rotate("Dw")
             self.rotate_y()
 
@@ -1445,7 +1483,8 @@ class RubiksCube555(RubiksCube):
                 self.rotate(step)
 
             # 3Uw' Uw
-            self.rotate("Uw")
+            if self.use_pair_outside_edges:
+                self.rotate("Uw")
             self.rotate("Dw'")
             self.rotate_y_reverse()
 
@@ -1459,22 +1498,32 @@ class RubiksCube555(RubiksCube):
         if wings_paired < 1:
             raise SolveError("Paired %d wings" % wings_paired)
 
-        if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
-            raise SolveError("outside edges have been broken")
+        if self.use_pair_outside_edges:
+            if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
+                raise SolveError("outside edges have been broken")
 
     def pair_edge(self, edge_to_pair):
+
         #log.info("pair_edge() with edge_to_pair %s" % pformat(edge_to_pair))
         pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
         pre_non_paired_edges_count = self.get_non_paired_edges_count()
         pre_non_paired_wings_count = self.get_non_paired_wings_count()
         self.rotate_edge_to_F_west(edge_to_pair[0])
+
+        # We need to rotate this around so the two unpaired wings are at the bottom of F-west
+        if self.state[40] == self.state[45] and self.state[61] == self.state[66]:
+            self.rotate_z()
+            self.rotate_z()
+            self.rotate_y()
+
         log.info("pair_edge() for %s (%d wings and %d edges left to pair)" % (pformat(edge_to_pair), pre_non_paired_wings_count, pre_non_paired_edges_count))
 
         if self.sideF.west_edge_paired():
             raise SolveError("F-west should not be paired")
 
-        if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
-            raise SolveError("outside edges have been broken")
+        if self.use_pair_outside_edges:
+            if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
+                raise SolveError("outside edges have been broken")
 
         if self.pair_checkboard_edge_555(pre_solution_len, pre_non_paired_wings_count):
             return True
@@ -1607,7 +1656,9 @@ class RubiksCube555(RubiksCube):
 
         depth = 0
         self.lt_init()
-        self.pair_outside_edges()
+
+        if self.use_pair_outside_edges:
+            self.pair_outside_edges()
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
         while True:
@@ -1619,7 +1670,7 @@ class RubiksCube555(RubiksCube):
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
-            # dwalton is the cube in a state that is in the 5x5x5-edges lookup table?
+            # Is the cube in a state that is in the 5x5x5-edges lookup table?
             try:
                 self.lt_edges.solve()
                 raise SolveError("holy crap this worked")
@@ -1637,10 +1688,7 @@ class RubiksCube555(RubiksCube):
             log.info('%d wings and %d edges left to pair, %d steps in' %
                 (post_non_paired_wings_count,
                  post_non_paired_edges_count,
-                 self.get_solution_len_minus_rotates(self.solution) - pre_solution_len))
-
-            #if post_non_paired_wings_count:
-            #    self.print_cube()
+                 self.get_solution_len_minus_rotates(self.solution)))
 
             log.info('')
             log.info('')

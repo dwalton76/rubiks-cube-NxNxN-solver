@@ -5,7 +5,7 @@ from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksSide import Side, SolveError
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoIDASolution
 import logging
 import math
 import os
@@ -406,12 +406,15 @@ class RubiksCube666(RubiksCube):
         self.lt_init()
         self.lt_UD_inner_x_centers_stage.solve()
 
-        self.lt_UD_oblique_edge_pairing_left_only.solve() # speed up IDA
-        self.lt_UD_oblique_edge_pairing.solve()
+        try:
+            self.lt_UD_oblique_edge_pairing.solve(7)
+        except NoIDASolution:
+            self.lt_UD_oblique_edge_pairing_left_only.solve() # speed up IDA
+            self.lt_UD_oblique_edge_pairing.solve(99)
         self.lt_LR_inner_x_centers_stage.solve()
 
-        self.lt_LR_oblique_edge_pairing_left_only.solve() # speed up IDA
-        self.lt_LR_oblique_edge_pairing.solve()
+        #self.lt_LR_oblique_edge_pairing_left_only.solve() # speed up IDA
+        self.lt_LR_oblique_edge_pairing.solve(99)
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
         # Reduce the centers to 5x5x5 centers
@@ -420,8 +423,11 @@ class RubiksCube666(RubiksCube):
         # - solve the FB centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
 
-        self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
-        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
+        try:
+            self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(12)
+        except NoIDASolution:
+            self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
+            self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(99)
         log.info("inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         # self.print_cube()
 

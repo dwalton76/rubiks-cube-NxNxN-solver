@@ -3527,8 +3527,8 @@ class RubiksCube(object):
 
                     # Prefer solutions that do not lead to OLL parity. Note that we do not do this
                     # for 6x6x6 right now because it takes too long to compute the solution.
-                    #if self.is_even() and self.center_solution_leads_to_oll_parity():
-                    if self.size == 4 and self.center_solution_leads_to_oll_parity():
+                    #if self.size == 4 and self.center_solution_leads_to_oll_parity():
+                    if self.is_even() and self.center_solution_leads_to_oll_parity():
                         log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
                         solution_leads_to_oll = True
                     else:
@@ -3569,7 +3569,8 @@ class RubiksCube(object):
                     # options. For 5x5x5 and larger though go ahead and break out if we
                     # have an OLL free solution.
                     if break_out_asap:
-                        if self.size == 4:
+                        #if self.size == 4:
+                        if self.is_even():
                             if not min_solution_leads_to_oll:
                                 break
                         else:
@@ -3581,14 +3582,16 @@ class RubiksCube(object):
                 # to run longer but produce a slightly shorter solution then comment out the
                 # breaks here (and the one above).
                 if break_out_asap and min_solution_length is not None:
-                    if self.size == 4:
+                    #if self.size == 4:
+                    if self.is_even():
                         if not min_solution_leads_to_oll:
                             break
                     else:
                         break
 
             if break_out_asap and min_solution_length is not None:
-                if self.size == 4:
+                #if self.size == 4:
+                if self.is_even():
                     if not min_solution_leads_to_oll:
                         break
                 else:

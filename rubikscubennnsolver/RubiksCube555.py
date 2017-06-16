@@ -326,7 +326,7 @@ class RubiksCube555(RubiksCube):
 
         # Stage UD centers
         try:
-            self.lt_UD_centers_stage.solve(8)
+            self.lt_UD_centers_stage.solve(7)
         except NoIDASolution:
             self.lt_UD_T_centers_stage.solve() # speed up IDA
             self.lt_UD_centers_stage.solve(99)
@@ -340,7 +340,7 @@ class RubiksCube555(RubiksCube):
 
         # All centers are staged so solve them
         try:
-            self.lt_ULFRB_centers_solve.solve(9)
+            self.lt_ULFRB_centers_solve.solve(8)
         except NoIDASolution:
             self.lt_UD_centers_solve.solve() # speed up IDA
             self.lt_ULFRB_centers_solve.solve(99)

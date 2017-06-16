@@ -344,14 +344,16 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))
 
+        # dwalton
+        self.print_cube()
+        sys.exit(0)
+
         self.lt_LR_centers_stage.solve()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
         #self.lt_UD_centers_solve.solve() # speed up IDA
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
-
-        self.print_cube()
 
     def find_moves_to_stage_slice_backward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)

@@ -4,7 +4,7 @@ from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksSide import Side, SolveError
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_4x4x4, solved_4x4x4
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps, NoIDASolution
 import datetime as dt
 import logging
 import math
@@ -98,6 +98,9 @@ class RubiksCube555(RubiksCube):
         X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
         is 0.0000013596729171 which is a decent percentage for IDA.
 
+        I ended up building this out to 7-deep, there are another ~312 million entries at 7 steps
+        so 328 million total
+
         lookup-table-5x5x5-step10-UD-centers-stage.txt
         ==============================================
         1 steps has 5 entries (0 percent)
@@ -127,12 +130,12 @@ class RubiksCube555(RubiksCube):
         1 steps has 3 entries (0 percent, 0.00x previous step)
         2 steps has 29 entries (0 percent, 9.67x previous step)
         3 steps has 234 entries (1 percent, 8.07x previous step)
-        4 steps has 1246 entries (9 percent, 5.32x previous step)
-        5 steps has 4466 entries (34 percent, 3.58x previous step)
-        6 steps has 6236 entries (48 percent, 1.40x previous step)
+        4 steps has 1,246 entries (9 percent, 5.32x previous step)
+        5 steps has 4,466 entries (34 percent, 3.58x previous step)
+        6 steps has 6,236 entries (48 percent, 1.40x previous step)
         7 steps has 656 entries (5 percent, 0.11x previous step)
 
-        Total: 12870 entries
+        Total: 12,870 entries
         '''
         self.lt_LR_centers_stage_x_center_only = LookupTable(self,
                                                              'lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt',
@@ -148,13 +151,13 @@ class RubiksCube555(RubiksCube):
         2 steps has 25 entries (0 percent, 8.33x previous step)
         3 steps has 210 entries (1 percent, 8.40x previous step)
         4 steps has 722 entries (5 percent, 3.44x previous step)
-        5 steps has 1752 entries (13 percent, 2.43x previous step)
-        6 steps has 4033 entries (31 percent, 2.30x previous step)
-        7 steps has 4014 entries (31 percent, 1.00x previous step)
-        8 steps has 1977 entries (15 percent, 0.49x previous step)
+        5 steps has 1,752 entries (13 percent, 2.43x previous step)
+        6 steps has 4,033 entries (31 percent, 2.30x previous step)
+        7 steps has 4,014 entries (31 percent, 1.00x previous step)
+        8 steps has 1,977 entries (15 percent, 0.49x previous step)
         9 steps has 134 entries (1 percent, 0.07x previous step)
 
-        Total: 12870 entries
+        Total: 12,870 entries
         '''
         self.lt_LR_centers_stage_t_center_only = LookupTable(self,
                                                              'lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt',
@@ -211,8 +214,8 @@ class RubiksCube555(RubiksCube):
         3 steps has 82 entries (1 percent, 3.73x previous step)
         4 steps has 292 entries (5 percent, 3.56x previous step)
         5 steps has 986 entries (20 percent, 3.38x previous step)
-        6 steps has 2001 entries (40 percent, 2.03x previous step)
-        7 steps has 1312 entries (26 percent, 0.66x previous step)
+        6 steps has 2,001 entries (40 percent, 2.03x previous step)
+        7 steps has 1,312 entries (26 percent, 0.66x previous step)
         8 steps has 200 entries (4 percent, 0.15x previous step)
 
         Total: 4900 entries
@@ -239,19 +242,20 @@ class RubiksCube555(RubiksCube):
                                                True) # prune table
 
         '''
-        Would be 117,649,000,000
+        Would be 117,649,000,000. The 7-deep copy is checked into the repo. I build it
+        to 8-deep which takes the total up to ~120 million.
 
         lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
         ==================================================
         1 steps has 7 entries (0 percent, 0.00x previous step)
         2 steps has 99 entries (0 percent, 14.14x previous step)
-        3 steps has 1134 entries (0 percent, 11.45x previous step)
-        4 steps has 12183 entries (0 percent, 10.74x previous step)
-        5 steps has 128730 entries (0 percent, 10.57x previous step)
-        6 steps has 1291295 entries (9 percent, 10.03x previous step)
-        7 steps has 12250688 entries (89 percent, 9.49x previous step)
+        3 steps has 1,134 entries (0 percent, 11.45x previous step)
+        4 steps has 12,183 entries (0 percent, 10.74x previous step)
+        5 steps has 128,730 entries (0 percent, 10.57x previous step)
+        6 steps has 1,291,295 entries (9 percent, 10.03x previous step)
+        7 steps has 12,250,688 entries (89 percent, 9.49x previous step)
 
-        Total: 13684136 entries
+        Total: 13,684,136 entries
         '''
         self.lt_ULFRB_centers_solve = LookupTableIDA(self,
                                                     'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
@@ -274,9 +278,9 @@ class RubiksCube555(RubiksCube):
         1 steps has 7 entries (0 percent)
         2 steps has 42 entries (0 percent)
         3 steps has 299 entries (3 percent)
-        4 steps has 1306 entries (16 percent)
-        5 steps has 3449 entries (43 percent)
-        6 steps has 2617 entries (33 percent)
+        4 steps has 1,306 entries (16 percent)
+        5 steps has 3,449 entries (43 percent)
+        6 steps has 2,617 entries (33 percent)
         7 steps has 200 entries (2 percent)
 
         Total: 7920 entries
@@ -295,9 +299,9 @@ class RubiksCube555(RubiksCube):
         3 steps has 36 entries (0 percent)
         4 steps has 66 entries (0 percent)
         5 steps has 334 entries (4 percent)
-        6 steps has 1369 entries (17 percent)
-        7 steps has 3505 entries (44 percent)
-        8 steps has 2539 entries (32 percent)
+        6 steps has 1,369 entries (17 percent)
+        7 steps has 3,505 entries (44 percent)
+        8 steps has 2,539 entries (32 percent)
         9 steps has 69 entries (0 percent)
 
         Total: 7919 entries
@@ -320,35 +324,26 @@ class RubiksCube555(RubiksCube):
         self.lt_init()
         self.rotate_U_to_U()
 
-        '''
-        Without IDA speed up
-33 steps to solve centers
-83 steps to group edges
-20 steps to solve 3x3x3
-136 steps total
-
-5.01user 0.52system 0:10.57elapsed 52%CPU (0avgtext+0avgdata 46156maxresident
-
-
-        With IDA speed up...center solution is 7 steps longer but edge
-        solution happened to be 10 steps shorter
-
-40 steps to solve centers
-73 steps to group edges
-21 steps to solve 3x3x3
-134 steps total
-
-0.95user 0.04system 0:00.99elapsed 99%CPU (0avgtext+0avgdata 14052maxresident)k
-        '''
-        self.lt_UD_T_centers_stage.solve() # speed up IDA
-        self.lt_UD_centers_stage.solve()
+        # Stage UD centers
+        try:
+            self.lt_UD_centers_stage.solve(8)
+        except NoIDASolution:
+            self.lt_UD_T_centers_stage.solve() # speed up IDA
+            self.lt_UD_centers_stage.solve(99)
         log.info("Took %d steps to stage UD centers" % len(self.solution))
 
-        self.lt_LR_centers_stage.solve()
+
+        # Stage LR centers
+        self.lt_LR_centers_stage.solve(99)
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
-        self.lt_UD_centers_solve.solve() # speed up IDA
-        self.lt_ULFRB_centers_solve.solve()
+
+        # All centers are staged so solve them
+        try:
+            self.lt_ULFRB_centers_solve.solve(9)
+        except NoIDASolution:
+            self.lt_UD_centers_solve.solve() # speed up IDA
+            self.lt_ULFRB_centers_solve.solve(99)
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 
     def find_moves_to_stage_slice_backward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):

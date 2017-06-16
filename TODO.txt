@@ -1,4 +1,6 @@
 
+Build lookup-table-5x5x5-step20-LR-centers-stage.txt out all the way (165 million entries)
+
 5x5x5 edge pairing needs the same improvement that 4x4x4 edge pairing has
 - pair the final 4
 - pair the final 2

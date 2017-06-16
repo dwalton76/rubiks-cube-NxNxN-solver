@@ -102,3 +102,15 @@ The 4x4x4-edges table was only 9-moves deep here so this was just the beginning
 5x5x5 avg solution 141.0 steps
 5x5x5 avg centers solution 40.0 steps
 5x5x5 avg edges solution 80.0 steps
+
+
+Added NoIDASolution to dynamically 'solve' prune
+table when the IDA search it taking too long. This
+takes longer to run but chops 7 moves from centers
+solution.
+==================================================
+5x5x5 min solution 116 steps (RDBFBFFDFDUBULDFRFUDFRFULFBFRDBBFURLLRRDFLDLFRBLBURBRFDLFLBDUUFUDFLFFDUUBUDLFDRBDDLRLFDDBURDRBLLURLFUDFRDBBUDUBBLBRLLDULFBLRBLRULBURRDURUBFLLRRUURDBBU)
+5x5x5 max solution 160 steps (RLBFBDBLUDBRUBUFFRBRBBLDUFBRLURBDLBDFRLDBUURDRBFDFLRUFLUBULUBLFFFURDFUFFFLURRUFFDURDUBLDURFURRBLLLDLBRRUDDDBDRFBLFDLLBFLURLFDRUUBDLRDDBRFBULLLDFUDRDFB)
+5x5x5 avg solution 136.0 steps
+5x5x5 avg centers solution 33.0 steps
+5x5x5 avg edges solution 82.0 steps

@@ -27,6 +27,10 @@ class NoSteps(Exception):
     pass
 
 
+class NoIDASolution(Exception):
+    pass
+
+
 def steps_cancel_out(prev_step, step):
 
     if prev_step is None:
@@ -1252,7 +1256,7 @@ class LookupTableIDA(LookupTable):
                 result.append("%s %s" % (prev_steps, next_step))
         return result
 
-    def ida_stage(self):
+    def ida_stage(self, max_ida_depth):
         start_time0 = dt.datetime.now()
         state = self.state()
         log.debug("state %s vs state_target %s" % (state, self.state_target))
@@ -1299,7 +1303,7 @@ class LookupTableIDA(LookupTable):
         for (index, pt) in enumerate(prune_tables):
             pt.index = index
 
-        for threshold in xrange(1, 20):
+        for threshold in xrange(1, max_ida_depth+1):
 
             # Build a list of moves we can do 1 move deep
             # Build a list of moves we can do 2 moves deep, this must build on the 1 move deep list
@@ -1548,13 +1552,16 @@ class LookupTableIDA(LookupTable):
                              pretty_time(end_time2 - start_time2), rotate_count,
                              pretty_time(end_time3 - start_time3)))
 
-        # we should never get to here
-        raise SolveError("%s FAILED for state %s" % (self, self.state()))
+        # The only time we will get here is when max_ida_depth is a low number.  It will be up to the caller to:
+        # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
+        # - call ida_stage() again but with a near infinite max_ida_depth...99 is close enough to infinity for IDA purposes
+        log.warning("%s: could not find a solution via IDA within %d steps...will 'solve' a prune table and try again" % (self, max_ida_depth))
+        raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))
 
-    def solve(self):
+    def solve(self, max_ida_stage):
         assert self.state_target is not None, "state_target is None"
 
-        if self.ida_stage():
+        if self.ida_stage(max_ida_stage):
             return
 
         LookupTable.solve(self)

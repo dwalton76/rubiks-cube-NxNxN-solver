@@ -340,18 +340,14 @@ class RubiksCube555(RubiksCube):
 
 0.95user 0.04system 0:00.99elapsed 99%CPU (0avgtext+0avgdata 14052maxresident)k
         '''
-        #self.lt_UD_T_centers_stage.solve() # speed up IDA
+        self.lt_UD_T_centers_stage.solve() # speed up IDA
         self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))
-
-        # dwalton
-        self.print_cube()
-        sys.exit(0)
 
         self.lt_LR_centers_stage.solve()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
-        #self.lt_UD_centers_solve.solve() # speed up IDA
+        self.lt_UD_centers_solve.solve() # speed up IDA
         self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
 

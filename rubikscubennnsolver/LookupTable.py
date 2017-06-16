@@ -1450,8 +1450,8 @@ class LookupTableIDA(LookupTable):
 
                         end_time0 = dt.datetime.now()
                         end_time3 = end_time0
-                        log.info("%s: IDA threshold %d (max step %d), keep %3d, took %s (%s to rotate %d, %s to search tables)" %\
-                            (self, threshold, max_step_count, len(step_sequences_within_cost),
+                        log.info("%s: IDA threshold %d (max step %d), took %s (%s to rotate %d, %s to search tables)" %\
+                            (self, threshold, max_step_count,
                              pretty_time(end_time3 - start_time1),
                              pretty_time(end_time2 - start_time2), rotate_count,
                              pretty_time(end_time3 - start_time3)))

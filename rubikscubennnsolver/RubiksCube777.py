@@ -5,7 +5,7 @@ from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6, moves_6x6x6
 from rubikscubennnsolver.RubiksSide import Side, SolveError
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoIDASolution
 import logging
 import math
 import os
@@ -511,7 +511,12 @@ class RubiksCube777(RubiksCube):
 
     def group_inside_UD_centers(self):
         fake_555 = self.create_fake_555_centers()
-        fake_555.lt_UD_centers_stage.solve()
+
+        try:
+            fake_555.lt_UD_centers_stage.solve(7)
+        except NoIDASolution:
+            fake_555.lt_UD_T_centers_stage.solve() # speed up IDA
+            fake_555.lt_UD_centers_stage.solve(99)
 
         for step in fake_555.solution:
 
@@ -526,7 +531,7 @@ class RubiksCube777(RubiksCube):
 
     def group_inside_LR_centers(self):
         fake_555 = self.create_fake_555_centers()
-        fake_555.lt_LR_centers_stage.solve()
+        fake_555.lt_LR_centers_stage.solve(99)
 
         for step in fake_555.solution:
 
@@ -662,8 +667,12 @@ class RubiksCube777(RubiksCube):
 
     def group_outside_UD_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
-        fake_666.lt_UD_oblique_edge_pairing_right_only.solve()
-        fake_666.lt_UD_oblique_edge_pairing.solve()
+
+        try:
+            fake_666.lt_UD_oblique_edge_pairing.solve(7)
+        except NoIDASolution:
+            fake_666.lt_UD_oblique_edge_pairing_left_only.solve() # speed up IDA
+            fake_666.lt_UD_oblique_edge_pairing.solve(99)
 
         for step in fake_666.solution:
 
@@ -674,7 +683,7 @@ class RubiksCube777(RubiksCube):
 
     def group_outside_LR_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
-        fake_666.lt_LR_oblique_edge_pairing.solve()
+        fake_666.lt_LR_oblique_edge_pairing.solve(99)
 
         for step in fake_666.solution:
 
@@ -689,8 +698,8 @@ class RubiksCube777(RubiksCube):
         self.group_inside_UD_centers()
         self.group_outside_UD_oblique_edges()
 
-        self.lt_UD_oblique_edge_pairing_middle_only.solve # speed up IDA
-        self.lt_UD_oblique_edge_pairing.solve()
+        #self.lt_UD_oblique_edge_pairing_middle_only.solve # speed up IDA
+        self.lt_UD_oblique_edge_pairing.solve(99)
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
         self.group_inside_LR_centers()
@@ -701,24 +710,24 @@ class RubiksCube777(RubiksCube):
         log.info('post group_outside_LR_oblique_edges')
         #self.print_cube()
 
-        self.lt_LR_oblique_edge_pairing_middle_only.solve() # speed up IDA
-        self.lt_LR_oblique_edge_pairing.solve()
+        #self.lt_LR_oblique_edge_pairing_middle_only.solve() # speed up IDA
+        self.lt_LR_oblique_edge_pairing.solve(99)
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         #self.print_cube()
 
         # Solve the UD centers and pair the UD oblique edges
-        self.lt_UD_solve_inner_centers_and_oblique_edges.solve()
+        self.lt_UD_solve_inner_centers_and_oblique_edges.solve(99)
         self.print_cube()
 
         # Solve the LFRB centers and pair the LR oblique edges
         # First solve inner x-centers, inner t-centers and outer t-centers (the middle of oblique edge)
-        self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve() # speed up IDA
-        self.print_cube()
+        self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve(99) # speed up IDA
+        #self.print_cube()
 
         # dwalton here now
-        self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()
+        #self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()
         log.info("LRFB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        self.print_cube()
+        #self.print_cube()
         sys.exit(0)
 
         '''

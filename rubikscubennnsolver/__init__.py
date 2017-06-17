@@ -2823,6 +2823,7 @@ class RubiksCube(object):
                 self.rotate_z()
 
             if has_oll:
+                # 26 moves :(
                 oll_solution = "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
                 log.warning("Solving OLL %s" % oll_solution)
                 self.print_cube()
@@ -3353,6 +3354,7 @@ class RubiksCube(object):
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
+        orbits_with_oll_parity = []
 
         orbits = (self.size - 2) / 2
 
@@ -3360,11 +3362,13 @@ class RubiksCube(object):
             # OLL Parity - "...is caused by solving the centers such that the edge permutation is odd"
             # http://www.speedcubing.com/chris/4speedsolve3.html
             if self.edge_swaps_odd(False, orbit, debug):
-                log.debug("Predict we have OLL parity")
-                return True
+                orbits_with_oll_parity.append(orbit)
+                log.info("orbit %d has OLL parity" % orbit)
 
-        log.debug("Predict we are free of OLL parity")
-        return False
+        if not orbits_with_oll_parity:
+            log.debug("Predict we are free of OLL parity")
+
+        return orbits_with_oll_parity
 
     def get_state_all(self):
         result = []
@@ -3377,6 +3381,44 @@ class RubiksCube(object):
 
     def group_centers_guts(self):
         raise ImplementThis("Child class must imlement group_centers_guts")
+
+    def prevent_oll(self, orbits_with_oll_parity):
+        """
+        This doesn't work...need to think about this some more
+        """
+
+        # save cube state
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        if self.size == 6:
+            oll_solutions = ("3Uw Uw' F U F' Uw 3Uw'",
+                             "Uw' F U F' Uw",
+                             "Dw F D F' Dw'",
+                             "Dw' F D F' Dw")
+
+            if 0 in orbits_with_oll_parity:
+
+                for oll_solution in oll_solutions:
+                    for step in oll_solution.split():
+                        self.rotate(step)
+                    orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+
+                    if 0 in orbits_with_oll_parity:
+                        self.state = original_state[:]
+                        self.solution = original_solution[:]
+                    else:
+                        raise SolveError("Wow that worked")
+
+
+            if 1 in orbits_with_oll_parity:
+                for step in "3Uw F U F' 3Uw'".split():
+                    self.rotate(step)
+
+            raise SolveError("We should have prevented OLL parity but still have it in orbits %s" % ','.join(map(str, orbits_with_oll_parity)))
+
+        else:
+            raise ImplementThis("Do prevent_oll for %dx%dx%d" % (self.size, self.size, self.size))
 
     def group_centers(self):
 
@@ -3403,9 +3445,28 @@ class RubiksCube(object):
         # solving across our 50 test cubes.
         break_out_asap = True
 
+        if self.size == 6:
+            opening_moves = (None,
+                             "3Uw", "Uw",
+                             "3Lw", "Lw",
+                             "3Fw", "Fw",
+                             "3Rw", "Rw",
+                             "3Bw", "Bw",
+                             "3Dw", "Dw",
+                             "3Uw'", "Uw'",
+                             "3Lw'", "Lw'",
+                             "3Fw'", "Fw'",
+                             "3Rw'", "Rw'",
+                             "3Bw'", "Bw'",
+                             "3Dw'", "Dw'")
+        else:
+            opening_moves = (None,
+                             "Uw", "Dw", "Lw", "Fw", "Rw", "Bw",
+                             "Uw'", "Dw'", "Lw'", "Fw'", "Rw'", "Bw'")
+
         for upper_side_name in ('U', 'D', 'L', 'F', 'R', 'B'):
             for front_side_name in ('F', 'R', 'B', 'L', 'U', 'D'):
-                for opening_move in (None, "Uw", "Dw", "Lw", "Fw", "Rw", "Dw", "Uw'", "Dw'", "Lw'", "Fw'", "Rw'", "Dw'"):
+                for opening_move in opening_moves:
 
                     if upper_side_name == front_side_name:
                         continue
@@ -3520,6 +3581,9 @@ class RubiksCube(object):
                     if opening_move:
                         self.rotate(opening_move)
 
+                    log.info("")
+                    log.info("")
+                    log.info("")
                     self.group_centers_guts()
 
                     if not self.centers_solved():
@@ -3527,10 +3591,18 @@ class RubiksCube(object):
 
                     # Prefer solutions that do not lead to OLL parity. Note that we do not do this
                     # for 6x6x6 right now because it takes too long to compute the solution.
-                    #if self.is_even() and self.center_solution_leads_to_oll_parity():
-                    if self.size == 4 and self.center_solution_leads_to_oll_parity():
-                        log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
-                        solution_leads_to_oll = True
+                    orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+
+                    if orbits_with_oll_parity:
+                        if self.size == 4:
+                            log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
+                            solution_leads_to_oll = True
+                        else:
+                            log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
+                            solution_leads_to_oll = True
+                            #log.info("%s on top, %s in front, opening move %4s: creates OLL parity but we will avoid it" % (upper_side_name, front_side_name, opening_move))
+                            #self.prevent_oll(orbits_with_oll_parity)
+                            #solution_leads_to_oll = False
                     else:
                         log.info("%s on top, %s in front, opening move %4s: free of OLL parity" % (upper_side_name, front_side_name, opening_move))
                         solution_leads_to_oll = False
@@ -3565,37 +3637,22 @@ class RubiksCube(object):
                             (upper_side_name, front_side_name, opening_move, center_solution_length, min_solution_length, min_solution_non_paired_wings_count))
 
                     # We can compute solutions for 4x4x4 centers without using IDA so
-                    # those are very fast, keep exploring all of the 'None' opening_move
-                    # options. For 5x5x5 and larger though go ahead and break out if we
-                    # have an OLL free solution.
-                    if break_out_asap:
-                        #if self.is_even():
-                        if self.size == 4:
-                            if not min_solution_leads_to_oll:
+                    # those are very fast, keep exploring 4x4x4 solutions until we find
+                    # one that is free of OLL.
+                    if min_solution_length is not None:
+                        if min_solution_leads_to_oll:
+                            if self.size == 4:
+                                min_solution_length = None
+                            else:
                                 break
                         else:
                             break
 
-                # If you comment this out we will keep looking through other combinations
-                # of upper/front/opening_move.  It takes ~10x as long to run and brings the
-                # 4x4x4 average move count down from 70 to 66...so if you want the solver
-                # to run longer but produce a slightly shorter solution then comment out the
-                # breaks here (and the one above).
-                if break_out_asap and min_solution_length is not None:
-                    #if self.is_even():
-                    if self.size == 4:
-                        if not min_solution_leads_to_oll:
-                            break
-                    else:
-                        break
-
-            if break_out_asap and min_solution_length is not None:
-                #if self.is_even():
-                if self.size == 4:
-                    if not min_solution_leads_to_oll:
-                        break
-                else:
+                if min_solution_length is not None:
                     break
+
+            if min_solution_length is not None:
+                break
 
         if min_solution_length is None:
             raise SolveError("Could not find parity free solution for centers")

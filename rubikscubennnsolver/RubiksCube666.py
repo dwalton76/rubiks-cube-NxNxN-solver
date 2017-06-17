@@ -413,18 +413,17 @@ class RubiksCube666(RubiksCube):
             self.lt_UD_oblique_edge_pairing.solve(99)
         self.lt_LR_inner_x_centers_stage.solve()
 
-        #self.lt_LR_oblique_edge_pairing_left_only.solve() # speed up IDA
         self.lt_LR_oblique_edge_pairing.solve(99)
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
         # Reduce the centers to 5x5x5 centers
-        # - solve the UD centers and pair the UD oblique edges
-        # - solve the LR centers and pair the LR oblique edges
-        # - solve the FB centers and pair the FB oblique edges
+        # - solve the UD inner x-centers and pair the UD oblique edges
+        # - solve the LR inner x-centers and pair the LR oblique edges
+        # - solve the FB inner x-centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
 
         try:
-            self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(12)
+            self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(11)
         except NoIDASolution:
             self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
             self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(99)

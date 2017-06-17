@@ -3,8 +3,7 @@ DONE - do NoIDASolution stuff for 777
 
 - go ahead and do the rest of the 777 solver even though centers are not done yet
 
-- Even cubes...when using IDA to solve the centers we need to check for OLL parity
-  - Do not attempt to do this if the centers are already solved
+- Even cubes...we need to somehow prevent OL when we figure out that we will hit it later
 
 - Avoid PLL parity for 6x6x6...not 100% sure how to do this.  Maybe only look for
   it when pairing the outer orbit of edges.

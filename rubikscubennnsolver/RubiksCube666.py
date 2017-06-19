@@ -544,7 +544,12 @@ class RubiksCube666(RubiksCube):
                 step = '6' + step[1:]
             elif step.startswith('3'):
                 raise ImplementThis('4x4x4 steps starts with 3')
-            elif step.startswith('Uw') or step.startswith('Dw'):
+            elif step in ("Uw", "Uw'", "Uw2",
+                          "Lw", "Lw'", "Lw2",
+                          "Fw", "Fw'", "Fw2",
+                          "Rw", "Rw'", "Rw2",
+                          "Bw", "Bw'", "Bw2",
+                          "Dw", "Dw'", "Dw2"):
                 step = '3' + step
 
             # log.warning("fake_444 step %s" % step)

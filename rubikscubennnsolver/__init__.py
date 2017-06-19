@@ -2750,7 +2750,12 @@ class RubiksCube(object):
 
                     # second row
                     foo.append(self.state[side.edge_west_pos[0]])
-                    foo.append(self.state[side.center_corner_pos[0]])
+
+                    if side.mid_pos:
+                        foo.append(self.state[side.mid_pos])
+                    else:
+                        foo.append(self.state[side.center_corner_pos[0]])
+
                     foo.append(self.state[side.edge_east_pos[0]])
 
                     # third row

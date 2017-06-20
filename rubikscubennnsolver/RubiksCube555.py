@@ -37,6 +37,9 @@ class RubiksCube555(RubiksCube):
         # scenario where pair_one_wing_555 breaks up the U-south edge and pairs 0 wings
         self.use_pair_outside_edges = True
 
+        # This will only be True when an even cube is using the 555 edge solver to pair the final/outside orbit of edges
+        self.avoid_pll = False
+
         if debug:
             log.setLevel(logging.DEBUG)
 
@@ -1630,6 +1633,9 @@ class RubiksCube555(RubiksCube):
             post_solution_len = self.get_solution_len_minus_rotates(self.solution)
             solution_len = post_solution_len - pre_solution_len
             wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
+
+            if post_non_paired_wings_count == 0 and self.avoid_pll and self.edge_solution_leads_to_pll_parity():
+                solution_len += 12
 
             if wings_paired > max_wings_paired or (wings_paired == max_wings_paired and solution_len < max_wings_paired_solution_len):
                 max_wings_paired = wings_paired

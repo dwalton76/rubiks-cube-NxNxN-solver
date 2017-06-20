@@ -2647,10 +2647,20 @@ class RubiksCube(object):
             pos_to_check = side.mid_pos
             F_pos_to_check = self.sideF.mid_pos
             D_pos_to_check = self.sideD.mid_pos
+
         else:
-            pos_to_check = side.center_corner_pos[0]
-            F_pos_to_check = self.sideF.center_corner_pos[0]
-            D_pos_to_check = self.sideD.center_corner_pos[0]
+            if self.size == 4:
+                pos_to_check = side.center_corner_pos[0]
+                F_pos_to_check = self.sideF.center_corner_pos[0]
+                D_pos_to_check = self.sideD.center_corner_pos[0]
+
+            elif self.size == 6:
+                pos_to_check = side.min_pos + 14
+                F_pos_to_check = self.sideF.min_pos + 14
+                D_pos_to_check = self.sideD.min_pos + 14
+
+            else:
+                raise ImplementThis("")
 
         count = 0
 
@@ -2767,6 +2777,40 @@ class RubiksCube(object):
         log.debug('kociemba string: %s' % kociemba_string)
         return kociemba_string
 
+    def prevent_OLL(self):
+        """
+        Solving OLL at the end takes 26 moves, preventing it takes 10
+        """
+        orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+
+        if self.size == 6:
+            #log.info("oll parity %s" % pformat(self.center_solution_leads_to_oll_parity()))
+
+            if orbits_with_oll_parity == [0,1]:
+                for step in "3Rw U2 3Rw U2 3Rw U2 3Rw U2 3Rw U2".split():
+                    self.rotate(step)
+
+            elif orbits_with_oll_parity == [0]:
+                for step in "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2".split():
+                    self.rotate(step)
+
+            elif orbits_with_oll_parity == [1]:
+
+                # solving the parity for the inside orbit creates parity for the outside orbit
+                # [0, 1] sequence
+                for step in "3Rw U2 3Rw U2 3Rw U2 3Rw U2 3Rw U2".split():
+                    self.rotate(step)
+
+                # [0] sequence
+                for step in "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2".split():
+                    self.rotate(step)
+
+                # log.info("oll parity %s" % pformat(self.center_solution_leads_to_oll_parity()))
+            else:
+                raise ImplementThis("orbits_with_oll_parity %s" % pformat(orbits_with_oll_parity))
+        else:
+            raise ImplementThis("prevent_OLL for %sx%sx%s" % (self.size, self.size, self.size))
+
     def solve_OLL(self):
 
         # Check all 12 edges, rotate the one with OLL to U-south
@@ -2828,6 +2872,9 @@ class RubiksCube(object):
                 self.rotate_z()
 
             if has_oll:
+                # We should no longer hit OLL
+                raise SolveError("prevent_OLL failed")
+
                 # 26 moves :(
                 oll_solution = "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
                 log.warning("Solving OLL %s" % oll_solution)
@@ -2961,6 +3008,7 @@ class RubiksCube(object):
 
         # http://www.speedcubing.com/chris/4speedsolve3.html
         if pll_id == 2:
+
             # Takes 12 steps
             pll_solution = "L2 D %dFw2 %dLw2 F2 %dLw2 L2 F2 %dLw2 %dFw2 D' L2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
             log.warning("Solving PLL ID %d: %s" % (pll_id, pll_solution))
@@ -3368,7 +3416,7 @@ class RubiksCube(object):
             # http://www.speedcubing.com/chris/4speedsolve3.html
             if self.edge_swaps_odd(False, orbit, debug):
                 orbits_with_oll_parity.append(orbit)
-                log.info("orbit %d has OLL parity" % orbit)
+                #log.info("orbit %d has OLL parity" % orbit)
 
         if not orbits_with_oll_parity:
             log.debug("Predict we are free of OLL parity")
@@ -3386,44 +3434,6 @@ class RubiksCube(object):
 
     def group_centers_guts(self):
         raise ImplementThis("Child class must imlement group_centers_guts")
-
-    def prevent_oll(self, orbits_with_oll_parity):
-        """
-        This doesn't work...need to think about this some more
-        """
-
-        # save cube state
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        if self.size == 6:
-            oll_solutions = ("3Uw Uw' F U F' Uw 3Uw'",
-                             "Uw' F U F' Uw",
-                             "Dw F D F' Dw'",
-                             "Dw' F D F' Dw")
-
-            if 0 in orbits_with_oll_parity:
-
-                for oll_solution in oll_solutions:
-                    for step in oll_solution.split():
-                        self.rotate(step)
-                    orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
-
-                    if 0 in orbits_with_oll_parity:
-                        self.state = original_state[:]
-                        self.solution = original_solution[:]
-                    else:
-                        raise SolveError("Wow that worked")
-
-
-            if 1 in orbits_with_oll_parity:
-                for step in "3Uw F U F' 3Uw'".split():
-                    self.rotate(step)
-
-            raise SolveError("We should have prevented OLL parity but still have it in orbits %s" % ','.join(map(str, orbits_with_oll_parity)))
-
-        else:
-            raise ImplementThis("Do prevent_oll for %dx%dx%d" % (self.size, self.size, self.size))
 
     def group_centers(self):
 
@@ -3603,11 +3613,11 @@ class RubiksCube(object):
                             log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
                             solution_leads_to_oll = True
                         else:
-                            log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
-                            solution_leads_to_oll = True
-                            #log.info("%s on top, %s in front, opening move %4s: creates OLL parity but we will avoid it" % (upper_side_name, front_side_name, opening_move))
-                            #self.prevent_oll(orbits_with_oll_parity)
-                            #solution_leads_to_oll = False
+                            #log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
+                            #solution_leads_to_oll = True
+                            log.info("%s on top, %s in front, opening move %4s: creates OLL parity but we will avoid it" % (upper_side_name, front_side_name, opening_move))
+                            self.prevent_OLL()
+                            solution_leads_to_oll = False
                     else:
                         log.info("%s on top, %s in front, opening move %4s: free of OLL parity" % (upper_side_name, front_side_name, opening_move))
                         solution_leads_to_oll = False

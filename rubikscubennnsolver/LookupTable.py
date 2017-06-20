@@ -1439,6 +1439,16 @@ class LookupTableIDA(LookupTable):
                 # This will do a multi-key binary search of all states_to_check
                 steps_for_states = self.steps(states_to_check)
 
+                '''
+                states_with_steps_count = 0
+                for (step_sequence_index, state) in enumerate(states_to_check):
+                    if steps_for_states[state]:
+                        states_with_steps_count += 1
+
+                if states_with_steps_count:
+                    log.info("%s: There are %d states with steps" % (self, states_with_steps_count))
+                '''
+
                 # There are steps for a state that means our IDA search is done...woohoo!!
                 for (step_sequence_index, state) in enumerate(states_to_check):
                     steps = steps_for_states[state]
@@ -1554,14 +1564,10 @@ class LookupTableIDA(LookupTable):
 
         # The only time we will get here is when max_ida_depth is a low number.  It will be up to the caller to:
         # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
-        # - call ida_stage() again but with a near infinite max_ida_depth...99 is close enough to infinity for IDA purposes
+        # - call ida_solve() again but with a near infinite max_ida_depth...99 is close enough to infinity for IDA purposes
         log.warning("%s: could not find a solution via IDA within %d steps...will 'solve' a prune table and try again" % (self, max_ida_depth))
         raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))
 
     def solve(self, max_ida_stage):
-        assert self.state_target is not None, "state_target is None"
-
-        if self.ida_stage(max_ida_stage):
-            return
-
+        self.ida_stage(max_ida_stage)
         LookupTable.solve(self)

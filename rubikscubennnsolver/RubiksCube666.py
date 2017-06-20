@@ -428,7 +428,6 @@ class RubiksCube666(RubiksCube):
             self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
             self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(99)
         log.info("inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        # self.print_cube()
 
         # At this point the 6x6x6 centers have been reduced to 5x5x5 centers
         fake_555 = RubiksCube555(solved_5x5x5)
@@ -442,12 +441,11 @@ class RubiksCube666(RubiksCube):
 
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
 
-    def pair_inside_edges(self):
+    def pair_inside_edges_via_444(self):
         fake_444 = RubiksCube444(solved_4x4x4)
         fake_444.lt_init()
 
         # The corners don't matter but it does make troubleshooting easier if they match
-        '''
         fake_444.state[1] = self.state[1]
         fake_444.state[4] = self.state[6]
         fake_444.state[13] = self.state[31]
@@ -472,7 +470,6 @@ class RubiksCube666(RubiksCube):
         fake_444.state[84] = self.state[186]
         fake_444.state[93] = self.state[211]
         fake_444.state[96] = self.state[216]
-        '''
 
         # Upper
         fake_444.state[2] = self.state[3]
@@ -555,15 +552,13 @@ class RubiksCube666(RubiksCube):
             # log.warning("fake_444 step %s" % step)
             self.rotate(step)
 
-        #self.print_cube()
         log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-    def pair_edges_via_555(self):
+    def pair_outside_edges_via_555(self):
         fake_555 = RubiksCube555(solved_5x5x5)
         fake_555.lt_init()
 
-        # The corners don't matter but it does make troubleshooting easier if they match
-        '''
+        # The corners matter for avoiding PLL
         fake_555.state[1] = self.state[1]
         fake_555.state[5] = self.state[6]
         fake_555.state[21] = self.state[31]
@@ -588,7 +583,6 @@ class RubiksCube666(RubiksCube):
         fake_555.state[130] = self.state[186]
         fake_555.state[146] = self.state[211]
         fake_555.state[150] = self.state[216]
-        '''
 
         # Upper
         fake_555.state[2] = self.state[2]
@@ -676,6 +670,7 @@ class RubiksCube666(RubiksCube):
 
         #self.print_cube()
         #fake_555.print_cube()
+        fake_555.avoid_pll = True
         fake_555.group_edges()
 
         for step in fake_555.solution:
@@ -689,7 +684,6 @@ class RubiksCube666(RubiksCube):
 
             self.rotate(step)
 
-        #self.print_cube()
         log.info("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_edges(self):
@@ -698,8 +692,8 @@ class RubiksCube666(RubiksCube):
         Create a fake 555 to pair the outside edges
         """
         self.lt_init()
-        self.pair_inside_edges()
-        self.pair_edges_via_555()
+        self.pair_inside_edges_via_444()
+        self.pair_outside_edges_via_555()
         self.solution.append('EDGES_GROUPED')
 
     def phase(self):

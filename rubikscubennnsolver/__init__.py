@@ -2784,8 +2784,6 @@ class RubiksCube(object):
         orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
 
         if self.size == 6:
-            #log.info("oll parity %s" % pformat(self.center_solution_leads_to_oll_parity()))
-
             if orbits_with_oll_parity == [0,1]:
                 for step in "3Rw U2 3Rw U2 3Rw U2 3Rw U2 3Rw U2".split():
                     self.rotate(step)
@@ -2796,18 +2794,13 @@ class RubiksCube(object):
 
             elif orbits_with_oll_parity == [1]:
 
-                # solving the parity for the inside orbit creates parity for the outside orbit
-                # [0, 1] sequence
-                for step in "3Rw U2 3Rw U2 3Rw U2 3Rw U2 3Rw U2".split():
-                    self.rotate(step)
-
-                # [0] sequence
-                for step in "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2".split():
+                for step in "3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2".split():
                     self.rotate(step)
 
                 # log.info("oll parity %s" % pformat(self.center_solution_leads_to_oll_parity()))
             else:
                 raise ImplementThis("orbits_with_oll_parity %s" % pformat(orbits_with_oll_parity))
+
         else:
             raise ImplementThis("prevent_OLL for %sx%sx%s" % (self.size, self.size, self.size))
 
@@ -3433,7 +3426,7 @@ class RubiksCube(object):
         return ''.join(result)
 
     def group_centers_guts(self):
-        raise ImplementThis("Child class must imlement group_centers_guts")
+        raise ImplementThis("Child class must implement group_centers_guts")
 
     def group_centers(self):
 
@@ -3606,20 +3599,23 @@ class RubiksCube(object):
 
                     # Prefer solutions that do not lead to OLL parity. Note that we do not do this
                     # for 6x6x6 right now because it takes too long to compute the solution.
-                    orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+                    if self.is_even():
+                        orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
 
-                    if orbits_with_oll_parity:
-                        if self.size == 4:
-                            log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
-                            solution_leads_to_oll = True
+                        if orbits_with_oll_parity:
+                            if self.size == 4:
+                                log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
+                                solution_leads_to_oll = True
+                            else:
+                                #log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
+                                #solution_leads_to_oll = True
+                                log.info("%s on top, %s in front, opening move %4s: creates OLL parity but we will avoid it" % (upper_side_name, front_side_name, opening_move))
+                                self.prevent_OLL()
+                                solution_leads_to_oll = False
                         else:
-                            #log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
-                            #solution_leads_to_oll = True
-                            log.info("%s on top, %s in front, opening move %4s: creates OLL parity but we will avoid it" % (upper_side_name, front_side_name, opening_move))
-                            self.prevent_OLL()
+                            log.info("%s on top, %s in front, opening move %4s: free of OLL parity" % (upper_side_name, front_side_name, opening_move))
                             solution_leads_to_oll = False
                     else:
-                        log.info("%s on top, %s in front, opening move %4s: free of OLL parity" % (upper_side_name, front_side_name, opening_move))
                         solution_leads_to_oll = False
 
                     center_solution_length = self.get_solution_len_minus_rotates(self.solution)

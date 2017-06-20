@@ -1,12 +1,12 @@
 
 DONE - do NoIDASolution stuff for 777
 
-- go ahead and do the rest of the 777 solver even though centers are not done yet
+DONE - go ahead and do the rest of the 777 solver even though centers are not done yet
 
-- Even cubes...we need to somehow prevent OL when we figure out that we will hit it later
+DONE - Even cubes...we need to prevent OLL when we figure out that we will hit it later
 
-- Avoid PLL parity for 6x6x6...not 100% sure how to do this.  Maybe only look for
-  it when pairing the outer orbit of edges.
+DONE - Avoid PLL parity for 6x6x6...not 100% sure how to do this.  Maybe only look for
+       it when pairing the outer orbit of edges.
 
 - build lookup-table-5x5x5-step20-LR-centers-stage.txt out all the way (165 million entries)
 

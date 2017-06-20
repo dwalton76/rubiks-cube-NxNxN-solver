@@ -415,6 +415,12 @@ class RubiksCube666(RubiksCube):
 
         self.lt_LR_oblique_edge_pairing.solve(99)
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube()
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges
@@ -428,6 +434,12 @@ class RubiksCube666(RubiksCube):
             self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
             self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(99)
         log.info("inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube()
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
         # At this point the 6x6x6 centers have been reduced to 5x5x5 centers
         fake_555 = RubiksCube555(solved_5x5x5)

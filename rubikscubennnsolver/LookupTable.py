@@ -164,18 +164,20 @@ class LookupTable(object):
             self.linecount = filesize/self.width
 
             # Populate guts_cache with the first line of the file
-            self.guts_cache[0] = state
+            self.guts_cache[0] = first_line.rstrip()
 
             # Populate guts_cache with the last line of the file
             fh.seek((self.linecount-1) * self.width)
             line = fh.readline()
             (state, steps) = line.split(':')
-            self.guts_cache[self.linecount] = state
+            self.guts_cache[self.linecount] = line.rstrip()
 
         #log.info("%s: %d entries in guts_cache" % (self, len(self.guts_cache.keys())))
         self.cache = {}
         self.guts_call_count = 0
         self.guts_left_right_range = 0
+        self.fh_seek_call_count = 0
+        self.fh_seek_lines_read = 0
 
     def __str__(self):
         return self.desc
@@ -952,19 +954,28 @@ class LookupTable(object):
         else:
             right = init_right
 
-        self.guts_call_count += 1
-        self.guts_left_right_range += right - left
-
-        state = None
         width = self.width
         state_width = self.state_width
+        state = None
+        #left_right_delta = right - left
+        # log.warning("file_binary_search_guts %d <-> %d, delta %d, look for %s" % (left, right, left_right_delta, state_to_find))
+
+        #self.guts_call_count += 1
+        #self.guts_left_right_range += left_right_delta
 
         while left <= right:
+            #left_right_delta = right - left
             mid = int(left + ((right - left) /2))
-            fh.seek(mid * width)
-            line = fh.readline()
+
+            try:
+                line = self.guts_cache[mid]
+            except KeyError:
+                fh.seek(mid * width)
+                self.fh_seek_call_count += 1
+                self.fh_seek_lines_read += 1
+                line = fh.readline().rstrip()
+                self.guts_cache[mid] = line
             state = line[0:state_width]
-            self.guts_cache[mid] = state
 
             #if line[state_width] != ':':
             #    raise Exception("we are off")
@@ -995,7 +1006,7 @@ class LookupTable(object):
         guts_cache = self.guts_cache
 
         for line_number in line_numbers:
-            state = guts_cache[line_number]
+            (state, steps) = guts_cache[line_number].split(':')
 
             if prev_state and state_to_find >= prev_state and state_to_find <= state:
                 min_left = prev_line_number
@@ -1025,7 +1036,9 @@ class LookupTable(object):
             return results
 
         # Look in our cache to see which states we've already found
+        states_to_find = sorted(list(set(states_to_find)))
         original_states_to_find_count = len(states_to_find)
+
         non_cached_states_to_find = []
 
         for state in states_to_find:
@@ -1057,9 +1070,12 @@ class LookupTable(object):
             index += 1
 
         end_time = dt.datetime.now()
-        log.info("%s: found %d states (another %d were cached) in %s, %d guts calls, %d avg left->right range, guts_cache has %d entries" %
-            (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time),
-             self.guts_call_count, int(self.guts_left_right_range/self.guts_call_count), len(self.guts_cache.keys())))
+        #log.info("%s: found %d states (another %d were cached) in %s, %d guts calls, %d avg left->right range, guts_cache has %d entries" %
+        #    (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time),
+        #     self.guts_call_count, int(self.guts_left_right_range/self.guts_call_count), len(self.guts_cache.keys())))
+        log.info("%s: found %d states (another %d were cached) in %s" %
+            (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time)))
+
         return results
 
     def file_binary_search_multiple_keys_low_high_C(self, fh, states_to_find, debug=False):

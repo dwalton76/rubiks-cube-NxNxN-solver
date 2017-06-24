@@ -749,8 +749,13 @@ class RubiksCube777(RubiksCube):
 
         # Solve the LFRB centers and pair the LR oblique edges
 
-        # dwalton solve a prune table to speed up IDA here?
+        # solve a prune table to speed up IDA here?
         # First solve inner x-centers, inner t-centers and outer t-centers (the middle of oblique edge)
+        self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only.solve()
+        log.info("LRFB inner x-center, middle oblique (solved prune table for IDA speed up), %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube()
+        log.info("")
+
         self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve(99)
         log.info("LRFB inner x-center, t-center and middle oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()

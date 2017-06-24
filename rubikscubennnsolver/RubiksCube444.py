@@ -165,8 +165,8 @@ class RubiksCube444(RubiksCube):
 
         self.lt_edges = LookupTable(self,
                                     'lookup-table-4x4x4-step101-edges.txt',
-                                    '444-centers-and-unpaired-edges',
-                                    'xxxUUxxUUxxxxxxLLxxLLxxxxxxFFxxFFxxxxxxRRxxRRxxxxxxBBxxBBxxxxxxDDxxDDxxx',
+                                    '444-edges',
+                                    'TBD',
                                     False, # state_hex
                                     False) # prune table
 
@@ -907,7 +907,8 @@ class RubiksCube444(RubiksCube):
         try:
             self.lt_edges.solve()
             non_paired_edges = []
-            # raise SolveError("holy crap that worked")
+            # dwalton
+            raise SolveError("holy crap that worked")
 
         except NoSteps:
             # No entry in the lookup table so restore to tmp_state/tmp_solution to undo the rotate UF to UF

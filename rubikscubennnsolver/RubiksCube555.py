@@ -318,8 +318,8 @@ class RubiksCube555(RubiksCube):
 
         self.lt_edges = LookupTable(self,
                                     'lookup-table-5x5x5-step101-edges.txt',
-                                    '555-centers-and-unpaired-edges',
-                                    'xxxxUUUxxUUUxxUUUxxxxxxxxLLLxxLLLxxLLLxxxxxxxxFFFxxFFFxxFFFxxxxxxxxRRRxxRRRxxRRRxxxxxxxxBBBxxBBBxxBBBxxxxxxxxDDDxxDDDxxDDDxxxx',
+                                    '555-edges',
+                                    'TBD',
                                     False, # state_hex
                                     False) # prune table
 

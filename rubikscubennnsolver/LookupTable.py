@@ -214,6 +214,10 @@ class LookupTable(object):
                 # unroll
                 state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.center_pos])
 
+            elif self.state_type == '444-edges':
+                # unroll
+                state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.edge_pos])
+
             elif self.state_type == '444-centers-and-unpaired-edges':
                 state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1,97)])
                 state_list = list(state)
@@ -361,6 +365,10 @@ class LookupTable(object):
                                   'x'])
                 state = ''.join(state)
                 state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
+
+            elif self.state_type == '555-edges':
+                # unroll
+                state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.edge_pos])
 
             elif self.state_type == '555-centers-and-unpaired-edges':
                 state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1,151)])
@@ -1173,11 +1181,10 @@ class LookupTable(object):
             steps = self.steps(state)
 
             if not steps:
+                #if self.filename == 'lookup-table-4x4x4-step101-edges.txt':
+                #    log.warning("state: %s" % state)
+                #    self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
-
-            #if self.filename == 'lookup-table-4x4x4-step101-edges.txt':
-            #    self.parent.print_cube()
-            #    log.warning("%s: steps %s" % (self, ' '.join(steps)))
 
             for step in steps:
                 self.parent.rotate(step)

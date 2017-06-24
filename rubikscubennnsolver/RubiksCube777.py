@@ -697,6 +697,12 @@ class RubiksCube777(RubiksCube):
 
         self.group_inside_UD_centers()
         self.group_outside_UD_oblique_edges()
+        log.info("Inside UD centers and outside UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube()
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
         #self.lt_UD_oblique_edge_pairing_middle_only.solve # speed up IDA
         self.lt_UD_oblique_edge_pairing.solve(99)
@@ -734,6 +740,7 @@ class RubiksCube777(RubiksCube):
 
         # Solve the UD centers and pair the UD oblique edges
         self.lt_UD_solve_inner_centers_and_oblique_edges.solve(99)
+        log.info("UD inner-centers solved, UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
         log.info("")
@@ -741,21 +748,26 @@ class RubiksCube777(RubiksCube):
         log.info("")
 
         # Solve the LFRB centers and pair the LR oblique edges
+
+        # dwalton solve a prune table to speed up IDA here?
         # First solve inner x-centers, inner t-centers and outer t-centers (the middle of oblique edge)
-        self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve(99) # speed up IDA
+        self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve(99)
+        log.info("LRFB inner x-center, t-center and middle oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
         log.info("")
         log.info("")
         log.info("")
 
-        self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()
+        # dwalton
+        self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve(99)
         log.info("LRFB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
         log.info("")
         log.info("")
         log.info("")
+        sys.exit(0)
 
         '''
         # Centers are now reduced to 5x5x5 centers

@@ -977,8 +977,9 @@ class LookupTable(object):
                 self.guts_cache[mid] = line
             state = line[0:state_width]
 
-            #if line[state_width] != ':':
-            #    raise Exception("we are off")
+            # dwalton comment this out
+            if line[state_width] != ':':
+                raise Exception("we are off")
 
             if state_to_find > state:
                 left = mid + 1

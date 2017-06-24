@@ -981,9 +981,9 @@ class LookupTable(object):
                 self.guts_cache[mid] = line
             state = line[0:state_width]
 
-            # dwalton comment this out
-            if line[state_width] != ':':
-                raise Exception("we are off")
+            # uncomment this to sanity check that all lookup tables have been padded so that all lines are the same length
+            #if line[state_width] != ':':
+            #    raise Exception("we are off")
 
             if state_to_find > state:
                 left = mid + 1
@@ -1318,14 +1318,15 @@ class LookupTableIDA(LookupTable):
         else:
             raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
 
-        states_scratchpad = 'states_scratchpad.txt'
-        pt_states_scratchpad = 'pt_states_scratchpad.txt'
         prune_tables = self.prune_tables
 
         # Because saving a little number to pt_costs_by_step below takes much less memory than
         # saving the pt.filename
         for (index, pt) in enumerate(prune_tables):
             pt.index = index
+
+        # dwalton
+        ida_cache = {}
 
         for threshold in xrange(1, max_ida_depth+1):
 
@@ -1344,17 +1345,6 @@ class LookupTableIDA(LookupTable):
                     log.debug("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
                         (self, threshold, len(step_sequences), max_step_count))
 
-                # Once we run out of memory and start swapping we are dead in the water.
-                # If we are processing more than 500k step_sequences save state to the
-                # disk to avoid running out of memory. All of that writing to the disk is
-                # slow so that is why we only do this in extreme cases.
-                if os.path.exists(states_scratchpad):
-                    os.unlink(states_scratchpad)
-
-                if os.path.exists(pt_states_scratchpad):
-                    os.unlink(pt_states_scratchpad)
-                use_scratchpad = False
-
                 states_to_check = []
                 pt_costs_by_step = []
 
@@ -1362,118 +1352,53 @@ class LookupTableIDA(LookupTable):
                 # Do one gigantic binary search
                 start_time2 = dt.datetime.now()
                 rotate_count = 0
+                ida_cache_count = 0
 
                 for (step_sequence_index, step_sequence) in enumerate(step_sequences):
-                    self.parent.state = original_state[:]
-                    self.parent.solution = original_solution[:]
-                    self.ida_count += 1
-                    rotate_count += 1
+                    if step_sequence in ida_cache:
+                        (self.parent.state, self.parent.solution, state, pt_costs_by_step_tmp_list) = ida_cache[step_sequence]
+                        states_to_check.append(state)
+                        pt_costs_by_step.append(pt_costs_by_step_tmp_list)
+                        #log.warning("step_sequence %s was in ida_cache" % pformat(step_sequence))
+                        ida_cache_count += 1
+                    else:
+                        self.parent.state = original_state[:]
+                        self.parent.solution = original_solution[:]
+                        self.ida_count += 1
+                        rotate_count += 1
 
-                    steps_in_step_sequence = step_sequence.split()
-                    self.parent.solution.extend(steps_in_step_sequence)
+                        steps_in_step_sequence = step_sequence.split()
+                        self.parent.solution.extend(steps_in_step_sequence)
 
-                    for step in steps_in_step_sequence:
-                        rotate_xxx(self.parent.state, self.parent.state[:], step)
+                        for step in steps_in_step_sequence:
+                            self.parent.state = rotate_xxx(self.parent.state, step)
 
-                    # get the current state of the cube
-                    state = self.state()
-                    states_to_check.append(state)
+                        # get the current state of the cube
+                        state = self.state()
+                        states_to_check.append(state)
 
-                    # Save a list of the pt indexes/states for this step_sequence
-                    tmp_list = []
-                    for pt in prune_tables:
-                        tmp_list.append((pt.index, pt.state()))
-                    pt_costs_by_step.append(tmp_list)
+                        # Save a list of the pt indexes/states for this step_sequence
+                        tmp_list = []
+                        for pt in prune_tables:
+                            tmp_list.append((pt.index, pt.state()))
+                        pt_costs_by_step.append(tmp_list)
 
-                    '''
-                    # does this help with memory issues?
-                    if rotate_count % 500000 == 0:
-                        log.debug("%s: rotate count %d" % (self, rotate_count))
+                        ida_cache[step_sequence] = (self.parent.state[:], self.parent.solution[:], state, tmp_list)
 
-                        # Write states to scratchpad to save memory
-                        with open(states_scratchpad, 'a') as fh_states_scratchpad:
-                            fh_states_scratchpad.write("\n".join(states_to_check) + "\n")
-                        log.debug("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, states_scratchpad))
-                        states_to_check = []
-
-                        # Write prune table states to scratchpad to save memory
-                        with open(pt_states_scratchpad, 'a') as fh_pt_states_scratchpad:
-                            to_write = []
-                            for list_of_pt_index_pt_state in pt_costs_by_step: # there is one of these per step_sequence
-                                to_write.append(json.dumps(list_of_pt_index_pt_state))
-                            fh_pt_states_scratchpad.write("\n".join(to_write) + "\n")
-                        log.debug("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, pt_states_scratchpad))
-                        pt_costs_by_step = []
-
-                        gc.collect()
-                        use_scratchpad = True
-
-                if use_scratchpad:
-                    if states_to_check:
-                        # Write states to scratchpad to save memory
-                        with open(states_scratchpad, 'a') as fh_states_scratchpad:
-                            fh_states_scratchpad.write("\n".join(states_to_check))
-                        log.debug("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, states_scratchpad))
-                        states_to_check = []
-
-                    if pt_costs_by_step:
-                        # Write prune table states to scratchpad to save memory
-                        with open(pt_states_scratchpad, 'a') as fh_pt_states_scratchpad:
-                            to_write = []
-                            for list_of_pt_index_pt_state in pt_costs_by_step: # there is one of these per step_sequence
-                                to_write.append(json.dumps(list_of_pt_index_pt_state))
-                            fh_pt_states_scratchpad.write("\n".join(to_write))
-                        log.debug("%s: rotate count %d, wrote entries to %s" % (self, rotate_count, pt_states_scratchpad))
-                        pt_costs_by_step = []
-
-                    gc.collect()
-                    '''
                 end_time2 = dt.datetime.now()
 
-                if rotate_count:
-                    log.debug("%s: IDA threshold %d (max step %d) rotated %d sequences in %s" %
-                        (self, threshold, max_step_count, rotate_count, pretty_time(end_time2 - start_time2)))
+                if rotate_count or ida_cache_count:
+                    log.info("%s: IDA threshold %d (max step %d), %d in ida cache, rotated %d sequences in %s" %
+                        (self, threshold, max_step_count, ida_cache_count, rotate_count, pretty_time(end_time2 - start_time2)))
 
                 start_time3 = dt.datetime.now()
                 self.parent.state = original_state[:]
                 self.parent.solution = original_solution[:]
 
-                # with copy
-                # IDA threshold 14, rotated 215609 sequences in 0:00:18.440573 (max step 4)
-
-                # with slices
-                # IDA threshold 14, rotated 215609 sequences in 0:00:16.131184 (max step 4)
-
-                # with rotate_xxx
-                # IDA threshold 14, rotated 215609 sequences in 0:00:15.804288 (max step 4)
-
-                # first time getting the 1.6 million rotates to not run out of memory
-                # IDA threshold 14, rotated 1644910 sequences in 0:02:26.224329 (max step 5)
-
-                # IDA threshold 14, rotated 1644910 sequences in 0:02:11.353591 (max step 5)
-                # something with using parent_state instead of self.parent.state break...same with self.parent.solution
-
-                # If not using the scratchpad states_to_check is already populated
-                if use_scratchpad:
-                    states_to_check = []
-                    with open(states_scratchpad, 'r') as fh_states_scratchpad:
-                        for line in fh_states_scratchpad:
-                            states_to_check.append(line.rstrip())
-
                 # This will do a multi-key binary search of all states_to_check
                 steps_for_states = self.steps(states_to_check)
 
-                '''
-                states_with_steps_count = 0
-                for (step_sequence_index, state) in enumerate(states_to_check):
-                    if steps_for_states[state]:
-                        states_with_steps_count += 1
-
-                if states_with_steps_count:
-                    log.info("%s: There are %d states with steps" % (self, states_with_steps_count))
-                '''
-
-                # There are steps for a state that means our IDA search is done...woohoo!!
+                # If there are steps for a state that means our IDA search is done...woohoo!!
                 for (step_sequence_index, state) in enumerate(states_to_check):
                     steps = steps_for_states[state]
 
@@ -1504,19 +1429,10 @@ class LookupTableIDA(LookupTable):
                 for pt in prune_tables:
                     states_to_find = []
 
-                    if use_scratchpad:
-                        with open(pt_states_scratchpad, 'r') as fh_pt_states_scratchpad:
-                            for line in fh_pt_states_scratchpad:
-                                list_of_pt_index_pt_state = json.loads(line.rstrip())
-
-                                for (pt_index, pt_state) in list_of_pt_index_pt_state:
-                                    if pt_index == pt.index:
-                                        states_to_find.append(pt_state)
-                    else:
-                        for list_of_pt_index_pt_state in pt_costs_by_step:
-                            for (pt_index, pt_state) in list_of_pt_index_pt_state:
-                                if pt_index == pt.index:
-                                    states_to_find.append(pt_state)
+                    for list_of_pt_index_pt_state in pt_costs_by_step:
+                        for (pt_index, pt_state) in list_of_pt_index_pt_state:
+                            if pt_index == pt.index:
+                                states_to_find.append(pt_state)
 
                     with open(pt.filename, 'r') as fh:
                         pt_costs[pt.index] = pt.file_binary_search_multiple_keys(fh, states_to_find)
@@ -1524,50 +1440,24 @@ class LookupTableIDA(LookupTable):
 
                 step_sequences_within_cost = []
 
-                # There is one line in fh_pt_states_scratchpad per step_sequence_index so step through these together
-                if use_scratchpad:
-                    with open(pt_states_scratchpad, 'r') as fh_pt_states_scratchpad:
+                for (step_sequence_index, state) in enumerate(states_to_check):
+                    step_sequence = step_sequences[step_sequence_index]
 
-                        for (step_sequence_index, state) in enumerate(states_to_check):
-                            step_sequence = step_sequences[step_sequence_index]
+                    # extract cost_to_goal from the pt_costs dictionary
+                    cost_to_goal = 0
+                    cost_to_here = len(step_sequence.split())
 
-                            # extract cost_to_goal from the pt_costs dictionary
-                            cost_to_goal = 0
-                            cost_to_here = len(step_sequence.split())
+                    for (pt_index, pt_state) in pt_costs_by_step[step_sequence_index]:
+                        pt_steps = pt_costs[pt_index][pt_state]
+                        len_pt_steps = len(pt_steps)
 
-                            line = next(fh_pt_states_scratchpad)
-                            list_of_pt_index_pt_state = json.loads(line.rstrip())
+                        if len_pt_steps > cost_to_goal:
+                            cost_to_goal = len_pt_steps
 
-                            for (pt_index, pt_state) in list_of_pt_index_pt_state:
-                                pt_steps = pt_costs[pt_index][pt_state]
-                                len_pt_steps = len(pt_steps)
-
-                                if len_pt_steps > cost_to_goal:
-                                    cost_to_goal = len_pt_steps
-
-                            if (cost_to_here + cost_to_goal) > threshold:
-                                self.ida_prune_count += 1
-                            else:
-                                step_sequences_within_cost.append(step_sequence)
-                else:
-                    for (step_sequence_index, state) in enumerate(states_to_check):
-                        step_sequence = step_sequences[step_sequence_index]
-
-                        # extract cost_to_goal from the pt_costs dictionary
-                        cost_to_goal = 0
-                        cost_to_here = len(step_sequence.split())
-
-                        for (pt_index, pt_state) in pt_costs_by_step[step_sequence_index]:
-                            pt_steps = pt_costs[pt_index][pt_state]
-                            len_pt_steps = len(pt_steps)
-
-                            if len_pt_steps > cost_to_goal:
-                                cost_to_goal = len_pt_steps
-
-                        if (cost_to_here + cost_to_goal) > threshold:
-                            self.ida_prune_count += 1
-                        else:
-                            step_sequences_within_cost.append(step_sequence)
+                    if (cost_to_here + cost_to_goal) > threshold:
+                        self.ida_prune_count += 1
+                    else:
+                        step_sequences_within_cost.append(step_sequence)
 
                 prev_step_sequences = step_sequences_within_cost[:]
                 states_to_check = []
@@ -1600,3 +1490,6 @@ class LookupTableIDA(LookupTable):
 
         self.ida_stage(max_ida_stage)
         LookupTable.solve(self)
+        self.cache = {}
+        self.guts_cache = {}
+        gc.collect()

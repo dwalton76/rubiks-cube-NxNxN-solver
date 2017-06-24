@@ -87,7 +87,7 @@ for (size, solved_state) in (
 
             function_name = "rotate_%d%d%d_%s" % (size, size, size, step_pretty)
             print("")
-            print("def %s(cube, cube_tmp):" % function_name)
+            print("def %s(cube):" % function_name)
             rotate_mapper[step] = function_name
 
             cube.rotate(step)
@@ -102,6 +102,6 @@ for (size, solved_state) in (
         print("}")
 
         print("")
-        print("def rotate_%d%d%d(cube, cube_tmp, step):" % (size, size, size))
-        print("    rotate_mapper_%d%d%d[step](cube, cube_tmp)" % (size, size, size))
+        print("def rotate_%d%d%d(cube, step):" % (size, size, size))
+        print("    return rotate_mapper_%d%d%d[step](cube)" % (size, size, size))
         print("")

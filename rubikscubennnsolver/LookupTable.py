@@ -183,10 +183,6 @@ class LookupTable(object):
         return self.desc
 
     def state(self):
-        #if not self.filename_exists:
-        #    print("File %s does not exist" % self.filename)
-        #    sys.exit(1)
-
         state_type = self.state_type
         state_function = state_functions.get(state_type)
 
@@ -1164,6 +1160,10 @@ class LookupTable(object):
 
     def solve(self):
 
+        if not self.filename_exists:
+            print("File %s does not exist" % self.filename)
+            sys.exit(1)
+
         while True:
             state = self.state()
 
@@ -1586,5 +1586,10 @@ class LookupTableIDA(LookupTable):
         raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))
 
     def solve(self, max_ida_stage):
+
+        if not self.filename_exists:
+            print("File %s does not exist" % self.filename)
+            sys.exit(1)
+
         self.ida_stage(max_ida_stage)
         LookupTable.solve(self)

@@ -1,5 +1,6 @@
 
 import datetime as dt
+from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.rotate_xxx import rotate_222, rotate_444, rotate_555, rotate_666, rotate_777
@@ -189,12 +190,44 @@ class LookupTable(object):
 
             # Populate guts_cache with the first line of the file
             self.guts_cache[0] = first_line.rstrip()
+            self.guts_cache_first_line = first_line.rstrip()
 
             # Populate guts_cache with the last line of the file
             fh.seek((self.linecount-1) * self.width)
             line = fh.readline()
-            (state, steps) = line.split(':')
             self.guts_cache[self.linecount] = line.rstrip()
+            self.guts_cache_last_line = line.rstrip()
+
+            # We only load the guts_cache for this one table because it is about 800G and lives
+            # on an old school hard drive that is very very slow
+            if self.filename == 'lookup-table-7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges.txt':
+                json_filename = self.filename + '.guts_cache.json'
+
+                if os.path.exists(json_filename):
+                    #log.info("init guts_cache %s" % pformat(self.guts_cache))
+                    with open(json_filename, 'r') as fh_json:
+                        tmp_guts_cache = json.load(fh_json)
+
+                    for (key, value) in tmp_guts_cache.items():
+                        self.guts_cache[int(key)] = str(value)
+                    #log.info("post json guts_cache %s" % pformat(self.guts_cache))
+                else:
+                    log.info("%s: load guts_cache start" % self)
+                    gap = (1024 * 64) - 1
+                    for line_number in range(gap, self.linecount, gap):
+                        log.info("%s: seek to line %d/%d" % (self, line_number, self.linecount))
+                        fh.seek(line_number * self.width)
+                        line = fh.readline()
+                        self.guts_cache[line_number] = line.rstrip()
+                    log.info("%s: load guts_cache end" % self)
+
+                    with open(json_filename, 'w') as fh_json:
+                        json.dump(self.guts_cache, fh_json, indent=4)
+
+            self.guts_cache_sorted_keys = sorted(self.guts_cache.keys())
+
+            self.guts_cache_original = copy(self.guts_cache)
+            self.guts_cache_sorted_keys_original = self.guts_cache_sorted_keys[:]
 
         #log.info("%s: %d entries in guts_cache" % (self, len(self.guts_cache.keys())))
         self.cache = {}
@@ -985,14 +1018,14 @@ class LookupTable(object):
         width = self.width
         state_width = self.state_width
         state = None
-        #left_right_delta = right - left
-        # log.warning("file_binary_search_guts %d <-> %d, delta %d, look for %s" % (left, right, left_right_delta, state_to_find))
+        left_right_delta = right - left
+        #log.info("file_binary_search_guts %d <-> %d, delta %d, look for %s" % (left, right, left_right_delta, state_to_find))
 
-        #self.guts_call_count += 1
-        #self.guts_left_right_range += left_right_delta
+        self.guts_call_count += 1
+        self.guts_left_right_range += left_right_delta
+        guts_cache_changed = False
 
         while left <= right:
-            #left_right_delta = right - left
             mid = int(left + ((right - left) /2))
 
             try:
@@ -1003,6 +1036,7 @@ class LookupTable(object):
                 self.fh_seek_lines_read += 1
                 line = fh.readline().rstrip()
                 self.guts_cache[mid] = line
+                guts_cache_changed = True
             state = line[0:state_width]
 
             # uncomment this to sanity check that all lookup tables have been padded so that all lines are the same length
@@ -1013,12 +1047,16 @@ class LookupTable(object):
                 left = mid + 1
 
             elif state_to_find == state:
+                if guts_cache_changed:
+                    self.guts_cache_sorted_keys = sorted(self.guts_cache.keys())
                 (state, steps) = line.split(':')
                 return (mid, steps.strip().split())
 
             else:
                 right = mid - 1
 
+        if guts_cache_changed:
+            self.guts_cache_sorted_keys = sorted(self.guts_cache.keys())
         return (mid, None)
 
     def file_binary_search(self, fh, state_to_find):
@@ -1028,13 +1066,11 @@ class LookupTable(object):
     def find_min_left_max_right(self, state_to_find):
         min_left = None
         max_right = None
-
-        line_numbers = sorted(self.guts_cache.keys())
         prev_state = None
         prev_line_number = 0
         guts_cache = self.guts_cache
 
-        for line_number in line_numbers:
+        for line_number in self.guts_cache_sorted_keys:
             (state, steps) = guts_cache[line_number].split(':')
 
             if prev_state and state_to_find >= prev_state and state_to_find <= state:
@@ -1045,13 +1081,21 @@ class LookupTable(object):
             prev_state = state
             prev_line_number = line_number
 
-        for line_number in line_numbers:
+        guts_cache_changed = False
+
+        for line_number in self.guts_cache_sorted_keys:
             if line_number < min_left:
                 del self.guts_cache[line_number]
-            elif line_number >= min_left:
+                guts_cache_changed = True
+            else:
                 break
 
-        #log.info("find_min_left_max_right: min_left(%d) %s, max_right(%d) %s, state_to_find %s" % (min_left_i, min_left, max_right_i, max_right, state_to_find))
+        if guts_cache_changed:
+            self.guts_cache_sorted_keys = sorted(self.guts_cache.keys())
+
+        #log.info("find_min_left_max_right: guts_cache size %d, min_left %s, max_right %s, state_to_find %s" % (len(self.guts_cache.keys()), min_left, max_right, state_to_find))
+        #log.info("find_min_left_max_right: guts_cache size %d -> %d, %s <-> %s delta %s, state_to_find %s" % (init_guts_cache_size, len(self.guts_cache.keys()), min_left, max_right, max_right - min_left, state_to_find))
+        #log.info("")
         return (min_left, max_right)
 
     def file_binary_search_multiple_keys(self, fh, states_to_find, exit_on_first_match, debug=False):
@@ -1084,29 +1128,40 @@ class LookupTable(object):
             return results
 
         states_to_find_count = len(states_to_find)
-        # log.info("%s find %d states, %d are not cached" % (self, original_states_to_find_count, states_to_find_count))
+        log.info("%s find %d states, %d are not cached" % (self, original_states_to_find_count, states_to_find_count))
+
+        self.guts_cache = copy(self.guts_cache_original)
+        self.guts_cache_sorted_keys = copy(self.guts_cache_sorted_keys_original)
 
         start_time = dt.datetime.now()
         for state_to_find in states_to_find:
-            (min_left, max_right) = self.find_min_left_max_right(state_to_find)
 
-            (line_number, value) = self.file_binary_search_guts(fh, state_to_find, min_left, max_right)
-            results[state_to_find] = value
-            self.cache[state_to_find] = value
+            # If state_to_find is less than our first entry or greater than our last entry
+            # then there is no point doing a search
+            if state_to_find < self.guts_cache_first_line or state_to_find > self.guts_cache_last_line:
+                results[state_to_find] = None
+                self.cache[state_to_find] = None
 
-            if exit_on_first_match and value:
-                break
+            else:
+                (min_left, max_right) = self.find_min_left_max_right(state_to_find)
+
+                (line_number, value) = self.file_binary_search_guts(fh, state_to_find, min_left, max_right)
+                results[state_to_find] = value
+                self.cache[state_to_find] = value
+
+                if exit_on_first_match and value:
+                    break
 
         end_time = dt.datetime.now()
-        #log.info("%s: found %d states (another %d were cached) in %s, %d guts calls, %d avg left->right range, guts_cache has %d entries" %
-        #    (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time),
-        #     self.guts_call_count, int(self.guts_left_right_range/self.guts_call_count), len(self.guts_cache.keys())))
-        log.info("%s: found %d states (another %d were cached, cache has %d entries) in %s" %
-            (self, states_to_find_count, original_states_to_find_count - states_to_find_count, len(self.cache.keys()), pretty_time(end_time - start_time)))
+        log.info("%s: found %d states (another %d were cached) in %s, %d guts calls, %d avg left->right range, guts_cache has %d entries" %
+            (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time),
+             self.guts_call_count, int(self.guts_left_right_range/self.guts_call_count), len(self.guts_cache.keys())))
+        #log.info("%s: found %d states (another %d were cached, cache has %d entries) in %s" %
+        #    (self, states_to_find_count, original_states_to_find_count - states_to_find_count, len(self.cache.keys()), pretty_time(end_time - start_time)))
 
         return results
 
-    def steps(self, state_to_find=None):
+    def steps(self, state_to_find=None, exit_on_first_match=False):
         """
         Return the steps found in the lookup table for the current cube state
         """
@@ -1117,7 +1172,7 @@ class LookupTable(object):
             # Return a dictionary where the key is the state and the value is the
             # list of steps. This is the case when LookupTableIDA() calls steps()
             with open(self.filename, 'r') as fh:
-                return self.file_binary_search_multiple_keys(fh, state_to_find, True)
+                return self.file_binary_search_multiple_keys(fh, state_to_find, exit_on_first_match)
 
         else:
             # Return a list of steps that correspond to this state. This is the
@@ -1240,6 +1295,10 @@ class LookupTableIDA(LookupTable):
         return result
 
     def ida_stage(self, max_ida_depth):
+        """
+        The goal is to find a sequence of moves that will put the cube in a state that is
+        in our lookup table self.filename
+        """
         start_time0 = dt.datetime.now()
         state = self.state()
         log.debug("state %s vs state_target %s" % (state, self.state_target))
@@ -1285,8 +1344,6 @@ class LookupTableIDA(LookupTable):
         for (index, pt) in enumerate(prune_tables):
             pt.index = index
 
-        steps_sequences_explored = set()
-
         for threshold in xrange(1, max_ida_depth+1):
 
             # Build a list of moves we can do 1 move deep
@@ -1299,7 +1356,7 @@ class LookupTableIDA(LookupTable):
                 start_time1 = dt.datetime.now()
                 step_sequences = self.ida_steps_list(prev_step_sequences, threshold, max_step_count)
 
-                if True or step_sequences:
+                if step_sequences:
                     log.info("")
                     log.info("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
                         (self, threshold, len(step_sequences), max_step_count))
@@ -1309,33 +1366,33 @@ class LookupTableIDA(LookupTable):
                 start_time2 = dt.datetime.now()
                 states_to_check = []
                 rotate_count = 0
-                ida_cache_count = 0
                 step_sequences_for_states_to_check = []
+                step_sequences_that_create_unique_states = []
+                states_found = set()
 
                 for step_sequence in step_sequences:
-                    if step_sequence in steps_sequences_explored:
-                        ida_cache_count += 1
-                    else:
-                        self.parent.state = original_state[:]
-                        self.parent.solution = original_solution[:]
-                        self.ida_count += 1
-                        rotate_count += 1
+                    self.parent.state = original_state[:]
+                    self.parent.solution = original_solution[:]
+                    self.ida_count += 1
+                    rotate_count += 1
 
-                        for step in step_sequence.split():
-                            self.parent.state = rotate_xxx(self.parent.state, step)
+                    for step in step_sequence.split():
+                        self.parent.state = rotate_xxx(self.parent.state, step)
 
-                        # get the current state of the cube
-                        state = self.state()
-                        states_to_check.append(state)
-                        step_sequences_for_states_to_check.append(step_sequence)
+                    # get the current state of the cube
+                    state = self.state()
+                    states_to_check.append(state)
+                    step_sequences_for_states_to_check.append(step_sequence)
 
-                        steps_sequences_explored.add(step_sequence)
+                    if state not in states_found:
+                        states_found.add(state)
+                        step_sequences_that_create_unique_states.append(step_sequence)
 
                 end_time2 = dt.datetime.now()
 
-                if True or rotate_count or ida_cache_count:
-                    log.info("%s: IDA threshold %d (max step %d), %d in ida cache, rotated %d sequences in %s" %
-                        (self, threshold, max_step_count, ida_cache_count, rotate_count, pretty_time(end_time2 - start_time2)))
+                if rotate_count:
+                    log.info("%s: IDA threshold %d (max step %d), rotated %d sequences in %s" %
+                        (self, threshold, max_step_count, rotate_count, pretty_time(end_time2 - start_time2)))
 
                 start_time3 = dt.datetime.now()
                 self.parent.state = original_state[:]
@@ -1349,7 +1406,7 @@ class LookupTableIDA(LookupTable):
                 # complete. Note that self.steps() exits as soon as it finds the first entry so
                 # there will not be an entry in steps_for_states for each states_to_check....thus the
                 # steps_for_states.get(state) below instead of steps_for_states[state]
-                steps_for_states = self.steps(states_to_check[:])
+                steps_for_states = self.steps(states_to_check[:], exit_on_first_match=True)
 
                 # =================================================
                 # If there are steps for a state that means our IDA
@@ -1389,7 +1446,7 @@ class LookupTableIDA(LookupTable):
                 # If we are here it means none of the step_sequences put the cube in a state that is in self.filename
                 pt_costs_by_step_sequence = {}
 
-                for step_sequence in step_sequences:
+                for step_sequence in step_sequences_that_create_unique_states:
                     self.parent.state = original_state[:]
                     self.parent.solution = original_solution[:]
 
@@ -1400,7 +1457,6 @@ class LookupTableIDA(LookupTable):
                     tmp_list = []
                     for pt in prune_tables:
                         tmp_list.append((pt.index, pt.state()))
-                    #pt_costs_by_step_sequence.append(tmp_list)
                     pt_costs_by_step_sequence[step_sequence] = tmp_list
 
                 # Time to prune some branches, do a multi-key binary search for each prune table
@@ -1414,12 +1470,12 @@ class LookupTableIDA(LookupTable):
                                 states_to_find.append(pt_state)
 
                     with open(pt.filename, 'r') as fh:
-                        pt_costs[pt.index] = pt.file_binary_search_multiple_keys(fh, states_to_find, False)
+                        pt_costs[pt.index] = pt.file_binary_search_multiple_keys(fh, states_to_find, exit_on_first_match=False)
                     states_to_find = []
 
                 step_sequences_within_cost = []
 
-                for step_sequence in step_sequences:
+                for step_sequence in step_sequences_that_create_unique_states:
 
                     # extract cost_to_goal from the pt_costs dictionary
                     cost_to_goal = 0

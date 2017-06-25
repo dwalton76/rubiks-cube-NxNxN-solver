@@ -406,14 +406,14 @@ class RubiksCube777(RubiksCube):
                                                         # dwalton try with fewer prune table
                                                          # prune tables
                                                          (self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_inner_t_center_only,
-                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_left_oblique_edge_only,
+                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_left_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only,
-                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_right_oblique_edge_only,
+                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_right_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_left_oblique_edge_only,
-                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_middle_oblique_edge_only,
+                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_middle_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_right_oblique_edge_only,
-                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_left_middle_oblique_edge_only,
-                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_middle_right_oblique_edge_only,
+                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_left_middle_oblique_edge_only,
+                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_middle_right_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_left_right_oblique_edge_only))
 
         self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge = LookupTableIDA(self,

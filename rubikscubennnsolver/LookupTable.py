@@ -82,6 +82,30 @@ def convert_state_to_hex(state, hex_width):
 
 
 def get_555_UD_centers_stage_state(parent_state):
+    # I tried this once in hopes that it would be faster, it wasn't
+    '''
+    bar = []
+    bar.extend(parent_state[7:10])
+    bar.extend(parent_state[12:15])
+    bar.extend(parent_state[17:20])
+    bar.extend(parent_state[32:35])
+    bar.extend(parent_state[37:40])
+    bar.extend(parent_state[42:45])
+    bar.extend(parent_state[57:60])
+    bar.extend(parent_state[62:65])
+    bar.extend(parent_state[67:70])
+    bar.extend(parent_state[82:85])
+    bar.extend(parent_state[87:90])
+    bar.extend(parent_state[92:95])
+    bar.extend(parent_state[107:110])
+    bar.extend(parent_state[112:115])
+    bar.extend(parent_state[117:120])
+    bar.extend(parent_state[132:135])
+    bar.extend(parent_state[137:140])
+    bar.extend(parent_state[142:145])
+    state = ''.join(bar)
+    '''
+
     state = ''.join([parent_state[7], parent_state[8], parent_state[9],
                      parent_state[12], parent_state[13], parent_state[14],
                      parent_state[17], parent_state[18], parent_state[19],
@@ -1030,7 +1054,7 @@ class LookupTable(object):
         #log.info("find_min_left_max_right: min_left(%d) %s, max_right(%d) %s, state_to_find %s" % (min_left_i, min_left, max_right_i, max_right, state_to_find))
         return (min_left, max_right)
 
-    def file_binary_search_multiple_keys_low_low_python(self, fh, states_to_find, debug=False):
+    def file_binary_search_multiple_keys(self, fh, states_to_find, exit_on_first_match, debug=False):
         results = {}
         min_left = None
         max_right = None
@@ -1054,97 +1078,33 @@ class LookupTable(object):
             else:
                 results[state] = steps
 
-        states_to_find = sorted(non_cached_states_to_find)
+        states_to_find = non_cached_states_to_find
 
         if not states_to_find:
             return results
 
         states_to_find_count = len(states_to_find)
         # log.info("%s find %d states, %d are not cached" % (self, original_states_to_find_count, states_to_find_count))
-        index = 0
 
         start_time = dt.datetime.now()
-        while index < states_to_find_count:
-            state_to_find = states_to_find[index]
-
+        for state_to_find in states_to_find:
             (min_left, max_right) = self.find_min_left_max_right(state_to_find)
 
             (line_number, value) = self.file_binary_search_guts(fh, state_to_find, min_left, max_right)
             results[state_to_find] = value
             self.cache[state_to_find] = value
-            index += 1
+
+            if exit_on_first_match and value:
+                break
 
         end_time = dt.datetime.now()
         #log.info("%s: found %d states (another %d were cached) in %s, %d guts calls, %d avg left->right range, guts_cache has %d entries" %
         #    (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time),
         #     self.guts_call_count, int(self.guts_left_right_range/self.guts_call_count), len(self.guts_cache.keys())))
-        log.info("%s: found %d states (another %d were cached) in %s" %
-            (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time)))
+        log.info("%s: found %d states (another %d were cached, cache has %d entries) in %s" %
+            (self, states_to_find_count, original_states_to_find_count - states_to_find_count, len(self.cache.keys()), pretty_time(end_time - start_time)))
 
         return results
-
-    def file_binary_search_multiple_keys_low_high_C(self, fh, states_to_find, debug=False):
-        results = {}
-        min_left = None
-        max_right = None
-
-        if not states_to_find:
-            return results
-
-        # Look in our cache to see which states we've already found
-        original_states_to_find_count = len(states_to_find)
-        non_cached_states_to_find = []
-
-        for state in states_to_find:
-            steps = self.cache.get(state, -1)
-
-            if steps == -1:
-                non_cached_states_to_find.append(state)
-            else:
-                results[state] = steps
-
-        states_to_find = sorted(non_cached_states_to_find)
-        states_to_find_count = len(states_to_find)
-        log.info("%s find %d states, %d are not cached" % (self, original_states_to_find_count, states_to_find_count))
-        tmp_filename = 'states-to-find-%s'  % self.filename
-
-        # - write states_to_find to a file
-        # - call C program to process it
-        # - read output into results dictionary
-        with open(tmp_filename, 'w') as fh2:
-            for state in states_to_find:
-                fh2.write(state + '\n')
-
-        cmd = ['./binary-search',
-               '--input', tmp_filename,
-               '--output',  'foo.txt',
-               '--db', self.filename,
-               '--line-width', str(self.width),
-               '--state-width', str(self.state_width),
-               '--line-count', str(self.linecount)]
-
-        if not self.prune_table:
-            cmd.append('--exit-on-first-match')
-
-        # log.info(' '.join(cmd))
-        subprocess.call(cmd)
-
-        with open('foo.txt', 'r') as fh2:
-            for line in fh2:
-                (state, steps) = line.strip().split(':')
-
-                if steps == 'None':
-                    results[state] = None
-                else:
-                    results[state] = steps.split()
-                self.cache[state] = results[state]
-
-        log.info("%s: done" % self)
-        return results
-
-    def file_binary_search_multiple_keys(self, fh, states_to_find, debug=False):
-        #return self.file_binary_search_multiple_keys_low_high_C(fh, states_to_find, debug)
-        return self.file_binary_search_multiple_keys_low_low_python(fh, states_to_find, debug)
 
     def steps(self, state_to_find=None):
         """
@@ -1154,12 +1114,14 @@ class LookupTable(object):
             state_to_find = self.state()
 
         if isinstance(state_to_find, list):
-            # Return a dictionary where the key is the state and the value is the list of steps
+            # Return a dictionary where the key is the state and the value is the
+            # list of steps. This is the case when LookupTableIDA() calls steps()
             with open(self.filename, 'r') as fh:
-                return self.file_binary_search_multiple_keys(fh, state_to_find)
+                return self.file_binary_search_multiple_keys(fh, state_to_find, True)
 
         else:
-            # Return a list of steps that correspond to this state
+            # Return a list of steps that correspond to this state. This is the
+            # case when LookupTable calls steps()
             with open(self.filename, 'r') as fh:
                 return self.file_binary_search(fh, state_to_find)
 
@@ -1181,9 +1143,6 @@ class LookupTable(object):
             steps = self.steps(state)
 
             if not steps:
-                #if self.filename == 'lookup-table-4x4x4-step101-edges.txt':
-                #    log.warning("state: %s" % state)
-                #    self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
 
             for step in steps:
@@ -1287,6 +1246,7 @@ class LookupTableIDA(LookupTable):
 
         # The cube is already in the desired state, nothing to do
         if state == self.state_target:
+            log.info("%s: IDA count %d, cube is already at the target state" % (self, self.ida_count))
             return
 
         # The cube is already in a state that is in our lookup table, nothing for IDA to do
@@ -1320,13 +1280,12 @@ class LookupTableIDA(LookupTable):
 
         prune_tables = self.prune_tables
 
-        # Because saving a little number to pt_costs_by_step below takes much less memory than
+        # Because saving a little number to pt_costs_by_step_sequence below takes much less memory than
         # saving the pt.filename
         for (index, pt) in enumerate(prune_tables):
             pt.index = index
 
-        # dwalton
-        ida_cache = {}
+        steps_sequences_explored = set()
 
         for threshold in xrange(1, max_ida_depth+1):
 
@@ -1341,25 +1300,20 @@ class LookupTableIDA(LookupTable):
                 step_sequences = self.ida_steps_list(prev_step_sequences, threshold, max_step_count)
 
                 if step_sequences:
-                    log.debug("")
-                    log.debug("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
+                    log.info("")
+                    log.info("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
                         (self, threshold, len(step_sequences), max_step_count))
 
-                states_to_check = []
-                pt_costs_by_step = []
-
-                # Now rotate all of these moves and get the resulting cube for each
-                # Do one gigantic binary search
+                # Now rotate all of these moves and get the resulting cube for each.
+                # This allows us to do one gigantic binary search.
                 start_time2 = dt.datetime.now()
+                states_to_check = []
                 rotate_count = 0
                 ida_cache_count = 0
+                step_sequences_for_states_to_check = []
 
-                for (step_sequence_index, step_sequence) in enumerate(step_sequences):
-                    if step_sequence in ida_cache:
-                        (self.parent.state, self.parent.solution, state, pt_costs_by_step_tmp_list) = ida_cache[step_sequence]
-                        states_to_check.append(state)
-                        pt_costs_by_step.append(pt_costs_by_step_tmp_list)
-                        #log.warning("step_sequence %s was in ida_cache" % pformat(step_sequence))
+                for step_sequence in step_sequences:
+                    if step_sequence in steps_sequences_explored:
                         ida_cache_count += 1
                     else:
                         self.parent.state = original_state[:]
@@ -1367,23 +1321,15 @@ class LookupTableIDA(LookupTable):
                         self.ida_count += 1
                         rotate_count += 1
 
-                        steps_in_step_sequence = step_sequence.split()
-                        self.parent.solution.extend(steps_in_step_sequence)
-
-                        for step in steps_in_step_sequence:
+                        for step in step_sequence.split():
                             self.parent.state = rotate_xxx(self.parent.state, step)
 
                         # get the current state of the cube
                         state = self.state()
                         states_to_check.append(state)
+                        step_sequences_for_states_to_check.append(step_sequence)
 
-                        # Save a list of the pt indexes/states for this step_sequence
-                        tmp_list = []
-                        for pt in prune_tables:
-                            tmp_list.append((pt.index, pt.state()))
-                        pt_costs_by_step.append(tmp_list)
-
-                        ida_cache[step_sequence] = (self.parent.state[:], self.parent.solution[:], state, tmp_list)
+                        steps_sequences_explored.add(step_sequence)
 
                 end_time2 = dt.datetime.now()
 
@@ -1395,15 +1341,26 @@ class LookupTableIDA(LookupTable):
                 self.parent.state = original_state[:]
                 self.parent.solution = original_solution[:]
 
-                # This will do a multi-key binary search of all states_to_check
-                steps_for_states = self.steps(states_to_check)
+                # self.steps() will do a multi-key binary search of all states_to_check. states_to_check
+                # isn't sorted (do NOT sort it), there is one entry for every step_sequences entry.
+                #
+                # self.steps() will return a dictionary of the 'steps' for each 'state' as
+                # per self.filename.  If we find any state in self.filename then our IDA search is
+                # complete. Note that self.steps() exits as soon as it finds the first entry so
+                # there will not be an entry in steps_for_states for each states_to_check....thus the
+                # steps_for_states.get(state) below instead of steps_for_states[state]
+                steps_for_states = self.steps(states_to_check[:])
 
-                # If there are steps for a state that means our IDA search is done...woohoo!!
-                for (step_sequence_index, state) in enumerate(states_to_check):
-                    steps = steps_for_states[state]
+                # =================================================
+                # If there are steps for a state that means our IDA
+                # search is done...woohoo!!
+                # =================================================
+                for (states_to_check_index, state) in enumerate(states_to_check):
+                    steps = steps_for_states.get(state)
 
                     if steps:
-                        step_sequence = step_sequences[step_sequence_index]
+                        log.info("state: %s, steps %s" % (state, steps))
+                        step_sequence = step_sequences_for_states_to_check[states_to_check_index]
 
                         for step in step_sequence.split():
                             self.parent.rotate(step)
@@ -1418,36 +1375,57 @@ class LookupTableIDA(LookupTable):
                              pretty_time(end_time3 - start_time1),
                              pretty_time(end_time2 - start_time2), rotate_count,
                              pretty_time(end_time3 - start_time3)))
-                        log.warning("%s: IDA threshold %d (max step %d), found match in %s, steps %s" %\
+                        log.warning("%s: IDA threshold %d (max step %d), found match in %s, steps %s, state %d/%d in states_to_check" %\
                             (self, threshold, max_step_count,
                              pretty_time(end_time0 - start_time0),
-                             step_sequence))
+                             step_sequence, states_to_check_index, len(states_to_check)))
                         return
+
+
+                # ==============
+                # Keep Searching
+                # ==============
+
+                # If we are here it means none of the step_sequences put the cube in a state that is in self.filename
+                pt_costs_by_step_sequence = {}
+
+                for step_sequence in step_sequences:
+                    self.parent.state = original_state[:]
+                    self.parent.solution = original_solution[:]
+
+                    for step in step_sequence.split():
+                        self.parent.state = rotate_xxx(self.parent.state, step)
+
+                    # Save a list of the pt indexes/states for this step_sequence
+                    tmp_list = []
+                    for pt in prune_tables:
+                        tmp_list.append((pt.index, pt.state()))
+                    #pt_costs_by_step_sequence.append(tmp_list)
+                    pt_costs_by_step_sequence[step_sequence] = tmp_list
 
                 # Time to prune some branches, do a multi-key binary search for each prune table
                 pt_costs = {}
                 for pt in prune_tables:
                     states_to_find = []
 
-                    for list_of_pt_index_pt_state in pt_costs_by_step:
+                    for list_of_pt_index_pt_state in pt_costs_by_step_sequence.values():
                         for (pt_index, pt_state) in list_of_pt_index_pt_state:
                             if pt_index == pt.index:
                                 states_to_find.append(pt_state)
 
                     with open(pt.filename, 'r') as fh:
-                        pt_costs[pt.index] = pt.file_binary_search_multiple_keys(fh, states_to_find)
+                        pt_costs[pt.index] = pt.file_binary_search_multiple_keys(fh, states_to_find, False)
                     states_to_find = []
 
                 step_sequences_within_cost = []
 
-                for (step_sequence_index, state) in enumerate(states_to_check):
-                    step_sequence = step_sequences[step_sequence_index]
+                for step_sequence in step_sequences:
 
                     # extract cost_to_goal from the pt_costs dictionary
                     cost_to_goal = 0
                     cost_to_here = len(step_sequence.split())
 
-                    for (pt_index, pt_state) in pt_costs_by_step[step_sequence_index]:
+                    for (pt_index, pt_state) in pt_costs_by_step_sequence[step_sequence]:
                         pt_steps = pt_costs[pt_index][pt_state]
                         len_pt_steps = len(pt_steps)
 
@@ -1461,7 +1439,7 @@ class LookupTableIDA(LookupTable):
 
                 prev_step_sequences = step_sequences_within_cost[:]
                 states_to_check = []
-                pt_costs_by_step = []
+                pt_costs_by_step_sequence = {}
                 self.ida_count = 0
                 self.ida_prune_count = 0
                 gc.collect()
@@ -1480,6 +1458,9 @@ class LookupTableIDA(LookupTable):
         # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
         # - call ida_solve() again but with a near infinite max_ida_depth...99 is close enough to infinity for IDA purposes
         log.warning("%s: could not find a solution via IDA within %d steps...will 'solve' a prune table and try again" % (self, max_ida_depth))
+
+        self.parent.state = original_state[:]
+        self.parent.solution = original_solution[:]
         raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))
 
     def solve(self, max_ida_stage):

@@ -32,7 +32,7 @@ class RubiksCube555(RubiksCube):
 
     def __init__(self, kociemba_string, debug=False):
         RubiksCube.__init__(self, kociemba_string)
-        # dwalton setting this to False needs some more work
+        # TODO setting this to False needs some more work
         # RLBFBDBLUDBRUBUFFRBRBBLDUFBRLURBDLBDFRLDBUURDRBFDFLRUFLUBULUBLFFFURDFUFFFLURRUFFDURDUBLDURFURRBLLLDLBRRUDDDBDRFBLFDLLBFLURLFDRUUBDLRDDBRFBULLLDFUDRDFB has a
         # scenario where pair_one_wing_555 breaks up the U-south edge and pairs 0 wings
         self.use_pair_outside_edges = True

@@ -1299,7 +1299,7 @@ class LookupTableIDA(LookupTable):
                 start_time1 = dt.datetime.now()
                 step_sequences = self.ida_steps_list(prev_step_sequences, threshold, max_step_count)
 
-                if step_sequences:
+                if True or step_sequences:
                     log.info("")
                     log.info("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
                         (self, threshold, len(step_sequences), max_step_count))
@@ -1333,7 +1333,7 @@ class LookupTableIDA(LookupTable):
 
                 end_time2 = dt.datetime.now()
 
-                if rotate_count or ida_cache_count:
+                if True or rotate_count or ida_cache_count:
                     log.info("%s: IDA threshold %d (max step %d), %d in ida cache, rotated %d sequences in %s" %
                         (self, threshold, max_step_count, ida_cache_count, rotate_count, pretty_time(end_time2 - start_time2)))
 
@@ -1359,7 +1359,6 @@ class LookupTableIDA(LookupTable):
                     steps = steps_for_states.get(state)
 
                     if steps:
-                        log.info("state: %s, steps %s" % (state, steps))
                         step_sequence = step_sequences_for_states_to_check[states_to_check_index]
 
                         for step in step_sequence.split():
@@ -1385,6 +1384,7 @@ class LookupTableIDA(LookupTable):
                 # ==============
                 # Keep Searching
                 # ==============
+                log.info("%s: IDA threshold %d (max step %d) did not find a match...prune some branches" % (self, threshold, max_step_count))
 
                 # If we are here it means none of the step_sequences put the cube in a state that is in self.filename
                 pt_costs_by_step_sequence = {}

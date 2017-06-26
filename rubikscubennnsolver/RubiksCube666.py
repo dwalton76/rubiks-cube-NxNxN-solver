@@ -325,7 +325,8 @@ class RubiksCube666(RubiksCube):
 
                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
                                                           "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
+                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
+                                                          "L", "L'", "L2", "R", "R'", "R2"), # do not mess up LR sides that we staged via self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
 
                                                          # prune tables
                                                          (self.lt_LR_solve_inner_x_centers_and_oblique_edges,
@@ -406,13 +407,30 @@ class RubiksCube666(RubiksCube):
         self.lt_init()
         self.lt_UD_inner_x_centers_stage.solve()
 
+        # This one can take a while so we do some tricks to speed it up
+        # - first try to find a solution without solving either prune table beforehand
+        # - if that doesn't work, solve the left_only prune table and try again
+        # - if that doesn't work, solve the right_only prune table and let it run
+        #
+        # We do this because for some cubes if you solve the left_only prune table it
+        # really speeds up IDA while for other cubes it doesn't but solving the right_only
+        # prune table will speed things up.
         try:
-            self.lt_UD_oblique_edge_pairing.solve(7)
+            self.lt_UD_oblique_edge_pairing.solve(6)
         except NoIDASolution:
+            original_state = self.state[:]
+            original_solution = self.solution[:]
             self.lt_UD_oblique_edge_pairing_left_only.solve() # speed up IDA
-            self.lt_UD_oblique_edge_pairing.solve(99)
-        self.lt_LR_inner_x_centers_stage.solve()
 
+            try:
+                self.lt_UD_oblique_edge_pairing.solve(6)
+            except NoIDASolution:
+                self.state = original_state
+                self.solution = original_solution
+                self.lt_UD_oblique_edge_pairing_right_only.solve() # speed up IDA
+                self.lt_UD_oblique_edge_pairing.solve(99)
+
+        self.lt_LR_inner_x_centers_stage.solve()
         self.lt_LR_oblique_edge_pairing.solve(99)
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
@@ -428,11 +446,8 @@ class RubiksCube666(RubiksCube):
         # - solve the FB inner x-centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
 
-        try:
-            self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(11)
-        except NoIDASolution:
-            self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
-            self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(99)
+        self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
+        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(99)
         log.info("inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
@@ -445,7 +460,6 @@ class RubiksCube666(RubiksCube):
         fake_555 = RubiksCube555(solved_5x5x5)
         fake_555.lt_init()
         self.populate_fake_555_for_ULFRBD(fake_555)
-        #fake_555.print_cube()
         fake_555.group_centers_guts()
 
         for step in fake_555.solution:

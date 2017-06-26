@@ -1,4 +1,22 @@
 
+
+6x6x6 in the repo
+- step20 is a little slow
+- step60 is a little slow
+
+
+7x7x7 in the repo
+- lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt is 2.4G
+    - this currently has all steps
+    - it is built 9-deep...could we get by with 8-deep?
+
+- step70 needs some work
+    lookup-table-7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges.txt.10-deep is 62G...build a 9-deep copy of this
+    step71, 72, and 73 prune tables all have 24 million entries and are 3.7G...we could split each of these
+    up into two 4900 entry tables...those would be very small
+
+
+
 DONE - do NoIDASolution stuff for 777
 
 DONE - go ahead and do the rest of the 777 solver even though centers are not done yet

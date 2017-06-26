@@ -203,34 +203,8 @@ class LookupTable(object):
             self.guts_cache[self.linecount] = line.rstrip()
             self.guts_cache_last_line = line.rstrip()
 
-            # We only load the guts_cache for this one table because it is about 800G and lives
-            # on an old school hard drive that is very very slow
-            if self.filename == 'lookup-table-7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges.txt':
-                json_filename = self.filename + '.guts_cache.json'
-
-                if os.path.exists(json_filename):
-                    #log.info("init guts_cache %s" % pformat(self.guts_cache))
-                    with open(json_filename, 'r') as fh_json:
-                        tmp_guts_cache = json.load(fh_json)
-
-                    for (key, value) in tmp_guts_cache.items():
-                        self.guts_cache[int(key)] = str(value)
-                    #log.info("post json guts_cache %s" % pformat(self.guts_cache))
-                else:
-                    log.info("%s: load guts_cache start" % self)
-                    gap = (1024 * 64) - 1
-                    for line_number in range(gap, self.linecount, gap):
-                        log.info("%s: seek to line %d/%d" % (self, line_number, self.linecount))
-                        fh.seek(line_number * self.width)
-                        line = fh.readline()
-                        self.guts_cache[line_number] = line.rstrip()
-                    log.info("%s: load guts_cache end" % self)
-
-                    with open(json_filename, 'w') as fh_json:
-                        json.dump(self.guts_cache, fh_json, indent=4)
-
+            # dwalton clean up a bunch of this
             self.guts_cache_sorted_keys = sorted(self.guts_cache.keys())
-
             self.guts_cache_original = copy(self.guts_cache)
             self.guts_cache_sorted_keys_original = self.guts_cache_sorted_keys[:]
 

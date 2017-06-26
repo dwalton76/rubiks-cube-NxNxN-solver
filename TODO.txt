@@ -1,8 +1,12 @@
 
 
 6x6x6 in the repo
-- step20 is a little slow
+- step20 is a little slow...this is one of those 540 billion IDA tables where the prune tables are only 735k each
+    The one checked in is 6-deep and 29M zipped but the 7-deep one is 579M zipped.  Could add part of the 7-deep table
+    to get it up to 100M?
+
 - step60 is a little slow
+    This is 9-deep with 25 million entries and is 25M zipped.  Build this to 7-deep and check in part of it.
 
 
 7x7x7 in the repo

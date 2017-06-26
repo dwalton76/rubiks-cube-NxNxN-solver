@@ -703,6 +703,11 @@ class RubiksCube666(RubiksCube):
         Create a fake 444 to pair the inside edges
         Create a fake 555 to pair the outside edges
         """
+
+        if not self.get_non_paired_edges():
+            self.solution.append('EDGES_GROUPED')
+            return
+
         self.lt_init()
         self.pair_inside_edges_via_444()
         self.pair_outside_edges_via_555()

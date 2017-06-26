@@ -374,7 +374,7 @@ class RubiksCube777(RubiksCube):
                         False, # state_hex
                         True)  # prune table
 
-        # I am in the middle of building this out to 10 deep
+        # I am in the middle of building this out to 11 deep
         '''
         lookup-table-7x7x7-step60-LFRB-solve-inner-center-and-oblique-edges.txt
         =======================================================================
@@ -403,7 +403,6 @@ class RubiksCube777(RubiksCube):
                                                           "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
                                                           "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
 
-                                                        # dwalton try with fewer prune table
                                                          # prune tables
                                                          (self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_inner_t_center_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_left_oblique_edge_only,
@@ -415,6 +414,9 @@ class RubiksCube777(RubiksCube):
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_left_middle_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_middle_right_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_left_right_oblique_edge_only))
+
+        '''
+        TODO delete this
 
         self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge = LookupTableIDA(self,
                                                          'lookup-table-7x7x7-step80-LFRB-inner-x-center-t-center-and-middle-oblique-edges.txt',
@@ -432,8 +434,32 @@ class RubiksCube777(RubiksCube):
                                                          (self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_inner_t_center_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_middle_oblique_edge_only))
+        '''
 
-    def create_fake_555_centers(self):
+        self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge = LookupTable(self,
+                        'lookup-table-7x7x7-step161-LR-inner-x-center-t-center-and-middle-oblique-edges.txt',
+                        '777-LFRB-inner-x-center-t-center-and-middle-oblique-edges-LR-solve',
+                        'xxLxxxLLLxLLLLLxLLLxxxLxxxxxxxxxxxxxxxxxxxxxxxxxxxxxRxxxRRRxRRRRRxRRRxxxRxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+                        False, # state_hex
+                        True)  # prune table
+
+        # dwalton
+        self.lt_LR_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
+                                                         'lookup-table-7x7x7-step160-LR-solve-inner-center-and-oblique-edges.txt',
+                                                         '777-LFRB-centers-oblique-edges-LR-solve',
+                                                         'xLLLxLLLLLLLLLLLLLLLxLLLxxxxxxxxxxxxxxxxxxxxxxxxxxxRRRxRRRRRRRRRRRRRRRxRRRxxxxxxxxxxxxxxxxxxxxxxxxxx',
+
+                                                         False, # state_hex
+                                                         moves_7x7x7,
+
+                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
+                                                          "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
+                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
+
+                                                         # prune tables
+                                                         (self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge,))
+
+    def create_fake_555_from_inside_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
         fake_555 = RubiksCube555(solved_5x5x5)
@@ -510,8 +536,85 @@ class RubiksCube777(RubiksCube):
 
         return fake_555
 
+    def create_fake_555_from_outside_centers(self):
+
+        # Create a fake 5x5x5 to solve 7x7x7 centers (they have been reduced to a 5x5x5)
+        fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555.lt_init()
+
+        for x in xrange(1, 151):
+            fake_555.state[x] = 'x'
+
+        # Upper
+        fake_555.state[7] = self.state[9]
+        fake_555.state[8] = self.state[11]
+        fake_555.state[9] = self.state[13]
+        fake_555.state[12] = self.state[23]
+        fake_555.state[13] = self.state[25]
+        fake_555.state[14] = self.state[27]
+        fake_555.state[17] = self.state[37]
+        fake_555.state[18] = self.state[39]
+        fake_555.state[19] = self.state[41]
+
+        # Left
+        fake_555.state[32] = self.state[58]
+        fake_555.state[33] = self.state[60]
+        fake_555.state[34] = self.state[62]
+        fake_555.state[37] = self.state[72]
+        fake_555.state[38] = self.state[74]
+        fake_555.state[39] = self.state[76]
+        fake_555.state[42] = self.state[86]
+        fake_555.state[43] = self.state[88]
+        fake_555.state[44] = self.state[90]
+
+        # Front
+        fake_555.state[57] = self.state[107]
+        fake_555.state[58] = self.state[109]
+        fake_555.state[59] = self.state[111]
+        fake_555.state[62] = self.state[121]
+        fake_555.state[63] = self.state[123]
+        fake_555.state[64] = self.state[125]
+        fake_555.state[67] = self.state[135]
+        fake_555.state[68] = self.state[137]
+        fake_555.state[69] = self.state[139]
+
+        # Right
+        fake_555.state[82] = self.state[156]
+        fake_555.state[83] = self.state[158]
+        fake_555.state[84] = self.state[160]
+        fake_555.state[87] = self.state[170]
+        fake_555.state[88] = self.state[172]
+        fake_555.state[89] = self.state[174]
+        fake_555.state[92] = self.state[184]
+        fake_555.state[93] = self.state[186]
+        fake_555.state[94] = self.state[188]
+
+        # Back
+        fake_555.state[107] = self.state[205]
+        fake_555.state[108] = self.state[207]
+        fake_555.state[109] = self.state[209]
+        fake_555.state[112] = self.state[219]
+        fake_555.state[113] = self.state[221]
+        fake_555.state[114] = self.state[223]
+        fake_555.state[117] = self.state[233]
+        fake_555.state[118] = self.state[235]
+        fake_555.state[119] = self.state[237]
+
+        # Down
+        fake_555.state[132] = self.state[254]
+        fake_555.state[133] = self.state[256]
+        fake_555.state[134] = self.state[258]
+        fake_555.state[137] = self.state[268]
+        fake_555.state[138] = self.state[270]
+        fake_555.state[139] = self.state[272]
+        fake_555.state[142] = self.state[282]
+        fake_555.state[143] = self.state[284]
+        fake_555.state[144] = self.state[286]
+
+        return fake_555
+
     def group_inside_UD_centers(self):
-        fake_555 = self.create_fake_555_centers()
+        fake_555 = self.create_fake_555_from_inside_centers()
 
         try:
             fake_555.lt_UD_centers_stage.solve(7)
@@ -531,7 +634,7 @@ class RubiksCube777(RubiksCube):
             self.rotate(step)
 
     def group_inside_LR_centers(self):
-        fake_555 = self.create_fake_555_centers()
+        fake_555 = self.create_fake_555_from_inside_centers()
         fake_555.lt_LR_centers_stage.solve(99)
 
         for step in fake_555.solution:
@@ -539,11 +642,33 @@ class RubiksCube777(RubiksCube):
             if step.startswith('5'):
                 step = '7' + step[1:]
             elif step.startswith('3'):
-                step = '4' + step[1:]
+                raise Exception("5x5x5 solution has 3 wide turn")
             elif 'w' in step:
                 step = '3' + step
 
             self.rotate(step)
+
+    def solve_reduced_555_centers(self):
+        fake_555 = self.create_fake_555_from_outside_centers()
+        #self.print_cube()
+        #fake_555.print_cube()
+        fake_555.group_centers()
+
+        for step in fake_555.solution:
+
+            if step == 'CENTERS_SOLVED':
+                continue
+
+            if step.startswith('5'):
+                step = '7' + step[1:]
+
+            elif step.startswith('3'):
+                raise Exception("5x5x5 solution has 3 wide turn")
+
+            self.rotate(step)
+
+        #self.print_cube()
+        #fake_555.print_cube()
 
     def create_fake_666_centers(self):
 
@@ -696,7 +821,10 @@ class RubiksCube777(RubiksCube):
     def group_centers_guts(self):
         self.lt_init()
 
+        # Uses 5x5x5 solver so stage the inner x-centers and inner t-centers for UD
         self.group_inside_UD_centers()
+
+        # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
         self.group_outside_UD_oblique_edges()
         log.info("Inside UD centers and outside UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
@@ -705,6 +833,7 @@ class RubiksCube777(RubiksCube):
         log.info("")
         log.info("")
 
+        # Now pair the "inside" oblique edge with the already paired outside oblique edges...for UD
         #self.lt_UD_oblique_edge_pairing_middle_only.solve # speed up IDA
         self.lt_UD_oblique_edge_pairing.solve(99)
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
@@ -714,6 +843,7 @@ class RubiksCube777(RubiksCube):
         log.info("")
         log.info("")
 
+        # Uses 5x5x5 solver so stage the inner x-centers and inner t-centers for LR
         self.group_inside_LR_centers()
         log.info('post group_inside_LR_centers')
         self.print_cube()
@@ -722,6 +852,7 @@ class RubiksCube777(RubiksCube):
         log.info("")
         log.info("")
 
+        # Uses 6x6x6 solver to pair the "outside" oblique edges for LR
         self.group_outside_LR_oblique_edges()
         log.info('post group_outside_LR_oblique_edges')
         self.print_cube()
@@ -730,6 +861,7 @@ class RubiksCube777(RubiksCube):
         log.info("")
         log.info("")
 
+        # Now pair the "inside" oblique edge with the already paired outside oblique edges...for LR
         #self.lt_LR_oblique_edge_pairing_middle_only.solve() # speed up IDA
         self.lt_LR_oblique_edge_pairing.solve(99)
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
@@ -739,64 +871,33 @@ class RubiksCube777(RubiksCube):
         log.info("")
         log.info("")
 
-        # Solve the UD centers and pair the UD oblique edges
+        # Reduce UD centers to 5x5x5 by solving the inner x-centers, t-centers and obblique edges
         self.lt_UD_solve_inner_centers_and_oblique_edges.solve(99)
         log.info("UD inner-centers solved, UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        #log.info(self.get_kociemba_string(True))
         log.info("")
         log.info("")
         log.info("")
         log.info("")
 
-        # Solve the LFRB centers and pair the LR oblique edges
-
-        # solve a prune table to speed up IDA here?
-        # First solve inner x-centers, inner t-centers and outer t-centers (the middle of oblique edge)
-        self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only.solve()
-        log.info("LRFB inner x-center, middle oblique (solved prune table for IDA speed up), %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        # Reduce LR centers to 5x5x5 by solving the inner x-centers, t-centers and obblique edges
+        self.lt_LR_solve_inner_centers_and_oblique_edges.solve(99)
+        log.info("LR inner-centers solved, UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
-        log.info("")
 
-        self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve(99)
-        log.info("LRFB inner x-center, t-center and middle oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        self.print_cube()
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-
-        # dwalton
+        # Reduce LRFB centers to 5x5x5 by solving the inner x-centers, t-centers and obblique edges
         self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve(99)
-        log.info("LRFB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
         log.info("")
         log.info("")
         log.info("")
-        sys.exit(0)
 
-        '''
         # Centers are now reduced to 5x5x5 centers
-
-        self.lt_LR_solve_inner_centers_and_oblique_edges.solve()
-        #self.lt_FB_solve_inner_centers_and_oblique_edges.solve()
-        self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()
-        log.info("LRFB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        # self.print_cube()
-
-        # At this point the 7x7x7 centers have been reduced to 5x5x5 centers
-        fake_555 = RubiksCube555(solved_5x5x5)
-        fake_555.lt_init()
-        self.populate_fake_555_for_ULFRBD(fake_555)
-        #fake_555.print_cube()
-        fake_555.group_centers_guts()
-
-        for step in fake_555.solution:
-            self.rotate(step)
-
+        self.solve_reduced_555_centers()
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
-        # self.print_cube()
-        '''
+
 
     def pair_inside_edges(self):
         fake_555 = RubiksCube555(solved_5x5x5)
@@ -1008,8 +1109,14 @@ class RubiksCube777(RubiksCube):
         log.info("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_edges(self):
+
+        if not self.get_non_paired_edges():
+            self.solution.append('EDGES_GROUPED')
+            return
+
         self.pair_inside_edges()
         self.pair_outside_edges()
+        self.solution.append('EDGES_GROUPED')
 
     def phase(self):
         if self._phase is None:

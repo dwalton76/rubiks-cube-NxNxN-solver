@@ -3032,6 +3032,7 @@ class RubiksCube(object):
         log.debug("kociemba steps : %s" % ', '.join(steps))
 
         for step in steps:
+            step = str(step)
             self.rotate(step)
 
         if not self.solved():

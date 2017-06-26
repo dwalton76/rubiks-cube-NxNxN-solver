@@ -1649,6 +1649,7 @@ class RubiksCube555(RubiksCube):
         return max_wings_paired_edge
 
     def group_edges(self):
+
         if not self.get_non_paired_edges():
             self.solution.append('EDGES_GROUPED')
             return

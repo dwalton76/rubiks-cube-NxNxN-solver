@@ -41,6 +41,11 @@ def steps_cancel_out(prev_step, step):
     if step == prev_step and step.endswith("2"):
         return True
 
+    # dwalton experimental
+    # U followed by U is a no-op because a U2 does the same but is one step instead of two so return true
+    #if step == prev_step:
+    #    return True
+
     # U' followed by U is a no-op
     if prev_step.endswith("'") and not step.endswith("'") and step == prev_step[0:-1]:
         return True
@@ -995,6 +1000,52 @@ class LookupTable(object):
             elif self.state_type == '777-LFRB-centers-oblique-edges-solve-left-middle-oblique-edge-only':
                 state = ''.join(['x', parent_state[59], parent_state[60], 'xxxxxx', parent_state[69], parent_state[72], 'xxx', parent_state[76], parent_state[79], 'xxxxxx', parent_state[88], parent_state[89], 'xx', parent_state[108], parent_state[109], 'xxxxxx', parent_state[118], parent_state[121], 'xxx', parent_state[125], parent_state[128], 'xxxxxx', parent_state[137], parent_state[138], 'xx', parent_state[157], parent_state[158], 'xxxxxx', parent_state[167], parent_state[170], 'xxx', parent_state[174], parent_state[177], 'xxxxxx', parent_state[186], parent_state[187], 'xx', parent_state[206], parent_state[207], 'xxxxxx', parent_state[216], parent_state[219], 'xxx', parent_state[223], parent_state[226], 'xxxxxx', parent_state[235], parent_state[236], 'x'])
 
+            elif self.state_type == '777-LFRB-inner-x-center-t-center-and-middle-oblique-edges-LR-solve':
+                state = ''.join(['xx', parent_state[60], 'xx',
+                                 'x', parent_state[66], parent_state[67], parent_state[68], 'x',
+                                 parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
+                                 'x', parent_state[80], parent_state[81], parent_state[82], 'x',
+                                 'xx', parent_state[88], 'xx',
+                                 'xx', parent_state[109], 'xx',
+                                 'x', parent_state[115], parent_state[116], parent_state[117], 'x',
+                                 parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125],
+                                 'x', parent_state[129], parent_state[130], parent_state[131], 'x',
+                                 'xx', parent_state[137], 'xx',
+                                 'xx', parent_state[158], 'xx',
+                                 'x', parent_state[164], parent_state[165], parent_state[166], 'x',
+                                 parent_state[170], parent_state[171], parent_state[172], parent_state[173], parent_state[174],
+                                 'x', parent_state[178], parent_state[179], parent_state[180], 'x',
+                                 'xx', parent_state[186], 'xx',
+                                 'xx', parent_state[207], 'xx',
+                                 'x', parent_state[213], parent_state[214], parent_state[215], 'x',
+                                 parent_state[219], parent_state[220], parent_state[221], parent_state[222], parent_state[223],
+                                 'x', parent_state[227], parent_state[228], parent_state[229], 'x',
+                                 'xx', parent_state[235], 'xx'])
+                state = state.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
+
+            elif self.state_type == '777-LFRB-centers-oblique-edges-LR-solve':
+                state = ''.join(['x', parent_state[59], parent_state[60], parent_state[61], 'x',
+                                 parent_state[65], parent_state[66], parent_state[67], parent_state[68], parent_state[69],
+                                 parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
+                                 parent_state[79], parent_state[80], parent_state[81], parent_state[82], parent_state[83],
+                                 'x', parent_state[87], parent_state[88], parent_state[89], 'x',
+                                 'x', parent_state[108], parent_state[109], parent_state[110], 'x',
+                                 parent_state[114], parent_state[115], parent_state[116], parent_state[117], parent_state[118],
+                                 parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125],
+                                 parent_state[128], parent_state[129], parent_state[130], parent_state[131], parent_state[132],
+                                 'x', parent_state[136], parent_state[137], parent_state[138], 'x',
+                                 'x', parent_state[157], parent_state[158], parent_state[159], 'x',
+                                 parent_state[163], parent_state[164], parent_state[165], parent_state[166], parent_state[167],
+                                 parent_state[170], parent_state[171], parent_state[172], parent_state[173], parent_state[174],
+                                 parent_state[177], parent_state[178], parent_state[179], parent_state[180], parent_state[181],
+                                 'x', parent_state[185], parent_state[186], parent_state[187], 'x',
+                                 'x', parent_state[206], parent_state[207], parent_state[208], 'x',
+                                 parent_state[212], parent_state[213], parent_state[214], parent_state[215], parent_state[216],
+                                 parent_state[219], parent_state[220], parent_state[221], parent_state[222], parent_state[223],
+                                 parent_state[226], parent_state[227], parent_state[228], parent_state[229], parent_state[230],
+                                 'x', parent_state[234], parent_state[235], parent_state[236], 'x'])
+                state = state.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
+
             else:
                 raise ImplementThis("state_type %s" % self.state_type)
 
@@ -1136,11 +1187,16 @@ class LookupTable(object):
         start_time = dt.datetime.now()
         for state_to_find in states_to_find:
 
+            if state_to_find == self.state_target:
+                results[state_to_find] = ''
+                self.cache[state_to_find] = ''
+
+            # dwalton this causes issues...need to look into this
             # If state_to_find is less than our first entry or greater than our last entry
             # then there is no point doing a search
-            if state_to_find < self.guts_cache_first_line or state_to_find > self.guts_cache_last_line:
-                results[state_to_find] = None
-                self.cache[state_to_find] = None
+            #elif state_to_find < self.guts_cache_first_line or state_to_find > self.guts_cache_last_line:
+            #    results[state_to_find] = None
+            #    self.cache[state_to_find] = None
 
             else:
                 (min_left, max_right) = self.find_min_left_max_right(state_to_find)
@@ -1153,9 +1209,15 @@ class LookupTable(object):
                     break
 
         end_time = dt.datetime.now()
+
+        if self.guts_call_count:
+            avg_left_right_range = int(self.guts_left_right_range/self.guts_call_count)
+        else:
+            avg_left_right_range = 0
+
         log.info("%s: found %d states (another %d were cached) in %s, %d guts calls, %d avg left->right range, guts_cache has %d entries" %
             (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time),
-             self.guts_call_count, int(self.guts_left_right_range/self.guts_call_count), len(self.guts_cache.keys())))
+             self.guts_call_count, avg_left_right_range, len(self.guts_cache.keys())))
         #log.info("%s: found %d states (another %d were cached, cache has %d entries) in %s" %
         #    (self, states_to_find_count, original_states_to_find_count - states_to_find_count, len(self.cache.keys()), pretty_time(end_time - start_time)))
 
@@ -1191,6 +1253,7 @@ class LookupTable(object):
 
         while True:
             state = self.state()
+            log.info("solve() state %s vs state_target %s" % (state, self.state_target))
 
             if state == self.state_target:
                 break
@@ -1301,7 +1364,7 @@ class LookupTableIDA(LookupTable):
         """
         start_time0 = dt.datetime.now()
         state = self.state()
-        log.debug("state %s vs state_target %s" % (state, self.state_target))
+        log.info("ida_stage() state %s vs state_target %s" % (state, self.state_target))
 
         # The cube is already in the desired state, nothing to do
         if state == self.state_target:
@@ -1444,6 +1507,7 @@ class LookupTableIDA(LookupTable):
                 log.info("%s: IDA threshold %d (max step %d) did not find a match...prune some branches" % (self, threshold, max_step_count))
 
                 # If we are here it means none of the step_sequences put the cube in a state that is in self.filename
+                # Time to prune some branches
                 pt_costs_by_step_sequence = {}
 
                 for step_sequence in step_sequences_that_create_unique_states:
@@ -1459,7 +1523,7 @@ class LookupTableIDA(LookupTable):
                         tmp_list.append((pt.index, pt.state()))
                     pt_costs_by_step_sequence[step_sequence] = tmp_list
 
-                # Time to prune some branches, do a multi-key binary search for each prune table
+                # Do a multi-key binary search for each prune table
                 pt_costs = {}
                 for pt in prune_tables:
                     states_to_find = []

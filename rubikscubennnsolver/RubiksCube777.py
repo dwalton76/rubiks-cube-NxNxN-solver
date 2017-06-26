@@ -401,17 +401,18 @@ class RubiksCube777(RubiksCube):
 
                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
                                                           "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
+                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
+                                                          "L", "L'", "L2", "R", "R'", "R2"), # Do not mess up LRs reduced to 5x5x5 centers
 
                                                          # prune tables
                                                          (self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_inner_t_center_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_left_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_right_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_left_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_middle_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_right_oblique_edge_only,
-                                                          self.lt_LFRB_solve_inner_centers_and_oblique_edges_left_middle_oblique_edge_only,
+                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_left_oblique_edge_only,
+                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_middle_oblique_edge_only,
+                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_x_center_right_oblique_edge_only,
+                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_left_oblique_edge_only,
+                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_middle_oblique_edge_only,
+                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_inner_t_center_right_oblique_edge_only,
+                                                          #self.lt_LFRB_solve_inner_centers_and_oblique_edges_left_middle_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_middle_right_oblique_edge_only,
                                                           self.lt_LFRB_solve_inner_centers_and_oblique_edges_left_right_oblique_edge_only))
 
@@ -1004,7 +1005,6 @@ class RubiksCube777(RubiksCube):
                 step = '3' + step
 
             self.rotate(step)
-            log.warning("original step %s, step %s" % (original_step, step))
 
         log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 

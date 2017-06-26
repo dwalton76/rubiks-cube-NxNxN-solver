@@ -1179,7 +1179,7 @@ class LookupTable(object):
             return results
 
         states_to_find_count = len(states_to_find)
-        log.info("%s find %d states, %d are not cached" % (self, original_states_to_find_count, states_to_find_count))
+        #log.info("%s: find %d states, %d are not cached" % (self, original_states_to_find_count, states_to_find_count))
 
         self.guts_cache = copy(self.guts_cache_original)
         self.guts_cache_sorted_keys = copy(self.guts_cache_sorted_keys_original)
@@ -1418,10 +1418,10 @@ class LookupTableIDA(LookupTable):
             for max_step_count in xrange(1, threshold+1):
                 start_time1 = dt.datetime.now()
                 step_sequences = self.ida_steps_list(prev_step_sequences, threshold, max_step_count)
+                log.info("")
 
                 if step_sequences:
-                    log.info("")
-                    log.info("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
+                    log.debug("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
                         (self, threshold, len(step_sequences), max_step_count))
 
                 # Now rotate all of these moves and get the resulting cube for each.
@@ -1454,7 +1454,7 @@ class LookupTableIDA(LookupTable):
                 end_time2 = dt.datetime.now()
 
                 if rotate_count:
-                    log.info("%s: IDA threshold %d (max step %d), rotated %d sequences in %s" %
+                    log.debug("%s: IDA threshold %d (max step %d), rotated %d sequences in %s" %
                         (self, threshold, max_step_count, rotate_count, pretty_time(end_time2 - start_time2)))
 
                 start_time3 = dt.datetime.now()
@@ -1489,7 +1489,7 @@ class LookupTableIDA(LookupTable):
 
                         end_time0 = dt.datetime.now()
                         end_time3 = end_time0
-                        log.info("%s: IDA threshold %d (max step %d), took %s (%s to rotate %d, %s to search tables)" %\
+                        log.info("%s: IDA threshold %d (max step %d), took %s (%s to rotate %d, %s to search primary table)" %\
                             (self, threshold, max_step_count,
                              pretty_time(end_time3 - start_time1),
                              pretty_time(end_time2 - start_time2), rotate_count,
@@ -1504,11 +1504,18 @@ class LookupTableIDA(LookupTable):
                 # ==============
                 # Keep Searching
                 # ==============
-                log.info("%s: IDA threshold %d (max step %d) did not find a match...prune some branches" % (self, threshold, max_step_count))
+                end_time0 = dt.datetime.now()
+                end_time3 = end_time0
+                log.info("%s: IDA threshold %d (max step %d) did not find a match, took %s (%s to rotate %d, %s to search primary table)" %
+                    (self, threshold, max_step_count,
+                     pretty_time(end_time3 - start_time1),
+                     pretty_time(end_time2 - start_time2), rotate_count,
+                     pretty_time(end_time3 - start_time3)))
 
                 # If we are here it means none of the step_sequences put the cube in a state that is in self.filename
                 # Time to prune some branches
                 pt_costs_by_step_sequence = {}
+                start_time4 = dt.datetime.now()
 
                 for step_sequence in step_sequences_that_create_unique_states:
                     self.parent.state = original_state[:]
@@ -1564,15 +1571,15 @@ class LookupTableIDA(LookupTable):
                 self.ida_prune_count = 0
                 gc.collect()
 
-                if rotate_count:
-                    end_time3 = dt.datetime.now()
+                end_time4 = dt.datetime.now()
 
-                    if step_sequences_within_cost:
-                        log.info("%s: IDA threshold %d (max step %d), keep %3d, took %s (%s to rotate %d, %s to search tables)" %\
-                            (self, threshold, max_step_count, len(step_sequences_within_cost),
-                             pretty_time(end_time3 - start_time1),
-                             pretty_time(end_time2 - start_time2), rotate_count,
-                             pretty_time(end_time3 - start_time3)))
+                if step_sequences_within_cost:
+                    log.info("%s: IDA threshold %d (max step %d) explore %d branches from here (took %s to search prune tables)" %\
+                        (self, threshold, max_step_count, len(step_sequences_within_cost),
+                         pretty_time(end_time4 - start_time4)))
+                else:
+                    log.info("%s: IDA threshold %d (max step %d) this branch is a dead end (took %s to search prune tables)" %\
+                        (self, threshold, max_step_count, pretty_time(end_time4 - start_time4)))
 
         # The only time we will get here is when max_ida_depth is a low number.  It will be up to the caller to:
         # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily

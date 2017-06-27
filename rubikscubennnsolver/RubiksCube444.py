@@ -204,6 +204,17 @@ class RubiksCube444(RubiksCube):
         # them into the github repo.
         self.lt_UD_centers_stage.solve()
         self.lt_LR_centers_stage.solve()
+
+        # Made some pics to try to explain lookup tables on facebook
+        #
+        #self.print_cube()
+        #for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+        #    for square in side.edge_pos:
+        #        self.state[square] = 'x'
+        #    for square in side.corner_pos:
+        #        self.state[square] = 'x'
+        #self.print_cube()
+
         self.lt_ULFRBD_centers_solve.solve()
 
     def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):

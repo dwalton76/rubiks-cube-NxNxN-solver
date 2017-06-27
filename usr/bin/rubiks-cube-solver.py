@@ -171,4 +171,5 @@ except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
     cube.print_cube_layout()
     cube.print_cube()
     cube.print_solution()
+    print(cube.get_kociemba_string(True))
     raise

@@ -87,7 +87,7 @@ log.info("C low high end - took %s" % (end_time - start_time))
 start_time = dt.datetime.now()
 log.info("python low low start")
 with open(lt.filename, 'r') as fh:
-    results = lt.file_binary_search_multiple_keys_low_low_python(fh, states_to_find)
+    results = lt.file_binary_search_multiple_keys(fh, states_to_find, False)
 end_time = dt.datetime.now()
 log.info("python low low end - took %s" % (end_time - start_time))
 log.info("file_binary_search_guts called %d time with an average range of %s, %d fh.seek() calls, %d lines read" %

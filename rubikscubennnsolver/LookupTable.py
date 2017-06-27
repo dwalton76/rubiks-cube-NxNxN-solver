@@ -182,8 +182,10 @@ class LookupTable(object):
         self.state_hex = state_hex
         self.prune_table = prune_table
         self.guts_cache = {}
+        self.guts_cache_sorted_keys = []
         assert self.state_target is not None, "state_target is None"
 
+        # Find the width, state_width and filesize
         with open(self.filename) as fh:
             first_line = next(fh)
             self.width = len(first_line)
@@ -193,22 +195,6 @@ class LookupTable(object):
             filesize = os.path.getsize(self.filename)
             self.linecount = filesize/self.width
 
-            # Populate guts_cache with the first line of the file
-            self.guts_cache[0] = first_line.rstrip()
-            self.guts_cache_first_line = first_line.rstrip()
-
-            # Populate guts_cache with the last line of the file
-            fh.seek((self.linecount-1) * self.width)
-            line = fh.readline()
-            self.guts_cache[self.linecount] = line.rstrip()
-            self.guts_cache_last_line = line.rstrip()
-
-            # dwalton clean up a bunch of this
-            self.guts_cache_sorted_keys = sorted(self.guts_cache.keys())
-            self.guts_cache_original = copy(self.guts_cache)
-            self.guts_cache_sorted_keys_original = self.guts_cache_sorted_keys[:]
-
-        #log.info("%s: %d entries in guts_cache" % (self, len(self.guts_cache.keys())))
         self.cache = {}
         self.guts_call_count = 0
         self.guts_left_right_range = 0
@@ -1136,7 +1122,6 @@ class LookupTable(object):
         # Look in our cache to see which states we've already found
         states_to_find = sorted(list(set(states_to_find)))
         original_states_to_find_count = len(states_to_find)
-
         non_cached_states_to_find = []
 
         for state in states_to_find:
@@ -1148,29 +1133,18 @@ class LookupTable(object):
                 results[state] = steps
 
         states_to_find = non_cached_states_to_find
+        states_to_find_count = len(states_to_find)
 
         if not states_to_find:
             return results
 
-        states_to_find_count = len(states_to_find)
-        #log.info("%s: find %d states, %d are not cached" % (self, original_states_to_find_count, states_to_find_count))
-
-        self.guts_cache = copy(self.guts_cache_original)
-        self.guts_cache_sorted_keys = copy(self.guts_cache_sorted_keys_original)
-
         start_time = dt.datetime.now()
+
         for state_to_find in states_to_find:
 
             if state_to_find == self.state_target:
                 results[state_to_find] = ''
                 self.cache[state_to_find] = ''
-
-            # dwalton this causes issues...need to look into this
-            # If state_to_find is less than our first entry or greater than our last entry
-            # then there is no point doing a search
-            #elif state_to_find < self.guts_cache_first_line or state_to_find > self.guts_cache_last_line:
-            #    results[state_to_find] = None
-            #    self.cache[state_to_find] = None
 
             else:
                 (min_left, max_right) = self.find_min_left_max_right(state_to_find)
@@ -1222,8 +1196,7 @@ class LookupTable(object):
     def solve(self):
 
         if not self.filename_exists:
-            print("File %s does not exist" % self.filename)
-            sys.exit(1)
+            raise SolveError("%s does not exist" % self.filename)
 
         while True:
             state = self.state()
@@ -1423,7 +1396,7 @@ class LookupTableIDA(LookupTable):
 
                     if state not in states_found:
                         states_found.add(state)
-                        step_sequences_that_create_unique_states.append(step_sequence)
+                        step_sequences_that_create_unique_states.append((step_sequence, self.parent.state[:]))
 
                 end_time2 = dt.datetime.now()
 
@@ -1491,18 +1464,19 @@ class LookupTableIDA(LookupTable):
                 pt_costs_by_step_sequence = {}
                 start_time4 = dt.datetime.now()
 
-                for step_sequence in step_sequences_that_create_unique_states:
-                    self.parent.state = original_state[:]
-                    self.parent.solution = original_solution[:]
-
-                    for step in step_sequence.split():
-                        self.parent.state = rotate_xxx(self.parent.state, step)
+                # We cached the state of the cube after all of the rotate_xxx()
+                # calls, that is what parent_state is here
+                for (step_sequence, parent_state) in step_sequences_that_create_unique_states:
+                    self.parent.state = parent_state
 
                     # Save a list of the pt indexes/states for this step_sequence
                     tmp_list = []
                     for pt in prune_tables:
                         tmp_list.append((pt.index, pt.state()))
                     pt_costs_by_step_sequence[step_sequence] = tmp_list
+
+                log.info("%s: IDA threshold %d (max step %d) rotates for prune tables are complete" %
+                    (self, threshold, max_step_count))
 
                 # Do a multi-key binary search for each prune table
                 pt_costs = {}
@@ -1520,7 +1494,7 @@ class LookupTableIDA(LookupTable):
 
                 step_sequences_within_cost = []
 
-                for step_sequence in step_sequences_that_create_unique_states:
+                for (step_sequence, parent_state) in step_sequences_that_create_unique_states:
 
                     # extract cost_to_goal from the pt_costs dictionary
                     cost_to_goal = 0
@@ -1567,8 +1541,7 @@ class LookupTableIDA(LookupTable):
     def solve(self, max_ida_stage):
 
         if not self.filename_exists:
-            print("File %s does not exist" % self.filename)
-            sys.exit(1)
+            raise SolveError("%s does not exist" % self.filename)
 
         self.ida_stage(max_ida_stage)
         LookupTable.solve(self)

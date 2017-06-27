@@ -327,12 +327,25 @@ class RubiksCube555(RubiksCube):
         self.lt_init()
         self.rotate_U_to_U()
 
+        # TODO I am doing this sort of thing in multiple places (see 6x6x6 step20)...move this
+        # logic to LookupTableIDA
         # Stage UD centers
         try:
             self.lt_UD_centers_stage.solve(7)
         except NoIDASolution:
+            original_state = self.state[:]
+            original_solution = self.solution[:]
             self.lt_UD_T_centers_stage.solve() # speed up IDA
-            self.lt_UD_centers_stage.solve(99)
+
+            try:
+                self.lt_UD_centers_stage.solve(7)
+            except NoIDASolution:
+                self.state = original_state
+                self.solution = original_solution
+
+                self.lt_UD_X_centers_stage.solve() # speed up IDA
+                self.lt_UD_centers_stage.solve(99)
+
         log.info("Took %d steps to stage UD centers" % len(self.solution))
 
 

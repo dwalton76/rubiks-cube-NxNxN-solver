@@ -9,6 +9,10 @@ DONE - step20 is a little slow...this is one of those 540 billion IDA tables whe
     FIX: I changed the code so it solves the left_only prune table first to try to speed things up, if that doesn't work
     then solve the right_only prune table.  Typically one of them will speed up the IDA search a great deal.
 
+This one takes 11s...I'm not sure what else to change to speed it up other than build a deeper primary table
+What if we built a table to move the UD obliques from 3 sides to their final position?
+xxxxxxxDRRLxxLDDBxxLUUDxxFRDUxxxxxxxxxxxxxxBBLBxxURFUxxDRBDxxDFDLxxxxxxxxxxxxxxULLRxxUFLLxxBLFRxxBBRDxxxxxxxxxxxxxxLFBRxxBUUFxxFDDFxxURUFxxxxxxxxxxxxxxRFDLxxURFUxxUBBFxxRULDxxxxxxxxxxxxxxBBLFxxFLLRxxDRBBxxFDRUxxxxxxx
+
 DONE - step60 is a little slow
     This is 9-deep with 25 million entries and is 25M zipped.  Build this to 7-deep and check in part of it.
 

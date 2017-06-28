@@ -88,9 +88,8 @@ class RubiksCube666(RubiksCube):
         4 steps has 24,198 entries (0 percent, 16.87x previous step)
         5 steps has 405,916 entries (0 percent, 16.77x previous step)
         6 steps has 6,839,392 entries (5 percent, 16.85x previous step)
-        7 steps has 116,031,874 entries (94 percent, 16.97x previous step)
 
-        Total: 123,302,901 entries
+        Total: 7,271,027 entries
 
 
         lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt

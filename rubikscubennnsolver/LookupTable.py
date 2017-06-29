@@ -155,7 +155,7 @@ state_functions = {
 
 class LookupTable(object):
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, prune_table):
+    def __init__(self, parent, filename, state_type, state_target, state_hex, prune_table, max_depth=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.sides_LFRB = (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB)
@@ -166,6 +166,7 @@ class LookupTable(object):
         self.filename = filename
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
         self.filename_exists = False
+        self.max_depth = max_depth
 
         if not os.path.exists(filename):
             if os.path.exists(filename + '.gz'):
@@ -580,6 +581,56 @@ class LookupTable(object):
                         'x' + parent_state[203] +\
                         parent_state[207] + 'x'
                 state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+
+            elif self.state_type == '666-UD-oblique-edge-pairing-LFRB-only':
+                # unroll (use join)
+                # UD oblique-edge template for creating partial prune tables like 666-UD-oblique-edge-pairing-LFRB-only
+                '''
+                state = parent_state[9] + parent_state[10] +\ # Upper
+                        parent_state[14] + parent_state[17] +\
+                        parent_state[20] + parent_state[23] +\
+                        parent_state[27] + parent_state[28] +\
+                        parent_state[45] + parent_state[46] +\ # Left
+                        parent_state[50] + parent_state[53] +\
+                        parent_state[56] + parent_state[59] +\
+                        parent_state[63] + parent_state[64] +\
+                        parent_state[81] + parent_state[82] +\ # Front
+                        parent_state[86] + parent_state[89] +\
+                        parent_state[92] + parent_state[95] +\
+                        parent_state[99] + parent_state[100] +\
+                        parent_state[117] + parent_state[118] +\ # Right
+                        parent_state[122] + parent_state[125] +\
+                        parent_state[128] + parent_state[131] +\
+                        parent_state[135] + parent_state[136] +\
+                        parent_state[153] + parent_state[154] +\ # Back
+                        parent_state[158] + parent_state[161] +\
+                        parent_state[164] + parent_state[167] +\
+                        parent_state[171] + parent_state[172] +\
+                        parent_state[189] + parent_state[190] +\ # Down
+                        parent_state[194] + parent_state[197] +\
+                        parent_state[200] + parent_state[203] +\
+                        parent_state[207] + parent_state[208]
+                '''
+
+                state = parent_state[45] + parent_state[46] +\
+                        parent_state[50] + parent_state[53] +\
+                        parent_state[56] + parent_state[59] +\
+                        parent_state[63] + parent_state[64] +\
+                        parent_state[81] + parent_state[82] +\
+                        parent_state[86] + parent_state[89] +\
+                        parent_state[92] + parent_state[95] +\
+                        parent_state[99] + parent_state[100] +\
+                        parent_state[117] + parent_state[118] +\
+                        parent_state[122] + parent_state[125] +\
+                        parent_state[128] + parent_state[131] +\
+                        parent_state[135] + parent_state[136] +\
+                        parent_state[153] + parent_state[154] +\
+                        parent_state[158] + parent_state[161] +\
+                        parent_state[164] + parent_state[167] +\
+                        parent_state[171] + parent_state[172]\
+
+                state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+
 
             elif self.state_type == '666-LR-inner-X-centers-stage':
                 # unroll (use join)
@@ -1313,6 +1364,7 @@ class LookupTable(object):
             return results
 
         start_time = dt.datetime.now()
+        filename = self.filename
 
         for state_to_find in states_to_find:
 
@@ -1324,8 +1376,25 @@ class LookupTable(object):
                 (min_left, max_right) = self.find_min_left_max_right(state_to_find)
 
                 (line_number, value) = self.file_binary_search_guts(fh, state_to_find, min_left, max_right)
-                results[state_to_find] = value
-                self.cache[state_to_find] = value
+
+                if filename == 'lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt':
+                    # Most prune tables are very small so when I built them I just included all of the steps
+                    # for each state.  That was overkill though, all we really care about is the number of
+                    # steps.  Maybe I will go back and rebuild them all someday but for now the only one that
+                    # has the length of steps instead of the steps themselvs is
+                    # lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt.  For this table just
+                    # build some fake list of steps of the appropriate length.
+                    if value:
+                        new_value = []
+                        for x in range(int(value[0])):
+                            new_value.append("F")
+                        value = new_value
+
+                    results[state_to_find] = value
+                    self.cache[state_to_find] = value
+                else:
+                    results[state_to_find] = value
+                    self.cache[state_to_find] = value
 
                 if exit_on_first_match and value:
                     break
@@ -1511,11 +1580,13 @@ class LookupTableIDA(LookupTable):
             raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
 
         prune_tables = self.prune_tables
+        pt_index_to_pt = {}
 
         # Because saving a little number to pt_costs_by_step_sequence below takes much less memory than
         # saving the pt.filename
         for (index, pt) in enumerate(prune_tables):
             pt.index = index
+            pt_index_to_pt[pt.index] = pt
 
         for threshold in xrange(1, max_ida_depth+1):
 
@@ -1665,7 +1736,21 @@ class LookupTableIDA(LookupTable):
 
                     for (pt_index, pt_state) in pt_costs_by_step_sequence[step_sequence]:
                         pt_steps = pt_costs[pt_index][pt_state]
-                        len_pt_steps = len(pt_steps)
+
+                        if pt_steps:
+                            len_pt_steps = len(pt_steps)
+                        else:
+                            pt = pt_index_to_pt[pt_index]
+
+                            if pt_state == pt.state_target:
+                                len_pt_steps = 0
+                            elif pt.max_depth is None:
+                                raise SolveError("%s does not have max_depth and does not have steps for %s" % (pt, pt.state()))
+                            else:
+                                # This is the exception to the rule but some prune tables such
+                                # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
+                                # are partial tables so use the max_depth of the table +1
+                                len_pt_steps = pt.max_depth + 1
 
                         if len_pt_steps > cost_to_goal:
                             cost_to_goal = len_pt_steps

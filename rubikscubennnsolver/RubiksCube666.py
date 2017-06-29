@@ -72,26 +72,6 @@ class RubiksCube666(RubiksCube):
                                                       False) # prune table
 
         '''
-        Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
-        (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
-        IDA and build it 8 steps deep.
-
-        Our prune tables will be to solve on the left or right oblique edges. Each of these
-        tables are 24!/(8!*16!) or 735,471
-        735471/540917591841 is 0.0000013596729171
-
-        lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt
-        =====================================================
-        1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 82 entries (0 percent, 16.40x previous step)
-        3 steps has 1,434 entries (0 percent, 17.49x previous step)
-        4 steps has 24,198 entries (0 percent, 16.87x previous step)
-        5 steps has 405,916 entries (0 percent, 16.77x previous step)
-        6 steps has 6,839,392 entries (5 percent, 16.85x previous step)
-
-        Total: 7,271,027 entries
-
-
         lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
         lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt
         ================================================================
@@ -120,6 +100,67 @@ class RubiksCube666(RubiksCube):
                                                                 True, # state_hex
                                                                 True) # prune table
 
+        '''
+        Just found something cool...for tables like "6x6x6 stage UD oblique edges"
+        where there are (24!/(8!*16!))^2 or 540,917,591,841 combinations with two
+        prune tables (one for left-only UD obliques, one for right-only UD obliques)
+        of 24!/(8!*16!) or 735,471 the IDA search can be slow. I have one 6x6x6 test
+        cube where this IDA search takes 9600ms. My main table here is only 6-deep,
+        if I build it 7-deep the search will be much faster but the main table is
+        then too large for me to check into github. What I need are more/larger prune
+        tables to speed up the IDA search so I can keep using my 6-deep main table.
+
+        I built a special copy of the main table 7-deep where I keep all of the moves
+        for each state (normally I only keep the first move to save space). I then
+        parsed this 7-deep table and extracted the data for sides LFRB, for each one
+        of these LFRB states I keep the one with the least number of moves and write
+        that LFRB state/moves out to a new prune table. I now have a prune table that
+        contains the UD obliques just on sides LFRB, when I am doing my search if I do
+        not find the current state of UD obliques for sides LFRB in that table I know
+        that the cost to solve them is at least 8 moves. 
+
+        With this additional prune table my IDA search for that one test cube dropped
+        from 9600ms to 450ms!!
+        
+        lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
+        ===============================================================
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 50 entries (0 percent, 10.00x previous step)
+        3 steps has 714 entries (0 percent, 14.28x previous step)
+        4 steps has 9,416 entries (0 percent, 13.19x previous step)
+        5 steps has 121,298 entries (0 percent, 12.88x previous step)
+        6 steps has 1,454,512 entries (9 percent, 11.99x previous step)
+        7 steps has 13,809,296 entries (89 percent, 9.49x previous step)
+
+        Total: 15,395,291 entries
+        '''
+        self.lt_UD_oblique_edge_pairing_LFRB_only = LookupTable(self,
+                                                                'lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt',
+                                                                '666-UD-oblique-edge-pairing-LFRB-only',
+                                                                'TBD',
+                                                                True, # state_hex
+                                                                True, # prune table
+                                                                7)    # max_depth
+        '''
+        Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
+        (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
+        IDA and build it 8 steps deep.
+
+        Our prune tables will be to solve on the left or right oblique edges. Each of these
+        tables are 24!/(8!*16!) or 735,471
+        735471/540917591841 is 0.0000013596729171
+
+        lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt
+        =====================================================
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 82 entries (0 percent, 16.40x previous step)
+        3 steps has 1,434 entries (0 percent, 17.49x previous step)
+        4 steps has 24,198 entries (0 percent, 16.87x previous step)
+        5 steps has 405,916 entries (0 percent, 16.77x previous step)
+        6 steps has 6,839,392 entries (5 percent, 16.85x previous step)
+
+        Total: 7,271,027 entries
+        '''
         self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
                                                          'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt',
                                                          '666-UD-oblique-edge-pairing',
@@ -132,7 +173,8 @@ class RubiksCube666(RubiksCube):
 
                                                          # prune tables
                                                          (self.lt_UD_oblique_edge_pairing_left_only,
-                                                          self.lt_UD_oblique_edge_pairing_right_only))
+                                                          self.lt_UD_oblique_edge_pairing_right_only,
+                                                          self.lt_UD_oblique_edge_pairing_LFRB_only))
         '''
         16!/(8!*8!) is 12,870
 
@@ -415,14 +457,14 @@ class RubiksCube666(RubiksCube):
         # really speeds up IDA while for other cubes it doesn't but solving the right_only
         # prune table will speed things up.
         try:
-            self.lt_UD_oblique_edge_pairing.solve(6)
+            self.lt_UD_oblique_edge_pairing.solve(9)
         except NoIDASolution:
             original_state = self.state[:]
             original_solution = self.solution[:]
             self.lt_UD_oblique_edge_pairing_left_only.solve() # speed up IDA
 
             try:
-                self.lt_UD_oblique_edge_pairing.solve(6)
+                self.lt_UD_oblique_edge_pairing.solve(9)
             except NoIDASolution:
                 self.state = original_state
                 self.solution = original_solution

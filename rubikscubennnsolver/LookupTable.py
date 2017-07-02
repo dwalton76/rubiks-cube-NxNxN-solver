@@ -146,10 +146,85 @@ def get_555_UD_X_centers_stage_state(parent_state):
     return state
 
 
+def get_555_UD_centers_stage_LFRB_only_state(parent_state):
+    '''
+    # template
+    state = ''.join([parent_state[7], parent_state[8], parent_state[9],    # Upper
+                     parent_state[12], parent_state[13], parent_state[14],
+                     parent_state[17], parent_state[18], parent_state[19],
+                     parent_state[32], parent_state[33], parent_state[34], # Left
+                     parent_state[37], parent_state[38], parent_state[39],
+                     parent_state[42], parent_state[43], parent_state[44],
+                     parent_state[57], parent_state[58], parent_state[59], # Front
+                     parent_state[62], parent_state[63], parent_state[64],
+                     parent_state[67], parent_state[68], parent_state[69],
+                     parent_state[82], parent_state[83], parent_state[84], # Right
+                     parent_state[87], parent_state[88], parent_state[89],
+                     parent_state[92], parent_state[93], parent_state[94],
+                     parent_state[107], parent_state[108], parent_state[109], # Back
+                     parent_state[112], parent_state[113], parent_state[114],
+                     parent_state[117], parent_state[118], parent_state[119],
+                     parent_state[132], parent_state[133], parent_state[134], # Down
+                     parent_state[137], parent_state[138], parent_state[139],
+                     parent_state[142], parent_state[143], parent_state[144]])
+    '''
+    state = ''.join([parent_state[32], parent_state[33], parent_state[34], # Left
+                     parent_state[37], parent_state[38], parent_state[39],
+                     parent_state[42], parent_state[43], parent_state[44],
+                     parent_state[57], parent_state[58], parent_state[59], # Front
+                     parent_state[62], parent_state[63], parent_state[64],
+                     parent_state[67], parent_state[68], parent_state[69],
+                     parent_state[82], parent_state[83], parent_state[84], # Right
+                     parent_state[87], parent_state[88], parent_state[89],
+                     parent_state[92], parent_state[93], parent_state[94],
+                     parent_state[107], parent_state[108], parent_state[109], # Back
+                     parent_state[112], parent_state[113], parent_state[114],
+                     parent_state[117], parent_state[118], parent_state[119]])
+    state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+    return state
+
+
+def get_555_UD_centers_stage_UFDB_only_state(parent_state):
+    state = ''.join([parent_state[7], parent_state[8], parent_state[9],    # Upper
+                     parent_state[12], parent_state[13], parent_state[14],
+                     parent_state[17], parent_state[18], parent_state[19],
+                     parent_state[57], parent_state[58], parent_state[59], # Front
+                     parent_state[62], parent_state[63], parent_state[64],
+                     parent_state[67], parent_state[68], parent_state[69],
+                     parent_state[132], parent_state[133], parent_state[134], # Down
+                     parent_state[137], parent_state[138], parent_state[139],
+                     parent_state[142], parent_state[143], parent_state[144],
+                     parent_state[107], parent_state[108], parent_state[109], # Back
+                     parent_state[112], parent_state[113], parent_state[114],
+                     parent_state[117], parent_state[118], parent_state[119]])
+    state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+    return state
+
+
+def get_555_UD_centers_stage_ULDR_only_state(parent_state):
+    state = ''.join([parent_state[7], parent_state[8], parent_state[9],    # Upper
+                     parent_state[12], parent_state[13], parent_state[14],
+                     parent_state[17], parent_state[18], parent_state[19],
+                     parent_state[32], parent_state[33], parent_state[34], # Left
+                     parent_state[37], parent_state[38], parent_state[39],
+                     parent_state[42], parent_state[43], parent_state[44],
+                     parent_state[132], parent_state[133], parent_state[134], # Down
+                     parent_state[137], parent_state[138], parent_state[139],
+                     parent_state[142], parent_state[143], parent_state[144],
+                     parent_state[82], parent_state[83], parent_state[84], # Right
+                     parent_state[87], parent_state[88], parent_state[89],
+                     parent_state[92], parent_state[93], parent_state[94]])
+    state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+    return state
+
+
 state_functions = {
     '555-UD-centers-stage' : get_555_UD_centers_stage_state,
     '555-UD-T-centers-stage' : get_555_UD_T_centers_stage_state,
-    '555-UD-X-centers-stage' : get_555_UD_X_centers_stage_state
+    '555-UD-X-centers-stage' : get_555_UD_X_centers_stage_state,
+    '555-UD-centers-stage-LFRB-only' : get_555_UD_centers_stage_LFRB_only_state,
+    '555-UD-centers-stage-UFDB-only' : get_555_UD_centers_stage_UFDB_only_state,
+    '555-UD-centers-stage-ULDR-only' : get_555_UD_centers_stage_ULDR_only_state,
 }
 
 
@@ -1377,7 +1452,11 @@ class LookupTable(object):
 
                 (line_number, value) = self.file_binary_search_guts(fh, state_to_find, min_left, max_right)
 
-                if filename == 'lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt':
+                if filename in ('lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt',
+                                'lookup-table-5x5x5-step13-UD-centers-stage-UFDB-only.txt',
+                                'lookup-table-5x5x5-step14-UD-centers-stage-ULDR-only.txt',
+                                'lookup-table-5x5x5-step15-UD-centers-stage-LFRB-only.txt'):
+
                     # Most prune tables are very small so when I built them I just included all of the steps
                     # for each state.  That was overkill though, all we really care about is the number of
                     # steps.  Maybe I will go back and rebuild them all someday but for now the only one that
@@ -1393,6 +1472,11 @@ class LookupTable(object):
                     results[state_to_find] = value
                     self.cache[state_to_find] = value
                 else:
+                    # uncomment to sanity check things when you are building new prune tables like
+                    # lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
+                    #if value is not None and value[0].isdigit():
+                    #    raise Exception("value is a digit...we should not be here %s" % self.filename)
+
                     results[state_to_find] = value
                     self.cache[state_to_find] = value
 

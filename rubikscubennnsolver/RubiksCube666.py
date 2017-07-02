@@ -140,7 +140,7 @@ class RubiksCube666(RubiksCube):
                                                                 'TBD',
                                                                 True, # state_hex
                                                                 True, # prune table
-                                                                7)    # max_depth
+                                                                7)    # max depth of this partial prune table
         '''
         Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
         (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
@@ -470,6 +470,9 @@ class RubiksCube666(RubiksCube):
                 self.solution = original_solution
                 self.lt_UD_oblique_edge_pairing_right_only.solve() # speed up IDA
                 self.lt_UD_oblique_edge_pairing.solve(99)
+        #log.info("foo %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        #self.print_cube()
+        #sys.exit(0)
 
         self.lt_LR_inner_x_centers_stage.solve()
         self.lt_LR_oblique_edge_pairing.solve(99)

@@ -94,6 +94,34 @@ class RubiksCube555(RubiksCube):
                                                  True, # state_hex
                                                  True) # prune table
 
+        self.lt_UD_centers_stage_UFDB_only = LookupTable(self,
+                                                 'lookup-table-5x5x5-step13-UD-centers-stage-UFDB-only.txt',
+                                                 '555-UD-centers-stage-UFDB-only',
+                                                 'TBD',
+                                                 True, # state_hex
+                                                 True, # prune table
+                                                 6)    # max depth of this partial prune table
+
+        # Not used right now...if we use these we tend to prune too aggresively which forces us to get
+        # to IDA threshold of 10 at which point we are exploring tons of branches and it slows us down
+        '''
+        self.lt_UD_centers_stage_ULDR_only = LookupTable(self,
+                                                 'lookup-table-5x5x5-step14-UD-centers-stage-ULDR-only.txt',
+                                                 '555-UD-centers-stage-ULDR-only',
+                                                 'TBD',
+                                                 True, # state_hex
+                                                 True, # prune table
+                                                 6)    # max depth of this partial prune table
+
+        self.lt_UD_centers_stage_LFRB_only = LookupTable(self,
+                                                 'lookup-table-5x5x5-step15-UD-centers-stage-LFRB-only.txt',
+                                                 '555-UD-centers-stage-LFRB-only',
+                                                 'TBD',
+                                                 True, # state_hex
+                                                 True, # prune table
+                                                 6)    # max depth of this partial prune table
+        '''
+
         '''
         There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
         We cannot build a table that large so we will build it 7 moves deep and use
@@ -125,7 +153,10 @@ class RubiksCube555(RubiksCube):
 
                                                  # prune tables
                                                  (self.lt_UD_T_centers_stage,
-                                                  self.lt_UD_X_centers_stage))
+                                                  self.lt_UD_X_centers_stage,
+                                                  #self.lt_UD_centers_stage_ULDR_only,
+                                                  #self.lt_UD_centers_stage_LFRB_only,
+                                                  self.lt_UD_centers_stage_UFDB_only))
 
         '''
         lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt
@@ -331,14 +362,14 @@ class RubiksCube555(RubiksCube):
         # logic to LookupTableIDA
         # Stage UD centers
         try:
-            self.lt_UD_centers_stage.solve(7)
+            self.lt_UD_centers_stage.solve(9)
         except NoIDASolution:
             original_state = self.state[:]
             original_solution = self.solution[:]
             self.lt_UD_T_centers_stage.solve() # speed up IDA
 
             try:
-                self.lt_UD_centers_stage.solve(7)
+                self.lt_UD_centers_stage.solve(9)
             except NoIDASolution:
                 self.state = original_state
                 self.solution = original_solution
@@ -347,6 +378,8 @@ class RubiksCube555(RubiksCube):
                 self.lt_UD_centers_stage.solve(99)
 
         log.info("Took %d steps to stage UD centers" % len(self.solution))
+        #self.print_cube()
+        #sys.exit(0)
 
 
         # Stage LR centers

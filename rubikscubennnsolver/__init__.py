@@ -431,7 +431,10 @@ class RubiksCube(object):
 
         # 2Uw, Uw and 2U all mean rotate the top 2 U rows
         # 3Uw and 3U mean rotate the top 3 U rows
-        if action[0].isdigit():
+        if len(action) >= 2 and action[0].isdigit() and action[1].isdigit():
+            rows_to_rotate = int(action[0:2])
+            action = action[2:]
+        elif action[0].isdigit():
             rows_to_rotate = int(action[0])
             action = action[1:]
         else:
@@ -3594,6 +3597,9 @@ class RubiksCube(object):
                     log.info("")
                     self.group_centers_guts()
 
+                    # dwalton remove this and uncomment
+                    solution_leads_to_oll = False
+                    '''
                     if not self.centers_solved():
                         raise SolveError("centers should be solved but they are not")
 
@@ -3617,6 +3623,7 @@ class RubiksCube(object):
                             solution_leads_to_oll = False
                     else:
                         solution_leads_to_oll = False
+                    '''
 
                     center_solution_length = self.get_solution_len_minus_rotates(self.solution)
                     non_paired_wings_count = self.get_non_paired_wings_count()

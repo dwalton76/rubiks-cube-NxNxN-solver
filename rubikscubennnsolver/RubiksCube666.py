@@ -444,8 +444,7 @@ class RubiksCube666(RubiksCube):
         fake_555.state[143] = self.state[207]
         fake_555.state[144] = self.state[209]
 
-    def group_centers_guts(self):
-        self.lt_init()
+    def group_centers_stage_UD(self):
         self.lt_UD_inner_x_centers_stage.solve()
 
         # This one can take a while so we do some tricks to speed it up
@@ -470,9 +469,10 @@ class RubiksCube666(RubiksCube):
                 self.solution = original_solution
                 self.lt_UD_oblique_edge_pairing_right_only.solve() # speed up IDA
                 self.lt_UD_oblique_edge_pairing.solve(99)
-        #log.info("foo %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        #self.print_cube()
-        #sys.exit(0)
+
+    def group_centers_guts(self):
+        self.lt_init()
+        self.group_centers_stage_UD()
 
         self.lt_LR_inner_x_centers_stage.solve()
         self.lt_LR_oblique_edge_pairing.solve(99)

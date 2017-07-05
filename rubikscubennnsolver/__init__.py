@@ -3597,9 +3597,6 @@ class RubiksCube(object):
                     log.info("")
                     self.group_centers_guts()
 
-                    # dwalton remove this and uncomment
-                    solution_leads_to_oll = False
-                    '''
                     if not self.centers_solved():
                         raise SolveError("centers should be solved but they are not")
 
@@ -3623,7 +3620,6 @@ class RubiksCube(object):
                             solution_leads_to_oll = False
                     else:
                         solution_leads_to_oll = False
-                    '''
 
                     center_solution_length = self.get_solution_len_minus_rotates(self.solution)
                     non_paired_wings_count = self.get_non_paired_wings_count()

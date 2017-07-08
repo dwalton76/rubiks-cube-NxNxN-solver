@@ -954,13 +954,17 @@ class RubiksCube444(RubiksCube):
                 self.solution = original_solution[:]
 
         else:
+
+            # If you solve 3x3x3 and then resolve PLL it takes 12 steps but if we avoid it here
+            # it only takes 7 steps. If we are pairing the outside edges of a 5x5x5 self.avoid_pll
+            # will be False.
+            if self.avoid_pll and self.edge_solution_leads_to_pll_parity():
+                for step in "Rw2 U2 F2 Rw2 F2 U2 Rw2".split():
+                    self.rotate(step)
+
             # There are no edges left to pair, note how many steps it took pair them all
             edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
 
-            # It takes 12 steps to solve PLL parity so add that to the solution length.
-            # If we are pairing the outside edges of a 5x5x5 self.avoid_pll will be False.
-            if self.avoid_pll and self.edge_solution_leads_to_pll_parity():
-                edge_solution_len += 12
 
             # I tried this once for grins but it takes about 20x longer to run and the
             # avg solution over 50 cubes wasn't any shorter. I think it is because the

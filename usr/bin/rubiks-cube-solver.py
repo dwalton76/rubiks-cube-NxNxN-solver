@@ -95,7 +95,7 @@ try:
     elif size == 3:
         cube = RubiksCube333(args.state, args.debug)
     elif size == 4:
-        cube = RubiksCube444(args.state, args.debug)
+        cube = RubiksCube444(args.state, True, args.debug)
     elif size == 5:
         cube = RubiksCube555(args.state, args.debug)
     elif size == 6:

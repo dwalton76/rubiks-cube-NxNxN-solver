@@ -28,8 +28,6 @@ class RubiksCubeNNNEven(RubiksCube):
             log.setLevel(logging.DEBUG)
 
     def group_centers_guts(self):
-        # dwalton remove this return
-        return
 
         # Group UD centers
         # - create a fake 6x6x6 to solve the inside 4x4 block
@@ -89,7 +87,7 @@ class RubiksCubeNNNEven(RubiksCube):
         # Solve UD centers
         # Solve LRFB centers
         self.print_cube()
-        #sys.exit(0)
+        sys.exit(0)
 
     def pair_inside_edges_via_444(self):
         fake_444 = RubiksCube444(solved_4x4x4)
@@ -433,14 +431,14 @@ class RubiksCubeNNNEven(RubiksCube):
         # Pair the inside edges via fake 4x4x4
         self.pair_inside_edges_via_444()
 
+        # How many orbits of edges does this cube have?
         orbits = (self.size/2) - 1
 
         # The inside orbit was paired above via pair_inside_edges_via_444()
         # For all of the rest work your way from inside to outside and pair
-        # them via 5x5x5.
+        # them via the 5x5x5 solver.
         for orbit in reversed(range(1, orbits)):
             self.pair_edge_orbit_via_555(orbit)
-        #self.pair_edge_orbit_via_555(5)
 
         log.info("Edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()

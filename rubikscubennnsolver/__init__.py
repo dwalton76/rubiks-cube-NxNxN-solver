@@ -3016,6 +3016,10 @@ class RubiksCube(object):
             raise ImplementThis("pll_id %s" % pll_id)
 
     def solve_333(self):
+
+        if self.solved():
+            return
+
         kociemba_string = self.get_kociemba_string(False)
 
         try:

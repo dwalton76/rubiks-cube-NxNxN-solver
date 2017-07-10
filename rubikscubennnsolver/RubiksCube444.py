@@ -163,12 +163,20 @@ class RubiksCube444(RubiksCube):
                                                   False, # state hex
                                                   False) # prune table
 
-        self.lt_edges = LookupTable(self,
-                                    'lookup-table-4x4x4-step101-edges.txt',
-                                    '444-edges-xx-out-paired',
-                                    'EDGES',
-                                    False, # state_hex
-                                    False) # prune table
+        self.lt_edges = LookupTableIDA(self,
+                                       'lookup-table-4x4x4-step101-edges.txt',
+                                       '444-edges-xx-out-paired',
+                                       'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+                                       False, # state_hex
+                                       moves_4x4x4,
+                                       ("Uw", "Uw'", "Uw2",
+                                        "Lw", "Lw'", "Lw2",
+                                        "Fw", "Fw'", "Fw2",
+                                        "Rw", "Rw'", "Rw2",
+                                        "Bw", "Bw'", "Bw2",
+                                        "Dw", "Dw'", "Dw2"), # illegal moves
+                                       # prune tables
+                                       ())
 
     def phase(self):
         if self._phase is None:
@@ -746,7 +754,7 @@ class RubiksCube444(RubiksCube):
 
         The first stage took 1 or steps and the 2nd stage took either 7 or 10, it
         was 10 if the wing at F-east was turned the wrong way and needed to be
-        rotated around. It wasn't worth it...what I have below works just find and
+        rotated around. It wasn't worth it...what I have below works just fine and
         takes between 7 to 11 steps total.
         """
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
@@ -892,14 +900,160 @@ class RubiksCube444(RubiksCube):
         return max_edges_paired_edge
         '''
 
+    def lt_edges_remap(self):
+        """
+        The lt_edges lookup-table was built for edges FL, FR, BR, BL so we
+        must take the current unpaired edges and re-map them to those four edges
+        """
+        state = 'x' + ''.join([self.state[square_index] for square_index in xrange(1,97)])
+        state_list = list(state)
+        needs_translation = []
+        four_horsemen_available = [('F', 'L'),
+                                   ('F', 'R'),
+                                   ('B', 'R'),
+                                   ('B', 'L')]
+        four_horsemen = [('F', 'L'),
+                         ('F', 'R'),
+                         ('B', 'R'),
+                         ('B', 'L')]
+
+        for (a, b, c, d) in ((2, 3, 67, 66),
+                             (5, 9, 18, 19),
+                             (14, 15, 34, 35),
+                             (8, 12, 51, 50),
+                             (24, 28, 37, 41),
+                             (40, 44, 53, 57),
+                             (56, 60, 69, 73),
+                             (72, 76, 21, 25),
+                             (82, 83, 46, 47),
+                             (85, 89, 31, 30),
+                             (94, 95, 79, 78),
+                             (88, 92, 62, 63)):
+
+            # If the edge is paired, x it out
+            if state[a] == state[b] and state[c] == state[d]:
+                state_list[a] = "x"
+                state_list[b] = "x"
+                state_list[c] = "x"
+                state_list[d] = "x"
+
+            else:
+                if (state[a], state[c]) in four_horsemen:
+                    if (state[a], state[c]) in four_horsemen_available:
+                        four_horsemen_available.remove((state[a], state[c]))
+                elif (state[c], state[a]) in four_horsemen:
+                    if (state[c], state[a]) in four_horsemen_available:
+                        four_horsemen_available.remove((state[c], state[a]))
+                else:
+                    if (state[a], state[c]) not in needs_translation and (state[c], state[a]) not in needs_translation:
+                        needs_translation.append((state[a], state[c]))
+
+                if (state[b], state[d]) in four_horsemen:
+                    if (state[b], state[d]) in four_horsemen_available:
+                        four_horsemen_available.remove((state[b], state[d]))
+                elif (state[d], state[b]) in four_horsemen:
+                    if (state[d], state[b]) in four_horsemen_available:
+                        four_horsemen_available.remove((state[d], state[b]))
+                else:
+                    if (state[b], state[d]) not in needs_translation and (state[d], state[b]) not in needs_translation:
+                        needs_translation.append((state[b], state[d]))
+
+        if needs_translation:
+            #self.print_cube()
+            #log.info("needs_translation: %s" % ' '.join(map(str, needs_translation)))
+            #log.info("four_horsemen_available: %s" % ' '.join(map(str, four_horsemen_available)))
+
+            babelfish = {}
+            for (a, c) in needs_translation:
+                babelfish[(a, c)] = four_horsemen_available[0]
+                four_horsemen_available = four_horsemen_available[1:]
+
+            #log.info("babelfish: %s" % pformat(babelfish))
+
+            for (a, b, c, d) in ((2, 3, 67, 66),
+                                 (5, 9, 18, 19),
+                                 (14, 15, 34, 35),
+                                 (8, 12, 51, 50),
+                                 (24, 28, 37, 41),
+                                 (40, 44, 53, 57),
+                                 (56, 60, 69, 73),
+                                 (72, 76, 21, 25),
+                                 (82, 83, 46, 47),
+                                 (85, 89, 31, 30),
+                                 (94, 95, 79, 78),
+                                 (88, 92, 62, 63)):
+                if state[a] == state[b] and state[c] == state[d]:
+                    pass
+                else:
+                    if (state[a], state[c]) in babelfish:
+                        foo = babelfish[(state[a], state[c])]
+                        state_list[a] = foo[0]
+                        state_list[c] = foo[1]
+
+                    elif (state[c], state[a]) in babelfish:
+                        foo = babelfish[(state[c], state[a])]
+                        # dwalton think about this
+                        state_list[c] = foo[0]
+                        state_list[a] = foo[1]
+
+                    if (state[b], state[d]) in babelfish:
+                        foo = babelfish[(state[b], state[d])]
+                        state_list[b] = foo[0]
+                        state_list[d] = foo[1]
+
+                    elif (state[d], state[b]) in babelfish:
+                        foo = babelfish[(state[d], state[b])]
+                        # dwalton think about this
+                        state_list[d] = foo[0]
+                        state_list[b] = foo[1]
+
+        #log.info("pre state: %s" % self.state)
+        state_list[0] = 'placeholder'
+        self.state = state_list[:]
+        #log.info("post state: %s" % self.state)
+
+    def group_edges_via_lookup_table(self):
+
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        len_original_solution = len(original_solution)
+
+        try:
+            self.lt_edges_remap()
+            self.lt_edges.solve(10)
+            non_paired_edges = []
+            lookup_table_worked = True
+            #raise SolveError("holy crap that worked")
+
+            edges_solution = self.solution[len_original_solution:]
+
+            # Now un-map the edges and execute the solution we found when the edges were re-mapped
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in edges_solution:
+                self.rotate(step)
+
+            return True
+
+        #except NoSteps as e:
+        except Exception:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            raise
+            pass
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        return False
+
     def group_edges_recursive(self, depth, edge_to_pair):
         """
         """
         pre_non_paired_wings_count = len(self.get_non_paired_wings())
         pre_non_paired_edges_count = len(self.get_non_paired_edges())
         edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-        tmp_state = self.state[:]
-        tmp_solution = self.solution[:]
+        lookup_table_worked = False
 
         log.info("")
         log.info("group_edges_recursive(%d) called with edge_to_pair %s (%d edges and %d wings left to pair, min solution len %s, current solution len %d)" %
@@ -910,21 +1064,15 @@ class RubiksCube444(RubiksCube):
                  self.min_edge_solution_len,
                  edge_solution_len))
 
-        # Is the current state in the lookup table? The lookup table was built with U at U
-        # and F at F so we must rotate those in place.
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
+        # comment out for now...is slow and doesn't same any moves
+        '''
+        if edge_to_pair and pre_non_paired_edges_count <= 4:
+            if self.group_edges_via_lookup_table():
+                lookup_table_worked = True
+                non_paired_edges = self.get_non_paired_edges()
+        '''
 
-        try:
-            self.lt_edges.solve()
-            non_paired_edges = []
-            # dwalton
-            raise SolveError("holy crap that worked")
-
-        except NoSteps:
-            # No entry in the lookup table so restore to tmp_state/tmp_solution to undo the rotate UF to UF
-            self.state = tmp_state[:]
-            self.solution = tmp_solution[:]
+        if not lookup_table_worked:
 
             # Should we continue down this branch or should we prune it? An estimate
             # of 2 moves to pair an edge is a low estimate so if the current number of
@@ -933,9 +1081,9 @@ class RubiksCube444(RubiksCube):
             # some CPU cycles.
             estimated_solution_len = edge_solution_len + (2 * pre_non_paired_wings_count)
 
-            if estimated_solution_len >= self.min_edge_solution_len:
-                #log.warning("PRUNE: %s + (2 * %d) > %s" % (edge_solution_len, non_paired_wings_count, self.min_edge_solution_len))
-                return False
+            #if estimated_solution_len >= self.min_edge_solution_len:
+            #    #log.warning("PRUNE: %s + (2 * %d) > %s" % (edge_solution_len, non_paired_wings_count, self.min_edge_solution_len))
+            #    return False
 
             # The only time this will be None is on the initial call to group_edges_recursive()
             if edge_to_pair:

@@ -167,7 +167,7 @@ def get_swap_count(listA, listB, debug):
     return swaps
 
 
-def apply_rotations(step, rotations):
+def apply_rotations(size, step, rotations):
     """
     Apply the "rotations" to step and return the step. This is used by
     compress_solution() to remove all of the whole cube rotations from
@@ -181,7 +181,13 @@ def apply_rotations(step, rotations):
         # remove the number at the start of the rotation...for a 4x4x4 cube
         # there might be a 4U rotation (to rotate about the y-axis) but we
         # don't need to keep the '4' part.
-        rotation = rotation[1:]
+
+        if size <= 9:
+            rotation = rotation[1:]
+        elif size <= 99:
+            rotation = rotation[2:]
+        else:
+            rotation = rotation[3:] # For a 100x or larger cube!!
 
         if rotation == "U" or rotation == "D'":
             if "U" in step:
@@ -287,8 +293,7 @@ def orbit_matches(edges_per_side, orbit, edge_index):
             return True
         return False
 
-    raise ImplementThis("orbit_matches for %d" % orbit)
-    # It should be this...
+    # TODO verify this is correct
     if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
         return True
     return False
@@ -2651,18 +2656,12 @@ class RubiksCube(object):
             D_pos_to_check = self.sideD.mid_pos
 
         else:
-            if self.size == 4:
-                pos_to_check = side.center_corner_pos[0]
-                F_pos_to_check = self.sideF.center_corner_pos[0]
-                D_pos_to_check = self.sideD.center_corner_pos[0]
+            # Use the top-right inner x-center
+            offset = ((self.size/2) * self.size) - (self.size/2)
 
-            elif self.size == 6:
-                pos_to_check = side.min_pos + 14
-                F_pos_to_check = self.sideF.min_pos + 14
-                D_pos_to_check = self.sideD.min_pos + 14
-
-            else:
-                raise ImplementThis("")
+            pos_to_check = side.min_pos + offset
+            F_pos_to_check = self.sideF.min_pos + offset
+            D_pos_to_check = self.sideD.min_pos + offset
 
         count = 0
 
@@ -2766,7 +2765,9 @@ class RubiksCube(object):
                     if side.mid_pos:
                         foo.append(self.state[side.mid_pos])
                     else:
-                        foo.append(self.state[side.center_corner_pos[0]])
+                        offset = ((self.size/2) * self.size) - (self.size/2)
+                        pos_to_check = side.min_pos + offset
+                        foo.append(self.state[pos_to_check])
 
                     foo.append(self.state[side.edge_east_pos[0]])
 
@@ -2784,27 +2785,45 @@ class RubiksCube(object):
         Solving OLL at the end takes 26 moves, preventing it takes 10
         """
         orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+        steps = None
 
-        if self.size == 6:
-            if orbits_with_oll_parity == [0,1]:
-                for step in "3Rw U2 3Rw U2 3Rw U2 3Rw U2 3Rw U2".split():
-                    self.rotate(step)
+        if not orbits_with_oll_parity:
+            return True
 
-            elif orbits_with_oll_parity == [0]:
-                for step in "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2".split():
-                    self.rotate(step)
-
-            elif orbits_with_oll_parity == [1]:
-
-                for step in "3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2".split():
-                    self.rotate(step)
-
-                # log.info("oll parity %s" % pformat(self.center_solution_leads_to_oll_parity()))
+        if self.size == 4:
+            if orbits_with_oll_parity == [0]:
+                steps = "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2"
             else:
-                raise ImplementThis("orbits_with_oll_parity %s" % pformat(orbits_with_oll_parity))
+                raise SolveError("prevent_OLL for %sx%sx%s, orbits %s have parity issues" %
+                                    (self.size, self.size, self.size, pformat(orbits_with_oll_parity)))
 
-        else:
-            raise ImplementThis("prevent_OLL for %sx%sx%s" % (self.size, self.size, self.size))
+        elif self.size == 6:
+            # 10 steps
+            if orbits_with_oll_parity == [0,1]:
+                steps = "3Rw U2 3Rw U2 3Rw U2 3Rw U2 3Rw U2"
+
+            # 10 steps
+            elif orbits_with_oll_parity == [0]:
+                steps = "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2"
+
+            # 15 steps for an inside orbit
+            elif orbits_with_oll_parity == [1]:
+                steps = "3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2"
+
+            else:
+                raise SolveError("prevent_OLL for %sx%sx%s, orbits %s have parity issues" %
+                                    (self.size, self.size, self.size, pformat(orbits_with_oll_parity)))
+
+        #else:
+        #    raise ImplementThis("prevent_OLL for %sx%sx%s, orbits %s have parity issues" %
+        #                        (self.size, self.size, self.size, pformat(orbits_with_oll_parity)))
+
+        if steps:
+            for step in steps.split():
+                self.rotate(step)
+            return True
+
+        return False
 
     def solve_OLL(self):
 
@@ -2867,8 +2886,9 @@ class RubiksCube(object):
                 self.rotate_z()
 
             if has_oll:
-                # We should no longer hit OLL
-                raise SolveError("prevent_OLL failed")
+                # We should no longer hit OLL for 4x4x4 or 6x6x6
+                if self.size == 4 or self.size == 6:
+                    raise SolveError("prevent_OLL failed")
 
                 # 26 moves :(
                 oll_solution = "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
@@ -3605,7 +3625,8 @@ class RubiksCube(object):
                         raise SolveError("centers should be solved but they are not")
 
                     # Prefer solutions that do not lead to OLL parity. Note that we do not do this
-                    # for 6x6x6 right now because it takes too long to compute the solution.
+                    # for anything larger than 4x4x4 because it takes too long to compute multiple
+                    # solutions for solving the centers.
                     if self.is_even():
                         orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
 
@@ -3617,8 +3638,10 @@ class RubiksCube(object):
                                 #log.info("%s on top, %s in front, opening move %4s: creates OLL parity" % (upper_side_name, front_side_name, opening_move))
                                 #solution_leads_to_oll = True
                                 log.info("%s on top, %s in front, opening move %4s: creates OLL parity but we will avoid it" % (upper_side_name, front_side_name, opening_move))
-                                self.prevent_OLL()
-                                solution_leads_to_oll = False
+                                if self.prevent_OLL():
+                                    solution_leads_to_oll = False
+                                else:
+                                    solution_leads_to_oll = True
                         else:
                             log.info("%s on top, %s in front, opening move %4s: free of OLL parity" % (upper_side_name, front_side_name, opening_move))
                             solution_leads_to_oll = False
@@ -3761,9 +3784,9 @@ class RubiksCube(object):
 
         for (index, step) in enumerate(steps):
             if step.startswith(str(self.size)):
-                rotations.append(apply_rotations(step, rotations))
+                rotations.append(apply_rotations(self.size, step, rotations))
             else:
-                final_steps.append(apply_rotations(step, rotations))
+                final_steps.append(apply_rotations(self.size, step, rotations))
         solution_string = ' '.join(final_steps)
 
         # We put some markers in the solution to track how many steps

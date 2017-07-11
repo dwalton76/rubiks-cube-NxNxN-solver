@@ -87,6 +87,8 @@ class RubiksCubeNNNEven(RubiksCube):
         # Solve UD centers
         # Solve LRFB centers
         self.print_cube()
+
+        # still more work to do here so go ahead and exit
         sys.exit(0)
 
     def pair_inside_edges_via_444(self):
@@ -442,4 +444,4 @@ class RubiksCubeNNNEven(RubiksCube):
 
         log.info("Edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
-        sys.exit(0)
+        #sys.exit(0)

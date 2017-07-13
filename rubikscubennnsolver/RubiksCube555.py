@@ -348,21 +348,6 @@ class RubiksCube555(RubiksCube):
                                                   False, # state hex
                                                   False) # prune table
 
-        self.lt_edges = LookupTableIDA(self,
-                                       'lookup-table-5x5x5-step101-edges.txt',
-                                       '555-edges-xx-out-paired',
-                                       'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-                                       False, # state_hex
-                                       moves_5x5x5,
-                                       ("Uw", "Uw'", "Uw2",
-                                        "Lw", "Lw'", "Lw2",
-                                        "Fw", "Fw'", "Fw2",
-                                        "Rw", "Rw'", "Rw2",
-                                        "Bw", "Bw'", "Bw2",
-                                        "Dw", "Dw'", "Dw2"), # illegal moves
-                                       # prune tables
-                                       ())
-
     def group_centers_guts(self):
         self.lt_init()
         self.rotate_U_to_U()
@@ -1523,25 +1508,14 @@ class RubiksCube555(RubiksCube):
             # TODO this needs to set things up to pair a 2nd wing on the slice back
             self.make_U_south_have_unpaired_edge()
 
-            # dwalton
             # We need the right two pieces on U-south to be the ones that are
             # unpaired, if they are not flip it around
             if self.state[23] == self.state[24] and self.state[53] == self.state[54]:
-                #log.info("HERE 4")
-                #self.print_cube()
 
                 # U L B' L U2
                 for step in "U L' B' L U2".split():
                     self.rotate(step)
 
-                #log.info("HERE 5")
-                #self.print_cube()
-                #sys.exit(0)
-            #else:
-            #    log.info("HERE 6")
-                
-
-        #self.print_cube()
         if sister_wing[0] == 65:
             # 3Uw Uw'
             if self.use_pair_outside_edges:
@@ -1549,12 +1523,8 @@ class RubiksCube555(RubiksCube):
             self.rotate("Dw")
             self.rotate_y()
 
-            #log.info("HERE 10")
-            #self.print_cube()
             for step in "U' L' U L".split():
                 self.rotate(step)
-            #log.info("HERE 20")
-            #self.print_cube()
 
             # 3Uw' Uw
             if self.use_pair_outside_edges:
@@ -1638,7 +1608,6 @@ class RubiksCube555(RubiksCube):
         pre_non_paired_wings_count = len(self.get_non_paired_wings())
         pre_non_paired_edges_count = len(self.get_non_paired_edges())
         edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-        lookup_table_worked = False
 
         log.info("")
         log.info("group_edges_recursive(%d) called with edge_to_pair %s (%d edges and %d wings left to pair, min solution len %s, current solution len %d)" %
@@ -1649,27 +1618,20 @@ class RubiksCube555(RubiksCube):
              self.min_edge_solution_len,
              self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len))
 
-        # disable for now
-        if False and edge_to_pair and pre_non_paired_edges_count <= 4 and self.group_edges_via_lookup_table():
-            if self.get_non_paired_edges():
-                raise SolveError("All edges should have paired from lookup table")
+        # Should we continue down this branch or should we prune it? An estimate
+        # of 2.5 moves to pair an edge is a good target to hit so if the current number of
+        # steps plus 2.5 * pre_non_paired_wings_count is greater than our current minimum
+        # there isn't any point in continuing down this branch so prune it and save
+        # some CPU cycles.
+        estimated_solution_len = edge_solution_len + (2.5 * pre_non_paired_wings_count)
 
-        else:
+        if estimated_solution_len >= self.min_edge_solution_len:
+            #log.warning("PRUNE: %s + (2.5 * %d) > %s" % (edge_solution_len, pre_non_paired_wings_count, self.min_edge_solution_len))
+            return False
 
-            # Should we continue down this branch or should we prune it? An estimate
-            # of 2 moves to pair an edge is a low estimate so if the current number of
-            # steps plus 2 * pre_non_paired_wings_count is greater than our current minimum
-            # there isn't any point in continuing down this branch so prune it and save
-            # some CPU cycles.
-            estimated_solution_len = edge_solution_len + (2 * pre_non_paired_wings_count)
-
-            if estimated_solution_len >= self.min_edge_solution_len:
-                #log.warning("PRUNE: %s + (2 * %d) > %s" % (edge_solution_len, non_paired_wings_count, self.min_edge_solution_len))
-                return False
-
-            # The only time this will be None is on the initial call
-            if edge_to_pair:
-                self.pair_edge(edge_to_pair)
+        # The only time this will be None is on the initial call
+        if edge_to_pair:
+            self.pair_edge(edge_to_pair)
 
         non_paired_edges = self.get_non_paired_edges()
 
@@ -1743,181 +1705,6 @@ class RubiksCube555(RubiksCube):
         log.warning("%s will pair %d wings in %d steps" % (max_wings_paired_edge, max_wings_paired, max_wings_paired_solution_len))
         return max_wings_paired_edge
 
-    def lt_edges_remap(self):
-        """
-        The lt_edges lookup-table was built for edges FL, FR, BR, BL so we
-        must take the current unpaired edges and re-map them to those four edges
-        """
-        state = 'x' + ''.join([self.state[square_index] for square_index in xrange(1, 151)])
-        state_list = list(state)
-        needs_translation = []
-        four_horsemen_available = [('F', 'L'),
-                                   ('F', 'R'),
-                                   ('B', 'R'),
-                                   ('B', 'L')]
-        four_horsemen = [('F', 'L'),
-                         ('F', 'R'),
-                         ('B', 'R'),
-                         ('B', 'L')]
-
-        '''
-        # dwalton init numbers
-35 steps to solve centers
-83 steps to group edges
-21 steps to solve 3x3x3
-139 steps total
-        '''
-
-        for (a, b, c, d, e, f) in ((2, 3, 4, 104, 103, 102),
-                                   (6, 11, 16, 27, 28, 29),
-                                   (10, 15, 20, 79, 78, 77),
-                                   (22, 23, 24, 52, 53, 54),
-                                   (31, 36, 41, 110, 115, 120),
-                                   (35, 40, 45, 56, 61, 66),
-                                   (60, 65, 70, 81, 86, 91),
-                                   (85, 90, 95, 106, 111, 116),
-                                   (72, 73, 74, 127, 128, 129),
-                                   (131, 136, 141, 49, 48, 47),
-                                   (135, 140, 145, 97, 98, 99),
-                                   (147, 148, 149, 124, 123, 122)):
-
-            # If the edge is paired, x it out
-            if (state[a] == state[b] and state[b] == state[c] and
-                state[d] == state[e] and state[e] == state[f]):
-                state_list[a] = "x"
-                state_list[b] = "x"
-                state_list[c] = "x"
-                state_list[d] = "x"
-                state_list[e] = "x"
-                state_list[f] = "x"
-
-            else:
-                if (state[a], state[d]) in four_horsemen:
-                    if (state[a], state[d]) in four_horsemen_available:
-                        four_horsemen_available.remove((state[a], state[d]))
-                elif (state[d], state[a]) in four_horsemen:
-                    if (state[d], state[a]) in four_horsemen_available:
-                        four_horsemen_available.remove((state[d], state[a]))
-                else:
-                    if (state[a], state[d]) not in needs_translation and (state[d], state[a]) not in needs_translation:
-                        needs_translation.append((state[a], state[d]))
-
-                if (state[b], state[e]) in four_horsemen:
-                    if (state[b], state[e]) in four_horsemen_available:
-                        four_horsemen_available.remove((state[b], state[e]))
-                elif (state[e], state[b]) in four_horsemen:
-                    if (state[e], state[b]) in four_horsemen_available:
-                        four_horsemen_available.remove((state[e], state[b]))
-                else:
-                    if (state[b], state[e]) not in needs_translation and (state[e], state[b]) not in needs_translation:
-                        needs_translation.append((state[b], state[e]))
-
-                if (state[c], state[f]) in four_horsemen:
-                    if (state[c], state[f]) in four_horsemen_available:
-                        four_horsemen_available.remove((state[c], state[f]))
-                elif (state[f], state[c]) in four_horsemen:
-                    if (state[f], state[c]) in four_horsemen_available:
-                        four_horsemen_available.remove((state[f], state[c]))
-                else:
-                    if (state[c], state[f]) not in needs_translation and (state[f], state[c]) not in needs_translation:
-                        needs_translation.append((state[c], state[f]))
-
-        if needs_translation:
-            self.print_cube()
-            log.info("needs_translation: %s" % ' '.join(map(str, needs_translation)))
-            log.info("four_horsemen_available: %s" % ' '.join(map(str, four_horsemen_available)))
-
-            babelfish = {}
-            for (a, c) in needs_translation:
-                babelfish[(a, c)] = four_horsemen_available[0]
-                four_horsemen_available = four_horsemen_available[1:]
-
-            log.info("babelfish: %s" % pformat(babelfish))
-            for (a, b, c, d, e, f) in ((2, 3, 4, 104, 103, 102),
-                                       (6, 11, 16, 27, 28, 29),
-                                       (10, 15, 20, 79, 78, 77),
-                                       (22, 23, 24, 52, 53, 54),
-                                       (31, 36, 41, 110, 115, 120),
-                                       (35, 40, 45, 56, 61, 66),
-                                       (60, 65, 70, 81, 86, 91),
-                                       (85, 90, 95, 106, 111, 116),
-                                       (72, 73, 74, 127, 128, 129),
-                                       (131, 136, 141, 49, 48, 47),
-                                       (135, 140, 145, 97, 98, 99),
-                                       (147, 148, 149, 124, 123, 122)):
-                # Edge is paired
-                if (state[a] == state[b] and state[b] == state[c] and
-                    state[d] == state[e] and state[e] == state[f]):
-                    pass
-                else:
-                    if (state[a], state[d]) in babelfish:
-                        foo = babelfish[(state[a], state[d])]
-                        state_list[a] = foo[0]
-                        state_list[d] = foo[1]
-
-                    elif (state[d], state[a]) in babelfish:
-                        foo = babelfish[(state[d], state[a])]
-                        # think about this
-                        state_list[d] = foo[0]
-                        state_list[a] = foo[1]
-
-                    if (state[b], state[e]) in babelfish:
-                        foo = babelfish[(state[b], state[e])]
-                        state_list[b] = foo[0]
-                        state_list[e] = foo[1]
-
-                    elif (state[e], state[b]) in babelfish:
-                        foo = babelfish[(state[e], state[b])]
-                        # think about this
-                        state_list[e] = foo[0]
-                        state_list[b] = foo[1]
-
-                    if (state[c], state[f]) in babelfish:
-                        foo = babelfish[(state[c], state[f])]
-                        state_list[c] = foo[0]
-                        state_list[f] = foo[1]
-
-                    elif (state[f], state[c]) in babelfish:
-                        foo = babelfish[(state[f], state[c])]
-                        # think about this
-                        state_list[f] = foo[0]
-                        state_list[c] = foo[1]
-
-        #log.info("pre state: %s" % self.state)
-        state_list[0] = 'placeholder'
-        self.state = state_list[:]
-        #log.info("post state: %s" % self.state)
-
-    def group_edges_via_lookup_table(self):
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        len_original_solution = len(original_solution)
-
-        self.lt_edges_remap()
-
-        try:
-            self.print_cube()
-            self.lt_edges.solve(7)
-            raise SolveError("holy crap that worked")
-
-        except NoIDASolution:
-            raise SolveError("5x5x5-edges IDA failed")
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-            return False
-
-        edges_solution = self.solution[len_original_solution:]
-
-        # Now un-map the edges and execute the solution we found when the edges were re-mapped
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        for step in edges_solution:
-            self.rotate(step)
-
-        return True
-
     def group_edges(self):
 
         if not self.get_non_paired_edges():
@@ -1955,14 +1742,8 @@ class RubiksCube555(RubiksCube):
                 self.solution.append('EDGES_GROUPED')
                 break
 
-            # Is the cube in a state that is in the 5x5x5-edges lookup table?
-            if non_paired_edges_count <= 4 and self.group_edges_via_lookup_table():
-                raise SolveError("holy crap that worked")
-                if self.get_non_paired_edges():
-                    raise SolveError("All edges should have paired from lookup table")
-            else:
-                edge_to_pair = self.get_best_edge_to_pair(non_paired_edges)
-                self.pair_edge(edge_to_pair)
+            edge_to_pair = self.get_best_edge_to_pair(non_paired_edges)
+            self.pair_edge(edge_to_pair)
 
             post_non_paired_wings_count = len(self.get_non_paired_wings())
             post_non_paired_edges_count = len(self.get_non_paired_edges())

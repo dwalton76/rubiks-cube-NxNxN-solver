@@ -163,21 +163,6 @@ class RubiksCube444(RubiksCube):
                                                   False, # state hex
                                                   False) # prune table
 
-        self.lt_edges = LookupTableIDA(self,
-                                       'lookup-table-4x4x4-step101-edges.txt',
-                                       '444-edges-xx-out-paired',
-                                       'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-                                       False, # state_hex
-                                       moves_4x4x4,
-                                       ("Uw", "Uw'", "Uw2",
-                                        "Lw", "Lw'", "Lw2",
-                                        "Fw", "Fw'", "Fw2",
-                                        "Rw", "Rw'", "Rw2",
-                                        "Bw", "Bw'", "Bw2",
-                                        "Dw", "Dw'", "Dw2"), # illegal moves
-                                       # prune tables
-                                       ())
-
     def phase(self):
         if self._phase is None:
             self._phase = 'Stage UD centers'
@@ -837,201 +822,6 @@ class RubiksCube444(RubiksCube):
 
         return True
 
-        '''
-    def get_best_edge_to_pair(self, non_paired_edges):
-        """
-        Loop over all of the non-paired-edges and return the one that will allow us to pair the most edges
-        """
-        max_edges_paired_has_pll = False
-        max_edges_paired = None
-        max_edges_paired_edge = None
-        max_edges_paired_solution_len = None
-
-        pre_non_paired_edges_count = len(self.get_non_paired_edges())
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        for edge in non_paired_edges:
-
-            log.info('')
-            pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            self.pair_edge(edge)
-
-            post_non_paired_edges_count = len(self.get_non_paired_edges())
-            post_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            solution_len = post_solution_len - pre_solution_len
-            edges_paired = pre_non_paired_edges_count - post_non_paired_edges_count
-
-            if post_non_paired_edges_count:
-                leads_to_pll = None
-            else:
-                leads_to_pll = self.edge_solution_leads_to_pll_parity()
-
-            new_min = False
-
-            if max_edges_paired is None:
-                new_min = True
-
-            elif max_edges_paired_has_pll:
-                if leads_to_pll is True:
-                    if edges_paired > max_edges_paired or (edges_paired == max_edges_paired and solution_len < max_edges_paired_solution_len):
-                        new_min = True
-                elif leads_to_pll is False:
-                    new_min = True
-                # Not all edges were paired so leads_to_pll is None..you can
-                # only calculate PLL once all edges are paired
-                else:
-                    if edges_paired > max_edges_paired or (edges_paired == max_edges_paired and solution_len < max_edges_paired_solution_len):
-                        new_min = True
-
-            elif leads_to_pll is None or leads_to_pll is False:
-                if edges_paired > max_edges_paired or (edges_paired == max_edges_paired and solution_len < max_edges_paired_solution_len):
-                    new_min = True
-
-            if new_min:
-                max_edges_paired_has_pll = leads_to_pll
-                max_edges_paired = edges_paired
-                max_edges_paired_edge = edge
-                max_edges_paired_solution_len = solution_len
-
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-        log.warning("%s will pair %d edges in %d steps, leads to PLL %s" % (max_edges_paired_edge, max_edges_paired, max_edges_paired_solution_len, max_edges_paired_has_pll))
-        return max_edges_paired_edge
-        '''
-
-    def lt_edges_remap(self):
-        """
-        The lt_edges lookup-table was built for edges FL, FR, BR, BL so we
-        must take the current unpaired edges and re-map them to those four edges
-        """
-        state = 'x' + ''.join([self.state[square_index] for square_index in xrange(1,97)])
-        state_list = list(state)
-        needs_translation = []
-        four_horsemen_available = [('F', 'L'),
-                                   ('F', 'R'),
-                                   ('B', 'R'),
-                                   ('B', 'L')]
-        four_horsemen = [('F', 'L'),
-                         ('F', 'R'),
-                         ('B', 'R'),
-                         ('B', 'L')]
-
-        for (a, b, c, d) in ((2, 3, 67, 66),
-                             (5, 9, 18, 19),
-                             (14, 15, 34, 35),
-                             (8, 12, 51, 50),
-                             (24, 28, 37, 41),
-                             (40, 44, 53, 57),
-                             (56, 60, 69, 73),
-                             (72, 76, 21, 25),
-                             (82, 83, 46, 47),
-                             (85, 89, 31, 30),
-                             (94, 95, 79, 78),
-                             (88, 92, 62, 63)):
-
-            # If the edge is paired, x it out
-            if state[a] == state[b] and state[c] == state[d]:
-                state_list[a] = "x"
-                state_list[b] = "x"
-                state_list[c] = "x"
-                state_list[d] = "x"
-
-            else:
-                if (state[a], state[c]) in four_horsemen:
-                    if (state[a], state[c]) in four_horsemen_available:
-                        four_horsemen_available.remove((state[a], state[c]))
-                elif (state[c], state[a]) in four_horsemen:
-                    if (state[c], state[a]) in four_horsemen_available:
-                        four_horsemen_available.remove((state[c], state[a]))
-                else:
-                    if (state[a], state[c]) not in needs_translation and (state[c], state[a]) not in needs_translation:
-                        needs_translation.append((state[a], state[c]))
-
-                if (state[b], state[d]) in four_horsemen:
-                    if (state[b], state[d]) in four_horsemen_available:
-                        four_horsemen_available.remove((state[b], state[d]))
-                elif (state[d], state[b]) in four_horsemen:
-                    if (state[d], state[b]) in four_horsemen_available:
-                        four_horsemen_available.remove((state[d], state[b]))
-                else:
-                    if (state[b], state[d]) not in needs_translation and (state[d], state[b]) not in needs_translation:
-                        needs_translation.append((state[b], state[d]))
-
-        if needs_translation:
-            #self.print_cube()
-            #log.info("needs_translation: %s" % ' '.join(map(str, needs_translation)))
-            #log.info("four_horsemen_available: %s" % ' '.join(map(str, four_horsemen_available)))
-
-            babelfish = {}
-            for (a, c) in needs_translation:
-                babelfish[(a, c)] = four_horsemen_available[0]
-                four_horsemen_available = four_horsemen_available[1:]
-
-            #log.info("babelfish: %s" % pformat(babelfish))
-
-            for (a, b, c, d) in ((2, 3, 67, 66),
-                                 (5, 9, 18, 19),
-                                 (14, 15, 34, 35),
-                                 (8, 12, 51, 50),
-                                 (24, 28, 37, 41),
-                                 (40, 44, 53, 57),
-                                 (56, 60, 69, 73),
-                                 (72, 76, 21, 25),
-                                 (82, 83, 46, 47),
-                                 (85, 89, 31, 30),
-                                 (94, 95, 79, 78),
-                                 (88, 92, 62, 63)):
-                if state[a] == state[b] and state[c] == state[d]:
-                    pass
-                else:
-                    if (state[a], state[c]) in babelfish:
-                        foo = babelfish[(state[a], state[c])]
-                        state_list[a] = foo[0]
-                        state_list[c] = foo[1]
-
-                    elif (state[c], state[a]) in babelfish:
-                        foo = babelfish[(state[c], state[a])]
-                        # dwalton think about this
-                        state_list[c] = foo[0]
-                        state_list[a] = foo[1]
-
-                    if (state[b], state[d]) in babelfish:
-                        foo = babelfish[(state[b], state[d])]
-                        state_list[b] = foo[0]
-                        state_list[d] = foo[1]
-
-                    elif (state[d], state[b]) in babelfish:
-                        foo = babelfish[(state[d], state[b])]
-                        # dwalton think about this
-                        state_list[d] = foo[0]
-                        state_list[b] = foo[1]
-
-        #log.info("pre state: %s" % self.state)
-        state_list[0] = 'placeholder'
-        self.state = state_list[:]
-        #log.info("post state: %s" % self.state)
-
-    def group_edges_via_lookup_table(self):
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        len_original_solution = len(original_solution)
-
-        self.lt_edges_remap()
-        self.lt_edges.solve(10)
-        edges_solution = self.solution[len_original_solution:]
-
-        # Now un-map the edges and execute the solution we found when the edges were re-mapped
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        for step in edges_solution:
-            self.rotate(step)
-
-        return True
-
     def group_edges_recursive(self, depth, edge_to_pair):
         """
         """
@@ -1048,26 +838,20 @@ class RubiksCube444(RubiksCube):
                  self.min_edge_solution_len,
                  edge_solution_len))
 
-        # disable for now...is slow and doesn't same any moves
-        if False and edge_to_pair and pre_non_paired_edges_count <= 4 and self.group_edges_via_lookup_table():
-            if self.get_non_paired_edges():
-                raise SolveError("All edges should have paired from lookup table")
+        # Should we continue down this branch or should we prune it? An estimate
+        # of 2 moves to pair an edge is a low estimate so if the current number of
+        # steps plus 2 * pre_non_paired_wings_count is greater than our current minimum
+        # there isn't any point in continuing down this branch so prune it and save
+        # some CPU cycles.
+        estimated_solution_len = edge_solution_len + (2 * pre_non_paired_wings_count)
 
-        else:
-            # Should we continue down this branch or should we prune it? An estimate
-            # of 2 moves to pair an edge is a low estimate so if the current number of
-            # steps plus 2 * pre_non_paired_wings_count is greater than our current minimum
-            # there isn't any point in continuing down this branch so prune it and save
-            # some CPU cycles.
-            estimated_solution_len = edge_solution_len + (2 * pre_non_paired_wings_count)
+        if estimated_solution_len >= self.min_edge_solution_len:
+            #log.warning("PRUNE: %s + (2 * %d) > %s" % (edge_solution_len, non_paired_wings_count, self.min_edge_solution_len))
+            return False
 
-            if estimated_solution_len >= self.min_edge_solution_len:
-                #log.warning("PRUNE: %s + (2 * %d) > %s" % (edge_solution_len, non_paired_wings_count, self.min_edge_solution_len))
-                return False
-
-            # The only time this will be None is on the initial call to group_edges_recursive()
-            if edge_to_pair:
-                self.pair_edge(edge_to_pair)
+        # The only time this will be None is on the initial call to group_edges_recursive()
+        if edge_to_pair:
+            self.pair_edge(edge_to_pair)
 
         non_paired_edges = self.get_non_paired_edges()
 
@@ -1120,66 +904,6 @@ class RubiksCube444(RubiksCube):
         self.solution = self.min_edge_solution[:]
         self.solution.append('EDGES_GROUPED')
 
-        # This is the non-recursive approach...will leave this as a reference
-        '''
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        pll_blacklist = []
-        first_edge = None
-
-        while True:
-
-            if not self.get_non_paired_edges():
-                if self.edge_solution_leads_to_pll_parity():
-                    log.warning('*' * 80)
-                    log.warning("Pairing %s first leads to PLL" % pformat(first_edge))
-                    log.warning('*' * 80)
-                    pll_blacklist.append(first_edge)
-                    first_edge = None
-                    self.state = original_state[:]
-                    self.solution = original_solution[:]
-                else:
-                    self.solution.append('EDGES_GROUPED')
-                    break
-
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-
-            try:
-                tmp_state = self.state[:]
-                tmp_solution = self.solution[:]
-                self.lt_edges.solve()
-
-                if self.edge_solution_leads_to_pll_parity():
-                    self.state = tmp_state[:]
-                    self.solution = tmp_solution[:]
-                else:
-                    self.solution.append('EDGES_GROUPED')
-                    break
-            except NoSteps:
-                pass
-
-            if first_edge is None:
-                non_paired_edges = [edge for edge in self.get_non_paired_edges() if edge not in pll_blacklist]
-            else:
-                non_paired_edges = self.get_non_paired_edges()
-
-            edge_to_pair = self.get_best_edge_to_pair(non_paired_edges)
-
-            if first_edge is None:
-                first_edge = edge_to_pair
-
-            pre_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-            self.pair_edge(edge_to_pair)
-
-            post_non_paired_edges_count = len(self.get_non_paired_edges())
-            log.info('%d edges left to pair, %d steps in' %
-                (post_non_paired_edges_count,
-                 self.get_solution_len_minus_rotates(self.solution) - pre_solution_len))
-            log.info('')
-            log.info('')
-            log.info('')
-        '''
 
 # Move a wing to (44, 57)
 lookup_table_444_last_two_edges_place_F_east = {

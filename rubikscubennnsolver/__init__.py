@@ -2564,6 +2564,9 @@ class RubiksCube(object):
             self.rotate_U()
 
     def make_U_south_have_unpaired_edge(self):
+        """
+        5x5x5 edge pairing is the only place this is used
+        """
 
         if not self.sideU.south_edge_paired():
             return

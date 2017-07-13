@@ -321,7 +321,7 @@ class LookupTable(object):
                 state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.edge_pos])
 
             elif self.state_type == '444-edges-xx-out-paired':
-                state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1,97)])
+                state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1, 97)])
                 state_list = list(state)
 
                 for (a, b, c, d) in ((2, 3, 67, 66),
@@ -373,7 +373,7 @@ class LookupTable(object):
                         state[94:96]
 
             elif self.state_type == '444-centers-and-unpaired-edges':
-                state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1,97)])
+                state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1, 97)])
                 state_list = list(state)
 
                 for (a, b, c, d) in ((2, 3, 67, 66),
@@ -523,6 +523,67 @@ class LookupTable(object):
             elif self.state_type == '555-edges':
                 # unroll
                 state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.edge_pos])
+
+            elif self.state_type == '555-edges-xx-out-paired':
+                state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1, 151)])
+                state_list = list(state)
+
+                for (a, b, c, d, e, f) in ((2, 3, 4, 104, 103, 102),
+                                           (6, 11, 16, 27, 28, 29),
+                                           (10, 15, 20, 79, 78, 77),
+                                           (22, 23, 24, 52, 53, 54),
+                                           (31, 36, 41, 110, 115, 120),
+                                           (35, 40, 45, 56, 61, 66),
+                                           (60, 65, 70, 81, 86, 91),
+                                           (85, 90, 95, 106, 111, 116),
+                                           (72, 73, 74, 127, 128, 129),
+                                           (131, 136, 141, 49, 48, 47),
+                                           (135, 140, 145, 97, 98, 99),
+                                           (147, 148, 149, 124, 123, 122)):
+
+                    # If the edge is paired, x it out
+                    if (state[a] == state[b] and state[b] == state[c] and
+                        state[d] == state[e] and state[e] == state[f]):
+                        state_list[a] = "x"
+                        state_list[b] = "x"
+                        state_list[c] = "x"
+                        state_list[d] = "x"
+                        state_list[e] = "x"
+                        state_list[f] = "x"
+
+                state = ''.join(state_list)
+
+                # only keep the edges
+                state = state[2:5] +\
+                        state[6] + state[10] +\
+                        state[11] + state[15] +\
+                        state[16] + state[20] +\
+                        state[22:25] +\
+                        state[27:30] +\
+                        state[31] + state[35] +\
+                        state[36] + state[40] +\
+                        state[41] + state[45] +\
+                        state[47:50] +\
+                        state[52:55] +\
+                        state[56] + state[60] +\
+                        state[61] + state[65] +\
+                        state[66] + state[70] +\
+                        state[72:75] +\
+                        state[77:80] +\
+                        state[81] + state[85] +\
+                        state[86] + state[90] +\
+                        state[91] + state[95] +\
+                        state[97:100] +\
+                        state[102:105] +\
+                        state[106] + state[110] +\
+                        state[111] + state[115] +\
+                        state[116] + state[120] +\
+                        state[122:125] +\
+                        state[127:130] +\
+                        state[131] + state[135] +\
+                        state[136] + state[140] +\
+                        state[141] + state[145] +\
+                        state[147:150]
 
             elif self.state_type == '555-centers-and-unpaired-edges':
                 state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1,151)])
@@ -1606,6 +1667,7 @@ class LookupTableIDA(LookupTable):
         self.ida_prune_count = 0
         self.prune_tables = prune_tables
         self.visited_states = set()
+        self.init_ida_depth = 1
 
     def ida_steps_list(self, prev_step_sequences, threshold, max_step_count):
 
@@ -1673,7 +1735,7 @@ class LookupTableIDA(LookupTable):
                 result.append("%s %s" % (prev_steps, next_step))
         return result
 
-    def ida_stage(self, max_ida_depth):
+    def ida_stage(self, max_ida_threshold):
         """
         The goal is to find a sequence of moves that will put the cube in a state that is
         in our lookup table self.filename
@@ -1725,7 +1787,9 @@ class LookupTableIDA(LookupTable):
             pt.index = index
             pt_index_to_pt[pt.index] = pt
 
-        for threshold in xrange(1, max_ida_depth+1):
+        # dwalton
+        self.init_ida_depth = 1
+        for threshold in xrange(1, max_ida_threshold+1):
 
             # Build a list of moves we can do 1 move deep
             # Build a list of moves we can do 2 moves deep, this must build on the 1 move deep list
@@ -1914,10 +1978,10 @@ class LookupTableIDA(LookupTable):
                     log.info("%s: IDA threshold %d (max step %d) this branch is a dead end (took %s to search prune tables)" %\
                         (self, threshold, max_step_count, pretty_time(end_time4 - start_time4)))
 
-        # The only time we will get here is when max_ida_depth is a low number.  It will be up to the caller to:
+        # The only time we will get here is when max_ida_threshold is a low number.  It will be up to the caller to:
         # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
-        # - call ida_solve() again but with a near infinite max_ida_depth...99 is close enough to infinity for IDA purposes
-        log.warning("%s: could not find a solution via IDA within %d steps...will 'solve' a prune table and try again" % (self, max_ida_depth))
+        # - call ida_solve() again but with a near infinite max_ida_threshold...99 is close enough to infinity for IDA purposes
+        log.warning("%s: could not find a solution via IDA within %d steps...will 'solve' a prune table and try again" % (self, max_ida_threshold))
 
         self.parent.state = original_state[:]
         self.parent.solution = original_solution[:]

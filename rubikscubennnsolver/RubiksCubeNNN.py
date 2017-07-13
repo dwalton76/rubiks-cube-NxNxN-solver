@@ -430,6 +430,9 @@ class RubiksCubeNNNEven(RubiksCube):
             self.solution.append('EDGES_GROUPED')
             return
 
+        # dwalton - we need to tell both pair_inside_edges_via_444() and pair_edge_orbit_via_555() to
+        # avoid PLL
+
         # Pair the inside edges via fake 4x4x4
         self.pair_inside_edges_via_444()
 
@@ -444,4 +447,4 @@ class RubiksCubeNNNEven(RubiksCube):
 
         log.info("Edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
-        #sys.exit(0)
+        sys.exit(0)

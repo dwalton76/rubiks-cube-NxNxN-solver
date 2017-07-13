@@ -720,6 +720,7 @@ class RubiksCube444(RubiksCube):
 
         steps = lookup_table_444_sister_wing_to_U_west[sister_wing_bottom_F_east]
 
+        # dwalton take a look at this
         # If steps is None it means sister_wing_bottom_F_east is at (37, 24)
         # which is the top wing on F-west. If that is the case we can't pair
         # two edges at once so just put some random unpaired edge at U-west
@@ -1018,34 +1019,18 @@ class RubiksCube444(RubiksCube):
         original_solution = self.solution[:]
         len_original_solution = len(original_solution)
 
-        try:
-            self.lt_edges_remap()
-            self.lt_edges.solve(10)
-            non_paired_edges = []
-            lookup_table_worked = True
-            #raise SolveError("holy crap that worked")
+        self.lt_edges_remap()
+        self.lt_edges.solve(10)
+        edges_solution = self.solution[len_original_solution:]
 
-            edges_solution = self.solution[len_original_solution:]
-
-            # Now un-map the edges and execute the solution we found when the edges were re-mapped
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in edges_solution:
-                self.rotate(step)
-
-            return True
-
-        #except NoSteps as e:
-        except Exception:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-            raise
-            pass
-
+        # Now un-map the edges and execute the solution we found when the edges were re-mapped
         self.state = original_state[:]
         self.solution = original_solution[:]
-        return False
+
+        for step in edges_solution:
+            self.rotate(step)
+
+        return True
 
     def group_edges_recursive(self, depth, edge_to_pair):
         """
@@ -1053,7 +1038,6 @@ class RubiksCube444(RubiksCube):
         pre_non_paired_wings_count = len(self.get_non_paired_wings())
         pre_non_paired_edges_count = len(self.get_non_paired_edges())
         edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-        lookup_table_worked = False
 
         log.info("")
         log.info("group_edges_recursive(%d) called with edge_to_pair %s (%d edges and %d wings left to pair, min solution len %s, current solution len %d)" %
@@ -1064,16 +1048,12 @@ class RubiksCube444(RubiksCube):
                  self.min_edge_solution_len,
                  edge_solution_len))
 
-        # comment out for now...is slow and doesn't same any moves
-        '''
-        if edge_to_pair and pre_non_paired_edges_count <= 4:
-            if self.group_edges_via_lookup_table():
-                lookup_table_worked = True
-                non_paired_edges = self.get_non_paired_edges()
-        '''
+        # disable for now...is slow and doesn't same any moves
+        if False and edge_to_pair and pre_non_paired_edges_count <= 4 and self.group_edges_via_lookup_table():
+            if self.get_non_paired_edges():
+                raise SolveError("All edges should have paired from lookup table")
 
-        if not lookup_table_worked:
-
+        else:
             # Should we continue down this branch or should we prune it? An estimate
             # of 2 moves to pair an edge is a low estimate so if the current number of
             # steps plus 2 * pre_non_paired_wings_count is greater than our current minimum
@@ -1081,15 +1061,15 @@ class RubiksCube444(RubiksCube):
             # some CPU cycles.
             estimated_solution_len = edge_solution_len + (2 * pre_non_paired_wings_count)
 
-            #if estimated_solution_len >= self.min_edge_solution_len:
-            #    #log.warning("PRUNE: %s + (2 * %d) > %s" % (edge_solution_len, non_paired_wings_count, self.min_edge_solution_len))
-            #    return False
+            if estimated_solution_len >= self.min_edge_solution_len:
+                #log.warning("PRUNE: %s + (2 * %d) > %s" % (edge_solution_len, non_paired_wings_count, self.min_edge_solution_len))
+                return False
 
             # The only time this will be None is on the initial call to group_edges_recursive()
             if edge_to_pair:
                 self.pair_edge(edge_to_pair)
 
-            non_paired_edges = self.get_non_paired_edges()
+        non_paired_edges = self.get_non_paired_edges()
 
         if non_paired_edges:
             original_state = self.state[:]
@@ -1112,16 +1092,6 @@ class RubiksCube444(RubiksCube):
 
             # There are no edges left to pair, note how many steps it took pair them all
             edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-
-
-            # I tried this once for grins but it takes about 20x longer to run and the
-            # avg solution over 50 cubes wasn't any shorter. I think it is because the
-            # cubes are basically always scambled to the point where the 3x3x3 phase
-            # takes ~20 steps.
-            #
-            #kociemba_string = self.get_kociemba_string(False)
-            #steps_333 = check_output(['kociemba', kociemba_string]).decode('ascii').splitlines()[-1].strip().split()
-            #edge_solution_len += len(steps_333)
 
             # Remember the solution that pairs all edges in the least number of moves
             if edge_solution_len < self.min_edge_solution_len:

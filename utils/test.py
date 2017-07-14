@@ -6,6 +6,7 @@ from rubikscubennnsolver.RubiksCube333 import RubiksCube333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666
+from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 import argparse
 import json
 import logging
@@ -85,6 +86,9 @@ try:
             elif size == '6x6x6':
                 cube = RubiksCube666(kociemba_string)
 
+            elif size == '7x7x7':
+                cube = RubiksCube777(kociemba_string)
+
             else:
                 print("ERROR: Add support for %s" % size)
                 sys.exit(1)
@@ -127,11 +131,11 @@ try:
                 max_solution = solution_length
                 max_solution_kociemba_string = kociemba_string
 
-        results.append("%s min solution %s steps (%s)" % (size, min_solution, min_solution_kociemba_string))
-        results.append("%s max solution %s steps (%s)" % (size, max_solution, max_solution_kociemba_string))
-        results.append("%s avg solution %s steps" % (size, float(solution_total/num_test_cases_executed)))
         results.append("%s avg centers solution %s steps" % (size, float(centers_solution_total/num_test_cases_executed)))
         results.append("%s avg edges solution %s steps" % (size, float(edges_solution_total/num_test_cases_executed)))
+        results.append("%s avg solution %s steps" % (size, float(solution_total/num_test_cases_executed)))
+        results.append("%s min solution %s steps (%s)" % (size, min_solution, min_solution_kociemba_string))
+        results.append("%s max solution %s steps (%s)" % (size, max_solution, max_solution_kociemba_string))
         results.append("")
 
     for result in results:

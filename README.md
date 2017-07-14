@@ -6,8 +6,10 @@ This is a work in progress...here is what works so far:
 * 3x3x3 works via the kociemba solver
 * 4x4x4 works, average solution is 65 moves
 * 5x5x5 works, average solution is 119 moves
-* 6x6x6 works, average solution is X moves
+* 6x6x6 works, average solution is 214 moves
 * 7x7x7 works, average solution is X moves
+* NxNxN even cubes, am testing with a 14x14x14, not working yet
+* NxNxN odd cubes, am testing with a 15x15x15, not working yet
 
 All cubes 4x4x4 and larger follow the same basic approach:
 * Solve centers

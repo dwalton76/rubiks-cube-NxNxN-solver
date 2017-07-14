@@ -665,6 +665,8 @@ class RubiksCube444(RubiksCube):
         return True
 
     def pair_two_edges_444(self, edge):
+        original_state = self.state[:]
+        original_solution = self.solution[:]
         original_non_paired_wings_count = self.get_non_paired_wings_count()
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
@@ -705,18 +707,20 @@ class RubiksCube444(RubiksCube):
 
         steps = lookup_table_444_sister_wing_to_U_west[sister_wing_bottom_F_east]
 
-        # dwalton take a look at this
         # If steps is None it means sister_wing_bottom_F_east is at (37, 24)
-        # which is the top wing on F-west. If that is the case we can't pair
-        # two edges at once so just put some random unpaired edge at U-west
+        # which is the top wing on F-west. If that is the case call
+        # pair_last_two_edges_444()
         if steps == None:
-            self.make_U_west_have_unpaired_edge()
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            self.print_cube()
+            self.pair_last_two_edges_444(edge)
         else:
             for step in steps.split():
                 self.rotate(step)
 
-        for step in ("Uw", "L'", "U'", "L", "Uw'"):
-            self.rotate(step)
+            for step in ("Uw", "L'", "U'", "L", "Uw'"):
+                self.rotate(step)
 
         current_non_paired_wings_count = self.get_non_paired_wings_count()
         current_solution_len = self.get_solution_len_minus_rotates(self.solution)
@@ -775,8 +779,9 @@ class RubiksCube444(RubiksCube):
              current_solution_len - original_solution_len,
              current_non_paired_wings_count))
 
-        if current_non_paired_wings_count:
-            raise SolveError("Failed to pair last two edges")
+        if original_non_paired_wings_count == 2:
+            if current_non_paired_wings_count:
+                raise SolveError("Failed to pair last two edges")
 
     def pair_edge(self, edge_to_pair):
         """

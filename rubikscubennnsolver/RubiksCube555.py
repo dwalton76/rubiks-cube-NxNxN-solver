@@ -32,13 +32,10 @@ class RubiksCube555(RubiksCube):
 
     def __init__(self, kociemba_string, debug=False):
         RubiksCube.__init__(self, kociemba_string)
-        # TODO setting this to False needs some more work
-        # RLBFBDBLUDBRUBUFFRBRBBLDUFBRLURBDLBDFRLDBUURDRBFDFLRUFLUBULUBLFFFURDFUFFFLURRUFFDURDUBLDURFURRBLLLDLBRRUDDDBDRFBLFDLLBFLURLFDRUUBDLRDDBRFBULLLDFUDRDFB has a
-        # dwalton
-        # scenario where pair_one_wing_555 breaks up the U-south edge and pairs 0 wings
         self.use_pair_outside_edges = False
 
-        # This will only be True when an even cube is using the 555 edge solver to pair the final/outside orbit of edges
+        # This will be True when an even cube is using the 555 edge solver
+        # to pair an orbit of edges
         self.avoid_pll = False
 
         if debug:
@@ -352,8 +349,6 @@ class RubiksCube555(RubiksCube):
         self.lt_init()
         self.rotate_U_to_U()
 
-        # TODO I am doing this sort of thing in multiple places (see 6x6x6 step20)...move this
-        # logic to LookupTableIDA
         # Stage UD centers
         try:
             self.lt_UD_centers_stage.solve(9)
@@ -506,7 +501,7 @@ class RubiksCube555(RubiksCube):
             log.info("prep_for_slice_back_555() failed...no steps")
             return False
 
-    def get_sister_wings_slice_forward_555(self, pre_non_paired_wings_count):
+    def get_sister_wings_slice_forward_555(self, pre_non_paired_edges_count, pre_non_paired_wings_count):
         results = (None, None, None, None, None)
         max_pair_on_slice_forward = 0
 
@@ -544,7 +539,7 @@ class RubiksCube555(RubiksCube):
                         sister_wing2 = tuple(list(reversed(sister_wing2)))
                     sister_wing2_side = self.get_side_for_index(sister_wing2[0])
 
-                    # log.info("sister_wing1_use_first_neighbor %s, sister_wing2 %s, reverse %s, %s" %
+                    #log.info("sister_wing1_use_first_neighbor %s, sister_wing2 %s, reverse %s, %s" %
                     #   (sister_wing1_use_first_neighbor, pformat(sister_wing2), sister_wing2_reverse, sister_wing2_side))
 
                     for sister_wing2_use_first_neighbor in (True, False):
@@ -557,15 +552,15 @@ class RubiksCube555(RubiksCube):
 
                         for sister_wing3_reverse in (True, False):
 
-                            # If we are pairing the last six wings then we need sister_wing3 to
-                            # be any unpaired edge that allows us to only pair 2 on the slice forward
-                            if pre_non_paired_wings_count == 6:
+                            # If we are pairing the last 4, 5 or 6 edges then we need sister_wing3 to
+                            # be any unpaired edge that allows us to only pair 2 edges on the slice forward
+                            if pre_non_paired_edges_count in (4, 5, 6):
 
                                 # We need sister_wing3 to be any unpaired edge that allows us
                                 # to only pair 2 on the slice forward
                                 for wing in self.get_non_paired_wings():
-                                    if (wing[0] not in (target_wing, sister_wing1, sister_wing2, sister_wing3) and
-                                        wing[1] not in (target_wing, sister_wing1, sister_wing2, sister_wing3)):
+                                    if (wing[0] not in (target_wing, sister_wing1, sister_wing2, sister_wing3, (40, 61), (61, 40)) and
+                                        wing[1] not in (target_wing, sister_wing1, sister_wing2, sister_wing3, (40, 61), (61, 40))):
                                         sister_wing3 = wing[1]
                                         break
                             else:
@@ -574,25 +569,25 @@ class RubiksCube555(RubiksCube):
                             if sister_wing3_reverse:
                                 sister_wing3 = tuple(list(reversed(sister_wing3)))
 
-                            # log.info("sister_wing2_use_first_neighbor %s, sister_wing3 %s, reverse %s, %s" %
-                            #    (sister_wing2_use_first_neighbor, pformat(sister_wing3), sister_wing3_reverse, sister_wing3_side))
                             state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
                             steps = self.lt_edge_slice_forward.steps(state)
 
-                            if steps:
-                                #log.info("target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %
-                                #    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3)))
+                            #log.info("sister_wing2_use_first_neighbor %s, sister_wing3 %s, reverse %s, state %s, steps %s" %
+                            #    (sister_wing2_use_first_neighbor, pformat(sister_wing3), sister_wing3_reverse, state, "True" if steps else "False"))
 
-                                # pre_non_paired_wings_count = self.get_non_paired_wings_count()
+                            if steps:
+                                log.info("target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %
+                                    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3)))
+
                                 for step in steps:
                                     self.rotate(step)
 
                                 # 3Uw Uw'
                                 if self.use_pair_outside_edges:
                                     self.rotate("Uw'")
+
                                 self.rotate("Dw")
                                 self.rotate_y()
-
                                 post_non_paired_wings_count = self.get_non_paired_wings_count()
 
                                 # F-west must pair
@@ -608,6 +603,10 @@ class RubiksCube555(RubiksCube):
                                 if will_pair_on_slice_count > max_pair_on_slice_forward:
                                     results = (target_wing, sister_wing1, sister_wing2, sister_wing3, steps)
                                     max_pair_on_slice_forward = will_pair_on_slice_count
+
+        #if pre_non_paired_edges_count in (4, 5, 6):
+        #    if max_pair_on_slice_forward != 2:
+        #        raise SolveError("Should pair 2 on slice forward but will pair %d" % max_pair_on_slice_forward)
 
         #log.info("max_pair_on_slice_forward is %d" % max_pair_on_slice_forward)
         #if max_pair_on_slice_forward != 3:
@@ -1170,18 +1169,18 @@ class RubiksCube555(RubiksCube):
 
         return True
 
-    def pair_six_wings_555(self, wing_to_pair, pre_non_paired_wings_count):
+    def pair_four_or_six_wings_555(self, wing_to_pair, pre_non_paired_edges_count):
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
         original_non_paired_wings_count = self.get_non_paired_wings_count()
 
-        log.info("pair_six_wings_555()")
+        log.info("pair_four_or_six_wings_555()")
         # log.info("PREP-FOR-3Uw-SLICE (begin)")
 
-        (target_wing, sister_wing1, sister_wing2, sister_wing3, steps) = self.get_sister_wings_slice_forward_555(pre_non_paired_wings_count)
+        (target_wing, sister_wing1, sister_wing2, sister_wing3, steps) = self.get_sister_wings_slice_forward_555(pre_non_paired_edges_count, original_non_paired_wings_count)
 
         if target_wing is None:
-            log.info("pair_six_wings_555() failed...get_sister_wings_slice_forward_555")
-            #raise SolveError("pair_six_wings_555() failed...get_sister_wings_slice_forward_555")
+            log.info("pair_four_or_six_wings_555() failed...get_sister_wings_slice_forward_555")
+            #raise SolveError("pair_four_or_six_wings_555() failed...get_sister_wings_slice_forward_555")
             return False
 
         for step in steps:
@@ -1199,12 +1198,13 @@ class RubiksCube555(RubiksCube):
         post_slice_forward_non_paired_wings_count = self.get_non_paired_wings_count()
         post_slice_forward_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        log.info("pair_six_wings_555() paired %d wings in %d moves on slice forward (%d left to pair, %d steps in)" %
+        log.info("pair_four_or_six_wings_555() paired %d wings in %d moves on slice forward (%d left to pair, %d steps in)" %
             (original_non_paired_wings_count - post_slice_forward_non_paired_wings_count,
              post_slice_forward_solution_len - original_solution_len,
              post_slice_forward_non_paired_wings_count,
              post_slice_forward_solution_len))
 
+        # setup for slice back
         placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
 
         # We paired all 8 wings on the slice forward so rotate the edges from U and D onto L and F and check again
@@ -1218,7 +1218,7 @@ class RubiksCube555(RubiksCube):
             placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
 
             if not placed_unpaired_wing:
-                log.info("pair_six_wings_555() failed...no unpaired wings to move to F-east")
+                log.info("pair_four_or_six_wings_555() failed...no unpaired wings to move to F-east")
                 return False
 
         #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_wings_count())
@@ -1229,13 +1229,13 @@ class RubiksCube555(RubiksCube):
         self.rotate_y()
 
         #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
-        self.verify_all_centers_solved()
+        #self.verify_all_centers_solved()
 
         post_slice_back_non_paired_wings_count = self.get_non_paired_wings_count()
         post_slice_back_solution_len = self.get_solution_len_minus_rotates(self.solution)
         wings_paired = post_slice_forward_non_paired_wings_count - post_slice_back_non_paired_wings_count
 
-        log.info("pair_six_wings_555() paired %d wings in %d moves on slice back (%d left to pair, %d steps in)" %
+        log.info("pair_four_or_six_wings_555() paired %d wings in %d moves on slice back (%d left to pair, %d steps in)" %
             (post_slice_forward_non_paired_wings_count - post_slice_back_non_paired_wings_count,
              post_slice_back_solution_len - post_slice_forward_solution_len,
              post_slice_back_non_paired_wings_count,
@@ -1493,28 +1493,6 @@ class RubiksCube555(RubiksCube):
         if target_wing_value != sister_wing_value:
             for step in ("R", "U'", "B'", "R2"):
                 self.rotate(step)
-            #sister_wing = self.get_wings_on_edge(target_wing, 'F', 'R')[0]
-            #sister_wing_value = self.get_wing_value(sister_wing)
-
-        # If there are no unpaired wings on U,B or D then we cannot pair this wing
-        # without breaking some other already paired wing.
-        if (self.sideU.all_edges_paired() and
-            self.sideB.all_edges_paired() and
-            self.sideD.all_edges_paired()):
-            raise SolveError("pair_one_wing_555() no unpaired wings in U B or D")
-
-        else:
-            # Now that that two edges on F are in place, put an unpaired wing at U-west
-            # TODO this needs to set things up to pair a 2nd wing on the slice back
-            self.make_U_south_have_unpaired_edge()
-
-            # We need the right two pieces on U-south to be the ones that are
-            # unpaired, if they are not flip it around
-            if self.state[23] == self.state[24] and self.state[53] == self.state[54]:
-
-                # U L B' L U2
-                for step in "U L' B' L U2".split():
-                    self.rotate(step)
 
         if sister_wing[0] == 65:
             # 3Uw Uw'
@@ -1523,14 +1501,33 @@ class RubiksCube555(RubiksCube):
             self.rotate("Dw")
             self.rotate_y()
 
-            for step in "U' L' U L".split():
-                self.rotate(step)
+            placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
+
+            # We paired all 8 wings on the slice forward so rotate the edges from U and D onto L and F and check again
+            if not placed_unpaired_wing:
+                self.rotate("R")
+                self.rotate("L'")
+                self.rotate("U")
+                self.rotate("D")
+                self.rotate("R'")
+                self.rotate("L")
+                placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
+
+                if not placed_unpaired_wing:
+                    log.info("pair_four_or_six_wings_555() failed...no unpaired wings to move to F-east")
+                    return False
+
+            #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_wings_count())
+            #self.print_cube()
 
             # 3Uw' Uw
             if self.use_pair_outside_edges:
                 self.rotate("Uw")
             self.rotate("Dw'")
-            self.rotate_y_reverse()
+            self.rotate_y_reverse() # dwalton double check this..is rotate_y() in the other place where we slice back
+
+            #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
+            #self.verify_all_centers_solved()
 
         else:
             raise SolveError("sister_wing %s is in the wrong position" % str(sister_wing))
@@ -1539,12 +1536,15 @@ class RubiksCube555(RubiksCube):
         wings_paired = original_non_paired_wings_count - current_non_paired_wings_count
         log.info("pair_one_wing_555() paired %d wings, added %d steps" % (wings_paired, self.get_solution_len_minus_rotates(self.solution) - original_solution_len))
 
-        if wings_paired < 1:
-            raise SolveError("Paired %d wings" % wings_paired)
-
         if self.use_pair_outside_edges:
             if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
                 raise SolveError("outside edges have been broken")
+
+        if wings_paired < 1:
+            return False
+            #raise SolveError("Paired %d wings" % wings_paired)
+        else:
+            return True
 
     def pair_edge(self, edge_to_pair):
 
@@ -1572,7 +1572,8 @@ class RubiksCube555(RubiksCube):
         if self.pair_checkboard_edge_555(pre_solution_len, pre_non_paired_wings_count):
             return True
 
-        # Flip two edge elements
+        # Pair two sister edges...all colors involved live on two edges so this
+        # is just like solving the last two edges
         if self.pair_two_sister_edges_555(pre_solution_len, pre_non_paired_wings_count, pre_non_paired_edges_count):
             return True
 
@@ -1582,22 +1583,20 @@ class RubiksCube555(RubiksCube):
         if self.sideF.west_edge_paired():
             raise SolveError("F-west should not be paired")
 
-        if pre_non_paired_edges_count >= 6:
-            if self.pair_six_wings_555(edge_to_pair[0], pre_non_paired_wings_count):
+        if pre_non_paired_edges_count >= 4:
+            if self.pair_four_or_six_wings_555(edge_to_pair[0], pre_non_paired_edges_count):
                 return True
             else:
                 self.state = original_state[:]
                 self.solution = original_solution[:]
 
-        # dwalton now we need to try to pair 4 at a time
-        self.pair_one_wing_555()
-        post_non_paired_wings_count = self.get_non_paired_wings_count()
-        wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
-
-        if wings_paired < 1:
-            raise SolveError("Paired %d wings" % wings_paired)
-
-        return True
+        # TODO now we need to try to pair 4 at a time
+        if self.pair_one_wing_555():
+            return True
+        else:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            return False
 
     def group_edges_recursive(self, depth, edge_to_pair):
         """
@@ -1608,6 +1607,7 @@ class RubiksCube555(RubiksCube):
         pre_non_paired_wings_count = len(self.get_non_paired_wings())
         pre_non_paired_edges_count = len(self.get_non_paired_edges())
         edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
+        edge_paired = False
 
         log.info("")
         log.info("group_edges_recursive(%d) called with edge_to_pair %s (%d edges and %d wings left to pair, min solution len %s, current solution len %d)" %
@@ -1623,7 +1623,10 @@ class RubiksCube555(RubiksCube):
         # steps plus 2.5 * pre_non_paired_wings_count is greater than our current minimum
         # there isn't any point in continuing down this branch so prune it and save
         # some CPU cycles.
-        estimated_solution_len = edge_solution_len + (2.5 * pre_non_paired_wings_count)
+        #
+        # I use 3 here just to make it run faster...this adds 4 moves on average but it runs so much faster than using 2.5
+        #estimated_solution_len = edge_solution_len + (2.5 * pre_non_paired_wings_count)
+        estimated_solution_len = edge_solution_len + (3 * pre_non_paired_wings_count)
 
         if estimated_solution_len >= self.min_edge_solution_len:
             #log.warning("PRUNE: %s + (2.5 * %d) > %s" % (edge_solution_len, pre_non_paired_wings_count, self.min_edge_solution_len))
@@ -1631,7 +1634,9 @@ class RubiksCube555(RubiksCube):
 
         # The only time this will be None is on the initial call
         if edge_to_pair:
-            self.pair_edge(edge_to_pair)
+            edge_paired = self.pair_edge(edge_to_pair)
+        else:
+            edge_paired = True
 
         non_paired_edges = self.get_non_paired_edges()
 
@@ -1642,20 +1647,20 @@ class RubiksCube555(RubiksCube):
             original_state = self.state[:]
             original_solution = self.solution[:]
 
-            if depth > 0 and depth <= 3:
+            if edge_paired:
+                if not self.use_pair_outside_edges and depth > 0 and depth <= 3:
 
-                log.info("depth %d paired %d wings" % (depth, wings_paired))
-                if wings_paired >= 5:
+                    log.info("depth %d paired %d wings" % (depth, wings_paired))
+                    if wings_paired >= 5:
+                        for edge in non_paired_edges:
+                            self.group_edges_recursive(depth+1, edge)
+                            self.state = original_state[:]
+                            self.solution = original_solution[:]
+                else:
                     for edge in non_paired_edges:
                         self.group_edges_recursive(depth+1, edge)
                         self.state = original_state[:]
                         self.solution = original_solution[:]
-            else:
-                for edge in non_paired_edges:
-                    self.group_edges_recursive(depth+1, edge)
-                    self.state = original_state[:]
-                    self.solution = original_solution[:]
-
         else:
 
             # There are no edges left to pair, note how many steps it took pair them all
@@ -1667,43 +1672,10 @@ class RubiksCube555(RubiksCube):
                 self.min_edge_solution = self.solution[:]
                 self.min_edge_solution_state = self.state[:]
                 log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
-            else:
-                log.warning("LOST   : edges paired in %s vs MIN %d steps" % (edge_solution_len, self.min_edge_solution_len))
+            #else:
+            #    log.warning("LOST   : edges paired in %s vs MIN %d steps" % (edge_solution_len, self.min_edge_solution_len))
 
             return True
-
-    def get_best_edge_to_pair(self, non_paired_edges):
-        max_wings_paired = 0
-        max_wings_paired_edge = None
-        max_wings_paired_solution_len = None
-
-        pre_non_paired_wings_count = len(self.get_non_paired_wings())
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        for edge in non_paired_edges:
-
-            log.info('')
-            pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            self.pair_edge(edge)
-            post_non_paired_wings_count = len(self.get_non_paired_wings())
-            post_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            solution_len = post_solution_len - pre_solution_len
-            wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
-
-            if post_non_paired_wings_count == 0 and self.avoid_pll and self.edge_solution_leads_to_pll_parity():
-                solution_len += 12
-
-            if wings_paired > max_wings_paired or (wings_paired == max_wings_paired and solution_len < max_wings_paired_solution_len):
-                max_wings_paired = wings_paired
-                max_wings_paired_edge = edge
-                max_wings_paired_solution_len = solution_len
-
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-        log.warning("%s will pair %d wings in %d steps" % (max_wings_paired_edge, max_wings_paired, max_wings_paired_solution_len))
-        return max_wings_paired_edge
 
     def group_edges(self):
 
@@ -1730,32 +1702,6 @@ class RubiksCube555(RubiksCube):
         self.state = self.min_edge_solution_state[:]
         self.solution = self.min_edge_solution[:]
         self.solution.append('EDGES_GROUPED')
-
-
-        # This is the non-recursive approach...will leave this as a reference
-        '''
-        while True:
-            non_paired_edges = self.get_non_paired_edges()
-            non_paired_edges_count = len(non_paired_edges)
-
-            if not non_paired_edges:
-                self.solution.append('EDGES_GROUPED')
-                break
-
-            edge_to_pair = self.get_best_edge_to_pair(non_paired_edges)
-            self.pair_edge(edge_to_pair)
-
-            post_non_paired_wings_count = len(self.get_non_paired_wings())
-            post_non_paired_edges_count = len(self.get_non_paired_edges())
-            log.info('%d wings and %d edges left to pair, %d steps in' %
-                (post_non_paired_wings_count,
-                 post_non_paired_edges_count,
-                 self.get_solution_len_minus_rotates(self.solution)))
-
-            log.info('')
-            log.info('')
-            log.info('')
-        '''
 
     def phase(self):
         if self._phase is None:

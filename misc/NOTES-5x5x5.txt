@@ -114,3 +114,25 @@ solution.
 5x5x5 avg solution 139.0 steps
 5x5x5 avg centers solution 37.0 steps
 5x5x5 avg edges solution 81.0 steps
+
+
+Edge pairing improvements
+- no longer use 4x4x4 first
+- recurse through all edge combos
+- edge prune estimate of 3
+==================================================
+5x5x5 min solution 101 steps (RDBFBUDDLRDRUULLFFDDFBBDDLLUDLRUUBRRLRBBBRUDBBDDFRUURRFDRLRULBFLUFLDFLFFLDDLRBBLLFDLBFBDBFFRFFRRFRBBBLRBRRLDUFURLLDUBFBUFLLUUUDULDUBFDBDUBRFRURUFUUFLD)
+5x5x5 max solution 133 steps (URUBFUUFRDFFUUFLRDBLLBDDDLUULRDLDUBDLRBBLFLBRBFUUBBRBFFUDLFLLBFUFUDRLBFUBBURRLLRUFRDUFFDFRFUBRBBDRFRFLLFURLLFBRBLUDRDDRRDRRFDUDLFLDLUUDUDBRBBBRBDDLDFL)
+5x5x5 avg solution 119.0 steps
+5x5x5 avg centers solution 36.0 steps
+5x5x5 avg edges solution 62.0 steps
+
+
+- edge prune estimate of 2.5
+==================================================
+# It is 4 moves shorter but takes much longer to run
+5x5x5 min solution 101 steps (RDBFBUDDLRDRUULLFFDDFBBDDLLUDLRUUBRRLRBBBRUDBBDDFRUURRFDRLRULBFLUFLDFLFFLDDLRBBLLFDLBFBDBFFRFFRRFRBBBLRBRRLDUFURLLDUBFBUFLLUUUDULDUBFDBDUBRFRURUFUUFLD)
+5x5x5 max solution 132 steps (URUBFUUFRDFFUUFLRDBLLBDDDLUULRDLDUBDLRBBLFLBRBFUUBBRBFFUDLFLLBFUFUDRLBFUBBURRLLRUFRDUFFDFRFUBRBBDRFRFLLFURLLFBRBLUDRDDRRDRRFDUDLFLDLUUDUDBRBBBRBDDLDFL)
+5x5x5 avg solution 115.0 steps
+5x5x5 avg centers solution 36.0 steps
+5x5x5 avg edges solution 58.0 steps

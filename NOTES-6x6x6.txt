@@ -1,2 +1,0 @@
-baseline is 3.46 seconds
-

@@ -897,6 +897,7 @@ class RubiksCube555(RubiksCube):
             pattern_id = 10
 
         else:
+            self.print_cube()
             raise SolveError("Could not determine 5x5x5 last two edges pattern ID for %s" % edges_of_interest_state)
 
         return pattern_id
@@ -1255,19 +1256,14 @@ class RubiksCube555(RubiksCube):
         we want the No 5 scenario as it pairs two wings in 9 moves where No 1 pairs 1 wing
         in 15 moves.
         """
-        is_checkerboard = False
 
-        if self.use_pair_outside_edges:
-            if (self.state[35] == self.state[45] and
-                self.state[56] == self.state[66] and
-                self.state[56] == self.state[40] and
-                self.state[35] == self.state[61]):
-                is_checkerboard = True
+        if (self.state[35] == self.state[45] and
+            self.state[56] == self.state[66] and
+            self.state[56] == self.state[40] and
+            self.state[35] == self.state[61]):
+            is_checkerboard = True
         else:
-            if self.state[35] == self.state[61] and self.state[56] == self.state[40]:
-                is_checkerboard = True
-            elif self.state[45] == self.state[61] and self.state[66] == self.state[40]:
-                is_checkerboard = True
+            is_checkerboard = False
 
         if is_checkerboard:
             expected_pair_count = None

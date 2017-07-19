@@ -1446,89 +1446,115 @@ class RubiksCube555(RubiksCube):
         # Work with the edge at the bottom of F-west
         target_wing = self.sideF.edge_west_pos[-1]
         target_wing_value = self.get_wing_value(target_wing)
-        sister_wings = self.get_wings(target_wing, remove_if_in_same_edge=True)
+        sister_wings = self.get_wings(target_wing)
+        checkerboard = False
 
         # This is the scenario where the center edge is beside its two siblings it
         # just needs to be flipped in place.
         if not sister_wings:
             raise SolveError("We should not be here")
 
-        # Pick the sister_wing that is in the middle of the edge
-        for x in sister_wings:
-            if x in ((3, 103), (103, 3),
-                     (11, 28), (28, 11),
-                     (15, 78), (78, 15),
-                     (23, 53), (53, 23),
-                     (36, 115), (115, 36),
-                     (40, 61), (61, 40),
-                     (48, 136), (136, 48),
-                     (65, 86), (86, 65),
-                     (73, 128), (128, 73),
-                     (90, 111), (111, 90),
-                     (98, 140), (140, 98),
-                     (123, 148), (148, 123)):
-                sister_wing = x
-                break
+
+        # Is this a checkerboard?
+        if (40, 61) in sister_wings:
+            checkerboard = True
+            sister_wing = (40, 61)
+
+        elif (61, 40) in sister_wings:
+            checkerboard = True
+            sister_wing = (61, 40)
+
         else:
-            raise SolveError("Could not find sister wing in the middle: %s" % pformat(sister_wings))
+            # Pick the sister_wing that is in the middle of the edge
+            for x in sister_wings:
+                if x in ((3, 103), (103, 3),
+                         (11, 28), (28, 11),
+                         (15, 78), (78, 15),
+                         (23, 53), (53, 23),
+                         (36, 115), (115, 36),
+                         (40, 61), (61, 40),
+                         (65, 86), (86, 65),
+                         (48, 136), (136, 48),
+                         (73, 128), (128, 73),
+                         (90, 111), (111, 90),
+                         (98, 140), (140, 98),
+                         (123, 148), (148, 123)):
+                    sister_wing = x
+                    break
 
-        # Move sister wing to F-east...TODO this needs to be smart enough to move it there
-        # so that it doesn't need to be flipped once it is there.  The 4x4x4 edge pairing has this logic.
-        self.move_wing_to_F_east(sister_wing)
+            else:
+                self.print_cube()
+                raise SolveError("Could not find sister wing in the middle: %s" % pformat(sister_wings))
 
-        # We must have a sister wing at (65, 86)
-        sister_wings_on_FR_edge = self.get_wings_on_edge(target_wing, 'F', 'R')
-        if (65, 86) not in sister_wings_on_FR_edge:
-            log.info("sister_wings_on_FR_edge %s" % pformat(sister_wings_on_FR_edge))
-            raise SolveError("sister wing should be on FR edge")
-
-        sister_wing = (65, 86)
-        sister_wing_value = self.get_wing_value(sister_wing)
-
-        # The sister wing is in the right location but does it need to be flipped?
-        if target_wing_value != sister_wing_value:
-            for step in ("R", "U'", "B'", "R2"):
+        if checkerboard:
+            # Flip one middle wing in place
+            # No 1 at https://i.imgur.com/wsTqj.png
+            self.rotate_x()
+            self.rotate_y_reverse()
+            for step in "Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2".split():
                 self.rotate(step)
+            return True
 
-        if sister_wing[0] == 65:
-            # 3Uw Uw'
-            if self.use_pair_outside_edges:
-                self.rotate("Uw'")
-            self.rotate("Dw")
-            self.rotate_y()
+        else:
 
-            placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
+            # Move sister wing to F-east...TODO this needs to be smart enough to move it there
+            # so that it doesn't need to be flipped once it is there.  The 4x4x4 edge pairing has this logic.
+            self.move_wing_to_F_east(sister_wing)
 
-            # We paired all 8 wings on the slice forward so rotate the edges from U and D onto L and F and check again
-            if not placed_unpaired_wing:
-                self.rotate("R")
-                self.rotate("L'")
-                self.rotate("U")
-                self.rotate("D")
-                self.rotate("R'")
-                self.rotate("L")
+            # We must have a sister wing at (65, 86)
+            sister_wings_on_FR_edge = self.get_wings_on_edge(target_wing, 'F', 'R')
+            if (65, 86) not in sister_wings_on_FR_edge:
+                self.print_cube()
+                log.info("sister_wings_on_FR_edge %s" % pformat(sister_wings_on_FR_edge))
+                raise SolveError("sister wing should be on FR edge")
+
+            sister_wing = (65, 86)
+            sister_wing_value = self.get_wing_value(sister_wing)
+
+            # The sister wing is in the right location but does it need to be flipped?
+            if target_wing_value != sister_wing_value:
+                for step in ("R", "U'", "B'", "R2"):
+                    self.rotate(step)
+
+            if sister_wing[0] == 65:
+                # 3Uw Uw'
+                if self.use_pair_outside_edges:
+                    self.rotate("Uw'")
+                self.rotate("Dw")
+                self.rotate_y()
+
                 placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
 
+                # We paired all 8 wings on the slice forward so rotate the edges from U and D onto L and F and check again
                 if not placed_unpaired_wing:
-                    log.info("pair_four_or_six_wings_555() failed...no unpaired wings to move to F-east")
-                    return False
+                    self.rotate("R")
+                    self.rotate("L'")
+                    self.rotate("U")
+                    self.rotate("D")
+                    self.rotate("R'")
+                    self.rotate("L")
+                    placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
 
-            #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_wings_count())
-            #self.print_cube()
+                    if not placed_unpaired_wing:
+                        log.info("pair_four_or_six_wings_555() failed...no unpaired wings to move to F-east")
+                        return False
 
-            # 3Uw' Uw
-            if self.use_pair_outside_edges:
-                self.rotate("Uw")
-            self.rotate("Dw'")
-            self.rotate_y_reverse() # dwalton double check this..is rotate_y() in the other place where we slice back
+                #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_wings_count())
+                #self.print_cube()
 
-            #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
-            #self.verify_all_centers_solved()
+                # 3Uw' Uw
+                if self.use_pair_outside_edges:
+                    self.rotate("Uw")
+                self.rotate("Dw'")
+                self.rotate_y_reverse() # dwalton double check this..is rotate_y() in the other place where we slice back
 
-        else:
-            raise SolveError("sister_wing %s is in the wrong position" % str(sister_wing))
+                #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
+                #self.verify_all_centers_solved()
 
-        current_non_paired_wings_count = self.get_non_paired_wings_count()
+            else:
+                raise SolveError("sister_wing %s is in the wrong position" % str(sister_wing))
+
+            current_non_paired_wings_count = self.get_non_paired_wings_count()
         wings_paired = original_non_paired_wings_count - current_non_paired_wings_count
         log.info("pair_one_wing_555() paired %d wings, added %d steps" % (wings_paired, self.get_solution_len_minus_rotates(self.solution) - original_solution_len))
 
@@ -1595,9 +1621,6 @@ class RubiksCube555(RubiksCube):
             return False
 
     def group_edges_recursive(self, depth, edge_to_pair):
-        """
-        This was an experiment...it takes too long to run though...not used right now
-        """
 
         # Should we both going down this branch or should we prune it?
         pre_non_paired_wings_count = len(self.get_non_paired_wings())
@@ -1646,8 +1669,9 @@ class RubiksCube555(RubiksCube):
             if edge_paired:
                 if not self.use_pair_outside_edges and depth > 0 and depth <= 3:
 
+                    # dwalton - this is broken for BBDDUBLRRRRRLRRRRRLRRRRRBRRRRUUDUUUFULBBBRFBBBBDBBBBBFBBBBBFFBBBBBRFDDLFLFRRFRRDDDDRFDDDDLFDDDDLFDDDDULLLLRBFDDDDUULLLLLULLLLRULLLLRULLLLDLBRRLDLFUURBFFFFFUDFFFFUDFFFFUBFFFFRFLBBBDDRBBDDRUUUUDLUUUUFLUUUUFUUUUULRBFFDU
                     log.info("depth %d paired %d wings" % (depth, wings_paired))
-                    if wings_paired >= 5:
+                    if wings_paired >= 4:
                         for edge in non_paired_edges:
                             self.group_edges_recursive(depth+1, edge)
                             self.state = original_state[:]

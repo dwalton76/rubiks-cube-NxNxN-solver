@@ -1667,20 +1667,10 @@ class RubiksCube555(RubiksCube):
             original_solution = self.solution[:]
 
             if edge_paired:
-                if not self.use_pair_outside_edges and depth > 0 and depth <= 3:
-
-                    # dwalton - this is broken for BBDDUBLRRRRRLRRRRRLRRRRRBRRRRUUDUUUFULBBBRFBBBBDBBBBBFBBBBBFFBBBBBRFDDLFLFRRFRRDDDDRFDDDDLFDDDDLFDDDDULLLLRBFDDDDUULLLLLULLLLRULLLLRULLLLDLBRRLDLFUURBFFFFFUDFFFFUDFFFFUBFFFFRFLBBBDDRBBDDRUUUUDLUUUUFLUUUUFUUUUULRBFFDU
-                    log.info("depth %d paired %d wings" % (depth, wings_paired))
-                    if wings_paired >= 4:
-                        for edge in non_paired_edges:
-                            self.group_edges_recursive(depth+1, edge)
-                            self.state = original_state[:]
-                            self.solution = original_solution[:]
-                else:
-                    for edge in non_paired_edges:
-                        self.group_edges_recursive(depth+1, edge)
-                        self.state = original_state[:]
-                        self.solution = original_solution[:]
+                for edge in non_paired_edges:
+                    self.group_edges_recursive(depth+1, edge)
+                    self.state = original_state[:]
+                    self.solution = original_solution[:]
         else:
 
             # There are no edges left to pair, note how many steps it took pair them all

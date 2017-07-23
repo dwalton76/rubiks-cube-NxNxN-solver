@@ -17,8 +17,8 @@ solved_2x2x2 = 'UUUURRRRFFFFDDDDLLLLBBBB'
 
 class RubiksCube222(RubiksCube):
 
-    def __init__(self, kociemba_string, debug=False):
-        RubiksCube.__init__(self, kociemba_string, debug)
+    def __init__(self, kociemba_string, colormap, debug=False):
+        RubiksCube.__init__(self, kociemba_string, colormap, debug)
 
         if debug:
             log.setLevel(logging.DEBUG)

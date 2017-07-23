@@ -12,8 +12,8 @@ log = logging.getLogger(__name__)
 
 class RubiksCubeNNNOdd(RubiksCube):
 
-    def __init__(self, kociemba_string, debug=False):
-        RubiksCube.__init__(self, kociemba_string)
+    def __init__(self, kociemba_string, colormap, debug=False):
+        RubiksCube.__init__(self, kociemba_string, colormap)
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -21,8 +21,8 @@ class RubiksCubeNNNOdd(RubiksCube):
 
 class RubiksCubeNNNEven(RubiksCube):
 
-    def __init__(self, kociemba_string, debug=False):
-        RubiksCube.__init__(self, kociemba_string)
+    def __init__(self, kociemba_string, colormap, debug=False):
+        RubiksCube.__init__(self, kociemba_string, colormap)
 
         if debug:
             log.setLevel(logging.DEBUG)

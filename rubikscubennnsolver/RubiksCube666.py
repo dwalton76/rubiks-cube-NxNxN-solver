@@ -36,8 +36,8 @@ class RubiksCube666(RubiksCube):
     - solve as 3x3x3
     """
 
-    def __init__(self, kociemba_string, debug=False):
-        RubiksCube.__init__(self, kociemba_string)
+    def __init__(self, kociemba_string, colormap=None, debug=False):
+        RubiksCube.__init__(self, kociemba_string, colormap)
 
         if debug:
             log.setLevel(logging.DEBUG)

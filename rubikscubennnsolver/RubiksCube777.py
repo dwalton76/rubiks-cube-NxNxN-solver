@@ -45,8 +45,8 @@ class RubiksCube777(RubiksCube):
     - pair the outer 2 wings with the paired middle 3 wings via 5x5x5
     """
 
-    def __init__(self, kociemba_string, debug=False):
-        RubiksCube.__init__(self, kociemba_string)
+    def __init__(self, kociemba_string, colormap=None, debug=False):
+        RubiksCube.__init__(self, kociemba_string, colormap)
 
         if debug:
             log.setLevel(logging.DEBUG)

@@ -28,8 +28,8 @@ class RubiksCube444(RubiksCube):
     - solve as 3x3x3
     """
 
-    def __init__(self, kociemba_string, avoid_pll=True, debug=False):
-        RubiksCube.__init__(self, kociemba_string, debug)
+    def __init__(self, kociemba_string, colormap=None, avoid_pll=True, debug=False):
+        RubiksCube.__init__(self, kociemba_string, colormap, debug)
         self.avoid_pll = avoid_pll
 
         if debug:

@@ -30,8 +30,8 @@ class RubiksCube555(RubiksCube):
     - solve as 3x3x3
     """
 
-    def __init__(self, kociemba_string, debug=False):
-        RubiksCube.__init__(self, kociemba_string)
+    def __init__(self, kociemba_string, colormap=None, debug=False):
+        RubiksCube.__init__(self, kociemba_string, colormap)
         self.use_pair_outside_edges = False
 
         # This will be True when an even cube is using the 555 edge solver
@@ -877,7 +877,7 @@ class RubiksCube555(RubiksCube):
             pattern_id = 9
 
         # No 9 where U-north needs to be flipped
-        elif edges_of_interest_state in ('001210120002', '012221220102', '012121210101', '012321230103'):
+        elif edges_of_interest_state in ('001210120002', '012221220102', '012121210101', '012321230103', '010201020102'):
             self.rotate("U")
             self.rotate("R")
             self.rotate("U'")

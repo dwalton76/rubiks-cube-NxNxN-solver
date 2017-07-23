@@ -3,6 +3,7 @@ from copy import copy
 from collections import OrderedDict
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis
+import json
 import logging
 import math
 import os
@@ -324,7 +325,7 @@ def get_important_square_indexes(size):
 
 class RubiksCube(object):
 
-    def __init__(self, kociemba_string, debug=False):
+    def __init__(self, kociemba_string, colormap, debug=False):
         init_state = ['dummy', ]
         init_state.extend(list(kociemba_string))
         self.squares_per_side = int((len(init_state) - 1)/6)
@@ -339,6 +340,59 @@ class RubiksCube(object):
         self.ida_count = 0
         self._phase = None
         self.lt_init_called = False
+
+        if colormap:
+            colormap = json.loads(colormap)
+            self.color_map = {}
+            self.color_map_html = {}
+
+            for (side_name, color) in colormap.items():
+                side_name = str(side_name)
+
+                if color == 'Wh':
+                    self.color_map[side_name] = 97
+                    self.color_map_html[side_name] = (235, 254, 250)
+
+                elif color == 'Gr':
+                    self.color_map[side_name] = 92
+                    self.color_map_html[side_name] = (20, 105, 74)
+
+                elif color == 'Rd':
+                    self.color_map[side_name] = 91
+                    self.color_map_html[side_name] = (104, 4, 2)
+
+                elif color == 'Bu':
+                    self.color_map[side_name] = 94
+                    self.color_map_html[side_name] = (22, 57, 103)
+
+                elif color == 'OR':
+                    self.color_map[side_name] = 90
+                    self.color_map_html[side_name] = (148, 53, 9)
+
+                elif color == 'Ye':
+                    self.color_map[side_name] = 93
+                    self.color_map_html[side_name] = (210, 208, 2)
+
+            #log.warning("color_map:\n%s\n" % pformat(self.color_map))
+
+        else:
+            self.color_map = {
+                'U': 97, # Wh
+                'L': 92, # Gr
+                'F': 91, # Rd
+                'R': 94, # Bu
+                'B': 90, # Or
+                'D': 93, # Ye
+            }
+
+            self.color_map_html = {
+                'U': (235, 254, 250), # Wh
+                'L': (20, 105, 74),   # Gr
+                'F': (104, 4, 2),     # Rd
+                'R': (22, 57, 103),   # Bu
+                'B': (148, 53, 9),    # Or
+                'D': (210, 208, 2),   # Ye
+            }
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -947,15 +1001,6 @@ class RubiksCube(object):
         print(get_cube_layout(self.size) + '\n')
 
     def print_cube(self):
-        color_codes = {
-          'U': 97, # Wh
-          'L': 92, # Gr
-          'F': 91, # Rd
-          'R': 94, # Bu
-          'B': 90, # Or
-          'D': 93, # Ye
-        }
-
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
         side_name_index = 0
         rows = []
@@ -972,7 +1017,7 @@ class RubiksCube(object):
                 continue
 
             side_name = side_names[side_name_index]
-            color = color_codes.get(square_state, None)
+            color = self.color_map.get(square_state, None)
 
             if color:
                 # end of the row
@@ -3993,37 +4038,13 @@ div.square span {
 <body>
 """ % (square_size, square_size, square_size, square_size, square_size, square_size))
 
-    def write_cube(self, desc):
+    def www_write_cube(self, desc):
         """
         'cube' is a list of (R,G,B) tuples
         """
-        # dwalton
         cube = ['dummy',]
-        white = (235, 254, 250)
-        green = (20, 105, 74)
-        yellow = (210, 208, 2)
-        orange = (148, 53, 9)
-        blue = (22, 57, 103)
-        red = (104, 4, 2)
-
         for square in self.state[1:]:
-            if square == 'U':
-                cube.append(white)
-
-            elif square == 'L':
-                cube.append(green)
-
-            elif square == 'F':
-                cube.append(red)
-
-            elif square == 'R':
-                cube.append(blue)
-
-            elif square == 'B':
-                cube.append(orange)
-
-            elif square == 'D':
-                cube.append(yellow)
+            cube.append(self.color_map_html[square])
 
         col = 1
         squares_per_side = self.size * self.size

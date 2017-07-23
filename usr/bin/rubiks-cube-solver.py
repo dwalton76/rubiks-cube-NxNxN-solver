@@ -156,19 +156,25 @@ try:
     # Uncomment to print the solution step by step
     len_steps = len(solution)
 
+    cube.www_header()
+    cube.write_cube("Initial Cube")
+
     for (i, step) in enumerate(solution):
+        desc = "Phase     : %s<br>\nMove %d/%d: %s" % (cube.phase(), i+1, len_steps, step)
 
         if args.print_steps:
-            print("Phase     : %s" % cube.phase())
-            print("Move %d/%d: %s" % (i+1, len_steps, step))
+            print(desc)
 
         cube.rotate(step)
+        cube.write_cube(desc)
 
         if args.print_steps:
             cube.print_cube()
             print("\n\n\n\n")
             sleep(1)
             os.system('clear')
+
+    cube.www_footer()
 
     if args.print_steps:
         cube.print_cube()

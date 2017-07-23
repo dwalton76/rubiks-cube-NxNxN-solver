@@ -299,6 +299,29 @@ def orbit_matches(edges_per_side, orbit, edge_index):
     return False
 
 
+def get_important_square_indexes(size):
+    """
+    Used for writing www pages
+    """
+    squares_per_side = size * size
+    min_square = 1
+    max_square = squares_per_side * 6
+    first_squares = []
+    last_squares = []
+
+    for index in range(1, max_square + 1):
+        if (index - 1) % squares_per_side == 0:
+            first_squares.append(index)
+        elif index % squares_per_side == 0:
+            last_squares.append(index)
+
+    last_UBD_squares = (last_squares[0], last_squares[4], last_squares[5])
+    #log.info("first    squares: %s" % pformat(first_squares))
+    #log.info("last     squares: %s" % pformat(last_squares))
+    #log.info("last UBD squares: %s" % pformat(last_UBD_squares))
+    return (first_squares, last_squares, last_UBD_squares)
+
+
 class RubiksCube(object):
 
     def __init__(self, kociemba_string, debug=False):
@@ -3888,3 +3911,157 @@ class RubiksCube(object):
                     state.append('x')
 
         return ''.join(state)
+
+    def www_header(self):
+        """
+        Write the <head> including css
+        """
+        side_margin = 10
+        square_size = 40
+        size = self.size # 3 for 3x3x3, etc
+
+        with open('/tmp/solution.html', 'w') as fh:
+            fh.write("""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+div.clear {
+    clear: both;
+}
+
+div.clear_left {
+    clear: left;
+}
+
+div.side {
+    margin: %dpx;
+    float: left;
+}
+
+""" % side_margin)
+
+            for x in range(1, size-1):
+                fh.write("div.col%d,\n" % x)
+
+            fh.write("""div.col%d {
+    float: left;
+}
+
+div.col%d {
+    margin-left: %dpx;
+}
+div#upper,
+div#down {
+    margin-left: %dpx;
+}
+""" % (size-1,
+       size,
+       (size - 1) * square_size,
+       (size * square_size) + (3 * side_margin)))
+
+            fh.write("""
+span.square {
+    width: %dpx;
+    height: %dpx;
+    white-space-collapsing: discard;
+    display: inline-block;
+    color: black;
+    font-weight: bold;
+    line-height: %dpx;
+    text-align: center;
+}
+
+div.square {
+    width: %dpx;
+    height: %dpx;
+    color: black;
+    font-weight: bold;
+    line-height: %dpx;
+    text-align: center;
+}
+
+div.square span {
+  display:        inline-block;
+  vertical-align: middle;
+  line-height:    normal;
+}
+
+</style>
+<title>CraneCuber</title>
+</head>
+<body>
+""" % (square_size, square_size, square_size, square_size, square_size, square_size))
+
+    def write_cube(self, desc):
+        """
+        'cube' is a list of (R,G,B) tuples
+        """
+        # dwalton
+        cube = ['dummy',]
+        white = (235, 254, 250)
+        green = (20, 105, 74)
+        yellow = (210, 208, 2)
+        orange = (148, 53, 9)
+        blue = (22, 57, 103)
+        red = (104, 4, 2)
+
+        for square in self.state[1:]:
+            if square == 'U':
+                cube.append(white)
+
+            elif square == 'L':
+                cube.append(green)
+
+            elif square == 'F':
+                cube.append(red)
+
+            elif square == 'R':
+                cube.append(blue)
+
+            elif square == 'B':
+                cube.append(orange)
+
+            elif square == 'D':
+                cube.append(yellow)
+
+        col = 1
+        squares_per_side = self.size * self.size
+        min_square = 1
+        max_square = squares_per_side * 6
+
+        sides = ('upper', 'left', 'front', 'right', 'back', 'down')
+        side_index = -1
+        (first_squares, last_squares, last_UBD_squares) = get_important_square_indexes(self.size)
+
+        with open('/tmp/solution.html', 'a') as fh:
+            fh.write("<h1>%s</h1>\n" % desc)
+            for index in range(1, max_square + 1):
+                if index in first_squares:
+                    side_index += 1
+                    fh.write("<div class='side' id='%s'>\n" % sides[side_index])
+
+                (red, green, blue) = cube[index]
+                fh.write("    <div class='square col%d' title='RGB (%d, %d, %d)' style='background-color: #%02x%02x%02x;'><span>%02d</span></div>\n" %
+                    (col,
+                     red, green, blue,
+                     red, green, blue,
+                     index))
+
+                if index in last_squares:
+                    fh.write("</div>\n")
+
+                    if index in last_UBD_squares:
+                        fh.write("<div class='clear'></div>\n")
+
+                col += 1
+
+                if col == self.size + 1:
+                    col = 1
+
+    def www_footer(self):
+        with open('/tmp/solution.html', 'a') as fh:
+            fh.write("""
+</body>
+</html>
+""")

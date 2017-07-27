@@ -132,6 +132,10 @@ try:
     cube.print_cube()
     cube.print_solution()
 
+    print("\n**********************************************************")
+    print("See /tmp/solution.html for more detailed solve instruction")
+    print("**********************************************************\n")
+
     # Now put the cube back in its initial state and verify the solution solves it
     solution = cube.solution
 

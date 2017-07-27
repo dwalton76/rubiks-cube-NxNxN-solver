@@ -9,6 +9,7 @@ import math
 import os
 import random
 import re
+import shutil
 import subprocess
 import sys
 
@@ -3964,6 +3965,9 @@ class RubiksCube(object):
         side_margin = 10
         square_size = 40
         size = self.size # 3 for 3x3x3, etc
+        shutil.copy('www/solution.js', '/tmp/')
+        shutil.copy('www/Arrow-Next.png', '/tmp/')
+        shutil.copy('www/Arrow-Prev.png', '/tmp/')
 
         with open('/tmp/solution.html', 'w') as fh:
             fh.write("""<!DOCTYPE html>
@@ -3979,9 +3983,21 @@ div.clear_left {
     clear: left;
 }
 
+.clickable {
+        cursor: pointer;
+}
+
 div.side {
     margin: %dpx;
     float: left;
+}
+
+a.prev_page {
+    float: left;
+}
+
+a.next_page {
+    float: right;
 }
 
 """ % side_margin)
@@ -4032,11 +4048,24 @@ div.square span {
   line-height:    normal;
 }
 
+div.page {
+  display: none;
+}
+
+div#page_holder {
+  width: %dpx;
+}
+
 </style>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+<script type='text/javascript' src='http://code.jquery.com/ui/1.10.3/jquery-ui.min.js'></script>
+<script type="text/javascript" src="solution.js"></script>
 <title>CraneCuber</title>
 </head>
 <body>
-""" % (square_size, square_size, square_size, square_size, square_size, square_size))
+<div id="page_holder">
+""" % (square_size, square_size, square_size, square_size, square_size, square_size,
+       (square_size * size * 4) + square_size + (4 * side_margin)))
 
     def www_write_cube(self, desc):
         """
@@ -4056,6 +4085,7 @@ div.square span {
         (first_squares, last_squares, last_UBD_squares) = get_important_square_indexes(self.size)
 
         with open('/tmp/solution.html', 'a') as fh:
+            fh.write("<div class='page' style='display: none;'>\n")
             fh.write("<h1>%s</h1>\n" % desc)
             for index in range(1, max_square + 1):
                 if index in first_squares:
@@ -4079,10 +4109,17 @@ div.square span {
 
                 if col == self.size + 1:
                     col = 1
+            fh.write("</div>\n")
 
     def www_footer(self):
         with open('/tmp/solution.html', 'a') as fh:
+            # dwalton
             fh.write("""
+<div id="sets-browse-controls">
+<a class="prev_page" style="display: block;"><img src="Arrow-Prev.png" class="clickable" width="128"></a>
+<a class="next_page" style="display: block;"><img src="Arrow-Next.png" class="clickable" width="128"></a>
+</div>
+</div>
 </body>
 </html>
 """)

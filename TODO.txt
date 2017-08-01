@@ -1,0 +1,13 @@
+
+solutions.html
+- need an arrow that loads the next step of instructions
+- have a play/pause button so that it auto increments every 5s
+- highlight the face/rows that you should be turning
+
+
+444 solver
+- look into the 52 moves tables xyzzy is using
+
+
+NNN solver
+- work on centers for 14x14x14

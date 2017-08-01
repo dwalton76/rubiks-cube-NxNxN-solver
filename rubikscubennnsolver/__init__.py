@@ -326,7 +326,7 @@ def get_important_square_indexes(size):
 
 class RubiksCube(object):
 
-    def __init__(self, kociemba_string, colormap, debug=False):
+    def __init__(self, kociemba_string, colormap=None, debug=False):
         init_state = ['dummy', ]
         init_state.extend(list(kociemba_string))
         self.squares_per_side = int((len(init_state) - 1)/6)

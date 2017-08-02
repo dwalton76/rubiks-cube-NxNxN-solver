@@ -217,7 +217,89 @@ def get_555_UD_centers_stage_ULDR_only_state(parent_state):
     return state
 
 
+def get_444_UD_centers_stage(parent_state):
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+    return state
+
+def get_444_LR_centers_stage(parent_state):
+    state = [parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75]]
+    state = ''.join(state)
+    state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
+    return state
+
+def get_444_ULFRBD_centers_solve(parent_state):
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    return state
+
+
 state_functions = {
+    '444-UD-centers-stage' : get_444_UD_centers_stage,
+    '444-LR-centers-stage' : get_444_LR_centers_stage,
+    '444-ULFRBD-centers-solve' : get_444_ULFRBD_centers_solve,
     '555-UD-centers-stage' : get_555_UD_centers_stage_state,
     '555-UD-T-centers-stage' : get_555_UD_T_centers_stage_state,
     '555-UD-X-centers-stage' : get_555_UD_X_centers_stage_state,
@@ -297,190 +379,44 @@ class LookupTable(object):
             sides_LFRB = self.sides_LFRB
 
             # Used by 222 which doesn't really use a lookup table anymore..should chop all of that code
-            if self.state_type == 'all':
+            if state_type == 'all':
                 state = self.parent.get_state_all()
 
-            # 4x4x4
-            elif self.state_type == '444-UD-centers-stage':
-                # unroll
-                state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.center_pos])
-                state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
-
-            elif self.state_type == '444-LR-centers-stage':
-                # unroll
-                state = ''.join([parent_state[square_index] for side in sides_LFRB for square_index in side.center_pos])
-                state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
-
-            elif self.state_type == '444-ULFRBD-centers-solve':
-                # unroll
-                state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.center_pos])
-
-            elif self.state_type == '444-edges':
-                # unroll
-                state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.edge_pos])
-
-            elif self.state_type == '444-edges-xx-out-paired':
-                state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1, 97)])
-                state_list = list(state)
-
-                for (a, b, c, d) in ((2, 3, 67, 66),
-                                     (5, 9, 18, 19),
-                                     (14, 15, 34, 35),
-                                     (8, 12, 51, 50),
-                                     (24, 28, 37, 41),
-                                     (40, 44, 53, 57),
-                                     (56, 60, 69, 73),
-                                     (72, 76, 21, 25),
-                                     (82, 83, 46, 47),
-                                     (85, 89, 31, 30),
-                                     (94, 95, 79, 78),
-                                     (88, 92, 62, 63)):
-
-                    # If the edge is paired, x it out
-                    if state[a] == state[b] and state[c] == state[d]:
-                        state_list[a] = "x"
-                        state_list[b] = "x"
-                        state_list[c] = "x"
-                        state_list[d] = "x"
-
-                state = ''.join(state_list)
-
-                # only keep the edges
-                state = state[2:4] +\
-                        state[5] + state[8] +\
-                        state[9] + state[12] +\
-                        state[14:16] +\
-                        state[18:20] +\
-                        state[21] + state[24] +\
-                        state[25] + state[28] +\
-                        state[30:32] +\
-                        state[34:36] +\
-                        state[37] + state[40] +\
-                        state[41] + state[44] +\
-                        state[46:48] +\
-                        state[50:52] +\
-                        state[53] + state[56] +\
-                        state[57] + state[60] +\
-                        state[62:64] +\
-                        state[66:68] +\
-                        state[69] + state[72] +\
-                        state[73] + state[76] +\
-                        state[78:80] +\
-                        state[82:84] +\
-                        state[85] + state[88] +\
-                        state[89] + state[92] +\
-                        state[94:96]
-
-            elif self.state_type == '444-centers-and-unpaired-edges':
-                state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1, 97)])
-                state_list = list(state)
-
-                for (a, b, c, d) in ((2, 3, 67, 66),
-                                     (5, 9, 18, 19),
-                                     (14, 15, 34, 35),
-                                     (8, 12, 51, 50),
-                                     (24, 28, 37, 41),
-                                     (40, 44, 53, 57),
-                                     (56, 60, 69, 73),
-                                     (72, 76, 21, 25),
-                                     (82, 83, 46, 47),
-                                     (85, 89, 31, 30),
-                                     (94, 95, 79, 78),
-                                     (88, 92, 62, 63)):
-
-                    # If the edge is paired, x it out
-                    if state[a] == state[b] and state[c] == state[d]:
-                        state_list[a] = "x"
-                        state_list[b] = "x"
-                        state_list[c] = "x"
-                        state_list[d] = "x"
-
-                state = ''.join(state_list)
-
-                state = ''.join((state[2:4],
-                                 state[5:13],
-                                 state[14:16],
-                                 state[18:20],
-                                 state[21:29],
-                                 state[30:32],
-                                 state[34:36],
-                                 state[37:45],
-                                 state[46:48],
-                                 state[50:52],
-                                 state[53:61],
-                                 state[62:64],
-                                 state[66:68],
-                                 state[69:77],
-                                 state[78:80],
-                                 state[82:84],
-                                 state[85:93],
-                                 state[94:96]))
                 '''
-                # once ./utils/trim_444_555_edges.py is working use this
-                state = ''.join((state[2:4],
-                                 state[5],
-                                 state[8],
-                                 state[9],
-                                 state[12],
-                                 state[14:16],
-                                 state[18:20],
-                                 state[21],
-                                 state[24],
-                                 state[25],
-                                 state[28],
-                                 state[30:32],
-                                 state[34:36],
-                                 state[37],
-                                 state[40],
-                                 state[41],
-                                 state[44],
-                                 state[46:48],
-                                 state[50:52],
-                                 state[53],
-                                 state[56],
-                                 state[57],
-                                 state[60],
-                                 state[62:64],
-                                 state[66:68],
-                                 state[69],
-                                 state[72],
-                                 state[73],
-                                 state[76],
-                                 state[78:80],
-                                 state[82:84],
-                                 state[85],
-                                 state[88],
-                                 state[89],
-                                 state[92],
-                                 state[94:96]))
+                for side in sides_all:
+                    for square_index in side.edge_pos:
+                        print("                         parent_state[%d]," % square_index)
+                log.info("HERE 10")
+                sys.exit(0)
+                state = ''.join(state)
                 '''
 
             # 5x5x5
-            elif self.state_type == '555-UD-centers-solve-on-all':
+            elif state_type == '555-UD-centers-solve-on-all':
                 # unroll
                 state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.center_pos])
                 state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x')
 
-            elif self.state_type == '555-LR-centers-solve-on-all':
+            elif state_type == '555-LR-centers-solve-on-all':
                 # unroll
                 state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.center_pos])
                 state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x')
 
-            elif self.state_type == '555-FB-centers-solve-on-all':
+            elif state_type == '555-FB-centers-solve-on-all':
                 # unroll
                 state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.center_pos])
                 state = state.replace('U', 'x').replace('L', 'x').replace('R', 'x').replace('D', 'x')
 
-            elif self.state_type == '555-LR-centers-stage-on-LFRB':
+            elif state_type == '555-LR-centers-stage-on-LFRB':
                 # unroll
                 state = ''.join([parent_state[square_index] for side in sides_LFRB for square_index in side.center_pos])
                 state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
 
-            elif self.state_type == '555-ULFRBD-centers-solve':
+            elif state_type == '555-ULFRBD-centers-solve':
                 # unroll
                 state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.center_pos])
 
-            elif self.state_type == '555-LR-centers-stage-on-LFRB-x-center-only':
+            elif state_type == '555-LR-centers-stage-on-LFRB-x-center-only':
                 # unroll
                 state = []
                 for side in sides_LFRB:
@@ -500,7 +436,7 @@ class LookupTable(object):
                 state = ''.join(state)
                 state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
 
-            elif self.state_type == '555-LR-centers-stage-on-LFRB-t-center-only':
+            elif state_type == '555-LR-centers-stage-on-LFRB-t-center-only':
                 # unroll
                 state = []
                 for side in sides_LFRB:
@@ -519,11 +455,11 @@ class LookupTable(object):
                 state = ''.join(state)
                 state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
 
-            elif self.state_type == '555-edges':
+            elif state_type == '555-edges':
                 # unroll
                 state = ''.join([parent_state[square_index] for side in sides_all for square_index in side.edge_pos])
 
-            elif self.state_type == '555-edges-xx-out-paired':
+            elif state_type == '555-edges-xx-out-paired':
                 state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1, 151)])
                 state_list = list(state)
 
@@ -584,7 +520,7 @@ class LookupTable(object):
                         state[141] + state[145] +\
                         state[147:150]
 
-            elif self.state_type == '555-centers-and-unpaired-edges':
+            elif state_type == '555-centers-and-unpaired-edges':
                 state = 'x' + ''.join([parent_state[square_index] for square_index in xrange(1,151)])
                 state_list = list(state)
 
@@ -632,7 +568,7 @@ class LookupTable(object):
                                  state[147:150]))
 
             # 6x6x6
-            elif self.state_type == '666-UD-centers-oblique-edges-solve':
+            elif state_type == '666-UD-centers-oblique-edges-solve':
                 # unroll
                 state = []
 
@@ -645,7 +581,7 @@ class LookupTable(object):
 
                 state = ''.join(state)
 
-            elif self.state_type == '666-LR-centers-oblique-edges-solve':
+            elif state_type == '666-LR-centers-oblique-edges-solve':
                 # unroll
                 state = []
 
@@ -658,7 +594,7 @@ class LookupTable(object):
 
                 state = ''.join(state)
 
-            elif self.state_type == '666-FB-centers-oblique-edges-solve':
+            elif state_type == '666-FB-centers-oblique-edges-solve':
                 # unroll
                 state = []
 
@@ -671,10 +607,10 @@ class LookupTable(object):
 
                 state = ''.join(state)
 
-            elif self.state_type == '666-LFRB-centers-oblique-edges-solve':
+            elif state_type == '666-LFRB-centers-oblique-edges-solve':
                 state = ''.join(['x', parent_state[45], parent_state[46], 'x', parent_state[50], parent_state[51], parent_state[52], parent_state[53], parent_state[56], parent_state[57], parent_state[58], parent_state[59], 'x', parent_state[63], parent_state[64], 'xx', parent_state[81], parent_state[82], 'x', parent_state[86], parent_state[87], parent_state[88], parent_state[89], parent_state[92], parent_state[93], parent_state[94], parent_state[95], 'x', parent_state[99], parent_state[100], 'xx', parent_state[117], parent_state[118], 'x', parent_state[122], parent_state[123], parent_state[124], parent_state[125], parent_state[128], parent_state[129], parent_state[130], parent_state[131], 'x', parent_state[135], parent_state[136], 'xx', parent_state[153], parent_state[154], 'x', parent_state[158], parent_state[159], parent_state[160], parent_state[161], parent_state[164], parent_state[165], parent_state[166], parent_state[167], 'x', parent_state[171], parent_state[172], 'x'])
 
-            elif self.state_type == '666-UD-inner-X-centers-stage':
+            elif state_type == '666-UD-inner-X-centers-stage':
                 # unroll (use join)
                 state = 'xxxxx' + parent_state[15] + parent_state[16] + 'xx' + parent_state[21] + parent_state[22]  + 'xxxxx' +\
                         'xxxxx' + parent_state[51] + parent_state[52] + 'xx' + parent_state[57] + parent_state[58]  + 'xxxxx' +\
@@ -684,7 +620,7 @@ class LookupTable(object):
                         'xxxxx' + parent_state[195] + parent_state[196] + 'xx' + parent_state[201] + parent_state[202]  + 'xxxxx'
                 state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
-            elif self.state_type == '666-UD-oblique-edge-pairing':
+            elif state_type == '666-UD-oblique-edge-pairing':
                 # unroll (use join)
                 state = parent_state[9] + parent_state[10] +\
                         parent_state[14] + parent_state[17] +\
@@ -712,7 +648,7 @@ class LookupTable(object):
                         parent_state[207] + parent_state[208]
                 state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
-            elif self.state_type == '666-UD-oblique-edge-pairing-left-only':
+            elif state_type == '666-UD-oblique-edge-pairing-left-only':
                 # unroll (use join)
                 state = parent_state[9] + 'x' +\
                         'x' + parent_state[17] +\
@@ -741,7 +677,7 @@ class LookupTable(object):
 
                 state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
-            elif self.state_type == '666-UD-oblique-edge-pairing-right-only':
+            elif state_type == '666-UD-oblique-edge-pairing-right-only':
                 # unroll (use join)
                 state = 'x' + parent_state[10] +\
                         parent_state[14] + 'x' +\
@@ -769,7 +705,7 @@ class LookupTable(object):
                         parent_state[207] + 'x'
                 state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
-            elif self.state_type == '666-UD-oblique-edge-pairing-LFRB-only':
+            elif state_type == '666-UD-oblique-edge-pairing-LFRB-only':
                 # unroll (use join)
                 # UD oblique-edge template for creating partial prune tables like 666-UD-oblique-edge-pairing-LFRB-only
                 '''
@@ -819,7 +755,7 @@ class LookupTable(object):
                 state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
 
-            elif self.state_type == '666-LR-inner-X-centers-stage':
+            elif state_type == '666-LR-inner-X-centers-stage':
                 # unroll (use join)
                 state = 'xxxxx' + parent_state[15] + parent_state[16] + 'xx' + parent_state[21] + parent_state[22]  + 'xxxxx' +\
                         'xxxxx' + parent_state[51] + parent_state[52] + 'xx' + parent_state[57] + parent_state[58]  + 'xxxxx' +\
@@ -829,7 +765,7 @@ class LookupTable(object):
                         'xxxxx' + parent_state[195] + parent_state[196] + 'xx' + parent_state[201] + parent_state[202]  + 'xxxxx'
                 state = state.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0')
 
-            elif self.state_type == '666-LR-oblique-edge-pairing':
+            elif state_type == '666-LR-oblique-edge-pairing':
                 # unroll (use join)
                 state = parent_state[45] + parent_state[46] +\
                         parent_state[50] + parent_state[53] +\
@@ -849,7 +785,7 @@ class LookupTable(object):
                         parent_state[171] + parent_state[172]
                 state = state.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0')
 
-            elif self.state_type == '666-LR-oblique-edge-pairing-left-only':
+            elif state_type == '666-LR-oblique-edge-pairing-left-only':
                 # unroll (use join)
                 state = parent_state[45] + 'x' +\
                         'x' + parent_state[53] +\
@@ -869,7 +805,7 @@ class LookupTable(object):
                         'x' + parent_state[172]
                 state = state.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0')
 
-            elif self.state_type == '666-LR-oblique-edge-pairing-right-only':
+            elif state_type == '666-LR-oblique-edge-pairing-right-only':
                 # unroll (use join)
                 state = 'x' + parent_state[46] +\
                         parent_state[50] + 'x' +\
@@ -891,7 +827,7 @@ class LookupTable(object):
 
 
             # 7x7x7
-            elif self.state_type == '777-UD-centers-oblique-edges-solve':
+            elif state_type == '777-UD-centers-oblique-edges-solve':
                 # unroll
                 state = []
 
@@ -904,10 +840,10 @@ class LookupTable(object):
 
                 state = ''.join(state)
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve':
                 state = ''.join(['x', parent_state[59], parent_state[60], parent_state[61], 'x', parent_state[65], parent_state[66], parent_state[67], parent_state[68], parent_state[69], parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76], parent_state[79], parent_state[80], parent_state[81], parent_state[82], parent_state[83], 'x', parent_state[87], parent_state[88], parent_state[89], 'xx', parent_state[108], parent_state[109], parent_state[110], 'x', parent_state[114], parent_state[115], parent_state[116], parent_state[117], parent_state[118], parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125], parent_state[128], parent_state[129], parent_state[130], parent_state[131], parent_state[132], 'x', parent_state[136], parent_state[137], parent_state[138], 'xx', parent_state[157], parent_state[158], parent_state[159], 'x', parent_state[163], parent_state[164], parent_state[165], parent_state[166], parent_state[167], parent_state[170], parent_state[171], parent_state[172], parent_state[173], parent_state[174], parent_state[177], parent_state[178], parent_state[179], parent_state[180], parent_state[181], 'x', parent_state[185], parent_state[186], parent_state[187], 'xx', parent_state[206], parent_state[207], parent_state[208], 'x', parent_state[212], parent_state[213], parent_state[214], parent_state[215], parent_state[216], parent_state[219], parent_state[220], parent_state[221], parent_state[222], parent_state[223], parent_state[226], parent_state[227], parent_state[228], parent_state[229], parent_state[230], 'x', parent_state[234], parent_state[235], parent_state[236], 'x'])
 
-            elif self.state_type == '777-UD-oblique-edge-pairing':
+            elif state_type == '777-UD-oblique-edge-pairing':
                 # unroll (use join)
                 state = 'x' + parent_state[10] + parent_state[11] + parent_state[12] + 'x' +\
                         parent_state[16] + 'xxx' + parent_state[20] +\
@@ -941,7 +877,7 @@ class LookupTable(object):
                         'x' + parent_state[283] + parent_state[284] + parent_state[285] + 'x'
                 state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
-            elif self.state_type == '777-UD-oblique-edge-pairing-middle-only':
+            elif state_type == '777-UD-oblique-edge-pairing-middle-only':
                 # unroll (use join)
                 state = 'xx' + parent_state[11] + 'xx' +\
                         'xxxxx' +\
@@ -975,7 +911,7 @@ class LookupTable(object):
                         'xx' + parent_state[284] + 'xx'
                 state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
-            elif self.state_type == '777-UD-oblique-edge-pairing-left-only':
+            elif state_type == '777-UD-oblique-edge-pairing-left-only':
                 # unroll (use join)
                 state = 'x' + parent_state[10] + 'xxx' +\
                         'xxxx' + parent_state[20] +\
@@ -1009,7 +945,7 @@ class LookupTable(object):
                         'xxx' + parent_state[285] + 'x'
                 state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
-            elif self.state_type == '777-UD-oblique-edge-pairing-right-only':
+            elif state_type == '777-UD-oblique-edge-pairing-right-only':
                 # unroll (use join)
                 state = 'xxx' + parent_state[12] + 'x' +\
                         parent_state[16] + 'xxxx' +\
@@ -1043,7 +979,7 @@ class LookupTable(object):
                         'x' + parent_state[283] + 'xxx'
                 state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
-            elif self.state_type == '777-LR-oblique-edge-pairing':
+            elif state_type == '777-LR-oblique-edge-pairing':
                 # unroll (use join)
                 state = 'x' + parent_state[59] + parent_state[60] + parent_state[61] + 'x' +\
                         parent_state[65] + 'xxx' + parent_state[69] +\
@@ -1067,7 +1003,7 @@ class LookupTable(object):
                         'x' + parent_state[234] + parent_state[235] + parent_state[236] + 'x'
                 state = state.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
 
-            elif self.state_type == '777-LR-oblique-edge-pairing-middle-only':
+            elif state_type == '777-LR-oblique-edge-pairing-middle-only':
                 # unroll (use join)
                 state = 'xx' + parent_state[60] + 'xx' +\
                         'xxxxx' +\
@@ -1091,7 +1027,7 @@ class LookupTable(object):
                         'xx' + parent_state[235] + 'xx'
                 state = state.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
 
-            elif self.state_type == '777-LR-oblique-edge-pairing-left-only':
+            elif state_type == '777-LR-oblique-edge-pairing-left-only':
                 # unroll (use join)
                 state = 'x' + parent_state[59] + 'xxx' +\
                         'xxxx' + parent_state[69] +\
@@ -1115,7 +1051,7 @@ class LookupTable(object):
                         'xxx' + parent_state[236] + 'x'
                 state = state.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
 
-            elif self.state_type == '777-LR-oblique-edge-pairing-right-only':
+            elif state_type == '777-LR-oblique-edge-pairing-right-only':
                 # unroll (use join)
                 state = 'xxx' + parent_state[61] + 'x' +\
                         parent_state[65] + 'xxxx' +\
@@ -1139,10 +1075,10 @@ class LookupTable(object):
                         'x' + parent_state[234] + 'xxx'
                 state = state.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
 
-            elif self.state_type == '777-UD-centers-oblique-edges-solve-center-only':
+            elif state_type == '777-UD-centers-oblique-edges-solve-center-only':
                 state = ''.join(['xxxxxx', parent_state[17], parent_state[18], parent_state[19], 'xx', parent_state[24], 'x', parent_state[26], 'xx', parent_state[31], parent_state[32], parent_state[33], 'xxxxxxxx', 'xxxx', parent_state[262], parent_state[263], parent_state[264], 'xx', parent_state[269], 'x', parent_state[271], 'xx', parent_state[276], parent_state[277], parent_state[278], 'xxxxxx'])
 
-            elif self.state_type == '777-UD-centers-oblique-edges-solve-edges-only':
+            elif state_type == '777-UD-centers-oblique-edges-solve-edges-only':
                 state = ''.join(['x', parent_state[10], parent_state[11], parent_state[12], 'x', parent_state[16], 'xxx', parent_state[20], parent_state[23], 'xxx', parent_state[27], parent_state[30], 'xxx', parent_state[34], 'x', parent_state[38], parent_state[39], parent_state[40], 'xx', parent_state[255], parent_state[256], parent_state[257], 'x', parent_state[261], 'xxx', parent_state[265], parent_state[268], 'xxx', parent_state[272], parent_state[275], 'xxx', parent_state[279], 'x', parent_state[283], parent_state[284], parent_state[285], 'x'])
 
                 '''
@@ -1169,40 +1105,40 @@ class LookupTable(object):
                 state = ''.join(state)
                 '''
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-inner-t-center-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-inner-t-center-only':
                 state = ''.join(['xxxxxx', parent_state[66], parent_state[67], parent_state[68], 'xx', parent_state[73], parent_state[74], parent_state[75], 'xx', parent_state[80], parent_state[81], parent_state[82], 'xxxxxx', 'xxxxxx', parent_state[115], parent_state[116], parent_state[117], 'xx', parent_state[122], parent_state[123], parent_state[124], 'xx', parent_state[129], parent_state[130], parent_state[131], 'xxxxxx', 'xxxxxx', parent_state[164], parent_state[165], parent_state[166], 'xx', parent_state[171], parent_state[172], parent_state[173], 'xx', parent_state[178], parent_state[179], parent_state[180], 'xxxxxx', 'xxxxxx', parent_state[213], parent_state[214], parent_state[215], 'xx', parent_state[220], parent_state[221], parent_state[222], 'xx', parent_state[227], parent_state[228], parent_state[229], 'xxxxxx'])
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-left-oblique-edge-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-left-oblique-edge-only':
                 state = ''.join(['x', parent_state[59], 'xxxx', parent_state[66], 'x', parent_state[68], parent_state[69], 'xx', parent_state[74], 'xx', parent_state[79], parent_state[80], 'x', parent_state[82], 'xxxx', parent_state[89], 'xx', parent_state[108], 'xxxx', parent_state[115], 'x', parent_state[117], parent_state[118], 'xx', parent_state[123], 'xx', parent_state[128], parent_state[129], 'x', parent_state[131], 'xxxx', parent_state[138], 'xx', parent_state[157], 'xxxx', parent_state[164], 'x', parent_state[166], parent_state[167], 'xx', parent_state[172], 'xx', parent_state[177], parent_state[178], 'x', parent_state[180], 'xxxx', parent_state[187], 'xx', parent_state[206], 'xxxx', parent_state[213], 'x', parent_state[215], parent_state[216], 'xx', parent_state[221], 'xx', parent_state[226], parent_state[227], 'x', parent_state[229], 'xxxx', parent_state[236], 'x'])
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-middle-oblique-edge-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-middle-oblique-edge-only':
                 state = ''.join(['xx', parent_state[60], 'xxx', parent_state[66], 'x', parent_state[68], 'x', parent_state[72], 'x', parent_state[74], 'x', parent_state[76], 'x', parent_state[80], 'x', parent_state[82], 'xxx', parent_state[88], 'xxxx', parent_state[109], 'xxx', parent_state[115], 'x', parent_state[117], 'x', parent_state[121], 'x', parent_state[123], 'x', parent_state[125], 'x', parent_state[129], 'x', parent_state[131], 'xxx', parent_state[137], 'xxxx', parent_state[158], 'xxx', parent_state[164], 'x', parent_state[166], 'x', parent_state[170], 'x', parent_state[172], 'x', parent_state[174], 'x', parent_state[178], 'x', parent_state[180], 'xxx', parent_state[186], 'xxxx', parent_state[207], 'xxx', parent_state[213], 'x', parent_state[215], 'x', parent_state[219], 'x', parent_state[221], 'x', parent_state[223], 'x', parent_state[227], 'x', parent_state[229], 'xxx', parent_state[235], 'x', 'x'])
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-right-oblique-edge-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-right-oblique-edge-only':
                 state = ''.join(['xxx', parent_state[61], 'x', parent_state[65], parent_state[66], 'x', parent_state[68], 'xxx', parent_state[74], 'xxx', parent_state[80], 'x', parent_state[82], parent_state[83], 'x', parent_state[87], 'xxxxxx', parent_state[110], 'x', parent_state[114], parent_state[115], 'x', parent_state[117], 'xxx', parent_state[123], 'xxx', parent_state[129], 'x', parent_state[131], parent_state[132], 'x', parent_state[136], 'xxxxxx', parent_state[159], 'x', parent_state[163], parent_state[164], 'x', parent_state[166], 'xxx', parent_state[172], 'xxx', parent_state[178], 'x', parent_state[180], parent_state[181], 'x', parent_state[185], 'xxxxxx', parent_state[208], 'x', parent_state[212], parent_state[213], 'x', parent_state[215], 'xxx', parent_state[221], 'xxx', parent_state[227], 'x', parent_state[229], parent_state[230], 'x', parent_state[234], 'xxx'])
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-t-center-left-oblique-edge-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-inner-t-center-left-oblique-edge-only':
                 state = ''.join(['x', parent_state[59], 'xxxxx', parent_state[67], 'x', parent_state[69], 'x', parent_state[73], parent_state[74], parent_state[75], 'x', parent_state[79], 'x', parent_state[81], 'xxxxx', parent_state[89], 'xx', parent_state[108], 'xxxxx', parent_state[116], 'x', parent_state[118], 'x', parent_state[122], parent_state[123], parent_state[124], 'x', parent_state[128], 'x', parent_state[130], 'xxxxx', parent_state[138], 'xx', parent_state[157], 'xxxxx', parent_state[165], 'x', parent_state[167], 'x', parent_state[171], parent_state[172], parent_state[173], 'x', parent_state[177], 'x', parent_state[179], 'xxxxx', parent_state[187], 'xx', parent_state[206], 'xxxxx', parent_state[214], 'x', parent_state[216], 'x', parent_state[220], parent_state[221], parent_state[222], 'x', parent_state[226], 'x', parent_state[228], 'xxxxx', parent_state[236], 'x']
     )
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-t-center-middle-oblique-edge-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-inner-t-center-middle-oblique-edge-only':
                 state = ''.join(['xx', parent_state[60], 'xxxx', parent_state[67], 'xx', parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76], 'xx', parent_state[81], 'xxxx', parent_state[88], 'xxxx', parent_state[109], 'xxxx', parent_state[116], 'xx', parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125], 'xx', parent_state[130], 'xxxx', parent_state[137], 'xxxx', parent_state[158], 'xxxx', parent_state[165], 'xx', parent_state[170], parent_state[171], parent_state[172], parent_state[173], parent_state[174], 'xx', parent_state[179], 'xxxx', parent_state[186], 'xxxx', parent_state[207], 'xxxx', parent_state[214], 'xx', parent_state[219], parent_state[220], parent_state[221], parent_state[222], parent_state[223], 'xx', parent_state[228], 'xxxx', parent_state[235], 'x', 'x'])
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-inner-t-center-middle-oblique-edge-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-inner-x-center-inner-t-center-middle-oblique-edge-only':
                 state = ''.join(['xx', parent_state[60], 'xxx', parent_state[66], parent_state[67], parent_state[68], 'x', parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76], 'x', parent_state[80], parent_state[81], parent_state[82], 'xxx', parent_state[88], 'xxxx', parent_state[109], 'xxx', parent_state[115], parent_state[116], parent_state[117], 'x', parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125], 'x', parent_state[129], parent_state[130], parent_state[131], 'xxx', parent_state[137], 'xxxx', parent_state[158], 'xxx', parent_state[164], parent_state[165], parent_state[166], 'x', parent_state[170], parent_state[171], parent_state[172], parent_state[173], parent_state[174], 'x', parent_state[178], parent_state[179], parent_state[180], 'xxx', parent_state[186], 'xxxx', parent_state[207], 'xxx', parent_state[213], parent_state[214], parent_state[215], 'x', parent_state[219], parent_state[220], parent_state[221], parent_state[222], parent_state[223], 'x', parent_state[227], parent_state[228], parent_state[229], 'xxx', parent_state[235], 'xx'])
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-left-right-oblique-edges-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-left-right-oblique-edges-only':
                 state = ''.join(['x', parent_state[59], 'x', parent_state[61], 'x', parent_state[65], 'xxx', parent_state[69], 'xxxxx', parent_state[79], 'xxx', parent_state[83], 'x', parent_state[87], 'x', parent_state[89], 'xx', parent_state[108], 'x', parent_state[110], 'x', parent_state[114], 'xxx', parent_state[118], 'xxxxx', parent_state[128], 'xxx', parent_state[132], 'x', parent_state[136], 'x', parent_state[138], 'xx', parent_state[157], 'x', parent_state[159], 'x', parent_state[163], 'xxx', parent_state[167], 'xxxxx', parent_state[177], 'xxx', parent_state[181], 'x', parent_state[185], 'x', parent_state[187], 'xx', parent_state[206], 'x', parent_state[208], 'x', parent_state[212], 'xxx', parent_state[216], 'xxxxx', parent_state[226], 'xxx', parent_state[230], 'x', parent_state[234], 'x', parent_state[236], 'x'])
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-middle-right-oblique-edges-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-middle-right-oblique-edges-only':
                 state = ''.join(['xx', parent_state[60], parent_state[61], 'x', parent_state[65], 'xxxx', parent_state[72], 'xxx', parent_state[76], 'xxxx', parent_state[83], 'x', parent_state[87], parent_state[88], 'xxxx', parent_state[109], parent_state[110], 'x', parent_state[114], 'xxxx', parent_state[121], 'xxx', parent_state[125], 'xxxx', parent_state[132], 'x', parent_state[136], parent_state[137], 'xxxx', parent_state[158], parent_state[159], 'x', parent_state[163], 'xxxx', parent_state[170], 'xxx', parent_state[174], 'xxxx', parent_state[181], 'x', parent_state[185], parent_state[186], 'xxxx', parent_state[207], parent_state[208], 'x', parent_state[212], 'xxxx', parent_state[219], 'xxx', parent_state[223], 'xxxx', parent_state[230], 'x', parent_state[234], parent_state[235], 'x', 'x'])
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-inner-t-center-right-oblique-edge-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-inner-t-center-right-oblique-edge-only':
                 state = ''.join(['xxx', parent_state[61], 'x', parent_state[65], 'x', parent_state[67], 'xxx', parent_state[73], parent_state[74], parent_state[75], 'xxx', parent_state[81], 'x', parent_state[83], 'x', parent_state[87], 'xxxxxx', parent_state[110], 'x', parent_state[114], 'x', parent_state[116], 'xxx', parent_state[122], parent_state[123], parent_state[124], 'xxx', parent_state[130], 'x', parent_state[132], 'x', parent_state[136], 'xxxxxx', parent_state[159], 'x', parent_state[163], 'x', parent_state[165], 'xxx', parent_state[171], parent_state[172], parent_state[173], 'xxx', parent_state[179], 'x', parent_state[181], 'x', parent_state[185], 'xxxxxx', parent_state[208], 'x', parent_state[212], 'x', parent_state[214], 'xxx', parent_state[220], parent_state[221], parent_state[222], 'xxx', parent_state[228], 'x', parent_state[230], 'x', parent_state[234], 'xxx'])
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-solve-left-middle-oblique-edge-only':
+            elif state_type == '777-LFRB-centers-oblique-edges-solve-left-middle-oblique-edge-only':
                 state = ''.join(['x', parent_state[59], parent_state[60], 'xxxxxx', parent_state[69], parent_state[72], 'xxx', parent_state[76], parent_state[79], 'xxxxxx', parent_state[88], parent_state[89], 'xx', parent_state[108], parent_state[109], 'xxxxxx', parent_state[118], parent_state[121], 'xxx', parent_state[125], parent_state[128], 'xxxxxx', parent_state[137], parent_state[138], 'xx', parent_state[157], parent_state[158], 'xxxxxx', parent_state[167], parent_state[170], 'xxx', parent_state[174], parent_state[177], 'xxxxxx', parent_state[186], parent_state[187], 'xx', parent_state[206], parent_state[207], 'xxxxxx', parent_state[216], parent_state[219], 'xxx', parent_state[223], parent_state[226], 'xxxxxx', parent_state[235], parent_state[236], 'x'])
 
-            elif self.state_type == '777-LFRB-inner-x-center-t-center-and-middle-oblique-edges-LR-solve':
+            elif state_type == '777-LFRB-inner-x-center-t-center-and-middle-oblique-edges-LR-solve':
                 state = ''.join(['xx', parent_state[60], 'xx',
                                  'x', parent_state[66], parent_state[67], parent_state[68], 'x',
                                  parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
@@ -1225,7 +1161,7 @@ class LookupTable(object):
                                  'xx', parent_state[235], 'xx'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
 
-            elif self.state_type == '777-LFRB-oblique-edges-LR-solve':
+            elif state_type == '777-LFRB-oblique-edges-LR-solve':
                 state = ''.join(['x', parent_state[59], parent_state[60], parent_state[61], 'x', # Left
                                  parent_state[65], 'xxx', parent_state[69],
                                  parent_state[72], 'xxx', parent_state[76],
@@ -1248,7 +1184,7 @@ class LookupTable(object):
                                  'x', parent_state[234], parent_state[235], parent_state[236], 'x'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
 
-            elif self.state_type == '777-LR-inner-x-center-t-center-and-middle-oblique-edges-LR-solve':
+            elif state_type == '777-LR-inner-x-center-t-center-and-middle-oblique-edges-LR-solve':
                 state = ''.join(['xx', parent_state[60], 'xx',
                                  'x', parent_state[66], parent_state[67], parent_state[68], 'x',
                                  parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
@@ -1261,7 +1197,7 @@ class LookupTable(object):
                                  'xx', parent_state[186], 'xx'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
 
-            elif self.state_type == '777-LR-oblique-edges-LR-solve':
+            elif state_type == '777-LR-oblique-edges-LR-solve':
                 state = ''.join(['x', parent_state[59], parent_state[60], parent_state[61], 'x',
                                  parent_state[65], 'xxx', parent_state[69],
                                  parent_state[72], 'xxx', parent_state[76],
@@ -1274,7 +1210,7 @@ class LookupTable(object):
                                  'x', parent_state[185], parent_state[186], parent_state[187], 'x'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-LR-solve':
+            elif state_type == '777-LFRB-centers-oblique-edges-LR-solve':
                 state = ''.join(['x', parent_state[59], parent_state[60], parent_state[61], 'x',
                                  parent_state[65], parent_state[66], parent_state[67], parent_state[68], parent_state[69],
                                  parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
@@ -1297,7 +1233,7 @@ class LookupTable(object):
                                  'x', parent_state[234], parent_state[235], parent_state[236], 'x'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
 
-            elif self.state_type == '777-LR-centers-oblique-edges-LR-solve':
+            elif state_type == '777-LR-centers-oblique-edges-LR-solve':
                 state = ''.join(['x', parent_state[59], parent_state[60], parent_state[61], 'x',
                                  parent_state[65], parent_state[66], parent_state[67], parent_state[68], parent_state[69],
                                  parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
@@ -1310,7 +1246,7 @@ class LookupTable(object):
                                  'x', parent_state[185], parent_state[186], parent_state[187], 'x'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
 
-            elif self.state_type == '777-LFRB-centers-oblique-edges-FB-solve':
+            elif state_type == '777-LFRB-centers-oblique-edges-FB-solve':
                 state = ''.join(['x', parent_state[59], parent_state[60], parent_state[61], 'x',
                                  parent_state[65], parent_state[66], parent_state[67], parent_state[68], parent_state[69],
                                  parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
@@ -1333,7 +1269,7 @@ class LookupTable(object):
                                  'x', parent_state[234], parent_state[235], parent_state[236], 'x'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
 
-            elif self.state_type == '777-FB-centers-oblique-edges-FB-solve':
+            elif state_type == '777-FB-centers-oblique-edges-FB-solve':
                 state = ''.join(['x', parent_state[108], parent_state[109], parent_state[110], 'x',
                                  parent_state[114], parent_state[115], parent_state[116], parent_state[117], parent_state[118],
                                  parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125],
@@ -1346,7 +1282,7 @@ class LookupTable(object):
                                  'x', parent_state[234], parent_state[235], parent_state[236], 'x'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
 
-            elif self.state_type == '777-LFRB-inner-x-center-t-center-and-middle-oblique-edges-FB-solve':
+            elif state_type == '777-LFRB-inner-x-center-t-center-and-middle-oblique-edges-FB-solve':
                 state = ''.join(['xx', parent_state[60], 'xx',
                                  'x', parent_state[66], parent_state[67], parent_state[68], 'x',
                                  parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
@@ -1369,7 +1305,7 @@ class LookupTable(object):
                                  'xx', parent_state[235], 'xx'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
 
-            elif self.state_type == '777-FB-inner-x-center-t-center-and-middle-oblique-edges-FB-solve':
+            elif state_type == '777-FB-inner-x-center-t-center-and-middle-oblique-edges-FB-solve':
                 state = ''.join(['xx', parent_state[109], 'xx',
                                  'x', parent_state[115], parent_state[116], parent_state[117], 'x',
                                  parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125],
@@ -1382,7 +1318,7 @@ class LookupTable(object):
                                  'xx', parent_state[235], 'xx'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
 
-            elif self.state_type == '777-LFRB-oblique-edges-FB-solve':
+            elif state_type == '777-LFRB-oblique-edges-FB-solve':
                 state = ''.join(['x', parent_state[59], parent_state[60], parent_state[61], 'x',
                                  parent_state[65], 'xxx', parent_state[69],
                                  parent_state[72], 'xxx', parent_state[76],
@@ -1405,7 +1341,7 @@ class LookupTable(object):
                                  'x', parent_state[234], parent_state[235], parent_state[236], 'x'])
                 state = state.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
 
-            elif self.state_type == '777-FB-oblique-edges-FB-solve':
+            elif state_type == '777-FB-oblique-edges-FB-solve':
                 state = ''.join(['x', parent_state[108], parent_state[109], parent_state[110], 'x',
                                  parent_state[114], 'xxx', parent_state[118],
                                  parent_state[121], 'xxx', parent_state[125],
@@ -1419,7 +1355,7 @@ class LookupTable(object):
                 state = state.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
 
             else:
-                raise ImplementThis("state_type %s" % self.state_type)
+                raise ImplementThis("state_type %s" % state_type)
 
         if self.state_hex:
             state = convert_state_to_hex(state, self.state_width)

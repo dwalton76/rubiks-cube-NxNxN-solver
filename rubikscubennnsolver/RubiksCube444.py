@@ -1,7 +1,7 @@
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver import RubiksCube
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps, NoIDASolution
 from subprocess import check_output
 import logging
 import sys
@@ -16,6 +16,88 @@ moves_4x4x4 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2",
                "B" , "B'", "B2", "Bw", "Bw'", "Bw2",
                "D" , "D'", "D2", "Dw", "Dw'", "Dw2")
 solved_4x4x4 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
+
+
+# Move a wing to (44, 57)
+lookup_table_444_last_two_edges_place_F_east = {
+    (2, 67)  : "B' R2",
+    (3, 66)  : "U R'",
+    (5, 18)  : "U2 R'",
+    (9, 19)  : "U B' R2",
+    (14, 34) : "U' R'",
+    (15, 35) : "U F' U' F",
+    (8, 51)  : "F' U F",
+    (12, 50) : "R'",
+    (21, 72) : "B' U R'",
+    (25, 76) : "B2 R2",
+    (30, 89) : "F D F'",
+    (31, 85) : "D2 R",
+    (40, 53) : "R U' B' R2",
+    (44, 57) : "",
+    (46, 82) : "D F D' F'",
+    (47, 83) : "D R",
+    (56, 69) : "R2",
+    (60, 73) : "B U R'",
+    (62, 88) : "F D' F'",
+    (63, 92) : "R",
+    (78, 95) : "B R2",
+    (79, 94) : "D' R",
+}
+
+
+# Move a wing to (40, 53)
+lookup_table_444_sister_wing_to_F_east = {
+    (2, 67)  : "U R'",
+    (3, 66)  : "B' R2",
+    (5, 18)  : "U B' R2",
+    (9, 19)  : "U2 R'",
+    (14, 34) : "L F L'",
+    (15, 35) : "U' R'",
+    (8, 51)  : "R'",
+    (12, 50) : "F' U F",
+    (21, 72) : "B2 R2",
+    (25, 76) : "B D' R",
+    (30, 89) : "D2 R",
+    (31, 85) : "F D F'",
+    (40, 53) : "",
+    (44, 57) : "F D F' R",
+    (46, 82) : "D R",
+    (47, 83) : "D2 B R2",
+    (56, 69) : "B U R'",
+    (60, 73) : "R2",
+    (62, 88) : "R",
+    (63, 92) : "F D' F'",
+    (78, 95) : "D' R",
+    (79, 94) : "B R2",
+}
+
+
+# Move a wing to (5, 18)
+lookup_table_444_sister_wing_to_U_west = {
+    (2, 67)  : "L' B L",
+    (3, 66)  : "U'",
+    (5, 18)  : "",
+    (9, 19)  : "L' B' L U'",
+    (14, 34) : "U",
+    (15, 35) : "F' L' F",
+    (8, 51)  : "U' B F L F'",
+    (12, 50) : "U2",
+    (21, 72) : "B' U'",
+    (25, 76) : "L U L' U'",
+    (30, 89) : "L B' L' U'",
+    (31, 85) : "D' B2 U'",
+    (37, 24) : None,
+    #(40, 53) : "",
+    #(44, 57) : "",
+    (46, 82) : "F L' F'",
+    (47, 83) : "D2 B2 U'",
+    (56, 69) : "R' U2 R",
+    (60, 73) : "B U'",
+    (62, 88) : "R' B R U'",
+    (63, 92) : "D B2 U'",
+    (78, 95) : "B2 U'",
+    (79, 94) : "B2 U'",
+}
 
 
 class RubiksCube444(RubiksCube):
@@ -910,87 +992,7 @@ class RubiksCube444(RubiksCube):
         self.solution.append('EDGES_GROUPED')
 
 
-# Move a wing to (44, 57)
-lookup_table_444_last_two_edges_place_F_east = {
-    (2, 67)  : "B' R2",
-    (3, 66)  : "U R'",
-    (5, 18)  : "U2 R'",
-    (9, 19)  : "U B' R2",
-    (14, 34) : "U' R'",
-    (15, 35) : "U F' U' F",
-    (8, 51)  : "F' U F",
-    (12, 50) : "R'",
-    (21, 72) : "B' U R'",
-    (25, 76) : "B2 R2",
-    (30, 89) : "F D F'",
-    (31, 85) : "D2 R",
-    (40, 53) : "R U' B' R2",
-    (44, 57) : "",
-    (46, 82) : "D F D' F'",
-    (47, 83) : "D R",
-    (56, 69) : "R2",
-    (60, 73) : "B U R'",
-    (62, 88) : "F D' F'",
-    (63, 92) : "R",
-    (78, 95) : "B R2",
-    (79, 94) : "D' R",
-}
-
-# Move a wing to (40, 53)
-lookup_table_444_sister_wing_to_F_east = {
-    (2, 67)  : "U R'",
-    (3, 66)  : "B' R2",
-    (5, 18)  : "U B' R2",
-    (9, 19)  : "U2 R'",
-    (14, 34) : "L F L'",
-    (15, 35) : "U' R'",
-    (8, 51)  : "R'",
-    (12, 50) : "F' U F",
-    (21, 72) : "B2 R2",
-    (25, 76) : "B D' R",
-    (30, 89) : "D2 R",
-    (31, 85) : "F D F'",
-    (40, 53) : "",
-    (44, 57) : "F D F' R",
-    (46, 82) : "D R",
-    (47, 83) : "D2 B R2",
-    (56, 69) : "B U R'",
-    (60, 73) : "R2",
-    (62, 88) : "R",
-    (63, 92) : "F D' F'",
-    (78, 95) : "D' R",
-    (79, 94) : "B R2",
-}
-
-# Move a wing to (5, 18)
-lookup_table_444_sister_wing_to_U_west = {
-    (2, 67)  : "L' B L",
-    (3, 66)  : "U'",
-    (5, 18)  : "",
-    (9, 19)  : "L' B' L U'",
-    (14, 34) : "U",
-    (15, 35) : "F' L' F",
-    (8, 51)  : "U' B F L F'",
-    (12, 50) : "U2",
-    (21, 72) : "B' U'",
-    (25, 76) : "L U L' U'",
-    (30, 89) : "L B' L' U'",
-    (31, 85) : "D' B2 U'",
-    (37, 24) : None,
-    #(40, 53) : "",
-    #(44, 57) : "",
-    (46, 82) : "F L' F'",
-    (47, 83) : "D2 B2 U'",
-    (56, 69) : "R' U2 R",
-    (60, 73) : "B U'",
-    (62, 88) : "R' B R U'",
-    (63, 92) : "D B2 U'",
-    (78, 95) : "B2 U'",
-    (79, 94) : "B2 U'",
-}
-
-
-# Code below here is no longer...maybe I am saving it for a rainy day
+# Code below here is no longer used...saving it for a rainy day
 '''
     def find_moves_to_reach_state(self, wing_to_move, target_face_side):
         """

@@ -1,6 +1,5 @@
 
 import datetime as dt
-from copy import copy
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.rotate_xxx import rotate_222, rotate_444, rotate_555, rotate_666, rotate_777
@@ -41,7 +40,7 @@ def steps_cancel_out(prev_step, step):
     if step == prev_step and step.endswith("2"):
         return True
 
-    # dwalton experimental
+    # TODO experimental
     # U followed by U is a no-op because a U2 does the same but is one step instead of two so return true
     #if step == prev_step:
     #    return True
@@ -1667,7 +1666,10 @@ class LookupTableIDA(LookupTable):
         self.ida_prune_count = 0
         self.prune_tables = prune_tables
         self.visited_states = set()
-        self.init_ida_depth = 1
+
+        for x in self.moves_illegal:
+            if x not in self.moves_all:
+                raise Exception("illegal move %s is not in the list of legal moves" % x)
 
     def ida_steps_list(self, prev_step_sequences, threshold, max_step_count):
 
@@ -1787,8 +1789,6 @@ class LookupTableIDA(LookupTable):
             pt.index = index
             pt_index_to_pt[pt.index] = pt
 
-        # dwalton
-        self.init_ida_depth = 1
         for threshold in xrange(1, max_ida_threshold+1):
 
             # Build a list of moves we can do 1 move deep
@@ -1810,7 +1810,8 @@ class LookupTableIDA(LookupTable):
                 # This allows us to do one gigantic binary search.
                 start_time2 = dt.datetime.now()
                 states_to_check = []
-                rotate_count = 0
+                step_sequences_count = 0
+                step_count = 0
                 step_sequences_for_states_to_check = []
                 step_sequences_that_create_unique_states = []
                 states_found = set()
@@ -1819,10 +1820,11 @@ class LookupTableIDA(LookupTable):
                     self.parent.state = original_state[:]
                     self.parent.solution = original_solution[:]
                     self.ida_count += 1
-                    rotate_count += 1
+                    step_sequences_count += 1
 
                     for step in step_sequence.split():
                         self.parent.state = rotate_xxx(self.parent.state, step)
+                        step_count += 1
 
                     # get the current state of the cube
                     state = self.state()
@@ -1835,9 +1837,9 @@ class LookupTableIDA(LookupTable):
 
                 end_time2 = dt.datetime.now()
 
-                if rotate_count:
-                    log.debug("%s: IDA threshold %d (max step %d), rotated %d sequences in %s" %
-                        (self, threshold, max_step_count, rotate_count, pretty_time(end_time2 - start_time2)))
+                if step_sequences_count:
+                    log.debug("%s: IDA threshold %d (max step %d), rotated %d sequences with %d steps in %s" %
+                        (self, threshold, max_step_count, step_sequences_count, step_count, pretty_time(end_time2 - start_time2)))
 
                 start_time3 = dt.datetime.now()
                 self.parent.state = original_state[:]
@@ -1874,7 +1876,7 @@ class LookupTableIDA(LookupTable):
                         log.info("%s: IDA threshold %d (max step %d), took %s (%s to rotate %d, %s to search primary table)" %\
                             (self, threshold, max_step_count,
                              pretty_time(end_time3 - start_time1),
-                             pretty_time(end_time2 - start_time2), rotate_count,
+                             pretty_time(end_time2 - start_time2), step_sequences_count,
                              pretty_time(end_time3 - start_time3)))
                         log.warning("%s: IDA threshold %d (max step %d), found match in %s, step_sequence %s, steps %s, state %s is %d/%d in states_to_check" %\
                             (self, threshold, max_step_count,
@@ -1888,10 +1890,10 @@ class LookupTableIDA(LookupTable):
                 # ==============
                 end_time0 = dt.datetime.now()
                 end_time3 = end_time0
-                log.info("%s: IDA threshold %d (max step %d) did not find a match, took %s (%s to rotate %d, %s to search primary table)" %
+                log.info("%s: IDA threshold %d (max step %d) did not find a match, took %s (%s %d step sequences with %d total steps, %s to search primary table)" %
                     (self, threshold, max_step_count,
                      pretty_time(end_time3 - start_time1),
-                     pretty_time(end_time2 - start_time2), rotate_count,
+                     pretty_time(end_time2 - start_time2), step_sequences_count, step_count,
                      pretty_time(end_time3 - start_time3)))
 
                 # If we are here it means none of the step_sequences put the cube in a state that is in self.filename
@@ -1902,7 +1904,7 @@ class LookupTableIDA(LookupTable):
                 # We cached the state of the cube after all of the rotate_xxx()
                 # calls, that is what parent_state is here
                 for (step_sequence, parent_state) in step_sequences_that_create_unique_states:
-                    self.parent.state = parent_state
+                    self.parent.state = parent_state[:]
 
                     # Save a list of the pt indexes/states for this step_sequence
                     tmp_list = []
@@ -1910,6 +1912,8 @@ class LookupTableIDA(LookupTable):
                         tmp_list.append((pt.index, pt.state()))
                     pt_costs_by_step_sequence[step_sequence] = tmp_list
 
+                self.parent.state = original_state[:]
+                self.parent.solution = original_solution[:]
                 log.info("%s: IDA threshold %d (max step %d) rotates for prune tables are complete" %
                     (self, threshold, max_step_count))
 
@@ -1946,7 +1950,7 @@ class LookupTableIDA(LookupTable):
                             if pt_state == pt.state_target:
                                 len_pt_steps = 0
                             elif pt.max_depth is None:
-                                raise SolveError("%s does not have max_depth and does not have steps for %s" % (pt, pt.state()))
+                                raise SolveError("steps %s, %s does not have max_depth and does not have steps for %s" % (pformat(step_sequence), pt, pt_state))
                             else:
                                 # This is the exception to the rule but some prune tables such
                                 # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt

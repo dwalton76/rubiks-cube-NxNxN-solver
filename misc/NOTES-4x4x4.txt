@@ -182,3 +182,14 @@ Replaced all range() with xrange()
 ==================================
 13.41user 0.62system 0:14.26elapsed 98%CPU (0avgtext+0avgdata 16076maxresident)k
 
+
+
+2017-08-02
+==========
+4x4x4 avg centers solution 19.0 steps
+4x4x4 avg edges solution 25.0 steps
+4x4x4 avg solution 65.0 steps
+4x4x4 min solution 59 steps (FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU)
+4x4x4 max solution 75 steps (FLDRFFBLFDLRURUUFBUBLRUFUDUBULLFRUBLRRRUDFDFDUBBRRDLUFDDRFBDDFBDDDRFDLUDBLRBLFFBUFBLLLURRBBLRULB)
+
+13.22user 0.50system 0:13.98elapsed 98%CPU (0avgtext+0avgdata 15672maxresident)k

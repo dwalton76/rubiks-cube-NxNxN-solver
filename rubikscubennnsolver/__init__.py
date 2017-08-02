@@ -341,6 +341,7 @@ class RubiksCube(object):
         self.ida_count = 0
         self._phase = None
         self.lt_init_called = False
+        self.orient_edges = {}
 
         if colormap:
             colormap = json.loads(colormap)
@@ -477,6 +478,9 @@ class RubiksCube(object):
 
         for side in self.sides.values():
             side.calculate_wing_partners()
+
+    def __str__(self):
+        return "%dx%dx%d" % (self.size, self.size, self.size)
 
     def is_even(self):
         if self.size % 2 == 0:
@@ -1410,16 +1414,20 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            raise ImplementThis("F north")
+            for step in ("U2", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            raise ImplementThis("F south")
+            for step in ("F2", "U2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            raise ImplementThis("F east")
+            for step in ("R", "U'"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            raise ImplementThis("F west")
+            for step in ("F", "U2"):
+                self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
@@ -1440,16 +1448,19 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            raise ImplementThis("B north")
+            pass
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            raise ImplementThis("B south")
+            for step in ("B2", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            raise ImplementThis("B east")
+            for step in ("B'", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            raise ImplementThis("B west")
+            for step in ("B", ):
+                self.rotate(step)
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
@@ -1512,16 +1523,20 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            raise ImplementThis("F north")
+            for step in ("U", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            raise ImplementThis("F south")
+            for step in ("F2", "U"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            raise ImplementThis("F east")
+            for step in ("F'", "U"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            raise ImplementThis("F west")
+            for step in ("L'", ):
+                self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
@@ -1542,16 +1557,20 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            raise ImplementThis("B north")
+            for step in ("U'", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            raise ImplementThis("B south")
+            for step in ("B2", "U'"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            raise ImplementThis("B east")
+            for step in ("L", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            raise ImplementThis("B west")
+            for step in ("B", "U'"):
+                self.rotate(step)
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
@@ -1615,16 +1634,19 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            raise ImplementThis("F north")
+            pass
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            raise ImplementThis("F south")
+            for step in ("F2", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            raise ImplementThis("F east")
+            for step in ("F'", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            raise ImplementThis("F west")
+            for step in ("F", ):
+                self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
@@ -1645,16 +1667,20 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            raise ImplementThis("B north")
+            for step in ("U2", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            raise ImplementThis("B south")
+            for step in ("B2", "U2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            raise ImplementThis("B east")
+            for step in ("B'", "U2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            raise ImplementThis("B west")
+            for step in ("B", "U2"):
+                self.rotate(step)
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
@@ -1718,16 +1744,20 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            raise ImplementThis("F north")
+            for step in ("U'", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            raise ImplementThis("F south")
+            for step in ("F'", "R"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            raise ImplementThis("F east")
+            for step in ("R", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            raise ImplementThis("F west")
+            for step in ("F", "U'"):
+                self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
@@ -1747,16 +1777,20 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            raise ImplementThis("B north")
+            for step in ("U", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            raise ImplementThis("B south")
+            for step in ("B", "R'"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            raise ImplementThis("B east")
+            for step in ("B'", "U"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            raise ImplementThis("B west")
+            for step in ("R'", ):
+                self.rotate(step)
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
@@ -1820,16 +1854,20 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            raise ImplementThis("F north")
+            for step in ("F'", "L2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            raise ImplementThis("F south")
+            for step in ("F", "L2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            raise ImplementThis("F east")
+            for step in ("F2", "L2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            raise ImplementThis("F west")
+            for step in ("L2", ):
+                self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
@@ -1850,16 +1888,19 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            raise ImplementThis("B north")
+            for step in ("B", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            raise ImplementThis("B south")
+            for step in ("B'", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            raise ImplementThis("B east")
+            pass
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            raise ImplementThis("B west")
+            for step in ("B2", ):
+                self.rotate(step)
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
@@ -2135,16 +2176,20 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            raise ImplementThis("F north")
+            for step in ("U'", "R"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            raise ImplementThis("F south")
+            for step in ("F'", "R2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            raise ImplementThis("F east")
+            for step in ("R2", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            raise ImplementThis("F west")
+            for step in ("F2", "R2"):
+                self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
@@ -2164,16 +2209,19 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            raise ImplementThis("B north")
+            for step in ("B'", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            raise ImplementThis("B south")
+            for step in ("B", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            raise ImplementThis("B east")
+            for step in ("B2", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            raise ImplementThis("B west")
+            pass
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
@@ -2241,16 +2289,19 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            raise ImplementThis("F north")
+            for step in ("F2", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            raise ImplementThis("F south")
+            pass
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            raise ImplementThis("F east")
+            for step in ("F", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            raise ImplementThis("F west")
+            for step in ("F'", ):
+                self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
@@ -2271,16 +2322,20 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            raise ImplementThis("B north")
+            for step in ("B2", "D2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            raise ImplementThis("B south")
+            for step in ("D2", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            raise ImplementThis("B east")
+            for step in ("B", "D2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            raise ImplementThis("B west")
+            for step in ("R", "D'"):
+                self.rotate(step)
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
@@ -2343,16 +2398,20 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            raise ImplementThis("F north")
+            for step in ("F'", "L"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            raise ImplementThis("F south")
+            for step in ("D'", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            raise ImplementThis("F east")
+            for step in ("F", "D'"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            raise ImplementThis("F west")
+            for step in ("L", ):
+                self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
@@ -2373,16 +2432,20 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            raise ImplementThis("B north")
+            for step in ("B", "L'"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            raise ImplementThis("B south")
+            for step in ("D", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            raise ImplementThis("B east")
+            for step in ("L'", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            raise ImplementThis("B west")
+            for step in ("B'", "D"):
+                self.rotate(step)
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
@@ -2433,7 +2496,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
-            for step in ("D'"):
+            for step in ("D'", ):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
@@ -2446,16 +2509,20 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            raise ImplementThis("F north")
+            for step in ("F2", "D2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            raise ImplementThis("F south")
+            for step in ("D2", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            raise ImplementThis("F east")
+            for step in ("F", "D2"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            raise ImplementThis("F west")
+            for step in ("F'", "D2"):
+                self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
@@ -2476,16 +2543,19 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            raise ImplementThis("B north")
+            for step in ("B2", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            raise ImplementThis("B south")
+            pass
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            raise ImplementThis("B east")
+            for step in ("B", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            raise ImplementThis("B west")
+            for step in ("B'", ):
+                self.rotate(step)
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
@@ -2549,16 +2619,20 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            raise ImplementThis("F north")
+            for step in ("F", "R'"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            raise ImplementThis("F south")
+            for step in ("D", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            raise ImplementThis("F east")
+            for step in ("R'", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            raise ImplementThis("F west")
+            for step in ("F'", "D"):
+                self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
@@ -2578,16 +2652,20 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            raise ImplementThis("B north")
+            for step in ("B2", "D'"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            raise ImplementThis("B south")
+            for step in ("D'", ):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            raise ImplementThis("B east")
+            for step in ("B", "D'"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            raise ImplementThis("B west")
+            for step in ("R", ):
+                self.rotate(step)
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
@@ -2989,7 +3067,7 @@ class RubiksCube(object):
         elif self.state[self.sideU.edge_east_pos[0]] != 'U':
             self.rotate_y()
         elif self.state[self.sideL.edge_north_pos[0]] != 'L':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideL.edge_south_pos[0]] != 'L':
             self.rotate_x()
             self.rotate_x()
@@ -3000,15 +3078,15 @@ class RubiksCube(object):
             self.rotate_y_reverse()
             self.rotate_z()
         elif self.state[self.sideF.edge_north_pos[0]] != 'F':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideF.edge_south_pos[0]] != 'F':
             self.rotate_x()
         elif self.state[self.sideF.edge_east_pos[0]] != 'F':
             self.rotate_z_reverse()
         elif self.state[self.sideF.edge_west_pos[0]] != 'F':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideR.edge_north_pos[0]] != 'R':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideR.edge_south_pos[0]] != 'R':
             self.rotate_y()
             self.rotate_x()
@@ -3016,24 +3094,24 @@ class RubiksCube(object):
             self.rotate_y()
             self.rotate_z_reverse()
         elif self.state[self.sideR.edge_west_pos[0]] != 'R':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideB.edge_north_pos[0]] != 'B':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideB.edge_south_pos[0]] != 'B':
             self.rotate_x()
             self.rotate_x()
         elif self.state[self.sideB.edge_east_pos[0]] != 'B':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideB.edge_west_pos[0]] != 'B':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideD.edge_north_pos[0]] != 'D':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideD.edge_south_pos[0]] != 'D':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideD.edge_east_pos[0]] != 'D':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideD.edge_west_pos[0]] != 'D':
-            raise ImplementThis()
+            raise ImplementThis("pll")
         else:
             self.print_cube()
             raise Exception("we should not be here")
@@ -3043,53 +3121,53 @@ class RubiksCube(object):
 
         # rotate the other hosed edges to U-west
         if self.state[self.sideU.edge_south_pos[0]] != self.state[self.sideU.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideU.edge_north_pos[0]] != self.state[self.sideU.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideU.edge_west_pos[0]] != self.state[self.sideU.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideU.edge_east_pos[0]] != self.state[self.sideU.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideL.edge_north_pos[0]] != self.state[self.sideL.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideL.edge_south_pos[0]] != self.state[self.sideL.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideL.edge_east_pos[0]] != self.state[self.sideL.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideL.edge_west_pos[0]] != self.state[self.sideL.corner_pos[0]]:
             self.rotate_y()
             pll_id = 2
         elif self.state[self.sideF.edge_south_pos[0]] != self.state[self.sideF.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideF.edge_east_pos[0]] != self.state[self.sideF.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideF.edge_west_pos[0]] != self.state[self.sideF.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideR.edge_north_pos[0]] != self.state[self.sideR.corner_pos[0]]:
             self.rotate_y()
             pll_id = 2
         elif self.state[self.sideR.edge_south_pos[0]] != self.state[self.sideR.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideR.edge_east_pos[0]] != self.state[self.sideR.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideR.edge_west_pos[0]] != self.state[self.sideR.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideB.edge_north_pos[0]] != self.state[self.sideB.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideB.edge_south_pos[0]] != self.state[self.sideB.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideB.edge_east_pos[0]] != self.state[self.sideB.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideB.edge_west_pos[0]] != self.state[self.sideB.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideD.edge_north_pos[0]] != self.state[self.sideD.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideD.edge_south_pos[0]] != self.state[self.sideD.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideD.edge_east_pos[0]] != self.state[self.sideD.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         elif self.state[self.sideD.edge_west_pos[0]] != self.state[self.sideD.corner_pos[0]]:
-            raise ImplementThis()
+            raise ImplementThis("pll")
         else:
             raise Exception("we should not be here")
 
@@ -3229,7 +3307,8 @@ class RubiksCube(object):
                     to_check.append(square_index)
                     needed_edges.append('UL%d' % edge_index)
 
-        for (edge_index, square_index) in enumerate(self.sideU.edge_south_pos):
+        # TODO this was not reversed originally
+        for (edge_index, square_index) in enumerate(reversed(self.sideU.edge_south_pos)):
             if edges_paired:
                 to_check.append(square_index)
                 needed_edges.append('UF')
@@ -3314,7 +3393,8 @@ class RubiksCube(object):
                     to_check.append(square_index)
                     needed_edges.append('DL%d' % edge_index)
 
-        for (edge_index, square_index) in enumerate(self.sideD.edge_south_pos):
+        # TODO this was not reversed originally
+        for (edge_index, square_index) in enumerate(reversed(self.sideD.edge_south_pos)):
             if edges_paired:
                 to_check.append(square_index)
                 needed_edges.append('DB')
@@ -3363,7 +3443,7 @@ class RubiksCube(object):
             elif square2 in ('L', 'R'):
                 wing_str = square2 + square1
             else:
-                raise Exception("Could not determin wing_str for (%s, %s)" % (square1, square2))
+                raise Exception("Could not determine wing_str for (%s, %s)" % (square1, square2))
 
             if not edges_paired:
                 # - backup the current state
@@ -3395,7 +3475,7 @@ class RubiksCube(object):
 
                 elif wing_str == 'UF':
                     self.move_wing_to_U_south(square_index)
-                    edge_to_check = self.sideU.edge_south_pos
+                    edge_to_check = reversed(self.sideU.edge_south_pos)
                     target_side = self.sideU
 
                 elif wing_str == 'UR':
@@ -3435,7 +3515,7 @@ class RubiksCube(object):
 
                 elif wing_str == 'DB':
                     self.move_wing_to_D_south(square_index)
-                    edge_to_check = self.sideD.edge_south_pos
+                    edge_to_check = reversed(self.sideD.edge_south_pos)
                     target_side = self.sideD
 
                 elif wing_str == 'DR':
@@ -3445,7 +3525,6 @@ class RubiksCube(object):
 
                 else:
                     raise SolveError("invalid wing %s" % wing_str)
-
 
                 for (edge_index, wing_index) in enumerate(edge_to_check):
                     wing_value = self.state[wing_index]
@@ -3467,6 +3546,7 @@ class RubiksCube(object):
 
         if debug:
             log.info("current edges: %s" % ' '.join(current_edges))
+
         return get_swap_count(needed_edges, current_edges, debug)
 
     def edge_swaps_even(self, edges_paired, orbit, debug):
@@ -4113,7 +4193,6 @@ div#page_holder {
 
     def www_footer(self):
         with open('/tmp/solution.html', 'a') as fh:
-            # dwalton
             fh.write("""
 <div id="sets-browse-controls">
 <a class="prev_page" style="display: block;"><img src="Arrow-Prev.png" class="clickable" width="128"></a>
@@ -4123,3 +4202,297 @@ div#page_holder {
 </body>
 </html>
 """)
+
+    def test(self):
+        """
+        Run some tests to sanity check some things
+        """
+        for side in self.sides.values():
+            for square_index in xrange(side.min_pos, side.max_pos+1):
+                self.state[square_index] = 'x'
+
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        for side in self.sides.values():
+            for direction in ('north', 'south', 'east', 'west'):
+
+                if direction == 'north':
+                    edges = side.edge_north_pos
+                elif direction == 'south':
+                    edges = side.edge_south_pos
+                elif direction == 'east':
+                    edges = side.edge_east_pos
+                elif direction == 'west':
+                    edges = side.edge_west_pos
+
+                for edge_index in edges:
+                    partner_index = side.get_wing_partner(edge_index)
+                    self.state[edge_index] = 'U'
+                    self.state[partner_index] = 'U'
+                    tmp_state = self.state[:]
+                    log.info("test move_wing for %s-%s (%d, %d)" % (side, direction, edge_index, partner_index))
+
+                    # U-north
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_U_north(index_to_test)
+                        for tmp_edge_index in self.sideU.edge_north_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_U_north failed")
+                        self.state[:] = tmp_state
+
+                    # U-south
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_U_south(index_to_test)
+                        for tmp_edge_index in self.sideU.edge_south_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_U_south failed")
+                        self.state[:] = tmp_state
+
+                    # U-east
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_U_east(index_to_test)
+                        for tmp_edge_index in self.sideU.edge_east_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_U_east failed")
+                        self.state[:] = tmp_state
+
+                    # U-west
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_U_west(index_to_test)
+                        for tmp_edge_index in self.sideU.edge_west_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_U_west failed")
+                        self.state[:] = tmp_state
+
+                    # L-north
+                    '''
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_L_north(index_to_test)
+                        for tmp_edge_index in self.sideL.edge_north_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_L_north failed")
+                        self.state[:] = tmp_state
+                    '''
+
+                    # L-south
+                    '''
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_L_south(index_to_test)
+                        for tmp_edge_index in self.sideL.edge_south_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_L_south failed")
+                        self.state[:] = tmp_state
+                    '''
+
+                    # L-east
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_L_east(index_to_test)
+                        for tmp_edge_index in self.sideL.edge_east_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_L_east failed for %d" % index_to_test)
+                        self.state[:] = tmp_state
+
+                    # L-west
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_L_west(index_to_test)
+                        for tmp_edge_index in self.sideL.edge_west_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_L_west failed")
+                        self.state[:] = tmp_state
+
+                    # F-north
+                    '''
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_F_north(index_to_test)
+                        for tmp_edge_index in self.sideF.edge_north_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_F_north failed")
+                        self.state[:] = tmp_state
+                    '''
+
+                    # F-south
+                    '''
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_F_south(index_to_test)
+                        for tmp_edge_index in self.sideF.edge_south_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_F_south failed")
+                        self.state[:] = tmp_state
+                    '''
+
+                    # F-east
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_F_east(index_to_test)
+                        for tmp_edge_index in self.sideF.edge_east_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_F_east failed")
+                        self.state[:] = tmp_state
+
+                    # F-west
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_F_west(index_to_test)
+                        for tmp_edge_index in self.sideF.edge_west_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_F_west failed")
+                        self.state[:] = tmp_state
+
+                    # R-north
+                    '''
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_R_north(index_to_test)
+                        for tmp_edge_index in self.sideR.edge_north_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_R_north failed")
+                        self.state[:] = tmp_state
+                    '''
+
+                    # R-south
+                    '''
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_R_south(index_to_test)
+                        for tmp_edge_index in self.sideR.edge_south_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_R_south failed")
+                        self.state[:] = tmp_state
+                    '''
+
+                    # R-east
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_R_east(index_to_test)
+                        for tmp_edge_index in self.sideR.edge_east_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_R_east failed")
+                        self.state[:] = tmp_state
+
+                    # R-west
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_R_west(index_to_test)
+                        for tmp_edge_index in self.sideR.edge_west_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_R_west failed")
+                        self.state[:] = tmp_state
+
+                    # B-north
+                    '''
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_B_north(index_to_test)
+                        for tmp_edge_index in self.sideB.edge_north_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_B_north failed")
+                        self.state[:] = tmp_state
+                    '''
+
+                    # B-south
+                    '''
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_B_south(index_to_test)
+                        for tmp_edge_index in self.sideB.edge_south_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_B_south failed")
+                        self.state[:] = tmp_state
+                    '''
+
+                    # B-east
+                    '''
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_B_east(index_to_test)
+                        for tmp_edge_index in self.sideB.edge_east_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_B_east failed")
+                        self.state[:] = tmp_state
+                    '''
+
+                    # B-west
+                    '''
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_B_west(index_to_test)
+                        for tmp_edge_index in self.sideB.edge_west_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_B_west failed")
+                        self.state[:] = tmp_state
+                    '''
+
+                    # D-north
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_D_north(index_to_test)
+                        for tmp_edge_index in self.sideD.edge_north_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_D_north failed")
+                        self.state[:] = tmp_state
+
+                    # D-south
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_D_south(index_to_test)
+                        for tmp_edge_index in self.sideD.edge_south_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_D_south failed")
+                        self.state[:] = tmp_state
+
+                    # D-east
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_D_east(index_to_test)
+                        for tmp_edge_index in self.sideD.edge_east_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_D_east failed")
+                        self.state[:] = tmp_state
+
+                    # D-west
+                    for index_to_test in (edge_index, partner_index):
+                        self.move_wing_to_D_west(index_to_test)
+                        for tmp_edge_index in self.sideD.edge_west_pos:
+                            if self.state[tmp_edge_index] == 'U':
+                                break
+                        else:
+                            raise SolveError("move_wing_to_D_west failed")
+                        self.state[:] = tmp_state
+
+                    self.state[:] = original_state
+        self.state[:] = original_state
+

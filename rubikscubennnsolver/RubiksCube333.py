@@ -11,7 +11,7 @@ solved_3x3x3 = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
 
 class RubiksCube333(RubiksCube):
 
-    def __init__(self, kociemba_string, colormap, debug=False):
+    def __init__(self, kociemba_string, colormap=None, debug=False):
         RubiksCube.__init__(self, kociemba_string, colormap, debug)
 
         if debug:

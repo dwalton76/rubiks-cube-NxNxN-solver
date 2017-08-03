@@ -374,6 +374,8 @@ class RubiksCube555(RubiksCube):
         # Stage LR centers
         self.lt_LR_centers_stage.solve(99)
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
+        #self.print_cube()
+        #sys.exit(0)
 
 
         # All centers are staged so solve them

@@ -193,3 +193,9 @@ Replaced all range() with xrange()
 4x4x4 max solution 75 steps (FLDRFFBLFDLRURUUFBUBLRUFUDUBULLFRUBLRRRUDFDFDUBBRRDLUFDDRFBDDFBDDDRFDLUDBLRBLFFBUFBLLLURRBBLRULB)
 
 13.22user 0.50system 0:13.98elapsed 98%CPU (0avgtext+0avgdata 15672maxresident)k
+
+
+unroll 4x4x4 state loops
+========================
+11.62user 0.47system 0:12.28elapsed 98%CPU (0avgtext+0avgdata 15740maxresident)k
+

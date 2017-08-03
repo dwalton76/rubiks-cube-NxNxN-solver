@@ -99,3 +99,4 @@ lookup-table-4x4x4-step33-FB-centers-solve.txt.gz
 lookup-table-*-deep*
 not_used
 binary-search
+*.hash

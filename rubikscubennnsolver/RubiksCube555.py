@@ -67,7 +67,8 @@ class RubiksCube555(RubiksCube):
                                                  '555-UD-T-centers-stage',
                                                  '174000000000ba',
                                                  True, # state_hex
-                                                 True) # prune table
+                                                 True, # prune table
+                                                 modulo=735473)
 
         '''
         lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
@@ -90,7 +91,8 @@ class RubiksCube555(RubiksCube):
                                                  '555-UD-X-centers-stage',
                                                  '2aa00000000155',
                                                  True, # state_hex
-                                                 True) # prune table
+                                                 True, # prune table
+                                                 modulo=735473)
 
         self.lt_UD_centers_stage_UFDB_only = LookupTable(self,
                                                  'lookup-table-5x5x5-step13-UD-centers-stage-UFDB-only.txt',
@@ -98,7 +100,8 @@ class RubiksCube555(RubiksCube):
                                                  'TBD',
                                                  True, # state_hex
                                                  True, # prune table
-                                                 6)    # max depth of this partial prune table
+                                                 6,    # max depth of this partial prune table
+                                                 modulo=7033619)
 
         # Not used right now...if we use these we tend to prune too aggresively which forces us to get
         # to IDA threshold of 10 at which point we are exploring tons of branches and it slows us down
@@ -154,7 +157,8 @@ class RubiksCube555(RubiksCube):
                                                   self.lt_UD_X_centers_stage,
                                                   #self.lt_UD_centers_stage_ULDR_only,
                                                   #self.lt_UD_centers_stage_LFRB_only,
-                                                  self.lt_UD_centers_stage_UFDB_only))
+                                                  self.lt_UD_centers_stage_UFDB_only),
+                                                 modulo=17168477) # modulo
 
         '''
         lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt
@@ -174,7 +178,8 @@ class RubiksCube555(RubiksCube):
                                                              '555-LR-centers-stage-on-LFRB-x-center-only',
                                                              'aa802aa00',
                                                              True, # state_hex
-                                                             True) # prune table
+                                                             True, # prune table
+                                                             modulo=12889)
 
         '''
         lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt
@@ -196,7 +201,8 @@ class RubiksCube555(RubiksCube):
                                                              '555-LR-centers-stage-on-LFRB-t-center-only',
                                                              '5d0017400',
                                                              True, # state_hex
-                                                             True) # prune table
+                                                             True, # prune table
+                                                             modulo=12889)
 
         '''
         Stage LR centers to sides L or R, this will automagically stage
@@ -233,8 +239,11 @@ class RubiksCube555(RubiksCube):
                                                   True, # state_hex
                                                   moves_5x5x5,
                                                   ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'"), # illegal moves
+
+                                                  # prune tables
                                                   (self.lt_LR_centers_stage_x_center_only,
-                                                   self.lt_LR_centers_stage_t_center_only))
+                                                   self.lt_LR_centers_stage_t_center_only),
+                                                  modulo=3805253)
 
         '''
         lookup-table-5x5x5-step31-UD-centers-solve.txt
@@ -257,21 +266,24 @@ class RubiksCube555(RubiksCube):
                                                '555-UD-centers-solve-on-all',
                                                'UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxDDDDDDDDD',
                                                False, # state_hex
-                                               True) # prune table
+                                               True, # prune table
+                                               modulo=4903)
 
         self.lt_LR_centers_solve = LookupTable(self,
                                                'lookup-table-5x5x5-step32-LR-centers-solve.txt',
                                                '555-LR-centers-solve-on-all',
                                                'xxxxxxxxxLLLLLLLLLxxxxxxxxxRRRRRRRRRxxxxxxxxxxxxxxxxxx',
                                                False, # state_hex
-                                               True) # prune table
+                                               True, # prune table
+                                               modulo=4903)
 
         self.lt_FB_centers_solve = LookupTable(self,
                                                'lookup-table-5x5x5-step33-FB-centers-solve.txt',
                                                '555-FB-centers-solve-on-all',
                                                'xxxxxxxxxxxxxxxxxxFFFFFFFFFxxxxxxxxxBBBBBBBBBxxxxxxxxx',
                                                False, # state_hex
-                                               True) # prune table
+                                               True, # prune table
+                                               modulo=4903)
 
         '''
         Would be 117,649,000,000. The 7-deep copy is checked into the repo. I build it
@@ -302,7 +314,9 @@ class RubiksCube555(RubiksCube):
                                                     # prune tables
                                                     (self.lt_UD_centers_solve,
                                                      self.lt_LR_centers_solve,
-                                                     self.lt_FB_centers_solve))
+                                                     self.lt_FB_centers_solve),
+
+                                                    modulo=13684141)
 
         '''
         lookup-table-5x5x5-step90-edges-slice-forward.txt
@@ -322,7 +336,8 @@ class RubiksCube555(RubiksCube):
                                                  '555-edges-slice-forward',
                                                  'TBD',
                                                  False, # state hex
-                                                 False) # prune table
+                                                 False, # prune table
+                                                 modulo=7927)
 
         '''
         lookup-table-5x5x5-step91-edges-slice-backward.txt
@@ -343,7 +358,8 @@ class RubiksCube555(RubiksCube):
                                                   '555-edges-slice-backward',
                                                   'TBD',
                                                   False, # state hex
-                                                  False) # prune table
+                                                  False, # prune table
+                                                  modulo=7919)
 
     def group_centers_guts(self):
         self.lt_init()

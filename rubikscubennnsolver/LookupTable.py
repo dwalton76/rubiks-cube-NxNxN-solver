@@ -3,11 +3,12 @@ import datetime as dt
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.rotate_xxx import rotate_222, rotate_444, rotate_555, rotate_666, rotate_777
-import gc
+from pyhashxx import hashxx
 import json
 import logging
 import math
 import os
+import shutil
 import subprocess
 import sys
 
@@ -84,6 +85,20 @@ def convert_state_to_hex(state, hex_width):
         hex_state = hex_state[:-1]
 
     return hex_state.zfill(hex_width)
+
+
+def find_prime_in_range(a, b):
+    for p in range(a, b):
+        for i in range(2, p):
+            if p % i == 0:
+                break
+        else:
+            return p
+    return None
+
+
+def find_next_prime(n):
+    return find_prime_in_range(n, 2*n)
 
 
 def get_444_UD_centers_stage(parent_state):
@@ -1803,7 +1818,7 @@ state_functions = {
 
 class LookupTable(object):
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, prune_table, max_depth=None):
+    def __init__(self, parent, filename, state_type, state_target, state_hex, prune_table, max_depth=None, modulo=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.sides_LFRB = (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB)
@@ -1812,17 +1827,49 @@ class LookupTable(object):
         self.sides_LR = (self.parent.sideL, self.parent.sideR)
         self.sides_FB = (self.parent.sideF, self.parent.sideB)
         self.filename = filename
+        self.filename_hash = filename + '.hash'
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
         self.filename_exists = False
         self.max_depth = max_depth
+        self.modulo = modulo
 
-        if not os.path.exists(filename):
-            if os.path.exists(filename + '.gz'):
-                log.warning("gunzip --keep %s.gz" % filename)
-                subprocess.call(['gunzip', '--keep', filename + '.gz'])
+        assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
+        assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
+        assert self.modulo, "%s modulo is %s" % (self, self.modulo)
+
+        # If the user just git cloned the repo all of the lookup tables will still be gzipped
+        if not os.path.exists(self.filename):
+            if os.path.exists(self.filename + '.gz'):
+                log.warning("gunzip --keep %s.gz" % self.filename)
+                subprocess.call(['gunzip', '--keep', self.filename + '.gz'])
             else:
-                log.warning("ERROR: %s does not exist" % filename)
+                log.warning("%s does not exist" % self.filename)
                 return
+
+        # Now create a .hash copy of the lookup table
+        if not os.path.exists(self.filename_hash):
+            self.convert_file_to_hash()
+
+        # Find the width, state_width and filesize of our .hash file
+        with open(self.filename_hash, 'r') as fh:
+            first_line = next(fh)
+            self.width = len(first_line)
+
+            # Now that the files are hashed the first line may not have an entry
+            while ':' not in first_line:
+                first_line = next(fh)
+
+            for state_steps in first_line.split(','):
+                (state, steps) = state_steps.split(':')
+            self.state_width = len(state)
+
+            filesize = os.path.getsize(self.filename_hash)
+            self.linecount = int(filesize/self.width)
+
+            if self.linecount * self.width != filesize:
+                log.warning("%s is corrupt, self.linecount * self.width != filesize, %d * %d is %d, filesize is %d" %
+                    (self.filename_hash, self.linecount, self.width, self.linecount * self.width, filesize))
+                sys.exit(0)
 
         self.filename_exists = True
         self.scratchpad = self.desc + '.scratchpad'
@@ -1830,32 +1877,70 @@ class LookupTable(object):
         self.state_target = state_target
         self.state_hex = state_hex
         self.prune_table = prune_table
-        self.guts_cache = {}
-        self.guts_cache_sorted_keys = []
         assert self.state_target is not None, "state_target is None"
-
-        # Find the width, state_width and filesize
-        with open(self.filename) as fh:
-            first_line = next(fh)
-            self.width = len(first_line)
-            (state, steps) = first_line.split(':')
-            self.state_width = len(state)
-
-            filesize = os.path.getsize(self.filename)
-            self.linecount = int(filesize/self.width)
-
-            if self.linecount * self.width != filesize:
-                log.warning("%s is corrupt, not all lines are the same length" % self.filename)
-                sys.exit(1)
 
         self.cache = {}
         self.guts_call_count = 0
         self.guts_left_right_range = 0
         self.fh_seek_call_count = 0
         self.fh_seek_lines_read = 0
+        self.fh = open(self.filename_hash, 'r')
 
     def __str__(self):
         return self.desc
+
+    def convert_file_to_hash(self):
+        log.warning("%s: converting to a .hash file, we only need to do this the first time you run the solver" % self.filename)
+
+        linecount = 0
+        with open(self.filename, 'r') as fh:
+            for line in fh:
+                linecount += 1
+
+        next_prime = find_next_prime(linecount)
+        assert next_prime == self.modulo, "linecount %d, next prime %d, modulo %d...next prime and modulo must match" % (linecount, next_prime, self.modulo)
+
+        log.info("%s: has %d lines, hash table will have %d buckets" % (self.filename, linecount, next_prime))
+        by_index = {}
+
+        for hash_index in xrange(next_prime):
+            by_index[hash_index] = []
+
+        with open(self.filename, 'r') as fh:
+            for line in fh:
+                line = line.rstrip()
+                (state, steps) = line.split(':')
+                hash_index = hashxx(state) % next_prime
+                #print("state %s, hash %s" % (state, hash_index))
+                by_index[hash_index].append(line)
+
+        with open(self.filename_hash, 'w') as fh:
+            for x in xrange(next_prime):
+                line = ','.join(sorted(by_index[x]))
+                fh.write(line + '\n')
+
+        # Now pad the file so that all lines are the same length
+        filename_pad = self.filename_hash + '.pad'
+        max_length = 0
+
+        with open(self.filename_hash, 'r') as fh:
+            for line in fh:
+                length = len(line.strip())
+                if length > max_length:
+                    max_length = length
+
+        with open(filename_pad, 'w') as fh_pad:
+            with open(self.filename_hash, 'r') as fh:
+                for line in fh:
+                    line = line.strip()
+                    length = len(line)
+                    spaces_to_add = max_length - length
+
+                    if spaces_to_add:
+                        line = line + ' ' * spaces_to_add
+                    fh_pad.write(line + '\n')
+
+        shutil.move(filename_pad, self.filename_hash)
 
     def state(self):
         state_function = state_functions.get(self.state_type)
@@ -1866,208 +1951,48 @@ class LookupTable(object):
 
         return state
 
-    def file_binary_search_guts(self, fh, state_to_find, init_left, init_right):
-
-        if init_left is None:
-            left = 0
-        else:
-            left = init_left
-
-        if init_right is None:
-            right = self.linecount - 1
-        else:
-            right = init_right
-
-        width = self.width
-        state_width = self.state_width
-        state = None
-        left_right_delta = right - left
-        #log.info("file_binary_search_guts %d <-> %d, delta %d, look for %s" % (left, right, left_right_delta, state_to_find))
-
-        self.guts_call_count += 1
-        self.guts_left_right_range += left_right_delta
-        guts_cache_changed = False
-
-        while left <= right:
-            mid = int(left + ((right - left) /2))
-
-            try:
-                line = self.guts_cache[mid]
-            except KeyError:
-                fh.seek(mid * width)
-                self.fh_seek_call_count += 1
-                self.fh_seek_lines_read += 1
-                line = fh.readline().rstrip()
-                self.guts_cache[mid] = line
-                guts_cache_changed = True
-            state = line[0:state_width]
-
-            # uncomment this to sanity check that all lookup tables have been padded so that all lines are the same length
-            #if line[state_width] != ':':
-            #    raise Exception("we are off")
-
-            if state_to_find > state:
-                left = mid + 1
-
-            elif state_to_find == state:
-                if guts_cache_changed:
-                    self.guts_cache_sorted_keys = sorted(self.guts_cache.keys())
-                (state, steps) = line.split(':')
-                return (mid, steps.strip().split())
-
-            else:
-                right = mid - 1
-
-        if guts_cache_changed:
-            self.guts_cache_sorted_keys = sorted(self.guts_cache.keys())
-        return (mid, None)
-
-    def file_binary_search(self, fh, state_to_find):
-        (line_number, value) = self.file_binary_search_guts(fh, state_to_find, None, None)
-        return value
-
-    def find_min_left_max_right(self, state_to_find):
-        min_left = None
-        max_right = None
-        prev_state = None
-        prev_line_number = 0
-        guts_cache = self.guts_cache
-
-        for line_number in self.guts_cache_sorted_keys:
-            (state, steps) = guts_cache[line_number].split(':')
-
-            if prev_state and state_to_find >= prev_state and state_to_find <= state:
-                min_left = prev_line_number
-                max_right = line_number
-                break
-
-            prev_state = state
-            prev_line_number = line_number
-
-        guts_cache_changed = False
-
-        for line_number in self.guts_cache_sorted_keys:
-            if line_number < min_left:
-                del self.guts_cache[line_number]
-                guts_cache_changed = True
-            else:
-                break
-
-        if guts_cache_changed:
-            self.guts_cache_sorted_keys = sorted(self.guts_cache.keys())
-
-        #log.info("find_min_left_max_right: guts_cache size %d, min_left %s, max_right %s, state_to_find %s" % (len(self.guts_cache.keys()), min_left, max_right, state_to_find))
-        #log.info("find_min_left_max_right: guts_cache size %d -> %d, %s <-> %s delta %s, state_to_find %s" % (init_guts_cache_size, len(self.guts_cache.keys()), min_left, max_right, max_right - min_left, state_to_find))
-        #log.info("")
-        return (min_left, max_right)
-
-    def file_binary_search_multiple_keys(self, fh, states_to_find, exit_on_first_match, debug=False):
-        results = {}
-        min_left = None
-        max_right = None
-        self.guts_call_count = 0
-        self.guts_left_right_range = 0
-
-        if not states_to_find:
-            return results
-
-        # Look in our cache to see which states we've already found
-        states_to_find = sorted(list(set(states_to_find)))
-        original_states_to_find_count = len(states_to_find)
-        non_cached_states_to_find = []
-
-        for state in states_to_find:
-            steps = self.cache.get(state, -1)
-
-            if steps == -1:
-                non_cached_states_to_find.append(state)
-            else:
-                results[state] = steps
-
-        states_to_find = non_cached_states_to_find
-        states_to_find_count = len(states_to_find)
-
-        if not states_to_find:
-            return results
-
-        start_time = dt.datetime.now()
-        filename = self.filename
-
-        for state_to_find in states_to_find:
-
-            if state_to_find == self.state_target:
-                results[state_to_find] = ''
-                self.cache[state_to_find] = ''
-
-            else:
-                (min_left, max_right) = self.find_min_left_max_right(state_to_find)
-
-                (line_number, value) = self.file_binary_search_guts(fh, state_to_find, min_left, max_right)
-
-                if filename in ('lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt',
-                                'lookup-table-5x5x5-step13-UD-centers-stage-UFDB-only.txt',
-                                'lookup-table-5x5x5-step14-UD-centers-stage-ULDR-only.txt',
-                                'lookup-table-5x5x5-step15-UD-centers-stage-LFRB-only.txt'):
-
-                    # Most prune tables are very small so when I built them I just included all of the steps
-                    # for each state.  That was overkill though, all we really care about is the number of
-                    # steps.  Maybe I will go back and rebuild them all someday but for now the only one that
-                    # has the length of steps instead of the steps themselvs is
-                    # lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt.  For this table just
-                    # build some fake list of steps of the appropriate length.
-                    if value:
-                        new_value = []
-                        for x in range(int(value[0])):
-                            new_value.append("F")
-                        value = new_value
-
-                    results[state_to_find] = value
-                    self.cache[state_to_find] = value
-                else:
-                    # uncomment to sanity check things when you are building new prune tables like
-                    # lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
-                    #if value is not None and value[0].isdigit():
-                    #    raise Exception("value is a digit...we should not be here %s" % self.filename)
-
-                    results[state_to_find] = value
-                    self.cache[state_to_find] = value
-
-                if exit_on_first_match and value:
-                    break
-
-        end_time = dt.datetime.now()
-
-        if self.guts_call_count:
-            avg_left_right_range = int(self.guts_left_right_range/self.guts_call_count)
-        else:
-            avg_left_right_range = 0
-
-        log.info("%s: found %d states (another %d were cached) in %s, %d guts calls, %d avg left->right range, guts_cache has %d entries" %
-            (self, states_to_find_count, original_states_to_find_count - states_to_find_count, pretty_time(end_time - start_time),
-             self.guts_call_count, avg_left_right_range, len(self.guts_cache.keys())))
-        #log.info("%s: found %d states (another %d were cached, cache has %d entries) in %s" %
-        #    (self, states_to_find_count, original_states_to_find_count - states_to_find_count, len(self.cache.keys()), pretty_time(end_time - start_time)))
-
-        return results
-
-    def steps(self, state_to_find=None, exit_on_first_match=False):
+    def steps(self, state_to_find=None):
         """
-        Return the steps found in the lookup table for the current cube state
+        Return a list of the steps found in the lookup table for the current cube state
         """
         if state_to_find is None:
             state_to_find = self.state()
 
-        if isinstance(state_to_find, list):
-            # Return a dictionary where the key is the state and the value is the
-            # list of steps. This is the case when LookupTableIDA() calls steps()
-            with open(self.filename, 'r') as fh:
-                return self.file_binary_search_multiple_keys(fh, state_to_find, exit_on_first_match)
+        try:
+            return self.cache[state_to_find]
+        except KeyError:
 
-        else:
-            # Return a list of steps that correspond to this state. This is the
-            # case when LookupTable calls steps()
-            with open(self.filename, 'r') as fh:
-                return self.file_binary_search(fh, state_to_find)
+            # We use the hash_index as our line number in the file
+            hash_index = hashxx(state_to_find) % self.modulo
+
+            # Each line is the same width (they are padded with whitespaces to achieve this)
+            # so jump to the hash_index line_number and read the line
+            self.fh.seek(hash_index * self.width)
+            line = self.fh.readline().rstrip()
+            #log.info("%s: state %s, hash_index %s" % (self, state_to_find, hash_index))
+
+            if not line:
+                self.cache[state_to_find] = None
+                return None
+
+            for state_steps in line.split(','):
+                #log.info("%s: %s, state_steps %s" % (self, line, state_steps))
+                (state, steps) = state_steps.split(':')
+
+                if state == state_to_find:
+                    #log.info("%s: state %s, hash_index %s, steps %s" % (self, state, hash_index, steps))
+                    steps_list = steps.split()
+                    self.cache[state_to_find] = steps_list
+                    return steps_list
+
+                # The states on the line are sorted so stop looking if we know
+                # there isn't going to be a match
+                # TODO uncomment this once everything is working
+                #if state_to_find < state:
+                #    return None
+
+            self.cache[state_to_find] = None
+            return None
 
     def steps_length(self, state=None):
         return len(self.steps(state))
@@ -2098,14 +2023,14 @@ class LookupTableIDA(LookupTable):
     """
     """
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables):
-        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, False)
+    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, modulo):
+        assert modulo, "%s modulo is %s" % (self, self.modulo)
+        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, False, None, modulo)
         self.moves_all = moves_all
         self.moves_illegal = moves_illegal
-        self.ida_count = 0
-        self.ida_prune_count = 0
         self.prune_tables = prune_tables
         self.visited_states = set()
+        assert self.modulo, "%s modulo is %s" % (self, self.modulo)
 
         for x in self.moves_illegal:
             if x not in self.moves_all:
@@ -2188,14 +2113,14 @@ class LookupTableIDA(LookupTable):
 
         # The cube is already in the desired state, nothing to do
         if state == self.state_target:
-            log.info("%s: IDA count %d, cube is already at the target state" % (self, self.ida_count))
+            log.info("%s: IDA, cube is already at the target state" % self)
             return
 
         # The cube is already in a state that is in our lookup table, nothing for IDA to do
         steps = self.steps()
 
         if steps:
-            log.info("%s: IDA count %d, cube is already in a state that is in our lookup table" % (self, self.ida_count))
+            log.info("%s: IDA, cube is already in a state that is in our lookup table" % self)
             return
 
         # If we are here (odds are very high we will be) it means that the current
@@ -2221,26 +2146,18 @@ class LookupTableIDA(LookupTable):
             raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
 
         prune_tables = self.prune_tables
-        pt_index_to_pt = {}
-
-        # Because saving a little number to pt_costs_by_step_sequence below takes much less memory than
-        # saving the pt.filename
-        for (index, pt) in enumerate(prune_tables):
-            pt.index = index
-            pt_index_to_pt[pt.index] = pt
 
         for threshold in xrange(1, max_ida_threshold+1):
 
-            # Build a list of moves we can do 1 move deep
-            # Build a list of moves we can do 2 moves deep, this must build on the 1 move deep list
-            # Build a list of moves we can do 3 moves deep, this must build on the 2 move deep list
+            # Attempt sequences 1 move deep
+            # Attempt sequences 2 moves deep, this must build on the 1 move deep list
+            # Attempt sequences 3 moves deep, this must build on the 2 move deep list
             # etc
             prev_step_sequences = []
 
             for max_step_count in xrange(1, threshold+1):
                 start_time1 = dt.datetime.now()
                 step_sequences = self.ida_steps_list(prev_step_sequences, threshold, max_step_count)
-                log.info("")
 
                 if step_sequences:
                     log.debug("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
@@ -2248,179 +2165,134 @@ class LookupTableIDA(LookupTable):
 
                 # Now rotate all of these moves and get the resulting cube for each.
                 # This allows us to do one gigantic binary search.
-                start_time2 = dt.datetime.now()
-                states_to_check = []
                 step_sequences_count = 0
                 step_count = 0
-                step_sequences_for_states_to_check = []
-                step_sequences_that_create_unique_states = []
                 states_found = set()
+                step_sequences_within_cost = []
+                prev_step_sequence_list = None
+                shortcut_state = None
 
                 for step_sequence in step_sequences:
                     self.parent.state = original_state[:]
                     self.parent.solution = original_solution[:]
-                    self.ida_count += 1
+                    step_sequence_list = step_sequence.split()
                     step_sequences_count += 1
+                    used_shortcut = False
 
-                    for step in step_sequence.split():
-                        self.parent.state = rotate_xxx(self.parent.state, step)
-                        step_count += 1
+                    if prev_step_sequence_list and shortcut_state:
+                        if step_sequence_list[:-1] == prev_step_sequence_list[:-1]:
+                            self.parent.state = shortcut_state[:]
+                            last_step = step_sequence_list[-1]
+                            self.parent.state = rotate_xxx(self.parent.state, last_step)
+                            step_count += 1
+                            used_shortcut = True
+                        else:
+                            shortcut_state = None
 
-                    # get the current state of the cube
+                    # TODO if the prev step_sequence and the current step_sequence only differ
+                    # by the last move...find a way to avoid doing all of that work again.
+                    if not used_shortcut:
+                        for (step_index, step) in enumerate(step_sequence_list):
+                            self.parent.state = rotate_xxx(self.parent.state, step)
+                            step_count += 1
+
+                            if step_index + 2 == max_step_count:
+                                shortcut_state = self.parent.state[:]
+
                     state = self.state()
-                    states_to_check.append(state)
-                    step_sequences_for_states_to_check.append(step_sequence)
+                    steps = self.steps(state)
 
-                    if state not in states_found:
-                        states_found.add(state)
-                        step_sequences_that_create_unique_states.append((step_sequence, self.parent.state[:]))
-
-                end_time2 = dt.datetime.now()
-
-                if step_sequences_count:
-                    log.debug("%s: IDA threshold %d (max step %d), rotated %d sequences with %d steps in %s" %
-                        (self, threshold, max_step_count, step_sequences_count, step_count, pretty_time(end_time2 - start_time2)))
-
-                start_time3 = dt.datetime.now()
-                self.parent.state = original_state[:]
-                self.parent.solution = original_solution[:]
-
-                # self.steps() will do a multi-key binary search of all states_to_check. states_to_check
-                # isn't sorted (do NOT sort it), there is one entry for every step_sequences entry.
-                #
-                # self.steps() will return a dictionary of the 'steps' for each 'state' as
-                # per self.filename.  If we find any state in self.filename then our IDA search is
-                # complete. Note that self.steps() exits as soon as it finds the first entry so
-                # there will not be an entry in steps_for_states for each states_to_check....thus the
-                # steps_for_states.get(state) below instead of steps_for_states[state]
-                steps_for_states = self.steps(states_to_check[:], exit_on_first_match=True)
-
-                # =================================================
-                # If there are steps for a state that means our IDA
-                # search is done...woohoo!!
-                # =================================================
-                for (states_to_check_index, state) in enumerate(states_to_check):
-                    steps = steps_for_states.get(state)
-
+                    # =================================================
+                    # If there are steps for a state that means our IDA
+                    # search is done...woohoo!!
+                    # =================================================
                     if steps:
-                        step_sequence = step_sequences_for_states_to_check[states_to_check_index]
+                        # rotate_xxx() above is very fast but it does not append the
+                        # steps to the solution so put the cube back in original state
+                        # and execute the steps via a normal rotate() call
+                        self.parent.state = original_state[:]
+                        self.parent.solution = original_solution[:]
 
-                        for step in step_sequence.split():
+                        for step in step_sequence_list:
                             self.parent.rotate(step)
 
                         for step in steps:
                             self.parent.rotate(step)
 
+                        # 5x baseline test runs
+                        # 0:14.77elapsed
+                        # 0:15.06elapsed
+                        # 0:15.37elapsed
+                        # 0:15.87elapsed
+                        #
+                        # Fixed states_found
+                        # 0:06.07elapsed
+                        # 0:06.03elapsed
+                        # 0:06.45elapsed
+                        #
+                        # Fixed self.cache
+                        # 0:04.71elapsed
+                        # 0:04.72elapsed
+
+                        # dwalton stopped here
+                        # - fix all of the start_time/end_time output
                         end_time0 = dt.datetime.now()
-                        end_time3 = end_time0
-                        log.info("%s: IDA threshold %d (max step %d), took %s (%s to rotate %d, %s to search primary table)" %\
-                            (self, threshold, max_step_count,
-                             pretty_time(end_time3 - start_time1),
-                             pretty_time(end_time2 - start_time2), step_sequences_count,
-                             pretty_time(end_time3 - start_time3)))
-                        log.warning("%s: IDA threshold %d (max step %d), found match in %s, step_sequence %s, steps %s, state %s is %d/%d in states_to_check" %\
+                        log.warning("%s: IDA threshold %d (max step %d), took %s total (%s at this threshold/max_step), step_sequence %s, steps %s, state %s is %d/%d" %\
                             (self, threshold, max_step_count,
                              pretty_time(end_time0 - start_time0),
-                             step_sequence, ' '.join(steps), state, states_to_check_index, len(states_to_check)))
+                             pretty_time(end_time0 - start_time1),
+                             step_sequence, ' '.join(steps), state, step_sequences_count, len(step_sequences)))
                         return
 
+                    else:
+                        prev_step_sequence_list = step_sequence_list[:]
+
+                        # cost_to_goal is the cost_to_here plus the high estimated cost from our prune tables
+                        cost_to_goal = 0
+                        cost_to_here = len(step_sequence_list)
+
+                        for pt in prune_tables:
+                            pt_state = pt.state()
+                            pt_steps = pt.steps(pt_state)
+
+                            if pt_steps:
+                                len_pt_steps = len(pt_steps)
+                            else:
+                                if pt_state == pt.state_target:
+                                    len_pt_steps = 0
+                                elif pt.max_depth is None:
+                                    raise SolveError("%s does not have max_depth and does not have steps for %s" % (pt, pt_state))
+                                else:
+                                    # This is the exception to the rule but some prune tables such
+                                    # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
+                                    # are partial tables so use the max_depth of the table +1
+                                    len_pt_steps = pt.max_depth + 1
+
+                            if len_pt_steps > cost_to_goal:
+                                cost_to_goal = len_pt_steps
+
+                        if (cost_to_here + cost_to_goal) > threshold:
+                            pass
+                        else:
+                            # dwalton
+                            if state not in states_found:
+                                step_sequences_within_cost.append(step_sequence)
+                                states_found.add(state)
 
                 # ==============
                 # Keep Searching
                 # ==============
-                end_time0 = dt.datetime.now()
-                end_time3 = end_time0
-                log.info("%s: IDA threshold %d (max step %d) did not find a match, took %s (%s %d step sequences with %d total steps, %s to search primary table)" %
-                    (self, threshold, max_step_count,
-                     pretty_time(end_time3 - start_time1),
-                     pretty_time(end_time2 - start_time2), step_sequences_count, step_count,
-                     pretty_time(end_time3 - start_time3)))
-
-                # If we are here it means none of the step_sequences put the cube in a state that is in self.filename
-                # Time to prune some branches
-                pt_costs_by_step_sequence = {}
-                start_time4 = dt.datetime.now()
-
-                # We cached the state of the cube after all of the rotate_xxx()
-                # calls, that is what parent_state is here
-                for (step_sequence, parent_state) in step_sequences_that_create_unique_states:
-                    self.parent.state = parent_state[:]
-
-                    # Save a list of the pt indexes/states for this step_sequence
-                    tmp_list = []
-                    for pt in prune_tables:
-                        tmp_list.append((pt.index, pt.state()))
-                    pt_costs_by_step_sequence[step_sequence] = tmp_list
-
                 self.parent.state = original_state[:]
                 self.parent.solution = original_solution[:]
-                log.info("%s: IDA threshold %d (max step %d) rotates for prune tables are complete" %
-                    (self, threshold, max_step_count))
-
-                # Do a multi-key binary search for each prune table
-                pt_costs = {}
-                for pt in prune_tables:
-                    states_to_find = []
-
-                    for list_of_pt_index_pt_state in pt_costs_by_step_sequence.values():
-                        for (pt_index, pt_state) in list_of_pt_index_pt_state:
-                            if pt_index == pt.index:
-                                states_to_find.append(pt_state)
-
-                    with open(pt.filename, 'r') as fh:
-                        pt_costs[pt.index] = pt.file_binary_search_multiple_keys(fh, states_to_find, exit_on_first_match=False)
-                    states_to_find = []
-
-                step_sequences_within_cost = []
-
-                for (step_sequence, parent_state) in step_sequences_that_create_unique_states:
-
-                    # extract cost_to_goal from the pt_costs dictionary
-                    cost_to_goal = 0
-                    cost_to_here = len(step_sequence.split())
-
-                    for (pt_index, pt_state) in pt_costs_by_step_sequence[step_sequence]:
-                        pt_steps = pt_costs[pt_index][pt_state]
-
-                        if pt_steps:
-                            len_pt_steps = len(pt_steps)
-                        else:
-                            pt = pt_index_to_pt[pt_index]
-
-                            if pt_state == pt.state_target:
-                                len_pt_steps = 0
-                            elif pt.max_depth is None:
-                                raise SolveError("steps %s, %s does not have max_depth and does not have steps for %s" % (pformat(step_sequence), pt, pt_state))
-                            else:
-                                # This is the exception to the rule but some prune tables such
-                                # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
-                                # are partial tables so use the max_depth of the table +1
-                                len_pt_steps = pt.max_depth + 1
-
-                        if len_pt_steps > cost_to_goal:
-                            cost_to_goal = len_pt_steps
-
-                    if (cost_to_here + cost_to_goal) > threshold:
-                        self.ida_prune_count += 1
-                    else:
-                        step_sequences_within_cost.append(step_sequence)
+                end_time1 = dt.datetime.now()
+                log.info("%s: IDA threshold %d (max step %d) no match, took %s (%d step sequences with %d total steps), %s" %
+                    (self, threshold, max_step_count,
+                     pretty_time(end_time1 - start_time1),
+                     step_sequences_count, step_count,
+                    "explore %d branches from here" % len(step_sequences_within_cost) if step_sequences_within_cost else "this branch is a dead end"))
 
                 prev_step_sequences = step_sequences_within_cost[:]
                 states_to_check = []
-                pt_costs_by_step_sequence = {}
-                self.ida_count = 0
-                self.ida_prune_count = 0
-                gc.collect()
-
-                end_time4 = dt.datetime.now()
-
-                if step_sequences_within_cost:
-                    log.info("%s: IDA threshold %d (max step %d) explore %d branches from here (took %s to search prune tables)" %\
-                        (self, threshold, max_step_count, len(step_sequences_within_cost),
-                         pretty_time(end_time4 - start_time4)))
-                else:
-                    log.info("%s: IDA threshold %d (max step %d) this branch is a dead end (took %s to search prune tables)" %\
-                        (self, threshold, max_step_count, pretty_time(end_time4 - start_time4)))
 
         # The only time we will get here is when max_ida_threshold is a low number.  It will be up to the caller to:
         # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
@@ -2433,11 +2305,17 @@ class LookupTableIDA(LookupTable):
 
     def solve(self, max_ida_stage):
 
+        # This shouldn't happen since the lookup tables are in the repo
         if not self.filename_exists:
             raise SolveError("%s does not exist" % self.filename)
 
+        # Get the cube in a state that is in our lookup table
         self.ida_stage(max_ida_stage)
+
+        # The cube is now in a state where it is in the lookup table, we may need
+        # to do several lookups to get to our target state though. Use
+        # LookupTabele's solve() to take us the rest of the way to the target state.
         LookupTable.solve(self)
+
+        # Empty out the cache to save some memory
         self.cache = {}
-        self.guts_cache = {}
-        gc.collect()

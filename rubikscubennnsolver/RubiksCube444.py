@@ -147,7 +147,8 @@ class RubiksCube444(RubiksCube):
                                                '444-UD-centers-stage',
                                                'f0000f',
                                                 True,  # state hex
-                                                False) # prune table
+                                                False, # prune table
+                                                modulo=735473)
 
 
         '''
@@ -170,7 +171,8 @@ class RubiksCube444(RubiksCube):
                                                '444-LR-centers-stage',
                                                'f0f0',
                                                 True,  # state hex
-                                                False) # prune table
+                                                False, # prune table
+                                                modulo=12889)
 
 
         '''
@@ -197,7 +199,8 @@ class RubiksCube444(RubiksCube):
                                                    '444-ULFRBD-centers-solve',
                                                    'UUUULLLLFFFFRRRRBBBBDDDD',
                                                    False, # state hex
-                                                   False) # prune table
+                                                   False, # prune table
+                                                   modulo=343019)
 
         '''
         22*20*18 is 7920
@@ -219,7 +222,8 @@ class RubiksCube444(RubiksCube):
                                                  '444-edges-slice-forward',
                                                  'EDGES',
                                                  False, # state hex
-                                                 False) # prune table
+                                                 False, # prune table
+                                                 modulo=7927)
 
         '''
         22*20*18 is 7920
@@ -243,7 +247,8 @@ class RubiksCube444(RubiksCube):
                                                   '444-edges-slice-backward',
                                                   'EDGES',
                                                   False, # state hex
-                                                  False) # prune table
+                                                  False, # prune table
+                                                  modulo=7919)
 
     def phase(self):
         if self._phase is None:

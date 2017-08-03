@@ -153,3 +153,8 @@ unroll 5x5x5 state loops
 ========================
 401.68user 9.84system 7:08.33elapsed 96%CPU (0avgtext+0avgdata 118356maxresident)k
 
+
+
+WIP on switching to hash...why is this slower?
+==============================================
+299.76user 25.02system 8:35.15elapsed 63%CPU (0avgtext+0avgdata 96700maxresident)k

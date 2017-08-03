@@ -69,6 +69,7 @@ try:
             os.system('clear')
             log.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
             num_test_cases_executed += 1
+            kociemba_string = str(kociemba_string)
 
             # solve the cube
             if size == '2x2x2':

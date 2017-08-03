@@ -147,3 +147,9 @@ Edge pairing improvements
 5x5x5 max solution 133 steps (URUBFUUFRDFFUUFLRDBLLBDDDLUULRDLDUBDLRBBLFLBRBFUUBBRBFFUDLFLLBFUFUDRLBFUBBURRLLRUFRDUFFDFRFUBRBBDRFRFLLFURLLFBRBLUDRDDRRDRRFDUDLFLDLUUDUDBRBBBRBDDLDFL)
 
 432.35user 10.22system 7:34.63elapsed 97%CPU (0avgtext+0avgdata 118340maxresident)k
+
+
+unroll 5x5x5 state loops
+========================
+401.68user 9.84system 7:08.33elapsed 96%CPU (0avgtext+0avgdata 118356maxresident)k
+

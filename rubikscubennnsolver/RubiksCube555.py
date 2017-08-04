@@ -383,15 +383,11 @@ class RubiksCube555(RubiksCube):
                 self.lt_UD_centers_stage.solve(99)
 
         log.info("Took %d steps to stage UD centers" % len(self.solution))
-        #self.print_cube()
-        #sys.exit(0)
 
 
         # Stage LR centers
         self.lt_LR_centers_stage.solve(99)
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
-        #self.print_cube()
-        #sys.exit(0)
 
 
         # All centers are staged so solve them
@@ -401,6 +397,8 @@ class RubiksCube555(RubiksCube):
             self.lt_UD_centers_solve.solve() # speed up IDA
             self.lt_ULFRB_centers_solve.solve(99)
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
+        #self.print_cube()
+        #sys.exit(0)
 
     def find_moves_to_stage_slice_backward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
@@ -1564,7 +1562,7 @@ class RubiksCube555(RubiksCube):
                 if self.use_pair_outside_edges:
                     self.rotate("Uw")
                 self.rotate("Dw'")
-                self.rotate_y_reverse() # dwalton double check this..is rotate_y() in the other place where we slice back
+                self.rotate_y_reverse()
 
                 #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
                 #self.verify_all_centers_solved()
@@ -1653,7 +1651,7 @@ class RubiksCube555(RubiksCube):
              pre_non_paired_edges_count,
              pre_non_paired_wings_count,
              self.min_edge_solution_len,
-             self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len))
+             edge_solution_len))
 
         # Should we continue down this branch or should we prune it? An estimate
         # of 2.5 moves to pair an edge is a good target to hit so if the current number of
@@ -1661,12 +1659,23 @@ class RubiksCube555(RubiksCube):
         # there isn't any point in continuing down this branch so prune it and save
         # some CPU cycles.
         #
-        # I use 3 here just to make it run faster...this adds 4 moves on average but it runs so much faster than using 2.5
-        #estimated_solution_len = edge_solution_len + (2.5 * pre_non_paired_wings_count)
-        estimated_solution_len = edge_solution_len + (3 * pre_non_paired_wings_count)
+        # I use 4 here just to make it run faster...this adds 4-6 moves on average but
+        # it runs about 20x faster than using 2.5
+        estimate_per_wing = 4
+
+        # 9 moves is the least number of moves I know of that will pair the last 2 wings
+        if pre_non_paired_wings_count == 2:
+            estimated_solution_len = edge_solution_len + 9
+        elif pre_non_paired_wings_count == 3:
+            estimated_solution_len = edge_solution_len + 7
+        elif pre_non_paired_wings_count == 4:
+            estimated_solution_len = edge_solution_len + 8
+        else:
+            estimated_solution_len = edge_solution_len + (estimate_per_wing * pre_non_paired_wings_count)
 
         if estimated_solution_len >= self.min_edge_solution_len:
-            #log.warning("PRUNE: %s + (2.5 * %d) > %s" % (edge_solution_len, pre_non_paired_wings_count, self.min_edge_solution_len))
+            log.info("PRUNE: %s non-paired wings, estimated_solution_len %d, %s + (%s * %d) > %s" %
+                (pre_non_paired_wings_count, estimated_solution_len, edge_solution_len, estimate_per_wing, pre_non_paired_wings_count, self.min_edge_solution_len))
             return False
 
         # The only time this will be None is on the initial call
@@ -1680,11 +1689,13 @@ class RubiksCube555(RubiksCube):
         # call group_edges_recursive for each edge left to pair
         if non_paired_edges:
             post_non_paired_wings_count = len(self.get_non_paired_wings())
+            edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
             wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
             original_state = self.state[:]
             original_solution = self.solution[:]
 
-            if edge_paired:
+            if edge_paired and edge_solution_len < self.min_edge_solution_len:
+                log.info("group_edges_recursive(%d) paired %d" % (depth, wings_paired))
                 for edge in non_paired_edges:
                     self.group_edges_recursive(depth+1, edge)
                     self.state = original_state[:]
@@ -1701,7 +1712,7 @@ class RubiksCube555(RubiksCube):
                 self.min_edge_solution_state = self.state[:]
                 log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
             #else:
-            #    log.warning("LOST   : edges paired in %s vs MIN %d steps" % (edge_solution_len, self.min_edge_solution_len))
+            #    log.info("LOST   : edges paired in %s vs MIN %d steps" % (edge_solution_len, self.min_edge_solution_len))
 
             return True
 
@@ -1721,11 +1732,23 @@ class RubiksCube555(RubiksCube):
 
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
+        # TODO Trying to find a way to speed up edge pairing...this needs more work
+        '''
+        for x in xrange(55, 100, 10):
+            self.min_edge_solution_len = x
+            self.min_edge_solution = None
+            self.min_edge_solution_state = None
+
+            self.group_edges_recursive(depth, None)
+
+            if self.min_edge_solution:
+                break
+            raise SolveError("did not find edge solution")
+        '''
+
         self.min_edge_solution_len = 9999
         self.min_edge_solution = None
         self.min_edge_solution_state = None
-
-        self.group_edges_start_time = dt.datetime.now()
         self.group_edges_recursive(depth, None)
         self.state = self.min_edge_solution_state[:]
         self.solution = self.min_edge_solution[:]

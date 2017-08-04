@@ -283,6 +283,379 @@ def get_444_ULFRBD_centers_solve(parent_state):
     return state
 
 
+def get_444_LR_centers_stage_tsai(parent_state, self):
+    """
+    444-LR-centers-stage-tsai
+    """
+    # unroll
+    state = ''.join([parent_state[square_index] for side in self.sides_all for square_index in side.center_pos])
+    state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1').replace('D', '0').replace('U', '0')
+    return state
+
+
+def get_444_LR_centers_solve_tsai(parent_state, self):
+    """
+    444-LR-centers-solve-tsai
+    """
+    # unroll
+    state = ''.join([parent_state[square_index] for side in self.sides_all for square_index in side.center_pos])
+    state = state.replace('F', 'x').replace('B', 'x').replace('D', 'x').replace('U', 'x')
+    return state
+
+
+def get_444_FB_centers_stage_tsai(parent_state, self):
+    """
+    444-FB-centers-stage-tsai
+    """
+    # unroll
+    state = ''.join([parent_state[square_index] for side in self.sides_all for square_index in side.center_pos])
+    state = state.replace('x', '0').replace('F', '1').replace('R', '0').replace('B', '1').replace('L', '0').replace('D', '0').replace('U', '0')
+    return state
+
+
+def get_444_orient_edges_tsai(parent_state, self):
+    """
+    444-orient-edges-tsai or 444-phase2-tsai
+    """
+    parent = self.parent
+    original_state = self.parent.state[:]
+    original_solution = self.parent.solution[:]
+
+    state = []
+    for side in self.sides_all:
+        for square_index in xrange(side.min_pos, side.max_pos):
+
+            if square_index in side.corner_pos:
+                pass
+
+            elif square_index in side.edge_pos:
+                partner_index = side.get_wing_partner(square_index)
+                square1 = self.parent.state[square_index]
+                square2 = self.parent.state[partner_index]
+
+                try:
+                    state.append(self.parent.orient_edges[(square_index, partner_index, square1, square2)])
+                except KeyError:
+                    raise SolveError("%s is not in self.parent.orient_edges" % str((square_index, partner_index, square1, square2)))
+
+                # If you hit the SolveError above, uncomment this code to build the entry
+                # that needs to be added to RubiksCube444.orient_edges
+                '''
+                if square1 in ('U', 'D'):
+                    wing_str = square1 + square2
+                elif square2 in ('U', 'D'):
+                    wing_str = square2 + square1
+                elif square1 in ('L', 'R'):
+                    wing_str = square1 + square2
+                elif square2 in ('L', 'R'):
+                    wing_str = square2 + square1
+                else:
+                    raise Exception("Could not determine wing_str for (%s, %s)" % (square1, square2))
+
+                # - backup the current state
+                # - add an 'x' to the end of the square_index/partner_index
+                # - move square_index/partner_index to its final edge location
+                # - look for the 'x' to determine if this is the '0' vs '1' wing
+                # - restore the original state
+                square1_with_x = square1 + 'x'
+                square2_with_x = square2 + 'x'
+
+                self.parent.state[square_index] = square1_with_x
+                self.parent.state[partner_index] = square2_with_x
+
+                #log.info("PRE: %s at (%d, %d)" % (wing_str, square_index, partner_index))
+                #self.parent.print_cube()
+
+                # 'UB0', 'UB1', 'UL0', 'UL1', 'UF0', 'UF1', 'UR0', 'UR1',
+                # 'LB0', 'LB1', 'LF0', 'LF1', 'RF0', 'RF1', 'RB0', 'RB1',
+                # 'DF0', 'DF1', 'DL0', 'DL1', 'DB0', 'DB1', 'DR0', 'DR1
+                if wing_str == 'UB':
+                    self.parent.move_wing_to_U_north(square_index)
+
+                    if self.parent.state[2] == 'Ux' or self.parent.state[66] == 'Ux':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'UL':
+                    self.parent.move_wing_to_U_west(square_index)
+
+                    if self.parent.state[9] == 'Ux' or self.parent.state[18] == 'Ux':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'UF':
+                    self.parent.move_wing_to_U_south(square_index)
+
+                    if self.parent.state[15] == 'Ux' or self.parent.state[34] == 'Ux':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'UR':
+                    self.parent.move_wing_to_U_east(square_index)
+
+                    if self.parent.state[8] == 'Ux' or self.parent.state[50] == 'Ux':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'LB':
+                    self.parent.move_wing_to_L_west(square_index)
+
+                    if self.parent.state[25] == 'Lx' or self.parent.state[72] == 'Lx':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'LF':
+                    self.parent.move_wing_to_L_east(square_index)
+
+                    if self.parent.state[24] == 'Lx' or self.parent.state[41] == 'Lx':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'RF':
+                    self.parent.move_wing_to_R_west(square_index)
+
+                    if self.parent.state[57] == 'Rx' or self.parent.state[40] == 'Rx':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'RB':
+                    self.parent.move_wing_to_R_east(square_index)
+
+                    if self.parent.state[56] == 'Rx' or self.parent.state[73] == 'Rx':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'DF':
+                    self.parent.move_wing_to_D_north(square_index)
+
+                    if self.parent.state[82] == 'Dx' or self.parent.state[47] == 'Dx':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'DL':
+                    self.parent.move_wing_to_D_west(square_index)
+
+                    if self.parent.state[89] == 'Dx' or self.parent.state[31] == 'Dx':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'DB':
+                    self.parent.move_wing_to_D_south(square_index)
+
+                    if self.parent.state[95] == 'Dx' or self.parent.state[79] == 'Dx':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                elif wing_str == 'DR':
+                    self.parent.move_wing_to_D_east(square_index)
+                    if self.parent.state[88] == 'Dx' or self.parent.state[63] == 'Dx':
+                        state.append('U')
+                    else:
+                        state.append('D')
+
+                else:
+                    raise SolveError("invalid wing %s" % wing_str)
+
+                if (square_index, partner_index, square1, square2) not in self.parent.orient_edges:
+                    self.parent.orient_edges[(square_index, partner_index, square1, square2)] = state[-1]
+                    log.info("orient_edges:\n%s\n" % pformat(self.parent.orient_edges))
+
+                self.parent.state = original_state[:]
+                self.parent.solution = original_solution[:]
+                '''
+
+            elif square_index in side.center_pos:
+                if self.state_type == '444-phase2-tsai':
+                    square_state = self.parent.state[square_index]
+                    square_state = square_state.replace('B', 'F').replace('U', 'x').replace('D', 'x')
+                    state.append(square_state)
+
+    state = ''.join(state)
+
+    if self.state_type == '444-orient-edges-tsai':
+        if state.count('U') != 24:
+            raise SolveError("state %s has %d Us and %d Ds, should have 24 of each" % (state, state.count('U'), state.count('D')))
+
+        if state.count('D') != 24:
+            raise SolveError("state %s has %d Us and %d Ds, should have 24 of each" % (state, state.count('U'), state.count('D')))
+    #else:
+    #    log.info(state)
+    return state
+
+
+def get_444_phase3_tsai(parent_state, self):
+    """
+    444-phase3-tsai
+    """
+    # unroll print
+    # print("             parent_state[%d]," % square_index)
+    state = [parent_state[2],
+             parent_state[3],
+             parent_state[5],
+             parent_state[6],
+             parent_state[7],
+             parent_state[8],
+             parent_state[9],
+             parent_state[10],
+             parent_state[11],
+             parent_state[12],
+             parent_state[14],
+             parent_state[15],
+             parent_state[18],
+             parent_state[19],
+             parent_state[21],
+             parent_state[22],
+             parent_state[23],
+             parent_state[24],
+             parent_state[25],
+             parent_state[26],
+             parent_state[27],
+             parent_state[28],
+             parent_state[30],
+             parent_state[31],
+             parent_state[34],
+             parent_state[35],
+             parent_state[37],
+             parent_state[38],
+             parent_state[39],
+             parent_state[40],
+             parent_state[41],
+             parent_state[42],
+             parent_state[43],
+             parent_state[44],
+             parent_state[46],
+             parent_state[47],
+             parent_state[50],
+             parent_state[51],
+             parent_state[53],
+             parent_state[54],
+             parent_state[55],
+             parent_state[56],
+             parent_state[57],
+             parent_state[58],
+             parent_state[59],
+             parent_state[60],
+             parent_state[62],
+             parent_state[63],
+             parent_state[66],
+             parent_state[67],
+             parent_state[69],
+             parent_state[70],
+             parent_state[71],
+             parent_state[72],
+             parent_state[73],
+             parent_state[74],
+             parent_state[75],
+             parent_state[76],
+             parent_state[78],
+             parent_state[79],
+             parent_state[82],
+             parent_state[83],
+             parent_state[85],
+             parent_state[86],
+             parent_state[87],
+             parent_state[88],
+             parent_state[89],
+             parent_state[90],
+             parent_state[91],
+             parent_state[92],
+             parent_state[94],
+             parent_state[95]]
+    state = ''.join(state)
+    return state
+
+
+def get_444_UFBR_edges(parent_states, self):
+    """
+    444-UFBR-edges
+    """
+    state = []
+    for side in self.sides_all:
+        for square_index in side.edge_pos:
+                partner_index = side.get_wing_partner(square_index)
+                square1 = self.parent.state[square_index]
+                square2 = self.parent.state[partner_index]
+                wing_str = "%s%s" % (square1, square2)
+
+                if wing_str in ('UF', 'UB', 'UR', 'FU', 'BU', 'RU'):
+                    state.append(square1)
+                else:
+                    state.append('x')
+    state = ''.join(state)
+    return state
+
+
+def get_444_ULRF_edges(parent_state, self):
+    """
+    444-ULRF-edges
+    """
+    state = []
+    for side in self.sides_all:
+        for square_index in side.edge_pos:
+                partner_index = side.get_wing_partner(square_index)
+                square1 = self.parent.state[square_index]
+                square2 = self.parent.state[partner_index]
+                wing_str = "%s%s" % (square1, square2)
+
+                if wing_str in ('UL', 'UR', 'UF', 'LU', 'RU', 'FU'):
+                    state.append(square1)
+                else:
+                    state.append('x')
+    state = ''.join(state)
+    return state
+
+
+def get_444_DFBR_edges(parent_state, self):
+    """
+    444-DFBR-edges
+    """
+    state = []
+    for side in self.sides_all:
+        for square_index in side.edge_pos:
+                partner_index = side.get_wing_partner(square_index)
+                square1 = self.parent.state[square_index]
+                square2 = self.parent.state[partner_index]
+                wing_str = "%s%s" % (square1, square2)
+
+                if wing_str in ('DF', 'DB', 'DR', 'FD', 'BD', 'RD'):
+                    state.append(square1)
+                else:
+                    state.append('x')
+    state = ''.join(state)
+    return state
+
+
+def get_444_DLRF_edges(parent_state, self):
+    """
+    444-DLRF-edges
+    """
+    state = []
+    for side in self.sides_all:
+        for square_index in side.edge_pos:
+                partner_index = side.get_wing_partner(square_index)
+                square1 = self.parent.state[square_index]
+                square2 = self.parent.state[partner_index]
+                wing_str = "%s%s" % (square1, square2)
+
+                if wing_str in ('DL', 'DR', 'DF', 'LD', 'RD', 'FD'):
+                    state.append(square1)
+                else:
+                    state.append('x')
+    state = ''.join(state)
+    return state
+
+
 def get_555_UD_centers_stage_state(parent_state):
     """
     555-UD-centers-stage
@@ -1840,12 +2213,23 @@ def get_777_FB_oblique_edges_FB_solve(parent_state):
     return state
 
 
+# dwalton
 state_functions = {
     '444-UD-centers-stage' : get_444_UD_centers_stage,
     '444-LR-centers-stage' : get_444_LR_centers_stage,
     '444-FB-centers-stage' : get_444_FB_centers_stage,
     '444-ULFRBD-centers-stage' : get_444_ULFRBD_centers_stage,
     '444-ULFRBD-centers-solve' : get_444_ULFRBD_centers_solve,
+    '444-LR-centers-stage-tsai' : get_444_LR_centers_stage_tsai,
+    '444-LR-centers-solve-tsai' : get_444_LR_centers_solve_tsai,
+    '444-FB-centers-stage-tsai' : get_444_FB_centers_stage_tsai,
+    '444-orient-edges-tsai' : get_444_orient_edges_tsai,
+    '444-phase2-tsai' : get_444_orient_edges_tsai,
+    '444-phase3-tsai' : get_444_phase3_tsai,
+    '444-UFBR-edges' : get_444_UFBR_edges,
+    '444-ULRF-edges' : get_444_ULRF_edges,
+    '444-DFBR-edges' : get_444_DFBR_edges,
+    '444-DLRF-edges' : get_444_DLRF_edges,
     '555-UD-centers-stage' : get_555_UD_centers_stage_state,
     '555-UD-T-centers-stage' : get_555_UD_T_centers_stage_state,
     '555-UD-X-centers-stage' : get_555_UD_X_centers_stage_state,
@@ -2038,7 +2422,20 @@ class LookupTable(object):
 
     def state(self):
         state_function = state_functions.get(self.state_type)
-        state = state_function(self.parent.state)
+
+        # dwalton
+        if state_function in (get_444_LR_centers_stage_tsai,
+                              get_444_LR_centers_solve_tsai,
+                              get_444_FB_centers_stage_tsai,
+                              get_444_orient_edges_tsai,
+                              get_444_phase3_tsai,
+                              get_444_UFBR_edges,
+                              get_444_ULRF_edges,
+                              get_444_DFBR_edges,
+                              get_444_DLRF_edges):
+            state = state_function(self.parent.state, self)
+        else:
+            state = state_function(self.parent.state)
 
         if self.state_hex:
             state = convert_state_to_hex(state, self.state_width)

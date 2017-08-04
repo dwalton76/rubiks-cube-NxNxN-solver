@@ -12,7 +12,7 @@ from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
 from rubikscubennnsolver.LookupTable import NoSteps
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, RubiksCubeTsai444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777
@@ -103,6 +103,7 @@ try:
         cube = RubiksCube333(args.state, args.colormap, args.debug)
     elif size == 4:
         cube = RubiksCube444(args.state, args.colormap, avoid_pll=True, debug=args.debug)
+        #cube = RubiksCubeTsai444(args.state, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
         cube = RubiksCube555(args.state, args.colormap, args.debug)
     elif size == 6:
@@ -152,6 +153,7 @@ try:
         cube = RubiksCube333(args.state, args.colormap)
     elif size == 4:
         cube = RubiksCube444(args.state, args.colormap, avoid_pll=True)
+        #cube = RubiksCubeTsai444(args.state, args.colormap, avoid_pll=True)
     elif size == 5:
         cube = RubiksCube555(args.state, args.colormap)
     elif size == 6:

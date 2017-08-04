@@ -1,8 +1,8 @@
 
 solutions.html
-- need an arrow that loads the next step of instructions
-- have a play/pause button so that it auto increments every 5s
+DONE - need an arrow that loads the next step of instructions
 - highlight the face/rows that you should be turning
+- have a play/pause button so that it auto increments every 5s
 
 
 444 solver
@@ -11,3 +11,7 @@ solutions.html
 
 NNN solver
 - work on centers for 14x14x14
+
+
+rotate_xxx() can we compress the lists down to a few lists additions?
+same for state_functions

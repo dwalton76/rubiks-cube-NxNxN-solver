@@ -126,6 +126,7 @@ class RubiksCube444(RubiksCube):
         lookup-tables init
         """
 
+        # option 1
         '''
         24!/(16! * 8!) is 735,471
 
@@ -174,6 +175,46 @@ class RubiksCube444(RubiksCube):
                                                 False, # prune table
                                                 modulo=12889)
 
+        # option 2
+        self.lt_UD_centers_stage = LookupTable(self,
+                                               'lookup-table-4x4x4-step11-UD-centers-stage.txt',
+                                               '444-UD-centers-stage',
+                                               'f0000f',
+                                                True, # state hex
+                                                True, # prune table
+                                                modulo=735473)
+
+        self.lt_LR_centers_stage = LookupTable(self,
+                                               'lookup-table-4x4x4-step12-LR-centers-stage.txt',
+                                               '444-LR-centers-stage',
+                                               '0f0f00',
+                                                True, # state hex
+                                                True, # prune table
+                                                modulo=735473)
+
+        self.lt_FB_centers_stage = LookupTable(self,
+                                               'lookup-table-4x4x4-step13-FB-centers-stage.txt',
+                                               '444-FB-centers-stage',
+                                               '00f0f0',
+                                                True, # state hex
+                                                True, # prune table
+                                                modulo=735473)
+
+        # dwalton
+        self.lt_ULFRBD_centers_stage = LookupTableIDA(self,
+                                               'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
+                                               '444-ULFRBD-centers-stage',
+                                               'UUUULLLLFFFFLLLLFFFFUUUU',
+                                                False, # state hex
+                                                moves_4x4x4,
+                                                (), # illegal_moves
+
+                                                # prune tables
+                                                (self.lt_UD_centers_stage,
+                                                 self.lt_LR_centers_stage,
+                                                 self.lt_FB_centers_stage),
+                                                max_depth=6,
+                                                modulo=8649187)
 
         '''
         (8!/(4! * 4!))^3 is 343,000
@@ -282,8 +323,19 @@ class RubiksCube444(RubiksCube):
         # lookup tables are 5.6G where the UD stage, LR stage, ULFRBD solve
         # lookup tables are only 49M...we use the 49M tables so we can check
         # them into the github repo.
-        self.lt_UD_centers_stage.solve()
-        self.lt_LR_centers_stage.solve()
+        #self.lt_UD_centers_stage.solve()
+        #self.lt_LR_centers_stage.solve()
+
+        # dwalton
+        #self.lt_UD_centers_stage.solve()
+        #self.lt_LR_centers_stage.solve()
+        #self.lt_FB_centers_stage.solve()
+        #self.print_cube()
+        #sys.exit(0)
+
+        self.lt_ULFRBD_centers_stage.solve(99)
+        #self.print_cube()
+        #sys.exit(0)
 
         # Made some pics to try to explain lookup tables on facebook
         #

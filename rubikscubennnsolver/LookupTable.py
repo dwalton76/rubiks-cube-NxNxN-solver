@@ -138,6 +138,7 @@ def get_444_LR_centers_stage(parent_state):
     """
     444-LR-centers-stage
     """
+    '''
     state = [parent_state[22],
              parent_state[23],
              parent_state[26],
@@ -154,8 +155,66 @@ def get_444_LR_centers_stage(parent_state):
              parent_state[71],
              parent_state[74],
              parent_state[75]]
+    '''
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
     state = ''.join(state)
-    state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
+    state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1').replace('U', '0').replace('D', '0')
+    return state
+
+
+def get_444_FB_centers_stage(parent_state):
+    """
+    444-FB-centers-stage
+    """
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    state = state.replace('x', '0').replace('F', '1').replace('R', '0').replace('B', '1').replace('L', '0').replace('U', '0').replace('D', '0')
     return state
 
 
@@ -1751,6 +1810,7 @@ def get_777_FB_oblique_edges_FB_solve(parent_state):
 state_functions = {
     '444-UD-centers-stage' : get_444_UD_centers_stage,
     '444-LR-centers-stage' : get_444_LR_centers_stage,
+    '444-FB-centers-stage' : get_444_FB_centers_stage,
     '444-ULFRBD-centers-solve' : get_444_ULFRBD_centers_solve,
     '555-UD-centers-stage' : get_555_UD_centers_stage_state,
     '555-UD-T-centers-stage' : get_555_UD_T_centers_stage_state,
@@ -2023,13 +2083,14 @@ class LookupTableIDA(LookupTable):
     """
     """
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, modulo):
+    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, max_depth, modulo):
         assert modulo, "%s modulo is %s" % (self, self.modulo)
-        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, False, None, modulo)
+        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, False, max_depth, modulo)
         self.moves_all = moves_all
         self.moves_illegal = moves_illegal
         self.prune_tables = prune_tables
         self.visited_states = set()
+        self.max_depth = max_depth
         assert self.modulo, "%s modulo is %s" % (self, self.modulo)
 
         for x in self.moves_illegal:
@@ -2102,6 +2163,84 @@ class LookupTableIDA(LookupTable):
                 result.append("%s %s" % (prev_steps, next_step))
         return result
 
+    def ida_cost_estimate(self):
+        cost_to_goal = 0
+
+        for pt in self.prune_tables:
+            pt_state = pt.state()
+            pt_steps = pt.steps(pt_state)
+
+            if pt_state == pt.state_target:
+                len_pt_steps = 0
+
+            elif pt_steps:
+                len_pt_steps = len(pt_steps)
+
+            elif pt.max_depth:
+                # This is the exception to the rule but some prune tables such
+                # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
+                # are partial tables so use the max_depth of the table +1
+                len_pt_steps = pt.max_depth + 1
+
+            else:
+                raise SolveError("%s does not have max_depth and does not have steps for %s" % (pt, pt_state))
+
+            if len_pt_steps > cost_to_goal:
+                cost_to_goal = len_pt_steps
+
+        return cost_to_goal
+
+    def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
+        cost_to_here = len(steps_to_here)
+
+        for step in self.moves_all:
+
+            if step in self.moves_illegal:
+                continue
+
+            # If this step cancels out the previous step then don't bother with this branch
+            if steps_cancel_out(prev_step, step):
+                continue
+
+            self.parent.state = self.rotate_xxx(prev_state[:], step)
+            state = self.state()
+            #log.info("%s state: %s" % (self, state))
+            steps = self.steps(state)
+            self.ida_count += 1
+
+            # =================================================
+            # If there are steps for a state that means our IDA
+            # search is done...woohoo!!
+            # =================================================
+            if steps:
+                # rotate_xxx() above is very fast but it does not append the
+                # steps to the solution so put the cube back in original state
+                # and execute the steps via a normal rotate() call
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+
+                for step in steps_to_here + [step,]:
+                    self.parent.rotate(step)
+
+                for step in steps:
+                    self.parent.rotate(step)
+
+                return True
+
+            # Keep searching
+            else:
+                cost_to_goal = self.ida_cost_estimate()
+
+                # dwalton do we want the +1?
+                #if (cost_to_here + 1 + cost_to_goal) > threshold:
+                if (cost_to_here + cost_to_goal) <= threshold:
+                    state_end_of_this_step = self.parent.state[:]
+
+                    if self.ida_search(steps_to_here + [step,], threshold, step, state_end_of_this_step):
+                        return True
+
+        return False
+
     def ida_stage(self, max_ida_threshold):
         """
         The goal is to find a sequence of moves that will put the cube in a state that is
@@ -2129,178 +2268,47 @@ class LookupTableIDA(LookupTable):
         # lookup table.
 
         # save cube state
-        original_state = self.parent.state[:]
-        original_solution = self.parent.solution[:]
+        self.original_state = self.parent.state[:]
+        self.original_solution = self.parent.solution[:]
 
         if self.parent.size == 2:
-            rotate_xxx = rotate_222
+            self.rotate_xxx = rotate_222
         elif self.parent.size == 4:
-            rotate_xxx = rotate_444
+            self.rotate_xxx = rotate_444
         elif self.parent.size == 5:
-            rotate_xxx = rotate_555
+            self.rotate_xxx = rotate_555
         elif self.parent.size == 6:
-            rotate_xxx = rotate_666
+            self.rotate_xxx = rotate_666
         elif self.parent.size == 7:
-            rotate_xxx = rotate_777
+            self.rotate_xxx = rotate_777
         else:
             raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
 
-        prune_tables = self.prune_tables
+        #for threshold in xrange(1, max_ida_threshold+1):
+        for threshold in xrange(self.max_depth, max_ida_threshold+1):
+            steps_to_here = []
+            start_time1 = dt.datetime.now()
+            self.ida_count = 0
 
-        for threshold in xrange(1, max_ida_threshold+1):
-
-            # Attempt sequences 1 move deep
-            # Attempt sequences 2 moves deep, this must build on the 1 move deep list
-            # Attempt sequences 3 moves deep, this must build on the 2 move deep list
-            # etc
-            prev_step_sequences = []
-
-            for max_step_count in xrange(1, threshold+1):
-                start_time1 = dt.datetime.now()
-                step_sequences = self.ida_steps_list(prev_step_sequences, threshold, max_step_count)
-
-                if step_sequences:
-                    log.debug("%s: IDA threshold %d, %s step_sequences to evaluate (max step %d)" %
-                        (self, threshold, len(step_sequences), max_step_count))
-
-                # Now rotate all of these moves and get the resulting cube for each.
-                # This allows us to do one gigantic binary search.
-                step_sequences_count = 0
-                step_count = 0
-                states_found = set()
-                step_sequences_within_cost = []
-                prev_step_sequence_list = None
-                shortcut_state = None
-
-                for step_sequence in step_sequences:
-                    self.parent.state = original_state[:]
-                    self.parent.solution = original_solution[:]
-                    step_sequence_list = step_sequence.split()
-                    step_sequences_count += 1
-                    used_shortcut = False
-
-                    if prev_step_sequence_list and shortcut_state:
-                        if step_sequence_list[:-1] == prev_step_sequence_list[:-1]:
-                            self.parent.state = shortcut_state[:]
-                            last_step = step_sequence_list[-1]
-                            self.parent.state = rotate_xxx(self.parent.state, last_step)
-                            step_count += 1
-                            used_shortcut = True
-                        else:
-                            shortcut_state = None
-
-                    # TODO if the prev step_sequence and the current step_sequence only differ
-                    # by the last move...find a way to avoid doing all of that work again.
-                    if not used_shortcut:
-                        for (step_index, step) in enumerate(step_sequence_list):
-                            self.parent.state = rotate_xxx(self.parent.state, step)
-                            step_count += 1
-
-                            if step_index + 2 == max_step_count:
-                                shortcut_state = self.parent.state[:]
-
-                    state = self.state()
-                    steps = self.steps(state)
-
-                    # =================================================
-                    # If there are steps for a state that means our IDA
-                    # search is done...woohoo!!
-                    # =================================================
-                    if steps:
-                        # rotate_xxx() above is very fast but it does not append the
-                        # steps to the solution so put the cube back in original state
-                        # and execute the steps via a normal rotate() call
-                        self.parent.state = original_state[:]
-                        self.parent.solution = original_solution[:]
-
-                        for step in step_sequence_list:
-                            self.parent.rotate(step)
-
-                        for step in steps:
-                            self.parent.rotate(step)
-
-                        # 5x baseline test runs
-                        # 0:14.77elapsed
-                        # 0:15.06elapsed
-                        # 0:15.37elapsed
-                        # 0:15.87elapsed
-                        #
-                        # Fixed states_found
-                        # 0:06.07elapsed
-                        # 0:06.03elapsed
-                        # 0:06.45elapsed
-                        #
-                        # Fixed self.cache
-                        # 0:04.71elapsed
-                        # 0:04.72elapsed
-
-                        # dwalton stopped here
-                        # - fix all of the start_time/end_time output
-                        end_time0 = dt.datetime.now()
-                        log.warning("%s: IDA threshold %d (max step %d), took %s total (%s at this threshold/max_step), step_sequence %s, steps %s, state %s is %d/%d" %\
-                            (self, threshold, max_step_count,
-                             pretty_time(end_time0 - start_time0),
-                             pretty_time(end_time0 - start_time1),
-                             step_sequence, ' '.join(steps), state, step_sequences_count, len(step_sequences)))
-                        return
-
-                    else:
-                        prev_step_sequence_list = step_sequence_list[:]
-
-                        # cost_to_goal is the cost_to_here plus the high estimated cost from our prune tables
-                        cost_to_goal = 0
-                        cost_to_here = len(step_sequence_list)
-
-                        for pt in prune_tables:
-                            pt_state = pt.state()
-                            pt_steps = pt.steps(pt_state)
-
-                            if pt_steps:
-                                len_pt_steps = len(pt_steps)
-                            else:
-                                if pt_state == pt.state_target:
-                                    len_pt_steps = 0
-                                elif pt.max_depth is None:
-                                    raise SolveError("%s does not have max_depth and does not have steps for %s" % (pt, pt_state))
-                                else:
-                                    # This is the exception to the rule but some prune tables such
-                                    # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
-                                    # are partial tables so use the max_depth of the table +1
-                                    len_pt_steps = pt.max_depth + 1
-
-                            if len_pt_steps > cost_to_goal:
-                                cost_to_goal = len_pt_steps
-
-                        if (cost_to_here + cost_to_goal) > threshold:
-                            pass
-                        else:
-                            # dwalton
-                            if state not in states_found:
-                                step_sequences_within_cost.append(step_sequence)
-                                states_found.add(state)
-
-                # ==============
-                # Keep Searching
-                # ==============
-                self.parent.state = original_state[:]
-                self.parent.solution = original_solution[:]
+            if self.ida_search(steps_to_here, threshold, None, self.original_state[:]):
                 end_time1 = dt.datetime.now()
-                log.info("%s: IDA threshold %d (max step %d) no match, took %s (%d step sequences with %d total steps), %s" %
-                    (self, threshold, max_step_count,
+                log.info("%s: IDA threshold %d, found match, explored %d branches, took %s (%s total)" %
+                    (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
-                     step_sequences_count, step_count,
-                    "explore %d branches from here" % len(step_sequences_within_cost) if step_sequences_within_cost else "this branch is a dead end"))
-
-                prev_step_sequences = step_sequences_within_cost[:]
-                states_to_check = []
+                     pretty_time(end_time1 - start_time0)))
+                return
+            else:
+                end_time1 = dt.datetime.now()
+                log.info("%s: IDA threshold %d, no match, explored %d branches, took %s" %
+                    (self, threshold, self.ida_count, pretty_time(end_time1 - start_time1)))
 
         # The only time we will get here is when max_ida_threshold is a low number.  It will be up to the caller to:
         # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
         # - call ida_solve() again but with a near infinite max_ida_threshold...99 is close enough to infinity for IDA purposes
         log.warning("%s: could not find a solution via IDA within %d steps...will 'solve' a prune table and try again" % (self, max_ida_threshold))
 
-        self.parent.state = original_state[:]
-        self.parent.solution = original_solution[:]
+        self.parent.state = self.original_state[:]
+        self.parent.solution = self.original_solution[:]
         raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))
 
     def solve(self, max_ida_stage):

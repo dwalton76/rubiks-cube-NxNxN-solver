@@ -158,6 +158,7 @@ class RubiksCube555(RubiksCube):
                                                   #self.lt_UD_centers_stage_ULDR_only,
                                                   #self.lt_UD_centers_stage_LFRB_only,
                                                   self.lt_UD_centers_stage_UFDB_only),
+                                                 max_depth=6,
                                                  modulo=17168477) # modulo
 
         '''
@@ -243,6 +244,7 @@ class RubiksCube555(RubiksCube):
                                                   # prune tables
                                                   (self.lt_LR_centers_stage_x_center_only,
                                                    self.lt_LR_centers_stage_t_center_only),
+                                                  max_depth=7,
                                                   modulo=3805253)
 
         '''
@@ -286,8 +288,7 @@ class RubiksCube555(RubiksCube):
                                                modulo=4903)
 
         '''
-        Would be 117,649,000,000. The 7-deep copy is checked into the repo. I build it
-        to 8-deep which takes the total up to ~120 million.
+        Would be 117,649,000,000...I built it 7-deep
 
         lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
         ==================================================
@@ -315,7 +316,7 @@ class RubiksCube555(RubiksCube):
                                                     (self.lt_UD_centers_solve,
                                                      self.lt_LR_centers_solve,
                                                      self.lt_FB_centers_solve),
-
+                                                    max_depth=7,
                                                     modulo=13684141)
 
         '''
@@ -367,14 +368,14 @@ class RubiksCube555(RubiksCube):
 
         # Stage UD centers
         try:
-            self.lt_UD_centers_stage.solve(9)
+            self.lt_UD_centers_stage.solve(8)
         except NoIDASolution:
             original_state = self.state[:]
             original_solution = self.solution[:]
             self.lt_UD_T_centers_stage.solve() # speed up IDA
 
             try:
-                self.lt_UD_centers_stage.solve(9)
+                self.lt_UD_centers_stage.solve(8)
             except NoIDASolution:
                 self.state = original_state
                 self.solution = original_solution
@@ -397,6 +398,7 @@ class RubiksCube555(RubiksCube):
             self.lt_UD_centers_solve.solve() # speed up IDA
             self.lt_ULFRB_centers_solve.solve(99)
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
+        # dwalton
         #self.print_cube()
         #sys.exit(0)
 
@@ -1661,7 +1663,7 @@ class RubiksCube555(RubiksCube):
         #
         # I use 4 here just to make it run faster...this adds 4-6 moves on average but
         # it runs about 20x faster than using 2.5
-        estimate_per_wing = 4
+        estimate_per_wing = 3.5
 
         # 9 moves is the least number of moves I know of that will pair the last 2 wings
         if pre_non_paired_wings_count == 2:

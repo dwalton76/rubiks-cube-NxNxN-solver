@@ -41,17 +41,12 @@ def steps_cancel_out(prev_step, step):
     if step == prev_step and step.endswith("2"):
         return True
 
-    # TODO experimental
-    # U followed by U is a no-op because a U2 does the same but is one step instead of two so return true
-    #if step == prev_step:
-    #    return True
-
     # U' followed by U is a no-op
     if prev_step.endswith("'") and not step.endswith("'") and step == prev_step[0:-1]:
         return True
 
     # U followed by U' is a no-op
-    if not prev_step.endswith("'") and step.endswith("'") and step[0:1] == prev_step:
+    if not prev_step.endswith("'") and step.endswith("'") and step[0:-1] == prev_step:
         return True
 
     return False
@@ -2213,7 +2208,6 @@ def get_777_FB_oblique_edges_FB_solve(parent_state):
     return state
 
 
-# dwalton
 state_functions = {
     '444-UD-centers-stage' : get_444_UD_centers_stage,
     '444-LR-centers-stage' : get_444_LR_centers_stage,
@@ -2423,7 +2417,7 @@ class LookupTable(object):
     def state(self):
         state_function = state_functions.get(self.state_type)
 
-        # dwalton
+        # TODO stop passing self once you have unrolled all of these
         if state_function in (get_444_LR_centers_stage_tsai,
                               get_444_LR_centers_solve_tsai,
                               get_444_FB_centers_stage_tsai,
@@ -2528,72 +2522,6 @@ class LookupTableIDA(LookupTable):
             if x not in self.moves_all:
                 raise Exception("illegal move %s is not in the list of legal moves" % x)
 
-    def ida_steps_list(self, prev_step_sequences, threshold, max_step_count):
-
-        # Build a list of the steps we need to explore
-        step_sequences_to_try = []
-
-        for step in self.moves_all:
-
-            if step in self.moves_illegal:
-                continue
-
-            # Special case, we must preserve the outer UD oblique edges that have already been paired
-            if self.filename in ('lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
-                                 'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
-                                 'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
-                                 'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
-                                 'lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt',
-                                 'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
-                                 'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
-                                 'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt'):
-                if step == "3Rw2":
-                    step = "3Rw2 3Lw2"
-
-                elif step == "3Lw2":
-                    step = "3Lw2 3Rw2"
-
-                elif step == "3Fw2":
-                    step = "3Fw2 3Bw2"
-
-                elif step == "3Bw2":
-                    step = "3Bw2 3Fw2"
-
-                elif step == "3Uw2":
-                    step = "3Uw2 3Dw2"
-
-                elif step == "3Dw2":
-                    step = "3Dw2 3Uw2"
-
-                # "3Uw", "3Uw'", "3Dw", "3Dw'"
-                elif step == "3Uw":
-                    step = "3Uw 3Dw'"
-
-                elif step == "3Uw'":
-                    step = "3Uw' 3Dw"
-
-                elif step == "3Dw":
-                    step = "3Dw 3Uw'"
-
-                elif step == "3Dw'":
-                    step = "3Dw' 3Uw"
-
-            step_sequences_to_try.append(step)
-
-        if not prev_step_sequences:
-            return step_sequences_to_try
-
-        result = []
-        for prev_steps in prev_step_sequences:
-            for next_step in step_sequences_to_try:
-
-                # If this step cancels out the previous step then don't bother with this branch
-                if steps_cancel_out(prev_steps[-1], next_step):
-                    continue
-
-                result.append("%s %s" % (prev_steps, next_step))
-        return result
-
     def ida_cost_estimate(self):
         cost_to_goal = 0
 
@@ -2624,6 +2552,9 @@ class LookupTableIDA(LookupTable):
     def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
         cost_to_here = len(steps_to_here)
 
+        self.parent.state = prev_state[:]
+        current_state = self.state()
+
         for step in self.moves_all:
 
             if step in self.moves_illegal:
@@ -2633,9 +2564,14 @@ class LookupTableIDA(LookupTable):
             if steps_cancel_out(prev_step, step):
                 continue
 
+            # If we have already explored the exact same scenario down another branch
+            # then we can stop looking down this branch
+            if (cost_to_here, current_state, step) in self.explored:
+                continue
+            self.explored.add((cost_to_here, current_state, step))
+
             self.parent.state = self.rotate_xxx(prev_state[:], step)
             state = self.state()
-            #log.info("%s state: %s" % (self, state))
             steps = self.steps(state)
             self.ida_count += 1
 
@@ -2662,8 +2598,6 @@ class LookupTableIDA(LookupTable):
             else:
                 cost_to_goal = self.ida_cost_estimate()
 
-                # dwalton do we want the +1?
-                #if (cost_to_here + 1 + cost_to_goal) > threshold:
                 if (cost_to_here + cost_to_goal) <= threshold:
                     state_end_of_this_step = self.parent.state[:]
 
@@ -2720,6 +2654,7 @@ class LookupTableIDA(LookupTable):
             steps_to_here = []
             start_time1 = dt.datetime.now()
             self.ida_count = 0
+            self.explored = set()
 
             if self.ida_search(steps_to_here, threshold, None, self.original_state[:]):
                 end_time1 = dt.datetime.now()

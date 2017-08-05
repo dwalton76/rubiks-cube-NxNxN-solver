@@ -398,7 +398,6 @@ class RubiksCube555(RubiksCube):
             self.lt_UD_centers_solve.solve() # speed up IDA
             self.lt_ULFRB_centers_solve.solve(99)
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
-        # dwalton
         #self.print_cube()
         #sys.exit(0)
 

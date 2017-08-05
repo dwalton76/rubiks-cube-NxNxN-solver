@@ -122,60 +122,6 @@ class RubiksCube444(RubiksCube):
             return
         self.lt_init_called = True
 
-        """
-        lookup-tables init
-        """
-
-        # option 1
-        '''
-        24!/(16! * 8!) is 735,471
-
-        lookup-table-4x4x4-step01-UD-centers-stage.txt
-        ==============================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 82 entries (0 percent)
-        3 steps has 1,206 entries (0 percent)
-        4 steps has 14,116 entries (1 percent)
-        5 steps has 123,404 entries (16 percent)
-        6 steps has 422,508 entries (57 percent)
-        7 steps has 173,254 entries (23 percent)
-        8 steps has 896 entries (0 percent)
-
-        Total: 735,471 entries
-        '''
-        self.lt_UD_centers_stage = LookupTable(self,
-                                               'lookup-table-4x4x4-step01-UD-centers-stage.txt',
-                                               '444-UD-centers-stage',
-                                               'f0000f',
-                                                True,  # state hex
-                                                False, # prune table
-                                                modulo=735473)
-
-
-        '''
-        16!/(8! * 8!) is 12,870
-
-        lookup-table-4x4x4-step02-LR-centers-stage.txt
-        ==============================================
-        1 steps has 3 entries (0 percent)
-        2 steps has 29 entries (0 percent)
-        3 steps has 234 entries (1 percent)
-        4 steps has 1,246 entries (9 percent)
-        5 steps has 4,466 entries (34 percent)
-        6 steps has 6,236 entries (48 percent)
-        7 steps has 656 entries (5 percent)
-
-        Total: 12,870 entries
-        '''
-        self.lt_LR_centers_stage = LookupTable(self,
-                                               'lookup-table-4x4x4-step02-LR-centers-stage.txt',
-                                               '444-LR-centers-stage',
-                                               'f0f0',
-                                                True,  # state hex
-                                                False, # prune table
-                                                modulo=12889)
-
-        # option 2
         self.lt_UD_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step11-UD-centers-stage.txt',
                                                '444-UD-centers-stage',
@@ -235,7 +181,7 @@ class RubiksCube444(RubiksCube):
         Total: 343,000 entries
         '''
         self.lt_ULFRBD_centers_solve = LookupTable(self,
-                                                   'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt',
+                                                   'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
                                                    '444-ULFRBD-centers-solve',
                                                    'UUUULLLLFFFFRRRRBBBBDDDD',
                                                    False, # state hex
@@ -317,15 +263,7 @@ class RubiksCube444(RubiksCube):
     def group_centers_guts(self):
         self.lt_init()
 
-        # TODO rm this and rename/renumber the lookup tables
-        # The UD solve -> LFRB solve approach is only ~1 move shorter on average
-        # than doing UD stage, LR stage, ULFRBD solve.  The UD solve -> LFRB
-        # lookup tables are 5.6G where the UD stage, LR stage, ULFRBD solve
-        # lookup tables are only 49M...we use the 49M tables so we can check
-        # them into the github repo.
-        #self.lt_UD_centers_stage.solve()
-        #self.lt_LR_centers_stage.solve()
-
+        # Test prune tables
         #self.lt_UD_centers_stage.solve()
         #self.lt_LR_centers_stage.solve()
         #self.lt_FB_centers_stage.solve()
@@ -333,8 +271,6 @@ class RubiksCube444(RubiksCube):
         #sys.exit(0)
 
         self.lt_ULFRBD_centers_stage.solve(99)
-        #self.print_cube()
-        #sys.exit(0)
 
         # Made some pics to try to explain lookup tables on facebook
         #
@@ -1189,7 +1125,7 @@ class RubiksCubeTsai444(RubiksCube444):
         Total: 343,000 entries
         '''
         self.lt_ULFRBD_centers_solve = LookupTable(self,
-                                                   'lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt',
+                                                   'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
                                                    '444-ULFRBD-centers-solve',
                                                    'UUUULLLLFFFFRRRRBBBBDDDD',
                                                    False, # state hex

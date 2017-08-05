@@ -1003,11 +1003,9 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
-        return # dwalton remove me
         print(get_cube_layout(self.size) + '\n')
 
     def print_cube(self):
-        return # dwalton remove me
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
         side_name_index = 0
         rows = []

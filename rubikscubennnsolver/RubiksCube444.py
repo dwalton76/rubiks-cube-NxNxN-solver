@@ -117,11 +117,27 @@ class RubiksCube444(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
-    def lt_init(self):
-        if self.lt_init_called:
-            return
-        self.lt_init_called = True
+    def lt_init_common(self):
+        """
+        Both RubiksCube444 and RubiksCubeTsai444 use these tables
+        """
 
+        '''
+        lookup-table-4x4x4-step11-UD-centers-stage.txt
+        lookup-table-4x4x4-step12-LR-centers-stage.txt
+        lookup-table-4x4x4-step13-FB-centers-stage.txt
+        ==============================================
+        1 steps has 5 entries (0 percent, 0.00x previous step)
+        2 steps has 82 entries (0 percent, 16.40x previous step)
+        3 steps has 1,206 entries (0 percent, 14.71x previous step)
+        4 steps has 14,116 entries (1 percent, 11.70x previous step)
+        5 steps has 123,404 entries (16 percent, 8.74x previous step)
+        6 steps has 422,508 entries (57 percent, 3.42x previous step)
+        7 steps has 173,254 entries (23 percent, 0.41x previous step)
+        8 steps has 896 entries (0 percent, 0.01x previous step)
+
+        Total: 735,471 entries
+        '''
         self.lt_UD_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step11-UD-centers-stage.txt',
                                                '444-UD-centers-stage',
@@ -146,6 +162,18 @@ class RubiksCube444(RubiksCube):
                                                 True, # prune table
                                                 modulo=735473)
 
+        '''
+        lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
+        ==================================================
+        1 steps has 7 entries (0 percent, 0.00x previous step)
+        2 steps has 135 entries (0 percent, 19.29x previous step)
+        3 steps has 2,286 entries (0 percent, 16.93x previous step)
+        4 steps has 36,728 entries (0 percent, 16.07x previous step)
+        5 steps has 562,932 entries (6 percent, 15.33x previous step)
+        6 steps has 8,047,054 entries (93 percent, 14.29x previous step)
+
+        Total: 8,649,142 entries
+        '''
         self.lt_ULFRBD_centers_stage = LookupTableIDA(self,
                                                'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
                                                '444-ULFRBD-centers-stage',
@@ -185,8 +213,14 @@ class RubiksCube444(RubiksCube):
                                                    '444-ULFRBD-centers-solve',
                                                    'UUUULLLLFFFFRRRRBBBBDDDD',
                                                    False, # state hex
-                                                   False, # prune table
+                                                   True,  # prune table
                                                    modulo=343019)
+
+    def lt_init(self):
+        if self.lt_init_called:
+            return
+        self.lt_init_called = True
+        self.lt_init_common()
 
         '''
         22*20*18 is 7920
@@ -985,6 +1019,11 @@ class RubiksCube444(RubiksCube):
 
 
 class RubiksCubeTsai444(RubiksCube444):
+    """
+    phase 1 - stage all centers
+    phase 2 - orient edges and solve LR centers
+    phase 3 - solve all centers and pair all edges
+    """
 
 
     def lt_init(self):
@@ -992,74 +1031,37 @@ class RubiksCubeTsai444(RubiksCube444):
             return
         self.lt_init_called = True
 
-        '''
-        lookup-table-4x4x4-step110-LR-centers-stage.txt
-        ===============================================
-        1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 82 entries (0 percent, 16.40x previous step)
-        3 steps has 1,206 entries (0 percent, 14.71x previous step)
-        4 steps has 14,116 entries (1 percent, 11.70x previous step)
-        5 steps has 123,404 entries (16 percent, 8.74x previous step)
-        6 steps has 422,508 entries (57 percent, 3.42x previous step)
-        7 steps has 173,254 entries (23 percent, 0.41x previous step)
-        8 steps has 896 entries (0 percent, 0.01x previous step)
-
-        Total: 735,471 entries
-        '''
-        self.lt_LR_centers_stage = LookupTable(self,
-                                               'lookup-table-4x4x4-step110-LR-centers-stage.txt',
-                                               '444-LR-centers-stage-tsai',
-                                               '0f0f00',
-                                                True,  # state hex
-                                                False, # prune table
-                                                modulo=735473)
+        self.lt_init_common()
 
         # prune tables
         '''
-        lookup-table-4x4x4-step121-orient-edges.txt
+        lookup-table-4x4x4-step61-orient-edges.txt
         ===========================================
-        1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 62 entries (0 percent, 12.40x previous step)
-        3 steps has 906 entries (0 percent, 14.61x previous step)
-        4 steps has 11,163 entries (0 percent, 12.32x previous step)
-        5 steps has 127,148 entries (4 percent, 11.39x previous step)
-        6 steps has 889,398 entries (32 percent, 6.99x previous step)
-        7 steps has 1,553,434 entries (57 percent, 1.75x previous step)
-        8 steps has 122,040 entries (4 percent, 0.08x previous step)
+        1 steps has 3 entries (0 percent, 0.00x previous step)
+        2 steps has 29 entries (0 percent, 9.67x previous step)
+        3 steps has 278 entries (0 percent, 9.59x previous step)
+        4 steps has 1,934 entries (0 percent, 6.96x previous step)
+        5 steps has 15,640 entries (0 percent, 8.09x previous step)
+        6 steps has 124,249 entries (4 percent, 7.94x previous step)
+        7 steps has 609,241 entries (22 percent, 4.90x previous step)
+        8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
+        9 steps has 688,124 entries (25 percent, 0.56x previous step)
+        10 steps has 40,560 entries (1 percent, 0.06x previous step)
 
         Total: 2,704,156 entries
         '''
         self.lt_orient_edges = LookupTable(self,
-                                           'lookup-table-4x4x4-step121-orient-edges.txt',
+                                           'lookup-table-4x4x4-step61-orient-edges.txt',
                                            '444-orient-edges-tsai',
                                            'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
                                            False, # state hex
                                            True, # prune table
                                            modulo=2704157)
 
+        # TODO this can stage to 12 positions (solved just happens to be one of them) so long
+        # term build a table to get to these 12 positions...this might save us a move or two
         '''
-        lookup-table-4x4x4-step122-FB-centers-stage.txt
-        ===============================================
-        1 steps has 3 entries (0 percent, 0.00x previous step)
-        2 steps has 29 entries (0 percent, 9.67x previous step)
-        3 steps has 234 entries (1 percent, 8.07x previous step)
-        4 steps has 1,246 entries (9 percent, 5.32x previous step)
-        5 steps has 4,466 entries (34 percent, 3.58x previous step)
-        6 steps has 6,236 entries (48 percent, 1.40x previous step)
-        7 steps has 656 entries (5 percent, 0.11x previous step)
-
-        Total: 12,870 entries
-        '''
-        self.lt_FB_centers_stage = LookupTable(self,
-                                               'lookup-table-4x4x4-step122-FB-centers-stage.txt',
-                                               '444-FB-centers-stage-tsai',
-                                               '00f0f0',
-                                                True, # state hex
-                                                True, # prune table
-                                                modulo=12889)
-
-        '''
-        lookup-table-4x4x4-step123-LR-centers-solve.txt
+        lookup-table-4x4x4-step62-LR-centers-solve.txt
         ===============================================
         1 steps has 5 entries (7 percent, 0.00x previous step)
         2 steps has 13 entries (18 percent, 2.60x previous step)
@@ -1070,7 +1072,7 @@ class RubiksCubeTsai444(RubiksCube444):
         Total: 70 entries
         '''
         self.lt_LR_centers_solve = LookupTable(self,
-                                               'lookup-table-4x4x4-step123-LR-centers-solve.txt',
+                                               'lookup-table-4x4x4-step62-LR-centers-solve.txt',
                                                '444-LR-centers-solve-tsai',
                                                'xxxxLLLLxxxxRRRRxxxxxxxx',
                                                 False, # state hex
@@ -1078,62 +1080,36 @@ class RubiksCubeTsai444(RubiksCube444):
                                                 modulo=71)
 
         '''
-        lookup-table-4x4x4-step120-phase2-tsai.txt
+        lookup-table-4x4x4-step60-phase2-tsai.txt
         ==========================================
-        1 steps has 9 entries (0 percent, 0.00x previous step)
-        2 steps has 107 entries (0 percent, 11.89x previous step)
-        3 steps has 1,624 entries (0 percent, 15.18x previous step)
-        4 steps has 24,835 entries (0 percent, 15.29x previous step)
-        5 steps has 382,402 entries (6 percent, 15.40x previous step)
-        6 steps has 5,926,235 entries (93 percent, 15.50x previous step)
+        1 steps has 7 entries (0 percent, 0.00x previous step)
+        2 steps has 54 entries (0 percent, 7.71x previous step)
+        3 steps has 590 entries (0 percent, 10.93x previous step)
+        4 steps has 5,499 entries (0 percent, 9.32x previous step)
+        5 steps has 50,234 entries (1 percent, 9.14x previous step)
+        6 steps has 481,363 entries (10 percent, 9.58x previous step)
+        7 steps has 4,261,969 entries (88 percent, 8.85x previous step)
 
-        Total: 6,335,212 entries
+        Total: 4,799,716 entries
         '''
         self.lt_phase2_tsai = LookupTableIDA(self,
-                                             'lookup-table-4x4x4-step120-phase2-tsai.txt',
+                                             'lookup-table-4x4x4-step60-phase2-tsai.txt',
                                              '444-phase2-tsai',
                                              'UDDxxUUxxDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
                                              False, # state_hex
                                              moves_4x4x4,
-                                             ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"), # illegal_moves
+                                             ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'", "Rw", "Rw'", "Lw", "Lw'"), # illegal_moves
 
                                              # prune tables
                                              (self.lt_orient_edges,
                                               self.lt_FB_centers_stage,
                                               self.lt_LR_centers_solve),
-                                             max_depth=6,
-                                             modulo=6335213)
+                                             max_depth=7,
+                                             modulo=4799719)
 
 
         '''
-        (8!/(4! * 4!))^3 is 343,000
-
-        lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt
-        ==================================================
-        1 steps has 7 entries (0 percent)
-        2 steps has 99 entries (0 percent)
-        3 steps has 996 entries (0 percent)
-        4 steps has 6,477 entries (1 percent)
-        5 steps has 23,540 entries (6 percent)
-        6 steps has 53,537 entries (15 percent)
-        7 steps has 86,464 entries (25 percent)
-        8 steps has 83,240 entries (24 percent)
-        9 steps has 54,592 entries (15 percent)
-        10 steps has 29,568 entries (8 percent)
-        11 steps has 4,480 entries (1 percent)
-
-        Total: 343,000 entries
-        '''
-        self.lt_ULFRBD_centers_solve = LookupTable(self,
-                                                   'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
-                                                   '444-ULFRBD-centers-solve',
-                                                   'UUUULLLLFFFFRRRRBBBBDDDD',
-                                                   False, # state hex
-                                                   True, # prune table
-                                                   modulo=343019)
-
-        '''
-        lookup-table-4x4x4-step132-phase3-UFBR-edges-tsai.txt
+        lookup-table-4x4x4-step72-phase3-UFBR-edges-tsai.txt
         =====================================================
         1 steps has 15 entries (0 percent, 0.00x previous step)
         2 steps has 164 entries (0 percent, 10.93x previous step)
@@ -1149,7 +1125,7 @@ class RubiksCubeTsai444(RubiksCube444):
 
         '''
         self.lt_UFBR_edges_solve = LookupTable(self,
-                                          'lookup-table-4x4x4-step132-phase3-UFBR-edges-tsai.txt',
+                                          'lookup-table-4x4x4-step72-phase3-UFBR-edges-tsai.txt',
                                           '444-UFBR-edges',
                                           'UUxUxUUUxxxxxxxxFFxxxxxxRRxxxxxxBBxxxxxxxxxxxxxx',
                                           False, # state hex
@@ -1157,7 +1133,7 @@ class RubiksCubeTsai444(RubiksCube444):
                                           modulo=1742401)
 
         '''
-        lookup-table-4x4x4-step133-phase3-ULRF-edges-tsai.txt
+        lookup-table-4x4x4-step73-phase3-ULRF-edges-tsai.txt
         =====================================================
         1 steps has 13 entries (0 percent, 0.00x previous step)
         2 steps has 134 entries (0 percent, 10.31x previous step)
@@ -1172,7 +1148,7 @@ class RubiksCubeTsai444(RubiksCube444):
         Total: 1742400 entries
         '''
         self.lt_ULRF_edges_solve = LookupTable(self,
-                                          'lookup-table-4x4x4-step133-phase3-ULRF-edges-tsai.txt',
+                                          'lookup-table-4x4x4-step73-phase3-ULRF-edges-tsai.txt',
                                           '444-ULRF-edges',
                                           'xxUUUUUULLxxxxxxFFxxxxxxRRxxxxxxxxxxxxxxxxxxxxxx',
                                           False, # state hex
@@ -1180,7 +1156,7 @@ class RubiksCubeTsai444(RubiksCube444):
                                           modulo=1742401)
 
         '''
-        lookup-table-4x4x4-step134-phase3-DFBR-edges-tsai.txt
+        lookup-table-4x4x4-step74-phase3-DFBR-edges-tsai.txt
         =====================================================
         1 steps has 15 entries (0 percent, 0.00x previous step)
         2 steps has 164 entries (0 percent, 10.93x previous step)
@@ -1195,7 +1171,7 @@ class RubiksCubeTsai444(RubiksCube444):
         Total: 1742400 entries
         '''
         self.lt_DFBR_edges_solve = LookupTable(self,
-                                          'lookup-table-4x4x4-step134-phase3-DFBR-edges-tsai.txt',
+                                          'lookup-table-4x4x4-step74-phase3-DFBR-edges-tsai.txt',
                                           '444-DFBR-edges',
                                           'xxxxxxxxxxxxxxxxxxxxxxFFxxxxxxRRxxxxxxBBDDxDxDDD',
                                           False, # state hex
@@ -1203,7 +1179,7 @@ class RubiksCubeTsai444(RubiksCube444):
                                           modulo=1742401)
 
         '''
-        lookup-table-4x4x4-step135-phase3-DLRF-edges-tsai.txt
+        lookup-table-4x4x4-step75-phase3-DLRF-edges-tsai.txt
         =====================================================
         1 steps has 13 entries (0 percent, 0.00x previous step)
         2 steps has 134 entries (0 percent, 10.31x previous step)
@@ -1218,7 +1194,7 @@ class RubiksCubeTsai444(RubiksCube444):
         Total: 1742400 entries
         '''
         self.lt_DLRF_edges_solve = LookupTable(self,
-                                          'lookup-table-4x4x4-step135-phase3-DLRF-edges-tsai.txt',
+                                          'lookup-table-4x4x4-step75-phase3-DLRF-edges-tsai.txt',
                                           '444-DLRF-edges',
                                           'xxxxxxxxxxxxxxLLxxxxxxFFxxxxxxRRxxxxxxxxDDDDDDxx',
                                           False, # state hex
@@ -1227,7 +1203,7 @@ class RubiksCubeTsai444(RubiksCube444):
 
         '''
         self.lt_edges_solve = LookupTable(self,
-                                          'lookup-table-4x4x4-step131-phase3-edges-tsai.txt',
+                                          'lookup-table-4x4x4-step71-phase3-edges-tsai.txt',
                                           '444-edges',
                                           'TBD',
                                           False, # state hex
@@ -1236,7 +1212,7 @@ class RubiksCubeTsai444(RubiksCube444):
         '''
 
         '''
-        lookup-table-4x4x4-step130-phase3-tsai.txt
+        lookup-table-4x4x4-step70-phase3-tsai.txt
         ==========================================
         1 steps has 15 entries (0 percent, 0.00x previous step)
         2 steps has 193 entries (0 percent, 12.87x previous step)
@@ -1248,9 +1224,9 @@ class RubiksCubeTsai444(RubiksCube444):
         Total: 5305351 entries
         '''
         self.lt_phase3_tsai = LookupTableIDA(self,
-                                             'lookup-table-4x4x4-step130-phase3-tsai.txt',
+                                             'lookup-table-4x4x4-step70-phase3-tsai.txt',
                                              '444-phase3-tsai',
-                                             'TBD',
+                                             'UUUUUUUUUUUULLLLLLLLLLLLFFFFFFFFFFFFRRRRRRRRRRRRBBBBBBBBBBBBDDDDDDDDDDDD',
                                              False, # state_hex
                                              moves_4x4x4,
                                              ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",
@@ -2421,12 +2397,16 @@ class RubiksCubeTsai444(RubiksCube444):
 
     def group_centers_guts(self):
         self.lt_init()
-        self.lt_LR_centers_stage.solve()
-        log.info("%s: LR staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-        # TODO we should just solve LR from the start
-        self.lt_LR_centers_solve.solve() # IDA speed up
+        self.lt_ULFRBD_centers_stage.solve(99)
+        log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.print_cube()
+
+        # dwalton
+        # Testing the prune tables
+        #self.lt_orient_edges.solve()
+        #self.lt_LR_centers_solve.solve()
+        #self.print_cube()
+        #sys.exit(0)
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_phase2_tsai.solve(99)

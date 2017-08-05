@@ -2535,6 +2535,12 @@ class LookupTableIDA(LookupTable):
             elif pt_steps:
                 len_pt_steps = len(pt_steps)
 
+                # There are few prune tables that I built where instead of listing the steps
+                # for a state I just listed how many steps there would be.  I did this to save
+                # space.  lookup-table-5x5x5-step13-UD-centers-stage-UFDB-only.txt is one such table.
+                if len_pt_steps == 1 and pt_steps[0].isdigit():
+                    len_pt_steps = int(pt_steps[0])
+
             elif pt.max_depth:
                 # This is the exception to the rule but some prune tables such
                 # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt

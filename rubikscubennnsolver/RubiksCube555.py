@@ -94,6 +94,8 @@ class RubiksCube555(RubiksCube):
                                                  True, # prune table
                                                  modulo=735473)
 
+        '''
+        # something isn't right with these, if we use them IDA ends up taking longer
         self.lt_UD_centers_stage_UFDB_only = LookupTable(self,
                                                  'lookup-table-5x5x5-step13-UD-centers-stage-UFDB-only.txt',
                                                  '555-UD-centers-stage-UFDB-only',
@@ -103,9 +105,6 @@ class RubiksCube555(RubiksCube):
                                                  6,    # max depth of this partial prune table
                                                  modulo=7033619)
 
-        # Not used right now...if we use these we tend to prune too aggresively which forces us to get
-        # to IDA threshold of 10 at which point we are exploring tons of branches and it slows us down
-        '''
         self.lt_UD_centers_stage_ULDR_only = LookupTable(self,
                                                  'lookup-table-5x5x5-step14-UD-centers-stage-ULDR-only.txt',
                                                  '555-UD-centers-stage-ULDR-only',
@@ -157,7 +156,8 @@ class RubiksCube555(RubiksCube):
                                                   self.lt_UD_X_centers_stage,
                                                   #self.lt_UD_centers_stage_ULDR_only,
                                                   #self.lt_UD_centers_stage_LFRB_only,
-                                                  self.lt_UD_centers_stage_UFDB_only),
+                                                  #self.lt_UD_centers_stage_UFDB_only),
+                                                  ),
                                                  max_depth=6,
                                                  modulo=17168477) # modulo
 

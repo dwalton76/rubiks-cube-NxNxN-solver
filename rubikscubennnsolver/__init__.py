@@ -1220,6 +1220,15 @@ class RubiksCube(object):
     def get_non_paired_wings_count(self):
         return len(self.get_non_paired_wings())
 
+    def get_paired_wings(self):
+        return (self.sideU.paired_wings(True, True, True, True) +
+                self.sideF.paired_wings(False, True, False, True) +
+                self.sideB.paired_wings(False, True, False, True) +
+                self.sideD.paired_wings(True, True, True, True))
+
+    def get_paired_wings_count(self):
+        return len(self.get_paired_wings())
+
     def get_non_paired_edges(self):
         # north, west, south, east
         return (self.sideU.non_paired_edges(True, True, True, True) +

@@ -838,23 +838,6 @@ class RubiksCube444(RubiksCube):
         raise SolveError("Went from %d to %d non_paired_edges" %
             (original_non_paired_wings_count, current_non_paired_wings_count))
 
-    def pair_last_four_edges_444(self, edge):
-        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        original_non_paired_wings_count = self.get_non_paired_wings_count()
-
-        # rotate unpaired edge to F-west
-        self.rotate_edge_to_F_west(edge)
-
-        self.lt_edges_stage_last_four.solve()
-        self.lt_edges_solve_last_four.solve()
-
-        current_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        current_non_paired_wings_count = self.get_non_paired_wings_count()
-
-        # LF and FR are the two edges in the table
-        #self.lt_edges_solve_last_two.solve()
-        #raise SolveError("at pair_last_two_edges_444")
-
     def pair_last_two_edges_444(self, edge):
         """
         At one point I looked into using two lookup tables to do this:

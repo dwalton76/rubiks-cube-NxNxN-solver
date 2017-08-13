@@ -2081,6 +2081,7 @@ class LookupTable(object):
         self.sides_FB = (self.parent.sideF, self.parent.sideB)
         self.filename = filename
         self.filename_hash = filename + '.hash'
+        self.filename_gz = filename + '.gz'
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
         self.filename_exists = False
         self.modulo = modulo
@@ -2093,12 +2094,14 @@ class LookupTable(object):
         # If the user just git cloned the repo all of the lookup tables will still be gzipped
         if not os.path.exists(self.filename_hash):
             if not os.path.exists(self.filename):
-                if os.path.exists(self.filename + '.gz'):
-                    log.warning("gunzip --keep %s.gz" % self.filename)
-                    subprocess.call(['gunzip', '--keep', self.filename + '.gz'])
-                else:
-                    log.warning("%s does not exist" % self.filename)
-                    return
+                if not os.path.exists(self.filename_gz):
+                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
+                    log.info("Downloading table via 'wget %s'" % url)
+                    subprocess.call(['wget', url])
+                    # dwalton
+
+                log.warning("gunzip %s" % self.filename_gz)
+                subprocess.call(['gunzip', self.filename_gz])
 
             # Now create a .hash copy of the lookup table
             self.convert_file_to_hash()

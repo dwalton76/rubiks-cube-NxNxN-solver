@@ -2152,11 +2152,13 @@ class LookupTable(object):
         with open(self.filename, 'r') as fh:
             for line in fh:
                 linecount += 1
+        log.info("%s: has %d lines" % (self.filename, linecount))
 
+        # dwalton make this use less ram
         next_prime = find_next_prime(linecount)
         assert next_prime == self.modulo, "linecount %d, next prime %d  modulo %d...next prime and modulo must match" % (linecount, next_prime, self.modulo)
 
-        log.info("%s: has %d lines, hash table will have %d buckets" % (self.filename, linecount, next_prime))
+        log.info("%s: hash table will have %d buckets" % (self.filename, next_prime))
         by_index = {}
 
         for hash_index in xrange(next_prime):
@@ -2174,6 +2176,7 @@ class LookupTable(object):
             for x in xrange(next_prime):
                 line = ','.join(sorted(by_index[x]))
                 fh.write(line + '\n')
+        by_index = {}
 
         # Now pad the file so that all lines are the same length
         filename_pad = self.filename_hash + '.pad'
@@ -2184,6 +2187,7 @@ class LookupTable(object):
                 length = len(line.strip())
                 if length > max_length:
                     max_length = length
+        log.info("%s: longest line is %d characters" % (self.filename, max_length))
 
         with open(filename_pad, 'w') as fh_pad:
             with open(self.filename_hash, 'r') as fh:
@@ -2195,7 +2199,6 @@ class LookupTable(object):
                     if spaces_to_add:
                         line = line + ' ' * spaces_to_add
                     fh_pad.write(line + '\n')
-
         shutil.move(filename_pad, self.filename_hash)
 
     def state(self):

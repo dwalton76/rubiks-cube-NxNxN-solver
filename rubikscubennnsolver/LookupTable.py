@@ -2105,6 +2105,7 @@ class LookupTable(object):
 
             # Now create a .hash copy of the lookup table
             self.convert_file_to_hash()
+            os.unlink(self.filename)
 
         # Find the width, state_width and filesize of our .hash file
         with open(self.filename_hash, 'r') as fh:

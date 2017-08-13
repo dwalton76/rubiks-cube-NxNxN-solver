@@ -2081,6 +2081,7 @@ class LookupTable(object):
         self.sides_FB = (self.parent.sideF, self.parent.sideB)
         self.filename = filename
         self.filename_hash = filename + '.hash'
+        self.filename_hash2offset = filename + '.hash2offset'
         self.filename_gz = filename + '.gz'
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
         self.filename_exists = False
@@ -2092,13 +2093,12 @@ class LookupTable(object):
         assert self.modulo, "%s modulo is %s" % (self, self.modulo)
 
         # If the user just git cloned the repo all of the lookup tables will still be gzipped
-        if not os.path.exists(self.filename_hash):
+        if not os.path.exists(self.filename_hash) or not os.path.exists(self.filename_hash2offset):
             if not os.path.exists(self.filename):
                 if not os.path.exists(self.filename_gz):
                     url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
                     log.info("Downloading table via 'wget %s'" % url)
                     subprocess.call(['wget', url])
-                    # dwalton
 
                 log.warning("gunzip %s" % self.filename_gz)
                 subprocess.call(['gunzip', self.filename_gz])
@@ -2107,10 +2107,9 @@ class LookupTable(object):
             self.convert_file_to_hash()
             os.unlink(self.filename)
 
-        # Find the width, state_width and filesize of our .hash file
+        # Find the state_width for the entries in our .hash file
         with open(self.filename_hash, 'r') as fh:
             first_line = next(fh)
-            self.width = len(first_line)
 
             # Now that the files are hashed the first line may not have an entry
             while ':' not in first_line:
@@ -2118,29 +2117,26 @@ class LookupTable(object):
 
             for state_steps in first_line.split(','):
                 (state, steps) = state_steps.split(':')
-            self.state_width = len(state)
+                self.state_width = len(state)
+                #log.info("%s: state %s, state_width %d" % (self, state, self.state_width))
+                break
 
-            filesize = os.path.getsize(self.filename_hash)
-            self.linecount = int(filesize/self.width)
+        # Find the line width for our .hash2offset file...they will all be the same width
+        with open(self.filename_hash2offset, 'r') as fh:
+            first_line = next(fh)
 
-            if self.linecount * self.width != filesize:
-                log.warning("%s is corrupt, self.linecount * self.width != filesize, %d * %d is %d, filesize is %d" %
-                    (self.filename_hash, self.linecount, self.width, self.linecount * self.width, filesize))
-                sys.exit(0)
+            # add 1 for the newline
+            self.width = len(first_line)
 
         self.filename_exists = True
-        self.scratchpad = self.desc + '.scratchpad'
         self.state_type = state_type
         self.state_target = state_target
         self.state_hex = state_hex
         assert self.state_target is not None, "state_target is None"
 
         self.cache = {}
-        self.guts_call_count = 0
-        self.guts_left_right_range = 0
-        self.fh_seek_call_count = 0
-        self.fh_seek_lines_read = 0
-        self.fh = open(self.filename_hash, 'r')
+        self.fh_hash = open(self.filename_hash, 'r')
+        self.fh_hash2offset = open(self.filename_hash2offset, 'r')
 
     def __str__(self):
         return self.desc
@@ -2154,43 +2150,78 @@ class LookupTable(object):
                 linecount += 1
         log.info("%s: has %d lines" % (self.filename, linecount))
 
-        # dwalton make this use less ram
         next_prime = find_next_prime(linecount)
         assert next_prime == self.modulo, "linecount %d, next prime %d  modulo %d...next prime and modulo must match" % (linecount, next_prime, self.modulo)
 
         log.info("%s: hash table will have %d buckets" % (self.filename, next_prime))
-        by_index = {}
+        bucket_str_len = len(str(next_prime))
 
-        for hash_index in xrange(next_prime):
-            by_index[hash_index] = []
+        with open('/tmp/%s' % self.filename, 'w') as fh_tmp:
+            with open(self.filename, 'r') as fh:
+                for line in fh:
+                    line = line.rstrip()
+                    (state, steps) = line.split(':')
+                    hash_index = hashxx(state) % next_prime
+                    fh_tmp.write("%s:%s\n" % (str(hash_index).zfill(bucket_str_len), line))
+        subprocess.call(('sort', '--output=/tmp/%s' % self.filename, '/tmp/%s' % self.filename))
 
-        with open(self.filename, 'r') as fh:
-            for line in fh:
-                line = line.rstrip()
-                (state, steps) = line.split(':')
-                hash_index = hashxx(state) % next_prime
-                #print("state %s, hash %s" % (state, hash_index))
-                by_index[hash_index].append(line)
+        # dwalton
+        with open('/tmp/%s' % self.filename, 'r') as fh_tmp:
+            with open(self.filename_hash, 'w') as fh_hash:
+                with open(self.filename_hash2offset, 'w') as fh_hash2offset:
+                    line_number = 0
+                    offset = 0
+                    prev_hash_index = None
+                    to_write = []
 
-        with open(self.filename_hash, 'w') as fh:
-            for x in xrange(next_prime):
-                line = ','.join(sorted(by_index[x]))
-                fh.write(line + '\n')
-        by_index = {}
+                    for line in fh_tmp:
+                        line = line.strip()
+                        (hash_index, state, step) = line.split(':')
+                        hash_index = int(hash_index)
 
-        # Now pad the file so that all lines are the same length
-        filename_pad = self.filename_hash + '.pad'
+                        # write to filename_hash
+                        if prev_hash_index is not None and hash_index != prev_hash_index:
+
+                            to_write_string = ','.join(to_write) + '\n'
+                            fh_hash.write(to_write_string)
+                            #log.info("%s: prev_hash_index %s, offset %s" % (self, prev_hash_index, offset))
+                            fh_hash2offset.write("%s\n" % offset)
+                            offset += len(to_write_string)
+                            to_write = []
+
+                            # write a blank line for any hash_index that did not have an entry
+                            for x in range(hash_index - prev_hash_index - 1):
+                                #log.info("%s: hash_index %d, prev_hash_index %d, write blank line" % (self, hash_index, prev_hash_index))
+                                fh_hash2offset.write("\n")
+
+                        to_write.append("%s:%s" % (state, step))
+                        prev_hash_index = hash_index
+
+                    if to_write:
+
+                        to_write_string = ','.join(to_write) + '\n'
+                        fh_hash.write(to_write_string)
+                        fh_hash2offset.write("%s\n" % offset)
+                        offset += len(to_write_string)
+                        to_write = []
+
+                        # write a blank line for any hash_index that did not have an entry
+                        #for x in range(hash_index - prev_hash_index - 1):
+                        #    fh_hash2offset.write("\n")
+
+        # Now pad the hash2offset file so that all lines are the same length
+        filename_pad = self.filename_hash2offset + '.pad'
         max_length = 0
 
-        with open(self.filename_hash, 'r') as fh:
+        with open(self.filename_hash2offset, 'r') as fh:
             for line in fh:
                 length = len(line.strip())
                 if length > max_length:
                     max_length = length
-        log.info("%s: longest line is %d characters" % (self.filename, max_length))
+        log.info("%s: longest hash2offset line is %d characters" % (self.filename, max_length))
 
         with open(filename_pad, 'w') as fh_pad:
-            with open(self.filename_hash, 'r') as fh:
+            with open(self.filename_hash2offset, 'r') as fh:
                 for line in fh:
                     line = line.strip()
                     length = len(line)
@@ -2199,7 +2230,9 @@ class LookupTable(object):
                     if spaces_to_add:
                         line = line + ' ' * spaces_to_add
                     fh_pad.write(line + '\n')
-        shutil.move(filename_pad, self.filename_hash)
+        shutil.move(filename_pad, self.filename_hash2offset)
+        # os.unlink(self.filename)
+        #sys.exit(0)
 
     def state(self):
         state_function = state_functions.get(self.state_type)
@@ -2234,15 +2267,23 @@ class LookupTable(object):
             # We use the hash_index as our line number in the file
             hash_index = hashxx(state_to_find) % self.modulo
 
-            # Each line is the same width (they are padded with whitespaces to achieve this)
-            # so jump to the hash_index line_number and read the line
-            self.fh.seek(hash_index * self.width)
-            line = self.fh.readline().rstrip()
-            #log.info("%s: state %s, hash_index %s" % (self, state_to_find, hash_index))
+            # All lines in the .hash2offset file have been padded to be the same length
+            # so jump to 'hash_index' line number and read it.  This will tell us how
+            # many bytes into the .hash file to look for the entry for this hash_index.
+            self.fh_hash2offset.seek(hash_index * self.width)
+            line = self.fh_hash2offset.readline().rstrip()
+            #log.info("%s: hash_index %d, width %d, line %s" % (self, hash_index, self.width, line))
 
             if not line:
                 self.cache[state_to_find] = None
                 return None
+
+            hash_index_offset = int(line)
+
+            # Now seek in that many bytes in the .hash file and read that line
+            self.fh_hash.seek(hash_index_offset)
+            line = self.fh_hash.readline().rstrip()
+            #log.info("%s: hash_index %s, state %s, line %s" % (self, hash_index, state_to_find, line))
 
             for state_steps in line.split(','):
                 #log.info("%s: %s, state_steps %s" % (self, line, state_steps))
@@ -2344,7 +2385,8 @@ class LookupTableIDA(LookupTable):
                     log.info("%s: pt_state %s, cost %d (max depth)" % (pt, pt_state, len_pt_steps))
 
             else:
-                raise SolveError("%s does not have max_depth and does not have steps for %s" % (pt, pt_state))
+                # dwalton
+                raise SolveError("%s does not have max_depth and does not have steps for %s, hash index %d, state_width %d" % (pt, pt_state, hashxx(pt_state) % pt.modulo, pt.state_width))
 
             if len_pt_steps > cost_to_goal:
                 cost_to_goal = len_pt_steps

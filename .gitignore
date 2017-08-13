@@ -88,10 +88,7 @@ ENV/
 # Rope project settings
 .ropeproject
 
-lookup-table-*.txt
 *.swp
 cache
-lookup-table-*-deep*
-not_used
-binary-search
 *.hash
+*.hash2offset

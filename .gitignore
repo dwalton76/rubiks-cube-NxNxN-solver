@@ -90,5 +90,7 @@ ENV/
 
 *.swp
 cache
-*.hash
-*.hash2offset
+lookup*.hash
+lookup*.hash2offset
+lookup*.gz
+lookup*.txt

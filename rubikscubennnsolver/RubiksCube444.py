@@ -556,7 +556,8 @@ class RubiksCube444(RubiksCube):
             return False
 
         if not self.prep_for_slice_back_444():
-            #raise SolveError("cannot slice back")
+            # dwalton
+            raise SolveError("cannot slice back")
             self.state = original_state[:]
             self.solution = original_solution[:]
             return False

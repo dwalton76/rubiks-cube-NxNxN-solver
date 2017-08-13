@@ -2117,9 +2117,13 @@ class LookupTable(object):
 
             for state_steps in first_line.split(','):
                 (state, steps) = state_steps.split(':')
-                self.state_width = len(state)
-                #log.info("%s: state %s, state_width %d" % (self, state, self.state_width))
-                break
+
+                # Sometimes I write the hash_index in as the first entry to make debugging easier
+                # When I do that I list the steps as 'INDEX'
+                if steps != 'INDEX':
+                    self.state_width = len(state)
+                    #log.info("%s: state %s, state_width %d" % (self, state, self.state_width))
+                    break
 
         # Find the line width for our .hash2offset file...they will all be the same width
         with open(self.filename_hash2offset, 'r') as fh:
@@ -2165,19 +2169,23 @@ class LookupTable(object):
                     fh_tmp.write("%s:%s\n" % (str(hash_index).zfill(bucket_str_len), line))
         subprocess.call(('sort', '--output=/tmp/%s' % self.filename, '/tmp/%s' % self.filename))
 
-        # dwalton
         with open('/tmp/%s' % self.filename, 'r') as fh_tmp:
             with open(self.filename_hash, 'w') as fh_hash:
                 with open(self.filename_hash2offset, 'w') as fh_hash2offset:
-                    line_number = 0
                     offset = 0
                     prev_hash_index = None
+                    first_hash_index = None
                     to_write = []
 
                     for line in fh_tmp:
                         line = line.strip()
                         (hash_index, state, step) = line.split(':')
                         hash_index = int(hash_index)
+
+                        if first_hash_index is None:
+                            first_hash_index = hash_index
+                            for x in range(first_hash_index):
+                                fh_hash2offset.write("\n")
 
                         # write to filename_hash
                         if prev_hash_index is not None and hash_index != prev_hash_index:
@@ -2194,6 +2202,8 @@ class LookupTable(object):
                                 #log.info("%s: hash_index %d, prev_hash_index %d, write blank line" % (self, hash_index, prev_hash_index))
                                 fh_hash2offset.write("\n")
 
+                        #if not to_write:
+                        #    to_write.append("%s:INDEX" % hash_index)
                         to_write.append("%s:%s" % (state, step))
                         prev_hash_index = hash_index
 
@@ -2231,8 +2241,6 @@ class LookupTable(object):
                         line = line + ' ' * spaces_to_add
                     fh_pad.write(line + '\n')
         shutil.move(filename_pad, self.filename_hash2offset)
-        # os.unlink(self.filename)
-        #sys.exit(0)
 
     def state(self):
         state_function = state_functions.get(self.state_type)
@@ -2272,7 +2280,7 @@ class LookupTable(object):
             # many bytes into the .hash file to look for the entry for this hash_index.
             self.fh_hash2offset.seek(hash_index * self.width)
             line = self.fh_hash2offset.readline().rstrip()
-            #log.info("%s: hash_index %d, width %d, line %s" % (self, hash_index, self.width, line))
+            #log.info("%s: state %s, hash_index %d, width %d, offset in .hash %s bytes" % (self, state_to_find, hash_index, self.width, line))
 
             if not line:
                 self.cache[state_to_find] = None

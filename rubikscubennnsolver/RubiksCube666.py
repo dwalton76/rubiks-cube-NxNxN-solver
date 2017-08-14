@@ -69,7 +69,7 @@ class RubiksCube666(RubiksCube):
                                                       '666-UD-inner-X-centers-stage',
                                                       '066000000000000000000660',
                                                       True,  # state_hex
-                                                      modulo=735473)
+                                                      modulo=735471)
 
         '''
         lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
@@ -91,14 +91,14 @@ class RubiksCube666(RubiksCube):
                                                                 '666-UD-oblique-edge-pairing-left-only',
                                                                 '990000000099',
                                                                 True, # state_hex
-                                                                modulo=735473)
+                                                                modulo=735471)
 
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
                                                                 '666-UD-oblique-edge-pairing-right-only',
                                                                 '660000000066',
                                                                 True, # state_hex
-                                                                modulo=735473)
+                                                                modulo=735471)
 
         '''
         Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
@@ -154,7 +154,7 @@ class RubiksCube666(RubiksCube):
                                                       '666-LR-inner-X-centers-stage',
                                                       '000006600000066000000000',
                                                       True, # state_hex
-                                                      modulo=12889)
+                                                      modulo=12870)
 
         '''
         lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt
@@ -177,14 +177,14 @@ class RubiksCube666(RubiksCube):
                                                                 '666-LR-oblique-edge-pairing-left-only',
                                                                 '99009900',
                                                                 True, # state_hex
-                                                                modulo=12889)
+                                                                modulo=12870)
 
         self.lt_LR_oblique_edge_pairing_right_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt',
                                                                 '666-LR-oblique-edge-pairing-right-only',
                                                                 '66006600',
                                                                 True, # state_hex
-                                                                modulo=12889)
+                                                                modulo=12870)
         '''
         (16!/(8!*8!))^2 is 165,636,900
         I only built this 9 deep to keep it small thus the IDA
@@ -224,7 +224,7 @@ class RubiksCube666(RubiksCube):
                                                          # prune tables
                                                          (self.lt_LR_oblique_edge_pairing_left_only,
                                                           self.lt_LR_oblique_edge_pairing_right_only),
-                                                         modulo=24633733)
+                                                         modulo=24633732)
 
         '''
         lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt
@@ -248,7 +248,7 @@ class RubiksCube666(RubiksCube):
                                                                          '666-UD-centers-oblique-edges-solve',
                                                                          'xUUxUUUUUUUUxUUxxDDxDDDDDDDDxDDx',
                                                                          False, # state_hex
-                                                                         modulo=343019)
+                                                                         modulo=343000)
 
         '''
         lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
@@ -274,7 +274,7 @@ class RubiksCube666(RubiksCube):
                                                                          '666-LR-centers-oblique-edges-solve',
                                                                          'xLLxLLLLLLLLxLLxxRRxRRRRRRRRxRRx',
                                                                          False, # state_hex
-                                                                         modulo=343019)
+                                                                         modulo=343000)
 
         '''
         lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
@@ -300,7 +300,7 @@ class RubiksCube666(RubiksCube):
                                                                          '666-FB-centers-oblique-edges-solve',
                                                                          'xFFxFFFFFFFFxFFxxBBxBBBBBBBBxBBx',
                                                                          False, # state_hex
-                                                                         modulo=343019)
+                                                                         modulo=343000)
 
         '''
         lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt
@@ -332,7 +332,7 @@ class RubiksCube666(RubiksCube):
                                                          # prune tables
                                                          (self.lt_LR_solve_inner_x_centers_and_oblique_edges,
                                                           self.lt_FB_solve_inner_x_centers_and_oblique_edges),
-                                                         modulo=4793471)
+                                                         modulo=4793435)
 
     def populate_fake_555_for_ULFRBD(self, fake_555):
 

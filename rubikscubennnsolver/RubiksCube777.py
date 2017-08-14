@@ -82,21 +82,21 @@ class RubiksCube777(RubiksCube):
                                                                   '777-UD-oblique-edge-pairing-middle-only',
                                                                   '08088080000000000000000000000000404404',
                                                                   True, # state_hex
-                                                                  modulo=735473)
+                                                                  modulo=735471)
 
         self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
                                                                    'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
                                                                    '777-UD-oblique-edge-pairing-left-only',
                                                                    '10104040000000000000000000000000808202',
                                                                    True, # state_hex
-                                                                   modulo=735473)
+                                                                   modulo=735471)
 
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
                                                                    'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
                                                                    '777-UD-oblique-edge-pairing-right-only',
                                                                    '05000500000000000000000000000000280028',
                                                                    True, # state_hex
-                                                                   modulo=735473)
+                                                                   modulo=735471)
 
 
         '''
@@ -130,28 +130,28 @@ class RubiksCube777(RubiksCube):
                                                          (self.lt_UD_oblique_edge_pairing_middle_only,
                                                           self.lt_UD_oblique_edge_pairing_left_only,
                                                           self.lt_UD_oblique_edge_pairing_right_only),
-                                                         modulo=5961581)
+                                                         modulo=5961573)
 
         self.lt_LR_oblique_edge_pairing_middle_only = LookupTable(self,
                                                       'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
                                                       '777-LR-oblique-edge-pairing-middle-only',
                                                       '2022020000000808808000000',
                                                       True, # state_hex
-                                                      modulo=12889)
+                                                      modulo=12870)
 
         self.lt_LR_oblique_edge_pairing_left_only = LookupTable(self,
                                                       'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
                                                       '777-LR-oblique-edge-pairing-left-only',
                                                       '4041010000001010404000000',
                                                       True, # state_hex
-                                                      modulo=12889)
+                                                      modulo=12870)
 
         self.lt_LR_oblique_edge_pairing_right_only = LookupTable(self,
                                                       'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt',
                                                       '777-LR-oblique-edge-pairing-right-only',
                                                       '1400140000000500050000000',
                                                       True, # state_hex
-                                                      modulo=12889)
+                                                      modulo=12870)
 
         '''
         lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt
@@ -187,7 +187,7 @@ class RubiksCube777(RubiksCube):
                                                       (self.lt_LR_oblique_edge_pairing_middle_only,
                                                        self.lt_LR_oblique_edge_pairing_left_only,
                                                        self.lt_LR_oblique_edge_pairing_right_only),
-                                                      modulo=5044297)
+                                                      modulo=5044280)
 
 
         '''
@@ -198,41 +198,41 @@ class RubiksCube777(RubiksCube):
         3 steps has 82 entries (1 percent, 3.73x previous step)
         4 steps has 292 entries (5 percent, 3.56x previous step)
         5 steps has 986 entries (20 percent, 3.38x previous step)
-        6 steps has 2001 entries (40 percent, 2.03x previous step)
-        7 steps has 1312 entries (26 percent, 0.66x previous step)
+        6 steps has 2,001 entries (40 percent, 2.03x previous step)
+        7 steps has 1,312 entries (26 percent, 0.66x previous step)
         8 steps has 200 entries (4 percent, 0.15x previous step)
 
-        Total: 4900 entries
+        Total: 4,900 entries
 
         lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt
         ================================================================================
         1 steps has 9 entries (0 percent, 0.00x previous step)
         2 steps has 48 entries (0 percent, 5.33x previous step)
         3 steps has 276 entries (0 percent, 5.75x previous step)
-        4 steps has 1572 entries (0 percent, 5.70x previous step)
-        5 steps has 8134 entries (2 percent, 5.17x previous step)
-        6 steps has 33187 entries (9 percent, 4.08x previous step)
-        7 steps has 94826 entries (27 percent, 2.86x previous step)
-        8 steps has 141440 entries (41 percent, 1.49x previous step)
-        9 steps has 59620 entries (17 percent, 0.42x previous step)
-        10 steps has 3808 entries (1 percent, 0.06x previous step)
+        4 steps has 1,572 entries (0 percent, 5.70x previous step)
+        5 steps has 8,134 entries (2 percent, 5.17x previous step)
+        6 steps has 33,187 entries (9 percent, 4.08x previous step)
+        7 steps has 94,826 entries (27 percent, 2.86x previous step)
+        8 steps has 141,440 entries (41 percent, 1.49x previous step)
+        9 steps has 59,620 entries (17 percent, 0.42x previous step)
+        10 steps has 3,808 entries (1 percent, 0.06x previous step)
         11 steps has 80 entries (0 percent, 0.02x previous step)
 
-        Total: 343000 entries
+        Total: 343,000 entries
         '''
         self.lt_UD_solve_inner_centers_and_oblique_edges_center_only = LookupTable(self,
                                                                          'lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt',
                                                                          '777-UD-centers-oblique-edges-solve-center-only',
                                                                          'xxxxxxUUUxxUxUxxUUUxxxxxxxxxxxxDDDxxDxDxxDDDxxxxxx',
                                                                          False, # state_hex
-                                                                         modulo=4903)
+                                                                         modulo=4900)
 
         self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only = LookupTable(self,
                                                                          'lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt',
                                                                          '777-UD-centers-oblique-edges-solve-edges-only',
                                                                          'xUUUxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxDDDx',
                                                                          False, # state_hex
-                                                                         modulo=343019)
+                                                                         modulo=343000)
 
         '''
         lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt
@@ -262,7 +262,7 @@ class RubiksCube777(RubiksCube):
                                                                          # prune tables
                                                                         (self.lt_UD_solve_inner_centers_and_oblique_edges_center_only,
                                                                          self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only),
-                                                                        modulo=4898381)
+                                                                        modulo=4898347)
 
         '''
         lookup-table-7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges.txt
@@ -290,7 +290,7 @@ class RubiksCube777(RubiksCube):
                         '777-LR-inner-x-center-t-center-and-middle-oblique-edges-LR-solve',
                         'xxLxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxRxx',
                         False, # state_hex
-                        modulo=343019)
+                        modulo=343000)
 
         '''
         lookup-table-7x7x7-step62-LR-oblique-edges.txt
@@ -316,7 +316,7 @@ class RubiksCube777(RubiksCube):
                         '777-LR-oblique-edges-LR-solve',
                         'xLLLxLxxxLLxxxLLxxxLxLLLxxRRRxRxxxRRxxxRRxxxRxRRRx',
                         False, # state_hex
-                        modulo=343019)
+                        modulo=343000)
 
         '''
         lookup-table-7x7x7-step60-LR-solve-inner-center-and-oblique-edges.txt
@@ -350,7 +350,7 @@ class RubiksCube777(RubiksCube):
                                                          # prune tables
                                                          (self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge,
                                                           self.lt_LR_solve_oblique_edge),
-                                                         modulo=18155209)
+                                                         modulo=18155169)
 
         '''
         lookup-table-7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges.txt
@@ -378,7 +378,7 @@ class RubiksCube777(RubiksCube):
                         '777-FB-inner-x-center-t-center-and-middle-oblique-edges-FB-solve',
                         'xxFxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxBxx',
                         False, # state_hex
-                        modulo=343019)
+                        modulo=343002)
 
         '''
         lookup-table-7x7x7-step72-FB-oblique-edges.txt
@@ -387,24 +387,24 @@ class RubiksCube777(RubiksCube):
         2 steps has 26 entries (0 percent, 5.20x previous step)
         3 steps has 96 entries (0 percent, 3.69x previous step)
         4 steps has 435 entries (0 percent, 4.53x previous step)
-        5 steps has 1778 entries (0 percent, 4.09x previous step)
-        6 steps has 7001 entries (2 percent, 3.94x previous step)
-        7 steps has 22728 entries (6 percent, 3.25x previous step)
-        8 steps has 63683 entries (18 percent, 2.80x previous step)
-        9 steps has 117320 entries (34 percent, 1.84x previous step)
-        10 steps has 103428 entries (30 percent, 0.88x previous step)
-        11 steps has 25078 entries (7 percent, 0.24x previous step)
-        12 steps has 1406 entries (0 percent, 0.06x previous step)
+        5 steps has 1,778 entries (0 percent, 4.09x previous step)
+        6 steps has 7,001 entries (2 percent, 3.94x previous step)
+        7 steps has 22,728 entries (6 percent, 3.25x previous step)
+        8 steps has 63,683 entries (18 percent, 2.80x previous step)
+        9 steps has 117,320 entries (34 percent, 1.84x previous step)
+        10 steps has 103,428 entries (30 percent, 0.88x previous step)
+        11 steps has 25,078 entries (7 percent, 0.24x previous step)
+        12 steps has 1,406 entries (0 percent, 0.06x previous step)
         13 steps has 16 entries (0 percent, 0.01x previous step)
 
-        Total: 343000 entries
+        Total: 343,000 entries
         '''
         self.lt_FB_solve_oblique_edge = LookupTable(self,
                         'lookup-table-7x7x7-step72-FB-oblique-edges.txt',
                         '777-FB-oblique-edges-FB-solve',
                         'xFFFxFxxxFFxxxFFxxxFxFFFxxBBBxBxxxBBxxxBBxxxBxBBBx',
                         False, # state_hex
-                        modulo=343019)
+                        modulo=343000)
 
         '''
         lookup-table-7x7x7-step70-FB-solve-inner-center-and-oblique-edges.txt
@@ -413,15 +413,15 @@ class RubiksCube777(RubiksCube):
         2 steps has 26 entries (0 percent, 5.20x previous step)
         3 steps has 96 entries (0 percent, 3.69x previous step)
         4 steps has 463 entries (0 percent, 4.82x previous step)
-        5 steps has 2084 entries (0 percent, 4.50x previous step)
-        6 steps has 9819 entries (0 percent, 4.71x previous step)
-        7 steps has 43314 entries (0 percent, 4.41x previous step)
-        8 steps has 192016 entries (1 percent, 4.43x previous step)
-        9 steps has 822604 entries (4 percent, 4.28x previous step)
-        10 steps has 3440953 entries (18 percent, 4.18x previous step)
-        11 steps has 13643789 entries (75 percent, 3.97x previous step)
+        5 steps has 2,084 entries (0 percent, 4.50x previous step)
+        6 steps has 9,819 entries (0 percent, 4.71x previous step)
+        7 steps has 43,314 entries (0 percent, 4.41x previous step)
+        8 steps has 192,016 entries (1 percent, 4.43x previous step)
+        9 steps has 822,604 entries (4 percent, 4.28x previous step)
+        10 steps has 3,440,953 entries (18 percent, 4.18x previous step)
+        11 steps has 13,643,789 entries (75 percent, 3.97x previous step)
 
-        Total: 18155169 entries
+        Total: 18,155,169 entries
         '''
         self.lt_FB_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
                                                          'lookup-table-7x7x7-step70-FB-solve-inner-center-and-oblique-edges.txt',
@@ -439,7 +439,7 @@ class RubiksCube777(RubiksCube):
                                                          # prune tables
                                                          (self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
                                                           self.lt_FB_solve_oblique_edge),
-                                                         modulo=18155209)
+                                                         modulo=18155169)
 
         '''
         lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt
@@ -475,12 +475,12 @@ class RubiksCube777(RubiksCube):
                                                           self.lt_LR_solve_oblique_edge,
                                                           self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
                                                           self.lt_FB_solve_oblique_edge),
-                                                         modulo=11571317)
+                                                         modulo=11571315)
 
     def create_fake_555_from_inside_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
-        fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.lt_init()
 
         for x in xrange(1, 151):
@@ -557,7 +557,7 @@ class RubiksCube777(RubiksCube):
     def create_fake_555_from_outside_centers(self):
 
         # Create a fake 5x5x5 to solve 7x7x7 centers (they have been reduced to a 5x5x5)
-        fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.lt_init()
 
         for x in xrange(1, 151):
@@ -635,7 +635,7 @@ class RubiksCube777(RubiksCube):
         fake_555 = self.create_fake_555_from_inside_centers()
 
         try:
-            fake_555.lt_UD_centers_stage.solve(7)
+            fake_555.lt_UD_centers_stage.solve(8)
         except NoIDASolution:
             fake_555.lt_UD_T_centers_stage.solve() # speed up IDA
             fake_555.lt_UD_centers_stage.solve(99)
@@ -691,7 +691,7 @@ class RubiksCube777(RubiksCube):
     def create_fake_666_centers(self):
 
         # Create a fake 6x6x6 to stage the outside UD oblique edges
-        fake_666 = RubiksCube666(solved_6x6x6)
+        fake_666 = RubiksCube666(solved_6x6x6, 'URFDLB')
         fake_666.lt_init()
 
         for x in xrange(1, 217):
@@ -1172,120 +1172,3 @@ class RubiksCube777(RubiksCube):
                 self._phase = 'Solve 3x3x3'
 
         return self._phase
-
-
-    '''
-2017-06-27 00:07:28,725   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 1) did not find a match, took 0ms (0ms to rotate 22, 0ms to search primary table)
-2017-06-27 00:07:28,725   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 1) rotates for prune tables are complete
-2017-06-27 00:07:28,727   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 1) explore 11 branches from here (took 1ms to search prune tables)
-2017-06-27 00:07:28,727   LookupTable.py     INFO:
-2017-06-27 00:07:28,733   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 25 states (another 73 were cached) in 1ms, 25 guts calls, 1120945 avg left->right range, guts_cache has 55 entries
-2017-06-27 00:07:28,733   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 2) did not find a match, took 6ms (4ms to rotate 239, 2ms to search primary table)
-2017-06-27 00:07:28,735   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 2) rotates for prune tables are complete
-2017-06-27 00:07:28,736   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 13 states (another 57 were cached) in 0ms, 13 guts calls, 58404 avg left->right range, guts_cache has 34 entries
-2017-06-27 00:07:28,739   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 2) explore 68 branches from here (took 5ms to search prune tables)
-2017-06-27 00:07:28,741   LookupTable.py     INFO:
-2017-06-27 00:07:28,786   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 267 states (another 388 were cached) in 9ms, 267 guts calls, 115340 avg left->right range, guts_cache has 48 entries
-2017-06-27 00:07:28,787   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 3) did not find a match, took 47ms (33ms to rotate 1480, 11ms to search primary table)
-2017-06-27 00:07:28,795   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 3) rotates for prune tables are complete
-2017-06-27 00:07:28,803   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 143 states (another 144 were cached) in 6ms, 143 guts calls, 8449 avg left->right range, guts_cache has 35 entries
-2017-06-27 00:07:28,807   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 3) explore 293 branches from here (took 20ms to search prune tables)
-2017-06-27 00:07:28,813   LookupTable.py     INFO:
-2017-06-27 00:07:29,025   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 1468 states (another 1212 were cached) in 42ms, 1468 guts calls, 34152 avg left->right range, guts_cache has 25 entries
-2017-06-27 00:07:29,027   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 4) did not find a match, took 219ms (167ms to rotate 6374, 46ms to search primary table)
-2017-06-27 00:07:29,075   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 4) rotates for prune tables are complete
-2017-06-27 00:07:29,080   LookupTable.py     INFO: 7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges: found 44 states (another 192 were cached) in 1ms, 44 guts calls, 21388 avg left->right range, guts_cache has 16 entries
-2017-06-27 00:07:29,099   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 333 states (another 297 were cached) in 15ms, 333 guts calls, 4291 avg left->right range, guts_cache has 34 entries
-2017-06-27 00:07:29,114   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 4) explore 718 branches from here (took 87ms to search prune tables)
-2017-06-27 00:07:29,128   LookupTable.py     INFO:
-2017-06-27 00:07:29,784   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 4155 states (another 2460 were cached) in 95ms, 4155 guts calls, 15053 avg left->right range, guts_cache has 5 entries
-2017-06-27 00:07:29,788   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 5) did not find a match, took 673ms (552ms to rotate 15587, 107ms to search primary table)
-2017-06-27 00:07:29,880   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 5) rotates for prune tables are complete
-2017-06-27 00:07:29,892   LookupTable.py     INFO: 7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges: found 225 states (another 317 were cached) in 6ms, 225 guts calls, 5310 avg left->right range, guts_cache has 17 entries
-2017-06-27 00:07:29,919   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 513 states (another 433 were cached) in 18ms, 513 guts calls, 2981 avg left->right range, guts_cache has 21 entries
-2017-06-27 00:07:29,950   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 5) explore 1201 branches from here (took 161ms to search prune tables)
-2017-06-27 00:07:29,971   LookupTable.py     INFO:
-2017-06-27 00:07:31,154   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 8335 states (another 4556 were cached) in 172ms, 8335 guts calls, 8282 avg left->right range, guts_cache has 10 entries
-2017-06-27 00:07:31,162   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 6) did not find a match, took 1211ms (993ms to rotate 26101, 197ms to search primary table)
-2017-06-27 00:07:31,357   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 6) rotates for prune tables are complete
-2017-06-27 00:07:31,378   LookupTable.py     INFO: 7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges: found 136 states (another 740 were cached) in 6ms, 136 guts calls, 8951 avg left->right range, guts_cache has 18 entries
-2017-06-27 00:07:31,415   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 619 states (another 576 were cached) in 22ms, 619 guts calls, 2532 avg left->right range, guts_cache has 7 entries
-2017-06-27 00:07:31,480   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 6) explore 2196 branches from here (took 317ms to search prune tables)
-2017-06-27 00:07:31,521   LookupTable.py     INFO:
-2017-06-27 00:07:34,027   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 16215 states (another 8439 were cached) in 332ms, 16215 guts calls, 6176 avg left->right range, guts_cache has 13 entries
-2017-06-27 00:07:34,043   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 7) did not find a match, took 0:00:02.563471 (0:00:02.131635 to rotate 47896, 389ms to search primary table)
-2017-06-27 00:07:34,473   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 7) rotates for prune tables are complete
-2017-06-27 00:07:34,536   LookupTable.py     INFO: 7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges: found 1107 states (another 851 were cached) in 33ms, 1107 guts calls, 1472 avg left->right range, guts_cache has 5 entries
-2017-06-27 00:07:34,582   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 633 states (another 673 were cached) in 19ms, 633 guts calls, 2411 avg left->right range, guts_cache has 7 entries
-2017-06-27 00:07:34,690   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 7) explore 3901 branches from here (took 646ms to search prune tables)
-2017-06-27 00:07:34,767   LookupTable.py     INFO:
-2017-06-27 00:07:39,469   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 31037 states (another 11786 were cached) in 474ms, 31037 guts calls, 2534 avg left->right range, guts_cache has 26 entries
-2017-06-27 00:07:39,499   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 8) did not find a match, took 0:00:04.807653 (0:00:04.159629 to rotate 84786, 572ms to search primary table)
-2017-06-27 00:07:40,337   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 8) rotates for prune tables are complete
-2017-06-27 00:07:40,401   LookupTable.py     INFO: 7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges: found 294 states (another 1082 were cached) in 14ms, 294 guts calls, 4432 avg left->right range, guts_cache has 14 entries
-2017-06-27 00:07:40,464   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 381 states (another 520 were cached) in 12ms, 381 guts calls, 3533 avg left->right range, guts_cache has 11 entries
-2017-06-27 00:07:40,663   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 8) explore 2484 branches from here (took 1163ms to search prune tables)
-2017-06-27 00:07:40,712   LookupTable.py     INFO:
-2017-06-27 00:07:44,072   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 17204 states (another 9429 were cached) in 325ms, 17204 guts calls, 3841 avg left->right range, guts_cache has 32 entries
-2017-06-27 00:07:44,096   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 9) did not find a match, took 0:00:03.432848 (0:00:02.988046 to rotate 53826, 396ms to search primary table)
-2017-06-27 00:07:44,553   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 9) rotates for prune tables are complete
-2017-06-27 00:07:44,616   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 71 states (another 310 were cached) in 3ms, 71 guts calls, 14186 avg left->right range, guts_cache has 26 entries
-2017-06-27 00:07:44,739   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 9) explore 1939 branches from here (took 642ms to search prune tables)
-2017-06-27 00:07:44,775   LookupTable.py     INFO:
-2017-06-27 00:07:47,886   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 13831 states (another 5061 were cached) in 190ms, 13831 guts calls, 3964 avg left->right range, guts_cache has 43 entries
-2017-06-27 00:07:47,901   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 10) did not find a match, took 0:00:03.161235 (0:00:02.889931 to rotate 42030, 235ms to search primary table)
-2017-06-27 00:07:48,226   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 10) rotates for prune tables are complete
-2017-06-27 00:07:48,275   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 12 states (another 107 were cached) in 0ms, 12 guts calls, 50017 avg left->right range, guts_cache has 22 entries
-2017-06-27 00:07:48,390   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 10) explore 418 branches from here (took 489ms to search prune tables)
-2017-06-27 00:07:48,402   LookupTable.py     INFO:
-2017-06-27 00:07:49,096   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 3951 states (another 1888 were cached) in 12ms, 990 guts calls, 12090 avg left->right range, guts_cache has 63 entries
-2017-06-27 00:07:49,101   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 11), took 710ms (671ms to rotate 9092, 27ms to search primary table)
-2017-06-27 00:07:49,101   LookupTable.py  WARNING: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 11 (max step 11), found match in 0:00:22.945597, steps F Uw2 B' 3Uw2 Dw2 B2 3Uw2 F B Uw2 F, state 4079/9092 in states_to_check
-
-
-
-
-2017-06-27 00:04:03,440   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 1) did not find a match, took 0ms (0ms to rotate 16, 0ms to search primary table)
-2017-06-27 00:04:03,440   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 1) rotates for prune tables are complete
-2017-06-27 00:04:03,460   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 1) explore 11 branches from here (took 19ms to search prune tables)
-2017-06-27 00:04:03,460   LookupTable.py     INFO:
-2017-06-27 00:04:03,463   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 2) did not find a match, took 3ms (2ms to rotate 173, 0ms to search primary table)
-2017-06-27 00:04:03,465   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 2) rotates for prune tables are complete
-2017-06-27 00:04:03,478   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 2) explore 74 branches from here (took 15ms to search prune tables)
-2017-06-27 00:04:03,480   LookupTable.py     INFO:
-2017-06-27 00:04:03,515   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 3) did not find a match, took 36ms (34ms to rotate 1170, 0ms to search primary table)
-2017-06-27 00:04:03,528   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 3) rotates for prune tables are complete
-2017-06-27 00:04:03,541   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 3) explore 460 branches from here (took 26ms to search prune tables)
-2017-06-27 00:04:03,548   LookupTable.py     INFO:
-2017-06-27 00:04:03,756   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 121 states (another 2675 were cached) in 10ms, 121 guts calls, 232727 avg left->right range, guts_cache has 27 entries
-2017-06-27 00:04:03,758   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 4) did not find a match, took 216ms (193ms to rotate 7275, 17ms to search primary table)
-2017-06-27 00:04:03,844   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 4) rotates for prune tables are complete
-2017-06-27 00:04:03,861   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 91 states (another 1561 were cached) in 3ms, 91 guts calls, 11927 avg left->right range, guts_cache has 30 entries
-2017-06-27 00:04:03,870   LookupTable.py     INFO: 7x7x7-step72-FB-oblique-edges: found 52 states (another 1707 were cached) in 2ms, 52 guts calls, 20047 avg left->right range, guts_cache has 22 entries
-2017-06-27 00:04:03,899   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 4) explore 2613 branches from here (took 140ms to search prune tables)
-2017-06-27 00:04:03,935   LookupTable.py     INFO:
-2017-06-27 00:04:05,461   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 4190 states (another 11212 were cached) in 91ms, 4190 guts calls, 7647 avg left->right range, guts_cache has 17 entries
-2017-06-27 00:04:05,477   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 5) did not find a match, took 1578ms (1405ms to rotate 41335, 135ms to search primary table)
-2017-06-27 00:04:05,948   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 5) rotates for prune tables are complete
-2017-06-27 00:04:06,099   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 1807 states (another 4820 were cached) in 65ms, 1807 guts calls, 1029 avg left->right range, guts_cache has 17 entries
-2017-06-27 00:04:06,191   LookupTable.py     INFO: 7x7x7-step72-FB-oblique-edges: found 1557 states (another 5698 were cached) in 55ms, 1557 guts calls, 1384 avg left->right range, guts_cache has 29 entries
-2017-06-27 00:04:06,297   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 5) explore 9096 branches from here (took 819ms to search prune tables)
-2017-06-27 00:04:06,425   LookupTable.py     INFO:
-2017-06-27 00:04:12,553   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 30053 states (another 25016 were cached) in 326ms, 30053 guts calls, 1120 avg left->right range, guts_cache has 22 entries
-2017-06-27 00:04:12,598   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 6) did not find a match, took 0:00:06.301128 (0:00:05.671549 to rotate 143839, 501ms to search primary table)
-2017-06-27 00:04:14,278   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 6) rotates for prune tables are complete
-2017-06-27 00:04:14,898   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 7070 states (another 8882 were cached) in 333ms, 7070 guts calls, 371 avg left->right range, guts_cache has 24 entries
-2017-06-27 00:04:15,297   LookupTable.py     INFO: 7x7x7-step72-FB-oblique-edges: found 9197 states (another 10564 were cached) in 287ms, 9197 guts calls, 236 avg left->right range, guts_cache has 11 entries
-2017-06-27 00:04:15,664   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 6) explore 12148 branches from here (took 0:00:03.065532 to search prune tables)
-2017-06-27 00:04:15,856   LookupTable.py     INFO:
-2017-06-27 00:04:26,958   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 50586 states (another 33966 were cached) in 543ms, 50586 guts calls, 680 avg left->right range, guts_cache has 23 entries
-2017-06-27 00:04:27,026   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 7) did not find a match, took 0:00:11.358797 (0:00:10.349378 to rotate 192023, 820ms to search primary table)
-2017-06-27 00:04:30,318   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 7) rotates for prune tables are complete
-2017-06-27 00:04:30,957   LookupTable.py     INFO: 7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges: found 7549 states (another 10707 were cached) in 212ms, 7549 guts calls, 277 avg left->right range, guts_cache has 4 entries
-2017-06-27 00:04:31,473   LookupTable.py     INFO: 7x7x7-step72-FB-oblique-edges: found 10761 states (another 14486 were cached) in 310ms, 10761 guts calls, 224 avg left->right range, guts_cache has 7 entries
-2017-06-27 00:04:31,986   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 7) explore 7538 branches from here (took 0:00:04.958917 to search prune tables)
-2017-06-27 00:04:32,122   LookupTable.py     INFO:
-2017-06-27 00:04:40,291   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: found 35320 states (another 24097 were cached) in 352ms, 24593 guts calls, 1225 avg left->right range, guts_cache has 34 entries
-2017-06-27 00:04:40,325   LookupTable.py     INFO: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 8), took 0:00:08.338393 (0:00:07.706158 to rotate 119201, 496ms to search primary table)
-2017-06-27 00:04:40,325   LookupTable.py  WARNING: 7x7x7-step70-LFRB-solve-inner-center-and-oblique-edges: IDA threshold 14 (max step 8), found match in 0:00:47.706497, steps F2 Uw2 B 3Uw2 3Dw2 B 3Uw2 B2, state 74289/119201 in states_to_check
-    '''

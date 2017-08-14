@@ -4,6 +4,7 @@ from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.rotate_xxx import rotate_222, rotate_444, rotate_555, rotate_666, rotate_777
 from pyhashxx import hashxx
+from subprocess import check_output
 import json
 import logging
 import math
@@ -80,20 +81,6 @@ def convert_state_to_hex(state, hex_width):
         hex_state = hex_state[:-1]
 
     return hex_state.zfill(hex_width)
-
-
-def find_prime_in_range(a, b):
-    for p in range(a, b):
-        for i in range(2, p):
-            if p % i == 0:
-                break
-        else:
-            return p
-    return None
-
-
-def find_next_prime(n):
-    return find_prime_in_range(n, 2*n)
 
 
 def get_444_UD_centers_stage(parent_state):
@@ -2105,7 +2092,8 @@ class LookupTable(object):
 
             # Now create a .hash copy of the lookup table
             self.convert_file_to_hash()
-            os.unlink(self.filename)
+            # dwalton
+            #os.unlink(self.filename)
 
         # Find the state_width for the entries in our .hash file
         with open(self.filename_hash, 'r') as fh:
@@ -2148,24 +2136,18 @@ class LookupTable(object):
     def convert_file_to_hash(self):
         log.warning("%s: converting to a .hash file, we only need to do this the first time you run the solver" % self.filename)
 
-        linecount = 0
-        with open(self.filename, 'r') as fh:
-            for line in fh:
-                linecount += 1
-        log.info("%s: has %d lines" % (self.filename, linecount))
+        linecount = int(check_output(('wc', '-l', self.filename)).strip().split()[0])
+        assert linecount == self.modulo, "linecount %d, modulo %d...linecount and modulo must match" % (linecount, self.modulo)
 
-        next_prime = find_next_prime(linecount)
-        assert next_prime == self.modulo, "linecount %d, next prime %d  modulo %d...next prime and modulo must match" % (linecount, next_prime, self.modulo)
-
-        log.info("%s: hash table will have %d buckets" % (self.filename, next_prime))
-        bucket_str_len = len(str(next_prime))
+        log.info("%s: hash table will have %d buckets" % (self.filename, linecount))
+        bucket_str_len = len(str(linecount))
 
         with open('/tmp/%s' % self.filename, 'w') as fh_tmp:
             with open(self.filename, 'r') as fh:
                 for line in fh:
                     line = line.rstrip()
                     (state, steps) = line.split(':')
-                    hash_index = hashxx(state) % next_prime
+                    hash_index = hashxx(state) % linecount
                     fh_tmp.write("%s:%s\n" % (str(hash_index).zfill(bucket_str_len), line))
 
         log.info("%s: sort tmp file" % self.filename)

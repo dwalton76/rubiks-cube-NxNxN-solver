@@ -143,21 +143,21 @@ class RubiksCube444(RubiksCube):
                                                '444-UD-centers-stage',
                                                'f0000f',
                                                 True, # state hex
-                                                modulo=735473)
+                                                modulo=735471)
 
         self.lt_LR_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step12-LR-centers-stage.txt',
                                                '444-LR-centers-stage',
                                                '0f0f00',
                                                 True, # state hex
-                                                modulo=735473)
+                                                modulo=735471)
 
         self.lt_FB_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step13-FB-centers-stage.txt',
                                                '444-FB-centers-stage',
                                                '00f0f0',
                                                 True, # state hex
-                                                modulo=735473)
+                                                modulo=735471)
 
         '''
         lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
@@ -183,7 +183,7 @@ class RubiksCube444(RubiksCube):
                                                 (self.lt_UD_centers_stage,
                                                  self.lt_LR_centers_stage,
                                                  self.lt_FB_centers_stage),
-                                                modulo=8649187)
+                                                modulo=8649142)
 
     def lt_init(self):
         if self.lt_init_called:
@@ -215,7 +215,7 @@ class RubiksCube444(RubiksCube):
                                                    '444-ULFRBD-centers-solve',
                                                    'UUUULLLLFFFFRRRRBBBBDDDD',
                                                    False, # state hex
-                                                   modulo=343019)
+                                                   modulo=343000)
 
 
         '''
@@ -238,7 +238,7 @@ class RubiksCube444(RubiksCube):
                                                  '444-edges-slice-forward',
                                                  'EDGES',
                                                  False, # state hex
-                                                 modulo=7927)
+                                                 modulo=7920)
 
         '''
         22*20*18 is 7920

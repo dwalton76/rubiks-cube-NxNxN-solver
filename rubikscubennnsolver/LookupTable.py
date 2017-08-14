@@ -2167,8 +2167,11 @@ class LookupTable(object):
                     (state, steps) = line.split(':')
                     hash_index = hashxx(state) % next_prime
                     fh_tmp.write("%s:%s\n" % (str(hash_index).zfill(bucket_str_len), line))
+
+        log.info("%s: sort tmp file" % self.filename)
         subprocess.call(('sort', '--output=/tmp/%s' % self.filename, '/tmp/%s' % self.filename))
 
+        log.info("%s: write .hash and .hash2offset files" % self.filename)
         with open('/tmp/%s' % self.filename, 'r') as fh_tmp:
             with open(self.filename_hash, 'w') as fh_hash:
                 with open(self.filename_hash2offset, 'w') as fh_hash2offset:
@@ -2220,6 +2223,7 @@ class LookupTable(object):
                         #    fh_hash2offset.write("\n")
 
         # Now pad the hash2offset file so that all lines are the same length
+        log.info("%s: pad .hash2offset lines to be the same width" % self.filename)
         filename_pad = self.filename_hash2offset + '.pad'
         max_length = 0
 
@@ -2228,8 +2232,8 @@ class LookupTable(object):
                 length = len(line.strip())
                 if length > max_length:
                     max_length = length
-        log.info("%s: longest hash2offset line is %d characters" % (self.filename, max_length))
 
+        log.info("%s: longest hash2offset line is %d characters" % (self.filename, max_length))
         with open(filename_pad, 'w') as fh_pad:
             with open(self.filename_hash2offset, 'r') as fh:
                 for line in fh:

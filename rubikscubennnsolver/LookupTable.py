@@ -2068,7 +2068,6 @@ class LookupTable(object):
         self.sides_FB = (self.parent.sideF, self.parent.sideB)
         self.filename = filename
         self.filename_hash = filename + '.hash'
-        self.filename_hash2offset = filename + '.hash2offset'
         self.filename_gz = filename + '.gz'
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
         self.filename_exists = False
@@ -2080,7 +2079,7 @@ class LookupTable(object):
         assert self.modulo, "%s modulo is %s" % (self, self.modulo)
 
         # If the user just git cloned the repo all of the lookup tables will still be gzipped
-        if not os.path.exists(self.filename_hash) or not os.path.exists(self.filename_hash2offset):
+        if not os.path.exists(self.filename_hash):
             if not os.path.exists(self.filename):
                 if not os.path.exists(self.filename_gz):
                     url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
@@ -2098,6 +2097,7 @@ class LookupTable(object):
         # Find the state_width for the entries in our .hash file
         with open(self.filename_hash, 'r') as fh:
             first_line = next(fh)
+            self.width = len(first_line)
 
             # Now that the files are hashed the first line may not have an entry
             while ':' not in first_line:
@@ -2105,20 +2105,7 @@ class LookupTable(object):
 
             for state_steps in first_line.split(','):
                 (state, steps) = state_steps.split(':')
-
-                # Sometimes I write the hash_index in as the first entry to make debugging easier
-                # When I do that I list the steps as 'INDEX'
-                if steps != 'INDEX':
-                    self.state_width = len(state)
-                    #log.info("%s: state %s, state_width %d" % (self, state, self.state_width))
-                    break
-
-        # Find the line width for our .hash2offset file...they will all be the same width
-        with open(self.filename_hash2offset, 'r') as fh:
-            first_line = next(fh)
-
-            # add 1 for the newline
-            self.width = len(first_line)
+                self.state_width = len(state)
 
         self.filename_exists = True
         self.state_type = state_type
@@ -2128,7 +2115,6 @@ class LookupTable(object):
 
         self.cache = {}
         self.fh_hash = open(self.filename_hash, 'r')
-        self.fh_hash2offset = open(self.filename_hash2offset, 'r')
 
     def __str__(self):
         return self.desc
@@ -2153,71 +2139,54 @@ class LookupTable(object):
         log.info("%s: sort tmp file" % self.filename)
         subprocess.call(('sort', '--output=/tmp/%s' % self.filename, '/tmp/%s' % self.filename))
 
-        log.info("%s: write .hash and .hash2offset files" % self.filename)
+        log.info("%s: write .hash file" % self.filename)
         with open('/tmp/%s' % self.filename, 'r') as fh_tmp:
             with open(self.filename_hash, 'w') as fh_hash:
-                with open(self.filename_hash2offset, 'w') as fh_hash2offset:
-                    offset = 0
-                    prev_hash_index = None
-                    first_hash_index = None
-                    to_write = []
+                prev_hash_index = None
+                first_hash_index = None
+                to_write = []
 
-                    for line in fh_tmp:
-                        line = line.strip()
-                        (hash_index, state, step) = line.split(':')
-                        hash_index = int(hash_index)
+                for line in fh_tmp:
+                    line = line.strip()
+                    (hash_index, state, step) = line.split(':')
+                    hash_index = int(hash_index)
 
-                        if first_hash_index is None:
-                            first_hash_index = hash_index
-                            for x in range(first_hash_index):
-                                fh_hash2offset.write("\n")
+                    if first_hash_index is None:
+                        first_hash_index = hash_index
+                        for x in range(first_hash_index):
+                            fh_hash.write("\n")
 
-                        # write to filename_hash
-                        if prev_hash_index is not None and hash_index != prev_hash_index:
-
-                            to_write_string = ','.join(to_write) + '\n'
-                            fh_hash.write(to_write_string)
-                            #log.info("%s: prev_hash_index %s, offset %s" % (self, prev_hash_index, offset))
-                            fh_hash2offset.write("%s\n" % offset)
-                            offset += len(to_write_string)
-                            to_write = []
-
-                            # write a blank line for any hash_index that did not have an entry
-                            for x in range(hash_index - prev_hash_index - 1):
-                                #log.info("%s: hash_index %d, prev_hash_index %d, write blank line" % (self, hash_index, prev_hash_index))
-                                fh_hash2offset.write("\n")
-
-                        #if not to_write:
-                        #    to_write.append("%s:INDEX" % hash_index)
-                        to_write.append("%s:%s" % (state, step))
-                        prev_hash_index = hash_index
-
-                    if to_write:
-
-                        to_write_string = ','.join(to_write) + '\n'
-                        fh_hash.write(to_write_string)
-                        fh_hash2offset.write("%s\n" % offset)
-                        offset += len(to_write_string)
+                    # write to filename_hash
+                    if prev_hash_index is not None and hash_index != prev_hash_index:
+                        fh_hash.write(','.join(to_write) + '\n')
                         to_write = []
 
                         # write a blank line for any hash_index that did not have an entry
-                        #for x in range(hash_index - prev_hash_index - 1):
-                        #    fh_hash2offset.write("\n")
+                        for x in range(hash_index - prev_hash_index - 1):
+                            #log.info("%s: hash_index %d, prev_hash_index %d, write blank line" % (self, hash_index, prev_hash_index))
+                            fh_hash.write("\n")
 
-        # Now pad the hash2offset file so that all lines are the same length
-        log.info("%s: pad .hash2offset lines to be the same width" % self.filename)
-        filename_pad = self.filename_hash2offset + '.pad'
+                    to_write.append("%s:%s" % (state, step))
+                    prev_hash_index = hash_index
+
+                if to_write:
+                    fh_hash.write(','.join(to_write) + '\n')
+                    to_write = []
+
+        # Now pad the .hash file so that all lines are the same length
+        log.info("%s: pad .hash lines to be the same width" % self.filename)
+        filename_pad = self.filename_hash + '.pad'
         max_length = 0
 
-        with open(self.filename_hash2offset, 'r') as fh:
+        with open(self.filename_hash, 'r') as fh:
             for line in fh:
                 length = len(line.strip())
                 if length > max_length:
                     max_length = length
 
-        log.info("%s: longest hash2offset line is %d characters" % (self.filename, max_length))
+        log.info("%s: longest .hash line is %d characters" % (self.filename, max_length))
         with open(filename_pad, 'w') as fh_pad:
-            with open(self.filename_hash2offset, 'r') as fh:
+            with open(self.filename_hash, 'r') as fh:
                 for line in fh:
                     line = line.strip()
                     length = len(line)
@@ -2226,7 +2195,7 @@ class LookupTable(object):
                     if spaces_to_add:
                         line = line + ' ' * spaces_to_add
                     fh_pad.write(line + '\n')
-        shutil.move(filename_pad, self.filename_hash2offset)
+        shutil.move(filename_pad, self.filename_hash)
 
     def state(self):
         state_function = state_functions.get(self.state_type)
@@ -2261,23 +2230,14 @@ class LookupTable(object):
             # We use the hash_index as our line number in the file
             hash_index = hashxx(state_to_find) % self.modulo
 
-            # All lines in the .hash2offset file have been padded to be the same length
-            # so jump to 'hash_index' line number and read it.  This will tell us how
-            # many bytes into the .hash file to look for the entry for this hash_index.
-            self.fh_hash2offset.seek(hash_index * self.width)
-            line = self.fh_hash2offset.readline().rstrip()
-            #log.info("%s: state %s, hash_index %d, width %d, offset in .hash %s bytes" % (self, state_to_find, hash_index, self.width, line))
+            # Now seek in that many bytes in the .hash file and read that line
+            self.fh_hash.seek(hash_index * self.width)
+            line = self.fh_hash.readline().rstrip()
+            #log.info("%s: hash_index %s, state %s, line %s" % (self, hash_index, state_to_find, line))
 
             if not line:
                 self.cache[state_to_find] = None
                 return None
-
-            hash_index_offset = int(line)
-
-            # Now seek in that many bytes in the .hash file and read that line
-            self.fh_hash.seek(hash_index_offset)
-            line = self.fh_hash.readline().rstrip()
-            #log.info("%s: hash_index %s, state %s, line %s" % (self, hash_index, state_to_find, line))
 
             for state_steps in line.split(','):
                 #log.info("%s: %s, state_steps %s" % (self, line, state_steps))
@@ -2491,6 +2451,11 @@ class LookupTableIDA(LookupTable):
 
         if steps:
             log.info("%s: IDA, cube is already in a state that is in our lookup table" % self)
+
+            # The cube is now in a state where it is in the lookup table, we may need
+            # to do several lookups to get to our target state though. Use
+            # LookupTabele's solve() to take us the rest of the way to the target state.
+            LookupTable.solve(self)
             return
 
         # If we are here (odds are very high we will be) it means that the current

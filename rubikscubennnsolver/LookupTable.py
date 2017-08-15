@@ -2128,6 +2128,7 @@ class LookupTable(object):
         log.info("%s: hash table will have %d buckets" % (self.filename, linecount))
         bucket_str_len = len(str(linecount))
 
+        # TODO batch these fh writes
         with open('/tmp/%s' % self.filename, 'w') as fh_tmp:
             with open(self.filename, 'r') as fh:
                 for line in fh:
@@ -2139,6 +2140,7 @@ class LookupTable(object):
         log.info("%s: sort tmp file" % self.filename)
         subprocess.call(('sort', '--output=/tmp/%s' % self.filename, '/tmp/%s' % self.filename))
 
+        # TODO batch these fh writes
         log.info("%s: write .hash file" % self.filename)
         with open('/tmp/%s' % self.filename, 'r') as fh_tmp:
             with open(self.filename_hash, 'w') as fh_hash:
@@ -2184,6 +2186,7 @@ class LookupTable(object):
                 if length > max_length:
                     max_length = length
 
+        # TODO batch these fh writes
         log.info("%s: longest .hash line is %d characters" % (self.filename, max_length))
         with open(filename_pad, 'w') as fh_pad:
             with open(self.filename_hash, 'r') as fh:
@@ -2240,8 +2243,11 @@ class LookupTable(object):
                 return None
 
             for state_steps in line.split(','):
-                #log.info("%s: %s, state_steps %s" % (self, line, state_steps))
-                (state, steps) = state_steps.split(':')
+                try:
+                    (state, steps) = state_steps.split(':')
+                except Exception:
+                    log.info("%s: %s, state_steps %s" % (self, line, state_steps))
+                    raise
 
                 if state == state_to_find:
                     #log.info("%s: state %s, hash_index %s, steps %s" % (self, state, hash_index, steps))
@@ -2339,7 +2345,6 @@ class LookupTableIDA(LookupTable):
                     log.info("%s: pt_state %s, cost %d (max depth)" % (pt, pt_state, len_pt_steps))
 
             else:
-                # dwalton
                 raise SolveError("%s does not have max_depth and does not have steps for %s, hash index %d, state_width %d" % (pt, pt_state, hashxx(pt_state) % pt.modulo, pt.state_width))
 
             if len_pt_steps > cost_to_goal:

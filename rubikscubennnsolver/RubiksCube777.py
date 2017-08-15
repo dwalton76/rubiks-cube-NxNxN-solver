@@ -932,7 +932,7 @@ class RubiksCube777(RubiksCube):
         #sys.exit(0)
 
     def pair_inside_edges(self):
-        fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.lt_init()
 
         # Upper
@@ -1040,7 +1040,7 @@ class RubiksCube777(RubiksCube):
         log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def pair_outside_edges(self):
-        fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.lt_init()
 
         # Upper

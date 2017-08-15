@@ -2073,6 +2073,8 @@ class LookupTable(object):
         self.filename_exists = False
         self.modulo = modulo
         self.max_depth = max_depth
+        self.record_stats = False
+        self.heuristic_stats = {}
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -2091,8 +2093,7 @@ class LookupTable(object):
 
             # Now create a .hash copy of the lookup table
             self.convert_file_to_hash()
-            # dwalton
-            #os.unlink(self.filename)
+            os.unlink(self.filename)
 
         # Find the state_width for the entries in our .hash file
         with open(self.filename_hash, 'r') as fh:
@@ -2306,12 +2307,41 @@ class LookupTableIDA(LookupTable):
             if x not in self.moves_all:
                 raise Exception("illegal move %s is not in the list of legal moves" % x)
 
+    def ida_heuristic_all_costs(self):
+        results = {}
+
+        for pt in self.prune_tables:
+            pt_state = pt.state()
+            pt_steps = pt.steps(pt_state)
+
+            if pt_state == pt.state_target:
+                len_pt_steps = 0
+
+            elif pt_steps:
+                len_pt_steps = len(pt_steps)
+
+                # There are few prune tables that I built where instead of listing the steps
+                # for a state I just listed how many steps there would be.  I did this to save
+                # space.  lookup-table-5x5x5-step13-UD-centers-stage-UFDB-only.txt is one such table.
+                if len_pt_steps == 1 and pt_steps[0].isdigit():
+                    len_pt_steps = int(pt_steps[0])
+
+            elif pt.max_depth:
+                # This is the exception to the rule but some prune tables such
+                # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
+                # are partial tables so use the max_depth of the table +1
+                len_pt_steps = pt.max_depth + 1
+
+            else:
+                raise SolveError("%s does not have max_depth and does not have steps for %s, hash index %d, state_width %d" % (pt, pt_state, hashxx(pt_state) % pt.modulo, pt.state_width))
+
+            results[pt.filename] = len_pt_steps
+
+        return results
+
     def ida_heuristic(self, debug=False):
         cost_to_goal = 0
-
-        if debug:
-            log.info("ida_heuristic debugs")
-            self.parent.print_cube()
+        pt_costs = []
 
         for pt in self.prune_tables:
             pt_state = pt.state()
@@ -2347,7 +2377,17 @@ class LookupTableIDA(LookupTable):
             else:
                 raise SolveError("%s does not have max_depth and does not have steps for %s, hash index %d, state_width %d" % (pt, pt_state, hashxx(pt_state) % pt.modulo, pt.state_width))
 
+            pt_costs.append(len_pt_steps)
             if len_pt_steps > cost_to_goal:
+                cost_to_goal = len_pt_steps
+
+        if self.heuristic_stats:
+            pt_costs = tuple(pt_costs)
+            len_pt_steps = self.heuristic_stats.get(pt_costs, 0)
+
+            if len_pt_steps > cost_to_goal:
+                if debug:
+                    log.info("%s: %s increase heuristic from %d to %d" % (self, pformat(pt_costs), cost_to_goal, len_pt_steps))
                 cost_to_goal = len_pt_steps
 
         if debug:
@@ -2372,7 +2412,7 @@ class LookupTableIDA(LookupTable):
         # =================================================
         if steps:
 
-            # rotate_xxx() above is very fast but it does not append the
+            # rotate_xxx() is very fast but it does not append the
             # steps to the solution so put the cube back in original state
             # and execute the steps via a normal rotate() call
             self.parent.state = self.original_state[:]
@@ -2381,15 +2421,43 @@ class LookupTableIDA(LookupTable):
             for step in steps_to_here:
                 self.parent.rotate(step)
 
-            for step in steps:
-                self.parent.rotate(step)
-
             # The cube is now in a state where it is in the lookup table, we may need
             # to do several lookups to get to our target state though. Use
             # LookupTabele's solve() to take us the rest of the way to the target state.
             LookupTable.solve(self)
 
             solution_ok = True
+
+            # record stats here
+            if self.record_stats:
+                final_state = self.parent.state[:]
+                final_solution = self.parent.solution[:]
+
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                actual_cost_to_goal = len(final_solution) - len(self.original_solution)
+                stats = []
+
+                for step in final_solution[len(self.original_solution):]:
+                    stats.append(self.ida_heuristic_all_costs())
+                    stats[-1]['step'] = step
+                    stats[-1]['actual-cost'] = actual_cost_to_goal
+                    actual_cost_to_goal -= 1
+
+                    self.parent.rotate(step)
+
+                #log.info("STATS:\n%s\n" % pformat(stats))
+                with open('%s.stats' % self.filename, 'a') as fh:
+                    for entry in stats:
+                        fh.write("%d,%d,%d\n" % (
+                            #entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
+                            #entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
+                            entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
+                            entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
+                            entry['actual-cost']))
+
+                self.parent.state = final_state[:]
+                self.parent.solution = final_solution[:]
 
             if self.state_type == '444-phase2-tsai':
                 if not self.parent.edge_swaps_even(True, None, False):

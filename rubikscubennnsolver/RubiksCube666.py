@@ -5,7 +5,7 @@ from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksSide import Side, SolveError
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoIDASolution
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
 import logging
 import math
 import os
@@ -134,6 +134,53 @@ class RubiksCube666(RubiksCube):
                                                          (self.lt_UD_oblique_edge_pairing_left_only,
                                                           self.lt_UD_oblique_edge_pairing_right_only),
                                                          modulo=7271027)
+
+        # This data was collected by setting self.lt_UD_oblique_edge_pairing.record_stats = True
+        # and then crunching the resulting .stats file with crunch-stats-UD-oblique-pair-666.py to produce the following
+        # dictionary.  In the tuple that is the key, the first number is the cost per lt_UD_oblique_edge_pairing_left_only
+        # and the second number is the cost per lt_UD_oblique_edge_pairing_right_only.  The value is the actual
+        # number of steps it took to solve the cube.  So if lt_UD_oblique_edge_pairing_left_only says the cost is 4
+        # and lt_UD_oblique_edge_pairing_right_only says the cost is 7 it actually took 12 steps (see the (4,7) entry)
+        # to solve the cube so use that as our heuristic.
+        #
+        # These heuristics are not admissable so the IDA* search is no longer guaranted to find an
+        # optimal solution but this step20 search used to be really slow and this speeds it up a good deal.
+        self.lt_UD_oblique_edge_pairing.heuristic_stats = {
+            (1, 1) : 1,
+            (1, 3) : 5,
+            (2, 2) : 2,
+            (2, 3) : 3,
+            (2, 4) : 5,
+            (3, 1) : 6,
+            (3, 2) : 4,
+            (3, 3) : 3,
+            (3, 4) : 5,
+            (3, 5) : 6,
+            (3, 6) : 10,
+            (4, 2) : 6,
+            (4, 3) : 5,
+            (4, 4) : 6,
+            (4, 5) : 7,
+            (4, 6) : 10,
+            (4, 7) : 12,
+            (5, 2) : 6,
+            (5, 3) : 6,
+            (5, 4) : 8,
+            (5, 5) : 8,
+            (5, 6) : 10,
+            (5, 7) : 11,
+            (6, 2) : 11,
+            (6, 4) : 11,
+            (6, 5) : 10,
+            (6, 6) : 11,
+            (6, 7) : 12,
+            (7, 3) : 12,
+            (7, 4) : 12,
+            (7, 5) : 12,
+            (7, 6) : 12,
+            (7, 7) : 12,
+        }
+
         '''
         16!/(8!*8!) is 12,870
 
@@ -407,32 +454,10 @@ class RubiksCube666(RubiksCube):
 
     def group_centers_stage_UD(self):
         self.lt_UD_inner_x_centers_stage.solve()
+        log.info("UD inner x-centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-        # This one can take a while so we do some tricks to speed it up
-        # - first try to find a solution without solving either prune table beforehand
-        # - if that doesn't work, solve the left_only prune table and try again
-        # - if that doesn't work, solve the right_only prune table and let it run
-        #
-        # We do this because for some cubes if you solve the left_only prune table it
-        # really speeds up IDA while for other cubes it doesn't but solving the right_only
-        # prune table will speed things up.
-        try:
-            self.lt_UD_oblique_edge_pairing.solve(8)
-        except NoIDASolution:
-            original_state = self.state[:]
-            original_solution = self.solution[:]
-            self.lt_UD_oblique_edge_pairing_left_only.solve() # speed up IDA
-
-            try:
-                self.lt_UD_oblique_edge_pairing.solve(9)
-            except NoIDASolution:
-                self.state = original_state
-                self.solution = original_solution
-                self.lt_UD_oblique_edge_pairing_right_only.solve() # speed up IDA
-                self.lt_UD_oblique_edge_pairing.solve(99)
-
-        #self.print_cube()
-        #sys.exit(0)
+        self.lt_UD_oblique_edge_pairing.solve(99)
+        log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_centers_guts(self):
         self.lt_init()

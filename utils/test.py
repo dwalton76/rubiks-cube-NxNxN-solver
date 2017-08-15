@@ -96,8 +96,12 @@ try:
                 print("ERROR: Add support for %s" % size)
                 sys.exit(1)
 
-            cube.solve()
-            solution = cube.solution
+            try:
+                cube.solve()
+                solution = cube.solution
+            except Exception:
+                results.append("\033[91m%s FAIL\033[0m: %s" % (size, kociemba_string))
+                continue
 
             # Now put the cube back in its initial state and verify the solution solves it
             # uncomment this to test compress_solution()

@@ -67,73 +67,73 @@ test_cases = {
     "15x15x15" : [],
 }
 
-for x in xrange(5):
-    cube = RubiksCube(solved_222)
+for x in xrange(500):
+    cube = RubiksCube(solved_222, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["2x2x2"].append(ks)
 
-    cube = RubiksCube(solved_333)
+    cube = RubiksCube(solved_333, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["3x3x3"].append(ks)
 
-    cube = RubiksCube(solved_444)
+    cube = RubiksCube(solved_444, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["4x4x4"].append(ks)
 
-    cube = RubiksCube(solved_555)
+    cube = RubiksCube(solved_555, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["5x5x5"].append(ks)
 
-    cube = RubiksCube(solved_666)
+    cube = RubiksCube(solved_666, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["6x6x6"].append(ks)
 
-    cube = RubiksCube(solved_777)
+    cube = RubiksCube(solved_777, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["7x7x7"].append(ks)
 
-    cube = RubiksCube(solved_888)
+    cube = RubiksCube(solved_888, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["8x8x8"].append(ks)
 
-    cube = RubiksCube(solved_999)
+    cube = RubiksCube(solved_999, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["9x9x9"].append(ks)
 
-    cube = RubiksCube(solved_101010)
+    cube = RubiksCube(solved_101010, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["10x10x10"].append(ks)
 
-    cube = RubiksCube(solved_111111)
+    cube = RubiksCube(solved_111111, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["11x11x11"].append(ks)
 
-    cube = RubiksCube(solved_121212)
+    cube = RubiksCube(solved_121212, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["12x12x12"].append(ks)
 
-    cube = RubiksCube(solved_131313)
+    cube = RubiksCube(solved_131313, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["13x13x13"].append(ks)
 
-    cube = RubiksCube(solved_141414)
+    cube = RubiksCube(solved_141414, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["14x14x14"].append(ks)
 
-    cube = RubiksCube(solved_151515)
+    cube = RubiksCube(solved_151515, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     test_cases["15x15x15"].append(ks)

@@ -1,7 +1,7 @@
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver import RubiksCube
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps, NoIDASolution
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps
 from subprocess import check_output
 import logging
 import sys
@@ -556,8 +556,7 @@ class RubiksCube444(RubiksCube):
             return False
 
         if not self.prep_for_slice_back_444():
-            # dwalton
-            raise SolveError("cannot slice back")
+            log.warning("cannot slice back")
             self.state = original_state[:]
             self.solution = original_solution[:]
             return False
@@ -816,7 +815,7 @@ class RubiksCube444(RubiksCube):
         if steps == None:
             self.state = original_state[:]
             self.solution = original_solution[:]
-            self.print_cube()
+            #self.print_cube()
             self.pair_last_two_edges_444(edge)
         else:
             for step in steps.split():

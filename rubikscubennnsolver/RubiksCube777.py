@@ -5,7 +5,7 @@ from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6, moves_6x6x6
 from rubikscubennnsolver.RubiksSide import Side, SolveError
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoIDASolution
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
 import logging
 import math
 import os
@@ -633,12 +633,7 @@ class RubiksCube777(RubiksCube):
 
     def group_inside_UD_centers(self):
         fake_555 = self.create_fake_555_from_inside_centers()
-
-        try:
-            fake_555.lt_UD_centers_stage.solve(8)
-        except NoIDASolution:
-            fake_555.lt_UD_T_centers_stage.solve() # speed up IDA
-            fake_555.lt_UD_centers_stage.solve(99)
+        fake_555.lt_UD_centers_stage.solve(99)
 
         for step in fake_555.solution:
 
@@ -811,12 +806,7 @@ class RubiksCube777(RubiksCube):
 
     def group_outside_UD_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
-
-        try:
-            fake_666.lt_UD_oblique_edge_pairing.solve(7)
-        except NoIDASolution:
-            fake_666.lt_UD_oblique_edge_pairing_left_only.solve() # speed up IDA
-            fake_666.lt_UD_oblique_edge_pairing.solve(99)
+        fake_666.lt_UD_oblique_edge_pairing.solve(99)
 
         for step in fake_666.solution:
 

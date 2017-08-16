@@ -3,6 +3,7 @@ from copy import copy
 from collections import OrderedDict
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis
+import itertools
 import json
 import logging
 import math
@@ -322,6 +323,15 @@ def get_important_square_indexes(size):
     #log.info("last     squares: %s" % pformat(last_squares))
     #log.info("last UBD squares: %s" % pformat(last_UBD_squares))
     return (first_squares, last_squares, last_UBD_squares)
+
+
+def number_ranges(i):
+    """
+    https://stackoverflow.com/questions/4628333/converting-a-list-of-integers-into-range-in-python
+    """
+    for a, b in itertools.groupby(enumerate(i), lambda (x, y): y - x):
+        b = list(b)
+        yield b[0][1], b[-1][1]
 
 
 class RubiksCube(object):
@@ -1015,9 +1025,11 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
+        return # dwalton remove me
         print(get_cube_layout(self.size) + '\n')
 
     def print_cube(self):
+        return # dwalton remove me
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
         side_name_index = 0
         rows = []
@@ -1094,57 +1106,39 @@ class RubiksCube(object):
 
     def print_case_statement_python(self, case):
         """
-        This is called via --rotate-printer, it is used to print the
-        if/elif statements used by rotate.py
+        This is called via utils/rotate-printer.py, it is used to print the
+        contents of rotate_xxx.py
         """
-
-        def compress_cube_string(foo):
-            """
-            instead of returning "cube[0], cube[1], cube[2], cube[7]" compress it down
-            to "cube[0:3] + [cube[7]]"
-            """
-            final = []
-            indexes = []
-            prev_index = None
-            start_index = None
-            last_index = None
-
-            for cube_x in foo.split(', '):
-                re_cube_x = re.match('cube\[(\d+)\]', cube_x)
-                index = int(re_cube_x.group(1))
-
-                if prev_index is None:
-                    start_index = index
-                    last_index = index
-
-                else:
-                    if index == prev_index + 1:
-                        last_index = index
-
-                    else:
-                        if start_index == last_index:
-                            final.append("[cube[%d]]" % start_index)
-                        else:
-                            final.append("cube[%d:%d]" % (start_index, last_index+1))
-
-                        start_index = index
-                        last_index = index
-
-                prev_index = index
-
-            if start_index == last_index:
-                final.append("[cube[%d]]" % start_index)
-            else:
-                final.append("cube[%d:%d]" % (start_index, last_index+1))
-
-            return ' + '.join(final)
-    
-        new_cube_string = "cube[0]"
+        numbers = []
+        numbers.append(0)
         for (key, value) in enumerate(self.state[1:]):
-            new_cube_string += ", cube[%s]" % value
+            numbers.append(int(value))
 
-        new_cube_string = compress_cube_string(new_cube_string)
-        print("    return %s" % new_cube_string)
+        '''
+        If you feed number_ranges()
+            [0, 1, 2, 3, 4, 7, 8, 9, 11]
+
+        It will return:
+            [(0, 4), (7, 9), (11, 11)]
+        '''
+        lists = []
+        indexes_outside_streak = []
+
+        for (start_index, last_index) in number_ranges(numbers):
+            if start_index == last_index:
+                indexes_outside_streak.append("cube[%d]" % start_index)
+            else:
+                if indexes_outside_streak:
+                    # cube[11], cube[13]
+                    lists.append("[%s]" % ','.join(indexes_outside_streak))
+                    indexes_outside_streak = []
+                lists.append("cube[%d:%d]" % (start_index, last_index+1))
+
+        if indexes_outside_streak:
+            lists.append("[%s]" % ','.join(indexes_outside_streak))
+            indexes_outside_streak = []
+
+        print("    return %s" % ' + '.join(lists))
 
     def randomize(self):
         """

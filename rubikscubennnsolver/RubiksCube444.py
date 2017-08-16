@@ -298,7 +298,7 @@ class RubiksCube444(RubiksCube):
         #self.print_cube()
         #sys.exit(0)
 
-        self.lt_ULFRBD_centers_stage.solve(99)
+        self.lt_ULFRBD_centers_stage.solve()
 
         # Made some pics to try to explain lookup tables on facebook
         #
@@ -2330,7 +2330,7 @@ class RubiksCubeTsai444(RubiksCube444):
 
     def group_centers_guts(self):
         self.lt_init()
-        self.lt_ULFRBD_centers_stage.solve(99)
+        self.lt_ULFRBD_centers_stage.solve()
         self.print_cube()
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
@@ -2341,7 +2341,7 @@ class RubiksCubeTsai444(RubiksCube444):
         #sys.exit(0)
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_phase2_tsai.solve(99)
+        self.lt_phase2_tsai.solve()
         self.print_cube()
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
@@ -2353,7 +2353,7 @@ class RubiksCubeTsai444(RubiksCube444):
         #sys.exit(0)
 
         log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_phase3_tsai.solve(99)
+        self.lt_phase3_tsai.solve()
         self.print_cube()
         log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 

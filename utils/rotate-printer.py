@@ -33,7 +33,7 @@ for (size, solved_state) in (
     (7, solved_777)
     ):
 
-    cube = RubiksCube(solved_state)
+    cube = RubiksCube(solved_state, 'URFDLB')
     max_square_index = size * size * 6
 
     # Change each value to be equal to its square position

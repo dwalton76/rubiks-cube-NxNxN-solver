@@ -160,17 +160,6 @@ WIP on switching to hash...why is this slower?
 299.76user 25.02system 8:35.15elapsed 63%CPU (0avgtext+0avgdata 96700maxresident)k
 
 
-with edge estimate 3.5 we get
-=============================
-5x5x5 avg centers solution 36.0 steps
-5x5x5 avg edges solution 68.0 steps
-5x5x5 avg solution 125.0 steps
-5x5x5 min solution 101 steps (FFRUUUDRFBFLUUURRFLLBBFFRFBBURFURUBFBRFBLUURBRFLFLULRLURBBDDLFFUURDRFDFUBDDDRDRBFRFLLUDDBDUFBLRRBDDBLFDFLRBLRBRLLRFDLDFDFLLULBLUDUDUUBULLBDBUDDBLDBRRD)
-5x5x5 max solution 141 steps (BLFUFDBFLFURULRBURFLDURLRDUBLRBLLLDLDRLFUFFURLULBBBRDBFBDDLUDRFUBBFBDFFRBRFDDUFULRRBLRBDBUDBUDRDRFLLRFRULDRDURBDLFLRBBDLBBFDLUFDFUFFUUBLUBLDURFRDUDUFR)
-
-175.40user 18.62system 5:25.17elapsed 59%CPU (0avgtext+0avgdata 96420maxresident)k
-
-
 with edge estimate 4.0 we get
 =============================
 5x5x5 avg centers solution 36.0 steps
@@ -183,3 +172,29 @@ with edge estimate 4.0 we get
 
 
 
+with edge estimate 3.5 we get
+=============================
+5x5x5 avg centers solution 36.0 steps
+5x5x5 avg edges solution 68.0 steps
+5x5x5 avg solution 125.0 steps
+5x5x5 min solution 101 steps (FFRUUUDRFBFLUUURRFLLBBFFRFBBURFURUBFBRFBLUURBRFLFLULRLURBBDDLFFUURDRFDFUBDDDRDRBFRFLLUDDBDUFBLRRBDDBLFDFLRBLRBRLLRFDLDFDFLLULBLUDUDUUBULLBDBUDDBLDBRRD)
+5x5x5 max solution 141 steps (BLFUFDBFLFURULRBURFLDURLRDUBLRBLLLDLDRLFUFFURLULBBBRDBFBDDLUDRFUBBFBDFFRBRFDDUFULRRBLRBDBUDBUDRDRFLLRFRULDRDURBDLFLRBBDLBBFDLUFDFUFFUUBLUBLDURFRDUDUFR)
+
+175.40user 18.62system 5:25.17elapsed 59%CPU (0avgtext+0avgdata 96420maxresident)k
+
+This is the setting that is checked in
+
+
+
+with heuristic_stats for step10
+===============================
+5x5x5 avg centers solution 39.0 steps
+5x5x5 avg edges solution 67.0 steps
+5x5x5 avg solution 127.0 steps
+5x5x5 min solution 107 steps (RLBFBDBLUDBRUBUFFRBRBBLDUFBRLURBDLBDFRLDBUURDRBFDFLRUFLUBULUBLFFFURDFUFFFLURRUFFDURDUBLDURFURRBLLLDLBRRUDDDBDRFBLFDLLBFLURLFDRUUBDLRDDBRFBULLLDFUDRDFB)
+5x5x5 max solution 142 steps (LRBDRLBFULFFUDBFRRFRRRUDURBUUBBLFRLBBRLLBRLUFLLDBUDULRFUUBLRRBFUDBFUUURFLLUBDBDBFFDDFLBDDFLBRDLDRRULDDUDFBLDFFRULLUDBULDFBFRDURRUBFDRDUDFBRFURLBBFLDFL)
+
+57.92user 1.40system 0:59.70elapsed 99%CPU (0avgtext+0avgdata 67256maxresident)k
+784inputs+0outputs (3major+217515minor)pagefaults 0swaps
+
+We added 3 steps to solving centers but 50 cubes now takes 59s instead of 5m 25s

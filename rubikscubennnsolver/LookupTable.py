@@ -2258,6 +2258,7 @@ class LookupTable(object):
 
                 # The states on the line are sorted so stop looking if we know
                 # there isn't going to be a match
+                # dwalton try this
                 # TODO uncomment this once everything is working
                 #if state_to_find < state:
                 #    return None
@@ -2377,7 +2378,9 @@ class LookupTableIDA(LookupTable):
             else:
                 raise SolveError("%s does not have max_depth and does not have steps for %s, hash index %d, state_width %d" % (pt, pt_state, hashxx(pt_state) % pt.modulo, pt.state_width))
 
-            pt_costs.append(len_pt_steps)
+            if self.heuristic_stats:
+                pt_costs.append(len_pt_steps)
+
             if len_pt_steps > cost_to_goal:
                 cost_to_goal = len_pt_steps
 
@@ -2446,14 +2449,20 @@ class LookupTableIDA(LookupTable):
 
                     self.parent.rotate(step)
 
+                # dwalton
                 #log.info("STATS:\n%s\n" % pformat(stats))
+                #sys.exit(0)
                 with open('%s.stats' % self.filename, 'a') as fh:
                     for entry in stats:
                         fh.write("%d,%d,%d\n" % (
                             #entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
                             #entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
-                            entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
-                            entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
+
+                            #entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
+                            #entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
+
+                            entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
+                            entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
                             entry['actual-cost']))
 
                 self.parent.state = final_state[:]
@@ -2489,6 +2498,7 @@ class LookupTableIDA(LookupTable):
             if step in self.moves_illegal:
                 continue
 
+            # dwalton try this
             # If this step cancels out the previous step then don't bother with this branch
             #if steps_cancel_out(prev_step, step):
             #    continue
@@ -2499,7 +2509,7 @@ class LookupTableIDA(LookupTable):
             if self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:]):
                 return True
 
-    def solve(self, max_ida_threshold):
+    def solve(self, max_ida_threshold=99):
         """
         The goal is to find a sequence of moves that will put the cube in a state that is
         in our lookup table self.filename
@@ -2585,4 +2595,3 @@ class LookupTableIDA(LookupTable):
         self.cache = {}
 
         raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))
-

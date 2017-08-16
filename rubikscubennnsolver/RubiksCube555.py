@@ -378,17 +378,17 @@ class RubiksCube555(RubiksCube):
         self.rotate_U_to_U()
 
         # Stage UD centers
-        self.lt_UD_centers_stage.solve(99)
+        self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))
 
 
         # Stage LR centers
-        self.lt_LR_centers_stage.solve(99)
+        self.lt_LR_centers_stage.solve()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
 
 
         # All centers are staged so solve them
-        self.lt_ULFRB_centers_solve.solve(99)
+        self.lt_ULFRB_centers_solve.solve()
         log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
         #self.print_cube()
         #sys.exit(0)

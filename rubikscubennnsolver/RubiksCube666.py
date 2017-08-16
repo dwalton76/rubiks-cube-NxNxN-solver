@@ -364,6 +364,7 @@ class RubiksCube666(RubiksCube):
 
         Total: 25,679,911 entries
         '''
+        # dwalton build an admisable heuristics_stats dictionary
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA(self,
                                                          'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt',
                                                          '666-LFRB-centers-oblique-edges-solve',
@@ -380,6 +381,97 @@ class RubiksCube666(RubiksCube):
                                                          (self.lt_LR_solve_inner_x_centers_and_oblique_edges,
                                                           self.lt_FB_solve_inner_x_centers_and_oblique_edges),
                                                          modulo=4793435)
+        '''
+        # This needs more work, build the step60 table out to 11-deep so we have a better chance of
+        # finding a hit so that we can run without solving a prune table first and record_stats = True
+        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.heuristic_stats = {
+ (0, 0): 0,
+ (0, 1): 4,
+ (0, 2): 3,
+ (0, 3): 3,
+ (0, 4): 4,
+ (0, 5): 5,
+ (0, 6): 6,
+ (0, 7): 7,
+ (0, 8): 8,
+ (1, 0): 4,
+ (1, 1): 1,
+ (1, 2): 2,
+ (1, 3): 3,
+ (1, 4): 4,
+ (1, 5): 5,
+ (1, 6): 6,
+ (1, 7): 7,
+ (1, 8): 8,
+ (2, 0): 3,
+ (2, 1): 2,
+ (2, 2): 2,
+ (2, 3): 3,
+ (2, 4): 4,
+ (2, 5): 5,
+ (2, 6): 6,
+ (2, 7): 7,
+ (2, 8): 8,
+ (3, 0): 3,
+ (3, 1): 3,
+ (3, 2): 3,
+ (3, 3): 4,
+ (3, 4): 4,
+ (3, 5): 5,
+ (3, 6): 6,
+ (3, 7): 7,
+ (3, 8): 8,
+ (4, 0): 4,
+ (4, 1): 4,
+ (4, 2): 4,
+ (4, 3): 5,
+ (4, 4): 5,
+ (4, 5): 6,
+ (4, 6): 7,
+ (4, 7): 8,
+ (5, 0): 5,
+ (5, 1): 5,
+ (5, 2): 5,
+ (5, 3): 5,
+ (5, 4): 6,
+ (5, 5): 6,
+ (5, 6): 7,
+ (5, 7): 8,
+ (6, 0): 6,
+ (6, 1): 6,
+ (6, 2): 6,
+ (6, 3): 6,
+ (6, 4): 6,
+ (6, 5): 7,
+ (6, 6): 7,
+ (6, 7): 8,
+ (6, 10): 17,
+ (7, 0): 7,
+ (7, 1): 7,
+ (7, 2): 7,
+ (7, 3): 7,
+ (7, 4): 7,
+ (7, 5): 8,
+ (7, 6): 8,
+ (7, 8): 14,
+ (7, 9): 15,
+ (7, 10): 16,
+ (8, 0): 8,
+ (8, 1): 8,
+ (8, 2): 8,
+ (8, 3): 8,
+ (8, 4): 8,
+ (8, 5): 12,
+ (8, 6): 12,
+ (8, 7): 13,
+ (9, 4): 10,
+ (9, 5): 11,
+ (9, 6): 14,
+ (9, 7): 15,
+ (9, 8): 16,
+ (9, 9): 17,
+}
+        '''
 
     def populate_fake_555_for_ULFRBD(self, fake_555):
 
@@ -456,7 +548,7 @@ class RubiksCube666(RubiksCube):
         self.lt_UD_inner_x_centers_stage.solve()
         log.info("UD inner x-centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-        self.lt_UD_oblique_edge_pairing.solve(99)
+        self.lt_UD_oblique_edge_pairing.solve()
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_centers_guts(self):
@@ -464,7 +556,7 @@ class RubiksCube666(RubiksCube):
         self.group_centers_stage_UD()
 
         self.lt_LR_inner_x_centers_stage.solve()
-        self.lt_LR_oblique_edge_pairing.solve(99)
+        self.lt_LR_oblique_edge_pairing.solve()
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
@@ -479,8 +571,15 @@ class RubiksCube666(RubiksCube):
         # - solve the FB inner x-centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
 
+        # dwalton
+        # - comment out the 'speed up IDA' call
+        # - set record_stats to True
+        # - rm lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.stats
+        # - solve 500 cubes to build a .stats file
         self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
-        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(99)
+        #self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.record_stats = True
+        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
+        #self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(17)
         log.info("inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")

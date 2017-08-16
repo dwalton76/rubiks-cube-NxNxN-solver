@@ -633,7 +633,7 @@ class RubiksCube777(RubiksCube):
 
     def group_inside_UD_centers(self):
         fake_555 = self.create_fake_555_from_inside_centers()
-        fake_555.lt_UD_centers_stage.solve(99)
+        fake_555.lt_UD_centers_stage.solve()
 
         for step in fake_555.solution:
 
@@ -648,7 +648,7 @@ class RubiksCube777(RubiksCube):
 
     def group_inside_LR_centers(self):
         fake_555 = self.create_fake_555_from_inside_centers()
-        fake_555.lt_LR_centers_stage.solve(99)
+        fake_555.lt_LR_centers_stage.solve()
 
         for step in fake_555.solution:
 
@@ -806,7 +806,7 @@ class RubiksCube777(RubiksCube):
 
     def group_outside_UD_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
-        fake_666.lt_UD_oblique_edge_pairing.solve(99)
+        fake_666.lt_UD_oblique_edge_pairing.solve()
 
         for step in fake_666.solution:
 
@@ -817,7 +817,7 @@ class RubiksCube777(RubiksCube):
 
     def group_outside_LR_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
-        fake_666.lt_LR_oblique_edge_pairing.solve(99)
+        fake_666.lt_LR_oblique_edge_pairing.solve()
 
         for step in fake_666.solution:
 
@@ -842,8 +842,7 @@ class RubiksCube777(RubiksCube):
         log.info("")
 
         # Now pair the "inside" oblique edge with the already paired outside oblique edges...for UD
-        #self.lt_UD_oblique_edge_pairing_middle_only.solve # speed up IDA
-        self.lt_UD_oblique_edge_pairing.solve(99)
+        self.lt_UD_oblique_edge_pairing.solve()
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
@@ -870,8 +869,7 @@ class RubiksCube777(RubiksCube):
         log.info("")
 
         # Now pair the "inside" oblique edge with the already paired outside oblique edges...for LR
-        #self.lt_LR_oblique_edge_pairing_middle_only.solve() # speed up IDA
-        self.lt_LR_oblique_edge_pairing.solve(99)
+        self.lt_LR_oblique_edge_pairing.solve()
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
@@ -880,7 +878,7 @@ class RubiksCube777(RubiksCube):
         log.info("")
 
         # Reduce UD centers to 5x5x5 by solving the inner x-centers, t-centers and oblique edges
-        self.lt_UD_solve_inner_centers_and_oblique_edges.solve(99)
+        self.lt_UD_solve_inner_centers_and_oblique_edges.solve()
         log.info("UD inner-centers solved, UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
@@ -890,7 +888,7 @@ class RubiksCube777(RubiksCube):
 
         # Reduce LFRB centers to 5x5x5 via
         # Reduce LR centers to 5x5x5 by solving the inner x-centers, t-centers and oblique edges
-        self.lt_LR_solve_inner_centers_and_oblique_edges.solve(99)
+        self.lt_LR_solve_inner_centers_and_oblique_edges.solve()
         log.info("LR inner-centers solved, UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
@@ -898,8 +896,8 @@ class RubiksCube777(RubiksCube):
         log.info("")
         log.info("")
 
-        # Reduce LR centers to 5x5x5 by solving the inner x-centers, t-centers and oblique edges
-        self.lt_FB_solve_inner_centers_and_oblique_edges.solve(99)
+        # Reduce FB centers to 5x5x5 by solving the inner x-centers, t-centers and oblique edges
+        self.lt_FB_solve_inner_centers_and_oblique_edges.solve()
         self.print_cube()
         log.info("")
         log.info("")
@@ -907,7 +905,7 @@ class RubiksCube777(RubiksCube):
         log.info("")
 
         # Reduce LRFB centers to 5x5x5 by solving the inner x-centers, t-centers and oblique edges
-        self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve(99)
+        self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()
         log.info("LFRB centers reduced to 5x5x5 centers, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")

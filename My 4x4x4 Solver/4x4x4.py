@@ -6,6 +6,7 @@ class GenerateTables:
     size = 4
     cube = whole_cube
     
+    
     def print_sides(first_side, side_count):
         color_names = ['W','0','G','R','B','Y']
         for line in range(size):

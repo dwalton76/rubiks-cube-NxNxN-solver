@@ -191,6 +191,42 @@ class RubiksCube444(RubiksCube):
         self.lt_init_called = True
         self.lt_init_common()
 
+        # dwalton
+        self.lt_UD_centers_solve = LookupTable(self,
+                                               'lookup-table-4x4x4-step101-UD-centers-solve.txt',
+                                               '444-UD-centers-solve',
+                                               'TBD',
+                                                False, # state hex
+                                                modulo=51482970)
+
+        self.lt_LR_centers_solve = LookupTable(self,
+                                               'lookup-table-4x4x4-step102-LR-centers-solve.txt',
+                                               '444-LR-centers-solve',
+                                               'TBD',
+                                                False, # state hex
+                                                modulo=51482970)
+
+        self.lt_FB_centers_solve = LookupTable(self,
+                                               'lookup-table-4x4x4-step103-FB-centers-solve.txt',
+                                               '444-FB-centers-solve',
+                                               'TBD',
+                                                False, # state hex
+                                                modulo=51482970)
+        self.lt_ULFRBD_centers_solve_unstaged = LookupTableIDA(self,
+                                               'lookup-table-4x4x4-step100-ULFRBD-centers-solve-unstaged.txt',
+                                               '444-ULFRBD-centers-solve',
+                                               'UUUULLLLFFFFRRRRBBBBDDDD',
+                                                False, # state hex
+                                                moves_4x4x4,
+                                                (), # illegal_moves
+
+                                                # prune tables
+                                                (self.lt_UD_centers_solve,
+                                                 self.lt_LR_centers_solve,
+                                                 self.lt_FB_centers_solve),
+                                                modulo=87727430)
+
+
         '''
         (8!/(4! * 4!))^3 is 343,000
 
@@ -291,6 +327,16 @@ class RubiksCube444(RubiksCube):
     def group_centers_guts(self):
         self.lt_init()
 
+        # dwalton
+        # Test prune tables
+        self.lt_UD_centers_solve.solve()
+        #self.lt_LR_centers_solve.solve()
+        #self.lt_FB_centers_solve.solve()
+        self.print_cube()
+        sys.exit(0)
+
+        self.lt_ULFRBD_centers_solve_unstaged.solve()
+
         # Test prune tables
         #self.lt_UD_centers_stage.solve()
         #self.lt_LR_centers_stage.solve()
@@ -298,7 +344,7 @@ class RubiksCube444(RubiksCube):
         #self.print_cube()
         #sys.exit(0)
 
-        self.lt_ULFRBD_centers_stage.solve()
+        #self.lt_ULFRBD_centers_stage.solve()
 
         # Made some pics to try to explain lookup tables on facebook
         #
@@ -310,7 +356,7 @@ class RubiksCube444(RubiksCube):
         #        self.state[square] = 'x'
         #self.print_cube()
 
-        self.lt_ULFRBD_centers_solve.solve()
+        #self.lt_ULFRBD_centers_solve.solve()
 
     def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = []
@@ -1114,7 +1160,6 @@ class RubiksCubeTsai444(RubiksCube444):
 
         Total: 14,999,140 entries
         '''
-        # dwalton
         # TODO - this one is rebuilding
         self.lt_phase3_tsai_edges_solve = LookupTable(self,
                                                       'lookup-table-4x4x4-step71-phase3-edges-tsai.txt',
@@ -2345,7 +2390,6 @@ class RubiksCubeTsai444(RubiksCube444):
         self.print_cube()
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        # dwalton
         # Testing the prune tables
         #self.lt_phase3_tsai_edges_solve.solve()
         #self.lt_phase3_tsai_centers_solve.solve()

@@ -215,6 +215,105 @@ def get_444_ULFRBD_centers_stage(parent_state):
     return state
 
 
+def get_444_UD_centers_solve(parent_state):
+    """
+    444-UD-centers-solve
+    """
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x')
+    return state
+
+
+def get_444_LR_centers_solve(parent_state):
+    """
+    444-LR-centers-solve
+    """
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x')
+    return state
+
+
+def get_444_FB_centers_solve(parent_state):
+    """
+    444-FB-centers-solve
+    """
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    state = state.replace('U', 'x').replace('L', 'x').replace('R', 'x').replace('D', 'x')
+    return state
+
+
 def get_444_ULFRBD_centers_solve(parent_state):
     """
     444-ULFRBD-centers-solve
@@ -1989,6 +2088,9 @@ state_functions = {
     '444-UD-centers-stage' : get_444_UD_centers_stage,
     '444-LR-centers-stage' : get_444_LR_centers_stage,
     '444-FB-centers-stage' : get_444_FB_centers_stage,
+    '444-UD-centers-solve' : get_444_UD_centers_solve,
+    '444-LR-centers-solve' : get_444_LR_centers_solve,
+    '444-FB-centers-solve' : get_444_FB_centers_solve,
     '444-ULFRBD-centers-stage' : get_444_ULFRBD_centers_stage,
     '444-ULFRBD-centers-solve' : get_444_ULFRBD_centers_solve,
     '444-LR-centers-stage-tsai' : get_444_LR_centers_stage_tsai,
@@ -2276,8 +2378,8 @@ class LookupTable(object):
 
         while True:
             state = self.state()
-            #if self.state_target != 'EDGES':
-            #    log.info("solve() state %s vs state_target %s" % (state, self.state_target))
+            if self.state_target != 'EDGES':
+                log.info("solve() state %s vs state_target %s" % (state, self.state_target))
 
             if state == self.state_target:
                 break
@@ -2461,8 +2563,12 @@ class LookupTableIDA(LookupTable):
                             #entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
                             #entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
 
-                            entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
-                            entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
+                            #entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
+                            #entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
+
+                            entry['lookup-table-4x4x4-step101-UD-centers-solve.txt'],
+                            entry['lookup-table-4x4x4-step102-LR-centers-solve.txt'],
+                            entry['lookup-table-4x4x4-step103-FB-centers-solve.txt'],
                             entry['actual-cost']))
 
                 self.parent.state = final_state[:]
@@ -2498,10 +2604,9 @@ class LookupTableIDA(LookupTable):
             if step in self.moves_illegal:
                 continue
 
-            # dwalton try this
             # If this step cancels out the previous step then don't bother with this branch
-            #if steps_cancel_out(prev_step, step):
-            #    continue
+            if steps_cancel_out(prev_step, step):
+                continue
 
             self.parent.state = self.rotate_xxx(prev_state[:], step)
             self.ida_count += 1

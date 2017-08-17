@@ -189,29 +189,30 @@ class RubiksCube444(RubiksCube):
         if self.lt_init_called:
             return
         self.lt_init_called = True
-        self.lt_init_common()
+        #self.lt_init_common()
 
         # dwalton
         self.lt_UD_centers_solve = LookupTable(self,
                                                'lookup-table-4x4x4-step101-UD-centers-solve.txt',
                                                '444-UD-centers-solve',
-                                               'TBD',
+                                               'UUUUxxxxxxxxxxxxxxxxDDDD',
                                                 False, # state hex
                                                 modulo=51482970)
 
         self.lt_LR_centers_solve = LookupTable(self,
                                                'lookup-table-4x4x4-step102-LR-centers-solve.txt',
                                                '444-LR-centers-solve',
-                                               'TBD',
+                                               'xxxxLLLLxxxxRRRRxxxxxxxx',
                                                 False, # state hex
                                                 modulo=51482970)
 
         self.lt_FB_centers_solve = LookupTable(self,
                                                'lookup-table-4x4x4-step103-FB-centers-solve.txt',
                                                '444-FB-centers-solve',
-                                               'TBD',
+                                               'xxxxxxxxFFFFxxxxBBBBxxxx',
                                                 False, # state hex
                                                 modulo=51482970)
+
         self.lt_ULFRBD_centers_solve_unstaged = LookupTableIDA(self,
                                                'lookup-table-4x4x4-step100-ULFRBD-centers-solve-unstaged.txt',
                                                '444-ULFRBD-centers-solve',
@@ -225,6 +226,7 @@ class RubiksCube444(RubiksCube):
                                                  self.lt_LR_centers_solve,
                                                  self.lt_FB_centers_solve),
                                                 modulo=87727430)
+        self.lt_ULFRBD_centers_solve_unstaged.record_stats = True
 
 
         '''
@@ -329,11 +331,11 @@ class RubiksCube444(RubiksCube):
 
         # dwalton
         # Test prune tables
-        self.lt_UD_centers_solve.solve()
+        #self.lt_UD_centers_solve.solve()
         #self.lt_LR_centers_solve.solve()
         #self.lt_FB_centers_solve.solve()
-        self.print_cube()
-        sys.exit(0)
+        #self.print_cube()
+        #sys.exit(0)
 
         self.lt_ULFRBD_centers_solve_unstaged.solve()
 

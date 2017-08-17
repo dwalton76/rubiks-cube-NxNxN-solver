@@ -80,8 +80,8 @@ try:
                 cube = RubiksCube333(kociemba_string, order)
 
             elif size == '4x4x4':
-                #cube = RubiksCube444(kociemba_string, order)
-                cube = RubiksCubeTsai444(kociemba_string, order)
+                cube = RubiksCube444(kociemba_string, order)
+                #cube = RubiksCubeTsai444(kociemba_string, order)
 
             elif size == '5x5x5':
                 cube = RubiksCube555(kociemba_string, order)

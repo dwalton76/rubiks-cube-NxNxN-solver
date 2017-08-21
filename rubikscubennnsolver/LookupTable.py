@@ -2551,12 +2551,11 @@ class LookupTableIDA(LookupTable):
 
                     self.parent.rotate(step)
 
-                # dwalton
                 #log.info("STATS:\n%s\n" % pformat(stats))
                 #sys.exit(0)
                 with open('%s.stats' % self.filename, 'a') as fh:
                     for entry in stats:
-                        fh.write("%d,%d,%d\n" % (
+                        fh.write("%d,%d,%d,%d\n" % (
                             #entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
                             #entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
 

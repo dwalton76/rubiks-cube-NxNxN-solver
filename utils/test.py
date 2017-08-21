@@ -67,7 +67,7 @@ try:
             if index < args.start:
                 continue
 
-            os.system('clear')
+            #os.system('clear')
             log.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
             num_test_cases_executed += 1
             kociemba_string = str(kociemba_string)

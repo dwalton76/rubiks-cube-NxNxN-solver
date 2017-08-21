@@ -124,7 +124,7 @@ class RubiksCube555(RubiksCube):
                                                  # prune tables
                                                  (self.lt_UD_T_centers_stage,
                                                   self.lt_UD_X_centers_stage),
-                                                 modulo=17168476) # modulo
+                                                 modulo=17168476)
 
         # This data was collected by setting self.lt_UD_centers_stage.record_stats = True
         # and then crunching the resulting .stats file with crunch-stats-centers-UD-state-555.py to produce the following
@@ -381,11 +381,9 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))
 
-
         # Stage LR centers
         self.lt_LR_centers_stage.solve()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
-
 
         # All centers are staged so solve them
         self.lt_ULFRB_centers_solve.solve()

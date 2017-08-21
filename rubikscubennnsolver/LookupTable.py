@@ -2589,7 +2589,6 @@ class LookupTableIDA(LookupTable):
         # Keep Searching
         # ==============
         if f_cost > threshold:
-            steps_str = ' '.join(steps_to_here)
             return False
 
         # If we have already explored the exact same scenario down another branch

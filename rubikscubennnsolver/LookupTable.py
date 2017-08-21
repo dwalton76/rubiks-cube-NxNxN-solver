@@ -669,30 +669,18 @@ def get_444_phase3_edges(parent_state, self):
     """
     444-phase3-edges
     """
-    original_state = edges_high_low_recolor_444(parent_state[:])
-    results = []
+    state = 'x' + ''.join(parent_state[1:])
+    state = list(state)
+    state = edges_high_low_recolor_444(state[:])
 
-    for seq in symmetry_rotations_tsai_phase3_444:
-        state = original_state[:]
+    # record the state of all edges
+    state = ''.join(state)
+    state = ''.join((state[2],   state[9],  state[8],  state[15],
+                     state[25], state[24],
+                     state[57], state[56],
+                     state[82], state[89], state[88], state[95]))
 
-        for step in seq.split():
-            if step == 'reflect-x':
-                state = reflect_x_444(state[:])
-            else:
-                state = rotate_444(state[:], step)
-
-        # record the state of all edges
-        state = ''.join(state)
-        state = ''.join((state[2:4],   state[5],  state[8:10],  state[12], state[14:16],
-                         state[18:20], state[21], state[24:26], state[28], state[30:32],
-                         state[34:36], state[37], state[40:42], state[44], state[46:48],
-                         state[50:52], state[53], state[56:58], state[60], state[62:64],
-                         state[66:68], state[69], state[72:74], state[76], state[78:80],
-                         state[82:84], state[85], state[88:90], state[92], state[94:96]))
-        results.append(state[:])
-
-    results = sorted(results)
-    return results[0]
+    return state
 
 
 def get_444_phase3_tsai(parent_state, self):
@@ -2177,6 +2165,8 @@ class LookupTable(object):
         self.max_depth = max_depth
         self.record_stats = False
         self.heuristic_stats = {}
+        self.avoid_oll = False
+        self.avoid_pll = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -2218,6 +2208,27 @@ class LookupTable(object):
 
         self.cache = {}
         self.fh_hash = open(self.filename_hash, 'r')
+
+        # not used for now...takes a ton of RAM
+        preload_cache = False
+
+        if preload_cache:
+            log.info("%s: pre-loading begin" % self)
+            line_number = 0
+            with open(self.filename_hash, 'r') as fh:
+                for line in fh:
+                    line = line.strip()
+
+                    if line:
+                        for state_steps_tuple in line.split(','):
+                            #log.info("FOO: %s" % state_steps_tuple)
+                            (state, steps) = state_steps_tuple.split(':')
+                            self.cache[state] = steps
+
+                    if line_number % 1000000 == 0:
+                        log.info("%s: pre-loading line %d" % (self, line_number))
+                    line_number += 1
+            log.info("%s: pre-loading end" % self)
 
     def __str__(self):
         return self.desc
@@ -2533,46 +2544,6 @@ class LookupTableIDA(LookupTable):
 
             solution_ok = True
 
-            # record stats here
-            if self.record_stats:
-                final_state = self.parent.state[:]
-                final_solution = self.parent.solution[:]
-
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                actual_cost_to_goal = len(final_solution) - len(self.original_solution)
-                stats = []
-
-                for step in final_solution[len(self.original_solution):]:
-                    stats.append(self.ida_heuristic_all_costs())
-                    stats[-1]['step'] = step
-                    stats[-1]['actual-cost'] = actual_cost_to_goal
-                    actual_cost_to_goal -= 1
-
-                    self.parent.rotate(step)
-
-                #log.info("STATS:\n%s\n" % pformat(stats))
-                #sys.exit(0)
-                with open('%s.stats' % self.filename, 'a') as fh:
-                    for entry in stats:
-                        fh.write("%d,%d,%d,%d\n" % (
-                            #entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
-                            #entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
-
-                            #entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
-                            #entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
-
-                            #entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
-                            #entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
-
-                            entry['lookup-table-4x4x4-step101-UD-centers-solve.txt'],
-                            entry['lookup-table-4x4x4-step102-LR-centers-solve.txt'],
-                            entry['lookup-table-4x4x4-step103-FB-centers-solve.txt'],
-                            entry['actual-cost']))
-
-                self.parent.state = final_state[:]
-                self.parent.solution = final_solution[:]
-
             if self.state_type == '444-phase2-tsai':
                 if not self.parent.edge_swaps_even(True, None, False):
                     log.warning("%s: edge swaps are NOT the same" % self)
@@ -2580,7 +2551,61 @@ class LookupTableIDA(LookupTable):
                     self.parent.solution = self.original_solution[:]
                     solution_ok = False
 
+            elif self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.warning("%s: IDA found match but it leads to OLL" % self)
+                solution_ok = False
+
+            elif self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.warning("%s: IDA found match but it leads to PLL" % self)
+                solution_ok = False
+
             if solution_ok:
+                # record stats here
+                if self.record_stats:
+                    final_state = self.parent.state[:]
+                    final_solution = self.parent.solution[:]
+
+                    self.parent.state = self.original_state[:]
+                    self.parent.solution = self.original_solution[:]
+                    actual_cost_to_goal = len(final_solution) - len(self.original_solution)
+                    stats = []
+
+                    for step in final_solution[len(self.original_solution):]:
+                        stats.append(self.ida_heuristic_all_costs())
+                        stats[-1]['state'] = self.state()
+                        stats[-1]['step'] = step
+                        stats[-1]['actual-cost'] = actual_cost_to_goal
+                        actual_cost_to_goal -= 1
+
+                        self.parent.rotate(step)
+
+                    #log.info("STATS:\n%s\n" % pformat(stats))
+                    #sys.exit(0)
+                    with open('%s.stats' % self.filename, 'a') as fh:
+                        for entry in stats:
+                            fh.write("%s,%d,%d,%d,%d\n" % (
+                                #entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
+                                #entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
+
+                                #entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
+                                #entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
+
+                                #entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
+                                #entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
+
+                                entry['state'],
+                                entry['lookup-table-4x4x4-step101-UD-centers-solve.txt'],
+                                entry['lookup-table-4x4x4-step102-LR-centers-solve.txt'],
+                                entry['lookup-table-4x4x4-step103-FB-centers-solve.txt'],
+                                entry['actual-cost']))
+
+                    self.parent.state = final_state[:]
+                    self.parent.solution = final_solution[:]
+
                 log.info("%s: IDA found match %d steps in, %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
                          (self, len(steps_to_here), ' '.join(steps_to_here), f_cost, cost_to_here, cost_to_goal))
                 return True
@@ -2681,7 +2706,7 @@ class LookupTableIDA(LookupTable):
                     (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
                      pretty_time(end_time1 - start_time0)))
-                self.cache = {}
+                #self.cache = {}
                 return
             else:
                 end_time1 = dt.datetime.now()
@@ -2695,6 +2720,6 @@ class LookupTableIDA(LookupTable):
 
         self.parent.state = self.original_state[:]
         self.parent.solution = self.original_solution[:]
-        self.cache = {}
+        #self.cache = {}
 
         raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))

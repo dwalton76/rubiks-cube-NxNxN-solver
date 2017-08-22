@@ -2202,10 +2202,16 @@ class LookupTable(object):
 
         self.filename_exists = True
         self.state_type = state_type
-        self.state_target = state_target
-        self.state_hex = state_hex
-        assert self.state_target is not None, "state_target is None"
+        assert state_target is not None, "state_target is None"
 
+        if isinstance(state_target, tuple):
+            self.state_target = state_target
+        elif isinstance(state_target, list):
+            self.state_target = tuple(state_target)
+        else:
+            self.state_target = (state_target, )
+
+        self.state_hex = state_hex
         self.cache = {}
         self.fh_hash = open(self.filename_hash, 'r')
 
@@ -2371,7 +2377,6 @@ class LookupTable(object):
 
                 # The states on the line are sorted so stop looking if we know
                 # there isn't going to be a match
-                # dwalton try this
                 # TODO uncomment this once everything is working
                 #if state_to_find < state:
                 #    return None
@@ -2389,10 +2394,10 @@ class LookupTable(object):
 
         while True:
             state = self.state()
-            if self.state_target != 'EDGES':
-                log.info("solve() state %s vs state_target %s" % (state, self.state_target))
+            if 'TBD' in self.state_target:
+                log.info("solve() state %s vs state_target %s" % (state, pformat(self.state_target)))
 
-            if state == self.state_target:
+            if state in self.state_target:
                 break
 
             steps = self.steps(state)
@@ -2544,20 +2549,22 @@ class LookupTableIDA(LookupTable):
 
             solution_ok = True
 
-            if self.state_type == '444-phase2-tsai':
-                if not self.parent.edge_swaps_even(True, None, False):
-                    log.warning("%s: edge swaps are NOT the same" % self)
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-                    solution_ok = False
+            if (solution_ok and
+                (self.state_type == '444-phase2-tsai' or self.state_type == '444-ULFRBD-centers-stage') and
+                not self.parent.edge_swaps_even(False, None, False)):
 
-            elif self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.warning("%s: found match but edge swaps are NOT even" % self)
+                solution_ok = False
+
+            if solution_ok and self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
                 self.parent.state = self.original_state[:]
                 self.parent.solution = self.original_solution[:]
                 log.warning("%s: IDA found match but it leads to OLL" % self)
                 solution_ok = False
 
-            elif self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
+            if solution_ok and self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
                 self.parent.state = self.original_state[:]
                 self.parent.solution = self.original_solution[:]
                 log.warning("%s: IDA found match but it leads to PLL" % self)

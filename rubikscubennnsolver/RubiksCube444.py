@@ -395,7 +395,7 @@ class RubiksCube444(RubiksCube):
                 (8, 8, 7) : 14,
                 (8, 8, 8) : 14
             }
-            # dwalton remove this once we have collected/crunch stats
+            # TODO remove this once we have collected/crunch stats
             # and uesd that to update the numbers above
             self.lt_ULFRBD_centers_solve_unstaged.heuristic_stats = {}
 
@@ -512,7 +512,7 @@ class RubiksCube444(RubiksCube):
             #self.print_cube()
             #sys.exit(0)
 
-            # dwalton
+            # TODO
             self.lt_ULFRBD_centers_solve_unstaged.avoid_oll = True
             self.lt_ULFRBD_centers_solve_unstaged.record_stats = True
             self.lt_ULFRBD_centers_solve_unstaged.solve()
@@ -1282,38 +1282,50 @@ class RubiksCubeTsai444(RubiksCube444):
         '''
         lookup-table-4x4x4-step62-LR-centers-table1.txt
         ===============================================
-        1 steps has 5 entries (7 percent, 0.00x previous step)
-        2 steps has 13 entries (18 percent, 2.60x previous step)
-        3 steps has 18 entries (25 percent, 1.38x previous step)
-        4 steps has 18 entries (25 percent, 1.00x previous step)
-        5 steps has 16 entries (22 percent, 0.89x previous step)
+        1 steps has 22 entries (31 percent, 0.00x previous step)
+        2 steps has 16 entries (22 percent, 0.73x previous step)
+        3 steps has 16 entries (22 percent, 1.00x previous step)
+        4 steps has 16 entries (22 percent, 1.00x previous step)
 
         Total: 70 entries
         '''
         self.lt_LR_centers_solve = LookupTable(self,
-                                               'lookup-table-4x4x4-step62-LR-centers-table1.txt',
+                                               'lookup-table-4x4x4-step62-LR-centers.txt',
                                                '444-LR-centers-solve-tsai',
-                                               'xxxxLLLLxxxxRRRRxxxxxxxx',
+                                               ('xxxxLLLLxxxxRRRRxxxxxxxx', ),
                                                 False, # state hex
                                                 modulo=70)
 
         '''
         lookup-table-4x4x4-step60-phase2-tsai.txt
         ==========================================
-        1 steps has 7 entries (0 percent, 0.00x previous step)
-        2 steps has 54 entries (0 percent, 7.71x previous step)
-        3 steps has 590 entries (0 percent, 10.93x previous step)
-        4 steps has 5,499 entries (0 percent, 9.32x previous step)
-        5 steps has 50,234 entries (1 percent, 9.14x previous step)
-        6 steps has 481,363 entries (10 percent, 9.58x previous step)
-        7 steps has 4,261,969 entries (88 percent, 8.85x previous step)
+        1 steps has 36 entries (0 percent, 0.00x previous step)
+        2 steps has 348 entries (0 percent, 9.67x previous step)
+        3 steps has 3,416 entries (0 percent, 9.82x previous step)
+        4 steps has 26,260 entries (1 percent, 7.69x previous step)
+        5 steps has 226,852 entries (9 percent, 8.64x previous step)
+        6 steps has 2,048,086 entries (88 percent, 9.03x previous step)
 
-        Total: 4,799,716 entries
+        Total: 2304998 entries
+
+        See the bottom of this file for notes on how the 12 state_target
+        strings were constructed
         '''
         self.lt_phase2_tsai = LookupTableIDA(self,
                                              'lookup-table-4x4x4-step60-phase2-tsai.txt',
                                              '444-phase2-tsai',
-                                             'UDDxxUUxxDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                             ('UDDxxUUxxDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDRRUURRDUDDUUFFDDFFUUDDUDLLUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDLLUURRDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDLLUURRDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDRRUULLDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDRRUULLDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDRLUURLDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDRLUURLDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDLRUULRDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDLRUULRDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDRLUULRDUDDUUFFDDFFUUDDUDLRUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                              'UDDxxUUxxDDUDUDLRUURLDUDDUUFFDDFFUUDDUDRLUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU'),
                                              False, # state_hex
                                              moves_4x4x4,
                                              ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'", "Rw", "Rw'", "Lw", "Lw'"), # illegal_moves
@@ -1321,7 +1333,7 @@ class RubiksCubeTsai444(RubiksCube444):
                                              # prune tables
                                              (self.lt_orient_edges,
                                               self.lt_LR_centers_solve),
-                                             modulo=4799716)
+                                             modulo=2304998)
 
         '''
         lookup-table-4x4x4-step71-phase3-edges-tsai.txt
@@ -1345,7 +1357,7 @@ class RubiksCubeTsai444(RubiksCube444):
         self.lt_phase3_tsai_edges_solve = LookupTable(self,
                                                       'lookup-table-4x4x4-step71-phase3-edges-tsai.txt',
                                                       '444-phase3-edges',
-                                                      'TBD',
+                                                      '0123456789ab',
                                                       False, # state hex
                                                       modulo=239500800)
 
@@ -1388,8 +1400,7 @@ class RubiksCubeTsai444(RubiksCube444):
         self.lt_phase3_tsai = LookupTableIDA(self,
                                              'lookup-table-4x4x4-step70-phase3-tsai.txt',
                                              '444-phase3-tsai',
-                                             #'UUUUUUUUUUUULLLLLLLLLLLLFFFFFFFFFFFFRRRRRRRRRRRRBBBBBBBBBBBBDDDDDDDDDDDD',
-                                             'TBD',
+                                             '001UU21UU233114LL54LL599335FF65FF688226RR76RR7aa007BB47BB4bb889DDa9DDabb',
                                              False, # state_hex
                                              moves_4x4x4,
                                              ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",
@@ -2575,7 +2586,7 @@ class RubiksCubeTsai444(RubiksCube444):
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Testing the prune tables
-        self.lt_phase3_tsai_edges_solve.solve()
+        #self.lt_phase3_tsai_edges_solve.solve()
         #self.lt_phase3_tsai_centers_solve.solve()
         #self.print_cube()
         #sys.exit(0)
@@ -2910,4 +2921,454 @@ lookup_table_444_sister_wing_to_B_west = {
     (62, 88) : "B' D B", # D-east
     (63, 92) : "D R D' R'", # D-east
 }
+'''
+
+
+'''
+Used to build the 12 self.lt_phase2_tsai state_target strings
+
+table1
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DLLU
+ULLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DRRU
+URRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+UDDxxUUxxDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+table2
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DRRU
+URRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DLLU
+ULLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+UDDxxUUxxDDUDUDRRUURRDUDDUUFFDDFFUUDDUDLLUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+
+
+table3
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DLLU
+URRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DRRU
+ULLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+
+UDDxxUUxxDDUDUDLLUURRDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+
+
+table4
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DLLU
+URRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DLLU
+URRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+UDDxxUUxxDDUDUDLLUURRDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+
+
+
+table5
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DRRU
+ULLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DRRU
+ULLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+UDDxxUUxxDDUDUDRRUULLDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+
+
+
+table6
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DRRU
+ULLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DLLU
+URRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+UDDxxUUxxDDUDUDRRUULLDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+
+
+table7
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DRLU
+URLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DRLU
+URLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+UDDxxUUxxDDUDUDRLUURLDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+
+
+
+table8
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DRLU
+URLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DLRU
+ULRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+UDDxxUUxxDDUDUDRLUURLDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+
+
+table9
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DLRU
+ULRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DRLU
+URLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+
+UDDxxUUxxDDUDUDLRUULRDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+
+
+table10
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DLRU
+ULRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DLRU
+ULRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+
+UDDxxUUxxDDUDUDLRUULRDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+
+
+table11
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DRLU
+ULRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DLRU
+URLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+UDDxxUUxxDDUDUDRLUULRDUDDUUFFDDFFUUDDUDLRUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
+
+
+table12
+======
+ UD
+DxxU
+UxxD
+ DU
+
+ DU
+DLRU
+URLD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ DU
+DRLU
+ULRD
+ UD
+
+ DU
+UFFD
+DFFU
+ UD
+
+ UD
+DxxU
+UxxD
+ DU
+
+
+UDDxxUUxxDDUDUDLRUURLDUDDUUFFDDFFUUDDUDRLUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU
 '''

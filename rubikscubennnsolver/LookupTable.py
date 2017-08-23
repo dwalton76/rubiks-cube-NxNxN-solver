@@ -2558,6 +2558,21 @@ class LookupTableIDA(LookupTable):
                 log.warning("%s: found match but edge swaps are NOT even" % self)
                 solution_ok = False
 
+            '''
+            if solution_ok and self.state_type == '444-phase2-tsai' and self.parent.get_paired_wings_count() < 4:
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.warning("%s: found match but less than 4 edges are paired" % self)
+                solution_ok = False
+            '''
+
+            if solution_ok and self.state_type == '444-phase2-tsai' and not self.parent.centers_are_bars():
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.warning("%s: found match but centers are not bars" % self)
+                solution_ok = False
+
+
             if solution_ok and self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
                 self.parent.state = self.original_state[:]
                 self.parent.solution = self.original_solution[:]

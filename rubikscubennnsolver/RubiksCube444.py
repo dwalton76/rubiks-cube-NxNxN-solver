@@ -1239,6 +1239,21 @@ class RubiksCube444(RubiksCube):
         self.solution = self.min_edge_solution[:]
         self.solution.append('EDGES_GROUPED')
 
+    def centers_are_bars(self):
+        # dwalton
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            center0 = side.center_pos[0]
+            center1 = side.center_pos[1]
+            center2 = side.center_pos[2]
+            center3 = side.center_pos[3]
+
+            if ((self.state[center0] == self.state[center1] and self.state[center2] == self.state[center3]) or
+                (self.state[center0] == self.state[center2] and self.state[center1] == self.state[center3])):
+                pass
+            else:
+                return False
+        return True
+
 
 class RubiksCubeTsai444(RubiksCube444):
     """

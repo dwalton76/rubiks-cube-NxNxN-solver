@@ -37,6 +37,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--print-steps', default=False, action='store_true')
 parser.add_argument('--debug', default=False, action='store_true')
 parser.add_argument('--test', default=False, action='store_true')
+parser.add_argument('--tsai', default=False, action='store_true')
 parser.add_argument('--colormap', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--order', type=str, default='URFDLB', help='order of sides in --state, default kociemba URFDLB')
 parser.add_argument('--state', type=str, help='Cube state',
@@ -92,7 +93,7 @@ if args.debug:
     log.setLevel(logging.DEBUG)
 
 if args.test:
-    cube = RubiksCube444(solved_4x4x4, args.colormap, avoid_pll=True)
+    cube = RubiksCube444(solved_4x4x4, args.colormap, avoid_pll=True, use_tsai=args.tsai)
     cube.test()
     sys.exit(0)
 
@@ -104,7 +105,7 @@ try:
     elif size == 3:
         cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
     elif size == 4:
-        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
+        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug, use_tsai=args.tsai)
     elif size == 5:
         cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
     elif size == 6:
@@ -153,7 +154,7 @@ try:
     elif size == 3:
         cube = RubiksCube333(args.state, args.order, args.colormap)
     elif size == 4:
-        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True)
+        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, use_tsai=args.tsai)
     elif size == 5:
         cube = RubiksCube555(args.state, args.order, args.colormap)
     elif size == 6:

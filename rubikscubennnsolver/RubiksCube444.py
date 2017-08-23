@@ -108,9 +108,10 @@ class RubiksCube444(RubiksCube):
     phase 3 - solve all centers and pair all edges
     """
 
-    def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
+    def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False, use_tsai=False):
         RubiksCube.__init__(self, state, order, colormap, debug)
         self.avoid_pll = avoid_pll
+        self.use_tsai = use_tsai
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -120,7 +121,7 @@ class RubiksCube444(RubiksCube):
             return
         self.lt_init_called = True
 
-        # Phase 1
+        # Both tsai and non-tsai start the same way...stage all centers
         '''
         lookup-table-4x4x4-step11-UD-centers-stage.txt
         lookup-table-4x4x4-step12-LR-centers-stage.txt
@@ -317,310 +318,339 @@ class RubiksCube444(RubiksCube):
         self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_min
         self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_median
 
-        # Phase 2
-        '''
-        lookup-table-4x4x4-step61-orient-edges.txt
-        ===========================================
-        1 steps has 3 entries (0 percent, 0.00x previous step)
-        2 steps has 29 entries (0 percent, 9.67x previous step)
-        3 steps has 278 entries (0 percent, 9.59x previous step)
-        4 steps has 1,934 entries (0 percent, 6.96x previous step)
-        5 steps has 15,640 entries (0 percent, 8.09x previous step)
-        6 steps has 124,249 entries (4 percent, 7.94x previous step)
-        7 steps has 609,241 entries (22 percent, 4.90x previous step)
-        8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
-        9 steps has 688,124 entries (25 percent, 0.56x previous step)
-        10 steps has 40,560 entries (1 percent, 0.06x previous step)
+        if self.use_tsai:
+            # Phase 2
+            '''
+            lookup-table-4x4x4-step61-orient-edges.txt
+            ===========================================
+            1 steps has 3 entries (0 percent, 0.00x previous step)
+            2 steps has 29 entries (0 percent, 9.67x previous step)
+            3 steps has 278 entries (0 percent, 9.59x previous step)
+            4 steps has 1,934 entries (0 percent, 6.96x previous step)
+            5 steps has 15,640 entries (0 percent, 8.09x previous step)
+            6 steps has 124,249 entries (4 percent, 7.94x previous step)
+            7 steps has 609,241 entries (22 percent, 4.90x previous step)
+            8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
+            9 steps has 688,124 entries (25 percent, 0.56x previous step)
+            10 steps has 40,560 entries (1 percent, 0.06x previous step)
 
-        Total: 2,704,156 entries
-        '''
-        self.lt_orient_edges = LookupTable(self,
-                                           'lookup-table-4x4x4-step61-orient-edges.txt',
-                                           '444-orient-edges-tsai',
-                                           'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-                                           False, # state hex
-                                           modulo=2704156)
+            Total: 2,704,156 entries
+            '''
+            self.lt_orient_edges = LookupTable(self,
+                                               'lookup-table-4x4x4-step61-orient-edges.txt',
+                                               '444-orient-edges-tsai',
+                                               'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+                                               False, # state hex
+                                               modulo=2704156)
 
-        '''
-        lookup-table-4x4x4-step62-LR-centers-table1.txt
-        ===============================================
-        1 steps has 22 entries (31 percent, 0.00x previous step)
-        2 steps has 16 entries (22 percent, 0.73x previous step)
-        3 steps has 16 entries (22 percent, 1.00x previous step)
-        4 steps has 16 entries (22 percent, 1.00x previous step)
+            '''
+            lookup-table-4x4x4-step62-LR-centers-table1.txt
+            ===============================================
+            1 steps has 22 entries (31 percent, 0.00x previous step)
+            2 steps has 16 entries (22 percent, 0.73x previous step)
+            3 steps has 16 entries (22 percent, 1.00x previous step)
+            4 steps has 16 entries (22 percent, 1.00x previous step)
 
-        Total: 70 entries
-        '''
-        self.lt_LR_centers_solve = LookupTable(self,
-                                               'lookup-table-4x4x4-step62-LR-centers.txt',
-                                               '444-LR-centers-solve-tsai',
-                                               ('xxxxLLLLxxxxRRRRxxxxxxxx', ),
-                                                False, # state hex
-                                                modulo=70)
+            Total: 70 entries
+            '''
+            self.lt_LR_centers_solve = LookupTable(self,
+                                                   'lookup-table-4x4x4-step62-LR-centers.txt',
+                                                   '444-LR-centers-solve-tsai',
+                                                   ('xxxxLLLLxxxxRRRRxxxxxxxx', ),
+                                                    False, # state hex
+                                                    modulo=70)
 
-        '''
-        lookup-table-4x4x4-step60-phase2-tsai.txt
-        ==========================================
-        1 steps has 36 entries (0 percent, 0.00x previous step)
-        2 steps has 348 entries (0 percent, 9.67x previous step)
-        3 steps has 3,416 entries (0 percent, 9.82x previous step)
-        4 steps has 26,260 entries (1 percent, 7.69x previous step)
-        5 steps has 226,852 entries (9 percent, 8.64x previous step)
-        6 steps has 2,048,086 entries (88 percent, 9.03x previous step)
+            '''
+            lookup-table-4x4x4-step60-phase2-tsai.txt
+            ==========================================
+            1 steps has 36 entries (0 percent, 0.00x previous step)
+            2 steps has 348 entries (0 percent, 9.67x previous step)
+            3 steps has 3,416 entries (0 percent, 9.82x previous step)
+            4 steps has 26,260 entries (1 percent, 7.69x previous step)
+            5 steps has 226,852 entries (9 percent, 8.64x previous step)
+            6 steps has 2,048,086 entries (88 percent, 9.03x previous step)
 
-        Total: 2,304,998 entries
+            Total: 2,304,998 entries
 
-        See the bottom of this file for notes on how the 12 state_target
-        strings were constructed
-        '''
-        self.lt_phase2_tsai = LookupTableIDA(self,
-                                             'lookup-table-4x4x4-step60-phase2-tsai.txt',
-                                             '444-phase2-tsai',
-                                             ('UDDxxUUxxDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDRRUURRDUDDUUFFDDFFUUDDUDLLUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDLLUURRDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDLLUURRDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDRRUULLDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDRRUULLDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDRLUURLDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDRLUURLDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDLRUULRDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDLRUULRDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDRLUULRDUDDUUFFDDFFUUDDUDLRUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
-                                              'UDDxxUUxxDDUDUDLRUURLDUDDUUFFDDFFUUDDUDRLUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU'),
-                                             False, # state_hex
-                                             moves_4x4x4,
-                                             ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'", "Rw", "Rw'", "Lw", "Lw'"), # illegal_moves
+            See the bottom of this file for notes on how the 12 state_target
+            strings were constructed
+            '''
+            self.lt_phase2_tsai = LookupTableIDA(self,
+                                                 'lookup-table-4x4x4-step60-phase2-tsai.txt',
+                                                 '444-phase2-tsai',
+                                                 ('UDDxxUUxxDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDRRUURRDUDDUUFFDDFFUUDDUDLLUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDLLUURRDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDLLUURRDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDRRUULLDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDRRUULLDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDRLUURLDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDRLUURLDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDLRUULRDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDLRUULRDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDRLUULRDUDDUUFFDDFFUUDDUDLRUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU',
+                                                  'UDDxxUUxxDDUDUDLRUURLDUDDUUFFDDFFUUDDUDRLUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU'),
+                                                 False, # state_hex
+                                                 moves_4x4x4,
+                                                 ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'", "Rw", "Rw'", "Lw", "Lw'"), # illegal_moves
 
-                                             # prune tables
-                                             (self.lt_orient_edges,
-                                              self.lt_LR_centers_solve),
-                                             modulo=2304998)
+                                                 # prune tables
+                                                 (self.lt_orient_edges,
+                                                  self.lt_LR_centers_solve),
+                                                 modulo=2304998)
 
-        # Phase 3
-        '''
-        lookup-table-4x4x4-step71-phase3-edges-tsai.txt
-        - without symmetry
-        - we use the copy with symmetry I just left this here for the history
-        ===============================================
-        1 steps has 4 entries (0 percent, 0.00x previous step)
-        2 steps has 20 entries (0 percent, 5.00x previous step)
-        3 steps has 140 entries (0 percent, 7.00x previous step)
-        4 steps has 1,141 entries (0 percent, 8.15x previous step)
-        5 steps has 8,059 entries (0 percent, 7.06x previous step)
-        6 steps has 62,188 entries (0 percent, 7.72x previous step)
-        7 steps has 442,293 entries (0 percent, 7.11x previous step)
-        8 steps has 2,958,583 entries (1 percent, 6.69x previous step)
-        9 steps has 17,286,512 entries (7 percent, 5.84x previous step)
-        10 steps has 69,004,356 entries (28 percent, 3.99x previous step)
-        11 steps has 122,416,936 entries (51 percent, 1.77x previous step)
-        12 steps has 27,298,296 entries (11 percent, 0.22x previous step)
-        13 steps has 22,272 entries (0 percent, 0.00x previous step)
+            # Phase 3
+            '''
+            lookup-table-4x4x4-step71-phase3-edges-tsai.txt
+            - without symmetry
+            - we use the copy with symmetry I just left this here for the history
+            ===============================================
+            1 steps has 4 entries (0 percent, 0.00x previous step)
+            2 steps has 20 entries (0 percent, 5.00x previous step)
+            3 steps has 140 entries (0 percent, 7.00x previous step)
+            4 steps has 1,141 entries (0 percent, 8.15x previous step)
+            5 steps has 8,059 entries (0 percent, 7.06x previous step)
+            6 steps has 62,188 entries (0 percent, 7.72x previous step)
+            7 steps has 442,293 entries (0 percent, 7.11x previous step)
+            8 steps has 2,958,583 entries (1 percent, 6.69x previous step)
+            9 steps has 17,286,512 entries (7 percent, 5.84x previous step)
+            10 steps has 69,004,356 entries (28 percent, 3.99x previous step)
+            11 steps has 122,416,936 entries (51 percent, 1.77x previous step)
+            12 steps has 27,298,296 entries (11 percent, 0.22x previous step)
+            13 steps has 22,272 entries (0 percent, 0.00x previous step)
 
-        Total: 239,500,800 entries
+            Total: 239,500,800 entries
 
 
-        lookup-table-4x4x4-step71-phase3-edges-tsai.txt
-        - with symmetry
-        ===============================================
-        1 steps has 3 entries (0 percent, 0.00x previous step)
-        2 steps has 7 entries (0 percent, 2.33x previous step)
-        3 steps has 24 entries (0 percent, 3.43x previous step)
-        4 steps has 103 entries (0 percent, 4.29x previous step)
-        5 steps has 619 entries (0 percent, 6.01x previous step)
-        6 steps has 4,287 entries (0 percent, 6.93x previous step)
-        7 steps has 28,697 entries (0 percent, 6.69x previous step)
-        8 steps has 187,493 entries (1 percent, 6.53x previous step)
-        9 steps has 1,087,267 entries (7 percent, 5.80x previous step)
-        10 steps has 4,323,558 entries (28 percent, 3.98x previous step)
-        11 steps has 7,657,009 entries (51 percent, 1.77x previous step)
-        12 steps has 1,708,625 entries (11 percent, 0.22x previous step)
-        13 steps has 1,448 entries (0 percent, 0.00x previous step)
+            lookup-table-4x4x4-step71-phase3-edges-tsai.txt
+            - with symmetry
+            ===============================================
+            1 steps has 3 entries (0 percent, 0.00x previous step)
+            2 steps has 7 entries (0 percent, 2.33x previous step)
+            3 steps has 24 entries (0 percent, 3.43x previous step)
+            4 steps has 103 entries (0 percent, 4.29x previous step)
+            5 steps has 619 entries (0 percent, 6.01x previous step)
+            6 steps has 4,287 entries (0 percent, 6.93x previous step)
+            7 steps has 28,697 entries (0 percent, 6.69x previous step)
+            8 steps has 187,493 entries (1 percent, 6.53x previous step)
+            9 steps has 1,087,267 entries (7 percent, 5.80x previous step)
+            10 steps has 4,323,558 entries (28 percent, 3.98x previous step)
+            11 steps has 7,657,009 entries (51 percent, 1.77x previous step)
+            12 steps has 1,708,625 entries (11 percent, 0.22x previous step)
+            13 steps has 1,448 entries (0 percent, 0.00x previous step)
 
-        Total: 14,999,140 entries
-        '''
-        self.lt_phase3_tsai_edges_solve = LookupTable(self,
-                                                      'lookup-table-4x4x4-step71-phase3-edges-tsai.txt',
-                                                      '444-phase3-edges',
-                                                      '0123456789ab',
-                                                      False, # state hex
-                                                      modulo=14999140)
+            Total: 14,999,140 entries
+            '''
+            self.lt_phase3_tsai_edges_solve = LookupTable(self,
+                                                          'lookup-table-4x4x4-step71-phase3-edges-tsai.txt',
+                                                          '444-phase3-edges',
+                                                          '0123456789ab',
+                                                          False, # state hex
+                                                          modulo=14999140)
 
-        '''
-        lookup-table-4x4x4-step72-phase3-centers-tsai.txt
-        =================================================
-        1 steps has 7 entries (0 percent, 0.00x previous step)
-        2 steps has 83 entries (0 percent, 11.86x previous step)
-        3 steps has 724 entries (1 percent, 8.72x previous step)
-        4 steps has 3851 entries (6 percent, 5.32x previous step)
-        5 steps has 10,426 entries (17 percent, 2.71x previous step)
-        6 steps has 16,693 entries (28 percent, 1.60x previous step)
-        7 steps has 16,616 entries (28 percent, 1.00x previous step)
-        8 steps has 8,928 entries (15 percent, 0.54x previous step)
-        9 steps has 1,472 entries (2 percent, 0.16x previous step)
+            '''
+            lookup-table-4x4x4-step72-phase3-centers-tsai.txt
+            =================================================
+            1 steps has 7 entries (0 percent, 0.00x previous step)
+            2 steps has 83 entries (0 percent, 11.86x previous step)
+            3 steps has 724 entries (1 percent, 8.72x previous step)
+            4 steps has 3851 entries (6 percent, 5.32x previous step)
+            5 steps has 10,426 entries (17 percent, 2.71x previous step)
+            6 steps has 16,693 entries (28 percent, 1.60x previous step)
+            7 steps has 16,616 entries (28 percent, 1.00x previous step)
+            8 steps has 8,928 entries (15 percent, 0.54x previous step)
+            9 steps has 1,472 entries (2 percent, 0.16x previous step)
 
-        Total: 58,800 entries
-        '''
-        self.lt_phase3_tsai_centers_solve = LookupTable(self,
-                                                      'lookup-table-4x4x4-step72-phase3-centers-tsai.txt',
-                                                      '444-ULFRBD-centers-solve',
-                                                      'UUUULLLLFFFFRRRRBBBBDDDD',
-                                                      False, # state hex
-                                                      modulo=58800)
+            Total: 58,800 entries
+            '''
+            self.lt_phase3_tsai_centers_solve = LookupTable(self,
+                                                          'lookup-table-4x4x4-step72-phase3-centers-tsai.txt',
+                                                          '444-ULFRBD-centers-solve',
+                                                          'UUUULLLLFFFFRRRRBBBBDDDD',
+                                                          False, # state hex
+                                                          modulo=58800)
 
-        '''
-        If you build this to 8-deep it adds 119,166,578 which makes it too big to
-        check into the repo
+            '''
+            If you build this to 8-deep it adds 119,166,578 which makes it too big to
+            check into the repo
 
-        lookup-table-4x4x4-step70-phase3-tsai.txt
-        ==========================================
-        1 steps has 7 entries (0 percent, 0.00x previous step)
-        2 steps has 83 entries (0 percent, 11.86x previous step)
-        3 steps has 960 entries (0 percent, 11.57x previous step)
-        4 steps has 10,303 entries (0 percent, 10.73x previous step)
-        5 steps has 107,474 entries (0 percent, 10.43x previous step)
-        6 steps has 1,124,149 entries (8 percent, 10.46x previous step)
-        7 steps has 11,660,818 entries (90 percent, 10.37x previous step)
+            lookup-table-4x4x4-step70-phase3-tsai.txt
+            ==========================================
+            1 steps has 7 entries (0 percent, 0.00x previous step)
+            2 steps has 83 entries (0 percent, 11.86x previous step)
+            3 steps has 960 entries (0 percent, 11.57x previous step)
+            4 steps has 10,303 entries (0 percent, 10.73x previous step)
+            5 steps has 107,474 entries (0 percent, 10.43x previous step)
+            6 steps has 1,124,149 entries (8 percent, 10.46x previous step)
+            7 steps has 11,660,818 entries (90 percent, 10.37x previous step)
 
-        Total: 12,903,794 entries
-        '''
-        self.lt_phase3_tsai = LookupTableIDA(self,
-                                             'lookup-table-4x4x4-step70-phase3-tsai.txt',
-                                             '444-phase3-tsai',
-                                             '001UU21UU233114LL54LL599335FF65FF688226RR76RR7aa007BB47BB4bb889DDa9DDabb',
-                                             False, # state_hex
-                                             moves_4x4x4,
-                                             ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",
-                                              "Rw", "Rw'", "Lw", "Lw'", "R", "R'", "L", "L'"), # illegal_moves
+            Total: 12,903,794 entries
+            '''
+            self.lt_phase3_tsai = LookupTableIDA(self,
+                                                 'lookup-table-4x4x4-step70-phase3-tsai.txt',
+                                                 '444-phase3-tsai',
+                                                 '001UU21UU233114LL54LL599335FF65FF688226RR76RR7aa007BB47BB4bb889DDa9DDabb',
+                                                 False, # state_hex
+                                                 moves_4x4x4,
+                                                 ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",
+                                                  "Rw", "Rw'", "Lw", "Lw'", "R", "R'", "L", "L'"), # illegal_moves
 
-                                             # prune tables
-                                             (self.lt_phase3_tsai_edges_solve,
-                                              self.lt_phase3_tsai_centers_solve),
-                                             modulo=12903794)
-        lt_phase3_tsai_heuristic_stats_min = {
-            (1, 2) : 4,
-            (2, 1) : 5,
-            (3, 1) : 7,
-            (5, 1) : 6,
-            (5, 7) : 9,
-            (6, 1) : 12,
-            (6, 2) : 9,
-            (6, 7) : 9,
-            (6, 8) : 10,
-            (7, 1) : 13,
-            (7, 7) : 9,
-            (7, 8) : 10,
-            (8, 2) : 13,
-            (8, 3) : 11,
-            (8, 4) : 9,
-            (8, 6) : 9,
-            (8, 7) : 9,
-            (8, 8) : 10,
-            (9, 3) : 12,
-            (9, 4) : 10,
-            (9, 5) : 10,
-            (9, 7) : 10,
-            (9, 8) : 11,
-            (10, 3) : 13,
-            (10, 4) : 12,
-            (10, 6) : 11,
-            (10, 7) : 11,
-            (10, 8) : 11,
-            (10, 9) : 12,
-            (11, 3) : 14,
-            (11, 4) : 12,
-            (11, 6) : 13,
-            (11, 7) : 12,
-            (11, 8) : 13,
-            (11, 9) : 14,
-            (12, 3) : 16,
-            (12, 4) : 14,
-            (12, 5) : 14,
-            (12, 6) : 14,
-            (12, 7) : 14,
-            (12, 8) : 15,
-            (12, 9) : 19,
-            (13, 4) : 16,
-            (13, 8) : 17,
-        }
+                                                 # prune tables
+                                                 (self.lt_phase3_tsai_edges_solve,
+                                                  self.lt_phase3_tsai_centers_solve),
+                                                 modulo=12903794)
+            lt_phase3_tsai_heuristic_stats_min = {
+                (1, 2) : 4,
+                (2, 1) : 5,
+                (3, 1) : 7,
+                (5, 1) : 6,
+                (5, 7) : 9,
+                (6, 1) : 12,
+                (6, 2) : 9,
+                (6, 7) : 9,
+                (6, 8) : 10,
+                (7, 1) : 13,
+                (7, 7) : 9,
+                (7, 8) : 10,
+                (8, 2) : 13,
+                (8, 3) : 11,
+                (8, 4) : 9,
+                (8, 6) : 9,
+                (8, 7) : 9,
+                (8, 8) : 10,
+                (9, 3) : 12,
+                (9, 4) : 10,
+                (9, 5) : 10,
+                (9, 7) : 10,
+                (9, 8) : 11,
+                (10, 3) : 13,
+                (10, 4) : 12,
+                (10, 6) : 11,
+                (10, 7) : 11,
+                (10, 8) : 11,
+                (10, 9) : 12,
+                (11, 3) : 14,
+                (11, 4) : 12,
+                (11, 6) : 13,
+                (11, 7) : 12,
+                (11, 8) : 13,
+                (11, 9) : 14,
+                (12, 3) : 16,
+                (12, 4) : 14,
+                (12, 5) : 14,
+                (12, 6) : 14,
+                (12, 7) : 14,
+                (12, 8) : 15,
+                (12, 9) : 19,
+                (13, 4) : 16,
+                (13, 8) : 17,
+            }
 
-        lt_phase3_tsai_heuristic_stats_median = {
-            (1, 2) : 4,
-            (2, 1) : 7,
-            (2, 3) : 4,
-            (2, 5) : 6,
-            (3, 1) : 7,
-            (3, 4) : 5,
-            (3, 5) : 6,
-            (4, 1) : 6,
-            (4, 2) : 5,
-            (4, 3) : 5,
-            (4, 4) : 7,
-            (4, 5) : 7,
-            (4, 6) : 7,
-            (5, 1) : 8,
-            (5, 2) : 6,
-            (5, 3) : 6,
-            (5, 4) : 7,
-            (5, 5) : 8,
-            (5, 6) : 9,
-            (5, 7) : 10,
-            (6, 1) : 12,
-            (6, 2) : 10,
-            (6, 3) : 9,
-            (6, 4) : 9,
-            (6, 5) : 9,
-            (6, 6) : 10,
-            (6, 7) : 10,
-            (6, 8) : 11,
-            (7, 1) : 13,
-            (7, 3) : 11,
-            (7, 4) : 11,
-            (7, 5) : 11,
-            (7, 6) : 11,
-            (7, 7) : 11,
-            (7, 8) : 12,
-            (8, 2) : 13,
-            (8, 3) : 13,
-            (8, 4) : 12,
-            (8, 5) : 12,
-            (8, 6) : 12,
-            (8, 7) : 12,
-            (8, 8) : 12,
-            (9, 3) : 13,
-            (9, 4) : 13,
-            (9, 5) : 13,
-            (9, 6) : 13,
-            (9, 7) : 13,
-            (9, 8) : 13,
-            (10, 3) : 15,
-            (10, 4) : 14,
-            (10, 5) : 14,
-            (10, 6) : 14,
-            (10, 7) : 14,
-            (10, 8) : 15,
-            (10, 9) : 15,
-            (11, 3) : 16,
-            (11, 4) : 15,
-            (11, 5) : 16,
-            (11, 6) : 15,
-            (11, 7) : 16,
-            (11, 8) : 16,
-            (11, 9) : 15,
-            (12, 3) : 16,
-            (12, 4) : 16,
-            (12, 5) : 16,
-            (12, 6) : 16,
-            (12, 7) : 17,
-            (12, 8) : 16,
-            (12, 9) : 19,
-            (13, 4) : 16,
-            (13, 8) : 17,
-        }
-        #self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_min
-        self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_median
+            lt_phase3_tsai_heuristic_stats_median = {
+                (1, 2) : 4,
+                (2, 1) : 7,
+                (2, 3) : 4,
+                (2, 5) : 6,
+                (3, 1) : 7,
+                (3, 4) : 5,
+                (3, 5) : 6,
+                (4, 1) : 6,
+                (4, 2) : 5,
+                (4, 3) : 5,
+                (4, 4) : 7,
+                (4, 5) : 7,
+                (4, 6) : 7,
+                (5, 1) : 8,
+                (5, 2) : 6,
+                (5, 3) : 6,
+                (5, 4) : 7,
+                (5, 5) : 8,
+                (5, 6) : 9,
+                (5, 7) : 10,
+                (6, 1) : 12,
+                (6, 2) : 10,
+                (6, 3) : 9,
+                (6, 4) : 9,
+                (6, 5) : 9,
+                (6, 6) : 10,
+                (6, 7) : 10,
+                (6, 8) : 11,
+                (7, 1) : 13,
+                (7, 3) : 11,
+                (7, 4) : 11,
+                (7, 5) : 11,
+                (7, 6) : 11,
+                (7, 7) : 11,
+                (7, 8) : 12,
+                (8, 2) : 13,
+                (8, 3) : 13,
+                (8, 4) : 12,
+                (8, 5) : 12,
+                (8, 6) : 12,
+                (8, 7) : 12,
+                (8, 8) : 12,
+                (9, 3) : 13,
+                (9, 4) : 13,
+                (9, 5) : 13,
+                (9, 6) : 13,
+                (9, 7) : 13,
+                (9, 8) : 13,
+                (10, 3) : 15,
+                (10, 4) : 14,
+                (10, 5) : 14,
+                (10, 6) : 14,
+                (10, 7) : 14,
+                (10, 8) : 15,
+                (10, 9) : 15,
+                (11, 3) : 16,
+                (11, 4) : 15,
+                (11, 5) : 16,
+                (11, 6) : 15,
+                (11, 7) : 16,
+                (11, 8) : 16,
+                (11, 9) : 15,
+                (12, 3) : 16,
+                (12, 4) : 16,
+                (12, 5) : 16,
+                (12, 6) : 16,
+                (12, 7) : 17,
+                (12, 8) : 16,
+                (12, 9) : 19,
+                (13, 4) : 16,
+                (13, 8) : 17,
+            }
+            #self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_min
+            self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_median
 
-        # These two tables are only used if the centers have already been solved
+        # dwalton
+        else:
+            '''
+            lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt
+            ==================================================
+            1 steps has 7 entries (0 percent)
+            2 steps has 99 entries (0 percent)
+            3 steps has 996 entries (0 percent)
+            4 steps has 6,477 entries (1 percent)
+            5 steps has 23,540 entries (6 percent)
+            6 steps has 53,537 entries (15 percent)
+            7 steps has 86,464 entries (25 percent)
+            8 steps has 83,240 entries (24 percent)
+            9 steps has 54,592 entries (15 percent)
+            10 steps has 29,568 entries (8 percent)
+            11 steps has 4,480 entries (1 percent)
+
+            Total: 343,000 entries
+            '''
+            self.lt_ULFRBD_centers_solve = LookupTable(self,
+                                                       'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
+                                                       '444-ULFRBD-centers-solve',
+                                                       'UUUULLLLFFFFRRRRBBBBDDDD',
+                                                       False, # state hex
+                                                       modulo=343000)
+
+
+        # For tsai these two tables are only used if the centers have already been solved
+        # For non-tsai they are always used
         '''
         22*20*18 is 7920
 
@@ -1852,47 +1882,61 @@ class RubiksCube444(RubiksCube):
             self.solution.append('CENTERS_SOLVED')
             return
 
-        # If not though, the following will solve the centers and pair the edges
-        self.lt_ULFRBD_centers_stage.solve()
-        self.print_cube()
-        log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
+        # The tsai will solve the centers and pair the edges
+        if self.use_tsai:
+            self.lt_ULFRBD_centers_stage.solve()
+            self.print_cube()
+            log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
 
-        # Testing the phase2 prune tables
-        #self.lt_orient_edges.solve()
-        #self.lt_LR_centers_solve.solve()
-        #self.print_cube()
-        #sys.exit(0)
+            # Testing the phase2 prune tables
+            #self.lt_orient_edges.solve()
+            #self.lt_LR_centers_solve.solve()
+            #self.print_cube()
+            #sys.exit(0)
 
-        log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_phase2_tsai.solve()
-        self.print_cube()
-        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
+            log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.lt_phase2_tsai.solve()
+            self.print_cube()
+            log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
 
-        # Testing the phase3 prune tables
-        #self.lt_phase3_tsai_edges_solve.solve()
-        #self.lt_phase3_tsai_centers_solve.solve()
-        #self.print_cube()
-        #sys.exit(0)
+            # Testing the phase3 prune tables
+            #self.lt_phase3_tsai_edges_solve.solve()
+            #self.lt_phase3_tsai_centers_solve.solve()
+            #self.print_cube()
+            #sys.exit(0)
 
-        log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_phase3_tsai.avoid_oll = True
-        self.lt_phase3_tsai.avoid_pll = True
-        self.lt_phase3_tsai.solve()
-        self.print_cube()
-        log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
+            log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.lt_phase3_tsai.avoid_oll = True
+            self.lt_phase3_tsai.avoid_pll = True
+            self.lt_phase3_tsai.solve()
+            self.print_cube()
+            log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
 
-        # Made some pics to try to explain lookup tables on facebook
-        #
-        #self.print_cube()
-        #for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-        #    for square in side.edge_pos:
-        #        self.state[square] = 'x'
-        #    for square in side.corner_pos:
-        #        self.state[square] = 'x'
-        #self.print_cube()
+            # Made some pics to try to explain lookup tables on facebook
+            #
+            #self.print_cube()
+            #for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            #    for square in side.edge_pos:
+            #        self.state[square] = 'x'
+            #    for square in side.corner_pos:
+            #        self.state[square] = 'x'
+            #self.print_cube()
+
+        # The non-tsai solver will only solve the centers here
+        else:
+            self.lt_ULFRBD_centers_stage.solve()
+            self.print_cube()
+            log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+
+            log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.lt_ULFRBD_centers_solve.solve()
+            self.print_cube()
+            log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
 
     def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = []

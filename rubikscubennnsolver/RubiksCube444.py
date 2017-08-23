@@ -469,18 +469,20 @@ class RubiksCube444(RubiksCube):
                                                       modulo=58800)
 
         '''
+        If you build this to 8-deep it adds 119,166,578 which makes it too big to
+        check into the repo
+
         lookup-table-4x4x4-step70-phase3-tsai.txt
         ==========================================
         1 steps has 7 entries (0 percent, 0.00x previous step)
         2 steps has 83 entries (0 percent, 11.86x previous step)
         3 steps has 960 entries (0 percent, 11.57x previous step)
         4 steps has 10,303 entries (0 percent, 10.73x previous step)
-        5 steps has 107,490 entries (0 percent, 10.43x previous step)
-        6 steps has 1,124,449 entries (0 percent, 10.46x previous step)
-        7 steps has 11,663,132 entries (8 percent, 10.37x previous step)
-        8 steps has 119,166,578 entries (90 percent, 10.22x previous step)
+        5 steps has 107,474 entries (0 percent, 10.43x previous step)
+        6 steps has 1,124,149 entries (8 percent, 10.46x previous step)
+        7 steps has 11,660,818 entries (90 percent, 10.37x previous step)
 
-        Total: 132,073,002 entries
+        Total: 12,903,794 entries
         '''
         self.lt_phase3_tsai = LookupTableIDA(self,
                                              'lookup-table-4x4x4-step70-phase3-tsai.txt',
@@ -494,7 +496,7 @@ class RubiksCube444(RubiksCube):
                                              # prune tables
                                              (self.lt_phase3_tsai_edges_solve,
                                               self.lt_phase3_tsai_centers_solve),
-                                             modulo=132073002)
+                                             modulo=12903794)
         lt_phase3_tsai_heuristic_stats_min = {
             (1, 2) : 4,
             (2, 1) : 5,
@@ -615,6 +617,7 @@ class RubiksCube444(RubiksCube):
             (13, 4) : 16,
             (13, 8) : 17,
         }
+        #self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_min
         self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_median
 
         # These two tables are only used if the centers have already been solved

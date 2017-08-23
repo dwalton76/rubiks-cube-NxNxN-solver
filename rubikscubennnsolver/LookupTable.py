@@ -604,29 +604,29 @@ low_edges_444 = ((2, 67),  # upper
 
 def edges_high_low_recolor_444(state):
 
-    assert len(state) == 97, "Invalid state %s, len is %d" % (state, len(state))
+    #assert len(state) == 97, "Invalid state %s, len is %d" % (state, len(state))
     high_edge_map = {}
     for (high_edge_index, (square_index, partner_index)) in enumerate(high_edges_444):
         square_value = state[square_index]
         partner_value = state[partner_index]
-        assert square_value != partner_value, "both squares are %s" % square_value
+        #assert square_value != partner_value, "both squares are %s" % square_value
         wing_str = ''.join(sorted([square_value, partner_value]))
         high_edge_index = str(hex(high_edge_index))[2:]
         state[square_index] = high_edge_index
         state[partner_index] = high_edge_index
 
-        assert wing_str not in high_edge_map, "We have two %s wings, one at high_index %s %s and one at high_index %s (%d, %d), state %s" %\
-            (wing_str,
-             high_edge_map[wing_str],
-             pformat(high_edges_444[int(high_edge_map[wing_str])]),
-             high_edge_index,
-             square_index, partner_index,
-             ''.join(state[1:]))
+        #assert wing_str not in high_edge_map, "We have two %s wings, one at high_index %s %s and one at high_index %s (%d, %d), state %s" %\
+        #    (wing_str,
+        #     high_edge_map[wing_str],
+        #     pformat(high_edges_444[int(high_edge_map[wing_str])]),
+        #     high_edge_index,
+        #     square_index, partner_index,
+        #     ''.join(state[1:]))
 
         # save high_edge_index in hex and chop the leading 0x via [2:]
         high_edge_map[wing_str] = high_edge_index
 
-    assert len(high_edge_map.keys()) == 12, "Invalid high_edge_map\n%s\n" % pformat(high_edge_map)
+    #assert len(high_edge_map.keys()) == 12, "Invalid high_edge_map\n%s\n" % pformat(high_edge_map)
 
     for (square_index, partner_index) in low_edges_444:
         square_value = state[square_index]
@@ -669,18 +669,30 @@ def get_444_phase3_edges(parent_state, self):
     """
     444-phase3-edges
     """
-    state = 'x' + ''.join(parent_state[1:])
-    state = list(state)
-    state = edges_high_low_recolor_444(state[:])
+    original_state = list('x' + ''.join(parent_state[1:]))
+    results = []
 
-    # record the state of all edges
-    state = ''.join(state)
-    state = ''.join((state[2],   state[9],  state[8],  state[15],
-                     state[25], state[24],
-                     state[57], state[56],
-                     state[82], state[89], state[88], state[95]))
+    for seq in symmetry_rotations_tsai_phase3_444:
+        state = original_state[:]
 
-    return state
+        for step in seq.split():
+            if step == 'reflect-x':
+                state = reflect_x_444(state[:])
+            else:
+                state = rotate_444(state[:], step)
+
+        state = edges_high_low_recolor_444(state[:])
+
+        # record the state of all edges
+        state = ''.join(state)
+        state = ''.join((state[2],   state[9],  state[8],  state[15],
+                         state[25], state[24],
+                         state[57], state[56],
+                         state[82], state[89], state[88], state[95]))
+        results.append(state[:])
+
+    results = sorted(results)
+    return results[0]
 
 
 def get_444_phase3_tsai(parent_state, self):
@@ -2186,7 +2198,7 @@ class LookupTable(object):
 
             # Now create a .hash copy of the lookup table
             self.convert_file_to_hash()
-            os.unlink(self.filename)
+            #os.unlink(self.filename)
 
         # Find the state_width for the entries in our .hash file
         with open(self.filename_hash, 'r') as fh:
@@ -2615,6 +2627,13 @@ class LookupTableIDA(LookupTable):
                                     entry['lookup-table-4x4x4-step11-UD-centers-stage.txt'],
                                     entry['lookup-table-4x4x4-step12-LR-centers-stage.txt'],
                                     entry['lookup-table-4x4x4-step13-FB-centers-stage.txt'],
+                                    entry['actual-cost']))
+
+                            elif self.filename == 'lookup-table-4x4x4-step70-phase3-tsai.txt':
+                                fh.write("%s,%d,%d,%d\n" % (
+                                    entry['state'],
+                                    entry['lookup-table-4x4x4-step71-phase3-edges-tsai.txt'],
+                                    entry['lookup-table-4x4x4-step72-phase3-centers-tsai.txt'],
                                     entry['actual-cost']))
 
                             elif self.filename == 'lookup-table-5x5x5-step10-UD-centers-stage.txt':

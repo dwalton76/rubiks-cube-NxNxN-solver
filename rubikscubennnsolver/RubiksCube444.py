@@ -400,6 +400,8 @@ class RubiksCube444(RubiksCube):
         # Phase 3
         '''
         lookup-table-4x4x4-step71-phase3-edges-tsai.txt
+        - without symmetry
+        - we use the copy with symmetry I just left this here for the history
         ===============================================
         1 steps has 4 entries (0 percent, 0.00x previous step)
         2 steps has 20 entries (0 percent, 5.00x previous step)
@@ -416,13 +418,33 @@ class RubiksCube444(RubiksCube):
         13 steps has 22,272 entries (0 percent, 0.00x previous step)
 
         Total: 239,500,800 entries
+
+
+        lookup-table-4x4x4-step71-phase3-edges-tsai.txt
+        - with symmetry
+        ===============================================
+        1 steps has 3 entries (0 percent, 0.00x previous step)
+        2 steps has 7 entries (0 percent, 2.33x previous step)
+        3 steps has 24 entries (0 percent, 3.43x previous step)
+        4 steps has 103 entries (0 percent, 4.29x previous step)
+        5 steps has 619 entries (0 percent, 6.01x previous step)
+        6 steps has 4,287 entries (0 percent, 6.93x previous step)
+        7 steps has 28,697 entries (0 percent, 6.69x previous step)
+        8 steps has 187,493 entries (1 percent, 6.53x previous step)
+        9 steps has 1,087,267 entries (7 percent, 5.80x previous step)
+        10 steps has 4,323,558 entries (28 percent, 3.98x previous step)
+        11 steps has 7,657,009 entries (51 percent, 1.77x previous step)
+        12 steps has 1,708,625 entries (11 percent, 0.22x previous step)
+        13 steps has 1,448 entries (0 percent, 0.00x previous step)
+
+        Total: 14,999,140 entries
         '''
         self.lt_phase3_tsai_edges_solve = LookupTable(self,
                                                       'lookup-table-4x4x4-step71-phase3-edges-tsai.txt',
                                                       '444-phase3-edges',
                                                       '0123456789ab',
                                                       False, # state hex
-                                                      modulo=239500800)
+                                                      modulo=14999140)
 
         '''
         lookup-table-4x4x4-step72-phase3-centers-tsai.txt

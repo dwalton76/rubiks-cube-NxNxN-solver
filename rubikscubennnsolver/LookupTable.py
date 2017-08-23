@@ -2524,6 +2524,16 @@ class LookupTableIDA(LookupTable):
         cost_to_goal = self.ida_heuristic()
         f_cost = cost_to_here + cost_to_goal
 
+        # This looks a little odd because the cube may be in a state where we
+        # find a hit in our lookup table and we could execute the steps
+        # per the table and be done with our IDA search.
+        #
+        # That could cause us to return a longer solution but with the benefit
+        # of the searching being faster....I am torn on whether to return False
+        # here or not.
+        if f_cost > threshold:
+            return False
+
         state = self.state()
         steps = self.steps(state)
 
@@ -2594,9 +2604,11 @@ class LookupTableIDA(LookupTable):
                     #sys.exit(0)
                     with open('%s.stats' % self.filename, 'a') as fh:
                         for entry in stats:
-                            fh.write("%s,%d,%d,%d,%d\n" % (
-                                #entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
-                                #entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
+                            #fh.write("%s,%d,%d,%d,%d\n" % (
+                            fh.write("%s,%d,%d,%d\n" % (
+                                entry['state'],
+                                entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
+                                entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
 
                                 #entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
                                 #entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
@@ -2604,10 +2616,14 @@ class LookupTableIDA(LookupTable):
                                 #entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
                                 #entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
 
-                                entry['state'],
-                                entry['lookup-table-4x4x4-step101-UD-centers-solve.txt'],
-                                entry['lookup-table-4x4x4-step102-LR-centers-solve.txt'],
-                                entry['lookup-table-4x4x4-step103-FB-centers-solve.txt'],
+                                #entry['lookup-table-4x4x4-step101-UD-centers-solve.txt'],
+                                #entry['lookup-table-4x4x4-step102-LR-centers-solve.txt'],
+                                #entry['lookup-table-4x4x4-step103-FB-centers-solve.txt'],
+
+                                #entry['lookup-table-4x4x4-step11-UD-centers-stage.txt'],
+                                #entry['lookup-table-4x4x4-step12-LR-centers-stage.txt'],
+                                #entry['lookup-table-4x4x4-step13-FB-centers-stage.txt'],
+
                                 entry['actual-cost']))
 
                     self.parent.state = final_state[:]

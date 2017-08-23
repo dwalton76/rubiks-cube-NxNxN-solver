@@ -3930,6 +3930,12 @@ class RubiksCube(object):
         for step in solution:
             if step in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
                 continue
+
+            if step in ("x", "x'", "x2",
+                        "y", "y'", "y2",
+                        "z", "z'", "z2"):
+                continue
+
             if not step.startswith(size_str):
                 count += 1
 
@@ -4091,6 +4097,27 @@ class RubiksCube(object):
                     state.append('x')
 
         return ''.join(state)
+
+    def babelfish_colors(self, current, new):
+        # dwalton make this more dynamic
+
+        for (index, square_value) in enumerate(self.state):
+
+            # ignore the placeholder
+            if index == 0:
+                continue
+
+            if square_value == current[0]:
+                self.state[index] = new[0]
+
+            elif square_value == current[1]:
+                self.state[index] = new[1]
+
+            elif square_value == new[0]:
+                self.state[index] = current[0]
+
+            elif square_value == new[1]:
+                self.state[index] = current[1]
 
     def www_header(self):
         """

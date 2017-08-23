@@ -136,7 +136,7 @@ class RubiksCube666(RubiksCube):
                                                          modulo=7271027)
 
         # This data was collected by setting self.lt_UD_oblique_edge_pairing.record_stats = True
-        # and then crunching the resulting .stats file with crunch-stats-UD-oblique-pair-666.py to produce the following
+        # and then crunching the resulting .stats file with crunch-stats-666-step20.py to produce the following
         # dictionary.  In the tuple that is the key, the first number is the cost per lt_UD_oblique_edge_pairing_left_only
         # and the second number is the cost per lt_UD_oblique_edge_pairing_right_only.  The value is the actual
         # number of steps it took to solve the cube.  So if lt_UD_oblique_edge_pairing_left_only says the cost is 4
@@ -145,7 +145,7 @@ class RubiksCube666(RubiksCube):
         #
         # These heuristics are not admissable so the IDA* search is no longer guaranted to find an
         # optimal solution but this step20 search used to be really slow and this speeds it up a good deal.
-        self.lt_UD_oblique_edge_pairing.heuristic_stats = {
+        heuristic_stats_median = {
             (1, 1) : 1,
             (1, 3) : 5,
             (2, 2) : 2,
@@ -180,6 +180,8 @@ class RubiksCube666(RubiksCube):
             (7, 6) : 12,
             (7, 7) : 12,
         }
+        self.lt_UD_oblique_edge_pairing.heuristic_stats = heuristic_stats_median
+
 
         '''
         16!/(8!*8!) is 12,870

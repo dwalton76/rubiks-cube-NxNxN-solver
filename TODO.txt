@@ -27,13 +27,15 @@ NNN solver
 
 4x4x4 Tsai...could we combine first two phases?
         If you solved LR from the start that table would have 24!/(4!*4!*16!) or 51482970
-        If you stage UD and FB from the start that table would be 24!/(8!*8!*8!) or 9465511770
-        If you solved LR and stage UD and FB from the start that table would be 24!/(4!*4!*8!*8!) or 662585823900
-        The orient_table has 2704156
+        If you stage UD and FB from the start that table would be 24!/(8!*8!*8!) or 9,465,511,770
+        If you solved LR and stage UD and FB from the start that table would be 24!/(4!*4!*8!*8!) or 662,585,823,900
+        The orient_table has 2,704,156
 
-        The main table would be 24!/(4!*4!*8!*8!) * 2704156 or 1791735431214128400
+        The main table would be 24!/(4!*4!*8!*8!) * 2704156 or 1,791,735,431,214,128,400
         51482970/1791735431214128400     is 0.0000000000287336 so that would be very very slow
+
         9465511770/1791735431214128400   is 0.0000000052828736 so that might be doable but this is borderline
-            but requires you to build a prune table that is 9.4 billion entries
+            requires you to build a prune table that is 9.4 billion entries
+
         662585823900/1791735431214128400 is 0.0000003698011505 so that would work
-            but requires you to build a prune table that is 662 billion entries
+            requires you to build a prune table that is 662 billion entries

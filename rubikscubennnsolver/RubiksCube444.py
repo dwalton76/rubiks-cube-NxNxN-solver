@@ -186,6 +186,139 @@ class RubiksCube444(RubiksCube):
                                                  self.lt_FB_centers_stage),
                                                 modulo=8649142)
 
+        # Built via stats/crunch-stats-444-centers-stage.py
+        heuristic_stats_min = {
+            (2, 2, 3) : 5,
+            (2, 3, 2) : 5,
+            (3, 2, 2) : 5,
+            (3, 3, 3) : 4,
+            (3, 5, 6) : 7,
+            (3, 6, 5) : 7,
+            (3, 6, 7) : 9,
+            (3, 7, 6) : 9,
+            (4, 4, 4) : 5,
+            (4, 4, 6) : 7,
+            (4, 5, 7) : 8,
+            (4, 6, 4) : 7,
+            (4, 6, 5) : 7,
+            (4, 6, 7) : 10,
+            (4, 7, 6) : 8,
+            (4, 7, 7) : 10,
+            (5, 5, 5) : 6,
+            (5, 5, 7) : 8,
+            (5, 6, 3) : 7,
+            (5, 6, 4) : 7,
+            (5, 7, 5) : 8,
+            (5, 7, 6) : 8,
+            (5, 7, 7) : 8,
+            (6, 2, 6) : 7,
+            (6, 3, 5) : 7,
+            (6, 4, 4) : 7,
+            (6, 5, 5) : 7,
+            (6, 6, 6) : 7,
+            (6, 6, 7) : 8,
+            (6, 6, 8) : 11,
+            (6, 7, 5) : 8,
+            (6, 7, 7) : 8,
+            (7, 3, 6) : 8,
+            (7, 4, 6) : 8,
+            (7, 4, 7) : 9,
+            (7, 5, 4) : 9,
+            (7, 5, 5) : 8,
+            (7, 5, 7) : 9,
+            (7, 5, 8) : 11,
+            (7, 6, 7) : 9,
+            (7, 7, 5) : 8,
+            (7, 7, 6) : 9,
+            (7, 7, 7) : 9,
+        }
+
+        heuristic_stats_median = {
+            (2, 2, 3) : 5,
+            (2, 3, 2) : 5,
+            (2, 4, 3) : 5,
+            (2, 6, 6) : 7,
+            (3, 2, 2) : 5,
+            (3, 3, 3) : 6,
+            (3, 5, 6) : 7,
+            (3, 6, 5) : 7,
+            (3, 6, 6) : 8,
+            (3, 6, 7) : 9,
+            (3, 7, 6) : 9,
+            (4, 2, 3) : 5,
+            (4, 3, 4) : 5,
+            (4, 4, 4) : 6,
+            (4, 4, 5) : 6,
+            (4, 4, 6) : 8,
+            (4, 5, 4) : 6,
+            (4, 5, 5) : 6,
+            (4, 5, 6) : 7,
+            (4, 5, 7) : 9,
+            (4, 6, 4) : 7,
+            (4, 6, 5) : 8,
+            (4, 6, 6) : 8,
+            (4, 6, 7) : 10,
+            (4, 7, 6) : 10,
+            (4, 7, 7) : 10,
+            (5, 3, 4) : 6,
+            (5, 4, 5) : 6,
+            (5, 4, 6) : 7,
+            (5, 5, 3) : 6,
+            (5, 5, 4) : 6,
+            (5, 5, 5) : 7,
+            (5, 5, 6) : 8,
+            (5, 5, 7) : 9,
+            (5, 6, 3) : 7,
+            (5, 6, 4) : 8,
+            (5, 6, 5) : 8,
+            (5, 6, 6) : 8,
+            (5, 6, 7) : 9,
+            (5, 7, 5) : 9,
+            (5, 7, 6) : 9,
+            (5, 7, 7) : 10,
+            (6, 2, 6) : 7,
+            (6, 3, 5) : 8,
+            (6, 3, 6) : 7,
+            (6, 4, 4) : 8,
+            (6, 4, 5) : 7,
+            (6, 4, 6) : 7,
+            (6, 4, 7) : 9,
+            (6, 5, 3) : 8,
+            (6, 5, 4) : 8,
+            (6, 5, 5) : 8,
+            (6, 5, 6) : 9,
+            (6, 5, 7) : 9,
+            (6, 6, 3) : 8,
+            (6, 6, 4) : 8,
+            (6, 6, 5) : 9,
+            (6, 6, 6) : 9,
+            (6, 6, 7) : 10,
+            (6, 6, 8) : 11,
+            (6, 7, 4) : 9,
+            (6, 7, 5) : 9,
+            (6, 7, 6) : 10,
+            (6, 7, 7) : 10,
+            (7, 3, 6) : 8,
+            (7, 4, 5) : 9,
+            (7, 4, 6) : 8,
+            (7, 4, 7) : 9,
+            (7, 5, 4) : 9,
+            (7, 5, 5) : 10,
+            (7, 5, 6) : 9,
+            (7, 5, 7) : 10,
+            (7, 5, 8) : 11,
+            (7, 6, 4) : 8,
+            (7, 6, 5) : 10,
+            (7, 6, 6) : 10,
+            (7, 6, 7) : 10,
+            (7, 7, 5) : 10,
+            (7, 7, 6) : 10,
+            (7, 7, 7) : 10,
+        }
+
+        #self.lt_ULFRBD_centers_stage.heuristic_stats = heuristic_stats_min
+        self.lt_ULFRBD_centers_stage.heuristic_stats = heuristic_stats_median
+
     def lt_init(self):
         if self.lt_init_called:
             return
@@ -2573,19 +2706,61 @@ class RubiksCubeTsai444(RubiksCube444):
         self.lt_ULFRBD_centers_stage.solve()
         self.print_cube()
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
 
-        # Testing the prune tables
+        # Testing the phase2 prune tables
         #self.lt_orient_edges.solve()
         #self.lt_LR_centers_solve.solve()
         #self.print_cube()
         #sys.exit(0)
 
-        log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_phase2_tsai.solve()
-        self.print_cube()
-        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # Try phase2 around the LR, UD and FB axis' and use the solution
+        # that takes the least number of moves
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        min_len = None
+        min_babelfish = None
+        min_solution = None
+        min_state = None
+        phase1_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        # Testing the prune tables
+        for babelfish in (None, 'UD', 'FB'):
+
+            if babelfish == 'UD':
+                self.rotate('z')
+                self.babelfish_colors(('L', 'R'), ('U', 'D'))
+            elif babelfish == 'FB':
+                self.rotate('y')
+                self.babelfish_colors(('L', 'R'), ('F', 'B'))
+
+            log.info("%s: Start of Phase2 (%s), %d steps in" % (self, babelfish, phase1_solution_len))
+            self.lt_phase2_tsai.solve()
+            solution_len = self.get_solution_len_minus_rotates(self.solution)
+            self.print_cube()
+            log.info("%s: End of Phase2 (%s), %d steps in" % (self, babelfish, solution_len))
+            log.info("")
+
+            if min_len is None or solution_len < min_len:
+                min_len = solution_len
+                min_babelfish = babelfish
+                min_state = self.state[:]
+                min_solution = self.solution[:]
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+        log.info("%s: Use Phase2 (%s), %d steps in" % (self, min_babelfish, min_len))
+        self.state = min_state[:]
+        self.solution = min_solution[:]
+
+        if min_babelfish == 'UD':
+            self.babelfish_colors(('U', 'D'), ('L', 'R'))
+            self.rotate("z'")
+        elif min_babelfish == 'FB':
+            self.babelfish_colors(('F', 'B'), ('L', 'R'))
+            self.rotate("y'")
+
+        # Testing the phase3 prune tables
         #self.lt_phase3_tsai_edges_solve.solve()
         #self.lt_phase3_tsai_centers_solve.solve()
         #self.print_cube()
@@ -2597,6 +2772,7 @@ class RubiksCubeTsai444(RubiksCube444):
         self.lt_phase3_tsai.solve()
         self.print_cube()
         log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
 
     def group_edges(self):
 

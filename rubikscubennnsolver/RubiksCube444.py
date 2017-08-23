@@ -1372,21 +1372,6 @@ class RubiksCube444(RubiksCube):
         self.solution = self.min_edge_solution[:]
         self.solution.append('EDGES_GROUPED')
 
-    def centers_are_bars(self):
-        # dwalton
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            center0 = side.center_pos[0]
-            center1 = side.center_pos[1]
-            center2 = side.center_pos[2]
-            center3 = side.center_pos[3]
-
-            if ((self.state[center0] == self.state[center1] and self.state[center2] == self.state[center3]) or
-                (self.state[center0] == self.state[center2] and self.state[center1] == self.state[center3])):
-                pass
-            else:
-                return False
-        return True
-
 
 class RubiksCubeTsai444(RubiksCube444):
     """
@@ -2729,51 +2714,11 @@ class RubiksCubeTsai444(RubiksCube444):
         #self.print_cube()
         #sys.exit(0)
 
-        # Try phase2 around the LR, UD and FB axis' and use the solution
-        # that takes the least number of moves
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        min_len = None
-        min_babelfish = None
-        min_solution = None
-        min_state = None
-        phase1_solution_len = self.get_solution_len_minus_rotates(self.solution)
-
-        for babelfish in (None, 'UD', 'FB'):
-
-            if babelfish == 'UD':
-                self.rotate('z')
-                self.babelfish_colors(('L', 'R'), ('U', 'D'))
-            elif babelfish == 'FB':
-                self.rotate('y')
-                self.babelfish_colors(('L', 'R'), ('F', 'B'))
-
-            log.info("%s: Start of Phase2 (%s), %d steps in" % (self, babelfish, phase1_solution_len))
-            self.lt_phase2_tsai.solve()
-            solution_len = self.get_solution_len_minus_rotates(self.solution)
-            self.print_cube()
-            log.info("%s: End of Phase2 (%s), %d steps in" % (self, babelfish, solution_len))
-            log.info("")
-
-            if min_len is None or solution_len < min_len:
-                min_len = solution_len
-                min_babelfish = babelfish
-                min_state = self.state[:]
-                min_solution = self.solution[:]
-
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-        log.info("%s: Use Phase2 (%s), %d steps in" % (self, min_babelfish, min_len))
-        self.state = min_state[:]
-        self.solution = min_solution[:]
-
-        if min_babelfish == 'UD':
-            self.babelfish_colors(('U', 'D'), ('L', 'R'))
-            self.rotate("z'")
-        elif min_babelfish == 'FB':
-            self.babelfish_colors(('F', 'B'), ('L', 'R'))
-            self.rotate("y'")
+        log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.lt_phase2_tsai.solve()
+        self.print_cube()
+        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
 
         # Testing the phase3 prune tables
         #self.lt_phase3_tsai_edges_solve.solve()

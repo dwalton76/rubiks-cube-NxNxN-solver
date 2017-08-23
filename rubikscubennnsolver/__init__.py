@@ -4098,27 +4098,6 @@ class RubiksCube(object):
 
         return ''.join(state)
 
-    def babelfish_colors(self, current, new):
-        # dwalton make this more dynamic
-
-        for (index, square_value) in enumerate(self.state):
-
-            # ignore the placeholder
-            if index == 0:
-                continue
-
-            if square_value == current[0]:
-                self.state[index] = new[0]
-
-            elif square_value == current[1]:
-                self.state[index] = new[1]
-
-            elif square_value == new[0]:
-                self.state[index] = current[0]
-
-            elif square_value == new[1]:
-                self.state[index] = current[1]
-
     def www_header(self):
         """
         Write the <head> including css

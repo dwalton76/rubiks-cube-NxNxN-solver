@@ -43,3 +43,10 @@ DONE - need an arrow that loads the next step of instructions
 - highlight the face/rows that you should be turning
 - have a play/pause button so that it auto increments every 5s
 
+
+
+
+When heuristic_stats for step20 is {} and preload_cache() has been called this cube barfs
+./usr/bin/rubiks-cube-solver.py --state RBULFLLLDUFRLLDUFBFUUBUBFBFLLBUFDDFBRLRRDBRFUURUBURRBRBRUFBFLFDLRUBRUDFLLDLLLULBLDDBBLRRDDDLDLFDRUBUDDFRDBRRDDFUFDFLRRRULRUDFFRRFBLFDURBRRFUFLBFFBFRDBBBUFBDUDBLFLUBFLFRFDBDUBDBUULLDUBRDULFFRLUDBBDBLUDFLDBLDLRUUUUFRRR
+
+rubikscubennnsolver.LookupTable.NoSteps: 6x6x6-step40-LR-oblique-pairing: state 54f096dc does not have steps

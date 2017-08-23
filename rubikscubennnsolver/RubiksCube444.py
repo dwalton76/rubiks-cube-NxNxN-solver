@@ -185,7 +185,7 @@ class RubiksCube444(RubiksCube):
                                                 modulo=8649142)
 
         # Built via stats/crunch-stats-444-centers-stage.py
-        heuristic_stats_min = {
+        lt_ULFRBD_centers_stage_heuristic_stats_min = {
             (2, 2, 3) : 5,
             (2, 3, 2) : 5,
             (3, 2, 2) : 5,
@@ -231,7 +231,7 @@ class RubiksCube444(RubiksCube):
             (7, 7, 7) : 9,
         }
 
-        heuristic_stats_median = {
+        lt_ULFRBD_centers_stage_heuristic_stats_median = {
             (2, 2, 3) : 5,
             (2, 3, 2) : 5,
             (2, 4, 3) : 5,
@@ -314,8 +314,8 @@ class RubiksCube444(RubiksCube):
             (7, 7, 7) : 10,
         }
 
-        #self.lt_ULFRBD_centers_stage.heuristic_stats = heuristic_stats_min
-        self.lt_ULFRBD_centers_stage.heuristic_stats = heuristic_stats_median
+        self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_min
+        self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_median
 
         # Phase 2
         '''

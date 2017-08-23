@@ -145,7 +145,7 @@ class RubiksCube666(RubiksCube):
         #
         # These heuristics are not admissable so the IDA* search is no longer guaranted to find an
         # optimal solution but this step20 search used to be really slow and this speeds it up a good deal.
-        heuristic_stats_median = {
+        lt_UD_oblique_edge_pairing_heuristic_stats_median = {
             (1, 3) : 5,
             (2, 4) : 5,
             (3, 1) : 6,
@@ -177,7 +177,7 @@ class RubiksCube666(RubiksCube):
             (7, 6) : 12,
             (7, 7) : 12,
         }
-        self.lt_UD_oblique_edge_pairing.heuristic_stats = heuristic_stats_median
+        self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_median
 
         # dwalton
         self.lt_UD_oblique_edge_pairing.heuristic_stats = {}

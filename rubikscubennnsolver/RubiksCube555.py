@@ -136,7 +136,7 @@ class RubiksCube555(RubiksCube):
         #
         # These heuristics are not admissable so the IDA* search is no longer guaranted to find an
         # optimal solution but this step10 search used to be really slow and this speeds it up a good deal.
-        heuristic_stats_min = {
+        lt_UD_centers_stage_heuristic_stats_min = {
             (1, 2) : 5,
             (1, 6) : 9,
             (2, 1) : 4,
@@ -161,7 +161,7 @@ class RubiksCube555(RubiksCube):
             (8, 7) : 12,
         }
 
-        heuristic_stats_median = {
+        lt_UD_centers_stage_heuristic_stats_median = {
             (1, 2) : 5,
             (1, 6) : 9,
             (2, 1) : 4,
@@ -201,7 +201,7 @@ class RubiksCube555(RubiksCube):
             (8, 6) : 11,
             (8, 7) : 12,
         }
-        self.lt_UD_centers_stage.heuristic_stats = heuristic_stats_median
+        self.lt_UD_centers_stage.heuristic_stats = lt_UD_centers_stage_heuristic_stats_median
 
         '''
         lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt

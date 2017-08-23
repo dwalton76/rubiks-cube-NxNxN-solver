@@ -2411,7 +2411,7 @@ class LookupTable(object):
         while True:
             state = self.state()
             if 'TBD' in self.state_target:
-                log.info("solve() state %s vs state_target %s" % (state, pformat(self.state_target)))
+                log.info("%s: solve() state %s vs state_target %s" % (self, state, pformat(self.state_target)))
 
             if state in self.state_target:
                 break
@@ -2704,7 +2704,7 @@ class LookupTableIDA(LookupTable):
         start_time0 = dt.datetime.now()
 
         state = self.state()
-        log.info("ida_stage() state %s vs state_target %s" % (state, self.state_target))
+        log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
 
         # The cube is already in the desired state, nothing to do
         if state == self.state_target:

@@ -3,7 +3,7 @@
 from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222, solved_2x2x2
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_3x3x3
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, RubiksCubeTsai444, solved_4x4x4
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_7x7x7
@@ -48,7 +48,6 @@ try:
         if args.size != 'all' and size != args.size:
             continue
 
-        # dwalton
         # solve the cube
         if size == '2x2x2':
             cube = RubiksCube222(solved_2x2x2, order)
@@ -57,8 +56,7 @@ try:
             cube = RubiksCube333(solved_3x3x3, order)
 
         elif size == '4x4x4':
-            #cube = RubiksCube444(solved_4x4x4, order)
-            cube = RubiksCubeTsai444(solved_4x4x4, order)
+            cube = RubiksCube444(solved_4x4x4, order)
 
         elif size == '5x5x5':
             cube = RubiksCube555(solved_5x5x5, order)

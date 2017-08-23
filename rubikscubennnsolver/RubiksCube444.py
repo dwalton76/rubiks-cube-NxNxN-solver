@@ -622,7 +622,6 @@ class RubiksCube444(RubiksCube):
             #self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_min
             self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_median
 
-        # dwalton
         else:
             '''
             lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt

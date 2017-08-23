@@ -2189,16 +2189,35 @@ class LookupTable(object):
         if not os.path.exists(self.filename_hash):
             if not os.path.exists(self.filename):
                 if not os.path.exists(self.filename_gz):
-                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
-                    log.info("Downloading table via 'wget %s'" % url)
-                    subprocess.call(['wget', url])
+
+                    # Special case, I could not get this one under 100M so I split it via:
+                    # split -b 70m lookup-table-4x4x4-step70-phase3-tsai.txt.gz "lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-"
+                    if self.filename_gz == 'lookup-table-4x4x4-step70-phase3-tsai.txt.gz':
+
+                        # Download part-aa
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa" % (self.parent.size, self.parent.size, self.parent.size)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
+
+                        # Download part-ab
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab" % (self.parent.size, self.parent.size, self.parent.size)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
+
+                        subprocess.call('cat lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-* > lookup-table-4x4x4-step70-phase3-tsai.txt.gz', shell=True)
+                        os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa')
+                        os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab')
+                    else:
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
 
                 log.warning("gunzip %s" % self.filename_gz)
                 subprocess.call(['gunzip', self.filename_gz])
 
             # Now create a .hash copy of the lookup table
             self.convert_file_to_hash()
-            #os.unlink(self.filename)
+            os.unlink(self.filename)
 
         # Find the state_width for the entries in our .hash file
         with open(self.filename_hash, 'r') as fh:
@@ -2587,13 +2606,13 @@ class LookupTableIDA(LookupTable):
             if solution_ok and self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
                 self.parent.state = self.original_state[:]
                 self.parent.solution = self.original_solution[:]
-                log.warning("%s: IDA found match but it leads to OLL" % self)
+                log.info("%s: IDA found match but it leads to OLL" % self)
                 solution_ok = False
 
             if solution_ok and self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
                 self.parent.state = self.original_state[:]
                 self.parent.solution = self.original_solution[:]
-                log.warning("%s: IDA found match but it leads to PLL" % self)
+                log.info("%s: IDA found match but it leads to PLL" % self)
                 solution_ok = False
 
             if solution_ok:

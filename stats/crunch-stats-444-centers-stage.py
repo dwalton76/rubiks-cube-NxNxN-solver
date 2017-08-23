@@ -44,7 +44,7 @@ print("        }\n")
 data_median = {}
 for (UD_cost, LR_cost, FB_cost) in sorted(data.keys()):
     list_actual_cost = data[(UD_cost, LR_cost, FB_cost)]
-    data_median[(UD_cost, LR_cost, FB_cost)] = statistics.median(list_actual_cost)
+    data_median[(UD_cost, LR_cost, FB_cost)] = int(statistics.median(list_actual_cost))
 
 print("        heuristic_stats_median = {")
 for (UD_cost, LR_cost, FB_cost) in sorted(data.keys()):

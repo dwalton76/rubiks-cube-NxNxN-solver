@@ -2167,6 +2167,7 @@ class LookupTable(object):
         self.heuristic_stats = {}
         self.avoid_oll = False
         self.avoid_pll = False
+        self.preloaded_cache = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -2185,7 +2186,7 @@ class LookupTable(object):
 
             # Now create a .hash copy of the lookup table
             self.convert_file_to_hash()
-            #os.unlink(self.filename)
+            os.unlink(self.filename)
 
         # Find the state_width for the entries in our .hash file
         with open(self.filename_hash, 'r') as fh:
@@ -2214,27 +2215,6 @@ class LookupTable(object):
         self.state_hex = state_hex
         self.cache = {}
         self.fh_hash = open(self.filename_hash, 'r')
-
-        # not used for now...takes a ton of RAM
-        preload_cache = False
-
-        if preload_cache:
-            log.info("%s: pre-loading begin" % self)
-            line_number = 0
-            with open(self.filename_hash, 'r') as fh:
-                for line in fh:
-                    line = line.strip()
-
-                    if line:
-                        for state_steps_tuple in line.split(','):
-                            #log.info("FOO: %s" % state_steps_tuple)
-                            (state, steps) = state_steps_tuple.split(':')
-                            self.cache[state] = steps
-
-                    if line_number % 1000000 == 0:
-                        log.info("%s: pre-loading line %d" % (self, line_number))
-                    line_number += 1
-            log.info("%s: pre-loading end" % self)
 
     def __str__(self):
         return self.desc
@@ -2320,6 +2300,25 @@ class LookupTable(object):
                     fh_pad.write(line + '\n')
         shutil.move(filename_pad, self.filename_hash)
 
+    def preload_cache(self):
+        log.info("%s: pre-loading begin" % self)
+        line_number = 0
+        with open(self.filename_hash, 'r') as fh:
+            for line in fh:
+                line = line.strip()
+
+                if line:
+                    for state_steps_tuple in line.split(','):
+                        #log.info("FOO: %s" % state_steps_tuple)
+                        (state, steps) = state_steps_tuple.split(':')
+                        self.cache[state] = steps.split()
+
+                if line_number % 1000000 == 0:
+                    log.info("%s: pre-loading line %d" % (self, line_number))
+                line_number += 1
+        log.info("%s: pre-loading end" % self)
+        self.preloaded_cache = True
+
     def state(self):
         state_function = state_functions.get(self.state_type)
 
@@ -2349,6 +2348,11 @@ class LookupTable(object):
         try:
             return self.cache[state_to_find]
         except KeyError:
+
+            # If we preloaded the cache and did not find state_to_find then we know
+            # it isn't there so return None
+            if self.preloaded_cache:
+                return None
 
             # We use the hash_index as our line number in the file
             hash_index = hashxx(state_to_find) % self.modulo
@@ -2604,27 +2608,35 @@ class LookupTableIDA(LookupTable):
                     #sys.exit(0)
                     with open('%s.stats' % self.filename, 'a') as fh:
                         for entry in stats:
-                            #fh.write("%s,%d,%d,%d,%d\n" % (
-                            fh.write("%s,%d,%d,%d\n" % (
-                                entry['state'],
-                                entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
-                                entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
 
-                                #entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
-                                #entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
+                            if self.filename == 'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt':
+                                fh.write("%s,%d,%d,%d,%d\n" % (
+                                    entry['state'],
+                                    entry['lookup-table-4x4x4-step11-UD-centers-stage.txt'],
+                                    entry['lookup-table-4x4x4-step12-LR-centers-stage.txt'],
+                                    entry['lookup-table-4x4x4-step13-FB-centers-stage.txt'],
+                                    entry['actual-cost']))
 
-                                #entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
-                                #entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
+                            elif self.filename == 'lookup-table-5x5x5-step10-UD-centers-stage.txt':
+                                fh.write("%s,%d,%d,%d\n" % (
+                                    entry['state'],
+                                    entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
+                                    entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
+                                    entry['actual-cost']))
 
-                                #entry['lookup-table-4x4x4-step101-UD-centers-solve.txt'],
-                                #entry['lookup-table-4x4x4-step102-LR-centers-solve.txt'],
-                                #entry['lookup-table-4x4x4-step103-FB-centers-solve.txt'],
+                            elif self.filename == 'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt':
+                                fh.write("%s,%d,%d,%d\n" % (
+                                    entry['state'],
+                                    entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
+                                    entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
+                                    entry['actual-cost']))
 
-                                #entry['lookup-table-4x4x4-step11-UD-centers-stage.txt'],
-                                #entry['lookup-table-4x4x4-step12-LR-centers-stage.txt'],
-                                #entry['lookup-table-4x4x4-step13-FB-centers-stage.txt'],
-
-                                entry['actual-cost']))
+                            elif self.filename == 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt':
+                                fh.write("%s,%d,%d,%d\n" % (
+                                    entry['state'],
+                                    entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
+                                    entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
+                                    entry['actual-cost']))
 
                     self.parent.state = final_state[:]
                     self.parent.solution = final_solution[:]
@@ -2729,7 +2741,6 @@ class LookupTableIDA(LookupTable):
                     (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
                      pretty_time(end_time1 - start_time0)))
-                #self.cache = {}
                 return
             else:
                 end_time1 = dt.datetime.now()
@@ -2743,6 +2754,5 @@ class LookupTableIDA(LookupTable):
 
         self.parent.state = self.original_state[:]
         self.parent.solution = self.original_solution[:]
-        #self.cache = {}
 
         raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))

@@ -146,14 +146,11 @@ class RubiksCube666(RubiksCube):
         # These heuristics are not admissable so the IDA* search is no longer guaranted to find an
         # optimal solution but this step20 search used to be really slow and this speeds it up a good deal.
         heuristic_stats_median = {
-            (1, 1) : 1,
             (1, 3) : 5,
-            (2, 2) : 2,
-            (2, 3) : 3,
             (2, 4) : 5,
             (3, 1) : 6,
             (3, 2) : 4,
-            (3, 3) : 3,
+            (3, 3) : 4,
             (3, 4) : 5,
             (3, 5) : 6,
             (3, 6) : 10,
@@ -181,6 +178,13 @@ class RubiksCube666(RubiksCube):
             (7, 7) : 12,
         }
         self.lt_UD_oblique_edge_pairing.heuristic_stats = heuristic_stats_median
+
+        # dwalton
+        self.lt_UD_oblique_edge_pairing.heuristic_stats = {}
+        self.lt_UD_oblique_edge_pairing.record_stats = True
+        self.lt_UD_oblique_edge_pairing_left_only.preload_cache()
+        self.lt_UD_oblique_edge_pairing_right_only.preload_cache()
+        self.lt_UD_oblique_edge_pairing.preload_cache()
 
 
         '''
@@ -366,7 +370,6 @@ class RubiksCube666(RubiksCube):
 
         Total: 25,679,911 entries
         '''
-        # dwalton build an admisable heuristics_stats dictionary
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA(self,
                                                          'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt',
                                                          '666-LFRB-centers-oblique-edges-solve',
@@ -573,7 +576,6 @@ class RubiksCube666(RubiksCube):
         # - solve the FB inner x-centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
 
-        # dwalton
         # - comment out the 'speed up IDA' call
         # - set record_stats to True
         # - rm lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.stats

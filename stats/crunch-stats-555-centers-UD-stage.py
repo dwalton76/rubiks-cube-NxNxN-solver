@@ -33,7 +33,7 @@ for (t_cost, x_cost) in sorted(data.keys()):
 print("        heuristic_stats_min = {")
 for (t_cost, x_cost) in sorted(data.keys()):
     actual_cost = data_min[(t_cost, x_cost)]
-    if actual_cost > x_cost and actual_cost > t_cost:
+    if actual_cost > t_cost and actual_cost > x_cost:
         print("            (%d, %d) : %d," % (t_cost, x_cost, actual_cost))
 print("        }\n")
 
@@ -42,11 +42,11 @@ print("        }\n")
 data_median = {}
 for (t_cost, x_cost) in sorted(data.keys()):
     list_actual_cost = data[(t_cost, x_cost)]
-    data_median[(t_cost, x_cost)] = statistics.median(list_actual_cost)
+    data_median[(t_cost, x_cost)] = int(statistics.median(list_actual_cost))
 
 print("        heuristic_stats_median = {")
 for (t_cost, x_cost) in sorted(data.keys()):
     actual_cost = data_median[(t_cost, x_cost)]
-    if actual_cost > x_cost and actual_cost > t_cost:
+    if actual_cost > t_cost and actual_cost > x_cost:
         print("            (%d, %d) : %d," % (t_cost, x_cost, actual_cost))
 print("        }\n")

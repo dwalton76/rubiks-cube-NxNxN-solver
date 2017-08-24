@@ -410,30 +410,7 @@ class RubiksCube(object):
         if debug:
             log.setLevel(logging.DEBUG)
 
-        # kociemba_string is in URFDLB order so split this apart and re-arrange it to
-        # be ULFRBD so that is is sequential with the normal square numbering scheme
-        foo = []
-
-        if order == 'URFDLB':
-            foo.extend(init_state[1:self.squares_per_side + 1])                                       # U
-            foo.extend(init_state[(self.squares_per_side * 4) + 1 : (self.squares_per_side * 5) + 1]) # L
-            foo.extend(init_state[(self.squares_per_side * 2) + 1 : (self.squares_per_side * 3) + 1]) # F
-            foo.extend(init_state[(self.squares_per_side * 1) + 1 : (self.squares_per_side * 2) + 1]) # R
-            foo.extend(init_state[(self.squares_per_side * 5) + 1 : (self.squares_per_side * 6) + 1]) # B
-            foo.extend(init_state[(self.squares_per_side * 3) + 1 : (self.squares_per_side * 4) + 1]) # D
-        elif order == 'ULFRBD':
-            foo.extend(init_state[1:self.squares_per_side + 1])                                       # U
-            foo.extend(init_state[(self.squares_per_side * 1) + 1 : (self.squares_per_side * 2) + 1]) # L
-            foo.extend(init_state[(self.squares_per_side * 2) + 1 : (self.squares_per_side * 3) + 1]) # F
-            foo.extend(init_state[(self.squares_per_side * 3) + 1 : (self.squares_per_side * 4) + 1]) # R
-            foo.extend(init_state[(self.squares_per_side * 4) + 1 : (self.squares_per_side * 5) + 1]) # B
-            foo.extend(init_state[(self.squares_per_side * 5) + 1 : (self.squares_per_side * 6) + 1]) # D
-        else:
-            raise Exception("Add support for order %s" % order)
-
-        self.state = ['placeholder', ]
-        for (square_index, side_name) in enumerate(foo):
-            self.state.append(side_name)
+        self.load_state(state_string, order)
 
         self.sides = OrderedDict()
         self.sides['U'] = Side(self, 'U')
@@ -503,6 +480,35 @@ class RubiksCube(object):
 
     def __str__(self):
         return "%dx%dx%d" % (self.size, self.size, self.size)
+
+    def load_state(self, state_string, order):
+
+        # kociemba_string is in URFDLB order so split this apart and re-arrange it to
+        # be ULFRBD so that is is sequential with the normal square numbering scheme
+        foo = []
+        init_state = ['dummy', ]
+        init_state.extend(list(state_string))
+
+        if order == 'URFDLB':
+            foo.extend(init_state[1:self.squares_per_side + 1])                                       # U
+            foo.extend(init_state[(self.squares_per_side * 4) + 1 : (self.squares_per_side * 5) + 1]) # L
+            foo.extend(init_state[(self.squares_per_side * 2) + 1 : (self.squares_per_side * 3) + 1]) # F
+            foo.extend(init_state[(self.squares_per_side * 1) + 1 : (self.squares_per_side * 2) + 1]) # R
+            foo.extend(init_state[(self.squares_per_side * 5) + 1 : (self.squares_per_side * 6) + 1]) # B
+            foo.extend(init_state[(self.squares_per_side * 3) + 1 : (self.squares_per_side * 4) + 1]) # D
+        elif order == 'ULFRBD':
+            foo.extend(init_state[1:self.squares_per_side + 1])                                       # U
+            foo.extend(init_state[(self.squares_per_side * 1) + 1 : (self.squares_per_side * 2) + 1]) # L
+            foo.extend(init_state[(self.squares_per_side * 2) + 1 : (self.squares_per_side * 3) + 1]) # F
+            foo.extend(init_state[(self.squares_per_side * 3) + 1 : (self.squares_per_side * 4) + 1]) # R
+            foo.extend(init_state[(self.squares_per_side * 4) + 1 : (self.squares_per_side * 5) + 1]) # B
+            foo.extend(init_state[(self.squares_per_side * 5) + 1 : (self.squares_per_side * 6) + 1]) # D
+        else:
+            raise Exception("Add support for order %s" % order)
+
+        self.state = ['placeholder', ]
+        for (square_index, side_name) in enumerate(foo):
+            self.state.append(side_name)
 
     def is_even(self):
         if self.size % 2 == 0:
@@ -1025,11 +1031,9 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
-        return # dwalton remove me
         print(get_cube_layout(self.size) + '\n')
 
     def print_cube(self):
-        return # dwalton remove me
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
         side_name_index = 0
         rows = []
@@ -3926,6 +3930,12 @@ class RubiksCube(object):
         for step in solution:
             if step in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
                 continue
+
+            if step in ("x", "x'", "x2",
+                        "y", "y'", "y2",
+                        "z", "z'", "z2"):
+                continue
+
             if not step.startswith(size_str):
                 count += 1
 

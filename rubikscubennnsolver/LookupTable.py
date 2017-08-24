@@ -215,6 +215,105 @@ def get_444_ULFRBD_centers_stage(parent_state):
     return state
 
 
+def get_444_UD_centers_solve(parent_state):
+    """
+    444-UD-centers-solve
+    """
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    state = state.replace('L', 'x').replace('F', 'x').replace('R', 'x').replace('B', 'x')
+    return state
+
+
+def get_444_LR_centers_solve(parent_state):
+    """
+    444-LR-centers-solve
+    """
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    state = state.replace('U', 'x').replace('F', 'x').replace('D', 'x').replace('B', 'x')
+    return state
+
+
+def get_444_FB_centers_solve(parent_state):
+    """
+    444-FB-centers-solve
+    """
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    state = state.replace('U', 'x').replace('L', 'x').replace('R', 'x').replace('D', 'x')
+    return state
+
+
 def get_444_ULFRBD_centers_solve(parent_state):
     """
     444-ULFRBD-centers-solve
@@ -505,29 +604,29 @@ low_edges_444 = ((2, 67),  # upper
 
 def edges_high_low_recolor_444(state):
 
-    assert len(state) == 97, "Invalid state %s, len is %d" % (state, len(state))
+    #assert len(state) == 97, "Invalid state %s, len is %d" % (state, len(state))
     high_edge_map = {}
     for (high_edge_index, (square_index, partner_index)) in enumerate(high_edges_444):
         square_value = state[square_index]
         partner_value = state[partner_index]
-        assert square_value != partner_value, "both squares are %s" % square_value
+        #assert square_value != partner_value, "both squares are %s" % square_value
         wing_str = ''.join(sorted([square_value, partner_value]))
         high_edge_index = str(hex(high_edge_index))[2:]
         state[square_index] = high_edge_index
         state[partner_index] = high_edge_index
 
-        assert wing_str not in high_edge_map, "We have two %s wings, one at high_index %s %s and one at high_index %s (%d, %d), state %s" %\
-            (wing_str,
-             high_edge_map[wing_str],
-             pformat(high_edges_444[int(high_edge_map[wing_str])]),
-             high_edge_index,
-             square_index, partner_index,
-             ''.join(state[1:]))
+        #assert wing_str not in high_edge_map, "We have two %s wings, one at high_index %s %s and one at high_index %s (%d, %d), state %s" %\
+        #    (wing_str,
+        #     high_edge_map[wing_str],
+        #     pformat(high_edges_444[int(high_edge_map[wing_str])]),
+        #     high_edge_index,
+        #     square_index, partner_index,
+        #     ''.join(state[1:]))
 
         # save high_edge_index in hex and chop the leading 0x via [2:]
         high_edge_map[wing_str] = high_edge_index
 
-    assert len(high_edge_map.keys()) == 12, "Invalid high_edge_map\n%s\n" % pformat(high_edge_map)
+    #assert len(high_edge_map.keys()) == 12, "Invalid high_edge_map\n%s\n" % pformat(high_edge_map)
 
     for (square_index, partner_index) in low_edges_444:
         square_value = state[square_index]
@@ -570,7 +669,7 @@ def get_444_phase3_edges(parent_state, self):
     """
     444-phase3-edges
     """
-    original_state = edges_high_low_recolor_444(parent_state[:])
+    original_state = list('x' + ''.join(parent_state[1:]))
     results = []
 
     for seq in symmetry_rotations_tsai_phase3_444:
@@ -582,14 +681,14 @@ def get_444_phase3_edges(parent_state, self):
             else:
                 state = rotate_444(state[:], step)
 
+        state = edges_high_low_recolor_444(state[:])
+
         # record the state of all edges
         state = ''.join(state)
-        state = ''.join((state[2:4],   state[5],  state[8:10],  state[12], state[14:16],
-                         state[18:20], state[21], state[24:26], state[28], state[30:32],
-                         state[34:36], state[37], state[40:42], state[44], state[46:48],
-                         state[50:52], state[53], state[56:58], state[60], state[62:64],
-                         state[66:68], state[69], state[72:74], state[76], state[78:80],
-                         state[82:84], state[85], state[88:90], state[92], state[94:96]))
+        state = ''.join((state[2],   state[9],  state[8],  state[15],
+                         state[25], state[24],
+                         state[57], state[56],
+                         state[82], state[89], state[88], state[95]))
         results.append(state[:])
 
     results = sorted(results)
@@ -1989,6 +2088,9 @@ state_functions = {
     '444-UD-centers-stage' : get_444_UD_centers_stage,
     '444-LR-centers-stage' : get_444_LR_centers_stage,
     '444-FB-centers-stage' : get_444_FB_centers_stage,
+    '444-UD-centers-solve' : get_444_UD_centers_solve,
+    '444-LR-centers-solve' : get_444_LR_centers_solve,
+    '444-FB-centers-solve' : get_444_FB_centers_solve,
     '444-ULFRBD-centers-stage' : get_444_ULFRBD_centers_stage,
     '444-ULFRBD-centers-solve' : get_444_ULFRBD_centers_solve,
     '444-LR-centers-stage-tsai' : get_444_LR_centers_stage_tsai,
@@ -2075,6 +2177,9 @@ class LookupTable(object):
         self.max_depth = max_depth
         self.record_stats = False
         self.heuristic_stats = {}
+        self.avoid_oll = False
+        self.avoid_pll = False
+        self.preloaded_cache = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -2084,9 +2189,28 @@ class LookupTable(object):
         if not os.path.exists(self.filename_hash):
             if not os.path.exists(self.filename):
                 if not os.path.exists(self.filename_gz):
-                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
-                    log.info("Downloading table via 'wget %s'" % url)
-                    subprocess.call(['wget', url])
+
+                    # Special case, I could not get this one under 100M so I split it via:
+                    # split -b 70m lookup-table-4x4x4-step70-phase3-tsai.txt.gz "lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-"
+                    if self.filename_gz == 'lookup-table-4x4x4-step70-phase3-tsai.txt.gz':
+
+                        # Download part-aa
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa" % (self.parent.size, self.parent.size, self.parent.size)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
+
+                        # Download part-ab
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab" % (self.parent.size, self.parent.size, self.parent.size)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
+
+                        subprocess.call('cat lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-* > lookup-table-4x4x4-step70-phase3-tsai.txt.gz', shell=True)
+                        os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa')
+                        os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab')
+                    else:
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
 
                 log.warning("gunzip %s" % self.filename_gz)
                 subprocess.call(['gunzip', self.filename_gz])
@@ -2110,10 +2234,16 @@ class LookupTable(object):
 
         self.filename_exists = True
         self.state_type = state_type
-        self.state_target = state_target
-        self.state_hex = state_hex
-        assert self.state_target is not None, "state_target is None"
+        assert state_target is not None, "state_target is None"
 
+        if isinstance(state_target, tuple):
+            self.state_target = state_target
+        elif isinstance(state_target, list):
+            self.state_target = tuple(state_target)
+        else:
+            self.state_target = (state_target, )
+
+        self.state_hex = state_hex
         self.cache = {}
         self.fh_hash = open(self.filename_hash, 'r')
 
@@ -2201,6 +2331,25 @@ class LookupTable(object):
                     fh_pad.write(line + '\n')
         shutil.move(filename_pad, self.filename_hash)
 
+    def preload_cache(self):
+        log.info("%s: pre-loading begin" % self)
+        line_number = 0
+        with open(self.filename_hash, 'r') as fh:
+            for line in fh:
+                line = line.strip()
+
+                if line:
+                    for state_steps_tuple in line.split(','):
+                        #log.info("FOO: %s" % state_steps_tuple)
+                        (state, steps) = state_steps_tuple.split(':')
+                        self.cache[state] = steps.split()
+
+                if line_number % 1000000 == 0:
+                    log.info("%s: pre-loading line %d" % (self, line_number))
+                line_number += 1
+        log.info("%s: pre-loading end" % self)
+        self.preloaded_cache = True
+
     def state(self):
         state_function = state_functions.get(self.state_type)
 
@@ -2231,6 +2380,11 @@ class LookupTable(object):
             return self.cache[state_to_find]
         except KeyError:
 
+            # If we preloaded the cache and did not find state_to_find then we know
+            # it isn't there so return None
+            if self.preloaded_cache:
+                return None
+
             # We use the hash_index as our line number in the file
             hash_index = hashxx(state_to_find) % self.modulo
 
@@ -2258,7 +2412,6 @@ class LookupTable(object):
 
                 # The states on the line are sorted so stop looking if we know
                 # there isn't going to be a match
-                # dwalton try this
                 # TODO uncomment this once everything is working
                 #if state_to_find < state:
                 #    return None
@@ -2276,10 +2429,10 @@ class LookupTable(object):
 
         while True:
             state = self.state()
-            #if self.state_target != 'EDGES':
-            #    log.info("solve() state %s vs state_target %s" % (state, self.state_target))
+            if 'TBD' in self.state_target:
+                log.info("%s: solve() state %s vs state_target %s" % (self, state, pformat(self.state_target)))
 
-            if state == self.state_target:
+            if state in self.state_target:
                 break
 
             steps = self.steps(state)
@@ -2406,6 +2559,16 @@ class LookupTableIDA(LookupTable):
         cost_to_goal = self.ida_heuristic()
         f_cost = cost_to_here + cost_to_goal
 
+        # This looks a little odd because the cube may be in a state where we
+        # find a hit in our lookup table and we could execute the steps
+        # per the table and be done with our IDA search.
+        #
+        # That could cause us to return a longer solution but with the benefit
+        # of the searching being faster....I am torn on whether to return False
+        # here or not.
+        if f_cost > threshold:
+            return False
+
         state = self.state()
         steps = self.steps(state)
 
@@ -2431,51 +2594,91 @@ class LookupTableIDA(LookupTable):
 
             solution_ok = True
 
-            # record stats here
-            if self.record_stats:
-                final_state = self.parent.state[:]
-                final_solution = self.parent.solution[:]
+            if (solution_ok and
+                (self.state_type == '444-phase2-tsai' or self.state_type == '444-ULFRBD-centers-stage') and
+                not self.parent.edge_swaps_even(False, None, False)):
 
                 self.parent.state = self.original_state[:]
                 self.parent.solution = self.original_solution[:]
-                actual_cost_to_goal = len(final_solution) - len(self.original_solution)
-                stats = []
+                log.warning("%s: found match but edge swaps are NOT even" % self)
+                solution_ok = False
 
-                for step in final_solution[len(self.original_solution):]:
-                    stats.append(self.ida_heuristic_all_costs())
-                    stats[-1]['step'] = step
-                    stats[-1]['actual-cost'] = actual_cost_to_goal
-                    actual_cost_to_goal -= 1
+            if solution_ok and self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.info("%s: IDA found match but it leads to OLL" % self)
+                solution_ok = False
 
-                    self.parent.rotate(step)
-
-                # dwalton
-                #log.info("STATS:\n%s\n" % pformat(stats))
-                #sys.exit(0)
-                with open('%s.stats' % self.filename, 'a') as fh:
-                    for entry in stats:
-                        fh.write("%d,%d,%d\n" % (
-                            #entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
-                            #entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
-
-                            #entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
-                            #entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
-
-                            entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
-                            entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
-                            entry['actual-cost']))
-
-                self.parent.state = final_state[:]
-                self.parent.solution = final_solution[:]
-
-            if self.state_type == '444-phase2-tsai':
-                if not self.parent.edge_swaps_even(True, None, False):
-                    log.warning("%s: edge swaps are NOT the same" % self)
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-                    solution_ok = False
+            if solution_ok and self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.info("%s: IDA found match but it leads to PLL" % self)
+                solution_ok = False
 
             if solution_ok:
+                # record stats here
+                if self.record_stats:
+                    final_state = self.parent.state[:]
+                    final_solution = self.parent.solution[:]
+
+                    self.parent.state = self.original_state[:]
+                    self.parent.solution = self.original_solution[:]
+                    actual_cost_to_goal = len(final_solution) - len(self.original_solution)
+                    stats = []
+
+                    for step in final_solution[len(self.original_solution):]:
+                        stats.append(self.ida_heuristic_all_costs())
+                        stats[-1]['state'] = self.state()
+                        stats[-1]['step'] = step
+                        stats[-1]['actual-cost'] = actual_cost_to_goal
+                        actual_cost_to_goal -= 1
+
+                        self.parent.rotate(step)
+
+                    #log.info("STATS:\n%s\n" % pformat(stats))
+                    #sys.exit(0)
+                    with open('%s.stats' % self.filename, 'a') as fh:
+                        for entry in stats:
+
+                            if self.filename == 'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt':
+                                fh.write("%s,%d,%d,%d,%d\n" % (
+                                    entry['state'],
+                                    entry['lookup-table-4x4x4-step11-UD-centers-stage.txt'],
+                                    entry['lookup-table-4x4x4-step12-LR-centers-stage.txt'],
+                                    entry['lookup-table-4x4x4-step13-FB-centers-stage.txt'],
+                                    entry['actual-cost']))
+
+                            elif self.filename == 'lookup-table-4x4x4-step70-phase3-tsai.txt':
+                                fh.write("%s,%d,%d,%d\n" % (
+                                    entry['state'],
+                                    entry['lookup-table-4x4x4-step71-phase3-edges-tsai.txt'],
+                                    entry['lookup-table-4x4x4-step72-phase3-centers-tsai.txt'],
+                                    entry['actual-cost']))
+
+                            elif self.filename == 'lookup-table-5x5x5-step10-UD-centers-stage.txt':
+                                fh.write("%s,%d,%d,%d\n" % (
+                                    entry['state'],
+                                    entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
+                                    entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
+                                    entry['actual-cost']))
+
+                            elif self.filename == 'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt':
+                                fh.write("%s,%d,%d,%d\n" % (
+                                    entry['state'],
+                                    entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
+                                    entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
+                                    entry['actual-cost']))
+
+                            elif self.filename == 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt':
+                                fh.write("%s,%d,%d,%d\n" % (
+                                    entry['state'],
+                                    entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
+                                    entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
+                                    entry['actual-cost']))
+
+                    self.parent.state = final_state[:]
+                    self.parent.solution = final_solution[:]
+
                 log.info("%s: IDA found match %d steps in, %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
                          (self, len(steps_to_here), ' '.join(steps_to_here), f_cost, cost_to_here, cost_to_goal))
                 return True
@@ -2484,7 +2687,6 @@ class LookupTableIDA(LookupTable):
         # Keep Searching
         # ==============
         if f_cost > threshold:
-            steps_str = ' '.join(steps_to_here)
             return False
 
         # If we have already explored the exact same scenario down another branch
@@ -2498,10 +2700,9 @@ class LookupTableIDA(LookupTable):
             if step in self.moves_illegal:
                 continue
 
-            # dwalton try this
             # If this step cancels out the previous step then don't bother with this branch
-            #if steps_cancel_out(prev_step, step):
-            #    continue
+            if steps_cancel_out(prev_step, step):
+                continue
 
             self.parent.state = self.rotate_xxx(prev_state[:], step)
             self.ida_count += 1
@@ -2522,7 +2723,7 @@ class LookupTableIDA(LookupTable):
         start_time0 = dt.datetime.now()
 
         state = self.state()
-        log.info("ida_stage() state %s vs state_target %s" % (state, self.state_target))
+        log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
 
         # The cube is already in the desired state, nothing to do
         if state == self.state_target:
@@ -2578,7 +2779,6 @@ class LookupTableIDA(LookupTable):
                     (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
                      pretty_time(end_time1 - start_time0)))
-                self.cache = {}
                 return
             else:
                 end_time1 = dt.datetime.now()
@@ -2592,6 +2792,5 @@ class LookupTableIDA(LookupTable):
 
         self.parent.state = self.original_state[:]
         self.parent.solution = self.original_solution[:]
-        self.cache = {}
 
         raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))

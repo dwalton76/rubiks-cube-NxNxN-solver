@@ -1,39 +1,52 @@
 
+4x4x4
+=====
+lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
+- build this 7-deep with symmetry
+
+lookup-table-4x4x4-step70-phase3-tsai.txt
+- build this 8-deep with symmetry
+
+
+6x6x6
+=====
+self.lt_UD_oblique_edge_pairing
+- self.lt_UD_oblique_edge_pairing.record_stats to True
+- self.lt_UD_oblique_edge_pairing.heuristic_stats = {}
+- test against utils/test_cubes.json.huge
+- this one will take a few days to run
+- update heuristics_stats
+
+
 self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve
 - build a .stats file to create a heuristic_stats dictionary
 - then remove the "speed up IDA" call where we solve a prune table
 - test this on RBULFLLLDUFRLLDUFBFUUBUBFBFLLBUFDDFBRLRRDBRFUURUBURRBRBRUFBFLFDLRUBRUDFLLDLLLULBLDDBBLRRDDDLDLFDRUBUDDFRDBRRDDFUFDFLRRRULRUDFFRRFBLFDURBRRFUFLBFFBFRDBBBUFBDUDBLFLUBFLFRFDBDUBDBUULLDUBRDULFFRLUDBBDBLUDFLDBLDLRUUUUFRRR this one takes FOREVER if you chop the "speed up IDA" call
+- need to build the step60 table out 11-deep to try to speed this up
 
 
+7x7x7
+=====
 self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve
 - prior to calling this we reduce LR centers to 5x5x5 and then reduce FB centers to 5x5x5
 - can we avoid some of this if we build a .stats file and heuristic_stats dictionary?
 
 
-We should be able to build an admissable heuristic_stats dictionary for any IDA table.
-We can do this by analyzing the main lookup table, starting with the shortest move sequences
-and working our way up towards the longest.
+NxNxN
+=====
+- work on centers for 14x14x14
 
 
-solutions.html
+www
+===
 DONE - need an arrow that loads the next step of instructions
 - highlight the face/rows that you should be turning
 - have a play/pause button so that it auto increments every 5s
 
 
-NNN solver
-- work on centers for 14x14x14
 
 
-4x4x4 Tsai...could we combine first two phases?
-        If you solved LR from the start that table would have 24!/(4!*4!*16!) or 51482970
-        If you stage UD and FB from the start that table would be 24!/(8!*8!*8!) or 9465511770
-        If you solved LR and stage UD and FB from the start that table would be 24!/(4!*4!*8!*8!) or 662585823900
-        The orient_table has 2704156
+When heuristic_stats for step20 is {} and preload_cache() has been called this cube barfs
+./usr/bin/rubiks-cube-solver.py --state RBULFLLLDUFRLLDUFBFUUBUBFBFLLBUFDDFBRLRRDBRFUURUBURRBRBRUFBFLFDLRUBRUDFLLDLLLULBLDDBBLRRDDDLDLFDRUBUDDFRDBRRDDFUFDFLRRRULRUDFFRRFBLFDURBRRFUFLBFFBFRDBBBUFBDUDBLFLUBFLFRFDBDUBDBUULLDUBRDULFFRLUDBBDBLUDFLDBLDLRUUUUFRRR
 
-        The main table would be 24!/(4!*4!*8!*8!) * 2704156 or 1791735431214128400
-        51482970/1791735431214128400     is 0.0000000000287336 so that would be very very slow
-        9465511770/1791735431214128400   is 0.0000000052828736 so that might be doable but this is borderline
-            but requires you to build a prune table that is 9.4 billion entries
-        662585823900/1791735431214128400 is 0.0000003698011505 so that would work
-            but requires you to build a prune table that is 662 billion entries
+rubikscubennnsolver.LookupTable.NoSteps: 6x6x6-step40-LR-oblique-pairing: state 54f096dc does not have steps

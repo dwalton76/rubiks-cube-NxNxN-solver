@@ -1,12 +1,12 @@
 #!/usr/bin/env python2
 
 from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
-from rubikscubennnsolver.RubiksCube222 import RubiksCube222
-from rubikscubennnsolver.RubiksCube333 import RubiksCube333
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, RubiksCubeTsai444
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555
-from rubikscubennnsolver.RubiksCube666 import RubiksCube666
-from rubikscubennnsolver.RubiksCube777 import RubiksCube777
+from rubikscubennnsolver.RubiksCube222 import RubiksCube222, solved_2x2x2
+from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_3x3x3
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
+from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6
+from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_7x7x7
 import argparse
 import json
 import logging
@@ -48,15 +48,28 @@ try:
         if args.size != 'all' and size != args.size:
             continue
 
-        '''
-        # Not ready for these yet
-        if size in ('6x6x6', '7x7x7'):
-            continue
+        # solve the cube
+        if size == '2x2x2':
+            cube = RubiksCube222(solved_2x2x2, order)
 
-        # Ignore for now
-        if size in ('2x2x2', '3x3x3', '4x4x4'):
-            continue
-        '''
+        elif size == '3x3x3':
+            cube = RubiksCube333(solved_3x3x3, order)
+
+        elif size == '4x4x4':
+            cube = RubiksCube444(solved_4x4x4, order)
+
+        elif size == '5x5x5':
+            cube = RubiksCube555(solved_5x5x5, order)
+
+        elif size == '6x6x6':
+            cube = RubiksCube666(solved_6x6x6, order)
+
+        elif size == '7x7x7':
+            cube = RubiksCube777(solved_7x7x7, order)
+
+        else:
+            print("ERROR: Add support for %s" % size)
+            sys.exit(1)
 
         kociemba_strings = test_cases[size]
         num_test_cases = len(kociemba_strings)
@@ -67,34 +80,12 @@ try:
             if index < args.start:
                 continue
 
-            os.system('clear')
+            #os.system('clear')
             log.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
             num_test_cases_executed += 1
             kociemba_string = str(kociemba_string)
-
-            # solve the cube
-            if size == '2x2x2':
-                cube = RubiksCube222(kociemba_string, order)
-
-            elif size == '3x3x3':
-                cube = RubiksCube333(kociemba_string, order)
-
-            elif size == '4x4x4':
-                #cube = RubiksCube444(kociemba_string, order)
-                cube = RubiksCubeTsai444(kociemba_string, order)
-
-            elif size == '5x5x5':
-                cube = RubiksCube555(kociemba_string, order)
-
-            elif size == '6x6x6':
-                cube = RubiksCube666(kociemba_string, order)
-
-            elif size == '7x7x7':
-                cube = RubiksCube777(kociemba_string, order)
-
-            else:
-                print("ERROR: Add support for %s" % size)
-                sys.exit(1)
+            cube.solution = []
+            cube.load_state(kociemba_string, order)
 
             try:
                 cube.solve()

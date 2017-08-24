@@ -99,8 +99,8 @@ class RubiksCube555(RubiksCube):
         X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
         is 0.0000013596729171 which is a decent percentage for IDA.
 
-        I ended up building this out to 7-deep, there are another ~312 million entries at 7 steps
-        so 328 million total
+        If you build this 7-deep, there are another ~312 million entries at step 7.
+        That is too large for us to check into the repo.
 
         lookup-table-5x5x5-step10-UD-centers-stage.txt
         ==============================================
@@ -124,7 +124,7 @@ class RubiksCube555(RubiksCube):
                                                  # prune tables
                                                  (self.lt_UD_T_centers_stage,
                                                   self.lt_UD_X_centers_stage),
-                                                 modulo=17168476) # modulo
+                                                 modulo=17168476)
 
         # This data was collected by setting self.lt_UD_centers_stage.record_stats = True
         # and then crunching the resulting .stats file with crunch-stats-centers-UD-state-555.py to produce the following
@@ -136,36 +136,52 @@ class RubiksCube555(RubiksCube):
         #
         # These heuristics are not admissable so the IDA* search is no longer guaranted to find an
         # optimal solution but this step10 search used to be really slow and this speeds it up a good deal.
-        self.lt_UD_centers_stage.heuristic_stats = {
-            (1, 1) : 1,
+        lt_UD_centers_stage_heuristic_stats_min = {
             (1, 2) : 5,
-            (1, 3) : 3,
-            (1, 4) : 4,
-            (1, 5) : 5,
-            (2, 0) : 5,
-            (2, 1) : 6,
-            (2, 2) : 2,
-            (2, 3) : 3,
-            (2, 4) : 4,
-            (2, 5) : 5,
-            (3, 0) : 4,
-            (3, 1) : 3,
+            (1, 6) : 9,
+            (2, 1) : 4,
+            (2, 5) : 8,
+            (2, 7) : 10,
+            (3, 6) : 7,
+            (3, 7) : 11,
+            (4, 6) : 7,
+            (4, 7) : 9,
+            (5, 7) : 8,
+            (6, 2) : 10,
+            (6, 3) : 8,
+            (6, 4) : 7,
+            (7, 2) : 11,
+            (7, 3) : 12,
+            (7, 4) : 8,
+            (7, 5) : 8,
+            (7, 7) : 8,
+            (7, 8) : 12,
+            (8, 5) : 9,
+            (8, 6) : 10,
+            (8, 7) : 12,
+        }
+
+        lt_UD_centers_stage_heuristic_stats_median = {
+            (1, 2) : 5,
+            (1, 6) : 9,
+            (2, 1) : 4,
+            (2, 3) : 5,
+            (2, 5) : 8,
+            (2, 7) : 10,
             (3, 2) : 4,
-            (3, 3) : 3,
             (3, 4) : 5,
-            (3, 5) : 5,
-            (3, 6) : 9,
-            (4, 1) : 5,
+            (3, 6) : 10,
+            (3, 7) : 11,
             (4, 2) : 5,
             (4, 3) : 5,
             (4, 4) : 6,
-            (4, 5) : 6,
+            (4, 5) : 7,
             (4, 6) : 9,
-            (4, 7) : 12,
-            (5, 2) : 5,
-            (5, 3) : 6,
+            (4, 7) : 10,
+            (5, 2) : 6,
+            (5, 3) : 7,
             (5, 4) : 7,
-            (5, 5) : 7,
+            (5, 5) : 8,
             (5, 6) : 9,
             (5, 7) : 11,
             (6, 2) : 10,
@@ -176,15 +192,16 @@ class RubiksCube555(RubiksCube):
             (6, 7) : 11,
             (7, 2) : 11,
             (7, 3) : 12,
-            (7, 4) : 12,
+            (7, 4) : 11,
             (7, 5) : 11,
             (7, 6) : 11,
             (7, 7) : 11,
             (7, 8) : 12,
-            (8, 5) : 12,
-            (8, 6) : 12,
-            (8, 7) : 11,
+            (8, 5) : 11,
+            (8, 6) : 11,
+            (8, 7) : 12,
         }
+        self.lt_UD_centers_stage.heuristic_stats = lt_UD_centers_stage_heuristic_stats_median
 
         '''
         lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt
@@ -381,11 +398,9 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_centers_stage.solve()
         log.info("Took %d steps to stage UD centers" % len(self.solution))
 
-
         # Stage LR centers
         self.lt_LR_centers_stage.solve()
         log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
-
 
         # All centers are staged so solve them
         self.lt_ULFRB_centers_solve.solve()

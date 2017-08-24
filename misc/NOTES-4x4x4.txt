@@ -199,3 +199,13 @@ unroll 4x4x4 state loops
 ========================
 11.62user 0.47system 0:12.28elapsed 98%CPU (0avgtext+0avgdata 15740maxresident)k
 
+
+
+tsai solver!!! :)
+=================
+4x4x4 avg centers solution 36.0 steps
+4x4x4 avg edges solution 0.0 steps
+4x4x4 avg solution 55.0 steps
+4x4x4 min solution 50 steps (FFULULFRFDRBLFLFLRFDUBDDRRLLRBLBDUDUBLRBBUDDRLRUBDUFLFBUFRFFUDUURFDBRUULDFLRBLUDFLRDFUBDBBDBRRBL)
+4x4x4 max solution 61 steps (UBDBFRLRRDFFRRDLULFDULRURRBURUBRBFBFUBFFDLUDFBDFDLLDDUDBUURDBRFUBUBDRLBRBDFFLBFLLLRRLDFULBULFLDU)
+

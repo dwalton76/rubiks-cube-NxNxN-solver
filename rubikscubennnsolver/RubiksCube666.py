@@ -133,7 +133,8 @@ class RubiksCube666(RubiksCube):
                                                          # prune tables
                                                          (self.lt_UD_oblique_edge_pairing_left_only,
                                                           self.lt_UD_oblique_edge_pairing_right_only),
-                                                         modulo=7271027)
+                                                         modulo=123302901)
+                                                         #modulo=7271027)
 
         # This data was collected by setting self.lt_UD_oblique_edge_pairing.record_stats = True
         # and then crunching the resulting .stats file with crunch-stats-666-step20.py to produce the following
@@ -149,45 +150,42 @@ class RubiksCube666(RubiksCube):
             (1, 2) : 5,
             (1, 3) : 4,
             (2, 1) : 5,
+            (2, 5) : 6,
             (3, 1) : 5,
             (3, 6) : 9,
             (3, 7) : 11,
-            (4, 6) : 8,
-            (4, 7) : 12,
-            (5, 6) : 8,
-            (5, 7) : 10,
+            (4, 7) : 11,
+            (5, 7) : 9,
             (6, 3) : 9,
-            (6, 4) : 9,
-            (6, 5) : 7,
-            (6, 6) : 7,
-            (6, 7) : 9,
+            (6, 7) : 8,
             (7, 4) : 10,
             (7, 5) : 8,
-            (7, 6) : 9,
-            (7, 7) : 10,
+            (7, 6) : 8,
+            (7, 7) : 9,
             (7, 8) : 12,
         }
 
         lt_UD_oblique_edge_pairing_heuristic_stats_median = {
             (1, 2) : 5,
-            (1, 3) : 4,
-            (2, 1) : 5,
+            (1, 3) : 5,
+            (2, 1) : 6,
             (2, 3) : 4,
             (2, 4) : 5,
+            (2, 5) : 8,
             (3, 1) : 5,
-            (3, 3) : 4,
+            (3, 2) : 4,
             (3, 4) : 5,
-            (3, 5) : 7,
-            (3, 6) : 9,
+            (3, 5) : 6,
+            (3, 6) : 10,
             (3, 7) : 11,
-            (4, 2) : 7,
+            (4, 2) : 6,
             (4, 3) : 5,
             (4, 4) : 6,
-            (4, 5) : 8,
+            (4, 5) : 7,
             (4, 6) : 10,
             (4, 7) : 12,
-            (5, 3) : 8,
-            (5, 4) : 8,
+            (5, 3) : 6,
+            (5, 4) : 7,
             (5, 5) : 8,
             (5, 6) : 10,
             (5, 7) : 12,
@@ -198,7 +196,7 @@ class RubiksCube666(RubiksCube):
             (6, 7) : 11,
             (7, 4) : 12,
             (7, 5) : 11,
-            (7, 6) : 12,
+            (7, 6) : 11,
             (7, 7) : 12,
             (7, 8) : 12,
         }
@@ -206,10 +204,10 @@ class RubiksCube666(RubiksCube):
         self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_min
         self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_median
 
-        #self.lt_UD_oblique_edge_pairing.heuristic_stats = {}
-        #self.lt_UD_oblique_edge_pairing.record_stats = True
-        #self.lt_UD_oblique_edge_pairing_left_only.preload_cache()
-        #self.lt_UD_oblique_edge_pairing_right_only.preload_cache()
+        self.lt_UD_oblique_edge_pairing.heuristic_stats = {}
+        self.lt_UD_oblique_edge_pairing.record_stats = True
+        self.lt_UD_oblique_edge_pairing_left_only.preload_cache()
+        self.lt_UD_oblique_edge_pairing_right_only.preload_cache()
         #self.lt_UD_oblique_edge_pairing.preload_cache()
 
 
@@ -581,6 +579,8 @@ class RubiksCube666(RubiksCube):
 
         self.lt_UD_oblique_edge_pairing.solve()
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        # dwalton
+        raise Exception("skip the rest")
 
     def group_centers_guts(self):
         self.lt_init()

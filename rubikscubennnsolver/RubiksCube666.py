@@ -201,13 +201,13 @@ class RubiksCube666(RubiksCube):
             (7, 8) : 12,
         }
 
-        self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_min
+        #self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_min
         self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_median
 
-        self.lt_UD_oblique_edge_pairing.heuristic_stats = {}
-        self.lt_UD_oblique_edge_pairing.record_stats = True
-        self.lt_UD_oblique_edge_pairing_left_only.preload_cache()
-        self.lt_UD_oblique_edge_pairing_right_only.preload_cache()
+        #self.lt_UD_oblique_edge_pairing.heuristic_stats = {}
+        #self.lt_UD_oblique_edge_pairing.record_stats = True
+        #self.lt_UD_oblique_edge_pairing_left_only.preload_cache()
+        #self.lt_UD_oblique_edge_pairing_right_only.preload_cache()
         #self.lt_UD_oblique_edge_pairing.preload_cache()
 
 
@@ -579,8 +579,6 @@ class RubiksCube666(RubiksCube):
 
         self.lt_UD_oblique_edge_pairing.solve()
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        # dwalton
-        raise Exception("skip the rest")
 
     def group_centers_guts(self):
         self.lt_init()

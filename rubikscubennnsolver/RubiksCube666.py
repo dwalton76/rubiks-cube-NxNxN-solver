@@ -373,7 +373,6 @@ class RubiksCube666(RubiksCube):
 
         Total: 25,679,911 entries
         '''
-        # dwalton rebuilding this to 9 deep (is 8 right now)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA(self,
                                                          'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt',
                                                          '666-LFRB-centers-oblique-edges-solve',
@@ -388,7 +387,7 @@ class RubiksCube666(RubiksCube):
 
                                                          # prune tables
                                                          (self.lt_LR_solve_inner_x_centers_and_oblique_edges,),
-                                                         modulo=4793435)
+                                                         modulo=25679911)
 
     def populate_fake_555_for_ULFRBD(self, fake_555):
 

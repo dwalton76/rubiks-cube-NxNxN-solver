@@ -1741,6 +1741,7 @@ class RubiksCube555(RubiksCube):
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
         # TODO Trying to find a way to speed up edge pairing...this needs more work
+        # - this needs to do a BFS instead of DFS...that should fix it
         '''
         for x in xrange(55, 100, 10):
             self.min_edge_solution_len = x

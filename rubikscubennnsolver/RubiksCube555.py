@@ -5,6 +5,7 @@ from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksSide import Side, SolveError
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_4x4x4, solved_4x4x4
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps
+from rubikscubennnsolver.rotate_xxx import rotate_555
 import datetime as dt
 import logging
 import math
@@ -40,6 +41,15 @@ class RubiksCube555(RubiksCube):
 
         if debug:
             log.setLevel(logging.DEBUG)
+
+    def rotate(self, step):
+        """
+        The 5x5x5 solver calls rotate() much more than other solvers, this is
+        due to the edge-pairing code.  In order to speed up edge-pairing use
+        the faster rotate_555() instead of RubiksCube.rotate()
+        """
+        self.state = rotate_555(self.state[:], step)
+        self.solution.append(step)
 
     def lt_init(self):
         if self.lt_init_called:
@@ -600,8 +610,8 @@ class RubiksCube555(RubiksCube):
                             #    (sister_wing2_use_first_neighbor, pformat(sister_wing3), sister_wing3_reverse, state, "True" if steps else "False"))
 
                             if steps:
-                                log.info("target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %
-                                    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3)))
+                                #log.info("target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %
+                                #    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3)))
 
                                 for step in steps:
                                     self.rotate(step)
@@ -1667,9 +1677,9 @@ class RubiksCube555(RubiksCube):
         # there isn't any point in continuing down this branch so prune it and save
         # some CPU cycles.
         #
-        # I use 4 here just to make it run faster...this adds 4-6 moves on average but
-        # it runs about 20x faster than using 2.5
-        estimate_per_wing = 3.5
+        # I use 3.0 here just to make it run faster...this adds a few moves but
+        # it runs about 4x faster than using 2.5
+        estimate_per_wing = 3.0
 
         # 9 moves is the least number of moves I know of that will pair the last 2 wings
         if pre_non_paired_wings_count == 2:

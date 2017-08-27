@@ -2793,22 +2793,22 @@ class RubiksCube(object):
         self.rotate("D")
 
     def rotate_x(self):
-        self.rotate("%dR" % self.size)
+        self.rotate("x")
 
     def rotate_x_reverse(self):
-        self.rotate("%dR'" % self.size)
+        self.rotate("x'")
 
     def rotate_y(self):
-        self.rotate("%dU" % self.size)
+        self.rotate("y")
 
     def rotate_y_reverse(self):
-        self.rotate("%dU'" % self.size)
+        self.rotate("y'")
 
     def rotate_z(self):
-        self.rotate("%dF" % self.size)
+        self.rotate("z")
 
     def rotate_z_reverse(self):
-        self.rotate("%dF'" % self.size)
+        self.rotate("z'")
 
     def get_center_corner_state(self):
         return ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_corner_pos])
@@ -3942,8 +3942,27 @@ class RubiksCube(object):
         return count
 
     def compress_solution(self):
-        solution_string = ' '.join(self.solution)
-        moves = set(self.solution)
+
+        solution_string = []
+
+        for step in self.solution:
+            if step == "x":
+                step = "%dR" % self.size
+            elif step == "x'":
+                step = "%dR'" % self.size
+            elif step == "y":
+                step = "%dU" % self.size
+            elif step == "y'":
+                step = "%dU'" % self.size
+            elif step == "z":
+                step = "%dF" % self.size
+            elif step == "z'":
+                step = "%dF'" % self.size
+
+            solution_string.append(step)
+
+        moves = set(solution_string)
+        solution_string = ' '.join(solution_string)
 
         while True:
             original_solution_string = solution_string[:]
@@ -4066,37 +4085,25 @@ class RubiksCube(object):
         print("%d steps total" % len(self.solution))
 
     def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
-        state = []
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in sorted(side.edge_pos):
-                if square_index == target_wing[0]:
-                    state.append('A')
 
-                elif square_index == target_wing[1]:
-                    state.append('B')
+        edge_pos_square_index = (2, 3, 4, 6, 10, 11, 15, 16, 20, 22, 23, 24, 27,
+            28, 29, 31, 35, 36, 40, 41, 45, 47, 48, 49, 52, 53, 54, 56, 60, 61,
+            65, 66, 70, 72, 73, 74, 77, 78, 79, 81, 85, 86, 90, 91, 95, 97, 98,
+            99, 102, 103, 104, 106, 110, 111, 115, 116, 120, 122, 123, 124, 127,
+            128, 129, 131, 135, 136, 140, 141, 145, 147, 148, 149)
 
-                elif square_index == sister_wing1[0]:
-                    state.append('C')
+        foo = {
+            target_wing[0] : 'A',
+            target_wing[1] : 'B',
+            sister_wing1[0] : 'C',
+            sister_wing1[1] : 'D',
+            sister_wing2[0] : 'E',
+            sister_wing2[1] : 'F',
+            sister_wing3[0] : 'G',
+            sister_wing3[1] : 'H',
+        }
 
-                elif square_index == sister_wing1[1]:
-                    state.append('D')
-
-                elif square_index == sister_wing2[0]:
-                    state.append('E')
-
-                elif square_index == sister_wing2[1]:
-                    state.append('F')
-
-                elif square_index == sister_wing3[0]:
-                    state.append('G')
-
-                elif square_index == sister_wing3[1]:
-                    state.append('H')
-
-                else:
-                    state.append('x')
-
-        return ''.join(state)
+        return ''.join([foo.get(square_index, 'x') for square_index in edge_pos_square_index])
 
     def www_header(self):
         """

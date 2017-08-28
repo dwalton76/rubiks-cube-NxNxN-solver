@@ -120,6 +120,7 @@ class RubiksCube666(RubiksCube):
 
         Total: 7,271,027 entries
         '''
+        # dwalton rebuilding this to 8 deep (is 6 right now)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
                                                          'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt',
                                                          '666-UD-oblique-edge-pairing',
@@ -148,57 +149,59 @@ class RubiksCube666(RubiksCube):
         lt_UD_oblique_edge_pairing_heuristic_stats_min = {
             (1, 2) : 5,
             (1, 3) : 4,
-            (2, 4) : 5,
+            (2, 1) : 5,
+            (2, 5) : 6,
             (3, 1) : 5,
-            (3, 5) : 7,
-            (4, 6) : 8,
-            (4, 7) : 12,
-            (5, 6) : 8,
-            (5, 7) : 10,
+            (3, 6) : 9,
+            (3, 7) : 11,
+            (4, 7) : 11,
+            (5, 7) : 9,
             (6, 3) : 9,
-            (6, 4) : 9,
-            (6, 5) : 7,
-            (6, 6) : 7,
-            (6, 7) : 9,
+            (6, 7) : 8,
             (7, 4) : 10,
             (7, 5) : 8,
-            (7, 6) : 9,
-            (7, 7) : 10,
+            (7, 6) : 8,
+            (7, 7) : 9,
             (7, 8) : 12,
         }
 
         lt_UD_oblique_edge_pairing_heuristic_stats_median = {
             (1, 2) : 5,
-            (1, 3) : 4,
+            (1, 3) : 5,
+            (2, 1) : 6,
+            (2, 3) : 4,
             (2, 4) : 5,
+            (2, 5) : 8,
             (3, 1) : 5,
-            (3, 3) : 4,
+            (3, 2) : 4,
             (3, 4) : 5,
-            (3, 5) : 8,
-            (4, 2) : 7,
+            (3, 5) : 6,
+            (3, 6) : 10,
+            (3, 7) : 11,
+            (4, 2) : 6,
             (4, 3) : 5,
-            (4, 4) : 5,
-            (4, 5) : 8,
+            (4, 4) : 6,
+            (4, 5) : 7,
             (4, 6) : 10,
             (4, 7) : 12,
-            (5, 3) : 8,
-            (5, 4) : 8,
+            (5, 3) : 6,
+            (5, 4) : 7,
             (5, 5) : 8,
             (5, 6) : 10,
-            (5, 7) : 11,
+            (5, 7) : 12,
             (6, 3) : 9,
-            (6, 4) : 9,
+            (6, 4) : 10,
             (6, 5) : 10,
             (6, 6) : 10,
             (6, 7) : 11,
-            (7, 4) : 10,
+            (7, 4) : 12,
             (7, 5) : 11,
-            (7, 6) : 12,
+            (7, 6) : 11,
             (7, 7) : 12,
             (7, 8) : 12,
         }
 
-        self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_min
+        #self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_min
         self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_median
 
         #self.lt_UD_oblique_edge_pairing.heuristic_stats = {}
@@ -261,7 +264,7 @@ class RubiksCube666(RubiksCube):
                                                                 modulo=12870)
         '''
         (16!/(8!*8!))^2 is 165,636,900
-        I only built this 9 deep to keep it small thus the IDA
+        I only built this 8 deep to keep the table in the repo small thus the IDA
 
         lookup-table-6x6x6-step40-LR-oblique-pairing.txt
         ================================================
@@ -298,7 +301,7 @@ class RubiksCube666(RubiksCube):
                                                          # prune tables
                                                          (self.lt_LR_oblique_edge_pairing_left_only,
                                                           self.lt_LR_oblique_edge_pairing_right_only),
-                                                         modulo=24633732)
+                                                         modulo=5614410)
 
         '''
         lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt
@@ -328,53 +331,32 @@ class RubiksCube666(RubiksCube):
         lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
         ========================================================================
         1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 26 entries (0 percent, 5.20x previous step)
-        3 steps has 86 entries (0 percent, 3.31x previous step)
-        4 steps has 356 entries (0 percent, 4.14x previous step)
-        5 steps has 1,186 entries (0 percent, 3.33x previous step)
-        6 steps has 4,264 entries (1 percent, 3.60x previous step)
-        7 steps has 12,946 entries (3 percent, 3.04x previous step)
-        8 steps has 35,741 entries (10 percent, 2.76x previous step)
-        9 steps has 77,322 entries (22 percent, 2.16x previous step)
-        10 steps has 111,116 entries (32 percent, 1.44x previous step)
-        11 steps has 80,988 entries (23 percent, 0.73x previous step)
-        12 steps has 18,436 entries (5 percent, 0.23x previous step)
-        13 steps has 528 entries (0 percent, 0.03x previous step)
+        2 steps has 40 entries (0 percent, 8.00x previous step)
+        3 steps has 228 entries (0 percent, 5.70x previous step)
+        4 steps has 1,142 entries (0 percent, 5.01x previous step)
+        5 steps has 5,240 entries (0 percent, 4.59x previous step)
+        6 steps has 20,914 entries (0 percent, 3.99x previous step)
+        7 steps has 78,886 entries (0 percent, 3.77x previous step)
+        8 steps has 272,733 entries (1 percent, 3.46x previous step)
+        9 steps has 844,382 entries (3 percent, 3.10x previous step)
+        10 steps has 2,204,738 entries (9 percent, 2.61x previous step)
+        11 steps has 4,507,592 entries (18 percent, 2.04x previous step)
+        12 steps has 6,560,576 entries (27 percent, 1.46x previous step)
+        13 steps has 6,029,508 entries (25 percent, 0.92x previous step)
+        14 steps has 2,918,224 entries (12 percent, 0.48x previous step)
+        15 steps has 545,008 entries (2 percent, 0.19x previous step)
+        16 steps has 20,784 entries (0 percent, 0.04x previous step)
+        17 steps has 34 entries (0 percent, 0.00x previous step)
 
-        Total: 343,000 entries
+        Total: 24,010,034 entries
         '''
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable(self,
                                                                          'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt',
                                                                          '666-LR-centers-oblique-edges-solve',
-                                                                         'xLLxLLLLLLLLxLLxxRRxRRRRRRRRxRRx',
+                                                                         'xLLxLLLLLLLLxLLxxxxxxFFxxFFxxxxxxRRxRRRRRRRRxRRxxxxxxBBxxBBxxxxx',
                                                                          False, # state_hex
-                                                                         modulo=343000)
+                                                                         modulo=24010034)
 
-        '''
-        lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
-        ========================================================================
-        1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 26 entries (0 percent, 5.20x previous step)
-        3 steps has 86 entries (0 percent, 3.31x previous step)
-        4 steps has 356 entries (0 percent, 4.14x previous step)
-        5 steps has 1,186 entries (0 percent, 3.33x previous step)
-        6 steps has 4,264 entries (1 percent, 3.60x previous step)
-        7 steps has 12,946 entries (3 percent, 3.04x previous step)
-        8 steps has 35,741 entries (10 percent, 2.76x previous step)
-        9 steps has 77,322 entries (22 percent, 2.16x previous step)
-        10 steps has 111,116 entries (32 percent, 1.44x previous step)
-        11 steps has 80,988 entries (23 percent, 0.73x previous step)
-        12 steps has 18,436 entries (5 percent, 0.23x previous step)
-        13 steps has 528 entries (0 percent, 0.03x previous step)
-
-        Total: 343,000 entries
-        '''
-        self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable(self,
-                                                                         'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
-                                                                         '666-FB-centers-oblique-edges-solve',
-                                                                         'xFFxFFFFFFFFxFFxxBBxBBBBBBBBxBBx',
-                                                                         False, # state_hex
-                                                                         modulo=343000)
 
         '''
         lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt
@@ -404,100 +386,8 @@ class RubiksCube666(RubiksCube):
                                                           "L", "L'", "L2", "R", "R'", "R2"), # do not mess up LR sides that we staged via self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
 
                                                          # prune tables
-                                                         (self.lt_LR_solve_inner_x_centers_and_oblique_edges,
-                                                          self.lt_FB_solve_inner_x_centers_and_oblique_edges),
-                                                         modulo=4793435)
-        '''
-        # This needs more work, build the step60 table out to 11-deep so we have a better chance of
-        # finding a hit so that we can run without solving a prune table first and record_stats = True
-        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.heuristic_stats = {
- (0, 0): 0,
- (0, 1): 4,
- (0, 2): 3,
- (0, 3): 3,
- (0, 4): 4,
- (0, 5): 5,
- (0, 6): 6,
- (0, 7): 7,
- (0, 8): 8,
- (1, 0): 4,
- (1, 1): 1,
- (1, 2): 2,
- (1, 3): 3,
- (1, 4): 4,
- (1, 5): 5,
- (1, 6): 6,
- (1, 7): 7,
- (1, 8): 8,
- (2, 0): 3,
- (2, 1): 2,
- (2, 2): 2,
- (2, 3): 3,
- (2, 4): 4,
- (2, 5): 5,
- (2, 6): 6,
- (2, 7): 7,
- (2, 8): 8,
- (3, 0): 3,
- (3, 1): 3,
- (3, 2): 3,
- (3, 3): 4,
- (3, 4): 4,
- (3, 5): 5,
- (3, 6): 6,
- (3, 7): 7,
- (3, 8): 8,
- (4, 0): 4,
- (4, 1): 4,
- (4, 2): 4,
- (4, 3): 5,
- (4, 4): 5,
- (4, 5): 6,
- (4, 6): 7,
- (4, 7): 8,
- (5, 0): 5,
- (5, 1): 5,
- (5, 2): 5,
- (5, 3): 5,
- (5, 4): 6,
- (5, 5): 6,
- (5, 6): 7,
- (5, 7): 8,
- (6, 0): 6,
- (6, 1): 6,
- (6, 2): 6,
- (6, 3): 6,
- (6, 4): 6,
- (6, 5): 7,
- (6, 6): 7,
- (6, 7): 8,
- (6, 10): 17,
- (7, 0): 7,
- (7, 1): 7,
- (7, 2): 7,
- (7, 3): 7,
- (7, 4): 7,
- (7, 5): 8,
- (7, 6): 8,
- (7, 8): 14,
- (7, 9): 15,
- (7, 10): 16,
- (8, 0): 8,
- (8, 1): 8,
- (8, 2): 8,
- (8, 3): 8,
- (8, 4): 8,
- (8, 5): 12,
- (8, 6): 12,
- (8, 7): 13,
- (9, 4): 10,
- (9, 5): 11,
- (9, 6): 14,
- (9, 7): 15,
- (9, 8): 16,
- (9, 9): 17,
-}
-        '''
+                                                         (self.lt_LR_solve_inner_x_centers_and_oblique_edges,),
+                                                         modulo=25679911)
 
     def populate_fake_555_for_ULFRBD(self, fake_555):
 
@@ -582,9 +472,10 @@ class RubiksCube666(RubiksCube):
         self.group_centers_stage_UD()
 
         self.lt_LR_inner_x_centers_stage.solve()
+        log.info("LR inner x-center staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
         self.lt_LR_oblique_edge_pairing.solve()
-        log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        self.print_cube()
+        log.info("LR oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         log.info("")
         log.info("")
         log.info("")
@@ -596,16 +487,13 @@ class RubiksCube666(RubiksCube):
         # - solve the LR inner x-centers and pair the LR oblique edges
         # - solve the FB inner x-centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
+        log.info("UD inner x-center solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-        # - comment out the 'speed up IDA' call
-        # - set record_stats to True
-        # - rm lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.stats
-        # - solve 500 cubes to build a .stats file
         self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
-        #self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.record_stats = True
+        log.info("LR inner x-center and oblique edges prune table solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
-        #self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve(17)
-        log.info("inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
         log.info("")

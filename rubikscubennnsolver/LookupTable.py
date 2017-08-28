@@ -1093,38 +1093,22 @@ def get_666_LR_centers_oblique_edges_solve(parent_state):
     """
     666-LR-centers-oblique-edges-solve
     """
-    state = ['x',
-             parent_state[45],
-             parent_state[46],
-             'x',
-             parent_state[50],
-             parent_state[51],
-             parent_state[52],
-             parent_state[53],
-             parent_state[56],
-             parent_state[57],
-             parent_state[58],
-             parent_state[59],
-             'x',
-             parent_state[63],
-             parent_state[64],
-             'x',
-             'x',
-             parent_state[117],
-             parent_state[118],
-             'x',
-             parent_state[122],
-             parent_state[123],
-             parent_state[124],
-             parent_state[125],
-             parent_state[128],
-             parent_state[129],
-             parent_state[130],
-             parent_state[131],
-             'x',
-             parent_state[135],
-             parent_state[136],
-             'x']
+    state = ['x', parent_state[45], parent_state[46], 'x',
+             parent_state[50], parent_state[51], parent_state[52], parent_state[53],
+             parent_state[56], parent_state[57], parent_state[58], parent_state[59],
+             'x', parent_state[63], parent_state[64], 'x',
+             'xxxx',
+             'x', parent_state[87], parent_state[88], 'x',
+             'x', parent_state[93], parent_state[94], 'x',
+             'xxxx',
+             'x', parent_state[117], parent_state[118], 'x',
+             parent_state[122], parent_state[123], parent_state[124], parent_state[125],
+             parent_state[128], parent_state[129], parent_state[130], parent_state[131],
+             'x', parent_state[135], parent_state[136], 'x',
+             'xxxx',
+             'x', parent_state[159], parent_state[160], 'x',
+             'x', parent_state[165], parent_state[166], 'x',
+             'xxxx']
     state = ''.join(state)
     return state
 
@@ -1133,38 +1117,22 @@ def get_666_FB_centers_oblique_edges_solve(parent_state):
     """
     666-FB-centers-oblique-edges-solve
     """
-    state = ['x',
-             parent_state[81],
-             parent_state[82],
-             'x',
-             parent_state[86],
-             parent_state[87],
-             parent_state[88],
-             parent_state[89],
-             parent_state[92],
-             parent_state[93],
-             parent_state[94],
-             parent_state[95],
-             'x',
-             parent_state[99],
-             parent_state[100],
-             'x',
-             'x',
-             parent_state[153],
-             parent_state[154],
-             'x',
-             parent_state[158],
-             parent_state[159],
-             parent_state[160],
-             parent_state[161],
-             parent_state[164],
-             parent_state[165],
-             parent_state[166],
-             parent_state[167],
-             'x',
-             parent_state[171],
-             parent_state[172],
-             'x']
+    state = ['xxxx',
+             'x', parent_state[51], parent_state[52], 'x',
+             'x', parent_state[57], parent_state[58], 'x',
+             'xxxx',
+             'x', parent_state[81], parent_state[82], 'x',
+             parent_state[86], parent_state[87], parent_state[88], parent_state[89],
+             parent_state[92], parent_state[93], parent_state[94], parent_state[95],
+             'x', parent_state[99], parent_state[100], 'x',
+             'xxxx',
+             'x', parent_state[123], parent_state[124], 'x',
+             'x', parent_state[129], parent_state[130], 'x',
+             'xxxx',
+             'x', parent_state[153], parent_state[154], 'x',
+             parent_state[158], parent_state[159], parent_state[160], parent_state[161],
+             parent_state[164], parent_state[165], parent_state[166], parent_state[167],
+             'x', parent_state[171], parent_state[172], 'x']
     state = ''.join(state)
     return state
 
@@ -1174,6 +1142,31 @@ def get_666_LFRB_centers_oblique_edges_solve(parent_state):
     666-LFRB-centers-oblique-edges-solve
     """
     state = ''.join(['x', parent_state[45], parent_state[46], 'x', parent_state[50], parent_state[51], parent_state[52], parent_state[53], parent_state[56], parent_state[57], parent_state[58], parent_state[59], 'x', parent_state[63], parent_state[64], 'xx', parent_state[81], parent_state[82], 'x', parent_state[86], parent_state[87], parent_state[88], parent_state[89], parent_state[92], parent_state[93], parent_state[94], parent_state[95], 'x', parent_state[99], parent_state[100], 'xx', parent_state[117], parent_state[118], 'x', parent_state[122], parent_state[123], parent_state[124], parent_state[125], parent_state[128], parent_state[129], parent_state[130], parent_state[131], 'x', parent_state[135], parent_state[136], 'xx', parent_state[153], parent_state[154], 'x', parent_state[158], parent_state[159], parent_state[160], parent_state[161], parent_state[164], parent_state[165], parent_state[166], parent_state[167], 'x', parent_state[171], parent_state[172], 'x'])
+    return state
+
+
+def get_666_LFRB_oblique_edges_solve(parent_state):
+    """
+    666-LFRB-oblique-edges-solve
+    """
+    state = ''.join([
+    'x', parent_state[45], parent_state[46], 'x',
+    parent_state[50], 'xx', parent_state[53],
+    parent_state[56], 'xx', parent_state[59],
+    'x', parent_state[63], parent_state[64],
+    'xx', parent_state[81], parent_state[82], 'x',
+    parent_state[86], 'xx', parent_state[89],
+    parent_state[92], 'xx', parent_state[95],
+    'x', parent_state[99], parent_state[100],
+    'xx', parent_state[117], parent_state[118], 'x',
+    parent_state[122], 'xx', parent_state[125],
+    parent_state[128], 'xx', parent_state[131],
+    'x', parent_state[135], parent_state[136],
+    'xx', parent_state[153], parent_state[154], 'x',
+    parent_state[158], 'xx', parent_state[161],
+    parent_state[164], 'xx', parent_state[167],
+    'x', parent_state[171], parent_state[172], 'x'])
+
     return state
 
 
@@ -2112,6 +2105,7 @@ state_functions = {
     '666-LR-centers-oblique-edges-solve' : get_666_LR_centers_oblique_edges_solve,
     '666-FB-centers-oblique-edges-solve' : get_666_FB_centers_oblique_edges_solve,
     '666-LFRB-centers-oblique-edges-solve' : get_666_LFRB_centers_oblique_edges_solve,
+    '666-LFRB-oblique-edges-solve' : get_666_LFRB_oblique_edges_solve,
     '666-UD-inner-X-centers-stage' : get_666_UD_inner_X_centers_stage,
     '666-UD-oblique-edge-pairing' : get_666_UD_oblique_edge_pairing,
     '666-UD-oblique-edge-pairing-left-only' : get_666_UD_oblique_edge_pairing_left_only,
@@ -2190,23 +2184,54 @@ class LookupTable(object):
             if not os.path.exists(self.filename):
                 if not os.path.exists(self.filename_gz):
 
-                    # Special case, I could not get this one under 100M so I split it via:
+                    # Special cases where I could not get them one under 100M so I split it via:
                     # split -b 70m lookup-table-4x4x4-step70-phase3-tsai.txt.gz "lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-"
                     if self.filename_gz == 'lookup-table-4x4x4-step70-phase3-tsai.txt.gz':
 
                         # Download part-aa
-                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa" % (self.parent.size, self.parent.size, self.parent.size)
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa" %\
+                            (self.parent.size, self.parent.size, self.parent.size)
                         log.info("Downloading table via 'wget %s'" % url)
                         subprocess.call(['wget', url])
 
                         # Download part-ab
-                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab" % (self.parent.size, self.parent.size, self.parent.size)
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab" %\
+                            (self.parent.size, self.parent.size, self.parent.size)
                         log.info("Downloading table via 'wget %s'" % url)
                         subprocess.call(['wget', url])
 
                         subprocess.call('cat lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-* > lookup-table-4x4x4-step70-phase3-tsai.txt.gz', shell=True)
                         os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa')
                         os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab')
+
+                    elif self.filename_gz == 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz':
+
+                        # Download all three parts
+                        for extension in ('aa', 'ab', 'ac'):
+                            url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-%s" %\
+                                (self.parent.size, self.parent.size, self.parent.size, extension)
+                            log.info("Downloading table via 'wget %s'" % url)
+                            subprocess.call(['wget', url])
+
+                        subprocess.call('cat lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-* > lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz', shell=True)
+                        os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-aa')
+                        os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
+                        os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
+
+                    elif self.filename_gz == 'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz':
+
+                        # Download all three parts
+                        for extension in ('aa', 'ab', 'ac'):
+                            url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-%s" %\
+                                (self.parent.size, self.parent.size, self.parent.size, extension)
+                            log.info("Downloading table via 'wget %s'" % url)
+                            subprocess.call(['wget', url])
+
+                        subprocess.call('cat lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-* > lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz', shell=True)
+                        os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-aa')
+                        os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
+                        os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
+
                     else:
                         url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
                         log.info("Downloading table via 'wget %s'" % url)
@@ -2217,7 +2242,7 @@ class LookupTable(object):
 
             # Now create a .hash copy of the lookup table
             self.convert_file_to_hash()
-            os.unlink(self.filename)
+            #os.unlink(self.filename)
 
         # Find the state_width for the entries in our .hash file
         with open(self.filename_hash, 'r') as fh:
@@ -2391,7 +2416,7 @@ class LookupTable(object):
             # Now seek in that many bytes in the .hash file and read that line
             self.fh_hash.seek(hash_index * self.width)
             line = self.fh_hash.readline().rstrip()
-            #log.info("%s: hash_index %s, state %s, line %s" % (self, hash_index, state_to_find, line))
+            #log.info("%s: file %s, hash_index %s, state %s, line %s" % (self, self.filename_hash, hash_index, state_to_find, line))
 
             if not line:
                 self.cache[state_to_find] = None
@@ -2438,6 +2463,7 @@ class LookupTable(object):
             steps = self.steps(state)
 
             if not steps:
+                self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
 
             for step in steps:
@@ -2587,6 +2613,9 @@ class LookupTableIDA(LookupTable):
             for step in steps_to_here:
                 self.parent.rotate(step)
 
+            for step in steps:
+                self.parent.rotate(step)
+
             # The cube is now in a state where it is in the lookup table, we may need
             # to do several lookups to get to our target state though. Use
             # LookupTabele's solve() to take us the rest of the way to the target state.
@@ -2667,13 +2696,6 @@ class LookupTableIDA(LookupTable):
                                     entry['state'],
                                     entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
                                     entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
-                                    entry['actual-cost']))
-
-                            elif self.filename == 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt':
-                                fh.write("%s,%d,%d,%d\n" % (
-                                    entry['state'],
-                                    entry['lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt'],
-                                    entry['lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt'],
                                     entry['actual-cost']))
 
                     self.parent.state = final_state[:]

@@ -2624,6 +2624,7 @@ class LookupTableIDA(LookupTable):
             solution_ok = True
 
             if (solution_ok and
+                self.parent.use_tsai and
                 (self.state_type == '444-phase2-tsai' or self.state_type == '444-ULFRBD-centers-stage') and
                 not self.parent.edge_swaps_even(False, None, False)):
 

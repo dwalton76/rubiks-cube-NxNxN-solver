@@ -2242,7 +2242,7 @@ class LookupTable(object):
 
             # Now create a .hash copy of the lookup table
             self.convert_file_to_hash()
-            #os.unlink(self.filename)
+            os.unlink(self.filename)
 
         # Find the state_width for the entries in our .hash file
         with open(self.filename_hash, 'r') as fh:

@@ -1881,8 +1881,19 @@ class RubiksCube444(RubiksCube):
             self.solution.append('CENTERS_SOLVED')
             return
 
+        # Made some pics to try to explain lookup tables on facebook
+        #
+        #self.print_cube()
+        #for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+        #    for square in side.edge_pos:
+        #        self.state[square] = 'x'
+        #    for square in side.corner_pos:
+        #        self.state[square] = 'x'
+        #self.print_cube()
+
         # The tsai will solve the centers and pair the edges
         if self.use_tsai:
+
             self.lt_ULFRBD_centers_stage.solve()
             self.print_cube()
             log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
@@ -1913,16 +1924,6 @@ class RubiksCube444(RubiksCube):
             self.print_cube()
             log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
-
-            # Made some pics to try to explain lookup tables on facebook
-            #
-            #self.print_cube()
-            #for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            #    for square in side.edge_pos:
-            #        self.state[square] = 'x'
-            #    for square in side.corner_pos:
-            #        self.state[square] = 'x'
-            #self.print_cube()
 
         # The non-tsai solver will only solve the centers here
         else:

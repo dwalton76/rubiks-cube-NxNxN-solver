@@ -82,21 +82,21 @@ class RubiksCube777(RubiksCube):
                                                                   '777-UD-oblique-edge-pairing-middle-only',
                                                                   '08088080000000000000000000000000404404',
                                                                   True, # state_hex
-                                                                  modulo=735471)
+                                                                  linecount=735471)
 
         self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
                                                                    'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
                                                                    '777-UD-oblique-edge-pairing-left-only',
                                                                    '10104040000000000000000000000000808202',
                                                                    True, # state_hex
-                                                                   modulo=735471)
+                                                                   linecount=735471)
 
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
                                                                    'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
                                                                    '777-UD-oblique-edge-pairing-right-only',
                                                                    '05000500000000000000000000000000280028',
                                                                    True, # state_hex
-                                                                   modulo=735471)
+                                                                   linecount=735471)
 
 
         '''
@@ -130,28 +130,28 @@ class RubiksCube777(RubiksCube):
                                                          (self.lt_UD_oblique_edge_pairing_middle_only,
                                                           self.lt_UD_oblique_edge_pairing_left_only,
                                                           self.lt_UD_oblique_edge_pairing_right_only),
-                                                         modulo=5961573)
+                                                         linecount=5961573)
 
         self.lt_LR_oblique_edge_pairing_middle_only = LookupTable(self,
                                                       'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
                                                       '777-LR-oblique-edge-pairing-middle-only',
                                                       '2022020000000808808000000',
                                                       True, # state_hex
-                                                      modulo=12870)
+                                                      linecount=12870)
 
         self.lt_LR_oblique_edge_pairing_left_only = LookupTable(self,
                                                       'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
                                                       '777-LR-oblique-edge-pairing-left-only',
                                                       '4041010000001010404000000',
                                                       True, # state_hex
-                                                      modulo=12870)
+                                                      linecount=12870)
 
         self.lt_LR_oblique_edge_pairing_right_only = LookupTable(self,
                                                       'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt',
                                                       '777-LR-oblique-edge-pairing-right-only',
                                                       '1400140000000500050000000',
                                                       True, # state_hex
-                                                      modulo=12870)
+                                                      linecount=12870)
 
         '''
         lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt
@@ -187,7 +187,7 @@ class RubiksCube777(RubiksCube):
                                                       (self.lt_LR_oblique_edge_pairing_middle_only,
                                                        self.lt_LR_oblique_edge_pairing_left_only,
                                                        self.lt_LR_oblique_edge_pairing_right_only),
-                                                      modulo=5044280)
+                                                      linecount=5044280)
 
 
         '''
@@ -225,14 +225,14 @@ class RubiksCube777(RubiksCube):
                                                                          '777-UD-centers-oblique-edges-solve-center-only',
                                                                          'xxxxxxUUUxxUxUxxUUUxxxxxxxxxxxxDDDxxDxDxxDDDxxxxxx',
                                                                          False, # state_hex
-                                                                         modulo=4900)
+                                                                         linecount=4900)
 
         self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only = LookupTable(self,
                                                                          'lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt',
                                                                          '777-UD-centers-oblique-edges-solve-edges-only',
                                                                          'xUUUxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxDDDx',
                                                                          False, # state_hex
-                                                                         modulo=343000)
+                                                                         linecount=343000)
 
         '''
         lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt
@@ -262,7 +262,7 @@ class RubiksCube777(RubiksCube):
                                                                          # prune tables
                                                                         (self.lt_UD_solve_inner_centers_and_oblique_edges_center_only,
                                                                          self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only),
-                                                                        modulo=4898347)
+                                                                        linecount=4898347)
 
         '''
         lookup-table-7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges.txt
@@ -290,7 +290,7 @@ class RubiksCube777(RubiksCube):
                         '777-LR-inner-x-center-t-center-and-middle-oblique-edges-LR-solve',
                         'xxLxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxRxx',
                         False, # state_hex
-                        modulo=343000)
+                        linecount=343000)
 
         '''
         lookup-table-7x7x7-step62-LR-oblique-edges.txt
@@ -316,7 +316,7 @@ class RubiksCube777(RubiksCube):
                         '777-LR-oblique-edges-LR-solve',
                         'xLLLxLxxxLLxxxLLxxxLxLLLxxRRRxRxxxRRxxxRRxxxRxRRRx',
                         False, # state_hex
-                        modulo=343000)
+                        linecount=343000)
 
         '''
         lookup-table-7x7x7-step60-LR-solve-inner-center-and-oblique-edges.txt
@@ -350,7 +350,7 @@ class RubiksCube777(RubiksCube):
                                                          # prune tables
                                                          (self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge,
                                                           self.lt_LR_solve_oblique_edge),
-                                                         modulo=18155169)
+                                                         linecount=18155169)
 
         '''
         lookup-table-7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges.txt
@@ -378,7 +378,7 @@ class RubiksCube777(RubiksCube):
                         '777-FB-inner-x-center-t-center-and-middle-oblique-edges-FB-solve',
                         'xxFxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxBxx',
                         False, # state_hex
-                        modulo=343002)
+                        linecount=343002)
 
         '''
         lookup-table-7x7x7-step72-FB-oblique-edges.txt
@@ -404,7 +404,7 @@ class RubiksCube777(RubiksCube):
                         '777-FB-oblique-edges-FB-solve',
                         'xFFFxFxxxFFxxxFFxxxFxFFFxxBBBxBxxxBBxxxBBxxxBxBBBx',
                         False, # state_hex
-                        modulo=343000)
+                        linecount=343000)
 
         '''
         lookup-table-7x7x7-step70-FB-solve-inner-center-and-oblique-edges.txt
@@ -439,7 +439,7 @@ class RubiksCube777(RubiksCube):
                                                          # prune tables
                                                          (self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
                                                           self.lt_FB_solve_oblique_edge),
-                                                         modulo=18155169)
+                                                         linecount=18155169)
 
         '''
         lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt
@@ -475,7 +475,7 @@ class RubiksCube777(RubiksCube):
                                                           self.lt_LR_solve_oblique_edge,
                                                           self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
                                                           self.lt_FB_solve_oblique_edge),
-                                                         modulo=11571315)
+                                                         linecount=11571315)
 
     def create_fake_555_from_inside_centers(self):
 

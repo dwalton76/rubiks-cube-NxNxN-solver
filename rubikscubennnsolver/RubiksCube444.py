@@ -143,21 +143,21 @@ class RubiksCube444(RubiksCube):
                                                '444-UD-centers-stage',
                                                'f0000f',
                                                 True, # state hex
-                                                modulo=735471)
+                                                linecount=735471)
 
         self.lt_LR_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step12-LR-centers-stage.txt',
                                                '444-LR-centers-stage',
                                                '0f0f00',
                                                 True, # state hex
-                                                modulo=735471)
+                                                linecount=735471)
 
         self.lt_FB_centers_stage = LookupTable(self,
                                                'lookup-table-4x4x4-step13-FB-centers-stage.txt',
                                                '444-FB-centers-stage',
                                                '00f0f0',
                                                 True, # state hex
-                                                modulo=735471)
+                                                linecount=735471)
 
         '''
         lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
@@ -183,7 +183,7 @@ class RubiksCube444(RubiksCube):
                                                 (self.lt_UD_centers_stage,
                                                  self.lt_LR_centers_stage,
                                                  self.lt_FB_centers_stage),
-                                                modulo=8649142)
+                                                linecount=8649142)
 
         # Built via stats/crunch-stats-444-centers-stage.py
         lt_ULFRBD_centers_stage_heuristic_stats_min = {
@@ -341,7 +341,7 @@ class RubiksCube444(RubiksCube):
                                                '444-orient-edges-tsai',
                                                'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
                                                False, # state hex
-                                               modulo=2704156)
+                                               linecount=2704156)
 
             '''
             lookup-table-4x4x4-step62-LR-centers-table1.txt
@@ -358,7 +358,7 @@ class RubiksCube444(RubiksCube):
                                                    '444-LR-centers-solve-tsai',
                                                    ('xxxxLLLLxxxxRRRRxxxxxxxx', ),
                                                     False, # state hex
-                                                    modulo=70)
+                                                    linecount=70)
 
             '''
             lookup-table-4x4x4-step60-phase2-tsai.txt
@@ -397,7 +397,7 @@ class RubiksCube444(RubiksCube):
                                                  # prune tables
                                                  (self.lt_orient_edges,
                                                   self.lt_LR_centers_solve),
-                                                 modulo=2304998)
+                                                 linecount=2304998)
 
             # Phase 3
             '''
@@ -446,7 +446,7 @@ class RubiksCube444(RubiksCube):
                                                           '444-phase3-edges',
                                                           '0123456789ab',
                                                           False, # state hex
-                                                          modulo=14999140)
+                                                          linecount=14999140)
 
             '''
             lookup-table-4x4x4-step72-phase3-centers-tsai.txt
@@ -468,7 +468,7 @@ class RubiksCube444(RubiksCube):
                                                           '444-ULFRBD-centers-solve',
                                                           'UUUULLLLFFFFRRRRBBBBDDDD',
                                                           False, # state hex
-                                                          modulo=58800)
+                                                          linecount=58800)
 
             '''
             If you build this to 8-deep it adds 119,166,578 which makes it too big to
@@ -498,7 +498,7 @@ class RubiksCube444(RubiksCube):
                                                  # prune tables
                                                  (self.lt_phase3_tsai_edges_solve,
                                                   self.lt_phase3_tsai_centers_solve),
-                                                 modulo=12903794)
+                                                 linecount=12903794)
             lt_phase3_tsai_heuristic_stats_min = {
                 (1, 2) : 4,
                 (2, 1) : 5,
@@ -645,7 +645,7 @@ class RubiksCube444(RubiksCube):
                                                        '444-ULFRBD-centers-solve',
                                                        'UUUULLLLFFFFRRRRBBBBDDDD',
                                                        False, # state hex
-                                                       modulo=343000)
+                                                       linecount=343000)
 
 
         # For tsai these two tables are only used if the centers have already been solved
@@ -670,7 +670,7 @@ class RubiksCube444(RubiksCube):
                                                  '444-edges-slice-forward',
                                                  'EDGES',
                                                  False, # state hex
-                                                 modulo=7920)
+                                                 linecount=7920)
 
         '''
         22*20*18 is 7920
@@ -694,7 +694,7 @@ class RubiksCube444(RubiksCube):
                                                   '444-edges-slice-backward',
                                                   'EDGES',
                                                   False, # state hex
-                                                  modulo=7919)
+                                                  linecount=7919)
 
         self.orient_edges = {
              (2, 67, 'B', 'D'): 'D',

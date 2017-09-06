@@ -74,31 +74,32 @@ class RubiksCube666(RubiksCube):
         '''
         lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
         lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt
-        ================================================================
-        1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 82 entries (0 percent, 16.40x previous step)
-        3 steps has 1,198 entries (0 percent, 14.61x previous step)
-        4 steps has 13,818 entries (1 percent, 11.53x previous step)
-        5 steps has 115,638 entries (15 percent, 8.37x previous step)
-        6 steps has 399,478 entries (54 percent, 3.45x previous step)
-        7 steps has 204,612 entries (27 percent, 0.51x previous step)
-        8 steps has 640 entries (0 percent, 0.00x previous step)
+        ===============================================================
+        1 steps has 3 entries (0 percent, 0.00x previous step)
+        2 steps has 29 entries (0 percent, 9.67x previous step)
+        3 steps has 238 entries (1 percent, 8.21x previous step)
+        4 steps has 742 entries (5 percent, 3.12x previous step)
+        5 steps has 1,836 entries (14 percent, 2.47x previous step)
+        6 steps has 4,405 entries (34 percent, 2.40x previous step)
+        7 steps has 3,774 entries (29 percent, 0.86x previous step)
+        8 steps has 1,721 entries (13 percent, 0.46x previous step)
+        9 steps has 122 entries (0 percent, 0.07x previous step)
 
-        Total: 735,471 entries
+        Total: 12,870 entries
         '''
         self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
                                                                 '666-UD-oblique-edge-pairing-left-only',
                                                                 '990000000099',
                                                                 True, # state_hex
-                                                                modulo=735471)
+                                                                modulo=12870)
 
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
                                                                 'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
                                                                 '666-UD-oblique-edge-pairing-right-only',
                                                                 '660000000066',
                                                                 True, # state_hex
-                                                                modulo=735471)
+                                                                modulo=12870)
 
         '''
         Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
@@ -109,18 +110,35 @@ class RubiksCube666(RubiksCube):
         tables are 24!/(8!*16!) or 735,471
         735471/540917591841 is 0.0000013596729171
 
+        Originally I did what is described above but the IDA search took 4 minutes
+        (on my laptop) for some cubes...I can only imagine how long that would
+        take on a 300Mhz EV3.  To speed this up I did something unusual here...I
+        rebuilt the step20 table but restricted moves so that UD obliques can
+        only move to sides UFDB. The cube will be very scrambled though and
+        there will be UD obliques on sides LR.  What I do is "fake move" these
+        obliques to side UDFB so that I can use the step20 table.  At that point
+        there will only be UD obliques on sides ULDR so I then do a rotate_y()
+        one time to make LR free of UD obliques again. Then I do another lookup
+        in the step20 table.
+
+        I only build the table to 9-deep, it would have 165 million entries if
+        I built it the whole way out but that would be too large tou check into
+        the repo so I use IDA.
+
         lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt
         =====================================================
-        1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 82 entries (0 percent, 16.40x previous step)
-        3 steps has 1,434 entries (0 percent, 17.49x previous step)
-        4 steps has 24,198 entries (0 percent, 16.87x previous step)
-        5 steps has 405,916 entries (0 percent, 16.77x previous step)
-        6 steps has 6,839,392 entries (5 percent, 16.85x previous step)
+        1 steps has 3 entries (0 percent, 0.00x previous step)
+        2 steps has 29 entries (0 percent, 9.67x previous step)
+        3 steps has 286 entries (0 percent, 9.86x previous step)
+        4 steps has 2,052 entries (0 percent, 7.17x previous step)
+        5 steps has 16,348 entries (0 percent, 7.97x previous step)
+        6 steps has 127,859 entries (0 percent, 7.82x previous step)
+        7 steps has 844,248 entries (3 percent, 6.60x previous step)
+        8 steps has 4,623,585 entries (18 percent, 5.48x previous step)
+        9 steps has 19,019,322 entries (77 percent, 4.11x previous step)
 
-        Total: 7,271,027 entries
+        Total: 24,633,732 entries
         '''
-        # dwalton rebuilding this to 8 deep (is 6 right now)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
                                                          'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt',
                                                          '666-UD-oblique-edge-pairing',
@@ -128,88 +146,14 @@ class RubiksCube666(RubiksCube):
                                                          True, # state_hex
                                                          moves_6x6x6,
 
-                                                         # These would break up the staged UD inner x-centers
-                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"),
+                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # These would break up the staged UD inner x-centers
+                                                          "Fw", "Fw'", "Bw", "Bw'",
+                                                          "3Uw", "3Uw'", "3Dw", "3Dw'", "Uw", "Uw'", "Dw", "Dw'"),
 
                                                          # prune tables
                                                          (self.lt_UD_oblique_edge_pairing_left_only,
                                                           self.lt_UD_oblique_edge_pairing_right_only),
-                                                         modulo=7271027)
-
-        # This data was collected by setting self.lt_UD_oblique_edge_pairing.record_stats = True
-        # and then crunching the resulting .stats file with crunch-stats-666-step20.py to produce the following
-        # dictionary.  In the tuple that is the key, the first number is the cost per lt_UD_oblique_edge_pairing_left_only
-        # and the second number is the cost per lt_UD_oblique_edge_pairing_right_only.  The value is the actual
-        # number of steps it took to solve the cube.  So if lt_UD_oblique_edge_pairing_left_only says the cost is 4
-        # and lt_UD_oblique_edge_pairing_right_only says the cost is 7 it actually took 12 steps (see the (4,7) entry)
-        # to solve the cube so use that as our heuristic.
-        #
-        # These heuristics are not admissable so the IDA* search is no longer guaranted to find an
-        # optimal solution but this step20 search used to be really slow and this speeds it up a good deal.
-        lt_UD_oblique_edge_pairing_heuristic_stats_min = {
-            (1, 2) : 5,
-            (1, 3) : 4,
-            (2, 1) : 5,
-            (2, 5) : 6,
-            (3, 1) : 5,
-            (3, 6) : 9,
-            (3, 7) : 11,
-            (4, 7) : 11,
-            (5, 7) : 9,
-            (6, 3) : 9,
-            (6, 7) : 8,
-            (7, 4) : 10,
-            (7, 5) : 8,
-            (7, 6) : 8,
-            (7, 7) : 9,
-            (7, 8) : 12,
-        }
-
-        lt_UD_oblique_edge_pairing_heuristic_stats_median = {
-            (1, 2) : 5,
-            (1, 3) : 5,
-            (2, 1) : 6,
-            (2, 3) : 4,
-            (2, 4) : 5,
-            (2, 5) : 8,
-            (3, 1) : 5,
-            (3, 2) : 4,
-            (3, 4) : 5,
-            (3, 5) : 6,
-            (3, 6) : 10,
-            (3, 7) : 11,
-            (4, 2) : 6,
-            (4, 3) : 5,
-            (4, 4) : 6,
-            (4, 5) : 7,
-            (4, 6) : 10,
-            (4, 7) : 12,
-            (5, 3) : 6,
-            (5, 4) : 7,
-            (5, 5) : 8,
-            (5, 6) : 10,
-            (5, 7) : 12,
-            (6, 3) : 9,
-            (6, 4) : 10,
-            (6, 5) : 10,
-            (6, 6) : 10,
-            (6, 7) : 11,
-            (7, 4) : 12,
-            (7, 5) : 11,
-            (7, 6) : 11,
-            (7, 7) : 12,
-            (7, 8) : 12,
-        }
-
-        #self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_min
-        self.lt_UD_oblique_edge_pairing.heuristic_stats = lt_UD_oblique_edge_pairing_heuristic_stats_median
-
-        #self.lt_UD_oblique_edge_pairing.heuristic_stats = {}
-        #self.lt_UD_oblique_edge_pairing.record_stats = True
-        #self.lt_UD_oblique_edge_pairing_left_only.preload_cache()
-        #self.lt_UD_oblique_edge_pairing_right_only.preload_cache()
-        #self.lt_UD_oblique_edge_pairing.preload_cache()
-
+                                                         modulo=24633732)
 
         '''
         16!/(8!*8!) is 12,870
@@ -460,11 +404,67 @@ class RubiksCube666(RubiksCube):
         fake_555.state[143] = self.state[207]
         fake_555.state[144] = self.state[209]
 
+    def fake_move_UD_to_UFDB(self):
+
+        # How many UD squares are on sides LR? We need to "fake move" those to somewhere on FB for our lookup table to work.
+        left_fake_move_count = 0
+        right_fake_move_count = 0
+
+        for square_index in (45, 53, 64, 56, 117, 125, 136, 128):
+            if self.state[square_index] in ('U', 'D'):
+                self.state[square_index] = 'L'
+                left_fake_move_count += 1
+
+        for square_index in (46, 59, 63, 50, 118, 131, 135, 122):
+            if self.state[square_index] in ('U', 'D'):
+                self.state[square_index] = 'L'
+                right_fake_move_count += 1
+
+        if left_fake_move_count > 0:
+            for square_index in (9, 17, 28, 20, 189, 197, 208, 200, 81, 89, 100, 92, 153, 161, 172, 164):
+                if self.state[square_index] not in ('U', 'D'):
+                    self.state[square_index] = 'U'
+                    left_fake_move_count -= 1
+
+                    if not left_fake_move_count:
+                        break
+
+        if right_fake_move_count > 0:
+            for square_index in (10, 23, 27, 14, 190, 203, 207, 194, 82, 95, 99, 86, 154, 167, 171, 158):
+                if self.state[square_index] not in ('U', 'D'):
+                    self.state[square_index] = 'U'
+                    right_fake_move_count -= 1
+
+                    if not right_fake_move_count:
+                        break
+
     def group_centers_stage_UD(self):
         self.lt_UD_inner_x_centers_stage.solve()
         log.info("UD inner x-centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-        self.lt_UD_oblique_edge_pairing.solve()
+        # See the comments where self.lt_UD_oblique_edge_pairing is declared for
+        # an explanation on what is happening here
+        for x in range(2):
+            original_state = self.state[:]
+            original_solution = self.solution[:]
+            original_solution_len = len(self.solution)
+
+            self.fake_move_UD_to_UFDB()
+            self.lt_UD_oblique_edge_pairing.solve()
+
+            tmp_solution = self.solution[original_solution_len:]
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in tmp_solution:
+                self.rotate(step)
+
+            if x == 0:
+                self.rotate_y()
+            else:
+                self.rotate_y_reverse()
+
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_centers_guts(self):

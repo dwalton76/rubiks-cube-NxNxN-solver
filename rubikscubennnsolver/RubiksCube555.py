@@ -58,49 +58,31 @@ class RubiksCube555(RubiksCube):
 
         '''
         lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
+        lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
         ================================================
-        T-centers - 24!/(16! * 8!) is 735,471
+        1 steps has 3 entries (0 percent, 0.00x previous step)
+        2 steps has 29 entries (0 percent, 9.67x previous step)
+        3 steps has 234 entries (1 percent, 8.07x previous step)
+        4 steps has 1,246 entries (9 percent, 5.32x previous step)
+        5 steps has 4,466 entries (34 percent, 3.58x previous step)
+        6 steps has 6,236 entries (48 percent, 1.40x previous step)
+        7 steps has 656 entries (5 percent, 0.11x previous step)
 
-        1 steps has 5 entries (0 percent)
-        2 steps has 66 entries (0 percent)
-        3 steps has 900 entries (0 percent)
-        4 steps has 9,626 entries (1 percent)
-        5 steps has 80,202 entries (10 percent)
-        6 steps has 329,202 entries (44 percent)
-        7 steps has 302,146 entries (41 percent)
-        8 steps has 13,324 entries (1 percent)
-
-        Total: 735,471 entries
+        Total: 12,870 entries
         '''
         self.lt_UD_T_centers_stage = LookupTable(self,
                                                  'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
                                                  '555-UD-T-centers-stage',
                                                  '174000000000ba',
                                                  True, # state_hex
-                                                 modulo=735471)
+                                                 modulo=12870)
 
-        '''
-        lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
-        ================================================
-        X-centers - 24!/(16! * 8!) is 735,471
-
-        1 steps has 5 entries (0 percent)
-        2 steps has 82 entries (0 percent)
-        3 steps has 1,206 entries (0 percent)
-        4 steps has 14,116 entries (1 percent)
-        5 steps has 123,404 entries (16 percent)
-        6 steps has 422,508 entries (57 percent)
-        7 steps has 173,254 entries (23 percent)
-        8 steps has 896 entries (0 percent)
-
-        Total: 735,471 entries
-        '''
         self.lt_UD_X_centers_stage = LookupTable(self,
                                                  'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
                                                  '555-UD-X-centers-stage',
                                                  '2aa00000000155',
                                                  True, # state_hex
-                                                 modulo=735471)
+                                                 modulo=12870)
 
         '''
         There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
@@ -109,19 +91,33 @@ class RubiksCube555(RubiksCube):
         X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
         is 0.0000013596729171 which is a decent percentage for IDA.
 
-        If you build this 7-deep, there are another ~312 million entries at step 7.
-        That is too large for us to check into the repo.
+        Originally I did what is described above but the IDA search took 30 seconds
+        (on my laptop) for some cubes...I can only imagine how long that would
+        take on a 300Mhz EV3.  To speed this up I did something unusual here...I
+        rebuilt the step10 table but restricted moves so that UD centers can
+        only move to sides UFDB. The cube will be very scrambled though and
+        there will be UD centers on sides LR.  What I do is "fake move" these
+        centers to side UDFB so that I can use the step10 table.  At that point
+        there will only be UD centers on sides ULDR so I then do a rotate_y()
+        one time to make LR free of UD centers again. Then I do another lookup
+        in the step10 table.
+
+        I only build the table to 8-deep, it would have 165 million entries if
+        I built it the whole way out but that would be too large tou check into
+        the repo so I use IDA.
 
         lookup-table-5x5x5-step10-UD-centers-stage.txt
         ==============================================
-        1 steps has 5 entries (0 percent)
-        2 steps has 98 entries (0 percent)
-        3 steps has 2,036 entries (0 percent)
-        4 steps has 41,096 entries (0 percent)
-        5 steps has 824,950 entries (0 percent)
-        6 steps has 16,300,291 entries (4 percent)
+        1 steps has 3 entries (0 percent, 0.00x previous step)
+        2 steps has 33 entries (0 percent, 11.00x previous step)
+        3 steps has 374 entries (0 percent, 11.33x previous step)
+        4 steps has 3,838 entries (0 percent, 10.26x previous step)
+        5 steps has 39,254 entries (0 percent, 10.23x previous step)
+        6 steps has 387,357 entries (1 percent, 9.87x previous step)
+        7 steps has 3,374,380 entries (13 percent, 8.71x previous step)
+        8 steps has 20,851,334 entries (84 percent, 6.18x previous step)
 
-        Total: 17,168,476 entries
+        Total: 24,656,573 entries
         '''
         self.lt_UD_centers_stage = LookupTableIDA(self,
                                                  'lookup-table-5x5x5-step10-UD-centers-stage.txt',
@@ -129,89 +125,12 @@ class RubiksCube555(RubiksCube):
                                                  '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
                                                  True, # state_hex
                                                  moves_5x5x5,
-                                                 (), # illegal_moves
+                                                 ("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"), # illegal_moves
 
                                                  # prune tables
                                                  (self.lt_UD_T_centers_stage,
                                                   self.lt_UD_X_centers_stage),
-                                                 modulo=17168476)
-
-        # This data was collected by setting self.lt_UD_centers_stage.record_stats = True
-        # and then crunching the resulting .stats file with crunch-stats-centers-UD-state-555.py to produce the following
-        # dictionary.  In the tuple that is the key, the first number is the cost per lt_UD_T_centers_stage
-        # and the second number is the cost per lt_UD_X_centers_stage.  The value is the actual
-        # number of steps it took to solve the cube.  So if lt_UD_T_centers_stage says the cost is 4
-        # and lt_UD_X_centers_stage says the cost is 7 it actually took 12 steps (see the (4,7) entry)
-        # to solve the cube so use that as our heuristic.
-        #
-        # These heuristics are not admissable so the IDA* search is no longer guaranted to find an
-        # optimal solution but this step10 search used to be really slow and this speeds it up a good deal.
-        lt_UD_centers_stage_heuristic_stats_min = {
-            (1, 2) : 5,
-            (1, 6) : 9,
-            (2, 1) : 4,
-            (2, 5) : 8,
-            (2, 7) : 10,
-            (3, 6) : 7,
-            (3, 7) : 11,
-            (4, 6) : 7,
-            (4, 7) : 9,
-            (5, 7) : 8,
-            (6, 2) : 10,
-            (6, 3) : 8,
-            (6, 4) : 7,
-            (7, 2) : 11,
-            (7, 3) : 12,
-            (7, 4) : 8,
-            (7, 5) : 8,
-            (7, 7) : 8,
-            (7, 8) : 12,
-            (8, 5) : 9,
-            (8, 6) : 10,
-            (8, 7) : 12,
-        }
-
-        lt_UD_centers_stage_heuristic_stats_median = {
-            (1, 2) : 5,
-            (1, 6) : 9,
-            (2, 1) : 4,
-            (2, 3) : 5,
-            (2, 5) : 8,
-            (2, 7) : 10,
-            (3, 2) : 4,
-            (3, 4) : 5,
-            (3, 6) : 10,
-            (3, 7) : 11,
-            (4, 2) : 5,
-            (4, 3) : 5,
-            (4, 4) : 6,
-            (4, 5) : 7,
-            (4, 6) : 9,
-            (4, 7) : 10,
-            (5, 2) : 6,
-            (5, 3) : 7,
-            (5, 4) : 7,
-            (5, 5) : 8,
-            (5, 6) : 9,
-            (5, 7) : 11,
-            (6, 2) : 10,
-            (6, 3) : 9,
-            (6, 4) : 9,
-            (6, 5) : 9,
-            (6, 6) : 10,
-            (6, 7) : 11,
-            (7, 2) : 11,
-            (7, 3) : 12,
-            (7, 4) : 11,
-            (7, 5) : 11,
-            (7, 6) : 11,
-            (7, 7) : 11,
-            (7, 8) : 12,
-            (8, 5) : 11,
-            (8, 6) : 11,
-            (8, 7) : 12,
-        }
-        self.lt_UD_centers_stage.heuristic_stats = lt_UD_centers_stage_heuristic_stats_median
+                                                 modulo=24656573)
 
         '''
         lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt
@@ -400,23 +319,75 @@ class RubiksCube555(RubiksCube):
                                                   False, # state hex
                                                   modulo=7919)
 
+    def fake_move_UD_to_UFDB(self):
+
+        # How many UD squares are on sides LR? We need to "fake move" those
+        # to somewhere on UFDB for our lookup table to work.
+        x_fake_move_count = 0
+        t_fake_move_count = 0
+
+        for square_index in (32, 34, 42, 44, 82, 84, 92, 94):
+            if self.state[square_index] in ('U', 'D'):
+                self.state[square_index] = 'L'
+                x_fake_move_count += 1
+
+        for square_index in (33, 37, 39, 43, 83, 87, 89, 93):
+            if self.state[square_index] in ('U', 'D'):
+                self.state[square_index] = 'L'
+                t_fake_move_count += 1
+
+        if x_fake_move_count > 0:
+            for square_index in (7, 9, 17, 19, 132, 134, 142, 144, 57, 59, 67, 69, 107, 109, 117, 119):
+                if self.state[square_index] not in ('U', 'D'):
+                    self.state[square_index] = 'U'
+                    x_fake_move_count -= 1
+
+                    if not x_fake_move_count:
+                        break
+
+        if t_fake_move_count > 0:
+            for square_index in (8, 12, 14, 18, 133, 137, 139, 143, 58, 62, 64, 68, 108, 112, 114, 118):
+                if self.state[square_index] not in ('U', 'D'):
+                    self.state[square_index] = 'U'
+                    t_fake_move_count -= 1
+
+                    if not t_fake_move_count:
+                        break
+
     def group_centers_guts(self):
         self.lt_init()
         self.rotate_U_to_U()
 
-        # Stage UD centers
-        self.lt_UD_centers_stage.solve()
-        log.info("Took %d steps to stage UD centers" % len(self.solution))
+        # Stage UD centers...see the comments where self.lt_UD_centers_stage is created for
+        # an explanation on what is going on here
+        for x in range(2):
+            original_state = self.state[:]
+            original_solution = self.solution[:]
+            original_solution_len = len(self.solution)
+
+            self.fake_move_UD_to_UFDB()
+            self.lt_UD_centers_stage.solve()
+
+            tmp_solution = self.solution[original_solution_len:]
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in tmp_solution:
+                self.rotate(step)
+
+            if x == 0:
+                self.rotate_y()
+            else:
+                self.rotate_y_reverse()
+        log.info("UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
         # Stage LR centers
         self.lt_LR_centers_stage.solve()
-        log.info("Took %d steps to stage ULFRBD centers" % len(self.solution))
+        log.info("ULFRBD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
         # All centers are staged so solve them
         self.lt_ULFRB_centers_solve.solve()
-        log.info("Took %d steps to solve ULFRBD centers" % len(self.solution))
-        #self.print_cube()
-        #sys.exit(0)
+        log.info("ULFRBD centers solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def find_moves_to_stage_slice_backward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)

@@ -2164,6 +2164,7 @@ class LookupTable(object):
         self.sides_FB = (self.parent.sideF, self.parent.sideB)
         self.filename = filename
         self.filename_hash = filename + '.hash'
+        self.filename_hash_gz = self.filename_hash + '.gz'
         self.filename_gz = filename + '.gz'
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
         self.filename_exists = False
@@ -2178,6 +2179,10 @@ class LookupTable(object):
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
         assert self.modulo, "%s modulo is %s" % (self, self.modulo)
+
+        if not os.path.exists(self.filename_hash) and os.path.exists(self.filename_hash_gz):
+            log.warning("gunzip %s" % self.filename_hash_gz)
+            subprocess.call(['gunzip', self.filename_hash_gz])
 
         # If the user just git cloned the repo all of the lookup tables will still be gzipped
         if not os.path.exists(self.filename_hash):

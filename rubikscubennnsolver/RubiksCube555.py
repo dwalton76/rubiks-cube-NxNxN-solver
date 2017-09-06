@@ -75,14 +75,14 @@ class RubiksCube555(RubiksCube):
                                                  '555-UD-T-centers-stage',
                                                  '174000000000ba',
                                                  True, # state_hex
-                                                 modulo=12870)
+                                                 linecount=12870)
 
         self.lt_UD_X_centers_stage = LookupTable(self,
                                                  'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
                                                  '555-UD-X-centers-stage',
                                                  '2aa00000000155',
                                                  True, # state_hex
-                                                 modulo=12870)
+                                                 linecount=12870)
 
         '''
         There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
@@ -130,7 +130,7 @@ class RubiksCube555(RubiksCube):
                                                  # prune tables
                                                  (self.lt_UD_T_centers_stage,
                                                   self.lt_UD_X_centers_stage),
-                                                 modulo=24656573)
+                                                 linecount=24656573)
 
         '''
         lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt
@@ -150,7 +150,7 @@ class RubiksCube555(RubiksCube):
                                                              '555-LR-centers-stage-on-LFRB-x-center-only',
                                                              'aa802aa00',
                                                              True, # state_hex
-                                                             modulo=12870)
+                                                             linecount=12870)
 
         '''
         lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt
@@ -172,7 +172,7 @@ class RubiksCube555(RubiksCube):
                                                              '555-LR-centers-stage-on-LFRB-t-center-only',
                                                              '5d0017400',
                                                              True, # state_hex
-                                                             modulo=12870)
+                                                             linecount=12870)
 
         '''
         Stage LR centers to sides L or R, this will automagically stage
@@ -215,7 +215,7 @@ class RubiksCube555(RubiksCube):
                                                   # prune tables
                                                   (self.lt_LR_centers_stage_x_center_only,
                                                    self.lt_LR_centers_stage_t_center_only),
-                                                  modulo=3805239)
+                                                  linecount=3805239)
 
         '''
         This tables solves sides U and L which in turn also solve D and R.  When
@@ -246,7 +246,7 @@ class RubiksCube555(RubiksCube):
                                                '555-UL-centers-solve-on-all',
                                                '3ffff000000000',
                                                True, # state_hex
-                                               modulo=24010000)
+                                               linecount=24010000)
 
         '''
         Would be 117,649,000,000...I built it 7-deep.
@@ -276,7 +276,7 @@ class RubiksCube555(RubiksCube):
 
                                                     # prune tables
                                                     (self.lt_UL_centers_solve,),
-                                                    modulo=13684136)
+                                                    linecount=13684136)
 
         '''
         lookup-table-5x5x5-step90-edges-slice-forward.txt
@@ -296,7 +296,7 @@ class RubiksCube555(RubiksCube):
                                                  '555-edges-slice-forward',
                                                  'TBD',
                                                  False, # state hex
-                                                 modulo=7920)
+                                                 linecount=7920)
 
         '''
         lookup-table-5x5x5-step91-edges-slice-backward.txt
@@ -317,7 +317,7 @@ class RubiksCube555(RubiksCube):
                                                   '555-edges-slice-backward',
                                                   'TBD',
                                                   False, # state hex
-                                                  modulo=7919)
+                                                  linecount=7919)
 
     def fake_move_UD_to_UFDB(self):
 

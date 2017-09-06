@@ -29,3 +29,17 @@ Prevent OLL and avoid PLL (most of the time)
 6x6x6 avg centers solution 106.0 steps
 6x6x6 avg edges solution 86.0 steps
 
+
+6x6x6 step20 speed improvement
+==============================
+Adds a few steps but that phase used to take 4 minutes for some cubes!!
+The times below are for 50 cubes.  I never timed 6x6x6 before becaues they
+toook so long to solve.
+
+6x6x6 avg centers solution 118.0 steps
+6x6x6 avg edges solution 86.0 steps
+6x6x6 avg solution 226.0 steps
+6x6x6 min solution 205 steps (DUBFRFDLLFFRFBLRBFBFUDRRBBRRUBUUDDDFUDDUUDFUBFRBFRFLLRFBLRBRFUFRRDDLLDULFFLBRRLDRDBRULRRULFULFDDFDDDDLULBLLLBBUBBBBDULRULRDDDFUFBUFLDBBBFRLUDRUDRBDLULDLLLLDFUBFDLRUDUURLBULFDUFRURRRFUUBBRRDUFLDLFUFRBRBBDBRLBFUFFFUBLB)
+6x6x6 max solution 243 steps (FLBRDBLUUDLFDFURLRUFLLBUBBUUFBUFRFRLDLLFDRRFDLLUFUBDRLBFRDBFBFRBBRUUDRRRBUDUUBRRRRUFLDUDUUBBUURDDULBRDDBFFFFLDDRLRLDRUUFLFFBDRBLFBRULFDRBBLFDDDFLUFBURFDDLRBBBFDLFUFLRUULBFLLLUURDBFDRULFUBRDDDRBFFRURLBLBLLUDBFLDDRBLDB)
+
+73.27user 1.35system 1:18.88elapsed 94%CPU (0avgtext+0avgdata 48236maxresident)k

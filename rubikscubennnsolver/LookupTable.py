@@ -3,7 +3,6 @@ import datetime as dt
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.rotate_xxx import rotate_222, rotate_444, rotate_555, rotate_666, rotate_777
-from pyhashxx import hashxx
 from subprocess import check_output
 import json
 import logging
@@ -2154,7 +2153,7 @@ state_functions = {
 
 class LookupTable(object):
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, modulo, max_depth=None):
+    def __init__(self, parent, filename, state_type, state_target, state_hex, linecount, max_depth=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.sides_LFRB = (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB)
@@ -2163,12 +2162,10 @@ class LookupTable(object):
         self.sides_LR = (self.parent.sideL, self.parent.sideR)
         self.sides_FB = (self.parent.sideF, self.parent.sideB)
         self.filename = filename
-        self.filename_hash = filename + '.hash'
-        self.filename_hash_gz = self.filename_hash + '.gz'
         self.filename_gz = filename + '.gz'
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
         self.filename_exists = False
-        self.modulo = modulo
+        self.linecount = linecount
         self.max_depth = max_depth
         self.record_stats = False
         self.heuristic_stats = {}
@@ -2178,89 +2175,78 @@ class LookupTable(object):
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
-        assert self.modulo, "%s modulo is %s" % (self, self.modulo)
+        assert self.linecount, "%s linecount is %s" % (self, self.linecount)
 
-        if not os.path.exists(self.filename_hash) and os.path.exists(self.filename_hash_gz):
-            log.warning("gunzip %s" % self.filename_hash_gz)
-            subprocess.call(['gunzip', self.filename_hash_gz])
+        # No longer used so we can delete them
+        filename_hash = filename + '.hash'
+        if os.path.exists(filename_hash):
+            os.unlink(filename_hash)
 
-        # If the user just git cloned the repo all of the lookup tables will still be gzipped
-        if not os.path.exists(self.filename_hash):
-            if not os.path.exists(self.filename):
-                if not os.path.exists(self.filename_gz):
+        if not os.path.exists(self.filename):
+            if not os.path.exists(self.filename_gz):
 
-                    # Special cases where I could not get them one under 100M so I split it via:
-                    # split -b 70m lookup-table-4x4x4-step70-phase3-tsai.txt.gz "lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-"
-                    if self.filename_gz == 'lookup-table-4x4x4-step70-phase3-tsai.txt.gz':
+                # Special cases where I could not get them one under 100M so I split it via:
+                # split -b 70m lookup-table-4x4x4-step70-phase3-tsai.txt.gz "lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-"
+                if self.filename_gz == 'lookup-table-4x4x4-step70-phase3-tsai.txt.gz':
 
-                        # Download part-aa
-                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa" %\
-                            (self.parent.size, self.parent.size, self.parent.size)
+                    # Download part-aa
+                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa" %\
+                        (self.parent.size, self.parent.size, self.parent.size)
+                    log.info("Downloading table via 'wget %s'" % url)
+                    subprocess.call(['wget', url])
+
+                    # Download part-ab
+                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab" %\
+                        (self.parent.size, self.parent.size, self.parent.size)
+                    log.info("Downloading table via 'wget %s'" % url)
+                    subprocess.call(['wget', url])
+
+                    subprocess.call('cat lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-* > lookup-table-4x4x4-step70-phase3-tsai.txt.gz', shell=True)
+                    os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa')
+                    os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab')
+
+                elif self.filename_gz == 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz':
+
+                    # Download all three parts
+                    for extension in ('aa', 'ab', 'ac'):
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-%s" %\
+                            (self.parent.size, self.parent.size, self.parent.size, extension)
                         log.info("Downloading table via 'wget %s'" % url)
                         subprocess.call(['wget', url])
 
-                        # Download part-ab
-                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab" %\
-                            (self.parent.size, self.parent.size, self.parent.size)
+                    subprocess.call('cat lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-* > lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz', shell=True)
+                    os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-aa')
+                    os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
+                    os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
+
+                elif self.filename_gz == 'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz':
+
+                    # Download all three parts
+                    for extension in ('aa', 'ab', 'ac'):
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-%s" %\
+                            (self.parent.size, self.parent.size, self.parent.size, extension)
                         log.info("Downloading table via 'wget %s'" % url)
                         subprocess.call(['wget', url])
 
-                        subprocess.call('cat lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-* > lookup-table-4x4x4-step70-phase3-tsai.txt.gz', shell=True)
-                        os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa')
-                        os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab')
+                    subprocess.call('cat lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-* > lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz', shell=True)
+                    os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-aa')
+                    os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
+                    os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
 
-                    elif self.filename_gz == 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz':
+                else:
+                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
+                    log.info("Downloading table via 'wget %s'" % url)
+                    subprocess.call(['wget', url])
 
-                        # Download all three parts
-                        for extension in ('aa', 'ab', 'ac'):
-                            url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-%s" %\
-                                (self.parent.size, self.parent.size, self.parent.size, extension)
-                            log.info("Downloading table via 'wget %s'" % url)
-                            subprocess.call(['wget', url])
+            log.warning("gunzip %s" % self.filename_gz)
+            subprocess.call(['gunzip', self.filename_gz])
 
-                        subprocess.call('cat lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-* > lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz', shell=True)
-                        os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-aa')
-                        os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
-                        os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
-
-                    elif self.filename_gz == 'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz':
-
-                        # Download all three parts
-                        for extension in ('aa', 'ab', 'ac'):
-                            url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-%s" %\
-                                (self.parent.size, self.parent.size, self.parent.size, extension)
-                            log.info("Downloading table via 'wget %s'" % url)
-                            subprocess.call(['wget', url])
-
-                        subprocess.call('cat lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-* > lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz', shell=True)
-                        os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-aa')
-                        os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
-                        os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
-
-                    else:
-                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
-                        log.info("Downloading table via 'wget %s'" % url)
-                        subprocess.call(['wget', url])
-
-                log.warning("gunzip %s" % self.filename_gz)
-                subprocess.call(['gunzip', self.filename_gz])
-
-            # Now create a .hash copy of the lookup table
-            self.convert_file_to_hash()
-            os.unlink(self.filename)
-
-        # Find the state_width for the entries in our .hash file
-        with open(self.filename_hash, 'r') as fh:
+        # Find the state_width for the entries in our .txt file
+        with open(self.filename, 'r') as fh:
             first_line = next(fh)
             self.width = len(first_line)
-
-            # Now that the files are hashed the first line may not have an entry
-            while ':' not in first_line:
-                first_line = next(fh)
-
-            for state_steps in first_line.split(','):
-                (state, steps) = state_steps.split(':')
-                self.state_width = len(state)
+            (state, steps) = first_line.split(':')
+            self.state_width = len(state)
 
         self.filename_exists = True
         self.state_type = state_type
@@ -2275,110 +2261,10 @@ class LookupTable(object):
 
         self.state_hex = state_hex
         self.cache = {}
-        self.fh_hash = open(self.filename_hash, 'r')
+        self.fh_txt = open(self.filename, 'r')
 
     def __str__(self):
         return self.desc
-
-    def convert_file_to_hash(self):
-        log.warning("%s: converting to a .hash file, we only need to do this the first time you run the solver" % self.filename)
-
-        linecount = int(check_output(('wc', '-l', self.filename)).strip().split()[0])
-        assert linecount == self.modulo, "linecount %d, modulo %d...linecount and modulo must match" % (linecount, self.modulo)
-
-        log.info("%s: hash table will have %d buckets" % (self.filename, linecount))
-        bucket_str_len = len(str(linecount))
-
-        # TODO batch these fh writes
-        with open('/tmp/%s' % self.filename, 'w') as fh_tmp:
-            with open(self.filename, 'r') as fh:
-                for line in fh:
-                    line = line.rstrip()
-                    (state, steps) = line.split(':')
-                    hash_index = hashxx(state) % linecount
-                    fh_tmp.write("%s:%s\n" % (str(hash_index).zfill(bucket_str_len), line))
-
-        log.info("%s: sort tmp file" % self.filename)
-        subprocess.call(('sort', '--output=/tmp/%s' % self.filename, '/tmp/%s' % self.filename))
-
-        # TODO batch these fh writes
-        log.info("%s: write .hash file" % self.filename)
-        with open('/tmp/%s' % self.filename, 'r') as fh_tmp:
-            with open(self.filename_hash, 'w') as fh_hash:
-                prev_hash_index = None
-                first_hash_index = None
-                to_write = []
-
-                for line in fh_tmp:
-                    line = line.strip()
-                    (hash_index, state, step) = line.split(':')
-                    hash_index = int(hash_index)
-
-                    if first_hash_index is None:
-                        first_hash_index = hash_index
-                        for x in range(first_hash_index):
-                            fh_hash.write("\n")
-
-                    # write to filename_hash
-                    if prev_hash_index is not None and hash_index != prev_hash_index:
-                        fh_hash.write(','.join(to_write) + '\n')
-                        to_write = []
-
-                        # write a blank line for any hash_index that did not have an entry
-                        for x in range(hash_index - prev_hash_index - 1):
-                            #log.info("%s: hash_index %d, prev_hash_index %d, write blank line" % (self, hash_index, prev_hash_index))
-                            fh_hash.write("\n")
-
-                    to_write.append("%s:%s" % (state, step))
-                    prev_hash_index = hash_index
-
-                if to_write:
-                    fh_hash.write(','.join(to_write) + '\n')
-                    to_write = []
-
-        # Now pad the .hash file so that all lines are the same length
-        log.info("%s: pad .hash lines to be the same width" % self.filename)
-        filename_pad = self.filename_hash + '.pad'
-        max_length = 0
-
-        with open(self.filename_hash, 'r') as fh:
-            for line in fh:
-                length = len(line.strip())
-                if length > max_length:
-                    max_length = length
-
-        # TODO batch these fh writes
-        log.info("%s: longest .hash line is %d characters" % (self.filename, max_length))
-        with open(filename_pad, 'w') as fh_pad:
-            with open(self.filename_hash, 'r') as fh:
-                for line in fh:
-                    line = line.strip()
-                    length = len(line)
-                    spaces_to_add = max_length - length
-
-                    if spaces_to_add:
-                        line = line + ' ' * spaces_to_add
-                    fh_pad.write(line + '\n')
-        shutil.move(filename_pad, self.filename_hash)
-
-    def preload_cache(self):
-        log.info("%s: pre-loading begin" % self)
-        line_number = 0
-        with open(self.filename_hash, 'r') as fh:
-            for line in fh:
-                line = line.strip()
-
-                if line:
-                    for state_steps_tuple in line.split(','):
-                        #log.info("FOO: %s" % state_steps_tuple)
-                        (state, steps) = state_steps_tuple.split(':')
-                        self.cache[state] = steps.split()
-
-                if line_number % 1000000 == 0:
-                    log.info("%s: pre-loading line %d" % (self, line_number))
-                line_number += 1
-        log.info("%s: pre-loading end" % self)
-        self.preloaded_cache = True
 
     def state(self):
         state_function = state_functions.get(self.state_type)
@@ -2399,6 +2285,33 @@ class LookupTable(object):
 
         return state
 
+    def binary_search(self, state_to_find):
+        # dwalton here now
+        first = 0
+        last = self.linecount - 1
+        found = False
+
+        while first <= last and not found:
+            midpoint = int((first + last)/2)
+            self.fh_txt.seek(midpoint * self.width)
+            line = self.fh_txt.readline().rstrip()
+
+            try:
+                (state, steps) = line.split(':')
+            except Exception:
+                log.warning("%s: midpoint %d, width %d, state_to_find %s, line %s" % (self, midpoint, self.width, state_to_find, line))
+                raise
+
+            if state == state_to_find:
+                return line
+            else:
+                if state_to_find < state:
+                    last = midpoint-1
+                else:
+                    first = midpoint+1
+
+        return None
+
     def steps(self, state_to_find=None):
         """
         Return a list of the steps found in the lookup table for the current cube state
@@ -2415,13 +2328,7 @@ class LookupTable(object):
             if self.preloaded_cache:
                 return None
 
-            # We use the hash_index as our line number in the file
-            hash_index = hashxx(state_to_find) % self.modulo
-
-            # Now seek in that many bytes in the .hash file and read that line
-            self.fh_hash.seek(hash_index * self.width)
-            line = self.fh_hash.readline().rstrip()
-            #log.info("%s: file %s, hash_index %s, state %s, line %s" % (self, self.filename_hash, hash_index, state_to_find, line))
+            line = self.binary_search(state_to_find)
 
             if not line:
                 self.cache[state_to_find] = None
@@ -2435,16 +2342,9 @@ class LookupTable(object):
                     raise
 
                 if state == state_to_find:
-                    #log.info("%s: state %s, hash_index %s, steps %s" % (self, state, hash_index, steps))
                     steps_list = steps.split()
                     self.cache[state_to_find] = steps_list
                     return steps_list
-
-                # The states on the line are sorted so stop looking if we know
-                # there isn't going to be a match
-                # TODO uncomment this once everything is working
-                #if state_to_find < state:
-                #    return None
 
             self.cache[state_to_find] = None
             return None
@@ -2476,17 +2376,13 @@ class LookupTable(object):
 
 
 class LookupTableIDA(LookupTable):
-    """
-    """
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, modulo):
-        assert modulo, "%s modulo is %s" % (self, self.modulo)
-        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, modulo)
+    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, linecount):
+        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, linecount)
         self.moves_all = moves_all
         self.moves_illegal = moves_illegal
         self.prune_tables = prune_tables
         self.visited_states = set()
-        assert self.modulo, "%s modulo is %s" % (self, self.modulo)
 
         for x in self.moves_illegal:
             if x not in self.moves_all:
@@ -2518,7 +2414,7 @@ class LookupTableIDA(LookupTable):
                 len_pt_steps = pt.max_depth + 1
 
             else:
-                raise SolveError("%s does not have max_depth and does not have steps for %s, hash index %d, state_width %d" % (pt, pt_state, hashxx(pt_state) % pt.modulo, pt.state_width))
+                raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (pt, pt_state, pt.state_width))
 
             results[pt.filename] = len_pt_steps
 
@@ -2560,7 +2456,7 @@ class LookupTableIDA(LookupTable):
                     log.info("%s: pt_state %s, cost %d (max depth)" % (pt, pt_state, len_pt_steps))
 
             else:
-                raise SolveError("%s does not have max_depth and does not have steps for %s, hash index %d, state_width %d" % (pt, pt_state, hashxx(pt_state) % pt.modulo, pt.state_width))
+                raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (pt, pt_state, pt.state_width))
 
             if self.heuristic_stats:
                 pt_costs.append(len_pt_steps)
@@ -2690,20 +2586,6 @@ class LookupTableIDA(LookupTable):
                                     entry['lookup-table-4x4x4-step72-phase3-centers-tsai.txt'],
                                     entry['actual-cost']))
 
-                            elif self.filename == 'lookup-table-5x5x5-step10-UD-centers-stage.txt':
-                                fh.write("%s,%d,%d,%d\n" % (
-                                    entry['state'],
-                                    entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
-                                    entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
-                                    entry['actual-cost']))
-
-                            elif self.filename == 'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt':
-                                fh.write("%s,%d,%d,%d\n" % (
-                                    entry['state'],
-                                    entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
-                                    entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
-                                    entry['actual-cost']))
-
                     self.parent.state = final_state[:]
                     self.parent.solution = final_solution[:]
 
@@ -2737,6 +2619,9 @@ class LookupTableIDA(LookupTable):
 
             if self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:]):
                 return True
+
+        self.parent.state = prev_state[:]
+        return False
 
     def solve(self, max_ida_threshold=99):
         """

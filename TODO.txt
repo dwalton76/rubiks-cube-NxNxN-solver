@@ -1,45 +1,7 @@
 
+
 - file issues for everything in this file and delete the file
 - file issues for every TODO in the code
-
-- file an issue for this to document it and close it
-6x6x6 step60 to use FB prune table to avoid "speed up IDA" call
-
-Today for 6x6x6 step60 we "solve" the self.lt_LR_solve_inner_x_centers_and_oblique_edges
-prune table to speed up the IDA search. When solving this prune table the IDA search is
-under 1s for cube RBULFLLLDUFRLLDUFBFUUBUBFBFLLBUFDDFBRLRRDBRFUURUBURRBRBRUFBFLFDLRUBRUDFLLDLLLULBLDDBBLRRDDDLDLFDRUBUDDFRDBRRDDFUFDFLRRRULRUDFFRRFBLFDURBRRFUFLBFFBFRDBBBUFBDUDBLFLUBFLFRFDBDUBDBUULLDUBRDULFFRLUDBBDBLUDFLDBLDLRUUUUFRRR
-but if we don't solve the prune table first then IDA takes 3min 53s. I built
-a self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve prune table but
-that only brought the time down to 3m 3s.
-
-So long story short, in order to produce a solution in a reasonable amount of time we
-need to solve that LR prune table.
-
-
-
-
-
-4x4x4
-=====
-lookup-table-4x4x4-step70-phase3-tsai.txt
-- build this 8-deep with symmetry
-
-
-6x6x6
-=====
-self.lt_UD_oblique_edge_pairing
-- self.lt_UD_oblique_edge_pairing.record_stats to True
-- self.lt_UD_oblique_edge_pairing.heuristic_stats = {}
-- test against utils/test_cubes.json.huge
-- this one will take a few days to run
-- update heuristics_stats
-
-
-self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve
-- build a .stats file to create a heuristic_stats dictionary
-- then remove the "speed up IDA" call where we solve a prune table
-- test this on RBULFLLLDUFRLLDUFBFUUBUBFBFLLBUFDDFBRLRRDBRFUURUBURRBRBRUFBFLFDLRUBRUDFLLDLLLULBLDDBBLRRDDDLDLFDRUBUDDFRDBRRDDFUFDFLRRRULRUDFFRRFBLFDURBRRFUFLBFFBFRDBBBUFBDUDBLFLUBFLFRFDBDUBDBUULLDUBRDULFFRLUDBBDBLUDFLDBLDLRUUUUFRRR this one takes FOREVER if you chop the "speed up IDA" call
-- need to build the step60 table out 11-deep to try to speed this up
 
 
 7x7x7
@@ -52,18 +14,3 @@ self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve
 NxNxN
 =====
 - work on centers for 14x14x14
-
-
-www
-===
-DONE - need an arrow that loads the next step of instructions
-- highlight the face/rows that you should be turning
-- have a play/pause button so that it auto increments every 5s
-
-
-
-IDA on step20 takes 4min 40s!! :(
-FUDDBRRFLLDUBRDRFFRUBRDLRLDRLLFDLBDDBFDLFFRUDULRDLLFDDFUDBFBDUULUUBFFUBRDRULRLUDBLDBURDFBBBRUBBRLDDUBBBLFRFLRBUBDUBLFBRLFLFBUDRBDUURFRBDRUFDRRDDUUUFULFFRFFLUBLUDFFRRFRUDBFFRDURDLLUDULBLRBFFFBRRULLLLLLURDDFURBBFBLUBBL
-
-IDA on step20 takes 15s
-LDBRRFDFDLLBFFUUULFFLFDRLBRBUUBFDLLULFBFRDUFDRBRBLBFRURBRRUDUDBRUBFULUDDRURUBBRDRUFBDFLBURDLFLDUDFRLRBLBDDRUDDBFFLFDFURLFFULLBLDUBLBFBBUUFFLLFBBFFURDUULLDBFLRRDBLUFDDLBBRBURRRLBRLBRUDULDDUBULRLFDBRFFFFRBRRLDDDLRDUDUU

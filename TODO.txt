@@ -1,9 +1,26 @@
 
+- file issues for everything in this file and delete the file
+- file issues for every TODO in the code
+
+- file an issue for this to document it and close it
+6x6x6 step60 to use FB prune table to avoid "speed up IDA" call
+
+Today for 6x6x6 step60 we "solve" the self.lt_LR_solve_inner_x_centers_and_oblique_edges
+prune table to speed up the IDA search. When solving this prune table the IDA search is
+under 1s for cube RBULFLLLDUFRLLDUFBFUUBUBFBFLLBUFDDFBRLRRDBRFUURUBURRBRBRUFBFLFDLRUBRUDFLLDLLLULBLDDBBLRRDDDLDLFDRUBUDDFRDBRRDDFUFDFLRRRULRUDFFRRFBLFDURBRRFUFLBFFBFRDBBBUFBDUDBLFLUBFLFRFDBDUBDBUULLDUBRDULFFRLUDBBDBLUDFLDBLDLRUUUUFRRR
+but if we don't solve the prune table first then IDA takes 3min 53s. I built
+a self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve prune table but
+that only brought the time down to 3m 3s.
+
+So long story short, in order to produce a solution in a reasonable amount of time we
+need to solve that LR prune table.
+
+
+
+
+
 4x4x4
 =====
-lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
-- build this 7-deep with symmetry
-
 lookup-table-4x4x4-step70-phase3-tsai.txt
 - build this 8-deep with symmetry
 

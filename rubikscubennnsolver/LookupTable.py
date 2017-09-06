@@ -2456,6 +2456,7 @@ class LookupTableIDA(LookupTable):
                     log.info("%s: pt_state %s, cost %d (max depth)" % (pt, pt_state, len_pt_steps))
 
             else:
+                self.parent.print_cube()
                 raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (pt, pt_state, pt.state_width))
 
             if self.heuristic_stats:

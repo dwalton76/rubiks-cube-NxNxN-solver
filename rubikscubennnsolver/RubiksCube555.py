@@ -354,12 +354,12 @@ class RubiksCube555(RubiksCube):
                     if not t_fake_move_count:
                         break
 
-    def group_centers_guts(self):
-        self.lt_init()
-        self.rotate_U_to_U()
+    def group_centers_stage_UD(self):
+        """
+        Stage UD centers...see the comments where self.lt_UD_centers_stage is created for
+        an explanation on what is going on here
+        """
 
-        # Stage UD centers...see the comments where self.lt_UD_centers_stage is created for
-        # an explanation on what is going on here
         for x in range(2):
             original_state = self.state[:]
             original_solution = self.solution[:]
@@ -380,6 +380,13 @@ class RubiksCube555(RubiksCube):
             else:
                 self.rotate_y_reverse()
         log.info("UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
+    def group_centers_guts(self):
+        self.lt_init()
+        self.rotate_U_to_U()
+
+        # Stage UD centers
+        self.group_centers_stage_UD()
 
         # Stage LR centers
         self.lt_LR_centers_stage.solve()

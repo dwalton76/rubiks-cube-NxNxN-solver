@@ -1655,9 +1655,23 @@ class RubiksCube555(RubiksCube):
         # there isn't any point in continuing down this branch so prune it and save
         # some CPU cycles.
         #
-        # I use 3.0 here just to make it run faster...this adds a few moves but
-        # it runs about 4x faster than using 2.5
-        estimate_per_wing = 3.0
+        # Whether we use 2.5, 3.0, or 3.5 makes a big differnce in how fast the
+        # solver runs and how short the solution is. All of the data below is from
+        # running the solver on my laptop.
+        #
+        #   For 5x5x5 test with 2.5 takes 16m 36s to solve 50 cubes, avg solution 120 steps
+        #   For 5x5x5 test with 3.0 takes 1m 44s to solve 50 cubes, avg solution 125 steps
+        #   For 5x5x5 test with 3.1 takes 2m 01s to solve 50 cubes, avg solution 126 steps
+        #   For 5x5x5 test with 3.2 takes 1m 10s to solve 50 cubes, avg solution 127 steps
+        #   For 5x5x5 test with 3.3 takes 52s to solve 50 cubes, avg solution 127 steps
+        #   For 5x5x5 test with 3.4 takes 35s to solve 50 cubes, avg solution 129 steps
+        #   For 5x5x5 test with 3.5 takes 30s to solve 50 cubes, avg solution 131 steps
+        #
+        #   For our default 7x7x7 cube with 2.5 it takes 13.1s,110/300 edge/total steps
+        #   For our default 7x7x7 cube with 3.0 it takes 6.8s, 125/315 edge/total steps
+        #   For our default 7x7x7 cube with 3.4 it takes 1.7s, 135/327 edge/total steps
+        #   For our default 7x7x7 cube with 3.5 it takes 1.7s, 135/327 edge/total steps
+        estimate_per_wing = 3.4
 
         # 9 moves is the least number of moves I know of that will pair the last 2 wings
         if pre_non_paired_wings_count == 2:

@@ -2576,7 +2576,8 @@ class RubiksCube444(RubiksCube):
         # steps plus 2 * pre_non_paired_wings_count is greater than our current minimum
         # there isn't any point in continuing down this branch so prune it and save
         # some CPU cycles.
-        estimated_solution_len = edge_solution_len + (2 * pre_non_paired_wings_count)
+        estimate_per_wing = 2.0
+        estimated_solution_len = edge_solution_len + (estimate_per_wing * pre_non_paired_wings_count)
 
         if estimated_solution_len >= self.min_edge_solution_len:
             #log.warning("PRUNE: %s + (2 * %d) > %s" % (edge_solution_len, non_paired_wings_count, self.min_edge_solution_len))

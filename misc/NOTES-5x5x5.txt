@@ -225,3 +225,16 @@ estimate_per_wing from 3.5 to 3.0
 
 96.10user 2.05system 1:40.44elapsed 97%CPU (0avgtext+0avgdata 196336maxresident)k
 
+
+5x5x5 step10 speed improvement
+==============================
+Adds a few steps but step10 used to take 30s for some cubes and it cut that to < 1s
+
+5x5x5 avg centers solution 41.0 steps
+5x5x5 avg edges solution 62.0 steps
+5x5x5 avg solution 125.0 steps
+5x5x5 min solution 108 steps (LBFFUUFLULDFURFBDUDLDRBRRBDDBRDDBDBFFRRLDRRFRBBDLRFUUDDURUBLRBFDRUBDLRUUBDLFRRBUDBURUBDDFRUURRFFRDFUDLBDRFBLLFFFLLURUULFLLLFLBRLUBLFBLDULBDUFUBFBFLLBD)
+5x5x5 max solution 136 steps (FFULRLRDRUBDUUULUBDRBDBDFDBFBFDBUUBRURBDULBUBURLRDLLLFLBDBFRFFFRFFBRBRLUBBFBLRDRLDLLDLFDFDULLRFBFDFBLBUBDUDDRDURLRDRUDFRUFFDUDULDUUBLFFBFBLRRLUFURLRLR)
+
+103.49user 1.64system 1:48.30elapsed 97%CPU (0avgtext+0avgdata 46208maxresident)k
+

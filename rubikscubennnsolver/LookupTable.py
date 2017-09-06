@@ -2690,20 +2690,6 @@ class LookupTableIDA(LookupTable):
                                     entry['lookup-table-4x4x4-step72-phase3-centers-tsai.txt'],
                                     entry['actual-cost']))
 
-                            elif self.filename == 'lookup-table-5x5x5-step10-UD-centers-stage.txt':
-                                fh.write("%s,%d,%d,%d\n" % (
-                                    entry['state'],
-                                    entry['lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt'],
-                                    entry['lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt'],
-                                    entry['actual-cost']))
-
-                            elif self.filename == 'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt':
-                                fh.write("%s,%d,%d,%d\n" % (
-                                    entry['state'],
-                                    entry['lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt'],
-                                    entry['lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt'],
-                                    entry['actual-cost']))
-
                     self.parent.state = final_state[:]
                     self.parent.solution = final_solution[:]
 
@@ -2737,6 +2723,9 @@ class LookupTableIDA(LookupTable):
 
             if self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:]):
                 return True
+
+        self.parent.state = prev_state[:]
+        return False
 
     def solve(self, max_ida_threshold=99):
         """

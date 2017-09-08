@@ -2576,7 +2576,12 @@ class RubiksCube444(RubiksCube):
         # steps plus 2 * pre_non_paired_wings_count is greater than our current minimum
         # there isn't any point in continuing down this branch so prune it and save
         # some CPU cycles.
-        estimate_per_wing = 2.0
+
+        if self.ev3:
+            estimate_per_wing = 3.0
+        else:
+            estimate_per_wing = 2.0
+
         estimated_solution_len = edge_solution_len + (estimate_per_wing * pre_non_paired_wings_count)
 
         if estimated_solution_len >= self.min_edge_solution_len:

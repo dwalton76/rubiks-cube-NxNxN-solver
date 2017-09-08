@@ -1671,7 +1671,11 @@ class RubiksCube555(RubiksCube):
         #   For our default 7x7x7 cube with 3.0 it takes 6.8s, 125/315 edge/total steps
         #   For our default 7x7x7 cube with 3.4 it takes 1.7s, 135/327 edge/total steps
         #   For our default 7x7x7 cube with 3.5 it takes 1.7s, 135/327 edge/total steps
-        estimate_per_wing = 3.4
+
+        if self.ev3:
+            estimate_per_wing = 4.0
+        else:
+            estimate_per_wing = 3.4
 
         # 9 moves is the least number of moves I know of that will pair the last 2 wings
         if pre_non_paired_wings_count == 2:

@@ -353,6 +353,7 @@ class RubiksCube(object):
         self.lt_init_called = False
         self.orient_edges = {}
         self.use_tsai = False
+        self.ev3 = False
 
         if colormap:
             colormap = json.loads(colormap)

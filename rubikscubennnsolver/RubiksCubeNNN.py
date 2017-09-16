@@ -31,7 +31,7 @@ class RubiksCubeNNNEven(RubiksCube):
 
         # Group UD centers
         # - create a fake 6x6x6 to solve the inside 4x4 block
-        fake_666 = RubiksCube666(solved_6x6x6)
+        fake_666 = RubiksCube666(solved_6x6x6, 'URFDLB')
         start_666 = 0
         start_NNN = 0
 
@@ -89,10 +89,10 @@ class RubiksCubeNNNEven(RubiksCube):
         self.print_cube()
 
         # still more work to do here so go ahead and exit
-        sys.exit(0)
+        #sys.exit(0)
 
     def pair_inside_edges_via_444(self):
-        fake_444 = RubiksCube444(solved_4x4x4)
+        fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
         fake_444.lt_init()
 
         # The corners don't matter but it does make troubleshooting easier if they match
@@ -230,7 +230,7 @@ class RubiksCubeNNNEven(RubiksCube):
 
     def pair_edge_orbit_via_555(self, orbit):
         log.warning("pair_edge_orbit_via_555 for %d" % orbit)
-        fake_555 = RubiksCube555(solved_5x5x5)
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.lt_init()
 
         # The corners don't matter but it does make troubleshooting easier if they match
@@ -398,7 +398,6 @@ class RubiksCubeNNNEven(RubiksCube):
 
         self.print_cube()
         fake_555.print_cube()
-        #sys.exit(0)
         fake_555.avoid_pll = False
         fake_555.group_edges()
 
@@ -447,4 +446,3 @@ class RubiksCubeNNNEven(RubiksCube):
 
         log.info("Edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
-        sys.exit(0)

@@ -354,6 +354,7 @@ class RubiksCube(object):
         self.orient_edges = {}
         self.use_tsai = False
         self.ev3 = False
+        self.best = False
 
         if colormap:
             colormap = json.loads(colormap)
@@ -3170,7 +3171,7 @@ class RubiksCube(object):
             raise ImplementThis("pll")
         else:
             self.print_cube()
-            raise Exception("we should not be here")
+            raise SolveError("we should not be here")
 
         if self.state[self.sideF.edge_north_pos[0]] == 'F':
             raise SolveError("F-north should have PLL edge")
@@ -3829,8 +3830,8 @@ class RubiksCube(object):
                     log.info("")
                     self.group_centers_guts()
 
-                    if not self.centers_solved():
-                        raise SolveError("centers should be solved but they are not")
+                    #if not self.centers_solved():
+                    #    raise SolveError("centers should be solved but they are not")
 
                     # Prefer solutions that do not lead to OLL parity. Note that we do not do this
                     # for anything larger than 4x4x4 because it takes too long to compute multiple
@@ -3888,7 +3889,7 @@ class RubiksCube(object):
                     # We can compute solutions for 4x4x4 centers without using IDA so
                     # those are very fast, keep exploring 4x4x4 solutions until we find
                     # one that is free of OLL.
-                    if min_solution_length is not None:
+                    if min_solution_length is not None and not self.best:
                         if min_solution_leads_to_oll:
                             if self.size == 4:
                                 min_solution_length = None
@@ -3897,10 +3898,10 @@ class RubiksCube(object):
                         else:
                             break
 
-                if min_solution_length is not None:
+                if min_solution_length is not None and not self.best:
                     break
 
-            if min_solution_length is not None:
+            if min_solution_length is not None and not self.best:
                 break
 
         if min_solution_length is None:

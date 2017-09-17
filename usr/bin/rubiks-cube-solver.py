@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """
 Solve any size rubiks cube:
@@ -175,8 +175,8 @@ try:
     for (i, step) in enumerate(solution):
 
         if args.print_steps:
-            print("Phase     : %s" % cube.phase())
-            print("Move %d/%d: %s" % (i+1, len_steps, step))
+            print(("Phase     : %s" % cube.phase()))
+            print(("Move %d/%d: %s" % (i+1, len_steps, step)))
 
         cube.rotate(step)
 
@@ -206,5 +206,5 @@ except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
     cube.print_cube_layout()
     cube.print_cube()
     cube.print_solution()
-    print(cube.get_kociemba_string(True))
+    print((cube.get_kociemba_string(True)))
     raise

@@ -629,7 +629,7 @@ class RubiksCube555(RubiksCube):
         """
         Rotate an unpaired wing to the bottom of F-east (one that can be sliced back)
         """
-        for x in xrange(3):
+        for x in range(3):
             if self.state[65] == self.state[70] and self.state[86] == self.state[91]:
                 self.rotate_y()
             else:

@@ -51,25 +51,25 @@ def get_cube_layout(size):
     indent = ((digits_size * size) + size + 1) * ' '
     rows = size * 3
 
-    for row in xrange(1, rows + 1):
+    for row in range(1, rows + 1):
         line = []
 
         if row <= size:
             line.append(indent)
-            for col in xrange(1, size + 1):
+            for col in range(1, size + 1):
                 line.append(digits_format % square_index)
                 square_index += 1
 
         elif row > rows - size:
             line.append(indent)
-            for col in xrange(1, size + 1):
+            for col in range(1, size + 1):
                 line.append(digits_format % square_index)
                 square_index += 1
 
         else:
             init_square_index = square_index
             last_col = size * 4
-            for col in xrange(1, last_col + 1):
+            for col in range(1, last_col + 1):
                 line.append(digits_format % square_index)
 
                 if col == last_col:
@@ -329,7 +329,7 @@ def number_ranges(i):
     """
     https://stackoverflow.com/questions/4628333/converting-a-list-of-integers-into-range-in-python
     """
-    for a, b in itertools.groupby(enumerate(i), lambda (x, y): y - x):
+    for a, b in itertools.groupby(enumerate(i), lambda x_y: x_y[1] - x_y[0]):
         b = list(b)
         yield b[0][1], b[-1][1]
 
@@ -361,7 +361,7 @@ class RubiksCube(object):
             self.color_map = {}
             self.color_map_html = {}
 
-            for (side_name, color) in colormap.items():
+            for (side_name, color) in list(colormap.items()):
                 side_name = str(side_name)
 
                 if color == 'Wh':
@@ -478,7 +478,7 @@ class RubiksCube(object):
         for (pos1, pos2) in zip(reversed(self.sideB.edge_south_pos), self.sideD.edge_south_pos):
             self.all_edge_positions.append((pos1, pos2))
 
-        for side in self.sides.values():
+        for side in list(self.sides.values()):
             side.calculate_wing_partners()
 
     def __str__(self):
@@ -527,7 +527,7 @@ class RubiksCube(object):
         """
         Return True if the cube is solved
         """
-        for side in self.sides.values():
+        for side in list(self.sides.values()):
             if not side.solved():
                 return False
         return True
@@ -593,7 +593,7 @@ class RubiksCube(object):
         max_pos = side.max_pos
 
         # rotate the face...this is the same for all sides
-        for turn in xrange(quarter_turns):
+        for turn in range(quarter_turns):
             face = side.get_face_as_2d_list()
 
             if reverse:
@@ -645,10 +645,10 @@ class RubiksCube(object):
 
         if side_name == "U":
 
-            for turn in xrange(quarter_turns):
+            for turn in range(quarter_turns):
 
                 # rotate the connecting row(s) of the surrounding sides
-                for row in xrange(rows_to_rotate):
+                for row in range(rows_to_rotate):
                     left_first_square = self.squares_per_side + 1 + (row * self.size)
                     left_last_square = left_first_square + self.size - 1
 
@@ -667,39 +667,39 @@ class RubiksCube(object):
                     #log.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     if reverse:
-                        for square_index in xrange(left_first_square, left_last_square + 1):
+                        for square_index in range(left_first_square, left_last_square + 1):
                             result[square_index] = self.state[square_index + (3 * self.squares_per_side)]
 
-                        for square_index in xrange(front_first_square, front_last_square + 1):
+                        for square_index in range(front_first_square, front_last_square + 1):
                             result[square_index] = self.state[square_index - self.squares_per_side]
 
-                        for square_index in xrange(right_first_square, right_last_square + 1):
+                        for square_index in range(right_first_square, right_last_square + 1):
                             result[square_index] = self.state[square_index - self.squares_per_side]
 
-                        for square_index in xrange(back_first_square, back_last_square + 1):
+                        for square_index in range(back_first_square, back_last_square + 1):
                             result[square_index] = self.state[square_index - self.squares_per_side]
 
                     else:
-                        for square_index in xrange(left_first_square, left_last_square + 1):
+                        for square_index in range(left_first_square, left_last_square + 1):
                             result[square_index] = self.state[square_index + self.squares_per_side]
 
-                        for square_index in xrange(front_first_square, front_last_square + 1):
+                        for square_index in range(front_first_square, front_last_square + 1):
                             result[square_index] = self.state[square_index + self.squares_per_side]
 
-                        for square_index in xrange(right_first_square, right_last_square + 1):
+                        for square_index in range(right_first_square, right_last_square + 1):
                             result[square_index] = self.state[square_index + self.squares_per_side]
 
-                        for square_index in xrange(back_first_square, back_last_square + 1):
+                        for square_index in range(back_first_square, back_last_square + 1):
                             result[square_index] = self.state[square_index - (3 * self.squares_per_side)]
 
                 self.state = result[:]
 
         elif side_name == "L":
 
-            for turn in xrange(quarter_turns):
+            for turn in range(quarter_turns):
 
                 # rotate the connecting row(s) of the surrounding sides
-                for row in xrange(rows_to_rotate):
+                for row in range(rows_to_rotate):
 
                     top_first_square = 1 + row
                     top_last_square = top_first_square + ((self.size - 1) * self.size)
@@ -719,58 +719,58 @@ class RubiksCube(object):
                     #log.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     top_squares = []
-                    for square_index in xrange(top_first_square, top_last_square + 1, self.size):
+                    for square_index in range(top_first_square, top_last_square + 1, self.size):
                         top_squares.append(self.state[square_index])
 
                     front_squares = []
-                    for square_index in xrange(front_first_square, front_last_square + 1, self.size):
+                    for square_index in range(front_first_square, front_last_square + 1, self.size):
                         front_squares.append(self.state[square_index])
 
                     down_squares = []
-                    for square_index in xrange(down_first_square, down_last_square + 1, self.size):
+                    for square_index in range(down_first_square, down_last_square + 1, self.size):
                         down_squares.append(self.state[square_index])
 
                     back_squares = []
-                    for square_index in xrange(back_first_square, back_last_square + 1, self.size):
+                    for square_index in range(back_first_square, back_last_square + 1, self.size):
                         back_squares.append(self.state[square_index])
 
                     if reverse:
-                        for (index, square_index) in enumerate(xrange(top_first_square, top_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1, self.size)):
                             result[square_index] = front_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(front_first_square, front_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(front_first_square, front_last_square + 1, self.size)):
                             result[square_index] = down_squares[index]
 
                         back_squares = list(reversed(back_squares))
-                        for (index, square_index) in enumerate(xrange(down_first_square, down_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1, self.size)):
                             result[square_index] = back_squares[index]
 
                         top_squares = list(reversed(top_squares))
-                        for (index, square_index) in enumerate(xrange(back_first_square, back_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(back_first_square, back_last_square + 1, self.size)):
                             result[square_index] = top_squares[index]
                     else:
                         back_squares = list(reversed(back_squares))
-                        for (index, square_index) in enumerate(xrange(top_first_square, top_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1, self.size)):
                             result[square_index] = back_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(front_first_square, front_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(front_first_square, front_last_square + 1, self.size)):
                             result[square_index] = top_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(down_first_square, down_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1, self.size)):
                             result[square_index] = front_squares[index]
 
                         down_squares = list(reversed(down_squares))
-                        for (index, square_index) in enumerate(xrange(back_first_square, back_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(back_first_square, back_last_square + 1, self.size)):
                             result[square_index] = down_squares[index]
 
                 self.state = result[:]
 
         elif side_name == "F":
 
-            for turn in xrange(quarter_turns):
+            for turn in range(quarter_turns):
 
                 # rotate the connecting row(s) of the surrounding sides
-                for row in xrange(rows_to_rotate):
+                for row in range(rows_to_rotate):
                     top_first_square = (self.squares_per_side - self.size) + 1 - (row * self.size)
                     top_last_square = top_first_square + self.size - 1
 
@@ -789,59 +789,59 @@ class RubiksCube(object):
                     #log.info("right first %d, last %d" % (right_first_square, right_last_square))
 
                     top_squares = []
-                    for square_index in xrange(top_first_square, top_last_square + 1):
+                    for square_index in range(top_first_square, top_last_square + 1):
                         top_squares.append(self.state[square_index])
 
                     left_squares = []
-                    for square_index in xrange(left_first_square, left_last_square + 1, self.size):
+                    for square_index in range(left_first_square, left_last_square + 1, self.size):
                         left_squares.append(self.state[square_index])
 
                     down_squares = []
-                    for square_index in xrange(down_first_square, down_last_square + 1):
+                    for square_index in range(down_first_square, down_last_square + 1):
                         down_squares.append(self.state[square_index])
 
                     right_squares = []
-                    for square_index in xrange(right_first_square, right_last_square + 1, self.size):
+                    for square_index in range(right_first_square, right_last_square + 1, self.size):
                         right_squares.append(self.state[square_index])
 
                     if reverse:
-                        for (index, square_index) in enumerate(xrange(top_first_square, top_last_square + 1)):
+                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1)):
                             result[square_index] = right_squares[index]
 
                         top_squares = list(reversed(top_squares))
-                        for (index, square_index) in enumerate(xrange(left_first_square, left_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(left_first_square, left_last_square + 1, self.size)):
                             result[square_index] = top_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(down_first_square, down_last_square + 1)):
+                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1)):
                             result[square_index] = left_squares[index]
 
                         down_squares = list(reversed(down_squares))
-                        for (index, square_index) in enumerate(xrange(right_first_square, right_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(right_first_square, right_last_square + 1, self.size)):
                             result[square_index] = down_squares[index]
 
                     else:
                         left_squares = list(reversed(left_squares))
-                        for (index, square_index) in enumerate(xrange(top_first_square, top_last_square + 1)):
+                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1)):
                             result[square_index] = left_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(left_first_square, left_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(left_first_square, left_last_square + 1, self.size)):
                             result[square_index] = down_squares[index]
 
                         right_squares = list(reversed(right_squares))
-                        for (index, square_index) in enumerate(xrange(down_first_square, down_last_square + 1)):
+                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1)):
                             result[square_index] = right_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(right_first_square, right_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(right_first_square, right_last_square + 1, self.size)):
                             result[square_index] = top_squares[index]
 
                 self.state = result[:]
 
         elif side_name == "R":
 
-            for turn in xrange(quarter_turns):
+            for turn in range(quarter_turns):
 
                 # rotate the connecting row(s) of the surrounding sides
-                for row in xrange(rows_to_rotate):
+                for row in range(rows_to_rotate):
 
                     top_first_square = self.size - row
                     top_last_square = self.squares_per_side
@@ -861,59 +861,59 @@ class RubiksCube(object):
                     #log.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     top_squares = []
-                    for square_index in xrange(top_first_square, top_last_square + 1, self.size):
+                    for square_index in range(top_first_square, top_last_square + 1, self.size):
                         top_squares.append(self.state[square_index])
 
                     front_squares = []
-                    for square_index in xrange(front_first_square, front_last_square + 1, self.size):
+                    for square_index in range(front_first_square, front_last_square + 1, self.size):
                         front_squares.append(self.state[square_index])
 
                     down_squares = []
-                    for square_index in xrange(down_first_square, down_last_square + 1, self.size):
+                    for square_index in range(down_first_square, down_last_square + 1, self.size):
                         down_squares.append(self.state[square_index])
 
                     back_squares = []
-                    for square_index in xrange(back_first_square, back_last_square + 1, self.size):
+                    for square_index in range(back_first_square, back_last_square + 1, self.size):
                         back_squares.append(self.state[square_index])
 
                     if reverse:
                         back_squares = list(reversed(back_squares))
-                        for (index, square_index) in enumerate(xrange(top_first_square, top_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1, self.size)):
                             result[square_index] = back_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(front_first_square, front_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(front_first_square, front_last_square + 1, self.size)):
                             result[square_index] = top_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(down_first_square, down_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1, self.size)):
                             result[square_index] = front_squares[index]
 
                         down_squares = list(reversed(down_squares))
-                        for (index, square_index) in enumerate(xrange(back_first_square, back_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(back_first_square, back_last_square + 1, self.size)):
                             result[square_index] = down_squares[index]
 
                     else:
-                        for (index, square_index) in enumerate(xrange(top_first_square, top_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1, self.size)):
                             result[square_index] = front_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(front_first_square, front_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(front_first_square, front_last_square + 1, self.size)):
                             result[square_index] = down_squares[index]
 
                         back_squares = list(reversed(back_squares))
-                        for (index, square_index) in enumerate(xrange(down_first_square, down_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1, self.size)):
                             result[square_index] = back_squares[index]
 
                         top_squares = list(reversed(top_squares))
-                        for (index, square_index) in enumerate(xrange(back_first_square, back_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(back_first_square, back_last_square + 1, self.size)):
                             result[square_index] = top_squares[index]
 
                 self.state = result[:]
 
         elif side_name == "B":
 
-            for turn in xrange(quarter_turns):
+            for turn in range(quarter_turns):
 
                 # rotate the connecting row(s) of the surrounding sides
-                for row in xrange(rows_to_rotate):
+                for row in range(rows_to_rotate):
                     top_first_square = 1 + (row * self.size)
                     top_last_square = top_first_square + self.size - 1
 
@@ -932,59 +932,59 @@ class RubiksCube(object):
                     #log.info("right first %d, last %d" % (right_first_square, right_last_square))
 
                     top_squares = []
-                    for square_index in xrange(top_first_square, top_last_square + 1):
+                    for square_index in range(top_first_square, top_last_square + 1):
                         top_squares.append(self.state[square_index])
 
                     left_squares = []
-                    for square_index in xrange(left_first_square, left_last_square + 1, self.size):
+                    for square_index in range(left_first_square, left_last_square + 1, self.size):
                         left_squares.append(self.state[square_index])
 
                     down_squares = []
-                    for square_index in xrange(down_first_square, down_last_square + 1):
+                    for square_index in range(down_first_square, down_last_square + 1):
                         down_squares.append(self.state[square_index])
 
                     right_squares = []
-                    for square_index in xrange(right_first_square, right_last_square + 1, self.size):
+                    for square_index in range(right_first_square, right_last_square + 1, self.size):
                         right_squares.append(self.state[square_index])
 
                     if reverse:
                         left_squares = list(reversed(left_squares))
-                        for (index, square_index) in enumerate(xrange(top_first_square, top_last_square + 1)):
+                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1)):
                             result[square_index] = left_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(left_first_square, left_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(left_first_square, left_last_square + 1, self.size)):
                             result[square_index] = down_squares[index]
 
                         right_squares = list(reversed(right_squares))
-                        for (index, square_index) in enumerate(xrange(down_first_square, down_last_square + 1)):
+                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1)):
                             result[square_index] = right_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(right_first_square, right_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(right_first_square, right_last_square + 1, self.size)):
                             result[square_index] = top_squares[index]
 
                     else:
-                        for (index, square_index) in enumerate(xrange(top_first_square, top_last_square + 1)):
+                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1)):
                             result[square_index] = right_squares[index]
 
                         top_squares = list(reversed(top_squares))
-                        for (index, square_index) in enumerate(xrange(left_first_square, left_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(left_first_square, left_last_square + 1, self.size)):
                             result[square_index] = top_squares[index]
 
-                        for (index, square_index) in enumerate(xrange(down_first_square, down_last_square + 1)):
+                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1)):
                             result[square_index] = left_squares[index]
 
                         down_squares = list(reversed(down_squares))
-                        for (index, square_index) in enumerate(xrange(right_first_square, right_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(range(right_first_square, right_last_square + 1, self.size)):
                             result[square_index] = down_squares[index]
 
                 self.state = result[:]
 
         elif side_name == "D":
 
-            for turn in xrange(quarter_turns):
+            for turn in range(quarter_turns):
 
                 # rotate the connecting row(s) of the surrounding sides
-                for row in xrange(rows_to_rotate):
+                for row in range(rows_to_rotate):
                     left_first_square = (self.squares_per_side * 2) - self.size + 1 - (row * self.size)
                     left_last_square = left_first_square + self.size - 1
 
@@ -1003,29 +1003,29 @@ class RubiksCube(object):
                     #log.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     if reverse:
-                        for square_index in xrange(left_first_square, left_last_square + 1):
+                        for square_index in range(left_first_square, left_last_square + 1):
                             result[square_index] = self.state[square_index + self.squares_per_side]
 
-                        for square_index in xrange(front_first_square, front_last_square + 1):
+                        for square_index in range(front_first_square, front_last_square + 1):
                             result[square_index] = self.state[square_index + self.squares_per_side]
 
-                        for square_index in xrange(right_first_square, right_last_square + 1):
+                        for square_index in range(right_first_square, right_last_square + 1):
                             result[square_index] = self.state[square_index + self.squares_per_side]
 
-                        for square_index in xrange(back_first_square, back_last_square + 1):
+                        for square_index in range(back_first_square, back_last_square + 1):
                             result[square_index] = self.state[square_index - (3 * self.squares_per_side)]
 
                     else:
-                        for square_index in xrange(left_first_square, left_last_square + 1):
+                        for square_index in range(left_first_square, left_last_square + 1):
                             result[square_index] = self.state[square_index + (3 * self.squares_per_side)]
 
-                        for square_index in xrange(front_first_square, front_last_square + 1):
+                        for square_index in range(front_first_square, front_last_square + 1):
                             result[square_index] = self.state[square_index - self.squares_per_side]
 
-                        for square_index in xrange(right_first_square, right_last_square + 1):
+                        for square_index in range(right_first_square, right_last_square + 1):
                             result[square_index] = self.state[square_index - self.squares_per_side]
 
-                        for square_index in xrange(back_first_square, back_last_square + 1):
+                        for square_index in range(back_first_square, back_last_square + 1):
                             result[square_index] = self.state[square_index - self.squares_per_side]
 
                 self.state = result[:]
@@ -1034,7 +1034,7 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
-        print(get_cube_layout(self.size) + '\n')
+        print((get_cube_layout(self.size) + '\n'))
 
     def print_cube(self):
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
@@ -1043,7 +1043,7 @@ class RubiksCube(object):
         row_index = 0
         printing_numbers = False
 
-        for x in xrange(self.size * 3):
+        for x in range(self.size * 3):
             rows.append([])
 
         for (square_index, square_state) in enumerate(self.state):
@@ -1093,7 +1093,7 @@ class RubiksCube(object):
                 else:
                     sys.stdout.write(' ' * (self.size + self.size + 1))
 
-            print(' '.join(row))
+            print((' '.join(row)))
             if ((row_index+1) % self.size) == 0:
                 print('')
         print('')
@@ -1103,12 +1103,12 @@ class RubiksCube(object):
         This is called via --rotate-printer, it is used to print the
         case statements used by lookup-table-builder.c
         """
-        print("    } else if (strcmp(step, \"%s\") == 0) {" % case)
+        print(("    } else if (strcmp(step, \"%s\") == 0) {" % case))
         for (key, value) in enumerate(self.state[1:]):
             key += 1
 
             if str(key) != str(value):
-                print("        cube[%s] = cube_tmp[%s];" % (key, value))
+                print(("        cube[%s] = cube_tmp[%s];" % (key, value)))
         print("")
 
     def print_case_statement_python(self, case):
@@ -1145,7 +1145,7 @@ class RubiksCube(object):
             lists.append("[%s]" % ','.join(indexes_outside_streak))
             indexes_outside_streak = []
 
-        print("    return %s" % ' + '.join(lists))
+        print(("    return %s" % ' + '.join(lists)))
 
     def randomize(self):
         """
@@ -1160,7 +1160,7 @@ class RubiksCube(object):
         sides = ['U', 'L', 'F', 'R', 'B', 'D']
         count = ((self.size * self.size) * 6) * 3
 
-        for x in xrange(count):
+        for x in range(count):
             rows = random.randint(1, max_rows)
             side_index = random.randint(0, 5)
             side = sides[side_index]
@@ -1184,7 +1184,7 @@ class RubiksCube(object):
         """
         Return the Side object that owns square_index
         """
-        for side in self.sides.values():
+        for side in list(self.sides.values()):
             if square_index >= side.min_pos and square_index <= side.max_pos:
                 return side
         raise SolveError("We should not be here, square_index %s" % pformat(square_index))
@@ -2817,7 +2817,7 @@ class RubiksCube(object):
         return ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_corner_pos])
 
     def centers_solved(self):
-        for side in self.sides.values():
+        for side in list(self.sides.values()):
             prev_pos = None
             for pos in side.center_pos:
                 if prev_pos is not None:
@@ -2864,7 +2864,7 @@ class RubiksCube(object):
 
         else:
             # Use the top-right inner x-center
-            offset = ((self.size/2) * self.size) - (self.size/2)
+            offset = int(((self.size/2) * self.size) - (self.size/2))
 
             pos_to_check = side.min_pos + offset
             F_pos_to_check = self.sideF.min_pos + offset
@@ -2904,13 +2904,13 @@ class RubiksCube(object):
         self.rotate_side_X_to_Y('F', 'F')
 
     def all_center_corners_solved(self):
-        for side in self.sides.values():
+        for side in list(self.sides.values()):
             if not side.center_corners_solved():
                 return False
         return True
 
     def all_center_edges_solved(self):
-        for side in self.sides.values():
+        for side in list(self.sides.values()):
             if not side.center_edges_solved():
                 return False
         return True
@@ -2941,7 +2941,7 @@ class RubiksCube(object):
             for side_name in ('U', 'R', 'F', 'D', 'L', 'B'):
                 side = self.sides[side_name]
 
-                for square_index in xrange(side.min_pos, side.max_pos + 1):
+                for square_index in range(side.min_pos, side.max_pos + 1):
                     foo.append(self.state[square_index])
 
         else:
@@ -2972,7 +2972,7 @@ class RubiksCube(object):
                     if side.mid_pos:
                         foo.append(self.state[side.mid_pos])
                     else:
-                        offset = ((self.size/2) * self.size) - (self.size/2)
+                        offset = int(((self.size/2) * self.size) - (self.size/2))
                         pos_to_check = side.min_pos + offset
                         foo.append(self.state[pos_to_check])
 
@@ -3638,9 +3638,9 @@ class RubiksCube(object):
         self.rotate_F_to_F()
         orbits_with_oll_parity = []
 
-        orbits = (self.size - 2) / 2
+        orbits = int((self.size - 2) / 2)
 
-        for orbit in xrange(orbits):
+        for orbit in range(orbits):
             # OLL Parity - "...is caused by solving the centers such that the edge permutation is odd"
             # http://www.speedcubing.com/chris/4speedsolve3.html
             if self.edge_swaps_odd(False, orbit, debug):
@@ -3656,7 +3656,7 @@ class RubiksCube(object):
         result = []
 
         for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in xrange(side.min_pos, side.max_pos + 1):
+            for square_index in range(side.min_pos, side.max_pos + 1):
                 result.append(self.state[square_index])
 
         return ''.join(result)
@@ -3898,10 +3898,12 @@ class RubiksCube(object):
                         else:
                             break
 
-                if min_solution_length is not None and not self.best:
+                #if min_solution_length is not None and not self.best:
+                if min_solution_length is not None:
                     break
 
-            if min_solution_length is not None and not self.best:
+            #if min_solution_length is not None and not self.best:
+            if min_solution_length is not None:
                 break
 
         if min_solution_length is None:
@@ -4071,21 +4073,21 @@ class RubiksCube(object):
             self.compress_solution()
 
     def print_solution(self):
-        print("\nSolution: %s" % ' '.join(self.solution))
+        print(("\nSolution: %s" % ' '.join(self.solution)))
 
         if self.steps_to_rotate_cube:
-            print("%d steps to rotate entire cube" % self.steps_to_rotate_cube)
+            print(("%d steps to rotate entire cube" % self.steps_to_rotate_cube))
 
         if self.steps_to_solve_centers:
-            print("%d steps to solve centers" % self.steps_to_solve_centers)
+            print(("%d steps to solve centers" % self.steps_to_solve_centers))
 
         if self.steps_to_group_edges:
-            print("%d steps to group edges" % self.steps_to_group_edges)
+            print(("%d steps to group edges" % self.steps_to_group_edges))
 
         if self.steps_to_solve_3x3x3:
-            print("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3)
+            print(("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3))
 
-        print("%d steps total" % len(self.solution))
+        print(("%d steps total" % len(self.solution)))
 
     def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
 
@@ -4277,14 +4279,14 @@ div#page_holder {
         """
         Run some tests to sanity check some things
         """
-        for side in self.sides.values():
-            for square_index in xrange(side.min_pos, side.max_pos+1):
+        for side in list(self.sides.values()):
+            for square_index in range(side.min_pos, side.max_pos+1):
                 self.state[square_index] = 'x'
 
         original_state = self.state[:]
         original_solution = self.solution[:]
 
-        for side in self.sides.values():
+        for side in list(self.sides.values()):
             for direction in ('north', 'south', 'east', 'west'):
 
                 if direction == 'north':

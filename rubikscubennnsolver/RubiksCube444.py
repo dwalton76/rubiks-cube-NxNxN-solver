@@ -2296,7 +2296,7 @@ class RubiksCube444(RubiksCube):
                  post_slice_forward_non_paired_wings_count))
 
             if self.sideF.east_edge_paired():
-                for x in xrange(3):
+                for x in range(3):
                     self.rotate_y()
                     if not self.sideF.east_edge_paired():
                         break

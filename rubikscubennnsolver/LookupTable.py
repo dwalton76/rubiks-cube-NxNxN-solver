@@ -385,7 +385,7 @@ def get_444_orient_edges_tsai(parent_state, self):
 
     state = []
     for side in self.sides_all:
-        for square_index in xrange(side.min_pos, side.max_pos):
+        for square_index in range(side.min_pos, side.max_pos):
 
             if square_index in side.corner_pos:
                 pass
@@ -2681,7 +2681,7 @@ class LookupTableIDA(LookupTable):
         min_ida_threshold = self.ida_heuristic()
         log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
 
-        for threshold in xrange(min_ida_threshold, max_ida_threshold+1):
+        for threshold in range(min_ida_threshold, max_ida_threshold+1):
             steps_to_here = []
             start_time1 = dt.datetime.now()
             self.ida_count = 0

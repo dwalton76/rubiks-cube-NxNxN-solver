@@ -36,7 +36,7 @@ class RubiksCubeNNNEven(RubiksCube):
         start_NNN = 0
 
         for x in range(6):
-            start_NNN_row1 = start_NNN + (((self.size/2) - 2) * self.size) + ((self.size/2) - 1)
+            start_NNN_row1 = int(start_NNN + (((self.size/2) - 2) * self.size) + ((self.size/2) - 1))
             start_NNN_row2 = start_NNN_row1 + self.size
             start_NNN_row3 = start_NNN_row2 + self.size
             start_NNN_row4 = start_NNN_row3 + self.size
@@ -436,12 +436,12 @@ class RubiksCubeNNNEven(RubiksCube):
         self.pair_inside_edges_via_444()
 
         # How many orbits of edges does this cube have?
-        orbits = (self.size/2) - 1
+        orbits = int((self.size/2) - 1)
 
         # The inside orbit was paired above via pair_inside_edges_via_444()
         # For all of the rest work your way from inside to outside and pair
         # them via the 5x5x5 solver.
-        for orbit in reversed(range(1, orbits)):
+        for orbit in reversed(list(range(1, orbits))):
             self.pair_edge_orbit_via_555(orbit)
 
         log.info("Edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))

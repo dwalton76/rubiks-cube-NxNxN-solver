@@ -3093,9 +3093,6 @@ class RubiksCube(object):
                 self.rotate_z()
 
             if has_oll:
-                # We should no longer hit OLL for 4x4x4 or 6x6x6
-                if self.size == 4 or self.size == 6:
-                    raise SolveError("prevent_OLL failed")
 
                 # 26 moves :(
                 oll_solution = "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
@@ -3858,14 +3855,14 @@ class RubiksCube(object):
                         solution_leads_to_oll = False
 
                     center_solution_length = self.get_solution_len_minus_rotates(self.solution)
+
+                    if solution_leads_to_oll:
+                        center_solution_length += 26
+
                     non_paired_wings_count = self.get_non_paired_wings_count()
 
                     if min_solution_length is None:
                         update_min = True
-                    elif min_solution_leads_to_oll and not solution_leads_to_oll:
-                        update_min = True
-                    elif not min_solution_leads_to_oll and solution_leads_to_oll:
-                        update_min = False
                     elif center_solution_length < min_solution_length:
                         update_min = True
                     elif center_solution_length == min_solution_length and non_paired_wings_count < min_solution_non_paired_wings_count:
@@ -3889,20 +3886,12 @@ class RubiksCube(object):
                     # We can compute solutions for 4x4x4 centers without using IDA so
                     # those are very fast, keep exploring 4x4x4 solutions until we find
                     # one that is free of OLL.
-                    if min_solution_length is not None and not self.best:
-                        if min_solution_leads_to_oll:
-                            if self.size == 4:
-                                min_solution_length = None
-                            else:
-                                break
-                        else:
-                            break
+                    if not min_solution_leads_to_oll and not self.best:
+                        break
 
-                #if min_solution_length is not None and not self.best:
                 if min_solution_length is not None:
                     break
 
-            #if min_solution_length is not None and not self.best:
             if min_solution_length is not None:
                 break
 

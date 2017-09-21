@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """
 Solve any size rubiks cube:
@@ -67,7 +67,7 @@ test_cases = {
     "15x15x15" : [],
 }
 
-for x in xrange(500):
+for x in range(500):
     cube = RubiksCube(solved_222, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)

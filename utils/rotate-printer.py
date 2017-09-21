@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """
 Used to print the logic that is in rotate_444() and rotate_555() in
@@ -37,7 +37,7 @@ for (size, solved_state) in (
     max_square_index = size * size * 6
 
     # Change each value to be equal to its square position
-    for x in xrange(1, max_square_index+1):
+    for x in range(1, max_square_index+1):
         cube.state[x] = str(x)
 
     original_state = copy(cube.state)

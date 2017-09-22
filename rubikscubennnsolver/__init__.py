@@ -3631,8 +3631,9 @@ class RubiksCube(object):
         http://www.speedcubing.com/chris/4speedsolve3.html
         http://www.rubik.rthost.org/4x4x4_edges.htm
         """
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
+        if self.centers_solved():
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
         orbits_with_oll_parity = []
 
         orbits = int((self.size - 2) / 2)

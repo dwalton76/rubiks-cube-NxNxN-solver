@@ -2286,7 +2286,6 @@ class LookupTable(object):
         return state
 
     def binary_search(self, state_to_find):
-        # dwalton here now
         first = 0
         last = self.linecount - 1
         found = False

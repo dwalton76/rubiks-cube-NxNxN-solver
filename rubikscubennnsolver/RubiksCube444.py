@@ -1,8 +1,9 @@
-from pprint import pformat
+
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps
 from subprocess import check_output
+from pprint import pformat
 import logging
 import sys
 
@@ -623,8 +624,9 @@ class RubiksCube444(RubiksCube):
             self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_median
 
         else:
+
             '''
-            lookup-table-4x4x4-step03-ULFRBD-centers-solve.txt
+            lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt
             ==================================================
             1 steps has 7 entries (0 percent)
             2 steps has 99 entries (0 percent)
@@ -1927,6 +1929,7 @@ class RubiksCube444(RubiksCube):
 
         # The non-tsai solver will only solve the centers here
         else:
+            self.lt_ULFRBD_centers_stage.avoid_oll = True
             self.lt_ULFRBD_centers_stage.solve()
             self.print_cube()
             log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

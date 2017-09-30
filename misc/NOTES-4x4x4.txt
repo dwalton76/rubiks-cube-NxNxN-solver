@@ -221,3 +221,36 @@ Misc IDA fixes
 
 22.56user 1.07system 0:25.02elapsed 94%CPU (0avgtext+0avgdata 200160maxresident)k
 
+
+Testing --ev3 option
+====================
+With --ev3 we stage 4x4x4 centers by first staging UD and then staging LFRB
+
+Without --ev3 we stage all 4x4x4 centers at once, this requires an IDA search
+which can take a long time on an EV3's 300Mhz CPU
+
+The times below were on my laptop...so 3900ms vs 1m 42s. So a pretty drastic
+difference but using --ev3 also adds 10 steps to the solution length.
+
+    With --ev3
+    ----------
+    4x4x4 avg centers solution 23.36 steps
+    4x4x4 avg edges solution 30.06 steps
+    4x4x4 avg solution 74.0 steps
+    4x4x4 min solution 57 steps (DUDUURURLFRULRUDRFDLLDBFBFFFRBUBDBRBULLUFFRLRFRFFDBDLBUDLRUFBFBLLLDBRBLRDUDDUBDUFBBFLBDFRLDRUULR)
+    4x4x4 max solution 87 steps (LRRDUDFLBBFLUDBBDFURLLBUDRUDBLLRLLLRBDUURFRRLRUDUBBLFLDDLRRBUUFBFBDBUUDDRBFDFFDFFUBDFLUFFBLFURRR)
+
+    3.64user 0.18system 0:03.90elapsed 98%CPU (0avgtext+0avgdata 55304maxresident)k
+    0inputs+0outputs (0major+95949minor)pagefaults 0swaps
+
+
+    Without --ev3
+    -------------
+    4x4x4 avg centers solution 18.08 steps
+    4x4x4 avg edges solution 25.82 steps
+    4x4x4 avg solution 64.54 steps
+    4x4x4 min solution 55 steps (UFLLLFBDLUURRRFFRFBDRFFLBBDBBDUFUUDDLDLDLRURLUDDBBLLFDRLBRRFDFRRFUFBDFLFRLBBBDDUFBULULBRUDUBUURR)
+    4x4x4 max solution 75 steps (BLURRRBFRDFRDUFRUDUFFULUUDDBRDLULBLBDUBDDRRRRUDUBLLFBUUBLBRFLRULLFFFDDLFBFLBUDUDDRBDLBLRRFFLFFBB)
+
+    89.16user 9.66system 1:42.10elapsed 96%CPU (0avgtext+0avgdata 236004maxresident)k
+    454952inputs+0outputs (1major+437930minor)pagefaults 0swaps

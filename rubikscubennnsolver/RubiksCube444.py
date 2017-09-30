@@ -122,7 +122,20 @@ class RubiksCube444(RubiksCube):
             return
         self.lt_init_called = True
 
-        # Both tsai and non-tsai start the same way...stage all centers
+        # There are three "modes" we can run in:
+        # --ev3   : Uses the least CPU but produces a longer solution.
+        #           This will stage UD centers first, then LFRB centers.
+        #
+        # --tsai  : Uses the most CPU but produces the shortest solution
+        #           This will stage all centers at once.
+        #
+        # default : Uses a middle ground of CPU and produces not the shortest or longest solution.
+        #           This will stage all centers at once.
+
+        # ==============
+        # Phase 1 tables
+        # ==============
+        # All three modes use self.lt_UD_centers_stage
         '''
         lookup-table-4x4x4-step11-UD-centers-stage.txt
         lookup-table-4x4x4-step12-LR-centers-stage.txt
@@ -146,181 +159,210 @@ class RubiksCube444(RubiksCube):
                                                 True, # state hex
                                                 linecount=735471)
 
-        self.lt_LR_centers_stage = LookupTable(self,
-                                               'lookup-table-4x4x4-step12-LR-centers-stage.txt',
-                                               '444-LR-centers-stage',
-                                               '0f0f00',
-                                                True, # state hex
-                                                linecount=735471)
+        # --tsai and default use the step10, step12 and step13 tables
+        if self.use_tsai or not self.ev3:
+            self.lt_LR_centers_stage = LookupTable(self,
+                                                   'lookup-table-4x4x4-step12-LR-centers-stage.txt',
+                                                   '444-LR-centers-stage',
+                                                   '0f0f00',
+                                                    True, # state hex
+                                                    linecount=735471)
 
-        self.lt_FB_centers_stage = LookupTable(self,
-                                               'lookup-table-4x4x4-step13-FB-centers-stage.txt',
-                                               '444-FB-centers-stage',
-                                               '00f0f0',
-                                                True, # state hex
-                                                linecount=735471)
+            self.lt_FB_centers_stage = LookupTable(self,
+                                                   'lookup-table-4x4x4-step13-FB-centers-stage.txt',
+                                                   '444-FB-centers-stage',
+                                                   '00f0f0',
+                                                    True, # state hex
+                                                    linecount=735471)
 
-        '''
-        lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
-        ==================================================
-        1 steps has 7 entries (0 percent, 0.00x previous step)
-        2 steps has 135 entries (0 percent, 19.29x previous step)
-        3 steps has 2,286 entries (0 percent, 16.93x previous step)
-        4 steps has 36,728 entries (0 percent, 16.07x previous step)
-        5 steps has 562,932 entries (6 percent, 15.33x previous step)
-        6 steps has 8,047,054 entries (93 percent, 14.29x previous step)
+            '''
+            lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
+            ==================================================
+            1 steps has 7 entries (0 percent, 0.00x previous step)
+            2 steps has 135 entries (0 percent, 19.29x previous step)
+            3 steps has 2,286 entries (0 percent, 16.93x previous step)
+            4 steps has 36,728 entries (0 percent, 16.07x previous step)
+            5 steps has 562,932 entries (6 percent, 15.33x previous step)
+            6 steps has 8,047,054 entries (93 percent, 14.29x previous step)
 
-        Total: 8,649,142 entries
-        '''
-        self.lt_ULFRBD_centers_stage = LookupTableIDA(self,
-                                               'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
-                                               '444-ULFRBD-centers-stage',
-                                               'UUUULLLLFFFFLLLLFFFFUUUU',
-                                                False, # state hex
-                                                moves_4x4x4,
-                                                (), # illegal_moves
+            Total: 8,649,142 entries
+            '''
+            self.lt_ULFRBD_centers_stage = LookupTableIDA(self,
+                                                   'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
+                                                   '444-ULFRBD-centers-stage',
+                                                   'UUUULLLLFFFFLLLLFFFFUUUU',
+                                                    False, # state hex
+                                                    moves_4x4x4,
+                                                    (), # illegal_moves
 
-                                                # prune tables
-                                                (self.lt_UD_centers_stage,
-                                                 self.lt_LR_centers_stage,
-                                                 self.lt_FB_centers_stage),
-                                                linecount=8649142)
+                                                    # prune tables
+                                                    (self.lt_UD_centers_stage,
+                                                     self.lt_LR_centers_stage,
+                                                     self.lt_FB_centers_stage),
+                                                    linecount=8649142)
 
-        # Built via stats/crunch-stats-444-centers-stage.py
-        lt_ULFRBD_centers_stage_heuristic_stats_min = {
-            (2, 2, 3) : 5,
-            (2, 3, 2) : 5,
-            (3, 2, 2) : 5,
-            (3, 3, 3) : 4,
-            (3, 5, 6) : 7,
-            (3, 6, 5) : 7,
-            (3, 6, 7) : 9,
-            (3, 7, 6) : 9,
-            (4, 4, 4) : 5,
-            (4, 4, 6) : 7,
-            (4, 5, 7) : 8,
-            (4, 6, 4) : 7,
-            (4, 6, 5) : 7,
-            (4, 6, 7) : 10,
-            (4, 7, 6) : 8,
-            (4, 7, 7) : 10,
-            (5, 5, 5) : 6,
-            (5, 5, 7) : 8,
-            (5, 6, 3) : 7,
-            (5, 6, 4) : 7,
-            (5, 7, 5) : 8,
-            (5, 7, 6) : 8,
-            (5, 7, 7) : 8,
-            (6, 2, 6) : 7,
-            (6, 3, 5) : 7,
-            (6, 4, 4) : 7,
-            (6, 5, 5) : 7,
-            (6, 6, 6) : 7,
-            (6, 6, 7) : 8,
-            (6, 6, 8) : 11,
-            (6, 7, 5) : 8,
-            (6, 7, 7) : 8,
-            (7, 3, 6) : 8,
-            (7, 4, 6) : 8,
-            (7, 4, 7) : 9,
-            (7, 5, 4) : 9,
-            (7, 5, 5) : 8,
-            (7, 5, 7) : 9,
-            (7, 5, 8) : 11,
-            (7, 6, 7) : 9,
-            (7, 7, 5) : 8,
-            (7, 7, 6) : 9,
-            (7, 7, 7) : 9,
-        }
+            # Built via stats/crunch-stats-444-centers-stage.py
+            lt_ULFRBD_centers_stage_heuristic_stats_min = {
+                (2, 2, 3) : 5,
+                (2, 3, 2) : 5,
+                (3, 2, 2) : 5,
+                (3, 3, 3) : 4,
+                (3, 5, 6) : 7,
+                (3, 6, 5) : 7,
+                (3, 6, 7) : 9,
+                (3, 7, 6) : 9,
+                (4, 4, 4) : 5,
+                (4, 4, 6) : 7,
+                (4, 5, 7) : 8,
+                (4, 6, 4) : 7,
+                (4, 6, 5) : 7,
+                (4, 6, 7) : 10,
+                (4, 7, 6) : 8,
+                (4, 7, 7) : 10,
+                (5, 5, 5) : 6,
+                (5, 5, 7) : 8,
+                (5, 6, 3) : 7,
+                (5, 6, 4) : 7,
+                (5, 7, 5) : 8,
+                (5, 7, 6) : 8,
+                (5, 7, 7) : 8,
+                (6, 2, 6) : 7,
+                (6, 3, 5) : 7,
+                (6, 4, 4) : 7,
+                (6, 5, 5) : 7,
+                (6, 6, 6) : 7,
+                (6, 6, 7) : 8,
+                (6, 6, 8) : 11,
+                (6, 7, 5) : 8,
+                (6, 7, 7) : 8,
+                (7, 3, 6) : 8,
+                (7, 4, 6) : 8,
+                (7, 4, 7) : 9,
+                (7, 5, 4) : 9,
+                (7, 5, 5) : 8,
+                (7, 5, 7) : 9,
+                (7, 5, 8) : 11,
+                (7, 6, 7) : 9,
+                (7, 7, 5) : 8,
+                (7, 7, 6) : 9,
+                (7, 7, 7) : 9,
+            }
 
-        lt_ULFRBD_centers_stage_heuristic_stats_median = {
-            (2, 2, 3) : 5,
-            (2, 3, 2) : 5,
-            (2, 4, 3) : 5,
-            (2, 6, 6) : 7,
-            (3, 2, 2) : 5,
-            (3, 3, 3) : 6,
-            (3, 5, 6) : 7,
-            (3, 6, 5) : 7,
-            (3, 6, 6) : 8,
-            (3, 6, 7) : 9,
-            (3, 7, 6) : 9,
-            (4, 2, 3) : 5,
-            (4, 3, 4) : 5,
-            (4, 4, 4) : 6,
-            (4, 4, 5) : 6,
-            (4, 4, 6) : 8,
-            (4, 5, 4) : 6,
-            (4, 5, 5) : 6,
-            (4, 5, 6) : 7,
-            (4, 5, 7) : 9,
-            (4, 6, 4) : 7,
-            (4, 6, 5) : 8,
-            (4, 6, 6) : 8,
-            (4, 6, 7) : 10,
-            (4, 7, 6) : 10,
-            (4, 7, 7) : 10,
-            (5, 3, 4) : 6,
-            (5, 4, 5) : 6,
-            (5, 4, 6) : 7,
-            (5, 5, 3) : 6,
-            (5, 5, 4) : 6,
-            (5, 5, 5) : 7,
-            (5, 5, 6) : 8,
-            (5, 5, 7) : 9,
-            (5, 6, 3) : 7,
-            (5, 6, 4) : 8,
-            (5, 6, 5) : 8,
-            (5, 6, 6) : 8,
-            (5, 6, 7) : 9,
-            (5, 7, 5) : 9,
-            (5, 7, 6) : 9,
-            (5, 7, 7) : 10,
-            (6, 2, 6) : 7,
-            (6, 3, 5) : 8,
-            (6, 3, 6) : 7,
-            (6, 4, 4) : 8,
-            (6, 4, 5) : 7,
-            (6, 4, 6) : 7,
-            (6, 4, 7) : 9,
-            (6, 5, 3) : 8,
-            (6, 5, 4) : 8,
-            (6, 5, 5) : 8,
-            (6, 5, 6) : 9,
-            (6, 5, 7) : 9,
-            (6, 6, 3) : 8,
-            (6, 6, 4) : 8,
-            (6, 6, 5) : 9,
-            (6, 6, 6) : 9,
-            (6, 6, 7) : 10,
-            (6, 6, 8) : 11,
-            (6, 7, 4) : 9,
-            (6, 7, 5) : 9,
-            (6, 7, 6) : 10,
-            (6, 7, 7) : 10,
-            (7, 3, 6) : 8,
-            (7, 4, 5) : 9,
-            (7, 4, 6) : 8,
-            (7, 4, 7) : 9,
-            (7, 5, 4) : 9,
-            (7, 5, 5) : 10,
-            (7, 5, 6) : 9,
-            (7, 5, 7) : 10,
-            (7, 5, 8) : 11,
-            (7, 6, 4) : 8,
-            (7, 6, 5) : 10,
-            (7, 6, 6) : 10,
-            (7, 6, 7) : 10,
-            (7, 7, 5) : 10,
-            (7, 7, 6) : 10,
-            (7, 7, 7) : 10,
-        }
+            lt_ULFRBD_centers_stage_heuristic_stats_median = {
+                (2, 2, 3) : 5,
+                (2, 3, 2) : 5,
+                (2, 4, 3) : 5,
+                (2, 6, 6) : 7,
+                (3, 2, 2) : 5,
+                (3, 3, 3) : 6,
+                (3, 5, 6) : 7,
+                (3, 6, 5) : 7,
+                (3, 6, 6) : 8,
+                (3, 6, 7) : 9,
+                (3, 7, 6) : 9,
+                (4, 2, 3) : 5,
+                (4, 3, 4) : 5,
+                (4, 4, 4) : 6,
+                (4, 4, 5) : 6,
+                (4, 4, 6) : 8,
+                (4, 5, 4) : 6,
+                (4, 5, 5) : 6,
+                (4, 5, 6) : 7,
+                (4, 5, 7) : 9,
+                (4, 6, 4) : 7,
+                (4, 6, 5) : 8,
+                (4, 6, 6) : 8,
+                (4, 6, 7) : 10,
+                (4, 7, 6) : 10,
+                (4, 7, 7) : 10,
+                (5, 3, 4) : 6,
+                (5, 4, 5) : 6,
+                (5, 4, 6) : 7,
+                (5, 5, 3) : 6,
+                (5, 5, 4) : 6,
+                (5, 5, 5) : 7,
+                (5, 5, 6) : 8,
+                (5, 5, 7) : 9,
+                (5, 6, 3) : 7,
+                (5, 6, 4) : 8,
+                (5, 6, 5) : 8,
+                (5, 6, 6) : 8,
+                (5, 6, 7) : 9,
+                (5, 7, 5) : 9,
+                (5, 7, 6) : 9,
+                (5, 7, 7) : 10,
+                (6, 2, 6) : 7,
+                (6, 3, 5) : 8,
+                (6, 3, 6) : 7,
+                (6, 4, 4) : 8,
+                (6, 4, 5) : 7,
+                (6, 4, 6) : 7,
+                (6, 4, 7) : 9,
+                (6, 5, 3) : 8,
+                (6, 5, 4) : 8,
+                (6, 5, 5) : 8,
+                (6, 5, 6) : 9,
+                (6, 5, 7) : 9,
+                (6, 6, 3) : 8,
+                (6, 6, 4) : 8,
+                (6, 6, 5) : 9,
+                (6, 6, 6) : 9,
+                (6, 6, 7) : 10,
+                (6, 6, 8) : 11,
+                (6, 7, 4) : 9,
+                (6, 7, 5) : 9,
+                (6, 7, 6) : 10,
+                (6, 7, 7) : 10,
+                (7, 3, 6) : 8,
+                (7, 4, 5) : 9,
+                (7, 4, 6) : 8,
+                (7, 4, 7) : 9,
+                (7, 5, 4) : 9,
+                (7, 5, 5) : 10,
+                (7, 5, 6) : 9,
+                (7, 5, 7) : 10,
+                (7, 5, 8) : 11,
+                (7, 6, 4) : 8,
+                (7, 6, 5) : 10,
+                (7, 6, 6) : 10,
+                (7, 6, 7) : 10,
+                (7, 7, 5) : 10,
+                (7, 7, 6) : 10,
+                (7, 7, 7) : 10,
+            }
 
-        self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_min
-        self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_median
+            self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_min
+            self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_median
 
+        # only --ev3 uses the step20 table
+        elif self.ev3:
+            '''
+            lookup-table-4x4x4-step20-LFRB-centers-stage.txt
+            ================================================
+            1 steps has 3 entries (0 percent, 0.00x previous step)
+            2 steps has 29 entries (0 percent, 9.67x previous step)
+            3 steps has 234 entries (1 percent, 8.07x previous step)
+            4 steps has 1246 entries (9 percent, 5.32x previous step)
+            5 steps has 4466 entries (34 percent, 3.58x previous step)
+            6 steps has 6236 entries (48 percent, 1.40x previous step)
+            7 steps has 656 entries (5 percent, 0.11x previous step)
+
+            Total: 12870 entries
+            '''
+            self.lt_LFRB_centers_stage = LookupTable(self,
+                                                   'lookup-table-4x4x4-step20-LFRB-centers-stage.txt',
+                                                   '444-LFRB-centers-stage',
+                                                   'xxxxLLLLFFFFLLLLFFFFxxxx',
+                                                    False, # state hex
+                                                    linecount=12870)
+
+        else:
+            raise Exception("We should not be here")
+
+        # ==============
+        # Phase 2 tables
+        # ==============
         if self.use_tsai:
-            # Phase 2
             '''
             lookup-table-4x4x4-step61-orient-edges.txt
             ===========================================
@@ -1850,7 +1892,9 @@ class RubiksCube444(RubiksCube):
              (95, 78, 'U', 'B'): 'U',
              (95, 78, 'U', 'F'): 'U',
              (95, 78, 'U', 'L'): 'U',
-             (95, 78, 'U', 'R'): 'U'}
+             (95, 78, 'U', 'R'): 'U'
+        }
+
     def phase(self):
         if self._phase is None:
             self._phase = 'Stage UD centers'
@@ -1929,8 +1973,13 @@ class RubiksCube444(RubiksCube):
 
         # The non-tsai solver will only solve the centers here
         else:
-            self.lt_ULFRBD_centers_stage.avoid_oll = True
-            self.lt_ULFRBD_centers_stage.solve()
+            if self.ev3:
+                self.lt_UD_centers_stage.solve()
+                self.lt_LFRB_centers_stage.solve()
+            else:
+                self.lt_ULFRBD_centers_stage.avoid_oll = True
+                self.lt_ULFRBD_centers_stage.solve()
+
             self.print_cube()
             log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")

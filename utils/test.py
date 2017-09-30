@@ -57,6 +57,7 @@ try:
 
         elif size == '4x4x4':
             cube = RubiksCube444(solved_4x4x4, order)
+            #cube.ev3 = True
 
         elif size == '5x5x5':
             cube = RubiksCube555(solved_5x5x5, order)

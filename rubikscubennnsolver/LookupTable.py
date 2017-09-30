@@ -312,6 +312,38 @@ def get_444_FB_centers_solve(parent_state):
     state = state.replace('U', 'x').replace('L', 'x').replace('R', 'x').replace('D', 'x')
     return state
 
+def get_444_LFRB_centers_stage(parent_state):
+    """
+    444-LFRB-centers-stage
+    """
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    state = state.replace('U', 'x').replace('D', 'x').replace('R', 'L').replace('B', 'F')
+    return state
+
 
 def get_444_ULFRBD_centers_solve(parent_state):
     """
@@ -2080,6 +2112,7 @@ state_functions = {
     '444-UD-centers-stage' : get_444_UD_centers_stage,
     '444-LR-centers-stage' : get_444_LR_centers_stage,
     '444-FB-centers-stage' : get_444_FB_centers_stage,
+    '444-LFRB-centers-stage' : get_444_LFRB_centers_stage,
     '444-UD-centers-solve' : get_444_UD_centers_solve,
     '444-LR-centers-solve' : get_444_LR_centers_solve,
     '444-FB-centers-solve' : get_444_FB_centers_solve,
@@ -2267,7 +2300,7 @@ class LookupTable(object):
         return self.desc
 
     def state(self):
-        state_function = state_functions.get(self.state_type)
+        state_function = state_functions[self.state_type]
 
         # TODO stop passing self once you have unrolled all of these
         if state_function in (get_444_LR_centers_stage_tsai,

@@ -13,7 +13,7 @@ from rubikscubennnsolver.LookupTable import NoSteps
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 from rubikscubennnsolver.RubiksCubeNNN import RubiksCubeNNNEven, RubiksCubeNNNOdd
@@ -24,6 +24,175 @@ import argparse
 import logging
 import os
 import sys
+
+def remove_slices(solution):
+    results = []
+
+    for step in solution:
+
+        if 'w' in step:
+            results.append(step)
+
+        elif step == "2U":
+            results.append("Uw")
+            results.append("U'")
+
+        elif step == "2U'":
+            results.append("Uw'")
+            results.append("U")
+
+        elif step == "2U2":
+            results.append("Uw2")
+            results.append("U2")
+
+        elif step == "3U":
+            results.append("3Uw")
+            results.append("Uw'")
+
+        elif step == "3U'":
+            results.append("3Uw'")
+            results.append("Uw")
+
+        elif step == "3U2":
+            results.append("3Uw2")
+            results.append("Uw2")
+
+
+
+        elif step == "2L":
+            results.append("Lw")
+            results.append("L'")
+
+        elif step == "2L'":
+            results.append("Lw'")
+            results.append("L")
+
+        elif step == "2L2":
+            results.append("Lw2")
+            results.append("L2")
+
+        elif step == "3L":
+            results.append("3Lw")
+            results.append("Lw'")
+
+        elif step == "3L'":
+            results.append("3Lw'")
+            results.append("Lw")
+
+        elif step == "3L2":
+            results.append("3Lw2")
+            results.append("Lw2")
+
+
+
+
+        elif step == "2F":
+            results.append("Fw")
+            results.append("F'")
+
+        elif step == "2F'":
+            results.append("Fw'")
+            results.append("F")
+
+        elif step == "2F2":
+            results.append("Fw2")
+            results.append("F2")
+
+        elif step == "3F":
+            results.append("3Fw")
+            results.append("Fw'")
+
+        elif step == "3F'":
+            results.append("3Fw'")
+            results.append("Fw")
+
+        elif step == "3F2":
+            results.append("3Fw2")
+            results.append("Fw2")
+
+
+
+        elif step == "2R":
+            results.append("Rw")
+            results.append("R'")
+
+        elif step == "2R'":
+            results.append("Rw'")
+            results.append("R")
+
+        elif step == "2R2":
+            results.append("Rw2")
+            results.append("R2")
+
+        elif step == "3R":
+            results.append("3Rw")
+            results.append("Rw'")
+
+        elif step == "3R'":
+            results.append("3Rw'")
+            results.append("Rw")
+
+        elif step == "3R2":
+            results.append("3Rw2")
+            results.append("Rw2")
+
+
+
+        elif step == "2B":
+            results.append("Bw")
+            results.append("B'")
+
+        elif step == "2B'":
+            results.append("Bw'")
+            results.append("B")
+
+        elif step == "2B2":
+            results.append("Bw2")
+            results.append("B2")
+
+        elif step == "3B":
+            results.append("3Bw")
+            results.append("Bw'")
+
+        elif step == "3B'":
+            results.append("3Bw'")
+            results.append("Bw")
+
+        elif step == "3B2":
+            results.append("3Bw2")
+            results.append("Bw2")
+
+
+
+        elif step == "2D":
+            results.append("Dw")
+            results.append("D'")
+
+        elif step == "2D'":
+            results.append("Dw'")
+            results.append("D")
+
+        elif step == "2D2":
+            results.append("Dw2")
+            results.append("D2")
+
+        elif step == "3D":
+            results.append("3Dw")
+            results.append("Dw'")
+
+        elif step == "3D'":
+            results.append("3Dw'")
+            results.append("Dw")
+
+        elif step == "3D2":
+            results.append("3Dw2")
+            results.append("Dw2")
+
+        else:
+            results.append(step)
+
+    return results
+
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)16s %(levelname)8s: %(message)s')
@@ -126,8 +295,11 @@ try:
     # Uncomment to produce a cube from alg.cubing.net
     # https://alg.cubing.net/?alg=R_Rw-_D_Uw_R2_Fw2_Uw2_F2_Uw_Fw_%2F%2F_stage_centres%0AU_L_Fw2_D2_L_Fw2_U_Rw2_U-_%2F%2F_3_dedges_%26%232b%3B_partial_centres%0AB_D-_B-_Uw2_L_U-_F_R_Fw2_%2F%2F_6_dedges_%26%232b%3B_centres%0ARw2_U_R-_U-_D-_L2_D_Rw2_%2F%2F_9_dedges%0AFw2_D-_F-_D_Fw2_%2F%2F_12_dedges%0AL2_U-_D_R2_L-_B2_D-_F_%2F%2F_Kociemba_phase_1%0AR2_F2_U2_R2_L2_F2_U-_R2_U-_L2_U2_R2_B2_%2F%2F_Kociemba_phase_2&puzzle=4x4x4&setup=(R1_Rw3_D1_Uw1_R2_Fw2_Uw2_F2_Uw1_Fw1_U1_L1_Fw2_D2_L1_Fw2_U1_Rw2_U3_B1_D3_B3_Uw2_L1_U3_F1_R1_Fw2_Rw2_U1_R3_U3_D3_L2_D1_Rw2_Fw2_D3_F3_D1_Fw2_L2_U3_D1_R2_L3_B2_D3_F1_R2_F2_U2_R2_L2_F2_U3_R2_U3_L2_U2_R2_B2_x-_z-)-&view=playback
     '''
-    for step in "R1 Rw3 D1 Uw1 R2 Fw2 Uw2 F2 Uw1 Fw1 U1 L1 Fw2 D2 L1 Fw2 U1 Rw2 U3 B1 D3 B3 Uw2 L1 U3 F1 R1 Fw2 Rw2 U1 R3 U3 D3 L2 D1 Rw2 Fw2 D3 F3 D1 Fw2 L2 U3 D1 R2 L3 B2 D3 F1 R2 F2 U2 R2 L2 F2 U3 R2 U3 L2 U2 R2 B2".split():
+
+    cube = RubiksCube555(solved_5x5x5, args.order, args.colormap)
+    for step in remove_slices("y' U' 2U' 3U 3F R2 2B2 F 2R 3U 3R2 L2 B' 2U 2D' R2 L R2 2L' L2 F' 2D R 2L2 R' 2D' 2R L 2R2 2F' 2L' 2B R2 2F F 3R2 D 2U 2D 3U' 3R' 2D2 U' R' 2L2 R2 2F U F B2 3R2 2D' 3R2 B 3U' D 2R 2L2 B2 2D2 3U2 D' L' 3F' 3R' 2L2 2D2 2U' 3R2 3F 2F2 2R2 R L B 2U2 3U' D2 R' 2L' U 3F2 B 2L 3F' F2 2R2 L' D2 L2 3U2 3R2 R 3R 3U B2 U2 2R' F' 2U' F'".split()):
         cube.rotate(step)
+
 
     kociemba_string = cube.get_kociemba_string(True)
     print(kociemba_string)

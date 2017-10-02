@@ -3664,7 +3664,13 @@ class RubiksCube(object):
 
     def group_centers(self):
 
+        if self.is_odd():
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
+
         if self.centers_solved():
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
             log.info("group center solution: centers are already solved")
             self.solution.append('CENTERS_SOLVED')
             return

@@ -56,81 +56,156 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
-        '''
-        lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
-        lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
-        ================================================
-        1 steps has 3 entries (0 percent, 0.00x previous step)
-        2 steps has 29 entries (0 percent, 9.67x previous step)
-        3 steps has 234 entries (1 percent, 8.07x previous step)
-        4 steps has 1,246 entries (9 percent, 5.32x previous step)
-        5 steps has 4,466 entries (34 percent, 3.58x previous step)
-        6 steps has 6,236 entries (48 percent, 1.40x previous step)
-        7 steps has 656 entries (5 percent, 0.11x previous step)
+        if self.best:
+            '''
+            There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
+            We cannot build a table that large so we will build it 7 moves deep and use
+            IDA with T-centers and X-centers as our prune tables. Both the T-centers and
+            X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
+            is 0.0000013596729171 which is a decent percentage for IDA.
 
-        Total: 12,870 entries
-        '''
-        self.lt_UD_T_centers_stage = LookupTable(self,
-                                                 'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
-                                                 '555-UD-T-centers-stage',
-                                                 '174000000000ba',
-                                                 True, # state_hex
-                                                 linecount=12870)
+            lookup-table-5x5x5-step01-UD-centers-stage-t-center-only.txt
+            ============================================================
+            1 steps has 5 entries (0 percent, 0.00x previous step)
+            2 steps has 66 entries (0 percent, 13.20x previous step)
+            3 steps has 900 entries (0 percent, 13.64x previous step)
+            4 steps has 9626 entries (1 percent, 10.70x previous step)
+            5 steps has 80202 entries (10 percent, 8.33x previous step)
+            6 steps has 329202 entries (44 percent, 4.10x previous step)
+            7 steps has 302146 entries (41 percent, 0.92x previous step)
+            8 steps has 13324 entries (1 percent, 0.04x previous step)
 
-        self.lt_UD_X_centers_stage = LookupTable(self,
-                                                 'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
-                                                 '555-UD-X-centers-stage',
-                                                 '2aa00000000155',
-                                                 True, # state_hex
-                                                 linecount=12870)
+            Total: 735471 entries
+            '''
+            self.lt_UD_T_centers_stage = LookupTable(self,
+                                                     'lookup-table-5x5x5-step01-UD-centers-stage-t-center-only.txt',
+                                                     '555-UD-T-centers-stage',
+                                                     '174000000000ba',
+                                                     True, # state_hex
+                                                     linecount=735471)
 
-        '''
-        There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
-        We cannot build a table that large so we will build it 7 moves deep and use
-        IDA with T-centers and X-centers as our prune tables. Both the T-centers and
-        X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
-        is 0.0000013596729171 which is a decent percentage for IDA.
+            '''
+            lookup-table-5x5x5-step02-UD-centers-stage-x-center-only.txt
+            ============================================================
+            1 steps has 5 entries (0 percent, 0.00x previous step)
+            2 steps has 82 entries (0 percent, 16.40x previous step)
+            3 steps has 1206 entries (0 percent, 14.71x previous step)
+            4 steps has 14116 entries (1 percent, 11.70x previous step)
+            5 steps has 123404 entries (16 percent, 8.74x previous step)
+            6 steps has 422508 entries (57 percent, 3.42x previous step)
+            7 steps has 173254 entries (23 percent, 0.41x previous step)
+            8 steps has 896 entries (0 percent, 0.01x previous step)
 
-        Originally I did what is described above but the IDA search took 30 seconds
-        (on my laptop) for some cubes...I can only imagine how long that would
-        take on a 300Mhz EV3.  To speed this up I did something unusual here...I
-        rebuilt the step10 table but restricted moves so that UD centers can
-        only move to sides UFDB. The cube will be very scrambled though and
-        there will be UD centers on sides LR.  What I do is "fake move" these
-        centers to side UDFB so that I can use the step10 table.  At that point
-        there will only be UD centers on sides ULDR so I then do a rotate_y()
-        one time to make LR free of UD centers again. Then I do another lookup
-        in the step10 table.
+            Total: 735471 entries
+            '''
+            self.lt_UD_X_centers_stage = LookupTable(self,
+                                                     'lookup-table-5x5x5-step02-UD-centers-stage-x-center-only.txt',
+                                                     '555-UD-X-centers-stage',
+                                                     '2aa00000000155',
+                                                     True, # state_hex
+                                                     linecount=735471)
 
-        I only build the table to 8-deep, it would have 165 million entries if
-        I built it the whole way out but that would be too large tou check into
-        the repo so I use IDA.
+            '''
+            lookup-table-5x5x5-step00-UD-centers-stage.txt
+            ==============================================
+            1 steps has 5 entries (0 percent, 0.00x previous step)
+            2 steps has 98 entries (0 percent, 19.60x previous step)
+            3 steps has 2036 entries (0 percent, 20.78x previous step)
+            4 steps has 41096 entries (0 percent, 20.18x previous step)
+            5 steps has 824950 entries (4 percent, 20.07x previous step)
+            6 steps has 16300291 entries (94 percent, 19.76x previous step)
 
-        lookup-table-5x5x5-step10-UD-centers-stage.txt
-        ==============================================
-        1 steps has 3 entries (0 percent, 0.00x previous step)
-        2 steps has 33 entries (0 percent, 11.00x previous step)
-        3 steps has 374 entries (0 percent, 11.33x previous step)
-        4 steps has 3,838 entries (0 percent, 10.26x previous step)
-        5 steps has 39,254 entries (0 percent, 10.23x previous step)
-        6 steps has 387,357 entries (1 percent, 9.87x previous step)
-        7 steps has 3,374,380 entries (13 percent, 8.71x previous step)
-        8 steps has 20,851,334 entries (84 percent, 6.18x previous step)
+            Total: 17168476 entries
+            '''
+            self.lt_UD_centers_stage = LookupTableIDA(self,
+                                                     'lookup-table-5x5x5-step00-UD-centers-stage.txt',
+                                                     '555-UD-centers-stage',
+                                                     '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
+                                                     True, # state_hex
+                                                     moves_5x5x5,
+                                                     (), # illegal_moves
 
-        Total: 24,656,573 entries
-        '''
-        self.lt_UD_centers_stage = LookupTableIDA(self,
-                                                 'lookup-table-5x5x5-step10-UD-centers-stage.txt',
-                                                 '555-UD-centers-stage',
-                                                 '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
-                                                 True, # state_hex
-                                                 moves_5x5x5,
-                                                 ("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"), # illegal_moves
+                                                     # prune tables
+                                                     (self.lt_UD_T_centers_stage,
+                                                      self.lt_UD_X_centers_stage),
+                                                     linecount=17168476)
 
-                                                 # prune tables
-                                                 (self.lt_UD_T_centers_stage,
-                                                  self.lt_UD_X_centers_stage),
-                                                 linecount=24656573)
+        else:
+            '''
+            lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
+            lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
+            ================================================
+            1 steps has 3 entries (0 percent, 0.00x previous step)
+            2 steps has 29 entries (0 percent, 9.67x previous step)
+            3 steps has 234 entries (1 percent, 8.07x previous step)
+            4 steps has 1,246 entries (9 percent, 5.32x previous step)
+            5 steps has 4,466 entries (34 percent, 3.58x previous step)
+            6 steps has 6,236 entries (48 percent, 1.40x previous step)
+            7 steps has 656 entries (5 percent, 0.11x previous step)
+
+            Total: 12,870 entries
+            '''
+            self.lt_UD_T_centers_stage = LookupTable(self,
+                                                     'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
+                                                     '555-UD-T-centers-stage',
+                                                     '174000000000ba',
+                                                     True, # state_hex
+                                                     linecount=12870)
+
+            self.lt_UD_X_centers_stage = LookupTable(self,
+                                                     'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
+                                                     '555-UD-X-centers-stage',
+                                                     '2aa00000000155',
+                                                     True, # state_hex
+                                                     linecount=12870)
+
+            '''
+            There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
+            We cannot build a table that large so we will build it 7 moves deep and use
+            IDA with T-centers and X-centers as our prune tables. Both the T-centers and
+            X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
+            is 0.0000013596729171 which is a decent percentage for IDA.
+
+            Originally I did what is described above but the IDA search took 30 seconds
+            (on my laptop) for some cubes...I can only imagine how long that would
+            take on a 300Mhz EV3.  To speed this up I did something unusual here...I
+            rebuilt the step10 table but restricted moves so that UD centers can
+            only move to sides UFDB. The cube will be very scrambled though and
+            there will be UD centers on sides LR.  What I do is "fake move" these
+            centers to side UDFB so that I can use the step10 table.  At that point
+            there will only be UD centers on sides ULDR so I then do a rotate_y()
+            one time to make LR free of UD centers again. Then I do another lookup
+            in the step10 table.
+
+            I only build the table to 8-deep, it would have 165 million entries if
+            I built it the whole way out but that would be too large tou check into
+            the repo so I use IDA.
+
+            lookup-table-5x5x5-step10-UD-centers-stage.txt
+            ==============================================
+            1 steps has 3 entries (0 percent, 0.00x previous step)
+            2 steps has 33 entries (0 percent, 11.00x previous step)
+            3 steps has 374 entries (0 percent, 11.33x previous step)
+            4 steps has 3,838 entries (0 percent, 10.26x previous step)
+            5 steps has 39,254 entries (0 percent, 10.23x previous step)
+            6 steps has 387,357 entries (1 percent, 9.87x previous step)
+            7 steps has 3,374,380 entries (13 percent, 8.71x previous step)
+            8 steps has 20,851,334 entries (84 percent, 6.18x previous step)
+
+            Total: 24,656,573 entries
+            '''
+            self.lt_UD_centers_stage = LookupTableIDA(self,
+                                                     'lookup-table-5x5x5-step10-UD-centers-stage.txt',
+                                                     '555-UD-centers-stage',
+                                                     '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
+                                                     True, # state_hex
+                                                     moves_5x5x5,
+                                                     ("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"), # illegal_moves
+
+                                                     # prune tables
+                                                     (self.lt_UD_T_centers_stage,
+                                                      self.lt_UD_X_centers_stage),
+                                                     linecount=24656573)
 
         '''
         lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt
@@ -360,25 +435,30 @@ class RubiksCube555(RubiksCube):
         an explanation on what is going on here
         """
 
-        for x in range(2):
-            original_state = self.state[:]
-            original_solution = self.solution[:]
-            original_solution_len = len(self.solution)
-
-            self.fake_move_UD_to_UFDB()
+        if self.best:
             self.lt_UD_centers_stage.solve()
 
-            tmp_solution = self.solution[original_solution_len:]
-            self.state = original_state[:]
-            self.solution = original_solution[:]
+        else:
+            for x in range(2):
+                original_state = self.state[:]
+                original_solution = self.solution[:]
+                original_solution_len = len(self.solution)
 
-            for step in tmp_solution:
-                self.rotate(step)
+                self.fake_move_UD_to_UFDB()
+                self.lt_UD_centers_stage.solve()
 
-            if x == 0:
-                self.rotate_y()
-            else:
-                self.rotate_y_reverse()
+                tmp_solution = self.solution[original_solution_len:]
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in tmp_solution:
+                    self.rotate(step)
+
+                if x == 0:
+                    self.rotate_y()
+                else:
+                    self.rotate_y_reverse()
+
         log.info("UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_centers_guts(self):
@@ -389,6 +469,9 @@ class RubiksCube555(RubiksCube):
         self.group_centers_stage_UD()
 
         # Stage LR centers
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+
         self.lt_LR_centers_stage.solve()
         log.info("ULFRBD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
@@ -1674,6 +1757,8 @@ class RubiksCube555(RubiksCube):
 
         if self.ev3:
             estimate_per_wing = 4.0
+        elif self.best:
+            estimate_per_wing = 2.0
         else:
             estimate_per_wing = 3.4
 

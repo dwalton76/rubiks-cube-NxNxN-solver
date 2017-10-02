@@ -987,45 +987,22 @@ def get_555_LR_centers_stage_on_LFRB_x_center_only(parent_state):
     """
     555-LR-centers-stage-on-LFRB-x-center-only
     """
-    state = [parent_state[32],
-             'x',
-             parent_state[34],
-             'x',
-             parent_state[38],
-             'x',
-             parent_state[42],
-             'x',
-             parent_state[44],
+    state = [parent_state[32], 'x', parent_state[34],
+             'x', parent_state[38], 'x',
+             parent_state[42], 'x', parent_state[44],
 
-             parent_state[57],
-             'x',
-             parent_state[59],
-             'x',
-             parent_state[63],
-             'x',
-             parent_state[67],
-             'x',
-             parent_state[69],
+             parent_state[57], 'x', parent_state[59],
+             'x', parent_state[63], 'x',
+             parent_state[67], 'x', parent_state[69],
 
-             parent_state[82],
-             'x',
-             parent_state[84],
-             'x',
-             parent_state[88],
-             'x',
-             parent_state[92],
-             'x',
-             parent_state[94],
+             parent_state[82], 'x', parent_state[84],
+             'x', parent_state[88], 'x',
+             parent_state[92], 'x', parent_state[94],
 
-             parent_state[107],
-             'x',
-             parent_state[109],
-             'x',
-             parent_state[113],
-             'x',
-             parent_state[117],
-             'x',
-             parent_state[119]]
+             parent_state[107], 'x', parent_state[109],
+             'x', parent_state[113], 'x',
+             parent_state[117], 'x', parent_state[119]]
+
     state = ''.join(state)
     state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
     return state

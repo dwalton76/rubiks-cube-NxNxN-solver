@@ -1975,6 +1975,7 @@ class RubiksCube444(RubiksCube):
         else:
             if self.ev3:
                 self.lt_UD_centers_stage.solve()
+                self.rotate_for_best_centers_staging()
                 self.lt_LFRB_centers_stage.solve()
             else:
                 self.lt_ULFRBD_centers_stage.avoid_oll = True
@@ -1985,6 +1986,7 @@ class RubiksCube444(RubiksCube):
             log.info("")
 
             log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.rotate_for_best_centers_solving()
             self.lt_ULFRBD_centers_solve.solve()
             self.print_cube()
             log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

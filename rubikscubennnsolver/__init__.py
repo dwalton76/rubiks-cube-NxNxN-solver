@@ -3361,7 +3361,6 @@ class RubiksCube(object):
                     to_check.append(square_index)
                     needed_edges.append('UL%d' % edge_index)
 
-        # TODO this was not reversed originally
         for (edge_index, square_index) in enumerate(reversed(self.sideU.edge_south_pos)):
             if edges_paired:
                 to_check.append(square_index)
@@ -3447,7 +3446,6 @@ class RubiksCube(object):
                     to_check.append(square_index)
                     needed_edges.append('DL%d' % edge_index)
 
-        # TODO this was not reversed originally
         for (edge_index, square_index) in enumerate(reversed(self.sideD.edge_south_pos)):
             if edges_paired:
                 to_check.append(square_index)
@@ -3496,6 +3494,8 @@ class RubiksCube(object):
                 wing_str = square1 + square2
             elif square2 in ('L', 'R'):
                 wing_str = square2 + square1
+            elif (square1, square2) == ('x', 'x'):
+                continue
             else:
                 raise Exception("Could not determine wing_str for (%s, %s)" % (square1, square2))
 
@@ -3589,6 +3589,22 @@ class RubiksCube(object):
                         else:
                             max_edge_index = len(target_side.edge_east_pos) - 1
                             wing_str += str(max_edge_index - edge_index)
+
+                        # This is commented out because we used this once upon a time to generate the
+                        # orbit_index_444, etc dictionaries in https://github.com/dwalton76/rubiks-color-resolver
+                        #
+                        # The workflow was:
+                        # - tweak code to call center_solution_leads_to_oll_parity() for odd cubes too
+                        # - solve 500 cubes via "./utils/test.py --test-cubes utils/test_cubes.json --size 7x7x7"
+                        # - sort /tmp/orbit_index.txt > /tmp/orbit_index_sorted.txt
+                        # - cat /tmp/orbit_index_sorted.txt | uniq > /tmp/orbit_index_sorted_uniq.txt
+                        #
+                        # The lines in /tmp/orbit_index_sorted_uniq.txt are used to create orbit_index_777
+                        '''
+                        with open('/tmp/orbit_index.txt', 'a') as fh:
+                            fh.write("    (%d, %d, '%s', '%s') : '%s',\n" % (square_index, partner_index, square1, square2, wing_str))
+                            fh.write("    (%d, %d, '%s', '%s') : '%s',\n" % (partner_index, square_index, square2, square1, wing_str))
+                        '''
                         break
                 else:
                     raise SolveError("Could not find wing %s (%d, %d) among %s" % (wing_str, square_index, partner_index, str(edge_to_check)))

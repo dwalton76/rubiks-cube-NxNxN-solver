@@ -222,17 +222,17 @@ Misc IDA fixes
 22.56user 1.07system 0:25.02elapsed 94%CPU (0avgtext+0avgdata 200160maxresident)k
 
 
-Testing --ev3 option
+Testing --cpu-min option
 ====================
-With --ev3 we stage 4x4x4 centers by first staging UD and then staging LFRB
+With --cpu-min we stage 4x4x4 centers by first staging UD and then staging LFRB
 
-Without --ev3 we stage all 4x4x4 centers at once, this requires an IDA search
+Without --cpu-min we stage all 4x4x4 centers at once, this requires an IDA search
 which can take a long time on an EV3's 300Mhz CPU
 
 The times below were on my laptop...so 3900ms vs 1m 42s. So a pretty drastic
-difference but using --ev3 also adds 10 steps to the solution length.
+difference but using --cpu-min also adds 10 steps to the solution length.
 
-    With --ev3
+    With --cpu-min
     ----------
     4x4x4 avg centers solution 23.36 steps
     4x4x4 avg edges solution 30.06 steps
@@ -244,8 +244,8 @@ difference but using --ev3 also adds 10 steps to the solution length.
     0inputs+0outputs (0major+95949minor)pagefaults 0swaps
 
 
-    Without --ev3
-    -------------
+    With --cpu-normal
+    -----------------
     4x4x4 avg centers solution 18.08 steps
     4x4x4 avg edges solution 25.82 steps
     4x4x4 avg solution 64.54 steps

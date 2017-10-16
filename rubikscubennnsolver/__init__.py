@@ -353,8 +353,7 @@ class RubiksCube(object):
         self.lt_init_called = False
         self.orient_edges = {}
         self.use_tsai = False
-        self.ev3 = False
-        self.best = False
+        self.cpu_mode = None
 
         if colormap:
             colormap = json.loads(colormap)
@@ -1034,9 +1033,11 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
+        return # dwalton
         print((get_cube_layout(self.size) + '\n'))
 
     def print_cube(self):
+        return # dwalton
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
         side_name_index = 0
         rows = []

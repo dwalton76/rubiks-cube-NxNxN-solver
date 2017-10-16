@@ -109,10 +109,9 @@ class RubiksCube444(RubiksCube):
     phase 3 - solve all centers and pair all edges
     """
 
-    def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False, use_tsai=False):
+    def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube.__init__(self, state, order, colormap, debug)
         self.avoid_pll = avoid_pll
-        self.use_tsai = use_tsai
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -122,15 +121,50 @@ class RubiksCube444(RubiksCube):
             return
         self.lt_init_called = True
 
-        # There are three "modes" we can run in:
-        # --ev3   : Uses the least CPU but produces a longer solution.
-        #           This will stage UD centers first, then LFRB centers.
+        # brainstorm
+        # Today we typically stage all centers and then solve them
+        # - Staging is 24!/(8! * 8! * 8!) or 9,465,511,770
+        # - We have three prune tables (UD, LR, and FB) of 24!/(8! * 16!) or 735,471
         #
-        # --tsai  : Uses the most CPU but produces the shortest solution
-        #           This will stage all centers at once.
+        # option #1 - solve all centers at once
+        # - would be 24!/(4! * 4! * 4! * 4! * 4! * 4!) or 3,246,670,537,110,000
+        # - three prune tables (UD, LR, and FB) of 24!/(4! * 4! * 16!) or 51,482,970
+        # - 51,482,970 / 3,246,670,537,110,000 is 0.000 000 015 8571587, IDA might take a few hours
+        # - I've done this before and it removes ~6 steps when solving centers. We
+        #   currently average 64 steps to solve a 4x4x4 but the tsai solver averages 55....so
+        #   this would take a few hours to run but solutions still wouldn't be as short as
+        #   the tsai solver.
+        # - feasible but not worth it
         #
-        # default : Uses a middle ground of CPU and produces not the shortest or longest solution.
-        #           This will stage all centers at once.
+        #
+        # option #2 - combine tsai phases 1 and 2
+        # - this would be staging UD, FB centers, solving LR centers and orienting all edges
+        # - orienting edges is 2,704,156
+        # - centers is 24!/(4! * 4! * 8! * 8!) or 662,585,823,900
+        # - so would be 662,585,823,900 * 2,704,156 or 1,791,735,431,214,128,400
+        # - 2,704,156 / 1,791,735,431,214,128,400 or 0.000 000 000 001 5092, IDA might take weeks
+        # - 662,585,823,900 / 1,791,735,431,214,128,400 or 0.000 000 369 8011505, IDA would be
+        #   fast but that is with a 662 billion entry prune table
+        # - a LR prune table would be 24!/(4! * 4! * 16!) or 51,482,970
+        #   - 51,482,970 / 1,791,735,431,214,128,400 or 0.000 000 000 028 7336, IDA might take weeks
+        # - a UDFB prune table would be 24!/(8! * 8! * 8!) or 9,465,511,770
+        #   - 9,465,511,770 / 1,791,735,431,214,128,400 or 0.000 000 005 2828736, IDA would take a few hours
+        #     9 billion would be a huge prune table
+        # - probably not feasible
+
+
+        # There are four CPU "modes" we can run in:
+        #
+        # min    : Uses the least CPU but produces a longer solution.
+        #          This will stage UD centers first, then LFRB centers.
+        #
+        # normal : Uses a middle ground of CPU and produces not the shortest or longest solution.
+        #          This will stage all centers at once.
+        #
+        # max    : Uses more CPU and produce a shorter solution
+        #          This will stage all centers at once.
+        #
+        # tsai   : Uses the most CPU but produces the shortest solution
 
         # ==============
         # Phase 1 tables
@@ -159,8 +193,8 @@ class RubiksCube444(RubiksCube):
                                                 True, # state hex
                                                 linecount=735471)
 
-        # --tsai and default use the step10, step12 and step13 tables
-        if self.use_tsai or not self.ev3:
+        # All --cpu options except 'min' stage all centers at once
+        if self.cpu_mode in ('normal', 'max', 'tsai'):
             self.lt_LR_centers_stage = LookupTable(self,
                                                    'lookup-table-4x4x4-step12-LR-centers-stage.txt',
                                                    '444-LR-centers-stage',
@@ -334,8 +368,8 @@ class RubiksCube444(RubiksCube):
             self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_min
             self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_median
 
-        # only --ev3 uses the step20 table
-        elif self.ev3:
+        # only --cpu-min uses the step20 table
+        elif self.cpu_mode == 'min':
             '''
             lookup-table-4x4x4-step20-LFRB-centers-stage.txt
             ================================================
@@ -362,7 +396,7 @@ class RubiksCube444(RubiksCube):
         # ==============
         # Phase 2 tables
         # ==============
-        if self.use_tsai:
+        if self.cpu_mode == 'tsai':
             '''
             lookup-table-4x4x4-step61-orient-edges.txt
             ===========================================
@@ -1938,7 +1972,7 @@ class RubiksCube444(RubiksCube):
         #self.print_cube()
 
         # The tsai will solve the centers and pair the edges
-        if self.use_tsai:
+        if self.cpu_mode == 'tsai':
 
             self.lt_ULFRBD_centers_stage.solve()
             self.print_cube()
@@ -1973,7 +2007,7 @@ class RubiksCube444(RubiksCube):
 
         # The non-tsai solver will only solve the centers here
         else:
-            if self.ev3:
+            if self.cpu_mode == 'min':
                 self.lt_UD_centers_stage.solve()
                 self.rotate_for_best_centers_staging()
                 self.lt_LFRB_centers_stage.solve()
@@ -2631,7 +2665,7 @@ class RubiksCube444(RubiksCube):
         # there isn't any point in continuing down this branch so prune it and save
         # some CPU cycles.
 
-        if self.ev3:
+        if self.cpu_mode == 'min':
             estimate_per_wing = 3.0
         else:
             estimate_per_wing = 2.0

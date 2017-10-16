@@ -12,7 +12,7 @@ from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
 from rubikscubennnsolver.LookupTable import NoSteps
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777
@@ -200,16 +200,24 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--print-steps', default=False, action='store_true')
-parser.add_argument('--debug', default=False, action='store_true')
-parser.add_argument('--test', default=False, action='store_true')
-parser.add_argument('--best', default=False, action='store_true')
-parser.add_argument('--tsai', default=False, action='store_true', help='Use the tsai solver, 4x4x4 only')
-parser.add_argument('--ev3', default=False, action='store_true', help='EV3 is only 300Mhz...use some CPU saving tricks')
+parser.add_argument('--print-steps', default=False, action='store_true', help='Display animated step-by-step solution')
+parser.add_argument('--debug', default=False, action='store_true', help='set loglevel to DEBUG')
+
+# CPU mode
+action = parser.add_mutually_exclusive_group(required=False)
+action.add_argument('--cpu-min', default=False, help='Use the least CPU, produce a longer solution', action='store_true')
+action.add_argument('--cpu-normal', default=True, help='Use average CPU, produce an average solution', action='store_true')
+action.add_argument('--cpu-max', default=False, help='Use the most CPU, produce a shorter solution', action='store_true')
+action.add_argument('--cpu-tsai', default=False, help='Use the tsai solver, 4x4x4 only', action='store_true')
+
 parser.add_argument('--colormap', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--order', type=str, default='URFDLB', help='order of sides in --state, default kociemba URFDLB')
 parser.add_argument('--state', type=str, help='Cube state',
+
+# no longer used
+# parser.add_argument('--test', default=False, action='store_true')
 
 # 2x2x2
 #    default='DLRRFULLDUBFDURDBFBRBLFU')
@@ -262,10 +270,11 @@ args = parser.parse_args()
 if args.debug:
     log.setLevel(logging.DEBUG)
 
-if args.test:
-    cube = RubiksCube444(solved_4x4x4, args.colormap, avoid_pll=True, use_tsai=args.tsai)
-    cube.test()
-    sys.exit(0)
+# no longer used
+#if args.test:
+#    cube = RubiksCube444(solved_4x4x4, args.order, args.colormap, avoid_pll=True, debug=args.debug)
+#    cube.test()
+#    sys.exit(0)
 
 try:
     size = int(sqrt((len(args.state) / 6)))
@@ -275,7 +284,7 @@ try:
     elif size == 3:
         cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
     elif size == 4:
-        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug, use_tsai=args.tsai)
+        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
         cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
     elif size == 6:
@@ -287,8 +296,17 @@ try:
     else:
         cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
 
-    cube.ev3 = args.ev3
-    cube.best = args.best
+    if args.cpu_min:
+        cube.cpu_mode = 'min'
+    elif args.cpu_max:
+        cube.cpu_mode = 'max'
+    elif args.cpu_tsai:
+        cube.cpu_mode = 'tsai'
+        assert size == 4, "--cpu-tsai option can only be uses for a 4x4x4 cube"
+    elif args.cpu_normal:
+        cube.cpu_mode = 'normal'
+    else:
+        raise Exception("We should not be here")
 
     # Uncomment to produce a cube from alg.cubing.net
     # https://alg.cubing.net/?alg=R_Rw-_D_Uw_R2_Fw2_Uw2_F2_Uw_Fw_%2F%2F_stage_centres%0AU_L_Fw2_D2_L_Fw2_U_Rw2_U-_%2F%2F_3_dedges_%26%232b%3B_partial_centres%0AB_D-_B-_Uw2_L_U-_F_R_Fw2_%2F%2F_6_dedges_%26%232b%3B_centres%0ARw2_U_R-_U-_D-_L2_D_Rw2_%2F%2F_9_dedges%0AFw2_D-_F-_D_Fw2_%2F%2F_12_dedges%0AL2_U-_D_R2_L-_B2_D-_F_%2F%2F_Kociemba_phase_1%0AR2_F2_U2_R2_L2_F2_U-_R2_U-_L2_U2_R2_B2_%2F%2F_Kociemba_phase_2&puzzle=4x4x4&setup=(R1_Rw3_D1_Uw1_R2_Fw2_Uw2_F2_Uw1_Fw1_U1_L1_Fw2_D2_L1_Fw2_U1_Rw2_U3_B1_D3_B3_Uw2_L1_U3_F1_R1_Fw2_Rw2_U1_R3_U3_D3_L2_D1_Rw2_Fw2_D3_F3_D1_Fw2_L2_U3_D1_R2_L3_B2_D3_F1_R2_F2_U2_R2_L2_F2_U3_R2_U3_L2_U2_R2_B2_x-_z-)-&view=playback
@@ -324,7 +342,7 @@ try:
     elif size == 3:
         cube = RubiksCube333(args.state, args.order, args.colormap)
     elif size == 4:
-        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, use_tsai=args.tsai)
+        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True)
     elif size == 5:
         cube = RubiksCube555(args.state, args.order, args.colormap)
     elif size == 6:

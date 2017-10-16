@@ -56,7 +56,7 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
-        if self.best:
+        if self.cpu_mode == 'max':
             '''
             There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
             We cannot build a table that large so we will build it 7 moves deep and use
@@ -178,7 +178,7 @@ class RubiksCube555(RubiksCube):
             in the step10 table.
 
             I only build the table to 8-deep, it would have 165 million entries if
-            I built it the whole way out but that would be too large tou check into
+            I built it the whole way out but that would be too large to check into
             the repo so I use IDA.
 
             lookup-table-5x5x5-step10-UD-centers-stage.txt
@@ -206,6 +206,50 @@ class RubiksCube555(RubiksCube):
                                                      (self.lt_UD_T_centers_stage,
                                                       self.lt_UD_X_centers_stage),
                                                      linecount=24656573)
+
+        # brainstorm
+        # option #1 - Solve all centers at once?
+        # - would be (24!/(4! * 4! * 4! * 4! * 4! * 4!))^2 or 10,540,869,576,538,135,887,152,100,000,000
+        # - T-center and X-center prune tables would be 24!/(4! * 4! * 4! * 4! * 4! * 4!) or 3,246,670,537,110,000
+        # - yeah that isn't going to happen
+        # - not feasible
+        #
+        #
+        # option #2 - Solve UD while staging LR?
+        # - would be (24!/(4! * 4! * 8! *8!))^2 or 439,019,974,033,241,811,210,000
+        # - T-center and X-center prune tables would be 24!/(4! * 4! * 8! *8!) or 662,585,823,900
+        # - 662,585,823,900/439,019,974,033,241,811,210,000 is 0.000 000 000 0015092, IDA would take forever
+        # - not feasible
+        #
+        #
+        # option #3 - Stage all centers at once?
+        # - would be (24!/(8! * 8! * 8!))^2 or 89,595,913,068,008,532,900
+        # - T-center and X-center prune tables would be 24!/(8! * 8! * 8!) or 9,465,511,770
+        # - 9,465,511,770/89,595,913,068,008,532,900 is 0.000 000 000 1056467, IDA would be
+        #   probably take days not to mention the time/diskspace to build prune table
+        #   with 9 billion entries
+        # - not feasible without a lot of time and money on drive space
+        #
+        #
+        # option #4 - Solve UD instead of staging them?
+        # - would be (24!/(4! * 4! * 16!))^2 or 2,650,496,200,020,900
+        # - T-center and X-center prune tables would be 24!/(4! * 4! * 16!) or 51,482,970
+        # - 51,482,970/2,650,496,200,020,900 is 0.000 000 019 4238988, IDA might take a few hours
+        # -
+        # - would leave us with LFRB to solve which would be (16!/(4! * 4! * 4! * 4!))^2 or 3,976,941,969,000,000
+        # - T-center and X-center prune tables would be 16!/(4! * 4! * 4! * 4!) or 63,063,000
+        # - 63063000/3976941969000000 is 0.000 000 015 8571587, IDA might take a few hours
+        # - feasible but not fast
+        #
+        #
+        # option #5 - Stage UD centers but then solve LR instead of staging them? This would in turn stage FB and
+        # leave us with UFDB to solve in the next phase.
+        # - would be (16!/(4! * 4! * 8!))^2 or 811,620,810,000
+        # - the LR T-center and X-center prune tables would be 16!/(4! * 4! * 8!) or 900,900 each
+        # - 900900/811620810000 is 0.000 001 11000111, IDA would be reasonable
+        #
+        # - would leave us with UDFB to solve which would be (8!/(4! * 4!))^4 or 24,010,000
+        # - feasible...I'm not sure there would be huge savings here over what we do today
 
         '''
         lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt
@@ -435,7 +479,7 @@ class RubiksCube555(RubiksCube):
         an explanation on what is going on here
         """
 
-        if self.best:
+        if self.cpu_mode == 'max':
             self.lt_UD_centers_stage.solve()
 
         else:
@@ -1755,9 +1799,9 @@ class RubiksCube555(RubiksCube):
         #   For our default 7x7x7 cube with 3.4 it takes 1.7s, 135/327 edge/total steps
         #   For our default 7x7x7 cube with 3.5 it takes 1.7s, 135/327 edge/total steps
 
-        if self.ev3:
+        if self.cpu_mode == 'min':
             estimate_per_wing = 4.0
-        elif self.best:
+        elif self.cpu_mode == 'max':
             estimate_per_wing = 2.0
         else:
             estimate_per_wing = 3.4

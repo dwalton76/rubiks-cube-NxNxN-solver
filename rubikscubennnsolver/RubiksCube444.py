@@ -391,7 +391,7 @@ class RubiksCube444(RubiksCube):
                                                     linecount=12870)
 
         else:
-            raise Exception("We should not be here")
+            raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
 
         # ==============
         # Phase 2 tables

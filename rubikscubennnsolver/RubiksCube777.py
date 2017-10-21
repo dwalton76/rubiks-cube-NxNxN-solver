@@ -481,6 +481,7 @@ class RubiksCube777(RubiksCube):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
         for x in range(1, 151):
@@ -558,6 +559,7 @@ class RubiksCube777(RubiksCube):
 
         # Create a fake 5x5x5 to solve 7x7x7 centers (they have been reduced to a 5x5x5)
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
         for x in range(1, 151):
@@ -685,6 +687,7 @@ class RubiksCube777(RubiksCube):
 
         # Create a fake 6x6x6 to stage the outside UD oblique edges
         fake_666 = RubiksCube666(solved_6x6x6, 'URFDLB')
+        fake_666.cpu_mode = self.cpu_mode
         fake_666.lt_init()
 
         for x in range(1, 217):
@@ -824,7 +827,7 @@ class RubiksCube777(RubiksCube):
 
             self.rotate(step)
 
-    def group_centers_guts(self):
+    def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
 
         # Uses 5x5x5 solver so stage the inner x-centers and inner t-centers for UD
@@ -911,14 +914,18 @@ class RubiksCube777(RubiksCube):
         log.info("")
         log.info("")
 
+        if oblique_edges_only:
+            log.info("Took %d steps to solve oblique edges" % self.get_solution_len_minus_rotates(self.solution))
+            return
+
         # Centers are now reduced to 5x5x5 centers
         self.solve_reduced_555_centers()
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
-        #sys.exit(0)
 
     def pair_inside_edges(self):
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
         # Upper
@@ -1027,6 +1034,7 @@ class RubiksCube777(RubiksCube):
 
     def pair_outside_edges(self):
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
         # Upper

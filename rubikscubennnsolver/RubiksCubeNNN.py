@@ -4,6 +4,7 @@ from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6
+from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_7x7x7
 import logging
 import sys
 
@@ -28,71 +29,125 @@ class RubiksCubeNNNEven(RubiksCube):
             log.setLevel(logging.DEBUG)
 
     def group_centers_guts(self):
+        center_orbit_count = int((self.size - 4)/2)
 
-        # Group UD centers
-        # - create a fake 6x6x6 to solve the inside 4x4 block
-        fake_666 = RubiksCube666(solved_6x6x6, 'URFDLB')
-        start_666 = 0
-        start_NNN = 0
+        # Make a big "plus" sign on each side
+        for center_orbit_id in range(center_orbit_count):
 
-        for x in range(6):
-            start_NNN_row1 = int(start_NNN + (((self.size/2) - 2) * self.size) + ((self.size/2) - 1))
-            start_NNN_row2 = start_NNN_row1 + self.size
-            start_NNN_row3 = start_NNN_row2 + self.size
-            start_NNN_row4 = start_NNN_row3 + self.size
+            # Group UD centers
+            # - create a fake 6x6x6 to solve the inside 4x4 block
+            fake_666 = RubiksCube666(solved_6x6x6, 'URFDLB')
 
-            log.info("%d: start_NNN_row1 %d, row2 %d, row3 %d row4 %d" %
-                (x, start_NNN_row1, start_NNN_row2, start_NNN_row3, start_NNN_row4))
+            for index in range(1, 217):
+                fake_666.state[index] = 'x'
+            fake_666.cpu_mode = self.cpu_mode
 
-            fake_666.state[start_666+8] = self.state[start_NNN_row1]
-            fake_666.state[start_666+9] = self.state[start_NNN_row1+1]
-            fake_666.state[start_666+10] = self.state[start_NNN_row1+2]
-            fake_666.state[start_666+11] = self.state[start_NNN_row1+3]
+            start_666 = 0
+            start_NNN = 0
 
-            fake_666.state[start_666+14] = self.state[start_NNN_row2]
-            fake_666.state[start_666+15] = self.state[start_NNN_row2+1]
-            fake_666.state[start_666+16] = self.state[start_NNN_row2+2]
-            fake_666.state[start_666+17] = self.state[start_NNN_row2+3]
+            for x in range(6):
+                start_NNN_row1 = int(start_NNN + (((self.size/2) - 2) * self.size) + ((self.size/2) - 1))
+                start_NNN_row2 = start_NNN_row1 + self.size
+                start_NNN_row3 = start_NNN_row2 + self.size
+                start_NNN_row4 = start_NNN_row3 + self.size
 
-            fake_666.state[start_666+20] = self.state[start_NNN_row3]
-            fake_666.state[start_666+21] = self.state[start_NNN_row3+1]
-            fake_666.state[start_666+22] = self.state[start_NNN_row3+2]
-            fake_666.state[start_666+23] = self.state[start_NNN_row3+3]
+                log.info("%d: start_NNN_row1 %d, row2 %d, row3 %d row4 %d" %
+                    (x, start_NNN_row1, start_NNN_row2, start_NNN_row3, start_NNN_row4))
 
-            fake_666.state[start_666+26] = self.state[start_NNN_row4]
-            fake_666.state[start_666+27] = self.state[start_NNN_row4+1]
-            fake_666.state[start_666+28] = self.state[start_NNN_row4+2]
-            fake_666.state[start_666+29] = self.state[start_NNN_row4+3]
-            start_666 += 36
-            start_NNN += (self.size * self.size)
+                fake_666.state[start_666+9] = self.state[start_NNN_row1+1 - (center_orbit_id * self.size)]
+                fake_666.state[start_666+10] = self.state[start_NNN_row1+2 - (center_orbit_id * self.size)]
 
-        # Group LR centers (in turn groups FB)
-        fake_666.print_cube()
-        fake_666.lt_init()
-        #fake_666.group_centers_stage_UD()
-        fake_666.group_centers_guts()
-        fake_666.print_solution()
-        fake_666.print_cube()
+                fake_666.state[start_666+14] = self.state[start_NNN_row2 - center_orbit_id]
+                fake_666.state[start_666+15] = self.state[start_NNN_row2+1]
+                fake_666.state[start_666+16] = self.state[start_NNN_row2+2]
+                fake_666.state[start_666+17] = self.state[start_NNN_row2+3 + center_orbit_id]
 
-        half_size = int(self.size/2)
+                fake_666.state[start_666+20] = self.state[start_NNN_row3 - center_orbit_id]
+                fake_666.state[start_666+21] = self.state[start_NNN_row3+1]
+                fake_666.state[start_666+22] = self.state[start_NNN_row3+2]
+                fake_666.state[start_666+23] = self.state[start_NNN_row3+3 + center_orbit_id]
 
-        for step in fake_666.solution:
-            if step.startswith("3"):
-                self.rotate(str(half_size) + step[1:])
-            elif "w" in step:
-                self.rotate(str(half_size - 1) + step)
-            else:
-                self.rotate(step)
+                fake_666.state[start_666+27] = self.state[start_NNN_row4+1 + (center_orbit_id * self.size)]
+                fake_666.state[start_666+28] = self.state[start_NNN_row4+2 + (center_orbit_id * self.size)]
+                start_666 += 36
+                start_NNN += (self.size * self.size)
+
+            # Group LR centers (in turn groups FB)
+            fake_666.print_cube()
+            fake_666.lt_init()
+            fake_666.group_centers_guts(oblique_edges_only=True)
+            fake_666.print_solution()
+            fake_666.print_cube()
+            half_size = str(int(self.size/2))
+            wide_size = str(int(half_size) - 1 - center_orbit_id)
+
+            for step in fake_666.solution:
+                if step.startswith("3"):
+                    self.rotate(half_size + step[1:])
+                elif "w" in step:
+                    self.rotate(wide_size + step)
+                else:
+                    self.rotate(step)
+
+        for center_orbit_id in range(center_orbit_count):
+            fake_777 = RubiksCube777(solved_7x7x7, 'URFDLB')
+
+            for index in range(1, 295):
+                fake_777.state[index] = 'x'
+            fake_777.cpu_mode = self.cpu_mode
+
+            start_777 = 0
+            start_NNN = 0
+
+            # dwalton - stopped here...fix this
+            for x in range(6):
+                start_NNN_row1 = int(start_NNN + (((self.size/2) - 2) * self.size) + ((self.size/2) - 1))
+                start_NNN_row2 = start_NNN_row1 + self.size
+                start_NNN_row3 = start_NNN_row2 + self.size
+                start_NNN_row4 = start_NNN_row3 + self.size
+
+                log.info("%d: start_NNN_row1 %d, row2 %d, row3 %d row4 %d" %
+                    (x, start_NNN_row1, start_NNN_row2, start_NNN_row3, start_NNN_row4))
+
+                fake_777.state[start_777+9] = self.state[start_NNN_row1+1 - (center_orbit_id * self.size)]
+                fake_777.state[start_777+10] = self.state[start_NNN_row1+2 - (center_orbit_id * self.size)]
+
+                fake_777.state[start_777+14] = self.state[start_NNN_row2 - center_orbit_id]
+                fake_777.state[start_777+15] = self.state[start_NNN_row2+1]
+                fake_777.state[start_777+16] = self.state[start_NNN_row2+2]
+                fake_777.state[start_777+17] = self.state[start_NNN_row2+3 + center_orbit_id]
+
+                fake_777.state[start_777+20] = self.state[start_NNN_row3 - center_orbit_id]
+                fake_777.state[start_777+21] = self.state[start_NNN_row3+1]
+                fake_777.state[start_777+22] = self.state[start_NNN_row3+2]
+                fake_777.state[start_777+23] = self.state[start_NNN_row3+3 + center_orbit_id]
+
+                fake_777.state[start_777+27] = self.state[start_NNN_row4+1 + (center_orbit_id * self.size)]
+                fake_777.state[start_777+28] = self.state[start_NNN_row4+2 + (center_orbit_id * self.size)]
+                start_777 += 36
+                start_NNN += (self.size * self.size)
+
+            # Group LR centers (in turn groups FB)
+            fake_777.print_cube()
+            fake_777.print_cube_layout()
+            #fake_777.lt_init()
+            #fake_777.group_centers_guts(oblique_edges_only=True)
+            #fake_777.print_solution()
+            #fake_777.print_cube()
+            self.print_cube()
+            self.print_cube_layout()
+            sys.exit(0)
 
         # Solve UD centers
         # Solve LRFB centers
-        self.print_cube()
-
         # still more work to do here so go ahead and exit
-        #sys.exit(0)
+        self.print_cube()
+        self.print_cube_layout()
+        sys.exit(0)
 
     def pair_inside_edges_via_444(self):
         fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
+        fake_444.cpu_mode = self.cpu_mode
         fake_444.lt_init()
 
         # The corners don't matter but it does make troubleshooting easier if they match
@@ -231,6 +286,7 @@ class RubiksCubeNNNEven(RubiksCube):
     def pair_edge_orbit_via_555(self, orbit):
         log.warning("pair_edge_orbit_via_555 for %d" % orbit)
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
         # The corners don't matter but it does make troubleshooting easier if they match
@@ -401,7 +457,6 @@ class RubiksCubeNNNEven(RubiksCube):
         fake_555.avoid_pll = False
         fake_555.group_edges()
 
-        # dwalton
         wide_str = str(orbit + 1)
         for step in fake_555.solution:
 
@@ -429,7 +484,7 @@ class RubiksCubeNNNEven(RubiksCube):
             self.solution.append('EDGES_GROUPED')
             return
 
-        # dwalton - we need to tell both pair_inside_edges_via_444() and pair_edge_orbit_via_555() to
+        # TODO - we need to tell both pair_inside_edges_via_444() and pair_edge_orbit_via_555() to
         # avoid PLL
 
         # Pair the inside edges via fake 4x4x4

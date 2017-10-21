@@ -116,7 +116,7 @@ class RubiksCube666(RubiksCube):
         rebuilt the step20 table but restricted moves so that UD obliques can
         only move to sides UFDB. The cube will be very scrambled though and
         there will be UD obliques on sides LR.  What I do is "fake move" these
-        obliques to side UDFB so that I can use the step20 table.  At that point
+        obliques to side UFDB so that I can use the step20 table.  At that point
         there will only be UD obliques on sides ULDR so I then do a rotate_y()
         one time to make LR free of UD obliques again. Then I do another lookup
         in the step20 table.
@@ -467,7 +467,7 @@ class RubiksCube666(RubiksCube):
 
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-    def group_centers_guts(self):
+    def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
         self.group_centers_stage_UD()
 
@@ -501,8 +501,13 @@ class RubiksCube666(RubiksCube):
         log.info("")
         log.info("")
 
+        if oblique_edges_only:
+            log.info("Took %d steps to resolve oblique edges" % self.get_solution_len_minus_rotates(self.solution))
+            return
+
         # At this point the 6x6x6 centers have been reduced to 5x5x5 centers
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
         self.populate_fake_555_for_ULFRBD(fake_555)
         fake_555.group_centers_guts()
@@ -514,6 +519,7 @@ class RubiksCube666(RubiksCube):
 
     def pair_inside_edges_via_444(self):
         fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
+        fake_444.cpu_mode = self.cpu_mode
         fake_444.lt_init()
 
         # The corners don't matter but it does make troubleshooting easier if they match
@@ -627,6 +633,7 @@ class RubiksCube666(RubiksCube):
 
     def pair_outside_edges_via_555(self):
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
         # The corners matter for avoiding PLL

@@ -19,6 +19,9 @@ class RubiksCubeNNNOdd(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+    def phase(self):
+        return 'Solve NxNxN'
+
 
 class RubiksCubeNNNEven(RubiksCube):
 
@@ -28,10 +31,14 @@ class RubiksCubeNNNEven(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+    def phase(self):
+        return 'Solve NxNxN'
+
     def group_centers_guts(self):
         center_orbit_count = int((self.size - 4)/2)
 
-        # Make a big "plus" sign on each side
+        # Make a big "plus" sign on each side, this will allow us to reduce the
+        # centers to a series of 7x7x7 centers
         for center_orbit_id in range(center_orbit_count):
 
             # Group UD centers
@@ -78,6 +85,8 @@ class RubiksCubeNNNEven(RubiksCube):
             fake_666.group_centers_guts(oblique_edges_only=True)
             fake_666.print_solution()
             fake_666.print_cube()
+
+            # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size/2))
             wide_size = str(int(half_size) - 1 - center_orbit_id)
 
@@ -88,8 +97,16 @@ class RubiksCubeNNNEven(RubiksCube):
                     self.rotate(wide_size + step)
                 else:
                     self.rotate(step)
+            fake_666 = None
 
-        for center_orbit_id in range(center_orbit_count):
+        self.print_cube()
+        log.info("Big plus sign formed, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
+        center_orbit_count = ((self.size/2) - 3)/2
+        log.info("center_orbit_count %d" % center_orbit_count)
+
+        #for center_orbit_id in range(center_orbit_count):
+        for center_orbit_id in range(1):
             fake_777 = RubiksCube777(solved_7x7x7, 'URFDLB')
 
             for index in range(1, 295):
@@ -99,51 +116,93 @@ class RubiksCubeNNNEven(RubiksCube):
             start_777 = 0
             start_NNN = 0
 
-            # dwalton - stopped here...fix this
             for x in range(6):
-                start_NNN_row1 = int(start_NNN + (((self.size/2) - 2) * self.size) + ((self.size/2) - 1))
+                start_NNN_row1 = int(start_NNN + (((self.size/2) - 3) * self.size) + (self.size/2) - 2)
                 start_NNN_row2 = start_NNN_row1 + self.size
                 start_NNN_row3 = start_NNN_row2 + self.size
-                start_NNN_row4 = start_NNN_row3 + self.size
+                start_NNN_row4 = start_NNN_row3 + self.size + self.size
+                start_NNN_row5 = start_NNN_row4 + self.size
+                offset_from_edge = start_NNN_row1 % self.size
 
-                log.info("%d: start_NNN_row1 %d, row2 %d, row3 %d row4 %d" %
-                    (x, start_NNN_row1, start_NNN_row2, start_NNN_row3, start_NNN_row4))
+                end_NNN_row1 = (start_NNN_row1 - offset_from_edge) + self.size - offset_from_edge + 1
+                end_NNN_row2 = end_NNN_row1 + self.size
+                end_NNN_row3 = end_NNN_row2 + self.size
+                end_NNN_row4 = end_NNN_row3 + self.size + self.size
+                end_NNN_row5 = end_NNN_row4 + self.size
 
-                fake_777.state[start_777+9] = self.state[start_NNN_row1+1 - (center_orbit_id * self.size)]
-                fake_777.state[start_777+10] = self.state[start_NNN_row1+2 - (center_orbit_id * self.size)]
+                log.info("%d: offset_from_edge %s" % (x, offset_from_edge))
+                log.info("%d: start_NNN_row1 %d, end_NNN_row1 %d" % (x, start_NNN_row1, end_NNN_row1))
+                log.info("%d: start_NNN_row2 %d, end_NNN_row2 %d" % (x, start_NNN_row2, end_NNN_row2))
+                log.info("%d: start_NNN_row3 %d, end_NNN_row3 %d" % (x, start_NNN_row3, end_NNN_row3))
+                log.info("%d: start_NNN_row4 %d, end_NNN_row4 %d" % (x, start_NNN_row4, end_NNN_row4))
+                log.info("%d: start_NNN_row5 %d, end_NNN_row5 %d" % (x, start_NNN_row5, end_NNN_row5))
 
-                fake_777.state[start_777+14] = self.state[start_NNN_row2 - center_orbit_id]
-                fake_777.state[start_777+15] = self.state[start_NNN_row2+1]
-                fake_777.state[start_777+16] = self.state[start_NNN_row2+2]
-                fake_777.state[start_777+17] = self.state[start_NNN_row2+3 + center_orbit_id]
+                fake_777.state[start_777+9] = self.state[start_NNN_row1+0]
+                fake_777.state[start_777+10] = self.state[start_NNN_row1+1] 
+                fake_777.state[start_777+11] = self.state[start_NNN_row1+2]
+                fake_777.state[start_777+12] = self.state[end_NNN_row1-1]
+                fake_777.state[start_777+13] = self.state[end_NNN_row1]
 
-                fake_777.state[start_777+20] = self.state[start_NNN_row3 - center_orbit_id]
-                fake_777.state[start_777+21] = self.state[start_NNN_row3+1]
-                fake_777.state[start_777+22] = self.state[start_NNN_row3+2]
-                fake_777.state[start_777+23] = self.state[start_NNN_row3+3 + center_orbit_id]
+                fake_777.state[start_777+16] = self.state[start_NNN_row2+0]
+                fake_777.state[start_777+17] = self.state[start_NNN_row2+1]
+                fake_777.state[start_777+18] = self.state[start_NNN_row2+2]
+                fake_777.state[start_777+19] = self.state[end_NNN_row2-1]
+                fake_777.state[start_777+20] = self.state[end_NNN_row2]
 
-                fake_777.state[start_777+27] = self.state[start_NNN_row4+1 + (center_orbit_id * self.size)]
-                fake_777.state[start_777+28] = self.state[start_NNN_row4+2 + (center_orbit_id * self.size)]
-                start_777 += 36
+                fake_777.state[start_777+23] = self.state[start_NNN_row3+0]
+                fake_777.state[start_777+24] = self.state[start_NNN_row3+1]
+                fake_777.state[start_777+25] = self.state[start_NNN_row3+2]
+                fake_777.state[start_777+26] = self.state[end_NNN_row3-1]
+                fake_777.state[start_777+27] = self.state[end_NNN_row3]
+
+                fake_777.state[start_777+30] = self.state[start_NNN_row4+0]
+                fake_777.state[start_777+31] = self.state[start_NNN_row4+1]
+                fake_777.state[start_777+32] = self.state[start_NNN_row4+2]
+                fake_777.state[start_777+33] = self.state[end_NNN_row4-1]
+                fake_777.state[start_777+34] = self.state[end_NNN_row4]
+
+                fake_777.state[start_777+37] = self.state[start_NNN_row5+0]
+                fake_777.state[start_777+38] = self.state[start_NNN_row5+1]
+                fake_777.state[start_777+39] = self.state[start_NNN_row5+2]
+                fake_777.state[start_777+40] = self.state[end_NNN_row5-1]
+                fake_777.state[start_777+41] = self.state[end_NNN_row5]
+
+                start_777 += 49
                 start_NNN += (self.size * self.size)
 
+                #fake_777.print_cube()
+                #sys.exit(0)
+
+            # dwalton here now
             # Group LR centers (in turn groups FB)
             fake_777.print_cube()
-            fake_777.print_cube_layout()
-            #fake_777.lt_init()
+            fake_777.lt_init()
             #fake_777.group_centers_guts(oblique_edges_only=True)
+            fake_777.group_centers_guts()
             #fake_777.print_solution()
-            #fake_777.print_cube()
-            self.print_cube()
-            self.print_cube_layout()
-            sys.exit(0)
+            fake_777.print_cube()
 
-        # Solve UD centers
-        # Solve LRFB centers
-        # still more work to do here so go ahead and exit
-        self.print_cube()
-        self.print_cube_layout()
-        sys.exit(0)
+            # Apply the 7x7x7 solution to our cube
+            half_size = str(int(self.size/2) - 1)
+            wide_size = str(int(half_size) - 1 - center_orbit_id)
+            #half_size = '3'
+            #wide_size = '2'
+            self.print_cube()
+            log.warning("half_size %s, wide_size %s" % (half_size, wide_size))
+
+            for step in fake_777.solution:
+                if step.startswith("3"):
+                    self.rotate(half_size + step[1:])
+                elif "w" in step:
+                    self.rotate(wide_size + step)
+                else:
+                    self.rotate(step)
+            fake_777 = None
+
+            self.print_cube()
+            #self.print_cube_layout()
+            self.print_solution()
+            sys.exit(0)
 
     def pair_inside_edges_via_444(self):
         fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
@@ -257,8 +316,6 @@ class RubiksCubeNNNEven(RubiksCube):
         start_index += self.size * self.size
 
         fake_444.group_edges()
-        #fake_444.print_cube()
-        #fake_444.print_solution()
         half_size_str = str(half_size)
 
         for step in fake_444.solution:
@@ -278,7 +335,6 @@ class RubiksCubeNNNEven(RubiksCube):
                           "Dw", "Dw'", "Dw2"):
                 step = half_size_str + step
 
-            #log.warning("fake_444 step %s" % step)
             self.rotate(step)
 
         #log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))

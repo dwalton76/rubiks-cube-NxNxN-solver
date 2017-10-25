@@ -57,7 +57,6 @@ try:
 
         elif size == '4x4x4':
             cube = RubiksCube444(solved_4x4x4, order)
-            #cube.ev3 = True
 
         elif size == '5x5x5':
             cube = RubiksCube555(solved_5x5x5, order)
@@ -72,6 +71,7 @@ try:
             print("ERROR: Add support for %s" % size)
             sys.exit(1)
 
+        cube.cpu_mode = 'normal'
         kociemba_strings = test_cases[size]
         num_test_cases = len(kociemba_strings)
         num_test_cases_executed = 0
@@ -91,8 +91,8 @@ try:
             try:
                 cube.solve()
                 solution = cube.solution
-            except Exception:
-                results.append("\033[91m%s FAIL\033[0m: %s" % (size, kociemba_string))
+            except Exception as e:
+                results.append("\033[91m%s FAIL (exception) \033[0m: %s\n%s\n" % (size, kociemba_string, str(e)))
                 continue
 
             # Now put the cube back in its initial state and verify the solution solves it
@@ -105,7 +105,7 @@ try:
                 results.append("\033[92m%s PASS\033[0m: %s" % (size, kociemba_string))
                 # cube.print_solution()
             else:
-                results.append("\033[91m%s FAIL\033[0m: %s" % (size, kociemba_string))
+                results.append("\033[91m%s FAIL (not solved)\033[0m: %s" % (size, kociemba_string))
                 cube.print_cube()
                 cube.print_solution()
                 break

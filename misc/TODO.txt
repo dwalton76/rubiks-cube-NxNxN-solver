@@ -2,18 +2,18 @@
 lrzip comparison
 
 'lrzip lookup-table-4x4x4-step10-solve-UD-centers.txt'
-dwalton@laptop ~/l/r/NxNxN> ls -lh lookup-table-4x4x4-step10-solve-UD-centers.txt*
--rw-rw-r-- 1 dwalton dwalton 1.2G Mar 27 07:51 lookup-table-4x4x4-step10-solve-UD-centers.txt
--rw-rw-r-- 1 dwalton dwalton 165M Mar 27 15:49 lookup-table-4x4x4-step10-solve-UD-centers.txt.lrz
-dwalton@laptop ~/l/r/NxNxN>
+jdoe@laptop ~/l/r/NxNxN> ls -lh lookup-table-4x4x4-step10-solve-UD-centers.txt*
+-rw-rw-r-- 1 jdoe jdoe 1.2G Mar 27 07:51 lookup-table-4x4x4-step10-solve-UD-centers.txt
+-rw-rw-r-- 1 jdoe jdoe 165M Mar 27 15:49 lookup-table-4x4x4-step10-solve-UD-centers.txt.lrz
+jdoe@laptop ~/l/r/NxNxN>
 
 
 'lrzip -z lookup-table-4x4x4-step10-solve-UD-centers.txt'
-dwalton@laptop ~/l/r/NxNxN> ls -lh lookup-table-4x4x4-step10-solve-UD-centers.txt*
--rw-rw-r-- 1 dwalton dwalton 1.2G Mar 27 07:51 lookup-table-4x4x4-step10-solve-UD-centers.txt
--rw-rw-r-- 1 dwalton dwalton 132M Mar 27 16:01 lookup-table-4x4x4-step10-solve-UD-centers.txt.lrz
-dwalton@laptop ~/l/r/NxNxN>
-dwalton@laptop ~/l/r/NxNxN>
+jdoe@laptop ~/l/r/NxNxN> ls -lh lookup-table-4x4x4-step10-solve-UD-centers.txt*
+-rw-rw-r-- 1 jdoe jdoe 1.2G Mar 27 07:51 lookup-table-4x4x4-step10-solve-UD-centers.txt
+-rw-rw-r-- 1 jdoe jdoe 132M Mar 27 16:01 lookup-table-4x4x4-step10-solve-UD-centers.txt.lrz
+jdoe@laptop ~/l/r/NxNxN>
+jdoe@laptop ~/l/r/NxNxN>
 
 
 

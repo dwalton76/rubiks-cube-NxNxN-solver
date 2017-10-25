@@ -42,6 +42,49 @@ class RubiksCube555(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+
+    def sanity_check(self):
+        edge_orbit_0 = (2, 4, 10, 20, 24, 22, 16, 6,
+                        27, 29, 35, 45, 49, 47, 41, 31,
+                        52, 54, 60, 70, 74, 72, 66, 56,
+                        77, 79, 85, 95, 99, 97, 91, 81,
+                        102, 104, 110, 120, 124, 122, 116, 106,
+                        127, 129, 135, 145, 149, 147, 141, 131)
+
+        edge_orbit_1 = (3, 15, 23, 11,
+                        28, 40, 48, 36,
+                        53, 65, 73, 61,
+                        78, 90, 98, 86,
+                        103, 115, 123, 111,
+                        128, 140, 148, 136)
+
+        corners = (1, 5, 21, 25,
+                   26, 30, 46, 50,
+                   51, 55, 71, 75,
+                   76, 80, 96, 100,
+                   101, 105, 121, 125,
+                   126, 130, 146, 150)
+
+        x_centers = (7, 9, 13, 17, 19,
+                     32, 34, 38, 42, 44,
+                     57, 59, 63, 67, 69,
+                     82, 84, 88, 92, 94,
+                     107, 109, 113, 117, 119,
+                     132, 134, 138, 142, 144)
+
+        t_centers = (8, 12, 13, 14, 18,
+                     33, 37, 38, 39, 43,
+                     58, 62, 63, 64, 68,
+                     83, 87, 88, 89, 93,
+                     108, 112, 113, 114, 118,
+                     133, 137, 138, 139, 143)
+
+        self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
+        self._sanity_check('edge-orbit-1', edge_orbit_1, 4)
+        self._sanity_check('corners', corners, 4)
+        self._sanity_check('x-centers', x_centers, 5)
+        self._sanity_check('t-centers', t_centers, 5)
+
     def rotate(self, step):
         """
         The 5x5x5 solver calls rotate() much more than other solvers, this is
@@ -855,6 +898,7 @@ class RubiksCube555(RubiksCube):
         fake_444.state[92] = self.state[145]
         fake_444.state[94] = self.state[147]
         fake_444.state[95] = self.state[149]
+        fake_444.sanity_check()
         fake_444.group_edges()
 
         for step in fake_444.solution:

@@ -51,6 +51,92 @@ class RubiksCube777(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+    def sanity_check(self):
+        edge_orbit_0 = (2, 6, 14, 42, 48, 44, 36, 8,
+                        51, 55, 63, 91, 97, 93, 85, 57,
+                        100, 104, 112, 140, 146, 142, 134, 106,
+                        149, 153, 161, 189, 195, 191, 183, 155,
+                        198, 202, 210, 238, 244, 240, 232, 204,
+                        247, 251, 259, 287, 293, 289, 281, 253)
+
+        edge_orbit_1 = (3, 5, 21, 35, 47, 45, 29, 15,
+                        52, 54, 70, 84, 96, 94, 78, 64,
+                        101, 103, 119, 133, 145, 143, 127, 113,
+                        150, 152, 168, 182, 194, 192, 176, 162,
+                        199, 201, 217, 231, 243, 241, 225, 211,
+                        248, 250, 266, 280, 292, 290, 274, 260)
+
+        edge_orbit_2 = (4, 28, 46, 22,
+                        53, 77, 95, 71,
+                        102, 126, 144, 120,
+                        151, 175, 193, 169,
+                        200, 224, 242, 218,
+                        249, 273, 291, 267)
+
+        corners = (1, 7, 43, 49,
+                   50, 56, 92, 98,
+                   99, 105, 141, 147,
+                   148, 154, 190, 196,
+                   197, 203, 239, 245,
+                   246, 252, 288, 294)
+
+        left_oblique_edge = (10, 20, 40, 30,
+                             59, 69, 89, 79,
+                             108, 118, 138, 128,
+                             157, 167, 187, 177,
+                             206, 216, 236, 226,
+                             255, 265, 285, 275)
+
+        right_oblique_edge = (12, 34, 38, 16,
+                              61, 83, 87, 65,
+                              110, 132, 136, 114,
+                              159, 181, 185, 163,
+                              208, 230, 234, 212,
+                              257, 279, 283, 261)
+
+        outside_x_centers = (9, 13, 37, 41,
+                             58, 62, 86, 90,
+                             107, 111, 135, 139,
+                             156, 160, 184, 188,
+                             205, 209, 233, 237,
+                             254, 258, 282, 286)
+
+        inside_x_centers = (17, 19, 31, 33,
+                            66, 68, 80, 82,
+                            115, 117, 129, 131,
+                            164, 166, 178, 180,
+                            213, 215, 227, 229,
+                            262, 264, 276, 278)
+
+        outside_t_centers = (11, 23, 27, 39,
+                             60, 72, 76, 88,
+                             109, 121, 125, 137,
+                             158, 170, 174, 186,
+                             207, 219, 223, 235,
+                             256, 268, 272, 284)
+
+        inside_t_centers = (18, 24, 26, 32,
+                            67, 73, 75, 81,
+                            116, 122, 124, 130,
+                            165, 171, 173, 179,
+                            214, 220, 222, 228,
+                            263, 269, 271, 277)
+
+        centers = (25, 74, 123, 172, 221, 270)
+
+        self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
+        self._sanity_check('edge-orbit-1', edge_orbit_1, 8)
+        self._sanity_check('edge-orbit-2', edge_orbit_2, 4)
+        self._sanity_check('corners', corners, 4)
+        self._sanity_check('left-oblique', left_oblique_edge, 4)
+        self._sanity_check('right-oblique', right_oblique_edge, 4)
+        self._sanity_check('outside x-centers', outside_x_centers, 4)
+        self._sanity_check('inside x-centers', inside_x_centers, 4)
+        self._sanity_check('outside t-centers', outside_x_centers, 4)
+        self._sanity_check('inside t-centers', inside_x_centers, 4)
+        self._sanity_check('centers', centers, 1)
+
+
     def lt_init(self):
         if self.lt_init_called:
             return
@@ -434,7 +520,7 @@ class RubiksCube777(RubiksCube):
                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
                                                           "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
                                                           "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
-                                                          "L", "L'", "L2", "R", "R'", "R2"), # Do not mess up LRs reduced to 5x5x5 centers...dwalton is this needed?
+                                                          "L", "L'", "L2", "R", "R'", "R2"), # Do not mess up LRs reduced to 5x5x5 centers...TODO is this needed?
 
                                                          # prune tables
                                                          (self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
@@ -552,6 +638,7 @@ class RubiksCube777(RubiksCube):
         fake_555.state[142] = self.state[276]
         fake_555.state[143] = self.state[277]
         fake_555.state[144] = self.state[278]
+        fake_555.sanity_check()
 
         return fake_555
 
@@ -630,6 +717,7 @@ class RubiksCube777(RubiksCube):
         fake_555.state[142] = self.state[282]
         fake_555.state[143] = self.state[284]
         fake_555.state[144] = self.state[286]
+        fake_555.sanity_check()
 
         return fake_555
 
@@ -698,14 +786,17 @@ class RubiksCube777(RubiksCube):
         fake_666.state[9] = self.state[10]
         fake_666.state[10] = self.state[12]
         fake_666.state[11] = self.state[13]
+
         fake_666.state[14] = self.state[16]
         fake_666.state[15] = self.state[17]
         fake_666.state[16] = self.state[19]
         fake_666.state[17] = self.state[20]
+
         fake_666.state[20] = self.state[30]
         fake_666.state[21] = self.state[31]
         fake_666.state[22] = self.state[33]
         fake_666.state[23] = self.state[34]
+
         fake_666.state[26] = self.state[37]
         fake_666.state[27] = self.state[38]
         fake_666.state[28] = self.state[40]
@@ -800,9 +891,8 @@ class RubiksCube777(RubiksCube):
         fake_666.state[207] = self.state[283]
         fake_666.state[208] = self.state[285]
         fake_666.state[209] = self.state[286]
+        fake_666.sanity_check()
 
-        #self.print_cube()
-        #fake_666.print_cube()
         return fake_666
 
     def group_outside_UD_oblique_edges(self):
@@ -1011,6 +1101,7 @@ class RubiksCube777(RubiksCube):
         fake_555.state[147] = self.state[290]
         fake_555.state[148] = self.state[291]
         fake_555.state[149] = self.state[292]
+        fake_555.sanity_check()
         fake_555.group_edges()
 
         for step in fake_555.solution:
@@ -1120,6 +1211,7 @@ class RubiksCube777(RubiksCube):
         fake_555.state[147] = self.state[289]
         fake_555.state[148] = self.state[291]
         fake_555.state[149] = self.state[293]
+        fake_555.sanity_check()
         fake_555.group_edges()
 
         for step in fake_555.solution:

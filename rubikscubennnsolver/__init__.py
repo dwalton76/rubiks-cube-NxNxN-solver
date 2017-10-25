@@ -17,6 +17,10 @@ import sys
 log = logging.getLogger(__name__)
 
 
+class InvalidCubeReduction(Exception):
+    pass
+
+
 def get_cube_layout(size):
     """
     Example: size is 3, return the following string:
@@ -482,6 +486,36 @@ class RubiksCube(object):
 
     def __str__(self):
         return "%dx%dx%d" % (self.size, self.size, self.size)
+
+
+    def _sanity_check(self, desc, indexes, expected_count):
+        count = {
+            'U' : 0,
+            'L' : 0,
+            'F' : 0,
+            'R' : 0,
+            'B' : 0,
+            'D' : 0,
+            'x' : 0,
+        }
+
+        for x in indexes:
+            count[self.state[x]] += 1
+
+        for (side, value) in count.items():
+            if side == 'x' or value == 0:
+                continue
+
+            if value != expected_count:
+                self.print_cube()
+                raise InvalidCubeReduction("side %s %s count is %d (should be %d)" % (desc, side, value, expected_count))
+
+    def sanity_check(self):
+        """
+        Implemented by the various child classes to verify that
+        the 'state' content makes sense
+        """
+        pass
 
     def load_state(self, state_string, order):
 

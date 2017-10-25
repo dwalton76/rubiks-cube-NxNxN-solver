@@ -116,6 +116,33 @@ class RubiksCube444(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+
+    def sanity_check(self):
+        corners = (1, 4, 13, 16,
+                   17, 20, 29, 32,
+                   33, 36, 45, 48,
+                   49, 52, 61, 64,
+                   65, 68, 77, 80,
+                   81, 84, 93, 96)
+
+        centers = (6, 7, 10, 11,
+                   22, 23, 26, 27,
+                   38, 39, 42, 43,
+                   54, 55, 58, 59,
+                   70, 71, 74, 75,
+                   86, 87, 90, 91)
+
+        edge_orbit_0 = (2, 3, 8, 12, 15, 14, 9, 5,
+                        18, 19, 24, 28, 31, 30, 25, 21,
+                        34, 35, 40, 44, 47, 46, 41, 37,
+                        50, 51, 56, 60, 62, 63, 57, 53,
+                        66, 67, 72, 76, 79, 78, 73, 69,
+                        82, 83, 88, 92, 95, 94, 89, 85)
+
+        self._sanity_check('corners', corners, 4)
+        self._sanity_check('centers', centers, 4)
+        self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
+
     def lt_init(self):
         if self.lt_init_called:
             return

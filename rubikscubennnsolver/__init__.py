@@ -1069,7 +1069,7 @@ class RubiksCube(object):
     def print_cube_layout(self):
         print((get_cube_layout(self.size) + '\n'))
 
-    def print_cube(self):
+    def print_cube(self, print_positions=False):
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
         side_name_index = 0
         rows = []
@@ -1091,10 +1091,10 @@ class RubiksCube(object):
             if color:
                 # end of the row
                 if square_index % self.size == 0:
-                    rows[row_index].append("\033[%dm%s\033[0m " % (color, square_state))
+                    rows[row_index].append("\033[%dm%s\033[0m%s " % (color, square_state, " (%4d) " % square_index if print_positions else ""))
                     row_index += 1
                 else:
-                    rows[row_index].append("\033[%dm%s\033[0m" % (color, square_state))
+                    rows[row_index].append("\033[%dm%s\033[0m%s" % (color, square_state, " (%4d) " % square_index if print_positions else ""))
             else:
                 if square_state.isdigit():
                     printing_numbers = True

@@ -5,6 +5,7 @@ from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_7x7x7
+from math import ceil
 import logging
 import sys
 
@@ -13,346 +14,8 @@ log = logging.getLogger(__name__)
 
 class RubiksCubeNNN(RubiksCube):
 
-    def __init__(self, state, order,  colormap, debug=False):
-        RubiksCubeNNN.__init__(self, state, order, colormap)
-
-        if debug:
-            log.setLevel(logging.DEBUG)
-
     def phase(self):
         return 'Solve NxNxN'
-
-    def pair_inside_edges_via_444(self):
-        fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
-        fake_444.cpu_mode = self.cpu_mode
-        fake_444.lt_init()
-
-        # The corners don't matter but it does make troubleshooting easier if they match
-        start_index = 0
-        fake_444.state[1] = self.state[start_index+1]
-        fake_444.state[4] = self.state[start_index + self.size]
-        fake_444.state[13] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[16] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_444.state[17] = self.state[start_index+1]
-        fake_444.state[20] = self.state[start_index + self.size]
-        fake_444.state[29] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[32] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_444.state[33] = self.state[start_index+1]
-        fake_444.state[36] = self.state[start_index + self.size]
-        fake_444.state[45] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[48] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_444.state[49] = self.state[start_index+1]
-        fake_444.state[52] = self.state[start_index + self.size]
-        fake_444.state[61] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[64] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_444.state[65] = self.state[start_index+1]
-        fake_444.state[68] = self.state[start_index + self.size]
-        fake_444.state[77] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[80] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_444.state[81] = self.state[start_index+1]
-        fake_444.state[84] = self.state[start_index + self.size]
-        fake_444.state[93] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[96] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        # Upper
-        half_size = int(self.size/2)
-        start_index = 0
-        fake_444.state[2] = self.state[start_index + half_size]
-        fake_444.state[3] = self.state[start_index + half_size + 1]
-        fake_444.state[5] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[8] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[9] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[12] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[14] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[15] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
-
-        # Left
-        fake_444.state[18] = self.state[start_index + half_size]
-        fake_444.state[19] = self.state[start_index + half_size + 1]
-        fake_444.state[21] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[24] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[25] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[28] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[30] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[31] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
-
-        # Front
-        fake_444.state[34] = self.state[start_index + half_size]
-        fake_444.state[35] = self.state[start_index + half_size + 1]
-        fake_444.state[37] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[40] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[41] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[44] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[46] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[47] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
-
-        # Right
-        fake_444.state[50] = self.state[start_index + half_size]
-        fake_444.state[51] = self.state[start_index + half_size + 1]
-        fake_444.state[53] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[56] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[57] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[60] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[62] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[63] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
-
-        # Back
-        fake_444.state[66] = self.state[start_index + half_size]
-        fake_444.state[67] = self.state[start_index + half_size + 1]
-        fake_444.state[69] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[72] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[73] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[76] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[78] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[79] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
-
-        # Down
-        fake_444.state[82] = self.state[start_index + half_size]
-        fake_444.state[83] = self.state[start_index + half_size + 1]
-        fake_444.state[85] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[88] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[89] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[92] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[94] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[95] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
-
-        fake_444.sanity_check()
-        fake_444.group_edges()
-        half_size_str = str(half_size)
-
-        for step in fake_444.solution:
-
-            if step == 'EDGES_GROUPED':
-                continue
-
-            # Rotate the entire cube
-            if step.startswith('4'):
-                step = str(self.size) + step[1:]
-
-            elif step in ("Uw", "Uw'", "Uw2",
-                          "Lw", "Lw'", "Lw2",
-                          "Fw", "Fw'", "Fw2",
-                          "Rw", "Rw'", "Rw2",
-                          "Bw", "Bw'", "Bw2",
-                          "Dw", "Dw'", "Dw2"):
-                step = half_size_str + step
-
-            self.rotate(step)
-
-        #log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-
-    def pair_edge_orbit_via_555(self, orbit):
-        log.warning("pair_edge_orbit_via_555 for %d" % orbit)
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.cpu_mode = self.cpu_mode
-        fake_555.lt_init()
-
-        # The corners don't matter but it does make troubleshooting easier if they match
-        start_index = 0
-        fake_555.state[1] = self.state[start_index+1]
-        fake_555.state[5] = self.state[start_index + self.size]
-        fake_555.state[21] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[25] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_555.state[26] = self.state[start_index+1]
-        fake_555.state[30] = self.state[start_index + self.size]
-        fake_555.state[46] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[50] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_555.state[51] = self.state[start_index+1]
-        fake_555.state[55] = self.state[start_index + self.size]
-        fake_555.state[71] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[75] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_555.state[76] = self.state[start_index+1]
-        fake_555.state[80] = self.state[start_index + self.size]
-        fake_555.state[96] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[100] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_555.state[101] = self.state[start_index+1]
-        fake_555.state[105] = self.state[start_index + self.size]
-        fake_555.state[121] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[125] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_555.state[126] = self.state[start_index+1]
-        fake_555.state[130] = self.state[start_index + self.size]
-        fake_555.state[146] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[150] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        half_size = int(self.size/2)
-
-        # Upper
-        start_index = 0
-        fake_555.state[2] = self.state[start_index + orbit + 1]
-        fake_555.state[3] = self.state[start_index + half_size]
-        fake_555.state[4] = self.state[start_index + self.size - orbit]
-
-        fake_555.state[6] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[10] = self.state[start_index + (orbit * self.size) + self.size]
-
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[11] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[15] = self.state[start_index + (self.size * half_size)]
-
-        fake_555.state[16] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[20] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
-
-        fake_555.state[22] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[23] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[24] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
-
-
-        # Left
-        fake_555.state[27] = self.state[start_index + orbit + 1]
-        fake_555.state[28] = self.state[start_index + half_size]
-        fake_555.state[29] = self.state[start_index + self.size - orbit]
-
-        fake_555.state[31] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[35] = self.state[start_index + (orbit * self.size) + self.size]
-
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[36] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[40] = self.state[start_index + (self.size * half_size)]
-
-        fake_555.state[41] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[45] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
-
-        fake_555.state[47] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[48] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[49] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
-
-        # Front
-        fake_555.state[52] = self.state[start_index + orbit + 1]
-        fake_555.state[53] = self.state[start_index + half_size]
-        fake_555.state[54] = self.state[start_index + self.size - orbit]
-
-        fake_555.state[56] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[60] = self.state[start_index + (orbit * self.size) + self.size]
-
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[61] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[65] = self.state[start_index + (self.size * half_size)]
-
-        fake_555.state[66] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[70] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
-
-        fake_555.state[72] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[73] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[74] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
-
-        # Right
-        fake_555.state[77] = self.state[start_index + orbit + 1]
-        fake_555.state[78] = self.state[start_index + half_size]
-        fake_555.state[79] = self.state[start_index + self.size - orbit]
-
-        fake_555.state[81] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[85] = self.state[start_index + (orbit * self.size) + self.size]
-
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[86] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[90] = self.state[start_index + (self.size * half_size)]
-
-        fake_555.state[91] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[95] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
-
-        fake_555.state[97] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[98] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[99] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
-
-        # Back
-        fake_555.state[102] = self.state[start_index + orbit + 1]
-        fake_555.state[103] = self.state[start_index + half_size]
-        fake_555.state[104] = self.state[start_index + self.size - orbit]
-
-        fake_555.state[106] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[110] = self.state[start_index + (orbit * self.size) + self.size]
-
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[111] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[115] = self.state[start_index + (self.size * half_size)]
-
-        fake_555.state[116] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[120] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
-
-        fake_555.state[122] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[123] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[124] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
-
-
-        # Down
-        fake_555.state[127] = self.state[start_index + orbit + 1]
-        fake_555.state[128] = self.state[start_index + half_size]
-        fake_555.state[129] = self.state[start_index + self.size - orbit]
-
-        fake_555.state[131] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[135] = self.state[start_index + (orbit * self.size) + self.size]
-
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[136] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[140] = self.state[start_index + (self.size * half_size)]
-
-        fake_555.state[141] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[145] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
-
-        fake_555.state[147] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[148] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[149] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
-
-        fake_555.sanity_check()
-        self.print_cube()
-        fake_555.print_cube()
-        fake_555.avoid_pll = False
-        fake_555.group_edges()
-
-        wide_str = str(orbit + 1)
-        for step in fake_555.solution:
-
-            if step == 'EDGES_GROUPED':
-                continue
-
-            # Rotate the entire cube
-            if step.startswith('5'):
-                step = str(self.size) + step[1:]
-
-            elif step in ("Uw", "Uw'", "Uw2",
-                          "Lw", "Lw'", "Lw2",
-                          "Fw", "Fw'", "Fw2",
-                          "Rw", "Rw'", "Rw2",
-                          "Bw", "Bw'", "Bw2",
-                          "Dw", "Dw'", "Dw2"):
-                step = wide_str + step
-
-            #log.warning("fake_555 step %s" % step)
-            self.rotate(step)
 
 
 class RubiksCubeNNNOdd(RubiksCubeNNN):
@@ -366,10 +29,11 @@ class RubiksCubeNNNOdd(RubiksCubeNNN):
 
         start_777 = 0
         start_NNN = 0
+        row1_column = int((self.size/2) - 1)
+        log.warning("row1_column %s, size %s" % (row1_column, self.size))
 
         for x in range(6):
-            start_NNN_row1 = int(start_NNN + (((self.size/2) - 3) * self.size) + (self.size/2) - 2)
-            start_NNN_row1 -= self.size
+            start_NNN_row1 = int(start_NNN + row1_column + ((row1_column-1) * self.size))
             start_NNN_row2 = start_NNN_row1 + self.size
             start_NNN_row3 = start_NNN_row2 + self.size
             start_NNN_row4 = start_NNN_row3 + self.size
@@ -423,7 +87,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNN):
 
         # Apply the 7x7x7 solution to our cube
         half_size = str(int(self.size/2) - 1)
-        wide_size = str(int(half_size) - 1 - center_orbit_id)
+        wide_size = str(int(half_size) - 1)
 
         for step in fake_777.solution:
             if step.startswith("3"):
@@ -646,6 +310,280 @@ class RubiksCubeNNNOdd(RubiksCubeNNN):
             log.warning("%d/%d: end of orbit" % (center_orbit_id, x))
             self.print_cube()
 
+    def group_centers_guts(self):
+        self.solve_inside_777()
+
+    def pair_edge_orbit_via_555(self, orbit):
+        log.warning("pair_edge_orbit_via_555 for %d" % orbit)
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
+        fake_555.lt_init()
+
+        # The corners don't matter so x them out
+        x_out_corners = True
+
+        if x_out_corners:
+            start_555 = 0
+
+            for x in range(6):
+                fake_555.state[start_555+1] = 'x'
+                fake_555.state[start_555+5] = 'x'
+                fake_555.state[start_555+21] = 'x'
+                fake_555.state[start_555+25] = 'x'
+                start_555 += 25
+
+        else:
+            start_index = 0
+            fake_555.state[1] = self.state[start_index+1]
+            fake_555.state[5] = self.state[start_index + self.size]
+            fake_555.state[21] = self.state[start_index + (self.size * self.size) - self.size + 1]
+            fake_555.state[25] = self.state[start_index + (self.size * self.size)]
+            start_index += self.size * self.size
+
+            fake_555.state[26] = self.state[start_index+1]
+            fake_555.state[30] = self.state[start_index + self.size]
+            fake_555.state[46] = self.state[start_index + (self.size * self.size) - self.size + 1]
+            fake_555.state[50] = self.state[start_index + (self.size * self.size)]
+            start_index += self.size * self.size
+
+            fake_555.state[51] = self.state[start_index+1]
+            fake_555.state[55] = self.state[start_index + self.size]
+            fake_555.state[71] = self.state[start_index + (self.size * self.size) - self.size + 1]
+            fake_555.state[75] = self.state[start_index + (self.size * self.size)]
+            start_index += self.size * self.size
+
+            fake_555.state[76] = self.state[start_index+1]
+            fake_555.state[80] = self.state[start_index + self.size]
+            fake_555.state[96] = self.state[start_index + (self.size * self.size) - self.size + 1]
+            fake_555.state[100] = self.state[start_index + (self.size * self.size)]
+            start_index += self.size * self.size
+
+            fake_555.state[101] = self.state[start_index+1]
+            fake_555.state[105] = self.state[start_index + self.size]
+            fake_555.state[121] = self.state[start_index + (self.size * self.size) - self.size + 1]
+            fake_555.state[125] = self.state[start_index + (self.size * self.size)]
+            start_index += self.size * self.size
+
+            fake_555.state[126] = self.state[start_index+1]
+            fake_555.state[130] = self.state[start_index + self.size]
+            fake_555.state[146] = self.state[start_index + (self.size * self.size) - self.size + 1]
+            fake_555.state[150] = self.state[start_index + (self.size * self.size)]
+            start_index += self.size * self.size
+
+        start_index = 1
+        half_size = int(ceil(self.size/2))
+        log.warning("start_index %s, half_size %s, orbit %s" % (start_index, half_size, orbit))
+        #sys.exit(0)
+
+        # dwalton here now
+        start_555 = 0
+        start_777 = 0
+
+        for x in range(6):
+            row1_col1 = start_777 + orbit + 2
+            row1_col2 = start_777 + half_size
+            row1_col3 = start_777 + self.size - orbit - 1
+
+            row2_col1 = start_777 + ((orbit+1) * self.size) + 1
+            row2_col3 = row2_col1 + self.size - 1
+
+            row3_col1 = start_777 + (self.size * (half_size - 1)) + 1
+            row3_col3 = row3_col1 + self.size - 1
+
+            row4_col1 = start_777 + (self.size * self.size) - ((orbit+2) * self.size) + 1
+            row4_col3 = row4_col1 + self.size - 1
+
+            #row5_col1 = start_777 + (self.size * self.size) - self.size + 1 + orbit
+            #row5_col2 = start_777 + (self.size * self.size) - half_size
+            #row5_col3 = start_777 + (self.size * self.size) - orbit
+            row5_col1 = row1_col1 + ((self.size - 1) * self.size)
+            row5_col2 = row1_col2 + ((self.size - 1) * self.size)
+            row5_col3 = row1_col3 + ((self.size - 1) * self.size)
+
+            log.warning("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
+            log.warning("%d row2: %s, %s" % (x, row2_col1, row2_col3))
+            log.warning("%d row3: %s, %s" % (x, row3_col1, row3_col3))
+            log.warning("%d row4: %s, %s" % (x, row4_col1, row4_col3))
+            log.warning("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
+
+            # row1
+            fake_555.state[start_555+2] = self.state[row1_col1]
+            fake_555.state[start_555+3] = self.state[row1_col2]
+            fake_555.state[start_555+4] = self.state[row1_col3]
+
+            # row2
+            fake_555.state[start_555+6] = self.state[row2_col1]
+            fake_555.state[start_555+10] = self.state[row2_col3]
+
+            # row3 - The middle of the edge so orbit doesn't matter
+            fake_555.state[start_555+11] = self.state[row3_col1]
+            fake_555.state[start_555+15] = self.state[row3_col3]
+
+            # row4
+            fake_555.state[start_555+16] = self.state[row4_col1]
+            fake_555.state[start_555+20] = self.state[row4_col3]
+
+            # row5
+            fake_555.state[start_555+22] = self.state[row5_col1]
+            fake_555.state[start_555+23] = self.state[row5_col2]
+            fake_555.state[start_555+24] = self.state[row5_col3]
+
+            start_777 += self.size * self.size
+            start_555 += 25
+            # dwalton
+            #sys.exit(0)
+
+        '''
+        # Upper
+        fake_555.state[2] = self.state[start_index + orbit + 1]
+        fake_555.state[3] = self.state[start_index + half_size - 1]
+        fake_555.state[4] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[6] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[10] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[11] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[15] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[16] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[20] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[22] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[23] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[24] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+
+        # Left
+        fake_555.state[27] = self.state[start_index + orbit + 1]
+        fake_555.state[28] = self.state[start_index + half_size]
+        fake_555.state[29] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[31] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[35] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[36] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[40] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[41] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[45] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[47] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[48] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[49] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+        # Front
+        fake_555.state[52] = self.state[start_index + orbit + 1]
+        fake_555.state[53] = self.state[start_index + half_size]
+        fake_555.state[54] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[56] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[60] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[61] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[65] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[66] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[70] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[72] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[73] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[74] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+        # Right
+        fake_555.state[77] = self.state[start_index + orbit + 1]
+        fake_555.state[78] = self.state[start_index + half_size]
+        fake_555.state[79] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[81] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[85] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[86] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[90] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[91] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[95] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[97] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[98] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[99] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+        # Back
+        fake_555.state[102] = self.state[start_index + orbit + 1]
+        fake_555.state[103] = self.state[start_index + half_size]
+        fake_555.state[104] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[106] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[110] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[111] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[115] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[116] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[120] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[122] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[123] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[124] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+
+        # Down
+        fake_555.state[127] = self.state[start_index + orbit + 1]
+        fake_555.state[128] = self.state[start_index + half_size]
+        fake_555.state[129] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[131] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[135] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[136] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[140] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[141] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[145] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[147] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[148] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[149] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+        '''
+
+        self.print_cube()
+        fake_555.print_cube()
+        fake_555.sanity_check()
+        fake_555.avoid_pll = False
+        fake_555.group_edges()
+
+        wide_str = str(orbit + 1)
+        for step in fake_555.solution:
+
+            if step == 'EDGES_GROUPED':
+                continue
+
+            # Rotate the entire cube
+            if step.startswith('5'):
+                step = str(self.size) + step[1:]
+
+            elif step in ("Uw", "Uw'", "Uw2",
+                          "Lw", "Lw'", "Lw2",
+                          "Fw", "Fw'", "Fw2",
+                          "Rw", "Rw'", "Rw2",
+                          "Bw", "Bw'", "Bw2",
+                          "Dw", "Dw'", "Dw2"):
+                step = wide_str + step
+
+            #log.warning("fake_555 step %s" % step)
+            self.rotate(step)
+
     def group_edges(self):
 
         if not self.get_non_paired_edges():
@@ -659,7 +597,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNN):
         orbits = int((self.size/2) - 1)
 
         # Work your way from inside to outside and pair them via the 5x5x5 solver
-        for orbit in reversed(list(range(0, orbits))):
+        for orbit in reversed(list(range(1, orbits))):
             self.pair_edge_orbit_via_555(orbit)
 
         self.solution.append('EDGES_GROUPED')
@@ -667,7 +605,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNN):
         self.print_cube()
 
 
-class RubiksCubeNNNEven(RubiksCube):
+class RubiksCubeNNNEven(RubiksCubeNNN):
 
     def make_plus_sign(self):
         """
@@ -834,6 +772,339 @@ class RubiksCubeNNNEven(RubiksCube):
         self.print_cube()
         self.print_solution()
         sys.exit(0)
+
+    def pair_inside_edges_via_444(self):
+        fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
+        fake_444.cpu_mode = self.cpu_mode
+        fake_444.lt_init()
+
+        # The corners don't matter but it does make troubleshooting easier if they match
+        start_index = 0
+        fake_444.state[1] = self.state[start_index+1]
+        fake_444.state[4] = self.state[start_index + self.size]
+        fake_444.state[13] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_444.state[16] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        fake_444.state[17] = self.state[start_index+1]
+        fake_444.state[20] = self.state[start_index + self.size]
+        fake_444.state[29] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_444.state[32] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        fake_444.state[33] = self.state[start_index+1]
+        fake_444.state[36] = self.state[start_index + self.size]
+        fake_444.state[45] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_444.state[48] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        fake_444.state[49] = self.state[start_index+1]
+        fake_444.state[52] = self.state[start_index + self.size]
+        fake_444.state[61] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_444.state[64] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        fake_444.state[65] = self.state[start_index+1]
+        fake_444.state[68] = self.state[start_index + self.size]
+        fake_444.state[77] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_444.state[80] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        fake_444.state[81] = self.state[start_index+1]
+        fake_444.state[84] = self.state[start_index + self.size]
+        fake_444.state[93] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_444.state[96] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        # Upper
+        half_size = int(self.size/2)
+        start_index = 0
+        fake_444.state[2] = self.state[start_index + half_size]
+        fake_444.state[3] = self.state[start_index + half_size + 1]
+        fake_444.state[5] = self.state[start_index + (self.size * (half_size-1)) + 1]
+        fake_444.state[8] = self.state[start_index + (self.size * half_size)]
+        fake_444.state[9] = self.state[start_index + (self.size * half_size) + 1]
+        fake_444.state[12] = self.state[start_index + (self.size * (half_size+1))]
+        fake_444.state[14] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_444.state[15] = self.state[start_index + (self.size * self.size) - half_size + 1]
+        start_index += self.size * self.size
+
+        # Left
+        fake_444.state[18] = self.state[start_index + half_size]
+        fake_444.state[19] = self.state[start_index + half_size + 1]
+        fake_444.state[21] = self.state[start_index + (self.size * (half_size-1)) + 1]
+        fake_444.state[24] = self.state[start_index + (self.size * half_size)]
+        fake_444.state[25] = self.state[start_index + (self.size * half_size) + 1]
+        fake_444.state[28] = self.state[start_index + (self.size * (half_size+1))]
+        fake_444.state[30] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_444.state[31] = self.state[start_index + (self.size * self.size) - half_size + 1]
+        start_index += self.size * self.size
+
+        # Front
+        fake_444.state[34] = self.state[start_index + half_size]
+        fake_444.state[35] = self.state[start_index + half_size + 1]
+        fake_444.state[37] = self.state[start_index + (self.size * (half_size-1)) + 1]
+        fake_444.state[40] = self.state[start_index + (self.size * half_size)]
+        fake_444.state[41] = self.state[start_index + (self.size * half_size) + 1]
+        fake_444.state[44] = self.state[start_index + (self.size * (half_size+1))]
+        fake_444.state[46] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_444.state[47] = self.state[start_index + (self.size * self.size) - half_size + 1]
+        start_index += self.size * self.size
+
+        # Right
+        fake_444.state[50] = self.state[start_index + half_size]
+        fake_444.state[51] = self.state[start_index + half_size + 1]
+        fake_444.state[53] = self.state[start_index + (self.size * (half_size-1)) + 1]
+        fake_444.state[56] = self.state[start_index + (self.size * half_size)]
+        fake_444.state[57] = self.state[start_index + (self.size * half_size) + 1]
+        fake_444.state[60] = self.state[start_index + (self.size * (half_size+1))]
+        fake_444.state[62] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_444.state[63] = self.state[start_index + (self.size * self.size) - half_size + 1]
+        start_index += self.size * self.size
+
+        # Back
+        fake_444.state[66] = self.state[start_index + half_size]
+        fake_444.state[67] = self.state[start_index + half_size + 1]
+        fake_444.state[69] = self.state[start_index + (self.size * (half_size-1)) + 1]
+        fake_444.state[72] = self.state[start_index + (self.size * half_size)]
+        fake_444.state[73] = self.state[start_index + (self.size * half_size) + 1]
+        fake_444.state[76] = self.state[start_index + (self.size * (half_size+1))]
+        fake_444.state[78] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_444.state[79] = self.state[start_index + (self.size * self.size) - half_size + 1]
+        start_index += self.size * self.size
+
+        # Down
+        fake_444.state[82] = self.state[start_index + half_size]
+        fake_444.state[83] = self.state[start_index + half_size + 1]
+        fake_444.state[85] = self.state[start_index + (self.size * (half_size-1)) + 1]
+        fake_444.state[88] = self.state[start_index + (self.size * half_size)]
+        fake_444.state[89] = self.state[start_index + (self.size * half_size) + 1]
+        fake_444.state[92] = self.state[start_index + (self.size * (half_size+1))]
+        fake_444.state[94] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_444.state[95] = self.state[start_index + (self.size * self.size) - half_size + 1]
+        start_index += self.size * self.size
+
+        fake_444.sanity_check()
+        fake_444.group_edges()
+        half_size_str = str(half_size)
+
+        for step in fake_444.solution:
+
+            if step == 'EDGES_GROUPED':
+                continue
+
+            # Rotate the entire cube
+            if step.startswith('4'):
+                step = str(self.size) + step[1:]
+
+            elif step in ("Uw", "Uw'", "Uw2",
+                          "Lw", "Lw'", "Lw2",
+                          "Fw", "Fw'", "Fw2",
+                          "Rw", "Rw'", "Rw2",
+                          "Bw", "Bw'", "Bw2",
+                          "Dw", "Dw'", "Dw2"):
+                step = half_size_str + step
+
+            self.rotate(step)
+
+        #log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
+    def pair_edge_orbit_via_555(self, orbit):
+        log.warning("pair_edge_orbit_via_555 for %d" % orbit)
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
+        fake_555.lt_init()
+
+        # The corners don't matter but it does make troubleshooting easier if they match
+        start_index = 0
+        fake_555.state[1] = self.state[start_index+1]
+        fake_555.state[5] = self.state[start_index + self.size]
+        fake_555.state[21] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_555.state[25] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        fake_555.state[26] = self.state[start_index+1]
+        fake_555.state[30] = self.state[start_index + self.size]
+        fake_555.state[46] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_555.state[50] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        fake_555.state[51] = self.state[start_index+1]
+        fake_555.state[55] = self.state[start_index + self.size]
+        fake_555.state[71] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_555.state[75] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        fake_555.state[76] = self.state[start_index+1]
+        fake_555.state[80] = self.state[start_index + self.size]
+        fake_555.state[96] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_555.state[100] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        fake_555.state[101] = self.state[start_index+1]
+        fake_555.state[105] = self.state[start_index + self.size]
+        fake_555.state[121] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_555.state[125] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        fake_555.state[126] = self.state[start_index+1]
+        fake_555.state[130] = self.state[start_index + self.size]
+        fake_555.state[146] = self.state[start_index + (self.size * self.size) - self.size + 1]
+        fake_555.state[150] = self.state[start_index + (self.size * self.size)]
+        start_index += self.size * self.size
+
+        half_size = int(self.size/2)
+
+        # dwalton this is the even one for comparison
+        # Upper
+        start_index = 0
+        fake_555.state[2] = self.state[start_index + orbit + 1]
+        fake_555.state[3] = self.state[start_index + half_size]
+        fake_555.state[4] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[6] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[10] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[11] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[15] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[16] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[20] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[22] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[23] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[24] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+
+        # Left
+        fake_555.state[27] = self.state[start_index + orbit + 1]
+        fake_555.state[28] = self.state[start_index + half_size]
+        fake_555.state[29] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[31] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[35] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[36] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[40] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[41] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[45] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[47] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[48] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[49] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+        # Front
+        fake_555.state[52] = self.state[start_index + orbit + 1]
+        fake_555.state[53] = self.state[start_index + half_size]
+        fake_555.state[54] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[56] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[60] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[61] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[65] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[66] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[70] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[72] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[73] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[74] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+        # Right
+        fake_555.state[77] = self.state[start_index + orbit + 1]
+        fake_555.state[78] = self.state[start_index + half_size]
+        fake_555.state[79] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[81] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[85] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[86] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[90] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[91] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[95] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[97] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[98] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[99] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+        # Back
+        fake_555.state[102] = self.state[start_index + orbit + 1]
+        fake_555.state[103] = self.state[start_index + half_size]
+        fake_555.state[104] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[106] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[110] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[111] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[115] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[116] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[120] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[122] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[123] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[124] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+
+        # Down
+        fake_555.state[127] = self.state[start_index + orbit + 1]
+        fake_555.state[128] = self.state[start_index + half_size]
+        fake_555.state[129] = self.state[start_index + self.size - orbit]
+
+        fake_555.state[131] = self.state[start_index + (orbit * self.size) + 1]
+        fake_555.state[135] = self.state[start_index + (orbit * self.size) + self.size]
+
+        # The middle of the edge so orbit doesn't matter
+        fake_555.state[136] = self.state[start_index + (self.size * (half_size - 1)) + 1]
+        fake_555.state[140] = self.state[start_index + (self.size * half_size)]
+
+        fake_555.state[141] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
+        fake_555.state[145] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+
+        fake_555.state[147] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
+        fake_555.state[148] = self.state[start_index + (self.size * self.size) - half_size]
+        fake_555.state[149] = self.state[start_index + (self.size * self.size) - orbit]
+        start_index += self.size * self.size
+
+        fake_555.sanity_check()
+        self.print_cube()
+        fake_555.print_cube()
+        fake_555.avoid_pll = False
+        fake_555.group_edges()
+
+        wide_str = str(orbit + 1)
+        for step in fake_555.solution:
+
+            if step == 'EDGES_GROUPED':
+                continue
+
+            # Rotate the entire cube
+            if step.startswith('5'):
+                step = str(self.size) + step[1:]
+
+            elif step in ("Uw", "Uw'", "Uw2",
+                          "Lw", "Lw'", "Lw2",
+                          "Fw", "Fw'", "Fw2",
+                          "Rw", "Rw'", "Rw2",
+                          "Bw", "Bw'", "Bw2",
+                          "Dw", "Dw'", "Dw2"):
+                step = wide_str + step
+
+            #log.warning("fake_555 step %s" % step)
+            self.rotate(step)
 
     def group_edges(self):
 

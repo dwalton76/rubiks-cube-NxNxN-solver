@@ -7,6 +7,8 @@ from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_7x7x7
+from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven, solved_8x8x8, solved_10x10x10, solved_12x12x12, solved_14x14x14
+from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd, solved_9x9x9, solved_11x11x11, solved_13x13x13, solved_15x15x15
 import argparse
 import json
 import logging
@@ -67,6 +69,30 @@ try:
         elif size == '7x7x7':
             cube = RubiksCube777(solved_7x7x7, order)
 
+        elif size == '8x8x8':
+            cube = RubiksCubeNNNEven(solved_8x8x8, order)
+
+        elif size == '9x9x9':
+            cube = RubiksCubeNNNOdd(solved_9x9x9, order)
+
+        elif size == '10x10x10':
+            cube = RubiksCubeNNNEven(solved_10x10x10, order)
+
+        elif size == '11x11x11':
+            cube = RubiksCubeNNNOdd(solved_11x11x11, order)
+
+        elif size == '12x12x12':
+            cube = RubiksCubeNNNEven(solved_12x12x12, order)
+
+        elif size == '13x13x13':
+            cube = RubiksCubeNNNOdd(solved_13x13x13, order)
+
+        elif size == '14x14x14':
+            cube = RubiksCubeNNNEven(solved_14x14x14, order)
+
+        elif size == '15x15x15':
+            cube = RubiksCubeNNNOdd(solved_15x15x15, order)
+
         else:
             print("ERROR: Add support for %s" % size)
             sys.exit(1)
@@ -79,6 +105,10 @@ try:
         for (index, kociemba_string) in enumerate(kociemba_strings):
 
             if index < args.start:
+                continue
+
+            # Only test one of each for 'all'
+            if args.size == 'all' and index > 0:
                 continue
 
             #os.system('clear')

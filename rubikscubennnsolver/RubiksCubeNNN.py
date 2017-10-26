@@ -314,12 +314,14 @@ class RubiksCubeNNNOdd(RubiksCubeNNN):
         self.solve_inside_777()
 
     def pair_edge_orbit_via_555(self, orbit):
+        """
+        For Odd cubes
+        """
         log.warning("pair_edge_orbit_via_555 for %d" % orbit)
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
-        # dwalton for comparison
         # Fill in the corners so we can avoid certain types of parity
         start_555 = 0
         start_777 = 0
@@ -418,10 +420,10 @@ class RubiksCubeNNNOdd(RubiksCubeNNN):
             return
 
         # How many orbits of edges does this cube have?
-        orbits = int((self.size/2) - 1)
+        max_orbit = int((self.size/2) - 1)
 
         # Work your way from inside to outside and pair each orbit via the 5x5x5 solver
-        for orbit in reversed(list(range(0, orbits))):
+        for orbit in reversed(list(range(0, max_orbit))):
             self.pair_edge_orbit_via_555(orbit)
 
         self.solution.append('EDGES_GROUPED')
@@ -656,178 +658,81 @@ class RubiksCubeNNNEven(RubiksCubeNNN):
         log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def pair_edge_orbit_via_555(self, orbit):
+        """
+        For Even cubes
+        """
         log.warning("pair_edge_orbit_via_555 for %d" % orbit)
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
-        # dwalton here now
-        fake_555.print_cube()
-        self.print_cube()
-        sys.exit(0)
+        # Fill in the corners so we can avoid certain types of parity
+        start_555 = 0
+        start_777 = 0
 
-        # The corners don't matter but it does make troubleshooting easier if they match
-        start_index = 0
-        fake_555.state[1] = self.state[start_index+1]
-        fake_555.state[5] = self.state[start_index + self.size]
-        fake_555.state[21] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[25] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
+        for x in range(6):
+            fake_555.state[start_555+1] = self.state[start_777+1]
+            fake_555.state[start_555+5] = self.state[start_777 + self.size]
+            fake_555.state[start_555+21] = self.state[start_777 + (self.size * self.size) - self.size + 1]
+            fake_555.state[start_555+25] = self.state[start_777 + (self.size * self.size)]
+            start_777 += self.size * self.size
+            start_555 += 25
 
-        fake_555.state[26] = self.state[start_index+1]
-        fake_555.state[30] = self.state[start_index + self.size]
-        fake_555.state[46] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[50] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_555.state[51] = self.state[start_index+1]
-        fake_555.state[55] = self.state[start_index + self.size]
-        fake_555.state[71] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[75] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_555.state[76] = self.state[start_index+1]
-        fake_555.state[80] = self.state[start_index + self.size]
-        fake_555.state[96] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[100] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_555.state[101] = self.state[start_index+1]
-        fake_555.state[105] = self.state[start_index + self.size]
-        fake_555.state[121] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[125] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_555.state[126] = self.state[start_index+1]
-        fake_555.state[130] = self.state[start_index + self.size]
-        fake_555.state[146] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_555.state[150] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
+        # Fill in the edges
+        start_555 = 0
+        start_777 = 0
         half_size = int(self.size/2)
+        max_orbit = int((self.size - 2)/2) - 1
+        log.warning("orbit %s, half_size %s, max_orbit %s" % (orbit, half_size, max_orbit))
 
-        # Upper
-        start_index = 0
-        fake_555.state[2] = self.state[start_index + orbit + 1]
-        fake_555.state[3] = self.state[start_index + half_size]
-        fake_555.state[4] = self.state[start_index + self.size - orbit]
+        for x in range(6):
+            row1_col2 = start_777 + half_size
+            row1_col1 = row1_col2 - (max_orbit - orbit)
+            row1_col3 = row1_col2 + (max_orbit - orbit) + 1
 
-        fake_555.state[6] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[10] = self.state[start_index + (orbit * self.size) + self.size]
+            row2_col1 = start_777 + ((orbit+1) * self.size) + 1
+            row2_col3 = row2_col1 + self.size - 1
 
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[11] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[15] = self.state[start_index + (self.size * half_size)]
+            row3_col1 = start_777 + (self.size * (half_size - 1)) + 1
+            row3_col3 = row3_col1 + self.size - 1
 
-        fake_555.state[16] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[20] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+            row4_col1 = start_777 + (self.size * self.size) - ((orbit+2) * self.size) + 1
+            row4_col3 = row4_col1 + self.size - 1
 
-        fake_555.state[22] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[23] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[24] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
+            row5_col1 = row1_col1 + ((self.size - 1) * self.size)
+            row5_col2 = row1_col2 + ((self.size - 1) * self.size)
+            row5_col3 = row1_col3 + ((self.size - 1) * self.size)
 
+            log.warning("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
+            log.warning("%d row2: %s, %s" % (x, row2_col1, row2_col3))
+            log.warning("%d row3: %s, %s" % (x, row3_col1, row3_col3))
+            log.warning("%d row4: %s, %s" % (x, row4_col1, row4_col3))
+            log.warning("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
 
-        # Left
-        fake_555.state[27] = self.state[start_index + orbit + 1]
-        fake_555.state[28] = self.state[start_index + half_size]
-        fake_555.state[29] = self.state[start_index + self.size - orbit]
+            # row1
+            fake_555.state[start_555+2] = self.state[row1_col1]
+            fake_555.state[start_555+3] = self.state[row1_col2]
+            fake_555.state[start_555+4] = self.state[row1_col3]
 
-        fake_555.state[31] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[35] = self.state[start_index + (orbit * self.size) + self.size]
+            # row2
+            fake_555.state[start_555+6] = self.state[row2_col1]
+            fake_555.state[start_555+10] = self.state[row2_col3]
 
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[36] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[40] = self.state[start_index + (self.size * half_size)]
+            # row3 - The middle of the edge so orbit doesn't matter
+            fake_555.state[start_555+11] = self.state[row3_col1]
+            fake_555.state[start_555+15] = self.state[row3_col3]
 
-        fake_555.state[41] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[45] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
+            # row4
+            fake_555.state[start_555+16] = self.state[row4_col1]
+            fake_555.state[start_555+20] = self.state[row4_col3]
 
-        fake_555.state[47] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[48] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[49] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
+            # row5
+            fake_555.state[start_555+22] = self.state[row5_col1]
+            fake_555.state[start_555+23] = self.state[row5_col2]
+            fake_555.state[start_555+24] = self.state[row5_col3]
 
-        # Front
-        fake_555.state[52] = self.state[start_index + orbit + 1]
-        fake_555.state[53] = self.state[start_index + half_size]
-        fake_555.state[54] = self.state[start_index + self.size - orbit]
-
-        fake_555.state[56] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[60] = self.state[start_index + (orbit * self.size) + self.size]
-
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[61] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[65] = self.state[start_index + (self.size * half_size)]
-
-        fake_555.state[66] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[70] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
-
-        fake_555.state[72] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[73] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[74] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
-
-        # Right
-        fake_555.state[77] = self.state[start_index + orbit + 1]
-        fake_555.state[78] = self.state[start_index + half_size]
-        fake_555.state[79] = self.state[start_index + self.size - orbit]
-
-        fake_555.state[81] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[85] = self.state[start_index + (orbit * self.size) + self.size]
-
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[86] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[90] = self.state[start_index + (self.size * half_size)]
-
-        fake_555.state[91] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[95] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
-
-        fake_555.state[97] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[98] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[99] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
-
-        # Back
-        fake_555.state[102] = self.state[start_index + orbit + 1]
-        fake_555.state[103] = self.state[start_index + half_size]
-        fake_555.state[104] = self.state[start_index + self.size - orbit]
-
-        fake_555.state[106] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[110] = self.state[start_index + (orbit * self.size) + self.size]
-
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[111] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[115] = self.state[start_index + (self.size * half_size)]
-
-        fake_555.state[116] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[120] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
-
-        fake_555.state[122] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[123] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[124] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
-
-
-        # Down
-        fake_555.state[127] = self.state[start_index + orbit + 1]
-        fake_555.state[128] = self.state[start_index + half_size]
-        fake_555.state[129] = self.state[start_index + self.size - orbit]
-
-        fake_555.state[131] = self.state[start_index + (orbit * self.size) + 1]
-        fake_555.state[135] = self.state[start_index + (orbit * self.size) + self.size]
-
-        # The middle of the edge so orbit doesn't matter
-        fake_555.state[136] = self.state[start_index + (self.size * (half_size - 1)) + 1]
-        fake_555.state[140] = self.state[start_index + (self.size * half_size)]
-
-        fake_555.state[141] = self.state[start_index + (self.size * self.size) - (orbit * self.size) - self.size + 1]
-        fake_555.state[145] = self.state[start_index + (self.size * self.size) - (orbit * self.size)]
-
-        fake_555.state[147] = self.state[start_index + (self.size * self.size) - self.size + 1 + orbit]
-        fake_555.state[148] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_555.state[149] = self.state[start_index + (self.size * self.size) - orbit]
-        start_index += self.size * self.size
+            start_777 += self.size * self.size
+            start_555 += 25
 
         fake_555.sanity_check()
         self.print_cube()
@@ -835,7 +740,7 @@ class RubiksCubeNNNEven(RubiksCubeNNN):
         fake_555.avoid_pll = False
         fake_555.group_edges()
 
-        wide_str = str(orbit + 1)
+        wide_str = str(orbit + 2)
         for step in fake_555.solution:
 
             if step == 'EDGES_GROUPED':
@@ -853,7 +758,6 @@ class RubiksCubeNNNEven(RubiksCubeNNN):
                           "Dw", "Dw'", "Dw2"):
                 step = wide_str + step
 
-            #log.warning("fake_555 step %s" % step)
             self.rotate(step)
 
     def group_edges(self):
@@ -869,12 +773,12 @@ class RubiksCubeNNNEven(RubiksCubeNNN):
         self.pair_inside_edges_via_444()
 
         # How many orbits of edges does this cube have?
-        orbits = int((self.size/2) - 1)
+        max_orbit = int((self.size/2) - 1)
 
         # The inside orbit was paired above via pair_inside_edges_via_444()
         # For all of the rest work your way from inside to outside and pair
         # them via the 5x5x5 solver.
-        for orbit in reversed(list(range(1, orbits))):
+        for orbit in reversed(list(range(0, max_orbit-1))):
             self.pair_edge_orbit_via_555(orbit)
 
         self.solution.append('EDGES_GROUPED')

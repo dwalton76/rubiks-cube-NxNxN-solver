@@ -16,7 +16,8 @@ from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777
-from rubikscubennnsolver.RubiksCubeNNN import RubiksCubeNNNEven, RubiksCubeNNNOdd
+from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven
+from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
 from rubikscubennnsolver.rotate_xxx import rotate_444
 from math import sqrt
 from time import sleep

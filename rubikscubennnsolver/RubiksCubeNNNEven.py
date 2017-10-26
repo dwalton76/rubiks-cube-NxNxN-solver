@@ -179,7 +179,10 @@ class RubiksCubeNNNEven(RubiksCube):
         #    self.experiment_777_part2()
 
         # TODO: now reduce centers to a 5x5x5 and solve via the 5x5x5 solver
+
+        # dwalton
         self.print_cube()
+        sys.exit(0)
 
     def pair_inside_edges_via_444(self):
         fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')

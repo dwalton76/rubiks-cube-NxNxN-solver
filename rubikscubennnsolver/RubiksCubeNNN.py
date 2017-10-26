@@ -319,28 +319,18 @@ class RubiksCubeNNNOdd(RubiksCubeNNN):
         fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
-        # The corners don't matter so x them out...you can set this to False if
-        # you want to fill in the corners to debug something
-        x_out_corners = True
+        # dwalton for comparison
+        # Fill in the corners so we can avoid certain types of parity
         start_555 = 0
         start_777 = 0
 
-        if x_out_corners:
-            for x in range(6):
-                fake_555.state[start_555+1] = 'x'
-                fake_555.state[start_555+5] = 'x'
-                fake_555.state[start_555+21] = 'x'
-                fake_555.state[start_555+25] = 'x'
-                start_555 += 25
-
-        else:
-            for x in range(6):
-                fake_555.state[start_555+1] = self.state[start_777+1]
-                fake_555.state[start_555+5] = self.state[start_777 + self.size]
-                fake_555.state[start_555+21] = self.state[start_777 + (self.size * self.size) - self.size + 1]
-                fake_555.state[start_555+25] = self.state[start_777 + (self.size * self.size)]
-                start_777 += self.size * self.size
-                start_555 += 25
+        for x in range(6):
+            fake_555.state[start_555+1] = self.state[start_777+1]
+            fake_555.state[start_555+5] = self.state[start_777 + self.size]
+            fake_555.state[start_555+21] = self.state[start_777 + (self.size * self.size) - self.size + 1]
+            fake_555.state[start_555+25] = self.state[start_777 + (self.size * self.size)]
+            start_777 += self.size * self.size
+            start_555 += 25
 
         # Fill in the edges
         start_555 = 0
@@ -604,119 +594,41 @@ class RubiksCubeNNNEven(RubiksCubeNNN):
 
         # TODO: now reduce centers to a 5x5x5 and solve via the 5x5x5 solver
         self.print_cube()
-        self.print_solution()
-        sys.exit(0)
 
     def pair_inside_edges_via_444(self):
         fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
         fake_444.cpu_mode = self.cpu_mode
         fake_444.lt_init()
 
-        # The corners don't matter but it does make troubleshooting easier if they match
-        start_index = 0
-        fake_444.state[1] = self.state[start_index+1]
-        fake_444.state[4] = self.state[start_index + self.size]
-        fake_444.state[13] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[16] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
+        # Fill in the corners so that we can avoid PLL parity when pairing the edges
+        start_444 = 0
+        start_777 = 0
 
-        fake_444.state[17] = self.state[start_index+1]
-        fake_444.state[20] = self.state[start_index + self.size]
-        fake_444.state[29] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[32] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
+        for x in range(6):
+            fake_444.state[start_444+1] = self.state[start_777+1]
+            fake_444.state[start_444+4] = self.state[start_777 + self.size]
+            fake_444.state[start_444+13] = self.state[start_777 + (self.size * self.size) - self.size + 1]
+            fake_444.state[start_444+16] = self.state[start_777 + (self.size * self.size)]
+            start_777 += self.size * self.size
+            start_444 += 16
 
-        fake_444.state[33] = self.state[start_index+1]
-        fake_444.state[36] = self.state[start_index + self.size]
-        fake_444.state[45] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[48] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_444.state[49] = self.state[start_index+1]
-        fake_444.state[52] = self.state[start_index + self.size]
-        fake_444.state[61] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[64] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_444.state[65] = self.state[start_index+1]
-        fake_444.state[68] = self.state[start_index + self.size]
-        fake_444.state[77] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[80] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        fake_444.state[81] = self.state[start_index+1]
-        fake_444.state[84] = self.state[start_index + self.size]
-        fake_444.state[93] = self.state[start_index + (self.size * self.size) - self.size + 1]
-        fake_444.state[96] = self.state[start_index + (self.size * self.size)]
-        start_index += self.size * self.size
-
-        # Upper
+        # Fill in the edges
+        start_444 = 0
+        start_777 = 0
         half_size = int(self.size/2)
-        start_index = 0
-        fake_444.state[2] = self.state[start_index + half_size]
-        fake_444.state[3] = self.state[start_index + half_size + 1]
-        fake_444.state[5] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[8] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[9] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[12] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[14] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[15] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
 
-        # Left
-        fake_444.state[18] = self.state[start_index + half_size]
-        fake_444.state[19] = self.state[start_index + half_size + 1]
-        fake_444.state[21] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[24] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[25] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[28] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[30] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[31] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
+        for x in range(6):
 
-        # Front
-        fake_444.state[34] = self.state[start_index + half_size]
-        fake_444.state[35] = self.state[start_index + half_size + 1]
-        fake_444.state[37] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[40] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[41] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[44] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[46] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[47] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
-
-        # Right
-        fake_444.state[50] = self.state[start_index + half_size]
-        fake_444.state[51] = self.state[start_index + half_size + 1]
-        fake_444.state[53] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[56] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[57] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[60] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[62] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[63] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
-
-        # Back
-        fake_444.state[66] = self.state[start_index + half_size]
-        fake_444.state[67] = self.state[start_index + half_size + 1]
-        fake_444.state[69] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[72] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[73] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[76] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[78] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[79] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
-
-        # Down
-        fake_444.state[82] = self.state[start_index + half_size]
-        fake_444.state[83] = self.state[start_index + half_size + 1]
-        fake_444.state[85] = self.state[start_index + (self.size * (half_size-1)) + 1]
-        fake_444.state[88] = self.state[start_index + (self.size * half_size)]
-        fake_444.state[89] = self.state[start_index + (self.size * half_size) + 1]
-        fake_444.state[92] = self.state[start_index + (self.size * (half_size+1))]
-        fake_444.state[94] = self.state[start_index + (self.size * self.size) - half_size]
-        fake_444.state[95] = self.state[start_index + (self.size * self.size) - half_size + 1]
-        start_index += self.size * self.size
+            fake_444.state[start_444+2] = self.state[start_777 + half_size]
+            fake_444.state[start_444+3] = self.state[start_777 + half_size + 1]
+            fake_444.state[start_444+5] = self.state[start_777 + (self.size * (half_size-1)) + 1]
+            fake_444.state[start_444+8] = self.state[start_777 + (self.size * half_size)]
+            fake_444.state[start_444+9] = self.state[start_777 + (self.size * half_size) + 1]
+            fake_444.state[start_444+12] = self.state[start_777 + (self.size * (half_size+1))]
+            fake_444.state[start_444+14] = self.state[start_777 + (self.size * self.size) - half_size]
+            fake_444.state[start_444+15] = self.state[start_777 + (self.size * self.size) - half_size + 1]
+            start_777 += self.size * self.size
+            start_444 += 16
 
         fake_444.sanity_check()
         fake_444.group_edges()
@@ -741,13 +653,18 @@ class RubiksCubeNNNEven(RubiksCubeNNN):
 
             self.rotate(step)
 
-        #log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def pair_edge_orbit_via_555(self, orbit):
         log.warning("pair_edge_orbit_via_555 for %d" % orbit)
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
+
+        # dwalton here now
+        fake_555.print_cube()
+        self.print_cube()
+        sys.exit(0)
 
         # The corners don't matter but it does make troubleshooting easier if they match
         start_index = 0

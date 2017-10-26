@@ -60,7 +60,7 @@ class RubiksCube222(RubiksCube):
         # This is the order used by the kociemba 3x3x3 solver so
         # the rubiks-color-resolver uses this order
         normal = self.get_kociemba_string(False)
-        log.info("NORMAL: %s" % normal)
+        #log.info("NORMAL: %s" % normal)
         upper = normal[0:4]
         right = normal[4:8]
         front = normal[8:12]
@@ -128,10 +128,8 @@ class RubiksCube222(RubiksCube):
                     data[h][s] = x + [y - [1, -1, 1, 3][h * y % 4]]
 
                     if s in data[1 - h]:
-                        # pprint(data[0][s])
-                        # pprint(data[1][s])
                         try:
-                            result = ''.join('RUF'[x / 4] + " 2'"[x % 4] for x in data[0][s] + data[1][s][::-1])
+                            result = ''.join('RUF'[int(x / 4)] + " 2'"[x % 4] for x in data[0][s] + data[1][s][::-1])
                         except IndexError:
                             print("Cube is already solved")
                             sys.exit(0)
@@ -175,4 +173,3 @@ class RubiksCube222(RubiksCube):
     def solve(self):
         self.solve_non_table()
         self.compress_solution()
-

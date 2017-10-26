@@ -17,7 +17,7 @@ class RubiksCubeNNNOdd(RubiksCube):
     def phase(self):
         return 'Solve Odd NxNxN'
 
-    def solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle):
+    def solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle):
         fake_777 = RubiksCube777(solved_7x7x7, 'URFDLB')
 
         for index in range(1, 295):
@@ -26,11 +26,10 @@ class RubiksCubeNNNOdd(RubiksCube):
 
         start_777 = 0
         start_NNN = 0
-        #row1_column = int((self.size/2) - 1)
         row0_midpoint = ceil(self.size/2)
 
-        log.warning("center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s" %\
-            (center_orbit_id, max_center_orbits, width, cycle))
+        log.warning("Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
+            (center_orbit_id, max_center_orbits, width, cycle, max_cycle))
 
         for x in range(6):
             mid_NNN_row1 = start_NNN + row0_midpoint + (self.size * (max_center_orbits - center_orbit_id + 1))
@@ -45,11 +44,11 @@ class RubiksCubeNNNOdd(RubiksCube):
             start_NNN_row3 = mid_NNN_row3 - (2 + center_orbit_id)
             end_NNN_row3 = mid_NNN_row3 + (2 + center_orbit_id)
 
-            start_NNN_row2 = start_NNN_row3 - (self.size)
-            start_NNN_row4 = start_NNN_row3 + (self.size)
+            start_NNN_row2 = start_NNN_row3 - (self.size * (cycle+1))
+            start_NNN_row4 = start_NNN_row3 + (self.size * (cycle+1))
 
-            end_NNN_row2 = end_NNN_row3 - (self.size)
-            end_NNN_row4 = end_NNN_row3 + (self.size)
+            end_NNN_row2 = end_NNN_row3 - (self.size * (cycle+1))
+            end_NNN_row4 = end_NNN_row3 + (self.size * (cycle+1))
 
             mid_NNN_row2 = int((start_NNN_row2 + end_NNN_row2)/2)
             mid_NNN_row4 = int((start_NNN_row4 + end_NNN_row4)/2)
@@ -96,7 +95,10 @@ class RubiksCubeNNNOdd(RubiksCube):
             log.warning("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
             log.warning("%d: row5 %d, %d, %d, %d, %d\n\n" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
 
-            if center_orbit_id == 0 and cycle == 0:
+            # log.warning("End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
+            #   (center_orbit_id, max_center_orbits, width, cycle, max_cycle))
+            if ((center_orbit_id == 0 and cycle == 0) or
+                (center_orbit_id == max_center_orbits and cycle == max_cycle)):
                 fake_777.state[start_777+9] = self.state[row1_col1]
                 fake_777.state[start_777+10] = self.state[row1_col2]
                 fake_777.state[start_777+11] = self.state[row1_col3]
@@ -167,11 +169,12 @@ class RubiksCubeNNNOdd(RubiksCube):
         fake_777.lt_init()
 
         # Apply the 7x7x7 solution to our cube
-        half_size = str(int(self.size/2))
-        wide_size = str(int(half_size) - center_orbit_id - 1)
-        log.warning("half_size %s, wide_size %s" % (half_size, wide_size))
+        half_size = str( ceil(self.size/2) - 1 - cycle )
+        wide_size = str( ceil(self.size/2) - 2 - center_orbit_id)
+        #log.warning("half_size %s, wide_size %s" % (half_size, wide_size))
 
-        if center_orbit_id == 0 and cycle == 0:
+        if ((center_orbit_id == 0 and cycle == 0) or
+            (center_orbit_id == max_center_orbits and cycle == max_cycle)):
             fake_777.group_centers_guts()
         else:
             fake_777.group_centers_guts(oblique_edges_only=True)
@@ -185,12 +188,8 @@ class RubiksCubeNNNOdd(RubiksCube):
                 self.rotate(step)
 
         self.print_cube()
-        log.warning("End of center_orbit_id %s, width %s, cycle %s" % (center_orbit_id, width, cycle))
-
-        # dwalton
-        #if center_orbit_id == 1 and cycle == 0:
-        #    self.print_cube()
-        #    sys.exit(0)
+        log.warning("End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
+            (center_orbit_id, max_center_orbits, width, cycle, max_cycle))
 
     def group_centers_guts(self):
 
@@ -199,20 +198,14 @@ class RubiksCubeNNNOdd(RubiksCube):
 
         for center_orbit_id in range(max_center_orbits+1):
             width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-            cycles = int((width - 5)/2)
-            log.warning("orbit %s, width %d, cycles %s" % (center_orbit_id, width, cycles))
+            max_cycle = int((width - 5)/2)
+            log.warning("orbit %s, width %d, max_cycle %s" % (center_orbit_id, width, max_cycle))
 
-            for cycle in range(cycles+1):
-                self.solve_inside_777(center_orbit_id, max_center_orbits, width, cycle)
-                #break
-            #break
+            for cycle in range(max_cycle+1):
+                self.solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle)
 
-        # dwalton
         log.info("Centers are solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
-        sys.exit(0)
-
-        # TODO: now reduce centers to a 5x5x5 and solve via the 5x5x5 solver
 
     def pair_edge_orbit_via_555(self, orbit):
         log.warning("pair_edge_orbit_via_555 for %d" % orbit)

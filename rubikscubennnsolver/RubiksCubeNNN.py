@@ -76,6 +76,8 @@ class RubiksCubeNNNEven(RubiksCube):
                 start_666 += 36
                 start_NNN += (self.size * self.size)
 
+            fake_666.sanity_check()
+
             # Group LR centers (in turn groups FB)
             fake_666.print_cube()
             fake_666.lt_init()
@@ -176,14 +178,7 @@ class RubiksCubeNNNEven(RubiksCube):
                 start_777 += 49
                 start_NNN += (self.size * self.size)
 
-            # dwalton remove this
-            '''
-            if center_orbit_id > 0:
-                self.print_cube()
-                fake_777.print_cube()
-                #self.print_solution()
-                sys.exit(0)
-            '''
+            fake_777.sanity_check()
 
             # Group LR centers (in turn groups FB)
             fake_777.print_cube()
@@ -323,6 +318,7 @@ class RubiksCubeNNNEven(RubiksCube):
         fake_444.state[95] = self.state[start_index + (self.size * self.size) - half_size + 1]
         start_index += self.size * self.size
 
+        fake_444.sanity_check()
         fake_444.group_edges()
         half_size_str = str(half_size)
 
@@ -516,6 +512,7 @@ class RubiksCubeNNNEven(RubiksCube):
         fake_555.state[149] = self.state[start_index + (self.size * self.size) - orbit]
         start_index += self.size * self.size
 
+        fake_555.sanity_check()
         self.print_cube()
         fake_555.print_cube()
         fake_555.avoid_pll = False

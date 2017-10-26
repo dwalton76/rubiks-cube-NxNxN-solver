@@ -65,25 +65,28 @@ class RubiksCube555(RubiksCube):
                    101, 105, 121, 125,
                    126, 130, 146, 150)
 
-        x_centers = (7, 9, 13, 17, 19,
-                     32, 34, 38, 42, 44,
-                     57, 59, 63, 67, 69,
-                     82, 84, 88, 92, 94,
-                     107, 109, 113, 117, 119,
-                     132, 134, 138, 142, 144)
+        x_centers = (7, 9, 17, 19,
+                     32, 34, 42, 44,
+                     57, 59, 67, 69,
+                     82, 84, 92, 94,
+                     107, 109, 117, 119,
+                     132, 134, 142, 144)
 
-        t_centers = (8, 12, 13, 14, 18,
-                     33, 37, 38, 39, 43,
-                     58, 62, 63, 64, 68,
-                     83, 87, 88, 89, 93,
-                     108, 112, 113, 114, 118,
-                     133, 137, 138, 139, 143)
+        t_centers = (8, 12, 14, 18,
+                     33, 37, 39, 43,
+                     58, 62, 64, 68,
+                     83, 87, 89, 93,
+                     108, 112, 114, 118,
+                     133, 137, 139, 143)
+
+        centers = (13, 38, 63, 88, 113, 138)
 
         self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
         self._sanity_check('edge-orbit-1', edge_orbit_1, 4)
         self._sanity_check('corners', corners, 4)
-        self._sanity_check('x-centers', x_centers, 5)
-        self._sanity_check('t-centers', t_centers, 5)
+        self._sanity_check('x-centers', x_centers, 4)
+        self._sanity_check('t-centers', t_centers, 4)
+        self._sanity_check('centers', centers, 1)
 
     def rotate(self, step):
         """

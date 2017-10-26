@@ -28,7 +28,7 @@ class RubiksCubeNNNOdd(RubiksCube):
         start_NNN = 0
         row0_midpoint = ceil(self.size/2)
 
-        log.warning("Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
+        log.info("Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
             (center_orbit_id, max_center_orbits, width, cycle, max_cycle))
 
         for x in range(6):
@@ -83,20 +83,18 @@ class RubiksCubeNNNOdd(RubiksCube):
             row5_col4 = end_NNN_row5-1
             row5_col5 = end_NNN_row5
 
-            log.warning("%d: start_NNN_row1 %d, mid_NNN_row1 %d, end_NNN_row1 %d" % (x, start_NNN_row1, mid_NNN_row1, end_NNN_row1))
-            log.warning("%d: start_NNN_row2 %d, mid_NNN_row2 %d, end_NNN_row2 %d" % (x, start_NNN_row2, mid_NNN_row2, end_NNN_row2))
-            log.warning("%d: start_NNN_row3 %d, mid_NNN_row3 %d, end_NNN_row3 %d" % (x, start_NNN_row3, mid_NNN_row3, end_NNN_row3))
-            log.warning("%d: start_NNN_row4 %d, mid_NNN_row4 %d, end_NNN_row4 %d" % (x, start_NNN_row4, mid_NNN_row4, end_NNN_row4))
-            log.warning("%d: start_NNN_row5 %d, mid_NNN_row5 %d, end_NNN_row5 %d" % (x, start_NNN_row5, mid_NNN_row5, end_NNN_row5))
+            log.info("%d: start_NNN_row1 %d, mid_NNN_row1 %d, end_NNN_row1 %d" % (x, start_NNN_row1, mid_NNN_row1, end_NNN_row1))
+            log.info("%d: start_NNN_row2 %d, mid_NNN_row2 %d, end_NNN_row2 %d" % (x, start_NNN_row2, mid_NNN_row2, end_NNN_row2))
+            log.info("%d: start_NNN_row3 %d, mid_NNN_row3 %d, end_NNN_row3 %d" % (x, start_NNN_row3, mid_NNN_row3, end_NNN_row3))
+            log.info("%d: start_NNN_row4 %d, mid_NNN_row4 %d, end_NNN_row4 %d" % (x, start_NNN_row4, mid_NNN_row4, end_NNN_row4))
+            log.info("%d: start_NNN_row5 %d, mid_NNN_row5 %d, end_NNN_row5 %d" % (x, start_NNN_row5, mid_NNN_row5, end_NNN_row5))
 
-            log.warning("%d: row1 %d, %d, %d, %d, %d" % (x, row1_col1, row1_col2, row1_col3, row1_col4, row1_col5))
-            log.warning("%d: row2 %d, %d, %d, %d, %d" % (x, row2_col1, row2_col2, row2_col3, row2_col4, row2_col5))
-            log.warning("%d: row3 %d, %d, %d, %d, %d" % (x, row3_col1, row3_col2, row3_col3, row3_col4, row3_col5))
-            log.warning("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
-            log.warning("%d: row5 %d, %d, %d, %d, %d\n\n" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
+            log.info("%d: row1 %d, %d, %d, %d, %d" % (x, row1_col1, row1_col2, row1_col3, row1_col4, row1_col5))
+            log.info("%d: row2 %d, %d, %d, %d, %d" % (x, row2_col1, row2_col2, row2_col3, row2_col4, row2_col5))
+            log.info("%d: row3 %d, %d, %d, %d, %d" % (x, row3_col1, row3_col2, row3_col3, row3_col4, row3_col5))
+            log.info("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
+            log.info("%d: row5 %d, %d, %d, %d, %d\n\n" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
 
-            # log.warning("End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
-            #   (center_orbit_id, max_center_orbits, width, cycle, max_cycle))
             if ((center_orbit_id == 0 and cycle == 0) or
                 (center_orbit_id == max_center_orbits and cycle == max_cycle)):
                 fake_777.state[start_777+9] = self.state[row1_col1]
@@ -171,7 +169,6 @@ class RubiksCubeNNNOdd(RubiksCube):
         # Apply the 7x7x7 solution to our cube
         half_size = str( ceil(self.size/2) - 1 - cycle )
         wide_size = str( ceil(self.size/2) - 2 - center_orbit_id)
-        #log.warning("half_size %s, wide_size %s" % (half_size, wide_size))
 
         if ((center_orbit_id == 0 and cycle == 0) or
             (center_orbit_id == max_center_orbits and cycle == max_cycle)):
@@ -188,18 +185,16 @@ class RubiksCubeNNNOdd(RubiksCube):
                 self.rotate(step)
 
         self.print_cube()
-        log.warning("End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
+        log.info("End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
             (center_orbit_id, max_center_orbits, width, cycle, max_cycle))
 
     def group_centers_guts(self):
 
         max_center_orbits = int((self.size - 3) / 2) - 2
-        log.warning("max_center_orbits: %s" % max_center_orbits)
 
         for center_orbit_id in range(max_center_orbits+1):
             width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
             max_cycle = int((width - 5)/2)
-            log.warning("orbit %s, width %d, max_cycle %s" % (center_orbit_id, width, max_cycle))
 
             for cycle in range(max_cycle+1):
                 self.solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle)
@@ -208,7 +203,7 @@ class RubiksCubeNNNOdd(RubiksCube):
         self.print_cube()
 
     def pair_edge_orbit_via_555(self, orbit):
-        log.warning("pair_edge_orbit_via_555 for %d" % orbit)
+        log.info("pair_edge_orbit_via_555 for %d" % orbit)
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
@@ -249,11 +244,11 @@ class RubiksCubeNNNOdd(RubiksCube):
             row5_col2 = row1_col2 + ((self.size - 1) * self.size)
             row5_col3 = row1_col3 + ((self.size - 1) * self.size)
 
-            log.warning("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
-            log.warning("%d row2: %s, %s" % (x, row2_col1, row2_col3))
-            log.warning("%d row3: %s, %s" % (x, row3_col1, row3_col3))
-            log.warning("%d row4: %s, %s" % (x, row4_col1, row4_col3))
-            log.warning("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
+            log.info("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
+            log.info("%d row2: %s, %s" % (x, row2_col1, row2_col3))
+            log.info("%d row3: %s, %s" % (x, row3_col1, row3_col3))
+            log.info("%d row4: %s, %s" % (x, row4_col1, row4_col3))
+            log.info("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
 
             # row1
             fake_555.state[start_555+2] = self.state[row1_col1]

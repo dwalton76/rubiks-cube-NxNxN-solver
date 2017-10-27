@@ -2890,11 +2890,13 @@ class RubiksCube(object):
         elif y == 'D':
             side = self.sideD
 
+        # odd cube
         if side.mid_pos:
             pos_to_check = side.mid_pos
             F_pos_to_check = self.sideF.mid_pos
             D_pos_to_check = self.sideD.mid_pos
 
+        # even cube
         else:
             # Use the top-right inner x-center
             offset = int(((self.size/2) * self.size) - (self.size/2))
@@ -4073,6 +4075,8 @@ class RubiksCube(object):
             self.rotate_F_to_F()
             self.solve_333()
             self.compress_solution()
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
 
     def print_solution(self):
         print(("\nSolution: %s" % ' '.join(self.solution)))

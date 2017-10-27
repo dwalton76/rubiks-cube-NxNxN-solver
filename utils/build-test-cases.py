@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube
-from rubikscubennnsolver.RubiksCubeNNNEven import solved_2x2x2, solved_4x4x4, solved_6x6x6, solved_8x8x8, solved_10x10x10, solved_12x12x12, solved_14x14x14
-from rubikscubennnsolver.RubiksCubeNNNOdd import solved_3x3x3, solved_5x5x5, solved_7x7x7, solved_9x9x9, solved_11x11x11, solved_13x13x13, solved_15x15x15, solved_17x17x17
+from rubikscubennnsolver.RubiksCube222 import solved_2x2x2
+from rubikscubennnsolver.RubiksCube333 import solved_3x3x3
+from rubikscubennnsolver.RubiksCube444 import solved_4x4x4
+from rubikscubennnsolver.RubiksCube555 import solved_5x5x5
+from rubikscubennnsolver.RubiksCube666 import solved_6x6x6
+from rubikscubennnsolver.RubiksCube777 import solved_7x7x7
+from rubikscubennnsolver.RubiksCubeNNNEven import solved_8x8x8, solved_10x10x10, solved_12x12x12, solved_14x14x14
+from rubikscubennnsolver.RubiksCubeNNNOdd import solved_9x9x9, solved_11x11x11, solved_13x13x13, solved_15x15x15, solved_17x17x17
 import json
 import logging
 

@@ -582,91 +582,35 @@ class RubiksCube666(RubiksCube):
         fake_444.cpu_mode = self.cpu_mode
         fake_444.lt_init()
 
-        # The corners don't matter but it does make troubleshooting easier if they match
-        fake_444.state[1] = self.state[1]
-        fake_444.state[4] = self.state[6]
-        fake_444.state[13] = self.state[31]
-        fake_444.state[16] = self.state[36]
-        fake_444.state[17] = self.state[37]
-        fake_444.state[20] = self.state[42]
-        fake_444.state[29] = self.state[67]
-        fake_444.state[32] = self.state[72]
-        fake_444.state[33] = self.state[73]
-        fake_444.state[36] = self.state[78]
-        fake_444.state[45] = self.state[103]
-        fake_444.state[48] = self.state[108]
-        fake_444.state[49] = self.state[109]
-        fake_444.state[52] = self.state[114]
-        fake_444.state[61] = self.state[139]
-        fake_444.state[64] = self.state[144]
-        fake_444.state[65] = self.state[145]
-        fake_444.state[68] = self.state[150]
-        fake_444.state[77] = self.state[175]
-        fake_444.state[80] = self.state[180]
-        fake_444.state[81] = self.state[181]
-        fake_444.state[84] = self.state[186]
-        fake_444.state[93] = self.state[211]
-        fake_444.state[96] = self.state[216]
+        # Fill in the corners so that we can avoid PLL parity when pairing the edges
+        start_444 = 0
+        start_666 = 0
 
-        # Upper
-        fake_444.state[2] = self.state[3]
-        fake_444.state[3] = self.state[4]
-        fake_444.state[5] = self.state[13]
-        fake_444.state[8] = self.state[18]
-        fake_444.state[9] = self.state[19]
-        fake_444.state[12] = self.state[24]
-        fake_444.state[14] = self.state[33]
-        fake_444.state[15] = self.state[34]
+        for x in range(6):
+            fake_444.state[start_444+1] = self.state[start_666+1]
+            fake_444.state[start_444+4] = self.state[start_666 + self.size]
+            fake_444.state[start_444+13] = self.state[start_666 + (self.size * self.size) - self.size + 1]
+            fake_444.state[start_444+16] = self.state[start_666 + (self.size * self.size)]
+            start_666 += self.size * self.size
+            start_444 += 16
 
-        # Left
-        fake_444.state[18] = self.state[39]
-        fake_444.state[19] = self.state[40]
-        fake_444.state[21] = self.state[49]
-        fake_444.state[24] = self.state[54]
-        fake_444.state[25] = self.state[55]
-        fake_444.state[28] = self.state[60]
-        fake_444.state[30] = self.state[69]
-        fake_444.state[31] = self.state[70]
+        # Fill in the edges
+        start_444 = 0
+        start_666 = 0
+        half_size = int(self.size/2)
 
-        # Front
-        fake_444.state[34] = self.state[75]
-        fake_444.state[35] = self.state[76]
-        fake_444.state[37] = self.state[85]
-        fake_444.state[40] = self.state[90]
-        fake_444.state[41] = self.state[91]
-        fake_444.state[44] = self.state[96]
-        fake_444.state[46] = self.state[105]
-        fake_444.state[47] = self.state[106]
+        for x in range(6):
+            fake_444.state[start_444+2] = self.state[start_666 + half_size]
+            fake_444.state[start_444+3] = self.state[start_666 + half_size + 1]
+            fake_444.state[start_444+5] = self.state[start_666 + (self.size * (half_size-1)) + 1]
+            fake_444.state[start_444+8] = self.state[start_666 + (self.size * half_size)]
+            fake_444.state[start_444+9] = self.state[start_666 + (self.size * half_size) + 1]
+            fake_444.state[start_444+12] = self.state[start_666 + (self.size * (half_size+1))]
+            fake_444.state[start_444+14] = self.state[start_666 + (self.size * self.size) - half_size]
+            fake_444.state[start_444+15] = self.state[start_666 + (self.size * self.size) - half_size + 1]
+            start_666 += self.size * self.size
+            start_444 += 16
 
-        # Right
-        fake_444.state[50] = self.state[111]
-        fake_444.state[51] = self.state[112]
-        fake_444.state[53] = self.state[121]
-        fake_444.state[56] = self.state[126]
-        fake_444.state[57] = self.state[127]
-        fake_444.state[60] = self.state[132]
-        fake_444.state[62] = self.state[141]
-        fake_444.state[63] = self.state[142]
-
-        # Back
-        fake_444.state[66] = self.state[147]
-        fake_444.state[67] = self.state[148]
-        fake_444.state[69] = self.state[157]
-        fake_444.state[72] = self.state[162]
-        fake_444.state[73] = self.state[163]
-        fake_444.state[76] = self.state[168]
-        fake_444.state[78] = self.state[177]
-        fake_444.state[79] = self.state[178]
-
-        # Down
-        fake_444.state[82] = self.state[183]
-        fake_444.state[83] = self.state[184]
-        fake_444.state[85] = self.state[193]
-        fake_444.state[88] = self.state[198]
-        fake_444.state[89] = self.state[199]
-        fake_444.state[92] = self.state[204]
-        fake_444.state[94] = self.state[213]
-        fake_444.state[95] = self.state[214]
         fake_444.sanity_check()
         fake_444.group_edges()
 
@@ -691,123 +635,82 @@ class RubiksCube666(RubiksCube):
 
         log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-    def pair_outside_edges_via_555(self):
+    def pair_outside_edges_via_555(self, orbit):
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
-        # The corners matter for avoiding PLL
-        fake_555.state[1] = self.state[1]
-        fake_555.state[5] = self.state[6]
-        fake_555.state[21] = self.state[31]
-        fake_555.state[25] = self.state[36]
-        fake_555.state[26] = self.state[37]
-        fake_555.state[30] = self.state[42]
-        fake_555.state[46] = self.state[67]
-        fake_555.state[50] = self.state[72]
-        fake_555.state[51] = self.state[73]
-        fake_555.state[55] = self.state[78]
-        fake_555.state[71] = self.state[103]
-        fake_555.state[75] = self.state[108]
-        fake_555.state[76] = self.state[109]
-        fake_555.state[80] = self.state[114]
-        fake_555.state[96] = self.state[139]
-        fake_555.state[100] = self.state[144]
-        fake_555.state[101] = self.state[145]
-        fake_555.state[105] = self.state[150]
-        fake_555.state[121] = self.state[175]
-        fake_555.state[125] = self.state[180]
-        fake_555.state[126] = self.state[181]
-        fake_555.state[130] = self.state[186]
-        fake_555.state[146] = self.state[211]
-        fake_555.state[150] = self.state[216]
+        # Fill in the corners so we can avoid certain types of parity
+        start_555 = 0
+        start_666 = 0
 
-        # Upper
-        fake_555.state[2] = self.state[2]
-        fake_555.state[3] = self.state[3]
-        fake_555.state[4] = self.state[5]
-        fake_555.state[6] = self.state[7]
-        fake_555.state[10] = self.state[12]
-        fake_555.state[11] = self.state[13]
-        fake_555.state[15] = self.state[18]
-        fake_555.state[16] = self.state[25]
-        fake_555.state[20] = self.state[30]
-        fake_555.state[22] = self.state[32]
-        fake_555.state[23] = self.state[33]
-        fake_555.state[24] = self.state[35]
+        for x in range(6):
+            fake_555.state[start_555+1] = self.state[start_666+1]
+            fake_555.state[start_555+5] = self.state[start_666 + self.size]
+            fake_555.state[start_555+21] = self.state[start_666 + (self.size * self.size) - self.size + 1]
+            fake_555.state[start_555+25] = self.state[start_666 + (self.size * self.size)]
+            start_666 += self.size * self.size
+            start_555 += 25
 
-        # Left
-        fake_555.state[27] = self.state[38]
-        fake_555.state[28] = self.state[39]
-        fake_555.state[29] = self.state[41]
-        fake_555.state[31] = self.state[43]
-        fake_555.state[35] = self.state[48]
-        fake_555.state[36] = self.state[49]
-        fake_555.state[40] = self.state[54]
-        fake_555.state[41] = self.state[61]
-        fake_555.state[45] = self.state[66]
-        fake_555.state[47] = self.state[68]
-        fake_555.state[48] = self.state[69]
-        fake_555.state[49] = self.state[71]
+        # Fill in the edges
+        start_555 = 0
+        start_666 = 0
+        half_size = int(self.size/2)
+        max_orbit = int((self.size - 2)/2) - 1
 
-        # Front
-        fake_555.state[52] = self.state[74]
-        fake_555.state[53] = self.state[75]
-        fake_555.state[54] = self.state[77]
-        fake_555.state[56] = self.state[79]
-        fake_555.state[60] = self.state[84]
-        fake_555.state[61] = self.state[85]
-        fake_555.state[65] = self.state[90]
-        fake_555.state[66] = self.state[97]
-        fake_555.state[70] = self.state[102]
-        fake_555.state[72] = self.state[104]
-        fake_555.state[73] = self.state[105]
-        fake_555.state[74] = self.state[107]
+        for x in range(6):
+            row1_col2 = start_666 + half_size
+            row1_col1 = row1_col2 - (max_orbit - orbit)
+            row1_col3 = row1_col2 + (max_orbit - orbit) + 1
 
-        # Right
-        fake_555.state[77] = self.state[110]
-        fake_555.state[78] = self.state[111]
-        fake_555.state[79] = self.state[113]
-        fake_555.state[81] = self.state[115]
-        fake_555.state[85] = self.state[120]
-        fake_555.state[86] = self.state[121]
-        fake_555.state[90] = self.state[126]
-        fake_555.state[91] = self.state[133]
-        fake_555.state[95] = self.state[138]
-        fake_555.state[97] = self.state[140]
-        fake_555.state[98] = self.state[141]
-        fake_555.state[99] = self.state[143]
+            row2_col1 = start_666 + ((orbit+1) * self.size) + 1
+            row2_col3 = row2_col1 + self.size - 1
 
-        # Back
-        fake_555.state[102] = self.state[146]
-        fake_555.state[103] = self.state[147]
-        fake_555.state[104] = self.state[149]
-        fake_555.state[106] = self.state[151]
-        fake_555.state[110] = self.state[156]
-        fake_555.state[111] = self.state[157]
-        fake_555.state[115] = self.state[162]
-        fake_555.state[116] = self.state[169]
-        fake_555.state[120] = self.state[174]
-        fake_555.state[122] = self.state[176]
-        fake_555.state[123] = self.state[177]
-        fake_555.state[124] = self.state[179]
+            row3_col1 = start_666 + (self.size * (half_size - 1)) + 1
+            row3_col3 = row3_col1 + self.size - 1
 
-        # Down
-        fake_555.state[127] = self.state[182]
-        fake_555.state[128] = self.state[183]
-        fake_555.state[129] = self.state[185]
-        fake_555.state[131] = self.state[187]
-        fake_555.state[135] = self.state[192]
-        fake_555.state[136] = self.state[193]
-        fake_555.state[140] = self.state[198]
-        fake_555.state[141] = self.state[205]
-        fake_555.state[145] = self.state[210]
-        fake_555.state[147] = self.state[212]
-        fake_555.state[148] = self.state[213]
-        fake_555.state[149] = self.state[215]
+            row4_col1 = start_666 + (self.size * self.size) - ((orbit+2) * self.size) + 1
+            row4_col3 = row4_col1 + self.size - 1
+
+            row5_col1 = row1_col1 + ((self.size - 1) * self.size)
+            row5_col2 = row1_col2 + ((self.size - 1) * self.size)
+            row5_col3 = row1_col3 + ((self.size - 1) * self.size)
+
+            log.info("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
+            log.info("%d row2: %s, %s" % (x, row2_col1, row2_col3))
+            log.info("%d row3: %s, %s" % (x, row3_col1, row3_col3))
+            log.info("%d row4: %s, %s" % (x, row4_col1, row4_col3))
+            log.info("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
+
+            # row1
+            fake_555.state[start_555+2] = self.state[row1_col1]
+            fake_555.state[start_555+3] = self.state[row1_col2]
+            fake_555.state[start_555+4] = self.state[row1_col3]
+
+            # row2
+            fake_555.state[start_555+6] = self.state[row2_col1]
+            fake_555.state[start_555+10] = self.state[row2_col3]
+
+            # row3 - The middle of the edge so orbit doesn't matter
+            fake_555.state[start_555+11] = self.state[row3_col1]
+            fake_555.state[start_555+15] = self.state[row3_col3]
+
+            # row4
+            fake_555.state[start_555+16] = self.state[row4_col1]
+            fake_555.state[start_555+20] = self.state[row4_col3]
+
+            # row5
+            fake_555.state[start_555+22] = self.state[row5_col1]
+            fake_555.state[start_555+23] = self.state[row5_col2]
+            fake_555.state[start_555+24] = self.state[row5_col3]
+
+            start_666 += self.size * self.size
+            start_555 += 25
+
         fake_555.sanity_check()
-        fake_555.avoid_pll = True
+        fake_555.avoid_pll = False
         fake_555.group_edges()
+        wide_str = str(orbit + 2)
 
         for step in fake_555.solution:
             if step == 'EDGES_GROUPED':
@@ -834,7 +737,7 @@ class RubiksCube666(RubiksCube):
 
         self.lt_init()
         self.pair_inside_edges_via_444()
-        self.pair_outside_edges_via_555()
+        self.pair_outside_edges_via_555(0)
         self.solution.append('EDGES_GROUPED')
 
     def phase(self):

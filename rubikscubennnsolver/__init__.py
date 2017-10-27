@@ -4597,4 +4597,3 @@ div#page_holder {
 
                     self.state[:] = original_state
         self.state[:] = original_state
-

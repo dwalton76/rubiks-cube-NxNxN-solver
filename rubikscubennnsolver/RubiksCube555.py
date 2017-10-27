@@ -1811,7 +1811,6 @@ class RubiksCube555(RubiksCube):
                 self.state = original_state[:]
                 self.solution = original_solution[:]
 
-        # TODO now we need to try to pair 4 at a time
         if self.pair_one_wing_555():
             return True
         else:

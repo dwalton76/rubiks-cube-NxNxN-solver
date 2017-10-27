@@ -2274,7 +2274,6 @@ class LookupTable(object):
     def state(self):
         state_function = state_functions[self.state_type]
 
-        # TODO stop passing self once you have unrolled all of these
         if state_function in (get_444_LR_centers_stage_tsai,
                               get_444_LR_centers_solve_tsai,
                               get_444_FB_centers_stage_tsai,

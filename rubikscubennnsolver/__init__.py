@@ -300,9 +300,9 @@ def orbit_matches(edges_per_side, orbit, edge_index):
             return True
         return False
 
-    # TODO verify this is correct
     if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
         return True
+
     return False
 
 
@@ -1444,10 +1444,6 @@ class RubiksCube(object):
                 self.rotate_y()
                 self.rotate_y()
                 self.rotate_x()
-
-        # TODO reomve this once we've double checked everything
-        if self.sideF.west_edge_paired():
-            raise SolveError("F-west should not be paired, started on side %s, direction %s" % (side, direction))
 
     def move_wing_to_U_north(self, wing):
 

@@ -250,9 +250,6 @@ class Side(object):
         return paired_wings
 
     def non_paired_wings(self, check_north, check_west, check_south, check_east):
-        """
-        TODO there is a lot of cut-n-paste code in here to clean up
-        """
         non_paired_wings = []
 
         # north edge
@@ -310,9 +307,6 @@ class Side(object):
         return non_paired_wings
 
     def non_paired_edges(self, check_north, check_west, check_south, check_east):
-        """
-        TODO there is a lot of cut-n-paste code in here to clean up
-        """
         non_paired_edges = []
 
         # north edge
@@ -376,9 +370,6 @@ class Side(object):
         return non_paired_edges
 
     def north_edge_non_paired(self):
-        """
-        TODO lots of cut-n-paste code here
-        """
         non_paired_edges = self.non_paired_wings(True, False, False, False)
 
         for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:

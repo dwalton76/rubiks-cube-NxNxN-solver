@@ -2306,7 +2306,6 @@ class RubiksCube444(RubiksCube):
         self.rotate("Uw'")
         #log.info("SLICE BACK (end)")
         #self.print_cube()
-        #self.verify_all_centers_solved()
 
         post_slice_back_non_paired_wings_count = self.get_non_paired_wings_count()
         post_slice_back_solution_len = self.get_solution_len_minus_rotates(self.solution)

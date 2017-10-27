@@ -149,88 +149,11 @@ class Side(object):
             return False
         return True
 
-    # TODO rename these center_corner_is...
-    def corner_is_top_left(self, square_index):
-        return bool(self.center_corner_pos[0] == square_index)
-
-    def corner_is_top_right(self, square_index):
-        return bool(self.center_corner_pos[1] == square_index)
-
-    def corner_is_bottom_left(self, square_index):
-        return bool(self.center_corner_pos[2] == square_index)
-
-    def corner_is_bottom_right(self, square_index):
-        return bool(self.center_corner_pos[3] == square_index)
-
-    # TODO rename these center_edge_is...
-    def edge_is_top(self, square_index):
-        return bool(self.center_edge_pos[0] == square_index)
-
-    def edge_is_left(self, square_index):
-        return bool(self.center_edge_pos[1] == square_index)
-
-    def edge_is_right(self, square_index):
-        return bool(self.center_edge_pos[2] == square_index)
-
-    def edge_is_bottom(self, square_index):
-        return bool(self.center_edge_pos[3] == square_index)
-
     def get_face_as_2d_list(self):
         """
         Used by RubiksCube rotate()
         """
         return build_2d_list([self.parent.state[square_index] for square_index in range(self.min_pos, self.max_pos + 1)])
-
-    def center_corners_solved(self):
-        if self.mid_pos:
-            mid_pos_value = self.parent.state[self.mid_pos]
-        else:
-            mid_pos_value = None
-
-        prev_value = None
-
-        for square_index in self.center_corner_pos:
-            square_value = self.parent.state[square_index]
-
-            if mid_pos_value:
-                if square_value != mid_pos_value:
-                    return False
-
-            if prev_value is not None:
-                if prev_value != square_value:
-                    return False
-            prev_value = square_value
-
-        return True
-
-    def center_edges_solved(self):
-        if not self.mid_pos:
-            return True
-
-        target = self.parent.state[self.mid_pos]
-
-        for square_index in self.center_edge_pos:
-            square_value = self.parent.state[square_index]
-            if square_value != target:
-                return False
-        return True
-
-    def center_solved(self):
-        if self.center_corners_solved() and self.center_edges_solved():
-            return True
-        return False
-
-    def verify_center_corners_solved(self):
-        if not self.center_corners_solved():
-            raise SolveError("%s center corners are not solved" % self)
-
-    def verify_center_edges_solved(self):
-        if not self.center_edges_solved():
-            raise SolveError("%s center edges are not solved" % self)
-
-    def verify_center_solved(self):
-        if not self.center_solved():
-            raise SolveError("%s center not solved" % self)
 
     def get_wing_partner(self, wing_index):
         try:
@@ -452,11 +375,6 @@ class Side(object):
         #    (self, check_north, check_west, check_south, check_east, non_paired_edges))
         return non_paired_edges
 
-    def all_edges_paired(self):
-        if self.non_paired_edges(True, True, True, True):
-            return False
-        return True
-
     def north_edge_non_paired(self):
         """
         TODO lots of cut-n-paste code here
@@ -485,11 +403,6 @@ class Side(object):
     def north_edge_paired(self):
         return not self.north_edge_non_paired()
 
-    def north_wing_paired(self):
-        if self.paired_wings(True, False, False, False):
-            return True
-        return False
-
     def south_edge_non_paired(self):
         non_paired_edges = self.non_paired_wings(False, False, True, False)
 
@@ -502,11 +415,6 @@ class Side(object):
 
     def south_edge_paired(self):
         return not self.south_edge_non_paired()
-
-    def south_wing_paired(self):
-        if self.paired_wings(False, False, True, False):
-            return True
-        return False
 
     def east_edge_non_paired(self):
         non_paired_edges = self.non_paired_wings(False, False, False, True)
@@ -533,11 +441,6 @@ class Side(object):
 
     def west_edge_paired(self):
         return not self.west_edge_non_paired()
-
-    def west_wing_paired(self):
-        if self.paired_wings(False, True, False, False):
-            return True
-        return False
 
     def solved(self):
         """

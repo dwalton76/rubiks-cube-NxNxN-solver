@@ -941,12 +941,6 @@ class RubiksCube555(RubiksCube):
 
     def get_two_edge_pattern_id(self):
 
-        def colors_in(squares):
-            results = []
-            for x in squares:
-                results.append(self.state[x])
-            return sorted(list(set(results)))
-
         # Build a string that represents the pattern of colors for the U-south and U-north edges
         edges_of_interest = [52, 53, 54, 22, 23, 24, 2, 3, 4, 104, 103, 102]
         sides_in_edges_of_interest = []
@@ -1185,7 +1179,6 @@ class RubiksCube555(RubiksCube):
 
         target_wing = self.sideF.edge_west_pos[1]
         sister_wing = self.get_wings(target_wing, remove_if_in_same_edge=True)[0]
-        sister_wing_side = self.get_side_for_index(sister_wing[0])
 
         if sister_wing[0] in self.sideL.edge_west_pos or sister_wing[0] in self.sideB.edge_east_pos:
             self.rotate_z()
@@ -1438,9 +1431,7 @@ class RubiksCube555(RubiksCube):
             self.rotate("Uw")
         self.rotate("Dw'")
         self.rotate_y()
-
         #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
-        #self.verify_all_centers_solved()
 
         post_slice_back_non_paired_wings_count = self.get_non_paired_wings_count()
         post_slice_back_solution_len = self.get_solution_len_minus_rotates(self.solution)
@@ -1757,9 +1748,7 @@ class RubiksCube555(RubiksCube):
                     self.rotate("Uw")
                 self.rotate("Dw'")
                 self.rotate_y_reverse()
-
                 #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
-                #self.verify_all_centers_solved()
 
             else:
                 raise SolveError("sister_wing %s is in the wrong position" % str(sister_wing))

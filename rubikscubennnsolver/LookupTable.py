@@ -2166,11 +2166,6 @@ class LookupTable(object):
     def __init__(self, parent, filename, state_type, state_target, state_hex, linecount, max_depth=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
-        self.sides_LFRB = (self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB)
-        self.sides_UFDB = (self.parent.sideU, self.parent.sideF, self.parent.sideD, self.parent.sideB)
-        self.sides_UD = (self.parent.sideU, self.parent.sideD)
-        self.sides_LR = (self.parent.sideL, self.parent.sideR)
-        self.sides_FB = (self.parent.sideF, self.parent.sideB)
         self.filename = filename
         self.filename_gz = filename + '.gz'
         self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
@@ -2358,9 +2353,6 @@ class LookupTable(object):
             self.cache[state_to_find] = None
             return None
 
-    def steps_length(self, state=None):
-        return len(self.steps(state))
-
     def solve(self):
 
         if not self.filename_exists:
@@ -2391,7 +2383,6 @@ class LookupTableIDA(LookupTable):
         self.moves_all = moves_all
         self.moves_illegal = moves_illegal
         self.prune_tables = prune_tables
-        self.visited_states = set()
 
         for x in self.moves_illegal:
             if x not in self.moves_all:

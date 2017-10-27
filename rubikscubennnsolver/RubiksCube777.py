@@ -160,8 +160,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self._sanity_check('right-oblique', right_oblique_edge, 4)
         self._sanity_check('outside x-centers', outside_x_centers, 4)
         self._sanity_check('inside x-centers', inside_x_centers, 4)
-        self._sanity_check('outside t-centers', outside_x_centers, 4)
-        self._sanity_check('inside t-centers', inside_x_centers, 4)
+        self._sanity_check('outside t-centers', outside_t_centers, 4)
+        self._sanity_check('inside t-centers', inside_t_centers, 4)
         self._sanity_check('centers', centers, 1)
 
     def lt_init(self):

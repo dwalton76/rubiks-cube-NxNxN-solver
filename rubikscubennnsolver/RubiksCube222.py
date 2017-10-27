@@ -54,23 +54,12 @@ class RubiksCube222(RubiksCube):
         # This is the order used by the kociemba 3x3x3 solver so
         # the rubiks-color-resolver uses this order
         normal = self.get_kociemba_string(False)
-        #log.info("NORMAL: %s" % normal)
         upper = normal[0:4]
         right = normal[4:8]
         front = normal[8:12]
         down = normal[12:16]
         left = normal[16:20]
         back = normal[20:24]
-
-        '''
-        from pprint import pformat
-        print "upper: %s" % pformat(upper)
-        print "right: %s" % pformat(right)
-        print "front: %s" % pformat(front)
-        print "down: %s" % pformat(down)
-        print "left: %s" % pformat(left)
-        print "back: %s" % pformat(back)
-        '''
 
         scramble = []
         scramble.extend(upper)
@@ -93,12 +82,8 @@ class RubiksCube222(RubiksCube):
         scramble.append(back[3])
         scramble.extend(down)
 
-        o = ''.join
         data = [{''.join((' ', x)[x in scramble[12] + scramble[19] + scramble[22]]for x in scramble):[]},
              {' ' * 4 + (scramble[12] * 2 + ' ' * 4 + scramble[19] * 2) * 2 + scramble[22] * 4:[]}]
-
-        from pprint import pprint
-        #pprint(data)
 
         wtf_table = [
             [0, 7, 2, 15, 4, 5, 6, 21, 16, 8, 3, 11, 12, 13, 14, 23, 17, 9, 1, 19, 20, 18, 22, 10],

@@ -311,7 +311,6 @@ def get_important_square_indexes(size):
     Used for writing www pages
     """
     squares_per_side = size * size
-    min_square = 1
     max_square = squares_per_side * 6
     first_squares = []
     last_squares = []
@@ -323,9 +322,6 @@ def get_important_square_indexes(size):
             last_squares.append(index)
 
     last_UBD_squares = (last_squares[0], last_squares[4], last_squares[5])
-    #log.info("first    squares: %s" % pformat(first_squares))
-    #log.info("last     squares: %s" % pformat(last_squares))
-    #log.info("last UBD squares: %s" % pformat(last_UBD_squares))
     return (first_squares, last_squares, last_UBD_squares)
 
 
@@ -1253,15 +1249,6 @@ class RubiksCube(object):
 
     def get_non_paired_wings_count(self):
         return len(self.get_non_paired_wings())
-
-    def get_paired_wings(self):
-        return (self.sideU.paired_wings(True, True, True, True) +
-                self.sideF.paired_wings(False, True, False, True) +
-                self.sideB.paired_wings(False, True, False, True) +
-                self.sideD.paired_wings(True, True, True, True))
-
-    def get_paired_wings_count(self):
-        return len(self.get_paired_wings())
 
     def get_non_paired_edges(self):
         # north, west, south, east
@@ -2776,58 +2763,6 @@ class RubiksCube(object):
         else:
             raise ImplementThis("implement wing %s to D east" % str(wing))
 
-    def make_B_north_have_unpaired_edge(self):
-
-        if not self.sideB.north_edge_paired():
-            return
-
-        # D until we get a non-paired edge to B
-        while self.sideB.all_edges_paired():
-            self.rotate_D()
-
-        # B until a non-paired edge is in on the North side of B
-        while self.sideB.north_edge_paired():
-            self.rotate_B()
-
-    def make_U_west_have_unpaired_edge(self):
-        if not self.sideU.west_edge_paired():
-            return
-
-        if self.sideU.all_edges_paired():
-            self.make_B_north_have_unpaired_edge()
-
-        # U until a non-paired edge is in on the West side of U
-        while self.sideU.west_edge_paired():
-            self.rotate_U()
-
-    def make_U_south_have_unpaired_edge(self):
-        """
-        5x5x5 edge pairing is the only place this is used
-        """
-
-        if not self.sideU.south_edge_paired():
-            return
-
-        if self.sideU.all_edges_paired():
-            self.make_B_north_have_unpaired_edge()
-
-        # U until a non-paired edge is in on the West side of U
-        count = 0
-        while self.sideU.south_edge_paired():
-            self.rotate_U()
-            count += 1
-            if count > 4:
-                raise StuckInALoop("")
-
-    def rotate_B(self):
-        self.rotate("B")
-
-    def rotate_U(self):
-        self.rotate("U")
-
-    def rotate_D(self):
-        self.rotate("D")
-
     def rotate_x(self):
         self.rotate("x")
 
@@ -2937,35 +2872,6 @@ class RubiksCube(object):
 
     def rotate_F_to_F(self):
         self.rotate_side_X_to_Y('F', 'F')
-
-    def all_center_corners_solved(self):
-        for side in list(self.sides.values()):
-            if not side.center_corners_solved():
-                return False
-        return True
-
-    def all_center_edges_solved(self):
-        for side in list(self.sides.values()):
-            if not side.center_edges_solved():
-                return False
-        return True
-
-    def all_centers_solved(self):
-        if self.all_center_edges_solved() and self.all_center_corners_solved():
-            return True
-        return False
-
-    def verify_all_center_corners_solved(self):
-        if not self.all_center_corners_solved():
-            raise SolveError("%s all center corners are not solved" % self)
-
-    def verify_all_center_edges_solved(self):
-        if not self.all_center_edges_solved():
-            raise SolveError("%s all center edges are not solved" % self)
-
-    def verify_all_centers_solved(self):
-        if not self.all_centers_solved():
-            raise SolveError("%s all centers are not solved" % self)
 
     def get_kociemba_string(self, all_squares):
         # kociemba uses order U R F D L B
@@ -4259,7 +4165,6 @@ div#page_holder {
 
         col = 1
         squares_per_side = self.size * self.size
-        min_square = 1
         max_square = squares_per_side * 6
 
         sides = ('upper', 'left', 'front', 'right', 'back', 'down')

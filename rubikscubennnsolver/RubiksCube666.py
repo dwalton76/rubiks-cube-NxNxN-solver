@@ -1,7 +1,7 @@
 
 from collections import OrderedDict
 from pprint import pformat
-from rubikscubennnsolver import RubiksCube, ImplementThis
+from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksSide import Side, SolveError
@@ -26,7 +26,7 @@ moves_6x6x6 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
 solved_6x6x6 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 
-class RubiksCube666(RubiksCube):
+class RubiksCube666(RubiksCubeNNNEvenEdges):
     """
     6x6x6 strategy
     - stage UD centers to sides U or D (use IDA)
@@ -34,13 +34,15 @@ class RubiksCube666(RubiksCube):
     - solve all centers (use IDA)
     - pair edges
     - solve as 3x3x3
+
+    Inheritance model
+    -----------------
+            RubiksCube
+                |
+        RubiksCubeNNNEvenEdges
+           /            \
+    RubiksCubeNNNEven RubiksCube666
     """
-
-    def __init__(self, state, order, colormap=None, debug=False):
-        RubiksCube.__init__(self, state, order, colormap)
-
-        if debug:
-            log.setLevel(logging.DEBUG)
 
     def sanity_check(self):
         edge_orbit_0 = (2, 5, 12, 30, 35, 32, 25, 7,
@@ -99,7 +101,6 @@ class RubiksCube666(RubiksCube):
         self._sanity_check('right-oblique', right_oblique_edge, 4)
         self._sanity_check('outside x-center', outside_x_centers, 4)
         self._sanity_check('inside x-center', inside_x_centers, 4)
-
 
     def lt_init(self):
         if self.lt_init_called:
@@ -576,169 +577,6 @@ class RubiksCube666(RubiksCube):
             self.rotate(step)
 
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
-
-    def pair_inside_edges_via_444(self):
-        fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
-        fake_444.cpu_mode = self.cpu_mode
-        fake_444.lt_init()
-
-        # Fill in the corners so that we can avoid PLL parity when pairing the edges
-        start_444 = 0
-        start_666 = 0
-
-        for x in range(6):
-            fake_444.state[start_444+1] = self.state[start_666+1]
-            fake_444.state[start_444+4] = self.state[start_666 + self.size]
-            fake_444.state[start_444+13] = self.state[start_666 + (self.size * self.size) - self.size + 1]
-            fake_444.state[start_444+16] = self.state[start_666 + (self.size * self.size)]
-            start_666 += self.size * self.size
-            start_444 += 16
-
-        # Fill in the edges
-        start_444 = 0
-        start_666 = 0
-        half_size = int(self.size/2)
-
-        for x in range(6):
-            fake_444.state[start_444+2] = self.state[start_666 + half_size]
-            fake_444.state[start_444+3] = self.state[start_666 + half_size + 1]
-            fake_444.state[start_444+5] = self.state[start_666 + (self.size * (half_size-1)) + 1]
-            fake_444.state[start_444+8] = self.state[start_666 + (self.size * half_size)]
-            fake_444.state[start_444+9] = self.state[start_666 + (self.size * half_size) + 1]
-            fake_444.state[start_444+12] = self.state[start_666 + (self.size * (half_size+1))]
-            fake_444.state[start_444+14] = self.state[start_666 + (self.size * self.size) - half_size]
-            fake_444.state[start_444+15] = self.state[start_666 + (self.size * self.size) - half_size + 1]
-            start_666 += self.size * self.size
-            start_444 += 16
-
-        fake_444.sanity_check()
-        fake_444.group_edges()
-
-        for step in fake_444.solution:
-            if step == 'EDGES_GROUPED':
-                continue
-
-            if step.startswith('4'):
-                step = '6' + step[1:]
-            elif step.startswith('3'):
-                raise ImplementThis('4x4x4 steps starts with 3')
-            elif step in ("Uw", "Uw'", "Uw2",
-                          "Lw", "Lw'", "Lw2",
-                          "Fw", "Fw'", "Fw2",
-                          "Rw", "Rw'", "Rw2",
-                          "Bw", "Bw'", "Bw2",
-                          "Dw", "Dw'", "Dw2"):
-                step = '3' + step
-
-            # log.warning("fake_444 step %s" % step)
-            self.rotate(step)
-
-        log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-
-    def pair_outside_edges_via_555(self, orbit):
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.cpu_mode = self.cpu_mode
-        fake_555.lt_init()
-
-        # Fill in the corners so we can avoid certain types of parity
-        start_555 = 0
-        start_666 = 0
-
-        for x in range(6):
-            fake_555.state[start_555+1] = self.state[start_666+1]
-            fake_555.state[start_555+5] = self.state[start_666 + self.size]
-            fake_555.state[start_555+21] = self.state[start_666 + (self.size * self.size) - self.size + 1]
-            fake_555.state[start_555+25] = self.state[start_666 + (self.size * self.size)]
-            start_666 += self.size * self.size
-            start_555 += 25
-
-        # Fill in the edges
-        start_555 = 0
-        start_666 = 0
-        half_size = int(self.size/2)
-        max_orbit = int((self.size - 2)/2) - 1
-
-        for x in range(6):
-            row1_col2 = start_666 + half_size
-            row1_col1 = row1_col2 - (max_orbit - orbit)
-            row1_col3 = row1_col2 + (max_orbit - orbit) + 1
-
-            row2_col1 = start_666 + ((orbit+1) * self.size) + 1
-            row2_col3 = row2_col1 + self.size - 1
-
-            row3_col1 = start_666 + (self.size * (half_size - 1)) + 1
-            row3_col3 = row3_col1 + self.size - 1
-
-            row4_col1 = start_666 + (self.size * self.size) - ((orbit+2) * self.size) + 1
-            row4_col3 = row4_col1 + self.size - 1
-
-            row5_col1 = row1_col1 + ((self.size - 1) * self.size)
-            row5_col2 = row1_col2 + ((self.size - 1) * self.size)
-            row5_col3 = row1_col3 + ((self.size - 1) * self.size)
-
-            log.info("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
-            log.info("%d row2: %s, %s" % (x, row2_col1, row2_col3))
-            log.info("%d row3: %s, %s" % (x, row3_col1, row3_col3))
-            log.info("%d row4: %s, %s" % (x, row4_col1, row4_col3))
-            log.info("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
-
-            # row1
-            fake_555.state[start_555+2] = self.state[row1_col1]
-            fake_555.state[start_555+3] = self.state[row1_col2]
-            fake_555.state[start_555+4] = self.state[row1_col3]
-
-            # row2
-            fake_555.state[start_555+6] = self.state[row2_col1]
-            fake_555.state[start_555+10] = self.state[row2_col3]
-
-            # row3 - The middle of the edge so orbit doesn't matter
-            fake_555.state[start_555+11] = self.state[row3_col1]
-            fake_555.state[start_555+15] = self.state[row3_col3]
-
-            # row4
-            fake_555.state[start_555+16] = self.state[row4_col1]
-            fake_555.state[start_555+20] = self.state[row4_col3]
-
-            # row5
-            fake_555.state[start_555+22] = self.state[row5_col1]
-            fake_555.state[start_555+23] = self.state[row5_col2]
-            fake_555.state[start_555+24] = self.state[row5_col3]
-
-            start_666 += self.size * self.size
-            start_555 += 25
-
-        fake_555.sanity_check()
-        fake_555.avoid_pll = False
-        fake_555.group_edges()
-        wide_str = str(orbit + 2)
-
-        for step in fake_555.solution:
-            if step == 'EDGES_GROUPED':
-                continue
-
-            if step.startswith('5'):
-                step = '6' + step[1:]
-            elif step.startswith('3'):
-                step = '4' + step[1:]
-
-            self.rotate(step)
-
-        log.info("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-
-    def group_edges(self):
-        """
-        Create a fake 444 to pair the inside edges
-        Create a fake 555 to pair the outside edges
-        """
-
-        if not self.get_non_paired_edges():
-            self.solution.append('EDGES_GROUPED')
-            return
-
-        self.lt_init()
-        self.pair_inside_edges_via_444()
-        self.pair_outside_edges_via_555(0)
-        self.solution.append('EDGES_GROUPED')
 
     def phase(self):
         if self._phase is None:

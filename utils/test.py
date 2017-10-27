@@ -82,15 +82,19 @@ try:
             cube = RubiksCubeNNNOdd(solved_11x11x11, order)
 
         elif size == '12x12x12':
+            continue # no need to test above 10x10x10
             cube = RubiksCubeNNNEven(solved_12x12x12, order)
 
         elif size == '13x13x13':
+            continue # no need to test above 11x11x11
             cube = RubiksCubeNNNOdd(solved_13x13x13, order)
 
         elif size == '14x14x14':
+            continue # no need to test above 10x10x10
             cube = RubiksCubeNNNEven(solved_14x14x14, order)
 
         elif size == '15x15x15':
+            continue # no need to test above 11x11x11
             cube = RubiksCubeNNNOdd(solved_15x15x15, order)
 
         else:

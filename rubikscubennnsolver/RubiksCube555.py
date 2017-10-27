@@ -42,6 +42,29 @@ class RubiksCube555(RubiksCube):
         if debug:
             log.setLevel(logging.DEBUG)
 
+    def phase(self):
+        if self._phase is None:
+            self._phase = 'Stage UD centers'
+            return self._phase
+
+        if self._phase == 'Stage UD centers':
+            if self.UD_centers_staged():
+                self._phase = 'Stage LR centers'
+            return self._phase
+
+        if self._phase == 'Stage LR centers':
+            if self.LR_centers_staged():
+                self._phase = 'Solve Centers'
+
+        if self._phase == 'Solve Centers':
+            if self.centers_solved():
+                self._phase = 'Pair Edges'
+
+        if self._phase == 'Pair Edges':
+            if not self.get_non_paired_edges():
+                self._phase = 'Solve 3x3x3'
+
+        return self._phase
 
     def sanity_check(self):
         edge_orbit_0 = (2, 4, 10, 20, 24, 22, 16, 6,
@@ -1945,27 +1968,3 @@ class RubiksCube555(RubiksCube):
         self.state = self.min_edge_solution_state[:]
         self.solution = self.min_edge_solution[:]
         self.solution.append('EDGES_GROUPED')
-
-    def phase(self):
-        if self._phase is None:
-            self._phase = 'Stage UD centers'
-            return self._phase
-
-        if self._phase == 'Stage UD centers':
-            if self.UD_centers_staged():
-                self._phase = 'Stage LR centers'
-            return self._phase
-
-        if self._phase == 'Stage LR centers':
-            if self.LR_centers_staged():
-                self._phase = 'Solve Centers'
-
-        if self._phase == 'Solve Centers':
-            if self.centers_solved():
-                self._phase = 'Pair Edges'
-
-        if self._phase == 'Pair Edges':
-            if not self.get_non_paired_edges():
-                self._phase = 'Solve 3x3x3'
-
-        return self._phase

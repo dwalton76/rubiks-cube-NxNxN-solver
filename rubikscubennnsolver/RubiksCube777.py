@@ -1,7 +1,7 @@
 
 from collections import OrderedDict
 from pprint import pformat
-from rubikscubennnsolver import RubiksCube, ImplementThis
+from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6, moves_6x6x6
 from rubikscubennnsolver.RubiksSide import Side, SolveError
@@ -20,7 +20,7 @@ moves_7x7x7 = moves_6x6x6
 solved_7x7x7 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 
-class RubiksCube777(RubiksCube):
+class RubiksCube777(RubiksCubeNNNOddEdges):
     """
     For 7x7x7 centers
     - stage the UD inside 9 centers via 5x5x5
@@ -43,13 +43,41 @@ class RubiksCube777(RubiksCube):
     For 7x7x7 edges
     - pair the middle 3 wings for each side via 5x5x5
     - pair the outer 2 wings with the paired middle 3 wings via 5x5x5
+
+
+    Inheritance model
+    -----------------
+            RubiksCube
+                |
+        RubiksCubeNNNOddEdges
+           /            \
+    RubiksCubeNNNOdd RubiksCube777
+
     """
 
-    def __init__(self, state, order, colormap=None, debug=False):
-        RubiksCube.__init__(self, state, order, colormap)
+    def phase(self):
+        if self._phase is None:
+            self._phase = 'Stage UD centers'
+            return self._phase
 
-        if debug:
-            log.setLevel(logging.DEBUG)
+        if self._phase == 'Stage UD centers':
+            if self.UD_centers_staged():
+                self._phase = 'Stage LR centers'
+            return self._phase
+
+        if self._phase == 'Stage LR centers':
+            if self.LR_centers_staged():
+                self._phase = 'Solve Centers'
+
+        if self._phase == 'Solve Centers':
+            if self.centers_solved():
+                self._phase = 'Pair Edges'
+
+        if self._phase == 'Pair Edges':
+            if not self.get_non_paired_edges():
+                self._phase = 'Solve 3x3x3'
+
+        return self._phase
 
     def sanity_check(self):
         edge_orbit_0 = (2, 6, 14, 42, 48, 44, 36, 8,
@@ -135,7 +163,6 @@ class RubiksCube777(RubiksCube):
         self._sanity_check('outside t-centers', outside_x_centers, 4)
         self._sanity_check('inside t-centers', inside_x_centers, 4)
         self._sanity_check('centers', centers, 1)
-
 
     def lt_init(self):
         if self.lt_init_called:
@@ -768,9 +795,6 @@ class RubiksCube777(RubiksCube):
 
             self.rotate(step)
 
-        #self.print_cube()
-        #fake_555.print_cube()
-
     def create_fake_666_centers(self):
 
         # Create a fake 6x6x6 to stage the outside UD oblique edges
@@ -1012,249 +1036,3 @@ class RubiksCube777(RubiksCube):
         self.solve_reduced_555_centers()
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
-
-    def pair_inside_edges(self):
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.cpu_mode = self.cpu_mode
-        fake_555.lt_init()
-
-        # Upper
-        fake_555.state[2] = self.state[3]
-        fake_555.state[3] = self.state[4]
-        fake_555.state[4] = self.state[5]
-        fake_555.state[6] = self.state[15]
-        fake_555.state[11] = self.state[22]
-        fake_555.state[16] = self.state[29]
-        fake_555.state[10] = self.state[21]
-        fake_555.state[15] = self.state[28]
-        fake_555.state[20] = self.state[35]
-        fake_555.state[22] = self.state[45]
-        fake_555.state[23] = self.state[46]
-        fake_555.state[24] = self.state[47]
-
-        # Left
-        fake_555.state[27] = self.state[52]
-        fake_555.state[28] = self.state[53]
-        fake_555.state[29] = self.state[54]
-        fake_555.state[31] = self.state[64]
-        fake_555.state[36] = self.state[71]
-        fake_555.state[41] = self.state[78]
-        fake_555.state[35] = self.state[70]
-        fake_555.state[40] = self.state[77]
-        fake_555.state[45] = self.state[84]
-        fake_555.state[47] = self.state[94]
-        fake_555.state[48] = self.state[95]
-        fake_555.state[49] = self.state[96]
-
-        # Front
-        fake_555.state[52] = self.state[101]
-        fake_555.state[53] = self.state[102]
-        fake_555.state[54] = self.state[103]
-        fake_555.state[56] = self.state[113]
-        fake_555.state[61] = self.state[120]
-        fake_555.state[66] = self.state[127]
-        fake_555.state[60] = self.state[119]
-        fake_555.state[65] = self.state[126]
-        fake_555.state[70] = self.state[133]
-        fake_555.state[72] = self.state[143]
-        fake_555.state[73] = self.state[144]
-        fake_555.state[74] = self.state[145]
-
-        # Right
-        fake_555.state[77] = self.state[150]
-        fake_555.state[78] = self.state[151]
-        fake_555.state[79] = self.state[152]
-        fake_555.state[81] = self.state[162]
-        fake_555.state[86] = self.state[169]
-        fake_555.state[91] = self.state[176]
-        fake_555.state[85] = self.state[168]
-        fake_555.state[90] = self.state[175]
-        fake_555.state[95] = self.state[182]
-        fake_555.state[97] = self.state[192]
-        fake_555.state[98] = self.state[193]
-        fake_555.state[99] = self.state[194]
-
-        # Back
-        fake_555.state[102] = self.state[199]
-        fake_555.state[103] = self.state[200]
-        fake_555.state[104] = self.state[201]
-        fake_555.state[106] = self.state[211]
-        fake_555.state[111] = self.state[218]
-        fake_555.state[116] = self.state[225]
-        fake_555.state[110] = self.state[217]
-        fake_555.state[115] = self.state[224]
-        fake_555.state[120] = self.state[231]
-        fake_555.state[122] = self.state[241]
-        fake_555.state[123] = self.state[242]
-        fake_555.state[124] = self.state[243]
-
-        # Down
-        fake_555.state[127] = self.state[248]
-        fake_555.state[128] = self.state[249]
-        fake_555.state[129] = self.state[250]
-        fake_555.state[131] = self.state[260]
-        fake_555.state[136] = self.state[267]
-        fake_555.state[141] = self.state[274]
-        fake_555.state[135] = self.state[266]
-        fake_555.state[140] = self.state[273]
-        fake_555.state[145] = self.state[280]
-        fake_555.state[147] = self.state[290]
-        fake_555.state[148] = self.state[291]
-        fake_555.state[149] = self.state[292]
-        fake_555.sanity_check()
-        fake_555.group_edges()
-
-        for step in fake_555.solution:
-            if step == 'EDGES_GROUPED':
-                continue
-
-            original_step = step
-            if step.startswith('5'):
-                step = '7' + step[1:]
-            elif step in ("Uw", "Uw'", "Uw2",
-                          "Lw", "Lw'", "Lw2",
-                          "Fw", "Fw'", "Fw2",
-                          "Rw", "Rw'", "Rw2",
-                          "Bw", "Bw'", "Bw2",
-                          "Dw", "Dw'", "Dw2"):
-                step = '3' + step
-
-            self.rotate(step)
-
-        log.info("Inside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-
-    def pair_outside_edges(self):
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.cpu_mode = self.cpu_mode
-        fake_555.lt_init()
-
-        # Upper
-        fake_555.state[2] = self.state[2]
-        fake_555.state[3] = self.state[4]
-        fake_555.state[4] = self.state[6]
-        fake_555.state[6] = self.state[8]
-        fake_555.state[11] = self.state[22]
-        fake_555.state[16] = self.state[36]
-        fake_555.state[10] = self.state[14]
-        fake_555.state[15] = self.state[28]
-        fake_555.state[20] = self.state[42]
-        fake_555.state[22] = self.state[44]
-        fake_555.state[23] = self.state[46]
-        fake_555.state[24] = self.state[48]
-
-        # Left
-        fake_555.state[27] = self.state[51]
-        fake_555.state[28] = self.state[53]
-        fake_555.state[29] = self.state[55]
-        fake_555.state[31] = self.state[57]
-        fake_555.state[36] = self.state[71]
-        fake_555.state[41] = self.state[85]
-        fake_555.state[35] = self.state[63]
-        fake_555.state[40] = self.state[77]
-        fake_555.state[45] = self.state[91]
-        fake_555.state[47] = self.state[93]
-        fake_555.state[48] = self.state[95]
-        fake_555.state[49] = self.state[97]
-
-        # Front
-        fake_555.state[52] = self.state[100]
-        fake_555.state[53] = self.state[102]
-        fake_555.state[54] = self.state[104]
-        fake_555.state[56] = self.state[106]
-        fake_555.state[61] = self.state[120]
-        fake_555.state[66] = self.state[134]
-        fake_555.state[60] = self.state[112]
-        fake_555.state[65] = self.state[126]
-        fake_555.state[70] = self.state[140]
-        fake_555.state[72] = self.state[142]
-        fake_555.state[73] = self.state[144]
-        fake_555.state[74] = self.state[146]
-
-        # Right
-        fake_555.state[77] = self.state[149]
-        fake_555.state[78] = self.state[151]
-        fake_555.state[79] = self.state[153]
-        fake_555.state[81] = self.state[155]
-        fake_555.state[86] = self.state[169]
-        fake_555.state[91] = self.state[183]
-        fake_555.state[85] = self.state[161]
-        fake_555.state[90] = self.state[175]
-        fake_555.state[95] = self.state[189]
-        fake_555.state[97] = self.state[191]
-        fake_555.state[98] = self.state[193]
-        fake_555.state[99] = self.state[195]
-
-        # Back
-        fake_555.state[102] = self.state[198]
-        fake_555.state[103] = self.state[200]
-        fake_555.state[104] = self.state[202]
-        fake_555.state[106] = self.state[204]
-        fake_555.state[111] = self.state[218]
-        fake_555.state[116] = self.state[232]
-        fake_555.state[110] = self.state[210]
-        fake_555.state[115] = self.state[224]
-        fake_555.state[120] = self.state[238]
-        fake_555.state[122] = self.state[240]
-        fake_555.state[123] = self.state[242]
-        fake_555.state[124] = self.state[244]
-
-        # Down
-        fake_555.state[127] = self.state[247]
-        fake_555.state[128] = self.state[249]
-        fake_555.state[129] = self.state[251]
-        fake_555.state[131] = self.state[253]
-        fake_555.state[136] = self.state[267]
-        fake_555.state[141] = self.state[281]
-        fake_555.state[135] = self.state[259]
-        fake_555.state[140] = self.state[273]
-        fake_555.state[145] = self.state[287]
-        fake_555.state[147] = self.state[289]
-        fake_555.state[148] = self.state[291]
-        fake_555.state[149] = self.state[293]
-        fake_555.sanity_check()
-        fake_555.group_edges()
-
-        for step in fake_555.solution:
-            if step == 'EDGES_GROUPED':
-                continue
-
-            if step.startswith('5'):
-                step = '7' + step[1:]
-            self.rotate(step)
-
-        self.print_cube()
-        log.info("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-
-    def group_edges(self):
-
-        if not self.get_non_paired_edges():
-            self.solution.append('EDGES_GROUPED')
-            return
-
-        self.pair_inside_edges()
-        self.pair_outside_edges()
-        self.solution.append('EDGES_GROUPED')
-
-    def phase(self):
-        if self._phase is None:
-            self._phase = 'Stage UD centers'
-            return self._phase
-
-        if self._phase == 'Stage UD centers':
-            if self.UD_centers_staged():
-                self._phase = 'Stage LR centers'
-            return self._phase
-
-        if self._phase == 'Stage LR centers':
-            if self.LR_centers_staged():
-                self._phase = 'Solve Centers'
-
-        if self._phase == 'Solve Centers':
-            if self.centers_solved():
-                self._phase = 'Pair Edges'
-
-        if self._phase == 'Pair Edges':
-            if not self.get_non_paired_edges():
-                self._phase = 'Solve 3x3x3'
-
-        return self._phase

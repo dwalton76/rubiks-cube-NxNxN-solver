@@ -11,12 +11,6 @@ solved_3x3x3 = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
 
 class RubiksCube333(RubiksCube):
 
-    def __init__(self, state, order, colormap=None, debug=False):
-        RubiksCube.__init__(self, state, order, colormap, debug)
-
-        if debug:
-            log.setLevel(logging.DEBUG)
-
     def phase(self):
         return 'Solve 3x3x3'
 

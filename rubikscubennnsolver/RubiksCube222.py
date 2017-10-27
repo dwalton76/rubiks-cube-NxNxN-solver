@@ -17,12 +17,6 @@ solved_2x2x2 = 'UUUURRRRFFFFDDDDLLLLBBBB'
 
 class RubiksCube222(RubiksCube):
 
-    def __init__(self, state, order, colormap=None, debug=False):
-        RubiksCube.__init__(self, state, order, colormap, debug)
-
-        if debug:
-            log.setLevel(logging.DEBUG)
-
     def phase(self):
         return 'Solve 2x2x2'
 

@@ -1,13 +1,19 @@
 # rubiks-cube-NxNxN-solver
 
 ## Overview
+This is a rubiks cube solver that can solve any size cube, I have tested
+up to 17x17x17.  Here are some stats to give you a rough idea of how many
+moves it will take to solve your cube.
+
 * 2x2x2 works
-* 3x3x3 works via the kociemba solver
-* 4x4x4 works, average solution is 65 moves
-* 5x5x5 works, average solution is 119 moves
-* 6x6x6 works, average solution is 214 moves
-* 7x7x7 works, average solution is 304 moves
-* NxNxN works, average solution increases with cube size
+* 3x3x3 average solution is 20 moves
+* 4x4x4 average solution is 65 moves
+* 5x5x5 average solution is 129 moves
+* 6x6x6 average solution is 231 moves
+* 7x7x7 average solution is 329 moves
+* 8x8x8 average solution is 510 moves
+* 9x9x9 average solution is 652 moves
+* 10x10x10 average solution is 895 moves
 
 All cubes 4x4x4 and larger follow the same basic approach:
 * Solve centers

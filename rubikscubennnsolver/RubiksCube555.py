@@ -1,5 +1,5 @@
 
-from collections import OrderedDict
+from collections import deque
 from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksSide import Side, SolveError
@@ -1818,6 +1818,69 @@ class RubiksCube555(RubiksCube):
             self.solution = original_solution[:]
             return False
 
+    def group_edges_bfs(self):
+        """
+        This works and finds a shorter solution than the DFS that is
+        group_edges_recursive() but it takes about 30x longer to do so
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        non_paired_edges = self.get_non_paired_edges()
+        workq = deque([])
+
+        for edge_to_pair in non_paired_edges:
+            workq.append([edge_to_pair,])
+
+        state_cache = {}
+        solution_cache = {}
+
+        while workq:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            edges_to_pair = workq.popleft()
+            edges_paired_ok = True
+            all_but_last_edges_to_pair = tuple(edges_to_pair[0:-1])
+
+            if all_but_last_edges_to_pair in state_cache:
+                self.state = state_cache[all_but_last_edges_to_pair][:]
+                self.solution = solution_cache[all_but_last_edges_to_pair][:]
+                edge_to_pair = edges_to_pair[-1]
+
+                if not self.pair_edge(edge_to_pair):
+                    edges_paired_ok = False
+            else:
+
+                for edge_to_pair in edges_to_pair:
+                    if not self.pair_edge(edge_to_pair):
+                        edges_paired_ok = False
+                        break
+
+            if edges_paired_ok:
+                state_cache[tuple(edges_to_pair)] = self.state[:]
+                solution_cache[tuple(edges_to_pair)] = self.solution[:]
+
+                non_paired_edges = self.get_non_paired_edges()
+
+                if non_paired_edges:
+                    for edge_to_pair in non_paired_edges:
+                        workq.append(edges_to_pair + [edge_to_pair])
+
+                else:
+                    # There are no edges left to pair, note how many steps it took pair them all
+                    edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
+
+                    # Remember the solution that pairs all edges in the least number of moves
+                    if edge_solution_len < self.min_edge_solution_len:
+                        self.min_edge_solution_len = edge_solution_len
+                        self.min_edge_solution = self.solution[:]
+                        self.min_edge_solution_state = self.state[:]
+                        log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
+
+                        # since this is BFS we can go ahead and return
+                        return
+
     def group_edges_recursive(self, depth, edge_to_pair):
 
         # Should we both going down this branch or should we prune it?
@@ -1934,25 +1997,11 @@ class RubiksCube555(RubiksCube):
 
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        # TODO Trying to find a way to speed up edge pairing...this needs more work
-        # - this needs to do a BFS instead of DFS...that should fix it
-        '''
-        for x in xrange(55, 100, 10):
-            self.min_edge_solution_len = x
-            self.min_edge_solution = None
-            self.min_edge_solution_state = None
-
-            self.group_edges_recursive(depth, None)
-
-            if self.min_edge_solution:
-                break
-            raise SolveError("did not find edge solution")
-        '''
-
         self.min_edge_solution_len = 9999
         self.min_edge_solution = None
         self.min_edge_solution_state = None
         self.group_edges_recursive(depth, None)
+        #self.group_edges_bfs()
         self.state = self.min_edge_solution_state[:]
         self.solution = self.min_edge_solution[:]
         self.solution.append('EDGES_GROUPED')

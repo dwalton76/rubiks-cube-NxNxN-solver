@@ -835,7 +835,7 @@ class RubiksCube555(RubiksCube):
         return False
 
     def pair_outside_edges(self):
-        fake_444 = RubiksCube444(solved_4x4x4)
+        fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
         fake_444.cpu_mode = self.cpu_mode
         fake_444.lt_init()
 

@@ -152,5 +152,7 @@ class RubiksCube222(RubiksCube):
     def solve(self):
         self.solve_non_table()
         self.compress_solution()
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
+
+        # Cube is solved, rotate it around so white is on top, etc
+        #self.rotate_U_to_U()
+        #self.rotate_F_to_F()

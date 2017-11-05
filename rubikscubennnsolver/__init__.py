@@ -3977,8 +3977,10 @@ class RubiksCube(object):
             self.rotate_F_to_F()
             self.solve_333()
             self.compress_solution()
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
+
+            # Cube is solved, rotate it around so white is on top, etc
+            #self.rotate_U_to_U()
+            #self.rotate_F_to_F()
 
     def reverse_steps(self, steps):
         """

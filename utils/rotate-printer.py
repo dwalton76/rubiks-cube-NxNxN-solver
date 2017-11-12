@@ -7,6 +7,16 @@ https://github.com/dwalton76/rubiks-cube-lookup-tables/blob/master/rotate.c
 
 from copy import copy
 from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver.RubiksCube222 import solved_2x2x2, moves_2x2x2
+from rubikscubennnsolver.RubiksCube333 import solved_3x3x3, moves_3x3x3
+from rubikscubennnsolver.RubiksCube444 import solved_4x4x4, moves_4x4x4
+from rubikscubennnsolver.RubiksCube555 import solved_5x5x5, moves_5x5x5
+from rubikscubennnsolver.RubiksCube666 import solved_6x6x6, moves_6x6x6
+from rubikscubennnsolver.RubiksCube777 import solved_7x7x7, moves_7x7x7
+from rubikscubennnsolver.RubiksCubeNNNEven import solved_8x8x8, moves_8x8x8
+from rubikscubennnsolver.RubiksCubeNNNOdd import solved_9x9x9
+from rubikscubennnsolver.RubiksCubeNNNEven import moves_8x8x8 as moves_9x9x9
+from rubikscubennnsolver.RubiksCubeNNNEven import solved_10x10x10, moves_10x10x10
 import logging
 
 logging.basicConfig(level=logging.INFO,
@@ -17,20 +27,36 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-solved_222 = 'UUUURRRRFFFFDDDDLLLLBBBB'
-solved_333 = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
-solved_444 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
-solved_555 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
-solved_666 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
-solved_777 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+build_rotate_xxx_c = True
+
+
+if build_rotate_xxx_c:
+    print("""
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "rotate_xxx.h"
+
+int
+strmatch (char *str1, char *str2)
+{
+    if (strcmp(str1, str2) == 0) {
+        return 1;
+    }
+    return 0;
+}
+""")
 
 for (size, solved_state) in (
-    (2, solved_222),
-    (3, solved_333),
-    (4, solved_444),
-    (5, solved_555),
-    (6, solved_666),
-    (7, solved_777)
+    (2, solved_2x2x2),
+    (3, solved_3x3x3),
+    (4, solved_4x4x4),
+    (5, solved_5x5x5),
+    (6, solved_6x6x6),
+    (7, solved_7x7x7),
+    (8, solved_8x8x8),
+    (9, solved_9x9x9),
+    (10, solved_10x10x10),
     ):
 
     cube = RubiksCube(solved_state, 'URFDLB')
@@ -42,42 +68,57 @@ for (size, solved_state) in (
 
     original_state = copy(cube.state)
 
-    if size == 2 or size == 3:
-        steps = ("U", "U'", "U2",
-                 "L", "L'", "L2",
-                 "F", "F'", "F2",
-                 "R", "R'", "R2",
-                 "B", "B'", "B2",
-                 "D", "D'", "D2")
+    if size == 2:
+        steps = moves_2x2x2
 
-    elif size == 4 or size == 5:
-        steps = ("U", "U'", "U2", "Uw", "Uw'", "Uw2", "y", "y'", "x", "x'", "z", "z'",
-                 "L", "L'", "L2", "Lw", "Lw'", "Lw2", "y", "y'", "x", "x'", "z", "z'",
-                 "F", "F'", "F2", "Fw", "Fw'", "Fw2", "y", "y'", "x", "x'", "z", "z'",
-                 "R", "R'", "R2", "Rw", "Rw'", "Rw2", "y", "y'", "x", "x'", "z", "z'",
-                 "B", "B'", "B2", "Bw", "Bw'", "Bw2", "y", "y'", "x", "x'", "z", "z'",
-                 "D", "D'", "D2", "Dw", "Dw'", "Dw2", "y", "y'", "x", "x'", "z", "z'")
+    elif size == 3:
+        steps = moves_3x3x3
 
-    elif size == 6 or size == 7:
-        steps = ("U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
-                 "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2",
-                 "F", "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2",
-                 "R", "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2",
-                 "B", "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",
-                 "D", "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2")
+    elif size == 4:
+        steps = moves_4x4x4
 
-    if False:
+    elif size == 5:
+        steps = moves_5x5x5
+
+    elif size == 6:
+        steps = moves_6x6x6
+
+    elif size == 7:
+        steps = moves_7x7x7
+
+    elif size == 8:
+        steps = moves_8x8x8
+
+    elif size == 9:
+        steps = moves_9x9x9
+
+    elif size == 10:
+        steps = moves_10x10x10
+
+    else:
+        raise Exception("Add support for size %s" % size)
+
+    if build_rotate_xxx_c:
         print("void")
         print("rotate_%d%d%d(int *cube, int *cube_tmp, int array_size, char *step)" % (size, size, size))
         print("{")
         print("    /* This was contructed using 'solver.py --rotate-printer' */")
         print("    memcpy(cube_tmp, cube, sizeof(int) * array_size);")
         print("")
+        first_step = True
+
         for step in steps:
             cube.rotate(step)
-            cube.print_case_statement_C(step)
+            cube.print_case_statement_C(step, first_step)
             cube.state = copy(original_state)
-        print("}\n\n")
+            first_step = False
+
+        print("""    } else {
+        printf("ERROR: invalid step %s\\n", step);
+        // exit(1);
+    }
+}
+""")
 
     else:
         rotate_mapper = {}

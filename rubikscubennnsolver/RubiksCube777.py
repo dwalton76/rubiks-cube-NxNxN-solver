@@ -944,7 +944,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
 
-        # Uses 5x5x5 solver so stage the inner x-centers and inner t-centers for UD
+        # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for UD
         self.group_inside_UD_centers()
 
         # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
@@ -965,7 +965,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         log.info("")
         log.info("")
 
-        # Uses 5x5x5 solver so stage the inner x-centers and inner t-centers for LR
+        # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for LR
         self.group_inside_LR_centers()
         log.info('post group_inside_LR_centers')
         self.print_cube()

@@ -1127,12 +1127,17 @@ class RubiksCube(object):
                 print('')
         print('')
 
-    def print_case_statement_C(self, case):
+    def print_case_statement_C(self, case, first_step):
         """
         This is called via --rotate-printer, it is used to print the
         case statements used by lookup-table-builder.c
         """
-        print(("    } else if (strcmp(step, \"%s\") == 0) {" % case))
+
+        if first_step:
+            print(("    if (strcmp(step, \"%s\") == 0) {" % case))
+        else:
+            print(("    } else if (strcmp(step, \"%s\") == 0) {" % case))
+
         for (key, value) in enumerate(self.state[1:]):
             key += 1
 

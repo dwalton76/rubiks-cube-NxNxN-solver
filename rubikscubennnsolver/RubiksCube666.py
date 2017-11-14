@@ -131,89 +131,151 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                                                       True,  # state_hex
                                                       linecount=735471)
 
-        '''
-        lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
-        lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt
-        ===============================================================
-        1 steps has 3 entries (0 percent, 0.00x previous step)
-        2 steps has 29 entries (0 percent, 9.67x previous step)
-        3 steps has 238 entries (1 percent, 8.21x previous step)
-        4 steps has 742 entries (5 percent, 3.12x previous step)
-        5 steps has 1,836 entries (14 percent, 2.47x previous step)
-        6 steps has 4,405 entries (34 percent, 2.40x previous step)
-        7 steps has 3,774 entries (29 percent, 0.86x previous step)
-        8 steps has 1,721 entries (13 percent, 0.46x previous step)
-        9 steps has 122 entries (0 percent, 0.07x previous step)
+        if self.cpu_mode == 'max':
 
-        Total: 12,870 entries
-        '''
-        self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
-                                                                'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
-                                                                '666-UD-oblique-edge-pairing-left-only',
-                                                                '990000000099',
-                                                                True, # state_hex
-                                                                linecount=12870)
+            '''
+            lookup-table-6x6x6-step26-UD-oblique-edge-pairing-left-only.txt
+            lookup-table-6x6x6-step27-UD-oblique-edge-pairing-right-only.txt
+            ===============================================================
+            1 steps has 5 entries (0 percent, 0.00x previous step)
+            2 steps has 82 entries (0 percent, 16.40x previous step)
+            3 steps has 1198 entries (0 percent, 14.61x previous step)
+            4 steps has 13818 entries (1 percent, 11.53x previous step)
+            5 steps has 115638 entries (15 percent, 8.37x previous step)
+            6 steps has 399478 entries (54 percent, 3.45x previous step)
+            7 steps has 204612 entries (27 percent, 0.51x previous step)
+            8 steps has 640 entries (0 percent, 0.00x previous step)
 
-        self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
-                                                                'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
-                                                                '666-UD-oblique-edge-pairing-right-only',
-                                                                '660000000066',
-                                                                True, # state_hex
-                                                                linecount=12870)
+            Total: 735471 entries
+            '''
+            self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
+                                                                    'lookup-table-6x6x6-step26-UD-oblique-edge-pairing-left-only.txt',
+                                                                    '666-UD-oblique-edge-pairing-left-only',
+                                                                    '990000000099',
+                                                                    True, # state_hex
+                                                                    linecount=735471)
 
-        '''
-        Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
-        (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
-        IDA and build it 8 steps deep.
+            self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
+                                                                    'lookup-table-6x6x6-step27-UD-oblique-edge-pairing-right-only.txt',
+                                                                    '666-UD-oblique-edge-pairing-right-only',
+                                                                    '660000000066',
+                                                                    True, # state_hex
+                                                                    linecount=735471)
 
-        Our prune tables will be to solve on the left or right oblique edges. Each of these
-        tables are 24!/(8!*16!) or 735,471
-        735471/540917591841 is 0.0000013596729171
+            '''
+            Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
+            (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
+            IDA and build it 8 steps deep.
 
-        Originally I did what is described above but the IDA search took 4 minutes
-        (on my laptop) for some cubes...I can only imagine how long that would
-        take on a 300Mhz EV3.  To speed this up I did something unusual here...I
-        rebuilt the step20 table but restricted moves so that UD obliques can
-        only move to sides UFDB. The cube will be very scrambled though and
-        there will be UD obliques on sides LR.  What I do is "fake move" these
-        obliques to side UFDB so that I can use the step20 table.  At that point
-        there will only be UD obliques on sides ULDR so I then do a rotate_y()
-        one time to make LR free of UD obliques again. Then I do another lookup
-        in the step20 table.
+            Our prune tables will be to solve on the left or right oblique edges. Each of these
+            tables are 24!/(8!*16!) or 735,471
+            735471/540917591841 is 0.000 001 3596729171
 
-        I only build the table to 9-deep, it would have 165 million entries if
-        I built it the whole way out but that would be too large tou check into
-        the repo so I use IDA.
+            This IDA search can take several minutes, that is why we only do this if cpu_mode is max.
 
-        lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt
-        =====================================================
-        1 steps has 3 entries (0 percent, 0.00x previous step)
-        2 steps has 29 entries (0 percent, 9.67x previous step)
-        3 steps has 286 entries (0 percent, 9.86x previous step)
-        4 steps has 2,052 entries (0 percent, 7.17x previous step)
-        5 steps has 16,348 entries (0 percent, 7.97x previous step)
-        6 steps has 127,859 entries (0 percent, 7.82x previous step)
-        7 steps has 844,248 entries (3 percent, 6.60x previous step)
-        8 steps has 4,623,585 entries (18 percent, 5.48x previous step)
-        9 steps has 19,019,322 entries (77 percent, 4.11x previous step)
+            Note that the numbering scheme for the filenames for 25, 26 and 27 are a little off.
+            Typically 25 would be numbered something like 20 and 26/27 would be 21/22 (since
+            they are prune tables) but I was already using 20/21/22 and 30/31, etc so to avoid
+            renumbering lots of files I cheated and numbered these 25/26/27.
+            '''
+            self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
+                                                             'lookup-table-6x6x6-step25-UD-oblique-edge-pairing.txt',
+                                                             '666-UD-oblique-edge-pairing',
+                                                             'ff00000000ff',
+                                                             True, # state_hex
+                                                             moves_6x6x6,
 
-        Total: 24,633,732 entries
-        '''
-        self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
-                                                         'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt',
-                                                         '666-UD-oblique-edge-pairing',
-                                                         'ff00000000ff',
-                                                         True, # state_hex
-                                                         moves_6x6x6,
+                                                             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"), # These would break up the staged UD inner x-centers
 
-                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # These would break up the staged UD inner x-centers
-                                                          "Fw", "Fw'", "Bw", "Bw'",
-                                                          "3Uw", "3Uw'", "3Dw", "3Dw'", "Uw", "Uw'", "Dw", "Dw'"),
+                                                             # prune tables
+                                                             (self.lt_UD_oblique_edge_pairing_left_only,
+                                                              self.lt_UD_oblique_edge_pairing_right_only),
+                                                             linecount=7271027)
 
-                                                         # prune tables
-                                                         (self.lt_UD_oblique_edge_pairing_left_only,
-                                                          self.lt_UD_oblique_edge_pairing_right_only),
-                                                         linecount=24633732)
+        else:
+            '''
+            lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
+            lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt
+            ===============================================================
+            1 steps has 3 entries (0 percent, 0.00x previous step)
+            2 steps has 29 entries (0 percent, 9.67x previous step)
+            3 steps has 238 entries (1 percent, 8.21x previous step)
+            4 steps has 742 entries (5 percent, 3.12x previous step)
+            5 steps has 1,836 entries (14 percent, 2.47x previous step)
+            6 steps has 4,405 entries (34 percent, 2.40x previous step)
+            7 steps has 3,774 entries (29 percent, 0.86x previous step)
+            8 steps has 1,721 entries (13 percent, 0.46x previous step)
+            9 steps has 122 entries (0 percent, 0.07x previous step)
+
+            Total: 12,870 entries
+            '''
+            self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
+                                                                    'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
+                                                                    '666-UD-oblique-edge-pairing-left-only',
+                                                                    '990000000099',
+                                                                    True, # state_hex
+                                                                    linecount=12870)
+
+            self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
+                                                                    'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
+                                                                    '666-UD-oblique-edge-pairing-right-only',
+                                                                    '660000000066',
+                                                                    True, # state_hex
+                                                                    linecount=12870)
+
+            '''
+            Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
+            (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
+            IDA and build it 8 steps deep.
+
+            Our prune tables will be to solve on the left or right oblique edges. Each of these
+            tables are 24!/(8!*16!) or 735,471
+            735471/540917591841 is 0.000 001 3596729171
+
+            Originally I did what is described above but the IDA search took 4 minutes
+            (on my laptop) for some cubes...I can only imagine how long that would
+            take on a 300Mhz EV3.  To speed this up I did something unusual here...I
+            rebuilt the step20 table but restricted moves so that UD obliques can
+            only move to sides UFDB. The cube will be very scrambled though and
+            there will be UD obliques on sides LR.  What I do is "fake move" these
+            obliques to side UFDB so that I can use the step20 table.  At that point
+            there will only be UD obliques on sides ULDR so I then do a rotate_y()
+            one time to make LR free of UD obliques again. Then I do another lookup
+            in the step20 table.
+
+            I only built the table to 9-deep, it would have 165 million entries if
+            I built it the whole way out but that would be too large to check into
+            the repo so I use IDA.
+
+            lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt
+            =====================================================
+            1 steps has 3 entries (0 percent, 0.00x previous step)
+            2 steps has 29 entries (0 percent, 9.67x previous step)
+            3 steps has 286 entries (0 percent, 9.86x previous step)
+            4 steps has 2,052 entries (0 percent, 7.17x previous step)
+            5 steps has 16,348 entries (0 percent, 7.97x previous step)
+            6 steps has 127,859 entries (0 percent, 7.82x previous step)
+            7 steps has 844,248 entries (3 percent, 6.60x previous step)
+            8 steps has 4,623,585 entries (18 percent, 5.48x previous step)
+            9 steps has 19,019,322 entries (77 percent, 4.11x previous step)
+
+            Total: 24,633,732 entries
+            '''
+            self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
+                                                             'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt',
+                                                             '666-UD-oblique-edge-pairing',
+                                                             'ff00000000ff',
+                                                             True, # state_hex
+                                                             moves_6x6x6,
+
+                                                             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # These would break up the staged UD inner x-centers
+                                                              "Fw", "Fw'", "Bw", "Bw'",
+                                                              "3Uw", "3Uw'", "3Dw", "3Dw'", "Uw", "Uw'", "Dw", "Dw'"),
+
+                                                             # prune tables
+                                                             (self.lt_UD_oblique_edge_pairing_left_only,
+                                                              self.lt_UD_oblique_edge_pairing_right_only),
+                                                             linecount=24633732)
 
         '''
         16!/(8!*8!) is 12,870
@@ -386,12 +448,23 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
                                                          ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
                                                           "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
-                                                          "L", "L'", "L2", "R", "R'", "R2"), # do not mess up LR sides that we staged via self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
+                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
 
                                                          # prune tables
                                                          (self.lt_LR_solve_inner_x_centers_and_oblique_edges,),
                                                          linecount=25679911)
+
+        if self.cpu_mode == 'min':
+            """
+            self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() will only be called if cpu_mode is 'min'.
+            We 'solve' this prune table to speed up the IDA search for self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
+            """
+
+            # do not mess up LR sides that we staged via self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
+            moves_illegal = list(self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.moves_illegal)
+            moves_illegal.extend(["L", "L'", "L2", "R", "R'", "R2"])
+
+            self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.moves_illegal = tuple(moves_illegal)
 
     def populate_fake_555_for_ULFRBD(self, fake_555):
 
@@ -503,28 +576,32 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_inner_x_centers_stage.solve()
         log.info("UD inner x-centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-        # See the comments where self.lt_UD_oblique_edge_pairing is declared for
-        # an explanation on what is happening here
-        for x in range(2):
-            original_state = self.state[:]
-            original_solution = self.solution[:]
-            original_solution_len = len(self.solution)
-
-            self.fake_move_UD_to_UFDB()
+        if self.cpu_mode == 'max':
             self.lt_UD_oblique_edge_pairing.solve()
 
-            tmp_solution = self.solution[original_solution_len:]
+        else:
+            # See the comments where self.lt_UD_oblique_edge_pairing is declared for
+            # an explanation on what is happening here
+            for x in range(2):
+                original_state = self.state[:]
+                original_solution = self.solution[:]
+                original_solution_len = len(self.solution)
 
-            self.state = original_state[:]
-            self.solution = original_solution[:]
+                self.fake_move_UD_to_UFDB()
+                self.lt_UD_oblique_edge_pairing.solve()
 
-            for step in tmp_solution:
-                self.rotate(step)
+                tmp_solution = self.solution[original_solution_len:]
 
-            if x == 0:
-                self.rotate_y()
-            else:
-                self.rotate_y_reverse()
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in tmp_solution:
+                    self.rotate(step)
+
+                if x == 0:
+                    self.rotate_y()
+                else:
+                    self.rotate_y_reverse()
 
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
@@ -550,8 +627,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
         log.info("UD inner x-center solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-        self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() # speed up IDA
-        log.info("LR inner x-center and oblique edges prune table solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        # speed up IDA
+        if self.cpu_mode == 'min':
+            self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
+            log.info("LR inner x-center and oblique edges prune table solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
         log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))

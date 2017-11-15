@@ -377,39 +377,9 @@ def get_444_ULFRBD_centers_solve(parent_state):
     return state
 
 
-def get_444_LR_centers_stage_tsai(parent_state, self):
+def get_444_phase2_tsai_orient_edges(parent_state, self):
     """
-    444-LR-centers-stage-tsai
-    """
-    # unroll
-    state = ''.join([parent_state[square_index] for side in self.sides_all for square_index in side.center_pos])
-    state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1').replace('D', '0').replace('U', '0')
-    return state
-
-
-def get_444_LR_centers_solve_tsai(parent_state, self):
-    """
-    444-LR-centers-solve-tsai
-    """
-    # unroll
-    state = ''.join([parent_state[square_index] for side in self.sides_all for square_index in side.center_pos])
-    state = state.replace('F', 'x').replace('B', 'x').replace('D', 'x').replace('U', 'x')
-    return state
-
-
-def get_444_FB_centers_stage_tsai(parent_state, self):
-    """
-    444-FB-centers-stage-tsai
-    """
-    # unroll
-    state = ''.join([parent_state[square_index] for side in self.sides_all for square_index in side.center_pos])
-    state = state.replace('x', '0').replace('F', '1').replace('R', '0').replace('B', '1').replace('L', '0').replace('D', '0').replace('U', '0')
-    return state
-
-
-def get_444_orient_edges_tsai(parent_state, self):
-    """
-    444-orient-edges-tsai or 444-phase2-tsai
+    444-phase2-tsai-orient-edges or 444-phase2-tsai
     """
     parent = self.parent
     original_state = self.parent.state[:]
@@ -577,7 +547,7 @@ def get_444_orient_edges_tsai(parent_state, self):
 
     state = ''.join(state)
 
-    if self.state_type == '444-orient-edges-tsai':
+    if self.state_type == '444-phase2-tsai-orient-edges':
         if state.count('U') != 24:
             raise SolveError("state %s has %d Us and %d Ds, should have 24 of each" % (state, state.count('U'), state.count('D')))
 
@@ -585,6 +555,16 @@ def get_444_orient_edges_tsai(parent_state, self):
             raise SolveError("state %s has %d Us and %d Ds, should have 24 of each" % (state, state.count('U'), state.count('D')))
     #else:
     #    log.info(state)
+    return state
+
+
+def get_444_phase2_tsai_centers_solve(parent_state, self):
+    """
+    444-phase2-tsai-centers-solve-tsai
+    """
+    # unroll
+    state = ''.join([parent_state[square_index] for side in self.sides_all for square_index in side.center_pos])
+    state = state.replace('F', 'F').replace('B', 'F').replace('D', 'x').replace('U', 'x')
     return state
 
 
@@ -696,7 +676,7 @@ def reflect_x_444(cube):
            cube[1:5]
 
 
-def get_444_phase3_edges(parent_state, self):
+def get_444_phase3_edges(parent_state):
     """
     444-phase3-edges
     """
@@ -726,7 +706,7 @@ def get_444_phase3_edges(parent_state, self):
     return results[0]
 
 
-def get_444_phase3_tsai(parent_state, self):
+def get_444_phase3_tsai(parent_state):
     """
     444-phase3-tsai
     """
@@ -2095,11 +2075,9 @@ state_functions = {
     '444-FB-centers-solve' : get_444_FB_centers_solve,
     '444-ULFRBD-centers-stage' : get_444_ULFRBD_centers_stage,
     '444-ULFRBD-centers-solve' : get_444_ULFRBD_centers_solve,
-    '444-LR-centers-stage-tsai' : get_444_LR_centers_stage_tsai,
-    '444-LR-centers-solve-tsai' : get_444_LR_centers_solve_tsai,
-    '444-FB-centers-stage-tsai' : get_444_FB_centers_stage_tsai,
-    '444-orient-edges-tsai' : get_444_orient_edges_tsai,
-    '444-phase2-tsai' : get_444_orient_edges_tsai,
+    '444-phase2-tsai-orient-edges' : get_444_phase2_tsai_orient_edges,
+    '444-phase2-tsai-centers-solve' : get_444_phase2_tsai_centers_solve,
+    '444-phase2-tsai' : get_444_phase2_tsai_orient_edges,
     '444-phase3-tsai' : get_444_phase3_tsai,
     '444-phase3-edges' : get_444_phase3_edges,
     '555-UD-centers-stage' : get_555_UD_centers_stage_state,
@@ -2274,12 +2252,8 @@ class LookupTable(object):
     def state(self):
         state_function = state_functions[self.state_type]
 
-        if state_function in (get_444_LR_centers_stage_tsai,
-                              get_444_LR_centers_solve_tsai,
-                              get_444_FB_centers_stage_tsai,
-                              get_444_orient_edges_tsai,
-                              get_444_phase3_tsai,
-                              get_444_phase3_edges):
+        if state_function in (get_444_phase2_tsai_centers_solve,
+                              get_444_phase2_tsai_orient_edges):
             state = state_function(self.parent.state, self)
         else:
             state = state_function(self.parent.state)

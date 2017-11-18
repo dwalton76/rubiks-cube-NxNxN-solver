@@ -32,26 +32,6 @@ class NoIDASolution(Exception):
     pass
 
 
-def steps_cancel_out(prev_step, step):
-
-    if prev_step is None:
-        return False
-
-    # U2 followed by U2 is a no-op
-    if step == prev_step and step.endswith("2"):
-        return True
-
-    # U' followed by U is a no-op
-    if prev_step.endswith("'") and not step.endswith("'") and step == prev_step[0:-1]:
-        return True
-
-    # U followed by U' is a no-op
-    if not prev_step.endswith("'") and step.endswith("'") and step[0:-1] == prev_step:
-        return True
-
-    return False
-
-
 def pretty_time(delta):
     delta = str(delta)
 
@@ -86,32 +66,41 @@ def get_444_UD_centers_stage(parent_state):
     """
     444-UD-centers-stage
     """
-    state = [parent_state[6],
-             parent_state[7],
-             parent_state[10],
-             parent_state[11],
-             parent_state[22],
-             parent_state[23],
-             parent_state[26],
-             parent_state[27],
-             parent_state[38],
-             parent_state[39],
-             parent_state[42],
-             parent_state[43],
-             parent_state[54],
-             parent_state[55],
-             parent_state[58],
-             parent_state[59],
-             parent_state[70],
-             parent_state[71],
-             parent_state[74],
-             parent_state[75],
-             parent_state[86],
-             parent_state[87],
-             parent_state[90],
-             parent_state[91]]
+    babel = {
+        'x' : '0',
+        'L' : '0',
+        'F' : '0',
+        'R' : '0',
+        'B' : '0',
+        'D' : '1',
+        'U' : '1',
+    }
+
+    state = [babel[parent_state[6]],
+             babel[parent_state[7]],
+             babel[parent_state[10]],
+             babel[parent_state[11]],
+             babel[parent_state[22]],
+             babel[parent_state[23]],
+             babel[parent_state[26]],
+             babel[parent_state[27]],
+             babel[parent_state[38]],
+             babel[parent_state[39]],
+             babel[parent_state[42]],
+             babel[parent_state[43]],
+             babel[parent_state[54]],
+             babel[parent_state[55]],
+             babel[parent_state[58]],
+             babel[parent_state[59]],
+             babel[parent_state[70]],
+             babel[parent_state[71]],
+             babel[parent_state[74]],
+             babel[parent_state[75]],
+             babel[parent_state[86]],
+             babel[parent_state[87]],
+             babel[parent_state[90]],
+             babel[parent_state[91]]]
     state = ''.join(state)
-    state = state.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
     return state
 
 
@@ -119,32 +108,40 @@ def get_444_LR_centers_stage(parent_state):
     """
     444-LR-centers-stage
     """
-    state = [parent_state[6],
-             parent_state[7],
-             parent_state[10],
-             parent_state[11],
-             parent_state[22],
-             parent_state[23],
-             parent_state[26],
-             parent_state[27],
-             parent_state[38],
-             parent_state[39],
-             parent_state[42],
-             parent_state[43],
-             parent_state[54],
-             parent_state[55],
-             parent_state[58],
-             parent_state[59],
-             parent_state[70],
-             parent_state[71],
-             parent_state[74],
-             parent_state[75],
-             parent_state[86],
-             parent_state[87],
-             parent_state[90],
-             parent_state[91]]
+    babel = {
+        'x' : '0',
+        'L' : '1',
+        'F' : '0',
+        'R' : '1',
+        'B' : '0',
+        'D' : '0',
+        'U' : '0',
+    }
+    state = [babel[parent_state[6]],
+             babel[parent_state[7]],
+             babel[parent_state[10]],
+             babel[parent_state[11]],
+             babel[parent_state[22]],
+             babel[parent_state[23]],
+             babel[parent_state[26]],
+             babel[parent_state[27]],
+             babel[parent_state[38]],
+             babel[parent_state[39]],
+             babel[parent_state[42]],
+             babel[parent_state[43]],
+             babel[parent_state[54]],
+             babel[parent_state[55]],
+             babel[parent_state[58]],
+             babel[parent_state[59]],
+             babel[parent_state[70]],
+             babel[parent_state[71]],
+             babel[parent_state[74]],
+             babel[parent_state[75]],
+             babel[parent_state[86]],
+             babel[parent_state[87]],
+             babel[parent_state[90]],
+             babel[parent_state[91]]]
     state = ''.join(state)
-    state = state.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1').replace('U', '0').replace('D', '0')
     return state
 
 
@@ -152,32 +149,40 @@ def get_444_FB_centers_stage(parent_state):
     """
     444-FB-centers-stage
     """
-    state = [parent_state[6],
-             parent_state[7],
-             parent_state[10],
-             parent_state[11],
-             parent_state[22],
-             parent_state[23],
-             parent_state[26],
-             parent_state[27],
-             parent_state[38],
-             parent_state[39],
-             parent_state[42],
-             parent_state[43],
-             parent_state[54],
-             parent_state[55],
-             parent_state[58],
-             parent_state[59],
-             parent_state[70],
-             parent_state[71],
-             parent_state[74],
-             parent_state[75],
-             parent_state[86],
-             parent_state[87],
-             parent_state[90],
-             parent_state[91]]
+    babel = {
+        'x' : '0',
+        'L' : '0',
+        'F' : '1',
+        'R' : '0',
+        'B' : '1',
+        'D' : '0',
+        'U' : '0',
+    }
+    state = [babel[parent_state[6]],
+             babel[parent_state[7]],
+             babel[parent_state[10]],
+             babel[parent_state[11]],
+             babel[parent_state[22]],
+             babel[parent_state[23]],
+             babel[parent_state[26]],
+             babel[parent_state[27]],
+             babel[parent_state[38]],
+             babel[parent_state[39]],
+             babel[parent_state[42]],
+             babel[parent_state[43]],
+             babel[parent_state[54]],
+             babel[parent_state[55]],
+             babel[parent_state[58]],
+             babel[parent_state[59]],
+             babel[parent_state[70]],
+             babel[parent_state[71]],
+             babel[parent_state[74]],
+             babel[parent_state[75]],
+             babel[parent_state[86]],
+             babel[parent_state[87]],
+             babel[parent_state[90]],
+             babel[parent_state[91]]]
     state = ''.join(state)
-    state = state.replace('x', '0').replace('F', '1').replace('R', '0').replace('B', '1').replace('L', '0').replace('U', '0').replace('D', '0')
     return state
 
 
@@ -377,10 +382,159 @@ def get_444_ULFRBD_centers_solve(parent_state):
     return state
 
 
-def get_444_phase2_tsai_orient_edges(parent_state, self):
+def get_444_phase2_tsai_orient_edges(parent_state, orient_edges):
+    """
+    444-phase2-tsai-orient-edges
+    """
+    return ''.join([
+        orient_edges[(2, 67, parent_state[2], parent_state[67])],
+        orient_edges[(3, 66, parent_state[3], parent_state[66])],
+        orient_edges[(5, 18, parent_state[5], parent_state[18])],
+        orient_edges[(8, 51, parent_state[8], parent_state[51])],
+        orient_edges[(9, 19, parent_state[9], parent_state[19])],
+        orient_edges[(12, 50, parent_state[12], parent_state[50])],
+        orient_edges[(14, 34, parent_state[14], parent_state[34])],
+        orient_edges[(15, 35, parent_state[15], parent_state[35])],
+        orient_edges[(18, 5, parent_state[18], parent_state[5])],
+        orient_edges[(19, 9, parent_state[19], parent_state[9])],
+        orient_edges[(21, 72, parent_state[21], parent_state[72])],
+        orient_edges[(24, 37, parent_state[24], parent_state[37])],
+        orient_edges[(25, 76, parent_state[25], parent_state[76])],
+        orient_edges[(28, 41, parent_state[28], parent_state[41])],
+        orient_edges[(30, 89, parent_state[30], parent_state[89])],
+        orient_edges[(31, 85, parent_state[31], parent_state[85])],
+        orient_edges[(34, 14, parent_state[34], parent_state[14])],
+        orient_edges[(35, 15, parent_state[35], parent_state[15])],
+        orient_edges[(37, 24, parent_state[37], parent_state[24])],
+        orient_edges[(40, 53, parent_state[40], parent_state[53])],
+        orient_edges[(41, 28, parent_state[41], parent_state[28])],
+        orient_edges[(44, 57, parent_state[44], parent_state[57])],
+        orient_edges[(46, 82, parent_state[46], parent_state[82])],
+        orient_edges[(47, 83, parent_state[47], parent_state[83])],
+        orient_edges[(50, 12, parent_state[50], parent_state[12])],
+        orient_edges[(51, 8, parent_state[51], parent_state[8])],
+        orient_edges[(53, 40, parent_state[53], parent_state[40])],
+        orient_edges[(56, 69, parent_state[56], parent_state[69])],
+        orient_edges[(57, 44, parent_state[57], parent_state[44])],
+        orient_edges[(60, 73, parent_state[60], parent_state[73])],
+        orient_edges[(62, 88, parent_state[62], parent_state[88])],
+        orient_edges[(63, 92, parent_state[63], parent_state[92])],
+        orient_edges[(66, 3, parent_state[66], parent_state[3])],
+        orient_edges[(67, 2, parent_state[67], parent_state[2])],
+        orient_edges[(69, 56, parent_state[69], parent_state[56])],
+        orient_edges[(72, 21, parent_state[72], parent_state[21])],
+        orient_edges[(73, 60, parent_state[73], parent_state[60])],
+        orient_edges[(76, 25, parent_state[76], parent_state[25])],
+        orient_edges[(78, 95, parent_state[78], parent_state[95])],
+        orient_edges[(79, 94, parent_state[79], parent_state[94])],
+        orient_edges[(82, 46, parent_state[82], parent_state[46])],
+        orient_edges[(83, 47, parent_state[83], parent_state[47])],
+        orient_edges[(85, 31, parent_state[85], parent_state[31])],
+        orient_edges[(88, 62, parent_state[88], parent_state[62])],
+        orient_edges[(89, 30, parent_state[89], parent_state[30])],
+        orient_edges[(92, 63, parent_state[92], parent_state[63])],
+        orient_edges[(94, 79, parent_state[94], parent_state[79])],
+        orient_edges[(95, 78, parent_state[95], parent_state[78])]
+    ])
+
+
+def get_444_phase2_tsai(parent_state, orient_edges):
+    """
+    444-phase2-tsai
+    """
+    babel = {
+        'L' : 'L',
+        'F' : 'F',
+        'R' : 'R',
+        'B' : 'F',
+        'D' : 'x',
+        'U' : 'x',
+    }
+
+    return ''.join ([
+        orient_edges[(2, 67, parent_state[2], parent_state[67])],
+        orient_edges[(3, 66, parent_state[3], parent_state[66])],
+        orient_edges[(5, 18, parent_state[5], parent_state[18])],
+        babel[parent_state[6]],
+        babel[parent_state[7]],
+        orient_edges[(8, 51, parent_state[8], parent_state[51])],
+        orient_edges[(9, 19, parent_state[9], parent_state[19])],
+        babel[parent_state[10]],
+        babel[parent_state[11]],
+        orient_edges[(12, 50, parent_state[12], parent_state[50])],
+        orient_edges[(14, 34, parent_state[14], parent_state[34])],
+        orient_edges[(15, 35, parent_state[15], parent_state[35])],
+        orient_edges[(18, 5, parent_state[18], parent_state[5])],
+        orient_edges[(19, 9, parent_state[19], parent_state[9])],
+        orient_edges[(21, 72, parent_state[21], parent_state[72])],
+        babel[parent_state[22]],
+        babel[parent_state[23]],
+        orient_edges[(24, 37, parent_state[24], parent_state[37])],
+        orient_edges[(25, 76, parent_state[25], parent_state[76])],
+        babel[parent_state[26]],
+        babel[parent_state[27]],
+        orient_edges[(28, 41, parent_state[28], parent_state[41])],
+        orient_edges[(30, 89, parent_state[30], parent_state[89])],
+        orient_edges[(31, 85, parent_state[31], parent_state[85])],
+        orient_edges[(34, 14, parent_state[34], parent_state[14])],
+        orient_edges[(35, 15, parent_state[35], parent_state[15])],
+        orient_edges[(37, 24, parent_state[37], parent_state[24])],
+        babel[parent_state[38]],
+        babel[parent_state[39]],
+        orient_edges[(40, 53, parent_state[40], parent_state[53])],
+        orient_edges[(41, 28, parent_state[41], parent_state[28])],
+        babel[parent_state[42]],
+        babel[parent_state[43]],
+        orient_edges[(44, 57, parent_state[44], parent_state[57])],
+        orient_edges[(46, 82, parent_state[46], parent_state[82])],
+        orient_edges[(47, 83, parent_state[47], parent_state[83])],
+        orient_edges[(50, 12, parent_state[50], parent_state[12])],
+        orient_edges[(51, 8, parent_state[51], parent_state[8])],
+        orient_edges[(53, 40, parent_state[53], parent_state[40])],
+        babel[parent_state[54]],
+        babel[parent_state[55]],
+        orient_edges[(56, 69, parent_state[56], parent_state[69])],
+        orient_edges[(57, 44, parent_state[57], parent_state[44])],
+        babel[parent_state[58]],
+        babel[parent_state[59]],
+        orient_edges[(60, 73, parent_state[60], parent_state[73])],
+        orient_edges[(62, 88, parent_state[62], parent_state[88])],
+        orient_edges[(63, 92, parent_state[63], parent_state[92])],
+        orient_edges[(66, 3, parent_state[66], parent_state[3])],
+        orient_edges[(67, 2, parent_state[67], parent_state[2])],
+        orient_edges[(69, 56, parent_state[69], parent_state[56])],
+        babel[parent_state[70]],
+        babel[parent_state[71]],
+        orient_edges[(72, 21, parent_state[72], parent_state[21])],
+        orient_edges[(73, 60, parent_state[73], parent_state[60])],
+        babel[parent_state[74]],
+        babel[parent_state[75]],
+        orient_edges[(76, 25, parent_state[76], parent_state[25])],
+        orient_edges[(78, 95, parent_state[78], parent_state[95])],
+        orient_edges[(79, 94, parent_state[79], parent_state[94])],
+        orient_edges[(82, 46, parent_state[82], parent_state[46])],
+        orient_edges[(83, 47, parent_state[83], parent_state[47])],
+        orient_edges[(85, 31, parent_state[85], parent_state[31])],
+        babel[parent_state[86]],
+        babel[parent_state[87]],
+        orient_edges[(88, 62, parent_state[88], parent_state[62])],
+        orient_edges[(89, 30, parent_state[89], parent_state[30])],
+        babel[parent_state[90]],
+        babel[parent_state[91]],
+        orient_edges[(92, 63, parent_state[92], parent_state[63])],
+        orient_edges[(94, 79, parent_state[94], parent_state[79])],
+        orient_edges[(95, 78, parent_state[95], parent_state[78])]
+    ])
+
+
+def get_444_phase2_tsai_orient_edges_old(parent_state, self):
     """
     444-phase2-tsai-orient-edges or 444-phase2-tsai
+
+    This is what we used originally, I then unrolled it to create the two functions above
     """
+    raise Exception("We should not be here")
+    state = []
     parent = self.parent
     original_state = self.parent.state[:]
     original_solution = self.parent.solution[:]
@@ -399,6 +553,8 @@ def get_444_phase2_tsai_orient_edges(parent_state, self):
 
                 try:
                     state.append(self.parent.orient_edges[(square_index, partner_index, square1, square2)])
+                    print("        state.append(self.parent.orient_edges[(%d, %d, parent_state[%d], parent_state[%d])])" % (square_index, partner_index, square_index, partner_index))
+
                 except KeyError:
                     raise SolveError("%s is not in self.parent.orient_edges" % str((square_index, partner_index, square1, square2)))
 
@@ -544,6 +700,7 @@ def get_444_phase2_tsai_orient_edges(parent_state, self):
                     square_state = self.parent.state[square_index]
                     square_state = square_state.replace('B', 'F').replace('U', 'x').replace('D', 'x')
                     state.append(square_state)
+                    print("        state.append(self.parent.state[%d].replace('B', 'F').replace('U', 'x').replace('D', 'x'))" % square_index)
 
     state = ''.join(state)
 
@@ -553,18 +710,40 @@ def get_444_phase2_tsai_orient_edges(parent_state, self):
 
         if state.count('D') != 24:
             raise SolveError("state %s has %d Us and %d Ds, should have 24 of each" % (state, state.count('U'), state.count('D')))
-    #else:
-    #    log.info(state)
+
     return state
 
 
-def get_444_phase2_tsai_centers_solve(parent_state, self):
+def get_444_phase2_tsai_centers_solve(parent_state):
     """
     444-phase2-tsai-centers-solve-tsai
     """
-    # unroll
-    state = ''.join([parent_state[square_index] for side in self.sides_all for square_index in side.center_pos])
-    state = state.replace('F', 'F').replace('B', 'F').replace('D', 'x').replace('U', 'x')
+    state = [parent_state[6],
+             parent_state[7],
+             parent_state[10],
+             parent_state[11],
+             parent_state[22],
+             parent_state[23],
+             parent_state[26],
+             parent_state[27],
+             parent_state[38],
+             parent_state[39],
+             parent_state[42],
+             parent_state[43],
+             parent_state[54],
+             parent_state[55],
+             parent_state[58],
+             parent_state[59],
+             parent_state[70],
+             parent_state[71],
+             parent_state[74],
+             parent_state[75],
+             parent_state[86],
+             parent_state[87],
+             parent_state[90],
+             parent_state[91]]
+    state = ''.join(state)
+    state = state.replace('B', 'F').replace('D', 'x').replace('U', 'x')
     return state
 
 
@@ -586,65 +765,71 @@ symmetry_rotations_tsai_phase3_444 =\
      "reflect-x x x",
      "reflect-x x x y y")
 
-high_edges_444 = ((3, 66),  # upper
-                  (5, 18),
-                  (12, 50),
-                  (14, 34),
-                  (21, 72), # left
-                  (28, 41),
-                  (53, 40), # right
-                  (60, 73),
-                  (83, 47), # down
-                  (85, 31),
-                  (92, 63),
-                  (94, 79))
+# 12-23 are high edges, make these U (1)
+# 0-11 are low edges, make these D (6)
+# https://github.com/cs0x7f/TPR-4x4x4-Solver/blob/master/src/FullCube.java
+high_edges_444 = ((14, 2, 67),  # upper
+                  (13, 9, 19),
+                  (15, 8, 51),
+                  (12, 15, 35),
+                  (21, 25, 76), # left
+                  (20, 24, 37),
+                  (23, 57, 44), # right
+                  (22, 56, 69),
+                  (18, 82, 46), # down
+                  (17, 89, 30),
+                  (19, 88, 62),
+                  (16, 95, 78))
 
-low_edges_444 = ((2, 67),  # upper
-                 (9, 19),
-                 (8, 51),
-                 (15, 35),
-                 (25, 76), # left
-                 (24, 37),
-                 (57, 44), # right
-                 (56, 69),
-                 (82, 46), # down
-                 (89, 30),
-                 (88, 62),
-                 (95, 78))
-
+low_edges_444 = ((2, 3, 66),  # upper
+                 (1, 5, 18),
+                 (3, 12, 50),
+                 (0, 14, 34),
+                 (9, 21, 72), # left
+                 (9, 28, 41),
+                 (11, 53, 40), # right
+                 (10, 60, 73),
+                 (6, 83, 47), # down
+                 (5, 85, 31),
+                 (7, 92, 63),
+                 (4, 94, 79))
 
 def edges_high_low_recolor_444(state):
+    """
+    Look at all of the high edges and find the low edge for each.
+    Return a string that represents where all the low edge siblings live in relation to their high edge counterpart.
+    """
+    assert len(state) == 97, "Invalid state %s, len is %d" % (state, len(state))
+    low_edge_map = {}
 
-    #assert len(state) == 97, "Invalid state %s, len is %d" % (state, len(state))
-    high_edge_map = {}
-    for (high_edge_index, (square_index, partner_index)) in enumerate(high_edges_444):
+    for (low_edge_index, square_index, partner_index) in low_edges_444:
         square_value = state[square_index]
         partner_value = state[partner_index]
-        #assert square_value != partner_value, "both squares are %s" % square_value
+        assert square_value != partner_value, "both squares are %s" % square_value
         wing_str = ''.join(sorted([square_value, partner_value]))
-        high_edge_index = str(hex(high_edge_index))[2:]
-        state[square_index] = high_edge_index
-        state[partner_index] = high_edge_index
+        low_edge_index = str(hex(low_edge_index))[2:]
+        state[square_index] = low_edge_index
+        state[partner_index] = low_edge_index
 
-        #assert wing_str not in high_edge_map, "We have two %s wings, one at high_index %s %s and one at high_index %s (%d, %d), state %s" %\
-        #    (wing_str,
-        #     high_edge_map[wing_str],
-        #     pformat(high_edges_444[int(high_edge_map[wing_str])]),
-        #     high_edge_index,
-        #     square_index, partner_index,
-        #     ''.join(state[1:]))
+        assert wing_str not in low_edge_map, "We have two %s wings, one at high_index %s %s and one at high_index %s (%d, %d), state %s" %\
+            (wing_str,
+             low_edge_map[wing_str],
+             pformat(low_edges_444[int(low_edge_map[wing_str])]),
+             low_edge_index,
+             square_index, partner_index,
+             ''.join(state[1:]))
 
-        # save high_edge_index in hex and chop the leading 0x via [2:]
-        high_edge_map[wing_str] = high_edge_index
+        # save low_edge_index in hex and chop the leading 0x via [2:]
+        low_edge_map[wing_str] = low_edge_index
 
-    #assert len(high_edge_map.keys()) == 12, "Invalid high_edge_map\n%s\n" % pformat(high_edge_map)
+    assert len(low_edge_map.keys()) == 12, "Invalid low_edge_map\n%s\n" % pformat(low_edge_map)
 
-    for (square_index, partner_index) in low_edges_444:
+    for (high_edge_index, square_index, partner_index) in high_edges_444:
         square_value = state[square_index]
         partner_value = state[partner_index]
         wing_str = ''.join(sorted([square_value, partner_value]))
-        state[square_index] = high_edge_map[wing_str]
-        state[partner_index] = high_edge_map[wing_str]
+        state[square_index] = low_edge_map[wing_str]
+        state[partner_index] = low_edge_map[wing_str]
     return state
 
 
@@ -710,8 +895,6 @@ def get_444_phase3_tsai(parent_state):
     """
     444-phase3-tsai
     """
-    # unroll print
-    # print("             parent_state[%d]," % square_index)
     original_state = edges_high_low_recolor_444(parent_state[:])
     results = []
 
@@ -2077,7 +2260,7 @@ state_functions = {
     '444-ULFRBD-centers-solve' : get_444_ULFRBD_centers_solve,
     '444-phase2-tsai-orient-edges' : get_444_phase2_tsai_orient_edges,
     '444-phase2-tsai-centers-solve' : get_444_phase2_tsai_centers_solve,
-    '444-phase2-tsai' : get_444_phase2_tsai_orient_edges,
+    '444-phase2-tsai' : get_444_phase2_tsai,
     '444-phase3-tsai' : get_444_phase3_tsai,
     '444-phase3-edges' : get_444_phase3_edges,
     '555-UD-centers-stage' : get_555_UD_centers_stage_state,
@@ -2154,7 +2337,6 @@ class LookupTable(object):
         self.heuristic_stats = {}
         self.avoid_oll = False
         self.avoid_pll = False
-        self.preloaded_cache = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -2236,42 +2418,72 @@ class LookupTable(object):
         assert state_target is not None, "state_target is None"
 
         if isinstance(state_target, tuple):
-            self.state_target = state_target
+            self.state_target = set(state_target)
         elif isinstance(state_target, list):
-            self.state_target = tuple(state_target)
+            self.state_target = set(state_target)
         else:
-            self.state_target = (state_target, )
+            self.state_target = set((state_target, ))
 
         self.state_hex = state_hex
         self.cache = {}
         self.fh_txt = open(self.filename, 'r')
+        self.seek_calls = 0
+        self.binary_search_calls = 0
+        self.total_first_last_delta = 0
+        self.state_to_line_number = {}
+        self.preloaded_cache = False
+
+        # This will barf for 444-edges-slice-forward and 444-edges-slice-backward
+        # but that is ok we never call state() for those
+        try:
+            self.state_function = state_functions[self.state_type]
+
+            if self.state_function in (get_444_phase2_tsai_orient_edges,
+                                       get_444_phase2_tsai):
+                self.state_function_pass_orient_edges = True
+            else:
+                self.state_function_pass_orient_edges = False
+
+        except KeyError:
+            self.state_function = None
+            self.state_function_pass_orient_edges = False
 
     def __str__(self):
         return self.desc
 
     def state(self):
-        state_function = state_functions[self.state_type]
-
-        if state_function in (get_444_phase2_tsai_centers_solve,
-                              get_444_phase2_tsai_orient_edges):
-            state = state_function(self.parent.state, self)
+        if self.state_function_pass_orient_edges:
+            state = self.state_function(self.parent.state, self.parent.orient_edges)
         else:
-            state = state_function(self.parent.state)
+            state = self.state_function(self.parent.state)
 
         if self.state_hex:
             state = convert_state_to_hex(state, self.state_width)
 
         return state
 
+    def preload_cache(self):
+        log.info("%s: start preload_cache()" % self)
+        self.fh_txt.seek(0)
+
+        for line in self.fh_txt:
+            (state, steps) = line.rstrip().split(':')
+            self.cache[state] = steps.split()
+        self.fh_txt.seek(0)
+        log.info("%s: end preload_cache()" % self)
+        self.preloaded_cache = True
+
     def binary_search(self, state_to_find):
         first = 0
         last = self.linecount - 1
-        found = False
+        self.binary_search_calls += 1
 
-        while first <= last and not found:
+        while first <= last:
             midpoint = int((first + last)/2)
             self.fh_txt.seek(midpoint * self.width)
             line = self.fh_txt.readline().rstrip()
+            self.total_first_last_delta += (last - first)
+            self.seek_calls += 1
 
             try:
                 (state, steps) = line.split(':')
@@ -2296,44 +2508,56 @@ class LookupTable(object):
         if state_to_find is None:
             state_to_find = self.state()
 
+        # If we are at one of our state_targets we do not need to do anything
+        if state_to_find in self.state_target:
+            return None
+
+        if self.preloaded_cache:
+            return self.cache.get(state_to_find)
+
         try:
             return self.cache[state_to_find]
         except KeyError:
-
-            # If we preloaded the cache and did not find state_to_find then we know
-            # it isn't there so return None
-            if self.preloaded_cache:
-                return None
-
             line = self.binary_search(state_to_find)
 
-            if not line:
+            if line:
+                (state, steps) = line.strip().split(':')
+                steps_list = steps.split()
+                self.cache[state_to_find] = steps_list
+                return steps_list
+
+            else:
                 self.cache[state_to_find] = None
                 return None
 
-            for state_steps in line.split(','):
-                try:
-                    (state, steps) = state_steps.split(':')
-                except Exception:
-                    log.info("%s: %s, state_steps %s" % (self, line, state_steps))
-                    raise
+    def steps_cost(self, state_to_find=None):
 
-                if state == state_to_find:
-                    steps_list = steps.split()
-                    self.cache[state_to_find] = steps_list
-                    return steps_list
+        if state_to_find is None:
+            state_to_find = self.state()
 
-            self.cache[state_to_find] = None
-            return None
+        steps = self.steps(state_to_find)
+
+        if steps is None:
+            log.info("%s: steps_cost None for %s (stage_target)" % (self, state_to_find))
+            return 0
+        else:
+            log.info("%s: steps_cost %d for %s (%s)" % (self, len(steps), state_to_find, ' '.join(steps)))
+            return len(steps)
 
     def solve(self):
 
         if not self.filename_exists:
             raise SolveError("%s does not exist" % self.filename)
 
+        if 'TBD' in self.state_target:
+            tbd = True
+        else:
+            tbd = False
+
         while True:
             state = self.state()
-            if 'TBD' in self.state_target:
+
+            if tbd:
                 log.info("%s: solve() state %s vs state_target %s" % (self, state, pformat(self.state_target)))
 
             if state in self.state_target:
@@ -2341,34 +2565,52 @@ class LookupTable(object):
 
             steps = self.steps(state)
 
-            if not steps:
+            if steps:
+                #log.info("%s: solve() state %s found %s" % (self, state, ' '.join(steps)))
+
+                for step in steps:
+                    self.parent.rotate(step)
+            else:
                 self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
 
-            for step in steps:
-                self.parent.rotate(step)
+    def convert_state_to_hex(self, state, hex_width):
+        hex_state = hex(int(state, 2))[2:]
+
+        if hex_state.endswith('L'):
+            hex_state = hex_state[:-1]
+
+        return hex_state.zfill(hex_width)
+
 
 
 class LookupTableIDA(LookupTable):
 
     def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, linecount):
         LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, linecount)
-        self.moves_all = moves_all
-        self.moves_illegal = moves_illegal
         self.prune_tables = prune_tables
+        self.max_pt_cost = 0
 
-        for x in self.moves_illegal:
-            if x not in self.moves_all:
+        for x in moves_illegal:
+            if x not in moves_all:
                 raise Exception("illegal move %s is not in the list of legal moves" % x)
 
+        self.moves_all = []
+        for x in moves_all:
+            if x not in moves_illegal:
+                self.moves_all.append(x)
+
     def ida_heuristic_all_costs(self):
+        """
+        Only used if self.record_stats is True
+        """
         results = {}
 
         for pt in self.prune_tables:
             pt_state = pt.state()
             pt_steps = pt.steps(pt_state)
 
-            if pt_state == pt.state_target:
+            if pt_state in pt.state_target:
                 len_pt_steps = 0
 
             elif pt_steps:
@@ -2401,11 +2643,11 @@ class LookupTableIDA(LookupTable):
             pt_state = pt.state()
             pt_steps = pt.steps(pt_state)
 
-            if pt_state == pt.state_target:
+            if pt_state in pt.state_target:
                 len_pt_steps = 0
 
-                if debug:
-                    log.info("%s: pt_state %s, cost 0, at target" % (pt, pt_state))
+                #if debug:
+                #    log.info("%s: pt_state %s, cost 0, at target" % (pt, pt_state))
 
             elif pt_steps:
                 len_pt_steps = len(pt_steps)
@@ -2416,8 +2658,8 @@ class LookupTableIDA(LookupTable):
                 if len_pt_steps == 1 and pt_steps[0].isdigit():
                     len_pt_steps = int(pt_steps[0])
 
-                if debug:
-                    log.info("%s: pt_state %s, cost %d" % (pt, pt_state, len_pt_steps))
+                #if debug:
+                #    log.info("%s: pt_state %s, cost %d" % (pt, pt_state, len_pt_steps))
 
             elif pt.max_depth:
                 # This is the exception to the rule but some prune tables such
@@ -2425,8 +2667,8 @@ class LookupTableIDA(LookupTable):
                 # are partial tables so use the max_depth of the table +1
                 len_pt_steps = pt.max_depth + 1
 
-                if debug:
-                    log.info("%s: pt_state %s, cost %d (max depth)" % (pt, pt_state, len_pt_steps))
+                #if debug:
+                #    log.info("%s: pt_state %s, cost %d (max depth)" % (pt, pt_state, len_pt_steps))
 
             else:
                 self.parent.print_cube()
@@ -2438,19 +2680,41 @@ class LookupTableIDA(LookupTable):
             if len_pt_steps > cost_to_goal:
                 cost_to_goal = len_pt_steps
 
+                # dwalton
+                if self.max_pt_cost and len_pt_steps >= self.max_pt_cost:
+                    break
+
         if self.heuristic_stats:
             pt_costs = tuple(pt_costs)
             len_pt_steps = self.heuristic_stats.get(pt_costs, 0)
 
             if len_pt_steps > cost_to_goal:
-                if debug:
-                    log.info("%s: %s increase heuristic from %d to %d" % (self, pformat(pt_costs), cost_to_goal, len_pt_steps))
+                #if debug:
+                #    log.info("%s: %s increase heuristic from %d to %d" % (self, pformat(pt_costs), cost_to_goal, len_pt_steps))
                 cost_to_goal = len_pt_steps
 
-        if debug:
-            log.info("%s: cost_to_goal %d" % (self, cost_to_goal))
+        #if debug:
+        #    log.info("%s: cost_to_goal %d" % (self, cost_to_goal))
 
         return cost_to_goal
+
+    def steps(self, state_to_find):
+        """
+        Return a list of the steps found in the lookup table for the current cube state
+        This is very similar to LookupTable.steps(), the main difference is we do not
+        populate self.cache with misses.
+        """
+
+        if self.preloaded_cache:
+            return self.cache.get(state_to_find)
+        else:
+            line = self.binary_search(state_to_find)
+
+            if line:
+                (state, steps) = line.strip().split(':')
+                return steps.split()
+
+            return None
 
     def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
         """
@@ -2459,6 +2723,7 @@ class LookupTableIDA(LookupTable):
         cost_to_here = len(steps_to_here)
         cost_to_goal = self.ida_heuristic()
         f_cost = cost_to_here + cost_to_goal
+        self.ida_count += 1
 
         # This looks a little odd because the cube may be in a state where we
         # find a hit in our lookup table and we could execute the steps
@@ -2581,15 +2846,22 @@ class LookupTableIDA(LookupTable):
 
         for step in self.moves_all:
 
-            if step in self.moves_illegal:
-                continue
-
             # If this step cancels out the previous step then don't bother with this branch
-            if steps_cancel_out(prev_step, step):
-                continue
+            if prev_step is not None:
+
+                # U2 followed by U2 is a no-op
+                if step == prev_step and step.endswith("2"):
+                    continue
+
+                # U' followed by U is a no-op
+                if step == prev_step[0:-1] and prev_step.endswith("'") and not step.endswith("'"):
+                    continue
+
+                # U followed by U' is a no-op
+                if step[0:-1] == prev_step and not prev_step.endswith("'") and step.endswith("'"):
+                    continue
 
             self.parent.state = self.rotate_xxx(prev_state[:], step)
-            self.ida_count += 1
 
             if self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:]):
                 return True
@@ -2613,15 +2885,15 @@ class LookupTableIDA(LookupTable):
         log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
 
         # The cube is already in the desired state, nothing to do
-        if state == self.state_target:
-            log.info("%s: IDA, cube is already at the target state" % self)
+        if state in self.state_target:
+            log.info("%s: IDA, cube is already at the target state %s" % (self, state))
             return
 
         # The cube is already in a state that is in our lookup table, nothing for IDA to do
-        steps = self.steps()
+        steps = self.steps(state)
 
         if steps:
-            log.info("%s: IDA, cube is already in a state that is in our lookup table" % self)
+            log.info("%s: IDA, cube is already in a state %s that is in our lookup table" % (self, state))
 
             # The cube is now in a state where it is in the lookup table, we may need
             # to do several lookups to get to our target state though. Use
@@ -2676,6 +2948,33 @@ class LookupTableIDA(LookupTable):
         # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
         # - call ida_solve() again but with a near infinite max_ida_threshold...99 is close enough to infinity for IDA purposes
         log.warning("%s: could not find a solution via IDA within %d steps...will 'solve' a prune table and try again" % (self, max_ida_threshold))
+
+        # Uncomment to see output for binary search performance
+        '''
+        for pt in self.prune_tables:
+
+            # Avoid divide by 0
+            if pt.binary_search_calls == 0:
+                pt.binary_search_calls = 1
+
+            # Avoid divide by 0
+            if pt.seek_calls == 0:
+                pt.seek_calls = 1
+
+            log.warning("%s: %d binary search calls, %d seek calls, %d avg seeks per search, %d total first-to-last delta, %d avg first-to-last delta" %
+                (pt, pt.binary_search_calls, pt.seek_calls, int(pt.seek_calls/pt.binary_search_calls), pt.total_first_last_delta, int(pt.total_first_last_delta/pt.seek_calls)))
+
+        # Avoid divide by 0
+        if self.binary_search_calls == 0:
+            self.binary_search_calls = 1
+
+        # Avoid divide by 0
+        if self.seek_calls == 0:
+            self.seek_calls = 1
+
+        log.warning("%s: %d binary search calls, %d seek calls, %d avg seeks per search, %d total first-to-last delta, %d avg first-to-last delta" %
+                (self, self.binary_search_calls, self.seek_calls, int(self.seek_calls/self.binary_search_calls), self.total_first_last_delta, int(self.total_first_last_delta/self.seek_calls)))
+        '''
 
         self.parent.state = self.original_state[:]
         self.parent.solution = self.original_solution[:]

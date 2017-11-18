@@ -390,21 +390,22 @@ class RubiksCube(object):
             #log.warning("color_map:\n%s\n" % pformat(self.color_map))
 
         else:
+            # Match the colors on alg.cubing.net to make life easier
             self.color_map = {
                 'U': 97, # Wh
-                'L': 92, # Gr
-                'F': 91, # Rd
-                'R': 94, # Bu
-                'B': 90, # Or
+                'L': 90, # Or
+                'F': 92, # Gr
+                'R': 91, # Rd
+                'B': 94, # Bu
                 'D': 93, # Ye
             }
 
             self.color_map_html = {
                 'U': (235, 254, 250), # Wh
-                'L': (20, 105, 74),   # Gr
-                'F': (104, 4, 2),     # Rd
-                'R': (22, 57, 103),   # Bu
-                'B': (148, 53, 9),    # Or
+                'L': (148, 53, 9),    # Or
+                'F': (20, 105, 74),   # Gr
+                'R': (104, 4, 2),     # Rd
+                'B': (22, 57, 103),   # Bu
                 'D': (210, 208, 2),   # Ye
                 'x': (0, 0, 0),       # black
             }
@@ -3868,6 +3869,21 @@ class RubiksCube(object):
 
         return ''.join([foo.get(square_index, 'x') for square_index in edge_pos_square_index])
 
+    def nuke_corners(self):
+        for side in list(self.sides.values()):
+            for square_index in side.corner_pos:
+                self.state[square_index] = 'x'
+
+    def nuke_centers(self):
+        for side in list(self.sides.values()):
+            for square_index in side.center_pos:
+                self.state[square_index] = 'x'
+
+    def nuke_edges(self):
+        for side in list(self.sides.values()):
+            for square_index in side.edge_pos:
+                self.state[square_index] = 'x'
+
     def www_header(self):
         """
         Write the <head> including css
@@ -4324,3 +4340,122 @@ div#page_holder {
 
                     self.state[:] = original_state
         self.state[:] = original_state
+
+    def rotate_to_side(self, upper_side_name, front_side_name):
+
+        if upper_side_name == front_side_name:
+            return False
+
+        if upper_side_name == 'U':
+
+            if front_side_name == 'D':
+                return False
+
+            if front_side_name == 'L':
+                self.rotate_y_reverse()
+            elif front_side_name == 'F':
+                pass
+            elif front_side_name == 'R':
+                self.rotate_y()
+            elif front_side_name == 'B':
+                self.rotate_y()
+                self.rotate_y()
+
+        elif upper_side_name == 'D':
+
+            if front_side_name == 'U':
+                return False
+
+            self.rotate_x()
+            self.rotate_x()
+
+            if front_side_name == 'L':
+                self.rotate_y_reverse()
+            elif front_side_name == 'F':
+                self.rotate_y()
+                self.rotate_y()
+            elif front_side_name == 'R':
+                self.rotate_y()
+            elif front_side_name == 'B':
+                pass
+
+        elif upper_side_name == 'L':
+
+            if front_side_name == 'R':
+                return False
+
+            self.rotate_y_reverse()
+            self.rotate_x()
+
+            if front_side_name == 'U':
+                self.rotate_y()
+                self.rotate_y()
+            elif front_side_name == 'F':
+                self.rotate_y()
+            elif front_side_name == 'D':
+                pass
+            elif front_side_name == 'B':
+                self.rotate_y_reverse()
+
+                self.rotate_y()
+                self.rotate_y()
+            elif front_side_name == 'F':
+                self.rotate_y()
+            elif front_side_name == 'D':
+                pass
+            elif front_side_name == 'B':
+                self.rotate_y_reverse()
+
+        elif upper_side_name == 'F':
+
+            if front_side_name == 'B':
+                return False
+
+            self.rotate_x()
+
+            if front_side_name == 'L':
+                self.rotate_y_reverse()
+            elif front_side_name == 'U':
+                self.rotate_y()
+                self.rotate_y()
+            elif front_side_name == 'R':
+                self.rotate_y()
+            elif front_side_name == 'D':
+                pass
+
+        elif upper_side_name == 'R':
+
+            if front_side_name == 'L':
+                return False
+
+            self.rotate_y()
+            self.rotate_x()
+
+            if front_side_name == 'U':
+                self.rotate_y()
+                self.rotate_y()
+            elif front_side_name == 'F':
+                self.rotate_y_reverse()
+            elif front_side_name == 'D':
+                pass
+            elif front_side_name == 'B':
+                self.rotate_y()
+
+        elif upper_side_name == 'B':
+
+            if front_side_name == 'F':
+                return False
+
+            self.rotate_x_reverse()
+
+            if front_side_name == 'L':
+                self.rotate_y_reverse()
+            elif front_side_name == 'U':
+                pass
+            elif front_side_name == 'R':
+                self.rotate_y()
+            elif front_side_name == 'D':
+                self.rotate_y()
+                self.rotate_y()
+
+        return True

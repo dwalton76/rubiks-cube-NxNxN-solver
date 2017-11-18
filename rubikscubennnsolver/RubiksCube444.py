@@ -1,7 +1,11 @@
 
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver import RubiksCube
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps
+from rubikscubennnsolver.LookupTable import (
+    LookupTable,
+    LookupTableIDA,
+    NoSteps,
+)
 from subprocess import check_output
 from pprint import pformat
 import logging
@@ -219,7 +223,6 @@ class RubiksCube444(RubiksCube):
         # ==============
         # Phase 1 tables
         # ==============
-        # All three modes use self.lt_UD_centers_stage
         '''
         lookup-table-4x4x4-step11-UD-centers-stage.txt
         lookup-table-4x4x4-step12-LR-centers-stage.txt
@@ -236,15 +239,22 @@ class RubiksCube444(RubiksCube):
 
         Total: 735,471 entries
         '''
-        self.lt_UD_centers_stage = LookupTable(self,
-                                               'lookup-table-4x4x4-step11-UD-centers-stage.txt',
-                                               '444-UD-centers-stage',
-                                               'f0000f',
-                                                True, # state hex
-                                                linecount=735471)
+        if self.cpu_mode == 'tsai':
+            self.lt_LR_centers_stage = LookupTable(self,
+                                                   'lookup-table-4x4x4-step12-LR-centers-stage.txt',
+                                                   '444-LR-centers-stage',
+                                                   '0f0f00',
+                                                    True, # state hex
+                                                    linecount=735471)
 
-        # All --cpu options except 'min' stage all centers at once
-        if self.cpu_mode in ('normal', 'max', 'tsai'):
+        elif self.cpu_mode in ('normal', 'max'):
+            self.lt_UD_centers_stage = LookupTable(self,
+                                                   'lookup-table-4x4x4-step11-UD-centers-stage.txt',
+                                                  '444-UD-centers-stage',
+                                                  'f0000f',
+                                                   True, # state hex
+                                                   linecount=735471)
+
             self.lt_LR_centers_stage = LookupTable(self,
                                                    'lookup-table-4x4x4-step12-LR-centers-stage.txt',
                                                    '444-LR-centers-stage',
@@ -450,16 +460,14 @@ class RubiksCube444(RubiksCube):
             '''
             lookup-table-4x4x4-step61-orient-edges.txt
             ===========================================
-            1 steps has 3 entries (0 percent, 0.00x previous step)
-            2 steps has 29 entries (0 percent, 9.67x previous step)
-            3 steps has 278 entries (0 percent, 9.59x previous step)
-            4 steps has 1,934 entries (0 percent, 6.96x previous step)
-            5 steps has 15,640 entries (0 percent, 8.09x previous step)
-            6 steps has 124,249 entries (4 percent, 7.94x previous step)
-            7 steps has 609,241 entries (22 percent, 4.90x previous step)
-            8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
-            9 steps has 688,124 entries (25 percent, 0.56x previous step)
-            10 steps has 40,560 entries (1 percent, 0.06x previous step)
+            1 steps has 5 entries (0 percent, 0.00x previous step)
+            2 steps has 62 entries (0 percent, 12.40x previous step)
+            3 steps has 906 entries (0 percent, 14.61x previous step)
+            4 steps has 11,163 entries (0 percent, 12.32x previous step)
+            5 steps has 127,148 entries (4 percent, 11.39x previous step)
+            6 steps has 889,398 entries (32 percent, 6.99x previous step)
+            7 steps has 1,553,434 entries (57 percent, 1.75x previous step)
+            8 steps has 122,040 entries (4 percent, 0.08x previous step)
 
             Total: 2,704,156 entries
             '''
@@ -473,12 +481,17 @@ class RubiksCube444(RubiksCube):
             '''
             lookup-table-4x4x4-step62-centers.txt
             =====================================
-            1 steps has 22 entries (31 percent, 0.00x previous step)
-            2 steps has 16 entries (22 percent, 0.73x previous step)
-            3 steps has 16 entries (22 percent, 1.00x previous step)
-            4 steps has 16 entries (22 percent, 1.00x previous step)
+            1 steps has 46 entries (0 percent, 0.00x previous step)
+            2 steps has 384 entries (0 percent, 8.35x previous step)
+            3 steps has 3,354 entries (0 percent, 8.73x previous step)
+            4 steps has 22,324 entries (2 percent, 6.66x previous step)
+            5 steps has 113,276 entries (12 percent, 5.07x previous step)
+            6 steps has 338,860 entries (37 percent, 2.99x previous step)
+            7 steps has 388,352 entries (43 percent, 1.15x previous step)
+            8 steps has 34,048 entries (3 percent, 0.09x previous step)
+            9 steps has 256 entries (0 percent, 0.01x previous step)
 
-            Total: 70 entries
+            Total: 900,900 entries
             '''
             self.lt_phase2_tsai_centers = LookupTable(self,
                                                    'lookup-table-4x4x4-step62-centers.txt',
@@ -496,20 +509,18 @@ class RubiksCube444(RubiksCube):
                                                     'xxxxRLLRFFFFLRRLFFFFxxxx',
                                                     'xxxxLRRLFFFFRLLRFFFFxxxx'),
                                                     False, # state hex
-                                                    linecount=70)
+                                                    linecount=900900)
 
             '''
             lookup-table-4x4x4-step60-phase2-tsai.txt
             ==========================================
-            1 steps has 36 entries (0 percent, 0.00x previous step)
-            2 steps has 348 entries (0 percent, 9.67x previous step)
-            3 steps has 3,416 entries (0 percent, 9.82x previous step)
-            4 steps has 26,260 entries (0 percent, 7.69x previous step)
-            5 steps has 226,852 entries (1 percent, 8.64x previous step)
-            6 steps has 2,048,086 entries (11 percent, 9.03x previous step)
-            7 steps has 15,247,140 entries (86 percent, 7.44x previous step)
+            1 steps has 60 entries (0 percent, 0.00x previous step)
+            2 steps has 744 entries (0 percent, 12.40x previous step)
+            3 steps has 11,224 entries (0 percent, 15.09x previous step)
+            4 steps has 158,608 entries (6 percent, 14.13x previous step)
+            5 steps has 2,349,908 entries (93 percent, 14.82x previous step)
 
-            Total: 17,552,138 entries
+            Total: 2,520,544 entries
 
             See the bottom of this file for notes on how the 12 state_target
             strings were constructed
@@ -531,13 +542,13 @@ class RubiksCube444(RubiksCube):
                                                   'UDDxxUUxxDDUDUDLRUURLDUDDUUFFDDFFUUDDUDRLUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU'),
                                                  False, # state_hex
                                                  moves_4x4x4,
-                                                 ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'", "Rw", "Rw'", "Lw", "Lw'"), # illegal_moves
+                                                 ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"), # illegal_moves
 
                                                  # prune tables
-                                                 (self.lt_phase2_tsai_orient_edges,
-                                                  self.lt_phase2_tsai_centers),
-                                                 linecount=2304998)
-                                                 #linecount=17552138) # dwalton
+                                                 #(self.lt_phase2_tsai_orient_edges,
+                                                 # self.lt_phase2_tsai_centers),
+                                                 (self.lt_phase2_tsai_centers,),
+                                                 linecount=2520544)
 
             # Phase 3
             '''
@@ -581,12 +592,18 @@ class RubiksCube444(RubiksCube):
 
             Total: 14,999,140 entries
             '''
+            # TODO this one is still rebuilding...only finished to depth 10 so far
             self.lt_phase3_tsai_edges_solve = LookupTable(self,
                                                           'lookup-table-4x4x4-step71-phase3-edges-tsai.txt',
                                                           '444-phase3-edges',
-                                                          '0123456789ab',
+                                                          #'0123456789ab',
+                                                          'TBD',
                                                           False, # state hex
-                                                          linecount=14999140)
+                                                          #linecount=14999140)
+                                                          linecount=5632058,
+                                                          max_depth=10)
+            #self.lt_phase3_tsai_edges_solve.preload_cache()
+            # dwalton
 
             '''
             lookup-table-4x4x4-step72-phase3-centers-tsai.txt
@@ -622,14 +639,14 @@ class RubiksCube444(RubiksCube):
             4 steps has 10,303 entries (0 percent, 10.73x previous step)
             5 steps has 107,474 entries (0 percent, 10.43x previous step)
             6 steps has 1,124,149 entries (8 percent, 10.46x previous step)
-            7 steps has 11,660,818 entries (90 percent, 10.37x previous step)
+            7 steps has 11,660,824 entries (90 percent, 10.37x previous step)
 
-            Total: 12,903,794 entries
+            Total: 12,903,800 entries
             '''
             self.lt_phase3_tsai = LookupTableIDA(self,
                                                  'lookup-table-4x4x4-step70-phase3-tsai.txt',
                                                  '444-phase3-tsai',
-                                                 '001UU21UU233114LL54LL599335FF65FF688226RR76RR7aa007BB47BB4bb889DDa9DDabb',
+                                                 '001UU31UU322119LL99LL955229BBa9BBa4433aRRbaRRb7700bFF9bFF966445DD75DD766',
                                                  False, # state_hex
                                                  moves_4x4x4,
                                                  ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",
@@ -638,127 +655,12 @@ class RubiksCube444(RubiksCube):
                                                  # prune tables
                                                  (self.lt_phase3_tsai_edges_solve,
                                                   self.lt_phase3_tsai_centers_solve),
-                                                 linecount=12903794)
-            lt_phase3_tsai_heuristic_stats_min = {
-                (1, 2) : 4,
-                (2, 1) : 5,
-                (3, 1) : 7,
-                (5, 1) : 6,
-                (5, 7) : 9,
-                (6, 1) : 12,
-                (6, 2) : 9,
-                (6, 7) : 9,
-                (6, 8) : 10,
-                (7, 1) : 13,
-                (7, 7) : 9,
-                (7, 8) : 10,
-                (8, 2) : 13,
-                (8, 3) : 11,
-                (8, 4) : 9,
-                (8, 6) : 9,
-                (8, 7) : 9,
-                (8, 8) : 10,
-                (9, 3) : 12,
-                (9, 4) : 10,
-                (9, 5) : 10,
-                (9, 7) : 10,
-                (9, 8) : 11,
-                (10, 3) : 13,
-                (10, 4) : 12,
-                (10, 6) : 11,
-                (10, 7) : 11,
-                (10, 8) : 11,
-                (10, 9) : 12,
-                (11, 3) : 14,
-                (11, 4) : 12,
-                (11, 6) : 13,
-                (11, 7) : 12,
-                (11, 8) : 13,
-                (11, 9) : 14,
-                (12, 3) : 16,
-                (12, 4) : 14,
-                (12, 5) : 14,
-                (12, 6) : 14,
-                (12, 7) : 14,
-                (12, 8) : 15,
-                (12, 9) : 19,
-                (13, 4) : 16,
-                (13, 8) : 17,
-            }
+                                                 linecount=12903800)
+            #self.lt_phase3_tsai.preload_cache()
 
-            lt_phase3_tsai_heuristic_stats_median = {
-                (1, 2) : 4,
-                (2, 1) : 7,
-                (2, 3) : 4,
-                (2, 5) : 6,
-                (3, 1) : 7,
-                (3, 4) : 5,
-                (3, 5) : 6,
-                (4, 1) : 6,
-                (4, 2) : 5,
-                (4, 3) : 5,
-                (4, 4) : 7,
-                (4, 5) : 7,
-                (4, 6) : 7,
-                (5, 1) : 8,
-                (5, 2) : 6,
-                (5, 3) : 6,
-                (5, 4) : 7,
-                (5, 5) : 8,
-                (5, 6) : 9,
-                (5, 7) : 10,
-                (6, 1) : 12,
-                (6, 2) : 10,
-                (6, 3) : 9,
-                (6, 4) : 9,
-                (6, 5) : 9,
-                (6, 6) : 10,
-                (6, 7) : 10,
-                (6, 8) : 11,
-                (7, 1) : 13,
-                (7, 3) : 11,
-                (7, 4) : 11,
-                (7, 5) : 11,
-                (7, 6) : 11,
-                (7, 7) : 11,
-                (7, 8) : 12,
-                (8, 2) : 13,
-                (8, 3) : 13,
-                (8, 4) : 12,
-                (8, 5) : 12,
-                (8, 6) : 12,
-                (8, 7) : 12,
-                (8, 8) : 12,
-                (9, 3) : 13,
-                (9, 4) : 13,
-                (9, 5) : 13,
-                (9, 6) : 13,
-                (9, 7) : 13,
-                (9, 8) : 13,
-                (10, 3) : 15,
-                (10, 4) : 14,
-                (10, 5) : 14,
-                (10, 6) : 14,
-                (10, 7) : 14,
-                (10, 8) : 15,
-                (10, 9) : 15,
-                (11, 3) : 16,
-                (11, 4) : 15,
-                (11, 5) : 16,
-                (11, 6) : 15,
-                (11, 7) : 16,
-                (11, 8) : 16,
-                (11, 9) : 15,
-                (12, 3) : 16,
-                (12, 4) : 16,
-                (12, 5) : 16,
-                (12, 6) : 16,
-                (12, 7) : 17,
-                (12, 8) : 16,
-                (12, 9) : 19,
-                (13, 4) : 16,
-                (13, 8) : 17,
-            }
+            lt_phase3_tsai_heuristic_stats_min = {}
+            lt_phase3_tsai_heuristic_stats_median = {}
+
             #self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_min
             self.lt_phase3_tsai.heuristic_stats = lt_phase3_tsai_heuristic_stats_median
 
@@ -1992,6 +1894,28 @@ class RubiksCube444(RubiksCube):
              (95, 78, 'U', 'R'): 'U'
         }
 
+
+    def print_cube_orient_edge(self):
+
+        # save cube state
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        self.nuke_corners()
+        self.nuke_centers()
+        log.info("%s: orient_edges %s, cost %d" % (self, self.lt_phase2_tsai_orient_edges.state(), self.lt_phase2_tsai_orient_edges.steps_cost()))
+
+        orient_edge_state = list(self.lt_phase2_tsai_orient_edges.state())
+        orient_edge_state_index = 0
+        for side in list(self.sides.values()):
+            for square_index in side.edge_pos:
+                self.state[square_index] = orient_edge_state[orient_edge_state_index]
+                orient_edge_state_index += 1
+        self.print_cube()
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
     def group_centers_guts(self):
         self.lt_init()
 
@@ -2000,95 +1924,27 @@ class RubiksCube444(RubiksCube):
             self.solution.append('CENTERS_SOLVED')
             return
 
-        # Made some pics to try to explain lookup tables on facebook
-        #
-        #self.print_cube()
-        #for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-        #    for square in side.edge_pos:
-        #        self.state[square] = 'x'
-        #    for square in side.corner_pos:
-        #        self.state[square] = 'x'
-        #self.print_cube()
-
         # The tsai will solve the centers and pair the edges
         if self.cpu_mode == 'tsai':
 
-            '''
-            # experiment
-            # save cube state
-            original_state = self.state[:]
-            original_solution = self.solution[:]
-
-            min_phase1_phase2_solution_length = None
-            min_phase1_phase2_solution = None
-            min_phase1_phase2_state = None
-
-            self.lt_ULFRBD_centers_stage.ida_solutions_exit_asap = False
-            #self.lt_ULFRBD_centers_stage.ida_solutions_exit_asap = True
-            self.lt_ULFRBD_centers_stage.ida_solutions = []
-            self.lt_ULFRBD_centers_stage.solve()
-            phase1_solutions_length = len(self.lt_ULFRBD_centers_stage.ida_solutions)
-
-            for (phase1_index, (phase1_state, phase1_solution)) in enumerate(self.lt_ULFRBD_centers_stage.ida_solutions):
-                self.state = phase1_state[:]
-                self.solution = phase1_solution[:]
-                self.print_cube()
-                log.info("End of phase1 (%d), %d steps in" % (phase1_index, self.get_solution_len_minus_rotates(self.solution)))
-
-                self.lt_phase2_tsai.ida_solutions_exit_asap = False
-                self.lt_phase2_tsai.ida_solutions = []
-                self.lt_phase2_tsai.solve()
-                phase2_solutions_length = len(self.lt_phase2_tsai.ida_solutions)
-
-                for (phase2_index, (phase2_state, phase2_solution)) in enumerate(self.lt_phase2_tsai.ida_solutions):
-                    self.state = phase2_state[:]
-                    self.solution = phase2_solution[:]
-                    #self.print_cube()
-                    #log.info("End of phase2 (%d), %d steps in" % (phase2_index, self.get_solution_len_minus_rotates(self.solution)))
-
-                    solution_length = self.get_solution_len_minus_rotates(self.solution)
-
-                    if min_phase1_phase2_solution_length is None or solution_length < min_phase1_phase2_solution_length:
-                        min_phase1_phase2_state = self.state[:]
-                        min_phase1_phase2_solution = self.solution[:]
-                        min_phase1_phase2_solution_length = solution_length
-                        self.print_cube()
-                        log.warning("NEW MIN phase1 %d/%d, phase2 %d/%d, length %d" %
-                            (phase1_index, phase1_solutions_length, phase2_index, phase2_solutions_length, min_phase1_phase2_solution_length))
-
-                    else:
-                        log.warning("phase1 %d/%d, phase2 %d/%d, length %d (min %d)" %
-                            (phase1_index, phase1_solutions_length, phase2_index, phase2_solutions_length,
-                             solution_length, min_phase1_phase2_solution_length))
-
-                    self.state = original_state[:]
-                    self.solution = original_solution[:]
-
-
-            self.state = min_phase1_phase2_state[:]
-            self.solution = min_phase1_phase2_solution[:]
-            self.print_cube()
-            log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-            self.lt_phase3_tsai.avoid_oll = True
-            self.lt_phase3_tsai.avoid_pll = True
-            self.lt_phase3_tsai.ida_solutions = []
-            self.lt_phase3_tsai.solve()
-            log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-            sys.exit(0)
-            '''
-
-            #'''
-            self.lt_ULFRBD_centers_stage.avoid_oll = True
-            self.lt_ULFRBD_centers_stage.solve()
+            log.info("%s: Start of Phase1" % self)
+            self.lt_LR_centers_stage.solve()
             self.print_cube()
             log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
 
+            # Testing the phase2 prune tables
+            #self.lt_phase2_tsai_orient_edges.solve()
+            #self.lt_phase2_tsai_centers.solve()
+            #self.print_cube()
+            #sys.exit(0)
+
             log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             self.lt_phase2_tsai.solve()
             self.print_cube()
+            #self.print_cube_orient_edge()
+            kociemba_string = self.get_kociemba_string(True)
+            log.info('kociemba string: %s' % kociemba_string)
             log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
 
@@ -2098,6 +1954,7 @@ class RubiksCube444(RubiksCube):
             #self.print_cube()
             #sys.exit(0)
 
+            # dwalton
             log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             self.lt_phase3_tsai.avoid_oll = True
             self.lt_phase3_tsai.avoid_pll = True
@@ -2105,7 +1962,6 @@ class RubiksCube444(RubiksCube):
             self.print_cube()
             log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
-            #'''
 
         # The non-tsai solver will only solve the centers here
         else:

@@ -382,9 +382,9 @@ def get_444_ULFRBD_centers_solve(parent_state):
     return state
 
 
-def get_444_phase2_tsai_orient_edges(parent_state, orient_edges):
+def get_444_tsai_phase2_orient_edges(parent_state, orient_edges):
     """
-    444-phase2-tsai-orient-edges
+    444-tsai-phase2-orient-edges
     """
     return ''.join([
         orient_edges[(2, 67, parent_state[2], parent_state[67])],
@@ -438,9 +438,9 @@ def get_444_phase2_tsai_orient_edges(parent_state, orient_edges):
     ])
 
 
-def get_444_phase2_tsai(parent_state, orient_edges):
+def get_444_tsai_phase2(parent_state, orient_edges):
     """
-    444-phase2-tsai
+    444-tsai-phase2
     """
     babel = {
         'L' : 'L',
@@ -527,9 +527,9 @@ def get_444_phase2_tsai(parent_state, orient_edges):
     ])
 
 
-def get_444_phase2_tsai_orient_edges_old(parent_state, self):
+def get_444_tsai_phase2_orient_edges_old(parent_state, self):
     """
-    444-phase2-tsai-orient-edges or 444-phase2-tsai
+    444-tsai-phase2-orient-edges or 444-tsai-phase2
 
     This is what we used originally, I then unrolled it to create the two functions above
     """
@@ -696,7 +696,7 @@ def get_444_phase2_tsai_orient_edges_old(parent_state, self):
                 '''
 
             elif square_index in side.center_pos:
-                if self.state_type == '444-phase2-tsai':
+                if self.state_type == '444-tsai-phase2':
                     square_state = self.parent.state[square_index]
                     square_state = square_state.replace('B', 'F').replace('U', 'x').replace('D', 'x')
                     state.append(square_state)
@@ -704,7 +704,7 @@ def get_444_phase2_tsai_orient_edges_old(parent_state, self):
 
     state = ''.join(state)
 
-    if self.state_type == '444-phase2-tsai-orient-edges':
+    if self.state_type == '444-tsai-phase2-orient-edges':
         if state.count('U') != 24:
             raise SolveError("state %s has %d Us and %d Ds, should have 24 of each" % (state, state.count('U'), state.count('D')))
 
@@ -714,9 +714,9 @@ def get_444_phase2_tsai_orient_edges_old(parent_state, self):
     return state
 
 
-def get_444_phase2_tsai_centers_solve(parent_state):
+def get_444_tsai_phase2_centers_solve(parent_state):
     """
-    444-phase2-tsai-centers-solve-tsai
+    444-tsai-phase2-centers-solve-tsai
     """
     state = [parent_state[6],
              parent_state[7],
@@ -891,9 +891,9 @@ def get_444_phase3_edges(parent_state):
     return results[0]
 
 
-def get_444_phase3_tsai(parent_state):
+def get_444_tsai_phase3(parent_state):
     """
-    444-phase3-tsai
+    444-tsai-phase3
     """
     original_state = edges_high_low_recolor_444(parent_state[:])
     results = []
@@ -2258,10 +2258,10 @@ state_functions = {
     '444-FB-centers-solve' : get_444_FB_centers_solve,
     '444-ULFRBD-centers-stage' : get_444_ULFRBD_centers_stage,
     '444-ULFRBD-centers-solve' : get_444_ULFRBD_centers_solve,
-    '444-phase2-tsai-orient-edges' : get_444_phase2_tsai_orient_edges,
-    '444-phase2-tsai-centers-solve' : get_444_phase2_tsai_centers_solve,
-    '444-phase2-tsai' : get_444_phase2_tsai,
-    '444-phase3-tsai' : get_444_phase3_tsai,
+    '444-tsai-phase2-orient-edges' : get_444_tsai_phase2_orient_edges,
+    '444-tsai-phase2-centers-solve' : get_444_tsai_phase2_centers_solve,
+    '444-tsai-phase2' : get_444_tsai_phase2,
+    '444-tsai-phase3' : get_444_tsai_phase3,
     '444-phase3-edges' : get_444_phase3_edges,
     '555-UD-centers-stage' : get_555_UD_centers_stage_state,
     '555-UD-T-centers-stage' : get_555_UD_T_centers_stage_state,
@@ -2351,24 +2351,24 @@ class LookupTable(object):
             if not os.path.exists(self.filename_gz):
 
                 # Special cases where I could not get them one under 100M so I split it via:
-                # split -b 70m lookup-table-4x4x4-step70-phase3-tsai.txt.gz "lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-"
-                if self.filename_gz == 'lookup-table-4x4x4-step70-phase3-tsai.txt.gz':
+                # split -b 40m lookup-table-4x4x4-step70-tsai-phase3.txt.gz "lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-"
+                if self.filename_gz == 'lookup-table-4x4x4-step70-tsai-phase3.txt.gz':
 
                     # Download part-aa
-                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa" %\
+                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-aa" %\
                         (self.parent.size, self.parent.size, self.parent.size)
                     log.info("Downloading table via 'wget %s'" % url)
                     subprocess.call(['wget', url])
 
                     # Download part-ab
-                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab" %\
+                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-ab" %\
                         (self.parent.size, self.parent.size, self.parent.size)
                     log.info("Downloading table via 'wget %s'" % url)
                     subprocess.call(['wget', url])
 
-                    subprocess.call('cat lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-* > lookup-table-4x4x4-step70-phase3-tsai.txt.gz', shell=True)
-                    os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-aa')
-                    os.unlink('lookup-table-4x4x4-step70-phase3-tsai.txt.gz.part-ab')
+                    subprocess.call('cat lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-* > lookup-table-4x4x4-step70-tsai-phase3.txt.gz', shell=True)
+                    os.unlink('lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-aa')
+                    os.unlink('lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-ab')
 
                 elif self.filename_gz == 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz':
 
@@ -2438,8 +2438,8 @@ class LookupTable(object):
         try:
             self.state_function = state_functions[self.state_type]
 
-            if self.state_function in (get_444_phase2_tsai_orient_edges,
-                                       get_444_phase2_tsai):
+            if self.state_function in (get_444_tsai_phase2_orient_edges,
+                                       get_444_tsai_phase2):
                 self.state_function_pass_orient_edges = True
             else:
                 self.state_function_pass_orient_edges = False
@@ -2765,7 +2765,7 @@ class LookupTableIDA(LookupTable):
 
             if (solution_ok and
                 self.parent.use_tsai and
-                (self.state_type == '444-phase2-tsai' or self.state_type == '444-ULFRBD-centers-stage') and
+                (self.state_type == '444-tsai-phase2' or self.state_type == '444-ULFRBD-centers-stage') and
                 not self.parent.edge_swaps_even(False, None, False)):
 
                 self.parent.state = self.original_state[:]
@@ -2818,7 +2818,7 @@ class LookupTableIDA(LookupTable):
                                     entry['lookup-table-4x4x4-step13-FB-centers-stage.txt'],
                                     entry['actual-cost']))
 
-                            elif self.filename == 'lookup-table-4x4x4-step70-phase3-tsai.txt':
+                            elif self.filename == 'lookup-table-4x4x4-step70-tsai-phase3.txt':
                                 fh.write("%s,%d,%d,%d\n" % (
                                     entry['state'],
                                     entry['lookup-table-4x4x4-step71-phase3-edges-tsai.txt'],

@@ -106,12 +106,6 @@ lookup_table_444_sister_wing_to_U_west = {
 
 
 class RubiksCube444(RubiksCube):
-    """
-    4x4x4 strategy
-    phase 1 - stage all centers
-    phase 2 - orient edges into high/low groups and solve LR centers to one of 12 positions
-    phase 3 - solve all centers and pair all edges
-    """
 
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube.__init__(self, state, order, colormap, debug)
@@ -239,15 +233,19 @@ class RubiksCube444(RubiksCube):
 
         Total: 735,471 entries
         '''
-        if self.cpu_mode == 'tsai':
-            self.lt_LR_centers_stage = LookupTable(self,
-                                                   'lookup-table-4x4x4-step12-LR-centers-stage.txt',
-                                                   '444-LR-centers-stage',
-                                                   '0f0f00',
-                                                    True, # state hex
-                                                    linecount=735471)
+        if self.cpu_mode == 'min':
+
+            # Stage UD centers
+            self.lt_UD_centers_stage = LookupTable(self,
+                                                   'lookup-table-4x4x4-step11-UD-centers-stage.txt',
+                                                  '444-UD-centers-stage',
+                                                  'f0000f',
+                                                   True, # state hex
+                                                   linecount=735471)
 
         elif self.cpu_mode in ('normal', 'max'):
+
+            # Stage all centers via IDA
             self.lt_UD_centers_stage = LookupTable(self,
                                                    'lookup-table-4x4x4-step11-UD-centers-stage.txt',
                                                   '444-UD-centers-stage',
@@ -428,8 +426,24 @@ class RubiksCube444(RubiksCube):
             self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_min
             self.lt_ULFRBD_centers_stage.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_median
 
-        # only --cpu-min uses the step20 table
-        elif self.cpu_mode == 'min':
+        elif self.cpu_mode == 'tsai':
+
+            # Stage LR centers
+            self.lt_LR_centers_stage = LookupTable(self,
+                                                   'lookup-table-4x4x4-step12-LR-centers-stage.txt',
+                                                   '444-LR-centers-stage',
+                                                   '0f0f00',
+                                                    True, # state hex
+                                                    linecount=735471)
+        else:
+            raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
+
+        # ==============
+        # Phase2 tables
+        # ==============
+        if self.cpu_mode == 'min':
+
+            # Stage LR and FB centers
             '''
             lookup-table-4x4x4-step20-LFRB-centers-stage.txt
             ================================================
@@ -450,13 +464,38 @@ class RubiksCube444(RubiksCube):
                                                     False, # state hex
                                                     linecount=12870)
 
-        else:
-            raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
+        elif self.cpu_mode in ('normal', 'max'):
 
-        # ==============
-        # Phase 2 tables
-        # ==============
-        if self.cpu_mode == 'tsai':
+            # Solve staged centers
+            '''
+            lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt
+            ==================================================
+            1 steps has 7 entries (0 percent)
+            2 steps has 99 entries (0 percent)
+            3 steps has 996 entries (0 percent)
+            4 steps has 6,477 entries (1 percent)
+            5 steps has 23,540 entries (6 percent)
+            6 steps has 53,537 entries (15 percent)
+            7 steps has 86,464 entries (25 percent)
+            8 steps has 83,240 entries (24 percent)
+            9 steps has 54,592 entries (15 percent)
+            10 steps has 29,568 entries (8 percent)
+            11 steps has 4,480 entries (1 percent)
+
+            Total: 343,000 entries
+            '''
+            self.lt_ULFRBD_centers_solve = LookupTable(self,
+                                                       'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
+                                                       '444-ULFRBD-centers-solve',
+                                                       'UUUULLLLFFFFRRRRBBBBDDDD',
+                                                       False, # state hex
+                                                       linecount=343000)
+
+        elif self.cpu_mode == 'tsai':
+
+            # - orient the edges into high/low groups
+            # - solve LR centers to one of 12 states
+            # - stage UD and FB centers
             '''
             lookup-table-4x4x4-step61-orient-edges.txt
             ===========================================
@@ -549,8 +588,44 @@ class RubiksCube444(RubiksCube):
                                                  # self.lt_tsai_phase2_centers),
                                                  (self.lt_tsai_phase2_centers,),
                                                  linecount=2520544)
+        else:
+            raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
 
-            # Phase 3
+        # =============
+        # Phase3 tables
+        # =============
+        if self.cpu_mode == 'min':
+
+            # Solve staged centers
+            '''
+            lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt
+            ==================================================
+            1 steps has 7 entries (0 percent)
+            2 steps has 99 entries (0 percent)
+            3 steps has 996 entries (0 percent)
+            4 steps has 6,477 entries (1 percent)
+            5 steps has 23,540 entries (6 percent)
+            6 steps has 53,537 entries (15 percent)
+            7 steps has 86,464 entries (25 percent)
+            8 steps has 83,240 entries (24 percent)
+            9 steps has 54,592 entries (15 percent)
+            10 steps has 29,568 entries (8 percent)
+            11 steps has 4,480 entries (1 percent)
+
+            Total: 343,000 entries
+            '''
+            self.lt_ULFRBD_centers_solve = LookupTable(self,
+                                                       'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
+                                                       '444-ULFRBD-centers-solve',
+                                                       'UUUULLLLFFFFRRRRBBBBDDDD',
+                                                       False, # state hex
+                                                       linecount=343000)
+
+        elif self.cpu_mode in ('normal', 'max'):
+            pass
+
+        elif self.cpu_mode == 'tsai':
+
             '''
             lookup-table-4x4x4-step71-tsai-phase3-edges.txt
             - without symmetry
@@ -601,7 +676,6 @@ class RubiksCube444(RubiksCube):
                                                           #linecount=14999140)
                                                           linecount=13289067,
                                                           max_depth=11)
-            #self.lt_tsai_phase3_edges_solve.preload_cache()
 
             '''
             lookup-table-4x4x4-step72-tsai-phase3-centers.txt
@@ -665,30 +739,7 @@ class RubiksCube444(RubiksCube):
             self.lt_tsai_phase3.heuristic_stats = lt_tsai_phase3_heuristic_stats_median
 
         else:
-
-            '''
-            lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt
-            ==================================================
-            1 steps has 7 entries (0 percent)
-            2 steps has 99 entries (0 percent)
-            3 steps has 996 entries (0 percent)
-            4 steps has 6,477 entries (1 percent)
-            5 steps has 23,540 entries (6 percent)
-            6 steps has 53,537 entries (15 percent)
-            7 steps has 86,464 entries (25 percent)
-            8 steps has 83,240 entries (24 percent)
-            9 steps has 54,592 entries (15 percent)
-            10 steps has 29,568 entries (8 percent)
-            11 steps has 4,480 entries (1 percent)
-
-            Total: 343,000 entries
-            '''
-            self.lt_ULFRBD_centers_solve = LookupTable(self,
-                                                       'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
-                                                       '444-ULFRBD-centers-solve',
-                                                       'UUUULLLLFFFFRRRRBBBBDDDD',
-                                                       False, # state hex
-                                                       linecount=343000)
+            raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
 
 
         # For tsai these two tables are only used if the centers have already been solved
@@ -1894,7 +1945,6 @@ class RubiksCube444(RubiksCube):
              (95, 78, 'U', 'R'): 'U'
         }
 
-
     def print_cube_orient_edge(self):
 
         # save cube state
@@ -1919,13 +1969,53 @@ class RubiksCube444(RubiksCube):
     def group_centers_guts(self):
         self.lt_init()
 
-        # If the centers are already solve then return and let group_edges() pair the edges
-        if self.centers_solved():
-            self.solution.append('CENTERS_SOLVED')
-            return
+        # The non-tsai solver will only solve the centers here
+        if self.cpu_mode == 'min':
+
+            # If the centers are already solve then return and let group_edges() pair the edges
+            if self.centers_solved():
+                self.solution.append('CENTERS_SOLVED')
+                return
+
+            log.info("%s: Start of Phase1" % self)
+            self.lt_UD_centers_stage.solve()
+            self.print_cube()
+            log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+
+            log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.lt_LFRB_centers_stage.solve()
+            self.print_cube()
+            log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+
+            log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.lt_ULFRBD_centers_solve.solve()
+            self.print_cube()
+            log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+
+        elif self.cpu_mode in ('normal', 'max'):
+
+            # If the centers are already solve then return and let group_edges() pair the edges
+            if self.centers_solved():
+                self.solution.append('CENTERS_SOLVED')
+                return
+
+            log.info("%s: Start of Phase1" % self)
+            self.lt_ULFRBD_centers_stage.avoid_oll = True
+            self.lt_ULFRBD_centers_stage.solve()
+            log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+
+            log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.lt_ULFRBD_centers_solve.solve()
+            self.print_cube()
+            log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
 
         # The tsai will solve the centers and pair the edges
-        if self.cpu_mode == 'tsai':
+        elif self.cpu_mode == 'tsai':
 
             log.info("%s: Start of Phase1" % self)
             self.lt_LR_centers_stage.solve()
@@ -1947,6 +2037,8 @@ class RubiksCube444(RubiksCube):
             log.info('kociemba string: %s' % kociemba_string)
             log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
+            sys.exit(0)
+            # dwalton here now
 
             # Testing the phase3 prune tables
             #self.lt_tsai_phase3_edges_solve.solve()
@@ -1954,7 +2046,6 @@ class RubiksCube444(RubiksCube):
             #self.print_cube()
             #sys.exit(0)
 
-            # dwalton
             log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             self.lt_tsai_phase3.avoid_oll = True
             self.lt_tsai_phase3.avoid_pll = True
@@ -1963,24 +2054,7 @@ class RubiksCube444(RubiksCube):
             log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
 
-        # The non-tsai solver will only solve the centers here
-        else:
-            if self.cpu_mode == 'min':
-                self.lt_UD_centers_stage.solve()
-                self.lt_LFRB_centers_stage.solve()
-            else:
-                self.lt_ULFRBD_centers_stage.avoid_oll = True
-                self.lt_ULFRBD_centers_stage.solve()
-
-            self.print_cube()
-            log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-
-            log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.lt_ULFRBD_centers_solve.solve()
-            self.print_cube()
-            log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
+        self.solution.append('CENTERS_SOLVED')
 
     def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = []
@@ -2667,6 +2741,41 @@ class RubiksCube444(RubiksCube):
                 log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
 
             return True
+
+    def tsai_phase2_edges_oriented_into_high_low(self):
+
+        # save cube state
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        orient_edge_state = list(self.lt_tsai_phase2_orient_edges.state())
+        orient_edge_state_index = 0
+        for side in list(self.sides.values()):
+            for square_index in side.edge_pos:
+                self.state[square_index] = orient_edge_state[orient_edge_state_index]
+
+        high_low_split = True
+
+        # dwalton here now
+        for (square1_index, square2_index) in ((2, 3),
+                                               (5, 9),
+                                               (8, 12),
+                                               (14, 15),
+                                               (21, 25),
+                                               (24, 38),
+                                               (53, 57),
+                                               (56, 60),
+                                               (82, 83),
+                                               (85, 89),
+                                               (88, 92),
+                                               (94, 95)):
+            if self.state[square1_index] == self.state[square2_index]:
+                high_low_split = False
+                break
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        return high_low_split
 
     def group_edges(self):
         if not self.get_non_paired_edges():

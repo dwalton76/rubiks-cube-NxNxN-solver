@@ -2764,8 +2764,7 @@ class LookupTableIDA(LookupTable):
             solution_ok = True
 
             if (solution_ok and
-                self.parent.use_tsai and
-                (self.state_type == '444-tsai-phase2' or self.state_type == '444-ULFRBD-centers-stage') and
+                self.state_type == '444-tsai-phase2' and
                 not self.parent.edge_swaps_even(False, None, False)):
 
                 self.parent.state = self.original_state[:]
@@ -2980,3 +2979,14 @@ class LookupTableIDA(LookupTable):
         self.parent.solution = self.original_solution[:]
 
         raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))
+
+
+class LookupIDA(LookupTableIDA):
+    # dwalton
+
+    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, linecount):
+        filename = None
+        linecount = None
+        LookupTableIDA.__init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, linecount)
+
+

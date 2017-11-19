@@ -62,6 +62,213 @@ def convert_state_to_hex(state, hex_width):
     return hex_state.zfill(hex_width)
 
 
+def get_444_edges(parent_state):
+    return ''.join((parent_state[2],
+                    parent_state[3],
+                    parent_state[5],
+                    parent_state[8],
+                    parent_state[9],
+                    parent_state[12],
+                    parent_state[14],
+                    parent_state[15],
+
+                    parent_state[18],
+                    parent_state[19],
+                    parent_state[21],
+                    parent_state[24],
+                    parent_state[25],
+                    parent_state[28],
+                    parent_state[30],
+                    parent_state[31],
+
+                    parent_state[34],
+                    parent_state[35],
+                    parent_state[37],
+                    parent_state[40],
+                    parent_state[41],
+                    parent_state[44],
+                    parent_state[46],
+                    parent_state[47],
+
+                    parent_state[50],
+                    parent_state[51],
+                    parent_state[53],
+                    parent_state[56],
+                    parent_state[57],
+                    parent_state[60],
+                    parent_state[62],
+                    parent_state[63],
+
+                    parent_state[66],
+                    parent_state[67],
+                    parent_state[69],
+                    parent_state[72],
+                    parent_state[73],
+                    parent_state[76],
+                    parent_state[78],
+                    parent_state[79],
+
+                    parent_state[82],
+                    parent_state[83],
+                    parent_state[85],
+                    parent_state[88],
+                    parent_state[89],
+                    parent_state[92],
+                    parent_state[94],
+                    parent_state[95]))
+
+
+edges_444 = (('0', 2, 67),  # upper
+             ('1', 3, 66),
+             ('2', 5, 18),
+             ('3', 8, 51),
+             ('4', 9, 19),
+             ('5', 12, 50),
+             ('6', 14, 34),
+             ('7', 15, 35),
+
+             ('8', 21, 72), # left
+             ('9', 24, 37),
+             ('a', 25, 76),
+             ('b', 28, 41),
+
+             ('c', 53, 40), # right
+             ('d', 56, 69),
+             ('e', 57, 44),
+             ('f', 60, 73),
+
+             ('g', 82, 46), # down
+             ('h', 83, 47),
+             ('i', 85, 31),
+             ('j', 88, 62),
+             ('k', 89, 30),
+             ('l', 92, 63),
+             ('m', 94, 79),
+             ('n', 95, 78))
+
+def edges_high_low_recolor2_444(state):
+    edge_map = {
+        'BD': [],
+        'BL': [],
+        'BR': [],
+        'BU': [],
+        'DF': [],
+        'DL': [],
+        'DR': [],
+        'FL': [],
+        'FR': [],
+        'FU': [],
+        'LU': [],
+        'RU': []
+    }
+
+    for (edge_index, square_index, partner_index) in edges_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+        edge_map[wing_str].append(edge_index)
+
+    #log.info("state: %s" % ''.join(state))
+    #log.info("edge_map:\n%s" % pformat(edge_map))
+
+    # Where is the other wing_str like us?
+    for (edge_index, square_index, partner_index) in edges_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+
+        for tmp_index in edge_map[wing_str]:
+            if tmp_index != edge_index:
+                state[square_index] = tmp_index
+                state[partner_index] = tmp_index
+                break
+        else:
+            raise Exception("could not find tmp_index")
+
+    return ''.join(state)
+
+
+def get_444_edges_pattern(parent_state):
+    foo = edges_high_low_recolor2_444(parent_state[:])
+
+    return ''.join((foo[2],
+                    foo[3],
+                    foo[5],
+                    foo[8],
+                    foo[9],
+                    foo[12],
+                    foo[14],
+                    foo[15],
+
+                    foo[18],
+                    foo[19],
+                    foo[21],
+                    foo[24],
+                    foo[25],
+                    foo[28],
+                    foo[30],
+                    foo[31],
+
+                    foo[34],
+                    foo[35],
+                    foo[37],
+                    foo[40],
+                    foo[41],
+                    foo[44],
+                    foo[46],
+                    foo[47],
+
+                    foo[50],
+                    foo[51],
+                    foo[53],
+                    foo[56],
+                    foo[57],
+                    foo[60],
+                    foo[62],
+                    foo[63],
+
+                    foo[66],
+                    foo[67],
+                    foo[69],
+                    foo[72],
+                    foo[73],
+                    foo[76],
+                    foo[78],
+                    foo[79],
+
+                    foo[82],
+                    foo[83],
+                    foo[85],
+                    foo[88],
+                    foo[89],
+                    foo[92],
+                    foo[94],
+                    foo[95]))
+
+def get_444_centers_edges_pattern(parent_state):
+    foo = edges_high_low_recolor2_444(parent_state[:])
+
+    # record the state of all edges and centers
+    return ''.join(foo[2:4] +
+                   foo[5:13] +
+                   foo[14:16] +
+                   foo[18:20] +
+                   foo[21:29] +
+                   foo[30:32] +
+                   foo[34:36] +
+                   foo[37:45] +
+                   foo[46:48] +
+                   foo[50:52] +
+                   foo[53:61] +
+                   foo[62:64] +
+                   foo[66:68] +
+                   foo[69:77] +
+                   foo[78:80] +
+                   foo[82:84] +
+                   foo[85:93] +
+                   foo[94:96])
+
+
 def get_444_UD_centers_stage(parent_state):
     """
     444-UD-centers-stage
@@ -2263,6 +2470,9 @@ state_functions = {
     '444-tsai-phase2' : get_444_tsai_phase2,
     '444-tsai-phase3' : get_444_tsai_phase3,
     '444-phase3-edges' : get_444_phase3_edges,
+    '444-edges' : get_444_edges,
+    '444-edges-pattern' : get_444_edges_pattern,
+    '444-centers-edges-pattern' : get_444_centers_edges_pattern,
     '555-UD-centers-stage' : get_555_UD_centers_stage_state,
     '555-UD-T-centers-stage' : get_555_UD_T_centers_stage_state,
     '555-UD-X-centers-stage' : get_555_UD_X_centers_stage_state,
@@ -2341,11 +2551,6 @@ class LookupTable(object):
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
         assert self.linecount, "%s linecount is %s" % (self, self.linecount)
-
-        # No longer used so we can delete them
-        filename_hash = filename + '.hash'
-        if os.path.exists(filename_hash):
-            os.unlink(filename_hash)
 
         if not os.path.exists(self.filename):
             if not os.path.exists(self.filename_gz):
@@ -2583,13 +2788,11 @@ class LookupTable(object):
         return hex_state.zfill(hex_width)
 
 
-
 class LookupTableIDA(LookupTable):
 
     def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, linecount):
         LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, linecount)
         self.prune_tables = prune_tables
-        self.max_pt_cost = 0
 
         for x in moves_illegal:
             if x not in moves_all:
@@ -2679,10 +2882,6 @@ class LookupTableIDA(LookupTable):
 
             if len_pt_steps > cost_to_goal:
                 cost_to_goal = len_pt_steps
-
-                # dwalton
-                if self.max_pt_cost and len_pt_steps >= self.max_pt_cost:
-                    break
 
         if self.heuristic_stats:
             pt_costs = tuple(pt_costs)
@@ -2873,12 +3072,11 @@ class LookupTableIDA(LookupTable):
         The goal is to find a sequence of moves that will put the cube in a state that is
         in our lookup table self.filename
         """
+        start_time0 = dt.datetime.now()
 
         # This shouldn't happen since the lookup tables are in the repo
         if not self.filename_exists:
             raise SolveError("%s does not exist" % self.filename)
-
-        start_time0 = dt.datetime.now()
 
         state = self.state()
         log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
@@ -2979,14 +3177,3 @@ class LookupTableIDA(LookupTable):
         self.parent.solution = self.original_solution[:]
 
         raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))
-
-
-class LookupIDA(LookupTableIDA):
-    # dwalton
-
-    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, linecount):
-        filename = None
-        linecount = None
-        LookupTableIDA.__init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, linecount)
-
-

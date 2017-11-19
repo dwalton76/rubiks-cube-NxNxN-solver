@@ -538,7 +538,7 @@ class RubiksCube(object):
         else:
             raise Exception("Add support for order %s" % order)
 
-        self.state = ['placeholder', ]
+        self.state = ['x', ]
         for (square_index, side_name) in enumerate(foo):
             self.state.append(side_name)
 
@@ -1070,14 +1070,19 @@ class RubiksCube(object):
         side_name_index = 0
         rows = []
         row_index = 0
-        printing_numbers = False
 
         for x in range(self.size * 3):
             rows.append([])
 
+        all_digits = True
+        for (square_index, square_state) in enumerate(self.state):
+            if not square_state.isdigit():
+                all_digits = False
+                break
+
         for (square_index, square_state) in enumerate(self.state):
 
-            # ignore the placeholder
+            # ignore the placeholder (x)
             if square_index == 0:
                 continue
 
@@ -1092,22 +1097,26 @@ class RubiksCube(object):
                 else:
                     rows[row_index].append("\033[%dm%s\033[0m%s" % (color, square_state, " (%4d) " % square_index if print_positions else ""))
             else:
-                if square_state.isdigit():
-                    printing_numbers = True
 
                 # end of the row
                 if square_index % self.size == 0:
                     if square_state.endswith('x'):
                         rows[row_index].append("%s " % square_state)
                     else:
-                        rows[row_index].append("%02d" % int(square_state))
+                        if all_digits:
+                            rows[row_index].append("%02d" % int(square_state))
+                        else:
+                            rows[row_index].append("%s" % square_state)
 
                     row_index += 1
                 else:
                     if square_state.endswith('x'):
                         rows[row_index].append("%s" % square_state)
                     else:
-                        rows[row_index].append("%02d" % int(square_state))
+                        if all_digits:
+                            rows[row_index].append("%02d" % int(square_state))
+                        else:
+                            rows[row_index].append("%s" % square_state)
 
             # end of the side
             if square_index % self.squares_per_side == 0:
@@ -1117,7 +1126,7 @@ class RubiksCube(object):
 
         for (row_index, row) in enumerate(rows):
             if row_index < self.size or row_index >= (self.size * 2):
-                if printing_numbers:
+                if all_digits:
                     sys.stdout.write(' ' * (self.size * 3))
                 else:
                     sys.stdout.write(' ' * (self.size + self.size + 1))
@@ -1193,6 +1202,9 @@ class RubiksCube(object):
 
         sides = ['U', 'L', 'F', 'R', 'B', 'D']
         count = ((self.size * self.size) * 6) * 3
+
+        # uncomment to limit randomness of the scramble
+        # count = 12
 
         for x in range(count):
             rows = random.randint(1, max_rows)

@@ -435,12 +435,13 @@ class RubiksCube444(RubiksCube):
                                                    '0f0f00',
                                                     True, # state hex
                                                     linecount=735471)
+
         else:
             raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
 
-        # ==============
+        # =============
         # Phase2 tables
-        # ==============
+        # =============
         if self.cpu_mode == 'min':
 
             # Stage LR and FB centers
@@ -588,6 +589,8 @@ class RubiksCube444(RubiksCube):
                                                  # self.lt_tsai_phase2_centers),
                                                  (self.lt_tsai_phase2_centers,),
                                                  linecount=2520544)
+
+
         else:
             raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
 
@@ -698,7 +701,6 @@ class RubiksCube444(RubiksCube):
                                                            'UUUULLLLFFFFRRRRBBBBDDDD',
                                                            False, # state hex
                                                            linecount=58800)
-
             '''
             If you build this to 8-deep it adds 119,166,578 which makes it too big to
             check into the repo
@@ -2022,6 +2024,7 @@ class RubiksCube444(RubiksCube):
             self.print_cube()
             log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
+            #sys.exit(0)
 
             # Testing the phase2 prune tables
             #self.lt_tsai_phase2_orient_edges.solve()
@@ -2030,6 +2033,7 @@ class RubiksCube444(RubiksCube):
             #sys.exit(0)
 
             log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.lt_tsai_phase2.avoid_pll = True
             self.lt_tsai_phase2.solve()
             self.print_cube()
             #self.print_cube_orient_edge()
@@ -2038,7 +2042,6 @@ class RubiksCube444(RubiksCube):
             log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
             sys.exit(0)
-            # dwalton here now
 
             # Testing the phase3 prune tables
             #self.lt_tsai_phase3_edges_solve.solve()
@@ -2753,16 +2756,16 @@ class RubiksCube444(RubiksCube):
         for side in list(self.sides.values()):
             for square_index in side.edge_pos:
                 self.state[square_index] = orient_edge_state[orient_edge_state_index]
+                orient_edge_state_index += 1
 
         high_low_split = True
 
-        # dwalton here now
         for (square1_index, square2_index) in ((2, 3),
                                                (5, 9),
                                                (8, 12),
                                                (14, 15),
                                                (21, 25),
-                                               (24, 38),
+                                               (24, 28),
                                                (53, 57),
                                                (56, 60),
                                                (82, 83),

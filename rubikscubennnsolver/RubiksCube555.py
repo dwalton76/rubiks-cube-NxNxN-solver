@@ -1698,8 +1698,7 @@ class RubiksCube555(RubiksCube):
 
         else:
 
-            # Move sister wing to F-east...TODO this needs to be smart enough to move it there
-            # so that it doesn't need to be flipped once it is there.  The 4x4x4 edge pairing has this logic.
+            # Move sister wing to F-east
             self.move_wing_to_F_east(sister_wing)
 
             # We must have a sister wing at (65, 86)

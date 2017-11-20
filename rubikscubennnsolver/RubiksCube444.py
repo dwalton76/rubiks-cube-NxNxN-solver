@@ -637,7 +637,6 @@ class RubiksCube444(RubiksCube):
             13 steps has 1,448 entries (0 percent, 0.00x previous step)
 
             '''
-            # TODO this one is still rebuilding...only finished to depth 11 so far
             self.lt_tsai_phase3_edges_solve = LookupTable(self,
                                                           'lookup-table-4x4x4-step71-tsai-phase3-edges.txt',
                                                           '444-phase3-edges',
@@ -1920,55 +1919,13 @@ class RubiksCube444(RubiksCube):
         HIGH_LOW_TARGET = list('UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU')
 
         for (index, (x, y)) in enumerate((
-                (2, 67),
-                (3, 66),
-                (5, 18),
-                (8, 51),
-                (9, 19),
-                (12, 50),
-                (14, 34),
-                (15, 35),
-                (18, 5),
-                (19, 9),
-                (21, 72),
-                (24, 37),
-                (25, 76),
-                (28, 41),
-                (30, 89),
-                (31, 85),
-                (34, 14),
-                (35, 15),
-                (37, 24),
-                (40, 53),
-                (41, 28),
-                (44, 57),
-                (46, 82),
-                (47, 83),
-                (50, 12),
-                (51, 8),
-                (53, 40),
-                (56, 69),
-                (57, 44),
-                (60, 73),
-                (62, 88),
-                (63, 92),
-                (66, 3),
-                (67, 2),
-                (69, 56),
-                (72, 21),
-                (73, 60),
-                (76, 25),
-                (78, 95),
-                (79, 94),
-                (82, 46),
-                (83, 47),
-                (85, 31),
-                (88, 62),
-                (89, 30),
-                (92, 63),
-                (94, 79),
-                (95, 78))):
-
+                (2, 67), (3, 66), (5, 18), (8, 51), (9, 19), (12, 50), (14, 34),
+                (15, 35), (18, 5), (19, 9), (21, 72), (24, 37), (25, 76), (28, 41),
+                (30, 89), (31, 85), (34, 14), (35, 15), (37, 24), (40, 53), (41, 28),
+                (44, 57), (46, 82), (47, 83), (50, 12), (51, 8), (53, 40), (56, 69),
+                (57, 44), (60, 73), (62, 88), (63, 92), (66, 3), (67, 2), (69, 56),
+                (72, 21), (73, 60), (76, 25), (78, 95), (79, 94), (82, 46), (83, 47),
+                (85, 31), (88, 62), (89, 30), (92, 63), (94, 79), (95, 78))):
             wing_str1 = "%s%s" % (state[x], state[y])
             wing_str2 = "%s%s" % (state[y], state[x])
             high_low = orient_edges[(x, y, state[x], state[y])]
@@ -2835,33 +2792,68 @@ class RubiksCube444(RubiksCube):
         self.solution = self.min_edge_solution[:]
         self.solution.append('EDGES_GROUPED')
 
+    def tsai_phase2_edges_oriented(self):
+        """
+        Return True if the edges are oriented correctly
+        """
+        HIGH_LOW_TARGET = 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU'
+        original_high_low_state = []
+        state = self.state
+        orient_edges = self.orient_edges
+
+        for (index, (x, y)) in enumerate((
+                (2, 67), (3, 66), (5, 18), (8, 51), (9, 19), (12, 50), (14, 34),
+                (15, 35), (18, 5), (19, 9), (21, 72), (24, 37), (25, 76), (28, 41),
+                (30, 89), (31, 85), (34, 14), (35, 15), (37, 24), (40, 53), (41, 28),
+                (44, 57), (46, 82), (47, 83), (50, 12), (51, 8), (53, 40), (56, 69),
+                (57, 44), (60, 73), (62, 88), (63, 92), (66, 3), (67, 2), (69, 56),
+                (72, 21), (73, 60), (76, 25), (78, 95), (79, 94), (82, 46), (83, 47),
+                (85, 31), (88, 62), (89, 30), (92, 63), (94, 79), (95, 78))):
+            wing_str1 = "%s%s" % (state[x], state[y])
+            wing_str2 = "%s%s" % (state[y], state[x])
+            original_high_low_state.append((wing_str1, wing_str2, orient_edges[(x, y, state[x], state[y])]))
+
+        for edges_to_flip in tsai_edge_mapping_combinations:
+            all_match = True
+
+            for (index, (wing_str1, wing_str2, high_low)) in enumerate(original_high_low_state):
+                if wing_str1 in edges_to_flip or wing_str2 in edges_to_flip:
+                    if high_low == 'U':
+                        high_low = 'D'
+                    else:
+                        high_low = 'U'
+
+                if high_low != HIGH_LOW_TARGET[index]:
+                    all_match = False
+                    break
+
+            if all_match:
+                return True
+
+        return False
+
+
 class LookupTsaiPhase2IDA(LookupTableIDA):
 
     def ida_search_complete(self, state, steps_to_here):
         cost = self.ida_heuristic()
-        HIGH_LOW_TARGET = 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU'
 
-        if cost == 0:
-            # TODO call get_444_tsai_phase2_orient_edges 1x (pass it tsai_edge_mapping_combinations) instead of 2048 times
-            for edge_mapping in tsai_edge_mapping_combinations:
-                high_low_state = self.parent.get_444_tsai_phase2_orient_edges(edge_mapping, True)
+        # here now
+        if cost == 0 and self.parent.tsai_phase2_edges_oriented():
 
-                if high_low_state == HIGH_LOW_TARGET:
-                    self.parent.edge_mapping = edge_mapping
-                    log.warning("%s: edge_mapping %s is needed" % (self, pformat(edge_mapping)))
+            # rotate_xxx() is very fast but it does not append the
+            # steps to the solution so put the cube back in original state
+            # and execute the steps via a normal rotate() call
+            self.parent.state = self.original_state[:]
+            self.parent.solution = self.original_solution[:]
 
-                    # rotate_xxx() is very fast but it does not append the
-                    # steps to the solution so put the cube back in original state
-                    # and execute the steps via a normal rotate() call
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
+            for step in steps_to_here:
+                self.parent.rotate(step)
 
-                    for step in steps_to_here:
-                        self.parent.rotate(step)
+            return True
+        else:
+            return False
 
-                    return True
-
-        return False
 
 tsai_edge_mapping_combinations = (
     (),

@@ -589,62 +589,6 @@ def get_444_ULFRBD_centers_solve(parent_state):
     return state
 
 
-def get_444_tsai_phase2_orient_edges(parent_state, orient_edges):
-    """
-    444-tsai-phase2-orient-edges
-    """
-    return ''.join([
-        orient_edges[(2, 67, parent_state[2], parent_state[67])],
-        orient_edges[(3, 66, parent_state[3], parent_state[66])],
-        orient_edges[(5, 18, parent_state[5], parent_state[18])],
-        orient_edges[(8, 51, parent_state[8], parent_state[51])],
-        orient_edges[(9, 19, parent_state[9], parent_state[19])],
-        orient_edges[(12, 50, parent_state[12], parent_state[50])],
-        orient_edges[(14, 34, parent_state[14], parent_state[34])],
-        orient_edges[(15, 35, parent_state[15], parent_state[35])],
-        orient_edges[(18, 5, parent_state[18], parent_state[5])],
-        orient_edges[(19, 9, parent_state[19], parent_state[9])],
-        orient_edges[(21, 72, parent_state[21], parent_state[72])],
-        orient_edges[(24, 37, parent_state[24], parent_state[37])],
-        orient_edges[(25, 76, parent_state[25], parent_state[76])],
-        orient_edges[(28, 41, parent_state[28], parent_state[41])],
-        orient_edges[(30, 89, parent_state[30], parent_state[89])],
-        orient_edges[(31, 85, parent_state[31], parent_state[85])],
-        orient_edges[(34, 14, parent_state[34], parent_state[14])],
-        orient_edges[(35, 15, parent_state[35], parent_state[15])],
-        orient_edges[(37, 24, parent_state[37], parent_state[24])],
-        orient_edges[(40, 53, parent_state[40], parent_state[53])],
-        orient_edges[(41, 28, parent_state[41], parent_state[28])],
-        orient_edges[(44, 57, parent_state[44], parent_state[57])],
-        orient_edges[(46, 82, parent_state[46], parent_state[82])],
-        orient_edges[(47, 83, parent_state[47], parent_state[83])],
-        orient_edges[(50, 12, parent_state[50], parent_state[12])],
-        orient_edges[(51, 8, parent_state[51], parent_state[8])],
-        orient_edges[(53, 40, parent_state[53], parent_state[40])],
-        orient_edges[(56, 69, parent_state[56], parent_state[69])],
-        orient_edges[(57, 44, parent_state[57], parent_state[44])],
-        orient_edges[(60, 73, parent_state[60], parent_state[73])],
-        orient_edges[(62, 88, parent_state[62], parent_state[88])],
-        orient_edges[(63, 92, parent_state[63], parent_state[92])],
-        orient_edges[(66, 3, parent_state[66], parent_state[3])],
-        orient_edges[(67, 2, parent_state[67], parent_state[2])],
-        orient_edges[(69, 56, parent_state[69], parent_state[56])],
-        orient_edges[(72, 21, parent_state[72], parent_state[21])],
-        orient_edges[(73, 60, parent_state[73], parent_state[60])],
-        orient_edges[(76, 25, parent_state[76], parent_state[25])],
-        orient_edges[(78, 95, parent_state[78], parent_state[95])],
-        orient_edges[(79, 94, parent_state[79], parent_state[94])],
-        orient_edges[(82, 46, parent_state[82], parent_state[46])],
-        orient_edges[(83, 47, parent_state[83], parent_state[47])],
-        orient_edges[(85, 31, parent_state[85], parent_state[31])],
-        orient_edges[(88, 62, parent_state[88], parent_state[62])],
-        orient_edges[(89, 30, parent_state[89], parent_state[30])],
-        orient_edges[(92, 63, parent_state[92], parent_state[63])],
-        orient_edges[(94, 79, parent_state[94], parent_state[79])],
-        orient_edges[(95, 78, parent_state[95], parent_state[78])]
-    ])
-
-
 def get_444_tsai_phase2(parent_state, orient_edges):
     """
     444-tsai-phase2
@@ -732,226 +676,6 @@ def get_444_tsai_phase2(parent_state, orient_edges):
         orient_edges[(94, 79, parent_state[94], parent_state[79])],
         orient_edges[(95, 78, parent_state[95], parent_state[78])]
     ])
-
-
-def get_444_tsai_phase2_orient_edges_old(parent_state, self):
-    """
-    444-tsai-phase2-orient-edges or 444-tsai-phase2
-
-    This is what we used originally, I then unrolled it to create the two functions above
-    """
-    raise Exception("We should not be here")
-    state = []
-    parent = self.parent
-    original_state = self.parent.state[:]
-    original_solution = self.parent.solution[:]
-
-    state = []
-    for side in self.sides_all:
-        for square_index in range(side.min_pos, side.max_pos):
-
-            if square_index in side.corner_pos:
-                pass
-
-            elif square_index in side.edge_pos:
-                partner_index = side.get_wing_partner(square_index)
-                square1 = self.parent.state[square_index]
-                square2 = self.parent.state[partner_index]
-
-                try:
-                    state.append(self.parent.orient_edges[(square_index, partner_index, square1, square2)])
-                    print("        state.append(self.parent.orient_edges[(%d, %d, parent_state[%d], parent_state[%d])])" % (square_index, partner_index, square_index, partner_index))
-
-                except KeyError:
-                    raise SolveError("%s is not in self.parent.orient_edges" % str((square_index, partner_index, square1, square2)))
-
-                # If you hit the SolveError above, uncomment this code to build the entry
-                # that needs to be added to RubiksCube444.orient_edges
-                '''
-                if square1 in ('U', 'D'):
-                    wing_str = square1 + square2
-                elif square2 in ('U', 'D'):
-                    wing_str = square2 + square1
-                elif square1 in ('L', 'R'):
-                    wing_str = square1 + square2
-                elif square2 in ('L', 'R'):
-                    wing_str = square2 + square1
-                else:
-                    raise Exception("Could not determine wing_str for (%s, %s)" % (square1, square2))
-
-                # - backup the current state
-                # - add an 'x' to the end of the square_index/partner_index
-                # - move square_index/partner_index to its final edge location
-                # - look for the 'x' to determine if this is the '0' vs '1' wing
-                # - restore the original state
-                square1_with_x = square1 + 'x'
-                square2_with_x = square2 + 'x'
-
-                self.parent.state[square_index] = square1_with_x
-                self.parent.state[partner_index] = square2_with_x
-
-                #log.info("PRE: %s at (%d, %d)" % (wing_str, square_index, partner_index))
-                #self.parent.print_cube()
-
-                # 'UB0', 'UB1', 'UL0', 'UL1', 'UF0', 'UF1', 'UR0', 'UR1',
-                # 'LB0', 'LB1', 'LF0', 'LF1', 'RF0', 'RF1', 'RB0', 'RB1',
-                # 'DF0', 'DF1', 'DL0', 'DL1', 'DB0', 'DB1', 'DR0', 'DR1
-                if wing_str == 'UB':
-                    self.parent.move_wing_to_U_north(square_index)
-
-                    if self.parent.state[2] == 'Ux' or self.parent.state[66] == 'Ux':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'UL':
-                    self.parent.move_wing_to_U_west(square_index)
-
-                    if self.parent.state[9] == 'Ux' or self.parent.state[18] == 'Ux':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'UF':
-                    self.parent.move_wing_to_U_south(square_index)
-
-                    if self.parent.state[15] == 'Ux' or self.parent.state[34] == 'Ux':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'UR':
-                    self.parent.move_wing_to_U_east(square_index)
-
-                    if self.parent.state[8] == 'Ux' or self.parent.state[50] == 'Ux':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'LB':
-                    self.parent.move_wing_to_L_west(square_index)
-
-                    if self.parent.state[25] == 'Lx' or self.parent.state[72] == 'Lx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'LF':
-                    self.parent.move_wing_to_L_east(square_index)
-
-                    if self.parent.state[24] == 'Lx' or self.parent.state[41] == 'Lx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'RF':
-                    self.parent.move_wing_to_R_west(square_index)
-
-                    if self.parent.state[57] == 'Rx' or self.parent.state[40] == 'Rx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'RB':
-                    self.parent.move_wing_to_R_east(square_index)
-
-                    if self.parent.state[56] == 'Rx' or self.parent.state[73] == 'Rx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'DF':
-                    self.parent.move_wing_to_D_north(square_index)
-
-                    if self.parent.state[82] == 'Dx' or self.parent.state[47] == 'Dx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'DL':
-                    self.parent.move_wing_to_D_west(square_index)
-
-                    if self.parent.state[89] == 'Dx' or self.parent.state[31] == 'Dx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'DB':
-                    self.parent.move_wing_to_D_south(square_index)
-
-                    if self.parent.state[95] == 'Dx' or self.parent.state[79] == 'Dx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'DR':
-                    self.parent.move_wing_to_D_east(square_index)
-                    if self.parent.state[88] == 'Dx' or self.parent.state[63] == 'Dx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                else:
-                    raise SolveError("invalid wing %s" % wing_str)
-
-                if (square_index, partner_index, square1, square2) not in self.parent.orient_edges:
-                    self.parent.orient_edges[(square_index, partner_index, square1, square2)] = state[-1]
-                    log.info("orient_edges:\n%s\n" % pformat(self.parent.orient_edges))
-
-                self.parent.state = original_state[:]
-                self.parent.solution = original_solution[:]
-                '''
-
-            elif square_index in side.center_pos:
-                if self.state_type == '444-tsai-phase2':
-                    square_state = self.parent.state[square_index]
-                    square_state = square_state.replace('B', 'F').replace('U', 'x').replace('D', 'x')
-                    state.append(square_state)
-                    print("        state.append(self.parent.state[%d].replace('B', 'F').replace('U', 'x').replace('D', 'x'))" % square_index)
-
-    state = ''.join(state)
-
-    if self.state_type == '444-tsai-phase2-orient-edges':
-        if state.count('U') != 24:
-            raise SolveError("state %s has %d Us and %d Ds, should have 24 of each" % (state, state.count('U'), state.count('D')))
-
-        if state.count('D') != 24:
-            raise SolveError("state %s has %d Us and %d Ds, should have 24 of each" % (state, state.count('U'), state.count('D')))
-
-    return state
-
-
-def get_444_tsai_phase2_centers_solve(parent_state):
-    """
-    444-tsai-phase2-centers-solve-tsai
-    """
-    state = [parent_state[6],
-             parent_state[7],
-             parent_state[10],
-             parent_state[11],
-             parent_state[22],
-             parent_state[23],
-             parent_state[26],
-             parent_state[27],
-             parent_state[38],
-             parent_state[39],
-             parent_state[42],
-             parent_state[43],
-             parent_state[54],
-             parent_state[55],
-             parent_state[58],
-             parent_state[59],
-             parent_state[70],
-             parent_state[71],
-             parent_state[74],
-             parent_state[75],
-             parent_state[86],
-             parent_state[87],
-             parent_state[90],
-             parent_state[91]]
-    state = ''.join(state)
-    state = state.replace('B', 'F').replace('D', 'x').replace('U', 'x')
-    return state
 
 
 symmetry_rotations_tsai_phase3_444 =\
@@ -2465,8 +2189,6 @@ state_functions = {
     '444-FB-centers-solve' : get_444_FB_centers_solve,
     '444-ULFRBD-centers-stage' : get_444_ULFRBD_centers_stage,
     '444-ULFRBD-centers-solve' : get_444_ULFRBD_centers_solve,
-    '444-tsai-phase2-orient-edges' : get_444_tsai_phase2_orient_edges,
-    '444-tsai-phase2-centers-solve' : get_444_tsai_phase2_centers_solve,
     '444-tsai-phase2' : get_444_tsai_phase2,
     '444-tsai-phase3' : get_444_tsai_phase3,
     '444-phase3-edges' : get_444_phase3_edges,
@@ -2550,7 +2272,9 @@ class LookupTable(object):
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
-        assert self.linecount, "%s linecount is %s" % (self, self.linecount)
+
+        if 'dummy' not in self.filename:
+            assert self.linecount, "%s linecount is %s" % (self, self.linecount)
 
         if not os.path.exists(self.filename):
             if not os.path.exists(self.filename_gz):
@@ -2632,10 +2356,6 @@ class LookupTable(object):
         self.state_hex = state_hex
         self.cache = {}
         self.fh_txt = open(self.filename, 'r')
-        self.seek_calls = 0
-        self.binary_search_calls = 0
-        self.total_first_last_delta = 0
-        self.state_to_line_number = {}
         self.preloaded_cache = False
 
         # This will barf for 444-edges-slice-forward and 444-edges-slice-backward
@@ -2643,8 +2363,7 @@ class LookupTable(object):
         try:
             self.state_function = state_functions[self.state_type]
 
-            if self.state_function in (get_444_tsai_phase2_orient_edges,
-                                       get_444_tsai_phase2):
+            if self.state_function == get_444_tsai_phase2:
                 self.state_function_pass_orient_edges = True
             else:
                 self.state_function_pass_orient_edges = False
@@ -2681,14 +2400,11 @@ class LookupTable(object):
     def binary_search(self, state_to_find):
         first = 0
         last = self.linecount - 1
-        self.binary_search_calls += 1
 
         while first <= last:
             midpoint = int((first + last)/2)
             self.fh_txt.seek(midpoint * self.width)
             line = self.fh_txt.readline().rstrip()
-            self.total_first_last_delta += (last - first)
-            self.seek_calls += 1
 
             try:
                 (state, steps) = line.split(':')
@@ -2915,6 +2631,97 @@ class LookupTableIDA(LookupTable):
 
             return None
 
+    def ida_search_complete(self, state, steps_to_here):
+        steps = self.steps(state)
+
+        if not steps:
+            return False
+
+        # =================================================
+        # If there are steps for a state that means our IDA
+        # search is done...woohoo!!
+        # =================================================
+        # rotate_xxx() is very fast but it does not append the
+        # steps to the solution so put the cube back in original state
+        # and execute the steps via a normal rotate() call
+        self.parent.state = self.original_state[:]
+        self.parent.solution = self.original_solution[:]
+
+        for step in steps_to_here:
+            self.parent.rotate(step)
+
+        for step in steps:
+            self.parent.rotate(step)
+
+        # The cube is now in a state where it is in the lookup table, we may need
+        # to do several lookups to get to our target state though. Use
+        # LookupTabele's solve() to take us the rest of the way to the target state.
+        LookupTable.solve(self)
+
+        if (self.state_type == '444-tsai-phase2' and
+            not self.parent.edge_swaps_even(False, None, False)):
+
+            self.parent.state = self.original_state[:]
+            self.parent.solution = self.original_solution[:]
+            log.warning("%s: found match but edge swaps are NOT even" % self)
+            return False
+
+        if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
+            self.parent.state = self.original_state[:]
+            self.parent.solution = self.original_solution[:]
+            log.info("%s: IDA found match but it leads to OLL" % self)
+            return False
+
+        if self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
+            self.parent.state = self.original_state[:]
+            self.parent.solution = self.original_solution[:]
+            log.info("%s: IDA found match but it leads to PLL" % self)
+            return False
+
+        # record stats here
+        if self.record_stats:
+            final_state = self.parent.state[:]
+            final_solution = self.parent.solution[:]
+
+            self.parent.state = self.original_state[:]
+            self.parent.solution = self.original_solution[:]
+            actual_cost_to_goal = len(final_solution) - len(self.original_solution)
+            stats = []
+
+            for step in final_solution[len(self.original_solution):]:
+                stats.append(self.ida_heuristic_all_costs())
+                stats[-1]['state'] = self.state()
+                stats[-1]['step'] = step
+                stats[-1]['actual-cost'] = actual_cost_to_goal
+                actual_cost_to_goal -= 1
+
+                self.parent.rotate(step)
+
+            #log.info("STATS:\n%s\n" % pformat(stats))
+            #sys.exit(0)
+            with open('%s.stats' % self.filename, 'a') as fh:
+                for entry in stats:
+
+                    if self.filename == 'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt':
+                        fh.write("%s,%d,%d,%d,%d\n" % (
+                            entry['state'],
+                            entry['lookup-table-4x4x4-step11-UD-centers-stage.txt'],
+                            entry['lookup-table-4x4x4-step12-LR-centers-stage.txt'],
+                            entry['lookup-table-4x4x4-step13-FB-centers-stage.txt'],
+                            entry['actual-cost']))
+
+                    elif self.filename == 'lookup-table-4x4x4-step70-tsai-phase3.txt':
+                        fh.write("%s,%d,%d,%d\n" % (
+                            entry['state'],
+                            entry['lookup-table-4x4x4-step71-phase3-edges-tsai.txt'],
+                            entry['lookup-table-4x4x4-step72-phase3-centers-tsai.txt'],
+                            entry['actual-cost']))
+
+            self.parent.state = final_state[:]
+            self.parent.solution = final_solution[:]
+
+        return True
+
     def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
         """
         https://algorithmsinsight.wordpress.com/graph-theory-2/ida-star-algorithm-in-general/
@@ -2931,104 +2738,16 @@ class LookupTableIDA(LookupTable):
         # That could cause us to return a longer solution but with the benefit
         # of the searching being faster....I am torn on whether to return False
         # here or not.
+        # TODO retest this
         if f_cost > threshold:
             return False
 
         state = self.state()
-        steps = self.steps(state)
 
-        # =================================================
-        # If there are steps for a state that means our IDA
-        # search is done...woohoo!!
-        # =================================================
-        if steps:
-
-            # rotate_xxx() is very fast but it does not append the
-            # steps to the solution so put the cube back in original state
-            # and execute the steps via a normal rotate() call
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-
-            for step in steps_to_here:
-                self.parent.rotate(step)
-
-            for step in steps:
-                self.parent.rotate(step)
-
-            # The cube is now in a state where it is in the lookup table, we may need
-            # to do several lookups to get to our target state though. Use
-            # LookupTabele's solve() to take us the rest of the way to the target state.
-            LookupTable.solve(self)
-
-            solution_ok = True
-
-            if (solution_ok and
-                self.state_type == '444-tsai-phase2' and
-                not self.parent.edge_swaps_even(False, None, False)):
-
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.warning("%s: found match but edge swaps are NOT even" % self)
-                solution_ok = False
-
-            if solution_ok and self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.info("%s: IDA found match but it leads to OLL" % self)
-                solution_ok = False
-
-            if solution_ok and self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.info("%s: IDA found match but it leads to PLL" % self)
-                solution_ok = False
-
-            if solution_ok:
-                # record stats here
-                if self.record_stats:
-                    final_state = self.parent.state[:]
-                    final_solution = self.parent.solution[:]
-
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-                    actual_cost_to_goal = len(final_solution) - len(self.original_solution)
-                    stats = []
-
-                    for step in final_solution[len(self.original_solution):]:
-                        stats.append(self.ida_heuristic_all_costs())
-                        stats[-1]['state'] = self.state()
-                        stats[-1]['step'] = step
-                        stats[-1]['actual-cost'] = actual_cost_to_goal
-                        actual_cost_to_goal -= 1
-
-                        self.parent.rotate(step)
-
-                    #log.info("STATS:\n%s\n" % pformat(stats))
-                    #sys.exit(0)
-                    with open('%s.stats' % self.filename, 'a') as fh:
-                        for entry in stats:
-
-                            if self.filename == 'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt':
-                                fh.write("%s,%d,%d,%d,%d\n" % (
-                                    entry['state'],
-                                    entry['lookup-table-4x4x4-step11-UD-centers-stage.txt'],
-                                    entry['lookup-table-4x4x4-step12-LR-centers-stage.txt'],
-                                    entry['lookup-table-4x4x4-step13-FB-centers-stage.txt'],
-                                    entry['actual-cost']))
-
-                            elif self.filename == 'lookup-table-4x4x4-step70-tsai-phase3.txt':
-                                fh.write("%s,%d,%d,%d\n" % (
-                                    entry['state'],
-                                    entry['lookup-table-4x4x4-step71-phase3-edges-tsai.txt'],
-                                    entry['lookup-table-4x4x4-step72-phase3-centers-tsai.txt'],
-                                    entry['actual-cost']))
-
-                    self.parent.state = final_state[:]
-                    self.parent.solution = final_solution[:]
-
-                log.info("%s: IDA found match %d steps in, %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
-                         (self, len(steps_to_here), ' '.join(steps_to_here), f_cost, cost_to_here, cost_to_goal))
-                return True
+        if self.ida_search_complete(state, steps_to_here):
+            log.info("%s: IDA found match %d steps in, %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
+                     (self, len(steps_to_here), ' '.join(steps_to_here), f_cost, cost_to_here, cost_to_goal))
+            return True
 
         # ==============
         # Keep Searching
@@ -3036,6 +2755,7 @@ class LookupTableIDA(LookupTable):
         if f_cost > threshold:
             return False
 
+        # TODO what if the state has been explored but at a shorter cost?  That should count too
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
         if (cost_to_here, state) in self.explored:
@@ -3145,33 +2865,6 @@ class LookupTableIDA(LookupTable):
         # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
         # - call ida_solve() again but with a near infinite max_ida_threshold...99 is close enough to infinity for IDA purposes
         log.warning("%s: could not find a solution via IDA within %d steps...will 'solve' a prune table and try again" % (self, max_ida_threshold))
-
-        # Uncomment to see output for binary search performance
-        '''
-        for pt in self.prune_tables:
-
-            # Avoid divide by 0
-            if pt.binary_search_calls == 0:
-                pt.binary_search_calls = 1
-
-            # Avoid divide by 0
-            if pt.seek_calls == 0:
-                pt.seek_calls = 1
-
-            log.warning("%s: %d binary search calls, %d seek calls, %d avg seeks per search, %d total first-to-last delta, %d avg first-to-last delta" %
-                (pt, pt.binary_search_calls, pt.seek_calls, int(pt.seek_calls/pt.binary_search_calls), pt.total_first_last_delta, int(pt.total_first_last_delta/pt.seek_calls)))
-
-        # Avoid divide by 0
-        if self.binary_search_calls == 0:
-            self.binary_search_calls = 1
-
-        # Avoid divide by 0
-        if self.seek_calls == 0:
-            self.seek_calls = 1
-
-        log.warning("%s: %d binary search calls, %d seek calls, %d avg seeks per search, %d total first-to-last delta, %d avg first-to-last delta" %
-                (self, self.binary_search_calls, self.seek_calls, int(self.seek_calls/self.binary_search_calls), self.total_first_last_delta, int(self.total_first_last_delta/self.seek_calls)))
-        '''
 
         self.parent.state = self.original_state[:]
         self.parent.solution = self.original_solution[:]

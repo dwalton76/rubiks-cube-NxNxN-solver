@@ -598,8 +598,8 @@ def get_444_tsai_phase2(parent_state, orient_edges):
         'F' : 'F',
         'R' : 'R',
         'B' : 'F',
-        'D' : 'x',
-        'U' : 'x',
+        'D' : 'U',
+        'U' : 'U',
     }
 
     return ''.join ([

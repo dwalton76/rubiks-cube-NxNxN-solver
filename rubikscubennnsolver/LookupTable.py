@@ -2390,8 +2390,8 @@ class LookupTable(object):
         log.info("%s: start preload_cache()" % self)
         self.fh_txt.seek(0)
 
-        for line in self.fh_txt:
-            (state, steps) = line.rstrip().split(':')
+        for line in self.fh_txt.readlines():
+            (state, steps) = line.split(':')
             self.cache[state] = steps.split()
         self.fh_txt.seek(0)
         log.info("%s: end preload_cache()" % self)
@@ -2726,21 +2726,12 @@ class LookupTableIDA(LookupTable):
         """
         https://algorithmsinsight.wordpress.com/graph-theory-2/ida-star-algorithm-in-general/
         """
+        self.ida_count += 1
+
+        # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
         cost_to_here = len(steps_to_here)
         cost_to_goal = self.ida_heuristic()
         f_cost = cost_to_here + cost_to_goal
-        self.ida_count += 1
-
-        # This looks a little odd because the cube may be in a state where we
-        # find a hit in our lookup table and we could execute the steps
-        # per the table and be done with our IDA search.
-        #
-        # That could cause us to return a longer solution but with the benefit
-        # of the searching being faster....I am torn on whether to return False
-        # here or not.
-        # TODO retest this
-        if f_cost > threshold:
-            return False
 
         state = self.state()
 
@@ -2755,7 +2746,6 @@ class LookupTableIDA(LookupTable):
         if f_cost > threshold:
             return False
 
-        # TODO what if the state has been explored but at a shorter cost?  That should count too
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
         if (cost_to_here, state) in self.explored:

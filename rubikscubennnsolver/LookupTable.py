@@ -717,7 +717,7 @@ low_edges_444 = ((2, 3, 66),  # upper
                  (3, 12, 50),
                  (0, 14, 34),
                  (9, 21, 72), # left
-                 (9, 28, 41),
+                 (8, 28, 41),
                  (11, 53, 40), # right
                  (10, 60, 73),
                  (6, 83, 47), # down
@@ -730,30 +730,30 @@ def edges_high_low_recolor_444(state):
     Look at all of the high edges and find the low edge for each.
     Return a string that represents where all the low edge siblings live in relation to their high edge counterpart.
     """
-    assert len(state) == 97, "Invalid state %s, len is %d" % (state, len(state))
+    #assert len(state) == 97, "Invalid state %s, len is %d" % (state, len(state))
     low_edge_map = {}
 
     for (low_edge_index, square_index, partner_index) in low_edges_444:
         square_value = state[square_index]
         partner_value = state[partner_index]
-        assert square_value != partner_value, "both squares are %s" % square_value
+        #assert square_value != partner_value, "both squares are %s" % square_value
         wing_str = ''.join(sorted([square_value, partner_value]))
         low_edge_index = str(hex(low_edge_index))[2:]
         state[square_index] = low_edge_index
         state[partner_index] = low_edge_index
 
-        assert wing_str not in low_edge_map, "We have two %s wings, one at high_index %s %s and one at high_index %s (%d, %d), state %s" %\
-            (wing_str,
-             low_edge_map[wing_str],
-             pformat(low_edges_444[int(low_edge_map[wing_str])]),
-             low_edge_index,
-             square_index, partner_index,
-             ''.join(state[1:]))
+        #assert wing_str not in low_edge_map, "We have two %s wings, one at high_index %s %s and one at high_index %s (%d, %d), state %s" %\
+        #    (wing_str,
+        #     low_edge_map[wing_str],
+        #     pformat(low_edges_444[int(low_edge_map[wing_str])]),
+        #     low_edge_index,
+        #     square_index, partner_index,
+        #     ''.join(state[1:]))
 
         # save low_edge_index in hex and chop the leading 0x via [2:]
         low_edge_map[wing_str] = low_edge_index
 
-    assert len(low_edge_map.keys()) == 12, "Invalid low_edge_map\n%s\n" % pformat(low_edge_map)
+    #assert len(low_edge_map.keys()) == 12, "Invalid low_edge_map\n%s\n" % pformat(low_edge_map)
 
     for (high_edge_index, square_index, partner_index) in high_edges_444:
         square_value = state[square_index]
@@ -2295,9 +2295,16 @@ class LookupTable(object):
                     log.info("Downloading table via 'wget %s'" % url)
                     subprocess.call(['wget', url])
 
+                    # Download part-ac
+                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-ac" %\
+                        (self.parent.size, self.parent.size, self.parent.size)
+                    log.info("Downloading table via 'wget %s'" % url)
+                    subprocess.call(['wget', url])
+
                     subprocess.call('cat lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-* > lookup-table-4x4x4-step70-tsai-phase3.txt.gz', shell=True)
                     os.unlink('lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-aa')
                     os.unlink('lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-ab')
+                    os.unlink('lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-ac')
 
                 elif self.filename_gz == 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz':
 
@@ -2777,7 +2784,7 @@ class LookupTableIDA(LookupTable):
         self.parent.state = prev_state[:]
         return False
 
-    def solve(self, max_ida_threshold=99):
+    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
         """
         The goal is to find a sequence of moves that will put the cube in a state that is
         in our lookup table self.filename
@@ -2830,8 +2837,11 @@ class LookupTableIDA(LookupTable):
         else:
             raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
 
-        min_ida_threshold = self.ida_heuristic()
-        log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+        if min_ida_threshold is None:
+            min_ida_threshold = self.ida_heuristic()
+        # dwalton should be able to return early here if self.ida_heuristic() is greater than min_ida_threshold
+
+        log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold))
 
         for threshold in range(min_ida_threshold, max_ida_threshold+1):
             steps_to_here = []
@@ -2854,9 +2864,9 @@ class LookupTableIDA(LookupTable):
         # The only time we will get here is when max_ida_threshold is a low number.  It will be up to the caller to:
         # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
         # - call ida_solve() again but with a near infinite max_ida_threshold...99 is close enough to infinity for IDA purposes
-        log.warning("%s: could not find a solution via IDA within %d steps...will 'solve' a prune table and try again" % (self, max_ida_threshold))
+        log.warning("%s: could not find a solution via IDA with max threshold of %d " % (self, max_ida_threshold))
 
         self.parent.state = self.original_state[:]
         self.parent.solution = self.original_solution[:]
 
-        raise NoIDASolution("%s FAILED for state %s" % (self, self.state()))
+        raise NoIDASolution("%s FAILED with threshold %d" % (self, max_ida_threshold))

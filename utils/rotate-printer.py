@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-build_rotate_xxx_c = True
+build_rotate_xxx_c = False
 
 
 if build_rotate_xxx_c:
@@ -97,6 +97,9 @@ for (size, solved_state) in (
 
     else:
         raise Exception("Add support for size %s" % size)
+
+    steps = list(steps)
+    steps.extend(["x", "x'", "y", "y'", "z", "z'"])
 
     if build_rotate_xxx_c:
         print("void")

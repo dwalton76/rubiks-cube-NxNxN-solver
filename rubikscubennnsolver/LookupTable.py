@@ -678,6 +678,47 @@ def get_444_tsai_phase2(parent_state, orient_edges):
     ])
 
 
+def get_444_tsai_phase2_centers(parent_state):
+    """
+    444-tsai-phase2-centers
+    """
+    babel = {
+        'L' : 'L',
+        'F' : 'F',
+        'R' : 'R',
+        'B' : 'F',
+        'D' : 'U',
+        'U' : 'U',
+    }
+
+    return ''.join ([
+        babel[parent_state[6]],
+        babel[parent_state[7]],
+        babel[parent_state[10]],
+        babel[parent_state[11]],
+        babel[parent_state[22]],
+        babel[parent_state[23]],
+        babel[parent_state[26]],
+        babel[parent_state[27]],
+        babel[parent_state[38]],
+        babel[parent_state[39]],
+        babel[parent_state[42]],
+        babel[parent_state[43]],
+        babel[parent_state[54]],
+        babel[parent_state[55]],
+        babel[parent_state[58]],
+        babel[parent_state[59]],
+        babel[parent_state[70]],
+        babel[parent_state[71]],
+        babel[parent_state[74]],
+        babel[parent_state[75]],
+        babel[parent_state[86]],
+        babel[parent_state[87]],
+        babel[parent_state[90]],
+        babel[parent_state[91]],
+    ])
+
+
 symmetry_rotations_tsai_phase3_444 =\
     ("",
      "y y",
@@ -2190,6 +2231,7 @@ state_functions = {
     '444-ULFRBD-centers-stage' : get_444_ULFRBD_centers_stage,
     '444-ULFRBD-centers-solve' : get_444_ULFRBD_centers_solve,
     '444-tsai-phase2' : get_444_tsai_phase2,
+    '444-tsai-phase2-centers' : get_444_tsai_phase2_centers,
     '444-tsai-phase3' : get_444_tsai_phase3,
     '444-phase3-edges' : get_444_phase3_edges,
     '444-edges' : get_444_edges,

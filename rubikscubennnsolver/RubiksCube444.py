@@ -516,7 +516,7 @@ class RubiksCube444(RubiksCube):
             Total: 12870 entries
             '''
             self.lt_tsai_phase2_ud_centers = LookupTable(self,
-                                                         'lookup-table-4x4x4-step61-ud-centers.txt',
+                                                         'lookup-table-4x4x4-step63-ud-centers.txt',
                                                          '444-UD-centers-stage',
                                                          'f0000f',
                                                          True, # state hex
@@ -550,18 +550,68 @@ class RubiksCube444(RubiksCube):
                                                     False, # state hex
                                                     linecount=70)
 
+            '''
+            lookup-table-4x4x4-step61-centers.txt
+            =====================================
+            1 steps has 46 entries (0 percent, 0.00x previous step)
+            2 steps has 384 entries (0 percent, 8.35x previous step)
+            3 steps has 3354 entries (0 percent, 8.73x previous step)
+            4 steps has 22324 entries (2 percent, 6.66x previous step)
+            5 steps has 113276 entries (12 percent, 5.07x previous step)
+            6 steps has 338860 entries (37 percent, 2.99x previous step)
+            7 steps has 388352 entries (43 percent, 1.15x previous step)
+            8 steps has 34048 entries (3 percent, 0.09x previous step)
+            9 steps has 256 entries (0 percent, 0.01x previous step)
+
+            Total: 900900 entries
+            '''
+            self.lt_tsai_phase2_centers = LookupTable(self,
+                                                      'lookup-table-4x4x4-step61-centers.txt',
+                                                      '444-tsai-phase2-centers',
+                                                      'UUUULLLLFFFFRRRRFFFFUUUU',
+                                                      False, # state hex
+                                                      linecount=900900)
+
+            '''
+            This is only for table1...the other 11 are still building
+
+            lookup-table-4x4x4-step60.txt
+            =============================
+            1 steps has 9 entries (0 percent, 0.00x previous step)
+            2 steps has 107 entries (0 percent, 11.89x previous step)
+            3 steps has 1624 entries (0 percent, 15.18x previous step)
+            4 steps has 24835 entries (0 percent, 15.29x previous step)
+            5 steps has 382402 entries (6 percent, 15.40x previous step)
+            6 steps has 5926235 entries (93 percent, 15.50x previous step)
+
+            Total: 6335212 entries
+            '''
             self.lt_tsai_phase2 = LookupTsaiPhase2IDA(self,
-                                                      'lookup-table-4x4x4-step60-dummy.txt',
+                                                      'lookup-table-4x4x4-step60.txt',
                                                       '444-tsai-phase2',
-                                                      'TBD',
+
+                                                      # See the bottom of this file for notes on how the 12 state_target
+                                                      # strings were constructed
+                                                      ('UDDUUUUUUDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDRRUURRDUDDUUFFDDFFUUDDUDLLUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDLLUURRDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDLLUURRDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDRRUULLDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDRRUULLDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDRLUURLDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDRLUURLDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDLRUULRDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDLRUULRDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDRLUULRDUDDUUFFDDFFUUDDUDLRUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+                                                       'UDDUUUUUUDDUDUDLRUURLDUDDUUFFDDFFUUDDUDRLUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU'),
+
                                                       False, # state_hex
                                                       moves_4x4x4,
                                                       ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"), # illegal_moves
 
                                                       # prune tables
-                                                      (self.lt_tsai_phase2_ud_centers,
-                                                       self.lt_tsai_phase2_lr_centers),
-                                                      linecount=0)
+                                                      (self.lt_tsai_phase2_centers,),
+                                                      linecount=6335212)
 
         else:
             raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
@@ -971,7 +1021,6 @@ class RubiksCube444(RubiksCube):
         #          12   66
         len_wings_that_must_be_flipped = len(wings_that_must_be_flipped)
 
-        # dwalton here now
         # Testing this still
         #'''
         wings_that_may_be_flipped = all_wing_str - wings_that_must_be_flipped
@@ -1208,14 +1257,12 @@ class RubiksCube444(RubiksCube):
             log.info("")
 
             # Testing the phase2 prune tables
-            #self.lt_tsai_phase2_ud_centers.solve()
-            #self.lt_tsai_phase2_lr_centers.solve()
-            #self.lt_tsai_phase2_edges.solve()
+            #self.lt_tsai_phase2_centers.solve()
             #self.print_cube()
+            #log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             #sys.exit(0)
 
             log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.lt_tsai_phase2.avoid_pll = True
             self.lt_tsai_phase2.solve()
 
             # Force TPR solution
@@ -1233,6 +1280,7 @@ class RubiksCube444(RubiksCube):
             log.info('kociemba string: %s' % kociemba_string)
             log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
+            # dwalton
             sys.exit(0)
 
             # Testing the phase3 prune tables
@@ -1958,13 +2006,19 @@ class RubiksCube444(RubiksCube):
 
 class LookupTsaiPhase2IDA(LookupTableIDA):
 
+    # dwalton here now
     def ida_search_complete(self, state, steps_to_here):
+        return LookupTableIDA.ida_search_complete(self, state, steps_to_here)
+        # Are the centers in a state that is on the step60 table?  We need to take
+        # the step60 table and build a 'centers only' version of it.
+        #
+        # If we find that our centers are in the step60 table somewhere then we need
+        # to try all 2048 edge orientations against the cube and see if any of them
+        # result in a hit in the lookup table.
+        # This will require us to search for 2048 states in the lookup table so dust
+        # of the old code where we could search for a list of items.
 
-        # Attempt at a small speedup...come back to this later
-        #for side in (self.parent.sideU, self.parent.sideD):
-        #    for square_index in side.center_pos:
-        #        if self.parent.state[square_index] not in ('U', 'D'):
-        #            return False
+        '''
         cost = self.ida_heuristic()
 
         if cost == 0 and self.parent.tsai_phase2_edges_oriented():
@@ -1981,6 +2035,7 @@ class LookupTsaiPhase2IDA(LookupTableIDA):
             return True
         else:
             return False
+        '''
 
 
 tsai_phase2_orient_edges = {

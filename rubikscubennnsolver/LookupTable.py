@@ -32,6 +32,33 @@ class NoIDASolution(Exception):
     pass
 
 
+def get_first_last_for_binary_search(line_number_to_state, state_to_find, linecount):
+    first = 0
+    last = linecount - 1
+    to_delete = []
+
+    for linenumber in sorted(line_number_to_state.keys()):
+        state = line_number_to_state[linenumber]
+
+        if state < state_to_find:
+            first = linenumber
+            to_delete.append(linenumber)
+
+        elif state == state_to_find:
+            first = linenumber
+            last = linenumber
+            break
+
+        elif state > state_to_find:
+            last = linenumber
+            break
+
+    for linenumber in to_delete:
+        del line_number_to_state[linenumber]
+
+    return (line_number_to_state, first, last)
+
+
 def pretty_time(delta):
     delta = str(delta)
 
@@ -2470,6 +2497,46 @@ class LookupTable(object):
                     first = midpoint+1
 
         return None
+
+    def steps_for_list_of_states(self, list_of_states):
+        list_of_states = sorted(list_of_states)
+        results = []
+        line_number_to_state = {}
+
+        for state_to_find in list_of_states:
+            #first = 0
+            #last = self.linecount - 1
+            (line_number_to_state, first, last) = get_first_last_for_binary_search(line_number_to_state, state_to_find, self.linecount)
+            #log.info("%s: first %d, last %d, state_to_find %s" % (self, first, last, state_to_find))
+
+            while first <= last:
+                midpoint = int((first + last)/2)
+                self.fh_txt.seek(midpoint * self.width)
+                line = self.fh_txt.readline().rstrip()
+
+                # dwalton here now
+                #log.info("%s: first %d, last %d, midpoint %d, width %d, state_to_find %s, line %s" % (self, first, last, midpoint, self.width, state_to_find, line))
+
+                try:
+                    (state, steps) = line.split(':')
+                except Exception:
+                    log.warning("%s: midpoint %d, width %d, state_to_find %s, line %s" % (self, midpoint, self.width, state_to_find, line))
+                    raise
+
+                line_number_to_state[midpoint] = state
+
+                if state == state_to_find:
+                    results.append((state_to_find, steps.split()))
+                    break
+                else:
+
+                    if state_to_find < state:
+                        last = midpoint-1
+                    else:
+                        first = midpoint+1
+
+        return results
+
 
     def steps(self, state_to_find=None):
         """

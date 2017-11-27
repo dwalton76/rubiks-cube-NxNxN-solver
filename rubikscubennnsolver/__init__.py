@@ -4470,3 +4470,129 @@ div#page_holder {
                 self.rotate_y()
 
         return True
+
+    def transform_x(self):
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            for square_index in range(side.min_pos, side.max_pos+1):
+                if self.state[square_index] == 'U':
+                    self.state[square_index] = 'B'
+
+                elif self.state[square_index] == 'L':
+                    pass
+
+                elif self.state[square_index] == 'F':
+                    self.state[square_index] = 'U'
+
+                elif self.state[square_index] == 'R':
+                    pass
+
+                elif self.state[square_index] == 'B':
+                    self.state[square_index] = 'D'
+
+                elif self.state[square_index] == 'D':
+                    self.state[square_index] = 'F'
+
+    def transform_x_prime(self):
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            for square_index in range(side.min_pos, side.max_pos+1):
+                if self.state[square_index] == 'U':
+                    self.state[square_index] = 'F'
+
+                elif self.state[square_index] == 'L':
+                    pass
+
+                elif self.state[square_index] == 'F':
+                    self.state[square_index] = 'D'
+
+                elif self.state[square_index] == 'R':
+                    pass
+
+                elif self.state[square_index] == 'B':
+                    self.state[square_index] = 'U'
+
+                elif self.state[square_index] == 'D':
+                    self.state[square_index] = 'B'
+
+    def transform_y(self):
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            for square_index in range(side.min_pos, side.max_pos+1):
+                if self.state[square_index] == 'U':
+                    pass
+
+                elif self.state[square_index] == 'L':
+                    self.state[square_index] = 'B'
+
+                elif self.state[square_index] == 'F':
+                    self.state[square_index] = 'L'
+
+                elif self.state[square_index] == 'R':
+                    self.state[square_index] = 'F'
+
+                elif self.state[square_index] == 'B':
+                    self.state[square_index] = 'R'
+
+                elif self.state[square_index] == 'D':
+                    pass
+
+    def transform_y_prime(self):
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            for square_index in range(side.min_pos, side.max_pos+1):
+                if self.state[square_index] == 'U':
+                    pass
+
+                elif self.state[square_index] == 'L':
+                    self.state[square_index] = 'F'
+
+                elif self.state[square_index] == 'F':
+                    self.state[square_index] = 'R'
+
+                elif self.state[square_index] == 'R':
+                    self.state[square_index] = 'B'
+
+                elif self.state[square_index] == 'B':
+                    self.state[square_index] = 'L'
+
+                elif self.state[square_index] == 'D':
+                    pass
+
+    def transform_z(self):
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            for square_index in range(side.min_pos, side.max_pos+1):
+                if self.state[square_index] == 'U':
+                    self.state[square_index] = 'R'
+
+                elif self.state[square_index] == 'L':
+                    self.state[square_index] = 'U'
+
+                elif self.state[square_index] == 'F':
+                    pass
+
+                elif self.state[square_index] == 'R':
+                    self.state[square_index] = 'D'
+
+                elif self.state[square_index] == 'B':
+                    pass
+
+                elif self.state[square_index] == 'D':
+                    self.state[square_index] = 'L'
+
+    def transform_z_prime(self):
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            for square_index in range(side.min_pos, side.max_pos+1):
+                if self.state[square_index] == 'U':
+                    self.state[square_index] = 'L'
+
+                elif self.state[square_index] == 'L':
+                    self.state[square_index] = 'D'
+
+                elif self.state[square_index] == 'F':
+                    pass
+
+                elif self.state[square_index] == 'R':
+                    self.state[square_index] = 'U'
+
+                elif self.state[square_index] == 'B':
+                    pass
+
+                elif self.state[square_index] == 'D':
+                    self.state[square_index] = 'R'

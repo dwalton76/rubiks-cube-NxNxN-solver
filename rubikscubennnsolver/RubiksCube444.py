@@ -1138,32 +1138,14 @@ class RubiksCube444(RubiksCube):
 
             # apply y rotate
             if force_TPR:
-                for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-                    for square_index in range(side.min_pos, side.max_pos+1):
-                        if self.state[square_index] == 'U':
-                            pass
-
-                        elif self.state[square_index] == 'L':
-                            self.state[square_index] = 'B'
-
-                        elif self.state[square_index] == 'F':
-                            self.state[square_index] = 'L'
-
-                        elif self.state[square_index] == 'R':
-                            self.state[square_index] = 'F'
-
-                        elif self.state[square_index] == 'B':
-                            self.state[square_index] = 'R'
-
-                        elif self.state[square_index] == 'D':
-                            pass
+                self.transform_y()
 
             # TODO:
             # - find 1000s of solutions for phase1
             # - find the phase1+phase2 solution that is the shortest
             # - for each phase1 solution do phase2 but with IDA threshold of 1, then 2, then 3, etc until
             #   we have a high enough IDA thresh that we find a phase2 solution
-            '''
+            #'''
             # save cube state
             original_state = self.state[:]
             original_solution = self.solution[:]
@@ -1172,49 +1154,71 @@ class RubiksCube444(RubiksCube):
             min_solution = None
             min_state = None
             min_edge_mapping = None
-            #min_upper_side_name = None
-            #min_front_side_name = None
             phase1_options = []
 
-            #for upper_side_name in ('U',):
             for upper_side_name in ('U', 'D', 'L', 'F', 'R', 'B'):
-                #for front_side_name in ('R',):
                 for front_side_name in ('F', 'R', 'B', 'L', 'U', 'D'):
+                    for transform in ("", "x", "x'", "y", "y'", "z", "z'"):
 
-                    if self.rotate_to_side(upper_side_name, front_side_name):
-                        self.lt_LR_centers_stage.solve()
-                        phase1_options.append((upper_side_name, front_side_name, self.state[:], self.solution[:]))
-                        self.state = original_state[:]
-                        self.solution = original_solution[:]
-
-            #for phase2_threshold in (7,):
-            for phase2_threshold in range(1,20):
-                for (upper_side_name, front_side_name, tmp_state, tmp_solution) in phase1_options:
-                    self.state = tmp_state[:]
-                    self.solution = tmp_solution[:]
-
-                    try:
-                        self.lt_tsai_phase2.solve(min_ida_threshold=phase2_threshold, max_ida_threshold=phase2_threshold)
-                        solution_len = self.get_solution_len_minus_rotates(self.solution)
-
-                        if min_solution_len is None or solution_len < min_solution_len:
-                            self.tsai_phase2_edges_oriented()
-                            min_solution_len = solution_len
-                            #min_upper_side_name = upper_side_name
-                            #min_front_side_name = min_front_side_name
-                            min_state = self.state[:]
-                            min_solution = self.solution[:]
-                            min_edge_mapping = copy(self.edge_mapping)
-                            #self.print_cube()
-                            #self.tsai_phase2_orient_edges_print()
-                            log.warning("%s: NEW MIN %d (%s, %s), IDA threshold %d\n\n" % (self, min_solution_len, upper_side_name, front_side_name, phase2_threshold))
-                            break
+                        if transform == "":
+                            pass
+                        elif transform == "x":
+                            self.transform_x()
+                        elif transform == "x'":
+                            self.transform_x_prime()
+                        elif transform == "y":
+                            self.transform_y()
+                        elif transform == "y'":
+                            self.transform_y_prime()
+                        elif transform == "z":
+                            self.transform_z()
+                        elif transform == "z'":
+                            self.transform_z_prime()
                         else:
-                            log.warning("%s: NOT NEW MIN, this one %d, min %d, IDA threshold %d\n\n" % (self, solution_len, min_solution_len, phase2_threshold))
-                    except NoIDASolution:
-                        pass
+                            raise Exception("Implement transform %s" % transform)
 
-                if min_solution_len is not None:
+                        if self.rotate_to_side(upper_side_name, front_side_name):
+                            self.lt_LR_centers_stage.solve()
+                            phase1_options.append((upper_side_name, front_side_name, transform, self.state[:], self.solution[:]))
+                            self.state = original_state[:]
+                            self.solution = original_solution[:]
+
+            for (upper_side_name, front_side_name, transform, tmp_state, tmp_solution) in phase1_options:
+                log.warning("%s %s %-2s - phase1 %d steps" % (upper_side_name, front_side_name, transform, self.get_solution_len_minus_rotates(tmp_solution)))
+
+            # dwalton here now
+            for (upper_side_name, front_side_name, transform, tmp_state, tmp_solution) in phase1_options:
+                self.state = tmp_state[:]
+                self.solution = tmp_solution[:]
+                self.edge_mapping = {}
+
+                if min_solution_len is None:
+                    max_ida_threshold = 99
+                else:
+                    phase1_solution_length = self.get_solution_len_minus_rotates(tmp_solution)
+                    max_ida_threshold = min_solution_len - phase1_solution_length - 1
+                    log.info("%s: max_ida_threshold (%d) = min_solution_len (%d) - phase1_solution_length (%d) - 1" %
+                        (self, max_ida_threshold, min_solution_len, phase1_solution_length))
+
+                try:
+                    self.lt_tsai_phase2.solve(max_ida_threshold=max_ida_threshold)
+                except NoIDASolution:
+                    continue
+
+                solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+                if min_solution_len is None or solution_len < min_solution_len:
+                    self.tsai_phase2_edges_oriented()
+                    min_solution_len = solution_len
+                    min_state = self.state[:]
+                    min_solution = self.solution[:]
+                    min_edge_mapping = copy(self.edge_mapping)
+                    log.warning("%s: NEW MIN %d (%s, %s %-2s)\n\n\n\n\n" % (self, min_solution_len, upper_side_name, front_side_name, transform))
+                else:
+                    log.warning("%s: NOT NEW MIN, this one %d, min %d\n\n\n\n\n" % (self, solution_len, min_solution_len))
+
+                # dwalton remove this...temp speedup while doing dev
+                if min_solution_len == 15:
                     break
 
             self.state = min_state[:]
@@ -1227,8 +1231,9 @@ class RubiksCube444(RubiksCube):
             log.info("%s: End of Phase1/2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
             #sys.exit(0)
-            '''
+            #'''
 
+            '''
             log.info("%s: Start of Phase1" % self)
 
             if force_TPR:
@@ -1288,6 +1293,7 @@ class RubiksCube444(RubiksCube):
             log.info('kociemba string: %s' % kociemba_string)
             log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
+            '''
 
             # Testing the phase3 prune tables
             #self.lt_tsai_phase3_edges_solve.solve()
@@ -2026,9 +2032,13 @@ class LookupTsaiPhase2IDA(LookupTableIDA):
             # If we find that our centers are in the step60 table somewhere then we need
             # to try all 2048 edge orientations against the cube and see if any of them
             # result in a hit in the lookup table.
-            # This will require us to search for 2048 states in the lookup table so dust
-            # of the old code where we could search for a list of items.
             for uu_dd_count in tsai_edge_mapping_combinations.keys():
+
+                # dwalton here now
+                # An attempt to speed up the searching...
+                #if uu_dd_count > 4:
+                #    continue
+
                 for edges_to_flip in tsai_edge_mapping_combinations[uu_dd_count]:
 
                     orient_edge_state = list(self.parent.tsai_phase2_orient_edges_state(edges_to_flip))
@@ -2083,10 +2093,10 @@ class LookupTsaiPhase2IDA(LookupTableIDA):
                 for step in steps:
                     self.parent.rotate(step)
 
-                # dwalton here now
                 # The edge parity must be even, else the edges will be in a state
                 # that is not in our phase3-edges lookup table
-                if self.parent.edge_swaps_even(False, None, False):
+                # if self.parent.edge_swaps_even(False, None, False):
+                if self.parent.lt_tsai_phase3_edges_solve.steps() is not None:
                     orient_edges_state = self.parent.tsai_phase2_orient_edges_state(self.parent.edge_mapping)
 
                     target_orient_edges_state = 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU'
@@ -2095,9 +2105,9 @@ class LookupTsaiPhase2IDA(LookupTableIDA):
                         self.parent.tsai_phase2_orient_edges_print()
                         raise SolveError("orient_edges_state is %s, should be %s" % (orient_edges_state, target_orient_edges_state))
 
-                    if self.parent.lt_tsai_phase3_edges_solve.steps() is None:
-                        self.parent.tsai_phase2_orient_edges_print()
-                        raise SolveError("edges are not in a state that is in our phase3-edges table")
+                    #if self.parent.lt_tsai_phase3_edges_solve.steps() is None:
+                    #    self.parent.tsai_phase2_orient_edges_print()
+                    #    raise SolveError("edges are not in a state that is in our phase3-edges table")
 
                     return True
 

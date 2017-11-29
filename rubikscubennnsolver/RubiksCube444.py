@@ -113,7 +113,6 @@ class RubiksCube444(RubiksCube):
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube.__init__(self, state, order, colormap, debug)
         self.avoid_pll = avoid_pll
-        self.edge_mapping = ()
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -507,12 +506,12 @@ class RubiksCube444(RubiksCube):
             =====================================
             1 steps has 46 entries (0 percent, 0.00x previous step)
             2 steps has 384 entries (0 percent, 8.35x previous step)
-            3 steps has 3,354 entries (0 percent, 8.73x previous step)
-            4 steps has 22,324 entries (2 percent, 6.66x previous step)
-            5 steps has 113,276 entries (12 percent, 5.07x previous step)
-            6 steps has 338,860 entries (37 percent, 2.99x previous step)
-            7 steps has 388,352 entries (43 percent, 1.15x previous step)
-            8 steps has 34,048 entries (3 percent, 0.09x previous step)
+            3 steps has 3354 entries (0 percent, 8.73x previous step)
+            4 steps has 22324 entries (2 percent, 6.66x previous step)
+            5 steps has 113276 entries (12 percent, 5.07x previous step)
+            6 steps has 338860 entries (37 percent, 2.99x previous step)
+            7 steps has 388352 entries (43 percent, 1.15x previous step)
+            8 steps has 34048 entries (3 percent, 0.09x previous step)
             9 steps has 256 entries (0 percent, 0.01x previous step)
 
             Total: 900900 entries
@@ -520,56 +519,33 @@ class RubiksCube444(RubiksCube):
             self.lt_tsai_phase2_centers = LookupTable(self,
                                                       'lookup-table-4x4x4-step61-centers.txt',
                                                       '444-tsai-phase2-centers',
-                                                      'UUUULLLLFFFFRRRRFFFFUUUU',
+                                                      ('UUUULLLLFFFFRRRRFFFFUUUU',
+                                                       'UUUURRRRFFFFLLLLFFFFUUUU',
+                                                       'UUUULLRRFFFFRRLLFFFFUUUU',
+                                                       'UUUULLRRFFFFLLRRFFFFUUUU',
+                                                       'UUUURRLLFFFFRRLLFFFFUUUU',
+                                                       'UUUURRLLFFFFLLRRFFFFUUUU',
+                                                       'UUUURLRLFFFFRLRLFFFFUUUU',
+                                                       'UUUURLRLFFFFLRLRFFFFUUUU',
+                                                       'UUUULRLRFFFFRLRLFFFFUUUU',
+                                                       'UUUULRLRFFFFLRLRFFFFUUUU',
+                                                       'UUUURLLRFFFFLRRLFFFFUUUU',
+                                                       'UUUULRRLFFFFRLLRFFFFUUUU'),
                                                       False, # state hex
-                                                      linecount=900900)
+                                                      linecount=1801800)
 
-
-            self.lt_tsai_phase2_step60_centers_only = LookupTable(self,
-                                                                  'lookup-table-4x4x4-step60-centers-only.txt',
-                                                                  '444-tsai-phase2-centers',
-                                                                  'TBD',
-                                                                  False, # state hex
-                                                                  linecount=478244)
-
-            '''
-            lookup-table-4x4x4-step60.txt
-            =============================
-            1 steps has 60 entries (0 percent, 0.00x previous step)
-            2 steps has 744 entries (0 percent, 12.40x previous step)
-            3 steps has 11,224 entries (0 percent, 15.09x previous step)
-            4 steps has 158,608 entries (0 percent, 14.13x previous step)
-            5 steps has 2,349,908 entries (6 percent, 14.82x previous step)
-            6 steps has 34,705,174 entries (93 percent, 14.77x previous step)
-
-            Total: 37,225,718 entries
-            '''
             self.lt_tsai_phase2 = LookupTsaiPhase2IDA(self,
-                                                      'lookup-table-4x4x4-step60.txt',
+                                                      'lookup-table-4x4x4-step60-dummy.txt',
                                                       '444-tsai-phase2',
-
-                                                      # See the bottom of this file for notes on how the 12 state_target
-                                                      # strings were constructed
-                                                      ('UDDUUUUUUDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDRRUURRDUDDUUFFDDFFUUDDUDLLUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDLLUURRDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDLLUURRDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDRRUULLDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDRRUULLDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDRLUURLDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDRLUURLDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDLRUULRDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDLRUULRDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDRLUULRDUDDUUFFDDFFUUDDUDLRUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
-                                                       'UDDUUUUUUDDUDUDLRUURLDUDDUUFFDDFFUUDDUDRLUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU'),
-
+                                                      'TBD',
                                                       False, # state_hex
                                                       moves_4x4x4,
-                                                      ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"), # illegal_moves
+                                                      ("Fw", "Fw'", "Bw", "Bw'",
+                                                       "Uw", "Uw'", "Dw", "Dw'"), # illegal_moves
 
                                                       # prune tables
                                                       (self.lt_tsai_phase2_centers,),
-                                                      linecount=37225718)
+                                                      linecount=0)
 
         else:
             raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
@@ -839,245 +815,6 @@ class RubiksCube444(RubiksCube):
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-    def tsai_phase2_edges_oriented(self):
-        """
-        Return True if the edges are oriented correctly
-        """
-
-        # Walk the wings we care about and note the high/low state for each
-        original_high_low_state = []
-        square_index_to_high_low_state = {}
-        state = self.state
-
-        all_wing_str = set(('UB', 'UL', 'UR', 'UF',
-                            'LB', 'LF',
-                            'RB', 'RF',
-                            'DB', 'DL', 'DR', 'DF'))
-
-        # The following wing_strs were used to build
-        #   UB
-        #   UL
-        #   UR
-        #   UF
-        #   LB
-        #   LF
-        #   RB
-        #   RF
-        #   DB
-        #   DL
-        #   DR
-        #   DF
-        wing_str_map = {
-            'UB' : 'UB',
-            'BU' : 'UB',
-            'UL' : 'UL',
-            'LU' : 'UL',
-            'UR' : 'UR',
-            'RU' : 'UR',
-            'UF' : 'UF',
-            'FU' : 'UF',
-            'LB' : 'LB',
-            'BL' : 'LB',
-            'LF' : 'LF',
-            'FL' : 'LF',
-            'RB' : 'RB',
-            'BR' : 'RB',
-            'RF' : 'RF',
-            'FR' : 'RF',
-            'DB' : 'DB',
-            'BD' : 'DB',
-            'DL' : 'DL',
-            'LD' : 'DL',
-            'DR' : 'DR',
-            'RD' : 'DR',
-            'DF' : 'DF',
-            'FD' : 'DF',
-        }
-
-        # 12-23 are high edges, make these U (1)
-        # 0-11 are low edges, make these D (6)
-        # https://github.com/cs0x7f/TPR-4x4x4-Solver/blob/master/src/FullCube.java
-        high_edges_444 = ((2, 67),  # upper
-                          (9, 19),
-                          (8, 51),
-                          (15, 35),
-                          (25, 76), # left
-                          (24, 37),
-                          (57, 44), # right
-                          (56, 69),
-                          (82, 46), # down
-                          (89, 30),
-                          (88, 62),
-                          (95, 78))
-
-        low_edges_444 = ((3, 66),  # upper
-                         (5, 18),
-                         (12, 50),
-                         (14, 34),
-                         (21, 72), # left
-                         (28, 41),
-                         (53, 40), # right
-                         (60, 73),
-                         (83, 47), # down
-                         (85, 31),
-                         (92, 63),
-                         (94, 79))
-
-        for (x, y) in ((2, 67), (3, 66), (5, 18), (8, 51), (9, 19), (12, 50), (14, 34), (15, 35),
-                       (21, 72), (24, 37), (25, 76), (28, 41),
-                       (53, 40), (56, 69), (57, 44), (60, 73),
-                       (82, 46), (83, 47), (85, 31), (88, 62), (89, 30), (92, 63), (94, 79), (95, 78)):
-            state_x = state[x]
-            state_y = state[y]
-            wing_str = wing_str_map[''.join((state_x, state_y))]
-            high_low_state = tsai_phase2_orient_edges[(x, y, state_x, state_y)]
-            original_high_low_state.append((wing_str, high_low_state))
-
-            square_index_to_high_low_state[x] = high_low_state
-            square_index_to_high_low_state[y] = high_low_state
-
-
-        # If an odd number of edges are flipped we can go ahead and return False
-        uu_dd_count = 0
-        wings_that_must_be_flipped = set()
-
-        #for (x, y) in ((2,3), (5,9), (8,12), (14,15),
-        #               (21,25), (24,28),
-        #               (53,57), (56,60),
-        #               (82,83), (85,89), (88,92), (94,95)):
-        #    if square_index_to_high_low_state[x] == square_index_to_high_low_state[y]:
-        #        uu_dd_count += 1
-        for ((x1, y1), (x2, y2)) in (
-            ((2, 67), (3, 66)),
-            ((5, 18), (9, 19)),
-            ((8, 51), (12, 50)),
-            ((14, 34), (15, 35)),
-            ((21, 72), (25, 76)),
-            ((24, 37), (28, 41)),
-            ((53, 40), (57, 44)),
-            ((56, 69), (60, 73)),
-            ((82, 46), (83, 47)),
-            ((85, 31), (89, 30)),
-            ((88, 62), (92, 63)),
-            ((94, 79), (95, 78))):
-
-            if square_index_to_high_low_state[x1] == square_index_to_high_low_state[x2]:
-                state_x1 = state[x1]
-                state_y1 = state[y1]
-                wing_str1 = wing_str_map[''.join((state_x1, state_y1))]
-
-                state_x2 = state[x2]
-                state_y2 = state[y2]
-                wing_str2 = wing_str_map[''.join((state_x2, state_y2))]
-
-                if square_index_to_high_low_state[x1] == 'U' and (x1, y1) not in high_edges_444:
-                    wings_that_must_be_flipped.add(wing_str1)
-                elif square_index_to_high_low_state[x1] == 'D' and (x1, y1) not in low_edges_444:
-                    wings_that_must_be_flipped.add(wing_str1)
-                elif square_index_to_high_low_state[x2] == 'U' and (x2, y2) not in high_edges_444:
-                    wings_that_must_be_flipped.add(wing_str2)
-                elif square_index_to_high_low_state[x2] == 'D' and (x2, y2) not in low_edges_444:
-                    wings_that_must_be_flipped.add(wing_str2)
-
-                uu_dd_count += 1
-
-        if uu_dd_count % 2:
-            return False
-
-        HIGH_LOW_TARGET = list('UDDUUDDUDUUDDUUDUDDUUDDU')
-
-        # uu_dd_count is how many edges we have where two UU wings are side-by-side
-        # or two UU wings are side-by-side. If there are 6 edges in this state then
-        # we know we only need to look at the tsai_edge_mapping_combinations entries
-        # that flip 6 edges.
-        #
-        # uu_dd_count  permutations
-        # ===========  =============
-        #           2   66
-        #           4  494
-        #           6  925
-        #           8  494
-        #          10   66
-        #          12   66
-        len_wings_that_must_be_flipped = len(wings_that_must_be_flipped)
-
-        # Testing this still
-        #'''
-        wings_that_may_be_flipped = all_wing_str - wings_that_must_be_flipped
-        num_mystery_wing_str = uu_dd_count - len_wings_that_must_be_flipped
-        #log.info("uu_dd_count %s, len_wings_that_must_be_flipped %d, num_mystery_wing_str %d" % (uu_dd_count, len_wings_that_must_be_flipped, num_mystery_wing_str))
-        #log.info("wings_that_must_be_flipped %s" % pformat(wings_that_must_be_flipped))
-        #log.info("wings_that_may_be_flipped %s" % pformat(wings_that_may_be_flipped))
-
-        for mystery_wing_str in itertools.combinations(wings_that_may_be_flipped, num_mystery_wing_str):
-            all_match = True
-            edges_to_flip = wings_that_must_be_flipped.union(mystery_wing_str)
-            #log.info("mystery_wing_str %s" % pformat(mystery_wing_str))
-
-            for (index, (wing_str, high_low)) in enumerate(original_high_low_state):
-
-                if wing_str in edges_to_flip:
-                    if high_low == 'U':
-                        high_low = 'D'
-                    else:
-                        high_low = 'U'
-
-                if high_low != HIGH_LOW_TARGET[index]:
-                    all_match = False
-                    break
-
-            if all_match:
-                self.print_cube()
-                self.tsai_phase2_orient_edges_print()
-                #log.info("uu_dd_count %d return TRUE for edges_to_flip %s, wings_that_must_be_flipped %s" % (uu_dd_count, pformat(edges_to_flip), pformat(wings_that_must_be_flipped)))
-                self.edge_mapping = edges_to_flip
-                return True
-        #'''
-
-        '''
-        # This I know works
-        bad_edges_to_flip = set()
-
-        for edges_to_flip in tsai_edge_mapping_combinations[uu_dd_count]:
-
-            #overlap = edges_to_flip.intersection(wings_that_must_be_flipped)
-            #len_overlap = len(overlap)
-
-            #log.info("len_overlap %d, len_wings_that_must_be_flipped %d" % (len_overlap, len_wings_that_must_be_flipped))
-            #if len_overlap != len_wings_that_must_be_flipped:
-            #    continue
-
-            #if edges_to_flip.intersection(bad_edges_to_flip):
-            #    continue
-            all_match = True
-
-            for (index, (wing_str, high_low)) in enumerate(original_high_low_state):
-                if wing_str in edges_to_flip:
-                    if high_low == 'U':
-                        high_low = 'D'
-                    else:
-                        high_low = 'U'
-
-                    if high_low != HIGH_LOW_TARGET[index]:
-                        #bad_edges_to_flip.add(wing_str)
-                        #log.info("uu_dd_count %d, evaled %d/%d (EARLY)" % (uu_dd_count, evaled, eval_max))
-                        all_match = False
-                        break
-                else:
-                    if high_low != HIGH_LOW_TARGET[index]:
-                        #log.info("uu_dd_count %d, evaled %d/%d (EARLY)" % (uu_dd_count, evaled, eval_max))
-                        all_match = False
-                        break
-            if all_match:
-                self.print_cube()
-                self.tsai_phase2_orient_edges_print()
-                log.info("uu_dd_count %d return TRUE for edges_to_flip %s, wings_that_must_be_flipped %s" % (uu_dd_count, pformat(edges_to_flip), pformat(wings_that_must_be_flipped)))
-                self.edge_mapping = edges_to_flip
-                return True
-        '''
-
-        return False
-
     def group_centers_guts(self):
         self.lt_init()
 
@@ -1129,32 +866,18 @@ class RubiksCube444(RubiksCube):
         # The tsai will solve the centers and pair the edges
         elif self.cpu_mode == 'tsai':
 
-            # Force TPR solution...for comparing our solution for solving
-            # DUFFRDLRDLBUDLBULLBLFFUBURFFURFURDUBUDLLFDLRFDLRRRDBBBDDUFULLBFFBBBBLBBRFFUDFFUDDDLLDRRBRRUURRLU
-            # vs. the following solution produce by the TPR solver:
-            #
-            # https://alg.cubing.net/?alg=Rw-_Fw_D2_Rw_Uw_Fw2_Uw_%2F%2F_end_of_phase1%0AR_B_Rw-_B-_U-_Rw_%2F%2Fend_of_phase2%0AU-_B-_D2_L2_B-_Rw2_D_F-_Uw2_Fw2_D-_F_Rw2_y_z2_%2F%2Fend_of_phase3&puzzle=4x4x4&setup=D2-_R-_D_2Dw-_R-_B2-_R_D-_2Dw_R-_B2-_R2-_D_2Dw_R2-_D_2Dw-_R2-_D_2Dw-_R2-_D2-_2Dw2-_R2-_D2-_2Dw2-_U_R2-_U-_L2-_U_B2-_D-_U2-_R2-_U-_F_D_L-_B_L2-_U2-_B-_D-_R_D2-_U_Dw_R-_B_U-_R_B-_Dw-_B-_Uw_F_D2-_F-_L-_D2-_L_Uw-_F_U-_R-_Rw_F-_U2-_L-_R-_F_U2-_Rw-_B_U2-_F-_R_B-_D2-_Dw2-_F_Rw2-_F_L_Dw2-_L2-_Bw2-_U_Uw_Bw2-_B_Dw-_L_B_Bw_U_Lw-_Dw-_Lw-_Dw2-
-            force_TPR = False
-
-            # apply y rotate
-            if force_TPR:
-                self.transform_y()
-
             # TODO:
             # - find 1000s of solutions for phase1
             # - find the phase1+phase2 solution that is the shortest
             # - for each phase1 solution do phase2 but with IDA threshold of 1, then 2, then 3, etc until
             #   we have a high enough IDA thresh that we find a phase2 solution
-            #'''
+
             # save cube state
             original_state = self.state[:]
             original_solution = self.solution[:]
 
-            min_solution_len = None
-            min_solution = None
-            min_state = None
-            min_edge_mapping = None
             phase1_options = []
+            phase1_options_states = []
 
             for upper_side_name in ('U', 'D', 'L', 'F', 'R', 'B'):
                 for front_side_name in ('F', 'R', 'B', 'L', 'U', 'D'):
@@ -1179,121 +902,72 @@ class RubiksCube444(RubiksCube):
 
                         if self.rotate_to_side(upper_side_name, front_side_name):
                             self.lt_LR_centers_stage.solve()
-                            phase1_options.append((upper_side_name, front_side_name, transform, self.state[:], self.solution[:]))
+
+                            # 168, 104
+                            if self.state in phase1_options_states:
+                                log.warning("%s %s %-2s would add a duplicate cube state" % (upper_side_name, front_side_name, transform))
+                            else:
+                                phase1_options.append((upper_side_name, front_side_name, transform, self.state[:], self.solution[:]))
+                                phase1_options_states.append(self.state[:])
+
                             self.state = original_state[:]
                             self.solution = original_solution[:]
 
+            # Print all the permutations
             for (upper_side_name, front_side_name, transform, tmp_state, tmp_solution) in phase1_options:
-                log.warning("%s %s %-2s - phase1 %d steps" % (upper_side_name, front_side_name, transform, self.get_solution_len_minus_rotates(tmp_solution)))
+                log.info("%s %s %-2s - %d phase1 steps" % (upper_side_name, front_side_name, transform, self.get_solution_len_minus_rotates(tmp_solution)))
+            log.info("%s: %d phase1 options" % (self, len(phase1_options)))
+
+            min_solution_len = None
+            min_solution = None
+            min_state = None
 
             # dwalton here now
-            for (upper_side_name, front_side_name, transform, tmp_state, tmp_solution) in phase1_options:
-                self.state = tmp_state[:]
-                self.solution = tmp_solution[:]
-                self.edge_mapping = {}
+            for init_max_ida_threshold in range(8, 99):
+                for (upper_side_name, front_side_name, transform, tmp_state, tmp_solution) in phase1_options:
+                    self.state = tmp_state[:]
+                    self.solution = tmp_solution[:]
 
-                if min_solution_len is None:
-                    max_ida_threshold = 99
-                else:
-                    phase1_solution_length = self.get_solution_len_minus_rotates(tmp_solution)
-                    max_ida_threshold = min_solution_len - phase1_solution_length - 1
-                    log.info("%s: max_ida_threshold (%d) = min_solution_len (%d) - phase1_solution_length (%d) - 1" %
-                        (self, max_ida_threshold, min_solution_len, phase1_solution_length))
+                    if min_solution_len is None:
+                        max_ida_threshold = init_max_ida_threshold
+                        log.info("%s: max_ida_threshold (%d)" % (self, max_ida_threshold))
+                    else:
+                        phase1_solution_length = self.get_solution_len_minus_rotates(tmp_solution)
+                        max_ida_threshold = min_solution_len - phase1_solution_length - 1
+                        log.info("%s: max_ida_threshold (%d) = min_solution_len (%d) - phase1_solution_length (%d) - 1" %
+                            (self, max_ida_threshold, min_solution_len, phase1_solution_length))
 
-                try:
-                    self.lt_tsai_phase2.solve(max_ida_threshold=max_ida_threshold)
-                except NoIDASolution:
-                    continue
+                    try:
+                        self.lt_tsai_phase2.solve(max_ida_threshold=max_ida_threshold)
+                    except NoIDASolution:
+                        log.info("%s: NOT NEW MIN, no solution, min %s\n\n\n\n\n" % (self, min_solution_len))
+                        continue
 
-                solution_len = self.get_solution_len_minus_rotates(self.solution)
+                    solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-                if min_solution_len is None or solution_len < min_solution_len:
-                    self.tsai_phase2_edges_oriented()
-                    min_solution_len = solution_len
-                    min_state = self.state[:]
-                    min_solution = self.solution[:]
-                    min_edge_mapping = copy(self.edge_mapping)
-                    log.warning("%s: NEW MIN %d (%s, %s %-2s)\n\n\n\n\n" % (self, min_solution_len, upper_side_name, front_side_name, transform))
-                else:
-                    log.warning("%s: NOT NEW MIN, this one %d, min %d\n\n\n\n\n" % (self, solution_len, min_solution_len))
+                    if min_solution_len is None or solution_len < min_solution_len:
+                        min_solution_len = solution_len
+                        min_state = self.state[:]
+                        min_solution = self.solution[:]
+                        log.warning("%s: NEW MIN %d (%s, %s %-2s)\n\n\n\n\n" % (self, min_solution_len, upper_side_name, front_side_name, transform))
+                    else:
+                        log.info("%s: NOT NEW MIN, this one %d, min %d\n\n\n\n\n" % (self, solution_len, min_solution_len))
 
-                # dwalton remove this...temp speedup while doing dev
-                if min_solution_len == 15:
+                    # This is pretty good, we might be able to find a shorter one but it would take us a while.
+                    # If we are ever able to speed up phase2 IDA via an edges prune table then we can probably
+                    # remove this.
+                    if min_solution_len <= 15:
+                        break
+
+                if min_solution_len is not None:
                     break
 
             self.state = min_state[:]
             self.solution = min_solution[:]
-            self.edge_mapping = min_edge_mapping
-            self.tsai_phase2_edges_oriented()
             self.print_cube()
-            self.tsai_phase2_orient_edges_print()
 
             log.info("%s: End of Phase1/2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
-            #sys.exit(0)
-            #'''
-
-            '''
-            log.info("%s: Start of Phase1" % self)
-
-            if force_TPR:
-                for step in "Rw' Fw D2 Rw Uw Fw2 Uw".split():
-                    self.rotate(step)
-            else:
-                self.lt_LR_centers_stage.solve()
-
-            self.print_cube()
-            log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-
-            # Testing the phase2 prune tables
-            #self.lt_tsai_phase2_centers.solve()
-            #self.print_cube()
-            #log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            #sys.exit(0)
-
-            log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-            if force_TPR:
-                for step in "R B Rw' B' U' Rw".split():
-                    self.rotate(step)
-
-                if self.tsai_phase2_edges_oriented():
-                    log.info("%s: phase2 edges are oriented" % self)
-                else:
-                    log.info("%s: phase2 edges are NOT oriented" % self)
-
-                if self.edge_swaps_even(False, None, False):
-                    log.info("%s: phase2 edge parity is even" % self)
-                else:
-                    log.info("%s: phase2 edge parity is NOT even" % self)
-
-                if self.lt_tsai_phase3_edges_solve.steps() is not None:
-                    log.info("%s: phase2 edges are in phase3 edges table" % self)
-                else:
-                    log.info("%s: phase2 edges are NOT in phase3 edges table" % self)
-
-                self.print_cube()
-                self.tsai_phase2_orient_edges_print()
-                log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-                sys.exit(0)
-
-            else:
-                self.lt_tsai_phase2.solve()
-                self.print_cube()
-                orient_edges_state = self.tsai_phase2_orient_edges_state(self.edge_mapping)
-                self.tsai_phase2_orient_edges_print()
-
-                target_orient_edges_state = 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU'
-
-                if orient_edges_state != target_orient_edges_state:
-                    raise SolveError("orient_edges_state is %s, should be %s" % (orient_edges_state, target_orient_edges_state))
-
-            kociemba_string = self.get_kociemba_string(True)
-            log.info('kociemba string: %s' % kociemba_string)
-            log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-            '''
 
             # Testing the phase3 prune tables
             #self.lt_tsai_phase3_edges_solve.solve()
@@ -1302,7 +976,7 @@ class RubiksCube444(RubiksCube):
             #sys.exit(0)
 
             log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.lt_tsai_phase3.avoid_oll = True
+            #self.lt_tsai_phase3.avoid_oll = True
             self.lt_tsai_phase3.avoid_pll = True
             self.lt_tsai_phase3.solve()
             self.print_cube()
@@ -2019,67 +1693,40 @@ class RubiksCube444(RubiksCube):
 class LookupTsaiPhase2IDA(LookupTableIDA):
 
     def ida_search_complete(self, state, steps_to_here):
-        centers_state = self.parent.lt_tsai_phase2_centers.state()
 
-        # Are the centers in a state that is on the step60 table?  We took
-        # the step60 table and built a 'centers only' version of it. This is
-        # to avoid doing an IDA search of the step60 table if we know that not
-        # even the centers are in that table.
-        if self.parent.lt_tsai_phase2_step60_centers_only.steps(centers_state) is not None:
-            states_to_look_for = []
-            state_to_edge_flip = {}
+        # Are UD and FB staged?
+        for side in (self.parent.sideU, self.parent.sideD):
+            for square_index in side.center_pos:
+                if self.parent.state[square_index] not in ('U', 'D'):
+                    return False
 
-            # If we find that our centers are in the step60 table somewhere then we need
-            # to try all 2048 edge orientations against the cube and see if any of them
-            # result in a hit in the lookup table.
-            for uu_dd_count in tsai_edge_mapping_combinations.keys():
+        # Are the LR sides in 1 of the 12 states we want?
+        LR_center_targets = set(('LLLLRRRR',
+                                 'RRRRLLLL',
+                                 'LLRRRRLL',
+                                 'LLRRLLRR',
+                                 'RRLLRRLL',
+                                 'RRLLLLRR',
+                                 'RLRLRLRL',
+                                 'RLRLLRLR',
+                                 'LRLRRLRL',
+                                 'LRLRLRLR',
+                                 'RLLRLRRL',
+                                 'LRRLRLLR'))
 
-                # dwalton here now
-                # An attempt to speed up the searching...
-                #if uu_dd_count > 4:
-                #    continue
+        LR_centers = []
+        for side in (self.parent.sideL, self.parent.sideR):
+            for square_index in side.center_pos:
+                LR_centers.append(self.parent.state[square_index])
+        LR_centers = ''.join(LR_centers)
 
-                for edges_to_flip in tsai_edge_mapping_combinations[uu_dd_count]:
+        if LR_centers not in LR_center_targets:
+            return False
 
-                    orient_edge_state = list(self.parent.tsai_phase2_orient_edges_state(edges_to_flip))
-                    state_with_edges_flipped = []
-                    edges_with_edges_flipped = []
-                    orient_base = 0
-                    centers_base = 0
-
-                    for x in range(6):
-                        state_with_edges_flipped.append(orient_edge_state[orient_base])
-                        state_with_edges_flipped.append(orient_edge_state[orient_base+1])
-
-                        state_with_edges_flipped.append(orient_edge_state[orient_base+2])
-                        state_with_edges_flipped.append(centers_state[centers_base])
-                        state_with_edges_flipped.append(centers_state[centers_base+1])
-                        state_with_edges_flipped.append(orient_edge_state[orient_base+3])
-
-                        state_with_edges_flipped.append(orient_edge_state[orient_base+4])
-                        state_with_edges_flipped.append(centers_state[centers_base+2])
-                        state_with_edges_flipped.append(centers_state[centers_base+3])
-                        state_with_edges_flipped.append(orient_edge_state[orient_base+5])
-
-                        state_with_edges_flipped.append(orient_edge_state[orient_base+6])
-                        state_with_edges_flipped.append(orient_edge_state[orient_base+7])
-
-                        orient_base += 8
-                        centers_base += 4
-
-                    state_with_edges_flipped = ''.join(state_with_edges_flipped)
-                    states_to_look_for.append(state_with_edges_flipped)
-                    state_to_edge_flip[state_with_edges_flipped] = edges_to_flip
-
-            # This takes about 300ms :(
-            #log.info("states_to_look_for:\n%s\n\n" % pformat(states_to_look_for))
-            state_found_steps_tuples = self.steps_for_list_of_states(states_to_look_for)
-            #log.info("state_found_steps_tuples:\n%s\n\n" % pformat(state_found_steps_tuples))
-            #log.info("state_found_steps_tuples: %d" % len(state_found_steps_tuples))
-
-            for (state_found, steps) in state_found_steps_tuples:
-                self.parent.edge_mapping = state_to_edge_flip[state_found]
-                #log.info("%s: tsai phase2 must apply edge mapping %s" % (self, self.parent.edge_mapping))
+        # If we are here then our centers are all good...check the edges.
+        # If the edges are not in lt_tsai_phase3_edges_solve it may throw a KeyError
+        try:
+            if self.parent.lt_tsai_phase3_edges_solve.steps() is not None and self.parent.edge_swaps_even(False, None, False):
 
                 # rotate_xxx() is very fast but it does not append the
                 # steps to the solution so put the cube back in original state
@@ -2090,30 +1737,10 @@ class LookupTsaiPhase2IDA(LookupTableIDA):
                 for step in steps_to_here:
                     self.parent.rotate(step)
 
-                for step in steps:
-                    self.parent.rotate(step)
+                return True
 
-                # The edge parity must be even, else the edges will be in a state
-                # that is not in our phase3-edges lookup table
-                # if self.parent.edge_swaps_even(False, None, False):
-                if self.parent.lt_tsai_phase3_edges_solve.steps() is not None:
-                    orient_edges_state = self.parent.tsai_phase2_orient_edges_state(self.parent.edge_mapping)
-
-                    target_orient_edges_state = 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU'
-
-                    if orient_edges_state != target_orient_edges_state:
-                        self.parent.tsai_phase2_orient_edges_print()
-                        raise SolveError("orient_edges_state is %s, should be %s" % (orient_edges_state, target_orient_edges_state))
-
-                    #if self.parent.lt_tsai_phase3_edges_solve.steps() is None:
-                    #    self.parent.tsai_phase2_orient_edges_print()
-                    #    raise SolveError("edges are not in a state that is in our phase3-edges table")
-
-                    return True
-
-                else:
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
+        except KeyError:
+            pass
 
         return False
 
@@ -5336,7 +4963,6 @@ tsai_edge_mapping_combinations = {
 }
 
 
-
 # Code below here is no longer used...saving it for a rainy day
 '''
     def find_moves_to_reach_state(self, wing_to_move, target_face_side):
@@ -5518,193 +5144,6 @@ tsai_edge_mapping_combinations = {
             log.warning("Explored %d moves in %s but did not find a solution" % (count, filename))
             sys.exit(1)
 
-def tsai_phase2_orient_edges_state_old(parent_state, self):
-    """
-    444-tsai-phase2-orient-edges or 444-tsai-phase2
-
-    This is what we used originally, I then unrolled it to create the two functions above
-    """
-    raise Exception("We should not be here")
-    state = []
-    parent = self.parent
-    original_state = self.parent.state[:]
-    original_solution = self.parent.solution[:]
-
-    state = []
-    for side in self.sides_all:
-        for square_index in range(side.min_pos, side.max_pos):
-
-            if square_index in side.corner_pos:
-                pass
-
-            elif square_index in side.edge_pos:
-                partner_index = side.get_wing_partner(square_index)
-                square1 = self.parent.state[square_index]
-                square2 = self.parent.state[partner_index]
-
-                try:
-                    state.append(self.parent.orient_edges[(square_index, partner_index, square1, square2)])
-                    print("        state.append(self.parent.orient_edges[(%d, %d, parent_state[%d], parent_state[%d])])" % (square_index, partner_index, square_index, partner_index))
-
-                except KeyError:
-                    raise SolveError("%s is not in self.parent.orient_edges" % str((square_index, partner_index, square1, square2)))
-
-                # If you hit the SolveError above, uncomment this code to build the entry
-                # that needs to be added to RubiksCube444.orient_edges
-                ' ''
-                if square1 in ('U', 'D'):
-                    wing_str = square1 + square2
-                elif square2 in ('U', 'D'):
-                    wing_str = square2 + square1
-                elif square1 in ('L', 'R'):
-                    wing_str = square1 + square2
-                elif square2 in ('L', 'R'):
-                    wing_str = square2 + square1
-                else:
-                    raise Exception("Could not determine wing_str for (%s, %s)" % (square1, square2))
-
-                # - backup the current state
-                # - add an 'x' to the end of the square_index/partner_index
-                # - move square_index/partner_index to its final edge location
-                # - look for the 'x' to determine if this is the '0' vs '1' wing
-                # - restore the original state
-                square1_with_x = square1 + 'x'
-                square2_with_x = square2 + 'x'
-
-                self.parent.state[square_index] = square1_with_x
-                self.parent.state[partner_index] = square2_with_x
-
-                #log.info("PRE: %s at (%d, %d)" % (wing_str, square_index, partner_index))
-                #self.parent.print_cube()
-
-                # 'UB0', 'UB1', 'UL0', 'UL1', 'UF0', 'UF1', 'UR0', 'UR1',
-                # 'LB0', 'LB1', 'LF0', 'LF1', 'RF0', 'RF1', 'RB0', 'RB1',
-                # 'DF0', 'DF1', 'DL0', 'DL1', 'DB0', 'DB1', 'DR0', 'DR1
-                if wing_str == 'UB':
-                    self.parent.move_wing_to_U_north(square_index)
-
-                    if self.parent.state[2] == 'Ux' or self.parent.state[66] == 'Ux':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'UL':
-                    self.parent.move_wing_to_U_west(square_index)
-
-                    if self.parent.state[9] == 'Ux' or self.parent.state[18] == 'Ux':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'UF':
-                    self.parent.move_wing_to_U_south(square_index)
-
-                    if self.parent.state[15] == 'Ux' or self.parent.state[34] == 'Ux':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'UR':
-                    self.parent.move_wing_to_U_east(square_index)
-
-                    if self.parent.state[8] == 'Ux' or self.parent.state[50] == 'Ux':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'LB':
-                    self.parent.move_wing_to_L_west(square_index)
-
-                    if self.parent.state[25] == 'Lx' or self.parent.state[72] == 'Lx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'LF':
-                    self.parent.move_wing_to_L_east(square_index)
-
-                    if self.parent.state[24] == 'Lx' or self.parent.state[41] == 'Lx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'RF':
-                    self.parent.move_wing_to_R_west(square_index)
-
-                    if self.parent.state[57] == 'Rx' or self.parent.state[40] == 'Rx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'RB':
-                    self.parent.move_wing_to_R_east(square_index)
-
-                    if self.parent.state[56] == 'Rx' or self.parent.state[73] == 'Rx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'DF':
-                    self.parent.move_wing_to_D_north(square_index)
-
-                    if self.parent.state[82] == 'Dx' or self.parent.state[47] == 'Dx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'DL':
-                    self.parent.move_wing_to_D_west(square_index)
-
-                    if self.parent.state[89] == 'Dx' or self.parent.state[31] == 'Dx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'DB':
-                    self.parent.move_wing_to_D_south(square_index)
-
-                    if self.parent.state[95] == 'Dx' or self.parent.state[79] == 'Dx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                elif wing_str == 'DR':
-                    self.parent.move_wing_to_D_east(square_index)
-                    if self.parent.state[88] == 'Dx' or self.parent.state[63] == 'Dx':
-                        state.append('U')
-                    else:
-                        state.append('D')
-
-                else:
-                    raise SolveError("invalid wing %s" % wing_str)
-
-                if (square_index, partner_index, square1, square2) not in self.parent.orient_edges:
-                    self.parent.orient_edges[(square_index, partner_index, square1, square2)] = state[-1]
-                    log.info("orient_edges:\n%s\n" % pformat(self.parent.orient_edges))
-
-                self.parent.state = original_state[:]
-                self.parent.solution = original_solution[:]
-                ' ''
-
-            elif square_index in side.center_pos:
-                if self.state_type == '444-tsai-phase2':
-                    square_state = self.parent.state[square_index]
-                    square_state = square_state.replace('B', 'F').replace('U', 'x').replace('D', 'x')
-                    state.append(square_state)
-                    print("        state.append(self.parent.state[%d].replace('B', 'F').replace('U', 'x').replace('D', 'x'))" % square_index)
-
-    state = ''.join(state)
-
-    if self.state_type == '444-tsai-phase2-orient-edges':
-        if state.count('U') != 24:
-            raise SolveError("state %s has %d Us and %d Ds, should have 24 of each" % (state, state.count('U'), state.count('D')))
-
-        if state.count('D') != 24:
-            raise SolveError("state %s has %d Us and %d Ds, should have 24 of each" % (state, state.count('U'), state.count('D')))
-
-    return state
-
-
 lookup_table_444_sister_wing_to_R_east = {
     (2, 67)  : "B'", # U-north
     (3, 66)  : "R' U R", # U-north
@@ -5875,8 +5314,8 @@ DxxU
 UxxD
  DU
 
-
 UDDxxUUxxDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU
+
 
 table2
 ======
@@ -5910,9 +5349,7 @@ DxxU
 UxxD
  DU
 
-
 UDDxxUUxxDDUDUDRRUURRDUDDUUFFDDFFUUDDUDLLUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU
-
 
 
 table3
@@ -5947,10 +5384,7 @@ DxxU
 UxxD
  DU
 
-
-
 UDDxxUUxxDDUDUDLLUURRDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU
-
 
 
 table4
@@ -5985,10 +5419,7 @@ DxxU
 UxxD
  DU
 
-
 UDDxxUUxxDDUDUDLLUURRDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU
-
-
 
 
 table5
@@ -6023,9 +5454,7 @@ DxxU
 UxxD
  DU
 
-
 UDDxxUUxxDDUDUDRRUULLDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDxxUUxxDDU
-
 
 
 
@@ -6064,7 +5493,6 @@ UxxD
 UDDxxUUxxDDUDUDRRUULLDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDxxUUxxDDU
 
 
-
 table7
 ======
  UD
@@ -6097,10 +5525,7 @@ DxxU
 UxxD
  DU
 
-
 UDDxxUUxxDDUDUDRLUURLDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU
-
-
 
 
 table8
@@ -6135,9 +5560,7 @@ DxxU
 UxxD
  DU
 
-
 UDDxxUUxxDDUDUDRLUURLDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU
-
 
 
 table9
@@ -6172,10 +5595,7 @@ DxxU
 UxxD
  DU
 
-
-
 UDDxxUUxxDDUDUDLRUULRDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU
-
 
 
 table10
@@ -6210,10 +5630,7 @@ DxxU
 UxxD
  DU
 
-
-
 UDDxxUUxxDDUDUDLRUULRDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU
-
 
 
 table11
@@ -6248,9 +5665,7 @@ DxxU
 UxxD
  DU
 
-
 UDDxxUUxxDDUDUDRLUULRDUDDUUFFDDFFUUDDUDLRUURLDUDDUUFFDDFFUUDUDDxxUUxxDDU
-
 
 
 table12
@@ -6284,7 +5699,6 @@ DFFU
 DxxU
 UxxD
  DU
-
 
 UDDxxUUxxDDUDUDLRUURLDUDDUUFFDDFFUUDDUDRLUULRDUDDUUFFDDFFUUDUDDxxUUxxDDU
 '''

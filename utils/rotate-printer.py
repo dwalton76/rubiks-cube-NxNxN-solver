@@ -116,7 +116,8 @@ for (size, solved_state) in (
             cube.state = copy(original_state)
             first_step = False
 
-        print("""    } else {
+        print("""    } else if (strcmp(step, "noturn") == 0) {
+    } else {
         printf("ERROR: invalid step %s\\n", step);
         // exit(1);
     }

@@ -407,6 +407,29 @@ class RubiksCube555(RubiksCube):
                                                   linecount=3805239)
 
         '''
+        This is only used when a cube larger than 7x7x7 is being solved
+
+        lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt
+        ====================================================
+        1 steps has 7 entries (0 percent, 0.00x previous step)
+        2 steps has 99 entries (0 percent, 14.14x previous step)
+        3 steps has 1,038 entries (0 percent, 10.48x previous step)
+        4 steps has 8,463 entries (2 percent, 8.15x previous step)
+        5 steps has 47,986 entries (13 percent, 5.67x previous step)
+        6 steps has 146,658 entries (42 percent, 3.06x previous step)
+        7 steps has 128,914 entries (37 percent, 0.88x previous step)
+        8 steps has 9,835 entries (2 percent, 0.08x previous step)
+
+        Total: 343,000 entries
+        '''
+        self.lt_ULFRBD_t_centers_solve = LookupTable(self,
+                                               'lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt',
+                                               '555-ULFRBD-t-centers-solve',
+                                               'xUxUUUxUxxLxLLLxLxxFxFFFxFxxRxRRRxRxxBxBBBxBxxDxDDDxDx',
+                                               False, # state_hex
+                                               linecount=343000)
+
+        '''
         This tables solves sides U and L which in turn also solve D and R.  When
         the table was built the Ls were replaced with Us so that we were left with
         only 'U' and 'x' squares so that we could save the states in hex which

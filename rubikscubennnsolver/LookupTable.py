@@ -1201,6 +1201,68 @@ def get_555_ULFRBD_centers_solve(parent_state):
     state = ''.join(state)
     return state
 
+def get_555_ULFRBD_t_centers_solve(parent_state):
+    """
+    555-ULFRBD-t-centers-solve
+    """
+    state = ['x',
+             parent_state[8],
+             'x',
+             parent_state[12],
+             parent_state[13],
+             parent_state[14],
+             'x',
+             parent_state[18],
+             'x',
+             'x',
+             parent_state[33],
+             'x',
+             parent_state[37],
+             parent_state[38],
+             parent_state[39],
+             'x',
+             parent_state[43],
+             'x',
+             'x',
+             parent_state[58],
+             'x',
+             parent_state[62],
+             parent_state[63],
+             parent_state[64],
+             'x',
+             parent_state[68],
+             'x',
+             'x',
+             parent_state[83],
+             'x',
+             parent_state[87],
+             parent_state[88],
+             parent_state[89],
+             'x',
+             parent_state[93],
+             'x',
+             'x',
+             parent_state[108],
+             'x',
+             parent_state[112],
+             parent_state[113],
+             parent_state[114],
+             'x',
+             parent_state[118],
+             'x',
+             'x',
+             parent_state[133],
+             'x',
+             parent_state[137],
+             parent_state[138],
+             parent_state[139],
+             'x',
+             parent_state[143],
+             'x']
+
+    state = ''.join(state)
+    return state
+
 
 def get_555_LR_centers_stage_on_LFRB_x_center_only(parent_state):
     """
@@ -2328,6 +2390,7 @@ state_functions = {
     '555-UL-centers-solve-on-all' : get_555_UL_centers_solve_on_all,
     '555-LR-centers-stage-on-LFRB': get_555_LR_centers_stage_on_LFRB,
     '555-ULFRBD-centers-solve' : get_555_ULFRBD_centers_solve,
+    '555-ULFRBD-t-centers-solve' : get_555_ULFRBD_t_centers_solve,
     '555-LR-centers-stage-on-LFRB-x-center-only' : get_555_LR_centers_stage_on_LFRB_x_center_only,
     '555-LR-centers-stage-on-LFRB-t-center-only' : get_555_LR_centers_stage_on_LFRB_t_center_only,
     '666-UD-centers-oblique-edges-solve' : get_666_UD_centers_oblique_edges_solve,

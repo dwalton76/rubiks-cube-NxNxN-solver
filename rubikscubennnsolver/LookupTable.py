@@ -2977,9 +2977,9 @@ class LookupTableIDA(LookupTable):
                      (self, len(steps_to_here), ' '.join(steps_to_here), f_cost, cost_to_here, cost_to_goal))
             return True
 
-        # ==============
-        # Keep Searching
-        # ==============
+        # ===============
+        # Abort Searching
+        # ===============
         if f_cost > threshold:
             return False
 
@@ -2989,6 +2989,9 @@ class LookupTableIDA(LookupTable):
             return False
         self.explored.add((cost_to_here, state))
 
+        # ==============
+        # Keep Searching
+        # ==============
         for step in self.moves_all:
 
             # If this step cancels out the previous step then don't bother with this branch

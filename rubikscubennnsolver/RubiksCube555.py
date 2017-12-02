@@ -277,19 +277,28 @@ class RubiksCube555(RubiksCube):
                                                      linecount=17168476)
 
 
+        # IDA speed notes
+        # The worst IDA search I do today is 735471/540917591841 = 0.000 001 3596729171
+        # and that is with two 735471 prune tables.  That is about the limit of what
+        # an IDA search written in python can do in a reasonable amount of time.
+        # I am sure a C based IDA search will be faster but I don't yet know how much faster.
+        # If it is 1000x faster then I should be able to handle a 0.000 000 001 IDA search
+        #
         # brainstorm
         # option #1 - Solve all centers at once?
         # - would be (24!/(4! * 4! * 4! * 4! * 4! * 4!))^2 or 10,540,869,576,538,135,887,152,100,000,000
         # - T-center and X-center prune tables would be 24!/(4! * 4! * 4! * 4! * 4! * 4!) or 3,246,670,537,110,000
-        # - yeah that isn't going to happen
+        # - A UD T-center prune table would be 24!/(4! * 4! * 16!) or 51,482,970
+        # - 51,482,970/10,540,869,576,538,135,887,152,100,000,000 is 0.000 000 000 000 000 000 000 004 884
+        # - There would be 6 of these 51,482,970 prune tables but that IDA would probably still take years
         # - not feasible
         #
         #
         # option #2 - Solve UD while staging LR?
         # - would be (24!/(4! * 4! * 8! *8!))^2 or 439,019,974,033,241,811,210,000
         # - T-center and X-center prune tables would be 24!/(4! * 4! * 8! *8!) or 662,585,823,900
-        # - 662,585,823,900/439,019,974,033,241,811,210,000 is 0.000 000 000 0015092, IDA would take forever
-        # - not feasible
+        # - 662,585,823,900/439,019,974,033,241,811,210,000 is 0.000 000 000 001 5092, IDA would take forever
+        # - not feasible to build a prune table that large
         #
         #
         # option #3 - Stage all centers at once?
@@ -297,8 +306,15 @@ class RubiksCube555(RubiksCube):
         # - T-center and X-center prune tables would be 24!/(8! * 8! * 8!) or 9,465,511,770
         # - 9,465,511,770/89,595,913,068,008,532,900 is 0.000 000 000 1056467, IDA would be
         #   probably take days not to mention the time/diskspace to build prune table
-        #   with 9 billion entries
-        # - not feasible without a lot of time and money on drive space
+        #   with 9 billion entries, each would be a few hundred gigs.
+        # - There would be 3 of these 9,465,511,770 prune tables so IDA might be fast enough
+        # - maybe feasible but would take a TB or two of drive space
+        #
+        # - A UD T-center prune table would be 24!/(8! * 16!) or 735471
+        # - 735,471/89,595,913,068,008,532,900 is 0.000 000 000 000 008 209
+        # - There would be 6 of these 735,471 prune tables
+        # - I don't know how large of an impact having 6 of these tables will
+        #   have on an IDA search...this is an experiment worth running once the C IDA is finished.
         #
         #
         # option #4 - Solve UD instead of staging them?
@@ -462,7 +478,7 @@ class RubiksCube555(RubiksCube):
 
         '''
         Would be 117,649,000,000...I built it 7-deep.
-        24,010,000/117,649,000,000 is 0.000204082 so this will be a fast IDA search
+        24,010,000/117,649,000,000 is 0.000 204 082 so this will be a fast IDA search
 
         lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
         ==================================================

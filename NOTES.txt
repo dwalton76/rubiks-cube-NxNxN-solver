@@ -1,0 +1,96 @@
+
+IDA search is the #1 bottleneck...write an IDA search in C
+- first test is 5x5x5 UD centers for cube
+./ida_search --kociemba RFUBLFUBRULLUDDRLRLLFFFLUBDBLBFFUFLFURBFFLDDLFFBBRLUUDRRDLLLRDFFLBBLFURUBULBRLBDRUURDRRDFURDBUUBBFBUDRUBURBRBDLFLBDFBDULLDBBDDDRRFURLDUDUBRDFRFFDFDRLU --type 5x5x5-UD-centers-stage
+
+
+python output (18s)
+===================
+2017-11-30 13:39:01,215   LookupTable.py     INFO: 5x5x5-step00-UD-centers-stage: IDA threshold range 7->99
+2017-11-30 13:39:01,799   LookupTable.py     INFO: 5x5x5-step00-UD-centers-stage: IDA threshold 7, explored 1297 branches, took 583ms
+2017-11-30 13:39:11,484   LookupTable.py     INFO: 5x5x5-step00-UD-centers-stage: IDA threshold 8, explored 25972 branches, took 0:00:09.684785
+2017-11-30 13:39:19,876   LookupTable.py     INFO: 5x5x5-step00-UD-centers-stage: IDA found match 5 steps in, U Fw2 Dw' Rw F', f_cost 11 (cost_to_here 5, cost_to_goal 6)
+2017-11-30 13:39:19,876   LookupTable.py     INFO: 5x5x5-step00-UD-centers-stage: IDA threshold 9, explored 24449 branches, took 0:00:08.392555 (0:00:18.662184 total)
+2017-11-30 13:39:19,877 RubiksCube555.py     INFO: UD centers staged, 11 steps in
+
+
+
+C output (2s)
+=============
+
+nopreload 6-deep
+----------------
+// Took 2050ms
+[2017-12-01T22:26:52.985] IDA threshold 7, explored 1297 branches
+[2017-12-01T22:26:53.960] IDA threshold 8, explored 25972 branches
+[2017-12-01T22:26:55.053] IDA count 28658, f_cost 11 vs threshold 9 (cost_to_here 5, cost_to_goal 6)
+[2017-12-01T22:26:55.053] VICTORY
+
+U Fw2 Dw' Rw F' 
+[2017-12-01T22:26:55.053] IDA threshold 9, explored 28658 branches, found solution
+
+
+preload 6-deep
+--------------
+// It took us ~20s to load the 6-deep UD table into memory...about 30M of memory
+// Took 281ms!!!
+//
+// So this model would require that you run a daemon that has the tables already
+// loaded into memory.
+[2017-12-01T22:02:17.987] IDA threshold 7, explored 1297 branches
+[2017-12-01T22:02:18.136] IDA threshold 8, explored 25972 branches
+[2017-12-01T22:02:18.268] IDA count 28658, f_cost 11 vs threshold 9 (cost_to_here 5, cost_to_goal 6)
+[2017-12-01T22:02:18.268] VICTORY
+
+U Fw2 Dw' Rw F' 
+[2017-12-01T22:02:18.268] IDA threshold 9, explored 28658 branches, found solution
+
+
+preload 5-deep
+--------------
+// If we preload a 5-deep table it loads fast enough, search takes 3300ms
+[2017-12-01T22:13:12.603] ida_prune_table_preload lookup-table-5x5x5-step01-UD-centers-stage-t-center-only.txt: start
+[2017-12-01T22:13:13.119] ida_prune_table_preload lookup-table-5x5x5-step01-UD-centers-stage-t-center-only.txt: end
+[2017-12-01T22:13:13.119] ida_prune_table_preload lookup-table-5x5x5-step02-UD-centers-stage-x-center-only.txt: start
+[2017-12-01T22:13:13.630] ida_prune_table_preload lookup-table-5x5x5-step02-UD-centers-stage-x-center-only.txt: end
+[2017-12-01T22:13:13.630] ida_prune_table_preload lookup-table-5x5x5-step00-UD-centers-stage.txt: start
+[2017-12-01T22:13:14.133] ida_prune_table_preload lookup-table-5x5x5-step00-UD-centers-stage.txt: end
+[2017-12-01T22:13:14.139] IDA threshold 7, explored 1297 branches
+[2017-12-01T22:13:14.258] IDA threshold 8, explored 25972 branches
+[2017-12-01T22:13:16.985] IDA threshold 9, explored 599762 branches
+[2017-12-01T22:13:17.424] IDA count 96263, f_cost 12 vs threshold 10 (cost_to_here 9, cost_to_goal 3)
+[2017-12-01T22:13:17.424] VICTORY
+
+U L Fw2 D' Rw F2 Bw Uw' Uw' 
+[2017-12-01T22:13:17.424] IDA threshold 10, explored 96263 branches, found solution
+
+
+
+Misc
+====
+In order to move forward on several fronts I need key/value storage
+- the explored set stuff to avoid exploring branches we have already explored. That
+  should cut the number of branches explored in half.
+- all of the items below need this
+
+
+Reading from the disk is a huge bottleneck...90% of our time is in copy_user_enhanced_fast_string
+
+- preload all of the prune tables
+    - read the prune table files from disk into memory...how long will this take?
+    - compile prune tables into the program? I bet the executable would be gigantic and how much memory would this require.
+
+- then try the following
+    - try IDAing until our cube is in the desired state
+    - preload a smaller main lookup table, if we only go 5-deep it would have about 900k entries
+
+            lookup-table-5x5x5-step00-UD-centers-stage.txt
+            ==============================================
+            1 steps has 5 entries (0 percent, 0.00x previous step)
+            2 steps has 98 entries (0 percent, 19.60x previous step)
+            3 steps has 2036 entries (0 percent, 20.78x previous step)
+            4 steps has 41096 entries (0 percent, 20.18x previous step)
+            5 steps has 824950 entries (4 percent, 20.07x previous step)
+            6 steps has 16300291 entries (94 percent, 19.76x previous step)
+
+            Total: 17168476 entries

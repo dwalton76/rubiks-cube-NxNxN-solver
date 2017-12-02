@@ -113,6 +113,7 @@ class RubiksCube444(RubiksCube):
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube.__init__(self, state, order, colormap, debug)
         self.avoid_pll = avoid_pll
+        self.edge_mapping = {}
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -506,15 +507,15 @@ class RubiksCube444(RubiksCube):
             =====================================
             1 steps has 46 entries (0 percent, 0.00x previous step)
             2 steps has 384 entries (0 percent, 8.35x previous step)
-            3 steps has 3354 entries (0 percent, 8.73x previous step)
-            4 steps has 22324 entries (2 percent, 6.66x previous step)
-            5 steps has 113276 entries (12 percent, 5.07x previous step)
-            6 steps has 338860 entries (37 percent, 2.99x previous step)
-            7 steps has 388352 entries (43 percent, 1.15x previous step)
-            8 steps has 34048 entries (3 percent, 0.09x previous step)
+            3 steps has 3,354 entries (0 percent, 8.73x previous step)
+            4 steps has 22,324 entries (2 percent, 6.66x previous step)
+            5 steps has 113,276 entries (12 percent, 5.07x previous step)
+            6 steps has 338,860 entries (37 percent, 2.99x previous step)
+            7 steps has 388,352 entries (43 percent, 1.15x previous step)
+            8 steps has 34,048 entries (3 percent, 0.09x previous step)
             9 steps has 256 entries (0 percent, 0.01x previous step)
 
-            Total: 900900 entries
+            Total: 900,900 entries
             '''
             self.lt_tsai_phase2_centers = LookupTable(self,
                                                       'lookup-table-4x4x4-step61-centers.txt',
@@ -532,7 +533,28 @@ class RubiksCube444(RubiksCube):
                                                        'UUUURLLRFFFFLRRLFFFFUUUU',
                                                        'UUUULRRLFFFFRLLRFFFFUUUU'),
                                                       False, # state hex
-                                                      linecount=1801800)
+                                                      linecount=900900)
+
+            '''
+            lookup-table-4x4x4-step62-edges.txt
+            ===================================
+            1 steps has 5 entries (0 percent, 0.00x previous step)
+            2 steps has 62 entries (0 percent, 12.40x previous step)
+            3 steps has 906 entries (0 percent, 14.61x previous step)
+            4 steps has 11,163 entries (0 percent, 12.32x previous step)
+            5 steps has 127,148 entries (4 percent, 11.39x previous step)
+            6 steps has 889,398 entries (32 percent, 6.99x previous step)
+            7 steps has 1,553,434 entries (57 percent, 1.75x previous step)
+            8 steps has 122,040 entries (4 percent, 0.08x previous step)
+
+            Total: 2,704,156 entries
+            '''
+            self.lt_tsai_phase2_edges = LookupTsaiPhase2Edges(self,
+                                                              'lookup-table-4x4x4-step62-edges.txt',
+                                                              '444-tsai-phase2-edges',
+                                                              'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+                                                              False, # state hex
+                                                              linecount=2704156)
 
             self.lt_tsai_phase2 = LookupTsaiPhase2IDA(self,
                                                       'lookup-table-4x4x4-step60-dummy.txt',
@@ -545,6 +567,8 @@ class RubiksCube444(RubiksCube):
 
                                                       # prune tables
                                                       (self.lt_tsai_phase2_centers,),
+                                                      #(self.lt_tsai_phase2_centers,
+                                                      # self.lt_tsai_phase2_edges),
                                                       linecount=0)
 
         else:
@@ -866,16 +890,11 @@ class RubiksCube444(RubiksCube):
         # The tsai will solve the centers and pair the edges
         elif self.cpu_mode == 'tsai':
 
-            # TODO:
-            # - find 1000s of solutions for phase1
-            # - find the phase1+phase2 solution that is the shortest
-            # - for each phase1 solution do phase2 but with IDA threshold of 1, then 2, then 3, etc until
-            #   we have a high enough IDA thresh that we find a phase2 solution
-
             # save cube state
             original_state = self.state[:]
             original_solution = self.solution[:]
 
+            # Collect phase1 options
             phase1_options = []
             phase1_options_states = []
 
@@ -922,11 +941,17 @@ class RubiksCube444(RubiksCube):
             min_solution = None
             min_state = None
 
-            # dwalton here now
             for init_max_ida_threshold in range(8, 99):
                 for (upper_side_name, front_side_name, transform, tmp_state, tmp_solution) in phase1_options:
                     self.state = tmp_state[:]
                     self.solution = tmp_solution[:]
+
+                    # Test the prune table
+                    #self.lt_tsai_phase2_edges.solve()
+                    #self.lt_tsai_phase2_centers.solve()
+                    #self.tsai_phase2_orient_edges_print()
+                    #self.print_cube()
+                    #sys.exit(0)
 
                     if min_solution_len is None:
                         max_ida_threshold = init_max_ida_threshold
@@ -1688,6 +1713,32 @@ class RubiksCube444(RubiksCube):
         self.state = self.min_edge_solution_state[:]
         self.solution = self.min_edge_solution[:]
         self.solution.append('EDGES_GROUPED')
+
+
+class LookupTsaiPhase2Edges(LookupTable):
+    """
+    This is an experiment that needs more work....it is not used yet
+    """
+
+    def state(self):
+        centers_cost = self.parent.lt_tsai_phase2_centers.steps_cost()
+        min_edges_cost = None
+        min_edges_state = None
+
+        for uu_dd_count in tsai_edge_mapping_combinations.keys():
+            if uu_dd_count <= 4:
+                for edges_to_flip in tsai_edge_mapping_combinations[uu_dd_count]:
+                    edges_state = self.parent.tsai_phase2_orient_edges_state(edges_to_flip)
+                    edges_cost = self.steps_cost(edges_state)
+
+                    if edges_cost <= centers_cost:
+                        return edges_state
+
+                    if min_edges_cost is None or edges_cost < min_edges_cost:
+                        min_edges_cost = edges_cost
+                        min_edges_state = edges_state
+
+        return min_edges_state
 
 
 class LookupTsaiPhase2IDA(LookupTableIDA):

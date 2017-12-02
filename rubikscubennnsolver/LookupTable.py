@@ -2572,7 +2572,6 @@ class LookupTable(object):
                 self.fh_txt.seek(midpoint * self.width)
                 line = self.fh_txt.readline().rstrip()
 
-                # dwalton here now
                 #log.info("%s: first %d, last %d, midpoint %d, width %d, state_to_find %s, line %s" % (self, first, last, midpoint, self.width, state_to_find, line))
 
                 try:
@@ -2633,10 +2632,10 @@ class LookupTable(object):
         steps = self.steps(state_to_find)
 
         if steps is None:
-            log.info("%s: steps_cost None for %s (stage_target)" % (self, state_to_find))
+            #log.info("%s: steps_cost None for %s (stage_target)" % (self, state_to_find))
             return 0
         else:
-            log.info("%s: steps_cost %d for %s (%s)" % (self, len(steps), state_to_find, ' '.join(steps)))
+            #log.info("%s: steps_cost %d for %s (%s)" % (self, len(steps), state_to_find, ' '.join(steps)))
             return len(steps)
 
     def solve(self):
@@ -2783,7 +2782,7 @@ class LookupTableIDA(LookupTable):
                 cost_to_goal = len_pt_steps
 
         #if debug:
-        #    log.info("%s: cost_to_goal %d" % (self, cost_to_goal))
+        #    log.info("%s: cost_to_goal %d\n" % (self, cost_to_goal))
 
         return cost_to_goal
 

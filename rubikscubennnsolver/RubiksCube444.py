@@ -75,31 +75,45 @@ class LookupTable444UDCentersStage(LookupTable):
         # TODO test if it would be faster to not do babel here but loop over the
         # result and set to 1 if in (U, D) else set it to 0.
 
-        result = ''.join([
+        result = [
+            # Upper
             babel[parent_state[6]],
             babel[parent_state[7]],
             babel[parent_state[10]],
             babel[parent_state[11]],
+
+            # Left
             babel[parent_state[22]],
             babel[parent_state[23]],
             babel[parent_state[26]],
             babel[parent_state[27]],
+
+            # Front
             babel[parent_state[38]],
             babel[parent_state[39]],
             babel[parent_state[42]],
             babel[parent_state[43]],
+
+            # Right
             babel[parent_state[54]],
             babel[parent_state[55]],
             babel[parent_state[58]],
             babel[parent_state[59]],
+
+            # Back
             babel[parent_state[70]],
             babel[parent_state[71]],
             babel[parent_state[74]],
             babel[parent_state[75]],
+
+            # Down
             babel[parent_state[86]],
             babel[parent_state[87]],
             babel[parent_state[90]],
-            babel[parent_state[91]]])
+            babel[parent_state[91]]
+        ]
+
+        result = ''.join(result)
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -127,31 +141,45 @@ class LookupTable444LRCentersStage(LookupTable):
         }
         parent_state = self.parent.state
 
-        result = ''.join([
+        result = [
+            # Upper
             babel[parent_state[6]],
             babel[parent_state[7]],
             babel[parent_state[10]],
             babel[parent_state[11]],
+
+            # Left
             babel[parent_state[22]],
             babel[parent_state[23]],
             babel[parent_state[26]],
             babel[parent_state[27]],
+
+            # Front
             babel[parent_state[38]],
             babel[parent_state[39]],
             babel[parent_state[42]],
             babel[parent_state[43]],
+
+            # Right
             babel[parent_state[54]],
             babel[parent_state[55]],
             babel[parent_state[58]],
             babel[parent_state[59]],
+
+            # Back
             babel[parent_state[70]],
             babel[parent_state[71]],
             babel[parent_state[74]],
             babel[parent_state[75]],
+
+            # Down
             babel[parent_state[86]],
             babel[parent_state[87]],
             babel[parent_state[90]],
-            babel[parent_state[91]]])
+            babel[parent_state[91]]
+        ]
+
+        result = ''.join(result)
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -179,31 +207,45 @@ class LookupTable444FBCentersStage(LookupTable):
         }
         parent_state = self.parent.state
 
-        result = ''.join([
+        result = [
+            # Upper
             babel[parent_state[6]],
             babel[parent_state[7]],
             babel[parent_state[10]],
             babel[parent_state[11]],
+
+            # Left
             babel[parent_state[22]],
             babel[parent_state[23]],
             babel[parent_state[26]],
             babel[parent_state[27]],
+
+            # Front
             babel[parent_state[38]],
             babel[parent_state[39]],
             babel[parent_state[42]],
             babel[parent_state[43]],
+
+            # Right
             babel[parent_state[54]],
             babel[parent_state[55]],
             babel[parent_state[58]],
             babel[parent_state[59]],
+
+            # Back
             babel[parent_state[70]],
             babel[parent_state[71]],
             babel[parent_state[74]],
             babel[parent_state[75]],
+
+            # Down
             babel[parent_state[86]],
             babel[parent_state[87]],
             babel[parent_state[90]],
-            babel[parent_state[91]]])
+            babel[parent_state[91]]
+        ]
+
+        result = ''.join(result)
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -240,32 +282,49 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([
+
+        result = [
+            # Upper
             parent_state[6],
             parent_state[7],
             parent_state[10],
             parent_state[11],
+
+            # Left
             parent_state[22],
             parent_state[23],
             parent_state[26],
             parent_state[27],
+
+            # Front
             parent_state[38],
             parent_state[39],
             parent_state[42],
             parent_state[43],
+
+            # Right
             parent_state[54],
             parent_state[55],
             parent_state[58],
             parent_state[59],
+
+            # Back
             parent_state[70],
             parent_state[71],
             parent_state[74],
             parent_state[75],
+
+            # Down
             parent_state[86],
             parent_state[87],
             parent_state[90],
-            parent_state[91]])
-        return result.replace('R', 'L').replace('B', 'F').replace('D', 'U')
+            parent_state[91]
+        ]
+
+        result = ''.join(result)
+        result = result.replace('R', 'L').replace('B', 'F').replace('D', 'U')
+
+        return result
 
 
 class LookupTable444LFRBCentersStage(LookupTable):
@@ -293,32 +352,49 @@ class LookupTable444LFRBCentersStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([
+
+        result = [
+            # Upper
             parent_state[6],
             parent_state[7],
             parent_state[10],
             parent_state[11],
+
+            # Left
             parent_state[22],
             parent_state[23],
             parent_state[26],
             parent_state[27],
+
+            # Front
             parent_state[38],
             parent_state[39],
             parent_state[42],
             parent_state[43],
+
+            # Right
             parent_state[54],
             parent_state[55],
             parent_state[58],
             parent_state[59],
+
+            # Back
             parent_state[70],
             parent_state[71],
             parent_state[74],
             parent_state[75],
+
+            # Down
             parent_state[86],
             parent_state[87],
             parent_state[90],
-            parent_state[91]])
-        return result.replace('U', 'x').replace('D', 'x').replace('R', 'L').replace('B', 'F')
+            parent_state[91]
+        ]
+
+        result = ''.join(result)
+        result = result.replace('U', 'x').replace('D', 'x').replace('R', 'L').replace('B', 'F')
+
+        return result
 
 
 class LookupTable444ULFRBDCentersSolve(LookupTable):
@@ -351,31 +427,46 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([
+
+        result = [
+            # Upper
             parent_state[6],
             parent_state[7],
             parent_state[10],
             parent_state[11],
+
+            # Left
             parent_state[22],
             parent_state[23],
             parent_state[26],
             parent_state[27],
+
+            # Front
             parent_state[38],
             parent_state[39],
             parent_state[42],
             parent_state[43],
+
+            # Right
             parent_state[54],
             parent_state[55],
             parent_state[58],
             parent_state[59],
+
+            # Back
             parent_state[70],
             parent_state[71],
             parent_state[74],
             parent_state[75],
+
+            # Down
             parent_state[86],
             parent_state[87],
             parent_state[90],
-            parent_state[91]])
+            parent_state[91]
+        ]
+
+        result = ''.join(result)
         return result
 
 
@@ -424,33 +515,49 @@ class LookupTable444TsaiPhase2Centers(LookupTable):
             'D' : 'U',
             'U' : 'U',
         }
+
         parent_state = self.parent.state
 
-        return ''.join ([
+        result = [
+            # Upper
             babel[parent_state[6]],
             babel[parent_state[7]],
             babel[parent_state[10]],
             babel[parent_state[11]],
+
+            # Left
             babel[parent_state[22]],
             babel[parent_state[23]],
             babel[parent_state[26]],
             babel[parent_state[27]],
+
+            # Front
             babel[parent_state[38]],
             babel[parent_state[39]],
             babel[parent_state[42]],
             babel[parent_state[43]],
+
+            # Right
             babel[parent_state[54]],
             babel[parent_state[55]],
             babel[parent_state[58]],
             babel[parent_state[59]],
+
+            # Back
             babel[parent_state[70]],
             babel[parent_state[71]],
             babel[parent_state[74]],
             babel[parent_state[75]],
+
+            # Down
             babel[parent_state[86]],
             babel[parent_state[87]],
             babel[parent_state[90]],
-            babel[parent_state[91]]])
+            babel[parent_state[91]]
+        ]
+
+        result = ''.join(result)
+        return result
 
 
 class LookupTable444TsaiPhase2Edges(LookupTable):
@@ -530,7 +637,8 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
         orient_edges = tsai_phase2_orient_edges
         parent_state = self.parent.state
 
-        return ''.join ([
+        result = [
+            # Upper
             orient_edges[(2, 67, parent_state[2], parent_state[67])],
             orient_edges[(3, 66, parent_state[3], parent_state[66])],
             orient_edges[(5, 18, parent_state[5], parent_state[18])],
@@ -543,6 +651,8 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             orient_edges[(12, 50, parent_state[12], parent_state[50])],
             orient_edges[(14, 34, parent_state[14], parent_state[34])],
             orient_edges[(15, 35, parent_state[15], parent_state[35])],
+
+            # Left
             orient_edges[(18, 5, parent_state[18], parent_state[5])],
             orient_edges[(19, 9, parent_state[19], parent_state[9])],
             orient_edges[(21, 72, parent_state[21], parent_state[72])],
@@ -555,6 +665,8 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             orient_edges[(28, 41, parent_state[28], parent_state[41])],
             orient_edges[(30, 89, parent_state[30], parent_state[89])],
             orient_edges[(31, 85, parent_state[31], parent_state[85])],
+
+            # Front
             orient_edges[(34, 14, parent_state[34], parent_state[14])],
             orient_edges[(35, 15, parent_state[35], parent_state[15])],
             orient_edges[(37, 24, parent_state[37], parent_state[24])],
@@ -567,6 +679,8 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             orient_edges[(44, 57, parent_state[44], parent_state[57])],
             orient_edges[(46, 82, parent_state[46], parent_state[82])],
             orient_edges[(47, 83, parent_state[47], parent_state[83])],
+
+            # Right
             orient_edges[(50, 12, parent_state[50], parent_state[12])],
             orient_edges[(51, 8, parent_state[51], parent_state[8])],
             orient_edges[(53, 40, parent_state[53], parent_state[40])],
@@ -579,6 +693,8 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             orient_edges[(60, 73, parent_state[60], parent_state[73])],
             orient_edges[(62, 88, parent_state[62], parent_state[88])],
             orient_edges[(63, 92, parent_state[63], parent_state[92])],
+
+            # Back
             orient_edges[(66, 3, parent_state[66], parent_state[3])],
             orient_edges[(67, 2, parent_state[67], parent_state[2])],
             orient_edges[(69, 56, parent_state[69], parent_state[56])],
@@ -591,6 +707,8 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             orient_edges[(76, 25, parent_state[76], parent_state[25])],
             orient_edges[(78, 95, parent_state[78], parent_state[95])],
             orient_edges[(79, 94, parent_state[79], parent_state[94])],
+
+            # Down
             orient_edges[(82, 46, parent_state[82], parent_state[46])],
             orient_edges[(83, 47, parent_state[83], parent_state[47])],
             orient_edges[(85, 31, parent_state[85], parent_state[31])],
@@ -602,7 +720,11 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             babel[parent_state[91]],
             orient_edges[(92, 63, parent_state[92], parent_state[63])],
             orient_edges[(94, 79, parent_state[94], parent_state[79])],
-            orient_edges[(95, 78, parent_state[95], parent_state[78])]])
+            orient_edges[(95, 78, parent_state[95], parent_state[78])]
+        ]
+
+        result = ''.join(result)
+        return result
 
     def ida_search_complete(self, state, steps_to_here):
 
@@ -877,31 +999,46 @@ class LookupTable444TsaiPhase3CentersSolve(LookupTable):
     def state(self):
         parent_state = self.parent.state
 
-        return ''.join(
-            [parent_state[6],
-             parent_state[7],
-             parent_state[10],
-             parent_state[11],
-             parent_state[22],
-             parent_state[23],
-             parent_state[26],
-             parent_state[27],
-             parent_state[38],
-             parent_state[39],
-             parent_state[42],
-             parent_state[43],
-             parent_state[54],
-             parent_state[55],
-             parent_state[58],
-             parent_state[59],
-             parent_state[70],
-             parent_state[71],
-             parent_state[74],
-             parent_state[75],
-             parent_state[86],
-             parent_state[87],
-             parent_state[90],
-             parent_state[91]])
+        result = [
+            # Upper
+            parent_state[6],
+            parent_state[7],
+            parent_state[10],
+            parent_state[11],
+
+            # Left
+            parent_state[22],
+            parent_state[23],
+            parent_state[26],
+            parent_state[27],
+
+            # Front
+            parent_state[38],
+            parent_state[39],
+            parent_state[42],
+            parent_state[43],
+
+            # Right
+            parent_state[54],
+            parent_state[55],
+            parent_state[58],
+            parent_state[59],
+
+            # Back
+            parent_state[70],
+            parent_state[71],
+            parent_state[74],
+            parent_state[75],
+
+            # Down
+            parent_state[86],
+            parent_state[87],
+            parent_state[90],
+            parent_state[91]
+        ]
+
+        result = ''.join(result)
+        return result
 
 
 class LookupTableIDA444TsaiPhase3(LookupTableIDA):
@@ -943,34 +1080,25 @@ class LookupTableIDA444TsaiPhase3(LookupTableIDA):
         results = []
 
         for seq in symmetry_rotations_tsai_phase3_444:
-            state = original_state[:]
+            tmp_state = original_state[:]
 
             for step in seq.split():
                 if step == 'reflect-x':
-                    state = reflect_x_444(state[:])
+                    tmp_state = reflect_x_444(tmp_state[:])
                 else:
-                    state = rotate_444(state[:], step)
+                    tmp_state = rotate_444(tmp_state[:], step)
 
             # record the state of all edges and centers
-            state = ''.join(state[2:4] +
-                            state[5:13] +
-                            state[14:16] +
-                            state[18:20] +
-                            state[21:29] +
-                            state[30:32] +
-                            state[34:36] +
-                            state[37:45] +
-                            state[46:48] +
-                            state[50:52] +
-                            state[53:61] +
-                            state[62:64] +
-                            state[66:68] +
-                            state[69:77] +
-                            state[78:80] +
-                            state[82:84] +
-                            state[85:93] +
-                            state[94:96])
-            results.append(state[:])
+            result = \
+                tmp_state[2:4] + tmp_state[5:13] + tmp_state[14:16] +\
+                tmp_state[18:20] + tmp_state[21:29] + tmp_state[30:32] +\
+                tmp_state[34:36] + tmp_state[37:45] + tmp_state[46:48] +\
+                tmp_state[50:52] + tmp_state[53:61] + tmp_state[62:64] +\
+                tmp_state[66:68] + tmp_state[69:77] + tmp_state[78:80] +\
+                tmp_state[82:84] + tmp_state[85:93] + tmp_state[94:96]
+
+            result = ''.join(result)
+            results.append(result[:])
 
         results = sorted(results)
         return results[0]
@@ -1001,6 +1129,9 @@ class LookupTable444EdgeSliceForward(LookupTable):
             'EDGES',
             linecount=7920)
 
+    def state(self):
+        raise Exception("This should never be called")
+
 
 class LookupTable444EdgesSliceBackward(LookupTable):
     """
@@ -1028,6 +1159,9 @@ class LookupTable444EdgesSliceBackward(LookupTable):
             'lookup-table-4x4x4-step50-edges-slice-backward.txt',
             'EDGES',
             linecount=7919)
+
+    def state(self):
+        raise Exception("This should never be called")
 
 
 class RubiksCube444(RubiksCube):

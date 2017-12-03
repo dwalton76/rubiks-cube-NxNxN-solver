@@ -53,31 +53,39 @@ class LookupTable555UDTCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([
+        result = [
+            # Upper
             'x', parent_state[8], 'x',
             parent_state[12], parent_state[13], parent_state[14],
             'x', parent_state[18], 'x',
 
+            # Left
             'x', parent_state[33], 'x',
             parent_state[37], parent_state[38], parent_state[39],
             'x', parent_state[43], 'x',
 
+            # Front
             'x', parent_state[58], 'x',
             parent_state[62], parent_state[63], parent_state[64],
             'x', parent_state[68], 'x',
 
+            # Right
             'x', parent_state[83], 'x',
             parent_state[87], parent_state[88], parent_state[89],
             'x', parent_state[93], 'x',
 
+            # Back
             'x', parent_state[108], 'x',
             parent_state[112], parent_state[113], parent_state[114],
             'x', parent_state[118], 'x',
 
+            # Down
             'x', parent_state[133], 'x',
             parent_state[137], parent_state[138], parent_state[139],
-            'x', parent_state[143], 'x'])
+            'x', parent_state[143], 'x'
+        ]
 
+        result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
@@ -110,30 +118,39 @@ class LookupTable555UDXCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([
+        result = [
+            # Upper
             parent_state[7], 'x', parent_state[9],
             'x', parent_state[13], 'x',
             parent_state[17], 'x', parent_state[19],
 
+            # Left
             parent_state[32], 'x', parent_state[34],
             'x', parent_state[38], 'x',
             parent_state[42], 'x', parent_state[44],
 
+            # Front
             parent_state[57], 'x', parent_state[59],
             'x', parent_state[63], 'x',
             parent_state[67], 'x', parent_state[69],
 
+            # Right
             parent_state[82], 'x', parent_state[84],
             'x', parent_state[88], 'x',
             parent_state[92], 'x', parent_state[94],
 
+            # Back
             parent_state[107], 'x', parent_state[109],
             'x', parent_state[113], 'x',
             parent_state[117], 'x', parent_state[119],
 
+            # Down
             parent_state[132], 'x', parent_state[134],
             'x', parent_state[138], 'x',
-            parent_state[142], 'x', parent_state[144]])
+            parent_state[142], 'x', parent_state[144]
+        ]
+
+        result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
@@ -170,13 +187,15 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join(
-            parent_state[7:10] + parent_state[12:15] + parent_state[17:20] +
-            parent_state[32:35] + parent_state[37:40] + parent_state[42:45] +
-            parent_state[57:60] + parent_state[62:65] + parent_state[67:70] +
-            parent_state[82:85] + parent_state[87:90] + parent_state[92:95] +
-            parent_state[107:110] + parent_state[112:115] + parent_state[117:120] +
-            parent_state[132:135] + parent_state[137:140] + parent_state[142:145])
+        result = \
+            parent_state[7:10] + parent_state[12:15] + parent_state[17:20] +\
+            parent_state[32:35] + parent_state[37:40] + parent_state[42:45] +\
+            parent_state[57:60] + parent_state[62:65] + parent_state[67:70] +\
+            parent_state[82:85] + parent_state[87:90] + parent_state[92:95] +\
+            parent_state[107:110] + parent_state[112:115] + parent_state[117:120] +\
+            parent_state[132:135] + parent_state[137:140] + parent_state[142:145]
+
+        result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
@@ -208,36 +227,43 @@ class LookupTable555CpuMinUDTCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([
+        result = [
+            # Upper
             'x', parent_state[8], 'x',
             parent_state[12], parent_state[13], parent_state[14],
             'x', parent_state[18], 'x',
 
+            # Left
             'x', parent_state[33], 'x',
             parent_state[37], parent_state[38], parent_state[39],
             'x', parent_state[43], 'x',
 
+            # Front
             'x', parent_state[58], 'x',
             parent_state[62], parent_state[63], parent_state[64],
             'x', parent_state[68], 'x',
 
+            # Right
             'x', parent_state[83], 'x',
             parent_state[87], parent_state[88], parent_state[89],
             'x', parent_state[93], 'x',
 
+            # Back
             'x', parent_state[108], 'x',
             parent_state[112], parent_state[113], parent_state[114],
             'x', parent_state[118], 'x',
 
+            # Down
             'x', parent_state[133], 'x',
             parent_state[137], parent_state[138], parent_state[139],
-            'x', parent_state[143], 'x'])
+            'x', parent_state[143], 'x'
+        ]
 
+        result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
-
 
 
 class LookupTable555CpuMinUDXCenterStage(LookupTable):
@@ -265,30 +291,39 @@ class LookupTable555CpuMinUDXCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([
+        result = [
+            # Upper
             parent_state[7], 'x', parent_state[9],
             'x', parent_state[13], 'x',
             parent_state[17], 'x', parent_state[19],
 
+            # Left
             parent_state[32], 'x', parent_state[34],
             'x', parent_state[38], 'x',
             parent_state[42], 'x', parent_state[44],
 
+            # Front
             parent_state[57], 'x', parent_state[59],
             'x', parent_state[63], 'x',
             parent_state[67], 'x', parent_state[69],
 
+            # Right
             parent_state[82], 'x', parent_state[84],
             'x', parent_state[88], 'x',
             parent_state[92], 'x', parent_state[94],
 
+            # Back
             parent_state[107], 'x', parent_state[109],
             'x', parent_state[113], 'x',
             parent_state[117], 'x', parent_state[119],
 
+            # Down
             parent_state[132], 'x', parent_state[134],
             'x', parent_state[138], 'x',
-            parent_state[142], 'x', parent_state[144]])
+            parent_state[142], 'x', parent_state[144]
+        ]
+
+        result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
@@ -349,13 +384,15 @@ class  LookupTableIDA555CpuMinUDCentersStage(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join(
-            parent_state[7:10] + parent_state[12:15] + parent_state[17:20] +
-            parent_state[32:35] + parent_state[37:40] + parent_state[42:45] +
-            parent_state[57:60] + parent_state[62:65] + parent_state[67:70] +
-            parent_state[82:85] + parent_state[87:90] + parent_state[92:95] +
-            parent_state[107:110] + parent_state[112:115] + parent_state[117:120] +
-            parent_state[132:135] + parent_state[137:140] + parent_state[142:145])
+        result = \
+            parent_state[7:10] + parent_state[12:15] + parent_state[17:20] +\
+            parent_state[32:35] + parent_state[37:40] + parent_state[42:45] +\
+            parent_state[57:60] + parent_state[62:65] + parent_state[67:70] +\
+            parent_state[82:85] + parent_state[87:90] + parent_state[92:95] +\
+            parent_state[107:110] + parent_state[112:115] + parent_state[117:120] +\
+            parent_state[132:135] + parent_state[137:140] + parent_state[142:145]
+
+        result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
@@ -389,18 +426,22 @@ class LookupTable555LRXCentersStage(LookupTable):
         parent_state = self.parent.state
 
         result = [
+            # Left
             parent_state[32], 'x', parent_state[34],
             'x', parent_state[38], 'x',
             parent_state[42], 'x', parent_state[44],
 
+            # Front
             parent_state[57], 'x', parent_state[59],
             'x', parent_state[63], 'x',
             parent_state[67], 'x', parent_state[69],
 
+            # Right
             parent_state[82], 'x', parent_state[84],
             'x', parent_state[88], 'x',
             parent_state[92], 'x', parent_state[94],
 
+            # Back
             parent_state[107], 'x', parent_state[109],
             'x', parent_state[113], 'x',
             parent_state[117], 'x', parent_state[119]]
@@ -440,18 +481,22 @@ class LookupTable555LRTCentersStage(LookupTable):
     def state(self):
         parent_state = self.parent.state
         result = [
+            # Left
             'x', parent_state[33], 'x',
             parent_state[37], parent_state[38], parent_state[39],
             'x', parent_state[43], 'x'
 
+            # Front
             'x', parent_state[58], 'x',
             parent_state[62], parent_state[63], parent_state[64],
             'x', parent_state[68], 'x'
 
+            # Right
             'x', parent_state[83], 'x',
             parent_state[87], parent_state[88], parent_state[89],
             'x', parent_state[93], 'x'
 
+            # Back
             'x', parent_state[108], 'x',
             parent_state[112], parent_state[113], parent_state[114],
             'x', parent_state[118], 'x']
@@ -511,19 +556,29 @@ class LookupTableIDA555LRCentersStage(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([
+        result = [
+            # Upper
             parent_state[32], parent_state[33], parent_state[34],
             parent_state[37], parent_state[38], parent_state[39],
             parent_state[42], parent_state[43], parent_state[44],
+
+            # Left
             parent_state[57], parent_state[58], parent_state[59],
             parent_state[62], parent_state[63], parent_state[64],
             parent_state[67], parent_state[68], parent_state[69],
+
+            # Front
             parent_state[82], parent_state[83], parent_state[84],
             parent_state[87], parent_state[88], parent_state[89],
             parent_state[92], parent_state[93], parent_state[94],
+
+            # Right
             parent_state[107], parent_state[108], parent_state[109],
             parent_state[112], parent_state[113], parent_state[114],
-            parent_state[117], parent_state[118], parent_state[119]])
+            parent_state[117], parent_state[118], parent_state[119]
+        ]
+
+        result = ''.join(result)
         result = result.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
 
         # Convert to hex
@@ -567,24 +622,37 @@ class LookupTableULCentersSolve(LookupTable):
     def state(self):
         parent_state = self.parent.state
         result = [
+            # Upper
             parent_state[7], parent_state[8], parent_state[9],
             parent_state[12], parent_state[13], parent_state[14],
             parent_state[17], parent_state[18], parent_state[19],
+
+            # Left
             parent_state[32], parent_state[33], parent_state[34],
             parent_state[37], parent_state[38], parent_state[39],
             parent_state[42], parent_state[43], parent_state[44],
+
+            # Front
             parent_state[57], parent_state[58], parent_state[59],
             parent_state[62], parent_state[63], parent_state[64],
             parent_state[67], parent_state[68], parent_state[69],
+
+            # Right
             parent_state[82], parent_state[83], parent_state[84],
             parent_state[87], parent_state[88], parent_state[89],
             parent_state[92], parent_state[93], parent_state[94],
+
+            # Back
             parent_state[107], parent_state[108], parent_state[109],
             parent_state[112], parent_state[113], parent_state[114],
             parent_state[117], parent_state[118], parent_state[119],
+
+            # Down
             parent_state[132], parent_state[133], parent_state[134],
             parent_state[137], parent_state[138], parent_state[139],
-            parent_state[142], parent_state[143], parent_state[144]]
+            parent_state[142], parent_state[143], parent_state[144]
+        ]
+
         result = ''.join(result)
         result = result.replace('x', '0').replace('U', '1').replace('L', '1').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '0')
 
@@ -628,25 +696,39 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     def state(self):
         parent_state = self.parent.state
         result = [
+            # Upper
             parent_state[7], parent_state[8], parent_state[9],
             parent_state[12], parent_state[13], parent_state[14],
             parent_state[17], parent_state[18], parent_state[19],
+
+            # Left
             parent_state[32], parent_state[33], parent_state[34],
             parent_state[37], parent_state[38], parent_state[39],
             parent_state[42], parent_state[43], parent_state[44],
+
+            # Front
             parent_state[57], parent_state[58], parent_state[59],
             parent_state[62], parent_state[63], parent_state[64],
             parent_state[67], parent_state[68], parent_state[69],
+
+            # Right
             parent_state[82], parent_state[83], parent_state[84],
             parent_state[87], parent_state[88], parent_state[89],
             parent_state[92], parent_state[93], parent_state[94],
+
+            # Back
             parent_state[107], parent_state[108], parent_state[109],
             parent_state[112], parent_state[113], parent_state[114],
             parent_state[117], parent_state[118], parent_state[119],
+
+            # Down
             parent_state[132], parent_state[133], parent_state[134],
             parent_state[137], parent_state[138], parent_state[139],
-            parent_state[142], parent_state[143], parent_state[144]]
-        return ''.join(result)
+            parent_state[142], parent_state[143], parent_state[144]
+        ]
+
+        result = ''.join(result)
+        return result
 
 
 class LookupTable555EdgeSliceForward(LookupTable):
@@ -672,6 +754,9 @@ class LookupTable555EdgeSliceForward(LookupTable):
             'EDGES',
             linecount=7920)
 
+    def state(self):
+        raise Exception("This should never be called")
+
 
 class LookupTable555EdgeSliceBackward(LookupTable):
     """
@@ -696,6 +781,9 @@ class LookupTable555EdgeSliceBackward(LookupTable):
             'lookup-table-5x5x5-step91-edges-slice-backward.txt',
             'EDGES',
             linecount=7919)
+
+    def state(self):
+        raise Exception("This should never be called")
 
 
 class LookupTable555TCenterSolve(LookupTable):
@@ -727,31 +815,39 @@ class LookupTable555TCenterSolve(LookupTable):
     def state(self):
         parent_state = self.parent.state
         result = [
+            # Upper
             'x', parent_state[8], 'x',
             parent_state[12], parent_state[13], parent_state[14],
             'x', parent_state[18], 'x',
 
+            # Left
             'x', parent_state[33], 'x',
             parent_state[37], parent_state[38], parent_state[39],
             'x', parent_state[43], 'x',
 
+            # Front
             'x', parent_state[58], 'x',
             parent_state[62], parent_state[63], parent_state[64],
             'x', parent_state[68], 'x',
 
+            # Right
             'x', parent_state[83], 'x',
             parent_state[87], parent_state[88], parent_state[89],
             'x', parent_state[93], 'x',
 
+            # Back
             'x', parent_state[108], 'x',
             parent_state[112], parent_state[113], parent_state[114],
             'x', parent_state[118], 'x',
 
+            # Down
             'x', parent_state[133], 'x',
             parent_state[137], parent_state[138], parent_state[139],
-            'x', parent_state[143], 'x']
+            'x', parent_state[143], 'x'
+        ]
 
-        return ''.join(result)
+        result = ''.join(result)
+        return result
 
 
 class RubiksCube555(RubiksCube):

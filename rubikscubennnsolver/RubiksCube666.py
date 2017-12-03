@@ -55,13 +55,16 @@ class LookupTable666UDInnerXCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
             'xxxxx', parent_state[15], parent_state[16], 'xx', parent_state[21], parent_state[22], 'xxxxx',
             'xxxxx', parent_state[51], parent_state[52], 'xx', parent_state[57], parent_state[58], 'xxxxx',
             'xxxxx', parent_state[87], parent_state[88], 'xx', parent_state[93], parent_state[94], 'xxxxx',
             'xxxxx', parent_state[123], parent_state[124], 'xx', parent_state[129], parent_state[130], 'xxxxx',
             'xxxxx', parent_state[159], parent_state[160], 'xx', parent_state[165], parent_state[166], 'xxxxx',
-            'xxxxx', parent_state[195], parent_state[196], 'xx', parent_state[201], parent_state[202], 'xxxxx']
+            'xxxxx', parent_state[195], parent_state[196], 'xx', parent_state[201], parent_state[202], 'xxxxx'
+        ]
+
         result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1') 
 
@@ -95,31 +98,45 @@ class LookupTable666CpuMaxUDObliqueEdgePairingLeftOnly(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Upper
             parent_state[9], 'x',
             'x', parent_state[17],
             parent_state[20], 'x',
             'x', parent_state[28],
+
+            # Left
             parent_state[45], 'x',
             'x', parent_state[53],
             parent_state[56], 'x',
             'x', parent_state[64],
+
+            # Front
             parent_state[81], 'x',
             'x', parent_state[89],
             parent_state[92], 'x',
             'x', parent_state[100],
+
+            # Right
             parent_state[117], 'x',
             'x', parent_state[125],
             parent_state[128], 'x',
             'x', parent_state[136],
+
+            # Back
             parent_state[153], 'x',
             'x', parent_state[161],
             parent_state[164], 'x',
             'x', parent_state[172],
+
+            # Down
             parent_state[189], 'x',
             'x', parent_state[197],
             parent_state[200], 'x',
-            'x', parent_state[208]]
+            'x', parent_state[208]
+        ]
+
         result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
@@ -153,31 +170,45 @@ class LookupTable666CpuMaxUDObliqueEdgePairingRightOnly(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Upper
             'x', parent_state[10],
             parent_state[14], 'x',
             'x', parent_state[23],
             parent_state[27], 'x',
+
+            # Left
             'x', parent_state[46],
             parent_state[50], 'x',
             'x', parent_state[59],
             parent_state[63], 'x',
+
+            # Front
             'x', parent_state[82],
             parent_state[86], 'x',
             'x', parent_state[95],
             parent_state[99], 'x',
+
+            # Right
             'x', parent_state[118],
             parent_state[122], 'x',
             'x', parent_state[131],
             parent_state[135], 'x',
+
+            # Back
             'x', parent_state[154],
             parent_state[158], 'x',
             'x', parent_state[167],
             parent_state[171], 'x',
+
+            # Down
             'x', parent_state[190],
             parent_state[194], 'x',
             'x', parent_state[203],
-            parent_state[207], 'x']
+            parent_state[207], 'x'
+        ]
+
         result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
@@ -220,31 +251,44 @@ class LookupTableIDA666CpuMaxUDObliqueEdgePairing(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Upper
             parent_state[9], parent_state[10],
             parent_state[14], parent_state[17],
             parent_state[20], parent_state[23],
             parent_state[27], parent_state[28],
+
+            # Left
             parent_state[45], parent_state[46],
             parent_state[50], parent_state[53],
             parent_state[56], parent_state[59],
             parent_state[63], parent_state[64],
+
+            # Front
             parent_state[81], parent_state[82],
             parent_state[86], parent_state[89],
             parent_state[92], parent_state[95],
             parent_state[99], parent_state[100],
+
+            # Right
             parent_state[117], parent_state[118],
             parent_state[122], parent_state[125],
             parent_state[128], parent_state[131],
             parent_state[135], parent_state[136],
+
+            # Back
             parent_state[153], parent_state[154],
             parent_state[158], parent_state[161],
             parent_state[164], parent_state[167],
             parent_state[171], parent_state[172],
+
+            # Down
             parent_state[189], parent_state[190],
             parent_state[194], parent_state[197],
             parent_state[200], parent_state[203],
-            parent_state[207], parent_state[208]]
+            parent_state[207], parent_state[208]
+        ]
 
         result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
@@ -280,31 +324,45 @@ class LookupTable666UDObliqueEdgePairingLeftOnly(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Upper
             parent_state[9], 'x',
             'x', parent_state[17],
             parent_state[20], 'x',
             'x', parent_state[28],
+
+            # Left
             parent_state[45], 'x',
             'x', parent_state[53],
             parent_state[56], 'x',
             'x', parent_state[64],
+
+            # Front
             parent_state[81], 'x',
             'x', parent_state[89],
             parent_state[92], 'x',
             'x', parent_state[100],
+
+            # Right
             parent_state[117], 'x',
             'x', parent_state[125],
             parent_state[128], 'x',
             'x', parent_state[136],
+
+            # Back
             parent_state[153], 'x',
             'x', parent_state[161],
             parent_state[164], 'x',
             'x', parent_state[172],
+
+            # Down
             parent_state[189], 'x',
             'x', parent_state[197],
             parent_state[200], 'x',
-            'x', parent_state[208]]
+            'x', parent_state[208]
+        ]
+
         result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
@@ -339,31 +397,45 @@ class LookupTable666UDObliqueEdgePairingRightOnly(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Upper
             'x', parent_state[10],
             parent_state[14], 'x',
             'x', parent_state[23],
             parent_state[27], 'x',
+
+            # Left
             'x', parent_state[46],
             parent_state[50], 'x',
             'x', parent_state[59],
             parent_state[63], 'x',
+
+            # Front
             'x', parent_state[82],
             parent_state[86], 'x',
             'x', parent_state[95],
             parent_state[99], 'x',
+
+            # Right
             'x', parent_state[118],
             parent_state[122], 'x',
             'x', parent_state[131],
             parent_state[135], 'x',
+
+            # Back
             'x', parent_state[154],
             parent_state[158], 'x',
             'x', parent_state[167],
             parent_state[171], 'x',
+
+            # Down
             'x', parent_state[190],
             parent_state[194], 'x',
             'x', parent_state[203],
-            parent_state[207], 'x']
+            parent_state[207], 'x'
+        ]
+
         result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
@@ -430,31 +502,44 @@ class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Upper
             parent_state[9], parent_state[10],
             parent_state[14], parent_state[17],
             parent_state[20], parent_state[23],
             parent_state[27], parent_state[28],
+
+            # Left
             parent_state[45], parent_state[46],
             parent_state[50], parent_state[53],
             parent_state[56], parent_state[59],
             parent_state[63], parent_state[64],
+
+            # Front
             parent_state[81], parent_state[82],
             parent_state[86], parent_state[89],
             parent_state[92], parent_state[95],
             parent_state[99], parent_state[100],
+
+            # Right
             parent_state[117], parent_state[118],
             parent_state[122], parent_state[125],
             parent_state[128], parent_state[131],
             parent_state[135], parent_state[136],
+
+            # Back
             parent_state[153], parent_state[154],
             parent_state[158], parent_state[161],
             parent_state[164], parent_state[167],
             parent_state[171], parent_state[172],
+
+            # Down
             parent_state[189], parent_state[190],
             parent_state[194], parent_state[197],
             parent_state[200], parent_state[203],
-            parent_state[207], parent_state[208]]
+            parent_state[207], parent_state[208]
+        ]
 
         result = ''.join(result)
         result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
@@ -490,13 +575,27 @@ class LookupTable666LRInnerXCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Upper
             'xxxxx', parent_state[15], parent_state[16], 'xx', parent_state[21], parent_state[22], 'xxxxx',
+
+            # Left
             'xxxxx', parent_state[51], parent_state[52], 'xx', parent_state[57], parent_state[58], 'xxxxx',
+
+            # Front
             'xxxxx', parent_state[87], parent_state[88], 'xx', parent_state[93], parent_state[94], 'xxxxx',
+
+            # Right
             'xxxxx', parent_state[123], parent_state[124], 'xx', parent_state[129], parent_state[130], 'xxxxx',
+
+            # Back
             'xxxxx', parent_state[159], parent_state[160], 'xx', parent_state[165], parent_state[166], 'xxxxx',
-            'xxxxx', parent_state[195], parent_state[196], 'xx', parent_state[201], parent_state[202], 'xxxxx']
+
+            # Down
+            'xxxxx', parent_state[195], parent_state[196], 'xx', parent_state[201], parent_state[202], 'xxxxx'
+        ]
+
         result = ''.join(result)
         result = result.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0') 
 
@@ -533,22 +632,31 @@ class LookupTable666LRObliqueEdgePairingLeftOnly(LookupTable):
         parent_state = self.parent.state
 
         result = [
+            # Left
             parent_state[45], 'x',
             'x', parent_state[53],
             parent_state[56], 'x',
             'x', parent_state[64],
+
+            # Front
             parent_state[81], 'x',
             'x', parent_state[89],
             parent_state[92], 'x',
             'x', parent_state[100],
+
+            # Right
             parent_state[117], 'x',
             'x', parent_state[125],
             parent_state[128], 'x',
             'x', parent_state[136],
+
+            # Back
             parent_state[153], 'x',
             'x', parent_state[161],
             parent_state[164], 'x',
-            'x', parent_state[172]]
+            'x', parent_state[172]
+        ]
+
         result = ''.join(result)
         result = result.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0')
 
@@ -583,23 +691,33 @@ class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Left
             'x', parent_state[46],
             parent_state[50], 'x',
             'x', parent_state[59],
             parent_state[63], 'x',
+
+            # Front
             'x', parent_state[82],
             parent_state[86], 'x',
             'x', parent_state[95],
             parent_state[99], 'x',
+
+            # Right
             'x', parent_state[118],
             parent_state[122], 'x',
             'x', parent_state[131],
             parent_state[135], 'x',
+
+            # Back
             'x', parent_state[154],
             parent_state[158], 'x',
             'x', parent_state[167],
-            parent_state[171] + 'x']
+            parent_state[171] + 'x'
+        ]
+
         result = ''.join(result)
         result = result.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0')
 
@@ -653,23 +771,33 @@ class LookupTableIDA666LRObliqueEdgePairing(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Left
             parent_state[45], parent_state[46],
             parent_state[50], parent_state[53],
             parent_state[56], parent_state[59],
             parent_state[63], parent_state[64],
+
+            # Front
             parent_state[81], parent_state[82],
             parent_state[86], parent_state[89],
             parent_state[92], parent_state[95],
             parent_state[99], parent_state[100],
+
+            # Right
             parent_state[117], parent_state[118],
             parent_state[122], parent_state[125],
             parent_state[128], parent_state[131],
             parent_state[135], parent_state[136],
+
+            # Back
             parent_state[153], parent_state[154],
             parent_state[158], parent_state[161],
             parent_state[164], parent_state[167],
-            parent_state[171], parent_state[172]]
+            parent_state[171], parent_state[172]
+        ]
+
         result = ''.join(result)
         result = result.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0')
 
@@ -706,18 +834,23 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Upper
             'x', parent_state[9], parent_state[10], 'x',
             parent_state[14], parent_state[15], parent_state[16], parent_state[17],
             parent_state[20], parent_state[21], parent_state[22], parent_state[23], 
             'x', parent_state[27], parent_state[28], 'x',
     
+            # Down
             'x', parent_state[189], parent_state[190], 'x',
             parent_state[194], parent_state[195], parent_state[196], parent_state[197],
             parent_state[200], parent_state[201], parent_state[202], parent_state[203],
-            'x', parent_state[207], parent_state[208], 'x']
+            'x', parent_state[207], parent_state[208], 'x'
+        ]
 
-        return ''.join(result)
+        result = ''.join(result)
+        return result
 
 
 class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
@@ -755,24 +888,35 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Left
             'x', parent_state[45], parent_state[46], 'x',
             parent_state[50], parent_state[51], parent_state[52], parent_state[53],
             parent_state[56], parent_state[57], parent_state[58], parent_state[59],
             'x', parent_state[63], parent_state[64], 'x',
+
+            # Front
             'xxxx',
             'x', parent_state[87], parent_state[88], 'x',
             'x', parent_state[93], parent_state[94], 'x',
             'xxxx',
+
+            # Right
             'x', parent_state[117], parent_state[118], 'x',
             parent_state[122], parent_state[123], parent_state[124], parent_state[125],
             parent_state[128], parent_state[129], parent_state[130], parent_state[131],
             'x', parent_state[135], parent_state[136], 'x',
+
+            # Back
             'xxxx',
             'x', parent_state[159], parent_state[160], 'x',
             'x', parent_state[165], parent_state[166], 'x',
-            'xxxx']
-        return ''.join(result)
+            'xxxx'
+        ]
+
+        result = ''.join(result)
+        return result
 
 
 class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
@@ -810,27 +954,35 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
+
         result = [
+            # Left
             'x', parent_state[45], parent_state[46], 'x',
             parent_state[50], parent_state[51], parent_state[52], parent_state[53],
             parent_state[56], parent_state[57], parent_state[58], parent_state[59],
             'x', parent_state[63], parent_state[64], 'x',
 
+            # Front
             'x', parent_state[81], parent_state[82], 'x',
             parent_state[86], parent_state[87], parent_state[88], parent_state[89],
             parent_state[92], parent_state[93], parent_state[94], parent_state[95],
             'x', parent_state[99], parent_state[100], 'x',
 
+            # Right
             'x', parent_state[117], parent_state[118], 'x',
             parent_state[122], parent_state[123], parent_state[124], parent_state[125],
             parent_state[128], parent_state[129], parent_state[130], parent_state[131],
             'x', parent_state[135], parent_state[136], 'x',
 
+            # Back
             'x', parent_state[153], parent_state[154], 'x',
             parent_state[158], parent_state[159], parent_state[160], parent_state[161],
             parent_state[164], parent_state[165], parent_state[166], parent_state[167],
-            'x', parent_state[171], parent_state[172], 'x']
-        return ''.join(result)
+            'x', parent_state[171], parent_state[172], 'x'
+        ]
+
+        result = ''.join(result)
+        return result
 
 
 class RubiksCube666(RubiksCubeNNNEvenEdges):

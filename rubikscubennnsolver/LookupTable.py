@@ -91,8 +91,6 @@ class LookupTable(object):
         self.filename_exists = False
         self.linecount = linecount
         self.max_depth = max_depth
-        self.record_stats = False
-        self.heuristic_stats = {}
         self.avoid_oll = False
         self.avoid_pll = False
 
@@ -358,7 +356,7 @@ class LookupTableIDA(LookupTable):
 
     def ida_heuristic_all_costs(self):
         """
-        Only used if self.record_stats is True
+        No longer used...save for rainy day
         """
         results = {}
 
@@ -430,19 +428,7 @@ class LookupTableIDA(LookupTable):
                 self.parent.print_cube()
                 raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (pt, pt_state, pt.state_width))
 
-            if self.heuristic_stats:
-                pt_costs.append(len_pt_steps)
-
             if len_pt_steps > cost_to_goal:
-                cost_to_goal = len_pt_steps
-
-        if self.heuristic_stats:
-            pt_costs = tuple(pt_costs)
-            len_pt_steps = self.heuristic_stats.get(pt_costs, 0)
-
-            if len_pt_steps > cost_to_goal:
-                #if debug:
-                #    log.info("%s: %s increase heuristic from %d to %d" % (self, pformat(pt_costs), cost_to_goal, len_pt_steps))
                 cost_to_goal = len_pt_steps
 
         #if debug:
@@ -506,48 +492,6 @@ class LookupTableIDA(LookupTable):
             self.parent.solution = self.original_solution[:]
             log.info("%s: IDA found match but it leads to PLL" % self)
             return False
-
-        # record stats here
-        if self.record_stats:
-            final_state = self.parent.state[:]
-            final_solution = self.parent.solution[:]
-
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-            actual_cost_to_goal = len(final_solution) - len(self.original_solution)
-            stats = []
-
-            for step in final_solution[len(self.original_solution):]:
-                stats.append(self.ida_heuristic_all_costs())
-                stats[-1]['state'] = self.state()
-                stats[-1]['step'] = step
-                stats[-1]['actual-cost'] = actual_cost_to_goal
-                actual_cost_to_goal -= 1
-
-                self.parent.rotate(step)
-
-            #log.info("STATS:\n%s\n" % pformat(stats))
-            #sys.exit(0)
-            with open('%s.stats' % self.filename, 'a') as fh:
-                for entry in stats:
-
-                    if self.filename == 'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt':
-                        fh.write("%s,%d,%d,%d,%d\n" % (
-                            entry['state'],
-                            entry['lookup-table-4x4x4-step11-UD-centers-stage.txt'],
-                            entry['lookup-table-4x4x4-step12-LR-centers-stage.txt'],
-                            entry['lookup-table-4x4x4-step13-FB-centers-stage.txt'],
-                            entry['actual-cost']))
-
-                    elif self.filename == 'lookup-table-4x4x4-step70-tsai-phase3.txt':
-                        fh.write("%s,%d,%d,%d\n" % (
-                            entry['state'],
-                            entry['lookup-table-4x4x4-step71-phase3-edges-tsai.txt'],
-                            entry['lookup-table-4x4x4-step72-phase3-centers-tsai.txt'],
-                            entry['actual-cost']))
-
-            self.parent.state = final_state[:]
-            self.parent.solution = final_solution[:]
 
         return True
 

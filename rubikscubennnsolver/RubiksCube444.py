@@ -6,8 +6,6 @@ from rubikscubennnsolver.RubiksCube444Misc import (
     lookup_table_444_last_two_edges_place_F_east,
     lookup_table_444_sister_wing_to_F_east,
     lookup_table_444_sister_wing_to_U_west,
-    lt_ULFRBD_centers_stage_heuristic_stats_min,
-    lt_ULFRBD_centers_stage_heuristic_stats_median,
     tsai_phase2_orient_edges,
     tsai_edge_mapping_combinations,
 )
@@ -239,9 +237,6 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
              parent.lt_LR_centers_stage,
              parent.lt_FB_centers_stage),
             linecount=8649142)
-
-        self.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_min
-        self.heuristic_stats = lt_ULFRBD_centers_stage_heuristic_stats_median
 
     def state(self):
         parent_state = self.parent.state

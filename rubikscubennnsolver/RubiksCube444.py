@@ -236,7 +236,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             self,
             parent,
             'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
-            '444-ULFRBD-centers-stage',
+            None,
             'UUUULLLLFFFFLLLLFFFFUUUU',
             False, # state hex
             moves_4x4x4,

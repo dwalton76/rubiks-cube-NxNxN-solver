@@ -209,7 +209,7 @@ class LookupTable555CpuMinUDTCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
-            '555-UD-T-centers-stage',
+            None,
             '174000000000ba',
             True, # state_hex
             linecount=12870)
@@ -268,7 +268,7 @@ class LookupTable555CpuMinUDXCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
-            '555-UD-X-centers-stage',
+            None,
             '2aa00000000155',
             True, # state_hex
             linecount=12870)
@@ -579,7 +579,7 @@ class LookupTableULCentersSolve(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step31-UL-centers-solve.txt',
-            '555-UL-centers-solve-on-all',
+            None,
             '3ffff000000000',
             True, # state_hex
             linecount=24010000)

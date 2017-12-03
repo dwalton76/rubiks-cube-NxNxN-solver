@@ -20,6 +20,1752 @@ moves_7x7x7 = moves_6x6x6
 solved_7x7x7 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 
+class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
+    """
+    24!/(8!*16!) is 735,471
+
+    lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt
+    =================================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 66 entries (0 percent, 13.20x previous step)
+    3 steps has 850 entries (0 percent, 12.88x previous step)
+    4 steps has 8,753 entries (1 percent, 10.30x previous step)
+    5 steps has 67,758 entries (9 percent, 7.74x previous step)
+    6 steps has 243,959 entries (33 percent, 3.60x previous step)
+    7 steps has 257,410 entries (34 percent, 1.06x previous step)
+    8 steps has 135,684 entries (18 percent, 0.53x previous step)
+    9 steps has 20,177 entries (2 percent, 0.15x previous step)
+    10 steps has 801 entries (0 percent, 0.04x previous step)
+    11 steps has 8 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
+            '777-UD-oblique-edge-pairing-middle-only',
+            '08088080000000000000000000000000404404',
+            True, # state_hex
+            linecount=735471)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Upper
+            'xx', parent_state[11], 'xx',
+            'xxxxx',
+            parent_state[23], 'xxx', parent_state[27],
+            'xxxxx',
+            'xx', parent_state[39], 'xx',
+
+            # Left
+            'xx', parent_state[60], 'xx',
+            'xxxxx',
+            parent_state[72], 'xxx', parent_state[76],
+            'xxxxx',
+            'xx', parent_state[88], 'xx',
+
+            # Front
+            'xx', parent_state[109], 'xx',
+            'xxxxx',
+            parent_state[121], 'xxx', parent_state[125],
+            'xxxxx',
+            'xx', parent_state[137], 'xx',
+
+            # Right
+            'xx', parent_state[158], 'xx',
+            'xxxxx',
+            parent_state[170], 'xxx', parent_state[174],
+            'xxxxx',
+            'xx', parent_state[186], 'xx',
+
+            # Back
+            'xx', parent_state[207], 'xx',
+            'xxxxx',
+            parent_state[219], 'xxx', parent_state[223],
+            'xxxxx',
+            'xx', parent_state[235], 'xx',
+
+            # Down
+            'xx', parent_state[256], 'xx',
+            'xxxxx',
+            parent_state[268], 'xxx', parent_state[272],
+            'xxxxx',
+            'xx', parent_state[284], 'xx'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
+    """
+    24!/(8!*16!) is 735,471
+
+    lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt
+    ===============================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 66 entries (0 percent, 13.20x previous step)
+    3 steps has 850 entries (0 percent, 12.88x previous step)
+    4 steps has 8,753 entries (1 percent, 10.30x previous step)
+    5 steps has 67,758 entries (9 percent, 7.74x previous step)
+    6 steps has 243,959 entries (33 percent, 3.60x previous step)
+    7 steps has 257,410 entries (34 percent, 1.06x previous step)
+    8 steps has 135,684 entries (18 percent, 0.53x previous step)
+    9 steps has 20,177 entries (2 percent, 0.15x previous step)
+    10 steps has 801 entries (0 percent, 0.04x previous step)
+    11 steps has 8 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
+            '777-UD-oblique-edge-pairing-left-only',
+            '10104040000000000000000000000000808202',
+            True, # state_hex
+            linecount=735471)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Upper
+            'x', parent_state[10], 'xxx',
+            'xxxx', parent_state[20],
+            'xxxxx',
+            parent_state[30], 'xxxx',
+            'xxx', parent_state[40], 'x',
+
+            # Left
+            'x', parent_state[59], 'xxx',
+            'xxxx', parent_state[69],
+            'xxxxx',
+            parent_state[79], 'xxxx',
+            'xxx', parent_state[89], 'x',
+
+            # Front
+            'x', parent_state[108], 'xxx',
+            'xxxx', parent_state[118],
+            'xxxxx',
+            parent_state[128], 'xxxx',
+            'xxx', parent_state[138], 'x',
+
+            # Right
+            'x', parent_state[157], 'xxx',
+            'xxxx', parent_state[167],
+            'xxxxx',
+            parent_state[177], 'xxxx',
+            'xxx', parent_state[187], 'x',
+
+            # Back
+            'x', parent_state[206], 'xxx',
+            'xxxx', parent_state[216],
+            'xxxxx',
+            parent_state[226], 'xxxx',
+            'xxx', parent_state[236], 'x',
+
+            # Down
+            'x', parent_state[255], 'xxx',
+            'xxxx', parent_state[265],
+            'xxxxx',
+            parent_state[275], 'xxxx',
+            'xxx', parent_state[285], 'x'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
+    """
+    24!/(8!*16!) is 735,471
+
+    lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt
+    =================================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 66 entries (0 percent, 13.20x previous step)
+    3 steps has 850 entries (0 percent, 12.88x previous step)
+    4 steps has 8,753 entries (1 percent, 10.30x previous step)
+    5 steps has 67,758 entries (9 percent, 7.74x previous step)
+    6 steps has 243,959 entries (33 percent, 3.60x previous step)
+    7 steps has 257,410 entries (34 percent, 1.06x previous step)
+    8 steps has 135,684 entries (18 percent, 0.53x previous step)
+    9 steps has 20,177 entries (2 percent, 0.15x previous step)
+    10 steps has 801 entries (0 percent, 0.04x previous step)
+    11 steps has 8 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
+            '777-UD-oblique-edge-pairing-right-only',
+            '05000500000000000000000000000000280028',
+            True, # state_hex
+            linecount=735471)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Upper
+            'xxx', parent_state[12], 'x',
+            parent_state[16], 'xxxx',
+            'xxxxx',
+            'xxxx', parent_state[34],
+            'x', parent_state[38], 'xxx',
+
+            # Left
+            'xxx', parent_state[61], 'x',
+            parent_state[65], 'xxxx',
+            'xxxxx',
+            'xxxx', parent_state[83],
+            'x', parent_state[87], 'xxx',
+
+            # Front
+            'xxx', parent_state[110], 'x',
+            parent_state[114], 'xxxx',
+            'xxxxx',
+            'xxxx', parent_state[132],
+            'x', parent_state[136], 'xxx',
+
+            # Right
+            'xxx', parent_state[159], 'x',
+            parent_state[163], 'xxxx',
+            'xxxxx',
+            'xxxx', parent_state[181],
+            'x', parent_state[185], 'xxx',
+
+            # Back
+            'xxx', parent_state[208], 'x',
+            parent_state[212], 'xxxx',
+            'xxxxx',
+            'xxxx', parent_state[230],
+            'x', parent_state[234], 'xxx',
+
+            # Down
+            'xxx', parent_state[257], 'x',
+            parent_state[261], 'xxxx',
+            'xxxxx',
+            'xxxx', parent_state[279],
+            'x', parent_state[283], 'xxx'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
+    """
+    lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
+    =====================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 66 entries (0 percent, 13.20x previous step)
+    3 steps has 916 entries (0 percent, 13.88x previous step)
+    4 steps has 10,132 entries (0 percent, 11.06x previous step)
+    5 steps has 92,070 entries (0 percent, 9.09x previous step)
+    6 steps has 558,938 entries (0 percent, 6.07x previous step)
+    7 steps has 4,163,342 entries (4 percent, 7.45x previous step)
+    8 steps has 53,921,753 entries (56 percent, 12.95x previous step)
+    9 steps has 33,108,789 entries (34 percent, 0.61x previous step)
+    10 steps has 3,448,937 entries (3 percent, 0.10x previous step)
+    11 steps has 49,979 entries (0 percent, 0.01x previous step)
+
+    Total: 95,354,927 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
+            '777-UD-oblique-edge-pairing',
+            '1d18c5c0000000000000000000000000e8c62e',
+            True, # state_hex
+            moves_7x7x7,
+
+            # do not mess up UD 5x5x5 centers
+            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"),
+
+            # prune tables
+            (parent.lt_UD_oblique_edge_pairing_middle_only,
+             parent.lt_UD_oblique_edge_pairing_left_only,
+             parent.lt_UD_oblique_edge_pairing_right_only),
+            linecount=5961573)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Upper
+            'x', parent_state[10], parent_state[11], parent_state[12], 'x',
+            parent_state[16], 'xxx', parent_state[20],
+            parent_state[23], 'xxx', parent_state[27],
+            parent_state[30], 'xxx', parent_state[34],
+            'x', parent_state[38], parent_state[39], parent_state[40], 'x',
+
+            # Left
+            'x', parent_state[59], parent_state[60], parent_state[61], 'x',
+            parent_state[65], 'xxx', parent_state[69],
+            parent_state[72], 'xxx', parent_state[76],
+            parent_state[79], 'xxx', parent_state[83],
+            'x', parent_state[87], parent_state[88], parent_state[89], 'x',
+
+            # Front
+            'x', parent_state[108], parent_state[109], parent_state[110], 'x',
+            parent_state[114], 'xxx', parent_state[118],
+            parent_state[121], 'xxx', parent_state[125],
+            parent_state[128], 'xxx', parent_state[132],
+            'x', parent_state[136], parent_state[137], parent_state[138], 'x',
+
+            # Right
+            'x', parent_state[157], parent_state[158], parent_state[159], 'x',
+            parent_state[163], 'xxx', parent_state[167],
+            parent_state[170], 'xxx', parent_state[174],
+            parent_state[177], 'xxx', parent_state[181],
+            'x', parent_state[185], parent_state[186], parent_state[187], 'x',
+
+            # Back
+            'x', parent_state[206], parent_state[207], parent_state[208], 'x',
+            parent_state[212], 'xxx', parent_state[216],
+            parent_state[219], 'xxx', parent_state[223],
+            parent_state[226], 'xxx', parent_state[230],
+            'x', parent_state[234], parent_state[235], parent_state[236], 'x',
+
+            # Down
+            'x', parent_state[255], parent_state[256], parent_state[257], 'x',
+            parent_state[261], 'xxx', parent_state[265],
+            parent_state[268], 'xxx', parent_state[272],
+            parent_state[275], 'xxx', parent_state[279],
+            'x', parent_state[283], parent_state[284], parent_state[285], 'x'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTable777LRObliqueEdgePairingMiddleOnly(LookupTable):
+    """
+    lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt
+    =================================================================
+    1 steps has 2 entries (0 percent, 0.00x previous step)
+    2 steps has 26 entries (0 percent, 13.00x previous step)
+    3 steps has 190 entries (1 percent, 7.31x previous step)
+    4 steps has 612 entries (4 percent, 3.22x previous step)
+    5 steps has 1,513 entries (11 percent, 2.47x previous step)
+    6 steps has 3,370 entries (26 percent, 2.23x previous step)
+    7 steps has 4,066 entries (31 percent, 1.21x previous step)
+    8 steps has 2,258 entries (17 percent, 0.56x previous step)
+    9 steps has 803 entries (6 percent, 0.36x previous step)
+    10 steps has 30 entries (0 percent, 0.04x previous step)
+
+    Total: 12,870 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
+            '777-LR-oblique-edge-pairing-middle-only',
+            '2022020000000808808000000',
+            True, # state_hex
+            linecount=12870)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Left
+            'xx', parent_state[60], 'xx',
+            'xxxxx',
+            parent_state[72], 'xxx', parent_state[76],
+            'xxxxx',
+            'xx', parent_state[88], 'xx',
+
+            # Front
+            'xx', parent_state[109], 'xx',
+            'xxxxx',
+            parent_state[121], 'xxx', parent_state[125],
+            'xxxxx',
+            'xx', parent_state[137], 'xx',
+
+            # Right
+            'xx', parent_state[158], 'xx',
+            'xxxxx',
+            parent_state[170], 'xxx', parent_state[174],
+            'xxxxx',
+            'xx', parent_state[186], 'xx',
+
+            # Back
+            'xx', parent_state[207], 'xx',
+            'xxxxx',
+            parent_state[219], 'xxx', parent_state[223],
+            'xxxxx',
+            'xx', parent_state[235], 'xx'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTable777LRObliqueEdgePairingLeftOnly(LookupTable):
+    """
+    lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt
+    ===============================================================
+    1 steps has 2 entries (0 percent, 0.00x previous step)
+    2 steps has 26 entries (0 percent, 13.00x previous step)
+    3 steps has 210 entries (1 percent, 8.08x previous step)
+    4 steps has 722 entries (5 percent, 3.44x previous step)
+    5 steps has 1,752 entries (13 percent, 2.43x previous step)
+    6 steps has 4,033 entries (31 percent, 2.30x previous step)
+    7 steps has 4,014 entries (31 percent, 1.00x previous step)
+    8 steps has 1,977 entries (15 percent, 0.49x previous step)
+    9 steps has 134 entries (1 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
+            '777-LR-oblique-edge-pairing-left-only',
+            '4041010000001010404000000',
+            True, # state_hex
+            linecount=12870)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Left
+            'x', parent_state[59], 'xxx',
+            'xxxx', parent_state[69],
+            'xxxxx',
+            parent_state[79], 'xxxx',
+            'xxx', parent_state[89], 'x',
+
+            # Front
+            'x', parent_state[108], 'xxx',
+            'xxxx', parent_state[118],
+            'xxxxx',
+            parent_state[128], 'xxxx',
+            'xxx', parent_state[138], 'x',
+
+            # Right
+            'x', parent_state[157], 'xxx',
+            'xxxx', parent_state[167],
+            'xxxxx',
+            parent_state[177], 'xxxx',
+            'xxx', parent_state[187], 'x',
+
+            # Back
+            'x', parent_state[206], 'xxx',
+            'xxxx', parent_state[216],
+            'xxxxx',
+            parent_state[226], 'xxxx',
+            'xxx', parent_state[236], 'x'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTable777LRObliqueEdgePairingRightOnly(LookupTable):
+    """
+    lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt
+    ================================================================
+    1 steps has 2 entries (0 percent, 0.00x previous step)
+    2 steps has 26 entries (0 percent, 13.00x previous step)
+    3 steps has 210 entries (1 percent, 8.08x previous step)
+    4 steps has 722 entries (5 percent, 3.44x previous step)
+    5 steps has 1,752 entries (13 percent, 2.43x previous step)
+    6 steps has 4,033 entries (31 percent, 2.30x previous step)
+    7 steps has 4,014 entries (31 percent, 1.00x previous step)
+    8 steps has 1,977 entries (15 percent, 0.49x previous step)
+    9 steps has 134 entries (1 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt',
+            '777-LR-oblique-edge-pairing-right-only',
+            '1400140000000500050000000',
+            True, # state_hex
+            linecount=12870)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Left
+            'xxx', parent_state[61], 'x',
+            parent_state[65], 'xxxx',
+            'xxxxx',
+            'xxxx', parent_state[83],
+            'x', parent_state[87], 'xxx',
+
+            # Front
+            'xxx', parent_state[110], 'x',
+            parent_state[114], 'xxxx',
+            'xxxxx',
+            'xxxx', parent_state[132],
+            'x', parent_state[136], 'xxx',
+
+            # Right
+            'xxx', parent_state[159], 'x',
+            parent_state[163], 'xxxx',
+            'xxxxx',
+            'xxxx', parent_state[181],
+            'x', parent_state[185], 'xxx',
+
+            # Back
+            'xxx', parent_state[208], 'x',
+            parent_state[212], 'xxxx',
+            'xxxxx',
+            'xxxx', parent_state[230],
+            'x', parent_state[234], 'xxx'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
+    """
+    lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt
+    =====================================================
+    1 steps has 2 entries (0 percent, 0.00x previous step)
+    2 steps has 26 entries (0 percent, 13.00x previous step)
+    3 steps has 214 entries (0 percent, 8.23x previous step)
+    4 steps has 806 entries (0 percent, 3.77x previous step)
+    5 steps has 3,006 entries (0 percent, 3.73x previous step)
+    6 steps has 15,990 entries (0 percent, 5.32x previous step)
+    7 steps has 87,030 entries (1 percent, 5.44x previous step)
+    8 steps has 455,114 entries (9 percent, 5.23x previous step)
+    9 steps has 1,784,216 entries (35 percent, 3.92x previous step)
+    10 steps has 2,208,423 entries (43 percent, 1.24x previous step)
+    11 steps has 469,086 entries (9 percent, 0.21x previous step)
+    12 steps has 20,267 entries (0 percent, 0.04x previous step)
+    13 steps has 100 entries (0 percent, 0.00x previous step)
+
+    Total: 5,044,280 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt',
+            '777-LR-oblique-edge-pairing',
+            '7463170000001d18c5c000000',
+            True, # state_hex
+            moves_7x7x7,
+
+            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # do not mess up UD 5x5x5 centers
+             "Rw",  "Rw'",  "Lw",  "Lw'",  "Fw",  "Fw'",  "Bw",  "Bw'", # do not mess up UD oblique edges
+             "3Uw", "3Uw'", "3Dw", "3Dw'"),
+
+            # prune tables
+            (parent.lt_LR_oblique_edge_pairing_middle_only,
+             parent.lt_LR_oblique_edge_pairing_left_only,
+             parent.lt_LR_oblique_edge_pairing_right_only),
+            linecount=5044280)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Left
+            'x', parent_state[59], parent_state[60], parent_state[61], 'x',
+            parent_state[65], 'xxx', parent_state[69],
+            parent_state[72], 'xxx', parent_state[76],
+            parent_state[79], 'xxx', parent_state[83],
+            'x', parent_state[87], parent_state[88], parent_state[89], 'x',
+
+            # Front
+            'x', parent_state[108], parent_state[109], parent_state[110], 'x',
+            parent_state[114], 'xxx', parent_state[118],
+            parent_state[121], 'xxx', parent_state[125],
+            parent_state[128], 'xxx', parent_state[132],
+            'x', parent_state[136], parent_state[137], parent_state[138], 'x',
+
+            # Right
+            'x', parent_state[157], parent_state[158], parent_state[159], 'x',
+            parent_state[163], 'xxx', parent_state[167],
+            parent_state[170], 'xxx', parent_state[174],
+            parent_state[177], 'xxx', parent_state[181],
+            'x', parent_state[185], parent_state[186], parent_state[187], 'x',
+
+            # Back
+            'x', parent_state[206], parent_state[207], parent_state[208], 'x',
+            parent_state[212], 'xxx', parent_state[216],
+            parent_state[219], 'xxx', parent_state[223],
+            parent_state[226], 'xxx', parent_state[230],
+            'x', parent_state[234], parent_state[235], parent_state[236], 'x'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTable777UDSolveInnerCentersAndObliqueEdgesCenterOnly(LookupTable):
+    """
+    lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt
+    =================================================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 22 entries (0 percent, 4.40x previous step)
+    3 steps has 82 entries (1 percent, 3.73x previous step)
+    4 steps has 292 entries (5 percent, 3.56x previous step)
+    5 steps has 986 entries (20 percent, 3.38x previous step)
+    6 steps has 2,001 entries (40 percent, 2.03x previous step)
+    7 steps has 1,312 entries (26 percent, 0.66x previous step)
+    8 steps has 200 entries (4 percent, 0.15x previous step)
+
+    Total: 4,900 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt',
+            '777-UD-centers-oblique-edges-solve-center-only',
+            'xxxxxxUUUxxUxUxxUUUxxxxxxxxxxxxDDDxxDxDxxDDDxxxxxx',
+            False, # state_hex
+            linecount=4900)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Upper
+            'xxxxx',
+            'x', parent_state[17], parent_state[18], parent_state[19], 'x',
+            'x', parent_state[24], 'x', parent_state[26], 'x',
+            'x', parent_state[31], parent_state[32], parent_state[33], 'x',
+            'xxxxx',
+
+            # Down
+            'xxxxx',
+            'x', parent_state[262], parent_state[263], parent_state[264], 'x',
+            'x', parent_state[269], 'x', parent_state[271], 'x',
+            'x', parent_state[276], parent_state[277], parent_state[278], 'x',
+            'xxxxx'
+        ]
+
+        result = ''.join(result)
+        return result
+
+
+class LookupTable777UDSolveInnerCentersAndObliqueEdgesEdgesOnly(LookupTable):
+    """
+    lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt
+    ================================================================================
+    1 steps has 294 entries (0 percent, 0.00x previous step)
+    2 steps has 1,392 entries (0 percent, 4.73x previous step)
+    3 steps has 6,112 entries (1 percent, 4.39x previous step)
+    4 steps has 23,304 entries (6 percent, 3.81x previous step)
+    5 steps has 71,086 entries (20 percent, 3.05x previous step)
+    6 steps has 137,528 entries (40 percent, 1.93x previous step)
+    7 steps has 92,192 entries (26 percent, 0.67x previous step)
+    8 steps has 11,068 entries (3 percent, 0.12x previous step)
+    9 steps has 24 entries (0 percent, 0.00x previous step)
+
+    Total: 343,000 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt',
+            '777-UD-centers-oblique-edges-solve-edges-only',
+            ('xUUUxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxDDDx',
+             'xUUUxUxxxUUxxxUUxxxUxDDDxxUUUxDxxxDDxxxDDxxxDxDDDx',
+             'xUUUxUxxxUUxxxUUxxxUxDDDxxDDDxUxxxDUxxxDUxxxDxDDDx',
+             'xUUUxUxxxUUxxxUUxxxUxDDDxxDDDxDxxxUDxxxUDxxxUxDDDx',
+             'xUUUxUxxxUUxxxUUxxxUxDDDxxDDDxDxxxDDxxxDDxxxDxUUUx',
+             'xUUUxUxxxDUxxxDUxxxDxUUUxxUUUxDxxxDDxxxDDxxxDxDDDx',
+             'xUUUxUxxxDUxxxDUxxxDxUUUxxDDDxUxxxDUxxxDUxxxDxDDDx',
+             'xUUUxUxxxDUxxxDUxxxDxUUUxxDDDxDxxxUDxxxUDxxxUxDDDx',
+             'xUUUxUxxxDUxxxDUxxxDxUUUxxDDDxDxxxDDxxxDDxxxDxUUUx',
+             'xUUUxUxxxDUxxxDUxxxDxDDDxxUUUxUxxxDUxxxDUxxxDxDDDx',
+             'xUUUxUxxxDUxxxDUxxxDxDDDxxUUUxDxxxUDxxxUDxxxUxDDDx',
+             'xUUUxUxxxDUxxxDUxxxDxDDDxxUUUxDxxxDDxxxDDxxxDxUUUx',
+             'xUUUxUxxxDUxxxDUxxxDxDDDxxDDDxUxxxUUxxxUUxxxUxDDDx',
+             'xUUUxUxxxDUxxxDUxxxDxDDDxxDDDxUxxxDUxxxDUxxxDxUUUx',
+             'xUUUxUxxxDUxxxDUxxxDxDDDxxDDDxDxxxUDxxxUDxxxUxUUUx',
+             'xUUUxDxxxUDxxxUDxxxUxUUUxxUUUxDxxxDDxxxDDxxxDxDDDx',
+             'xUUUxDxxxUDxxxUDxxxUxUUUxxDDDxUxxxDUxxxDUxxxDxDDDx',
+             'xUUUxDxxxUDxxxUDxxxUxUUUxxDDDxDxxxUDxxxUDxxxUxDDDx',
+             'xUUUxDxxxUDxxxUDxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxUUUx',
+             'xUUUxDxxxUDxxxUDxxxUxDDDxxUUUxUxxxDUxxxDUxxxDxDDDx',
+             'xUUUxDxxxUDxxxUDxxxUxDDDxxUUUxDxxxUDxxxUDxxxUxDDDx',
+             'xUUUxDxxxUDxxxUDxxxUxDDDxxUUUxDxxxDDxxxDDxxxDxUUUx',
+             'xUUUxDxxxUDxxxUDxxxUxDDDxxDDDxUxxxUUxxxUUxxxUxDDDx',
+             'xUUUxDxxxUDxxxUDxxxUxDDDxxDDDxUxxxDUxxxDUxxxDxUUUx',
+             'xUUUxDxxxUDxxxUDxxxUxDDDxxDDDxDxxxUDxxxUDxxxUxUUUx',
+             'xUUUxDxxxDDxxxDDxxxDxUUUxxUUUxUxxxDUxxxDUxxxDxDDDx',
+             'xUUUxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxDDDx',
+             'xUUUxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxDDxxxDDxxxDxUUUx',
+             'xUUUxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxDDDx',
+             'xUUUxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxDUxxxDUxxxDxUUUx',
+             'xUUUxDxxxDDxxxDDxxxDxUUUxxDDDxDxxxUDxxxUDxxxUxUUUx',
+             'xUUUxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxDDDx',
+             'xUUUxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxDUxxxDUxxxDxUUUx',
+             'xUUUxDxxxDDxxxDDxxxDxDDDxxUUUxDxxxUDxxxUDxxxUxUUUx',
+             'xUUUxDxxxDDxxxDDxxxDxDDDxxDDDxUxxxUUxxxUUxxxUxUUUx',
+             'xDDDxUxxxUUxxxUUxxxUxUUUxxUUUxDxxxDDxxxDDxxxDxDDDx',
+             'xDDDxUxxxUUxxxUUxxxUxUUUxxDDDxUxxxDUxxxDUxxxDxDDDx',
+             'xDDDxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxUDxxxUDxxxUxDDDx',
+             'xDDDxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxUUUx',
+             'xDDDxUxxxUUxxxUUxxxUxDDDxxUUUxUxxxDUxxxDUxxxDxDDDx',
+             'xDDDxUxxxUUxxxUUxxxUxDDDxxUUUxDxxxUDxxxUDxxxUxDDDx',
+             'xDDDxUxxxUUxxxUUxxxUxDDDxxUUUxDxxxDDxxxDDxxxDxUUUx',
+             'xDDDxUxxxUUxxxUUxxxUxDDDxxDDDxUxxxUUxxxUUxxxUxDDDx',
+             'xDDDxUxxxUUxxxUUxxxUxDDDxxDDDxUxxxDUxxxDUxxxDxUUUx',
+             'xDDDxUxxxUUxxxUUxxxUxDDDxxDDDxDxxxUDxxxUDxxxUxUUUx',
+             'xDDDxUxxxDUxxxDUxxxDxUUUxxUUUxUxxxDUxxxDUxxxDxDDDx',
+             'xDDDxUxxxDUxxxDUxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxDDDx',
+             'xDDDxUxxxDUxxxDUxxxDxUUUxxUUUxDxxxDDxxxDDxxxDxUUUx',
+             'xDDDxUxxxDUxxxDUxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxDDDx',
+             'xDDDxUxxxDUxxxDUxxxDxUUUxxDDDxUxxxDUxxxDUxxxDxUUUx',
+             'xDDDxUxxxDUxxxDUxxxDxUUUxxDDDxDxxxUDxxxUDxxxUxUUUx',
+             'xDDDxUxxxDUxxxDUxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxDDDx',
+             'xDDDxUxxxDUxxxDUxxxDxDDDxxUUUxUxxxDUxxxDUxxxDxUUUx',
+             'xDDDxUxxxDUxxxDUxxxDxDDDxxUUUxDxxxUDxxxUDxxxUxUUUx',
+             'xDDDxUxxxDUxxxDUxxxDxDDDxxDDDxUxxxUUxxxUUxxxUxUUUx',
+             'xDDDxDxxxUDxxxUDxxxUxUUUxxUUUxUxxxDUxxxDUxxxDxDDDx',
+             'xDDDxDxxxUDxxxUDxxxUxUUUxxUUUxDxxxUDxxxUDxxxUxDDDx',
+             'xDDDxDxxxUDxxxUDxxxUxUUUxxUUUxDxxxDDxxxDDxxxDxUUUx',
+             'xDDDxDxxxUDxxxUDxxxUxUUUxxDDDxUxxxUUxxxUUxxxUxDDDx',
+             'xDDDxDxxxUDxxxUDxxxUxUUUxxDDDxUxxxDUxxxDUxxxDxUUUx',
+             'xDDDxDxxxUDxxxUDxxxUxUUUxxDDDxDxxxUDxxxUDxxxUxUUUx',
+             'xDDDxDxxxUDxxxUDxxxUxDDDxxUUUxUxxxUUxxxUUxxxUxDDDx',
+             'xDDDxDxxxUDxxxUDxxxUxDDDxxUUUxUxxxDUxxxDUxxxDxUUUx',
+             'xDDDxDxxxUDxxxUDxxxUxDDDxxUUUxDxxxUDxxxUDxxxUxUUUx',
+             'xDDDxDxxxUDxxxUDxxxUxDDDxxDDDxUxxxUUxxxUUxxxUxUUUx',
+             'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxUxxxUUxxxUUxxxUxDDDx',
+             'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxUxxxDUxxxDUxxxDxUUUx',
+             'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxUUUx',
+             'xDDDxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxUUUx',
+             'xDDDxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxUUUx'),
+            False, # state_hex
+            linecount=343000)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Upper
+            'x', parent_state[10], parent_state[11], parent_state[12], 'x',
+            parent_state[16], 'xxx', parent_state[20],
+            parent_state[23], 'xxx', parent_state[27],
+            parent_state[30], 'xxx', parent_state[34],
+            'x', parent_state[38], parent_state[39], parent_state[40], 'x',
+
+            # Down
+            'x', parent_state[255], parent_state[256], parent_state[257], 'x',
+            parent_state[261], 'xxx', parent_state[265],
+            parent_state[268], 'xxx', parent_state[272],
+            parent_state[275], 'xxx', parent_state[279],
+            'x', parent_state[283], parent_state[284], parent_state[285], 'x'
+        ]
+
+        result = ''.join(result)
+        return result
+
+
+class LookupTableIDA777UDSolveInnerCentersAndObliqueEdges(LookupTableIDA):
+    """
+    I built this 6-deep for all 70 tables and merged them together into the following
+
+    lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt
+    =====================================================================
+    1 steps has 350 entries (0 percent, 0.00x previous step)
+    2 steps has 2036 entries (0 percent, 5.82x previous step)
+    3 steps has 13108 entries (0 percent, 6.44x previous step)
+    4 steps has 86624 entries (2 percent, 6.61x previous step)
+    5 steps has 560132 entries (13 percent, 6.47x previous step)
+    6 steps has 3456952 entries (83 percent, 6.17x previous step)
+
+    Total: 4119202 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt',
+            '777-UD-centers-oblique-edges-solve',
+            ('xUUUxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxDDDx',
+             'xUUUxUUUUUUUUUUUUUUUxDDDxxUUUxDDDDDDDDDDDDDDDxDDDx',
+             'xUUUxUUUUUUUUUUUUUUUxDDDxxDDDxUDDDDUDDDDUDDDDxDDDx',
+             'xUUUxUUUUUUUUUUUUUUUxDDDxxDDDxDDDDUDDDDUDDDDUxDDDx',
+             'xUUUxUUUUUUUUUUUUUUUxDDDxxDDDxDDDDDDDDDDDDDDDxUUUx',
+             'xUUUxUUUUDUUUUDUUUUDxUUUxxUUUxDDDDDDDDDDDDDDDxDDDx',
+             'xUUUxUUUUDUUUUDUUUUDxUUUxxDDDxUDDDDUDDDDUDDDDxDDDx',
+             'xUUUxUUUUDUUUUDUUUUDxUUUxxDDDxDDDDUDDDDUDDDDUxDDDx',
+             'xUUUxUUUUDUUUUDUUUUDxUUUxxDDDxDDDDDDDDDDDDDDDxUUUx',
+             'xUUUxUUUUDUUUUDUUUUDxDDDxxUUUxUDDDDUDDDDUDDDDxDDDx',
+             'xUUUxUUUUDUUUUDUUUUDxDDDxxUUUxDDDDUDDDDUDDDDUxDDDx',
+             'xUUUxUUUUDUUUUDUUUUDxDDDxxUUUxDDDDDDDDDDDDDDDxUUUx',
+             'xUUUxUUUUDUUUUDUUUUDxDDDxxDDDxUDDDUUDDDUUDDDUxDDDx',
+             'xUUUxUUUUDUUUUDUUUUDxDDDxxDDDxUDDDDUDDDDUDDDDxUUUx',
+             'xUUUxUUUUDUUUUDUUUUDxDDDxxDDDxDDDDUDDDDUDDDDUxUUUx',
+             'xUUUxDUUUUDUUUUDUUUUxUUUxxUUUxDDDDDDDDDDDDDDDxDDDx',
+             'xUUUxDUUUUDUUUUDUUUUxUUUxxDDDxUDDDDUDDDDUDDDDxDDDx',
+             'xUUUxDUUUUDUUUUDUUUUxUUUxxDDDxDDDDUDDDDUDDDDUxDDDx',
+             'xUUUxDUUUUDUUUUDUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxUUUx',
+             'xUUUxDUUUUDUUUUDUUUUxDDDxxUUUxUDDDDUDDDDUDDDDxDDDx',
+             'xUUUxDUUUUDUUUUDUUUUxDDDxxUUUxDDDDUDDDDUDDDDUxDDDx',
+             'xUUUxDUUUUDUUUUDUUUUxDDDxxUUUxDDDDDDDDDDDDDDDxUUUx',
+             'xUUUxDUUUUDUUUUDUUUUxDDDxxDDDxUDDDUUDDDUUDDDUxDDDx',
+             'xUUUxDUUUUDUUUUDUUUUxDDDxxDDDxUDDDDUDDDDUDDDDxUUUx',
+             'xUUUxDUUUUDUUUUDUUUUxDDDxxDDDxDDDDUDDDDUDDDDUxUUUx',
+             'xUUUxDUUUDDUUUDDUUUDxUUUxxUUUxUDDDDUDDDDUDDDDxDDDx',
+             'xUUUxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxDDDx',
+             'xUUUxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDDDDDDDDDDDDxUUUx',
+             'xUUUxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxDDDx',
+             'xUUUxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDDUDDDDUDDDDxUUUx',
+             'xUUUxDUUUDDUUUDDUUUDxUUUxxDDDxDDDDUDDDDUDDDDUxUUUx',
+             'xUUUxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxDDDx',
+             'xUUUxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDDUDDDDUDDDDxUUUx',
+             'xUUUxDUUUDDUUUDDUUUDxDDDxxUUUxDDDDUDDDDUDDDDUxUUUx',
+             'xUUUxDUUUDDUUUDDUUUDxDDDxxDDDxUDDDUUDDDUUDDDUxUUUx',
+             'xDDDxUUUUUUUUUUUUUUUxUUUxxUUUxDDDDDDDDDDDDDDDxDDDx',
+             'xDDDxUUUUUUUUUUUUUUUxUUUxxDDDxUDDDDUDDDDUDDDDxDDDx',
+             'xDDDxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDUDDDDUDDDDUxDDDx',
+             'xDDDxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxUUUx',
+             'xDDDxUUUUUUUUUUUUUUUxDDDxxUUUxUDDDDUDDDDUDDDDxDDDx',
+             'xDDDxUUUUUUUUUUUUUUUxDDDxxUUUxDDDDUDDDDUDDDDUxDDDx',
+             'xDDDxUUUUUUUUUUUUUUUxDDDxxUUUxDDDDDDDDDDDDDDDxUUUx',
+             'xDDDxUUUUUUUUUUUUUUUxDDDxxDDDxUDDDUUDDDUUDDDUxDDDx',
+             'xDDDxUUUUUUUUUUUUUUUxDDDxxDDDxUDDDDUDDDDUDDDDxUUUx',
+             'xDDDxUUUUUUUUUUUUUUUxDDDxxDDDxDDDDUDDDDUDDDDUxUUUx',
+             'xDDDxUUUUDUUUUDUUUUDxUUUxxUUUxUDDDDUDDDDUDDDDxDDDx',
+             'xDDDxUUUUDUUUUDUUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxDDDx',
+             'xDDDxUUUUDUUUUDUUUUDxUUUxxUUUxDDDDDDDDDDDDDDDxUUUx',
+             'xDDDxUUUUDUUUUDUUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxDDDx',
+             'xDDDxUUUUDUUUUDUUUUDxUUUxxDDDxUDDDDUDDDDUDDDDxUUUx',
+             'xDDDxUUUUDUUUUDUUUUDxUUUxxDDDxDDDDUDDDDUDDDDUxUUUx',
+             'xDDDxUUUUDUUUUDUUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxDDDx',
+             'xDDDxUUUUDUUUUDUUUUDxDDDxxUUUxUDDDDUDDDDUDDDDxUUUx',
+             'xDDDxUUUUDUUUUDUUUUDxDDDxxUUUxDDDDUDDDDUDDDDUxUUUx',
+             'xDDDxUUUUDUUUUDUUUUDxDDDxxDDDxUDDDUUDDDUUDDDUxUUUx',
+             'xDDDxDUUUUDUUUUDUUUUxUUUxxUUUxUDDDDUDDDDUDDDDxDDDx',
+             'xDDDxDUUUUDUUUUDUUUUxUUUxxUUUxDDDDUDDDDUDDDDUxDDDx',
+             'xDDDxDUUUUDUUUUDUUUUxUUUxxUUUxDDDDDDDDDDDDDDDxUUUx',
+             'xDDDxDUUUUDUUUUDUUUUxUUUxxDDDxUDDDUUDDDUUDDDUxDDDx',
+             'xDDDxDUUUUDUUUUDUUUUxUUUxxDDDxUDDDDUDDDDUDDDDxUUUx',
+             'xDDDxDUUUUDUUUUDUUUUxUUUxxDDDxDDDDUDDDDUDDDDUxUUUx',
+             'xDDDxDUUUUDUUUUDUUUUxDDDxxUUUxUDDDUUDDDUUDDDUxDDDx',
+             'xDDDxDUUUUDUUUUDUUUUxDDDxxUUUxUDDDDUDDDDUDDDDxUUUx',
+             'xDDDxDUUUUDUUUUDUUUUxDDDxxUUUxDDDDUDDDDUDDDDUxUUUx',
+             'xDDDxDUUUUDUUUUDUUUUxDDDxxDDDxUDDDUUDDDUUDDDUxUUUx',
+             'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxUDDDUUDDDUUDDDUxDDDx',
+             'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxUDDDDUDDDDUDDDDxUUUx',
+             'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxUUUx',
+             'xDDDxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxUUUx',
+             'xDDDxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxUUUx'),
+            False, # state_hex
+            moves_7x7x7,
+
+            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
+             "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),            # do not mess up staged centers
+
+            # prune tables
+            (parent.lt_UD_solve_inner_centers_and_oblique_edges_center_only,
+             parent.lt_UD_solve_inner_centers_and_oblique_edges_edges_only),
+            linecount=4119202)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = [
+            # Upper
+            'x', parent_state[10], parent_state[11], parent_state[12], 'x',
+            parent_state[16], parent_state[17], parent_state[18], parent_state[19], parent_state[20],
+            parent_state[23], parent_state[24], parent_state[25], parent_state[26], parent_state[27],
+            parent_state[30], parent_state[31], parent_state[32], parent_state[33], parent_state[34],
+            'x', parent_state[38], parent_state[39], parent_state[40], 'x',
+
+            # Down
+            'x', parent_state[255], parent_state[256], parent_state[257], 'x',
+            parent_state[261], parent_state[262], parent_state[263], parent_state[264], parent_state[265],
+            parent_state[268], parent_state[269], parent_state[270], parent_state[271], parent_state[272],
+            parent_state[275], parent_state[276], parent_state[277], parent_state[278], parent_state[279],
+            'x', parent_state[283], parent_state[284], parent_state[285], 'x'
+        ]
+
+        result = ''.join(result)
+        return result
+
+
+class LookupTable777LRSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
+    """
+    lookup-table-7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges.txt
+    ==================================================================================
+    1 steps has 210 entries (0 percent, 0.00x previous step)
+    2 steps has 770 entries (0 percent, 3.67x previous step)
+    3 steps has 1,540 entries (0 percent, 2.00x previous step)
+    4 steps has 5,950 entries (1 percent, 3.86x previous step)
+    5 steps has 15,400 entries (4 percent, 2.59x previous step)
+    6 steps has 44,310 entries (12 percent, 2.88x previous step)
+    7 steps has 82,600 entries (24 percent, 1.86x previous step)
+    8 steps has 120,960 entries (35 percent, 1.46x previous step)
+    9 steps has 62,160 entries (18 percent, 0.51x previous step)
+    10 steps has 8,820 entries (2 percent, 0.14x previous step)
+    11 steps has 280 entries (0 percent, 0.03x previous step)
+
+    Total: 343,000 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges.txt',
+            '777-LR-inner-x-center-t-center-and-middle-oblique-edges-LR-solve',
+            ('xxLxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxRxx',
+             'xxLxxxLLLxLLLLLxLLLxxxRxxxxLxxxRRRxRRRRRxRRRxxxRxx',
+             'xxLxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxLRRRRxRRRxxxRxx',
+             'xxLxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxRRRRLxRRRxxxRxx',
+             'xxLxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxRRRRRxRRRxxxLxx',
+             'xxLxxxLLLxLLLLRxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxRxx',
+             'xxLxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxRxx',
+             'xxLxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxRxx',
+             'xxLxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxLxx',
+             'xxLxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxRxx',
+             'xxLxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxRxx',
+             'xxLxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxRRRRRxRRRxxxLxx',
+             'xxLxxxLLLxLLLLRxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxRxx',
+             'xxLxxxLLLxLLLLRxLLLxxxRxxxxRxxxRRRxLRRRRxRRRxxxLxx',
+             'xxLxxxLLLxLLLLRxLLLxxxRxxxxRxxxRRRxRRRRLxRRRxxxLxx',
+             'xxLxxxLLLxRLLLLxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxRxx',
+             'xxLxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxRxx',
+             'xxLxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxRxx',
+             'xxLxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxLxx',
+             'xxLxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxRxx',
+             'xxLxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxRxx',
+             'xxLxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxRRRRRxRRRxxxLxx',
+             'xxLxxxLLLxRLLLLxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxRxx',
+             'xxLxxxLLLxRLLLLxLLLxxxRxxxxRxxxRRRxLRRRRxRRRxxxLxx',
+             'xxLxxxLLLxRLLLLxLLLxxxRxxxxRxxxRRRxRRRRLxRRRxxxLxx',
+             'xxLxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxLRRRRxRRRxxxRxx',
+             'xxLxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxRxx',
+             'xxLxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxLxx',
+             'xxLxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxRxx',
+             'xxLxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxLxx',
+             'xxLxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxLxx',
+             'xxLxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxRxx',
+             'xxLxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxLxx',
+             'xxLxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxLxx',
+             'xxLxxxLLLxRLLLRxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxLxx',
+             'xxRxxxLLLxLLLLLxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxRxx',
+             'xxRxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxRxx',
+             'xxRxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxRxx',
+             'xxRxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxLxx',
+             'xxRxxxLLLxLLLLLxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxRxx',
+             'xxRxxxLLLxLLLLLxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxRxx',
+             'xxRxxxLLLxLLLLLxLLLxxxRxxxxLxxxRRRxRRRRRxRRRxxxLxx',
+             'xxRxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxRxx',
+             'xxRxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxLRRRRxRRRxxxLxx',
+             'xxRxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxRRRRLxRRRxxxLxx',
+             'xxRxxxLLLxLLLLRxLLLxxxLxxxxLxxxRRRxLRRRRxRRRxxxRxx',
+             'xxRxxxLLLxLLLLRxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxRxx',
+             'xxRxxxLLLxLLLLRxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxLxx',
+             'xxRxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxRxx',
+             'xxRxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxLxx',
+             'xxRxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxLxx',
+             'xxRxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxRxx',
+             'xxRxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxLxx',
+             'xxRxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxLxx',
+             'xxRxxxLLLxLLLLRxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxLxx',
+             'xxRxxxLLLxRLLLLxLLLxxxLxxxxLxxxRRRxLRRRRxRRRxxxRxx',
+             'xxRxxxLLLxRLLLLxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxRxx',
+             'xxRxxxLLLxRLLLLxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxLxx',
+             'xxRxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxRxx',
+             'xxRxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxLxx',
+             'xxRxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxLxx',
+             'xxRxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxRxx',
+             'xxRxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxLxx',
+             'xxRxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxLxx',
+             'xxRxxxLLLxRLLLLxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxLxx',
+             'xxRxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxLRRRLxRRRxxxRxx',
+             'xxRxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxLRRRRxRRRxxxLxx',
+             'xxRxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxLxx',
+             'xxRxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxLxx',
+             'xxRxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxLxx'),
+            False, # state_hex
+            linecount=343000)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Left
+            'xx', parent_state[60], 'xx',
+            'x', parent_state[66], parent_state[67], parent_state[68], 'x',
+            parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
+            'x', parent_state[80], parent_state[81], parent_state[82], 'x',
+            'xx', parent_state[88], 'xx',
+
+            # Right
+            'xx', parent_state[158], 'xx',
+            'x', parent_state[164], parent_state[165], parent_state[166], 'x',
+            parent_state[170], parent_state[171], parent_state[172], parent_state[173], parent_state[174],
+            'x', parent_state[178], parent_state[179], parent_state[180], 'x',
+            'xx', parent_state[186], 'xx'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
+
+        return result
+
+
+class LookupTable777LRSolveObliqueEdge(LookupTable):
+    """
+    lookup-table-7x7x7-step62-LR-oblique-edges.txt
+    ==============================================
+    1 steps has 182 entries (0 percent, 0.00x previous step)
+    2 steps has 616 entries (0 percent, 3.38x previous step)
+    3 steps has 2,044 entries (0 percent, 3.32x previous step)
+    4 steps has 8,576 entries (2 percent, 4.20x previous step)
+    5 steps has 21,516 entries (6 percent, 2.51x previous step)
+    6 steps has 60,392 entries (17 percent, 2.81x previous step)
+    7 steps has 105,050 entries (30 percent, 1.74x previous step)
+    8 steps has 106,464 entries (31 percent, 1.01x previous step)
+    9 steps has 35,772 entries (10 percent, 0.34x previous step)
+    10 steps has 2,368 entries (0 percent, 0.07x previous step)
+    11 steps has 20 entries (0 percent, 0.01x previous step)
+
+    Total: 343,000 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step62-LR-oblique-edges.txt',
+            '777-LR-oblique-edges-LR-solve',
+            ('xLLLxLxxxLLxxxLLxxxLxLLLxxRRRxRxxxRRxxxRRxxxRxRRRx',
+             'xLLLxLxxxLLxxxLLxxxLxRRRxxLLLxRxxxRRxxxRRxxxRxRRRx',
+             'xLLLxLxxxLLxxxLLxxxLxRRRxxRRRxLxxxRLxxxRLxxxRxRRRx',
+             'xLLLxLxxxLLxxxLLxxxLxRRRxxRRRxRxxxLRxxxLRxxxLxRRRx',
+             'xLLLxLxxxLLxxxLLxxxLxRRRxxRRRxRxxxRRxxxRRxxxRxLLLx',
+             'xLLLxLxxxRLxxxRLxxxRxLLLxxLLLxRxxxRRxxxRRxxxRxRRRx',
+             'xLLLxLxxxRLxxxRLxxxRxLLLxxRRRxLxxxRLxxxRLxxxRxRRRx',
+             'xLLLxLxxxRLxxxRLxxxRxLLLxxRRRxRxxxLRxxxLRxxxLxRRRx',
+             'xLLLxLxxxRLxxxRLxxxRxLLLxxRRRxRxxxRRxxxRRxxxRxLLLx',
+             'xLLLxLxxxRLxxxRLxxxRxRRRxxLLLxLxxxRLxxxRLxxxRxRRRx',
+             'xLLLxLxxxRLxxxRLxxxRxRRRxxLLLxRxxxLRxxxLRxxxLxRRRx',
+             'xLLLxLxxxRLxxxRLxxxRxRRRxxLLLxRxxxRRxxxRRxxxRxLLLx',
+             'xLLLxLxxxRLxxxRLxxxRxRRRxxRRRxLxxxLLxxxLLxxxLxRRRx',
+             'xLLLxLxxxRLxxxRLxxxRxRRRxxRRRxLxxxRLxxxRLxxxRxLLLx',
+             'xLLLxLxxxRLxxxRLxxxRxRRRxxRRRxRxxxLRxxxLRxxxLxLLLx',
+             'xLLLxRxxxLRxxxLRxxxLxLLLxxLLLxRxxxRRxxxRRxxxRxRRRx',
+             'xLLLxRxxxLRxxxLRxxxLxLLLxxRRRxLxxxRLxxxRLxxxRxRRRx',
+             'xLLLxRxxxLRxxxLRxxxLxLLLxxRRRxRxxxLRxxxLRxxxLxRRRx',
+             'xLLLxRxxxLRxxxLRxxxLxLLLxxRRRxRxxxRRxxxRRxxxRxLLLx',
+             'xLLLxRxxxLRxxxLRxxxLxRRRxxLLLxLxxxRLxxxRLxxxRxRRRx',
+             'xLLLxRxxxLRxxxLRxxxLxRRRxxLLLxRxxxLRxxxLRxxxLxRRRx',
+             'xLLLxRxxxLRxxxLRxxxLxRRRxxLLLxRxxxRRxxxRRxxxRxLLLx',
+             'xLLLxRxxxLRxxxLRxxxLxRRRxxRRRxLxxxLLxxxLLxxxLxRRRx',
+             'xLLLxRxxxLRxxxLRxxxLxRRRxxRRRxLxxxRLxxxRLxxxRxLLLx',
+             'xLLLxRxxxLRxxxLRxxxLxRRRxxRRRxRxxxLRxxxLRxxxLxLLLx',
+             'xLLLxRxxxRRxxxRRxxxRxLLLxxLLLxLxxxRLxxxRLxxxRxRRRx',
+             'xLLLxRxxxRRxxxRRxxxRxLLLxxLLLxRxxxLRxxxLRxxxLxRRRx',
+             'xLLLxRxxxRRxxxRRxxxRxLLLxxLLLxRxxxRRxxxRRxxxRxLLLx',
+             'xLLLxRxxxRRxxxRRxxxRxLLLxxRRRxLxxxLLxxxLLxxxLxRRRx',
+             'xLLLxRxxxRRxxxRRxxxRxLLLxxRRRxLxxxRLxxxRLxxxRxLLLx',
+             'xLLLxRxxxRRxxxRRxxxRxLLLxxRRRxRxxxLRxxxLRxxxLxLLLx',
+             'xLLLxRxxxRRxxxRRxxxRxRRRxxLLLxLxxxLLxxxLLxxxLxRRRx',
+             'xLLLxRxxxRRxxxRRxxxRxRRRxxLLLxLxxxRLxxxRLxxxRxLLLx',
+             'xLLLxRxxxRRxxxRRxxxRxRRRxxLLLxRxxxLRxxxLRxxxLxLLLx',
+             'xLLLxRxxxRRxxxRRxxxRxRRRxxRRRxLxxxLLxxxLLxxxLxLLLx',
+             'xRRRxLxxxLLxxxLLxxxLxLLLxxLLLxRxxxRRxxxRRxxxRxRRRx',
+             'xRRRxLxxxLLxxxLLxxxLxLLLxxRRRxLxxxRLxxxRLxxxRxRRRx',
+             'xRRRxLxxxLLxxxLLxxxLxLLLxxRRRxRxxxLRxxxLRxxxLxRRRx',
+             'xRRRxLxxxLLxxxLLxxxLxLLLxxRRRxRxxxRRxxxRRxxxRxLLLx',
+             'xRRRxLxxxLLxxxLLxxxLxRRRxxLLLxLxxxRLxxxRLxxxRxRRRx',
+             'xRRRxLxxxLLxxxLLxxxLxRRRxxLLLxRxxxLRxxxLRxxxLxRRRx',
+             'xRRRxLxxxLLxxxLLxxxLxRRRxxLLLxRxxxRRxxxRRxxxRxLLLx',
+             'xRRRxLxxxLLxxxLLxxxLxRRRxxRRRxLxxxLLxxxLLxxxLxRRRx',
+             'xRRRxLxxxLLxxxLLxxxLxRRRxxRRRxLxxxRLxxxRLxxxRxLLLx',
+             'xRRRxLxxxLLxxxLLxxxLxRRRxxRRRxRxxxLRxxxLRxxxLxLLLx',
+             'xRRRxLxxxRLxxxRLxxxRxLLLxxLLLxLxxxRLxxxRLxxxRxRRRx',
+             'xRRRxLxxxRLxxxRLxxxRxLLLxxLLLxRxxxLRxxxLRxxxLxRRRx',
+             'xRRRxLxxxRLxxxRLxxxRxLLLxxLLLxRxxxRRxxxRRxxxRxLLLx',
+             'xRRRxLxxxRLxxxRLxxxRxLLLxxRRRxLxxxLLxxxLLxxxLxRRRx',
+             'xRRRxLxxxRLxxxRLxxxRxLLLxxRRRxLxxxRLxxxRLxxxRxLLLx',
+             'xRRRxLxxxRLxxxRLxxxRxLLLxxRRRxRxxxLRxxxLRxxxLxLLLx',
+             'xRRRxLxxxRLxxxRLxxxRxRRRxxLLLxLxxxLLxxxLLxxxLxRRRx',
+             'xRRRxLxxxRLxxxRLxxxRxRRRxxLLLxLxxxRLxxxRLxxxRxLLLx',
+             'xRRRxLxxxRLxxxRLxxxRxRRRxxLLLxRxxxLRxxxLRxxxLxLLLx',
+             'xRRRxLxxxRLxxxRLxxxRxRRRxxRRRxLxxxLLxxxLLxxxLxLLLx',
+             'xRRRxRxxxLRxxxLRxxxLxLLLxxLLLxLxxxRLxxxRLxxxRxRRRx',
+             'xRRRxRxxxLRxxxLRxxxLxLLLxxLLLxRxxxLRxxxLRxxxLxRRRx',
+             'xRRRxRxxxLRxxxLRxxxLxLLLxxLLLxRxxxRRxxxRRxxxRxLLLx',
+             'xRRRxRxxxLRxxxLRxxxLxLLLxxRRRxLxxxLLxxxLLxxxLxRRRx',
+             'xRRRxRxxxLRxxxLRxxxLxLLLxxRRRxLxxxRLxxxRLxxxRxLLLx',
+             'xRRRxRxxxLRxxxLRxxxLxLLLxxRRRxRxxxLRxxxLRxxxLxLLLx',
+             'xRRRxRxxxLRxxxLRxxxLxRRRxxLLLxLxxxLLxxxLLxxxLxRRRx',
+             'xRRRxRxxxLRxxxLRxxxLxRRRxxLLLxLxxxRLxxxRLxxxRxLLLx',
+             'xRRRxRxxxLRxxxLRxxxLxRRRxxLLLxRxxxLRxxxLRxxxLxLLLx',
+             'xRRRxRxxxLRxxxLRxxxLxRRRxxRRRxLxxxLLxxxLLxxxLxLLLx',
+             'xRRRxRxxxRRxxxRRxxxRxLLLxxLLLxLxxxLLxxxLLxxxLxRRRx',
+             'xRRRxRxxxRRxxxRRxxxRxLLLxxLLLxLxxxRLxxxRLxxxRxLLLx',
+             'xRRRxRxxxRRxxxRRxxxRxLLLxxLLLxRxxxLRxxxLRxxxLxLLLx',
+             'xRRRxRxxxRRxxxRRxxxRxLLLxxRRRxLxxxLLxxxLLxxxLxLLLx',
+             'xRRRxRxxxRRxxxRRxxxRxRRRxxLLLxLxxxLLxxxLLxxxLxLLLx'),
+            False, # state_hex
+            linecount=343000)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Left
+            'x', parent_state[59], parent_state[60], parent_state[61], 'x',
+            parent_state[65], 'xxx', parent_state[69],
+            parent_state[72], 'xxx', parent_state[76],
+            parent_state[79], 'xxx', parent_state[83],
+            'x', parent_state[87], parent_state[88], parent_state[89], 'x',
+
+            # Right
+            'x', parent_state[157], parent_state[158], parent_state[159], 'x',
+            parent_state[163], 'xxx', parent_state[167],
+            parent_state[170], 'xxx', parent_state[174],
+            parent_state[177], 'xxx', parent_state[181],
+            'x', parent_state[185], parent_state[186], parent_state[187], 'x'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
+
+        return result
+
+
+class LookupTableIDA777LRSolveInnerCentersAndObliqueEdges(LookupTableIDA):
+    """
+    lookup-table-7x7x7-step60-LR-solve-inner-center-and-oblique-edges.txt
+    =====================================================================
+    1 steps has 210 entries (0 percent, 0.00x previous step)
+    2 steps has 770 entries (0 percent, 3.67x previous step)
+    3 steps has 2,828 entries (0 percent, 3.67x previous step)
+    4 steps has 15,158 entries (0 percent, 5.36x previous step)
+    5 steps has 63,008 entries (0 percent, 4.16x previous step)
+    6 steps has 290,588 entries (4 percent, 4.61x previous step)
+    7 steps has 1,232,594 entries (17 percent, 4.24x previous step)
+    8 steps has 5,266,642 entries (76 percent, 4.27x previous step)
+
+    Total: 6,871,798 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step60-LR-solve-inner-center-and-oblique-edges.txt',
+            '777-LR-centers-oblique-edges-LR-solve',
+            ('xLLLxLLLLLLLLLLLLLLLxLLLxxRRRxRRRRRRRRRRRRRRRxRRRx',
+             'xLLLxLLLLLLLLLLLLLLLxRRRxxLLLxRRRRRRRRRRRRRRRxRRRx',
+             'xLLLxLLLLLLLLLLLLLLLxRRRxxRRRxLRRRRLRRRRLRRRRxRRRx',
+             'xLLLxLLLLLLLLLLLLLLLxRRRxxRRRxRRRRLRRRRLRRRRLxRRRx',
+             'xLLLxLLLLLLLLLLLLLLLxRRRxxRRRxRRRRRRRRRRRRRRRxLLLx',
+             'xLLLxLLLLRLLLLRLLLLRxLLLxxLLLxRRRRRRRRRRRRRRRxRRRx',
+             'xLLLxLLLLRLLLLRLLLLRxLLLxxRRRxLRRRRLRRRRLRRRRxRRRx',
+             'xLLLxLLLLRLLLLRLLLLRxLLLxxRRRxRRRRLRRRRLRRRRLxRRRx',
+             'xLLLxLLLLRLLLLRLLLLRxLLLxxRRRxRRRRRRRRRRRRRRRxLLLx',
+             'xLLLxLLLLRLLLLRLLLLRxRRRxxLLLxLRRRRLRRRRLRRRRxRRRx',
+             'xLLLxLLLLRLLLLRLLLLRxRRRxxLLLxRRRRLRRRRLRRRRLxRRRx',
+             'xLLLxLLLLRLLLLRLLLLRxRRRxxLLLxRRRRRRRRRRRRRRRxLLLx',
+             'xLLLxLLLLRLLLLRLLLLRxRRRxxRRRxLRRRLLRRRLLRRRLxRRRx',
+             'xLLLxLLLLRLLLLRLLLLRxRRRxxRRRxLRRRRLRRRRLRRRRxLLLx',
+             'xLLLxLLLLRLLLLRLLLLRxRRRxxRRRxRRRRLRRRRLRRRRLxLLLx',
+             'xLLLxRLLLLRLLLLRLLLLxLLLxxLLLxRRRRRRRRRRRRRRRxRRRx',
+             'xLLLxRLLLLRLLLLRLLLLxLLLxxRRRxLRRRRLRRRRLRRRRxRRRx',
+             'xLLLxRLLLLRLLLLRLLLLxLLLxxRRRxRRRRLRRRRLRRRRLxRRRx',
+             'xLLLxRLLLLRLLLLRLLLLxLLLxxRRRxRRRRRRRRRRRRRRRxLLLx',
+             'xLLLxRLLLLRLLLLRLLLLxRRRxxLLLxLRRRRLRRRRLRRRRxRRRx',
+             'xLLLxRLLLLRLLLLRLLLLxRRRxxLLLxRRRRLRRRRLRRRRLxRRRx',
+             'xLLLxRLLLLRLLLLRLLLLxRRRxxLLLxRRRRRRRRRRRRRRRxLLLx',
+             'xLLLxRLLLLRLLLLRLLLLxRRRxxRRRxLRRRLLRRRLLRRRLxRRRx',
+             'xLLLxRLLLLRLLLLRLLLLxRRRxxRRRxLRRRRLRRRRLRRRRxLLLx',
+             'xLLLxRLLLLRLLLLRLLLLxRRRxxRRRxRRRRLRRRRLRRRRLxLLLx',
+             'xLLLxRLLLRRLLLRRLLLRxLLLxxLLLxLRRRRLRRRRLRRRRxRRRx',
+             'xLLLxRLLLRRLLLRRLLLRxLLLxxLLLxRRRRLRRRRLRRRRLxRRRx',
+             'xLLLxRLLLRRLLLRRLLLRxLLLxxLLLxRRRRRRRRRRRRRRRxLLLx',
+             'xLLLxRLLLRRLLLRRLLLRxLLLxxRRRxLRRRLLRRRLLRRRLxRRRx',
+             'xLLLxRLLLRRLLLRRLLLRxLLLxxRRRxLRRRRLRRRRLRRRRxLLLx',
+             'xLLLxRLLLRRLLLRRLLLRxLLLxxRRRxRRRRLRRRRLRRRRLxLLLx',
+             'xLLLxRLLLRRLLLRRLLLRxRRRxxLLLxLRRRLLRRRLLRRRLxRRRx',
+             'xLLLxRLLLRRLLLRRLLLRxRRRxxLLLxLRRRRLRRRRLRRRRxLLLx',
+             'xLLLxRLLLRRLLLRRLLLRxRRRxxLLLxRRRRLRRRRLRRRRLxLLLx',
+             'xLLLxRLLLRRLLLRRLLLRxRRRxxRRRxLRRRLLRRRLLRRRLxLLLx',
+             'xRRRxLLLLLLLLLLLLLLLxLLLxxLLLxRRRRRRRRRRRRRRRxRRRx',
+             'xRRRxLLLLLLLLLLLLLLLxLLLxxRRRxLRRRRLRRRRLRRRRxRRRx',
+             'xRRRxLLLLLLLLLLLLLLLxLLLxxRRRxRRRRLRRRRLRRRRLxRRRx',
+             'xRRRxLLLLLLLLLLLLLLLxLLLxxRRRxRRRRRRRRRRRRRRRxLLLx',
+             'xRRRxLLLLLLLLLLLLLLLxRRRxxLLLxLRRRRLRRRRLRRRRxRRRx',
+             'xRRRxLLLLLLLLLLLLLLLxRRRxxLLLxRRRRLRRRRLRRRRLxRRRx',
+             'xRRRxLLLLLLLLLLLLLLLxRRRxxLLLxRRRRRRRRRRRRRRRxLLLx',
+             'xRRRxLLLLLLLLLLLLLLLxRRRxxRRRxLRRRLLRRRLLRRRLxRRRx',
+             'xRRRxLLLLLLLLLLLLLLLxRRRxxRRRxLRRRRLRRRRLRRRRxLLLx',
+             'xRRRxLLLLLLLLLLLLLLLxRRRxxRRRxRRRRLRRRRLRRRRLxLLLx',
+             'xRRRxLLLLRLLLLRLLLLRxLLLxxLLLxLRRRRLRRRRLRRRRxRRRx',
+             'xRRRxLLLLRLLLLRLLLLRxLLLxxLLLxRRRRLRRRRLRRRRLxRRRx',
+             'xRRRxLLLLRLLLLRLLLLRxLLLxxLLLxRRRRRRRRRRRRRRRxLLLx',
+             'xRRRxLLLLRLLLLRLLLLRxLLLxxRRRxLRRRLLRRRLLRRRLxRRRx',
+             'xRRRxLLLLRLLLLRLLLLRxLLLxxRRRxLRRRRLRRRRLRRRRxLLLx',
+             'xRRRxLLLLRLLLLRLLLLRxLLLxxRRRxRRRRLRRRRLRRRRLxLLLx',
+             'xRRRxLLLLRLLLLRLLLLRxRRRxxLLLxLRRRLLRRRLLRRRLxRRRx',
+             'xRRRxLLLLRLLLLRLLLLRxRRRxxLLLxLRRRRLRRRRLRRRRxLLLx',
+             'xRRRxLLLLRLLLLRLLLLRxRRRxxLLLxRRRRLRRRRLRRRRLxLLLx',
+             'xRRRxLLLLRLLLLRLLLLRxRRRxxRRRxLRRRLLRRRLLRRRLxLLLx',
+             'xRRRxRLLLLRLLLLRLLLLxLLLxxLLLxLRRRRLRRRRLRRRRxRRRx',
+             'xRRRxRLLLLRLLLLRLLLLxLLLxxLLLxRRRRLRRRRLRRRRLxRRRx',
+             'xRRRxRLLLLRLLLLRLLLLxLLLxxLLLxRRRRRRRRRRRRRRRxLLLx',
+             'xRRRxRLLLLRLLLLRLLLLxLLLxxRRRxLRRRLLRRRLLRRRLxRRRx',
+             'xRRRxRLLLLRLLLLRLLLLxLLLxxRRRxLRRRRLRRRRLRRRRxLLLx',
+             'xRRRxRLLLLRLLLLRLLLLxLLLxxRRRxRRRRLRRRRLRRRRLxLLLx',
+             'xRRRxRLLLLRLLLLRLLLLxRRRxxLLLxLRRRLLRRRLLRRRLxRRRx',
+             'xRRRxRLLLLRLLLLRLLLLxRRRxxLLLxLRRRRLRRRRLRRRRxLLLx',
+             'xRRRxRLLLLRLLLLRLLLLxRRRxxLLLxRRRRLRRRRLRRRRLxLLLx',
+             'xRRRxRLLLLRLLLLRLLLLxRRRxxRRRxLRRRLLRRRLLRRRLxLLLx',
+             'xRRRxRLLLRRLLLRRLLLRxLLLxxLLLxLRRRLLRRRLLRRRLxRRRx',
+             'xRRRxRLLLRRLLLRRLLLRxLLLxxLLLxLRRRRLRRRRLRRRRxLLLx',
+             'xRRRxRLLLRRLLLRRLLLRxLLLxxLLLxRRRRLRRRRLRRRRLxLLLx',
+             'xRRRxRLLLRRLLLRRLLLRxLLLxxRRRxLRRRLLRRRLLRRRLxLLLx',
+             'xRRRxRLLLRRLLLRRLLLRxRRRxxLLLxLRRRLLRRRLLRRRLxLLLx'),
+            False, # state_hex
+            moves_7x7x7,
+
+            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
+             "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
+             "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
+
+            # prune tables
+            (parent.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge,
+             parent.lt_LR_solve_oblique_edge),
+            linecount=6871798)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Left
+            'x', parent_state[59], parent_state[60], parent_state[61], 'x',
+            parent_state[65], parent_state[66], parent_state[67], parent_state[68], parent_state[69],
+            parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
+            parent_state[79], parent_state[80], parent_state[81], parent_state[82], parent_state[83],
+            'x', parent_state[87], parent_state[88], parent_state[89], 'x',
+
+            # Right
+            'x', parent_state[157], parent_state[158], parent_state[159], 'x',
+            parent_state[163], parent_state[164], parent_state[165], parent_state[166], parent_state[167],
+            parent_state[170], parent_state[171], parent_state[172], parent_state[173], parent_state[174],
+            parent_state[177], parent_state[178], parent_state[179], parent_state[180], parent_state[181],
+            'x', parent_state[185], parent_state[186], parent_state[187], 'x'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
+
+        return result
+
+
+class LookupTable777FBSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
+    """
+    lookup-table-7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges.txt
+    =================================================================================
+    1 steps has 210 entries (0 percent, 0.00x previous step)
+    2 steps has 770 entries (0 percent, 3.67x previous step)
+    3 steps has 1,540 entries (0 percent, 2.00x previous step)
+    4 steps has 5,950 entries (1 percent, 3.86x previous step)
+    5 steps has 15,400 entries (4 percent, 2.59x previous step)
+    6 steps has 44,310 entries (12 percent, 2.88x previous step)
+    7 steps has 82,600 entries (24 percent, 1.86x previous step)
+    8 steps has 120,960 entries (35 percent, 1.46x previous step)
+    9 steps has 62,160 entries (18 percent, 0.51x previous step)
+    10 steps has 8,820 entries (2 percent, 0.14x previous step)
+    11 steps has 280 entries (0 percent, 0.03x previous step)
+
+    Total: 343,000 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges.txt',
+            '777-FB-inner-x-center-t-center-and-middle-oblique-edges-FB-solve',
+            ('xxFxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxBxx',
+             'xxFxxxFFFxFFFFFxFFFxxxBxxxxFxxxBBBxBBBBBxBBBxxxBxx',
+             'xxFxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxFBBBBxBBBxxxBxx',
+             'xxFxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxBBBBFxBBBxxxBxx',
+             'xxFxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxBBBBBxBBBxxxFxx',
+             'xxFxxxFFFxFFFFBxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxBxx',
+             'xxFxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxBxx',
+             'xxFxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxBxx',
+             'xxFxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxFxx',
+             'xxFxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxBxx',
+             'xxFxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxBxx',
+             'xxFxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxBBBBBxBBBxxxFxx',
+             'xxFxxxFFFxFFFFBxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxBxx',
+             'xxFxxxFFFxFFFFBxFFFxxxBxxxxBxxxBBBxFBBBBxBBBxxxFxx',
+             'xxFxxxFFFxFFFFBxFFFxxxBxxxxBxxxBBBxBBBBFxBBBxxxFxx',
+             'xxFxxxFFFxBFFFFxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxBxx',
+             'xxFxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxBxx',
+             'xxFxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxBxx',
+             'xxFxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxFxx',
+             'xxFxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxBxx',
+             'xxFxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxBxx',
+             'xxFxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxBBBBBxBBBxxxFxx',
+             'xxFxxxFFFxBFFFFxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxBxx',
+             'xxFxxxFFFxBFFFFxFFFxxxBxxxxBxxxBBBxFBBBBxBBBxxxFxx',
+             'xxFxxxFFFxBFFFFxFFFxxxBxxxxBxxxBBBxBBBBFxBBBxxxFxx',
+             'xxFxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxFBBBBxBBBxxxBxx',
+             'xxFxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxBxx',
+             'xxFxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxFxx',
+             'xxFxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxBxx',
+             'xxFxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxFxx',
+             'xxFxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxFxx',
+             'xxFxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxBxx',
+             'xxFxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxFxx',
+             'xxFxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxFxx',
+             'xxFxxxFFFxBFFFBxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxFxx',
+             'xxBxxxFFFxFFFFFxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxBxx',
+             'xxBxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxBxx',
+             'xxBxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxBxx',
+             'xxBxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxFxx',
+             'xxBxxxFFFxFFFFFxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxBxx',
+             'xxBxxxFFFxFFFFFxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxBxx',
+             'xxBxxxFFFxFFFFFxFFFxxxBxxxxFxxxBBBxBBBBBxBBBxxxFxx',
+             'xxBxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxBxx',
+             'xxBxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxFBBBBxBBBxxxFxx',
+             'xxBxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxBBBBFxBBBxxxFxx',
+             'xxBxxxFFFxFFFFBxFFFxxxFxxxxFxxxBBBxFBBBBxBBBxxxBxx',
+             'xxBxxxFFFxFFFFBxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxBxx',
+             'xxBxxxFFFxFFFFBxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxFxx',
+             'xxBxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxBxx',
+             'xxBxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxFxx',
+             'xxBxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxFxx',
+             'xxBxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxBxx',
+             'xxBxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxFxx',
+             'xxBxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxFxx',
+             'xxBxxxFFFxFFFFBxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxFxx',
+             'xxBxxxFFFxBFFFFxFFFxxxFxxxxFxxxBBBxFBBBBxBBBxxxBxx',
+             'xxBxxxFFFxBFFFFxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxBxx',
+             'xxBxxxFFFxBFFFFxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxFxx',
+             'xxBxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxBxx',
+             'xxBxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxFxx',
+             'xxBxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxFxx',
+             'xxBxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxBxx',
+             'xxBxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxFxx',
+             'xxBxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxFxx',
+             'xxBxxxFFFxBFFFFxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxFxx',
+             'xxBxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxFBBBFxBBBxxxBxx',
+             'xxBxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxFBBBBxBBBxxxFxx',
+             'xxBxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxFxx',
+             'xxBxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxFxx',
+             'xxBxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxFxx'),
+            False, # state_hex
+            linecount=343000)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Front
+            'xx', parent_state[109], 'xx',
+            'x', parent_state[115], parent_state[116], parent_state[117], 'x',
+            parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125],
+            'x', parent_state[129], parent_state[130], parent_state[131], 'x',
+            'xx', parent_state[137], 'xx',
+
+            # Back
+            'xx', parent_state[207], 'xx',
+            'x', parent_state[213], parent_state[214], parent_state[215], 'x',
+            parent_state[219], parent_state[220], parent_state[221], parent_state[222], parent_state[223],
+            'x', parent_state[227], parent_state[228], parent_state[229], 'x',
+            'xx', parent_state[235], 'xx'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
+
+        return result
+
+
+class LookupTable777FBSolveObliqueEdge(LookupTable):
+    """
+    lookup-table-7x7x7-step72-FB-oblique-edges.txt
+    ==============================================
+    1 steps has 182 entries (0 percent, 0.00x previous step)
+    2 steps has 616 entries (0 percent, 3.38x previous step)
+    3 steps has 2,044 entries (0 percent, 3.32x previous step)
+    4 steps has 8,576 entries (2 percent, 4.20x previous step)
+    5 steps has 21,516 entries (6 percent, 2.51x previous step)
+    6 steps has 60,392 entries (17 percent, 2.81x previous step)
+    7 steps has 105,050 entries (30 percent, 1.74x previous step)
+    8 steps has 106,464 entries (31 percent, 1.01x previous step)
+    9 steps has 35,772 entries (10 percent, 0.34x previous step)
+    10 steps has 2,368 entries (0 percent, 0.07x previous step)
+    11 steps has 20 entries (0 percent, 0.01x previous step)
+
+    Total: 343,000 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step72-FB-oblique-edges.txt',
+            '777-FB-oblique-edges-FB-solve',
+            ('xFFFxFxxxFFxxxFFxxxFxFFFxxBBBxBxxxBBxxxBBxxxBxBBBx',
+             'xFFFxFxxxFFxxxFFxxxFxBBBxxFFFxBxxxBBxxxBBxxxBxBBBx',
+             'xFFFxFxxxFFxxxFFxxxFxBBBxxBBBxFxxxBFxxxBFxxxBxBBBx',
+             'xFFFxFxxxFFxxxFFxxxFxBBBxxBBBxBxxxFBxxxFBxxxFxBBBx',
+             'xFFFxFxxxFFxxxFFxxxFxBBBxxBBBxBxxxBBxxxBBxxxBxFFFx',
+             'xFFFxFxxxBFxxxBFxxxBxFFFxxFFFxBxxxBBxxxBBxxxBxBBBx',
+             'xFFFxFxxxBFxxxBFxxxBxFFFxxBBBxFxxxBFxxxBFxxxBxBBBx',
+             'xFFFxFxxxBFxxxBFxxxBxFFFxxBBBxBxxxFBxxxFBxxxFxBBBx',
+             'xFFFxFxxxBFxxxBFxxxBxFFFxxBBBxBxxxBBxxxBBxxxBxFFFx',
+             'xFFFxFxxxBFxxxBFxxxBxBBBxxFFFxFxxxBFxxxBFxxxBxBBBx',
+             'xFFFxFxxxBFxxxBFxxxBxBBBxxFFFxBxxxFBxxxFBxxxFxBBBx',
+             'xFFFxFxxxBFxxxBFxxxBxBBBxxFFFxBxxxBBxxxBBxxxBxFFFx',
+             'xFFFxFxxxBFxxxBFxxxBxBBBxxBBBxFxxxFFxxxFFxxxFxBBBx',
+             'xFFFxFxxxBFxxxBFxxxBxBBBxxBBBxFxxxBFxxxBFxxxBxFFFx',
+             'xFFFxFxxxBFxxxBFxxxBxBBBxxBBBxBxxxFBxxxFBxxxFxFFFx',
+             'xFFFxBxxxFBxxxFBxxxFxFFFxxFFFxBxxxBBxxxBBxxxBxBBBx',
+             'xFFFxBxxxFBxxxFBxxxFxFFFxxBBBxFxxxBFxxxBFxxxBxBBBx',
+             'xFFFxBxxxFBxxxFBxxxFxFFFxxBBBxBxxxFBxxxFBxxxFxBBBx',
+             'xFFFxBxxxFBxxxFBxxxFxFFFxxBBBxBxxxBBxxxBBxxxBxFFFx',
+             'xFFFxBxxxFBxxxFBxxxFxBBBxxFFFxFxxxBFxxxBFxxxBxBBBx',
+             'xFFFxBxxxFBxxxFBxxxFxBBBxxFFFxBxxxFBxxxFBxxxFxBBBx',
+             'xFFFxBxxxFBxxxFBxxxFxBBBxxFFFxBxxxBBxxxBBxxxBxFFFx',
+             'xFFFxBxxxFBxxxFBxxxFxBBBxxBBBxFxxxFFxxxFFxxxFxBBBx',
+             'xFFFxBxxxFBxxxFBxxxFxBBBxxBBBxFxxxBFxxxBFxxxBxFFFx',
+             'xFFFxBxxxFBxxxFBxxxFxBBBxxBBBxBxxxFBxxxFBxxxFxFFFx',
+             'xFFFxBxxxBBxxxBBxxxBxFFFxxFFFxFxxxBFxxxBFxxxBxBBBx',
+             'xFFFxBxxxBBxxxBBxxxBxFFFxxFFFxBxxxFBxxxFBxxxFxBBBx',
+             'xFFFxBxxxBBxxxBBxxxBxFFFxxFFFxBxxxBBxxxBBxxxBxFFFx',
+             'xFFFxBxxxBBxxxBBxxxBxFFFxxBBBxFxxxFFxxxFFxxxFxBBBx',
+             'xFFFxBxxxBBxxxBBxxxBxFFFxxBBBxFxxxBFxxxBFxxxBxFFFx',
+             'xFFFxBxxxBBxxxBBxxxBxFFFxxBBBxBxxxFBxxxFBxxxFxFFFx',
+             'xFFFxBxxxBBxxxBBxxxBxBBBxxFFFxFxxxFFxxxFFxxxFxBBBx',
+             'xFFFxBxxxBBxxxBBxxxBxBBBxxFFFxFxxxBFxxxBFxxxBxFFFx',
+             'xFFFxBxxxBBxxxBBxxxBxBBBxxFFFxBxxxFBxxxFBxxxFxFFFx',
+             'xFFFxBxxxBBxxxBBxxxBxBBBxxBBBxFxxxFFxxxFFxxxFxFFFx',
+             'xBBBxFxxxFFxxxFFxxxFxFFFxxFFFxBxxxBBxxxBBxxxBxBBBx',
+             'xBBBxFxxxFFxxxFFxxxFxFFFxxBBBxFxxxBFxxxBFxxxBxBBBx',
+             'xBBBxFxxxFFxxxFFxxxFxFFFxxBBBxBxxxFBxxxFBxxxFxBBBx',
+             'xBBBxFxxxFFxxxFFxxxFxFFFxxBBBxBxxxBBxxxBBxxxBxFFFx',
+             'xBBBxFxxxFFxxxFFxxxFxBBBxxFFFxFxxxBFxxxBFxxxBxBBBx',
+             'xBBBxFxxxFFxxxFFxxxFxBBBxxFFFxBxxxFBxxxFBxxxFxBBBx',
+             'xBBBxFxxxFFxxxFFxxxFxBBBxxFFFxBxxxBBxxxBBxxxBxFFFx',
+             'xBBBxFxxxFFxxxFFxxxFxBBBxxBBBxFxxxFFxxxFFxxxFxBBBx',
+             'xBBBxFxxxFFxxxFFxxxFxBBBxxBBBxFxxxBFxxxBFxxxBxFFFx',
+             'xBBBxFxxxFFxxxFFxxxFxBBBxxBBBxBxxxFBxxxFBxxxFxFFFx',
+             'xBBBxFxxxBFxxxBFxxxBxFFFxxFFFxFxxxBFxxxBFxxxBxBBBx',
+             'xBBBxFxxxBFxxxBFxxxBxFFFxxFFFxBxxxFBxxxFBxxxFxBBBx',
+             'xBBBxFxxxBFxxxBFxxxBxFFFxxFFFxBxxxBBxxxBBxxxBxFFFx',
+             'xBBBxFxxxBFxxxBFxxxBxFFFxxBBBxFxxxFFxxxFFxxxFxBBBx',
+             'xBBBxFxxxBFxxxBFxxxBxFFFxxBBBxFxxxBFxxxBFxxxBxFFFx',
+             'xBBBxFxxxBFxxxBFxxxBxFFFxxBBBxBxxxFBxxxFBxxxFxFFFx',
+             'xBBBxFxxxBFxxxBFxxxBxBBBxxFFFxFxxxFFxxxFFxxxFxBBBx',
+             'xBBBxFxxxBFxxxBFxxxBxBBBxxFFFxFxxxBFxxxBFxxxBxFFFx',
+             'xBBBxFxxxBFxxxBFxxxBxBBBxxFFFxBxxxFBxxxFBxxxFxFFFx',
+             'xBBBxFxxxBFxxxBFxxxBxBBBxxBBBxFxxxFFxxxFFxxxFxFFFx',
+             'xBBBxBxxxFBxxxFBxxxFxFFFxxFFFxFxxxBFxxxBFxxxBxBBBx',
+             'xBBBxBxxxFBxxxFBxxxFxFFFxxFFFxBxxxFBxxxFBxxxFxBBBx',
+             'xBBBxBxxxFBxxxFBxxxFxFFFxxFFFxBxxxBBxxxBBxxxBxFFFx',
+             'xBBBxBxxxFBxxxFBxxxFxFFFxxBBBxFxxxFFxxxFFxxxFxBBBx',
+             'xBBBxBxxxFBxxxFBxxxFxFFFxxBBBxFxxxBFxxxBFxxxBxFFFx',
+             'xBBBxBxxxFBxxxFBxxxFxFFFxxBBBxBxxxFBxxxFBxxxFxFFFx',
+             'xBBBxBxxxFBxxxFBxxxFxBBBxxFFFxFxxxFFxxxFFxxxFxBBBx',
+             'xBBBxBxxxFBxxxFBxxxFxBBBxxFFFxFxxxBFxxxBFxxxBxFFFx',
+             'xBBBxBxxxFBxxxFBxxxFxBBBxxFFFxBxxxFBxxxFBxxxFxFFFx',
+             'xBBBxBxxxFBxxxFBxxxFxBBBxxBBBxFxxxFFxxxFFxxxFxFFFx',
+             'xBBBxBxxxBBxxxBBxxxBxFFFxxFFFxFxxxFFxxxFFxxxFxBBBx',
+             'xBBBxBxxxBBxxxBBxxxBxFFFxxFFFxFxxxBFxxxBFxxxBxFFFx',
+             'xBBBxBxxxBBxxxBBxxxBxFFFxxFFFxBxxxFBxxxFBxxxFxFFFx',
+             'xBBBxBxxxBBxxxBBxxxBxFFFxxBBBxFxxxFFxxxFFxxxFxFFFx',
+             'xBBBxBxxxBBxxxBBxxxBxBBBxxFFFxFxxxFFxxxFFxxxFxFFFx'),
+            False, # state_hex
+            linecount=343000)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Front
+            'x', parent_state[108], parent_state[109], parent_state[110], 'x',
+            parent_state[114], 'xxx', parent_state[118],
+            parent_state[121], 'xxx', parent_state[125],
+            parent_state[128], 'xxx', parent_state[132],
+            'x', parent_state[136], parent_state[137], parent_state[138], 'x',
+
+            # Back
+            'x', parent_state[206], parent_state[207], parent_state[208], 'x',
+            parent_state[212], 'xxx', parent_state[216],
+            parent_state[219], 'xxx', parent_state[223],
+            parent_state[226], 'xxx', parent_state[230],
+            'x', parent_state[234], parent_state[235], parent_state[236], 'x'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
+
+        return result
+
+
+class LookupTableIDA777FBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
+    """
+    lookup-table-7x7x7-step70-FB-solve-inner-center-and-oblique-edges.txt
+    =====================================================================
+    1 steps has 210 entries (0 percent, 0.00x previous step)
+    2 steps has 770 entries (0 percent, 3.67x previous step)
+    3 steps has 2,828 entries (0 percent, 3.67x previous step)
+    4 steps has 15,158 entries (0 percent, 5.36x previous step)
+    5 steps has 63,008 entries (0 percent, 4.16x previous step)
+    6 steps has 290,588 entries (4 percent, 4.61x previous step)
+    7 steps has 1,232,594 entries (17 percent, 4.24x previous step)
+    8 steps has 5,266,642 entries (76 percent, 4.27x previous step)
+
+    Total: 6,871,798 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step70-FB-solve-inner-center-and-oblique-edges.txt',
+            '777-FB-centers-oblique-edges-FB-solve',
+            ('xFFFxFFFFFFFFFFFFFFFxFFFxxBBBxBBBBBBBBBBBBBBBxBBBx',
+             'xFFFxFFFFFFFFFFFFFFFxBBBxxFFFxBBBBBBBBBBBBBBBxBBBx',
+             'xFFFxFFFFFFFFFFFFFFFxBBBxxBBBxFBBBBFBBBBFBBBBxBBBx',
+             'xFFFxFFFFFFFFFFFFFFFxBBBxxBBBxBBBBFBBBBFBBBBFxBBBx',
+             'xFFFxFFFFFFFFFFFFFFFxBBBxxBBBxBBBBBBBBBBBBBBBxFFFx',
+             'xFFFxFFFFBFFFFBFFFFBxFFFxxFFFxBBBBBBBBBBBBBBBxBBBx',
+             'xFFFxFFFFBFFFFBFFFFBxFFFxxBBBxFBBBBFBBBBFBBBBxBBBx',
+             'xFFFxFFFFBFFFFBFFFFBxFFFxxBBBxBBBBFBBBBFBBBBFxBBBx',
+             'xFFFxFFFFBFFFFBFFFFBxFFFxxBBBxBBBBBBBBBBBBBBBxFFFx',
+             'xFFFxFFFFBFFFFBFFFFBxBBBxxFFFxFBBBBFBBBBFBBBBxBBBx',
+             'xFFFxFFFFBFFFFBFFFFBxBBBxxFFFxBBBBFBBBBFBBBBFxBBBx',
+             'xFFFxFFFFBFFFFBFFFFBxBBBxxFFFxBBBBBBBBBBBBBBBxFFFx',
+             'xFFFxFFFFBFFFFBFFFFBxBBBxxBBBxFBBBFFBBBFFBBBFxBBBx',
+             'xFFFxFFFFBFFFFBFFFFBxBBBxxBBBxFBBBBFBBBBFBBBBxFFFx',
+             'xFFFxFFFFBFFFFBFFFFBxBBBxxBBBxBBBBFBBBBFBBBBFxFFFx',
+             'xFFFxBFFFFBFFFFBFFFFxFFFxxFFFxBBBBBBBBBBBBBBBxBBBx',
+             'xFFFxBFFFFBFFFFBFFFFxFFFxxBBBxFBBBBFBBBBFBBBBxBBBx',
+             'xFFFxBFFFFBFFFFBFFFFxFFFxxBBBxBBBBFBBBBFBBBBFxBBBx',
+             'xFFFxBFFFFBFFFFBFFFFxFFFxxBBBxBBBBBBBBBBBBBBBxFFFx',
+             'xFFFxBFFFFBFFFFBFFFFxBBBxxFFFxFBBBBFBBBBFBBBBxBBBx',
+             'xFFFxBFFFFBFFFFBFFFFxBBBxxFFFxBBBBFBBBBFBBBBFxBBBx',
+             'xFFFxBFFFFBFFFFBFFFFxBBBxxFFFxBBBBBBBBBBBBBBBxFFFx',
+             'xFFFxBFFFFBFFFFBFFFFxBBBxxBBBxFBBBFFBBBFFBBBFxBBBx',
+             'xFFFxBFFFFBFFFFBFFFFxBBBxxBBBxFBBBBFBBBBFBBBBxFFFx',
+             'xFFFxBFFFFBFFFFBFFFFxBBBxxBBBxBBBBFBBBBFBBBBFxFFFx',
+             'xFFFxBFFFBBFFFBBFFFBxFFFxxFFFxFBBBBFBBBBFBBBBxBBBx',
+             'xFFFxBFFFBBFFFBBFFFBxFFFxxFFFxBBBBFBBBBFBBBBFxBBBx',
+             'xFFFxBFFFBBFFFBBFFFBxFFFxxFFFxBBBBBBBBBBBBBBBxFFFx',
+             'xFFFxBFFFBBFFFBBFFFBxFFFxxBBBxFBBBFFBBBFFBBBFxBBBx',
+             'xFFFxBFFFBBFFFBBFFFBxFFFxxBBBxFBBBBFBBBBFBBBBxFFFx',
+             'xFFFxBFFFBBFFFBBFFFBxFFFxxBBBxBBBBFBBBBFBBBBFxFFFx',
+             'xFFFxBFFFBBFFFBBFFFBxBBBxxFFFxFBBBFFBBBFFBBBFxBBBx',
+             'xFFFxBFFFBBFFFBBFFFBxBBBxxFFFxFBBBBFBBBBFBBBBxFFFx',
+             'xFFFxBFFFBBFFFBBFFFBxBBBxxFFFxBBBBFBBBBFBBBBFxFFFx',
+             'xFFFxBFFFBBFFFBBFFFBxBBBxxBBBxFBBBFFBBBFFBBBFxFFFx',
+             'xBBBxFFFFFFFFFFFFFFFxFFFxxFFFxBBBBBBBBBBBBBBBxBBBx',
+             'xBBBxFFFFFFFFFFFFFFFxFFFxxBBBxFBBBBFBBBBFBBBBxBBBx',
+             'xBBBxFFFFFFFFFFFFFFFxFFFxxBBBxBBBBFBBBBFBBBBFxBBBx',
+             'xBBBxFFFFFFFFFFFFFFFxFFFxxBBBxBBBBBBBBBBBBBBBxFFFx',
+             'xBBBxFFFFFFFFFFFFFFFxBBBxxFFFxFBBBBFBBBBFBBBBxBBBx',
+             'xBBBxFFFFFFFFFFFFFFFxBBBxxFFFxBBBBFBBBBFBBBBFxBBBx',
+             'xBBBxFFFFFFFFFFFFFFFxBBBxxFFFxBBBBBBBBBBBBBBBxFFFx',
+             'xBBBxFFFFFFFFFFFFFFFxBBBxxBBBxFBBBFFBBBFFBBBFxBBBx',
+             'xBBBxFFFFFFFFFFFFFFFxBBBxxBBBxFBBBBFBBBBFBBBBxFFFx',
+             'xBBBxFFFFFFFFFFFFFFFxBBBxxBBBxBBBBFBBBBFBBBBFxFFFx',
+             'xBBBxFFFFBFFFFBFFFFBxFFFxxFFFxFBBBBFBBBBFBBBBxBBBx',
+             'xBBBxFFFFBFFFFBFFFFBxFFFxxFFFxBBBBFBBBBFBBBBFxBBBx',
+             'xBBBxFFFFBFFFFBFFFFBxFFFxxFFFxBBBBBBBBBBBBBBBxFFFx',
+             'xBBBxFFFFBFFFFBFFFFBxFFFxxBBBxFBBBFFBBBFFBBBFxBBBx',
+             'xBBBxFFFFBFFFFBFFFFBxFFFxxBBBxFBBBBFBBBBFBBBBxFFFx',
+             'xBBBxFFFFBFFFFBFFFFBxFFFxxBBBxBBBBFBBBBFBBBBFxFFFx',
+             'xBBBxFFFFBFFFFBFFFFBxBBBxxFFFxFBBBFFBBBFFBBBFxBBBx',
+             'xBBBxFFFFBFFFFBFFFFBxBBBxxFFFxFBBBBFBBBBFBBBBxFFFx',
+             'xBBBxFFFFBFFFFBFFFFBxBBBxxFFFxBBBBFBBBBFBBBBFxFFFx',
+             'xBBBxFFFFBFFFFBFFFFBxBBBxxBBBxFBBBFFBBBFFBBBFxFFFx',
+             'xBBBxBFFFFBFFFFBFFFFxFFFxxFFFxFBBBBFBBBBFBBBBxBBBx',
+             'xBBBxBFFFFBFFFFBFFFFxFFFxxFFFxBBBBFBBBBFBBBBFxBBBx',
+             'xBBBxBFFFFBFFFFBFFFFxFFFxxFFFxBBBBBBBBBBBBBBBxFFFx',
+             'xBBBxBFFFFBFFFFBFFFFxFFFxxBBBxFBBBFFBBBFFBBBFxBBBx',
+             'xBBBxBFFFFBFFFFBFFFFxFFFxxBBBxFBBBBFBBBBFBBBBxFFFx',
+             'xBBBxBFFFFBFFFFBFFFFxFFFxxBBBxBBBBFBBBBFBBBBFxFFFx',
+             'xBBBxBFFFFBFFFFBFFFFxBBBxxFFFxFBBBFFBBBFFBBBFxBBBx',
+             'xBBBxBFFFFBFFFFBFFFFxBBBxxFFFxFBBBBFBBBBFBBBBxFFFx',
+             'xBBBxBFFFFBFFFFBFFFFxBBBxxFFFxBBBBFBBBBFBBBBFxFFFx',
+             'xBBBxBFFFFBFFFFBFFFFxBBBxxBBBxFBBBFFBBBFFBBBFxFFFx',
+             'xBBBxBFFFBBFFFBBFFFBxFFFxxFFFxFBBBFFBBBFFBBBFxBBBx',
+             'xBBBxBFFFBBFFFBBFFFBxFFFxxFFFxFBBBBFBBBBFBBBBxFFFx',
+             'xBBBxBFFFBBFFFBBFFFBxFFFxxFFFxBBBBFBBBBFBBBBFxFFFx',
+             'xBBBxBFFFBBFFFBBFFFBxFFFxxBBBxFBBBFFBBBFFBBBFxFFFx',
+             'xBBBxBFFFBBFFFBBFFFBxBBBxxFFFxFBBBFFBBBFFBBBFxFFFx'),
+            False, # state_hex
+            moves_7x7x7,
+
+            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
+             "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
+             "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
+             "L", "L'", "L2", "R", "R'", "R2"),                                                        # Do not mess up LRs reduced to 5x5x5 centers
+
+            # prune tables
+            (parent.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
+             parent.lt_FB_solve_oblique_edge),
+            linecount=6871798)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Front
+            'x', parent_state[108], parent_state[109], parent_state[110], 'x',
+            parent_state[114], parent_state[115], parent_state[116], parent_state[117], parent_state[118],
+            parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125],
+            parent_state[128], parent_state[129], parent_state[130], parent_state[131], parent_state[132],
+            'x', parent_state[136], parent_state[137], parent_state[138], 'x',
+
+            # Back
+            'x', parent_state[206], parent_state[207], parent_state[208], 'x',
+            parent_state[212], parent_state[213], parent_state[214], parent_state[215], parent_state[216],
+            parent_state[219], parent_state[220], parent_state[221], parent_state[222], parent_state[223],
+            parent_state[226], parent_state[227], parent_state[228], parent_state[229], parent_state[230],
+            'x', parent_state[234], parent_state[235], parent_state[236], 'x'
+        ]
+
+        result = ''.join(result)
+        result = result.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
+
+        return result
+
+
+class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
+    """
+    lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt
+    =======================================================================
+    1 steps has 350 entries (0 percent, 0.00x previous step)
+    2 steps has 2800 entries (0 percent, 8.00x previous step)
+    3 steps has 18712 entries (1 percent, 6.68x previous step)
+    4 steps has 131496 entries (11 percent, 7.03x previous step)
+    5 steps has 966484 entries (86 percent, 7.35x previous step)
+
+    Total: 1119842 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt',
+            '777-LFRB-centers-oblique-edges-solve',
+            lt_LFRB_solve_inner_centers_and_oblique_edges_state_targets, # There are 4900 of them
+            False, # state_hex
+            moves_7x7x7,
+
+            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
+             "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
+             "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
+             "L", "L'", "L2", "R", "R'", "R2"),                                                        # Do not mess up LRs reduced to 5x5x5 centers
+
+            # prune tables
+            (parent.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge,
+             parent.lt_LR_solve_oblique_edge,
+             parent.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
+             parent.lt_FB_solve_oblique_edge),
+            linecount=1119842)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Left
+            'x', parent_state[59], parent_state[60], parent_state[61], 'x',
+            parent_state[65], parent_state[66], parent_state[67], parent_state[68], parent_state[69],
+            parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
+            parent_state[79], parent_state[80], parent_state[81], parent_state[82], parent_state[83],
+            'x', parent_state[87], parent_state[88], parent_state[89], 'x',
+
+            # Front
+            'x', parent_state[108], parent_state[109], parent_state[110], 'x',
+            parent_state[114], parent_state[115], parent_state[116], parent_state[117], parent_state[118],
+            parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125],
+            parent_state[128], parent_state[129], parent_state[130], parent_state[131], parent_state[132],
+            'x', parent_state[136], parent_state[137], parent_state[138], 'x',
+
+            # Right
+            'x', parent_state[157], parent_state[158], parent_state[159], 'x',
+            parent_state[163], parent_state[164], parent_state[165], parent_state[166], parent_state[167],
+            parent_state[170], parent_state[171], parent_state[172], parent_state[173], parent_state[174],
+            parent_state[177], parent_state[178], parent_state[179], parent_state[180], parent_state[181],
+            'x', parent_state[185], parent_state[186], parent_state[187], 'x',
+
+            # Back
+            'x', parent_state[206], parent_state[207], parent_state[208], 'x',
+            parent_state[212], parent_state[213], parent_state[214], parent_state[215], parent_state[216],
+            parent_state[219], parent_state[220], parent_state[221], parent_state[222], parent_state[223],
+            parent_state[226], parent_state[227], parent_state[228], parent_state[229], parent_state[230],
+            'x', parent_state[234], parent_state[235], parent_state[236], 'x'
+        ]
+
+        result = ''.join(result)
+
+        return result
+
 class RubiksCube777(RubiksCubeNNNOddEdges):
     """
     For 7x7x7 centers
@@ -169,949 +1915,29 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
         self.lt_init_called = True
 
-        '''
-        24!/(8!*16!) is 735,471
+        self.lt_UD_oblique_edge_pairing_middle_only = LookupTable777UDObliqueEdgePairingMiddleOnly(self)
+        self.lt_UD_oblique_edge_pairing_left_only = LookupTable777UDObliqueEdgePairingLeftOnly(self)
+        self.lt_UD_oblique_edge_pairing_right_only = LookupTable777UDObliqueEdgePairingRightOnly(self)
+        self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
 
-        lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt
-        lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt
-        lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt
-        =================================================================
-        1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 66 entries (0 percent, 13.20x previous step)
-        3 steps has 850 entries (0 percent, 12.88x previous step)
-        4 steps has 8,753 entries (1 percent, 10.30x previous step)
-        5 steps has 67,758 entries (9 percent, 7.74x previous step)
-        6 steps has 243,959 entries (33 percent, 3.60x previous step)
-        7 steps has 257,410 entries (34 percent, 1.06x previous step)
-        8 steps has 135,684 entries (18 percent, 0.53x previous step)
-        9 steps has 20,177 entries (2 percent, 0.15x previous step)
-        10 steps has 801 entries (0 percent, 0.04x previous step)
-        11 steps has 8 entries (0 percent, 0.01x previous step)
+        self.lt_LR_oblique_edge_pairing_middle_only = LookupTable777LRObliqueEdgePairingMiddleOnly(self)
+        self.lt_LR_oblique_edge_pairing_left_only = LookupTable777LRObliqueEdgePairingLeftOnly(self)
+        self.lt_LR_oblique_edge_pairing_right_only = LookupTable777LRObliqueEdgePairingRightOnly(self)
+        self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
 
-        Total: 735,471 entries
-        '''
-        self.lt_UD_oblique_edge_pairing_middle_only = LookupTable(self,
-                                                                  'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
-                                                                  '777-UD-oblique-edge-pairing-middle-only',
-                                                                  '08088080000000000000000000000000404404',
-                                                                  True, # state_hex
-                                                                  linecount=735471)
+        self.lt_UD_solve_inner_centers_and_oblique_edges_center_only = LookupTable777UDSolveInnerCentersAndObliqueEdgesCenterOnly(self)
+        self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only = LookupTable777UDSolveInnerCentersAndObliqueEdgesEdgesOnly(self)
+        self.lt_UD_solve_inner_centers_and_oblique_edges = LookupTableIDA777UDSolveInnerCentersAndObliqueEdges(self)
 
-        self.lt_UD_oblique_edge_pairing_left_only = LookupTable(self,
-                                                                   'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
-                                                                   '777-UD-oblique-edge-pairing-left-only',
-                                                                   '10104040000000000000000000000000808202',
-                                                                   True, # state_hex
-                                                                   linecount=735471)
+        self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge = LookupTable777LRSolveInnerXCenterTCenterMiddleObliqueEdge(self)
+        self.lt_LR_solve_oblique_edge = LookupTable777LRSolveObliqueEdge(self)
+        self.lt_LR_solve_inner_centers_and_oblique_edges = LookupTableIDA777LRSolveInnerCentersAndObliqueEdges(self)
 
-        self.lt_UD_oblique_edge_pairing_right_only = LookupTable(self,
-                                                                   'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
-                                                                   '777-UD-oblique-edge-pairing-right-only',
-                                                                   '05000500000000000000000000000000280028',
-                                                                   True, # state_hex
-                                                                   linecount=735471)
+        self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge = LookupTable777FBSolveInnerXCenterTCenterMiddleObliqueEdge(self)
+        self.lt_FB_solve_oblique_edge = LookupTable777FBSolveObliqueEdge(self)
+        self.lt_FB_solve_inner_centers_and_oblique_edges = LookupTableIDA777FBSolveInnerCentersAndObliqueEdges(self)
 
-
-        '''
-        lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
-        =====================================================
-        1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 66 entries (0 percent, 13.20x previous step)
-        3 steps has 916 entries (0 percent, 13.88x previous step)
-        4 steps has 10,132 entries (0 percent, 11.06x previous step)
-        5 steps has 92,070 entries (0 percent, 9.09x previous step)
-        6 steps has 558,938 entries (0 percent, 6.07x previous step)
-        7 steps has 4,163,342 entries (4 percent, 7.45x previous step)
-        8 steps has 53,921,753 entries (56 percent, 12.95x previous step)
-        9 steps has 33,108,789 entries (34 percent, 0.61x previous step)
-        10 steps has 3,448,937 entries (3 percent, 0.10x previous step)
-        11 steps has 49,979 entries (0 percent, 0.01x previous step)
-
-        Total: 95,354,927 entries
-        '''
-        self.lt_UD_oblique_edge_pairing = LookupTableIDA(self,
-                                                         'lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
-                                                         '777-UD-oblique-edge-pairing',
-                                                         '1d18c5c0000000000000000000000000e8c62e',
-                                                         True, # state_hex
-                                                         moves_7x7x7,
-
-                                                         # do not mess up UD 5x5x5 centers
-                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"),
-
-                                                         # prune tables
-                                                         (self.lt_UD_oblique_edge_pairing_middle_only,
-                                                          self.lt_UD_oblique_edge_pairing_left_only,
-                                                          self.lt_UD_oblique_edge_pairing_right_only),
-                                                         linecount=5961573)
-
-        self.lt_LR_oblique_edge_pairing_middle_only = LookupTable(self,
-                                                      'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
-                                                      '777-LR-oblique-edge-pairing-middle-only',
-                                                      '2022020000000808808000000',
-                                                      True, # state_hex
-                                                      linecount=12870)
-
-        self.lt_LR_oblique_edge_pairing_left_only = LookupTable(self,
-                                                      'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
-                                                      '777-LR-oblique-edge-pairing-left-only',
-                                                      '4041010000001010404000000',
-                                                      True, # state_hex
-                                                      linecount=12870)
-
-        self.lt_LR_oblique_edge_pairing_right_only = LookupTable(self,
-                                                      'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt',
-                                                      '777-LR-oblique-edge-pairing-right-only',
-                                                      '1400140000000500050000000',
-                                                      True, # state_hex
-                                                      linecount=12870)
-
-        '''
-        lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt
-        =====================================================
-        1 steps has 2 entries (0 percent, 0.00x previous step)
-        2 steps has 26 entries (0 percent, 13.00x previous step)
-        3 steps has 214 entries (0 percent, 8.23x previous step)
-        4 steps has 806 entries (0 percent, 3.77x previous step)
-        5 steps has 3,006 entries (0 percent, 3.73x previous step)
-        6 steps has 15,990 entries (0 percent, 5.32x previous step)
-        7 steps has 87,030 entries (1 percent, 5.44x previous step)
-        8 steps has 455,114 entries (9 percent, 5.23x previous step)
-        9 steps has 1,784,216 entries (35 percent, 3.92x previous step)
-        10 steps has 2,208,423 entries (43 percent, 1.24x previous step)
-        11 steps has 469,086 entries (9 percent, 0.21x previous step)
-        12 steps has 20,267 entries (0 percent, 0.04x previous step)
-        13 steps has 100 entries (0 percent, 0.00x previous step)
-
-        Total: 5,044,280 entries
-        '''
-        self.lt_LR_oblique_edge_pairing = LookupTableIDA(self,
-                                                      'lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt',
-                                                      '777-LR-oblique-edge-pairing',
-                                                      '7463170000001d18c5c000000',
-                                                      True, # state_hex
-                                                      moves_7x7x7,
-
-                                                      ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # do not mess up UD 5x5x5 centers
-                                                       "Rw",  "Rw'",  "Lw",  "Lw'",  "Fw",  "Fw'",  "Bw",  "Bw'", # do not mess up UD oblique edges
-                                                       "3Uw", "3Uw'", "3Dw", "3Dw'"),
-
-                                                      # prune tables
-                                                      (self.lt_LR_oblique_edge_pairing_middle_only,
-                                                       self.lt_LR_oblique_edge_pairing_left_only,
-                                                       self.lt_LR_oblique_edge_pairing_right_only),
-                                                      linecount=5044280)
-
-        '''
-        lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt
-        =================================================================================
-        1 steps has 5 entries (0 percent, 0.00x previous step)
-        2 steps has 22 entries (0 percent, 4.40x previous step)
-        3 steps has 82 entries (1 percent, 3.73x previous step)
-        4 steps has 292 entries (5 percent, 3.56x previous step)
-        5 steps has 986 entries (20 percent, 3.38x previous step)
-        6 steps has 2,001 entries (40 percent, 2.03x previous step)
-        7 steps has 1,312 entries (26 percent, 0.66x previous step)
-        8 steps has 200 entries (4 percent, 0.15x previous step)
-
-        Total: 4,900 entries
-        '''
-        self.lt_UD_solve_inner_centers_and_oblique_edges_center_only = LookupTable(self,
-                                                                         'lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt',
-                                                                         '777-UD-centers-oblique-edges-solve-center-only',
-                                                                         'xxxxxxUUUxxUxUxxUUUxxxxxxxxxxxxDDDxxDxDxxDDDxxxxxx',
-                                                                         False, # state_hex
-                                                                         linecount=4900)
-
-        '''
-        lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt
-        ================================================================================
-        1 steps has 294 entries (0 percent, 0.00x previous step)
-        2 steps has 1,392 entries (0 percent, 4.73x previous step)
-        3 steps has 6,112 entries (1 percent, 4.39x previous step)
-        4 steps has 23,304 entries (6 percent, 3.81x previous step)
-        5 steps has 71,086 entries (20 percent, 3.05x previous step)
-        6 steps has 137,528 entries (40 percent, 1.93x previous step)
-        7 steps has 92,192 entries (26 percent, 0.67x previous step)
-        8 steps has 11,068 entries (3 percent, 0.12x previous step)
-        9 steps has 24 entries (0 percent, 0.00x previous step)
-
-        Total: 343,000 entries
-        '''
-        self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only = LookupTable(self,
-                                                                         'lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt',
-                                                                         '777-UD-centers-oblique-edges-solve-edges-only',
-                                                                         ('xUUUxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxDDDx',
-                                                                          'xUUUxUxxxUUxxxUUxxxUxDDDxxUUUxDxxxDDxxxDDxxxDxDDDx',
-                                                                          'xUUUxUxxxUUxxxUUxxxUxDDDxxDDDxUxxxDUxxxDUxxxDxDDDx',
-                                                                          'xUUUxUxxxUUxxxUUxxxUxDDDxxDDDxDxxxUDxxxUDxxxUxDDDx',
-                                                                          'xUUUxUxxxUUxxxUUxxxUxDDDxxDDDxDxxxDDxxxDDxxxDxUUUx',
-                                                                          'xUUUxUxxxDUxxxDUxxxDxUUUxxUUUxDxxxDDxxxDDxxxDxDDDx',
-                                                                          'xUUUxUxxxDUxxxDUxxxDxUUUxxDDDxUxxxDUxxxDUxxxDxDDDx',
-                                                                          'xUUUxUxxxDUxxxDUxxxDxUUUxxDDDxDxxxUDxxxUDxxxUxDDDx',
-                                                                          'xUUUxUxxxDUxxxDUxxxDxUUUxxDDDxDxxxDDxxxDDxxxDxUUUx',
-                                                                          'xUUUxUxxxDUxxxDUxxxDxDDDxxUUUxUxxxDUxxxDUxxxDxDDDx',
-                                                                          'xUUUxUxxxDUxxxDUxxxDxDDDxxUUUxDxxxUDxxxUDxxxUxDDDx',
-                                                                          'xUUUxUxxxDUxxxDUxxxDxDDDxxUUUxDxxxDDxxxDDxxxDxUUUx',
-                                                                          'xUUUxUxxxDUxxxDUxxxDxDDDxxDDDxUxxxUUxxxUUxxxUxDDDx',
-                                                                          'xUUUxUxxxDUxxxDUxxxDxDDDxxDDDxUxxxDUxxxDUxxxDxUUUx',
-                                                                          'xUUUxUxxxDUxxxDUxxxDxDDDxxDDDxDxxxUDxxxUDxxxUxUUUx',
-                                                                          'xUUUxDxxxUDxxxUDxxxUxUUUxxUUUxDxxxDDxxxDDxxxDxDDDx',
-                                                                          'xUUUxDxxxUDxxxUDxxxUxUUUxxDDDxUxxxDUxxxDUxxxDxDDDx',
-                                                                          'xUUUxDxxxUDxxxUDxxxUxUUUxxDDDxDxxxUDxxxUDxxxUxDDDx',
-                                                                          'xUUUxDxxxUDxxxUDxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxUUUx',
-                                                                          'xUUUxDxxxUDxxxUDxxxUxDDDxxUUUxUxxxDUxxxDUxxxDxDDDx',
-                                                                          'xUUUxDxxxUDxxxUDxxxUxDDDxxUUUxDxxxUDxxxUDxxxUxDDDx',
-                                                                          'xUUUxDxxxUDxxxUDxxxUxDDDxxUUUxDxxxDDxxxDDxxxDxUUUx',
-                                                                          'xUUUxDxxxUDxxxUDxxxUxDDDxxDDDxUxxxUUxxxUUxxxUxDDDx',
-                                                                          'xUUUxDxxxUDxxxUDxxxUxDDDxxDDDxUxxxDUxxxDUxxxDxUUUx',
-                                                                          'xUUUxDxxxUDxxxUDxxxUxDDDxxDDDxDxxxUDxxxUDxxxUxUUUx',
-                                                                          'xUUUxDxxxDDxxxDDxxxDxUUUxxUUUxUxxxDUxxxDUxxxDxDDDx',
-                                                                          'xUUUxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxDDDx',
-                                                                          'xUUUxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxDDxxxDDxxxDxUUUx',
-                                                                          'xUUUxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxDDDx',
-                                                                          'xUUUxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxDUxxxDUxxxDxUUUx',
-                                                                          'xUUUxDxxxDDxxxDDxxxDxUUUxxDDDxDxxxUDxxxUDxxxUxUUUx',
-                                                                          'xUUUxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxDDDx',
-                                                                          'xUUUxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxDUxxxDUxxxDxUUUx',
-                                                                          'xUUUxDxxxDDxxxDDxxxDxDDDxxUUUxDxxxUDxxxUDxxxUxUUUx',
-                                                                          'xUUUxDxxxDDxxxDDxxxDxDDDxxDDDxUxxxUUxxxUUxxxUxUUUx',
-                                                                          'xDDDxUxxxUUxxxUUxxxUxUUUxxUUUxDxxxDDxxxDDxxxDxDDDx',
-                                                                          'xDDDxUxxxUUxxxUUxxxUxUUUxxDDDxUxxxDUxxxDUxxxDxDDDx',
-                                                                          'xDDDxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxUDxxxUDxxxUxDDDx',
-                                                                          'xDDDxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxUUUx',
-                                                                          'xDDDxUxxxUUxxxUUxxxUxDDDxxUUUxUxxxDUxxxDUxxxDxDDDx',
-                                                                          'xDDDxUxxxUUxxxUUxxxUxDDDxxUUUxDxxxUDxxxUDxxxUxDDDx',
-                                                                          'xDDDxUxxxUUxxxUUxxxUxDDDxxUUUxDxxxDDxxxDDxxxDxUUUx',
-                                                                          'xDDDxUxxxUUxxxUUxxxUxDDDxxDDDxUxxxUUxxxUUxxxUxDDDx',
-                                                                          'xDDDxUxxxUUxxxUUxxxUxDDDxxDDDxUxxxDUxxxDUxxxDxUUUx',
-                                                                          'xDDDxUxxxUUxxxUUxxxUxDDDxxDDDxDxxxUDxxxUDxxxUxUUUx',
-                                                                          'xDDDxUxxxDUxxxDUxxxDxUUUxxUUUxUxxxDUxxxDUxxxDxDDDx',
-                                                                          'xDDDxUxxxDUxxxDUxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxDDDx',
-                                                                          'xDDDxUxxxDUxxxDUxxxDxUUUxxUUUxDxxxDDxxxDDxxxDxUUUx',
-                                                                          'xDDDxUxxxDUxxxDUxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxDDDx',
-                                                                          'xDDDxUxxxDUxxxDUxxxDxUUUxxDDDxUxxxDUxxxDUxxxDxUUUx',
-                                                                          'xDDDxUxxxDUxxxDUxxxDxUUUxxDDDxDxxxUDxxxUDxxxUxUUUx',
-                                                                          'xDDDxUxxxDUxxxDUxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxDDDx',
-                                                                          'xDDDxUxxxDUxxxDUxxxDxDDDxxUUUxUxxxDUxxxDUxxxDxUUUx',
-                                                                          'xDDDxUxxxDUxxxDUxxxDxDDDxxUUUxDxxxUDxxxUDxxxUxUUUx',
-                                                                          'xDDDxUxxxDUxxxDUxxxDxDDDxxDDDxUxxxUUxxxUUxxxUxUUUx',
-                                                                          'xDDDxDxxxUDxxxUDxxxUxUUUxxUUUxUxxxDUxxxDUxxxDxDDDx',
-                                                                          'xDDDxDxxxUDxxxUDxxxUxUUUxxUUUxDxxxUDxxxUDxxxUxDDDx',
-                                                                          'xDDDxDxxxUDxxxUDxxxUxUUUxxUUUxDxxxDDxxxDDxxxDxUUUx',
-                                                                          'xDDDxDxxxUDxxxUDxxxUxUUUxxDDDxUxxxUUxxxUUxxxUxDDDx',
-                                                                          'xDDDxDxxxUDxxxUDxxxUxUUUxxDDDxUxxxDUxxxDUxxxDxUUUx',
-                                                                          'xDDDxDxxxUDxxxUDxxxUxUUUxxDDDxDxxxUDxxxUDxxxUxUUUx',
-                                                                          'xDDDxDxxxUDxxxUDxxxUxDDDxxUUUxUxxxUUxxxUUxxxUxDDDx',
-                                                                          'xDDDxDxxxUDxxxUDxxxUxDDDxxUUUxUxxxDUxxxDUxxxDxUUUx',
-                                                                          'xDDDxDxxxUDxxxUDxxxUxDDDxxUUUxDxxxUDxxxUDxxxUxUUUx',
-                                                                          'xDDDxDxxxUDxxxUDxxxUxDDDxxDDDxUxxxUUxxxUUxxxUxUUUx',
-                                                                          'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxUxxxUUxxxUUxxxUxDDDx',
-                                                                          'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxUxxxDUxxxDUxxxDxUUUx',
-                                                                          'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxUUUx',
-                                                                          'xDDDxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxUUUx',
-                                                                          'xDDDxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxUUUx'),
-                                                                         False, # state_hex
-                                                                         linecount=343000)
-
-        '''
-        I built this 6-deep for all 70 tables and merged them together into the following
-
-        lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt
-        =====================================================================
-        1 steps has 350 entries (0 percent, 0.00x previous step)
-        2 steps has 2036 entries (0 percent, 5.82x previous step)
-        3 steps has 13108 entries (0 percent, 6.44x previous step)
-        4 steps has 86624 entries (2 percent, 6.61x previous step)
-        5 steps has 560132 entries (13 percent, 6.47x previous step)
-        6 steps has 3456952 entries (83 percent, 6.17x previous step)
-
-        Total: 4119202 entries
-        '''
-        self.lt_UD_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
-                                                                         'lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt',
-                                                                         '777-UD-centers-oblique-edges-solve',
-                                                                         ('xUUUxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxDDDx',
-                                                                          'xUUUxUUUUUUUUUUUUUUUxDDDxxUUUxDDDDDDDDDDDDDDDxDDDx',
-                                                                          'xUUUxUUUUUUUUUUUUUUUxDDDxxDDDxUDDDDUDDDDUDDDDxDDDx',
-                                                                          'xUUUxUUUUUUUUUUUUUUUxDDDxxDDDxDDDDUDDDDUDDDDUxDDDx',
-                                                                          'xUUUxUUUUUUUUUUUUUUUxDDDxxDDDxDDDDDDDDDDDDDDDxUUUx',
-                                                                          'xUUUxUUUUDUUUUDUUUUDxUUUxxUUUxDDDDDDDDDDDDDDDxDDDx',
-                                                                          'xUUUxUUUUDUUUUDUUUUDxUUUxxDDDxUDDDDUDDDDUDDDDxDDDx',
-                                                                          'xUUUxUUUUDUUUUDUUUUDxUUUxxDDDxDDDDUDDDDUDDDDUxDDDx',
-                                                                          'xUUUxUUUUDUUUUDUUUUDxUUUxxDDDxDDDDDDDDDDDDDDDxUUUx',
-                                                                          'xUUUxUUUUDUUUUDUUUUDxDDDxxUUUxUDDDDUDDDDUDDDDxDDDx',
-                                                                          'xUUUxUUUUDUUUUDUUUUDxDDDxxUUUxDDDDUDDDDUDDDDUxDDDx',
-                                                                          'xUUUxUUUUDUUUUDUUUUDxDDDxxUUUxDDDDDDDDDDDDDDDxUUUx',
-                                                                          'xUUUxUUUUDUUUUDUUUUDxDDDxxDDDxUDDDUUDDDUUDDDUxDDDx',
-                                                                          'xUUUxUUUUDUUUUDUUUUDxDDDxxDDDxUDDDDUDDDDUDDDDxUUUx',
-                                                                          'xUUUxUUUUDUUUUDUUUUDxDDDxxDDDxDDDDUDDDDUDDDDUxUUUx',
-                                                                          'xUUUxDUUUUDUUUUDUUUUxUUUxxUUUxDDDDDDDDDDDDDDDxDDDx',
-                                                                          'xUUUxDUUUUDUUUUDUUUUxUUUxxDDDxUDDDDUDDDDUDDDDxDDDx',
-                                                                          'xUUUxDUUUUDUUUUDUUUUxUUUxxDDDxDDDDUDDDDUDDDDUxDDDx',
-                                                                          'xUUUxDUUUUDUUUUDUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxUUUx',
-                                                                          'xUUUxDUUUUDUUUUDUUUUxDDDxxUUUxUDDDDUDDDDUDDDDxDDDx',
-                                                                          'xUUUxDUUUUDUUUUDUUUUxDDDxxUUUxDDDDUDDDDUDDDDUxDDDx',
-                                                                          'xUUUxDUUUUDUUUUDUUUUxDDDxxUUUxDDDDDDDDDDDDDDDxUUUx',
-                                                                          'xUUUxDUUUUDUUUUDUUUUxDDDxxDDDxUDDDUUDDDUUDDDUxDDDx',
-                                                                          'xUUUxDUUUUDUUUUDUUUUxDDDxxDDDxUDDDDUDDDDUDDDDxUUUx',
-                                                                          'xUUUxDUUUUDUUUUDUUUUxDDDxxDDDxDDDDUDDDDUDDDDUxUUUx',
-                                                                          'xUUUxDUUUDDUUUDDUUUDxUUUxxUUUxUDDDDUDDDDUDDDDxDDDx',
-                                                                          'xUUUxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxDDDx',
-                                                                          'xUUUxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDDDDDDDDDDDDxUUUx',
-                                                                          'xUUUxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxDDDx',
-                                                                          'xUUUxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDDUDDDDUDDDDxUUUx',
-                                                                          'xUUUxDUUUDDUUUDDUUUDxUUUxxDDDxDDDDUDDDDUDDDDUxUUUx',
-                                                                          'xUUUxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxDDDx',
-                                                                          'xUUUxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDDUDDDDUDDDDxUUUx',
-                                                                          'xUUUxDUUUDDUUUDDUUUDxDDDxxUUUxDDDDUDDDDUDDDDUxUUUx',
-                                                                          'xUUUxDUUUDDUUUDDUUUDxDDDxxDDDxUDDDUUDDDUUDDDUxUUUx',
-                                                                          'xDDDxUUUUUUUUUUUUUUUxUUUxxUUUxDDDDDDDDDDDDDDDxDDDx',
-                                                                          'xDDDxUUUUUUUUUUUUUUUxUUUxxDDDxUDDDDUDDDDUDDDDxDDDx',
-                                                                          'xDDDxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDUDDDDUDDDDUxDDDx',
-                                                                          'xDDDxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxUUUx',
-                                                                          'xDDDxUUUUUUUUUUUUUUUxDDDxxUUUxUDDDDUDDDDUDDDDxDDDx',
-                                                                          'xDDDxUUUUUUUUUUUUUUUxDDDxxUUUxDDDDUDDDDUDDDDUxDDDx',
-                                                                          'xDDDxUUUUUUUUUUUUUUUxDDDxxUUUxDDDDDDDDDDDDDDDxUUUx',
-                                                                          'xDDDxUUUUUUUUUUUUUUUxDDDxxDDDxUDDDUUDDDUUDDDUxDDDx',
-                                                                          'xDDDxUUUUUUUUUUUUUUUxDDDxxDDDxUDDDDUDDDDUDDDDxUUUx',
-                                                                          'xDDDxUUUUUUUUUUUUUUUxDDDxxDDDxDDDDUDDDDUDDDDUxUUUx',
-                                                                          'xDDDxUUUUDUUUUDUUUUDxUUUxxUUUxUDDDDUDDDDUDDDDxDDDx',
-                                                                          'xDDDxUUUUDUUUUDUUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxDDDx',
-                                                                          'xDDDxUUUUDUUUUDUUUUDxUUUxxUUUxDDDDDDDDDDDDDDDxUUUx',
-                                                                          'xDDDxUUUUDUUUUDUUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxDDDx',
-                                                                          'xDDDxUUUUDUUUUDUUUUDxUUUxxDDDxUDDDDUDDDDUDDDDxUUUx',
-                                                                          'xDDDxUUUUDUUUUDUUUUDxUUUxxDDDxDDDDUDDDDUDDDDUxUUUx',
-                                                                          'xDDDxUUUUDUUUUDUUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxDDDx',
-                                                                          'xDDDxUUUUDUUUUDUUUUDxDDDxxUUUxUDDDDUDDDDUDDDDxUUUx',
-                                                                          'xDDDxUUUUDUUUUDUUUUDxDDDxxUUUxDDDDUDDDDUDDDDUxUUUx',
-                                                                          'xDDDxUUUUDUUUUDUUUUDxDDDxxDDDxUDDDUUDDDUUDDDUxUUUx',
-                                                                          'xDDDxDUUUUDUUUUDUUUUxUUUxxUUUxUDDDDUDDDDUDDDDxDDDx',
-                                                                          'xDDDxDUUUUDUUUUDUUUUxUUUxxUUUxDDDDUDDDDUDDDDUxDDDx',
-                                                                          'xDDDxDUUUUDUUUUDUUUUxUUUxxUUUxDDDDDDDDDDDDDDDxUUUx',
-                                                                          'xDDDxDUUUUDUUUUDUUUUxUUUxxDDDxUDDDUUDDDUUDDDUxDDDx',
-                                                                          'xDDDxDUUUUDUUUUDUUUUxUUUxxDDDxUDDDDUDDDDUDDDDxUUUx',
-                                                                          'xDDDxDUUUUDUUUUDUUUUxUUUxxDDDxDDDDUDDDDUDDDDUxUUUx',
-                                                                          'xDDDxDUUUUDUUUUDUUUUxDDDxxUUUxUDDDUUDDDUUDDDUxDDDx',
-                                                                          'xDDDxDUUUUDUUUUDUUUUxDDDxxUUUxUDDDDUDDDDUDDDDxUUUx',
-                                                                          'xDDDxDUUUUDUUUUDUUUUxDDDxxUUUxDDDDUDDDDUDDDDUxUUUx',
-                                                                          'xDDDxDUUUUDUUUUDUUUUxDDDxxDDDxUDDDUUDDDUUDDDUxUUUx',
-                                                                          'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxUDDDUUDDDUUDDDUxDDDx',
-                                                                          'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxUDDDDUDDDDUDDDDxUUUx',
-                                                                          'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxUUUx',
-                                                                          'xDDDxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxUUUx',
-                                                                          'xDDDxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxUUUx'),
-                                                                         False, # state_hex
-                                                                         moves_7x7x7,
-
-                                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-                                                                          "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),            # do not mess up staged centers
-
-                                                                         # prune tables
-                                                                         (self.lt_UD_solve_inner_centers_and_oblique_edges_center_only,
-                                                                          self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only),
-                                                                         linecount=4119202)
-
-        '''
-        lookup-table-7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges.txt
-        ==================================================================================
-        1 steps has 210 entries (0 percent, 0.00x previous step)
-        2 steps has 770 entries (0 percent, 3.67x previous step)
-        3 steps has 1,540 entries (0 percent, 2.00x previous step)
-        4 steps has 5,950 entries (1 percent, 3.86x previous step)
-        5 steps has 15,400 entries (4 percent, 2.59x previous step)
-        6 steps has 44,310 entries (12 percent, 2.88x previous step)
-        7 steps has 82,600 entries (24 percent, 1.86x previous step)
-        8 steps has 120,960 entries (35 percent, 1.46x previous step)
-        9 steps has 62,160 entries (18 percent, 0.51x previous step)
-        10 steps has 8,820 entries (2 percent, 0.14x previous step)
-        11 steps has 280 entries (0 percent, 0.03x previous step)
-
-        Total: 343,000 entries
-        '''
-        self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge = LookupTable(self,
-                        'lookup-table-7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges.txt',
-                        '777-LR-inner-x-center-t-center-and-middle-oblique-edges-LR-solve',
-                        ('xxLxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxRxx',
-                         'xxLxxxLLLxLLLLLxLLLxxxRxxxxLxxxRRRxRRRRRxRRRxxxRxx',
-                         'xxLxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxLRRRRxRRRxxxRxx',
-                         'xxLxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxRRRRLxRRRxxxRxx',
-                         'xxLxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxRRRRRxRRRxxxLxx',
-                         'xxLxxxLLLxLLLLRxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxRxx',
-                         'xxLxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxRxx',
-                         'xxLxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxRxx',
-                         'xxLxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxLxx',
-                         'xxLxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxRxx',
-                         'xxLxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxRxx',
-                         'xxLxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxRRRRRxRRRxxxLxx',
-                         'xxLxxxLLLxLLLLRxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxRxx',
-                         'xxLxxxLLLxLLLLRxLLLxxxRxxxxRxxxRRRxLRRRRxRRRxxxLxx',
-                         'xxLxxxLLLxLLLLRxLLLxxxRxxxxRxxxRRRxRRRRLxRRRxxxLxx',
-                         'xxLxxxLLLxRLLLLxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxRxx',
-                         'xxLxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxRxx',
-                         'xxLxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxRxx',
-                         'xxLxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxLxx',
-                         'xxLxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxRxx',
-                         'xxLxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxRxx',
-                         'xxLxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxRRRRRxRRRxxxLxx',
-                         'xxLxxxLLLxRLLLLxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxRxx',
-                         'xxLxxxLLLxRLLLLxLLLxxxRxxxxRxxxRRRxLRRRRxRRRxxxLxx',
-                         'xxLxxxLLLxRLLLLxLLLxxxRxxxxRxxxRRRxRRRRLxRRRxxxLxx',
-                         'xxLxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxLRRRRxRRRxxxRxx',
-                         'xxLxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxRxx',
-                         'xxLxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxLxx',
-                         'xxLxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxRxx',
-                         'xxLxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxLxx',
-                         'xxLxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxLxx',
-                         'xxLxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxRxx',
-                         'xxLxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxLxx',
-                         'xxLxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxLxx',
-                         'xxLxxxLLLxRLLLRxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxLxx',
-                         'xxRxxxLLLxLLLLLxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxRxx',
-                         'xxRxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxRxx',
-                         'xxRxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxRxx',
-                         'xxRxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxLxx',
-                         'xxRxxxLLLxLLLLLxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxRxx',
-                         'xxRxxxLLLxLLLLLxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxRxx',
-                         'xxRxxxLLLxLLLLLxLLLxxxRxxxxLxxxRRRxRRRRRxRRRxxxLxx',
-                         'xxRxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxRxx',
-                         'xxRxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxLRRRRxRRRxxxLxx',
-                         'xxRxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxRRRRLxRRRxxxLxx',
-                         'xxRxxxLLLxLLLLRxLLLxxxLxxxxLxxxRRRxLRRRRxRRRxxxRxx',
-                         'xxRxxxLLLxLLLLRxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxRxx',
-                         'xxRxxxLLLxLLLLRxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxLxx',
-                         'xxRxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxRxx',
-                         'xxRxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxLxx',
-                         'xxRxxxLLLxLLLLRxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxLxx',
-                         'xxRxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxRxx',
-                         'xxRxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxLxx',
-                         'xxRxxxLLLxLLLLRxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxLxx',
-                         'xxRxxxLLLxLLLLRxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxLxx',
-                         'xxRxxxLLLxRLLLLxLLLxxxLxxxxLxxxRRRxLRRRRxRRRxxxRxx',
-                         'xxRxxxLLLxRLLLLxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxRxx',
-                         'xxRxxxLLLxRLLLLxLLLxxxLxxxxLxxxRRRxRRRRRxRRRxxxLxx',
-                         'xxRxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxRxx',
-                         'xxRxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxLRRRRxRRRxxxLxx',
-                         'xxRxxxLLLxRLLLLxLLLxxxLxxxxRxxxRRRxRRRRLxRRRxxxLxx',
-                         'xxRxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxRxx',
-                         'xxRxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxLRRRRxRRRxxxLxx',
-                         'xxRxxxLLLxRLLLLxLLLxxxRxxxxLxxxRRRxRRRRLxRRRxxxLxx',
-                         'xxRxxxLLLxRLLLLxLLLxxxRxxxxRxxxRRRxLRRRLxRRRxxxLxx',
-                         'xxRxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxLRRRLxRRRxxxRxx',
-                         'xxRxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxLRRRRxRRRxxxLxx',
-                         'xxRxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxLxx',
-                         'xxRxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxLxx',
-                         'xxRxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxLxx'),
-                        False, # state_hex
-                        linecount=343000)
-
-        '''
-        lookup-table-7x7x7-step62-LR-oblique-edges.txt
-        ==============================================
-        1 steps has 182 entries (0 percent, 0.00x previous step)
-        2 steps has 616 entries (0 percent, 3.38x previous step)
-        3 steps has 2,044 entries (0 percent, 3.32x previous step)
-        4 steps has 8,576 entries (2 percent, 4.20x previous step)
-        5 steps has 21,516 entries (6 percent, 2.51x previous step)
-        6 steps has 60,392 entries (17 percent, 2.81x previous step)
-        7 steps has 105,050 entries (30 percent, 1.74x previous step)
-        8 steps has 106,464 entries (31 percent, 1.01x previous step)
-        9 steps has 35,772 entries (10 percent, 0.34x previous step)
-        10 steps has 2,368 entries (0 percent, 0.07x previous step)
-        11 steps has 20 entries (0 percent, 0.01x previous step)
-
-        Total: 343,000 entries
-        '''
-        self.lt_LR_solve_oblique_edge = LookupTable(self,
-                        'lookup-table-7x7x7-step62-LR-oblique-edges.txt',
-                        '777-LR-oblique-edges-LR-solve',
-                        ('xLLLxLxxxLLxxxLLxxxLxLLLxxRRRxRxxxRRxxxRRxxxRxRRRx',
-                         'xLLLxLxxxLLxxxLLxxxLxRRRxxLLLxRxxxRRxxxRRxxxRxRRRx',
-                         'xLLLxLxxxLLxxxLLxxxLxRRRxxRRRxLxxxRLxxxRLxxxRxRRRx',
-                         'xLLLxLxxxLLxxxLLxxxLxRRRxxRRRxRxxxLRxxxLRxxxLxRRRx',
-                         'xLLLxLxxxLLxxxLLxxxLxRRRxxRRRxRxxxRRxxxRRxxxRxLLLx',
-                         'xLLLxLxxxRLxxxRLxxxRxLLLxxLLLxRxxxRRxxxRRxxxRxRRRx',
-                         'xLLLxLxxxRLxxxRLxxxRxLLLxxRRRxLxxxRLxxxRLxxxRxRRRx',
-                         'xLLLxLxxxRLxxxRLxxxRxLLLxxRRRxRxxxLRxxxLRxxxLxRRRx',
-                         'xLLLxLxxxRLxxxRLxxxRxLLLxxRRRxRxxxRRxxxRRxxxRxLLLx',
-                         'xLLLxLxxxRLxxxRLxxxRxRRRxxLLLxLxxxRLxxxRLxxxRxRRRx',
-                         'xLLLxLxxxRLxxxRLxxxRxRRRxxLLLxRxxxLRxxxLRxxxLxRRRx',
-                         'xLLLxLxxxRLxxxRLxxxRxRRRxxLLLxRxxxRRxxxRRxxxRxLLLx',
-                         'xLLLxLxxxRLxxxRLxxxRxRRRxxRRRxLxxxLLxxxLLxxxLxRRRx',
-                         'xLLLxLxxxRLxxxRLxxxRxRRRxxRRRxLxxxRLxxxRLxxxRxLLLx',
-                         'xLLLxLxxxRLxxxRLxxxRxRRRxxRRRxRxxxLRxxxLRxxxLxLLLx',
-                         'xLLLxRxxxLRxxxLRxxxLxLLLxxLLLxRxxxRRxxxRRxxxRxRRRx',
-                         'xLLLxRxxxLRxxxLRxxxLxLLLxxRRRxLxxxRLxxxRLxxxRxRRRx',
-                         'xLLLxRxxxLRxxxLRxxxLxLLLxxRRRxRxxxLRxxxLRxxxLxRRRx',
-                         'xLLLxRxxxLRxxxLRxxxLxLLLxxRRRxRxxxRRxxxRRxxxRxLLLx',
-                         'xLLLxRxxxLRxxxLRxxxLxRRRxxLLLxLxxxRLxxxRLxxxRxRRRx',
-                         'xLLLxRxxxLRxxxLRxxxLxRRRxxLLLxRxxxLRxxxLRxxxLxRRRx',
-                         'xLLLxRxxxLRxxxLRxxxLxRRRxxLLLxRxxxRRxxxRRxxxRxLLLx',
-                         'xLLLxRxxxLRxxxLRxxxLxRRRxxRRRxLxxxLLxxxLLxxxLxRRRx',
-                         'xLLLxRxxxLRxxxLRxxxLxRRRxxRRRxLxxxRLxxxRLxxxRxLLLx',
-                         'xLLLxRxxxLRxxxLRxxxLxRRRxxRRRxRxxxLRxxxLRxxxLxLLLx',
-                         'xLLLxRxxxRRxxxRRxxxRxLLLxxLLLxLxxxRLxxxRLxxxRxRRRx',
-                         'xLLLxRxxxRRxxxRRxxxRxLLLxxLLLxRxxxLRxxxLRxxxLxRRRx',
-                         'xLLLxRxxxRRxxxRRxxxRxLLLxxLLLxRxxxRRxxxRRxxxRxLLLx',
-                         'xLLLxRxxxRRxxxRRxxxRxLLLxxRRRxLxxxLLxxxLLxxxLxRRRx',
-                         'xLLLxRxxxRRxxxRRxxxRxLLLxxRRRxLxxxRLxxxRLxxxRxLLLx',
-                         'xLLLxRxxxRRxxxRRxxxRxLLLxxRRRxRxxxLRxxxLRxxxLxLLLx',
-                         'xLLLxRxxxRRxxxRRxxxRxRRRxxLLLxLxxxLLxxxLLxxxLxRRRx',
-                         'xLLLxRxxxRRxxxRRxxxRxRRRxxLLLxLxxxRLxxxRLxxxRxLLLx',
-                         'xLLLxRxxxRRxxxRRxxxRxRRRxxLLLxRxxxLRxxxLRxxxLxLLLx',
-                         'xLLLxRxxxRRxxxRRxxxRxRRRxxRRRxLxxxLLxxxLLxxxLxLLLx',
-                         'xRRRxLxxxLLxxxLLxxxLxLLLxxLLLxRxxxRRxxxRRxxxRxRRRx',
-                         'xRRRxLxxxLLxxxLLxxxLxLLLxxRRRxLxxxRLxxxRLxxxRxRRRx',
-                         'xRRRxLxxxLLxxxLLxxxLxLLLxxRRRxRxxxLRxxxLRxxxLxRRRx',
-                         'xRRRxLxxxLLxxxLLxxxLxLLLxxRRRxRxxxRRxxxRRxxxRxLLLx',
-                         'xRRRxLxxxLLxxxLLxxxLxRRRxxLLLxLxxxRLxxxRLxxxRxRRRx',
-                         'xRRRxLxxxLLxxxLLxxxLxRRRxxLLLxRxxxLRxxxLRxxxLxRRRx',
-                         'xRRRxLxxxLLxxxLLxxxLxRRRxxLLLxRxxxRRxxxRRxxxRxLLLx',
-                         'xRRRxLxxxLLxxxLLxxxLxRRRxxRRRxLxxxLLxxxLLxxxLxRRRx',
-                         'xRRRxLxxxLLxxxLLxxxLxRRRxxRRRxLxxxRLxxxRLxxxRxLLLx',
-                         'xRRRxLxxxLLxxxLLxxxLxRRRxxRRRxRxxxLRxxxLRxxxLxLLLx',
-                         'xRRRxLxxxRLxxxRLxxxRxLLLxxLLLxLxxxRLxxxRLxxxRxRRRx',
-                         'xRRRxLxxxRLxxxRLxxxRxLLLxxLLLxRxxxLRxxxLRxxxLxRRRx',
-                         'xRRRxLxxxRLxxxRLxxxRxLLLxxLLLxRxxxRRxxxRRxxxRxLLLx',
-                         'xRRRxLxxxRLxxxRLxxxRxLLLxxRRRxLxxxLLxxxLLxxxLxRRRx',
-                         'xRRRxLxxxRLxxxRLxxxRxLLLxxRRRxLxxxRLxxxRLxxxRxLLLx',
-                         'xRRRxLxxxRLxxxRLxxxRxLLLxxRRRxRxxxLRxxxLRxxxLxLLLx',
-                         'xRRRxLxxxRLxxxRLxxxRxRRRxxLLLxLxxxLLxxxLLxxxLxRRRx',
-                         'xRRRxLxxxRLxxxRLxxxRxRRRxxLLLxLxxxRLxxxRLxxxRxLLLx',
-                         'xRRRxLxxxRLxxxRLxxxRxRRRxxLLLxRxxxLRxxxLRxxxLxLLLx',
-                         'xRRRxLxxxRLxxxRLxxxRxRRRxxRRRxLxxxLLxxxLLxxxLxLLLx',
-                         'xRRRxRxxxLRxxxLRxxxLxLLLxxLLLxLxxxRLxxxRLxxxRxRRRx',
-                         'xRRRxRxxxLRxxxLRxxxLxLLLxxLLLxRxxxLRxxxLRxxxLxRRRx',
-                         'xRRRxRxxxLRxxxLRxxxLxLLLxxLLLxRxxxRRxxxRRxxxRxLLLx',
-                         'xRRRxRxxxLRxxxLRxxxLxLLLxxRRRxLxxxLLxxxLLxxxLxRRRx',
-                         'xRRRxRxxxLRxxxLRxxxLxLLLxxRRRxLxxxRLxxxRLxxxRxLLLx',
-                         'xRRRxRxxxLRxxxLRxxxLxLLLxxRRRxRxxxLRxxxLRxxxLxLLLx',
-                         'xRRRxRxxxLRxxxLRxxxLxRRRxxLLLxLxxxLLxxxLLxxxLxRRRx',
-                         'xRRRxRxxxLRxxxLRxxxLxRRRxxLLLxLxxxRLxxxRLxxxRxLLLx',
-                         'xRRRxRxxxLRxxxLRxxxLxRRRxxLLLxRxxxLRxxxLRxxxLxLLLx',
-                         'xRRRxRxxxLRxxxLRxxxLxRRRxxRRRxLxxxLLxxxLLxxxLxLLLx',
-                         'xRRRxRxxxRRxxxRRxxxRxLLLxxLLLxLxxxLLxxxLLxxxLxRRRx',
-                         'xRRRxRxxxRRxxxRRxxxRxLLLxxLLLxLxxxRLxxxRLxxxRxLLLx',
-                         'xRRRxRxxxRRxxxRRxxxRxLLLxxLLLxRxxxLRxxxLRxxxLxLLLx',
-                         'xRRRxRxxxRRxxxRRxxxRxLLLxxRRRxLxxxLLxxxLLxxxLxLLLx',
-                         'xRRRxRxxxRRxxxRRxxxRxRRRxxLLLxLxxxLLxxxLLxxxLxLLLx'),
-                        False, # state_hex
-                        linecount=343000)
-
-        '''
-        lookup-table-7x7x7-step60-LR-solve-inner-center-and-oblique-edges.txt
-        =====================================================================
-        1 steps has 210 entries (0 percent, 0.00x previous step)
-        2 steps has 770 entries (0 percent, 3.67x previous step)
-        3 steps has 2,828 entries (0 percent, 3.67x previous step)
-        4 steps has 15,158 entries (0 percent, 5.36x previous step)
-        5 steps has 63,008 entries (0 percent, 4.16x previous step)
-        6 steps has 290,588 entries (4 percent, 4.61x previous step)
-        7 steps has 1,232,594 entries (17 percent, 4.24x previous step)
-        8 steps has 5,266,642 entries (76 percent, 4.27x previous step)
-
-        Total: 6,871,798 entries
-        '''
-        self.lt_LR_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
-                                                         'lookup-table-7x7x7-step60-LR-solve-inner-center-and-oblique-edges.txt',
-                                                         '777-LR-centers-oblique-edges-LR-solve',
-                                                         ('xLLLxLLLLLLLLLLLLLLLxLLLxxRRRxRRRRRRRRRRRRRRRxRRRx',
-                                                          'xLLLxLLLLLLLLLLLLLLLxRRRxxLLLxRRRRRRRRRRRRRRRxRRRx',
-                                                          'xLLLxLLLLLLLLLLLLLLLxRRRxxRRRxLRRRRLRRRRLRRRRxRRRx',
-                                                          'xLLLxLLLLLLLLLLLLLLLxRRRxxRRRxRRRRLRRRRLRRRRLxRRRx',
-                                                          'xLLLxLLLLLLLLLLLLLLLxRRRxxRRRxRRRRRRRRRRRRRRRxLLLx',
-                                                          'xLLLxLLLLRLLLLRLLLLRxLLLxxLLLxRRRRRRRRRRRRRRRxRRRx',
-                                                          'xLLLxLLLLRLLLLRLLLLRxLLLxxRRRxLRRRRLRRRRLRRRRxRRRx',
-                                                          'xLLLxLLLLRLLLLRLLLLRxLLLxxRRRxRRRRLRRRRLRRRRLxRRRx',
-                                                          'xLLLxLLLLRLLLLRLLLLRxLLLxxRRRxRRRRRRRRRRRRRRRxLLLx',
-                                                          'xLLLxLLLLRLLLLRLLLLRxRRRxxLLLxLRRRRLRRRRLRRRRxRRRx',
-                                                          'xLLLxLLLLRLLLLRLLLLRxRRRxxLLLxRRRRLRRRRLRRRRLxRRRx',
-                                                          'xLLLxLLLLRLLLLRLLLLRxRRRxxLLLxRRRRRRRRRRRRRRRxLLLx',
-                                                          'xLLLxLLLLRLLLLRLLLLRxRRRxxRRRxLRRRLLRRRLLRRRLxRRRx',
-                                                          'xLLLxLLLLRLLLLRLLLLRxRRRxxRRRxLRRRRLRRRRLRRRRxLLLx',
-                                                          'xLLLxLLLLRLLLLRLLLLRxRRRxxRRRxRRRRLRRRRLRRRRLxLLLx',
-                                                          'xLLLxRLLLLRLLLLRLLLLxLLLxxLLLxRRRRRRRRRRRRRRRxRRRx',
-                                                          'xLLLxRLLLLRLLLLRLLLLxLLLxxRRRxLRRRRLRRRRLRRRRxRRRx',
-                                                          'xLLLxRLLLLRLLLLRLLLLxLLLxxRRRxRRRRLRRRRLRRRRLxRRRx',
-                                                          'xLLLxRLLLLRLLLLRLLLLxLLLxxRRRxRRRRRRRRRRRRRRRxLLLx',
-                                                          'xLLLxRLLLLRLLLLRLLLLxRRRxxLLLxLRRRRLRRRRLRRRRxRRRx',
-                                                          'xLLLxRLLLLRLLLLRLLLLxRRRxxLLLxRRRRLRRRRLRRRRLxRRRx',
-                                                          'xLLLxRLLLLRLLLLRLLLLxRRRxxLLLxRRRRRRRRRRRRRRRxLLLx',
-                                                          'xLLLxRLLLLRLLLLRLLLLxRRRxxRRRxLRRRLLRRRLLRRRLxRRRx',
-                                                          'xLLLxRLLLLRLLLLRLLLLxRRRxxRRRxLRRRRLRRRRLRRRRxLLLx',
-                                                          'xLLLxRLLLLRLLLLRLLLLxRRRxxRRRxRRRRLRRRRLRRRRLxLLLx',
-                                                          'xLLLxRLLLRRLLLRRLLLRxLLLxxLLLxLRRRRLRRRRLRRRRxRRRx',
-                                                          'xLLLxRLLLRRLLLRRLLLRxLLLxxLLLxRRRRLRRRRLRRRRLxRRRx',
-                                                          'xLLLxRLLLRRLLLRRLLLRxLLLxxLLLxRRRRRRRRRRRRRRRxLLLx',
-                                                          'xLLLxRLLLRRLLLRRLLLRxLLLxxRRRxLRRRLLRRRLLRRRLxRRRx',
-                                                          'xLLLxRLLLRRLLLRRLLLRxLLLxxRRRxLRRRRLRRRRLRRRRxLLLx',
-                                                          'xLLLxRLLLRRLLLRRLLLRxLLLxxRRRxRRRRLRRRRLRRRRLxLLLx',
-                                                          'xLLLxRLLLRRLLLRRLLLRxRRRxxLLLxLRRRLLRRRLLRRRLxRRRx',
-                                                          'xLLLxRLLLRRLLLRRLLLRxRRRxxLLLxLRRRRLRRRRLRRRRxLLLx',
-                                                          'xLLLxRLLLRRLLLRRLLLRxRRRxxLLLxRRRRLRRRRLRRRRLxLLLx',
-                                                          'xLLLxRLLLRRLLLRRLLLRxRRRxxRRRxLRRRLLRRRLLRRRLxLLLx',
-                                                          'xRRRxLLLLLLLLLLLLLLLxLLLxxLLLxRRRRRRRRRRRRRRRxRRRx',
-                                                          'xRRRxLLLLLLLLLLLLLLLxLLLxxRRRxLRRRRLRRRRLRRRRxRRRx',
-                                                          'xRRRxLLLLLLLLLLLLLLLxLLLxxRRRxRRRRLRRRRLRRRRLxRRRx',
-                                                          'xRRRxLLLLLLLLLLLLLLLxLLLxxRRRxRRRRRRRRRRRRRRRxLLLx',
-                                                          'xRRRxLLLLLLLLLLLLLLLxRRRxxLLLxLRRRRLRRRRLRRRRxRRRx',
-                                                          'xRRRxLLLLLLLLLLLLLLLxRRRxxLLLxRRRRLRRRRLRRRRLxRRRx',
-                                                          'xRRRxLLLLLLLLLLLLLLLxRRRxxLLLxRRRRRRRRRRRRRRRxLLLx',
-                                                          'xRRRxLLLLLLLLLLLLLLLxRRRxxRRRxLRRRLLRRRLLRRRLxRRRx',
-                                                          'xRRRxLLLLLLLLLLLLLLLxRRRxxRRRxLRRRRLRRRRLRRRRxLLLx',
-                                                          'xRRRxLLLLLLLLLLLLLLLxRRRxxRRRxRRRRLRRRRLRRRRLxLLLx',
-                                                          'xRRRxLLLLRLLLLRLLLLRxLLLxxLLLxLRRRRLRRRRLRRRRxRRRx',
-                                                          'xRRRxLLLLRLLLLRLLLLRxLLLxxLLLxRRRRLRRRRLRRRRLxRRRx',
-                                                          'xRRRxLLLLRLLLLRLLLLRxLLLxxLLLxRRRRRRRRRRRRRRRxLLLx',
-                                                          'xRRRxLLLLRLLLLRLLLLRxLLLxxRRRxLRRRLLRRRLLRRRLxRRRx',
-                                                          'xRRRxLLLLRLLLLRLLLLRxLLLxxRRRxLRRRRLRRRRLRRRRxLLLx',
-                                                          'xRRRxLLLLRLLLLRLLLLRxLLLxxRRRxRRRRLRRRRLRRRRLxLLLx',
-                                                          'xRRRxLLLLRLLLLRLLLLRxRRRxxLLLxLRRRLLRRRLLRRRLxRRRx',
-                                                          'xRRRxLLLLRLLLLRLLLLRxRRRxxLLLxLRRRRLRRRRLRRRRxLLLx',
-                                                          'xRRRxLLLLRLLLLRLLLLRxRRRxxLLLxRRRRLRRRRLRRRRLxLLLx',
-                                                          'xRRRxLLLLRLLLLRLLLLRxRRRxxRRRxLRRRLLRRRLLRRRLxLLLx',
-                                                          'xRRRxRLLLLRLLLLRLLLLxLLLxxLLLxLRRRRLRRRRLRRRRxRRRx',
-                                                          'xRRRxRLLLLRLLLLRLLLLxLLLxxLLLxRRRRLRRRRLRRRRLxRRRx',
-                                                          'xRRRxRLLLLRLLLLRLLLLxLLLxxLLLxRRRRRRRRRRRRRRRxLLLx',
-                                                          'xRRRxRLLLLRLLLLRLLLLxLLLxxRRRxLRRRLLRRRLLRRRLxRRRx',
-                                                          'xRRRxRLLLLRLLLLRLLLLxLLLxxRRRxLRRRRLRRRRLRRRRxLLLx',
-                                                          'xRRRxRLLLLRLLLLRLLLLxLLLxxRRRxRRRRLRRRRLRRRRLxLLLx',
-                                                          'xRRRxRLLLLRLLLLRLLLLxRRRxxLLLxLRRRLLRRRLLRRRLxRRRx',
-                                                          'xRRRxRLLLLRLLLLRLLLLxRRRxxLLLxLRRRRLRRRRLRRRRxLLLx',
-                                                          'xRRRxRLLLLRLLLLRLLLLxRRRxxLLLxRRRRLRRRRLRRRRLxLLLx',
-                                                          'xRRRxRLLLLRLLLLRLLLLxRRRxxRRRxLRRRLLRRRLLRRRLxLLLx',
-                                                          'xRRRxRLLLRRLLLRRLLLRxLLLxxLLLxLRRRLLRRRLLRRRLxRRRx',
-                                                          'xRRRxRLLLRRLLLRRLLLRxLLLxxLLLxLRRRRLRRRRLRRRRxLLLx',
-                                                          'xRRRxRLLLRRLLLRRLLLRxLLLxxLLLxRRRRLRRRRLRRRRLxLLLx',
-                                                          'xRRRxRLLLRRLLLRRLLLRxLLLxxRRRxLRRRLLRRRLLRRRLxLLLx',
-                                                          'xRRRxRLLLRRLLLRRLLLRxRRRxxLLLxLRRRLLRRRLLRRRLxLLLx'),
-                                                         False, # state_hex
-                                                         moves_7x7x7,
-
-                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-                                                          "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
-
-                                                         # prune tables
-                                                         (self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge,
-                                                          self.lt_LR_solve_oblique_edge),
-                                                         linecount=6871798)
-
-        '''
-        lookup-table-7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges.txt
-        =================================================================================
-        1 steps has 210 entries (0 percent, 0.00x previous step)
-        2 steps has 770 entries (0 percent, 3.67x previous step)
-        3 steps has 1,540 entries (0 percent, 2.00x previous step)
-        4 steps has 5,950 entries (1 percent, 3.86x previous step)
-        5 steps has 15,400 entries (4 percent, 2.59x previous step)
-        6 steps has 44,310 entries (12 percent, 2.88x previous step)
-        7 steps has 82,600 entries (24 percent, 1.86x previous step)
-        8 steps has 120,960 entries (35 percent, 1.46x previous step)
-        9 steps has 62,160 entries (18 percent, 0.51x previous step)
-        10 steps has 8,820 entries (2 percent, 0.14x previous step)
-        11 steps has 280 entries (0 percent, 0.03x previous step)
-
-        Total: 343,000 entries
-        '''
-        self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge = LookupTable(self,
-                        'lookup-table-7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges.txt',
-                        '777-FB-inner-x-center-t-center-and-middle-oblique-edges-FB-solve',
-                        ('xxFxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxBxx',
-                         'xxFxxxFFFxFFFFFxFFFxxxBxxxxFxxxBBBxBBBBBxBBBxxxBxx',
-                         'xxFxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxFBBBBxBBBxxxBxx',
-                         'xxFxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxBBBBFxBBBxxxBxx',
-                         'xxFxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxBBBBBxBBBxxxFxx',
-                         'xxFxxxFFFxFFFFBxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxBxx',
-                         'xxFxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxBxx',
-                         'xxFxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxBxx',
-                         'xxFxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxFxx',
-                         'xxFxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxBxx',
-                         'xxFxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxBxx',
-                         'xxFxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxBBBBBxBBBxxxFxx',
-                         'xxFxxxFFFxFFFFBxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxBxx',
-                         'xxFxxxFFFxFFFFBxFFFxxxBxxxxBxxxBBBxFBBBBxBBBxxxFxx',
-                         'xxFxxxFFFxFFFFBxFFFxxxBxxxxBxxxBBBxBBBBFxBBBxxxFxx',
-                         'xxFxxxFFFxBFFFFxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxBxx',
-                         'xxFxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxBxx',
-                         'xxFxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxBxx',
-                         'xxFxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxFxx',
-                         'xxFxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxBxx',
-                         'xxFxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxBxx',
-                         'xxFxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxBBBBBxBBBxxxFxx',
-                         'xxFxxxFFFxBFFFFxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxBxx',
-                         'xxFxxxFFFxBFFFFxFFFxxxBxxxxBxxxBBBxFBBBBxBBBxxxFxx',
-                         'xxFxxxFFFxBFFFFxFFFxxxBxxxxBxxxBBBxBBBBFxBBBxxxFxx',
-                         'xxFxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxFBBBBxBBBxxxBxx',
-                         'xxFxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxBxx',
-                         'xxFxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxFxx',
-                         'xxFxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxBxx',
-                         'xxFxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxFxx',
-                         'xxFxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxFxx',
-                         'xxFxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxBxx',
-                         'xxFxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxFxx',
-                         'xxFxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxFxx',
-                         'xxFxxxFFFxBFFFBxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxFxx',
-                         'xxBxxxFFFxFFFFFxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxBxx',
-                         'xxBxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxBxx',
-                         'xxBxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxBxx',
-                         'xxBxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxFxx',
-                         'xxBxxxFFFxFFFFFxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxBxx',
-                         'xxBxxxFFFxFFFFFxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxBxx',
-                         'xxBxxxFFFxFFFFFxFFFxxxBxxxxFxxxBBBxBBBBBxBBBxxxFxx',
-                         'xxBxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxBxx',
-                         'xxBxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxFBBBBxBBBxxxFxx',
-                         'xxBxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxBBBBFxBBBxxxFxx',
-                         'xxBxxxFFFxFFFFBxFFFxxxFxxxxFxxxBBBxFBBBBxBBBxxxBxx',
-                         'xxBxxxFFFxFFFFBxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxBxx',
-                         'xxBxxxFFFxFFFFBxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxFxx',
-                         'xxBxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxBxx',
-                         'xxBxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxFxx',
-                         'xxBxxxFFFxFFFFBxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxFxx',
-                         'xxBxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxBxx',
-                         'xxBxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxFxx',
-                         'xxBxxxFFFxFFFFBxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxFxx',
-                         'xxBxxxFFFxFFFFBxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxFxx',
-                         'xxBxxxFFFxBFFFFxFFFxxxFxxxxFxxxBBBxFBBBBxBBBxxxBxx',
-                         'xxBxxxFFFxBFFFFxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxBxx',
-                         'xxBxxxFFFxBFFFFxFFFxxxFxxxxFxxxBBBxBBBBBxBBBxxxFxx',
-                         'xxBxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxBxx',
-                         'xxBxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxFBBBBxBBBxxxFxx',
-                         'xxBxxxFFFxBFFFFxFFFxxxFxxxxBxxxBBBxBBBBFxBBBxxxFxx',
-                         'xxBxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxBxx',
-                         'xxBxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxFBBBBxBBBxxxFxx',
-                         'xxBxxxFFFxBFFFFxFFFxxxBxxxxFxxxBBBxBBBBFxBBBxxxFxx',
-                         'xxBxxxFFFxBFFFFxFFFxxxBxxxxBxxxBBBxFBBBFxBBBxxxFxx',
-                         'xxBxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxFBBBFxBBBxxxBxx',
-                         'xxBxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxFBBBBxBBBxxxFxx',
-                         'xxBxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxFxx',
-                         'xxBxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxFxx',
-                         'xxBxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxFxx'),
-                        False, # state_hex
-                        linecount=343000)
-
-        '''
-        lookup-table-7x7x7-step72-FB-oblique-edges.txt
-        ==============================================
-        1 steps has 182 entries (0 percent, 0.00x previous step)
-        2 steps has 616 entries (0 percent, 3.38x previous step)
-        3 steps has 2,044 entries (0 percent, 3.32x previous step)
-        4 steps has 8,576 entries (2 percent, 4.20x previous step)
-        5 steps has 21,516 entries (6 percent, 2.51x previous step)
-        6 steps has 60,392 entries (17 percent, 2.81x previous step)
-        7 steps has 105,050 entries (30 percent, 1.74x previous step)
-        8 steps has 106,464 entries (31 percent, 1.01x previous step)
-        9 steps has 35,772 entries (10 percent, 0.34x previous step)
-        10 steps has 2,368 entries (0 percent, 0.07x previous step)
-        11 steps has 20 entries (0 percent, 0.01x previous step)
-
-        Total: 343,000 entries
-        '''
-        self.lt_FB_solve_oblique_edge = LookupTable(self,
-                        'lookup-table-7x7x7-step72-FB-oblique-edges.txt',
-                        '777-FB-oblique-edges-FB-solve',
-                        ('xFFFxFxxxFFxxxFFxxxFxFFFxxBBBxBxxxBBxxxBBxxxBxBBBx',
-                         'xFFFxFxxxFFxxxFFxxxFxBBBxxFFFxBxxxBBxxxBBxxxBxBBBx',
-                         'xFFFxFxxxFFxxxFFxxxFxBBBxxBBBxFxxxBFxxxBFxxxBxBBBx',
-                         'xFFFxFxxxFFxxxFFxxxFxBBBxxBBBxBxxxFBxxxFBxxxFxBBBx',
-                         'xFFFxFxxxFFxxxFFxxxFxBBBxxBBBxBxxxBBxxxBBxxxBxFFFx',
-                         'xFFFxFxxxBFxxxBFxxxBxFFFxxFFFxBxxxBBxxxBBxxxBxBBBx',
-                         'xFFFxFxxxBFxxxBFxxxBxFFFxxBBBxFxxxBFxxxBFxxxBxBBBx',
-                         'xFFFxFxxxBFxxxBFxxxBxFFFxxBBBxBxxxFBxxxFBxxxFxBBBx',
-                         'xFFFxFxxxBFxxxBFxxxBxFFFxxBBBxBxxxBBxxxBBxxxBxFFFx',
-                         'xFFFxFxxxBFxxxBFxxxBxBBBxxFFFxFxxxBFxxxBFxxxBxBBBx',
-                         'xFFFxFxxxBFxxxBFxxxBxBBBxxFFFxBxxxFBxxxFBxxxFxBBBx',
-                         'xFFFxFxxxBFxxxBFxxxBxBBBxxFFFxBxxxBBxxxBBxxxBxFFFx',
-                         'xFFFxFxxxBFxxxBFxxxBxBBBxxBBBxFxxxFFxxxFFxxxFxBBBx',
-                         'xFFFxFxxxBFxxxBFxxxBxBBBxxBBBxFxxxBFxxxBFxxxBxFFFx',
-                         'xFFFxFxxxBFxxxBFxxxBxBBBxxBBBxBxxxFBxxxFBxxxFxFFFx',
-                         'xFFFxBxxxFBxxxFBxxxFxFFFxxFFFxBxxxBBxxxBBxxxBxBBBx',
-                         'xFFFxBxxxFBxxxFBxxxFxFFFxxBBBxFxxxBFxxxBFxxxBxBBBx',
-                         'xFFFxBxxxFBxxxFBxxxFxFFFxxBBBxBxxxFBxxxFBxxxFxBBBx',
-                         'xFFFxBxxxFBxxxFBxxxFxFFFxxBBBxBxxxBBxxxBBxxxBxFFFx',
-                         'xFFFxBxxxFBxxxFBxxxFxBBBxxFFFxFxxxBFxxxBFxxxBxBBBx',
-                         'xFFFxBxxxFBxxxFBxxxFxBBBxxFFFxBxxxFBxxxFBxxxFxBBBx',
-                         'xFFFxBxxxFBxxxFBxxxFxBBBxxFFFxBxxxBBxxxBBxxxBxFFFx',
-                         'xFFFxBxxxFBxxxFBxxxFxBBBxxBBBxFxxxFFxxxFFxxxFxBBBx',
-                         'xFFFxBxxxFBxxxFBxxxFxBBBxxBBBxFxxxBFxxxBFxxxBxFFFx',
-                         'xFFFxBxxxFBxxxFBxxxFxBBBxxBBBxBxxxFBxxxFBxxxFxFFFx',
-                         'xFFFxBxxxBBxxxBBxxxBxFFFxxFFFxFxxxBFxxxBFxxxBxBBBx',
-                         'xFFFxBxxxBBxxxBBxxxBxFFFxxFFFxBxxxFBxxxFBxxxFxBBBx',
-                         'xFFFxBxxxBBxxxBBxxxBxFFFxxFFFxBxxxBBxxxBBxxxBxFFFx',
-                         'xFFFxBxxxBBxxxBBxxxBxFFFxxBBBxFxxxFFxxxFFxxxFxBBBx',
-                         'xFFFxBxxxBBxxxBBxxxBxFFFxxBBBxFxxxBFxxxBFxxxBxFFFx',
-                         'xFFFxBxxxBBxxxBBxxxBxFFFxxBBBxBxxxFBxxxFBxxxFxFFFx',
-                         'xFFFxBxxxBBxxxBBxxxBxBBBxxFFFxFxxxFFxxxFFxxxFxBBBx',
-                         'xFFFxBxxxBBxxxBBxxxBxBBBxxFFFxFxxxBFxxxBFxxxBxFFFx',
-                         'xFFFxBxxxBBxxxBBxxxBxBBBxxFFFxBxxxFBxxxFBxxxFxFFFx',
-                         'xFFFxBxxxBBxxxBBxxxBxBBBxxBBBxFxxxFFxxxFFxxxFxFFFx',
-                         'xBBBxFxxxFFxxxFFxxxFxFFFxxFFFxBxxxBBxxxBBxxxBxBBBx',
-                         'xBBBxFxxxFFxxxFFxxxFxFFFxxBBBxFxxxBFxxxBFxxxBxBBBx',
-                         'xBBBxFxxxFFxxxFFxxxFxFFFxxBBBxBxxxFBxxxFBxxxFxBBBx',
-                         'xBBBxFxxxFFxxxFFxxxFxFFFxxBBBxBxxxBBxxxBBxxxBxFFFx',
-                         'xBBBxFxxxFFxxxFFxxxFxBBBxxFFFxFxxxBFxxxBFxxxBxBBBx',
-                         'xBBBxFxxxFFxxxFFxxxFxBBBxxFFFxBxxxFBxxxFBxxxFxBBBx',
-                         'xBBBxFxxxFFxxxFFxxxFxBBBxxFFFxBxxxBBxxxBBxxxBxFFFx',
-                         'xBBBxFxxxFFxxxFFxxxFxBBBxxBBBxFxxxFFxxxFFxxxFxBBBx',
-                         'xBBBxFxxxFFxxxFFxxxFxBBBxxBBBxFxxxBFxxxBFxxxBxFFFx',
-                         'xBBBxFxxxFFxxxFFxxxFxBBBxxBBBxBxxxFBxxxFBxxxFxFFFx',
-                         'xBBBxFxxxBFxxxBFxxxBxFFFxxFFFxFxxxBFxxxBFxxxBxBBBx',
-                         'xBBBxFxxxBFxxxBFxxxBxFFFxxFFFxBxxxFBxxxFBxxxFxBBBx',
-                         'xBBBxFxxxBFxxxBFxxxBxFFFxxFFFxBxxxBBxxxBBxxxBxFFFx',
-                         'xBBBxFxxxBFxxxBFxxxBxFFFxxBBBxFxxxFFxxxFFxxxFxBBBx',
-                         'xBBBxFxxxBFxxxBFxxxBxFFFxxBBBxFxxxBFxxxBFxxxBxFFFx',
-                         'xBBBxFxxxBFxxxBFxxxBxFFFxxBBBxBxxxFBxxxFBxxxFxFFFx',
-                         'xBBBxFxxxBFxxxBFxxxBxBBBxxFFFxFxxxFFxxxFFxxxFxBBBx',
-                         'xBBBxFxxxBFxxxBFxxxBxBBBxxFFFxFxxxBFxxxBFxxxBxFFFx',
-                         'xBBBxFxxxBFxxxBFxxxBxBBBxxFFFxBxxxFBxxxFBxxxFxFFFx',
-                         'xBBBxFxxxBFxxxBFxxxBxBBBxxBBBxFxxxFFxxxFFxxxFxFFFx',
-                         'xBBBxBxxxFBxxxFBxxxFxFFFxxFFFxFxxxBFxxxBFxxxBxBBBx',
-                         'xBBBxBxxxFBxxxFBxxxFxFFFxxFFFxBxxxFBxxxFBxxxFxBBBx',
-                         'xBBBxBxxxFBxxxFBxxxFxFFFxxFFFxBxxxBBxxxBBxxxBxFFFx',
-                         'xBBBxBxxxFBxxxFBxxxFxFFFxxBBBxFxxxFFxxxFFxxxFxBBBx',
-                         'xBBBxBxxxFBxxxFBxxxFxFFFxxBBBxFxxxBFxxxBFxxxBxFFFx',
-                         'xBBBxBxxxFBxxxFBxxxFxFFFxxBBBxBxxxFBxxxFBxxxFxFFFx',
-                         'xBBBxBxxxFBxxxFBxxxFxBBBxxFFFxFxxxFFxxxFFxxxFxBBBx',
-                         'xBBBxBxxxFBxxxFBxxxFxBBBxxFFFxFxxxBFxxxBFxxxBxFFFx',
-                         'xBBBxBxxxFBxxxFBxxxFxBBBxxFFFxBxxxFBxxxFBxxxFxFFFx',
-                         'xBBBxBxxxFBxxxFBxxxFxBBBxxBBBxFxxxFFxxxFFxxxFxFFFx',
-                         'xBBBxBxxxBBxxxBBxxxBxFFFxxFFFxFxxxFFxxxFFxxxFxBBBx',
-                         'xBBBxBxxxBBxxxBBxxxBxFFFxxFFFxFxxxBFxxxBFxxxBxFFFx',
-                         'xBBBxBxxxBBxxxBBxxxBxFFFxxFFFxBxxxFBxxxFBxxxFxFFFx',
-                         'xBBBxBxxxBBxxxBBxxxBxFFFxxBBBxFxxxFFxxxFFxxxFxFFFx',
-                         'xBBBxBxxxBBxxxBBxxxBxBBBxxFFFxFxxxFFxxxFFxxxFxFFFx'),
-                        False, # state_hex
-                        linecount=343000)
-
-        '''
-        lookup-table-7x7x7-step70-FB-solve-inner-center-and-oblique-edges.txt
-        =====================================================================
-        1 steps has 210 entries (0 percent, 0.00x previous step)
-        2 steps has 770 entries (0 percent, 3.67x previous step)
-        3 steps has 2,828 entries (0 percent, 3.67x previous step)
-        4 steps has 15,158 entries (0 percent, 5.36x previous step)
-        5 steps has 63,008 entries (0 percent, 4.16x previous step)
-        6 steps has 290,588 entries (4 percent, 4.61x previous step)
-        7 steps has 1,232,594 entries (17 percent, 4.24x previous step)
-        8 steps has 5,266,642 entries (76 percent, 4.27x previous step)
-
-        Total: 6,871,798 entries
-        '''
-        self.lt_FB_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
-                                                         'lookup-table-7x7x7-step70-FB-solve-inner-center-and-oblique-edges.txt',
-                                                         '777-FB-centers-oblique-edges-FB-solve',
-                                                         ('xFFFxFFFFFFFFFFFFFFFxFFFxxBBBxBBBBBBBBBBBBBBBxBBBx',
-                                                          'xFFFxFFFFFFFFFFFFFFFxBBBxxFFFxBBBBBBBBBBBBBBBxBBBx',
-                                                          'xFFFxFFFFFFFFFFFFFFFxBBBxxBBBxFBBBBFBBBBFBBBBxBBBx',
-                                                          'xFFFxFFFFFFFFFFFFFFFxBBBxxBBBxBBBBFBBBBFBBBBFxBBBx',
-                                                          'xFFFxFFFFFFFFFFFFFFFxBBBxxBBBxBBBBBBBBBBBBBBBxFFFx',
-                                                          'xFFFxFFFFBFFFFBFFFFBxFFFxxFFFxBBBBBBBBBBBBBBBxBBBx',
-                                                          'xFFFxFFFFBFFFFBFFFFBxFFFxxBBBxFBBBBFBBBBFBBBBxBBBx',
-                                                          'xFFFxFFFFBFFFFBFFFFBxFFFxxBBBxBBBBFBBBBFBBBBFxBBBx',
-                                                          'xFFFxFFFFBFFFFBFFFFBxFFFxxBBBxBBBBBBBBBBBBBBBxFFFx',
-                                                          'xFFFxFFFFBFFFFBFFFFBxBBBxxFFFxFBBBBFBBBBFBBBBxBBBx',
-                                                          'xFFFxFFFFBFFFFBFFFFBxBBBxxFFFxBBBBFBBBBFBBBBFxBBBx',
-                                                          'xFFFxFFFFBFFFFBFFFFBxBBBxxFFFxBBBBBBBBBBBBBBBxFFFx',
-                                                          'xFFFxFFFFBFFFFBFFFFBxBBBxxBBBxFBBBFFBBBFFBBBFxBBBx',
-                                                          'xFFFxFFFFBFFFFBFFFFBxBBBxxBBBxFBBBBFBBBBFBBBBxFFFx',
-                                                          'xFFFxFFFFBFFFFBFFFFBxBBBxxBBBxBBBBFBBBBFBBBBFxFFFx',
-                                                          'xFFFxBFFFFBFFFFBFFFFxFFFxxFFFxBBBBBBBBBBBBBBBxBBBx',
-                                                          'xFFFxBFFFFBFFFFBFFFFxFFFxxBBBxFBBBBFBBBBFBBBBxBBBx',
-                                                          'xFFFxBFFFFBFFFFBFFFFxFFFxxBBBxBBBBFBBBBFBBBBFxBBBx',
-                                                          'xFFFxBFFFFBFFFFBFFFFxFFFxxBBBxBBBBBBBBBBBBBBBxFFFx',
-                                                          'xFFFxBFFFFBFFFFBFFFFxBBBxxFFFxFBBBBFBBBBFBBBBxBBBx',
-                                                          'xFFFxBFFFFBFFFFBFFFFxBBBxxFFFxBBBBFBBBBFBBBBFxBBBx',
-                                                          'xFFFxBFFFFBFFFFBFFFFxBBBxxFFFxBBBBBBBBBBBBBBBxFFFx',
-                                                          'xFFFxBFFFFBFFFFBFFFFxBBBxxBBBxFBBBFFBBBFFBBBFxBBBx',
-                                                          'xFFFxBFFFFBFFFFBFFFFxBBBxxBBBxFBBBBFBBBBFBBBBxFFFx',
-                                                          'xFFFxBFFFFBFFFFBFFFFxBBBxxBBBxBBBBFBBBBFBBBBFxFFFx',
-                                                          'xFFFxBFFFBBFFFBBFFFBxFFFxxFFFxFBBBBFBBBBFBBBBxBBBx',
-                                                          'xFFFxBFFFBBFFFBBFFFBxFFFxxFFFxBBBBFBBBBFBBBBFxBBBx',
-                                                          'xFFFxBFFFBBFFFBBFFFBxFFFxxFFFxBBBBBBBBBBBBBBBxFFFx',
-                                                          'xFFFxBFFFBBFFFBBFFFBxFFFxxBBBxFBBBFFBBBFFBBBFxBBBx',
-                                                          'xFFFxBFFFBBFFFBBFFFBxFFFxxBBBxFBBBBFBBBBFBBBBxFFFx',
-                                                          'xFFFxBFFFBBFFFBBFFFBxFFFxxBBBxBBBBFBBBBFBBBBFxFFFx',
-                                                          'xFFFxBFFFBBFFFBBFFFBxBBBxxFFFxFBBBFFBBBFFBBBFxBBBx',
-                                                          'xFFFxBFFFBBFFFBBFFFBxBBBxxFFFxFBBBBFBBBBFBBBBxFFFx',
-                                                          'xFFFxBFFFBBFFFBBFFFBxBBBxxFFFxBBBBFBBBBFBBBBFxFFFx',
-                                                          'xFFFxBFFFBBFFFBBFFFBxBBBxxBBBxFBBBFFBBBFFBBBFxFFFx',
-                                                          'xBBBxFFFFFFFFFFFFFFFxFFFxxFFFxBBBBBBBBBBBBBBBxBBBx',
-                                                          'xBBBxFFFFFFFFFFFFFFFxFFFxxBBBxFBBBBFBBBBFBBBBxBBBx',
-                                                          'xBBBxFFFFFFFFFFFFFFFxFFFxxBBBxBBBBFBBBBFBBBBFxBBBx',
-                                                          'xBBBxFFFFFFFFFFFFFFFxFFFxxBBBxBBBBBBBBBBBBBBBxFFFx',
-                                                          'xBBBxFFFFFFFFFFFFFFFxBBBxxFFFxFBBBBFBBBBFBBBBxBBBx',
-                                                          'xBBBxFFFFFFFFFFFFFFFxBBBxxFFFxBBBBFBBBBFBBBBFxBBBx',
-                                                          'xBBBxFFFFFFFFFFFFFFFxBBBxxFFFxBBBBBBBBBBBBBBBxFFFx',
-                                                          'xBBBxFFFFFFFFFFFFFFFxBBBxxBBBxFBBBFFBBBFFBBBFxBBBx',
-                                                          'xBBBxFFFFFFFFFFFFFFFxBBBxxBBBxFBBBBFBBBBFBBBBxFFFx',
-                                                          'xBBBxFFFFFFFFFFFFFFFxBBBxxBBBxBBBBFBBBBFBBBBFxFFFx',
-                                                          'xBBBxFFFFBFFFFBFFFFBxFFFxxFFFxFBBBBFBBBBFBBBBxBBBx',
-                                                          'xBBBxFFFFBFFFFBFFFFBxFFFxxFFFxBBBBFBBBBFBBBBFxBBBx',
-                                                          'xBBBxFFFFBFFFFBFFFFBxFFFxxFFFxBBBBBBBBBBBBBBBxFFFx',
-                                                          'xBBBxFFFFBFFFFBFFFFBxFFFxxBBBxFBBBFFBBBFFBBBFxBBBx',
-                                                          'xBBBxFFFFBFFFFBFFFFBxFFFxxBBBxFBBBBFBBBBFBBBBxFFFx',
-                                                          'xBBBxFFFFBFFFFBFFFFBxFFFxxBBBxBBBBFBBBBFBBBBFxFFFx',
-                                                          'xBBBxFFFFBFFFFBFFFFBxBBBxxFFFxFBBBFFBBBFFBBBFxBBBx',
-                                                          'xBBBxFFFFBFFFFBFFFFBxBBBxxFFFxFBBBBFBBBBFBBBBxFFFx',
-                                                          'xBBBxFFFFBFFFFBFFFFBxBBBxxFFFxBBBBFBBBBFBBBBFxFFFx',
-                                                          'xBBBxFFFFBFFFFBFFFFBxBBBxxBBBxFBBBFFBBBFFBBBFxFFFx',
-                                                          'xBBBxBFFFFBFFFFBFFFFxFFFxxFFFxFBBBBFBBBBFBBBBxBBBx',
-                                                          'xBBBxBFFFFBFFFFBFFFFxFFFxxFFFxBBBBFBBBBFBBBBFxBBBx',
-                                                          'xBBBxBFFFFBFFFFBFFFFxFFFxxFFFxBBBBBBBBBBBBBBBxFFFx',
-                                                          'xBBBxBFFFFBFFFFBFFFFxFFFxxBBBxFBBBFFBBBFFBBBFxBBBx',
-                                                          'xBBBxBFFFFBFFFFBFFFFxFFFxxBBBxFBBBBFBBBBFBBBBxFFFx',
-                                                          'xBBBxBFFFFBFFFFBFFFFxFFFxxBBBxBBBBFBBBBFBBBBFxFFFx',
-                                                          'xBBBxBFFFFBFFFFBFFFFxBBBxxFFFxFBBBFFBBBFFBBBFxBBBx',
-                                                          'xBBBxBFFFFBFFFFBFFFFxBBBxxFFFxFBBBBFBBBBFBBBBxFFFx',
-                                                          'xBBBxBFFFFBFFFFBFFFFxBBBxxFFFxBBBBFBBBBFBBBBFxFFFx',
-                                                          'xBBBxBFFFFBFFFFBFFFFxBBBxxBBBxFBBBFFBBBFFBBBFxFFFx',
-                                                          'xBBBxBFFFBBFFFBBFFFBxFFFxxFFFxFBBBFFBBBFFBBBFxBBBx',
-                                                          'xBBBxBFFFBBFFFBBFFFBxFFFxxFFFxFBBBBFBBBBFBBBBxFFFx',
-                                                          'xBBBxBFFFBBFFFBBFFFBxFFFxxFFFxBBBBFBBBBFBBBBFxFFFx',
-                                                          'xBBBxBFFFBBFFFBBFFFBxFFFxxBBBxFBBBFFBBBFFBBBFxFFFx',
-                                                          'xBBBxBFFFBBFFFBBFFFBxBBBxxFFFxFBBBFFBBBFFBBBFxFFFx'),
-                                                         False, # state_hex
-                                                         moves_7x7x7,
-
-                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-                                                          "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
-                                                          "L", "L'", "L2", "R", "R'", "R2"),                                                        # Do not mess up LRs reduced to 5x5x5 centers
-
-                                                         # prune tables
-                                                         (self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
-                                                          self.lt_FB_solve_oblique_edge),
-                                                         linecount=6871798)
-
-        '''
-        lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt
-        =======================================================================
-        1 steps has 350 entries (0 percent, 0.00x previous step)
-        2 steps has 2800 entries (0 percent, 8.00x previous step)
-        3 steps has 18712 entries (1 percent, 6.68x previous step)
-        4 steps has 131496 entries (11 percent, 7.03x previous step)
-        5 steps has 966484 entries (86 percent, 7.35x previous step)
-
-        Total: 1119842 entries
-        '''
-        self.lt_LFRB_solve_inner_centers_and_oblique_edges = LookupTableIDA(self,
-                                                         'lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt',
-                                                         '777-LFRB-centers-oblique-edges-solve',
-                                                         lt_LFRB_solve_inner_centers_and_oblique_edges_state_targets, # There are 4900 of them
-                                                         False, # state_hex
-                                                         moves_7x7x7,
-
-                                                         ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-                                                          "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-                                                          "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
-                                                          "L", "L'", "L2", "R", "R'", "R2"),                                                        # Do not mess up LRs reduced to 5x5x5 centers
-
-                                                         # prune tables
-                                                         (self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge,
-                                                          self.lt_LR_solve_oblique_edge,
-                                                          self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
-                                                          self.lt_FB_solve_oblique_edge),
-                                                         linecount=1119842)
+        self.lt_LFRB_solve_inner_centers_and_oblique_edges = LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(self)
 
     def create_fake_555_from_inside_centers(self):
 

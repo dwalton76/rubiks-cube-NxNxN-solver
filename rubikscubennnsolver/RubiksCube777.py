@@ -46,9 +46,7 @@ class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
-            '777-UD-oblique-edge-pairing-middle-only',
             '08088080000000000000000000000000404404',
-            True, # state_hex
             linecount=735471)
 
     def state(self):
@@ -131,9 +129,7 @@ class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
-            '777-UD-oblique-edge-pairing-left-only',
             '10104040000000000000000000000000808202',
-            True, # state_hex
             linecount=735471)
 
     def state(self):
@@ -216,9 +212,7 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
-            '777-UD-oblique-edge-pairing-right-only',
             '05000500000000000000000000000000280028',
-            True, # state_hex
             linecount=735471)
 
     def state(self):
@@ -299,9 +293,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
             self,
             parent,
             'lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
-            '777-UD-oblique-edge-pairing',
             '1d18c5c0000000000000000000000000e8c62e',
-            True, # state_hex
             moves_7x7x7,
 
             # do not mess up UD 5x5x5 centers
@@ -390,9 +382,7 @@ class LookupTable777LRObliqueEdgePairingMiddleOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
-            '777-LR-oblique-edge-pairing-middle-only',
             '2022020000000808808000000',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -457,9 +447,7 @@ class LookupTable777LRObliqueEdgePairingLeftOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
-            '777-LR-oblique-edge-pairing-left-only',
             '4041010000001010404000000',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -524,9 +512,7 @@ class LookupTable777LRObliqueEdgePairingRightOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt',
-            '777-LR-oblique-edge-pairing-right-only',
             '1400140000000500050000000',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -595,9 +581,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
             self,
             parent,
             'lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt',
-            '777-LR-oblique-edge-pairing',
             '7463170000001d18c5c000000',
-            True, # state_hex
             moves_7x7x7,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # do not mess up UD 5x5x5 centers
@@ -671,9 +655,7 @@ class LookupTable777UDSolveInnerCentersAndObliqueEdgesCenterOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt',
-            '777-UD-centers-oblique-edges-solve-center-only',
             'xxxxxxUUUxxUxUxxUUUxxxxxxxxxxxxDDDxxDxDxxDDDxxxxxx',
-            False, # state_hex
             linecount=4900)
 
     def state(self):
@@ -721,7 +703,6 @@ class LookupTable777UDSolveInnerCentersAndObliqueEdgesEdgesOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt',
-            '777-UD-centers-oblique-edges-solve-edges-only',
             ('xUUUxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxDDDx',
              'xUUUxUxxxUUxxxUUxxxUxDDDxxUUUxDxxxDDxxxDDxxxDxDDDx',
              'xUUUxUxxxUUxxxUUxxxUxDDDxxDDDxUxxxDUxxxDUxxxDxDDDx',
@@ -792,7 +773,6 @@ class LookupTable777UDSolveInnerCentersAndObliqueEdgesEdgesOnly(LookupTable):
              'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxUUUx',
              'xDDDxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxUUUx',
              'xDDDxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxUUUx'),
-            False, # state_hex
             linecount=343000)
 
     def state(self):
@@ -839,7 +819,6 @@ class LookupTableIDA777UDSolveInnerCentersAndObliqueEdges(LookupTableIDA):
             self,
             parent,
             'lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt',
-            '777-UD-centers-oblique-edges-solve',
             ('xUUUxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxDDDx',
              'xUUUxUUUUUUUUUUUUUUUxDDDxxUUUxDDDDDDDDDDDDDDDxDDDx',
              'xUUUxUUUUUUUUUUUUUUUxDDDxxDDDxUDDDDUDDDDUDDDDxDDDx',
@@ -910,7 +889,6 @@ class LookupTableIDA777UDSolveInnerCentersAndObliqueEdges(LookupTableIDA):
              'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxUUUx',
              'xDDDxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxUUUx',
              'xDDDxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxUUUx'),
-            False, # state_hex
             moves_7x7x7,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
@@ -967,7 +945,6 @@ class LookupTable777LRSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step61-LR-inner-x-center-t-center-and-middle-oblique-edges.txt',
-            '777-LR-inner-x-center-t-center-and-middle-oblique-edges-LR-solve',
             ('xxLxxxLLLxLLLLLxLLLxxxLxxxxRxxxRRRxRRRRRxRRRxxxRxx',
              'xxLxxxLLLxLLLLLxLLLxxxRxxxxLxxxRRRxRRRRRxRRRxxxRxx',
              'xxLxxxLLLxLLLLLxLLLxxxRxxxxRxxxRRRxLRRRRxRRRxxxRxx',
@@ -1038,7 +1015,6 @@ class LookupTable777LRSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
              'xxRxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxLxx',
              'xxRxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxLxx',
              'xxRxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxLxx'),
-            False, # state_hex
             linecount=343000)
 
     def state(self):
@@ -1090,7 +1066,6 @@ class LookupTable777LRSolveObliqueEdge(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step62-LR-oblique-edges.txt',
-            '777-LR-oblique-edges-LR-solve',
             ('xLLLxLxxxLLxxxLLxxxLxLLLxxRRRxRxxxRRxxxRRxxxRxRRRx',
              'xLLLxLxxxLLxxxLLxxxLxRRRxxLLLxRxxxRRxxxRRxxxRxRRRx',
              'xLLLxLxxxLLxxxLLxxxLxRRRxxRRRxLxxxRLxxxRLxxxRxRRRx',
@@ -1161,7 +1136,6 @@ class LookupTable777LRSolveObliqueEdge(LookupTable):
              'xRRRxRxxxRRxxxRRxxxRxLLLxxLLLxRxxxLRxxxLRxxxLxLLLx',
              'xRRRxRxxxRRxxxRRxxxRxLLLxxRRRxLxxxLLxxxLLxxxLxLLLx',
              'xRRRxRxxxRRxxxRRxxxRxRRRxxLLLxLxxxLLxxxLLxxxLxLLLx'),
-            False, # state_hex
             linecount=343000)
 
     def state(self):
@@ -1210,7 +1184,6 @@ class LookupTableIDA777LRSolveInnerCentersAndObliqueEdges(LookupTableIDA):
             self,
             parent,
             'lookup-table-7x7x7-step60-LR-solve-inner-center-and-oblique-edges.txt',
-            '777-LR-centers-oblique-edges-LR-solve',
             ('xLLLxLLLLLLLLLLLLLLLxLLLxxRRRxRRRRRRRRRRRRRRRxRRRx',
              'xLLLxLLLLLLLLLLLLLLLxRRRxxLLLxRRRRRRRRRRRRRRRxRRRx',
              'xLLLxLLLLLLLLLLLLLLLxRRRxxRRRxLRRRRLRRRRLRRRRxRRRx',
@@ -1281,7 +1254,6 @@ class LookupTableIDA777LRSolveInnerCentersAndObliqueEdges(LookupTableIDA):
              'xRRRxRLLLRRLLLRRLLLRxLLLxxLLLxRRRRLRRRRLRRRRLxLLLx',
              'xRRRxRLLLRRLLLRRLLLRxLLLxxRRRxLRRRLLRRRLLRRRLxLLLx',
              'xRRRxRLLLRRLLLRRLLLRxRRRxxLLLxLRRRLLRRRLLRRRLxLLLx'),
-            False, # state_hex
             moves_7x7x7,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
@@ -1342,7 +1314,6 @@ class LookupTable777FBSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step71-FB-inner-x-center-t-center-and-middle-oblique-edges.txt',
-            '777-FB-inner-x-center-t-center-and-middle-oblique-edges-FB-solve',
             ('xxFxxxFFFxFFFFFxFFFxxxFxxxxBxxxBBBxBBBBBxBBBxxxBxx',
              'xxFxxxFFFxFFFFFxFFFxxxBxxxxFxxxBBBxBBBBBxBBBxxxBxx',
              'xxFxxxFFFxFFFFFxFFFxxxBxxxxBxxxBBBxFBBBBxBBBxxxBxx',
@@ -1413,7 +1384,6 @@ class LookupTable777FBSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
              'xxBxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxFxx',
              'xxBxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxFxx',
              'xxBxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxFxx'),
-            False, # state_hex
             linecount=343000)
 
     def state(self):
@@ -1465,7 +1435,6 @@ class LookupTable777FBSolveObliqueEdge(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step72-FB-oblique-edges.txt',
-            '777-FB-oblique-edges-FB-solve',
             ('xFFFxFxxxFFxxxFFxxxFxFFFxxBBBxBxxxBBxxxBBxxxBxBBBx',
              'xFFFxFxxxFFxxxFFxxxFxBBBxxFFFxBxxxBBxxxBBxxxBxBBBx',
              'xFFFxFxxxFFxxxFFxxxFxBBBxxBBBxFxxxBFxxxBFxxxBxBBBx',
@@ -1536,7 +1505,6 @@ class LookupTable777FBSolveObliqueEdge(LookupTable):
              'xBBBxBxxxBBxxxBBxxxBxFFFxxFFFxBxxxFBxxxFBxxxFxFFFx',
              'xBBBxBxxxBBxxxBBxxxBxFFFxxBBBxFxxxFFxxxFFxxxFxFFFx',
              'xBBBxBxxxBBxxxBBxxxBxBBBxxFFFxFxxxFFxxxFFxxxFxFFFx'),
-            False, # state_hex
             linecount=343000)
 
     def state(self):
@@ -1585,7 +1553,6 @@ class LookupTableIDA777FBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
             self,
             parent,
             'lookup-table-7x7x7-step70-FB-solve-inner-center-and-oblique-edges.txt',
-            '777-FB-centers-oblique-edges-FB-solve',
             ('xFFFxFFFFFFFFFFFFFFFxFFFxxBBBxBBBBBBBBBBBBBBBxBBBx',
              'xFFFxFFFFFFFFFFFFFFFxBBBxxFFFxBBBBBBBBBBBBBBBxBBBx',
              'xFFFxFFFFFFFFFFFFFFFxBBBxxBBBxFBBBBFBBBBFBBBBxBBBx',
@@ -1656,7 +1623,6 @@ class LookupTableIDA777FBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
              'xBBBxBFFFBBFFFBBFFFBxFFFxxFFFxBBBBFBBBBFBBBBFxFFFx',
              'xBBBxBFFFBBFFFBBFFFBxFFFxxBBBxFBBBFFBBBFFBBBFxFFFx',
              'xBBBxBFFFBBFFFBBFFFBxBBBxxFFFxFBBBFFBBBFFBBBFxFFFx'),
-            False, # state_hex
             moves_7x7x7,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
@@ -1712,9 +1678,7 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
             self,
             parent,
             'lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt',
-            '777-LFRB-centers-oblique-edges-solve',
             lt_LFRB_solve_inner_centers_and_oblique_edges_state_targets, # There are 4900 of them
-            False, # state_hex
             moves_7x7x7,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
@@ -1765,6 +1729,7 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
         result = ''.join(result)
 
         return result
+
 
 class RubiksCube777(RubiksCubeNNNOddEdges):
     """

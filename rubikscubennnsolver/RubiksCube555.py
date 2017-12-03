@@ -48,9 +48,7 @@ class LookupTable555UDTCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step01-UD-centers-stage-t-center-only.txt',
-            None,
             '174000000000ba',
-            True, # state_hex
             linecount=735471)
 
     def state(self):
@@ -107,9 +105,7 @@ class LookupTable555UDXCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step02-UD-centers-stage-x-center-only.txt',
-            None,
             '2aa00000000155',
-            True, # state_hex
             linecount=735471)
 
     def state(self):
@@ -163,9 +159,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             self,
             parent,
             'lookup-table-5x5x5-step00-UD-centers-stage.txt',
-            None,
             '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
-            True, # state_hex
             moves_5x5x5,
             (), # illegal_moves
 
@@ -209,9 +203,7 @@ class LookupTable555CpuMinUDTCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
-            None,
             '174000000000ba',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -268,9 +260,7 @@ class LookupTable555CpuMinUDXCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
-            None,
             '2aa00000000155',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -347,9 +337,7 @@ class  LookupTableIDA555CpuMinUDCentersStage(LookupTableIDA):
             self,
             parent,
             'lookup-table-5x5x5-step10-UD-centers-stage.txt',
-            None,
             '3fe000000001ff',
-            True, # state_hex
             moves_5x5x5,
             ("Uw", "Uw'", "Dw", "Dw'",
              "Fw", "Fw'", "Bw", "Bw'"), # illegal_moves
@@ -394,9 +382,7 @@ class LookupTable555LRXCentersStage(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step21-LR-centers-stage-x-center-only.txt',
-            None,
             'aa802aa00',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -448,9 +434,7 @@ class LookupTable555LRTCentersStage(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step22-LR-centers-stage-t-center-only.txt',
-            None,
             '5d0017400',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -516,9 +500,7 @@ class LookupTableIDA555LRCentersStage(LookupTableIDA):
             self,
             parent,
             'lookup-table-5x5x5-step20-LR-centers-stage.txt',
-            None,
             'ff803fe00', # LLLLLLLLLxxxxxxxxxLLLLLLLLLxxxxxxxxx
-            True, # state_hex
             moves_5x5x5,
             ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'"), # illegal moves
 
@@ -579,9 +561,7 @@ class LookupTableULCentersSolve(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step31-UL-centers-solve.txt',
-            None,
             '3ffff000000000',
-            True, # state_hex
             linecount=24010000)
 
     def state(self):
@@ -635,9 +615,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             self,
             parent,
             'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
-            None,
             'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
-            False, # state_hex
             moves_5x5x5,
 
             # These moves would destroy the staged centers
@@ -691,9 +669,7 @@ class LookupTable555EdgeSliceForward(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step90-edges-slice-forward.txt',
-            None,
             'EDGES',
-            False, # state hex
             linecount=7920)
 
 
@@ -718,9 +694,7 @@ class LookupTable555EdgeSliceBackward(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step91-edges-slice-backward.txt',
-            None,
             'EDGES',
-            False, # state hex
             linecount=7919)
 
 
@@ -747,9 +721,7 @@ class LookupTable555TCenterSolve(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt',
-            None,
             'xUxUUUxUxxLxLLLxLxxFxFFFxFxxRxRRRxRxxBxBBBxBxxDxDDDxDx',
-            False, # state_hex
             linecount=343000)
 
     def state(self):

@@ -60,9 +60,7 @@ class LookupTable444UDCentersStage(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step11-UD-centers-stage.txt',
-            None, # state_type
             'f0000f',
-            True, # state hex
             linecount=735471)
 
     def state(self):
@@ -116,9 +114,7 @@ class LookupTable444LRCentersStage(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step12-LR-centers-stage.txt',
-            None, # state_type
             '0f0f00',
-            True, # state hex
             linecount=735471)
 
     def state(self):
@@ -170,9 +166,7 @@ class LookupTable444FBCentersStage(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step13-FB-centers-stage.txt',
-            None, # state_type
             '00f0f0',
-            True, # state hex
             linecount=735471)
 
     def state(self):
@@ -236,9 +230,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             self,
             parent,
             'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
-            None,
             'UUUULLLLFFFFLLLLFFFFUUUU',
-            False, # state hex
             moves_4x4x4,
             (), # illegal_moves
 
@@ -301,9 +293,7 @@ class LookupTable444LFRBCentersStage(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step20-LFRB-centers-stage.txt',
-            None,  # state_type
             'xxxxLLLLFFFFLLLLFFFFxxxx',
-            False, # state hex
             linecount=12870)
 
     def state(self):
@@ -360,9 +350,7 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
-            None,  # state_type
             'UUUULLLLFFFFRRRRBBBBDDDD',
-            False, # state hex
             linecount=343000)
 
 
@@ -418,7 +406,6 @@ class LookupTable444TsaiPhase2Centers(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step61-centers.txt',
-            None,  # state_type
             ('UUUULLLLFFFFRRRRFFFFUUUU',
              'UUUURRRRFFFFLLLLFFFFUUUU',
              'UUUULLRRFFFFRRLLFFFFUUUU',
@@ -431,7 +418,6 @@ class LookupTable444TsaiPhase2Centers(LookupTable):
              'UUUULRLRFFFFLRLRFFFFUUUU',
              'UUUURLLRFFFFLRRLFFFFUUUU',
              'UUUULRRLFFFFRLLRFFFFUUUU'),
-            False, # state hex
             linecount=900900)
 
     def state(self):
@@ -495,9 +481,7 @@ class LookupTable444TsaiPhase2Edges(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step62-edges.txt',
-            None,
             'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-            False, # state hex
             linecount=2704156)
 
     def state(self):
@@ -528,9 +512,7 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             self,
             parent,
             'lookup-table-4x4x4-step60-dummy.txt',
-            None,
             'TBD',
-            False, # state_hex
             moves_4x4x4,
             ("Fw", "Fw'", "Bw", "Bw'",
              "Uw", "Uw'", "Dw", "Dw'"), # illegal_moves
@@ -841,9 +823,7 @@ class LookupTable444TsaiPhase3Edges(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step71-tsai-phase3-edges.txt',
-            None,
             '213098ba6574',
-            False, # state hex
             linecount=14999140)
 
     def state(self):
@@ -896,9 +876,7 @@ class LookupTable444TsaiPhase3CentersSolve(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step72-tsai-phase3-centers.txt',
-            None,
             'UUUULLLLFFFFRRRRBBBBDDDD',
-            False, # state hex
             linecount=58800)
 
     def state(self):
@@ -954,9 +932,7 @@ class LookupTableIDA444TsaiPhase3(LookupTableIDA):
             self,
             parent,
             'lookup-table-4x4x4-step70-tsai-phase3.txt',
-            '444-tsai-phase3',
             '001UU31UU322118LL98LL955229BBa9BBa4433aRRbaRRb7700bFF8bFF866445DD75DD766',
-            False, # state_hex
             moves_4x4x4,
             ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",
              "Rw", "Rw'", "Lw", "Lw'", "R", "R'", "L", "L'"), # illegal_moves
@@ -1027,9 +1003,7 @@ class LookupTable444EdgeSliceForward(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step40-edges-slice-forward.txt',
-            None,
             'EDGES',
-            False, # state hex
             linecount=7920)
 
 
@@ -1057,9 +1031,7 @@ class LookupTable444EdgesSliceBackward(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step50-edges-slice-backward.txt',
-            None,
             'EDGES',
-            False, # state hex
             linecount=7919)
 
 

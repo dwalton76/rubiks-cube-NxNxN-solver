@@ -50,9 +50,7 @@ class LookupTable666UDInnerXCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt',
-            None,
             '066000000000000000000660',
-            True,  # state_hex
             linecount=735471)
 
     def state(self):
@@ -92,9 +90,7 @@ class LookupTable666CpuMaxUDObliqueEdgePairingLeftOnly(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step26-UD-oblique-edge-pairing-left-only.txt',
-            None,
             '990000000099',
-            True, # state_hex
             linecount=735471)
 
     def state(self):
@@ -152,9 +148,7 @@ class LookupTable666CpuMaxUDObliqueEdgePairingRightOnly(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step27-UD-oblique-edge-pairing-right-only.txt',
-            None,
             '660000000066',
-            True, # state_hex
             linecount=735471)
 
     def state(self):
@@ -214,9 +208,7 @@ class LookupTableIDA666CpuMaxUDObliqueEdgePairing(LookupTableIDA):
             self,
             parent,
             'lookup-table-6x6x6-step25-UD-oblique-edge-pairing.txt',
-            None,
             'ff00000000ff',
-            True, # state_hex
             moves_6x6x6,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"), # These would break up the staged UD inner x-centers
@@ -283,9 +275,7 @@ class LookupTable666UDObliqueEdgePairingLeftOnly(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
-            None,
             '990000000099',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -344,9 +334,7 @@ class LookupTable666UDObliqueEdgePairingRightOnly(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
-            None,
             '660000000066',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -428,9 +416,7 @@ class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
             self,
             parent,
             'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt',
-            None,
             'ff00000000ff',
-            True, # state_hex
             moves_6x6x6,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # These would break up the staged UD inner x-centers
@@ -499,9 +485,7 @@ class LookupTable666LRInnerXCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step30-LR-inner-x-centers-stage.txt',
-            None,
             '000006600000066000000000',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -542,9 +526,7 @@ class LookupTable666LRObliqueEdgePairingLeftOnly(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt',
-            None,
             '99009900',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -596,9 +578,7 @@ class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt',
-            None,
             '66006600',
-            True, # state_hex
             linecount=12870)
 
     def state(self):
@@ -658,9 +638,7 @@ class LookupTableIDA666LRObliqueEdgePairing(LookupTableIDA):
             self,
             parent,
             'lookup-table-6x6x6-step40-LR-oblique-pairing.txt',
-            None,
             'ff00ff00',
-            True, # state_hex
             moves_6x6x6,
 
             # These would break up the staged UD inner x-centers
@@ -723,9 +701,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt',
-            None,
             'xUUxUUUUUUUUxUUxxDDxDDDDDDDDxDDx',
-            False, # state_hex
             linecount=343000)
 
     def state(self):
@@ -774,9 +750,7 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt',
-            None,
             'xLLxLLLLLLLLxLLxxxxxxFFxxFFxxxxxxRRxRRRRRRRRxRRxxxxxxBBxxBBxxxxx',
-            False, # state_hex
             linecount=24010034)
 
     def state(self):
@@ -823,9 +797,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             self,
             parent,
             'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt',
-            None,
             'xLLxLLLLLLLLxLLxxFFxFFFFFFFFxFFxxRRxRRRRRRRRxRRxxBBxBBBBBBBBxBBx',
-            False, # state_hex
             moves_6x6x6,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers

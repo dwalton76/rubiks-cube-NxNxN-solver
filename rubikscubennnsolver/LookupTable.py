@@ -80,18 +80,9 @@ def pretty_time(delta):
         return "\033[91m%s\033[0m" % delta
 
 
-def convert_state_to_hex(state, hex_width):
-    hex_state = hex(int(state, 2))[2:]
-
-    if hex_state.endswith('L'):
-        hex_state = hex_state[:-1]
-
-    return hex_state.zfill(hex_width)
-
-
 class LookupTable(object):
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, linecount, max_depth=None):
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.filename = filename
@@ -186,7 +177,6 @@ class LookupTable(object):
 
         self.hex_format = '%' + "0%dx" % self.state_width
         self.filename_exists = True
-        self.state_type = state_type
 
         if isinstance(state_target, tuple):
             self.state_target = set(state_target)
@@ -195,7 +185,6 @@ class LookupTable(object):
         else:
             self.state_target = set((state_target, ))
 
-        self.state_hex = state_hex
         self.cache = {}
         self.fh_txt = open(self.filename, 'r')
         self.preloaded_cache = False
@@ -351,19 +340,11 @@ class LookupTable(object):
                 self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
 
-    def convert_state_to_hex(self, state, hex_width):
-        hex_state = hex(int(state, 2))[2:]
-
-        if hex_state.endswith('L'):
-            hex_state = hex_state[:-1]
-
-        return hex_state.zfill(hex_width)
-
 
 class LookupTableIDA(LookupTable):
 
-    def __init__(self, parent, filename, state_type, state_target, state_hex, moves_all, moves_illegal, prune_tables, linecount):
-        LookupTable.__init__(self, parent, filename, state_type, state_target, state_hex, linecount)
+    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount):
+        LookupTable.__init__(self, parent, filename, state_target, linecount)
         self.prune_tables = prune_tables
 
         for x in moves_illegal:
@@ -513,14 +494,6 @@ class LookupTableIDA(LookupTable):
         # to do several lookups to get to our target state though. Use
         # LookupTabele's solve() to take us the rest of the way to the target state.
         LookupTable.solve(self)
-
-        if (self.state_type == '444-tsai-phase2' and
-            not self.parent.edge_swaps_even(False, None, False)):
-
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-            log.warning("%s: found match but edge swaps are NOT even" % self)
-            return False
 
         if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
             self.parent.state = self.original_state[:]

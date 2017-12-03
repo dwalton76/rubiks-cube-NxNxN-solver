@@ -89,6 +89,69 @@ def convert_state_to_hex(state, hex_width):
     return hex_state.zfill(hex_width)
 
 
+def get_555_ULFRBD_t_centers_solve(parent_state):
+    """
+    555-ULFRBD-t-centers-solve
+    """
+    state = ['x',
+             parent_state[8],
+             'x',
+             parent_state[12],
+             parent_state[13],
+             parent_state[14],
+             'x',
+             parent_state[18],
+             'x',
+             'x',
+             parent_state[33],
+             'x',
+             parent_state[37],
+             parent_state[38],
+             parent_state[39],
+             'x',
+             parent_state[43],
+             'x',
+             'x',
+             parent_state[58],
+             'x',
+             parent_state[62],
+             parent_state[63],
+             parent_state[64],
+             'x',
+             parent_state[68],
+             'x',
+             'x',
+             parent_state[83],
+             'x',
+             parent_state[87],
+             parent_state[88],
+             parent_state[89],
+             'x',
+             parent_state[93],
+             'x',
+             'x',
+             parent_state[108],
+             'x',
+             parent_state[112],
+             parent_state[113],
+             parent_state[114],
+             'x',
+             parent_state[118],
+             'x',
+             'x',
+             parent_state[133],
+             'x',
+             parent_state[137],
+             parent_state[138],
+             parent_state[139],
+             'x',
+             parent_state[143],
+             'x']
+
+    state = ''.join(state)
+    return state
+
+
 def get_666_UD_centers_oblique_edges_solve(parent_state):
     """
     666-UD-centers-oblique-edges-solve

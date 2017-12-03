@@ -724,6 +724,64 @@ class LookupTable555EdgeSliceBackward(LookupTable):
             linecount=7919)
 
 
+class LookupTable555TCenterSolve(LookupTable):
+    """
+    This is only used when a cube larger than 7x7x7 is being solved
+
+    lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt
+    ====================================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 99 entries (0 percent, 14.14x previous step)
+    3 steps has 1,038 entries (0 percent, 10.48x previous step)
+    4 steps has 8,463 entries (2 percent, 8.15x previous step)
+    5 steps has 47,986 entries (13 percent, 5.67x previous step)
+    6 steps has 146,658 entries (42 percent, 3.06x previous step)
+    7 steps has 128,914 entries (37 percent, 0.88x previous step)
+    8 steps has 9,835 entries (2 percent, 0.08x previous step)
+
+    Total: 343,000 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt',
+            None,
+            'xUxUUUxUxxLxLLLxLxxFxFFFxFxxRxRRRxRxxBxBBBxBxxDxDDDxDx',
+            False, # state_hex
+            linecount=343000)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = [
+            'x', parent_state[8], 'x',
+            parent_state[12], parent_state[13], parent_state[14],
+            'x', parent_state[18], 'x',
+
+            'x', parent_state[33], 'x',
+            parent_state[37], parent_state[38], parent_state[39],
+            'x', parent_state[43], 'x',
+
+            'x', parent_state[58], 'x',
+            parent_state[62], parent_state[63], parent_state[64],
+            'x', parent_state[68], 'x',
+
+            'x', parent_state[83], 'x',
+            parent_state[87], parent_state[88], parent_state[89],
+            'x', parent_state[93], 'x',
+
+            'x', parent_state[108], 'x',
+            parent_state[112], parent_state[113], parent_state[114],
+            'x', parent_state[118], 'x',
+
+            'x', parent_state[133], 'x',
+            parent_state[137], parent_state[138], parent_state[139],
+            'x', parent_state[143], 'x']
+
+        return ''.join(result)
+
+
 class RubiksCube555(RubiksCube):
     """
     5x5x5 strategy
@@ -847,28 +905,7 @@ class RubiksCube555(RubiksCube):
         self.lt_edge_slice_forward = LookupTable555EdgeSliceForward(self)
         self.lt_edge_slice_backward = LookupTable555EdgeSliceBackward(self)
 
-        '''
-        This is only used when a cube larger than 7x7x7 is being solved
-
-        lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt
-        ====================================================
-        1 steps has 7 entries (0 percent, 0.00x previous step)
-        2 steps has 99 entries (0 percent, 14.14x previous step)
-        3 steps has 1,038 entries (0 percent, 10.48x previous step)
-        4 steps has 8,463 entries (2 percent, 8.15x previous step)
-        5 steps has 47,986 entries (13 percent, 5.67x previous step)
-        6 steps has 146,658 entries (42 percent, 3.06x previous step)
-        7 steps has 128,914 entries (37 percent, 0.88x previous step)
-        8 steps has 9,835 entries (2 percent, 0.08x previous step)
-
-        Total: 343,000 entries
-        '''
-        self.lt_ULFRBD_t_centers_solve = LookupTable(self,
-                                               'lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt',
-                                               '555-ULFRBD-t-centers-solve',
-                                               'xUxUUUxUxxLxLLLxLxxFxFFFxFxxRxRRRxRxxBxBBBxBxxDxDDDxDx',
-                                               False, # state_hex
-                                               linecount=343000)
+        self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
     def fake_move_UD_to_UFDB(self):
 

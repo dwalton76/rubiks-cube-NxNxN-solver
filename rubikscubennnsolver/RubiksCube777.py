@@ -1597,6 +1597,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             # solve their centers. We must "solve" the t-centers in this scenario.
             self.solve_reduced_555_t_centers()
             log.info("Took %d steps to solve oblique edges and t-centers" % self.get_solution_len_minus_rotates(self.solution))
+            self.print_cube()
         else:
             self.solve_reduced_555_centers()
             log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))

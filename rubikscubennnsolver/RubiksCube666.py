@@ -57,16 +57,45 @@ class LookupTable666UDInnerXCenterStage(LookupTable):
         parent_state = self.parent.state
 
         result = [
-            'xxxxx', parent_state[15], parent_state[16], 'xx', parent_state[21], parent_state[22], 'xxxxx',
-            'xxxxx', parent_state[51], parent_state[52], 'xx', parent_state[57], parent_state[58], 'xxxxx',
-            'xxxxx', parent_state[87], parent_state[88], 'xx', parent_state[93], parent_state[94], 'xxxxx',
-            'xxxxx', parent_state[123], parent_state[124], 'xx', parent_state[129], parent_state[130], 'xxxxx',
-            'xxxxx', parent_state[159], parent_state[160], 'xx', parent_state[165], parent_state[166], 'xxxxx',
-            'xxxxx', parent_state[195], parent_state[196], 'xx', parent_state[201], parent_state[202], 'xxxxx'
+            # Upper
+            'x', 'x', 'x', 'x',
+            'x', parent_state[15], parent_state[16], 'x',
+            'x', parent_state[21], parent_state[22], 'x',
+            'x', 'x', 'x', 'x',
+
+            # Left
+            'x', 'x', 'x', 'x',
+            'x', parent_state[51], parent_state[52], 'x',
+            'x', parent_state[57], parent_state[58], 'x',
+            'x', 'x', 'x', 'x',
+
+            # Front
+            'x', 'x', 'x', 'x',
+            'x', parent_state[87], parent_state[88], 'x',
+            'x', parent_state[93], parent_state[94], 'x',
+            'x', 'x', 'x', 'x',
+
+            # Right
+            'x', 'x', 'x', 'x',
+            'x', parent_state[123], parent_state[124], 'x',
+            'x', parent_state[129], parent_state[130], 'x',
+            'x', 'x', 'x', 'x',
+
+            # Back
+            'x', 'x', 'x', 'x',
+            'x', parent_state[159], parent_state[160], 'x',
+            'x', parent_state[165], parent_state[166], 'x',
+            'x', 'x', 'x', 'x',
+
+            # Down
+            'x', 'x', 'x', 'x',
+            'x', parent_state[195], parent_state[196], 'x',
+            'x', parent_state[201], parent_state[202], 'x',
+            'x', 'x', 'x', 'x'
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1') 
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -137,8 +166,8 @@ class LookupTable666CpuMaxUDObliqueEdgePairingLeftOnly(LookupTable):
             'x', parent_state[208]
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -150,14 +179,14 @@ class LookupTable666CpuMaxUDObliqueEdgePairingRightOnly(LookupTable):
     ================================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
     2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1198 entries (0 percent, 14.61x previous step)
-    4 steps has 13818 entries (1 percent, 11.53x previous step)
-    5 steps has 115638 entries (15 percent, 8.37x previous step)
-    6 steps has 399478 entries (54 percent, 3.45x previous step)
-    7 steps has 204612 entries (27 percent, 0.51x previous step)
+    3 steps has 1,198 entries (0 percent, 14.61x previous step)
+    4 steps has 13,818 entries (1 percent, 11.53x previous step)
+    5 steps has 115,638 entries (15 percent, 8.37x previous step)
+    6 steps has 399,478 entries (54 percent, 3.45x previous step)
+    7 steps has 204,612 entries (27 percent, 0.51x previous step)
     8 steps has 640 entries (0 percent, 0.00x previous step)
 
-    Total: 735471 entries
+    Total: 735,471 entries
     """
 
     def __init__(self, parent):
@@ -209,8 +238,8 @@ class LookupTable666CpuMaxUDObliqueEdgePairingRightOnly(LookupTable):
             parent_state[207], 'x'
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -290,8 +319,8 @@ class LookupTableIDA666CpuMaxUDObliqueEdgePairing(LookupTableIDA):
             parent_state[207], parent_state[208]
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -363,8 +392,8 @@ class LookupTable666UDObliqueEdgePairingLeftOnly(LookupTable):
             'x', parent_state[208]
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -436,8 +465,8 @@ class LookupTable666UDObliqueEdgePairingRightOnly(LookupTable):
             parent_state[207], 'x'
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -541,8 +570,8 @@ class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
             parent_state[207], parent_state[208]
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -578,26 +607,44 @@ class LookupTable666LRInnerXCenterStage(LookupTable):
 
         result = [
             # Upper
-            'xxxxx', parent_state[15], parent_state[16], 'xx', parent_state[21], parent_state[22], 'xxxxx',
+            'x', 'x', 'x', 'x',
+            'x', parent_state[15], parent_state[16], 'x',
+            'x', parent_state[21], parent_state[22], 'x',
+            'x', 'x', 'x', 'x',
 
             # Left
-            'xxxxx', parent_state[51], parent_state[52], 'xx', parent_state[57], parent_state[58], 'xxxxx',
+            'x', 'x', 'x', 'x',
+            'x', parent_state[51], parent_state[52], 'x',
+            'x', parent_state[57], parent_state[58], 'x',
+            'x', 'x', 'x', 'x',
 
             # Front
-            'xxxxx', parent_state[87], parent_state[88], 'xx', parent_state[93], parent_state[94], 'xxxxx',
+            'x', 'x', 'x', 'x',
+            'x', parent_state[87], parent_state[88], 'x',
+            'x', parent_state[93], parent_state[94], 'x',
+            'x', 'x', 'x', 'x',
 
             # Right
-            'xxxxx', parent_state[123], parent_state[124], 'xx', parent_state[129], parent_state[130], 'xxxxx',
+            'x', 'x', 'x', 'x',
+            'x', parent_state[123], parent_state[124], 'x',
+            'x', parent_state[129], parent_state[130], 'x',
+            'x', 'x', 'x', 'x',
 
             # Back
-            'xxxxx', parent_state[159], parent_state[160], 'xx', parent_state[165], parent_state[166], 'xxxxx',
+            'x', 'x', 'x', 'x',
+            'x', parent_state[159], parent_state[160], 'x',
+            'x', parent_state[165], parent_state[166], 'x',
+            'x', 'x', 'x', 'x',
 
             # Down
-            'xxxxx', parent_state[195], parent_state[196], 'xx', parent_state[201], parent_state[202], 'xxxxx'
+            'x', 'x', 'x', 'x',
+            'x', parent_state[195], parent_state[196], 'x',
+            'x', parent_state[201], parent_state[202], 'x',
+            'x', 'x', 'x', 'x'
         ]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0') 
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -657,8 +704,8 @@ class LookupTable666LRObliqueEdgePairingLeftOnly(LookupTable):
             'x', parent_state[172]
         ]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -715,11 +762,11 @@ class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
             'x', parent_state[154],
             parent_state[158], 'x',
             'x', parent_state[167],
-            parent_state[171] + 'x'
+            parent_state[171], 'x'
         ]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -798,8 +845,8 @@ class LookupTableIDA666LRObliqueEdgePairing(LookupTableIDA):
             parent_state[171], parent_state[172]
         ]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('U', '0').replace('L', '1').replace('F', '0').replace('R', '1').replace('B', '0').replace('D', '0')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -839,9 +886,9 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
             # Upper
             'x', parent_state[9], parent_state[10], 'x',
             parent_state[14], parent_state[15], parent_state[16], parent_state[17],
-            parent_state[20], parent_state[21], parent_state[22], parent_state[23], 
+            parent_state[20], parent_state[21], parent_state[22], parent_state[23],
             'x', parent_state[27], parent_state[28], 'x',
-    
+
             # Down
             'x', parent_state[189], parent_state[190], 'x',
             parent_state[194], parent_state[195], parent_state[196], parent_state[197],
@@ -1077,7 +1124,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.lt_UD_oblique_edge_pairing_left_only = LookupTable666UDObliqueEdgePairingLeftOnly(self)
             self.lt_UD_oblique_edge_pairing_right_only = LookupTable666UDObliqueEdgePairingRightOnly(self)
             self.lt_UD_oblique_edge_pairing = LookupTableIDA666UDObliqueEdgePairing(self)
-
 
         self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCenterStage(self)
 

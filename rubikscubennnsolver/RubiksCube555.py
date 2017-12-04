@@ -34,13 +34,13 @@ class LookupTable555UDTCenterStage(LookupTable):
     1 steps has 5 entries (0 percent, 0.00x previous step)
     2 steps has 66 entries (0 percent, 13.20x previous step)
     3 steps has 900 entries (0 percent, 13.64x previous step)
-    4 steps has 9626 entries (1 percent, 10.70x previous step)
-    5 steps has 80202 entries (10 percent, 8.33x previous step)
-    6 steps has 329202 entries (44 percent, 4.10x previous step)
-    7 steps has 302146 entries (41 percent, 0.92x previous step)
-    8 steps has 13324 entries (1 percent, 0.04x previous step)
+    4 steps has 9,626 entries (1 percent, 10.70x previous step)
+    5 steps has 80,202 entries (10 percent, 8.33x previous step)
+    6 steps has 329,202 entries (44 percent, 4.10x previous step)
+    7 steps has 302,146 entries (41 percent, 0.92x previous step)
+    8 steps has 13,324 entries (1 percent, 0.04x previous step)
 
-    Total: 735471 entries
+    Total: 735,471 entries
     """
 
     def __init__(self, parent):
@@ -85,8 +85,8 @@ class LookupTable555UDTCenterStage(LookupTable):
             'x', parent_state[143], 'x'
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -98,14 +98,14 @@ class LookupTable555UDXCenterStage(LookupTable):
     ============================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
     2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1206 entries (0 percent, 14.71x previous step)
-    4 steps has 14116 entries (1 percent, 11.70x previous step)
-    5 steps has 123404 entries (16 percent, 8.74x previous step)
-    6 steps has 422508 entries (57 percent, 3.42x previous step)
-    7 steps has 173254 entries (23 percent, 0.41x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
     8 steps has 896 entries (0 percent, 0.01x previous step)
 
-    Total: 735471 entries
+    Total: 735,471 entries
     """
 
     def __init__(self, parent):
@@ -150,8 +150,8 @@ class LookupTable555UDXCenterStage(LookupTable):
             parent_state[142], 'x', parent_state[144]
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -187,16 +187,43 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        result = \
-            parent_state[7:10] + parent_state[12:15] + parent_state[17:20] +\
-            parent_state[32:35] + parent_state[37:40] + parent_state[42:45] +\
-            parent_state[57:60] + parent_state[62:65] + parent_state[67:70] +\
-            parent_state[82:85] + parent_state[87:90] + parent_state[92:95] +\
-            parent_state[107:110] + parent_state[112:115] + parent_state[117:120] +\
-            parent_state[132:135] + parent_state[137:140] + parent_state[142:145]
+        # dwalton here now
 
+        result = [
+            # Upper
+            parent_state[7], parent_state[8], parent_state[9],
+            parent_state[12], parent_state[13], parent_state[14],
+            parent_state[17], parent_state[18], parent_state[19],
+
+            # Left
+            parent_state[32], parent_state[33], parent_state[34],
+            parent_state[37], parent_state[38], parent_state[39],
+            parent_state[42], parent_state[43], parent_state[44],
+
+            # Front
+            parent_state[57], parent_state[58], parent_state[59],
+            parent_state[62], parent_state[63], parent_state[64],
+            parent_state[67], parent_state[68], parent_state[69],
+
+            # Right
+            parent_state[82], parent_state[83], parent_state[84],
+            parent_state[87], parent_state[88], parent_state[89],
+            parent_state[92], parent_state[93], parent_state[94],
+
+            # Back
+            parent_state[107], parent_state[108], parent_state[109],
+            parent_state[112], parent_state[113], parent_state[114],
+            parent_state[117], parent_state[118], parent_state[119],
+
+            # Down
+            parent_state[132], parent_state[133], parent_state[134],
+            parent_state[137], parent_state[138], parent_state[139],
+            parent_state[142], parent_state[143], parent_state[144]
+        ]
+
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+        self.state_binary_str = result
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -259,8 +286,10 @@ class LookupTable555CpuMinUDTCenterStage(LookupTable):
             'x', parent_state[143], 'x'
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+        #result = ''.join(result)
+        #result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -323,8 +352,10 @@ class LookupTable555CpuMinUDXCenterStage(LookupTable):
             parent_state[142], 'x', parent_state[144]
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+        #result = ''.join(result)
+        #result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -392,8 +423,10 @@ class  LookupTableIDA555CpuMinUDCentersStage(LookupTableIDA):
             parent_state[107:110] + parent_state[112:115] + parent_state[117:120] +\
             parent_state[132:135] + parent_state[137:140] + parent_state[142:145]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
+        #result = ''.join(result)
+        #result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -557,22 +590,22 @@ class LookupTableIDA555LRCentersStage(LookupTableIDA):
     def state(self):
         parent_state = self.parent.state
         result = [
-            # Upper
+            # Left
             parent_state[32], parent_state[33], parent_state[34],
             parent_state[37], parent_state[38], parent_state[39],
             parent_state[42], parent_state[43], parent_state[44],
 
-            # Left
+            # Front
             parent_state[57], parent_state[58], parent_state[59],
             parent_state[62], parent_state[63], parent_state[64],
             parent_state[67], parent_state[68], parent_state[69],
 
-            # Front
+            # Right
             parent_state[82], parent_state[83], parent_state[84],
             parent_state[87], parent_state[88], parent_state[89],
             parent_state[92], parent_state[93], parent_state[94],
 
-            # Right
+            # Back
             parent_state[107], parent_state[108], parent_state[109],
             parent_state[112], parent_state[113], parent_state[114],
             parent_state[117], parent_state[118], parent_state[119]

@@ -184,8 +184,10 @@ class LookupTable(object):
             self.state_target = set((state_target, ))
 
         self.cache = {}
-        self.fh_txt = open(self.filename, 'r')
         self.preloaded_cache = False
+
+        # 'rb' mode is about 3x faster than 'r' mode
+        self.fh_txt = open(self.filename, mode='rb')
 
     def __str__(self):
         return self.desc
@@ -204,25 +206,26 @@ class LookupTable(object):
     def binary_search(self, state_to_find):
         first = 0
         last = self.linecount - 1
+        b_state_to_find = bytearray(state_to_find, encoding='utf-8')
 
         while first <= last:
             midpoint = int((first + last)/2)
             self.fh_txt.seek(midpoint * self.width)
-            line = self.fh_txt.readline().rstrip()
 
-            try:
-                (state, steps) = line.split(':')
-            except Exception:
-                log.warning("%s: midpoint %d, width %d, state_to_find %s, line %s" % (self, midpoint, self.width, state_to_find, line))
-                raise
+            # Only read the 'state' part of the line (for speed)
+            b_state = self.fh_txt.read(self.state_width)
 
-            if state == state_to_find:
-                return line
+            if b_state_to_find < b_state:
+                last = midpoint - 1
+
+            # If this is the line we are looking for, then read the entire line
+            elif b_state_to_find == b_state:
+                self.fh_txt.seek(midpoint * self.width)
+                line = self.fh_txt.read(self.width)
+                return line.decode('utf-8').rstrip()
+
             else:
-                if state_to_find < state:
-                    last = midpoint-1
-                else:
-                    first = midpoint+1
+                first = midpoint + 1
 
         return None
 
@@ -232,8 +235,6 @@ class LookupTable(object):
         line_number_to_state = {}
 
         for state_to_find in list_of_states:
-            #first = 0
-            #last = self.linecount - 1
             (line_number_to_state, first, last) = get_first_last_for_binary_search(line_number_to_state, state_to_find, self.linecount)
             #log.info("%s: first %d, last %d, state_to_find %s" % (self, first, last, state_to_find))
 
@@ -241,7 +242,6 @@ class LookupTable(object):
                 midpoint = int((first + last)/2)
                 self.fh_txt.seek(midpoint * self.width)
                 line = self.fh_txt.readline().rstrip()
-
                 #log.info("%s: first %d, last %d, midpoint %d, width %d, state_to_find %s, line %s" % (self, first, last, midpoint, self.width, state_to_find, line))
 
                 try:
@@ -263,7 +263,6 @@ class LookupTable(object):
                         first = midpoint+1
 
         return results
-
 
     def steps(self, state_to_find=None):
         """
@@ -509,8 +508,8 @@ class LookupTableIDA(LookupTable):
         state = self.state()
 
         if self.ida_search_complete(state, steps_to_here):
-            log.info("%s: IDA found match %d steps in, %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
-                     (self, len(steps_to_here), ' '.join(steps_to_here), f_cost, cost_to_here, cost_to_goal))
+            log.info("%s: IDA found match %d steps in, %s, state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
+                     (self, len(steps_to_here), ' '.join(steps_to_here), state, f_cost, cost_to_here, cost_to_goal))
             return True
 
         # ==============

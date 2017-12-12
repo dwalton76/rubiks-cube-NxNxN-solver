@@ -32,6 +32,10 @@ class NoIDASolution(Exception):
     pass
 
 
+class NoAStarSolution(Exception):
+    pass
+
+
 def get_first_last_for_binary_search(line_number_to_state, state_to_find, linecount):
     first = 0
     last = linecount - 1
@@ -184,24 +188,12 @@ class LookupTable(object):
             self.state_target = set((state_target, ))
 
         self.cache = {}
-        self.preloaded_cache = False
 
         # 'rb' mode is about 3x faster than 'r' mode
         self.fh_txt = open(self.filename, mode='rb')
 
     def __str__(self):
         return self.desc
-
-    def preload_cache(self):
-        log.info("%s: start preload_cache()" % self)
-        self.fh_txt.seek(0)
-
-        for line in self.fh_txt.readlines():
-            (state, steps) = line.split(':')
-            self.cache[state] = steps.split()
-        self.fh_txt.seek(0)
-        log.info("%s: end preload_cache()" % self)
-        self.preloaded_cache = True
 
     def binary_search(self, state_to_find):
         first = 0
@@ -275,9 +267,6 @@ class LookupTable(object):
         if state_to_find in self.state_target:
             return None
 
-        if self.preloaded_cache:
-            return self.cache.get(state_to_find)
-
         try:
             return self.cache[state_to_find]
         except KeyError:
@@ -338,7 +327,7 @@ class LookupTable(object):
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
 
 
-class LookupTableIDA(LookupTable):
+class LookupTableAStar(LookupTable):
 
     def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount):
         LookupTable.__init__(self, parent, filename, state_target, linecount)
@@ -352,41 +341,6 @@ class LookupTableIDA(LookupTable):
         for x in moves_all:
             if x not in moves_illegal:
                 self.moves_all.append(x)
-
-    def ida_heuristic_all_costs(self):
-        """
-        No longer used...save for rainy day
-        """
-        results = {}
-
-        for pt in self.prune_tables:
-            pt_state = pt.state()
-            pt_steps = pt.steps(pt_state)
-
-            if pt_state in pt.state_target:
-                len_pt_steps = 0
-
-            elif pt_steps:
-                len_pt_steps = len(pt_steps)
-
-                # There are few prune tables that I built where instead of listing the steps
-                # for a state I just listed how many steps there would be.  I did this to save
-                # space.  lookup-table-5x5x5-step13-UD-centers-stage-UFDB-only.txt is one such table.
-                if len_pt_steps == 1 and pt_steps[0].isdigit():
-                    len_pt_steps = int(pt_steps[0])
-
-            elif pt.max_depth:
-                # This is the exception to the rule but some prune tables such
-                # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
-                # are partial tables so use the max_depth of the table +1
-                len_pt_steps = pt.max_depth + 1
-
-            else:
-                raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (pt, pt_state, pt.state_width))
-
-            results[pt.filename] = len_pt_steps
-
-        return results
 
     def ida_heuristic(self, debug=False):
         cost_to_goal = 0
@@ -442,27 +396,24 @@ class LookupTableIDA(LookupTable):
         populate self.cache with misses.
         """
 
-        if self.preloaded_cache:
-            return self.cache.get(state_to_find)
-        else:
-            line = self.binary_search(state_to_find)
+        line = self.binary_search(state_to_find)
 
-            if line:
-                (state, steps) = line.strip().split(':')
-                return steps.split()
+        if line:
+            (state, steps) = line.strip().split(':')
+            return steps.split()
 
-            return None
+        return None
 
-    def ida_search_complete(self, state, steps_to_here):
+    def search_complete(self, state, steps_to_here):
         steps = self.steps(state)
 
         if not steps:
             return False
 
-        # =================================================
-        # If there are steps for a state that means our IDA
+        # =============================================
+        # If there are steps for a state that means our
         # search is done...woohoo!!
-        # =================================================
+        # =============================================
         # rotate_xxx() is very fast but it does not append the
         # steps to the solution so put the cube back in original state
         # and execute the steps via a normal rotate() call
@@ -494,6 +445,180 @@ class LookupTableIDA(LookupTable):
 
         return True
 
+    def _solve(self):
+        """
+        solving prep work used by both AStar and IDA* solve()
+
+        Returns True if cube is already "solved"
+        """
+
+        # This shouldn't happen since the lookup tables are downloaded from github
+        if not self.filename_exists:
+            raise Exception("%s does not exist" % self.filename)
+
+        state = self.state()
+        #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
+
+        # The cube is already in the desired state, nothing to do
+        if state in self.state_target:
+            log.info("%s: IDA/AStar, cube is already at the target state %s" % (self, state))
+            return True
+
+        # The cube is already in a state that is in our lookup table, nothing for IDA to do
+        steps = self.steps(state)
+
+        if steps:
+            log.info("%s: IDA/Star, cube is already in a state %s that is in our lookup table" % (self, state))
+
+            # The cube is now in a state where it is in the lookup table, we may need
+            # to do several lookups to get to our target state though. Use
+            # LookupTabele's solve() to take us the rest of the way to the target state.
+            LookupTable.solve(self)
+            return True
+
+        # If we are here (odds are very high we will be) it means that the current
+        # cube state was not in the lookup table.  We must now perform an IDA search
+        # until we find a sequence of moves that takes us to a state that IS in the
+        # lookup table.
+
+        # save cube state
+        self.original_state = self.parent.state[:]
+        self.original_solution = self.parent.solution[:]
+
+        if self.parent.size == 2:
+            self.rotate_xxx = rotate_222
+        elif self.parent.size == 4:
+            self.rotate_xxx = rotate_444
+        elif self.parent.size == 5:
+            self.rotate_xxx = rotate_555
+        elif self.parent.size == 6:
+            self.rotate_xxx = rotate_666
+        elif self.parent.size == 7:
+            self.rotate_xxx = rotate_777
+        else:
+            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+
+    def astar_search(self):
+        """
+        This isn't used at the moment...I did it as a quick experiment
+        """
+        astar_count = 0
+        explored = set()
+
+        import bisect
+        from sortedcontainers import SortedList
+
+        # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
+        cost_to_here = 0
+        cost_to_goal = self.ida_heuristic()
+        f_cost = cost_to_here + cost_to_goal
+
+        # Initialize the workq
+        workq = SortedList()
+        workq.append((f_cost, cost_to_goal, (), self.original_state[:]))
+
+        while workq:
+            astar_count += 1
+
+            (f_cost, cost_to_goal, steps_to_here, prev_state) = workq.pop(0)
+            self.parent.state = prev_state[:]
+
+            lt_state = self.state()
+
+            use_search_complete = True
+
+            if use_search_complete:
+                if self.search_complete(lt_state, steps_to_here):
+                    log.info("%s: AStar found match %d steps in, %s, lt_state %s, AStar count %d, f_cost %d" %
+                             (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, astar_count, f_cost))
+                    return True
+
+            else:
+                # I used the following (instead of the search_complete() call above) to test
+                # using A* to go all the way to our goal, in other words don't use the main
+                # lookup table at all, only use the prune tables.
+                #
+                # This works but it is slower...for instance when solving 5x5x5 centers and
+                # you stage the LR centers, using search_complete() takes 30ms but
+                # using just the prune tables takes 44000ms .
+                cost_to_goal = self.ida_heuristic()
+
+                if cost_to_goal == 0:
+                    # rotate_xxx() is very fast but it does not append the
+                    # steps to the solution so put the cube back in original state
+                    # and execute the steps via a normal rotate() call
+                    self.parent.state = self.original_state[:]
+                    self.parent.solution = self.original_solution[:]
+
+                    for step in steps_to_here:
+                        self.parent.rotate(step)
+
+                    lt_state = self.state()
+
+                    log.info("%s: AStar found match %d steps in, %s, lt_state %s, AStar count %d, f_cost %d" %
+                             (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, astar_count, f_cost))
+                    return True
+
+            if astar_count % 1000 == 0:
+                log.info("%s: AStar count %d, workq depth %d, f_cost %d, steps_to_here %s" % (self, astar_count, len(workq), f_cost, ' '.join(steps_to_here)))
+
+            # If we have already explored the exact same scenario down another branch
+            # then we can stop looking down this branch
+            if lt_state not in explored:
+                explored.add(lt_state)
+
+                if steps_to_here:
+                    prev_step = steps_to_here[-1]
+                else:
+                    prev_step = None
+
+                cost_to_here = len(steps_to_here) + 1
+
+                # ==============
+                # Keep Searching
+                # ==============
+                for step in self.moves_all:
+
+                    # If this step cancels out the previous step then don't bother with this branch
+                    if prev_step is not None:
+
+                        # U2 followed by U2 is a no-op
+                        if step == prev_step and step.endswith("2"):
+                            continue
+
+                        # U' followed by U is a no-op
+                        if step == prev_step[0:-1] and prev_step.endswith("'") and not step.endswith("'"):
+                            continue
+
+                        # U followed by U' is a no-op
+                        if step[0:-1] == prev_step and not prev_step.endswith("'") and step.endswith("'"):
+                            continue
+
+                    self.parent.state = self.rotate_xxx(prev_state[:], step)
+
+                    # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
+                    cost_to_goal = self.ida_heuristic()
+                    f_cost = cost_to_here + cost_to_goal
+
+                    # The workq must remain sorted with lowest f_cost entries coming first, use
+                    # cost_to_goal as a tie breaker
+                    steps_to_here_plus_step = tuple(list(steps_to_here[:]) + [step,])
+                    insert_position = bisect.bisect_right(workq, (f_cost, cost_to_goal, steps_to_here_plus_step, self.parent.state))
+                    workq.insert(insert_position, (f_cost, cost_to_goal, steps_to_here_plus_step, self.parent.state[:]))
+
+        raise NoAStarSolution("%s FAILED" % self)
+
+    def solve(self):
+        start_time0 = dt.datetime.now()
+
+        if self._solve():
+            return True
+
+        self.astar_search()
+
+
+class LookupTableIDA(LookupTableAStar):
+
     def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
         """
         https://algorithmsinsight.wordpress.com/graph-theory-2/ida-star-algorithm-in-general/
@@ -507,7 +632,7 @@ class LookupTableIDA(LookupTable):
 
         state = self.state()
 
-        if self.ida_search_complete(state, steps_to_here):
+        if self.search_complete(state, steps_to_here):
             log.info("%s: IDA found match %d steps in, %s, state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
                      (self, len(steps_to_here), ' '.join(steps_to_here), state, f_cost, cost_to_here, cost_to_goal))
             return True
@@ -552,55 +677,12 @@ class LookupTableIDA(LookupTable):
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
         """
         The goal is to find a sequence of moves that will put the cube in a state that is
-        in our lookup table self.filename
+        in our lookup table
         """
         start_time0 = dt.datetime.now()
 
-        # This shouldn't happen since the lookup tables are in the repo
-        if not self.filename_exists:
-            raise SolveError("%s does not exist" % self.filename)
-
-        state = self.state()
-        #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
-
-        # The cube is already in the desired state, nothing to do
-        if state in self.state_target:
-            log.info("%s: IDA, cube is already at the target state %s" % (self, state))
-            return
-
-        # The cube is already in a state that is in our lookup table, nothing for IDA to do
-        steps = self.steps(state)
-
-        if steps:
-            log.info("%s: IDA, cube is already in a state %s that is in our lookup table" % (self, state))
-
-            # The cube is now in a state where it is in the lookup table, we may need
-            # to do several lookups to get to our target state though. Use
-            # LookupTabele's solve() to take us the rest of the way to the target state.
-            LookupTable.solve(self)
-            return
-
-        # If we are here (odds are very high we will be) it means that the current
-        # cube state was not in the lookup table.  We must now perform an IDA search
-        # until we find a sequence of moves that takes us to a state that IS in the
-        # lookup table.
-
-        # save cube state
-        self.original_state = self.parent.state[:]
-        self.original_solution = self.parent.solution[:]
-
-        if self.parent.size == 2:
-            self.rotate_xxx = rotate_222
-        elif self.parent.size == 4:
-            self.rotate_xxx = rotate_444
-        elif self.parent.size == 5:
-            self.rotate_xxx = rotate_555
-        elif self.parent.size == 6:
-            self.rotate_xxx = rotate_666
-        elif self.parent.size == 7:
-            self.rotate_xxx = rotate_777
-        else:
-            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+        if self._solve():
+            return True
 
         if min_ida_threshold is None:
             min_ida_threshold = self.ida_heuristic()
@@ -623,7 +705,7 @@ class LookupTableIDA(LookupTable):
                     (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
                      pretty_time(end_time1 - start_time0)))
-                return
+                return True
             else:
                 end_time1 = dt.datetime.now()
                 log.info("%s: IDA threshold %d, explored %d branches, took %s" %

@@ -4,7 +4,7 @@ from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksSide import Side, SolveError
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_4x4x4, solved_4x4x4
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, NoSteps
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, LookupTableAStar
 from rubikscubennnsolver.rotate_xxx import rotate_555
 import datetime as dt
 import logging
@@ -187,7 +187,6 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        # dwalton here now
 
         result = [
             # Upper
@@ -479,8 +478,8 @@ class LookupTable555LRXCentersStage(LookupTable):
             'x', parent_state[113], 'x',
             parent_state[117], 'x', parent_state[119]]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -517,30 +516,31 @@ class LookupTable555LRTCentersStage(LookupTable):
             # Left
             'x', parent_state[33], 'x',
             parent_state[37], parent_state[38], parent_state[39],
-            'x', parent_state[43], 'x'
+            'x', parent_state[43], 'x',
 
             # Front
             'x', parent_state[58], 'x',
             parent_state[62], parent_state[63], parent_state[64],
-            'x', parent_state[68], 'x'
+            'x', parent_state[68], 'x',
 
             # Right
             'x', parent_state[83], 'x',
             parent_state[87], parent_state[88], parent_state[89],
-            'x', parent_state[93], 'x'
+            'x', parent_state[93], 'x',
 
             # Back
             'x', parent_state[108], 'x',
             parent_state[112], parent_state[113], parent_state[114],
             'x', parent_state[118], 'x']
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
 
 
+#class LookupTableIDA555LRCentersStage(LookupTableAStar):
 class LookupTableIDA555LRCentersStage(LookupTableIDA):
     """
     Stage LR centers to sides L or R, this will automagically stage
@@ -611,8 +611,8 @@ class LookupTableIDA555LRCentersStage(LookupTableIDA):
             parent_state[117], parent_state[118], parent_state[119]
         ]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('F', '0').replace('R', '1').replace('B', '0').replace('L', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)

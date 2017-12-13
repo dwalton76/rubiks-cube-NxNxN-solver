@@ -54,50 +54,50 @@ class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
 
         result = [
             # Upper
-            'xx', parent_state[11], 'xx',
-            'xxxxx',
-            parent_state[23], 'xxx', parent_state[27],
-            'xxxxx',
-            'xx', parent_state[39], 'xx',
+            'x', 'x', parent_state[11], 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[23], 'x', 'x', 'x', parent_state[27],
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', parent_state[39], 'x', 'x',
 
             # Left
-            'xx', parent_state[60], 'xx',
-            'xxxxx',
-            parent_state[72], 'xxx', parent_state[76],
-            'xxxxx',
-            'xx', parent_state[88], 'xx',
+            'x', 'x', parent_state[60], 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[72], 'x', 'x', 'x', parent_state[76],
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', parent_state[88], 'x', 'x',
 
             # Front
-            'xx', parent_state[109], 'xx',
-            'xxxxx',
-            parent_state[121], 'xxx', parent_state[125],
-            'xxxxx',
-            'xx', parent_state[137], 'xx',
+            'x', 'x', parent_state[109], 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[121], 'x', 'x', 'x', parent_state[125],
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', parent_state[137], 'x', 'x',
 
             # Right
-            'xx', parent_state[158], 'xx',
-            'xxxxx',
-            parent_state[170], 'xxx', parent_state[174],
-            'xxxxx',
-            'xx', parent_state[186], 'xx',
+            'x', 'x', parent_state[158], 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[170], 'x', 'x', 'x', parent_state[174],
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', parent_state[186], 'x', 'x',
 
             # Back
-            'xx', parent_state[207], 'xx',
-            'xxxxx',
-            parent_state[219], 'xxx', parent_state[223],
-            'xxxxx',
-            'xx', parent_state[235], 'xx',
+            'x', 'x', parent_state[207], 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[219], 'x', 'x', 'x', parent_state[223],
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', parent_state[235], 'x', 'x',
 
             # Down
-            'xx', parent_state[256], 'xx',
-            'xxxxx',
-            parent_state[268], 'xxx', parent_state[272],
-            'xxxxx',
-            'xx', parent_state[284], 'xx'
+            'x', 'x', parent_state[256], 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[268], 'x', 'x', 'x', parent_state[272],
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', parent_state[284], 'x', 'x'
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -137,50 +137,50 @@ class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
 
         result = [
             # Upper
-            'x', parent_state[10], 'xxx',
-            'xxxx', parent_state[20],
-            'xxxxx',
-            parent_state[30], 'xxxx',
-            'xxx', parent_state[40], 'x',
+            'x', parent_state[10], 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[20],
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[30], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', parent_state[40], 'x',
 
             # Left
-            'x', parent_state[59], 'xxx',
-            'xxxx', parent_state[69],
-            'xxxxx',
-            parent_state[79], 'xxxx',
-            'xxx', parent_state[89], 'x',
+            'x', parent_state[59], 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[69],
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[79], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', parent_state[89], 'x',
 
             # Front
-            'x', parent_state[108], 'xxx',
-            'xxxx', parent_state[118],
-            'xxxxx',
-            parent_state[128], 'xxxx',
-            'xxx', parent_state[138], 'x',
+            'x', parent_state[108], 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[118],
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[128], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', parent_state[138], 'x',
 
             # Right
-            'x', parent_state[157], 'xxx',
-            'xxxx', parent_state[167],
-            'xxxxx',
-            parent_state[177], 'xxxx',
-            'xxx', parent_state[187], 'x',
+            'x', parent_state[157], 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[167],
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[177], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', parent_state[187], 'x',
 
             # Back
-            'x', parent_state[206], 'xxx',
-            'xxxx', parent_state[216],
-            'xxxxx',
-            parent_state[226], 'xxxx',
-            'xxx', parent_state[236], 'x',
+            'x', parent_state[206], 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[216],
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[226], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', parent_state[236], 'x',
 
             # Down
-            'x', parent_state[255], 'xxx',
-            'xxxx', parent_state[265],
-            'xxxxx',
-            parent_state[275], 'xxxx',
-            'xxx', parent_state[285], 'x'
+            'x', parent_state[255], 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[265],
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[275], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', parent_state[285], 'x'
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -220,50 +220,50 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
 
         result = [
             # Upper
-            'xxx', parent_state[12], 'x',
-            parent_state[16], 'xxxx',
-            'xxxxx',
-            'xxxx', parent_state[34],
-            'x', parent_state[38], 'xxx',
+            'x', 'x', 'x', parent_state[12], 'x',
+            parent_state[16], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[34],
+            'x', parent_state[38], 'x', 'x', 'x',
 
             # Left
-            'xxx', parent_state[61], 'x',
-            parent_state[65], 'xxxx',
-            'xxxxx',
-            'xxxx', parent_state[83],
-            'x', parent_state[87], 'xxx',
+            'x', 'x', 'x', parent_state[61], 'x',
+            parent_state[65], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[83],
+            'x', parent_state[87], 'x', 'x', 'x',
 
             # Front
-            'xxx', parent_state[110], 'x',
-            parent_state[114], 'xxxx',
-            'xxxxx',
-            'xxxx', parent_state[132],
-            'x', parent_state[136], 'xxx',
+            'x', 'x', 'x', parent_state[110], 'x',
+            parent_state[114], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[132],
+            'x', parent_state[136], 'x', 'x', 'x',
 
             # Right
-            'xxx', parent_state[159], 'x',
-            parent_state[163], 'xxxx',
-            'xxxxx',
-            'xxxx', parent_state[181],
-            'x', parent_state[185], 'xxx',
+            'x', 'x', 'x', parent_state[159], 'x',
+            parent_state[163], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[181],
+            'x', parent_state[185], 'x', 'x', 'x',
 
             # Back
-            'xxx', parent_state[208], 'x',
-            parent_state[212], 'xxxx',
-            'xxxxx',
-            'xxxx', parent_state[230],
-            'x', parent_state[234], 'xxx',
+            'x', 'x', 'x', parent_state[208], 'x',
+            parent_state[212], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[230],
+            'x', parent_state[234], 'x', 'x', 'x',
 
             # Down
-            'xxx', parent_state[257], 'x',
-            parent_state[261], 'xxxx',
-            'xxxxx',
-            'xxxx', parent_state[279],
-            'x', parent_state[283], 'xxx'
+            'x', 'x', 'x', parent_state[257], 'x',
+            parent_state[261], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[279],
+            'x', parent_state[283], 'x', 'x', 'x'
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -311,49 +311,49 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
         result = [
             # Upper
             'x', parent_state[10], parent_state[11], parent_state[12], 'x',
-            parent_state[16], 'xxx', parent_state[20],
-            parent_state[23], 'xxx', parent_state[27],
-            parent_state[30], 'xxx', parent_state[34],
+            parent_state[16], 'x', 'x', 'x', parent_state[20],
+            parent_state[23], 'x', 'x', 'x', parent_state[27],
+            parent_state[30], 'x', 'x', 'x', parent_state[34],
             'x', parent_state[38], parent_state[39], parent_state[40], 'x',
 
             # Left
             'x', parent_state[59], parent_state[60], parent_state[61], 'x',
-            parent_state[65], 'xxx', parent_state[69],
-            parent_state[72], 'xxx', parent_state[76],
-            parent_state[79], 'xxx', parent_state[83],
+            parent_state[65], 'x', 'x', 'x', parent_state[69],
+            parent_state[72], 'x', 'x', 'x', parent_state[76],
+            parent_state[79], 'x', 'x', 'x', parent_state[83],
             'x', parent_state[87], parent_state[88], parent_state[89], 'x',
 
             # Front
             'x', parent_state[108], parent_state[109], parent_state[110], 'x',
-            parent_state[114], 'xxx', parent_state[118],
-            parent_state[121], 'xxx', parent_state[125],
-            parent_state[128], 'xxx', parent_state[132],
+            parent_state[114], 'x', 'x', 'x', parent_state[118],
+            parent_state[121], 'x', 'x', 'x', parent_state[125],
+            parent_state[128], 'x', 'x', 'x', parent_state[132],
             'x', parent_state[136], parent_state[137], parent_state[138], 'x',
 
             # Right
             'x', parent_state[157], parent_state[158], parent_state[159], 'x',
-            parent_state[163], 'xxx', parent_state[167],
-            parent_state[170], 'xxx', parent_state[174],
-            parent_state[177], 'xxx', parent_state[181],
+            parent_state[163], 'x', 'x', 'x', parent_state[167],
+            parent_state[170], 'x', 'x', 'x', parent_state[174],
+            parent_state[177], 'x', 'x', 'x', parent_state[181],
             'x', parent_state[185], parent_state[186], parent_state[187], 'x',
 
             # Back
             'x', parent_state[206], parent_state[207], parent_state[208], 'x',
-            parent_state[212], 'xxx', parent_state[216],
-            parent_state[219], 'xxx', parent_state[223],
-            parent_state[226], 'xxx', parent_state[230],
+            parent_state[212], 'x', 'x', 'x', parent_state[216],
+            parent_state[219], 'x', 'x', 'x', parent_state[223],
+            parent_state[226], 'x', 'x', 'x', parent_state[230],
             'x', parent_state[234], parent_state[235], parent_state[236], 'x',
 
             # Down
             'x', parent_state[255], parent_state[256], parent_state[257], 'x',
-            parent_state[261], 'xxx', parent_state[265],
-            parent_state[268], 'xxx', parent_state[272],
-            parent_state[275], 'xxx', parent_state[279],
+            parent_state[261], 'x', 'x', 'x', parent_state[265],
+            parent_state[268], 'x', 'x', 'x', parent_state[272],
+            parent_state[275], 'x', 'x', 'x', parent_state[279],
             'x', parent_state[283], parent_state[284], parent_state[285], 'x'
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -390,36 +390,36 @@ class LookupTable777LRObliqueEdgePairingMiddleOnly(LookupTable):
 
         result = [
             # Left
-            'xx', parent_state[60], 'xx',
-            'xxxxx',
-            parent_state[72], 'xxx', parent_state[76],
-            'xxxxx',
-            'xx', parent_state[88], 'xx',
+            'x', 'x', parent_state[60], 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[72], 'x', 'x', 'x', parent_state[76],
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', parent_state[88], 'x', 'x',
 
             # Front
-            'xx', parent_state[109], 'xx',
-            'xxxxx',
-            parent_state[121], 'xxx', parent_state[125],
-            'xxxxx',
-            'xx', parent_state[137], 'xx',
+            'x', 'x', parent_state[109], 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[121], 'x', 'x', 'x', parent_state[125],
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', parent_state[137], 'x', 'x',
 
             # Right
-            'xx', parent_state[158], 'xx',
-            'xxxxx',
-            parent_state[170], 'xxx', parent_state[174],
-            'xxxxx',
-            'xx', parent_state[186], 'xx',
+            'x', 'x', parent_state[158], 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[170], 'x', 'x', 'x', parent_state[174],
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', parent_state[186], 'x', 'x',
 
             # Back
-            'xx', parent_state[207], 'xx',
-            'xxxxx',
-            parent_state[219], 'xxx', parent_state[223],
-            'xxxxx',
-            'xx', parent_state[235], 'xx'
+            'x', 'x', parent_state[207], 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[219], 'x', 'x', 'x', parent_state[223],
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', parent_state[235], 'x', 'x'
         ]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -455,36 +455,36 @@ class LookupTable777LRObliqueEdgePairingLeftOnly(LookupTable):
 
         result = [
             # Left
-            'x', parent_state[59], 'xxx',
-            'xxxx', parent_state[69],
-            'xxxxx',
-            parent_state[79], 'xxxx',
-            'xxx', parent_state[89], 'x',
+            'x', parent_state[59], 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[69],
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[79], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', parent_state[89], 'x',
 
             # Front
-            'x', parent_state[108], 'xxx',
-            'xxxx', parent_state[118],
-            'xxxxx',
-            parent_state[128], 'xxxx',
-            'xxx', parent_state[138], 'x',
+            'x', parent_state[108], 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[118],
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[128], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', parent_state[138], 'x',
 
             # Right
-            'x', parent_state[157], 'xxx',
-            'xxxx', parent_state[167],
-            'xxxxx',
-            parent_state[177], 'xxxx',
-            'xxx', parent_state[187], 'x',
+            'x', parent_state[157], 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[167],
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[177], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', parent_state[187], 'x',
 
             # Back
-            'x', parent_state[206], 'xxx',
-            'xxxx', parent_state[216],
-            'xxxxx',
-            parent_state[226], 'xxxx',
-            'xxx', parent_state[236], 'x'
+            'x', parent_state[206], 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[216],
+            'x', 'x', 'x', 'x', 'x',
+            parent_state[226], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', parent_state[236], 'x'
         ]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -520,36 +520,36 @@ class LookupTable777LRObliqueEdgePairingRightOnly(LookupTable):
 
         result = [
             # Left
-            'xxx', parent_state[61], 'x',
-            parent_state[65], 'xxxx',
-            'xxxxx',
-            'xxxx', parent_state[83],
-            'x', parent_state[87], 'xxx',
+            'x', 'x', 'x', parent_state[61], 'x',
+            parent_state[65], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[83],
+            'x', parent_state[87], 'x', 'x', 'x',
 
             # Front
-            'xxx', parent_state[110], 'x',
-            parent_state[114], 'xxxx',
-            'xxxxx',
-            'xxxx', parent_state[132],
-            'x', parent_state[136], 'xxx',
+            'x', 'x', 'x', parent_state[110], 'x',
+            parent_state[114], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[132],
+            'x', parent_state[136], 'x', 'x', 'x',
 
             # Right
-            'xxx', parent_state[159], 'x',
-            parent_state[163], 'xxxx',
-            'xxxxx',
-            'xxxx', parent_state[181],
-            'x', parent_state[185], 'xxx',
+            'x', 'x', 'x', parent_state[159], 'x',
+            parent_state[163], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[181],
+            'x', parent_state[185], 'x', 'x', 'x',
 
             # Back
-            'xxx', parent_state[208], 'x',
-            parent_state[212], 'xxxx',
-            'xxxxx',
-            'xxxx', parent_state[230],
-            'x', parent_state[234], 'xxx'
+            'x', 'x', 'x', parent_state[208], 'x',
+            parent_state[212], 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x', parent_state[230],
+            'x', parent_state[234], 'x', 'x', 'x'
         ]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -600,35 +600,35 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
         result = [
             # Left
             'x', parent_state[59], parent_state[60], parent_state[61], 'x',
-            parent_state[65], 'xxx', parent_state[69],
-            parent_state[72], 'xxx', parent_state[76],
-            parent_state[79], 'xxx', parent_state[83],
+            parent_state[65], 'x', 'x', 'x', parent_state[69],
+            parent_state[72], 'x', 'x', 'x', parent_state[76],
+            parent_state[79], 'x', 'x', 'x', parent_state[83],
             'x', parent_state[87], parent_state[88], parent_state[89], 'x',
 
             # Front
             'x', parent_state[108], parent_state[109], parent_state[110], 'x',
-            parent_state[114], 'xxx', parent_state[118],
-            parent_state[121], 'xxx', parent_state[125],
-            parent_state[128], 'xxx', parent_state[132],
+            parent_state[114], 'x', 'x', 'x', parent_state[118],
+            parent_state[121], 'x', 'x', 'x', parent_state[125],
+            parent_state[128], 'x', 'x', 'x', parent_state[132],
             'x', parent_state[136], parent_state[137], parent_state[138], 'x',
 
             # Right
             'x', parent_state[157], parent_state[158], parent_state[159], 'x',
-            parent_state[163], 'xxx', parent_state[167],
-            parent_state[170], 'xxx', parent_state[174],
-            parent_state[177], 'xxx', parent_state[181],
+            parent_state[163], 'x', 'x', 'x', parent_state[167],
+            parent_state[170], 'x', 'x', 'x', parent_state[174],
+            parent_state[177], 'x', 'x', 'x', parent_state[181],
             'x', parent_state[185], parent_state[186], parent_state[187], 'x',
 
             # Back
             'x', parent_state[206], parent_state[207], parent_state[208], 'x',
-            parent_state[212], 'xxx', parent_state[216],
-            parent_state[219], 'xxx', parent_state[223],
-            parent_state[226], 'xxx', parent_state[230],
+            parent_state[212], 'x', 'x', 'x', parent_state[216],
+            parent_state[219], 'x', 'x', 'x', parent_state[223],
+            parent_state[226], 'x', 'x', 'x', parent_state[230],
             'x', parent_state[234], parent_state[235], parent_state[236], 'x'
         ]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('U', '0').replace('F', '0').replace('D', '0').replace('B', '0').replace('R', '1').replace('L', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -1036,8 +1036,8 @@ class LookupTable777LRSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
             'xx', parent_state[186], 'xx'
         ]
 
+        result = ['x' if x in ('U', 'D', 'F', 'B') else x for x in result]
         result = ''.join(result)
-        result = result.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
 
         return result
 
@@ -1157,8 +1157,8 @@ class LookupTable777LRSolveObliqueEdge(LookupTable):
             'x', parent_state[185], parent_state[186], parent_state[187], 'x'
         ]
 
+        result = ['x' if x in ('U', 'D', 'F', 'B') else x for x in result]
         result = ''.join(result)
-        result = result.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
 
         return result
 
@@ -1284,8 +1284,8 @@ class LookupTableIDA777LRSolveInnerCentersAndObliqueEdges(LookupTableIDA):
             'x', parent_state[185], parent_state[186], parent_state[187], 'x'
         ]
 
+        result = ['x' if x in ('U', 'D', 'F', 'B') else x for x in result]
         result = ''.join(result)
-        result = result.replace('U', 'x').replace('D', 'x').replace('F', 'x').replace('B', 'x')
 
         return result
 
@@ -1405,8 +1405,8 @@ class LookupTable777FBSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
             'xx', parent_state[235], 'xx'
         ]
 
+        result = ['x' if x in ('U', 'D', 'L', 'R') else x for x in result]
         result = ''.join(result)
-        result = result.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
 
         return result
 
@@ -1526,8 +1526,8 @@ class LookupTable777FBSolveObliqueEdge(LookupTable):
             'x', parent_state[234], parent_state[235], parent_state[236], 'x'
         ]
 
+        result = ['x' if x in ('U', 'D', 'L', 'R') else x for x in result]
         result = ''.join(result)
-        result = result.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
 
         return result
 
@@ -1654,8 +1654,8 @@ class LookupTableIDA777FBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
             'x', parent_state[234], parent_state[235], parent_state[236], 'x'
         ]
 
+        result = ['x' if x in ('U', 'D', 'L', 'R') else x for x in result]
         result = ''.join(result)
-        result = result.replace('U', 'x').replace('D', 'x').replace('L', 'x').replace('R', 'x')
 
         return result
 

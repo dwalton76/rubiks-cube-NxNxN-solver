@@ -62,57 +62,47 @@ class LookupTable444UDCentersStage(LookupTable):
             linecount=735471)
 
     def state(self):
-        babel = {
-            'x' : '0',
-            'L' : '0',
-            'F' : '0',
-            'R' : '0',
-            'B' : '0',
-            'D' : '1',
-            'U' : '1',
-        }
         parent_state = self.parent.state
-        # TODO test if it would be faster to not do babel here but loop over the
-        # result and set to 1 if in (U, D) else set it to 0.
 
         result = [
             # Upper
-            babel[parent_state[6]],
-            babel[parent_state[7]],
-            babel[parent_state[10]],
-            babel[parent_state[11]],
+            parent_state[6],
+            parent_state[7],
+            parent_state[10],
+            parent_state[11],
 
             # Left
-            babel[parent_state[22]],
-            babel[parent_state[23]],
-            babel[parent_state[26]],
-            babel[parent_state[27]],
+            parent_state[22],
+            parent_state[23],
+            parent_state[26],
+            parent_state[27],
 
             # Front
-            babel[parent_state[38]],
-            babel[parent_state[39]],
-            babel[parent_state[42]],
-            babel[parent_state[43]],
+            parent_state[38],
+            parent_state[39],
+            parent_state[42],
+            parent_state[43],
 
             # Right
-            babel[parent_state[54]],
-            babel[parent_state[55]],
-            babel[parent_state[58]],
-            babel[parent_state[59]],
+            parent_state[54],
+            parent_state[55],
+            parent_state[58],
+            parent_state[59],
 
             # Back
-            babel[parent_state[70]],
-            babel[parent_state[71]],
-            babel[parent_state[74]],
-            babel[parent_state[75]],
+            parent_state[70],
+            parent_state[71],
+            parent_state[74],
+            parent_state[75],
 
             # Down
-            babel[parent_state[86]],
-            babel[parent_state[87]],
-            babel[parent_state[90]],
-            babel[parent_state[91]]
+            parent_state[86],
+            parent_state[87],
+            parent_state[90],
+            parent_state[91]
         ]
 
+        result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
 
         # Convert to hex
@@ -130,55 +120,47 @@ class LookupTable444LRCentersStage(LookupTable):
             linecount=735471)
 
     def state(self):
-        babel = {
-            'x' : '0',
-            'L' : '1',
-            'F' : '0',
-            'R' : '1',
-            'B' : '0',
-            'D' : '0',
-            'U' : '0',
-        }
         parent_state = self.parent.state
 
         result = [
             # Upper
-            babel[parent_state[6]],
-            babel[parent_state[7]],
-            babel[parent_state[10]],
-            babel[parent_state[11]],
+            parent_state[6],
+            parent_state[7],
+            parent_state[10],
+            parent_state[11],
 
             # Left
-            babel[parent_state[22]],
-            babel[parent_state[23]],
-            babel[parent_state[26]],
-            babel[parent_state[27]],
+            parent_state[22],
+            parent_state[23],
+            parent_state[26],
+            parent_state[27],
 
             # Front
-            babel[parent_state[38]],
-            babel[parent_state[39]],
-            babel[parent_state[42]],
-            babel[parent_state[43]],
+            parent_state[38],
+            parent_state[39],
+            parent_state[42],
+            parent_state[43],
 
             # Right
-            babel[parent_state[54]],
-            babel[parent_state[55]],
-            babel[parent_state[58]],
-            babel[parent_state[59]],
+            parent_state[54],
+            parent_state[55],
+            parent_state[58],
+            parent_state[59],
 
             # Back
-            babel[parent_state[70]],
-            babel[parent_state[71]],
-            babel[parent_state[74]],
-            babel[parent_state[75]],
+            parent_state[70],
+            parent_state[71],
+            parent_state[74],
+            parent_state[75],
 
             # Down
-            babel[parent_state[86]],
-            babel[parent_state[87]],
-            babel[parent_state[90]],
-            babel[parent_state[91]]
+            parent_state[86],
+            parent_state[87],
+            parent_state[90],
+            parent_state[91]
         ]
 
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
         result = ''.join(result)
 
         # Convert to hex
@@ -196,55 +178,47 @@ class LookupTable444FBCentersStage(LookupTable):
             linecount=735471)
 
     def state(self):
-        babel = {
-            'x' : '0',
-            'L' : '0',
-            'F' : '1',
-            'R' : '0',
-            'B' : '1',
-            'D' : '0',
-            'U' : '0',
-        }
         parent_state = self.parent.state
 
         result = [
             # Upper
-            babel[parent_state[6]],
-            babel[parent_state[7]],
-            babel[parent_state[10]],
-            babel[parent_state[11]],
+            parent_state[6],
+            parent_state[7],
+            parent_state[10],
+            parent_state[11],
 
             # Left
-            babel[parent_state[22]],
-            babel[parent_state[23]],
-            babel[parent_state[26]],
-            babel[parent_state[27]],
+            parent_state[22],
+            parent_state[23],
+            parent_state[26],
+            parent_state[27],
 
             # Front
-            babel[parent_state[38]],
-            babel[parent_state[39]],
-            babel[parent_state[42]],
-            babel[parent_state[43]],
+            parent_state[38],
+            parent_state[39],
+            parent_state[42],
+            parent_state[43],
 
             # Right
-            babel[parent_state[54]],
-            babel[parent_state[55]],
-            babel[parent_state[58]],
-            babel[parent_state[59]],
+            parent_state[54],
+            parent_state[55],
+            parent_state[58],
+            parent_state[59],
 
             # Back
-            babel[parent_state[70]],
-            babel[parent_state[71]],
-            babel[parent_state[74]],
-            babel[parent_state[75]],
+            parent_state[70],
+            parent_state[71],
+            parent_state[74],
+            parent_state[75],
 
             # Down
-            babel[parent_state[86]],
-            babel[parent_state[87]],
-            babel[parent_state[90]],
-            babel[parent_state[91]]
+            parent_state[86],
+            parent_state[87],
+            parent_state[90],
+            parent_state[91]
         ]
 
+        result = ['1' if x in ('F', 'B') else '0' for x in result]
         result = ''.join(result)
 
         # Convert to hex
@@ -321,8 +295,18 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             parent_state[91]
         ]
 
-        result = ''.join(result)
-        result = result.replace('R', 'L').replace('B', 'F').replace('D', 'U')
+        tmp_result = []
+        for x in result:
+            if x in ('L', 'F', 'U'):
+                tmp_result.append(x)
+            elif x == 'R':
+                tmp_result.append('L')
+            elif x == 'B':
+                tmp_result.append('F')
+            elif x == 'D':
+                tmp_result.append('U')
+
+        result = ''.join(tmp_result)
 
         return result
 
@@ -391,8 +375,18 @@ class LookupTable444LFRBCentersStage(LookupTable):
             parent_state[91]
         ]
 
-        result = ''.join(result)
-        result = result.replace('U', 'x').replace('D', 'x').replace('R', 'L').replace('B', 'F')
+        tmp_result = []
+        for x in result:
+            if x in ('U', 'D'):
+                tmp_result.append('x')
+            elif x == 'R':
+                tmp_result.append('L')
+            elif x == 'B':
+                tmp_result.append('F')
+            else:
+                tmp_result.append(x)
+
+        result = ''.join(tmp_result)
 
         return result
 

@@ -68,6 +68,7 @@ class LookupTable(object):
         self.filename_exists = False
         self.linecount = linecount
         self.max_depth = max_depth
+        self.heuristic_stats = {}
         self.avoid_oll = False
         self.avoid_pll = False
 
@@ -319,7 +320,18 @@ class LookupTableAStar(LookupTable):
                 self.parent.print_cube()
                 raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (pt, pt_state, pt.state_width))
 
+            if self.heuristic_stats:
+                pt_costs.append(len_pt_steps)
+
             if len_pt_steps > cost_to_goal:
+                cost_to_goal = len_pt_steps
+
+        if self.heuristic_stats:
+            pt_costs = tuple(pt_costs)
+            len_pt_steps = self.heuristic_stats.get(pt_costs, 0)
+
+            if len_pt_steps > cost_to_goal:
+                log.info("%s: %s increase heuristic from %d to %d" % (self, pformat(pt_costs), cost_to_goal, len_pt_steps))
                 cost_to_goal = len_pt_steps
 
         #if debug:

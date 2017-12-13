@@ -1455,6 +1455,9 @@ class RubiksCube444(RubiksCube):
             log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
 
+            self.print_cube()
+            sys.exit(0) # dwalton
+
             log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             self.lt_ULFRBD_centers_solve.solve()
             self.print_cube()

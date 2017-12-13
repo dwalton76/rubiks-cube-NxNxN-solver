@@ -222,7 +222,6 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
 
         result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        self.state_binary_str = result
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -287,8 +286,6 @@ class LookupTable555CpuMinUDTCenterStage(LookupTable):
 
         result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        #result = ''.join(result)
-        #result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -353,8 +350,6 @@ class LookupTable555CpuMinUDXCenterStage(LookupTable):
 
         result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        #result = ''.join(result)
-        #result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -424,8 +419,6 @@ class  LookupTableIDA555CpuMinUDCentersStage(LookupTableIDA):
 
         result = ['1' if x in ('U', 'D') else '0' for x in result]
         result = ''.join(result)
-        #result = ''.join(result)
-        #result = result.replace('x', '0').replace('L', '0').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '1').replace('U', '1')
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -686,13 +679,88 @@ class LookupTableULCentersSolve(LookupTable):
             parent_state[142], parent_state[143], parent_state[144]
         ]
 
+        result = ['1' if x in ('U', 'L') else '0' for x in result]
         result = ''.join(result)
-        result = result.replace('x', '0').replace('U', '1').replace('L', '1').replace('F', '0').replace('R', '0').replace('B', '0').replace('D', '0')
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+class LookupTableUFCentersSolve(LookupTable):
+    """
+    This tables solves sides U and F which in turn also solve D and B.  When
+    the table was built the Fs were replaced with Us so that we were left with
+    only 'U' and 'x' squares so that we could save the states in hex which
+    makes the table take up much less disk space.
+
+    lookup-table-5x5x5-step33-UF-centers-solve.txt
+    ==============================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 71 entries (0 percent, 10.14x previous step)
+    3 steps has 630 entries (0 percent, 8.87x previous step)
+    4 steps has 4,639 entries (0 percent, 7.36x previous step)
+    5 steps has 32,060 entries (0 percent, 6.91x previous step)
+    6 steps has 198,779 entries (0 percent, 6.20x previous step)
+    7 steps has 1,011,284 entries (4 percent, 5.09x previous step)
+    8 steps has 3,826,966 entries (15 percent, 3.78x previous step)
+    9 steps has 8,611,512 entries (35 percent, 2.25x previous step)
+    10 steps has 8,194,244 entries (34 percent, 0.95x previous step)
+    11 steps has 2,062,640 entries (8 percent, 0.25x previous step)
+    12 steps has 67,152 entries (0 percent, 0.03x previous step)
+    13 steps has 16 entries (0 percent, 0.00x previous step)
+
+    Total: 24,010,000 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step33-UF-centers-solve.txt',
+            '3fe00ff8000000',
+            linecount=24010000)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = [
+            # Upper
+            parent_state[7], parent_state[8], parent_state[9],
+            parent_state[12], parent_state[13], parent_state[14],
+            parent_state[17], parent_state[18], parent_state[19],
+
+            # Left
+            parent_state[32], parent_state[33], parent_state[34],
+            parent_state[37], parent_state[38], parent_state[39],
+            parent_state[42], parent_state[43], parent_state[44],
+
+            # Front
+            parent_state[57], parent_state[58], parent_state[59],
+            parent_state[62], parent_state[63], parent_state[64],
+            parent_state[67], parent_state[68], parent_state[69],
+
+            # Right
+            parent_state[82], parent_state[83], parent_state[84],
+            parent_state[87], parent_state[88], parent_state[89],
+            parent_state[92], parent_state[93], parent_state[94],
+
+            # Back
+            parent_state[107], parent_state[108], parent_state[109],
+            parent_state[112], parent_state[113], parent_state[114],
+            parent_state[117], parent_state[118], parent_state[119],
+
+            # Down
+            parent_state[132], parent_state[133], parent_state[134],
+            parent_state[137], parent_state[138], parent_state[139],
+            parent_state[142], parent_state[143], parent_state[144]
+        ]
+
+        result = ['1' if x in ('U', 'F') else '0' for x in result]
+        result = ''.join(result)
 
         # Convert to hex
         return self.hex_format % int(result, 2)
 
 
+#class LookupTableIDA555ULFRBDCentersSolve(LookupTableAStar):
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     """
     Would be 117,649,000,000...I built it 7-deep.
@@ -713,6 +781,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
+        #LookupTableAStar.__init__(
             self,
             parent,
             'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
@@ -723,7 +792,8 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),
 
             # prune tables
-            (parent.lt_UL_centers_solve,),
+            (parent.lt_UL_centers_solve,
+             parent.lt_UF_centers_solve),
             linecount=13684136)
 
     def state(self):
@@ -1001,6 +1071,7 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
+        self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
 
         self.lt_edge_slice_forward = LookupTable555EdgeSliceForward(self)

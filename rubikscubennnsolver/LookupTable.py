@@ -571,8 +571,10 @@ class LookupTableIDA(LookupTableAStar):
         state = self.state()
 
         if self.search_complete(state, steps_to_here):
-            log.info("%s: IDA found match %d steps in, %s, state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
-                     (self, len(steps_to_here), ' '.join(steps_to_here), state, f_cost, cost_to_here, cost_to_goal))
+            #log.info("%s: IDA found match %d steps in, %s, state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
+            #         (self, len(steps_to_here), ' '.join(steps_to_here), state, f_cost, cost_to_here, cost_to_goal))
+            log.info("%s: IDA found match %d steps in, f_cost %d (%d + %d)" %
+                     (self, len(steps_to_here), f_cost, cost_to_here, cost_to_goal))
             return True
 
         # ==============

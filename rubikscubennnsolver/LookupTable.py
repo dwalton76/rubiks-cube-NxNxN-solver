@@ -71,6 +71,7 @@ class LookupTable(object):
         self.heuristic_stats = {}
         self.avoid_oll = False
         self.avoid_pll = False
+        self.preloaded_cache = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -169,6 +170,24 @@ class LookupTable(object):
     def __str__(self):
         return self.desc
 
+    def preload_cache(self):
+        """
+        This is experimental, it would typically be used to load the
+        contents of a prune table. For solving one cube it probably
+        doesn't buy you much but if one were to make a daemon that
+        loads all of the prune tables up front (that would take a lot
+        of memory) it might be worth it then.
+        """
+        log.info("%s: preload_cache start" % self)
+
+        self.cache = {}
+        for line in self.fh_txt:
+            (state, steps) = line.decode('utf-8').rstrip().split(':')
+            self.cache[state] = steps.split()
+
+        log.info("%s: preload_cache end" % self)
+        self.preloaded_cache = True
+
     def binary_search(self, state_to_find):
         first = 0
         last = self.linecount - 1
@@ -206,20 +225,28 @@ class LookupTable(object):
         if state_to_find in self.state_target:
             return None
 
-        try:
-            return self.cache[state_to_find]
-        except KeyError:
-            line = self.binary_search(state_to_find)
+        if self.preloaded_cache:
+            return self.cache.get(state_to_find)
 
-            if line:
-                (state, steps) = line.strip().split(':')
-                steps_list = steps.split()
-                self.cache[state_to_find] = steps_list
-                return steps_list
+        else:
+            try:
+                return self.cache[state_to_find]
+            except KeyError:
 
-            else:
-                self.cache[state_to_find] = None
-                return None
+                if self.preloaded_cache:
+                    return None
+
+                line = self.binary_search(state_to_find)
+
+                if line:
+                    (state, steps) = line.strip().split(':')
+                    steps_list = steps.split()
+                    self.cache[state_to_find] = steps_list
+                    return steps_list
+
+                else:
+                    self.cache[state_to_find] = None
+                    return None
 
     def steps_cost(self, state_to_find=None):
 
@@ -271,6 +298,7 @@ class LookupTableAStar(LookupTable):
     def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount):
         LookupTable.__init__(self, parent, filename, state_target, linecount)
         self.prune_tables = prune_tables
+        self.preloaded_state_set = False
 
         for x in moves_illegal:
             if x not in moves_all:
@@ -280,6 +308,22 @@ class LookupTableAStar(LookupTable):
         for x in moves_all:
             if x not in moves_illegal:
                 self.moves_all.append(x)
+
+    def preload_state_set(self):
+        """
+        This is experimental, it would typically be used to load only the keys
+        of an IDA lookup table. This would allow you to avoid doing a binary
+        search of the huge IDA lookup tables for keys that are not there.
+        """
+        log.info("%s: preload_state_set start" % self)
+
+        self.state_set = set()
+        for line in self.fh_txt:
+            (state, _) = line.decode('utf-8').strip().split(':')
+            self.state_set.add(state)
+
+        log.info("%s: preload_state_set end" % self)
+        self.preloaded_state_set = True
 
     def ida_heuristic(self, debug=False):
         cost_to_goal = 0
@@ -346,13 +390,30 @@ class LookupTableAStar(LookupTable):
         populate self.cache with misses.
         """
 
-        line = self.binary_search(state_to_find)
+        if self.preloaded_cache:
+            return self.cache.get(state_to_find)
 
-        if line:
-            (state, steps) = line.strip().split(':')
-            return steps.split()
+        elif self.preloaded_state_set:
 
-        return None
+            if state_to_find in self.state_set:
+                line = self.binary_search(state_to_find)
+
+                if line:
+                    (state, steps) = line.strip().split(':')
+                    return steps.split()
+                else:
+                    raise Exception("should not be here")
+            else:
+                return None
+
+        else:
+            line = self.binary_search(state_to_find)
+
+            if line:
+                (state, steps) = line.strip().split(':')
+                return steps.split()
+
+            return None
 
     def search_complete(self, state, steps_to_here):
         steps = self.steps(state)

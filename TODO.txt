@@ -1,0 +1,77 @@
+
+
+- experiment with B-Trees
+    - unittests
+    - rename 'nodes' to 'child_nodes' or 'children'
+    - optimaly load the B-Trees
+    - support for loading the first two levels in memory and finding the rest on disk
+
+    - Once the two bullets above are done we should be able to find a key via
+      a single seek(). We should also be able to only do one rstrip/split(',')
+      call, it should only happen when 'if key in key_line' is True.
+
+      Today we take ~14s where our time is in:
+
+   974730    0.533    0.000    0.533    0.000 {method 'seek' of '_io.BufferedReader' objects}
+  1431684    0.721    0.000    0.721    0.000 {method 'decode' of 'bytes' objects}
+ 127280/3    0.733    0.000   17.547    5.849 LookupTable.py:675(ida_search)
+   779505    0.920    0.000    0.920    0.000 {method 'read' of '_io.BufferedReader' objects}
+  1307535    1.435    0.000    1.435    0.000 {method 'rstrip' of 'str' objects}
+   915393    1.451    0.000    1.451    0.000 {built-in method builtins.next}
+  1372371    2.557    0.000    2.557    0.000 {method 'split' of 'str' objects}
+   195231    3.299    0.000   11.243    0.000 __init__.py:67(disk_get)
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+
+        So we should end up with
+        - seek()   : should come down to 195231...should shave about 300ms
+
+        - decode() : Will 'if key in key_line' work if it is not decoded to utf-8?
+            If so we can avoid all of these calls....should shave 721ms.
+
+        - read()   : should come down to 195231...should shave about 600ms
+
+        - rstrip() : can only call this 'if key in key_line' which should chop 99% of them..should shave 1435ms
+
+        - next() : is called today to load the nodes line...we can avoid this if we know that we are already at the leaf node depth
+            This should shave 1451ms
+
+        - split() : can only call this 'if key in key_line' which should chop 99% of them..should shave 2557ms
+
+        That is about ~7000ms we can shave...would get us from 14s down to 7s which would be awesome
+
+
+    - Test this against slow 6x6x6 UD oblique:
+
+./usr/bin/rubiks-cube-solver.py --cpu-max --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
+
+
+2017-12-17 09:52:42,776 RubiksCube666.py     INFO: UD inner x-centers staged, 5 steps in
+2017-12-17 09:52:42,777   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA threshold range 7->99
+2017-12-17 09:52:43,134   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA threshold 7, explored 2882 branches, took 356ms
+2017-12-17 09:52:52,335   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA threshold 8, explored 86762 branches, took 0:00:09.201718
+2017-12-17 09:52:55,953   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA found match 6 steps in, f_cost 10 (6 + 4)
+2017-12-17 09:52:55,953   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA threshold 9, explored 37636 branches, took 0:00:03.617328 (0:00:13.176431 total)
+
+This search takes about 5 million seek() calls when using binary search...the seeks are the top bottleneck thus the need to move to B-Trees
+
+
+
+- make rotate_xxx use one less function call by using a dictionary?
+
+- tsai
+    - explore TPR solver to see what tricks it is doing
+
+
+- ida_search() needs to return all of the results at that theshold
+Test on this one, 5x5x5-step20-LR-centers-stage  finds a solution 12 steps long but I know there is one
+that is 10 steps long (I found it via AStar)
+
+./usr/bin/rubiks-cube-solver.py --state RFFFUDUDURBFULULFDBLRLDUFDBLUBBBDDURLRDRFRUDDBFUFLFURRLDFRRRUBFUUDUFLLBLBBULDDRRUFUUUBUDFFDRFLRBBLRFDLLUUBBRFRFRLLBFRLBRRFRBDLLDDFBLRDLFBBBLBLBDUUFDDD
+
+I have a partial patch for this (patches/ida_solutions_use_best.patch) but it needs some work.
+We need to pseudo combine multiple phases to get shorter solutions. For example
+we need to find multiple solutions for staging UD centers and then for each of those find multiple
+solutions for staging LR centers and keep the one that allows us to solve the 5x5x5 centers in the
+least number of steps. That is a lot of IDA searches though so this all has to happen after
+the bplustree work is done.
+

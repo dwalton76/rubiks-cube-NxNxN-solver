@@ -641,11 +641,11 @@ class LookupTableIDA(LookupTableAStar):
         cost_to_goal = self.ida_heuristic()
         f_cost = cost_to_here + cost_to_goal
 
-        state = self.state()
+        lt_state = self.state()
 
-        if self.search_complete(state, steps_to_here):
-            #log.info("%s: IDA found match %d steps in, %s, state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
-            #         (self, len(steps_to_here), ' '.join(steps_to_here), state, f_cost, cost_to_here, cost_to_goal))
+        if self.search_complete(lt_state, steps_to_here):
+            #log.info("%s: IDA found match %d steps in, %s, lt_state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
+            #         (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             log.info("%s: IDA found match %d steps in, f_cost %d (%d + %d)" %
                      (self, len(steps_to_here), f_cost, cost_to_here, cost_to_goal))
             return True
@@ -658,9 +658,11 @@ class LookupTableIDA(LookupTableAStar):
 
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
-        if (cost_to_here, state) in self.explored:
+        explored_cost_to_here = self.explored.get(lt_state)
+
+        if explored_cost_to_here is not None and explored_cost_to_here <= cost_to_here:
             return False
-        self.explored.add((cost_to_here, state))
+        self.explored[lt_state] = cost_to_here
 
         for step in self.moves_all:
 
@@ -710,7 +712,7 @@ class LookupTableIDA(LookupTableAStar):
             steps_to_here = []
             start_time1 = dt.datetime.now()
             self.ida_count = 0
-            self.explored = set()
+            self.explored = {}
 
             if self.ida_search(steps_to_here, threshold, None, self.original_state[:]):
                 end_time1 = dt.datetime.now()

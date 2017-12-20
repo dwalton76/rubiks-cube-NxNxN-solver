@@ -21,6 +21,22 @@ class InvalidCubeReduction(Exception):
     pass
 
 
+def reverse_steps(steps):
+    """
+    Reverse the order of all steps and the direction of each individual step
+    """
+    results = []
+
+    for step in reversed(steps):
+        if step.endswith("'"):
+            reverse_step = step[0:-1]
+        else:
+            reverse_step = step + "'"
+        results.append(reverse_step)
+
+    return results
+
+
 def get_cube_layout(size):
     """
     Example: size is 3, return the following string:
@@ -3818,26 +3834,11 @@ class RubiksCube(object):
             #self.rotate_U_to_U()
             #self.rotate_F_to_F()
 
-    def reverse_steps(self, steps):
-        """
-        Reverse the order of all steps and the direction of each individual step
-        """
-        results = []
-
-        for step in reversed(steps):
-            if step.endswith("'"):
-                reverse_step = step[0:-1]
-            else:
-                reverse_step = step + "'"
-            results.append(reverse_step)
-
-        return results
-
     def print_solution(self):
 
         # Print an alg.cubing.net URL for this setup/solution
         url = "https://alg.cubing.net/?puzzle=%dx%dx%d&setup=" % (self.size, self.size, self.size)
-        url += '_'.join(self.reverse_steps(self.solution))
+        url += '_'.join(reverse_steps(self.solution))
         url += '&alg='
         url += '_'.join(self.solution)
         url = url.replace("'", "-")

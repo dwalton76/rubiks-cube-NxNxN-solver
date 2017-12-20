@@ -212,6 +212,7 @@ action.add_argument('--cpu-min', default=False, help='Use the least CPU, produce
 action.add_argument('--cpu-normal', default=True, help='Use average CPU, produce an average solution', action='store_true')
 action.add_argument('--cpu-max', default=False, help='Use the most CPU, produce a shorter solution', action='store_true')
 action.add_argument('--cpu-tsai', default=False, help='Use the tsai solver, 4x4x4 only', action='store_true')
+action.add_argument('--cpu-exp', default=False, help='Use experimental solver, 4x4x4 only', action='store_true')
 
 parser.add_argument('--colormap', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--order', type=str, default='URFDLB', help='order of sides in --state, default kociemba URFDLB')
@@ -310,6 +311,8 @@ try:
     elif args.cpu_tsai:
         cube.cpu_mode = 'tsai'
         assert size == 4, "--cpu-tsai option can only be uses for a 4x4x4 cube"
+    elif args.cpu_exp:
+        cube.cpu_mode = 'exp'
     elif args.cpu_normal:
         cube.cpu_mode = 'normal'
     else:

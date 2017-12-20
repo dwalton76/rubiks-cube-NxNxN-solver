@@ -1367,8 +1367,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
         log.info("")
         log.info("")
-        sys.exit(0) # dwalton
-
 
         if oblique_edges_only:
             log.info("Took %d steps to resolve oblique edges" % self.get_solution_len_minus_rotates(self.solution))
@@ -1385,7 +1383,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.rotate(step)
 
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
-        sys.exit(0) # dwalton 109 steps here
 
     def phase(self):
         if self._phase is None:

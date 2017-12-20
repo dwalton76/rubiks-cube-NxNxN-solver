@@ -1,16 +1,52 @@
 
+- 6x6x6 UD edge pairing bulid 70 tables and merge them
 
-- experiment with B-Trees
-    - unittests
-    - rename 'nodes' to 'child_nodes' or 'children'
-    - optimaly load the B-Trees
-    - support for loading the first two levels in memory and finding the rest on disk
+- B-Trees...this will benefit all searches
 
-    - Once the two bullets above are done we should be able to find a key via
-      a single seek(). We should also be able to only do one rstrip/split(',')
-      call, it should only happen when 'if key in key_line' is True.
+- TPR solver
+    - how the hell does it work so fast?
+    - ideas
+        - before we start IDA we could see which EO edge mapping gives us the
+          shortest edge heuristic and stick with that one.  We would need to go
+          back to the 0 line dummy table and
+          LookupTableIDA444TsaiPhase2.experimental_ida_search_complete()
 
-      Today we take ~14s where our time is in:
+          Or we could build out a small lookup table (say 3 moves deep) for that
+          one edge mapping.
+
+- xyzzy's 5x5x5 solver. It is a variation of the TPR solver so need to understand TPR first.
+    - he does an EO (edge orientation) step.  If all larger solvers that use 5x5x5 for edge
+      pairing could also do EO then maybe we could toss the edge pairing code...there is a
+      ton of it and it is hideous.
+
+- bidir IDA search
+    - I need to understand how the TPR solver works before I spend time on bidir IDA
+    - would allow us to find slighly shorter solutions than we do today
+    - may potentially allow us tackle much larger IDA searches...TBD
+        - first to try is staging all 5x5x5 centers via one phase
+        - second to try is staging all 5x5x5 centers via one phase
+        - combine phases 1 and 2 of tsai?
+    - start from a solved cube and work your way back to the scrambled cube
+    - requires us to build prune tables for each scrambled cube
+        - for 4x4x4 staging centers we can do this in XYZ minutes in python
+        - if we only build it out 4 steps deep we can do it in ~20s
+        - so this would have to be done in C and even then it would still
+          take some time.  I think this is a strategy that could only be
+          used in a fewest moves challenge given how long it will take to
+          produce solutions.
+
+
+
+B-Tree notes
+============
+- optimaly load the B-Trees
+- support for loading the first two levels in memory and finding the rest on disk
+
+- Once the two bullets above are done we should be able to find a key via
+  a single seek(). We should also be able to only do one rstrip/split(',')
+  call, it should only happen when 'if key in key_line' is True.
+
+  Today we take ~14s where our time is in:
 
    974730    0.533    0.000    0.533    0.000 {method 'seek' of '_io.BufferedReader' objects}
   1431684    0.721    0.000    0.721    0.000 {method 'decode' of 'bytes' objects}
@@ -22,25 +58,25 @@
    195231    3.299    0.000   11.243    0.000 __init__.py:67(disk_get)
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
 
-        So we should end up with
-        - seek()   : should come down to 195231...should shave about 300ms
+    So we should end up with
+    - seek()   : should come down to 195231...should shave about 300ms
 
-        - decode() : Will 'if key in key_line' work if it is not decoded to utf-8?
-            If so we can avoid all of these calls....should shave 721ms.
+    - decode() : Will 'if key in key_line' work if it is not decoded to utf-8?
+        If so we can avoid all of these calls....should shave 721ms.
 
-        - read()   : should come down to 195231...should shave about 600ms
+    - read()   : should come down to 195231...should shave about 600ms
 
-        - rstrip() : can only call this 'if key in key_line' which should chop 99% of them..should shave 1435ms
+    - rstrip() : can only call this 'if key in key_line' which should chop 99% of them..should shave 1435ms
 
-        - next() : is called today to load the nodes line...we can avoid this if we know that we are already at the leaf node depth
-            This should shave 1451ms
+    - next() : is called today to load the nodes line...we can avoid this if we know that we are already at the leaf node depth
+        This should shave 1451ms
 
-        - split() : can only call this 'if key in key_line' which should chop 99% of them..should shave 2557ms
+    - split() : can only call this 'if key in key_line' which should chop 99% of them..should shave 2557ms
 
-        That is about ~7000ms we can shave...would get us from 14s down to 7s which would be awesome
+    That is about ~7000ms we can shave...would get us from 14s down to 7s which would be awesome
 
 
-    - Test this against slow 6x6x6 UD oblique:
+- Test this against slow 6x6x6 UD oblique:
 
 ./usr/bin/rubiks-cube-solver.py --cpu-max --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
 
@@ -56,12 +92,8 @@ This search takes about 5 million seek() calls when using binary search...the se
 
 
 
-- make rotate_xxx use one less function call by using a dictionary?
-
-- tsai
-    - explore TPR solver to see what tricks it is doing
-
-
+misc notes
+==========
 - ida_search() needs to return all of the results at that theshold
 Test on this one, 5x5x5-step20-LR-centers-stage  finds a solution 12 steps long but I know there is one
 that is 10 steps long (I found it via AStar)

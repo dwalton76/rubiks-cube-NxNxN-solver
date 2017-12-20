@@ -610,6 +610,17 @@ class LookupTable444TsaiPhase2Edges(LookupTable):
 
 
 class LookupTableIDA444TsaiPhase2(LookupTableIDA):
+    """
+    lookup-table-4x4x4-step60.txt
+    =============================
+    1 steps has 60 entries (0 percent, 0.00x previous step)
+    2 steps has 744 entries (0 percent, 12.40x previous step)
+    3 steps has 11,224 entries (0 percent, 15.09x previous step)
+    4 steps has 158,608 entries (6 percent, 14.13x previous step)
+    5 steps has 2,349,908 entries (93 percent, 14.82x previous step)
+
+    Total: 2,520,544 entries
+    """
 
     def __init__(self, parent):
         LookupTableIDA.__init__(

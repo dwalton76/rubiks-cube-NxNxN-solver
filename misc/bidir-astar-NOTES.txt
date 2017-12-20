@@ -87,3 +87,5 @@ TIME: 6s!!
 2017-12-19 17:33:54,558   LookupTable.py  WARNING: lt_stateA is in exploredB
 2017-12-19 17:33:54,558   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar found match 7 stepsA (B Bw' U' Lw B2 Dw' U), 2 stepsB (Rw Uw'), countA 1257, countB 1257
 2017-12-19 17:33:54,577 RubiksCube444.py     INFO: 4x4x4: End of Phase1, 9 steps in
+
+I tried some other cubes and it wasn't nearly as fast (it took minutes)

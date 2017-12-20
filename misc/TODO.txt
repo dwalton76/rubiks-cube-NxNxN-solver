@@ -1,7 +1,19 @@
 
-- 6x6x6 UD edge pairing bulid 70 tables and merge them
+- 6x6x6 LR x-centers and oblique edges are done it two phases...it might be possible to combine these.
+    The main lt would be 12870^3 but we would have three prune tables so it might work
+
+- 6x6x6 UD edge pairing build 70 tables and merge them
+    - This is after they have already been staged and we are pairing them up.  When we
+      pair them up we are forcing them to their final position but that isn't needed.
+
+    ./usr/bin/rubiks-cube-solver.py --cpu-max --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
+
 
 - B-Trees...this will benefit all searches
+    - when this is done delete LookupTableIDA666UDObliqueEdgePairing and keep LookupTableIDA666CpuMaxUDObliqueEdgePairing
+    - when this is done delete LookupTableIDA555CpuMinUDCentersStage and keep LookupTableIDA555UDCentersStage
+    - that will eliminate all of the "fake move" crazyness
+
 
 - TPR solver
     - how the hell does it work so fast?

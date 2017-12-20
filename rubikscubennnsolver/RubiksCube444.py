@@ -1544,7 +1544,6 @@ class RubiksCube444(RubiksCube):
 
             # If the centers are already solve then return and let group_edges() pair the edges
             if self.centers_solved():
-                self.solution.append('CENTERS_SOLVED')
                 return
 
             log.info("%s: Start of Phase1" % self)
@@ -1569,7 +1568,6 @@ class RubiksCube444(RubiksCube):
 
             # If the centers are already solve then return and let group_edges() pair the edges
             if self.centers_solved():
-                self.solution.append('CENTERS_SOLVED')
                 return
 
             log.info("%s: Start of Phase1" % self)
@@ -1734,8 +1732,6 @@ class RubiksCube444(RubiksCube):
             self.print_cube()
             log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
-
-        self.solution.append('CENTERS_SOLVED')
 
     def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = []

@@ -434,14 +434,22 @@ class LookupTable555FBXCenterStage(LookupTable):
         # Convert to hex
         return self.hex_format % int(result, 2)
 
-# dwalton exp
-#class LookupTableIDA555AllCenterStage(LookupTableAStar):
+
 class LookupTableIDA555AllCenterStage(LookupTableIDA):
     """
+    lookup-table-5x5x5-step100-ALL-centers-stage.txt
+    ================================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 147 entries (0 percent, 21.00x previous step)
+    3 steps has 3,054 entries (0 percent, 20.78x previous step)
+    4 steps has 65,520 entries (4 percent, 21.45x previous step)
+    5 steps has 1,467,630 entries (95 percent, 22.40x previous step)
+
+    Total: 1,536,358 entries
     """
 
     def __init__(self, parent):
-        LookupTableAStar.__init__(
+        LookupTableIDA.__init__(
             self,
             parent,
             'lookup-table-5x5x5-step100-ALL-centers-stage.txt',
@@ -461,7 +469,7 @@ class LookupTableIDA555AllCenterStage(LookupTableIDA):
     def state(self):
         parent_state = self.parent.state
 
-        result = [
+        tmp_result = [
             # Upper
             parent_state[7], parent_state[8], parent_state[9],
             parent_state[12], parent_state[13], parent_state[14],
@@ -493,11 +501,18 @@ class LookupTableIDA555AllCenterStage(LookupTableIDA):
             parent_state[142], parent_state[143], parent_state[144]
         ]
 
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
+        # dwalton fix this
+        result = []
 
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        for x in tmp_result:
+            if x in ('U', 'D'):
+                result.append('U')
+            elif x in ('L', 'R'):
+                result.append('L')
+            elif x in ('F', 'B'):
+                result.append('F')
+
+        return ''.join(result)
 
 
 class LookupTable555CpuMinUDTCenterStage(LookupTable):
@@ -1330,7 +1345,8 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
-        # dwalton experiment
+        # experiment
+        '''
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
         self.lt_UD_X_centers_stage = LookupTable555UDXCenterStage(self)
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
@@ -1338,8 +1354,8 @@ class RubiksCube555(RubiksCube):
         self.lt_FB_T_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_X_centers_stage = LookupTable555FBXCenterStage(self)
         self.lt_ALL_enters_stage = LookupTableIDA555AllCenterStage(self)
-
         '''
+
         if self.cpu_mode == 'min':
             self.lt_UD_T_centers_stage = LookupTable555CpuMinUDTCenterStage(self)
             self.lt_UD_X_centers_stage = LookupTable555CpuMinUDXCenterStage(self)
@@ -1352,7 +1368,6 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_centers_stage_x_center_only = LookupTable555LRXCentersStage(self)
         self.lt_LR_centers_stage_t_center_only = LookupTable555LRTCentersStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
-        '''
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
@@ -1440,12 +1455,10 @@ class RubiksCube555(RubiksCube):
         #self.lt_LR_X_centers_stage.solve()
         #self.lt_FB_T_centers_stage.solve()
         #self.lt_FB_X_centers_stage.solve()
-        self.lt_ALL_enters_stage.solve()
-        # dwalton exp
-        self.print_cube()
-        sys.exit()
+        #self.lt_ALL_enters_stage.solve()
+        #self.print_cube()
+        #sys.exit()
 
-        '''
         # Stage UD centers
         self.group_centers_stage_UD()
 
@@ -1455,7 +1468,6 @@ class RubiksCube555(RubiksCube):
 
         self.lt_LR_centers_stage.solve()
         log.info("ULFRBD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        '''
 
         # All centers are staged so solve them
         self.lt_ULFRB_centers_solve.solve()

@@ -394,9 +394,68 @@ class LookupTable666LRInnerXCenterStage(LookupTable):
         return self.hex_format % int(result, 2)
 
 
-class LookupTable666LRObliqueEdgePairingLeftOnly(LookupTable):
+class LookupTable666LRInnerXCentersObliqueEdgePairingCentersOnly(LookupTable):
     """
-    lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt
+    lookup-table-6x6x6-step33-LR-inner-x-centers-stage.txt
+    ======================================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 29 entries (0 percent, 9.67x previous step)
+    3 steps has 234 entries (1 percent, 8.07x previous step)
+    4 steps has 1,246 entries (9 percent, 5.32x previous step)
+    5 steps has 4,466 entries (34 percent, 3.58x previous step)
+    6 steps has 6,236 entries (48 percent, 1.40x previous step)
+    7 steps has 656 entries (5 percent, 0.11x previous step)
+
+    Total: 12,870 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step33-LR-inner-x-centers-stage.txt',
+            '0660000006600000',
+            linecount=12870)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Left
+            'x', 'x', 'x', 'x',
+            'x', parent_state[51], parent_state[52], 'x',
+            'x', parent_state[57], parent_state[58], 'x',
+            'x', 'x', 'x', 'x',
+
+            # Front
+            'x', 'x', 'x', 'x',
+            'x', parent_state[87], parent_state[88], 'x',
+            'x', parent_state[93], parent_state[94], 'x',
+            'x', 'x', 'x', 'x',
+
+            # Right
+            'x', 'x', 'x', 'x',
+            'x', parent_state[123], parent_state[124], 'x',
+            'x', parent_state[129], parent_state[130], 'x',
+            'x', 'x', 'x', 'x',
+
+            # Back
+            'x', 'x', 'x', 'x',
+            'x', parent_state[159], parent_state[160], 'x',
+            'x', parent_state[165], parent_state[166], 'x',
+            'x', 'x', 'x', 'x',
+        ]
+
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
+        result = ''.join(result)
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTable666LRInnerXCentersObliqueEdgePairingLeftOnly(LookupTable):
+    """
+    lookup-table-6x6x6-step31-LR-oblique-pairing-left-only.txt
     ==========================================================
     1 steps has 3 entries (0 percent, 0.00x previous step)
     2 steps has 29 entries (0 percent, 9.67x previous step)
@@ -415,7 +474,7 @@ class LookupTable666LRObliqueEdgePairingLeftOnly(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt',
+            'lookup-table-6x6x6-step31-LR-oblique-pairing-left-only.txt',
             '99009900',
             linecount=12870)
 
@@ -455,9 +514,9 @@ class LookupTable666LRObliqueEdgePairingLeftOnly(LookupTable):
         return self.hex_format % int(result, 2)
 
 
-class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
+class LookupTable666LRInnerXCentersObliqueEdgePairingRightOnly(LookupTable):
     """
-    lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt
+    lookup-table-6x6x6-step32-LR-oblique-pairing-right-only.txt
     ===========================================================
     1 steps has 3 entries (0 percent, 0.00x previous step)
     2 steps has 29 entries (0 percent, 9.67x previous step)
@@ -471,12 +530,14 @@ class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
 
     Total: 12,870 entries
     """
+    # dwalton the new prune table should be better than this one, it should
+    # have 7.2million entries
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt',
+            'lookup-table-6x6x6-step32-LR-oblique-pairing-right-only.txt',
             '66006600',
             linecount=12870)
 
@@ -516,77 +577,65 @@ class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
         return self.hex_format % int(result, 2)
 
 
-class LookupTableIDA666LRObliqueEdgePairing(LookupTableIDA):
+class LookupTableIDA666LRInnerXCentersObliqueEdgePairing(LookupTableIDA):
     """
-    (16!/(8!*8!))^2 is 165,636,900
-    I only built this 8 deep to keep the table in the repo small thus the IDA
-
-    lookup-table-6x6x6-step40-LR-oblique-pairing.txt
+    lookup-table-6x6x6-step30-LR-oblique-pairing.txt
     ================================================
-    1 steps has 3 entries (0 percent)
-    2 steps has 29 entries (0 percent)
-    3 steps has 286 entries (0 percent)
-    4 steps has 2,052 entries (0 percent)
-    5 steps has 16,348 entries (0 percent)
-    6 steps has 127,859 entries (0 percent)
-    7 steps has 844,248 entries (0 percent)
-    8 steps has 4,623,585 entries (2 percent)
-    9 steps has 19,019,322 entries (11 percent)
-    10 steps has 47,544,426 entries (28 percent)
-    11 steps has 61,805,656 entries (37 percent)
-    12 steps has 28,890,234 entries (17 percent)
-    13 steps has 2,722,462 entries (1 percent)
-    14 steps has 40,242 entries (0 percent)
-    15 steps has 148 entries (0 percent)
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 70 entries (0 percent, 14.00x previous step)
+    3 steps has 1,080 entries (0 percent, 15.43x previous step)
+    4 steps has 15,459 entries (0 percent, 14.31x previous step)
+    5 steps has 228,546 entries (6 percent, 14.78x previous step)
+    6 steps has 3,357,736 entries (93 percent, 14.69x previous step)
 
-    Total: 165,636,900 entries
+    Total: 3,602,896 entries
     """
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step40-LR-oblique-pairing.txt',
-            'ff00ff00',
+            'lookup-table-6x6x6-step30-LR-oblique-pairing.txt',
+            'TBD',
             moves_6x6x6,
 
             # These would break up the staged UD inner x-centers
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # do not mess up UD x-centers
-             "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'",         # do not mess up UD oblique pairs
-             "3Uw", "3Uw'", "3Dw", "3Dw'"),                              # do not mess up LR x-centers
+             "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'"),        # do not mess up UD oblique pairs
 
             # prune tables
-            (parent.lt_LR_oblique_edge_pairing_left_only,
-             parent.lt_LR_oblique_edge_pairing_right_only),
-            linecount=5614410)
+            (parent.lt_LR_inner_x_centers_oblique_edge_pairing_centers_only,
+             parent.lt_LR_inner_x_centers_oblique_edge_pairing_left_only,
+             parent.lt_LR_inner_x_centers_oblique_edge_pairing_right_only),
+            linecount=3602896)
 
     def state(self):
         parent_state = self.parent.state
 
         result = [
             # Left
-            parent_state[45], parent_state[46],
-            parent_state[50], parent_state[53],
-            parent_state[56], parent_state[59],
-            parent_state[63], parent_state[64],
+            'x', parent_state[45], parent_state[46], 'x',
+            parent_state[50], parent_state[51], parent_state[52], parent_state[53],
+            parent_state[56], parent_state[57], parent_state[58], parent_state[59],
+            'x', parent_state[63], parent_state[64], 'x',
 
             # Front
-            parent_state[81], parent_state[82],
-            parent_state[86], parent_state[89],
-            parent_state[92], parent_state[95],
-            parent_state[99], parent_state[100],
+            'x', parent_state[81], parent_state[82], 'x',
+            parent_state[86], parent_state[87], parent_state[88], parent_state[89],
+            parent_state[92], parent_state[93], parent_state[94], parent_state[95],
+            'x', parent_state[99], parent_state[100], 'x',
 
             # Right
-            parent_state[117], parent_state[118],
-            parent_state[122], parent_state[125],
-            parent_state[128], parent_state[131],
-            parent_state[135], parent_state[136],
+            'x', parent_state[117], parent_state[118], 'x',
+            parent_state[122], parent_state[123], parent_state[124], parent_state[125],
+            parent_state[128], parent_state[129], parent_state[130], parent_state[131],
+            'x', parent_state[135], parent_state[136], 'x',
 
             # Back
-            parent_state[153], parent_state[154],
-            parent_state[158], parent_state[161],
-            parent_state[164], parent_state[167],
-            parent_state[171], parent_state[172]
+            'x', parent_state[153], parent_state[154], 'x',
+            parent_state[158], parent_state[159], parent_state[160], parent_state[161],
+            parent_state[164], parent_state[165], parent_state[166], parent_state[167],
+            'x', parent_state[171], parent_state[172], 'x',
         ]
 
         result = ['1' if x in ('L', 'R') else '0' for x in result]
@@ -614,6 +663,9 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     Total: 343,000 entries
     """
 
+    # TODO this pairs and solves the UD oblique edges, we need to build
+    # the 70 tables that let them go anywhere on sides U or D
+    # These are building now
     def __init__(self, parent):
         LookupTable.__init__(
             self,
@@ -934,11 +986,13 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable666UDObliqueEdgePairingRightOnly(self)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA666UDObliqueEdgePairing(self)
 
-        self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCenterStage(self)
+        # dwalton can we merge these?
+        #self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCenterStage(self)
 
-        self.lt_LR_oblique_edge_pairing_left_only = LookupTable666LRObliqueEdgePairingLeftOnly(self)
-        self.lt_LR_oblique_edge_pairing_right_only = LookupTable666LRObliqueEdgePairingRightOnly(self)
-        self.lt_LR_oblique_edge_pairing = LookupTableIDA666LRObliqueEdgePairing(self)
+        self.lt_LR_inner_x_centers_oblique_edge_pairing_centers_only = LookupTable666LRInnerXCentersObliqueEdgePairingCentersOnly(self)
+        self.lt_LR_inner_x_centers_oblique_edge_pairing_left_only = LookupTable666LRInnerXCentersObliqueEdgePairingLeftOnly(self)
+        self.lt_LR_inner_x_centers_oblique_edge_pairing_right_only = LookupTable666LRInnerXCentersObliqueEdgePairingRightOnly(self)
+        self.lt_LR_inner_x_centers_oblique_edge_pairing = LookupTableIDA666LRInnerXCentersObliqueEdgePairing(self)
 
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
@@ -1067,9 +1121,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_init()
 
         self.group_centers_stage_UD()
-
-        self.lt_LR_inner_x_centers_stage.solve()
-        log.info("LR inner x-center staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("UD inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
         log.info("")
@@ -1077,14 +1129,39 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
         log.info("")
 
-        self.lt_LR_oblique_edge_pairing.solve()
-        log.info("LR oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        # Test the prune tables
+        self.lt_LR_inner_x_centers_oblique_edge_pairing_centers_only.solve()
+        #self.lt_LR_inner_x_centers_oblique_edge_pairing_left_only.solve()
+        #self.lt_LR_inner_x_centers_oblique_edge_pairing_right_only.solve()
+        #self.print_cube()
+        sys.exit(0)
+
+        self.lt_LR_inner_x_centers_oblique_edge_pairing.solve()
+        log.info("LR inner x-centers and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
         log.info("")
         log.info("")
         log.info("")
         log.info("")
+        # dwalton - this is really slow, need a better prune table
+        sys.exit(0)
+        # At this point all of the inner x-centers and oblique edges are staged
+
+        # Could we simply stage all 6x6x6 sides and solve the centers?
+        # At this point inside x-centers and outside t-centers are staged.
+        # We would need to reduce the centers to 5x5x5 to stage outside
+        # x-centers.
+        #
+        # At that point all sides would be staged and there would be 4 groups
+        # of 8!/(4!*4!) per side so to solve ULF (which would also solve RBD)
+        # would be (8!/(4!*4!))^12 or 13,841,287,201,000,000,000,000
+        #
+        # Needless to say this is not feasible :(
+        #
+        # I brainstorm about this because for one of my 6x6x6 test cubes it takes
+        # us 42 steps to get to here and 109 steps to solve the centers....that
+        # is a lot of steps.
 
         # Could we simply stage all 6x6x6 sides and solve the centers?
         # At this point inside x-centers and outside t-centers are staged.
@@ -1138,6 +1215,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.rotate(step)
 
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
+        sys.exit(0)
 
     def phase(self):
         if self._phase is None:

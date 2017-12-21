@@ -871,6 +871,8 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     Total: 343,000 entries
     """
 
+    # dwalton this pairs and solves the UD oblique edges, we need to build
+    # the 70 tables that let them go anywhere on sides U or D
     def __init__(self, parent):
         LookupTable.__init__(
             self,
@@ -925,6 +927,7 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
     Total: 24,010,034 entries
     """
 
+    # dwalton we would have to build 70 of these and merge them...that might take a week or two
     def __init__(self, parent):
         LookupTable.__init__(
             self,
@@ -983,6 +986,8 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     Total: 25,679,911 entries
     """
 
+    # dwalton this pairs and solves the LR and FB oblique edges, we need to build
+    # the 4900 tables that let them go anywhere on sides U or D
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -1292,18 +1297,49 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
+
         self.group_centers_stage_UD()
+        log.info("UD inner x-center staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube()
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
         self.lt_LR_inner_x_centers_stage.solve()
         log.info("LR inner x-center staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube()
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
         self.lt_LR_oblique_edge_pairing.solve()
         log.info("LR oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube()
         log.info("")
         log.info("")
         log.info("")
         log.info("")
         log.info("")
+
+        # Could we simply stage all 6x6x6 sides and solve the centers?
+        # At this point inside x-centers and outside t-centers are staged.
+        # We would need to reduce the centers to 5x5x5 to stage outside
+        # x-centers.
+        #
+        # At that point all sides would be staged and there would be 4 groups
+        # of 8!/(4!*4!) per side so to solve ULF (which would also solve RBD)
+        # would be (8!/(4!*4!))^12 or 13,841,287,201,000,000,000,000
+        #
+        # Needless to say this is not feasible :(
+        #
+        # dwalton brainstorm....what if we used the cost_to_goal_sum thing?
+        # Maybe that would allow us to prune such a gigantic tree as this scenario?
+        # We are 42 steps by the time we get to here and are at 109 steps by the 
+        # time centers are solved.
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges
@@ -1311,6 +1347,12 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # - solve the FB inner x-centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
         log.info("UD inner x-center solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube()
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
         # speed up IDA
         if self.cpu_mode == 'min':

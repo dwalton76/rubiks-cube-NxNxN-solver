@@ -227,6 +227,294 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
         return self.hex_format % int(result, 2)
 
 
+class LookupTable555LRTCenterStage(LookupTable):
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step103-LR-centers-stage-t-center-only.txt',
+            '000ba002e80000',
+            linecount=735471)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = [
+            # Upper
+            'x', parent_state[8], 'x',
+            parent_state[12], parent_state[13], parent_state[14],
+            'x', parent_state[18], 'x',
+
+            # Left
+            'x', parent_state[33], 'x',
+            parent_state[37], parent_state[38], parent_state[39],
+            'x', parent_state[43], 'x',
+
+            # Front
+            'x', parent_state[58], 'x',
+            parent_state[62], parent_state[63], parent_state[64],
+            'x', parent_state[68], 'x',
+
+            # Right
+            'x', parent_state[83], 'x',
+            parent_state[87], parent_state[88], parent_state[89],
+            'x', parent_state[93], 'x',
+
+            # Back
+            'x', parent_state[108], 'x',
+            parent_state[112], parent_state[113], parent_state[114],
+            'x', parent_state[118], 'x',
+
+            # Down
+            'x', parent_state[133], 'x',
+            parent_state[137], parent_state[138], parent_state[139],
+            'x', parent_state[143], 'x'
+        ]
+
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
+        result = ''.join(result)
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTable555LRXCenterStage(LookupTable):
+    """
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step104-LR-centers-stage-x-center-only.txt',
+            '00155005540000',
+            linecount=735471)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = [
+            # Upper
+            parent_state[7], 'x', parent_state[9],
+            'x', parent_state[13], 'x',
+            parent_state[17], 'x', parent_state[19],
+
+            # Left
+            parent_state[32], 'x', parent_state[34],
+            'x', parent_state[38], 'x',
+            parent_state[42], 'x', parent_state[44],
+
+            # Front
+            parent_state[57], 'x', parent_state[59],
+            'x', parent_state[63], 'x',
+            parent_state[67], 'x', parent_state[69],
+
+            # Right
+            parent_state[82], 'x', parent_state[84],
+            'x', parent_state[88], 'x',
+            parent_state[92], 'x', parent_state[94],
+
+            # Back
+            parent_state[107], 'x', parent_state[109],
+            'x', parent_state[113], 'x',
+            parent_state[117], 'x', parent_state[119],
+
+            # Down
+            parent_state[132], 'x', parent_state[134],
+            'x', parent_state[138], 'x',
+            parent_state[142], 'x', parent_state[144]
+        ]
+
+        result = ['1' if x in ('L', 'R') else '0' for x in result]
+        result = ''.join(result)
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTable555FBTCenterStage(LookupTable):
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step105-FB-centers-stage-t-center-only.txt',
+            '000005d0017400',
+            linecount=735471)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = [
+            # Upper
+            'x', parent_state[8], 'x',
+            parent_state[12], parent_state[13], parent_state[14],
+            'x', parent_state[18], 'x',
+
+            # Left
+            'x', parent_state[33], 'x',
+            parent_state[37], parent_state[38], parent_state[39],
+            'x', parent_state[43], 'x',
+
+            # Front
+            'x', parent_state[58], 'x',
+            parent_state[62], parent_state[63], parent_state[64],
+            'x', parent_state[68], 'x',
+
+            # Right
+            'x', parent_state[83], 'x',
+            parent_state[87], parent_state[88], parent_state[89],
+            'x', parent_state[93], 'x',
+
+            # Back
+            'x', parent_state[108], 'x',
+            parent_state[112], parent_state[113], parent_state[114],
+            'x', parent_state[118], 'x',
+
+            # Down
+            'x', parent_state[133], 'x',
+            parent_state[137], parent_state[138], parent_state[139],
+            'x', parent_state[143], 'x'
+        ]
+
+        result = ['1' if x in ('F', 'B') else '0' for x in result]
+        result = ''.join(result)
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTable555FBXCenterStage(LookupTable):
+    """
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step106-FB-centers-stage-x-center-only.txt',
+            '00000aa802aa00',
+            linecount=735471)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = [
+            # Upper
+            parent_state[7], 'x', parent_state[9],
+            'x', parent_state[13], 'x',
+            parent_state[17], 'x', parent_state[19],
+
+            # Left
+            parent_state[32], 'x', parent_state[34],
+            'x', parent_state[38], 'x',
+            parent_state[42], 'x', parent_state[44],
+
+            # Front
+            parent_state[57], 'x', parent_state[59],
+            'x', parent_state[63], 'x',
+            parent_state[67], 'x', parent_state[69],
+
+            # Right
+            parent_state[82], 'x', parent_state[84],
+            'x', parent_state[88], 'x',
+            parent_state[92], 'x', parent_state[94],
+
+            # Back
+            parent_state[107], 'x', parent_state[109],
+            'x', parent_state[113], 'x',
+            parent_state[117], 'x', parent_state[119],
+
+            # Down
+            parent_state[132], 'x', parent_state[134],
+            'x', parent_state[138], 'x',
+            parent_state[142], 'x', parent_state[144]
+        ]
+
+        result = ['1' if x in ('F', 'B') else '0' for x in result]
+        result = ''.join(result)
+
+        # Convert to hex
+        return self.hex_format % int(result, 2)
+
+
+class LookupTableIDA555AllCenterStage(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step100-ALL-centers-stage.txt
+    ================================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 147 entries (0 percent, 21.00x previous step)
+    3 steps has 3,054 entries (0 percent, 20.78x previous step)
+    4 steps has 65,520 entries (4 percent, 21.45x previous step)
+    5 steps has 1,467,630 entries (95 percent, 22.40x previous step)
+
+    Total: 1,536,358 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step100-ALL-centers-stage.txt',
+            'UUUUUUUUULLLLLLLLLFFFFFFFFFLLLLLLLLLFFFFFFFFFUUUUUUUUU',
+            moves_5x5x5,
+            (), # illegal_moves
+
+            # prune tables
+            (parent.lt_UD_T_centers_stage,
+             parent.lt_UD_X_centers_stage,
+             parent.lt_LR_T_centers_stage,
+             parent.lt_LR_X_centers_stage,
+             parent.lt_FB_T_centers_stage,
+             parent.lt_FB_X_centers_stage),
+            linecount=1536358)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        tmp_result = [
+            # Upper
+            parent_state[7], parent_state[8], parent_state[9],
+            parent_state[12], parent_state[13], parent_state[14],
+            parent_state[17], parent_state[18], parent_state[19],
+
+            # Left
+            parent_state[32], parent_state[33], parent_state[34],
+            parent_state[37], parent_state[38], parent_state[39],
+            parent_state[42], parent_state[43], parent_state[44],
+
+            # Front
+            parent_state[57], parent_state[58], parent_state[59],
+            parent_state[62], parent_state[63], parent_state[64],
+            parent_state[67], parent_state[68], parent_state[69],
+
+            # Right
+            parent_state[82], parent_state[83], parent_state[84],
+            parent_state[87], parent_state[88], parent_state[89],
+            parent_state[92], parent_state[93], parent_state[94],
+
+            # Back
+            parent_state[107], parent_state[108], parent_state[109],
+            parent_state[112], parent_state[113], parent_state[114],
+            parent_state[117], parent_state[118], parent_state[119],
+
+            # Down
+            parent_state[132], parent_state[133], parent_state[134],
+            parent_state[137], parent_state[138], parent_state[139],
+            parent_state[142], parent_state[143], parent_state[144]
+        ]
+
+        # dwalton fix this
+        result = []
+
+        for x in tmp_result:
+            if x in ('U', 'D'):
+                result.append('U')
+            elif x in ('L', 'R'):
+                result.append('L')
+            elif x in ('F', 'B'):
+                result.append('F')
+
+        return ''.join(result)
+
+
 class LookupTable555CpuMinUDTCenterStage(LookupTable):
     """
     lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
@@ -1057,6 +1345,17 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
+        # experiment
+        '''
+        self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
+        self.lt_UD_X_centers_stage = LookupTable555UDXCenterStage(self)
+        self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
+        self.lt_LR_X_centers_stage = LookupTable555LRXCenterStage(self)
+        self.lt_FB_T_centers_stage = LookupTable555FBTCenterStage(self)
+        self.lt_FB_X_centers_stage = LookupTable555FBXCenterStage(self)
+        self.lt_ALL_enters_stage = LookupTableIDA555AllCenterStage(self)
+        '''
+
         if self.cpu_mode == 'min':
             self.lt_UD_T_centers_stage = LookupTable555CpuMinUDTCenterStage(self)
             self.lt_UD_X_centers_stage = LookupTable555CpuMinUDXCenterStage(self)
@@ -1149,6 +1448,16 @@ class RubiksCube555(RubiksCube):
         self.lt_init()
         self.rotate_U_to_U()
         self.rotate_F_to_F()
+
+        #self.lt_UD_T_centers_stage.solve()
+        #self.lt_UD_X_centers_stage.solve()
+        #self.lt_LR_T_centers_stage.solve()
+        #self.lt_LR_X_centers_stage.solve()
+        #self.lt_FB_T_centers_stage.solve()
+        #self.lt_FB_X_centers_stage.solve()
+        #self.lt_ALL_enters_stage.solve()
+        #self.print_cube()
+        #sys.exit()
 
         # Stage UD centers
         self.group_centers_stage_UD()

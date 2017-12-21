@@ -1,0 +1,91 @@
+
+Notes on doing bidir A*
+
+staging 4x4x4 centers
+
+baseline (IDA)
+==============
+dwalton@laptop ~/l/rubiks-cube-NxNxN-solver> ./usr/bin/rubiks-cube-solver.py --cpu-exp --state DRFDFRUFDURDDLLUFLDLLBLULFBUUFRBLBFLLUDDUFRBURBBRBDLLDURFFBBRUFUFDRFURBUDLDBDUFFBUDRRLDRBLFBRRLB 
+2017-12-19 08:41:43,217      __init__.py     INFO: 
+2017-12-19 08:41:43,217      __init__.py     INFO: 
+2017-12-19 08:41:43,217      __init__.py     INFO: 
+2017-12-19 08:41:43,222 RubiksCube444.py     INFO: 4x4x4: Start of Phase1
+2017-12-19 08:41:43,231   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold range 6->99
+2017-12-19 08:41:43,328   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 6, explored 37 branches, took 96ms
+2017-12-19 08:41:44,771   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 7, explored 877 branches, took 1443ms
+2017-12-19 08:41:44,801   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA found match but it leads to OLL
+2017-12-19 08:41:44,815   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA found match but it leads to OLL
+2017-12-19 08:41:45,312   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA found match but it leads to OLL
+2017-12-19 08:41:45,319   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA found match but it leads to OLL
+2017-12-19 08:41:47,740   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA found match 5 steps in, f_cost 9 (5 + 4)
+2017-12-19 08:41:47,740   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 8, explored 3508 branches, took 0:00:02.968344 (0:00:04.517612 total)
+2017-12-19 08:41:47,740 RubiksCube444.py     INFO: 4x4x4: End of Phase1, 11 steps in
+2017-12-19 08:41:47,740 RubiksCube444.py     INFO: 
+dwalton@laptop ~/l/rubiks-cube-NxNxN-solver> 
+
+
+test 1
+======
+- instead of using move count for cost_to_here and cost_to_goal, use
+  a count of how many facelets are in the wrong place. You could also
+  count the number of swaps required...not sure if that would make any
+  difference...maybe try that later.
+
+- at the start of the phase take a baseline of how many facelets are
+  out of place.  cost_to_here will be calculated as the current "facelets
+  out of place" minus the starting point "facelets out of place".
+
+- cost_to_goal will be the number of facelets out of place
+
+use A-star where cost_to_here is how
+
+
+
+test 99
+=======
+assuming we get the general approach working, instead of working towards a
+state that is in a lookup-table start another AStar search from a solved
+cube that works it way towards our scrambled cube.  When the two graphs
+overlap we have found a solution.
+
+
+
+bidir - take 1
+TIME: 1m 41s
+==============
+2017-12-19 17:06:41,267      __init__.py     INFO: 
+2017-12-19 17:06:41,268 RubiksCube444.py     INFO: 4x4x4: Start of Phase1
+2017-12-19 17:06:45,507   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countA 1000, workqA depth 25637, f_costA 9, steps_to_hereA Bw R2
+2017-12-19 17:06:45,507   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countB 1000, workqB depth 18637, f_costB 3, steps_to_hereB Bw U2 Fw2
+
+2017-12-19 17:06:49,342   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countA 2000, workqA depth 48437, f_costA 9, steps_to_hereA B' Fw' Bw2
+2017-12-19 17:06:49,342   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countB 2000, workqB depth 36012, f_costB 3, steps_to_hereB Fw D B2
+
+2017-12-19 17:06:53,781   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countA 3000, workqA depth 72812, f_costA 9, steps_to_hereA Bw' D B
+2017-12-19 17:06:53,781   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countB 3000, workqB depth 52512, f_costB 3, steps_to_hereB Lw D2 Lw2
+
+[snip]
+
+2017-12-19 17:08:21,341   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countA 24000, workqA depth 532502, f_costA 9, steps_to_hereA D Uw Bw' R' Bw2
+2017-12-19 17:08:21,341   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countB 24000, workqB depth 405802, f_costB 4, steps_to_hereB Dw B2 Lw Lw2
+
+2017-12-19 17:08:22,693   LookupTable.py  WARNING: lt_stateA is in exploredB
+2017-12-19 17:08:22,693   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar found match 6 stepsA in, B Bw' U' Lw B2 Dw', lt_stateA FLUUFFLLLUFUFLFLULUFULUF, AStar countA 24317, f_costA 9
+2017-12-19 17:08:22,693   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar found match 4 stepsB in, Dw B2 Uw2 R, lt_stateB UUUULLFFLLLLFLFLFFFFUUUU, AStar countB 24317, f_costB 4
+dwalton@laptop ~/l/rubiks-cube-NxNxN-solver> 
+
+
+
+bidir - take 2
+Added use_lt_as_prune=True to ida_heuristic
+TIME: 6s!!
+===========================================
+2017-12-19 17:33:48,178 RubiksCube444.py     INFO: 4x4x4: Start of Phase1
+2017-12-19 17:33:53,333   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countA 1000, workqA depth 24587, f_costA 9, steps_to_hereA Rw Fw2
+2017-12-19 17:33:53,333   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countB 1000, workqB depth 18637, f_costB 3, steps_to_hereB Bw U2 Fw2
+
+2017-12-19 17:33:54,558   LookupTable.py  WARNING: lt_stateA is in exploredB
+2017-12-19 17:33:54,558   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar found match 7 stepsA (B Bw' U' Lw B2 Dw' U), 2 stepsB (Rw Uw'), countA 1257, countB 1257
+2017-12-19 17:33:54,577 RubiksCube444.py     INFO: 4x4x4: End of Phase1, 9 steps in
+
+I tried some other cubes and it wasn't nearly as fast (it took minutes)

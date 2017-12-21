@@ -2277,10 +2277,16 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for UD
         self.group_inside_UD_centers()
+        log.info("Inside UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube()
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
         # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
         self.group_outside_UD_oblique_edges()
-        log.info("Inside UD centers and outside UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("Outside UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
         log.info("")

@@ -33,6 +33,9 @@ moves_4x4x4 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2",
                "B" , "B'", "B2", "Bw", "Bw'", "Bw2",
                "D" , "D'", "D2", "Dw", "Dw'", "Dw2")
 solved_4x4x4 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
+centers_444 = (6, 7, 10, 11, 22, 23, 26, 27, 38, 39, 42, 43, 54, 55, 58, 59, 70, 71, 74, 75, 86, 87, 90, 91)
+UD_centers_444 = (6, 7, 10, 11, 86, 87, 90, 91)
+LR_centers_444 = (22, 23, 26, 27, 54, 55, 58, 59)
 
 
 '''
@@ -40,14 +43,15 @@ lookup-table-4x4x4-step11-UD-centers-stage.txt
 lookup-table-4x4x4-step12-LR-centers-stage.txt
 lookup-table-4x4x4-step13-FB-centers-stage.txt
 ==============================================
-1 steps has 5 entries (0 percent, 0.00x previous step)
-2 steps has 82 entries (0 percent, 16.40x previous step)
-3 steps has 1,206 entries (0 percent, 14.71x previous step)
-4 steps has 14,116 entries (1 percent, 11.70x previous step)
-5 steps has 123,404 entries (16 percent, 8.74x previous step)
-6 steps has 422,508 entries (57 percent, 3.42x previous step)
-7 steps has 173,254 entries (23 percent, 0.41x previous step)
-8 steps has 896 entries (0 percent, 0.01x previous step)
+1 steps has 3 entries (0 percent, 0.00x previous step)
+2 steps has 36 entries (0 percent, 12.00x previous step)
+3 steps has 484 entries (0 percent, 13.44x previous step)
+4 steps has 5,408 entries (0 percent, 11.17x previous step)
+5 steps has 48,955 entries (6 percent, 9.05x previous step)
+6 steps has 242,011 entries (32 percent, 4.94x previous step)
+7 steps has 362,453 entries (49 percent, 1.50x previous step)
+8 steps has 75,955 entries (10 percent, 0.21x previous step)
+9 steps has 166 entries (0 percent, 0.00x previous step)
 
 Total: 735,471 entries
 '''
@@ -64,108 +68,7 @@ class LookupTable444UDCentersStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[6],
-            parent_state[7],
-            parent_state[10],
-            parent_state[11],
-
-            # Left
-            parent_state[22],
-            parent_state[23],
-            parent_state[26],
-            parent_state[27],
-
-            # Front
-            parent_state[38],
-            parent_state[39],
-            parent_state[42],
-            parent_state[43],
-
-            # Right
-            parent_state[54],
-            parent_state[55],
-            parent_state[58],
-            parent_state[59],
-
-            # Back
-            parent_state[70],
-            parent_state[71],
-            parent_state[74],
-            parent_state[75],
-
-            # Down
-            parent_state[86],
-            parent_state[87],
-            parent_state[90],
-            parent_state[91]
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
-class LookupTableAStar444LRCentersStage(LookupTableAStar):
-
-    def __init__(self, parent):
-        LookupTableAStar.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step12-LR-centers-stage.txt',
-            '0f0f00',
-            moves_4x4x4,
-            (), # illegal_moves
-            (parent.lt_LR_centers_stage,), # prune tables
-            linecount=735471)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[6],
-            parent_state[7],
-            parent_state[10],
-            parent_state[11],
-
-            # Left
-            parent_state[22],
-            parent_state[23],
-            parent_state[26],
-            parent_state[27],
-
-            # Front
-            parent_state[38],
-            parent_state[39],
-            parent_state[42],
-            parent_state[43],
-
-            # Right
-            parent_state[54],
-            parent_state[55],
-            parent_state[58],
-            parent_state[59],
-
-            # Back
-            parent_state[70],
-            parent_state[71],
-            parent_state[74],
-            parent_state[75],
-
-            # Down
-            parent_state[86],
-            parent_state[87],
-            parent_state[90],
-            parent_state[91]
-        ]
-
-        result = ['1' if x in ('L', 'R') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in centers_444])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -183,47 +86,7 @@ class LookupTable444LRCentersStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[6],
-            parent_state[7],
-            parent_state[10],
-            parent_state[11],
-
-            # Left
-            parent_state[22],
-            parent_state[23],
-            parent_state[26],
-            parent_state[27],
-
-            # Front
-            parent_state[38],
-            parent_state[39],
-            parent_state[42],
-            parent_state[43],
-
-            # Right
-            parent_state[54],
-            parent_state[55],
-            parent_state[58],
-            parent_state[59],
-
-            # Back
-            parent_state[70],
-            parent_state[71],
-            parent_state[74],
-            parent_state[75],
-
-            # Down
-            parent_state[86],
-            parent_state[87],
-            parent_state[90],
-            parent_state[91]
-        ]
-
-        result = ['1' if x in ('L', 'R') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in centers_444])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -241,47 +104,7 @@ class LookupTable444FBCentersStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[6],
-            parent_state[7],
-            parent_state[10],
-            parent_state[11],
-
-            # Left
-            parent_state[22],
-            parent_state[23],
-            parent_state[26],
-            parent_state[27],
-
-            # Front
-            parent_state[38],
-            parent_state[39],
-            parent_state[42],
-            parent_state[43],
-
-            # Right
-            parent_state[54],
-            parent_state[55],
-            parent_state[58],
-            parent_state[59],
-
-            # Back
-            parent_state[70],
-            parent_state[71],
-            parent_state[74],
-            parent_state[75],
-
-            # Down
-            parent_state[86],
-            parent_state[87],
-            parent_state[90],
-            parent_state[91]
-        ]
-
-        result = ['1' if x in ('F', 'B') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if parent_state[x] in ('F', 'B') else '0' for x in centers_444])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -291,14 +114,14 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
     """
     lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
     ==================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 135 entries (0 percent, 19.29x previous step)
-    3 steps has 2,286 entries (0 percent, 16.93x previous step)
-    4 steps has 36,728 entries (0 percent, 16.07x previous step)
-    5 steps has 562,932 entries (6 percent, 15.33x previous step)
-    6 steps has 8,047,054 entries (93 percent, 14.29x previous step)
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 54 entries (0 percent, 13.50x previous step)
+    3 steps has 726 entries (0 percent, 13.44x previous step)
+    4 steps has 9,300 entries (0 percent, 12.81x previous step)
+    5 steps has 121,407 entries (7 percent, 13.05x previous step)
+    6 steps has 1,586,554 entries (92 percent, 13.07x previous step)
 
-    Total: 8,649,142 entries
+    Total: 1,718,045 entries
     """
 
     def __init__(self, parent):
@@ -308,68 +131,36 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
             'UUUULLLLFFFFLLLLFFFFUUUU',
             moves_4x4x4,
-            (), # illegal_moves
+
+            # illegal_moves...ignoring these increases the average solution
+            # by less than 1 move but makes the IDA search about 20x faster
+            ("Lw", "Lw'", "Lw2",
+             "Bw", "Bw'", "Bw2",
+             "Dw", "Dw'", "Dw2"),
 
             # prune tables
             (parent.lt_UD_centers_stage,
              parent.lt_LR_centers_stage,
              parent.lt_FB_centers_stage),
-            linecount=8649142)
+            linecount=1718045)
 
     def state(self):
         parent_state = self.parent.state
+        result = []
 
-        result = [
-            # Upper
-            parent_state[6],
-            parent_state[7],
-            parent_state[10],
-            parent_state[11],
+        for index in centers_444:
+            x = parent_state[index]
 
-            # Left
-            parent_state[22],
-            parent_state[23],
-            parent_state[26],
-            parent_state[27],
-
-            # Front
-            parent_state[38],
-            parent_state[39],
-            parent_state[42],
-            parent_state[43],
-
-            # Right
-            parent_state[54],
-            parent_state[55],
-            parent_state[58],
-            parent_state[59],
-
-            # Back
-            parent_state[70],
-            parent_state[71],
-            parent_state[74],
-            parent_state[75],
-
-            # Down
-            parent_state[86],
-            parent_state[87],
-            parent_state[90],
-            parent_state[91]
-        ]
-
-        tmp_result = []
-        for x in result:
             if x in ('L', 'F', 'U'):
-                tmp_result.append(x)
+                result.append(x)
             elif x == 'R':
-                tmp_result.append('L')
+                result.append('L')
             elif x == 'B':
-                tmp_result.append('F')
+                result.append('F')
             elif x == 'D':
-                tmp_result.append('U')
+                result.append('U')
 
-        result = ''.join(tmp_result)
-
+        result = ''.join(result)
         return result
 
 
@@ -400,50 +191,35 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
             'UUUULLLLFFFFRRRRBBBBDDDD',
             linecount=343000)
 
+    def state(self):
+        parent_state = self.parent.state
+        result = ''.join([parent_state[x] for x in centers_444])
+        return result
+
+
+class LookupTable444TsaiPhase1LRCenters(LookupTableAStar):
+
+    def __init__(self, parent):
+        LookupTableAStar.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step12-LR-centers-stage.txt',
+            '0f0f00',
+            moves_4x4x4,
+
+            ("Lw", "Lw'", "Lw2",
+             "Bw", "Bw'", "Bw2",
+             "Dw", "Dw'", "Dw2"),
+
+            (parent.lt_LR_centers_stage,), # prune tables
+            linecount=735471)
 
     def state(self):
         parent_state = self.parent.state
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in centers_444])
 
-        result = [
-            # Upper
-            parent_state[6],
-            parent_state[7],
-            parent_state[10],
-            parent_state[11],
-
-            # Left
-            parent_state[22],
-            parent_state[23],
-            parent_state[26],
-            parent_state[27],
-
-            # Front
-            parent_state[38],
-            parent_state[39],
-            parent_state[42],
-            parent_state[43],
-
-            # Right
-            parent_state[54],
-            parent_state[55],
-            parent_state[58],
-            parent_state[59],
-
-            # Back
-            parent_state[70],
-            parent_state[71],
-            parent_state[74],
-            parent_state[75],
-
-            # Down
-            parent_state[86],
-            parent_state[87],
-            parent_state[90],
-            parent_state[91]
-        ]
-
-        result = ''.join(result)
-        return result
+        # Convert to hex
+        return self.hex_format % int(result, 2)
 
 
 class LookupTable444TsaiPhase2Centers(LookupTable):
@@ -483,54 +259,18 @@ class LookupTable444TsaiPhase2Centers(LookupTable):
             linecount=900900)
 
     def state(self):
-        babel = {
-            'L' : 'L',
-            'F' : 'F',
-            'R' : 'R',
-            'B' : 'F',
-            'D' : 'U',
-            'U' : 'U',
-        }
-
         parent_state = self.parent.state
+        result = []
 
-        result = [
-            # Upper
-            babel[parent_state[6]],
-            babel[parent_state[7]],
-            babel[parent_state[10]],
-            babel[parent_state[11]],
+        for index in centers_444:
+            x = parent_state[index]
 
-            # Left
-            babel[parent_state[22]],
-            babel[parent_state[23]],
-            babel[parent_state[26]],
-            babel[parent_state[27]],
-
-            # Front
-            babel[parent_state[38]],
-            babel[parent_state[39]],
-            babel[parent_state[42]],
-            babel[parent_state[43]],
-
-            # Right
-            babel[parent_state[54]],
-            babel[parent_state[55]],
-            babel[parent_state[58]],
-            babel[parent_state[59]],
-
-            # Back
-            babel[parent_state[70]],
-            babel[parent_state[71]],
-            babel[parent_state[74]],
-            babel[parent_state[75]],
-
-            # Down
-            babel[parent_state[86]],
-            babel[parent_state[87]],
-            babel[parent_state[90]],
-            babel[parent_state[91]]
-        ]
+            if x in ('L', 'F', 'R', 'U'):
+                result.append(x)
+            elif x == 'B':
+                result.append('F')
+            elif x == 'D':
+                result.append('U')
 
         result = ''.join(result)
         return result
@@ -622,13 +362,13 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
     def search_complete(self, state, steps_to_here):
         parent_state = self.parent.state
 
-        # Are UD and FB staged?
-        for x in (6, 7, 10, 11, 86, 87, 90, 91):
+        # Are UD and FB staged? Check UD, if it is staged FB has to be staged too.
+        for x in UD_FB_centers_444:
             if parent_state[x] not in ('U', 'D'):
                 return False
 
         # Are the LR sides in 1 of the 12 states we want?
-        LR_centers = [parent_state[x] for x in (22, 23, 26, 27, 54, 55, 58, 59)]
+        LR_centers = [parent_state[x] for x in LR_centers_444]
         LR_centers = ''.join(LR_centers)
 
         if LR_centers not in tsai_phase2_LR_center_targets:
@@ -1165,7 +905,7 @@ class RubiksCube444(RubiksCube):
 
             # Stage LR centers
             self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
-            self.lt_LR_centers_stage_astar = LookupTableAStar444LRCentersStage(self)
+            self.lt_tsai_phase1 = LookupTable444TsaiPhase1LRCenters(self)
             self.lt_LR_centers_stage.preload_cache()
 
         else:
@@ -1200,7 +940,7 @@ class RubiksCube444(RubiksCube):
             self.lt_tsai_phase3_edges_solve = LookupTable444TsaiPhase3Edges(self)
             self.lt_tsai_phase3_centers_solve = LookupTable444TsaiPhase3CentersSolve(self)
 
-            self.lt_tsai_phase3_edges_solve.preload_state_set()
+            #self.lt_tsai_phase3_edges_solve.preload_state_set()
             self.lt_tsai_phase3_centers_solve.preload_cache()
 
             self.lt_tsai_phase3 = LookupTableIDA444TsaiPhase3(self)
@@ -1318,14 +1058,13 @@ class RubiksCube444(RubiksCube):
             original_state = self.state[:]
             original_solution = self.solution[:]
 
-            # dwalton here now
             # - find 10k phase1 options
             # - sort them by their self.lt_tsai_phase2_centers.heuristic
             log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.lt_LR_centers_stage_astar._solve()
+            self.lt_tsai_phase1._solve()
 
-            phase1_solutions = self.lt_LR_centers_stage_astar.astar_search(solutions_target=10000)
-            phase1_solutions = sorted(phase1_solutions)[0:500]
+            phase1_solutions = self.lt_tsai_phase1.astar_search(solutions_target=100)
+            phase1_solutions = sorted(phase1_solutions)[0:50]
             log.info("phase1_solutions:\n%s" % pformat(phase1_solutions))
             #sys.exit(0)
 
@@ -1352,6 +1091,11 @@ class RubiksCube444(RubiksCube):
                     # Apply phase1 solution
                     for step in steps:
                         self.rotate(step)
+
+                    # Test the prune tables
+                    #self.lt_tsai_phase2_centers.solve()
+                    #self.print_cube()
+                    #sys.exit(0)
 
                     try:
                         if length12 == init_length12:

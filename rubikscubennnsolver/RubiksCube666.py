@@ -854,31 +854,97 @@ class LookupTableIDA666LRObliqueEdgePairing(LookupTableIDA):
 
 class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     """
+    This will solve the UD inner x-centers and pair the UD oblique edges.
+
     lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
-    1 steps has 9 entries (0 percent, 0.00x previous step)
-    2 steps has 47 entries (0 percent, 5.22x previous step)
-    3 steps has 232 entries (0 percent, 4.94x previous step)
-    4 steps has 1,001 entries (0 percent, 4.31x previous step)
-    5 steps has 4,266 entries (1 percent, 4.26x previous step)
-    6 steps has 16,697 entries (4 percent, 3.91x previous step)
-    7 steps has 52,894 entries (15 percent, 3.17x previous step)
-    8 steps has 114,134 entries (33 percent, 2.16x previous step)
-    9 steps has 113,888 entries (33 percent, 1.00x previous step)
-    10 steps has 37,136 entries (10 percent, 0.33x previous step)
-    11 steps has 2,696 entries (0 percent, 0.07x previous step)
+    1 steps has 350 entries (0 percent, 0.00x previous step)
+    2 steps has 1,358 entries (0 percent, 3.88x previous step)
+    3 steps has 5,148 entries (1 percent, 3.79x previous step)
+    4 steps has 21,684 entries (6 percent, 4.21x previous step)
+    5 steps has 75,104 entries (21 percent, 3.46x previous step)
+    6 steps has 134,420 entries (39 percent, 1.79x previous step)
+    7 steps has 91,784 entries (26 percent, 0.68x previous step)
+    8 steps has 13,152 entries (3 percent, 0.14x previous step)
 
     Total: 343,000 entries
     """
 
-    # dwalton this pairs and solves the UD oblique edges, we need to build
-    # the 70 tables that let them go anywhere on sides U or D
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
             'lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt',
-            'xUUxUUUUUUUUxUUxxDDxDDDDDDDDxDDx',
+            ('xDDxDUUDDUUDxDDxxUUxUDDUUDDUxUUx',
+             'xDDxDUUDDUUDxUUxxDDxUDDUUDDUxUUx',
+             'xDDxDUUDDUUDxUUxxUUxDDDUDDDUxUUx',
+             'xDDxDUUDDUUDxUUxxUUxUDDDUDDDxUUx',
+             'xDDxDUUDDUUDxUUxxUUxUDDUUDDUxDDx',
+             'xDDxDUUUDUUUxDDxxDDxUDDUUDDUxUUx',
+             'xDDxDUUUDUUUxDDxxUUxDDDUDDDUxUUx',
+             'xDDxDUUUDUUUxDDxxUUxUDDDUDDDxUUx',
+             'xDDxDUUUDUUUxDDxxUUxUDDUUDDUxDDx',
+             'xDDxDUUUDUUUxUUxxDDxDDDUDDDUxUUx',
+             'xDDxDUUUDUUUxUUxxDDxUDDDUDDDxUUx',
+             'xDDxDUUUDUUUxUUxxDDxUDDUUDDUxDDx',
+             'xDDxDUUUDUUUxUUxxUUxDDDDDDDDxUUx',
+             'xDDxDUUUDUUUxUUxxUUxDDDUDDDUxDDx',
+             'xDDxDUUUDUUUxUUxxUUxUDDDUDDDxDDx',
+             'xDDxUUUDUUUDxDDxxDDxUDDUUDDUxUUx',
+             'xDDxUUUDUUUDxDDxxUUxDDDUDDDUxUUx',
+             'xDDxUUUDUUUDxDDxxUUxUDDDUDDDxUUx',
+             'xDDxUUUDUUUDxDDxxUUxUDDUUDDUxDDx',
+             'xDDxUUUDUUUDxUUxxDDxDDDUDDDUxUUx',
+             'xDDxUUUDUUUDxUUxxDDxUDDDUDDDxUUx',
+             'xDDxUUUDUUUDxUUxxDDxUDDUUDDUxDDx',
+             'xDDxUUUDUUUDxUUxxUUxDDDDDDDDxUUx',
+             'xDDxUUUDUUUDxUUxxUUxDDDUDDDUxDDx',
+             'xDDxUUUDUUUDxUUxxUUxUDDDUDDDxDDx',
+             'xDDxUUUUUUUUxDDxxDDxDDDUDDDUxUUx',
+             'xDDxUUUUUUUUxDDxxDDxUDDDUDDDxUUx',
+             'xDDxUUUUUUUUxDDxxDDxUDDUUDDUxDDx',
+             'xDDxUUUUUUUUxDDxxUUxDDDDDDDDxUUx',
+             'xDDxUUUUUUUUxDDxxUUxDDDUDDDUxDDx',
+             'xDDxUUUUUUUUxDDxxUUxUDDDUDDDxDDx',
+             'xDDxUUUUUUUUxUUxxDDxDDDDDDDDxUUx',
+             'xDDxUUUUUUUUxUUxxDDxDDDUDDDUxDDx',
+             'xDDxUUUUUUUUxUUxxDDxUDDDUDDDxDDx',
+             'xDDxUUUUUUUUxUUxxUUxDDDDDDDDxDDx',
+             'xUUxDUUDDUUDxDDxxDDxUDDUUDDUxUUx',
+             'xUUxDUUDDUUDxDDxxUUxDDDUDDDUxUUx',
+             'xUUxDUUDDUUDxDDxxUUxUDDDUDDDxUUx',
+             'xUUxDUUDDUUDxDDxxUUxUDDUUDDUxDDx',
+             'xUUxDUUDDUUDxUUxxDDxDDDUDDDUxUUx',
+             'xUUxDUUDDUUDxUUxxDDxUDDDUDDDxUUx',
+             'xUUxDUUDDUUDxUUxxDDxUDDUUDDUxDDx',
+             'xUUxDUUDDUUDxUUxxUUxDDDDDDDDxUUx',
+             'xUUxDUUDDUUDxUUxxUUxDDDUDDDUxDDx',
+             'xUUxDUUDDUUDxUUxxUUxUDDDUDDDxDDx',
+             'xUUxDUUUDUUUxDDxxDDxDDDUDDDUxUUx',
+             'xUUxDUUUDUUUxDDxxDDxUDDDUDDDxUUx',
+             'xUUxDUUUDUUUxDDxxDDxUDDUUDDUxDDx',
+             'xUUxDUUUDUUUxDDxxUUxDDDDDDDDxUUx',
+             'xUUxDUUUDUUUxDDxxUUxDDDUDDDUxDDx',
+             'xUUxDUUUDUUUxDDxxUUxUDDDUDDDxDDx',
+             'xUUxDUUUDUUUxUUxxDDxDDDDDDDDxUUx',
+             'xUUxDUUUDUUUxUUxxDDxDDDUDDDUxDDx',
+             'xUUxDUUUDUUUxUUxxDDxUDDDUDDDxDDx',
+             'xUUxDUUUDUUUxUUxxUUxDDDDDDDDxDDx',
+             'xUUxUUUDUUUDxDDxxDDxDDDUDDDUxUUx',
+             'xUUxUUUDUUUDxDDxxDDxUDDDUDDDxUUx',
+             'xUUxUUUDUUUDxDDxxDDxUDDUUDDUxDDx',
+             'xUUxUUUDUUUDxDDxxUUxDDDDDDDDxUUx',
+             'xUUxUUUDUUUDxDDxxUUxDDDUDDDUxDDx',
+             'xUUxUUUDUUUDxDDxxUUxUDDDUDDDxDDx',
+             'xUUxUUUDUUUDxUUxxDDxDDDDDDDDxUUx',
+             'xUUxUUUDUUUDxUUxxDDxDDDUDDDUxDDx',
+             'xUUxUUUDUUUDxUUxxDDxUDDDUDDDxDDx',
+             'xUUxUUUDUUUDxUUxxUUxDDDDDDDDxDDx',
+             'xUUxUUUUUUUUxDDxxDDxDDDDDDDDxUUx',
+             'xUUxUUUUUUUUxDDxxDDxDDDUDDDUxDDx',
+             'xUUxUUUUUUUUxDDxxDDxUDDDUDDDxDDx',
+             'xUUxUUUUUUUUxDDxxUUxDDDDDDDDxDDx',
+             'xUUxUUUUUUUUxUUxxDDxDDDDDDDDxDDx'),
             linecount=343000)
 
     def state(self):
@@ -927,7 +993,7 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
     Total: 24,010,034 entries
     """
 
-    # dwalton we would have to build 70 of these and merge them...that might take a week or two
+    # TODO we would have to build 70 of these and merge them...that might take a week or two
     def __init__(self, parent):
         LookupTable.__init__(
             self,
@@ -986,7 +1052,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     Total: 25,679,911 entries
     """
 
-    # dwalton this pairs and solves the LR and FB oblique edges, we need to build
+    # TODO this pairs and solves the LR and FB oblique edges, we need to build
     # the 4900 tables that let them go anywhere on sides U or D
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -1294,18 +1360,17 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                     self.rotate_y_reverse()
 
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-
-    def group_centers_guts(self, oblique_edges_only=False):
-        self.lt_init()
-
-        self.group_centers_stage_UD()
-        log.info("UD inner x-center staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
         log.info("")
         log.info("")
         log.info("")
         log.info("")
+
+    def group_centers_guts(self, oblique_edges_only=False):
+        self.lt_init()
+
+        self.group_centers_stage_UD()
 
         self.lt_LR_inner_x_centers_stage.solve()
         log.info("LR inner x-center staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
@@ -1336,17 +1401,16 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         #
         # Needless to say this is not feasible :(
         #
-        # dwalton brainstorm....what if we used the cost_to_goal_sum thing?
-        # Maybe that would allow us to prune such a gigantic tree as this scenario?
-        # We are 42 steps by the time we get to here and are at 109 steps by the 
-        # time centers are solved.
+        # I brainstorm about this because for one of my 6x6x6 test cubes it takes
+        # us 42 steps to get to here and 109 steps to solve the centers....that
+        # is a lot of steps.
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges
         # - solve the LR inner x-centers and pair the LR oblique edges
         # - solve the FB inner x-centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
-        log.info("UD inner x-center solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("UD inner x-center solved and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
         log.info("")

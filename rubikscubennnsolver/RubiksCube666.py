@@ -937,6 +937,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LR_oblique_edge_pairing = LookupTableIDA666LRObliqueEdgePairing(self)
 
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
+
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
 
@@ -1071,6 +1072,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.group_centers_stage_UD()
 
         # Stage LR which in turn stages FB
+        self.lt_LR_inner_x_centers.solve()
         log.info("LR inner x-centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
         log.info("")
@@ -1132,15 +1134,17 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
         log.info("UD inner x-center solved and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("")
         log.info("")
         log.info("")
         log.info("")
         log.info("")
 
-        # dwalton
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
-        sys.exit(0)
+        # Test the prune tables
+        #self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
+        #self.print_cube()
+        #sys.exit(0)
 
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
         log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
@@ -1166,7 +1170,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.rotate(step)
 
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
-        sys.exit(0)
 
     def phase(self):
         if self._phase is None:

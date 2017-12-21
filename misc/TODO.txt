@@ -1,16 +1,11 @@
 
-6x6x6 - rebuild the oblique edge tables to hold only the obliques and not all centers...this will
-save us a lot of "x"s
 
-
-- 6x6x6 LR x-centers and oblique edges are done it two phases...it might be possible to combine these.
-    The main lt would be 12870^3 but we would have three prune tables so it might work
-
-- 6x6x6 UD edge pairing build 70 tables and merge them
+- 6x6x6 LR edge pairing build 70 tables and merge them
     - This is after they have already been staged and we are pairing them up.  When we
       pair them up we are forcing them to their final position but that isn't needed.
 
-    ./usr/bin/rubiks-cube-solver.py --cpu-max --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
+    - Do the same for FB prune table
+
 
 
 - B-Trees...this will benefit all searches

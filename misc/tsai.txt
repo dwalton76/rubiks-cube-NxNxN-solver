@@ -1,0 +1,13 @@
+TPR solution for DRFDFRUFDURDDLLUFLDLLBLULFBUUFRBLBFLLUDDUFRBURBBRBDLLDURFFBBRUFUFDRFURBUDLDBDUFFBUDRRLDRBLFBRRLB
+
+https://alg.cubing.net/?puzzle=4x4x4&setup=F2-_U-_F2-_D_U-_F2-_D_L2-_U2-_B-_D-_R_F-_D_B-_L-_B_F_L-_R_Uw_L-_B_D-_L_B-_Uw-_B-_Dw_B2-_L_U_D-_B2-_L-_Dw-_R_U-_B_R_D-_Rw_B2-_D_R-_B_D-_B_Rw-_F2-_D-_Fw2-_L_Dw2-_F_L_Bw2-_D-_Lw_U-_Lw-_Dw-_F-_Bw_U_Lw2-_Uw2-_R-_Uw&alg=Rw2_B_R-_Fw-_L-_Uw_Rw_%2F%2F_end_of_phase1%0AUw-_Rw2_B_R2_Uw_R-_%2F%2F_end_of_phase2%0AB-_F-_Fw2_R_B-_Uw2_R_U2_B-_Uw2_R-_Rw2_Uw2_x-_y2_%2F%2F_end_of_phase3
+
+    Rw2 B R' Fw' L' Uw Rw // end of phase1 (7 moves)
+    Uw' Rw2 B R2 Uw R' // end of phase2 (6 moves)
+    B' F' Fw2 R B' Uw2 R U2 B' Uw2 R' Rw2 Uw2 x' y2 // end of phase3
+
+
+
+
+
+./usr/bin/rubiks-cube-solver.py --state DRFDFRUFDURDDLLUFLDLLBLULFBUUFRBLBFLLUDDUFRBURBBRBDLLDURFFBBRUFUFDRFURBUDLDBDUFFBUDRRLDRBLFBRRLB

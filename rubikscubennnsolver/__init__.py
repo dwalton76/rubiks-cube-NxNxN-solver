@@ -4399,16 +4399,8 @@ div#page_holder {
             self.rotate_y_reverse()
             self.rotate_x()
 
+            # dwalton
             if front_side_name == 'U':
-                self.rotate_y()
-                self.rotate_y()
-            elif front_side_name == 'F':
-                self.rotate_y()
-            elif front_side_name == 'D':
-                pass
-            elif front_side_name == 'B':
-                self.rotate_y_reverse()
-
                 self.rotate_y()
                 self.rotate_y()
             elif front_side_name == 'F':
@@ -4597,3 +4589,46 @@ div#page_holder {
 
                 elif self.state[square_index] == 'D':
                     self.state[square_index] = 'R'
+
+    def transform(self, target):
+        """
+        This should cover every scenario:
+
+        rotations = (
+                (),
+                ("y",),
+                ("y'",),
+                ("y", "y"),
+                ("x", "x", "y"),
+                ("x", "x", "y'"),
+                ("x", "x", "y", "y"),
+                ("y'", "x", "y"),
+                ("y'", "x", "y'"),
+                ("y'", "x", "y", "y"),
+                ("x", "y"),
+                ("x", "y'"),
+                ("x", "y", "y"),
+                ("y", "x", "y"),
+                ("y", "x", "y'"),
+                ("y", "x", "y", "y"),
+                ("x'", "y"),
+                ("x'", "y'"),
+                ("x'", "y", "y")
+        )
+        """
+        if not target:
+            pass
+        elif target == "x":
+            self.transform_x()
+        elif target == "x'":
+            self.transform_x_prime()
+        elif target == "y":
+            self.transform_y()
+        elif target == "y'":
+            self.transform_y_prime()
+        elif target == "z":
+            self.transform_z()
+        elif target == "z'":
+            self.transform_z_prime()
+        else:
+            raise Exception("Implement target %s" % target)

@@ -363,7 +363,7 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
         parent_state = self.parent.state
 
         # Are UD and FB staged? Check UD, if it is staged FB has to be staged too.
-        for x in UD_FB_centers_444:
+        for x in UD_centers_444:
             if parent_state[x] not in ('U', 'D'):
                 return False
 
@@ -1068,6 +1068,17 @@ class RubiksCube444(RubiksCube):
             log.info("phase1_solutions:\n%s" % pformat(phase1_solutions))
             #sys.exit(0)
 
+            (phase2_f_cost, length1, steps) = phase1_solutions[0]
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            # Apply phase1 solution
+            for step in steps:
+                self.rotate(step)
+
+            self.lt_tsai_phase2.solve()
+
+            '''
             MAX_LENGTH2 = 9
             init_length12 = phase1_solutions[0][0]
             phase2_complete = False
@@ -1113,6 +1124,7 @@ class RubiksCube444(RubiksCube):
 
                 if phase2_complete:
                     break
+            '''
 
             self.print_cube()
             log.info("%s: End of Phase1+2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

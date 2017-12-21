@@ -712,35 +712,97 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
     """
     lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
     ========================================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 40 entries (0 percent, 8.00x previous step)
-    3 steps has 228 entries (0 percent, 5.70x previous step)
-    4 steps has 1,142 entries (0 percent, 5.01x previous step)
-    5 steps has 5,240 entries (0 percent, 4.59x previous step)
-    6 steps has 20,914 entries (0 percent, 3.99x previous step)
-    7 steps has 78,886 entries (0 percent, 3.77x previous step)
-    8 steps has 272,733 entries (1 percent, 3.46x previous step)
-    9 steps has 844,382 entries (3 percent, 3.10x previous step)
-    10 steps has 2,204,738 entries (9 percent, 2.61x previous step)
-    11 steps has 4,507,592 entries (18 percent, 2.04x previous step)
-    12 steps has 6,560,576 entries (27 percent, 1.46x previous step)
-    13 steps has 6,029,508 entries (25 percent, 0.92x previous step)
-    14 steps has 2,918,224 entries (12 percent, 0.48x previous step)
-    15 steps has 545,008 entries (2 percent, 0.19x previous step)
-    16 steps has 20,784 entries (0 percent, 0.04x previous step)
-    17 steps has 34 entries (0 percent, 0.00x previous step)
+    1 steps has 140 entries (0 percent, 0.00x previous step)
+    2 steps has 420 entries (0 percent, 3.00x previous step)
+    3 steps has 1390 entries (0 percent, 3.31x previous step)
+    4 steps has 5,794 entries (1 percent, 4.17x previous step)
+    5 steps has 17,606 entries (5 percent, 3.04x previous step)
+    6 steps has 51,580 entries (15 percent, 2.93x previous step)
+    7 steps has 102,466 entries (29 percent, 1.99x previous step)
+    8 steps has 114,764 entries (33 percent, 1.12x previous step)
+    9 steps has 45,068 entries (13 percent, 0.39x previous step)
+    10 steps has 3,656 entries (1 percent, 0.08x previous step)
+    11 steps has 116 entries (0 percent, 0.03x previous step)
 
-    Total: 24,010,034 entries
+    Total: 343,000 entries
     """
 
-    # TODO we would have to build 70 of these and merge them...that might take a week or two
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
             'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt',
-            'xLLxLLLLLLLLxLLxxxxxxFFxxFFxxxxxxRRxRRRRRRRRxRRxxxxxxBBxxBBxxxxx',
-            linecount=24010034)
+            ('xLLxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRRRRRRxRRxxxxxxxxxxxxxxxxx',
+             'xLLxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxRRxxxxxxxxxxxxxxxxx',
+             'xLLxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
+             'xLLxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
+             'xLLxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
+             'xLLxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxRRxxxxxxxxxxxxxxxxx',
+             'xLLxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
+             'xLLxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
+             'xLLxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
+             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
+             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
+             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
+             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
+             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
+             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
+             'xLLxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxRRxxxxxxxxxxxxxxxxx',
+             'xLLxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
+             'xLLxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
+             'xLLxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
+             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
+             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
+             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
+             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
+             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
+             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
+             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
+             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
+             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
+             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
+             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
+             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
+             'xLLxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
+             'xLLxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
+             'xLLxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
+             'xLLxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxLLxxxxxxxxxxxxxxxxx',
+             'xRRxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxRRxxxxxxxxxxxxxxxxx',
+             'xRRxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
+             'xRRxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
+             'xRRxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
+             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
+             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
+             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
+             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
+             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
+             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
+             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
+             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
+             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
+             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
+             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
+             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
+             'xRRxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
+             'xRRxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
+             'xRRxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
+             'xRRxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxLLxxxxxxxxxxxxxxxxx',
+             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
+             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
+             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
+             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
+             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
+             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
+             'xRRxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
+             'xRRxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
+             'xRRxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
+             'xRRxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxLLxxxxxxxxxxxxxxxxx',
+             'xRRxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
+             'xRRxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
+             'xRRxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
+             'xRRxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxLLxxxxxxxxxxxxxxxxx',
+             'xRRxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxLLxxxxxxxxxxxxxxxxx'),
+            linecount=343000)
 
     def state(self):
         parent_state = self.parent.state
@@ -753,10 +815,10 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
             'x', parent_state[63], parent_state[64], 'x',
 
             # Front
-            'xxxx',
-            'x', parent_state[87], parent_state[88], 'x',
-            'x', parent_state[93], parent_state[94], 'x',
-            'xxxx',
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
 
             # Right
             'x', parent_state[117], parent_state[118], 'x',
@@ -765,10 +827,58 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
             'x', parent_state[135], parent_state[136], 'x',
 
             # Back
-            'xxxx',
-            'x', parent_state[159], parent_state[160], 'x',
-            'x', parent_state[165], parent_state[166], 'x',
-            'xxxx'
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+        ]
+
+        result = ''.join(result)
+        return result
+
+
+class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
+    """
+    lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
+    ========================================================================
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
+            'TBD',
+            linecount=343000)
+
+    # dwalton this is building now
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            # Left
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+
+            # Front
+            'x', parent_state[81], parent_state[82], 'x',
+            parent_state[86], parent_state[87], parent_state[88], parent_state[89],
+            parent_state[92], parent_state[93], parent_state[94], parent_state[95],
+            'x', parent_state[99], parent_state[100], 'x',
+
+            # Right
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+            'x', 'x', 'x', 'x',
+
+            # Back
+            'x', parent_state[153], parent_state[154], 'x',
+            parent_state[158], parent_state[159], parent_state[160], parent_state[161],
+            parent_state[164], parent_state[165], parent_state[166], parent_state[167],
+            'x', parent_state[171], parent_state[172], 'x',
         ]
 
         result = ''.join(result)
@@ -792,6 +902,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     Total: 25,679,911 entries
     """
 
+    # dwalton need to build all 4900 of these and merge them
     # TODO this pairs and solves the LR and FB oblique edges, we need to build
     # the 4900 tables that let them go anywhere on sides U or D
     def __init__(self, parent):
@@ -807,7 +918,8 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
              "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
 
             # prune tables
-            (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,),
+            (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
+             parent.lt_FB_solve_inner_x_centers_and_oblique_edges,),
             linecount=25679911)
 
     def state(self):
@@ -939,6 +1051,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
 
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
+        self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
 
     def populate_fake_555_for_ULFRBD(self, fake_555):
@@ -1143,8 +1256,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         # Test the prune tables
         #self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
-        #self.print_cube()
-        #sys.exit(0)
+        self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
+        self.print_cube()
+        sys.exit(0)
+        # dwalton
 
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
         log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))

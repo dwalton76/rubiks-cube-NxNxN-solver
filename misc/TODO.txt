@@ -1,4 +1,8 @@
 
+- build the 4900 tables for 6x6x6 LFRB centers
+
+- tsai...need something better
+
 
 - 6x6x6 LR edge pairing build 70 tables and merge them
     - This is after they have already been staged and we are pairing them up.  When we

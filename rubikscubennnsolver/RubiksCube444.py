@@ -373,86 +373,6 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
         return result
 
 
-class LookupTable444LFRBCentersStage(LookupTable):
-    """
-    lookup-table-4x4x4-step20-LFRB-centers-stage.txt
-    ================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 234 entries (1 percent, 8.07x previous step)
-    4 steps has 1246 entries (9 percent, 5.32x previous step)
-    5 steps has 4466 entries (34 percent, 3.58x previous step)
-    6 steps has 6236 entries (48 percent, 1.40x previous step)
-    7 steps has 656 entries (5 percent, 0.11x previous step)
-
-    Total: 12870 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step20-LFRB-centers-stage.txt',
-            'xxxxLLLLFFFFLLLLFFFFxxxx',
-            linecount=12870)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[6],
-            parent_state[7],
-            parent_state[10],
-            parent_state[11],
-
-            # Left
-            parent_state[22],
-            parent_state[23],
-            parent_state[26],
-            parent_state[27],
-
-            # Front
-            parent_state[38],
-            parent_state[39],
-            parent_state[42],
-            parent_state[43],
-
-            # Right
-            parent_state[54],
-            parent_state[55],
-            parent_state[58],
-            parent_state[59],
-
-            # Back
-            parent_state[70],
-            parent_state[71],
-            parent_state[74],
-            parent_state[75],
-
-            # Down
-            parent_state[86],
-            parent_state[87],
-            parent_state[90],
-            parent_state[91]
-        ]
-
-        tmp_result = []
-        for x in result:
-            if x in ('U', 'D'):
-                tmp_result.append('x')
-            elif x == 'R':
-                tmp_result.append('L')
-            elif x == 'B':
-                tmp_result.append('F')
-            else:
-                tmp_result.append(x)
-
-        result = ''.join(tmp_result)
-
-        return result
-
-
 class LookupTable444ULFRBDCentersSolve(LookupTable):
     """
     lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt
@@ -1121,95 +1041,6 @@ class LookupTable444EdgesSliceBackward(LookupTable):
         raise Exception("This should never be called")
 
 
-
-class BidirIDA444ULFRBDCentersStage(LookupTableIDA):
-    """
-    lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
-    ==================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 135 entries (0 percent, 19.29x previous step)
-    3 steps has 2,286 entries (0 percent, 16.93x previous step)
-    4 steps has 36,728 entries (0 percent, 16.07x previous step)
-    5 steps has 562,932 entries (6 percent, 15.33x previous step)
-    6 steps has 8,047,054 entries (93 percent, 14.29x previous step)
-
-    Total: 8,649,142 entries
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
-            'UUUULLLLFFFFLLLLFFFFUUUU',
-            moves_4x4x4,
-            (), # illegal_moves
-
-            # prune tables
-            (parent.lt_UD_centers_stage,
-             parent.lt_LR_centers_stage,
-             parent.lt_FB_centers_stage),
-            linecount=8649142,
-            max_depth=6)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[6],
-            parent_state[7],
-            parent_state[10],
-            parent_state[11],
-
-            # Left
-            parent_state[22],
-            parent_state[23],
-            parent_state[26],
-            parent_state[27],
-
-            # Front
-            parent_state[38],
-            parent_state[39],
-            parent_state[42],
-            parent_state[43],
-
-            # Right
-            parent_state[54],
-            parent_state[55],
-            parent_state[58],
-            parent_state[59],
-
-            # Back
-            parent_state[70],
-            parent_state[71],
-            parent_state[74],
-            parent_state[75],
-
-            # Down
-            parent_state[86],
-            parent_state[87],
-            parent_state[90],
-            parent_state[91]
-        ]
-
-        tmp_result = []
-        for x in result:
-            if x in ('L', 'F', 'U'):
-                tmp_result.append(x)
-            elif x == 'R':
-                tmp_result.append('L')
-            elif x == 'B':
-                tmp_result.append('F')
-            elif x == 'D':
-                tmp_result.append('U')
-
-        result = ''.join(tmp_result)
-
-        return result
-
-
-
 class RubiksCube444(RubiksCube):
 
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
@@ -1307,10 +1138,7 @@ class RubiksCube444(RubiksCube):
         # - probably not feasible
 
 
-        # There are four CPU "modes" we can run in:
-        #
-        # min    : Uses the least CPU but produces a longer solution.
-        #          This will stage UD centers first, then LFRB centers.
+        # There are three CPU "modes" we can run in:
         #
         # normal : Uses a middle ground of CPU and produces not the shortest or longest solution.
         #          This will stage all centers at once.
@@ -1323,10 +1151,7 @@ class RubiksCube444(RubiksCube):
         # ==============
         # Phase 1 tables
         # ==============
-        if self.cpu_mode == 'min':
-            self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
-
-        elif self.cpu_mode in ('normal', 'max'):
+        if self.cpu_mode in ('normal', 'max'):
 
             # prune tables
             self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
@@ -1343,24 +1168,13 @@ class RubiksCube444(RubiksCube):
             self.lt_LR_centers_stage_astar = LookupTableAStar444LRCentersStage(self)
             self.lt_LR_centers_stage.preload_cache()
 
-        elif self.cpu_mode == 'exp':
-
-            self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
-            self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
-            self.lt_FB_centers_stage = LookupTable444FBCentersStage(self)
-
-            self.lt_ULFRBD_centers_stage = BidirIDA444ULFRBDCentersStage(self)
-
         else:
             raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
 
         # =============
         # Phase2 tables
         # =============
-        if self.cpu_mode == 'min':
-            self.lt_LFRB_centers_stage = LookupTable444LFRBCentersStage(self)
-
-        elif self.cpu_mode in ('normal', 'max'):
+        if self.cpu_mode in ('normal', 'max'):
             self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
 
         elif self.cpu_mode == 'tsai':
@@ -1371,19 +1185,13 @@ class RubiksCube444(RubiksCube):
             self.lt_tsai_phase2 = LookupTableIDA444TsaiPhase2(self)
             self.lt_tsai_phase2_centers.preload_cache()
 
-        elif self.cpu_mode == 'exp':
-            pass
-
         else:
             raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
 
         # =============
         # Phase3 tables
         # =============
-        if self.cpu_mode == 'min':
-            self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
-
-        elif self.cpu_mode in ('normal', 'max'):
+        if self.cpu_mode in ('normal', 'max'):
             pass
 
         elif self.cpu_mode == 'tsai':
@@ -1396,9 +1204,6 @@ class RubiksCube444(RubiksCube):
             self.lt_tsai_phase3_centers_solve.preload_cache()
 
             self.lt_tsai_phase3 = LookupTableIDA444TsaiPhase3(self)
-
-        elif self.cpu_mode == 'exp':
-            pass
 
         else:
             raise Exception("We should not be here, cpu_mode %s" % self.cpu_mode)
@@ -1487,31 +1292,7 @@ class RubiksCube444(RubiksCube):
         self.lt_init()
 
         # The non-tsai solver will only solve the centers here
-        if self.cpu_mode == 'min':
-
-            # If the centers are already solve then return and let group_edges() pair the edges
-            if self.centers_solved():
-                return
-
-            log.info("%s: Start of Phase1" % self)
-            self.lt_UD_centers_stage.solve()
-            self.print_cube()
-            log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-
-            log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.lt_LFRB_centers_stage.solve()
-            self.print_cube()
-            log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-
-            log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.lt_ULFRBD_centers_solve.solve()
-            self.print_cube()
-            log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-
-        elif self.cpu_mode in ('normal', 'max'):
+        if self.cpu_mode in ('normal', 'max'):
 
             # If the centers are already solve then return and let group_edges() pair the edges
             if self.centers_solved():
@@ -1529,16 +1310,6 @@ class RubiksCube444(RubiksCube):
             self.print_cube()
             log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
-
-        elif self.cpu_mode == 'exp':
-
-            log.info("%s: Start of Phase1" % self)
-            self.lt_ULFRBD_centers_stage.avoid_oll = True
-            self.lt_ULFRBD_centers_stage.solve()
-            log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.print_cube()
-            log.info("")
-            sys.exit(0)
 
         # The tsai will solve the centers and pair the edges
         elif self.cpu_mode == 'tsai':
@@ -2265,11 +2036,7 @@ class RubiksCube444(RubiksCube):
         # steps plus 2 * pre_non_paired_wings_count is greater than our current minimum
         # there isn't any point in continuing down this branch so prune it and save
         # some CPU cycles.
-
-        if self.cpu_mode == 'min':
-            estimate_per_wing = 3.0
-        else:
-            estimate_per_wing = 2.0
+        estimate_per_wing = 2.0
 
         estimated_solution_len = edge_solution_len + (estimate_per_wing * pre_non_paired_wings_count)
 

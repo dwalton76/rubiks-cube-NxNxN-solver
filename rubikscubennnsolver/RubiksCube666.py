@@ -101,246 +101,20 @@ class LookupTable666UDInnerXCenterStage(LookupTable):
         return self.hex_format % int(result, 2)
 
 
-class LookupTable666CpuMaxUDObliqueEdgePairingLeftOnly(LookupTable):
-    """
-    lookup-table-6x6x6-step26-UD-oblique-edge-pairing-left-only.txt
-    ===============================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1,198 entries (0 percent, 14.61x previous step)
-    4 steps has 13,818 entries (1 percent, 11.53x previous step)
-    5 steps has 115,638 entries (15 percent, 8.37x previous step)
-    6 steps has 399,478 entries (54 percent, 3.45x previous step)
-    7 steps has 204,612 entries (27 percent, 0.51x previous step)
-    8 steps has 640 entries (0 percent, 0.00x previous step)
-
-    Total: 735,471 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-6x6x6-step26-UD-oblique-edge-pairing-left-only.txt',
-            '990000000099',
-            linecount=735471)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[9], 'x',
-            'x', parent_state[17],
-            parent_state[20], 'x',
-            'x', parent_state[28],
-
-            # Left
-            parent_state[45], 'x',
-            'x', parent_state[53],
-            parent_state[56], 'x',
-            'x', parent_state[64],
-
-            # Front
-            parent_state[81], 'x',
-            'x', parent_state[89],
-            parent_state[92], 'x',
-            'x', parent_state[100],
-
-            # Right
-            parent_state[117], 'x',
-            'x', parent_state[125],
-            parent_state[128], 'x',
-            'x', parent_state[136],
-
-            # Back
-            parent_state[153], 'x',
-            'x', parent_state[161],
-            parent_state[164], 'x',
-            'x', parent_state[172],
-
-            # Down
-            parent_state[189], 'x',
-            'x', parent_state[197],
-            parent_state[200], 'x',
-            'x', parent_state[208]
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
-class LookupTable666CpuMaxUDObliqueEdgePairingRightOnly(LookupTable):
-    """
-    lookup-table-6x6x6-step27-UD-oblique-edge-pairing-right-only.txt
-    ================================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1,198 entries (0 percent, 14.61x previous step)
-    4 steps has 13,818 entries (1 percent, 11.53x previous step)
-    5 steps has 115,638 entries (15 percent, 8.37x previous step)
-    6 steps has 399,478 entries (54 percent, 3.45x previous step)
-    7 steps has 204,612 entries (27 percent, 0.51x previous step)
-    8 steps has 640 entries (0 percent, 0.00x previous step)
-
-    Total: 735,471 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-6x6x6-step27-UD-oblique-edge-pairing-right-only.txt',
-            '660000000066',
-            linecount=735471)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            'x', parent_state[10],
-            parent_state[14], 'x',
-            'x', parent_state[23],
-            parent_state[27], 'x',
-
-            # Left
-            'x', parent_state[46],
-            parent_state[50], 'x',
-            'x', parent_state[59],
-            parent_state[63], 'x',
-
-            # Front
-            'x', parent_state[82],
-            parent_state[86], 'x',
-            'x', parent_state[95],
-            parent_state[99], 'x',
-
-            # Right
-            'x', parent_state[118],
-            parent_state[122], 'x',
-            'x', parent_state[131],
-            parent_state[135], 'x',
-
-            # Back
-            'x', parent_state[154],
-            parent_state[158], 'x',
-            'x', parent_state[167],
-            parent_state[171], 'x',
-
-            # Down
-            'x', parent_state[190],
-            parent_state[194], 'x',
-            'x', parent_state[203],
-            parent_state[207], 'x'
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
-class LookupTableIDA666CpuMaxUDObliqueEdgePairing(LookupTableIDA):
-    """
-    Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
-    (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
-    IDA and build it 8 steps deep.
-
-    Our prune tables will be to solve on the left or right oblique edges. Each of these
-    tables are 24!/(8!*16!) or 735,471
-    735471/540917591841 is 0.000 001 3596729171
-
-    This IDA search can take several minutes, that is why we only do this if cpu_mode is max.
-
-    Note that the numbering scheme for the filenames for 25, 26 and 27 are a little off.
-    Typically 25 would be numbered something like 20 and 26/27 would be 21/22 (since
-    they are prune tables) but I was already using 20/21/22 and 30/31, etc so to avoid
-    renumbering lots of files I cheated and numbered these 25/26/27.
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-6x6x6-step25-UD-oblique-edge-pairing.txt',
-            'ff00000000ff',
-            moves_6x6x6,
-
-            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"), # These would break up the staged UD inner x-centers
-
-            # prune tables
-            (parent.lt_UD_oblique_edge_pairing_left_only,
-             parent.lt_UD_oblique_edge_pairing_right_only),
-            linecount=7271027)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[9], parent_state[10],
-            parent_state[14], parent_state[17],
-            parent_state[20], parent_state[23],
-            parent_state[27], parent_state[28],
-
-            # Left
-            parent_state[45], parent_state[46],
-            parent_state[50], parent_state[53],
-            parent_state[56], parent_state[59],
-            parent_state[63], parent_state[64],
-
-            # Front
-            parent_state[81], parent_state[82],
-            parent_state[86], parent_state[89],
-            parent_state[92], parent_state[95],
-            parent_state[99], parent_state[100],
-
-            # Right
-            parent_state[117], parent_state[118],
-            parent_state[122], parent_state[125],
-            parent_state[128], parent_state[131],
-            parent_state[135], parent_state[136],
-
-            # Back
-            parent_state[153], parent_state[154],
-            parent_state[158], parent_state[161],
-            parent_state[164], parent_state[167],
-            parent_state[171], parent_state[172],
-
-            # Down
-            parent_state[189], parent_state[190],
-            parent_state[194], parent_state[197],
-            parent_state[200], parent_state[203],
-            parent_state[207], parent_state[208]
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
 class LookupTable666UDObliqueEdgePairingLeftOnly(LookupTable):
     """
     lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt
     ===============================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 238 entries (1 percent, 8.21x previous step)
-    4 steps has 742 entries (5 percent, 3.12x previous step)
-    5 steps has 1,836 entries (14 percent, 2.47x previous step)
-    6 steps has 4,405 entries (34 percent, 2.40x previous step)
-    7 steps has 3,774 entries (29 percent, 0.86x previous step)
-    8 steps has 1,721 entries (13 percent, 0.46x previous step)
-    9 steps has 122 entries (0 percent, 0.07x previous step)
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 82 entries (0 percent, 16.40x previous step)
+    3 steps has 1,198 entries (0 percent, 14.61x previous step)
+    4 steps has 13,818 entries (1 percent, 11.53x previous step)
+    5 steps has 115,638 entries (15 percent, 8.37x previous step)
+    6 steps has 399,478 entries (54 percent, 3.45x previous step)
+    7 steps has 204,612 entries (27 percent, 0.51x previous step)
+    8 steps has 640 entries (0 percent, 0.00x previous step)
 
-    Total: 12,870 entries
+    Total: 735,471 entries
     """
 
     def __init__(self, parent):
@@ -349,7 +123,7 @@ class LookupTable666UDObliqueEdgePairingLeftOnly(LookupTable):
             parent,
             'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
             '990000000099',
-            linecount=12870)
+            linecount=735471)
 
     def state(self):
         parent_state = self.parent.state
@@ -403,17 +177,16 @@ class LookupTable666UDObliqueEdgePairingRightOnly(LookupTable):
     """
     lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt
     ================================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 238 entries (1 percent, 8.21x previous step)
-    4 steps has 742 entries (5 percent, 3.12x previous step)
-    5 steps has 1,836 entries (14 percent, 2.47x previous step)
-    6 steps has 4,405 entries (34 percent, 2.40x previous step)
-    7 steps has 3,774 entries (29 percent, 0.86x previous step)
-    8 steps has 1,721 entries (13 percent, 0.46x previous step)
-    9 steps has 122 entries (0 percent, 0.07x previous step)
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 82 entries (0 percent, 16.40x previous step)
+    3 steps has 1,198 entries (0 percent, 14.61x previous step)
+    4 steps has 13,818 entries (1 percent, 11.53x previous step)
+    5 steps has 115,638 entries (15 percent, 8.37x previous step)
+    6 steps has 399,478 entries (54 percent, 3.45x previous step)
+    7 steps has 204,612 entries (27 percent, 0.51x previous step)
+    8 steps has 640 entries (0 percent, 0.00x previous step)
 
-    Total: 12,870 entries
+    Total: 735,471 entries
     """
 
     def __init__(self, parent):
@@ -422,7 +195,7 @@ class LookupTable666UDObliqueEdgePairingRightOnly(LookupTable):
             parent,
             'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
             '660000000066',
-            linecount=12870)
+            linecount=735471)
 
     def state(self):
         parent_state = self.parent.state
@@ -482,34 +255,7 @@ class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
     tables are 24!/(8!*16!) or 735,471
     735471/540917591841 is 0.000 001 3596729171
 
-    Originally I did what is described above but the IDA search took 4 minutes
-    (on my laptop) for some cubes...I can only imagine how long that would
-    take on a 300Mhz EV3.  To speed this up I did something unusual here...I
-    rebuilt the step20 table but restricted moves so that UD obliques can
-    only move to sides UFDB. The cube will be very scrambled though and
-    there will be UD obliques on sides LR.  What I do is "fake move" these
-    obliques to side UFDB so that I can use the step20 table.  At that point
-    there will only be UD obliques on sides ULDR so I then do a rotate_y()
-    one time to make LR free of UD obliques again. Then I do another lookup
-    in the step20 table.
-
-    I only built the table to 9-deep, it would have 165 million entries if
-    I built it the whole way out but that would be too large to check into
-    the repo so I use IDA.
-
-    lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt
-    =====================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 286 entries (0 percent, 9.86x previous step)
-    4 steps has 2,052 entries (0 percent, 7.17x previous step)
-    5 steps has 16,348 entries (0 percent, 7.97x previous step)
-    6 steps has 127,859 entries (0 percent, 7.82x previous step)
-    7 steps has 844,248 entries (3 percent, 6.60x previous step)
-    8 steps has 4,623,585 entries (18 percent, 5.48x previous step)
-    9 steps has 19,019,322 entries (77 percent, 4.11x previous step)
-
-    Total: 24,633,732 entries
+    This IDA search can take a few dozen seconds
     """
 
     def __init__(self, parent):
@@ -520,14 +266,12 @@ class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
             'ff00000000ff',
             moves_6x6x6,
 
-            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # These would break up the staged UD inner x-centers
-             "Fw", "Fw'", "Bw", "Bw'",
-             "3Uw", "3Uw'", "3Dw", "3Dw'", "Uw", "Uw'", "Dw", "Dw'"),
+            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"), # These would break up the staged UD inner x-centers
 
             # prune tables
             (parent.lt_UD_oblique_edge_pairing_left_only,
              parent.lt_UD_oblique_edge_pairing_right_only),
-            linecount=24633732)
+            linecount=7271027)
 
     def state(self):
         parent_state = self.parent.state
@@ -1120,15 +864,9 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCenterStage(self)
 
-        if self.cpu_mode == 'max':
-            self.lt_UD_oblique_edge_pairing_left_only = LookupTable666CpuMaxUDObliqueEdgePairingLeftOnly(self)
-            self.lt_UD_oblique_edge_pairing_right_only = LookupTable666CpuMaxUDObliqueEdgePairingRightOnly(self)
-            self.lt_UD_oblique_edge_pairing = LookupTableIDA666CpuMaxUDObliqueEdgePairing(self)
-
-        else:
-            self.lt_UD_oblique_edge_pairing_left_only = LookupTable666UDObliqueEdgePairingLeftOnly(self)
-            self.lt_UD_oblique_edge_pairing_right_only = LookupTable666UDObliqueEdgePairingRightOnly(self)
-            self.lt_UD_oblique_edge_pairing = LookupTableIDA666UDObliqueEdgePairing(self)
+        self.lt_UD_oblique_edge_pairing_left_only = LookupTable666UDObliqueEdgePairingLeftOnly(self)
+        self.lt_UD_oblique_edge_pairing_right_only = LookupTable666UDObliqueEdgePairingRightOnly(self)
+        self.lt_UD_oblique_edge_pairing = LookupTableIDA666UDObliqueEdgePairing(self)
 
         self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCenterStage(self)
 
@@ -1139,22 +877,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
-
-        if self.cpu_mode == 'min':
-            """
-            self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve() will only be called if cpu_mode is 'min'.
-            We 'solve' this prune table to speed up the IDA search for self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
-            """
-
-            # do not mess up LR sides that we staged via self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
-            moves_all = list(self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.moves_all)
-            moves_all.remove("L")
-            moves_all.remove("L'")
-            moves_all.remove("L2")
-            moves_all.remove("R")
-            moves_all.remove("R'")
-            moves_all.remove("R2")
-            self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.moves_all = tuple(moves_all)
 
     def populate_fake_555_for_ULFRBD(self, fake_555):
 
@@ -1266,33 +988,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_inner_x_centers_stage.solve()
         log.info("UD inner x-centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-        if self.cpu_mode == 'max':
-            self.lt_UD_oblique_edge_pairing.solve()
-
-        else:
-            # See the comments where self.lt_UD_oblique_edge_pairing is declared for
-            # an explanation on what is happening here
-            for x in range(2):
-                original_state = self.state[:]
-                original_solution = self.solution[:]
-                original_solution_len = len(self.solution)
-
-                self.fake_move_UD_to_UFDB()
-                self.lt_UD_oblique_edge_pairing.solve()
-
-                tmp_solution = self.solution[original_solution_len:]
-
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                for step in tmp_solution:
-                    self.rotate(step)
-
-                if x == 0:
-                    self.rotate_y()
-                else:
-                    self.rotate_y_reverse()
-
+        self.lt_UD_oblique_edge_pairing.solve()
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_centers_guts(self, oblique_edges_only=False):
@@ -1353,11 +1049,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
         log.info("")
         log.info("")
-
-        # speed up IDA
-        if self.cpu_mode == 'min':
-            self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
-            log.info("LR inner x-center and oblique edges prune table solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
         log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))

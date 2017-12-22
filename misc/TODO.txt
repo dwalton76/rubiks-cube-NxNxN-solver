@@ -1,4 +1,11 @@
 
+- rebuild the tsai phase3 tables without
+
+        'illegal'  : ("Lw", "Lw'", "Lw2",
+                      "Bw", "Bw'", "Bw2",
+                      "Dw", "Dw'", "Dw2"),
+
+
 - build the 4900 tables for 6x6x6 LFRB centers
 
 - tsai...need something better

@@ -125,6 +125,20 @@ class LookupTable(object):
                     os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
                     os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
 
+                elif self.filename_gz == 'lookup-table-4x4x4-step50-tsai-phase1.txt.gz':
+
+                    # Download all three parts
+                    for extension in ('aa', 'ab', 'ac'):
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-%s" %\
+                            (self.parent.size, self.parent.size, self.parent.size, extension)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
+
+                    subprocess.call('cat lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-* > lookup-table-4x4x4-step50-tsai-phase1.txt.gz', shell=True)
+                    os.unlink('lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-aa')
+                    os.unlink('lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-ab')
+                    os.unlink('lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-ac')
+
                 else:
                     url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
                     log.info("Downloading table via 'wget %s'" % url)

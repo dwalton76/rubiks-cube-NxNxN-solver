@@ -125,20 +125,6 @@ class LookupTable(object):
                     os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
                     os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
 
-                elif self.filename_gz == 'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz':
-
-                    # Download all three parts
-                    for extension in ('aa', 'ab', 'ac'):
-                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-%s" %\
-                            (self.parent.size, self.parent.size, self.parent.size, extension)
-                        log.info("Downloading table via 'wget %s'" % url)
-                        subprocess.call(['wget', url])
-
-                    subprocess.call('cat lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-* > lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz', shell=True)
-                    os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-aa')
-                    os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
-                    os.unlink('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
-
                 else:
                     url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
                     log.info("Downloading table via 'wget %s'" % url)
@@ -444,10 +430,22 @@ class LookupTableAStar(LookupTable):
 
         Returns True if cube is already "solved"
         """
+        # save cube state
+        self.original_state = self.parent.state[:]
+        self.original_solution = self.parent.solution[:]
 
-        # This shouldn't happen since the lookup tables are downloaded from github
-        if not self.filename_exists:
-            raise Exception("%s does not exist" % self.filename)
+        if self.parent.size == 2:
+            self.rotate_xxx = rotate_222
+        elif self.parent.size == 4:
+            self.rotate_xxx = rotate_444
+        elif self.parent.size == 5:
+            self.rotate_xxx = rotate_555
+        elif self.parent.size == 6:
+            self.rotate_xxx = rotate_666
+        elif self.parent.size == 7:
+            self.rotate_xxx = rotate_777
+        else:
+            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
 
         state = self.state()
         #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
@@ -473,118 +471,59 @@ class LookupTableAStar(LookupTable):
         # cube state was not in the lookup table.  We must now perform an IDA search
         # until we find a sequence of moves that takes us to a state that IS in the
         # lookup table.
+        return False
 
-        # save cube state
-        self.original_state = self.parent.state[:]
-        self.original_solution = self.parent.solution[:]
-
-        if self.parent.size == 2:
-            self.rotate_xxx = rotate_222
-        elif self.parent.size == 4:
-            self.rotate_xxx = rotate_444
-        elif self.parent.size == 5:
-            self.rotate_xxx = rotate_555
-        elif self.parent.size == 6:
-            self.rotate_xxx = rotate_666
-        elif self.parent.size == 7:
-            self.rotate_xxx = rotate_777
-        else:
-            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
-
-    def astar_search(self):
+    def astar_search(self, solutions_target=None, max_depth=None):
         """
         This isn't used at the moment...I did it as an experiment.
-
-        The workqA parts are for going from a scrambled cube towards a solved cube.
-
-        The workqB parts that are commented out are for taking a solved cube and traversing
-        a graph towards the scrambled cube.
-
-        The idea is explore workqA and workqB until you find a state that overlaps. I had
-        it working but you really need a heuristic for workqB to estimate the cost to the
-        scrambled cube...I may come back to it later.
         """
         import bisect
         from sortedcontainers import SortedList
-        from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_4x4x4, solved_4x4x4
 
         astar_countA = 0
-        astar_countB = 0
         exploredA = {}
-        exploredB = {}
+        solutions = []
+
+        self.parent.state = self.original_state[:]
+        self.parent.solution = self.original_solution[:]
 
         # Initialize workqA
         workqA = SortedList()
-        workqA.append((0, 0, 0, (), self.original_state[:]))
+        workqA.append((0, 0, 0, [], self.original_state[:]))
 
-        # Initialize workqB
-        # Start with a solved cube and work your way towards the scrambled cube
-        solved_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
-        workqB = SortedList()
-        workqB.append((0, 0, 0, (), solved_444.state[:]))
-
-        while workqA and workqB:
+        while workqA:
             astar_countA += 1
-            astar_countB += 1
 
             # len_steps_to_here and cost_to_goal are just tie-breakers for sorting the
             # better step sequencs to the front of the workq
 
-            '''
-            # workq for going from solved to scrambled
-            (f_costB, len_steps_to_here, cost_to_goal, steps_to_hereB, prev_stateB) = workqB.pop(0)
-            self.parent.state = prev_stateB[:]
-            lt_stateB = self.state()
-            '''
-
             # workq for going from scrambled to solved
-            (f_costA, len_steps_to_here, cost_to_goal, steps_to_hereA, prev_stateA) = workqA.pop(0)
+            (f_costA, _, _, steps_to_hereA, prev_stateA) = workqA.pop(0)
             self.parent.state = prev_stateA[:]
             lt_stateA = self.state()
 
-            '''
-            if lt_stateA == lt_stateB:
-                log.warning("lt_stateA equals lt_stateB")
-                raise Exception("ImplementThis")
-
-            if lt_stateB in exploredA:
-                log.warning("lt_stateB is in exploredA")
-                #log.info("%s: AStar found match %d stepsB in, %s, lt_stateB %s, AStar countB %d, f_costB %d" %
-                #             (self, len(steps_to_hereB), ' '.join(steps_to_hereB), lt_stateB, astar_countB, f_costB))
-                raise Exception("ImplementThis")
-
-            if lt_stateA in exploredB:
-                log.warning("lt_stateA is in exploredB")
-                stepsB = reverse_steps(exploredB[lt_stateA])
-
-                log.info("%s: AStar found match %d stepsA (%s), %d stepsB (%s), countA %d, countB %d" %
-                    (self,
-                     len(steps_to_hereA), ' '.join(steps_to_hereA),
-                     len(stepsB), ' '.join(stepsB),
-                     astar_countA, astar_countB))
-
-                # rotate_xxx() is very fast but it does not append the
-                # steps to the solution so put the cube back in original state
-                # and execute the steps via a normal rotate() call
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-
-                for step in steps_to_hereA:
-                    self.parent.rotate(step)
-
-                for step in stepsB:
-                    self.parent.rotate(step)
-                return True
-            '''
-
-            #use_search_complete = False
-            use_search_complete = True
+            use_search_complete = False
+            #use_search_complete = True
 
             if use_search_complete:
                 if self.search_complete(lt_stateA, steps_to_hereA):
                     log.info("%s: AStar found match %d steps in, %s, lt_state %s, AStar count %d, f_cost %d" %
                              (self, len(steps_to_hereA), ' '.join(steps_to_hereA), lt_stateA, astar_countA, f_costA))
-                    return True
+
+                    if solutions_target is None:
+                        return True
+                    else:
+                        cost_to_here = self.parent.get_solution_len_minus_rotates(steps_to_hereA)
+                        cost_to_goal = self.parent.lt_tsai_phase2_centers.heuristic()
+                        f_cost = cost_to_here + cost_to_goal
+
+                        solution_tuple = (f_cost, cost_to_here, self.parent.solution[:])
+
+                        if solution_tuple not in solutions:
+                            solutions.append(solution_tuple)
+
+                        if len(solutions) >= solutions_target:
+                            return solutions
 
             else:
                 # I used the following (instead of the search_complete() call above) to test
@@ -603,23 +542,35 @@ class LookupTableAStar(LookupTable):
                     self.parent.state = self.original_state[:]
                     self.parent.solution = self.original_solution[:]
 
-                    for step in steps_to_here:
+                    for step in steps_to_hereA:
                         self.parent.rotate(step)
 
                     lt_state = self.state()
 
-                    log.info("%s: AStar found match %d steps in, %s, lt_state %s, AStar count %d, f_cost %d" %
-                             (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, astar_count, f_cost))
-                    return True
+                    #log.info("%s: AStar found match %d steps in, %s, lt_state %s, AStar count %d, f_cost %d" %
+                    #         (self, len(steps_to_hereA), ' '.join(steps_to_hereA), lt_state, astar_countA, f_costA))
+
+                    if solutions_target is None:
+                        return True
+                    else:
+                        cost_to_here = self.parent.get_solution_len_minus_rotates(steps_to_hereA)
+                        cost_to_goal = self.parent.lt_tsai_phase2_centers.heuristic()
+                        f_cost = cost_to_here + cost_to_goal
+                        solutions.append((f_cost, cost_to_here, self.parent.solution[:]))
+
+                        if len(solutions) >= solutions_target:
+                            log.warning("reached solutions_target %d, we have %d" % (solutions_target, len(solutions)))
+                            return solutions
 
             if astar_countA % 1000 == 0:
-                log.info("%s: AStar countA %d, workqA depth %d, f_costA %d, steps_to_hereA %s" % (self, astar_countA, len(workqA), f_costA, ' '.join(steps_to_hereA)))
+                log.info("%s: AStar countA %d, solutions %d, workqA depth %d, f_costA %d, steps_to_hereA %s" %
+                    (self, astar_countA, len(solutions), len(workqA), f_costA, ' '.join(steps_to_hereA)))
                 #log.info("%s: AStar countB %d, workqB depth %d, f_costB %d, steps_to_hereB %s\n" % (self, astar_countB, len(workqB), f_costB, ' '.join(steps_to_hereB)))
 
             # If we have already explored the exact same scenario down another branch
             # then we can stop looking down this branch
             if lt_stateA not in exploredA:
-                exploredA[lt_stateA] = steps_to_hereA[:]
+                #exploredA[lt_stateA] = steps_to_hereA[:]
 
                 if steps_to_hereA:
                     prev_step = steps_to_hereA[-1]
@@ -647,74 +598,30 @@ class LookupTableAStar(LookupTable):
                             continue
 
                     self.parent.state = self.rotate_xxx(prev_stateA[:], step)
-                    cost_to_goal = self.ida_heuristic(use_lt_as_prune=False)
 
                     # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
-                    cost_to_here = len(steps_to_hereA) + 1
+                    len_steps_to_hereA_plus_step = self.parent.get_solution_len_minus_rotates(steps_to_hereA) + 1
+                    cost_to_here = len_steps_to_hereA_plus_step
+
+                    cost_to_goal = self.ida_heuristic(use_lt_as_prune=False)
                     f_cost = cost_to_here + cost_to_goal
 
                     # The workq must remain sorted with lowest f_cost entries coming first, use
                     # cost_to_goal as a tie breaker
-                    steps_to_here_plus_step = tuple(list(steps_to_hereA[:]) + [step,])
-                    workq_tuple = (f_cost, len(steps_to_here_plus_step), cost_to_goal, steps_to_here_plus_step[:], self.parent.state[:])
+                    #steps_to_here_plus_step = tuple(list(steps_to_hereA[:]) + [step,])
+                    steps_to_here_plus_step = steps_to_hereA[:] + [step,]
 
+                    if max_depth is not None and len_steps_to_hereA_plus_step > max_depth:
+                        continue
+
+                    workq_tuple = (f_cost, len_steps_to_hereA_plus_step, cost_to_goal, steps_to_here_plus_step, self.parent.state[:])
                     insert_position = bisect.bisect_right(workqA, workq_tuple)
                     workqA.insert(insert_position, workq_tuple)
 
-            '''
-            # If we have already explored the exact same scenario down another branch
-            # then we can stop looking down this branch
-            if lt_stateB not in exploredB:
-                exploredB[lt_stateB] = steps_to_hereB[:]
-
-                if steps_to_hereB:
-                    prev_step = steps_to_hereB[-1]
-                else:
-                    prev_step = None
-
-                # ==============
-                # Keep Searching
-                # ==============
-                for step in self.moves_all:
-
-                    # If this step cancels out the previous step then don't bother with this branch
-                    if prev_step is not None:
-
-                        # U2 followed by U2 is a no-op
-                        if step == prev_step and step.endswith("2"):
-                            continue
-
-                        # U' followed by U is a no-op
-                        if prev_step.endswith("'") and not step.endswith("'") and step == prev_step[0:-1]:
-                            continue
-
-                        # U followed by U' is a no-op
-                        if not prev_step.endswith("'") and step.endswith("'") and step[0:-1] == prev_step:
-                            continue
-
-                    self.parent.state = self.rotate_xxx(prev_stateB[:], step)
-
-                    # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
-                    cost_to_here = len(steps_to_hereB) + 1
-
-                    # dwalton here now...this needs work
-                    if cost_to_here <= self.max_depth:
-                        cost_to_goal = self.max_depth - cost_to_here
-                    else:
-                        cost_to_goal = 0
-
-                    f_cost = cost_to_here + cost_to_goal
-
-                    # The workq must remain sorted with lowest f_cost entries coming first, use
-                    # cost_to_goal as a tie breaker
-                    steps_to_here_plus_step = tuple(list(steps_to_hereB[:]) + [step,])
-                    workq_tuple = (f_cost, len(steps_to_here_plus_step), cost_to_goal, steps_to_here_plus_step[:], self.parent.state[:])
-
-                    insert_position = bisect.bisect_right(workqB, workq_tuple)
-                    workqB.insert(insert_position, workq_tuple)
-            '''
-
-        raise NoAStarSolution("%s FAILED" % self)
+        if solutions:
+            return solutions
+        else:
+            raise NoAStarSolution("%s FAILED" % self)
 
     def solve(self):
         start_time0 = dt.datetime.now()
@@ -722,7 +629,7 @@ class LookupTableAStar(LookupTable):
         if self._solve():
             return True
 
-        self.astar_search()
+        return self.astar_search()
 
 
 class LookupTableIDA(LookupTableAStar):

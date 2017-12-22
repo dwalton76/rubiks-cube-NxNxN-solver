@@ -1,12 +1,22 @@
 
-- 6x6x6 LR x-centers and oblique edges are done it two phases...it might be possible to combine these.
-    The main lt would be 12870^3 but we would have three prune tables so it might work
+- rebuild the tsai phase3 tables without
 
-- 6x6x6 UD edge pairing build 70 tables and merge them
+        'illegal'  : ("Lw", "Lw'", "Lw2",
+                      "Bw", "Bw'", "Bw2",
+                      "Dw", "Dw'", "Dw2"),
+
+
+- build the 4900 tables for 6x6x6 LFRB centers
+
+- tsai...need something better
+
+
+- 6x6x6 LR edge pairing build 70 tables and merge them
     - This is after they have already been staged and we are pairing them up.  When we
       pair them up we are forcing them to their final position but that isn't needed.
 
-    ./usr/bin/rubiks-cube-solver.py --cpu-max --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
+    - Do the same for FB prune table
+
 
 
 - B-Trees...this will benefit all searches

@@ -841,6 +841,19 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
     """
     lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
     ========================================================================
+    1 steps has 140 entries (0 percent, 0.00x previous step)
+    2 steps has 420 entries (0 percent, 3.00x previous step)
+    3 steps has 1,390 entries (0 percent, 3.31x previous step)
+    4 steps has 5,794 entries (1 percent, 4.17x previous step)
+    5 steps has 17,606 entries (5 percent, 3.04x previous step)
+    6 steps has 51,580 entries (15 percent, 2.93x previous step)
+    7 steps has 102,466 entries (29 percent, 1.99x previous step)
+    8 steps has 114,764 entries (33 percent, 1.12x previous step)
+    9 steps has 45,068 entries (13 percent, 0.39x previous step)
+    10 steps has 3,656 entries (1 percent, 0.08x previous step)
+    11 steps has 116 entries (0 percent, 0.03x previous step)
+
+    Total: 343,000 entries
     """
 
     def __init__(self, parent):
@@ -848,10 +861,78 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
-            'TBD',
+            ('xxxxxxxxxxxxxxxxxBBxBFFBBFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBFFBBFxFFx',
+             'xxxxxxxxxxxxxxxxxBBxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxFFx',
+             'xxxxxxxxxxxxxxxxxBBxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxFFx',
+             'xxxxxxxxxxxxxxxxxBBxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxFFx',
+             'xxxxxxxxxxxxxxxxxBBxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxFBBFFBBFxBBx',
+             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxFFx',
+             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxFFx',
+             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxFFx',
+             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxFBBFFBBFxBBx',
+             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
+             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
+             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
+             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
+             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
+             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
+             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxFFx',
+             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxFFx',
+             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxFFx',
+             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBFFBBFxBBx',
+             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
+             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
+             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
+             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
+             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
+             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
+             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
+             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
+             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
+             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
+             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
+             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
+             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxFFx',
+             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxBBx',
+             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxBBx',
+             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxBBx',
+             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxFFx',
+             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxFFx',
+             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxFFx',
+             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBFFBBFxBBx',
+             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
+             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
+             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
+             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
+             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
+             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
+             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
+             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
+             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
+             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
+             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
+             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
+             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxFFx',
+             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxBBx',
+             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxBBx',
+             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxBBx',
+             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
+             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
+             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
+             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
+             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
+             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
+             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxFFx',
+             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxBBx',
+             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxBBx',
+             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxBBx',
+             'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxFFx',
+             'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxBBx',
+             'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxBBx',
+             'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxBBx',
+             'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxBBx'),
             linecount=343000)
 
-    # dwalton this is building now
     def state(self):
         parent_state = self.parent.state
 
@@ -902,7 +983,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     Total: 25,679,911 entries
     """
 
-    # dwalton need to build all 4900 of these and merge them
+    # dwalton this is building now
     # TODO this pairs and solves the LR and FB oblique edges, we need to build
     # the 4900 tables that let them go anywhere on sides U or D
     def __init__(self, parent):
@@ -915,7 +996,10 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
              "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-             "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                              # do not mess up solved UD
+             "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
+             "3Lw", "3Lw'", "3Lw2",        # can skip these for 6x6x6 cubes
+             "3Dw", "3Dw'", "3Dw2",
+             "3Bw", "3Bw'", "3Bw2"),
 
             # prune tables
             (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
@@ -1256,10 +1340,9 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         # Test the prune tables
         #self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
-        self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
-        self.print_cube()
-        sys.exit(0)
-        # dwalton
+        #self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
+        #self.print_cube()
+        #sys.exit(0)
 
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
         log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
@@ -1269,6 +1352,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
         log.info("")
         log.info("")
+        # dwalton
 
         if oblique_edges_only:
             log.info("Took %d steps to resolve oblique edges" % self.get_solution_len_minus_rotates(self.solution))

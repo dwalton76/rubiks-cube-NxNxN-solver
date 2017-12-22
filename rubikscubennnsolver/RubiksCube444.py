@@ -6,7 +6,7 @@ from rubikscubennnsolver.RubiksCube444Misc import (
     lookup_table_444_last_two_edges_place_F_east,
     lookup_table_444_sister_wing_to_F_east,
     lookup_table_444_sister_wing_to_U_west,
-    tsai_phase2_orient_edges,
+    tsai_phase2_orient_edges_444,
     tsai_edge_mapping_combinations,
 )
 from rubikscubennnsolver.LookupTable import (
@@ -304,7 +304,7 @@ class LookupTable444TsaiPhase1(LookupTableIDA):
             'D' : '0',
         }
 
-        orient_edges = tsai_phase2_orient_edges
+        orient_edges = tsai_phase2_orient_edges_444
         parent_state = self.parent.state
 
         result = [
@@ -1172,7 +1172,7 @@ class RubiksCube444(RubiksCube):
             state_x = state[x]
             state_y = state[y]
             wing_str = wing_str_map[''.join((state_x, state_y))]
-            high_low = tsai_phase2_orient_edges[(x, y, state_x, state_y)]
+            high_low = tsai_phase2_orient_edges_444[(x, y, state_x, state_y)]
 
             if wing_str in edges_to_flip:
                 if high_low == 'U':

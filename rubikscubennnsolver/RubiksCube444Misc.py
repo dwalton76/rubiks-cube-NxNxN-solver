@@ -80,7 +80,7 @@ lookup_table_444_sister_wing_to_U_west = {
 }
 
 
-tsai_phase2_orient_edges = {
+tsai_phase2_orient_edges_444 = {
     (2, 67, 'B', 'D'): 'D',
     (2, 67, 'B', 'L'): 'D',
     (2, 67, 'B', 'R'): 'D',
@@ -1236,6 +1236,7 @@ tsai_phase2_orient_edges = {
 }
 
 
+# These apply to 4x4x4 and 5x5x5
 tsai_edge_mapping_combinations = {
     0 : (set()),
     2 : (

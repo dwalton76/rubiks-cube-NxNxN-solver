@@ -1,56 +1,130 @@
 
-- rebuild the tsai phase3 tables without
+====
+Misc
+====
+- update # of moves in the misc files and the README
+    DONE - 4x4x4
+    DONE - 5x5x5
+    - 6x6x6
+    - 7x7x7
+
+
+=====
+4x4x4
+=====
+- TPR solver
+    - Testing with the following
+        ./usr/bin/rubiks-cube-solver.py --state DRFDFRUFDURDDLLUFLDLLBLULFBUUFRBLBFLLUDDUFRBURBBRBDLLDURFFBBRUFUFDRFURBUDLDBDUFFBUDRRLDRBLFBRRLB --cpu-tsai
+
+    - TPR reduces centers in 26 moves
+    - https://alg.cubing.net/?puzzle=4x4x4&setup=F2-_U-_F2-_D_U-_F2-_D_L2-_U2-_B-_D-_R_F-_D_B-_L-_B_F_L-_R_Uw_L-_B_D-_L_B-_Uw-_B-_Dw_B2-_L_U_D-_B2-_L-_Dw-_R_U-_B_R_D-_Rw_B2-_D_R-_B_D-_B_Rw-_F2-_D-_Fw2-_L_Dw2-_F_L_Bw2-_D-_Lw_U-_Lw-_Dw-_F-_Bw_U_Lw2-_Uw2-_R-_Uw&alg=Rw2_B_R-_Fw-_L-_Uw_Rw_%2F%2F_end_of_phase1%0AUw-_Rw2_B_R2_Uw_R-_%2F%2F_end_of_phase2%0AB-_F-_Fw2_R_B-_Uw2_R_U2_B-_Uw2_R-_Rw2_Uw2_x-_y2_%2F%2F_end_of_phase3
+
+    - where mine takes 34 moves
+https://alg.cubing.net/?puzzle=4x4x4&setup=R2-_U_L2-_F2-_R2-_F2-_D-_F2-_R2-_U2-_R_B-_L_R-_B2-_U_L_R2-_U2-_B2-_Lw2-_B2-_Dw2-_F2-_D2-_Lw2-_U-_F-_Lw2-_L2-_D_Lw2-_B_Uw2-_F2-_U_R-_Rw-_Fw2-_Rw-_D2-_F-_Uw2-_B_L_Fw_B-_U-_Rw_Fw2-_R-_F2-_U2-_Fw&alg=Fw-_U2_F2_R_Fw2_Rw-_U_B_Fw-_L-__%2F%2F_end_of_phase1%0AB-_Uw2_F_D2_Rw_Fw2_Rw_R__%2F%2F_end_of_phase2%0AU-_F2_Uw2_B-_Lw2_D-_L2_Lw2_F_U_Lw2_D2_F2_Dw2_B2_Lw2_%2F%2F_end_of_phase3%0AB2_U2_R2_L-_U-_B2_R_L-_B_R-_U2_R2_F2_D_F2_R2_F2_L2_U-_R2
+
+    - The difference is the TPR solver finds 10k phase1 solutions and keeps the best 500 (the
+      ones with the lowest phase2 centers heuristic).  It then searches for a phase2 solution
+      for those 500 phase1 solutions, it does this by starting with a very low IDA threshold
+      and incrementing it by one after trying to find a solution for all 500 scenarios. It then
+      keeps the best 100 phase2 solutions and does the same basic process for finding the best
+      phase2 + phase3 combo.
+
+      I am unable to get phase2 to run fast enough to do this though. TPR does some pruning
+      that I do not understand. This is the skipAxis2 stuff...need to wrap my head around this.
+
+      Note that my phase1 does EO where all edges are oriented correctly.  I do this just to speed
+      up phase2 where it is looking for edges to be EO but in any orientation.
+
+      Long term I think bidir IDA is the way to go here, we could just combine phase 1 and phase 2
+      (which the TPR solver is somewhat doing)
+
+
+- rebuild the tsai phase3 tables with the following illegal moves
 
         'illegal'  : ("Lw", "Lw'", "Lw2",
                       "Bw", "Bw'", "Bw2",
                       "Dw", "Dw'", "Dw2"),
 
+    phase3 for this cube takes ~90s...test with this one.
+    ./usr/bin/rubiks-cube-solver.py --state FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU --cpu-tsai
 
-- build the 4900 tables for 6x6x6 LFRB centers
-
-- tsai...need something better
-
-
-- 6x6x6 LR edge pairing build 70 tables and merge them
-    - This is after they have already been staged and we are pairing them up.  When we
-      pair them up we are forcing them to their final position but that isn't needed.
-
-    - Do the same for FB prune table
+    2017-12-22 07:38:36,659   LookupTable.py     INFO: 4x4x4-step70-tsai-phase3: IDA found match 8 steps in, f_cost 14 (8 + 6)
+    2017-12-22 07:38:36,659   LookupTable.py     INFO: 4x4x4-step70-tsai-phase3: IDA threshold 13, explored 74412 branches, took 0:01:04.261351 (0:01:28.678691 total)
 
 
+- tsai phase3 takes a while in large part due to calculating symmetry states.  We could rebuild the table one move less
+  but skip doing sym...it might be a net win and the lookup table would be smaller.
 
-- B-Trees...this will benefit all searches
-    - when this is done delete LookupTableIDA666UDObliqueEdgePairing and keep LookupTableIDA666CpuMaxUDObliqueEdgePairing
-    - when this is done delete LookupTableIDA555CpuMinUDCentersStage and keep LookupTableIDA555UDCentersStage
-    - that will eliminate all of the "fake move" crazyness
+- cpu-normal phase1 stages all centers but I often see "it leads to OLL" scrolling by. We could
+  build parity specific tables to help with this.
+
+- If we did EO as part of phase2 (solving the centers) would it reduce the number of moves to pair edges?
+    - My guess is no, we are already at an avg of 25.82 steps for pairing edges which is pretty darn
+      good considering all of the centers are solved.
+
+- Add "cube.cpu_mode = 'tsai'" to test.py and run this overnight
+time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 
 
-- TPR solver
-    - how the hell does it work so fast?
-    - ideas
-        - before we start IDA we could see which EO edge mapping gives us the
-          shortest edge heuristic and stick with that one.  We would need to go
-          back to the 0 line dummy table and
-          LookupTableIDA444TsaiPhase2.experimental_ida_search_complete()
-
-          Or we could build out a small lookup table (say 3 moves deep) for that
-          one edge mapping.
-
-- xyzzy's 5x5x5 solver. It is a variation of the TPR solver so need to understand TPR first.
+=====
+5x5x5
+=====
+- xyzzy's 5x5x5 solver
     - he does an EO (edge orientation) step.  If all larger solvers that use 5x5x5 for edge
       pairing could also do EO then maybe we could toss the edge pairing code...there is a
       ton of it and it is hideous.
 
-- bidir IDA search
-    - I need to understand how the TPR solver works before I spend time on bidir IDA
-    - would allow us to find slighly shorter solutions than we do today
-    - may potentially allow us tackle much larger IDA searches...TBD
+- lookup-table-5x5x5-step52-tsai-phase3lite-UF-centers-solve.txt needs to store only the
+  move count to make the file smaller
+- lookup-table-5x5x5-step40-tsai-phase2.txt.gz is over 100M can we get away with only
+  building this one 6-deep instead of 7-deep?
+
+
+=====
+6x6x6
+=====
+- build the 4900 tables for 6x6x6 LFRB centers
+    - this is building now
+
+- Something to explore...stage the centers and then solve them via bidir IDA.
+  Today we reduce the centers to 5x5x5 and use that solver but it ends up
+  taking us ~100 steps to solve the centers. We would need to add a phase just
+  after step40 that stages the outer x-centers (today this happens via 5x5x5
+  centers solver). It takes us ~34 steps to get to the end of step40...so guess
+  roughly 45 moves to get the centers staged. We would build a fake_555 and use
+  it to stage the outer x-centers.
+
+  Once all sides are staged there are 4 groups of 8!/(4!*4!) per side so to
+  solve ULF (which would also solve RBD) would be (8!/(4!*4!))^12 or
+  13,841,287,201,000,000,000,000...that doesn't seem feasible.
+
+  Solving just U (in turn solves D) would be (8!/(4!*4!))^4 or 24,010,000
+
+  Solving L and F (in turn solve R and B) would be (8!/(4!*4!))^8 or
+  576,480,100,000,000 but with two 24,010,000 prune tables for a ratio
+  of 0.000 000 041 6493128
+
+- EO for the two edge orbits?
+
+
+=====
+7x7x7
+=====
+- EO for the two outer edge orbits?
+
+
+=================
+bidirectional IDA
+=================
+    - would open a lot of doors in terms of tackling much larger IDA searches
         - first to try is staging all 5x5x5 centers via one phase
         - second to try is staging all 5x5x5 centers via one phase
         - combine phases 1 and 2 of tsai?
+
     - start from a solved cube and work your way back to the scrambled cube
+
     - requires us to build prune tables for each scrambled cube
-        - for 4x4x4 staging centers we can do this in XYZ minutes in python
+        - for 4x4x4 staging centers we can do this in ~20 minutes in python
         - if we only build it out 4 steps deep we can do it in ~20s
         - so this would have to be done in C and even then it would still
           take some time.  I think this is a strategy that could only be
@@ -59,9 +133,13 @@
 
 
 
+============
 B-Tree notes
 ============
+- B-Tree will benefit all searches
+
 - optimaly load the B-Trees
+
 - support for loading the first two levels in memory and finding the rest on disk
 
 - Once the two bullets above are done we should be able to find a key via
@@ -111,21 +189,3 @@ B-Tree notes
 2017-12-17 09:52:55,953   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA threshold 9, explored 37636 branches, took 0:00:03.617328 (0:00:13.176431 total)
 
 This search takes about 5 million seek() calls when using binary search...the seeks are the top bottleneck thus the need to move to B-Trees
-
-
-
-misc notes
-==========
-- ida_search() needs to return all of the results at that theshold
-Test on this one, 5x5x5-step20-LR-centers-stage  finds a solution 12 steps long but I know there is one
-that is 10 steps long (I found it via AStar)
-
-./usr/bin/rubiks-cube-solver.py --state RFFFUDUDURBFULULFDBLRLDUFDBLUBBBDDURLRDRFRUDDBFUFLFURRLDFRRRUBFUUDUFLLBLBBULDDRRUFUUUBUDFFDRFLRBBLRFDLLUUBBRFRFRLLBFRLBRRFRBDLLDDFBLRDLFBBBLBLBDUUFDDD
-
-I have a partial patch for this (patches/ida_solutions_use_best.patch) but it needs some work.
-We need to pseudo combine multiple phases to get shorter solutions. For example
-we need to find multiple solutions for staging UD centers and then for each of those find multiple
-solutions for staging LR centers and keep the one that allows us to solve the 5x5x5 centers in the
-least number of steps. That is a lot of IDA searches though so this all has to happen after
-the bplustree work is done.
-

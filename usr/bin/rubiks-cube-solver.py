@@ -306,7 +306,7 @@ try:
         cube.cpu_mode = 'max'
     elif args.cpu_tsai:
         cube.cpu_mode = 'tsai'
-        assert size == 4, "--cpu-tsai option can only be uses for a 4x4x4 cube"
+        assert size == 4 or size == 5, "--cpu-tsai option can only be uses for 4x4x4 or 5x5x5 cubes"
     elif args.cpu_normal:
         cube.cpu_mode = 'normal'
     else:

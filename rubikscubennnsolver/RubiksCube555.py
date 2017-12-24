@@ -814,7 +814,7 @@ class LookupTable555TsaiPhase2(LookupTableIDA):
             self,
             parent,
             'lookup-table-5x5x5-step40-tsai-phase2.txt',
-            'TBD',
+            'UxxUUxxUxUxLLLUULLULLLxUxxUUxxUUxxUxRRRURRRURRRxUxxUUxxUUxUxxUUxxU',
             moves_5x5x5,
 
             # illegal moves
@@ -826,12 +826,48 @@ class LookupTable555TsaiPhase2(LookupTableIDA):
             (parent.lt_tsai_phase2_edges_orient,
              parent.lt_tsai_phase2_LR_centers),
 
-            linecount=10545197)
+            linecount=966758)
 
-    # dwalton - stopped here...copy what 444 did to get the phase2 state.I first need to rebuild the phase2 table
-    # to not include the middle wing on each edge...it isn't needed and will only get confusing if I leave it.
     def state(self):
-        raise Exception("implement this")
+        self.edge_mapping = {}
+        parent_state = self.parent.state
+        orient_edge_state = self.parent.tsai_phase2_orient_edges_state(self.edge_mapping, return_hex=False)
+
+        # tsai_phase2_orient_edges_staten returns high edges as U and
+        # low edges as D so we can print them but for the lookup table
+        # low edges are x.  This was done so the lookup-table-5x5x5-step41-tsai-phase2-edges-orient.txt
+        # table could be stored in hex.
+        orient_edge_state = orient_edge_state.replace('D', 'x')
+
+        # Return the state of the edges plus the LR centers
+        result = []
+        result.append(orient_edge_state[0:11]) # takes us up to square 31 (inclusive)
+        result.append(parent_state[32])
+        result.append(parent_state[33])
+        result.append(parent_state[34])
+        result.append(orient_edge_state[11]) # 35
+        result.append(parent_state[36])
+        result.append(parent_state[37])
+        result.append(parent_state[38])
+        result.append(orient_edge_state[12]) # 41
+        result.append(parent_state[42])
+        result.append(parent_state[43])
+        result.append(parent_state[44])
+        result.append(orient_edge_state[13:27]) # 81
+        result.append(parent_state[82])
+        result.append(parent_state[83])
+        result.append(parent_state[84])
+        result.append(orient_edge_state[27]) # 85
+        result.append(parent_state[87])
+        result.append(parent_state[88])
+        result.append(parent_state[89])
+        result.append(orient_edge_state[28]) # 91
+        result.append(parent_state[92])
+        result.append(parent_state[93])
+        result.append(parent_state[94])
+        result.append(orient_edge_state[29:]) # 95
+        result = ''.join(result)
+        return result
 
 
 class LookupTableULCentersSolve(LookupTable):
@@ -1614,12 +1650,12 @@ tsai_phase2_orient_edges_444 = {
             # dwalton
 
             # Test prune tables
-            self.lt_tsai_phase2_edges_orient.solve()
+            #self.lt_tsai_phase2_edges_orient.solve()
             #self.lt_tsai_phase2_LR_centers.solve()
-            self.print_cube()
-            self.tsai_phase2_orient_edges_print()
-            log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
-            sys.exit(0)
+            #self.print_cube()
+            #self.tsai_phase2_orient_edges_print()
+            #log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
+            #sys.exit(0)
 
             # All centers are staged, solve them and pair the edges
             log.info("%s: Start of tsai Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

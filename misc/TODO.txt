@@ -69,6 +69,8 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 =====
 5x5x5
 =====
+- edge paring is still awful...revisit lookup tables but with pattern2 approach
+
 - tsai today is
     - stage UD centers
     - stage LR centers (and in turn FB)
@@ -80,12 +82,22 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
     - could always build the full LRFB prube table (165 million entries) if IDA is slow
 
 - tsai phase3 needs to be finished
-    
+    - pair edges at LB, LF, RB, RF
+    - LFRB centers must be vertical strips
+
+- tsai phase4
+    - restrict F, F', B, B' to preserved the 4 edges
+    - solve centers and finish reduction
+
 
 =====
 6x6x6
 =====
-- step20 for RBULFLLLDUFRLLDUFBFUUBUBFBFLLBUFDDFBRLRRDBRFUURUBURRBRBRUFBFLFDLRUBRUDFLLDLLLULBLDDBBLRRDDDLDLFDRUBUDDFRDBRRDDFUFDFLRRRULRUDFFRRFBLFDURBRRFUFLBFFBFRDBBBUFBDUDBLFLUBFLFRFDBDUBDBUULLDUBRDULFFRLUDBBDBLUDFLDBLDLRUUUUFRRR takes forever....need a better prune table here or build this table 1-step deeper.  It is already 50M zipped though and would be about 15x that size one move deeper.
+- This cube hits OLL:
+
+    ./usr/bin/rubiks-cube-solver.py --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
+
+    Once fixed comment out the prevent_OLL() call in __init__.py
 
 - Something to explore...stage the centers and then solve them via bidir IDA.
   Today we reduce the centers to 5x5x5 and use that solver but it ends up
@@ -112,6 +124,12 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 7x7x7
 =====
 - EO for the two outer edge orbits?
+
+
+=====
+8x8x8
+=====
+- Add support in prevent_OLL()
 
 
 =================
@@ -179,7 +197,7 @@ B-Tree notes
 
 - Test this against slow 6x6x6 UD oblique:
 
-./usr/bin/rubiks-cube-solver.py --cpu-max --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
+./usr/bin/rubiks-cube-solver.py --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
 
 
 2017-12-17 09:52:42,776 RubiksCube666.py     INFO: UD inner x-centers staged, 5 steps in
@@ -190,3 +208,18 @@ B-Tree notes
 2017-12-17 09:52:55,953   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA threshold 9, explored 37636 branches, took 0:00:03.617328 (0:00:13.176431 total)
 
 This search takes about 5 million seek() calls when using binary search...the seeks are the top bottleneck thus the need to move to B-Trees
+
+
+This is another slow one
+./usr/bin/rubiks-cube-solver.py --state UBULRLBDLDBDDLLDBBRRBFDRFRLLRLBUDUBBUFFUBBFUURDBDUFRDLDLUDBFLBRUFLUFUUBDDRLLLLULFDLLDRFDFBDFLUUFLBFRDBFUBRDRLLUFFBRDBDLUUFRFDRDDBLBRRRBBRRLLLBRRRRRBRRDUUFBFBLDBUFBLULRBUUBDLDDFRFDUDUDFUFDFFUFFUUBRRLLBRULLUFFRUBFDRFDF
+2017-12-24 07:20:07,314  __init__.py     INFO:
+2017-12-24 07:20:07,319 RubiksCube666.py     INFO: UD inner x-centers staged, 5 steps in
+2017-12-24 07:20:07,320 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold range 6->99
+2017-12-24 07:20:07,327 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 6, explored 42 branches, took 6ms
+2017-12-24 07:20:07,471 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 7, explored 1162 branches, took 144ms
+2017-12-24 07:20:10,826 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 8, explored 30442 branches, took 0:00:03.354795
+2017-12-24 07:21:30,345 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 9, explored 810242 branches, took 0:01:19.518391
+2017-12-24 07:22:40,802 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA found match 8 steps in, f_cost 11 (8 + 3)
+2017-12-24 07:22:40,802 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 10, explored 793725 branches, took 0:01:10.457381 (0:02:33.482832 total)
+2017-12-24 07:22:40,802 RubiksCube666.py     INFO: UD oblique edges paired, 20 steps in
+

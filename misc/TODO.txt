@@ -69,22 +69,23 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 =====
 5x5x5
 =====
-- xyzzy's 5x5x5 solver
-    - he does an EO (edge orientation) step.  If all larger solvers that use 5x5x5 for edge
-      pairing could also do EO then maybe we could toss the edge pairing code...there is a
-      ton of it and it is hideous.
+- tsai today is
+    - stage UD centers
+    - stage LR centers (and in turn FB)
+    - phase2 starts (solve LR centers and do EO)
 
-- lookup-table-5x5x5-step52-tsai-phase3lite-UF-centers-solve.txt needs to store only the
-  move count to make the file smaller
-- lookup-table-5x5x5-step40-tsai-phase2.txt.gz is over 100M can we get away with only
-  building this one 6-deep instead of 7-deep?
+    we could save a lot of steps by doing
+    - stage UD centers
+    - phase2 (solve LR centers and do EO)
+    - could always build the full LRFB prube table (165 million entries) if IDA is slow
 
+- tsai phase3 needs to be finished
+    
 
 =====
 6x6x6
 =====
-- build the 4900 tables for 6x6x6 LFRB centers
-    - this is building now
+- step20 for RBULFLLLDUFRLLDUFBFUUBUBFBFLLBUFDDFBRLRRDBRFUURUBURRBRBRUFBFLFDLRUBRUDFLLDLLLULBLDDBBLRRDDDLDLFDRUBUDDFRDBRRDDFUFDFLRRRULRUDFFRRFBLFDURBRRFUFLBFFBFRDBBBUFBDUDBLFLUBFLFRFDBDUBDBUULLDUBRDULFFRLUDBBDBLUDFLDBLDLRUUUUFRRR takes forever....need a better prune table here or build this table 1-step deeper.  It is already 50M zipped though and would be about 15x that size one move deeper.
 
 - Something to explore...stage the centers and then solve them via bidir IDA.
   Today we reduce the centers to 5x5x5 and use that solver but it ends up

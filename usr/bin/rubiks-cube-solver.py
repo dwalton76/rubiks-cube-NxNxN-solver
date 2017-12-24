@@ -306,7 +306,7 @@ try:
         cube.cpu_mode = 'max'
     elif args.cpu_tsai:
         cube.cpu_mode = 'tsai'
-        assert size == 4, "--cpu-tsai option can only be uses for a 4x4x4 cube"
+        assert size == 4 or size == 5, "--cpu-tsai option can only be uses for 4x4x4 or 5x5x5 cubes"
     elif args.cpu_normal:
         cube.cpu_mode = 'normal'
     else:
@@ -394,6 +394,7 @@ try:
 except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
     cube.print_cube_layout()
     cube.print_cube()
+    #cube.tsai_phase2_orient_edges_print()
     cube.print_solution()
     print((cube.get_kociemba_string(True)))
     raise

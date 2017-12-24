@@ -2970,7 +2970,7 @@ class RubiksCube(object):
         steps = None
 
         if not orbits_with_oll_parity:
-            return True
+            return False
 
         if self.size == 4:
             if orbits_with_oll_parity == [0]:
@@ -3248,8 +3248,7 @@ class RubiksCube(object):
                 self.solve_PLL()
 
                 if not self.solved():
-                    print("We hit either OLL or PLL parity and could not solve it")
-                    sys.exit(1)
+                    raise SolveError("We hit either OLL or PLL parity and could not solve it")
 
     def get_corner_swap_count(self, debug=False):
 
@@ -3668,7 +3667,10 @@ class RubiksCube(object):
             log.info("")
             log.info("")
             self.group_centers_guts()
-            log.info("group center solution (%d steps): %s" % (self.get_solution_len_minus_rotates(self.solution), ' '.join(self.solution)))
+            log.info("group center solution (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
+
+            if self.prevent_OLL():
+                log.info("prevented OLL (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
 
         self.solution.append('CENTERS_SOLVED')
 

@@ -264,10 +264,11 @@ class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
     2 steps has 82 entries (0 percent, 16.40x previous step)
     3 steps has 1,434 entries (0 percent, 17.49x previous step)
     4 steps has 24,198 entries (0 percent, 16.87x previous step)
-    5 steps has 405,916 entries (5 percent, 16.77x previous step)
-    6 steps has 6,839,392 entries (94 percent, 16.85x previous step)
+    5 steps has 405,916 entries (0 percent, 16.77x previous step)
+    6 steps has 6,839,392 entries (5 percent, 16.85x previous step)
+    7 steps has 116,031,874 entries (94 percent, 16.97x previous step)
 
-    Total: 7,271,027 entries
+    Total: 123,302,901 entries
     """
 
     def __init__(self, parent):
@@ -286,7 +287,7 @@ class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
             # prune tables
             (parent.lt_UD_oblique_edge_pairing_left_only,
              parent.lt_UD_oblique_edge_pairing_right_only),
-            linecount=7271027)
+            linecount=123302901)
 
     def state(self):
         parent_state = self.parent.state
@@ -1206,41 +1207,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555.state[144] = self.state[209]
         fake_555.sanity_check()
 
-    def fake_move_UD_to_UFDB(self):
-
-        # How many UD squares are on sides LR? We need to "fake move" those to somewhere on FB for our lookup table to work.
-        left_fake_move_count = 0
-        right_fake_move_count = 0
-
-        for square_index in (45, 53, 64, 56, 117, 125, 136, 128):
-            if self.state[square_index] in ('U', 'D'):
-                self.state[square_index] = 'L'
-                left_fake_move_count += 1
-
-        for square_index in (46, 59, 63, 50, 118, 131, 135, 122):
-            if self.state[square_index] in ('U', 'D'):
-                self.state[square_index] = 'L'
-                right_fake_move_count += 1
-
-        if left_fake_move_count > 0:
-            for square_index in (9, 17, 28, 20, 189, 197, 208, 200, 81, 89, 100, 92, 153, 161, 172, 164):
-                if self.state[square_index] not in ('U', 'D'):
-                    self.state[square_index] = 'U'
-                    left_fake_move_count -= 1
-
-                    if not left_fake_move_count:
-                        break
-
-        if right_fake_move_count > 0:
-            for square_index in (10, 23, 27, 14, 190, 203, 207, 194, 82, 95, 99, 86, 154, 167, 171, 158):
-                if self.state[square_index] not in ('U', 'D'):
-                    self.state[square_index] = 'U'
-                    right_fake_move_count -= 1
-
-                    if not right_fake_move_count:
-                        break
-
     def group_centers_stage_UD(self):
+        """
+        Stage UD inner x-centers and oblique edges. The 7x7x7 uses this that is why it is in its own method.
+        """
         self.lt_UD_inner_x_centers_stage.solve()
         log.info("UD inner x-centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 

@@ -2,6 +2,7 @@
 ********************
 Main 5x5x5 test cube
 ********************
+time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 5x5x5
 
 Baseline
 ========
@@ -237,4 +238,16 @@ Adds a few steps but step10 used to take 30s for some cubes and it cut that to <
 5x5x5 max solution 136 steps (FFULRLRDRUBDUUULUBDRBDBDFDBFBFDBUUBRURBDULBUBURLRDLLLFLBDBFRFFFRFFBRBRLUBBFBLRDRLDLLDLFDFDULLRFBFDFBLBUBDUDDRDURLRDRUDFRUFFDUDULDUUBLFFBFBLRRLUFURLRLR)
 
 103.49user 1.64system 1:48.30elapsed 97%CPU (0avgtext+0avgdata 46208maxresident)k
+
+
+5x5x5 removed --cpu-min option
+misc IDA tweaks
+==============================
+5x5x5 avg centers solution 34.12 steps
+5x5x5 avg edges solution 66.94 steps
+5x5x5 avg solution 121.88 steps
+5x5x5 min solution 105 steps (DFLUDUFLFDLUUBFRRRBLLLUDRUBUFRUDFLUDDRLUDBUFBFDDBUDFRRBFUFURBFFULULRDBBDFBRUFRRULUBURDBDRRLRDRDDLBLLRFFFBBBLDLDDLLLRLDLFFUFDLFBURBRBFFLBBBUBURRDBFDRUL)
+5x5x5 max solution 135 steps (DUFURLULDDLUUDFLFRDURDRUBRLDBFDRLUDRRRBURFFBUUDBRBBLBFURRBBFDUFDFRDLBFULRDLLUUFFBRUURDFDBUBLFFBUDBFDLBFFDLRLDFDRLDBUUDLUFRLLBDFUBFRFFLDLRBURBBBLRLLLBR)
+
+211.40user 28.03system 4:24.39elapsed 90%CPU (0avgtext+0avgdata 742620maxresident)k
 

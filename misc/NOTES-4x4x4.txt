@@ -1,5 +1,8 @@
 These are the numbers from running --test against the 4x4x4 test cases
 
+time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
+
+
 4x4x4 original numbers
 ======================
 4x4x4 min solution 172 steps
@@ -254,3 +257,16 @@ difference but using --cpu-min also adds 10 steps to the solution length.
 
     89.16user 9.66system 1:42.10elapsed 96%CPU (0avgtext+0avgdata 236004maxresident)k
     454952inputs+0outputs (1major+437930minor)pagefaults 0swaps
+
+
+Removed Lw, Dw, Bw from IDA searches
+Removed --cpu-min option
+====================================
+4x4x4 avg centers solution 18.12 steps
+4x4x4 avg edges solution 25.82 steps
+4x4x4 avg solution 64.8 steps
+4x4x4 min solution 58 steps (DLUBUURUDFRRDDLURDLUFBBFFFFBLUURRBFFFULUDDUDLDBFFRRURDRBULBRBLLFBRLBULBRRLUFLBFDRLBLLRFFDDDBDDBU)
+4x4x4 max solution 71 steps (FLDRFFBLFDLRURUUFBUBLRUFUDUBULLFRUBLRRRUDFDFDUBBRRDLUFDDRFBDDFBDDDRFDLUDBLRBLFFBUFBLLLURRBBLRULB)
+
+73.08user 10.40system 1:23.59elapsed 99%CPU (0avgtext+0avgdata 447820maxresident)k
+

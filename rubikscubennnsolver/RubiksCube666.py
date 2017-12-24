@@ -264,10 +264,11 @@ class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
     2 steps has 82 entries (0 percent, 16.40x previous step)
     3 steps has 1,434 entries (0 percent, 17.49x previous step)
     4 steps has 24,198 entries (0 percent, 16.87x previous step)
-    5 steps has 405,916 entries (5 percent, 16.77x previous step)
-    6 steps has 6,839,392 entries (94 percent, 16.85x previous step)
+    5 steps has 405,916 entries (0 percent, 16.77x previous step)
+    6 steps has 6,839,392 entries (5 percent, 16.85x previous step)
+    7 steps has 116,031,874 entries (94 percent, 16.97x previous step)
 
-    Total: 7,271,027 entries
+    Total: 123,302,901 entries
     """
 
     def __init__(self, parent):
@@ -286,7 +287,7 @@ class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
             # prune tables
             (parent.lt_UD_oblique_edge_pairing_left_only,
              parent.lt_UD_oblique_edge_pairing_right_only),
-            linecount=7271027)
+            linecount=123302901)
 
     def state(self):
         parent_state = self.parent.state

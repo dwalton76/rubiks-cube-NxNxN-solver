@@ -822,7 +822,7 @@ class LookupTable555TsaiPhase2(LookupTableIDA):
             self,
             parent,
             'lookup-table-5x5x5-step40-tsai-phase2.txt',
-            'UxxUUxxUxUxLLLUULLULLLxUxxUUxxUUxxUxRRRURRRURRRxUxxUUxxUUxUxxUUxxU',
+            'UxxUUxxUxUxLLLULLLULLLxUxxUUxxUUxxUxRRRURRRURRRxUxxUUxxUUxUxxUUxxU',
             moves_5x5x5,
 
             # illegal moves
@@ -850,17 +850,20 @@ class LookupTable555TsaiPhase2(LookupTableIDA):
         # Return the state of the edges plus the LR centers
         result = []
         result.append(orient_edge_state[0:11]) # takes us up to square 31 (inclusive)
+
+        # L centers start here
         result.append(parent_state[32])
         result.append(parent_state[33])
         result.append(parent_state[34])
         result.append(orient_edge_state[11]) # 35
-        result.append(parent_state[36])
         result.append(parent_state[37])
         result.append(parent_state[38])
+        result.append(parent_state[39])
         result.append(orient_edge_state[12]) # 41
         result.append(parent_state[42])
         result.append(parent_state[43])
         result.append(parent_state[44])
+
         result.append(orient_edge_state[13:27]) # 81
         result.append(parent_state[82])
         result.append(parent_state[83])
@@ -876,6 +879,8 @@ class LookupTable555TsaiPhase2(LookupTableIDA):
         result.append(orient_edge_state[29:]) # 95
         result = ''.join(result)
         return result
+
+
 
 
 class LookupTable555TsaiPhase3ULCenters(LookupTable):
@@ -1639,15 +1644,6 @@ class RubiksCube555(RubiksCube):
         return result
 
     def build_tsai_phase2_orient_edges_555(self):
-        """
-tsai_phase2_orient_edges_444 = {
-    (2, 67, 'B', 'D'): 'D',
-    (2, 67, 'B', 'L'): 'D',
-    (2, 67, 'B', 'R'): 'D',
-    (2, 67, 'B', 'U'): 'D',
-    (2, 67, 'D', 'B'): 'U',
-    (2, 67, 'D', 'F'): 'U',
-        """
         state = self.state
 
         for x in range(1000000):
@@ -1803,7 +1799,6 @@ tsai_phase2_orient_edges_444 = {
             #self.print_cube()
             #log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
             #sys.exit(0)
-
 
             log.info("%s: Start of tsai Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             self.lt_tsai_phase3.solve()

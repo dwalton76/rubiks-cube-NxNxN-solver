@@ -5,7 +5,7 @@ Misc
 - update # of moves in the misc files and the README
     DONE - 4x4x4
     DONE - 5x5x5
-    - 6x6x6
+    DONE - 6x6x6
     - 7x7x7
 
 
@@ -69,7 +69,8 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 =====
 5x5x5
 =====
-- edge paring is still awful...revisit lookup tables but with pattern2 approach
+- edge pairing is still awful...revisit lookup tables but with pattern2 approach
+    - see ac5a482e45315345db438b61887c240e5e6732d1
 
 - tsai today is
     - stage UD centers
@@ -117,13 +118,14 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
   576,480,100,000,000 but with two 24,010,000 prune tables for a ratio
   of 0.000 000 041 6493128
 
-- EO for the two edge orbits?
-
 
 =====
 7x7x7
 =====
-- EO for the two outer edge orbits?
+
+step80 LFRB appears to be hanging on this one:
+
+LLDBLFDRRFDUBFLLLFLLDFLDUBRULFLFDRDRUBBUDBFLFRUBFLDBFRDRFLLRBDUUFRFURDDDBRRLDUDUBLRLLBUDRUDBUUUUBUUDLDFRURFFUFURRRDLBRFLLUFUULRUBRRURULFUBUURLDBRBDBFRLULLFLDLFRRDLRBFDBBFDDUDRBBUUFLBFBLRDDDBRFLBURFDDRBDRBRLURFUDDUFBBFBFLLRFFLLRDFDBBFBRFDLLURUFDDFLFDFBDFFUBDBRBUDDDBLFBLBRBRURFLBBULLDFURUBBLURFU
 
 
 =====

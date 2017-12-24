@@ -3248,8 +3248,7 @@ class RubiksCube(object):
                 self.solve_PLL()
 
                 if not self.solved():
-                    print("We hit either OLL or PLL parity and could not solve it")
-                    sys.exit(1)
+                    raise SolveError("We hit either OLL or PLL parity and could not solve it")
 
     def get_corner_swap_count(self, debug=False):
 

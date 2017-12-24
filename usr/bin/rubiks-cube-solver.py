@@ -394,6 +394,7 @@ try:
 except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
     cube.print_cube_layout()
     cube.print_cube()
+    #cube.tsai_phase2_orient_edges_print()
     cube.print_solution()
     print((cube.get_kociemba_string(True)))
     raise

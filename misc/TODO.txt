@@ -100,7 +100,7 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 
 
 - step80...we spend 40+  moves in this phase
-    - we solve LR and then FB prune to speed up step80...can we avoid this
+    - we solve LR and then FB prune to speed up step80...can we avoid this?
     - build the main table out to 6-deep
     - build a bunch of 24 million entry prune tables
     - test with this cube
@@ -112,7 +112,7 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 =====
 8x8x8
 =====
-- Add support in prevent_OLL()
+LOW - Add support in prevent_OLL()
 
 
 =================

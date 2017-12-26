@@ -767,15 +767,17 @@ class LookupTable444TsaiPhase3CentersSolve(LookupTable):
     """
     lookup-table-4x4x4-step72-tsai-phase3-centers.txt
     =================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 83 entries (0 percent, 11.86x previous step)
-    3 steps has 724 entries (1 percent, 8.72x previous step)
-    4 steps has 3851 entries (6 percent, 5.32x previous step)
-    5 steps has 10,426 entries (17 percent, 2.71x previous step)
-    6 steps has 16,693 entries (28 percent, 1.60x previous step)
-    7 steps has 16,616 entries (28 percent, 1.00x previous step)
-    8 steps has 8,928 entries (15 percent, 0.54x previous step)
-    9 steps has 1,472 entries (2 percent, 0.16x previous step)
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 34 entries (0 percent, 8.50x previous step)
+    3 steps has 247 entries (0 percent, 7.26x previous step)
+    4 steps has 1,282 entries (2 percent, 5.19x previous step)
+    5 steps has 4,844 entries (8 percent, 3.78x previous step)
+    6 steps has 11,821 entries (20 percent, 2.44x previous step)
+    7 steps has 17,486 entries (29 percent, 1.48x previous step)
+    8 steps has 15,121 entries (25 percent, 0.86x previous step)
+    9 steps has 6,889 entries (11 percent, 0.46x previous step)
+    10 steps has 1,063 entries (1 percent, 0.15x previous step)
+    11 steps has 9 entries (0 percent, 0.01x previous step)
 
     Total: 58,800 entries
     """
@@ -840,15 +842,16 @@ class LookupTableIDA444TsaiPhase3(LookupTableIDA):
 
     lookup-table-4x4x4-step70-tsai-phase3.txt
     ==========================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 83 entries (0 percent, 11.86x previous step)
-    3 steps has 960 entries (0 percent, 11.57x previous step)
-    4 steps has 10,303 entries (0 percent, 10.73x previous step)
-    5 steps has 107,474 entries (0 percent, 10.43x previous step)
-    6 steps has 1,124,149 entries (8 percent, 10.46x previous step)
-    7 steps has 11,660,824 entries (90 percent, 10.37x previous step)
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 34 entries (0 percent, 8.50x previous step)
+    3 steps has 371 entries (0 percent, 10.91x previous step)
+    4 steps has 3,834 entries (0 percent, 10.33x previous step)
+    5 steps has 38,705 entries (0 percent, 10.10x previous step)
+    6 steps has 385,747 entries (0 percent, 9.97x previous step)
+    7 steps has 3,884,435 entries (8 percent, 10.07x previous step)
+    8 steps has 39,549,005 entries (90 percent, 10.18x previous step)
 
-    Total: 12,903,800 entries
+    Total: 43,862,135 entries
     """
 
     def __init__(self, parent):
@@ -858,13 +861,21 @@ class LookupTableIDA444TsaiPhase3(LookupTableIDA):
             'lookup-table-4x4x4-step70-tsai-phase3.txt',
             '001UU31UU322118LL98LL955229BBa9BBa4433aRRbaRRb7700bFF8bFF866445DD75DD766',
             moves_4x4x4,
-            ("Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",
-             "Rw", "Rw'", "Lw", "Lw'", "R", "R'", "L", "L'"), # illegal_moves
+
+            # illegal moves
+            ("Fw", "Fw'",
+             "Uw", "Uw'",
+             "Rw", "Rw'",
+             "Lw", "Lw'", "Lw2",
+             "Bw", "Bw'", "Bw2",
+             "Dw", "Dw'", "Dw2",
+             "R", "R'",
+             "L", "L'"),
 
             # prune tables
             (parent.lt_tsai_phase3_edges_solve,
              parent.lt_tsai_phase3_centers_solve),
-            linecount=12903800)
+            linecount=43862135)
 
     def state(self):
         parent_state = self.parent.state
@@ -1252,7 +1263,7 @@ class RubiksCube444(RubiksCube):
             log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             self.lt_tsai_phase1.solve()
             self.print_cube()
-            self.tsai_phase2_orient_edges_print()
+            #self.tsai_phase2_orient_edges_print()
             log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
             # Test the prune table
@@ -1266,12 +1277,13 @@ class RubiksCube444(RubiksCube):
             self.lt_tsai_phase2.avoid_pll = True
             self.lt_tsai_phase2.solve()
             self.print_cube()
-            self.tsai_phase2_orient_edges_print()
+            #self.tsai_phase2_orient_edges_print()
             log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
             # Testing the phase3 prune tables
             #self.lt_tsai_phase3_edges_solve.solve()
             #self.lt_tsai_phase3_centers_solve.solve()
+            #self.tsai_phase2_orient_edges_print()
             #self.print_cube()
             #sys.exit(0)
 

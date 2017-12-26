@@ -38,24 +38,6 @@ https://alg.cubing.net/?puzzle=4x4x4&setup=R2-_U_L2-_F2-_R2-_F2-_D-_F2-_R2-_U2-_
       Long term I think bidir IDA is the way to go here, we could just combine phase 1 and phase 2
       (which the TPR solver is somewhat doing)
 
-
-- rebuild the tsai phase3 tables with the following illegal moves
-
-        'illegal'  : ("Lw", "Lw'", "Lw2",
-                      "Bw", "Bw'", "Bw2",
-                      "Dw", "Dw'", "Dw2"),
-
-    phase3 for this cube takes ~90s...test with this one.
-    ./usr/bin/rubiks-cube-solver.py --state FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU --cpu-tsai
-
-    2017-12-22 07:38:36,659   LookupTable.py     INFO: 4x4x4-step70-tsai-phase3: IDA found match 8 steps in, f_cost 14 (8 + 6)
-    2017-12-22 07:38:36,659   LookupTable.py     INFO: 4x4x4-step70-tsai-phase3: IDA threshold 13, explored 74412 branches, took 0:01:04.261351 (0:01:28.678691 total)
-
-    UPDATE
-        - the edges and centers tables are ready and in ~/lego/rubiks-cube-lookup-tables-4x4x4/
-        - the main table is building now to 8-deep, restricting the moves makes the seq
-          about 1 step longer so 7-deep wasn't going to be enough
-
 - Add "cube.cpu_mode = 'tsai'" to test.py and run this overnight
 time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 
@@ -94,15 +76,18 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 7x7x7
 =====
 
-- step10 is slow for this one...build that table 1 move deeper
-
-./usr/bin/rubiks-cube-solver.py --state LLDBLFDRRFDUBFLLLFLLDFLDUBRULFLFDRDRUBBUDBFLFRUBFLDBFRDRFLLRBDUUFRFURDDDBRRLDUDUBLRLLBUDRUDBUUUUBUUDLDFRURFFUFURRRDLBRFLLUFUULRUBRRURULFUBUURLDBRBDBFRLULLFLDLFRRDLRBFDBBFDDUDRBBUUFLBFBLRDDDBRFLBURFDDRBDRBRLURFUDDUFBBFBFLLRFFLLRDFDBBFBRFDLLURUFDDFLFDFBDFFUBDBRBUDDDBLFBLBRBRURFLBBULLDFURUBBLURFU
-
+- step10 is slow for this one, it takes 1m 13s (the table is 6-deep).  I build
+  it to 7-deep and the search only took about 1s but the file was 6.4G which
+  gzipped down to 845M which is too big to check into the repo.
 
 - step80...we spend 40+  moves in this phase
-    - we solve LR and then FB prune to speed up step80...can we avoid this?
     - build the main table out to 6-deep
+
+    - we solve LR and then FB prune to speed up step80...can we avoid
+      this with the extra entries of a 6-deep table?
+
     - build a bunch of 24 million entry prune tables
+
     - test with this cube
 
 ./usr/bin/rubiks-cube-solver.py --state LLDBLFDRRFDUBFLLLFLLDFLDUBRULFLFDRDRUBBUDBFLFRUBFLDBFRDRFLLRBDUUFRFURDDDBRRLDUDUBLRLLBUDRUDBUUUUBUUDLDFRURFFUFURRRDLBRFLLUFUULRUBRRURULFUBUURLDBRBDBFRLULLFLDLFRRDLRBFDBBFDDUDRBBUUFLBFBLRDDDBRFLBURFDDRBDRBRLURFUDDUFBBFBFLLRFFLLRDFDBBFBRFDLLURUFDDFLFDFBDFFUBDBRBUDDDBLFBLBRBRURFLBBULLDFURUBBLURFU

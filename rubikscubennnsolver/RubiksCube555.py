@@ -1748,33 +1748,26 @@ class RubiksCube555(RubiksCube):
         """
         Stage UD centers.  The 7x7x7 uses this that is why it is in its own method.
         """
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
         self.lt_UD_centers_stage.solve()
         log.info("UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-    def group_centers_guts(self):
-        self.lt_init()
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-
-        #self.lt_UD_T_centers_stage.solve()
-        #self.lt_UD_X_centers_stage.solve()
-        #self.lt_LR_T_centers_stage.solve()
-        #self.lt_LR_X_centers_stage.solve()
-        #self.lt_FB_T_centers_stage.solve()
-        #self.lt_FB_X_centers_stage.solve()
-        #self.lt_ALL_enters_stage.solve()
-        #self.print_cube()
-        #sys.exit()
-
-        # Stage UD centers
-        self.group_centers_stage_UD()
-
+    def group_centers_stage_LR(self):
+        """
+        Stage LR centers.  The 6x6x6 uses this that is why it is in its own method.
+        """
         # Stage LR centers
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
         self.lt_LR_centers_stage.solve()
         log.info("ULFRBD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
+    def group_centers_guts(self):
+        self.lt_init()
+        self.group_centers_stage_UD()
+        self.group_centers_stage_LR()
 
         if self.cpu_mode == 'tsai':
 

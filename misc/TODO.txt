@@ -6,7 +6,7 @@ Misc
     DONE - 4x4x4
     DONE - 5x5x5
     DONE - 6x6x6
-    - 7x7x7
+    - 7x7x7...need to rebuild step80 first
 
 
 =====
@@ -56,10 +56,6 @@ https://alg.cubing.net/?puzzle=4x4x4&setup=R2-_U_L2-_F2-_R2-_F2-_D-_F2-_R2-_U2-_
         - the main table is building now to 8-deep, restricting the moves makes the seq
           about 1 step longer so 7-deep wasn't going to be enough
 
-
-LOW - cpu-normal phase1 stages all centers but I often see "it leads to OLL" scrolling by. We could
-  build parity specific tables to help with this.
-
 - Add "cube.cpu_mode = 'tsai'" to test.py and run this overnight
 time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 
@@ -92,34 +88,6 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 =====
 6x6x6
 =====
-- This cube hits OLL:
-
-    ./usr/bin/rubiks-cube-solver.py --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
-
-    The fake_555 centers solver would have to know its 6x6x6 parent and check
-    the parent for OLL.
-
-    Once fixed comment out the prevent_OLL() call in __init__.py. I think this
-    would shave about 10 moves off of 6x6x6 solutions...that would put us at
-    sub-200 moves on average.
-
-- Something to explore...stage the centers and then solve them via bidir IDA.
-  Today we reduce the centers to 5x5x5 and use that solver but it ends up
-  taking us ~100 steps to solve the centers. We would need to add a phase just
-  after step40 that stages the outer x-centers (today this happens via 5x5x5
-  centers solver). It takes us ~34 steps to get to the end of step40...so guess
-  roughly 45 moves to get the centers staged. We would build a fake_555 and use
-  it to stage the outer x-centers.
-
-  Once all sides are staged there are 4 groups of 8!/(4!*4!) per side so to
-  solve ULF (which would also solve RBD) would be (8!/(4!*4!))^12 or
-  13,841,287,201,000,000,000,000...that doesn't seem feasible.
-
-  Solving just U (in turn solves D) would be (8!/(4!*4!))^4 or 24,010,000
-
-  Solving L and F (in turn solve R and B) would be (8!/(4!*4!))^8 or
-  576,480,100,000,000 but with two 24,010,000 prune tables for a ratio
-  of 0.000 000 041 6493128...it might be doable.
 
 
 =====

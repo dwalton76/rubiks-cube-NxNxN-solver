@@ -1135,7 +1135,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
 
-    def populate_fake_555_for_ULFRBD(self, fake_555):
+    def populate_fake_555_for_ULFRBD_solve(self, fake_555):
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
@@ -1207,6 +1207,83 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555.state[144] = self.state[209]
         fake_555.sanity_check()
 
+    def populate_fake_555_for_ULFRBD_stage(self, fake_555):
+        """
+        This will be called when the inner x-centers and oblique edges are staged
+        so we can set those to be the name of the side they are on.  We only need
+        to bring in the outer x-centers from the 6x6x6.
+        """
+
+        for x in range(1, 151):
+            fake_555.state[x] = 'x'
+
+        # Upper
+        fake_555.state[7] = self.state[8]
+        fake_555.state[8] = 'U'
+        fake_555.state[9] = self.state[11]
+        fake_555.state[12] = 'U'
+        fake_555.state[13] = 'U'
+        fake_555.state[14] = 'U'
+        fake_555.state[17] = self.state[26]
+        fake_555.state[18] = 'U'
+        fake_555.state[19] = self.state[29]
+
+        # Left
+        fake_555.state[32] = self.state[44]
+        fake_555.state[33] = 'L'
+        fake_555.state[34] = self.state[47]
+        fake_555.state[37] = 'L'
+        fake_555.state[38] = 'L'
+        fake_555.state[39] = 'L'
+        fake_555.state[42] = self.state[62]
+        fake_555.state[43] = 'L'
+        fake_555.state[44] = self.state[65]
+
+        # Front
+        fake_555.state[57] = self.state[80]
+        fake_555.state[58] = 'F'
+        fake_555.state[59] = self.state[83]
+        fake_555.state[62] = 'F'
+        fake_555.state[63] = 'F'
+        fake_555.state[64] = 'F'
+        fake_555.state[67] = self.state[98]
+        fake_555.state[68] = 'F'
+        fake_555.state[69] = self.state[101]
+
+        # Right
+        fake_555.state[82] = self.state[116]
+        fake_555.state[83] = 'R'
+        fake_555.state[84] = self.state[119]
+        fake_555.state[87] = 'R'
+        fake_555.state[88] = 'R'
+        fake_555.state[89] = 'R'
+        fake_555.state[92] = self.state[134]
+        fake_555.state[93] = 'R'
+        fake_555.state[94] = self.state[137]
+
+        # Back
+        fake_555.state[107] = self.state[152]
+        fake_555.state[108] = 'B'
+        fake_555.state[109] = self.state[155]
+        fake_555.state[112] = 'B'
+        fake_555.state[113] = 'B'
+        fake_555.state[114] = 'B'
+        fake_555.state[117] = self.state[170]
+        fake_555.state[118] = 'B'
+        fake_555.state[119] = self.state[173]
+
+        # Down
+        fake_555.state[132] = self.state[188]
+        fake_555.state[133] = 'D'
+        fake_555.state[134] = self.state[191]
+        fake_555.state[137] = 'D'
+        fake_555.state[138] = 'D'
+        fake_555.state[139] = 'D'
+        fake_555.state[142] = self.state[206]
+        fake_555.state[143] = 'D'
+        fake_555.state[144] = self.state[209]
+        fake_555.sanity_check()
+
     def group_centers_stage_UD(self):
         """
         Stage UD inner x-centers and oblique edges. The 7x7x7 uses this that is why it is in its own method.
@@ -1260,78 +1337,90 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
         # At this point all of the inner x-centers and oblique edges are staged
 
-        # Could we simply stage all 6x6x6 sides and solve the centers?
-        # At this point inside x-centers and outside t-centers are staged.
-        # We would need to reduce the centers to 5x5x5 to stage outside
-        # x-centers.
-        #
-        # At that point all sides would be staged and there would be 4 groups
-        # of 8!/(4!*4!) per side so to solve ULF (which would also solve RBD)
-        # would be (8!/(4!*4!))^12 or 13,841,287,201,000,000,000,000
-        #
-        # Needless to say this is not feasible :(
-        #
-        # I brainstorm about this because for one of my 6x6x6 test cubes it takes
-        # us 42 steps to get to here and 109 steps to solve the centers....that
-        # is a lot of steps.
+        solve_via_555 = True
 
-        # Could we simply stage all 6x6x6 sides and solve the centers?
-        # At this point inside x-centers and outside t-centers are staged.
-        # We would need to reduce the centers to 5x5x5 to stage outside
-        # x-centers.
-        #
-        # At that point all sides would be staged and there would be 4 groups
-        # of 8!/(4!*4!) per side so to solve ULF (which would also solve RBD)
-        # would be (8!/(4!*4!))^12 or 13,841,287,201,000,000,000,000
-        #
-        # Needless to say this is not feasible :(
-        #
-        # I brainstorm about this because for one of my 6x6x6 test cubes it takes
-        # us 42 steps to get to here and 109 steps to solve the centers....that
-        # is a lot of steps.
+        if solve_via_555 or oblique_edges_only:
 
-        # Reduce the centers to 5x5x5 centers
-        # - solve the UD inner x-centers and pair the UD oblique edges
-        # - solve the LR inner x-centers and pair the LR oblique edges
-        # - solve the FB inner x-centers and pair the FB oblique edges
-        self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
-        log.info("UD inner x-center solved and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        self.print_cube()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+            # Reduce the centers to 5x5x5 centers
+            # - solve the UD inner x-centers and pair the UD oblique edges
+            # - solve the LR inner x-centers and pair the LR oblique edges
+            # - solve the FB inner x-centers and pair the FB oblique edges
+            self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
+            log.info("UD inner x-center solved and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+            self.print_cube()
+            #log.info("kociemba: %s" % self.get_kociemba_string(True))
+            log.info("")
+            log.info("")
+            log.info("")
+            log.info("")
+            log.info("")
 
-        # Test the prune tables
-        #self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
-        #self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
-        #self.print_cube()
-        #sys.exit(0)
+            # Test the prune tables
+            #self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
+            #self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
+            #self.print_cube()
+            #sys.exit(0)
 
-        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
-        log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        self.print_cube()
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+            self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
+            log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+            self.print_cube()
+            log.info("")
+            log.info("")
+            log.info("")
+            log.info("")
+            log.info("")
 
-        if oblique_edges_only:
-            log.info("Took %d steps to resolve oblique edges" % self.get_solution_len_minus_rotates(self.solution))
-            return
+            if oblique_edges_only:
+                log.info("Took %d steps to resolve oblique edges" % self.get_solution_len_minus_rotates(self.solution))
+                return
 
-        # At this point the 6x6x6 centers have been reduced to 5x5x5 centers
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.cpu_mode = self.cpu_mode
-        fake_555.lt_init()
-        self.populate_fake_555_for_ULFRBD(fake_555)
-        fake_555.group_centers_guts()
+            # At this point the 6x6x6 centers have been reduced to 5x5x5 centers
+            fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+            fake_555.cpu_mode = self.cpu_mode
+            fake_555.lt_init()
+            self.populate_fake_555_for_ULFRBD_solve(fake_555)
+            fake_555.group_centers_guts()
 
-        for step in fake_555.solution:
-            self.rotate(step)
+            for step in fake_555.solution:
+                self.rotate(step)
+
+        else:
+            # For test cube FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
+            # it takes 32 moves to get to this point.  If solve_via_555 is True we solve the 6x6x6
+            # centers in 74 moves total...so this experiment needs to beat 74 moves.
+            #
+            # The code below gets all of the centers staged (via fake_555) in 53 moves.
+            # Once all sides are staged there are 4 groups of 8!/(4!*4!) per side so to
+            # solve ULF (which would also solve RBD) would be (8!/(4!*4!))^12 or
+            # 13,841,287,201,000,000,000,000...that doesn't seem feasible.
+            #
+            # Solving just U (in turn solves D) would be (8!/(4!*4!))^4 or 24,010,000
+            #
+            # Solving L and F (in turn solves R and B) would be (8!/(4!*4!))^8 or
+            # 576,480,100,000,000 but with two 24,010,000 prune tables for a ratio
+            # of 0.000 000 041 6493128...it might be doable.
+            #
+            # The solve_via_555 code path can solve the centers in 74 moves while it takes
+            # the non-solve_via_555 code 53 moves to get the centers staged.  That only
+            # leaves us 21 moves to solve all of the centers...that doesn't sound like
+            # much wiggle room and would take a lot of CPU to do the "solve L and R" IDA.
+            #
+            # This doesn't feel worth the effort to explore further.  I'll leave this bit
+            # of code here for a rainy day though.
+
+            fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+            fake_555.cpu_mode = self.cpu_mode
+            fake_555.lt_init()
+            self.populate_fake_555_for_ULFRBD_stage(fake_555)
+            fake_555.group_centers_stage_UD()
+            fake_555.group_centers_stage_LR()
+
+            for step in fake_555.solution:
+                self.rotate(step)
+
+            self.print_cube()
+            log.info("Took %d steps to stage centers" % self.get_solution_len_minus_rotates(self.solution))
+            sys.exit(0)
 
         log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
 

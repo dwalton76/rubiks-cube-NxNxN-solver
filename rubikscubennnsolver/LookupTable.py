@@ -86,30 +86,80 @@ class LookupTable(object):
 
                 # Special cases where I could not get them one under 100M so I split it via:
                 # split -b 40m lookup-table-4x4x4-step70-tsai-phase3.txt.gz "lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-"
+
+                # =====
+                # 4x4x4
+                # =====
                 if self.filename_gz == 'lookup-table-4x4x4-step70-tsai-phase3.txt.gz':
 
-                    # Download part-aa
-                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-aa" %\
-                        (self.parent.size, self.parent.size, self.parent.size)
-                    log.info("Downloading table via 'wget %s'" % url)
-                    subprocess.call(['wget', url])
+                    # Download all parts
+                    for extension in ('aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak'):
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-%s" %\
+                            (self.parent.size, self.parent.size, self.parent.size, extension)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
 
-                    # Download part-ab
-                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-ab" %\
-                        (self.parent.size, self.parent.size, self.parent.size)
-                    log.info("Downloading table via 'wget %s'" % url)
-                    subprocess.call(['wget', url])
-
-                    # Download part-ac
-                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-ac" %\
-                        (self.parent.size, self.parent.size, self.parent.size)
-                    log.info("Downloading table via 'wget %s'" % url)
-                    subprocess.call(['wget', url])
-
+                    # cat them together into a .gz file
                     subprocess.call('cat lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-* > lookup-table-4x4x4-step70-tsai-phase3.txt.gz', shell=True)
-                    os.unlink('lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-aa')
-                    os.unlink('lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-ab')
-                    os.unlink('lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-ac')
+
+                    # remove all of the parts
+                    for extension in ('aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak'):
+                        os.unlink('lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-%s' % extension)
+
+                elif self.filename_gz == 'lookup-table-4x4x4-step71-tsai-phase3-edges.txt.gz':
+
+                    # Download all parts
+                    for extension in ('aa', 'ab', 'ac', 'ad'):
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step71-tsai-phase3-edges.txt.gz.part-%s" %\
+                            (self.parent.size, self.parent.size, self.parent.size, extension)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
+
+                    # cat them together into a .gz file
+                    subprocess.call('cat lookup-table-4x4x4-step71-tsai-phase3-edges.txt.gz.part-* > lookup-table-4x4x4-step71-tsai-phase3-edges.txt.gz', shell=True)
+
+                    # remove all of the parts
+                    for extension in ('aa', 'ab', 'ac', 'ad'):
+                        os.unlink('lookup-table-4x4x4-step71-tsai-phase3-edges.txt.gz.part-%s' % extension)
+
+                # =====
+                # 5x5x5
+                # =====
+                elif self.filename_gz == 'lookup-table-4x4x4-step50-tsai-phase1.txt.gz':
+
+                    # Download all three parts
+                    for extension in ('aa', 'ab', 'ac'):
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-%s" %\
+                            (self.parent.size, self.parent.size, self.parent.size, extension)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
+
+                    # cat them together into a .gz file
+                    subprocess.call('cat lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-* > lookup-table-4x4x4-step50-tsai-phase1.txt.gz', shell=True)
+
+                    # remove all of the parts
+                    os.unlink('lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-aa')
+                    os.unlink('lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-ab')
+                    os.unlink('lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-ac')
+
+                # =====
+                # 6x6x6
+                # =====
+                elif self.filename_gz == 'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt.gz':
+
+                    # Download all parts
+                    for extension in ('aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al'):
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt.gz.part-%s" %\
+                            (self.parent.size, self.parent.size, self.parent.size, extension)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
+
+                    # cat them together into a .gz file
+                    subprocess.call('cat lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt.gz.part-* > lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt.gz', shell=True)
+
+                    # remove all of the parts
+                    for extension in ('aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al'):
+                        os.unlink('lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt.gz.part-%s' % extension)
 
                 elif self.filename_gz == 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz':
 
@@ -120,40 +170,13 @@ class LookupTable(object):
                         log.info("Downloading table via 'wget %s'" % url)
                         subprocess.call(['wget', url])
 
+                    # cat them together into a .gz file
                     subprocess.call('cat lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-* > lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz', shell=True)
+
+                    # remove all of the parts
                     os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-aa')
                     os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
                     os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
-
-                elif self.filename_gz == 'lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt.gz':
-
-                    # Download all parts
-                    for extension in ('aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al'):
-                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-%s" %\
-                            (self.parent.size, self.parent.size, self.parent.size, extension)
-                        log.info("Downloading table via 'wget %s'" % url)
-                        subprocess.call(['wget', url])
-
-                    #subprocess.call('cat lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-* > lookup-table-4x4x4-step50-tsai-phase1.txt.gz', shell=True)
-                    subprocess.call('cat lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt.gz.part-* > lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt.gz', shell=True)
-
-                    for extension in ('aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al'):
-                        os.unlink('lookup-table-6x6x6-step20-UD-oblique-edge-pairing.txt.gz-%s' % extension)
-
-
-                elif self.filename_gz == 'lookup-table-4x4x4-step50-tsai-phase1.txt.gz':
-
-                    # Download all three parts
-                    for extension in ('aa', 'ab', 'ac'):
-                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-%s" %\
-                            (self.parent.size, self.parent.size, self.parent.size, extension)
-                        log.info("Downloading table via 'wget %s'" % url)
-                        subprocess.call(['wget', url])
-
-                    subprocess.call('cat lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-* > lookup-table-4x4x4-step50-tsai-phase1.txt.gz', shell=True)
-                    os.unlink('lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-aa')
-                    os.unlink('lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-ab')
-                    os.unlink('lookup-table-4x4x4-step50-tsai-phase1.txt.gz.part-ac')
 
                 else:
                     url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)

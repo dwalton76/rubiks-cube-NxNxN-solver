@@ -325,6 +325,15 @@ try:
     sys.exit(0)
     '''
 
+    # compress a solution
+    '''
+    cube = RubiksCube555(solved_5x5x5, args.order, args.colormap)
+    cube.solution = "Rw' Lw x F2 Rw Lw' x' F' Uw Dw' y' B' Uw Dw' y' B Uw Dw' y' B Uw Dw' y' B' Uw Dw' y' F'".split()
+    cube.compress_solution()
+    cube.print_solution()
+    sys.exit(0)
+    '''
+
     cube.sanity_check()
     cube.print_cube()
     cube.www_header()

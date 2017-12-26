@@ -2966,6 +2966,11 @@ class RubiksCube(object):
         """
         Solving OLL at the end takes 26 moves, preventing it takes 10
         """
+
+        # OLL only applies for even cubes
+        if self.is_odd():
+            return False
+
         orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
         steps = None
 

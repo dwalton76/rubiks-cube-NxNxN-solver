@@ -36,6 +36,33 @@ solved_4x4x4 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDD
 centers_444 = (6, 7, 10, 11, 22, 23, 26, 27, 38, 39, 42, 43, 54, 55, 58, 59, 70, 71, 74, 75, 86, 87, 90, 91)
 UD_centers_444 = (6, 7, 10, 11, 86, 87, 90, 91)
 LR_centers_444 = (22, 23, 26, 27, 54, 55, 58, 59)
+edges_444 = (
+    2, 3, 5, 8, 9, 12, 14, 15,      # Upper
+    18, 19, 21, 24, 25, 28, 30, 31, # Left
+    34, 35, 37, 40, 41, 44, 46, 47, # Front
+    50, 51, 53, 56, 57, 60, 62, 63, # Right
+    66, 67, 69, 72, 73, 76, 78, 79, # Back
+    82, 83, 85, 88, 89, 92, 94, 95) # Down
+
+wings_444 = (
+    2, 3, 5, 8, 9, 12, 14, 15,      # Upper
+    21, 24, 25, 28,                 # Left
+    53, 56, 57, 60,                 # Right
+    82, 83, 85, 88, 89, 92, 94, 95) # Down
+
+
+def get_characters_common_count(strA, strB, str_len, max_score):
+    result = 0
+
+    for (index, (charA, charB)) in enumerate(zip(strA, strB)):
+        if charA == charB:
+            result += 1
+        else:
+            if max_score is not None:
+                if result + (str_len - (index + 1)) <= max_score:
+                    break
+
+    return result
 
 
 '''
@@ -605,6 +632,7 @@ high_edges_444 = ((14, 2, 67),  # upper
                   (19, 88, 62),
                   (16, 95, 78))
 
+
 low_edges_444 = ((2, 3, 66),  # upper
                  (1, 5, 18),
                  (3, 12, 50),
@@ -617,6 +645,7 @@ low_edges_444 = ((2, 3, 66),  # upper
                  (5, 85, 31),
                  (7, 92, 63),
                  (4, 94, 79))
+
 
 def edges_high_low_recolor_444(state):
     """
@@ -655,6 +684,77 @@ def edges_high_low_recolor_444(state):
         state[square_index] = low_edge_map[wing_str]
         state[partner_index] = low_edge_map[wing_str]
     return state
+
+
+edges_recolor2_444 = (
+    ('0', 2, 67),  # upper
+    ('1', 3, 66),
+    ('2', 5, 18),
+    ('3', 8, 51),
+    ('4', 9, 19),
+    ('5', 12, 50),
+    ('6', 14, 34),
+    ('7', 15, 35),
+
+    ('8', 21, 72), # left
+    ('9', 24, 37),
+    ('a', 25, 76),
+    ('b', 28, 41),
+
+    ('c', 53, 40), # right
+    ('d', 56, 69),
+    ('e', 57, 44),
+    ('f', 60, 73),
+
+    ('g', 82, 46), # down
+    ('h', 83, 47),
+    ('i', 85, 31),
+    ('j', 88, 62),
+    ('k', 89, 30),
+    ('l', 92, 63),
+    ('m', 94, 79),
+    ('n', 95, 78))
+
+
+def edges_high_low_recolor2_444(state):
+    edge_map = {
+        'BD': [],
+        'BL': [],
+        'BR': [],
+        'BU': [],
+        'DF': [],
+        'DL': [],
+        'DR': [],
+        'FL': [],
+        'FR': [],
+        'FU': [],
+        'LU': [],
+        'RU': []
+    }
+
+    # Record the two edge_indexes for each of the 12 edges
+    for (edge_index, square_index, partner_index) in edges_recolor2_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+        edge_map[wing_str].append(edge_index)
+
+    # Where is the other wing_str like us?
+    for (edge_index, square_index, partner_index) in edges_recolor2_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+
+        for tmp_index in edge_map[wing_str]:
+            if tmp_index != edge_index:
+                state[square_index] = tmp_index
+                state[partner_index] = tmp_index
+                break
+        else:
+            raise Exception("could not find tmp_index")
+
+    return ''.join(state)
+
 
 def reflect_x_444(cube):
     return [cube[0],
@@ -967,6 +1067,100 @@ class LookupTable444EdgesSliceBackward(LookupTable):
         raise Exception("This should never be called")
 
 
+class LookupTable444Edges(LookupTable):
+    """
+    lookup-table-4x4x4-step101-edges.txt
+    ====================================
+    5 steps has 288 entries (0 percent, 0.00x previous step)
+    6 steps has 3264 entries (0 percent, 11.33x previous step)
+    7 steps has 17,785 entries (2 percent, 5.45x previous step)
+    8 steps has 116,395 entries (17 percent, 6.54x previous step)
+    9 steps has 540,868 entries (79 percent, 4.65x previous step)
+
+    Total: 678,600 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step101-edges.txt',
+            '10452376ab89efcdhgklijnm',
+            linecount=678600)
+
+    def state(self):
+        log.info("%s: state() called" % self)
+        state = edges_high_low_recolor2_444(self.parent.state[:])
+
+        result = []
+
+        for square_index in wings_444:
+            result.append(state[square_index])
+
+        result = ''.join(result)
+
+        if result in self.state_target:
+            return result
+
+        #log.info("result: %s" % result)
+
+        # Find the entry that our result has the most in common with
+        with open(self.filename, 'r') as fh:
+            max_score = None
+            max_score_states = []
+
+            for line in fh:
+                (tmp_state, tmp_steps) = line.split(':')
+                tmp_steps = tmp_steps.split()
+
+                score = get_characters_common_count(result, tmp_state, self.state_width, max_score)
+
+                if max_score is None or score > max_score:
+                    max_score = score
+                    max_score_states = [(len(tmp_steps), tmp_state), ]
+                elif score == max_score:
+                    max_score_states.append((len(tmp_steps), tmp_state))
+
+        max_score_states = sorted(max_score_states)
+        log.info("max_score_states(%d):\n%s\n" % (max_score, pformat(max_score_states)))
+        tmp_state = self.parent.state[:]
+        tmp_solution = self.parent.solution[:]
+
+        pll_free_states = []
+        all_edges_paired_states = []
+
+        # dwalton here now
+        # If all edges are paired check for PLL so that we do not return a
+        # state that leads to a set of steps that causes PLL
+        for (steps_len, state) in max_score_states:
+            steps = self.steps(state)
+
+            for step in steps:
+                self.parent.rotate(step)
+
+            if self.parent.edges_paired():
+                all_edges_paired_states.append((len(steps), state))
+
+                if not self.parent.edge_solution_leads_to_pll_parity():
+                    pll_free_states.append((len(steps), state))
+
+            self.parent.state = tmp_state[:]
+            self.parent.solution = tmp_solution[:]
+
+        if pll_free_states:
+            pll_free_states = sorted(pll_free_states)
+            #log.info("pll_free_states:\n%s\n" % pformat(pll_free_states))
+            return pll_free_states[0][1]
+
+        elif all_edges_paired_states:
+            all_edges_paired_states = sorted(all_edges_paired_states)
+            #log.info("all_edges_paired_states:\n%s\n" % pformat(all_edges_paired_states))
+            return all_edges_paired_states[0][1]
+
+        else:
+            return max_score_states[0][1]
+
+
 class RubiksCube444(RubiksCube):
 
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
@@ -1140,6 +1334,7 @@ class RubiksCube444(RubiksCube):
         # For non-tsai they are always used
         self.lt_edge_slice_forward = LookupTable444EdgeSliceForward(self)
         self.lt_edge_slice_backward = LookupTable444EdgesSliceBackward(self)
+        self.lt_edge = LookupTable444Edges(self)
 
     def tsai_phase2_orient_edges_state(self, edges_to_flip, return_hex):
         state = self.state
@@ -1985,12 +2180,33 @@ class RubiksCube444(RubiksCube):
         depth = 0
         self.lt_init()
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        self.min_edge_solution_len = 9999
-        self.min_edge_solution = None
-        self.min_edge_solution_state = None
+
+        use_recursive = False
 
         # group_edges_recursive() is where the magic happens
-        self.group_edges_recursive(depth, None)
-        self.state = self.min_edge_solution_state[:]
-        self.solution = self.min_edge_solution[:]
+        if use_recursive:
+            self.min_edge_solution_len = 9999
+            self.min_edge_solution = None
+            self.min_edge_solution_state = None
+            self.group_edges_recursive(depth, None)
+
+            self.state = self.min_edge_solution_state[:]
+            self.solution = self.min_edge_solution[:]
+
+        else:
+            while True:
+                non_paired_edges = self.get_non_paired_edges()
+
+                # If all edges are paired break out of the loop
+                if not non_paired_edges:
+                    break
+
+                log.info("%s: %d non-paired-edges" % (self, len(non_paired_edges)))
+
+                # dwalton call new edge lookup-table solver here
+                self.lt_edge.solve()
+
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+        log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')

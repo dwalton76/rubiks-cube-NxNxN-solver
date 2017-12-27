@@ -1175,7 +1175,6 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
-        #LookupTableAStar.__init__(
             self,
             parent,
             'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',

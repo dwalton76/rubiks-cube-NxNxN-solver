@@ -75,10 +75,15 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 =====
 7x7x7
 =====
+Use this test cube for both the step10 and step80 items below
 
-- step10 is slow for this one, it takes 1m 13s (the table is 6-deep).  I build
+./usr/bin/rubiks-cube-solver.py --state LLDBLFDRRFDUBFLLLFLLDFLDUBRULFLFDRDRUBBUDBFLFRUBFLDBFRDRFLLRBDUUFRFURDDDBRRLDUDUBLRLLBUDRUDBUUUUBUUDLDFRURFFUFURRRDLBRFLLUFUULRUBRRURULFUBUURLDBRBDBFRLULLFLDLFRRDLRBFDBBFDDUDRBBUUFLBFBLRDDDBRFLBURFDDRBDRBRLURFUDDUFBBFBFLLRFFLLRDFDBBFBRFDLLURUFDDFLFDFBDFFUBDBRBUDDDBLFBLBRBRURFLBBULLDFURUBBLURFU
+
+- step10 is slow for this one, it takes 19s (the table is 6-deep).  I built
   it to 7-deep and the search only took about 1s but the file was 6.4G which
   gzipped down to 845M which is too big to check into the repo.
+
+  Will need to wait for the B-Tree work to be done to speed this one up.
 
 - step80...we spend 40+  moves in this phase
     - build the main table out to 6-deep
@@ -87,11 +92,6 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
       this with the extra entries of a 6-deep table?
 
     - build a bunch of 24 million entry prune tables
-
-    - test with this cube
-
-./usr/bin/rubiks-cube-solver.py --state LLDBLFDRRFDUBFLLLFLLDFLDUBRULFLFDRDRUBBUDBFLFRUBFLDBFRDRFLLRBDUUFRFURDDDBRRLDUDUBLRLLBUDRUDBUUUUBUUDLDFRURFFUFURRRDLBRFLLUFUULRUBRRURULFUBUURLDBRBDBFRLULLFLDLFRRDLRBFDBBFDDUDRBBUUFLBFBLRDDDBRFLBURFDDRBDRBRLURFUDDUFBBFBFLLRFFLLRDFDBBFBRFDLLURUFDDFLFDFBDFFUBDBRBUDDDBLFBLBRBRURFLBBULLDFURUBBLURFU
-
 
 
 =====

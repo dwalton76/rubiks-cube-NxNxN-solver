@@ -351,10 +351,17 @@ class LookupTable(object):
             steps = self.steps(state)
 
             if steps:
-                #log.info("%s: solve() state %s found %s" % (self, state, ' '.join(steps)))
+                # dwalton
+                #log.info("%s: PRE solve() state %s found %s" % (self, state, ' '.join(steps)))
+                #self.parent.print_cube()
+                log.info("%s: %d steps" % (self, len(steps)))
 
                 for step in steps:
                     self.parent.rotate(step)
+
+                #log.info("%s: POST solve()" % self)
+                #self.parent.print_cube()
+
             else:
                 self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))

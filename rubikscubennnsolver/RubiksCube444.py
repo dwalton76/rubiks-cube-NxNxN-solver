@@ -195,19 +195,19 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
     """
     lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt
     ==================================================
-    1 steps has 7 entries (0 percent)
-    2 steps has 99 entries (0 percent)
-    3 steps has 996 entries (0 percent)
-    4 steps has 6,477 entries (1 percent)
-    5 steps has 23,540 entries (6 percent)
-    6 steps has 53,537 entries (15 percent)
-    7 steps has 86,464 entries (25 percent)
-    8 steps has 83,240 entries (24 percent)
-    9 steps has 54,592 entries (15 percent)
-    10 steps has 29,568 entries (8 percent)
-    11 steps has 4,480 entries (1 percent)
+    1 steps has 96 entries (0 percent, 0.00x previous step)
+    2 steps has 1,008 entries (0 percent, 10.50x previous step)
+    3 steps has 8,208 entries (0 percent, 8.14x previous step)
+    4 steps has 41,712 entries (2 percent, 5.08x previous step)
+    5 steps has 145,560 entries (7 percent, 3.49x previous step)
+    6 steps has 321,576 entries (15 percent, 2.21x previous step)
+    7 steps has 514,896 entries (25 percent, 1.60x previous step)
+    8 steps has 496,560 entries (24 percent, 0.96x previous step)
+    9 steps has 324,096 entries (15 percent, 0.65x previous step)
+    10 steps has 177,408 entries (8 percent, 0.55x previous step)
+    11 steps has 26,880 entries (1 percent, 0.15x previous step)
 
-    Total: 343,000 entries
+    Total: 2,058,000 entries
     """
 
     def __init__(self, parent):
@@ -216,7 +216,7 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
             parent,
             'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
             'UUUULLLLFFFFRRRRBBBBDDDD',
-            linecount=343000)
+            linecount=2058000)
 
     def state(self):
         parent_state = self.parent.state
@@ -686,7 +686,7 @@ def edges_high_low_recolor_444(state):
     return state
 
 
-edges_recolor2_444 = (
+wings_for_edges_recolor_pattern_444 = (
     ('0', 2, 67),  # upper
     ('1', 3, 66),
     ('2', 5, 18),
@@ -716,7 +716,7 @@ edges_recolor2_444 = (
     ('n', 95, 78))
 
 
-def edges_high_low_recolor2_444(state):
+def edges_recolor_pattern_444(state):
     edge_map = {
         'BD': [],
         'BL': [],
@@ -733,14 +733,14 @@ def edges_high_low_recolor2_444(state):
     }
 
     # Record the two edge_indexes for each of the 12 edges
-    for (edge_index, square_index, partner_index) in edges_recolor2_444:
+    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
         square_value = state[square_index]
         partner_value = state[partner_index]
         wing_str = ''.join(sorted([square_value, partner_value]))
         edge_map[wing_str].append(edge_index)
 
     # Where is the other wing_str like us?
-    for (edge_index, square_index, partner_index) in edges_recolor2_444:
+    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
         square_value = state[square_index]
         partner_value = state[partner_index]
         wing_str = ''.join(sorted([square_value, partner_value]))
@@ -1007,7 +1007,7 @@ class LookupTableIDA444TsaiPhase3(LookupTableIDA):
         return results[0]
 
 
-class LookupTable444EdgeSliceForward(LookupTable):
+class LookupTable444EdgesSliceForward(LookupTable):
     """
     22*20*18 is 7920
 
@@ -1089,22 +1089,39 @@ class LookupTable444Edges(LookupTable):
             linecount=678600)
 
     def state(self):
-        log.info("%s: state() called" % self)
-        state = edges_high_low_recolor2_444(self.parent.state[:])
+        """
+        Normally the state() for a LookupTable is a straightforward thing where
+        you look at certain squares on the cube, build the state from the squares
+        and you are done.  With LookupTable444Edges though things are a little
+        different because lookup-table-4x4x4-step101-edges.txt does not contain
+        all possible edge states (there are gazillions of them), it only contains
+        all of the edges states possible up to 9-deep.
 
-        result = []
+        So what we do is find the current state of edges and look through
+        lookup-table-4x4x4-step101-edges.txt for the line whose state is the closest
+        match to our own. The LookupTable.solve() code will then execute the set of
+        steps for that state which will pair several of our edges.
+        """
+        state = edges_recolor_pattern_444(self.parent.state[:])
 
-        for square_index in wings_444:
-            result.append(state[square_index])
+        result = ''.join([state[square_index] for square_index in wings_444])
 
-        result = ''.join(result)
-
+        # If we are at our state_target, return our actual state
         if result in self.state_target:
+            log.warning("%s: at our state_target" % self)
             return result
 
-        #log.info("result: %s" % result)
+        # If our state is in lookup-table-4x4x4-step101-edges.txt, return our actual state.
+        # When this happens we will pair all of the remaining edges.
+        steps = self.steps(result)
 
-        # Find the entry that our result has the most in common with
+        if steps is not None:
+            log.warning("%s: all edges should pair" % self)
+            return result
+
+        # If we are here then we need to look through lookup-table-4x4x4-step101-edges.txt
+        # to find the line whose state is the closest match to our own. This allows us to
+        # pair some of our unpaired edges.
         with open(self.filename, 'r') as fh:
             max_score = None
             max_score_states = []
@@ -1113,6 +1130,8 @@ class LookupTable444Edges(LookupTable):
                 (tmp_state, tmp_steps) = line.split(':')
                 tmp_steps = tmp_steps.split()
 
+                # dwalton this needs some logic to make sure the state we pick as our state does
+                # not unpair any of our paired edges
                 score = get_characters_common_count(result, tmp_state, self.state_width, max_score)
 
                 if max_score is None or score > max_score:
@@ -1122,14 +1141,13 @@ class LookupTable444Edges(LookupTable):
                     max_score_states.append((len(tmp_steps), tmp_state))
 
         max_score_states = sorted(max_score_states)
-        log.info("max_score_states(%d):\n%s\n" % (max_score, pformat(max_score_states)))
+        #log.info("max_score_states(%d):\n%s\n" % (max_score, pformat(max_score_states)))
         tmp_state = self.parent.state[:]
         tmp_solution = self.parent.solution[:]
 
         pll_free_states = []
         all_edges_paired_states = []
 
-        # dwalton here now
         # If all edges are paired check for PLL so that we do not return a
         # state that leads to a set of steps that causes PLL
         for (steps_len, state) in max_score_states:
@@ -1150,14 +1168,19 @@ class LookupTable444Edges(LookupTable):
         if pll_free_states:
             pll_free_states = sorted(pll_free_states)
             #log.info("pll_free_states:\n%s\n" % pformat(pll_free_states))
+            log.warning("%s: closest state match is PLL free and has %d steps" % (self, pll_free_states[0][0]))
+
             return pll_free_states[0][1]
 
         elif all_edges_paired_states:
             all_edges_paired_states = sorted(all_edges_paired_states)
             #log.info("all_edges_paired_states:\n%s\n" % pformat(all_edges_paired_states))
+
+            log.warning("%s: closest state match leads to PLL and has %d steps" % (self, all_edges_paired_states[0][0]))
             return all_edges_paired_states[0][1]
 
         else:
+            log.warning("%s: closest state match has %d steps" % (self, max_score_states[0][0]))
             return max_score_states[0][1]
 
 
@@ -1332,9 +1355,9 @@ class RubiksCube444(RubiksCube):
 
         # For tsai these two tables are only used if the centers have already been solved
         # For non-tsai they are always used
-        self.lt_edge_slice_forward = LookupTable444EdgeSliceForward(self)
-        self.lt_edge_slice_backward = LookupTable444EdgesSliceBackward(self)
-        self.lt_edge = LookupTable444Edges(self)
+        self.lt_edges_slice_forward = LookupTable444EdgesSliceForward(self)
+        self.lt_edges_slice_backward = LookupTable444EdgesSliceBackward(self)
+        self.lt_edges = LookupTable444Edges(self)
 
     def tsai_phase2_orient_edges_state(self, edges_to_flip, return_hex):
         state = self.state
@@ -1520,7 +1543,7 @@ class RubiksCube444(RubiksCube):
         sister_wing3 must go in spot (72, 21)
         """
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
-        return self.lt_edge_slice_forward.steps(state)
+        return self.lt_edges_slice_forward.steps(state)
 
     def find_moves_to_stage_slice_backward_444(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         """
@@ -1530,7 +1553,7 @@ class RubiksCube444(RubiksCube):
         sister_wing3 must go in spot (56, 69)
         """
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
-        return self.lt_edge_slice_backward.steps(state)
+        return self.lt_edges_slice_backward.steps(state)
 
     def prep_for_slice_back_444(self):
 
@@ -2181,7 +2204,7 @@ class RubiksCube444(RubiksCube):
         self.lt_init()
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        use_recursive = False
+        use_recursive = True
 
         # group_edges_recursive() is where the magic happens
         if use_recursive:
@@ -2204,7 +2227,7 @@ class RubiksCube444(RubiksCube):
                 log.info("%s: %d non-paired-edges" % (self, len(non_paired_edges)))
 
                 # dwalton call new edge lookup-table solver here
-                self.lt_edge.solve()
+                self.lt_edges.solve()
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()

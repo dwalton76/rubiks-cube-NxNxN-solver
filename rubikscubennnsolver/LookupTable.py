@@ -354,7 +354,7 @@ class LookupTable(object):
                 # dwalton
                 #log.info("%s: PRE solve() state %s found %s" % (self, state, ' '.join(steps)))
                 #self.parent.print_cube()
-                log.info("%s: %d steps" % (self, len(steps)))
+                #log.info("%s: %d steps" % (self, len(steps)))
 
                 for step in steps:
                     self.parent.rotate(step)

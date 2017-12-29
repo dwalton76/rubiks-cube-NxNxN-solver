@@ -19,6 +19,15 @@ import subprocess
 import sys
 
 log = logging.getLogger(__name__)
+'''
+baseline
+
+35 steps to solve centers
+71 steps to group edges
+21 steps to solve 3x3x3
+127 steps total
+
+'''
 
 moves_5x5x5 = moves_4x4x4
 solved_5x5x5 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
@@ -30,6 +39,13 @@ centers_555 = (
     82, 83, 84, 87, 88, 89, 92, 93, 94,
     107, 108, 109, 112, 113, 114, 117, 118, 119,
     132, 133, 134, 137, 138, 139, 142, 143, 144
+)
+
+wings_555 = (
+    2, 3, 4, 6, 10, 11, 15, 16, 20, 22, 23, 24,                # Upper
+    31, 35, 36, 40, 41, 45,                                    # Left
+    81, 85, 86, 90, 91, 95,                                    # Right
+    127, 128, 129, 131, 135, 136, 140, 141, 145, 147, 148, 149 # Down
 )
 
 wing_str_map = {
@@ -58,6 +74,20 @@ wing_str_map = {
     'DF' : 'DF',
     'FD' : 'DF',
 }
+
+
+def get_characters_common_count(strA, strB, str_len, max_score):
+    result = 0
+
+    for (index, (charA, charB)) in enumerate(zip(strA, strB)):
+        if charA == charB:
+            result += 1
+        else:
+            if max_score is not None:
+                if result + (str_len - (index + 1)) <= max_score:
+                    break
+
+    return result
 
 
 class LookupTable555UDTCenterStage(LookupTable):
@@ -1282,6 +1312,223 @@ class LookupTable555EdgeSliceBackward(LookupTable):
         raise Exception("This should never be called")
 
 
+edges_recolor_tuples_555 = (
+    ('0', 2, 104), # upper
+    ('1', 4, 102),
+    ('2', 6, 27),
+    ('3', 10, 79),
+    ('4', 16, 29),
+    ('5', 20, 77),
+    ('6', 22, 52),
+    ('7', 24, 54),
+
+    ('8', 31, 110), # left
+    ('9', 35, 56),
+    ('a', 41, 120),
+    ('b', 45, 66),
+
+    ('c', 81, 60), # right
+    ('d', 85, 106),
+    ('e', 91, 70),
+    ('f', 95, 116),
+
+    ('g', 127, 72), # down
+    ('h', 129, 74),
+    ('i', 131, 49),
+    ('j', 135, 97),
+    ('k', 141, 47),
+    ('l', 145, 99),
+    ('m', 147, 124),
+    ('n', 149, 122)
+)
+
+midges_recolor_tuples_555 = (
+    ('o', 3, 103), # upper
+    ('p', 11, 28),
+    ('q', 15, 78),
+    ('r', 23, 53),
+
+    ('s', 36, 115), # left
+    ('t', 40, 61),
+
+    ('u', 86, 65),  # right
+    ('v', 90, 111),
+
+    ('w', 128, 73), # down
+    ('x', 136, 48),
+    ('y', 140, 98),
+    ('z', 148, 123)
+)
+
+def edges_recolor_pattern_555(state):
+    midges_map = {
+        'BD': None,
+        'BL': None,
+        'BR': None,
+        'BU': None,
+        'DF': None,
+        'DL': None,
+        'DR': None,
+        'FL': None,
+        'FR': None,
+        'FU': None,
+        'LU': None,
+        'RU': None
+    }
+
+    for (edge_index, square_index, partner_index) in midges_recolor_tuples_555:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+        midges_map[wing_str] = edge_index
+        state[square_index] = edge_index
+        state[partner_index] = edge_index
+
+    # Where is the midge for each wing_str?
+    for (edge_index, square_index, partner_index) in edges_recolor_tuples_555:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+
+        high_low = tsai_phase2_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+
+        # dwalton
+        if high_low == 'U':
+            state[square_index] = midges_map[wing_str].upper()
+            state[partner_index] = midges_map[wing_str].upper()
+        elif high_low == 'D':
+            state[square_index] = midges_map[wing_str]
+            state[partner_index] = midges_map[wing_str]
+        else:
+            raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
+
+    return ''.join(state)
+
+
+class LookupTable555Edges(LookupTable):
+    """
+    lookup-table-5x5x5-step101-edges.txt
+    ====================================
+    5 steps has 294 entries (0 percent, 0.00x previous step)
+    6 steps has 2301 entries (0 percent, 7.83x previous step)
+    7 steps has 12,872 entries (0 percent, 5.59x previous step)
+    8 steps has 132,255 entries (8 percent, 10.27x previous step)
+    9 steps has 1,325,156 entries (89 percent, 10.02x previous step)
+
+    Total: 1,472,878 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step101-edges.txt',
+            'TBD',
+            linecount=8638)
+
+    def state(self):
+        """
+        Normally the state() for a LookupTable is a straightforward thing where
+        you look at certain squares on the cube, build the state from the squares
+        and you are done.  With LookupTable555Edges though things are a little
+        different because lookup-table-5x5x5-step101-edges.txt does not contain
+        all possible edge states (there are gazillions of them), it only contains
+        all of the edges states possible up to 9-deep.
+
+        So what we do is find the current state of edges and look through
+        lookup-table-5x5x5-step101-edges.txt for the line whose state is the closest
+        match to our own. The LookupTable.solve() code will then execute the set of
+        steps for that state which will pair several of our edges.
+        """
+        state = edges_recolor_pattern_555(self.parent.state[:])
+
+        result = ''.join([state[square_index] for square_index in wings_555])
+
+        # If we are at our state_target, return our actual state
+        if result in self.state_target:
+            log.warning("%s: at our state_target (state %s)" % (self, result))
+            self.parent.print_cube()
+            return result
+
+        # If our state is in lookup-table-5x5x5-step101-edges.txt, return our actual state.
+        # When this happens we will pair all of the remaining edges.
+        steps = self.steps(result)
+
+        if steps is not None:
+            log.warning("%s: all edges should pair (state %s)" % (self, result))
+            self.parent.print_cube()
+            return result
+
+        # If we are here then we need to look through lookup-table-5x5x5-step101-edges.txt
+        # to find the line whose state is the closest match to our own. This allows us to
+        # pair some of our unpaired edges.
+        with open(self.filename, 'r') as fh:
+            max_score = None
+            max_score_states = []
+
+            for line in fh:
+                (tmp_state, tmp_steps) = line.split(':')
+                tmp_steps = tmp_steps.split()
+
+                # dwalton this needs some logic to make sure the state we pick as our state does
+                # not unpair any of our paired edges
+                score = get_characters_common_count(result, tmp_state, self.state_width, max_score)
+
+                if max_score is None or score > max_score:
+                    max_score = score
+                    max_score_states = [(len(tmp_steps), tmp_state, tmp_steps), ]
+                elif score == max_score:
+                    max_score_states.append((len(tmp_steps), tmp_state, tmp_steps))
+
+        max_score_states = sorted(max_score_states)
+        log.info("max_score_states(%d):\n%s\n" % (max_score, pformat(max_score_states)))
+        tmp_state = self.parent.state[:]
+        tmp_solution = self.parent.solution[:]
+
+        #pll_free_states = []
+        all_edges_paired_states = []
+
+        # If all edges are paired check for PLL so that we do not return a
+        # state that leads to a set of steps that causes PLL
+        for (steps_len, state, steps) in max_score_states:
+            #steps = self.steps(state)
+
+            for step in steps:
+                self.parent.rotate(step)
+
+            if self.parent.edges_paired():
+                all_edges_paired_states.append((len(steps), state))
+
+                #if not self.parent.edge_solution_leads_to_pll_parity():
+                #    pll_free_states.append((len(steps), state))
+
+            self.parent.state = tmp_state[:]
+            self.parent.solution = tmp_solution[:]
+
+        #if pll_free_states:
+        #    pll_free_states = sorted(pll_free_states)
+        #    #log.info("pll_free_states:\n%s\n" % pformat(pll_free_states))
+        #    log.warning("%s: closest state match is PLL free and has %d steps" % (self, pll_free_states[0][0]))
+        #
+        #    return pll_free_states[0][1]
+        #elif all_edges_paired_states:
+
+        if all_edges_paired_states:
+            all_edges_paired_states = sorted(all_edges_paired_states)
+            #log.info("all_edges_paired_states:\n%s\n" % pformat(all_edges_paired_states))
+
+            log.warning("%s: closest state (%s) match will pair all edges and has %d steps" %
+                (self, result, all_edges_paired_states[0][0]))
+            return all_edges_paired_states[0][1]
+
+        else:
+            non_paired_wings_count = self.parent.get_non_paired_wings_count()
+            non_paired_edges_count = self.parent.get_non_paired_edges_count()
+            log.warning("%s: closest state (%s) match has %d steps, %d wings not paired, %d edges not paired" %
+                (self, result, max_score_states[0][0], non_paired_wings_count, non_paired_edges_count))
+            return max_score_states[0][1]
+
+
 class LookupTable555TCenterSolve(LookupTable):
     """
     This is only used when a cube larger than 7x7x7 is being solved
@@ -1481,8 +1728,9 @@ class RubiksCube555(RubiksCube):
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
 
-        self.lt_edge_slice_forward = LookupTable555EdgeSliceForward(self)
-        self.lt_edge_slice_backward = LookupTable555EdgeSliceBackward(self)
+        self.lt_edges_slice_forward = LookupTable555EdgeSliceForward(self)
+        self.lt_edges_slice_backward = LookupTable555EdgeSliceBackward(self)
+        self.lt_edges = LookupTable555Edges(self)
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
@@ -1650,9 +1898,6 @@ class RubiksCube555(RubiksCube):
 
             # make random moves
             step = moves_5x5x5[randint(0, len(moves_5x5x5)-1)]
-            self.rotate(step)
-            #log.info("STEP: %s" % step)
-            #self.print_cube()
 
             for (x, y) in (
                 (2, 104), (4, 102), (6, 27), (10, 79), (16, 29), (20, 77), (22, 52), (24, 54),
@@ -1670,11 +1915,6 @@ class RubiksCube555(RubiksCube):
                 if wing_tuple not in tsai_phase2_orient_edges_555:
                     tsai_phase2_orient_edges_555[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
                     added_wing_tuple = True
-
-            #if added_wing_tuple:
-            #    log.info("tsai_phase2_orient_edges_555 now has %d entries" % len(tsai_phase2_orient_edges_555))
-
-            #break
 
         log.info("new tsai_phase2_orient_edges_555\n\n%s\n\n" % pformat(tsai_phase2_orient_edges_555))
         log.info("tsai_phase2_orient_edges_555 has %d entries" % len(tsai_phase2_orient_edges_555))
@@ -1804,7 +2044,7 @@ class RubiksCube555(RubiksCube):
 
     def find_moves_to_stage_slice_backward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
         state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
-        return self.lt_edge_slice_backward.steps(state)
+        return self.lt_edges_slice_backward.steps(state)
 
     def get_sister_wings_slice_backward_555(self):
         results = (None, None, None, None)
@@ -1988,7 +2228,7 @@ class RubiksCube555(RubiksCube):
                                 sister_wing3 = tuple(list(reversed(sister_wing3)))
 
                             state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
-                            steps = self.lt_edge_slice_forward.steps(state)
+                            steps = self.lt_edges_slice_forward.steps(state)
 
                             #log.info("sister_wing2_use_first_neighbor %s, sister_wing3 %s, reverse %s, state %s, steps %s" %
                             #    (sister_wing2_use_first_neighbor, pformat(sister_wing3), sister_wing3_reverse, state, "True" if steps else "False"))
@@ -3204,13 +3444,33 @@ class RubiksCube555(RubiksCube):
 
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        self.min_edge_solution_len = 9999
-        self.min_edge_solution = None
-        self.min_edge_solution_state = None
-        self.group_edges_recursive(depth, None)
-        #self.group_edges_bfs()
-        self.state = self.min_edge_solution_state[:]
-        self.solution = self.min_edge_solution[:]
+        use_recursive = True
+
+        if use_recursive:
+            self.min_edge_solution_len = 9999
+            self.min_edge_solution = None
+            self.min_edge_solution_state = None
+            self.group_edges_recursive(depth, None)
+            #self.group_edges_bfs()
+            self.state = self.min_edge_solution_state[:]
+            self.solution = self.min_edge_solution[:]
+        else:
+            while True:
+                non_paired_wings_count = self.get_non_paired_wings_count()
+                non_paired_edges_count = self.get_non_paired_edges_count()
+
+                # If all edges are paired break out of the loop
+                if not non_paired_edges_count:
+                    break
+
+                log.info("%s: %d wings not paired, %d edges not paired" % (self, non_paired_wings_count, non_paired_edges_count))
+
+                # dwalton call new edge lookup-table solver here
+                self.lt_edges.solve()
+
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+        log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')
 
 tsai_phase2_orient_edges_555 = {

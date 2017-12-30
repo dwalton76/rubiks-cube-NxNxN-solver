@@ -1198,7 +1198,7 @@ class LookupTable444EdgesSliceBackward(LookupTable):
 
 class LookupTable444Edges(LookupTable):
     """
-    lookup-table-4x4x4-step101-edges.txt
+    lookup-table-4x4x4-step100-edges.txt
     ====================================
     11-deep
     -------
@@ -1217,7 +1217,7 @@ class LookupTable444Edges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step101-edges.txt',
+            'lookup-table-4x4x4-step100-edges.txt',
             '111111111111_10452376ab89efcdhgklijnm',
             linecount=31784731) # 11-deep
 
@@ -1307,12 +1307,12 @@ class LookupTable444Edges(LookupTable):
         Normally the state() for a LookupTable is a straightforward thing where
         you look at certain squares on the cube, build the state from the squares
         and you are done.  With LookupTable444Edges though things are a little
-        different because lookup-table-4x4x4-step101-edges.txt does not contain
+        different because lookup-table-4x4x4-step100-edges.txt does not contain
         all possible edge states (there are gazillions of them), it only contains
         all of the edges states possible up to 9-deep.
 
         So what we do is find the current state of edges and look through
-        lookup-table-4x4x4-step101-edges.txt for the line whose state is the closest
+        lookup-table-4x4x4-step100-edges.txt for the line whose state is the closest
         match to our own. The LookupTable.solve() code will then execute the set of
         steps for that state which will pair several of our edges.
         """
@@ -1333,7 +1333,7 @@ class LookupTable444Edges(LookupTable):
             return edges_state
 
 
-        # If our state is in lookup-table-4x4x4-step101-edges.txt, return our actual state.
+        # If our state is in lookup-table-4x4x4-step100-edges.txt, return our actual state.
         # When this happens we will pair all of the remaining edges.
         steps = self.steps(edges_state)
 
@@ -1342,7 +1342,7 @@ class LookupTable444Edges(LookupTable):
             return edges_state
 
 
-        # If we are here then we need to look through lookup-table-4x4x4-step101-edges.txt
+        # If we are here then we need to look through lookup-table-4x4x4-step100-edges.txt
         # to find the line whose state is the closest match to our own. This allows us to
         # pair some of our unpaired edges and make some progress even though our current
         # state isn't in the lookup table.

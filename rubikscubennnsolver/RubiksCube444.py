@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 from copy import copy
 from rubikscubennnsolver import RubiksCube
@@ -51,18 +52,146 @@ wings_444 = (
     82, 83, 85, 88, 89, 92, 94, 95) # Down
 
 
-def get_characters_common_count(strA, strB, str_len, max_score):
+def get_characters_common_count(strA, strB, str_len):
     result = 0
 
     for (index, (charA, charB)) in enumerate(zip(strA, strB)):
         if charA == charB:
             result += 1
-        else:
-            if max_score is not None:
-                if result + (str_len - (index + 1)) <= max_score:
-                    break
 
     return result
+
+
+def get_best_entry(foo):
+    best_entry = None
+    best_paired_edges = None
+    best_steps_len = None
+
+    for (paired_edges, steps_len, state) in foo:
+        if (best_entry is None or
+            paired_edges > best_paired_edges or
+            (paired_edges == best_paired_edges and steps_len < best_steps_len)):
+
+            best_entry = (paired_edges, steps_len, state)
+            best_paired_edges = paired_edges
+            best_steps_len = steps_len
+    return best_entry
+
+
+def get_edges_paired_binary_signature(state):
+    """
+    The facelets are numbered:
+
+                  - 02 03 -
+                 05  - -  08
+                 09  - -  12
+                  - 14 15 -
+
+     - 18 19 -    - 34 35 -    - 50 51 -    - 66 67 -
+    21  - -  24  37  - -  40  53  - -  56  69  - -  72
+    25  - -  28  41  - -  44  57  - -  60  73  - -  76
+     - 30 31 -    - 46 47 -    - 62 63 -    - 78 79 -
+
+                  - 82 83 -
+                 85  - -  88
+                 89  - -  92
+                  - 94 95 -
+
+
+    The wings are labeled 0123456789abcdefghijklmn
+
+                  -  0 1  -
+                  2  - -  3
+                  4  - -  5
+                  -  6 7 -
+
+     -  2 4  -    -  6 7  -    -  5 3  -    -  1 0  -
+     8  - -  9    9  - -  c    c  - -  d    d  - -  8
+     a  - -  b    b  - -  e    e  - -  f    f  - -  a
+     -  k i  -    -  g h  -    -  j l  -    -  n m  -
+
+                  -  g h  -
+                  i  - -  j
+                  k  - -  l
+                  -  m n  -
+
+    'state' goes wing by # wing and records the location of where the sibling wing is located.
+
+    state: 0123456789abcdefghijklmn
+
+    index: 000000000011111111112222
+           012345678901234567890123
+
+    get_edges_paired_binary_signature('10452376ab89efcdhgklijnm')
+    111111111111
+    """
+    result = []
+
+    # Upper
+    if state[0] == '1':
+        result.append('1')
+    else:
+        result.append('0')
+
+    if state[2] == '4':
+        result.append('1')
+    else:
+        result.append('0')
+
+    if state[3] == '5':
+        result.append('1')
+    else:
+        result.append('0')
+
+    if state[6] == '7':
+        result.append('1')
+    else:
+        result.append('0')
+
+    # Left
+    if state[8] == 'a':
+        result.append('1')
+    else:
+        result.append('0')
+
+    if state[9] == 'b':
+        result.append('1')
+    else:
+        result.append('0')
+
+    # Right
+    if state[12] == 'e':
+        result.append('1')
+    else:
+        result.append('0')
+
+    if state[13] == 'f':
+        result.append('1')
+    else:
+        result.append('0')
+
+    # Down
+    if state[16] == 'h':
+        result.append('1')
+    else:
+        result.append('0')
+
+    if state[18] == 'k':
+        result.append('1')
+    else:
+        result.append('0')
+
+    if state[19] == 'l':
+        result.append('1')
+    else:
+        result.append('0')
+
+    if state[22] == 'n':
+        result.append('1')
+    else:
+        result.append('0')
+
+    return ''.join(result)
 
 
 '''
@@ -1071,13 +1200,17 @@ class LookupTable444Edges(LookupTable):
     """
     lookup-table-4x4x4-step101-edges.txt
     ====================================
-    5 steps has 288 entries (0 percent, 0.00x previous step)
-    6 steps has 3264 entries (0 percent, 11.33x previous step)
-    7 steps has 17,785 entries (2 percent, 5.45x previous step)
-    8 steps has 116,395 entries (17 percent, 6.54x previous step)
-    9 steps has 540,868 entries (79 percent, 4.65x previous step)
+    11-deep
+    -------
+    5 steps has 144 entries (0 percent, 0.00x previous step)
+    6 steps has 1134 entries (0 percent, 7.88x previous step)
+    7 steps has 6,184 entries (0 percent, 5.45x previous step)
+    8 steps has 57,802 entries (0 percent, 9.35x previous step)
+    9 steps has 466,831 entries (1 percent, 8.08x previous step)
+    10 steps has 2,803,833 entries (8 percent, 6.01x previous step)
+    11 steps has 28,448,803 entries (89 percent, 10.15x previous step)
 
-    Total: 678,600 entries
+    Total: 31,784,731 entries
     """
 
     def __init__(self, parent):
@@ -1085,8 +1218,89 @@ class LookupTable444Edges(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step101-edges.txt',
-            '10452376ab89efcdhgklijnm',
-            linecount=678600)
+            '111111111111_10452376ab89efcdhgklijnm',
+            linecount=31784731) # 11-deep
+
+    def find_edge_entries_with_signature(self, signature_to_find):
+        """
+        Given a signature such as 001001010110, return a list of all of the lines
+        in our lookup-table that start with that signature.
+        """
+        self.fh_txt.seek(0)
+
+        first = 0
+        last = self.linecount - 1
+        signature_width = len(signature_to_find)
+        b_signature_to_find = bytearray(signature_to_find, encoding='utf-8')
+
+        fh = self.fh_txt
+
+        # Find an entry with signature_to_find
+        while first <= last:
+            midpoint = int((first + last)/2)
+            fh.seek(midpoint * self.width)
+
+            # Only read the 'state' part of the line (for speed)
+            b_signature = fh.read(signature_width)
+
+            if b_signature_to_find < b_signature:
+                last = midpoint - 1
+
+            # If this is the line we are looking for
+            elif b_signature_to_find == b_signature:
+                break
+
+            else:
+                first = midpoint + 1
+        else:
+            raise SolveError("could not find signature %s" % signature_to_find)
+
+        result = []
+        line_number_midpoint_signature_to_find = midpoint
+
+        # Go back one line at a time until we are at the line just before
+        # the signature_to_find entries start.
+        while True:
+            midpoint -= 1
+            fh.seek(midpoint * self.width)
+
+            line = fh.read(self.width)
+            line = line.decode('utf-8').rstrip()
+            (edges_state, steps) = line.split(':')
+            (signature, _) = edges_state.split('_')
+
+            #b_signature = fh.read(signature_width)
+
+            if signature != signature_to_find:
+                break
+
+            result.append(line)
+
+            if midpoint == 0:
+                break
+
+
+        # Go forward one line at a time until we have read all the lines
+        # with signature_to_find
+        midpoint = line_number_midpoint_signature_to_find
+
+        while True:
+            midpoint += 1
+            fh.seek(midpoint * self.width)
+            line = fh.read(self.width)
+            line = line.decode('utf-8').rstrip()
+            (edges_state, steps) = line.split(':')
+            (signature, _) = edges_state.split('_')
+
+            if signature == signature_to_find:
+                result.append(line)
+            else:
+                break
+
+            if midpoint == self.linecount - 1:
+                break
+
+        return result
 
     def state(self):
         """
@@ -1104,84 +1318,139 @@ class LookupTable444Edges(LookupTable):
         """
         state = edges_recolor_pattern_444(self.parent.state[:])
 
-        result = ''.join([state[square_index] for square_index in wings_444])
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        signature = get_edges_paired_binary_signature(edges_state)
+        signature_width = len(signature) + 1
+        edges_state = signature + '_' + edges_state
+
+        pre_non_paired_edges_count = self.parent.get_non_paired_edges_count()
+        log.info("%s: signature %s, %d unpaired edges" % (self, signature, pre_non_paired_edges_count))
+
 
         # If we are at our state_target, return our actual state
-        if result in self.state_target:
-            log.warning("%s: at our state_target" % self)
-            return result
+        if edges_state in self.state_target:
+            #log.warning("%s: at our state_target" % self)
+            return edges_state
+
 
         # If our state is in lookup-table-4x4x4-step101-edges.txt, return our actual state.
         # When this happens we will pair all of the remaining edges.
-        steps = self.steps(result)
+        steps = self.steps(edges_state)
 
         if steps is not None:
-            log.warning("%s: all edges should pair" % self)
-            return result
+            #log.warning("%s: all edges should pair (%d steps)" % (self, len(steps)))
+            return edges_state
+
 
         # If we are here then we need to look through lookup-table-4x4x4-step101-edges.txt
         # to find the line whose state is the closest match to our own. This allows us to
-        # pair some of our unpaired edges.
-        with open(self.filename, 'r') as fh:
-            max_score = None
-            max_score_states = []
+        # pair some of our unpaired edges and make some progress even though our current
+        # state isn't in the lookup table.
 
-            for line in fh:
-                (tmp_state, tmp_steps) = line.split(':')
-                tmp_steps = tmp_steps.split()
+        # How many edges are paired?
+        pre_paired_edges_count = 12 - pre_non_paired_edges_count
 
-                # dwalton this needs some logic to make sure the state we pick as our state does
-                # not unpair any of our paired edges
-                score = get_characters_common_count(result, tmp_state, self.state_width, max_score)
+        # If we have less than 6 edges paired our goal is to find a few dozen phase1
+        # solutions that will pair at least 5 edges. We will explore these phase1 solutions
+        # in more depth to see which phase1 + phase2 solution pairs all 12 edges in the fewest moves.
+        if pre_paired_edges_count < 6:
 
-                if max_score is None or score > max_score:
-                    max_score = score
-                    max_score_states = [(len(tmp_steps), tmp_state), ]
-                elif score == max_score:
-                    max_score_states.append((len(tmp_steps), tmp_state))
+            # Most of the time when we are here we do not have any edges paired so our
+            # signature is 000000000000.  Find all of the entries in the lookup-table
+            # with our signature and see which ones peer 5 or more edges.
+            entries_with_signature = []
 
-        max_score_states = sorted(max_score_states)
-        #log.info("max_score_states(%d):\n%s\n" % (max_score, pformat(max_score_states)))
-        tmp_state = self.parent.state[:]
-        tmp_solution = self.parent.solution[:]
+            for line in self.find_edge_entries_with_signature(signature):
+                (phase1_state, phase1_steps) = line.split(':')
 
-        pll_free_states = []
-        all_edges_paired_states = []
+                common_count = get_characters_common_count(edges_state[signature_width:],
+                                                               phase1_state[signature_width:],
+                                                               self.state_width - signature_width)
+                should_pair = int(common_count/2)
 
-        # If all edges are paired check for PLL so that we do not return a
-        # state that leads to a set of steps that causes PLL
-        for (steps_len, state) in max_score_states:
-            steps = self.steps(state)
+                if should_pair >= 5:
+                    #log.info("should_pair %d - %s" % (should_pair, phase1_state))
+                    entries_with_signature.append(line.strip())
 
-            for step in steps:
-                self.parent.rotate(step)
-
-            if self.parent.edges_paired():
-                all_edges_paired_states.append((len(steps), state))
-
-                if not self.parent.edge_solution_leads_to_pll_parity():
-                    pll_free_states.append((len(steps), state))
-
-            self.parent.state = tmp_state[:]
-            self.parent.solution = tmp_solution[:]
-
-        if pll_free_states:
-            pll_free_states = sorted(pll_free_states)
-            #log.info("pll_free_states:\n%s\n" % pformat(pll_free_states))
-            log.warning("%s: closest state match is PLL free and has %d steps" % (self, pll_free_states[0][0]))
-
-            return pll_free_states[0][1]
-
-        elif all_edges_paired_states:
-            all_edges_paired_states = sorted(all_edges_paired_states)
-            #log.info("all_edges_paired_states:\n%s\n" % pformat(all_edges_paired_states))
-
-            log.warning("%s: closest state match leads to PLL and has %d steps" % (self, all_edges_paired_states[0][0]))
-            return all_edges_paired_states[0][1]
-
+        # If we have 6 or more edges paired then just find all of the entries
+        # in the lookup table with our edges signature, we will evaluate all of those.
         else:
-            log.warning("%s: closest state match has %d steps" % (self, max_score_states[0][0]))
-            return max_score_states[0][1]
+            entries_with_signature = self.find_edge_entries_with_signature(signature)
+
+        # dwalton
+        #log.warning("pre_paired_edges_count %d, entries_with_signature %d" % (pre_paired_edges_count, len(entries_with_signature)))
+        original_state = self.parent.state[:]
+        original_solution = self.parent.solution[:]
+        best_score_states = []
+
+        # Now run through each state:steps in entries_with_signature
+        for line in entries_with_signature:
+            (phase1_edges_state_fake, phase1_steps) = line.split(':')
+            phase1_steps = phase1_steps.split()
+
+            common_count = get_characters_common_count(edges_state[signature_width:],
+                                                       phase1_edges_state_fake[signature_width:],
+                                                       self.state_width - signature_width)
+            should_pair = int(common_count/2)
+
+            # Only bother looking at this one if it will get us more paired edges that we currently have
+            if should_pair > pre_paired_edges_count:
+
+                # Apply the phase1 steps
+                for step in phase1_steps:
+                    self.parent.rotate(step)
+
+                phase1_state = edges_recolor_pattern_444(self.parent.state[:])
+                phase1_edges_state = ''.join([phase1_state[square_index] for square_index in wings_444])
+                phase1_signature = get_edges_paired_binary_signature(phase1_edges_state)
+                phase1_edges_state = phase1_signature + '_' + phase1_edges_state
+
+                # If that got us to our state_target then phase1 alone paired all
+                # of the edges...this is unlikely
+                if phase1_edges_state in self.state_target:
+
+                    # PLL will take 12 moves to fix so add that penalty
+                    if self.parent.edge_solution_leads_to_pll_parity():
+                        best_score_states.append((12, len(phase1_steps) + 12, phase1_edges_state_fake))
+                    else:
+                        best_score_states.append((12, len(phase1_steps), phase1_edges_state_fake))
+
+                else:
+                    # phase1_steps did not pair all edges so do another lookup and execute those steps
+                    phase2_steps = self.steps(phase1_edges_state)
+
+                    if phase2_steps is not None:
+                        for step in phase2_steps:
+                            self.parent.rotate(step)
+
+                        phase2_state = edges_recolor_pattern_444(self.parent.state[:])
+                        phase2_edges_state = ''.join([phase2_state[square_index] for square_index in wings_444])
+                        phase2_signature = get_edges_paired_binary_signature(phase2_edges_state)
+                        phase2_edges_state = phase2_signature + '_' + phase2_edges_state
+
+                        if phase2_edges_state in self.state_target:
+                            if self.parent.edge_solution_leads_to_pll_parity():
+                                best_score_states.append((12, len(phase1_steps) + len(phase2_steps) + 12, phase1_edges_state_fake))
+                            else:
+                                best_score_states.append((12, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
+                        else:
+                            post_non_paired_edges_count = self.parent.get_non_paired_edges_count()
+                            paired_edges_count = 12 - post_non_paired_edges_count
+
+                            best_score_states.append((paired_edges_count, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
+                    else:
+                        post_non_paired_edges_count = self.parent.get_non_paired_edges_count()
+                        paired_edges_count = 12 - post_non_paired_edges_count
+
+                        best_score_states.append((paired_edges_count, len(phase1_steps), phase1_edges_state_fake))
+
+                self.parent.state = original_state[:]
+                self.parent.solution = original_solution[:]
+
+        best_entry = get_best_entry(best_score_states)
+        log.info("best_entry: %s" % pformat(best_entry))
+
+        return best_entry[2]
 
 
 class RubiksCube444(RubiksCube):
@@ -2196,18 +2465,20 @@ class RubiksCube444(RubiksCube):
             return True
 
     def group_edges(self):
+
         if not self.get_non_paired_edges():
             self.solution.append('EDGES_GROUPED')
             return
 
-        depth = 0
         self.lt_init()
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        use_recursive = True
+        #use_recursive = True
+        use_recursive = False
 
         # group_edges_recursive() is where the magic happens
         if use_recursive:
+            depth = 0
             self.min_edge_solution_len = 9999
             self.min_edge_solution = None
             self.min_edge_solution_state = None
@@ -2224,12 +2495,23 @@ class RubiksCube444(RubiksCube):
                 if not non_paired_edges:
                     break
 
-                log.info("%s: %d non-paired-edges" % (self, len(non_paired_edges)))
-
-                # dwalton call new edge lookup-table solver here
                 self.lt_edges.solve()
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')
+
+
+if __name__ == '__main__':
+    import doctest
+
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s %(filename)16s %(levelname)8s: %(message)s')
+    log = logging.getLogger(__name__)
+
+    # Color the errors and warnings in red
+    logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
+    logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
+
+    doctest.testmod()

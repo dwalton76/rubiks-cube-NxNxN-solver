@@ -1409,13 +1409,13 @@ class LookupTable555Edges(LookupTable):
     """
     lookup-table-5x5x5-step101-edges.txt
     ====================================
-    5 steps has 294 entries (0 percent, 0.00x previous step)
-    6 steps has 2301 entries (0 percent, 7.83x previous step)
-    7 steps has 12,872 entries (0 percent, 5.59x previous step)
-    8 steps has 132,255 entries (8 percent, 10.27x previous step)
-    9 steps has 1,325,156 entries (89 percent, 10.02x previous step)
+5 steps has 99953 entries (1 percent, 0.00x previous step)
+6 steps has 391285 entries (5 percent, 3.91x previous step)
+7 steps has 898469 entries (12 percent, 2.30x previous step)
+8 steps has 1473092 entries (19 percent, 1.64x previous step)
+9 steps has 4514971 entries (61 percent, 3.06x previous step)
 
-    Total: 1,472,878 entries
+Total: 7377770 entries
     """
 
     def __init__(self, parent):
@@ -1424,7 +1424,7 @@ class LookupTable555Edges(LookupTable):
             parent,
             'lookup-table-5x5x5-step101-edges.txt',
             'TBD',
-            linecount=8638)
+            linecount=7377770)
 
     def state(self):
         """
@@ -1443,6 +1443,7 @@ class LookupTable555Edges(LookupTable):
         state = edges_recolor_pattern_555(self.parent.state[:])
 
         result = ''.join([state[square_index] for square_index in wings_555])
+        self.parent.print_cube()
 
         # If we are at our state_target, return our actual state
         if result in self.state_target:
@@ -3444,7 +3445,7 @@ class RubiksCube555(RubiksCube):
 
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        use_recursive = True
+        use_recursive = False
 
         if use_recursive:
             self.min_edge_solution_len = 9999

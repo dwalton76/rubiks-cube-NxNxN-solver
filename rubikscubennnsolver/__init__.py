@@ -3829,7 +3829,8 @@ class RubiksCube(object):
                         'B' * self.squares_per_side +\
                         'D' * self.squares_per_side
 
-        if self.get_state_all() != solved_string:
+        # dwalton remove this True
+        if True or self.get_state_all() != solved_string:
             self.group_centers()
             self.group_edges()
             self.rotate_U_to_U()

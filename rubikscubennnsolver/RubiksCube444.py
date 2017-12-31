@@ -11,6 +11,8 @@ from rubikscubennnsolver.RubiksCube444Misc import (
     tsai_edge_mapping_combinations,
 )
 from rubikscubennnsolver.LookupTable import (
+    get_characters_common_count,
+    get_best_entry,
     LookupTable,
     LookupTableIDA,
     LookupTableAStar,
@@ -50,32 +52,6 @@ wings_444 = (
     21, 24, 25, 28,                 # Left
     53, 56, 57, 60,                 # Right
     82, 83, 85, 88, 89, 92, 94, 95) # Down
-
-
-def get_characters_common_count(strA, strB, str_len):
-    result = 0
-
-    for (index, (charA, charB)) in enumerate(zip(strA, strB)):
-        if charA == charB:
-            result += 1
-
-    return result
-
-
-def get_best_entry(foo):
-    best_entry = None
-    best_paired_edges = None
-    best_steps_len = None
-
-    for (paired_edges, steps_len, state) in foo:
-        if (best_entry is None or
-            paired_edges > best_paired_edges or
-            (paired_edges == best_paired_edges and steps_len < best_steps_len)):
-
-            best_entry = (paired_edges, steps_len, state)
-            best_paired_edges = paired_edges
-            best_steps_len = steps_len
-    return best_entry
 
 
 def get_edges_paired_binary_signature(state):
@@ -1200,8 +1176,9 @@ class LookupTable444Edges(LookupTable):
     """
     lookup-table-4x4x4-step100-edges.txt
     ====================================
-    11-deep
-    -------
+
+    11-deep (no dups)
+    -----------------
     5 steps has 144 entries (0 percent, 0.00x previous step)
     6 steps has 1134 entries (0 percent, 7.88x previous step)
     7 steps has 6,184 entries (0 percent, 5.45x previous step)
@@ -1220,87 +1197,6 @@ class LookupTable444Edges(LookupTable):
             'lookup-table-4x4x4-step100-edges.txt',
             '111111111111_10452376ab89efcdhgklijnm',
             linecount=31784731) # 11-deep
-
-    def find_edge_entries_with_signature(self, signature_to_find):
-        """
-        Given a signature such as 001001010110, return a list of all of the lines
-        in our lookup-table that start with that signature.
-        """
-        self.fh_txt.seek(0)
-
-        first = 0
-        last = self.linecount - 1
-        signature_width = len(signature_to_find)
-        b_signature_to_find = bytearray(signature_to_find, encoding='utf-8')
-
-        fh = self.fh_txt
-
-        # Find an entry with signature_to_find
-        while first <= last:
-            midpoint = int((first + last)/2)
-            fh.seek(midpoint * self.width)
-
-            # Only read the 'state' part of the line (for speed)
-            b_signature = fh.read(signature_width)
-
-            if b_signature_to_find < b_signature:
-                last = midpoint - 1
-
-            # If this is the line we are looking for
-            elif b_signature_to_find == b_signature:
-                break
-
-            else:
-                first = midpoint + 1
-        else:
-            raise SolveError("could not find signature %s" % signature_to_find)
-
-        result = []
-        line_number_midpoint_signature_to_find = midpoint
-
-        # Go back one line at a time until we are at the line just before
-        # the signature_to_find entries start.
-        while True:
-            midpoint -= 1
-            fh.seek(midpoint * self.width)
-
-            line = fh.read(self.width)
-            line = line.decode('utf-8').rstrip()
-            (edges_state, steps) = line.split(':')
-            (signature, _) = edges_state.split('_')
-
-            #b_signature = fh.read(signature_width)
-
-            if signature != signature_to_find:
-                break
-
-            result.append(line)
-
-            if midpoint == 0:
-                break
-
-
-        # Go forward one line at a time until we have read all the lines
-        # with signature_to_find
-        midpoint = line_number_midpoint_signature_to_find
-
-        while True:
-            midpoint += 1
-            fh.seek(midpoint * self.width)
-            line = fh.read(self.width)
-            line = line.decode('utf-8').rstrip()
-            (edges_state, steps) = line.split(':')
-            (signature, _) = edges_state.split('_')
-
-            if signature == signature_to_find:
-                result.append(line)
-            else:
-                break
-
-            if midpoint == self.linecount - 1:
-                break
-
-        return result
 
     def state(self):
         """
@@ -1447,6 +1343,7 @@ class LookupTable444Edges(LookupTable):
                 self.parent.state = original_state[:]
                 self.parent.solution = original_solution[:]
 
+        #log.info("best_score_states: %s" % pformat(best_score_states))
         best_entry = get_best_entry(best_score_states)
         log.info("best_entry: %s" % pformat(best_entry))
 

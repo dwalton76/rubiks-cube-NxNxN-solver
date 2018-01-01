@@ -607,7 +607,7 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             self,
             parent,
             'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
-            'TBD',
+            '111111111111_10425376a8b9ecfdhgkiljnm',
             moves_4x4x4,
             ("Fw", "Fw'", "Bw", "Bw'",
              "Uw", "Uw'", "Dw", "Dw'", # illegal_moves
@@ -1179,18 +1179,13 @@ class LookupTable444Edges(LookupTable):
     """
     lookup-table-4x4x4-step100-edges.txt
     ====================================
-
-    11-deep (no dups)
-    -----------------
     5 steps has 144 entries (0 percent, 0.00x previous step)
     6 steps has 1134 entries (0 percent, 7.88x previous step)
-    7 steps has 6,184 entries (0 percent, 5.45x previous step)
-    8 steps has 57,802 entries (0 percent, 9.35x previous step)
-    9 steps has 466,831 entries (1 percent, 8.08x previous step)
-    10 steps has 2,803,833 entries (8 percent, 6.01x previous step)
-    11 steps has 28,448,803 entries (89 percent, 10.15x previous step)
+    7 steps has 5656 entries (1 percent, 4.99x previous step)
+    8 steps has 51694 entries (10 percent, 9.14x previous step)
+    9 steps has 457129 entries (88 percent, 8.84x previous step)
 
-    Total: 31,784,731 entries
+    Total: 515757 entries
     """
 
     def __init__(self, parent):
@@ -1199,7 +1194,7 @@ class LookupTable444Edges(LookupTable):
             parent,
             'lookup-table-4x4x4-step100-edges.txt',
             '111111111111_10425376a8b9ecfdhgkiljnm',
-            linecount=6934) # 11-deep
+            linecount=515757) # 9-deep
 
     def state(self):
         """
@@ -1293,7 +1288,6 @@ class LookupTable444Edges(LookupTable):
 
         if not entries_with_signature:
             line_number = 0
-            # dwalton
 
             while line_number < self.linecount:
                 self.fh_txt.seek(line_number * self.width)
@@ -1310,10 +1304,10 @@ class LookupTable444Edges(LookupTable):
                 if len(entries_with_signature) >= 100:
                     break
 
-                line_number += 1 
+                line_number += 1
 
         # dwalton
-        #log.warning("pre_paired_edges_count %d, entries_with_signature %d" % (pre_paired_edges_count, len(entries_with_signature)))
+        log.warning("pre_paired_edges_count %d, entries_with_signature %d" % (pre_paired_edges_count, len(entries_with_signature)))
         original_state = self.parent.state[:]
         original_solution = self.parent.solution[:]
         best_score_states = []

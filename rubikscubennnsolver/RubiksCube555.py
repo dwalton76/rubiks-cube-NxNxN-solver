@@ -120,7 +120,7 @@ def get_edges_paired_binary_signature(state):
 
                            ---  g   w   h  ---
                             i  --- --- ---  j
-                            x  --- --- ---  y 
+                            x  --- --- ---  y
                             k  --- --- ---  l
                            ---  m   z   n  ---
 
@@ -1680,36 +1680,36 @@ def edges_recolor_pattern_555(state):
 
 class LookupTable555Edges(LookupTable):
     """
-    lookup-table-5x5x5-step101-edges.txt
+    lookup-table-5x5x5-step100-edges.txt
     ====================================
-5 steps has 99953 entries (1 percent, 0.00x previous step)
-6 steps has 391285 entries (5 percent, 3.91x previous step)
-7 steps has 898469 entries (12 percent, 2.30x previous step)
-8 steps has 1473092 entries (19 percent, 1.64x previous step)
-9 steps has 4514971 entries (61 percent, 3.06x previous step)
+    5 steps has 97856 entries (1 percent, 0.00x previous step)
+    6 steps has 375995 entries (5 percent, 3.84x previous step)
+    7 steps has 892869 entries (12 percent, 2.37x previous step)
+    8 steps has 1438416 entries (19 percent, 1.61x previous step)
+    9 steps has 4588466 entries (62 percent, 3.19x previous step)
 
-Total: 7377770 entries
+    Total: 7393602 entries
     """
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step101-edges.txt',
+            'lookup-table-5x5x5-step100-edges.txt',
             '111111111111111111111111_OOopPPQQqrRRsSSTTtuUUVVvWWwxXXYYyzZZ',
-            linecount=63873)
+            linecount=7393602)
 
     def state(self):
         """
         Normally the state() for a LookupTable is a straightforward thing where
         you look at certain squares on the cube, build the state from the squares
         and you are done.  With LookupTable555Edges though things are a little
-        different because lookup-table-5x5x5-step101-edges.txt does not contain
+        different because lookup-table-5x5x5-step100-edges.txt does not contain
         all possible edge states (there are gazillions of them), it only contains
         all of the edges states possible up to 9-deep.
 
         So what we do is find the current state of edges and look through
-        lookup-table-5x5x5-step101-edges.txt for the line whose state is the closest
+        lookup-table-5x5x5-step100-edges.txt for the line whose state is the closest
         match to our own. The LookupTable.solve() code will then execute the set of
         steps for that state which will pair several of our edges.
         """
@@ -1730,16 +1730,14 @@ Total: 7377770 entries
             state[147], state[148], state[149]
         ))
 
-        # dwalton
-        #log.info("FOO: %s" % edges_state)
-        #sys.exit(0)
-
         signature = get_edges_paired_binary_signature(edges_state)
         signature_width = len(signature) + 1
         edges_state = signature + '_' + edges_state
 
+        # dwalton
         pre_non_paired_wings_count = self.parent.get_non_paired_wings_count()
-        log.info("%s: signature %s, %d unpaired wings" % (self, signature, pre_non_paired_wings_count))
+        log.info("%s: signature %s, %d unpaired wings, %d steps in" %
+            (self, signature, pre_non_paired_wings_count, self.parent.get_solution_len_minus_rotates(self.parent.solution)))
         self.parent.print_cube()
 
         if pre_non_paired_wings_count != signature.count('0'):
@@ -1752,7 +1750,7 @@ Total: 7377770 entries
             return edges_state
 
 
-        # If our state is in lookup-table-4x4x4-step100-edges.txt, return our actual state.
+        # If our state is in lookup-table-5x5x5-step100-edges.txt, return our actual state.
         # When this happens we will pair all of the remaining edges.
         steps = self.steps(edges_state)
 
@@ -1761,7 +1759,7 @@ Total: 7377770 entries
             return edges_state
 
 
-        # If we are here then we need to look through lookup-table-4x4x4-step100-edges.txt
+        # If we are here then we need to look through lookup-table-5x5x5-step100-edges.txt
         # to find the line whose state is the closest match to our own. This allows us to
         # pair some of our unpaired edges and make some progress even though our current
         # state isn't in the lookup table.
@@ -1800,28 +1798,31 @@ Total: 7377770 entries
 
         if not entries_with_signature:
             line_number = 0
-        
-            while True:
+            # dwalton
+
+            while line_number < self.linecount:
                 self.fh_txt.seek(line_number * self.width)
                 line = self.fh_txt.read(self.width).decode('utf-8').rstrip()
                 (phase1_state, phase1_steps) = line.split(':')
-
                 common_count = get_characters_common_count(edges_state[signature_width:],
                                                            phase1_state[signature_width:],
                                                            self.state_width - signature_width)
                 should_pair = int(common_count/2)
 
-                if should_pair >= 5:
+                if should_pair > pre_paired_wings_count:
                     #log.info("should_pair %d - %s" % (should_pair, phase1_state))
                     entries_with_signature.append(line)
 
-                if len(entries_with_signature) >= 100:
-                    break
+                #if len(entries_with_signature) >= 1000:
+                #    break
 
                 line_number += 1
 
-        #log.warning("pre_paired_wings_count %d, entries_with_signature(%d):\n%s" % (pre_paired_wings_count, len(entries_with_signature), pformat(entries_with_signature)))
-        log.warning("pre_paired_wings_count %d, entries_with_signature(%d)" % (pre_paired_wings_count, len(entries_with_signature)))
+        if not entries_with_signature:
+            raise SolveError("could not find any edge solutions to apply to move forward")
+
+        log.warning("pre_paired_wings_count %d, entries_with_signature(%d):\n%s" % (pre_paired_wings_count, len(entries_with_signature), pformat(entries_with_signature)))
+        #log.warning("pre_paired_wings_count %d, entries_with_signature(%d)" % (pre_paired_wings_count, len(entries_with_signature)))
         original_state = self.parent.state[:]
         original_solution = self.parent.solution[:]
         best_score_states = []
@@ -1882,7 +1883,7 @@ Total: 7377770 entries
                 self.parent.state = original_state[:]
                 self.parent.solution = original_solution[:]
 
-        log.info("best_score_states: %s" % pformat(best_score_states))
+        #log.info("best_score_states: %s" % pformat(best_score_states))
         best_entry = get_best_entry(best_score_states)
         log.info("best_entry: %s" % pformat(best_entry))
         log.info("\n\n\n\n\n\n")

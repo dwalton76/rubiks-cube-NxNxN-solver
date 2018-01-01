@@ -93,13 +93,16 @@ def get_edges_paired_binary_signature(state):
 
     'state' goes wing by # wing and records the location of where the sibling wing is located.
 
-    state: 0123456789abcdefghijklmn
+    state: 10425376a8b9ecfdhgkiljnm
 
     index: 000000000011111111112222
            012345678901234567890123
 
-    get_edges_paired_binary_signature('10452376ab89efcdhgklijnm')
+    get_edges_paired_binary_signature('10425376a8b9ecfdhgkiljnm')
     111111111111
+
+    get_edges_paired_binary_signature('7ad9nlg0j14cbm2i6kfh85e3')
+    000000000000
     """
     result = []
 
@@ -114,7 +117,7 @@ def get_edges_paired_binary_signature(state):
     else:
         result.append('0')
 
-    if state[3] == '5':
+    if state[4] == '5':
         result.append('1')
     else:
         result.append('0')
@@ -130,7 +133,7 @@ def get_edges_paired_binary_signature(state):
     else:
         result.append('0')
 
-    if state[9] == 'b':
+    if state[10] == 'b':
         result.append('1')
     else:
         result.append('0')
@@ -141,7 +144,7 @@ def get_edges_paired_binary_signature(state):
     else:
         result.append('0')
 
-    if state[13] == 'f':
+    if state[14] == 'f':
         result.append('1')
     else:
         result.append('0')
@@ -157,7 +160,7 @@ def get_edges_paired_binary_signature(state):
     else:
         result.append('0')
 
-    if state[19] == 'l':
+    if state[20] == 'l':
         result.append('1')
     else:
         result.append('0')
@@ -1195,8 +1198,8 @@ class LookupTable444Edges(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step100-edges.txt',
-            '111111111111_10452376ab89efcdhgklijnm',
-            linecount=31784731) # 11-deep
+            '111111111111_10425376a8b9ecfdhgkiljnm',
+            linecount=6934) # 11-deep
 
     def state(self):
         """
@@ -1214,7 +1217,22 @@ class LookupTable444Edges(LookupTable):
         """
         state = edges_recolor_pattern_444(self.parent.state[:])
 
-        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        edges_state = ''.join((
+            state[2], state[3],
+            state[5], state[9],
+            state[8], state[12],
+            state[14], state[15],
+            state[21], state[25],
+            state[24], state[28],
+            state[53], state[57],
+            state[56], state[60],
+            state[82], state[83],
+            state[85], state[89],
+            state[88], state[92],
+            state[94], state[95]
+        ))
+
+        # dwalton
         signature = get_edges_paired_binary_signature(edges_state)
         signature_width = len(signature) + 1
         edges_state = signature + '_' + edges_state
@@ -1260,8 +1278,8 @@ class LookupTable444Edges(LookupTable):
                 (phase1_state, phase1_steps) = line.split(':')
 
                 common_count = get_characters_common_count(edges_state[signature_width:],
-                                                               phase1_state[signature_width:],
-                                                               self.state_width - signature_width)
+                                                           phase1_state[signature_width:],
+                                                           self.state_width - signature_width)
                 should_pair = int(common_count/2)
 
                 if should_pair >= 5:
@@ -1272,6 +1290,27 @@ class LookupTable444Edges(LookupTable):
         # in the lookup table with our edges signature, we will evaluate all of those.
         else:
             entries_with_signature = self.find_edge_entries_with_signature(signature)
+
+        if not entries_with_signature:
+            line_number = 0
+            # dwalton
+
+            while line_number < self.linecount:
+                self.fh_txt.seek(line_number * self.width)
+                line = self.fh_txt.read(self.width).decode('utf-8').rstrip()
+                (phase1_state, phase1_steps) = line.split(':')
+                common_count = get_characters_common_count(edges_state[signature_width:],
+                                                           phase1_state[signature_width:],
+                                                           self.state_width - signature_width)
+                should_pair = int(common_count/2)
+
+                if should_pair > pre_paired_edges_count:
+                    entries_with_signature.append(line)
+
+                if len(entries_with_signature) >= 100:
+                    break
+
+                line_number += 1 
 
         # dwalton
         #log.warning("pre_paired_edges_count %d, entries_with_signature %d" % (pre_paired_edges_count, len(entries_with_signature)))

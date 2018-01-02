@@ -334,6 +334,53 @@ try:
     sys.exit(0)
     '''
 
+    # run build_tsai_phase2_orient_edges_555
+    '''
+    cube = RubiksCube555(solved_5x5x5, args.order, args.colormap)
+    cube.build_tsai_phase2_orient_edges_555()
+    sys.exit(0)
+    '''
+
+    # print cube rotations
+    '''
+    cube = RubiksCube444(solved_4x4x4, args.order, args.colormap)
+    original_state = cube.state[:]
+    rotations = (
+                (),
+                ("y",),
+                ("y'",),
+                ("y", "y"),
+                ("x", "x", "y"),
+                ("x", "x", "y'"),
+                ("x", "x", "y", "y"),
+                ("y'", "x", "y"),
+                ("y'", "x", "y'"),
+                ("y'", "x", "y", "y"),
+                ("x", "y"),
+                ("x", "y'"),
+                ("x", "y", "y"),
+                ("y", "x", "y"),
+                ("y", "x", "y'"),
+                ("y", "x", "y", "y"),
+                ("x'", "y"),
+                ("x'", "y'"),
+                ("x'", "y", "y")
+    )
+
+    for rotation_seq in rotations:
+        cube.state = original_state[:]
+
+        for step in rotation_seq:
+            cube.rotate(step)
+
+        result = []
+        for side in (cube.sideU, cube.sideL, cube.sideF, cube.sideR, cube.sideB, cube.sideD):
+            result.append(cube.state[side.center_pos[0]])
+        print(''.join(result))
+
+    sys.exit(0)
+    '''
+
     cube.sanity_check()
     cube.print_cube()
     cube.www_header()

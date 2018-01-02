@@ -46,7 +46,7 @@ class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
-            '08088080000000000000000000000000404404',
+            '462000000000000462',
             linecount=735471)
 
     def state(self):
@@ -54,46 +54,46 @@ class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
 
         result = [
             # Upper
-            'x', 'x', parent_state[11], 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[23], 'x', 'x', 'x', parent_state[27],
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', parent_state[39], 'x', 'x',
+            'x', parent_state[11], 'x',
+            'x', 'x',
+            parent_state[23], parent_state[27],
+            'x', 'x',
+            'x', parent_state[39], 'x',
 
             # Left
-            'x', 'x', parent_state[60], 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[72], 'x', 'x', 'x', parent_state[76],
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', parent_state[88], 'x', 'x',
+            'x', parent_state[60], 'x',
+            'x', 'x',
+            parent_state[72], parent_state[76],
+            'x', 'x',
+            'x', parent_state[88], 'x',
 
             # Front
-            'x', 'x', parent_state[109], 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[121], 'x', 'x', 'x', parent_state[125],
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', parent_state[137], 'x', 'x',
+            'x', parent_state[109], 'x',
+            'x', 'x',
+            parent_state[121], parent_state[125],
+            'x', 'x',
+            'x', parent_state[137], 'x',
 
             # Right
-            'x', 'x', parent_state[158], 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[170], 'x', 'x', 'x', parent_state[174],
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', parent_state[186], 'x', 'x',
+            'x', parent_state[158], 'x',
+            'x', 'x',
+            parent_state[170], parent_state[174],
+            'x', 'x',
+            'x', parent_state[186], 'x',
 
             # Back
-            'x', 'x', parent_state[207], 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[219], 'x', 'x', 'x', parent_state[223],
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', parent_state[235], 'x', 'x',
+            'x', parent_state[207], 'x',
+            'x', 'x',
+            parent_state[219], parent_state[223],
+            'x', 'x',
+            'x', parent_state[235], 'x',
 
             # Down
-            'x', 'x', parent_state[256], 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[268], 'x', 'x', 'x', parent_state[272],
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', parent_state[284], 'x', 'x'
+            'x', parent_state[256], 'x',
+            'x', 'x',
+            parent_state[268], parent_state[272],
+            'x', 'x',
+            'x', parent_state[284], 'x'
         ]
 
         result = ['1' if x in ('U', 'D') else '0' for x in result]
@@ -129,7 +129,7 @@ class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
-            '10104040000000000000000000000000808202',
+            '891000000000000891',
             linecount=735471)
 
     def state(self):
@@ -137,46 +137,46 @@ class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
 
         result = [
             # Upper
-            'x', parent_state[10], 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[20],
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[30], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[40], 'x',
+            parent_state[10], 'x', 'x',
+            'x', parent_state[20],
+            'x', 'x',
+            parent_state[30], 'x',
+            'x', 'x', parent_state[40],
 
             # Left
-            'x', parent_state[59], 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[69],
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[79], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[89], 'x',
+            parent_state[59], 'x', 'x',
+            'x', parent_state[69],
+            'x', 'x',
+            parent_state[79], 'x',
+            'x', 'x', parent_state[89],
 
             # Front
-            'x', parent_state[108], 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[118],
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[128], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[138], 'x',
+            parent_state[108], 'x', 'x',
+            'x', parent_state[118],
+            'x', 'x',
+            parent_state[128], 'x',
+            'x', 'x', parent_state[138],
 
             # Right
-            'x', parent_state[157], 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[167],
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[177], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[187], 'x',
+            parent_state[157], 'x', 'x',
+            'x', parent_state[167],
+            'x', 'x',
+            parent_state[177], 'x',
+            'x', 'x', parent_state[187],
 
             # Back
-            'x', parent_state[206], 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[216],
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[226], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[236], 'x',
+            parent_state[206], 'x', 'x',
+            'x', parent_state[216],
+            'x', 'x',
+            parent_state[226], 'x',
+            'x', 'x', parent_state[236],
 
             # Down
-            'x', parent_state[255], 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[265],
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[275], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[285], 'x'
+            parent_state[255], 'x', 'x',
+            'x', parent_state[265],
+            'x', 'x',
+            parent_state[275], 'x',
+            'x', 'x', parent_state[285]
         ]
 
         result = ['1' if x in ('U', 'D') else '0' for x in result]
@@ -212,7 +212,7 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
-            '05000500000000000000000000000000280028',
+            '30c00000000000030c',
             linecount=735471)
 
     def state(self):
@@ -220,46 +220,46 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
 
         result = [
             # Upper
-            'x', 'x', 'x', parent_state[12], 'x',
-            parent_state[16], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[34],
-            'x', parent_state[38], 'x', 'x', 'x',
+            'x', 'x', parent_state[12],
+            parent_state[16], 'x',
+            'x', 'x',
+            'x', parent_state[34],
+            parent_state[38], 'x', 'x',
 
             # Left
-            'x', 'x', 'x', parent_state[61], 'x',
-            parent_state[65], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[83],
-            'x', parent_state[87], 'x', 'x', 'x',
+            'x', 'x', parent_state[61],
+            parent_state[65], 'x',
+            'x', 'x',
+            'x', parent_state[83],
+            parent_state[87], 'x', 'x',
 
             # Front
-            'x', 'x', 'x', parent_state[110], 'x',
-            parent_state[114], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[132],
-            'x', parent_state[136], 'x', 'x', 'x',
+            'x', 'x', parent_state[110],
+            parent_state[114], 'x',
+            'x', 'x',
+            'x', parent_state[132],
+            parent_state[136], 'x', 'x',
 
             # Right
-            'x', 'x', 'x', parent_state[159], 'x',
-            parent_state[163], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[181],
-            'x', parent_state[185], 'x', 'x', 'x',
+            'x', 'x', parent_state[159],
+            parent_state[163], 'x',
+            'x', 'x',
+            'x', parent_state[181],
+            parent_state[185], 'x', 'x',
 
             # Back
-            'x', 'x', 'x', parent_state[208], 'x',
-            parent_state[212], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[230],
-            'x', parent_state[234], 'x', 'x', 'x',
+            'x', 'x', parent_state[208],
+            parent_state[212], 'x',
+            'x', 'x',
+            'x', parent_state[230],
+            parent_state[234], 'x', 'x',
 
             # Down
-            'x', 'x', 'x', parent_state[257], 'x',
-            parent_state[261], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[279],
-            'x', parent_state[283], 'x', 'x', 'x'
+            'x', 'x', parent_state[257],
+            parent_state[261], 'x',
+            'x', 'x',
+            'x', parent_state[279],
+            parent_state[283], 'x', 'x',
         ]
 
         result = ['1' if x in ('U', 'D') else '0' for x in result]
@@ -271,6 +271,24 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
 
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
     """
+    6-deep
+
+    lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
+    =====================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 66 entries (0 percent, 13.20x previous step)
+    3 steps has 916 entries (0 percent, 13.88x previous step)
+    4 steps has 10,132 entries (0 percent, 11.06x previous step)
+    5 steps has 92,070 entries (1 percent, 9.09x previous step)
+    6 steps has 558,938 entries (9 percent, 6.07x previous step)
+    7 steps has 3,861,196 entries (64 percent, 6.91x previous step)
+    8 steps has 1,366,153 entries (22 percent, 0.35x previous step)
+    9 steps has 71,939 entries (1 percent, 0.05x previous step)
+    10 steps has 158 entries (0 percent, 0.00x previous step)
+
+    Total: 5,961,573 entries
+
+    7-deep is 845M gzipped
     lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
     =====================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
@@ -293,7 +311,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
             self,
             parent,
             'lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
-            '1d18c5c0000000000000000000000000e8c62e',
+            'fff000000000000fff',
             moves_7x7x7,
 
             # do not mess up UD 5x5x5 centers
@@ -310,46 +328,46 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
 
         result = [
             # Upper
-            'x', parent_state[10], parent_state[11], parent_state[12], 'x',
-            parent_state[16], 'x', 'x', 'x', parent_state[20],
-            parent_state[23], 'x', 'x', 'x', parent_state[27],
-            parent_state[30], 'x', 'x', 'x', parent_state[34],
-            'x', parent_state[38], parent_state[39], parent_state[40], 'x',
+            parent_state[10], parent_state[11], parent_state[12],
+            parent_state[16], parent_state[20],
+            parent_state[23], parent_state[27],
+            parent_state[30], parent_state[34],
+            parent_state[38], parent_state[39], parent_state[40],
 
             # Left
-            'x', parent_state[59], parent_state[60], parent_state[61], 'x',
-            parent_state[65], 'x', 'x', 'x', parent_state[69],
-            parent_state[72], 'x', 'x', 'x', parent_state[76],
-            parent_state[79], 'x', 'x', 'x', parent_state[83],
-            'x', parent_state[87], parent_state[88], parent_state[89], 'x',
+            parent_state[59], parent_state[60], parent_state[61],
+            parent_state[65], parent_state[69],
+            parent_state[72], parent_state[76],
+            parent_state[79], parent_state[83],
+            parent_state[87], parent_state[88], parent_state[89],
 
             # Front
-            'x', parent_state[108], parent_state[109], parent_state[110], 'x',
-            parent_state[114], 'x', 'x', 'x', parent_state[118],
-            parent_state[121], 'x', 'x', 'x', parent_state[125],
-            parent_state[128], 'x', 'x', 'x', parent_state[132],
-            'x', parent_state[136], parent_state[137], parent_state[138], 'x',
+            parent_state[108], parent_state[109], parent_state[110],
+            parent_state[114], parent_state[118],
+            parent_state[121], parent_state[125],
+            parent_state[128], parent_state[132],
+            parent_state[136], parent_state[137], parent_state[138],
 
             # Right
-            'x', parent_state[157], parent_state[158], parent_state[159], 'x',
-            parent_state[163], 'x', 'x', 'x', parent_state[167],
-            parent_state[170], 'x', 'x', 'x', parent_state[174],
-            parent_state[177], 'x', 'x', 'x', parent_state[181],
-            'x', parent_state[185], parent_state[186], parent_state[187], 'x',
+            parent_state[157], parent_state[158], parent_state[159],
+            parent_state[163], parent_state[167],
+            parent_state[170], parent_state[174],
+            parent_state[177], parent_state[181],
+            parent_state[185], parent_state[186], parent_state[187],
 
             # Back
-            'x', parent_state[206], parent_state[207], parent_state[208], 'x',
-            parent_state[212], 'x', 'x', 'x', parent_state[216],
-            parent_state[219], 'x', 'x', 'x', parent_state[223],
-            parent_state[226], 'x', 'x', 'x', parent_state[230],
-            'x', parent_state[234], parent_state[235], parent_state[236], 'x',
+            parent_state[206], parent_state[207], parent_state[208],
+            parent_state[212], parent_state[216],
+            parent_state[219], parent_state[223],
+            parent_state[226], parent_state[230],
+            parent_state[234], parent_state[235], parent_state[236],
 
             # Down
-            'x', parent_state[255], parent_state[256], parent_state[257], 'x',
-            parent_state[261], 'x', 'x', 'x', parent_state[265],
-            parent_state[268], 'x', 'x', 'x', parent_state[272],
-            parent_state[275], 'x', 'x', 'x', parent_state[279],
-            'x', parent_state[283], parent_state[284], parent_state[285], 'x'
+            parent_state[255], parent_state[256], parent_state[257],
+            parent_state[261], parent_state[265],
+            parent_state[268], parent_state[272],
+            parent_state[275], parent_state[279],
+            parent_state[283], parent_state[284], parent_state[285],
         ]
 
         result = ['1' if x in ('U', 'D') else '0' for x in result]
@@ -382,7 +400,7 @@ class LookupTable777LRObliqueEdgePairingMiddleOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
-            '2022020000000808808000000',
+            '462000462000',
             linecount=12870)
 
     def state(self):
@@ -390,32 +408,32 @@ class LookupTable777LRObliqueEdgePairingMiddleOnly(LookupTable):
 
         result = [
             # Left
-            'x', 'x', parent_state[60], 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[72], 'x', 'x', 'x', parent_state[76],
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', parent_state[88], 'x', 'x',
+            'x', parent_state[60], 'x',
+            'x', 'x',
+            parent_state[72], parent_state[76],
+            'x', 'x',
+            'x', parent_state[88], 'x',
 
             # Front
-            'x', 'x', parent_state[109], 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[121], 'x', 'x', 'x', parent_state[125],
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', parent_state[137], 'x', 'x',
+            'x', parent_state[109], 'x',
+            'x', 'x',
+            parent_state[121], parent_state[125],
+            'x', 'x',
+            'x', parent_state[137], 'x',
 
             # Right
-            'x', 'x', parent_state[158], 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[170], 'x', 'x', 'x', parent_state[174],
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', parent_state[186], 'x', 'x',
+            'x', parent_state[158], 'x',
+            'x', 'x',
+            parent_state[170], parent_state[174],
+            'x', 'x',
+            'x', parent_state[186], 'x',
 
             # Back
-            'x', 'x', parent_state[207], 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[219], 'x', 'x', 'x', parent_state[223],
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', parent_state[235], 'x', 'x'
+            'x', parent_state[207], 'x',
+            'x', 'x',
+            parent_state[219], parent_state[223],
+            'x', 'x',
+            'x', parent_state[235], 'x'
         ]
 
         result = ['1' if x in ('L', 'R') else '0' for x in result]
@@ -447,7 +465,7 @@ class LookupTable777LRObliqueEdgePairingLeftOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
-            '4041010000001010404000000',
+            '891000891000',
             linecount=12870)
 
     def state(self):
@@ -455,32 +473,32 @@ class LookupTable777LRObliqueEdgePairingLeftOnly(LookupTable):
 
         result = [
             # Left
-            'x', parent_state[59], 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[69],
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[79], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[89], 'x',
+            parent_state[59], 'x', 'x',
+            'x', parent_state[69],
+            'x', 'x',
+            parent_state[79], 'x',
+            'x', 'x', parent_state[89],
 
             # Front
-            'x', parent_state[108], 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[118],
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[128], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[138], 'x',
+            parent_state[108], 'x', 'x',
+            'x', parent_state[118],
+            'x', 'x',
+            parent_state[128], 'x',
+            'x', 'x', parent_state[138],
 
             # Right
-            'x', parent_state[157], 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[167],
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[177], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[187], 'x',
+            parent_state[157], 'x', 'x',
+            'x', parent_state[167],
+            'x', 'x',
+            parent_state[177], 'x',
+            'x', 'x', parent_state[187],
 
             # Back
-            'x', parent_state[206], 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[216],
-            'x', 'x', 'x', 'x', 'x',
-            parent_state[226], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[236], 'x'
+            parent_state[206], 'x', 'x',
+            'x', parent_state[216],
+            'x', 'x',
+            parent_state[226], 'x',
+            'x', 'x', parent_state[236]
         ]
 
         result = ['1' if x in ('L', 'R') else '0' for x in result]
@@ -512,7 +530,7 @@ class LookupTable777LRObliqueEdgePairingRightOnly(LookupTable):
             self,
             parent,
             'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt',
-            '1400140000000500050000000',
+            '30c00030c000',
             linecount=12870)
 
     def state(self):
@@ -520,32 +538,32 @@ class LookupTable777LRObliqueEdgePairingRightOnly(LookupTable):
 
         result = [
             # Left
-            'x', 'x', 'x', parent_state[61], 'x',
-            parent_state[65], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[83],
-            'x', parent_state[87], 'x', 'x', 'x',
+            'x', 'x', parent_state[61],
+            parent_state[65], 'x',
+            'x', 'x',
+            'x', parent_state[83],
+            parent_state[87], 'x', 'x',
 
             # Front
-            'x', 'x', 'x', parent_state[110], 'x',
-            parent_state[114], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[132],
-            'x', parent_state[136], 'x', 'x', 'x',
+            'x', 'x', parent_state[110],
+            parent_state[114], 'x',
+            'x', 'x',
+            'x', parent_state[132],
+            parent_state[136], 'x', 'x',
 
             # Right
-            'x', 'x', 'x', parent_state[159], 'x',
-            parent_state[163], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[181],
-            'x', parent_state[185], 'x', 'x', 'x',
+            'x', 'x', parent_state[159],
+            parent_state[163], 'x',
+            'x', 'x',
+            'x', parent_state[181],
+            parent_state[185], 'x', 'x',
 
             # Back
-            'x', 'x', 'x', parent_state[208], 'x',
-            parent_state[212], 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x', parent_state[230],
-            'x', parent_state[234], 'x', 'x', 'x'
+            'x', 'x', parent_state[208],
+            parent_state[212], 'x',
+            'x', 'x',
+            'x', parent_state[230],
+            parent_state[234], 'x', 'x'
         ]
 
         result = ['1' if x in ('L', 'R') else '0' for x in result]
@@ -557,6 +575,7 @@ class LookupTable777LRObliqueEdgePairingRightOnly(LookupTable):
 
 class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
     """
+    8-deep
     lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt
     =====================================================
     1 steps has 2 entries (0 percent, 0.00x previous step)
@@ -581,7 +600,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
             self,
             parent,
             'lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt',
-            '7463170000001d18c5c000000',
+            'fff000fff000',
             moves_7x7x7,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # do not mess up UD 5x5x5 centers
@@ -599,32 +618,32 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
 
         result = [
             # Left
-            'x', parent_state[59], parent_state[60], parent_state[61], 'x',
-            parent_state[65], 'x', 'x', 'x', parent_state[69],
-            parent_state[72], 'x', 'x', 'x', parent_state[76],
-            parent_state[79], 'x', 'x', 'x', parent_state[83],
-            'x', parent_state[87], parent_state[88], parent_state[89], 'x',
+            parent_state[59], parent_state[60], parent_state[61],
+            parent_state[65], parent_state[69],
+            parent_state[72], parent_state[76],
+            parent_state[79], parent_state[83],
+            parent_state[87], parent_state[88], parent_state[89],
 
             # Front
-            'x', parent_state[108], parent_state[109], parent_state[110], 'x',
-            parent_state[114], 'x', 'x', 'x', parent_state[118],
-            parent_state[121], 'x', 'x', 'x', parent_state[125],
-            parent_state[128], 'x', 'x', 'x', parent_state[132],
-            'x', parent_state[136], parent_state[137], parent_state[138], 'x',
+            parent_state[108], parent_state[109], parent_state[110],
+            parent_state[114], parent_state[118],
+            parent_state[121], parent_state[125],
+            parent_state[128], parent_state[132],
+            parent_state[136], parent_state[137], parent_state[138],
 
             # Right
-            'x', parent_state[157], parent_state[158], parent_state[159], 'x',
-            parent_state[163], 'x', 'x', 'x', parent_state[167],
-            parent_state[170], 'x', 'x', 'x', parent_state[174],
-            parent_state[177], 'x', 'x', 'x', parent_state[181],
-            'x', parent_state[185], parent_state[186], parent_state[187], 'x',
+            parent_state[157], parent_state[158], parent_state[159],
+            parent_state[163], parent_state[167],
+            parent_state[170], parent_state[174],
+            parent_state[177], parent_state[181],
+            parent_state[185], parent_state[186], parent_state[187],
 
             # Back
-            'x', parent_state[206], parent_state[207], parent_state[208], 'x',
-            parent_state[212], 'x', 'x', 'x', parent_state[216],
-            parent_state[219], 'x', 'x', 'x', parent_state[223],
-            parent_state[226], 'x', 'x', 'x', parent_state[230],
-            'x', parent_state[234], parent_state[235], parent_state[236], 'x'
+            parent_state[206], parent_state[207], parent_state[208],
+            parent_state[212], parent_state[216],
+            parent_state[219], parent_state[223],
+            parent_state[226], parent_state[230],
+            parent_state[234], parent_state[235], parent_state[236]
         ]
 
         result = ['1' if x in ('L', 'R') else '0' for x in result]
@@ -1686,12 +1705,13 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
              "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
              "L", "L'", "L2", "R", "R'", "R2"),                                                        # Do not mess up LRs reduced to 5x5x5 centers
 
+
             # prune tables
             (parent.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge,
              parent.lt_LR_solve_oblique_edge,
              parent.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
              parent.lt_FB_solve_oblique_edge),
-            linecount=1119842)
+            linecount=12672378)
 
     def state(self):
         parent_state = self.parent.state
@@ -2293,6 +2313,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         log.info("")
         log.info("")
 
+        # Test the prune tables
+        #self.lt_UD_oblique_edge_pairing_middle_only.solve()
+        #self.lt_UD_oblique_edge_pairing_left_only.solve()
+        #self.lt_UD_oblique_edge_pairing_right_only.solve()
+        #self.print_cube()
+        #sys.exit(0)
+
         # Now pair the "inside" oblique edge with the already paired outside oblique edges...for UD
         self.lt_UD_oblique_edge_pairing.solve()
         log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
@@ -2320,6 +2347,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         log.info("")
         log.info("")
 
+        # Test the prune tables
+        #self.lt_LR_oblique_edge_pairing_middle_only.solve()
+        #self.lt_LR_oblique_edge_pairing_left_only.solve()
+        #self.lt_LR_oblique_edge_pairing_right_only.solve()
+        #self.print_cube()
+        #sys.exit(0)
+
         # Now pair the "inside" oblique edge with the already paired outside oblique edges...for LR
         self.lt_LR_oblique_edge_pairing.solve()
         log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
@@ -2339,6 +2373,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_UD_solve_inner_centers_and_oblique_edges.solve()
         log.info("UD inner-centers solved, UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        #log.info("state: %s" % self.get_kociemba_string(True))
         log.info("")
         log.info("")
         log.info("")

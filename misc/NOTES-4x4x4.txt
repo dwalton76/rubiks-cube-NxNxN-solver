@@ -270,3 +270,14 @@ Removed --cpu-min option
 
 73.08user 10.40system 1:23.59elapsed 99%CPU (0avgtext+0avgdata 447820maxresident)k
 
+
+
+
+edges step100 table 11-deep
+===========================
+4x4x4 avg centers solution 18.12 steps
+4x4x4 avg edges solution 20.88 steps
+4x4x4 avg solution 60.22 steps
+4x4x4 min solution 56 steps (DLUBUURUDFRRDDLURDLUFBBFFFFBLUURRBFFFULUDDUDLDBFFRRURDRBULBRBLLFBRLBULBRRLUFLBFDRLBLLRFFDDDBDDBU)
+4x4x4 max solution 73 steps (FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU)
+

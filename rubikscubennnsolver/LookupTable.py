@@ -37,6 +37,32 @@ class NoAStarSolution(Exception):
     pass
 
 
+def get_characters_common_count(strA, strB, str_len):
+    result = 0
+
+    for (index, (charA, charB)) in enumerate(zip(strA, strB)):
+        if charA == charB:
+            result += 1
+
+    return result
+
+
+def get_best_entry(foo):
+    best_entry = None
+    best_paired_edges = None
+    best_steps_len = None
+
+    for (paired_edges, steps_len, state) in foo:
+        if (best_entry is None or
+            paired_edges > best_paired_edges or
+            (paired_edges == best_paired_edges and steps_len < best_steps_len)):
+
+            best_entry = (paired_edges, steps_len, state)
+            best_paired_edges = paired_edges
+            best_steps_len = steps_len
+    return best_entry
+
+
 def pretty_time(delta):
     delta = str(delta)
 
@@ -351,10 +377,17 @@ class LookupTable(object):
             steps = self.steps(state)
 
             if steps:
-                #log.info("%s: solve() state %s found %s" % (self, state, ' '.join(steps)))
+                # dwalton
+                #log.info("%s: PRE solve() state %s found %s" % (self, state, ' '.join(steps)))
+                #self.parent.print_cube()
+                #log.info("%s: %d steps" % (self, len(steps)))
 
                 for step in steps:
                     self.parent.rotate(step)
+
+                #log.info("%s: POST solve()" % self)
+                #self.parent.print_cube()
+
             else:
                 self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
@@ -386,6 +419,85 @@ class LookupTable(object):
             raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (self, pt_state, self.state_width))
 
         return len_pt_steps
+
+    def find_edge_entries_with_signature(self, signature_to_find):
+        """
+        Given a signature such as 001001010110, return a list of all of the lines
+        in our lookup-table that start with that signature.
+
+        This is only used by the 4x4x4 and 5x5x5 edges tables
+        """
+        self.fh_txt.seek(0)
+        result = []
+
+        first = 0
+        last = self.linecount - 1
+        signature_width = len(signature_to_find)
+        b_signature_to_find = bytearray(signature_to_find, encoding='utf-8')
+
+        fh = self.fh_txt
+
+        # Find an entry with signature_to_find
+        while first <= last:
+            midpoint = int((first + last)/2)
+            fh.seek(midpoint * self.width)
+
+            # Only read the 'state' part of the line (for speed)
+            b_signature = fh.read(signature_width)
+
+            if b_signature_to_find < b_signature:
+                last = midpoint - 1
+
+            # If this is the line we are looking for
+            elif b_signature_to_find == b_signature:
+                break
+
+            else:
+                first = midpoint + 1
+        else:
+            log.warning("could not find signature %s" % signature_to_find)
+            return result
+
+        line_number_midpoint_signature_to_find = midpoint
+
+        # Go back one line at a time until we are at the first line with signature_to_find
+        while True:
+            fh.seek(midpoint * self.width)
+
+            line = fh.read(self.width)
+            line = line.decode('utf-8').rstrip()
+            (edges_state, steps) = line.split(':')
+            (signature, _) = edges_state.split('_')
+
+            if signature != signature_to_find:
+                break
+
+            result.append(line)
+            midpoint -= 1
+
+            if midpoint < 0:
+                break
+
+
+        # Go forward one line at a time until we have read all the lines
+        # with signature_to_find
+        midpoint = line_number_midpoint_signature_to_find + 1
+
+        while midpoint <= self.linecount - 1:
+            fh.seek(midpoint * self.width)
+            line = fh.read(self.width)
+            line = line.decode('utf-8').rstrip()
+            (edges_state, steps) = line.split(':')
+            (signature, _) = edges_state.split('_')
+
+            if signature == signature_to_find:
+                result.append(line)
+            else:
+                break
+
+            midpoint += 1
+
+        return result
 
 
 class LookupTableAStar(LookupTable):

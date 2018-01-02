@@ -190,7 +190,7 @@ class LookupTable(object):
                 elif self.filename_gz == 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz':
 
                     # Download all three parts
-                    for extension in ('aa', 'ab', 'ac'):
+                    for extension in ('aa', 'ab'):
                         url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-%s" %\
                             (self.parent.size, self.parent.size, self.parent.size, extension)
                         log.info("Downloading table via 'wget %s'" % url)
@@ -202,7 +202,6 @@ class LookupTable(object):
                     # remove all of the parts
                     os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-aa')
                     os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ab')
-                    os.unlink('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.gz.part-ac')
 
                 else:
                     url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)

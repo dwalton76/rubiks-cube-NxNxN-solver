@@ -1259,6 +1259,7 @@ class LookupTable444Edges(LookupTable):
         # How many edges are paired?
         pre_paired_edges_count = 12 - pre_non_paired_edges_count
 
+        '''
         # If we have less than 6 edges paired our goal is to find a few dozen phase1
         # solutions that will pair at least 5 edges. We will explore these phase1 solutions
         # in more depth to see which phase1 + phase2 solution pairs all 12 edges in the fewest moves.
@@ -1305,6 +1306,22 @@ class LookupTable444Edges(LookupTable):
                     break
 
                 line_number += 1
+        '''
+
+        # dwalton this needs to loop over all signatures that won't cause something to
+        # unpair...break out once we have 100 or so of them just to speed things up
+        entries_with_signature = []
+
+        for line in self.find_edge_entries_with_signature(signature):
+            (phase1_state, phase1_steps) = line.split(':')
+
+            common_count = get_characters_common_count(edges_state[signature_width:],
+                                                           phase1_state[signature_width:],
+                                                           self.state_width - signature_width)
+            should_pair = int(common_count/2)
+
+            if should_pair > pre_paired_edges_count:
+                entries_with_signature.append(line)
 
         # dwalton
         log.warning("pre_paired_edges_count %d, entries_with_signature %d" % (pre_paired_edges_count, len(entries_with_signature)))
@@ -1317,64 +1334,61 @@ class LookupTable444Edges(LookupTable):
             (phase1_edges_state_fake, phase1_steps) = line.split(':')
             phase1_steps = phase1_steps.split()
 
-            common_count = get_characters_common_count(edges_state[signature_width:],
-                                                       phase1_edges_state_fake[signature_width:],
-                                                       self.state_width - signature_width)
-            should_pair = int(common_count/2)
+            #common_count = get_characters_common_count(edges_state[signature_width:],
+            #                                           phase1_edges_state_fake[signature_width:],
+            #                                           self.state_width - signature_width)
+            #should_pair = int(common_count/2)
 
-            # Only bother looking at this one if it will get us more paired edges that we currently have
-            if should_pair > pre_paired_edges_count:
+            # Apply the phase1 steps
+            for step in phase1_steps:
+                self.parent.rotate(step)
 
-                # Apply the phase1 steps
-                for step in phase1_steps:
-                    self.parent.rotate(step)
+            phase1_state = edges_recolor_pattern_444(self.parent.state[:])
+            phase1_edges_state = ''.join([phase1_state[square_index] for square_index in wings_444])
+            phase1_signature = get_edges_paired_binary_signature(phase1_edges_state)
+            phase1_edges_state = phase1_signature + '_' + phase1_edges_state
 
-                phase1_state = edges_recolor_pattern_444(self.parent.state[:])
-                phase1_edges_state = ''.join([phase1_state[square_index] for square_index in wings_444])
-                phase1_signature = get_edges_paired_binary_signature(phase1_edges_state)
-                phase1_edges_state = phase1_signature + '_' + phase1_edges_state
+            # If that got us to our state_target then phase1 alone paired all
+            # of the edges...this is unlikely
+            if phase1_edges_state in self.state_target:
 
-                # If that got us to our state_target then phase1 alone paired all
-                # of the edges...this is unlikely
-                if phase1_edges_state in self.state_target:
-
-                    # PLL will take 12 moves to fix so add that penalty
-                    if self.parent.edge_solution_leads_to_pll_parity():
-                        best_score_states.append((12, len(phase1_steps) + 12, phase1_edges_state_fake))
-                    else:
-                        best_score_states.append((12, len(phase1_steps), phase1_edges_state_fake))
-
+                # PLL will take 12 moves to fix so add that penalty
+                if self.parent.edge_solution_leads_to_pll_parity():
+                    best_score_states.append((12, len(phase1_steps) + 12, phase1_edges_state_fake))
                 else:
-                    # phase1_steps did not pair all edges so do another lookup and execute those steps
-                    phase2_steps = self.steps(phase1_edges_state)
+                    best_score_states.append((12, len(phase1_steps), phase1_edges_state_fake))
 
-                    if phase2_steps is not None:
-                        for step in phase2_steps:
-                            self.parent.rotate(step)
+            else:
+                # phase1_steps did not pair all edges so do another lookup and execute those steps
+                phase2_steps = self.steps(phase1_edges_state)
 
-                        phase2_state = edges_recolor_pattern_444(self.parent.state[:])
-                        phase2_edges_state = ''.join([phase2_state[square_index] for square_index in wings_444])
-                        phase2_signature = get_edges_paired_binary_signature(phase2_edges_state)
-                        phase2_edges_state = phase2_signature + '_' + phase2_edges_state
+                if phase2_steps is not None:
+                    for step in phase2_steps:
+                        self.parent.rotate(step)
 
-                        if phase2_edges_state in self.state_target:
-                            if self.parent.edge_solution_leads_to_pll_parity():
-                                best_score_states.append((12, len(phase1_steps) + len(phase2_steps) + 12, phase1_edges_state_fake))
-                            else:
-                                best_score_states.append((12, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
+                    phase2_state = edges_recolor_pattern_444(self.parent.state[:])
+                    phase2_edges_state = ''.join([phase2_state[square_index] for square_index in wings_444])
+                    phase2_signature = get_edges_paired_binary_signature(phase2_edges_state)
+                    phase2_edges_state = phase2_signature + '_' + phase2_edges_state
+
+                    if phase2_edges_state in self.state_target:
+                        if self.parent.edge_solution_leads_to_pll_parity():
+                            best_score_states.append((12, len(phase1_steps) + len(phase2_steps) + 12, phase1_edges_state_fake))
                         else:
-                            post_non_paired_edges_count = self.parent.get_non_paired_edges_count()
-                            paired_edges_count = 12 - post_non_paired_edges_count
-
-                            best_score_states.append((paired_edges_count, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
+                            best_score_states.append((12, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
                     else:
                         post_non_paired_edges_count = self.parent.get_non_paired_edges_count()
                         paired_edges_count = 12 - post_non_paired_edges_count
 
-                        best_score_states.append((paired_edges_count, len(phase1_steps), phase1_edges_state_fake))
+                        best_score_states.append((paired_edges_count, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
+                else:
+                    post_non_paired_edges_count = self.parent.get_non_paired_edges_count()
+                    paired_edges_count = 12 - post_non_paired_edges_count
 
-                self.parent.state = original_state[:]
-                self.parent.solution = original_solution[:]
+                    best_score_states.append((paired_edges_count, len(phase1_steps), phase1_edges_state_fake))
+
+            self.parent.state = original_state[:]
+            self.parent.solution = original_solution[:]
 
         #log.info("best_score_states: %s" % pformat(best_score_states))
         best_entry = get_best_entry(best_score_states)
@@ -2403,8 +2417,7 @@ class RubiksCube444(RubiksCube):
         self.lt_init()
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        #use_recursive = True
-        use_recursive = False
+        use_recursive = True
 
         # group_edges_recursive() is where the magic happens
         if use_recursive:

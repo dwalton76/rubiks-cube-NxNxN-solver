@@ -1798,7 +1798,6 @@ class LookupTable555Edges(LookupTable):
 
         if not entries_with_signature:
             line_number = 0
-            # dwalton
 
             while line_number < self.linecount:
                 self.fh_txt.seek(line_number * self.width)
@@ -3792,9 +3791,9 @@ class RubiksCube555(RubiksCube):
 
     def group_edges(self):
 
-        #if not self.get_non_paired_edges():
-        #    self.solution.append('EDGES_GROUPED')
-        #    return
+        if not self.get_non_paired_edges():
+            self.solution.append('EDGES_GROUPED')
+            return
 
         depth = 0
         self.lt_init()
@@ -3806,7 +3805,7 @@ class RubiksCube555(RubiksCube):
 
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        use_recursive = False
+        use_recursive = True
 
         if use_recursive:
             self.min_edge_solution_len = 9999
@@ -3822,12 +3821,11 @@ class RubiksCube555(RubiksCube):
                 non_paired_edges_count = self.get_non_paired_edges_count()
 
                 # If all edges are paired break out of the loop
-                #if not non_paired_edges_count:
-                #    break
+                if not non_paired_edges_count:
+                    break
 
                 log.info("%s: %d wings not paired, %d edges not paired" % (self, non_paired_wings_count, non_paired_edges_count))
 
-                # dwalton call new edge lookup-table solver here
                 self.lt_edges.solve()
 
         self.rotate_U_to_U()
@@ -3835,15 +3833,6 @@ class RubiksCube555(RubiksCube):
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')
 
-        # dwalton remove this
-        '''
-        baseline
-        =========
-        35 steps to solve centers
-        71 steps to group edges
-        21 steps to solve 3x3x3
-        127 steps total
-        '''
 
 tsai_phase2_orient_edges_555 = {
     (2, 104, 'B', 'D'): 'D',

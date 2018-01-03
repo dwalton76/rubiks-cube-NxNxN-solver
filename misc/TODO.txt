@@ -60,7 +60,6 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 =====
 6x6x6
 =====
-- step20 is slooooow...revisit if btree does not speed it up enough
 
 
 =====

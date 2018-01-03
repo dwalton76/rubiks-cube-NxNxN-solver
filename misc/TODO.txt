@@ -1,14 +1,4 @@
 
-====
-Misc
-====
-- update # of moves in the misc files and the README
-    DONE - 4x4x4
-    DONE - 5x5x5
-    DONE - 6x6x6
-    - 7x7x7...need to rebuild step80 first
-
-
 =====
 4x4x4
 =====
@@ -70,6 +60,7 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 =====
 6x6x6
 =====
+- step20 is slooooow...revisit if btree does not speed it up enough
 
 
 =====
@@ -168,12 +159,14 @@ B-Tree notes
 ./usr/bin/rubiks-cube-solver.py --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
 
 
-2017-12-17 09:52:42,776 RubiksCube666.py     INFO: UD inner x-centers staged, 5 steps in
-2017-12-17 09:52:42,777   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA threshold range 7->99
-2017-12-17 09:52:43,134   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA threshold 7, explored 2882 branches, took 356ms
-2017-12-17 09:52:52,335   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA threshold 8, explored 86762 branches, took 0:00:09.201718
-2017-12-17 09:52:55,953   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA found match 6 steps in, f_cost 10 (6 + 4)
-2017-12-17 09:52:55,953   LookupTable.py     INFO: 6x6x6-step25-UD-oblique-edge-pairing: IDA threshold 9, explored 37636 branches, took 0:00:03.617328 (0:00:13.176431 total)
+With the 6-deep table for step20:
+2018-01-02 17:32:22,445 RubiksCube666.py     INFO: UD inner x-centers staged, 5 steps in
+2018-01-02 17:32:22,449   LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold range 7->99
+2018-01-02 17:32:23,286   LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 7, explored 2282 branches, took 836ms
+2018-01-02 17:32:30,300   LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 8, explored 58442 branches, took 0:00:07.013864
+2018-01-02 17:32:32,504   LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA found match 6 steps in, f_cost 10 (6 + 4)
+2018-01-02 17:32:32,504   LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 9, explored 25219 branches, took 0:00:02.204081 (0:00:10.058671 total)
+2018-01-02 17:32:32,504 RubiksCube666.py     INFO: UD oblique edges paired, 17 steps in
 
 This search takes about 5 million seek() calls when using binary search...the seeks are the top bottleneck thus the need to move to B-Trees
 

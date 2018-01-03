@@ -1683,13 +1683,14 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
     """
     lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt
     =======================================================================
-    1 steps has 350 entries (0 percent, 0.00x previous step)
-    2 steps has 2800 entries (0 percent, 8.00x previous step)
-    3 steps has 18712 entries (1 percent, 6.68x previous step)
-    4 steps has 131496 entries (11 percent, 7.03x previous step)
-    5 steps has 966484 entries (86 percent, 7.35x previous step)
+    1 steps has 601 entries (0 percent, 0.00x previous step)
+    2 steps has 3,950 entries (0 percent, 6.57x previous step)
+    3 steps has 28,792 entries (0 percent, 7.29x previous step)
+    4 steps has 207,438 entries (1 percent, 7.20x previous step)
+    5 steps has 1,515,935 entries (11 percent, 7.31x previous step)
+    6 steps has 10,915,662 entries (86 percent, 7.20x previous step)
 
-    Total: 1119842 entries
+    Total: 12,672,378 entries
     """
 
     def __init__(self, parent):
@@ -1705,12 +1706,12 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
              "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
              "L", "L'", "L2", "R", "R'", "R2"),                                                        # Do not mess up LRs reduced to 5x5x5 centers
 
-
             # prune tables
             (parent.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge,
              parent.lt_LR_solve_oblique_edge,
              parent.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
              parent.lt_FB_solve_oblique_edge),
+
             linecount=12672378)
 
     def state(self):
@@ -2387,7 +2388,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
         #sys.exit(0)
 
-        # TODO if we build the LFRB table out to 6-deep can we avoid staging LR and FB?
         # Reduce LFRB centers to 5x5x5 via
         # Reduce LR centers to 5x5x5 by solving the inner x-centers, t-centers and oblique edges
         self.lt_LR_solve_inner_centers_and_oblique_edges.solve()

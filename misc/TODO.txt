@@ -60,28 +60,26 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 =====
 6x6x6
 =====
+- file bug to try to improve IDA for step20 to get away from "fake_move" solution
 
 
 =====
 7x7x7
 =====
-Use this test cube for both the step10 and step80 items below
-
-./usr/bin/rubiks-cube-solver.py --state LLDBLFDRRFDUBFLLLFLLDFLDUBRULFLFDRDRUBBUDBFLFRUBFLDBFRDRFLLRBDUUFRFURDDDBRRLDUDUBLRLLBUDRUDBUUUUBUUDLDFRURFFUFURRRDLBRFLLUFUULRUBRRURULFUBUURLDBRBDBFRLULLFLDLFRRDLRBFDBBFDDUDRBBUUFLBFBLRDDDBRFLBURFDDRBDRBRLURFUDDUFBBFBFLLRFFLLRDFDBBFBRFDLLURUFDDFLFDFBDFFUBDBRBUDDDBLFBLBRBRURFLBBULLDFURUBBLURFU
-
-- step10 is slow for this one, it takes 19s (the table is 6-deep).  I built
-  it to 7-deep and the search only took about 1s but the file was 6.4G which
-  gzipped down to 845M which is too big to check into the repo.
-
-  Will need to wait for the B-Tree work to be done to speed this one up.
-
-- step80...we spend 40+  moves in this phase
-    - build the main table out to 6-deep
+step80...we spend 40+ moves in this phase
+    - build the main table out to 7-deep
 
     - we solve LR and then FB prune to speed up step80...can we avoid
-      this with the extra entries of a 6-deep table?
+      this with the extra entries of a 7-deep table? Combine these on
+      LJs machine and see how crazy big it is.
 
-    - build a bunch of 24 million entry prune tables
+    - the step80 table could be converted to hex to make it much smaller
+      I would rebuild all 4900 though just convert what we already have.
+      Would also chop out the "x"s
+
+    - build a bunch of 24 million entry prune tables?
+
+    - ./usr/bin/rubiks-cube-solver.py --state LLDBLFDRRFDUBFLLLFLLDFLDUBRULFLFDRDRUBBUDBFLFRUBFLDBFRDRFLLRBDUUFRFURDDDBRRLDUDUBLRLLBUDRUDBUUUUBUUDLDFRURFFUFURRRDLBRFLLUFUULRUBRRURULFUBUURLDBRBDBFRLULLFLDLFRRDLRBFDBBFDDUDRBBUUFLBFBLRDDDBRFLBURFDDRBDRBRLURFUDDUFBBFBFLLRFFLLRDFDBBFBRFDLLURUFDDFLFDFBDFFUBDBRBUDDDBLFBLBRBRURFLBBULLDFURUBBLURFU
 
 
 =====
@@ -107,79 +105,3 @@ bidirectional IDA
           take some time.  I think this is a strategy that could only be
           used in a fewest moves challenge given how long it will take to
           produce solutions.
-
-
-
-============
-B-Tree notes
-============
-- B-Tree will benefit all searches
-
-- optimaly load the B-Trees
-
-- support for loading the first two levels in memory and finding the rest on disk
-
-- Once the two bullets above are done we should be able to find a key via
-  a single seek(). We should also be able to only do one rstrip/split(',')
-  call, it should only happen when 'if key in key_line' is True.
-
-  Today we take ~14s where our time is in:
-
-   974730    0.533    0.000    0.533    0.000 {method 'seek' of '_io.BufferedReader' objects}
-  1431684    0.721    0.000    0.721    0.000 {method 'decode' of 'bytes' objects}
- 127280/3    0.733    0.000   17.547    5.849 LookupTable.py:675(ida_search)
-   779505    0.920    0.000    0.920    0.000 {method 'read' of '_io.BufferedReader' objects}
-  1307535    1.435    0.000    1.435    0.000 {method 'rstrip' of 'str' objects}
-   915393    1.451    0.000    1.451    0.000 {built-in method builtins.next}
-  1372371    2.557    0.000    2.557    0.000 {method 'split' of 'str' objects}
-   195231    3.299    0.000   11.243    0.000 __init__.py:67(disk_get)
-   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-
-    So we should end up with
-    - seek()   : should come down to 195231...should shave about 300ms
-
-    - decode() : Will 'if key in key_line' work if it is not decoded to utf-8?
-        If so we can avoid all of these calls....should shave 721ms.
-
-    - read()   : should come down to 195231...should shave about 600ms
-
-    - rstrip() : can only call this 'if key in key_line' which should chop 99% of them..should shave 1435ms
-
-    - next() : is called today to load the nodes line...we can avoid this if we know that we are already at the leaf node depth
-        This should shave 1451ms
-
-    - split() : can only call this 'if key in key_line' which should chop 99% of them..should shave 2557ms
-
-    That is about ~7000ms we can shave...would get us from 14s down to 7s which would be awesome
-
-
-- Test this against slow 6x6x6 UD oblique:
-
-./usr/bin/rubiks-cube-solver.py --state FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
-
-
-With the 6-deep table for step20:
-2018-01-02 17:32:22,445 RubiksCube666.py     INFO: UD inner x-centers staged, 5 steps in
-2018-01-02 17:32:22,449   LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold range 7->99
-2018-01-02 17:32:23,286   LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 7, explored 2282 branches, took 836ms
-2018-01-02 17:32:30,300   LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 8, explored 58442 branches, took 0:00:07.013864
-2018-01-02 17:32:32,504   LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA found match 6 steps in, f_cost 10 (6 + 4)
-2018-01-02 17:32:32,504   LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 9, explored 25219 branches, took 0:00:02.204081 (0:00:10.058671 total)
-2018-01-02 17:32:32,504 RubiksCube666.py     INFO: UD oblique edges paired, 17 steps in
-
-This search takes about 5 million seek() calls when using binary search...the seeks are the top bottleneck thus the need to move to B-Trees
-
-
-This is another slow one
-./usr/bin/rubiks-cube-solver.py --state UBULRLBDLDBDDLLDBBRRBFDRFRLLRLBUDUBBUFFUBBFUURDBDUFRDLDLUDBFLBRUFLUFUUBDDRLLLLULFDLLDRFDFBDFLUUFLBFRDBFUBRDRLLUFFBRDBDLUUFRFDRDDBLBRRRBBRRLLLBRRRRRBRRDUUFBFBLDBUFBLULRBUUBDLDDFRFDUDUDFUFDFFUFFUUBRRLLBRULLUFFRUBFDRFDF
-2017-12-24 07:20:07,314  __init__.py     INFO:
-2017-12-24 07:20:07,319 RubiksCube666.py     INFO: UD inner x-centers staged, 5 steps in
-2017-12-24 07:20:07,320 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold range 6->99
-2017-12-24 07:20:07,327 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 6, explored 42 branches, took 6ms
-2017-12-24 07:20:07,471 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 7, explored 1162 branches, took 144ms
-2017-12-24 07:20:10,826 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 8, explored 30442 branches, took 0:00:03.354795
-2017-12-24 07:21:30,345 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 9, explored 810242 branches, took 0:01:19.518391
-2017-12-24 07:22:40,802 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA found match 8 steps in, f_cost 11 (8 + 3)
-2017-12-24 07:22:40,802 LookupTable.py     INFO: 6x6x6-step20-UD-oblique-edge-pairing: IDA threshold 10, explored 793725 branches, took 0:01:10.457381 (0:02:33.482832 total)
-2017-12-24 07:22:40,802 RubiksCube666.py     INFO: UD oblique edges paired, 20 steps in
-

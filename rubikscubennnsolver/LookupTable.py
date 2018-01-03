@@ -111,28 +111,12 @@ class LookupTable(object):
             if not os.path.exists(self.filename_gz):
 
                 # Special cases where I could not get them one under 100M so I split it via:
-                # split -b 40m lookup-table-4x4x4-step70-tsai-phase3.txt.gz "lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-"
+                # split -b 40m foo.txt.gz "foo.txt.gz.part-"
 
                 # =====
                 # 4x4x4
                 # =====
-                if self.filename_gz == 'lookup-table-4x4x4-step70-tsai-phase3.txt.gz':
-
-                    # Download all parts
-                    for extension in ('aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak'):
-                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-%s" %\
-                            (self.parent.size, self.parent.size, self.parent.size, extension)
-                        log.info("Downloading table via 'wget %s'" % url)
-                        subprocess.call(['wget', url])
-
-                    # cat them together into a .gz file
-                    subprocess.call('cat lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-* > lookup-table-4x4x4-step70-tsai-phase3.txt.gz', shell=True)
-
-                    # remove all of the parts
-                    for extension in ('aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak'):
-                        os.unlink('lookup-table-4x4x4-step70-tsai-phase3.txt.gz.part-%s' % extension)
-
-                elif self.filename_gz == 'lookup-table-4x4x4-step71-tsai-phase3-edges.txt.gz':
+                if self.filename_gz == 'lookup-table-4x4x4-step71-tsai-phase3-edges.txt.gz':
 
                     # Download all parts
                     for extension in ('aa', 'ab', 'ac', 'ad'):
@@ -418,6 +402,30 @@ class LookupTable(object):
             raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (self, pt_state, self.state_width))
 
         return len_pt_steps
+
+    def find_edge_entries_with_loose_signature(self, signature_to_find):
+        """
+        Given a signature such as 001001010110, return a list of all of the lines
+        in our lookup-table that will not break up any of the paired edges (a 1
+        represents a paired edge).
+
+        This is only used by the 4x4x4 and 5x5x5 edges tables
+        """
+        result = []
+        signature_to_find = int(signature_to_find, 2)
+
+        with open(self.filename, 'r') as fh:
+            for line in fh:
+                line = line.strip()
+                (edges_state, steps) = line.split(':')
+                (signature, _) = edges_state.split('_')
+                signature = int(signature, 2)
+
+                if (signature & signature_to_find) == signature_to_find:
+                    result.append(line)
+
+        return result
+
 
     def find_edge_entries_with_signature(self, signature_to_find):
         """

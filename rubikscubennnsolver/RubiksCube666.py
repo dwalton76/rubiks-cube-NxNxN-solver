@@ -1383,6 +1383,26 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
         log.info("")
 
+    def solve_reduced_555_centers(self):
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
+        fake_555.lt_init()
+        self.populate_fake_555_for_ULFRBD_solve(fake_555)
+        fake_555.group_centers_guts()
+
+        for step in fake_555.solution:
+            self.rotate(step)
+
+    def solve_reduced_555_t_centers(self):
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.cpu_mode = self.cpu_mode
+        fake_555.lt_init()
+        self.populate_fake_555_for_ULFRBD_solve(fake_555)
+        fake_555.lt_ULFRBD_t_centers_solve.solve()
+
+        for step in fake_555.solution:
+            self.rotate(step)
+
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
 
@@ -1390,8 +1410,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         # Stage LR which in turn stages FB
         self.lt_LR_inner_x_centers.solve()
-        log.info("LR inner x-centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        log.info("LR inner x-centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         log.info("")
         log.info("")
         log.info("")
@@ -1405,8 +1425,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         #sys.exit(0)
 
         self.lt_LR_oblique_edge_pairing.solve()
-        log.info("LR oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        log.info("LR oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         log.info("")
         log.info("")
         log.info("")
@@ -1414,92 +1434,47 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
         # At this point all of the inner x-centers and oblique edges are staged
 
-        solve_via_555 = True
+        # Reduce the centers to 5x5x5 centers
+        # - solve the UD inner x-centers and pair the UD oblique edges
+        # - solve the LR inner x-centers and pair the LR oblique edges
+        # - solve the FB inner x-centers and pair the FB oblique edges
+        self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
+        self.print_cube()
+        log.info("UD inner x-center solved and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
-        if solve_via_555 or oblique_edges_only:
+        # Test the prune tables
+        #self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
+        #self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
+        #self.print_cube()
+        #sys.exit(0)
 
-            # Reduce the centers to 5x5x5 centers
-            # - solve the UD inner x-centers and pair the UD oblique edges
-            # - solve the LR inner x-centers and pair the LR oblique edges
-            # - solve the FB inner x-centers and pair the FB oblique edges
-            self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
-            log.info("UD inner x-center solved and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
+        self.print_cube()
+        log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
+
+        if oblique_edges_only:
+
+            # If we are here it is because a larger cube is using the 6x6x6 solver to
+            # solve their centers. We must "solve" the t-centers in this scenario.
+            self.solve_reduced_555_t_centers()
             self.print_cube()
-            #log.info("kociemba: %s" % self.get_kociemba_string(True))
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
-
-            # Test the prune tables
-            #self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
-            #self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
-            #self.print_cube()
-            #sys.exit(0)
-
-            self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
-            log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-            self.print_cube()
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
-
-            if oblique_edges_only:
-                log.info("Took %d steps to resolve oblique edges" % self.get_solution_len_minus_rotates(self.solution))
-                return
-
-            # At this point the 6x6x6 centers have been reduced to 5x5x5 centers
-            fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-            fake_555.cpu_mode = self.cpu_mode
-            fake_555.lt_init()
-            self.populate_fake_555_for_ULFRBD_solve(fake_555)
-            fake_555.group_centers_guts()
-
-            for step in fake_555.solution:
-                self.rotate(step)
+            log.info("Took %d steps to solve oblique edges" % self.get_solution_len_minus_rotates(self.solution))
 
         else:
-            # For test cube FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL
-            # it takes 32 moves to get to this point.  If solve_via_555 is True we solve the 6x6x6
-            # centers in 74 moves total...so this experiment needs to beat 74 moves.
-            #
-            # The code below gets all of the centers staged (via fake_555) in 53 moves.
-            # Once all sides are staged there are 4 groups of 8!/(4!*4!) per side so to
-            # solve ULF (which would also solve RBD) would be (8!/(4!*4!))^12 or
-            # 13,841,287,201,000,000,000,000...that doesn't seem feasible.
-            #
-            # Solving just U (in turn solves D) would be (8!/(4!*4!))^4 or 24,010,000
-            #
-            # Solving L and F (in turn solves R and B) would be (8!/(4!*4!))^8 or
-            # 576,480,100,000,000 but with two 24,010,000 prune tables for a ratio
-            # of 0.000 000 041 6493128...it might be doable.
-            #
-            # The solve_via_555 code path can solve the centers in 74 moves while it takes
-            # the non-solve_via_555 code 53 moves to get the centers staged.  That only
-            # leaves us 21 moves to solve all of the centers...that doesn't sound like
-            # much wiggle room and would take a lot of CPU to do the "solve L and R" IDA.
-            #
-            # This doesn't feel worth the effort to explore further.  I'll leave this bit
-            # of code here for a rainy day though.
-
-            fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-            fake_555.cpu_mode = self.cpu_mode
-            fake_555.lt_init()
-            self.populate_fake_555_for_ULFRBD_stage(fake_555)
-            fake_555.group_centers_stage_UD()
-            fake_555.group_centers_stage_LR()
-
-            for step in fake_555.solution:
-                self.rotate(step)
-
+            self.solve_reduced_555_centers()
             self.print_cube()
-            log.info("Took %d steps to stage centers" % self.get_solution_len_minus_rotates(self.solution))
-            sys.exit(0)
-
-        log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
+            log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
 
     def phase(self):
         if self._phase is None:

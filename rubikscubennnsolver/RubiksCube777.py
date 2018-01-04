@@ -1683,14 +1683,13 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
     """
     lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt
     =======================================================================
-    1 steps has 601 entries (0 percent, 0.00x previous step)
-    2 steps has 3,950 entries (0 percent, 6.57x previous step)
-    3 steps has 28,792 entries (0 percent, 7.29x previous step)
-    4 steps has 207,438 entries (1 percent, 7.20x previous step)
-    5 steps has 1,515,935 entries (11 percent, 7.31x previous step)
-    6 steps has 10,915,662 entries (86 percent, 7.20x previous step)
+    1 steps has 350 entries (0 percent, 0.00x previous step)
+    2 steps has 2,800 entries (0 percent, 8.00x previous step)
+    3 steps has 18,712 entries (1 percent, 6.68x previous step)
+    4 steps has 131,496 entries (11 percent, 7.03x previous step)
+    5 steps has 966,484 entries (86 percent, 7.35x previous step)
 
-    Total: 12,672,378 entries
+    Total: 1,119,842 entries
     """
 
     def __init__(self, parent):
@@ -1712,7 +1711,7 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
              parent.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge,
              parent.lt_FB_solve_oblique_edge),
 
-            linecount=12672378)
+            linecount=1119842)
 
     def state(self):
         parent_state = self.parent.state
@@ -2428,12 +2427,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             # If we are here it is because a larger cube is using the 7x7x7 solver to
             # solve their centers. We must "solve" the t-centers in this scenario.
             self.solve_reduced_555_t_centers()
-            log.info("Took %d steps to solve oblique edges and t-centers" % self.get_solution_len_minus_rotates(self.solution))
             self.print_cube()
+            log.info("Took %d steps to solve oblique edges and t-centers" % self.get_solution_len_minus_rotates(self.solution))
         else:
             self.solve_reduced_555_centers()
-            log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
             self.print_cube()
+            log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
 
 
 # There are 4900 of them so I put them at the bottom of the file

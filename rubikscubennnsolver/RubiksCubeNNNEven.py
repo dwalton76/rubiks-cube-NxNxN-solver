@@ -106,7 +106,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             fake_666.lt_init()
             fake_666.print_cube()
             fake_666.group_centers_guts(oblique_edges_only=True)
-            #fake_666.print_solution()
             fake_666.print_cube()
 
             # Apply the 6x6x6 solution to our cube

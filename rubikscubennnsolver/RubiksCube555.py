@@ -1998,11 +1998,11 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_centers_stage_t_center_only = LookupTable555LRTCentersStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
 
-        self.lt_tsai_phase2_edges_orient = LookupTable555TsaiPhase2EdgesOrient(self)
-        self.lt_tsai_phase2_LR_centers = LookupTable555TsaiPhase2LRCenters(self)
-        self.lt_tsai_phase2 = LookupTable555TsaiPhase2(self)
+        #self.lt_tsai_phase2_edges_orient = LookupTable555TsaiPhase2EdgesOrient(self)
+        #self.lt_tsai_phase2_LR_centers = LookupTable555TsaiPhase2LRCenters(self)
+        #self.lt_tsai_phase2 = LookupTable555TsaiPhase2(self)
 
-        self.lt_tsai_phase3_LF_centers = LookupTable555TsaiPhase3LFCenters(self)
+        #self.lt_tsai_phase3_LF_centers = LookupTable555TsaiPhase3LFCenters(self)
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)

@@ -32,6 +32,8 @@ https://alg.cubing.net/?puzzle=4x4x4&setup=R2-_U_L2-_F2-_R2-_F2-_D-_F2-_R2-_U2-_
 time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 
 
+- edge pairing table is building to 11-deep on LJs machine
+
 =====
 5x5x5
 =====
@@ -67,14 +69,13 @@ time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 7x7x7
 =====
 step80...we spend 40+ moves in this phase
-    - build the main table out to 7-deep
+    - build the main table out to 6-deep
 
     - we solve LR and then FB prune to speed up step80...can we avoid
-      this with the extra entries of a 7-deep table? Combine these on
+      this with the extra entries of a 6-deep table? Combine these on
       LJs machine and see how crazy big it is.
 
     - the step80 table could be converted to hex to make it much smaller
-      I would rebuild all 4900 though just convert what we already have.
       Would also chop out the "x"s
 
     - build a bunch of 24 million entry prune tables?

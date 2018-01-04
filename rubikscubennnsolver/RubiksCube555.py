@@ -49,12 +49,35 @@ centers_555 = (
     132, 133, 134, 137, 138, 139, 142, 143, 144
 )
 
+LFRB_centers_555 = (
+    32, 33, 34, 37, 38, 39, 42, 43, 44,
+    57, 58, 59, 62, 63, 64, 67, 68, 69,
+    82, 83, 84, 87, 88, 89, 92, 93, 94,
+    107, 108, 109, 112, 113, 114, 117, 118, 119
+)
+
 wings_555 = (
     2, 3, 4, 6, 10, 11, 15, 16, 20, 22, 23, 24,                # Upper
     31, 35, 36, 40, 41, 45,                                    # Left
     81, 85, 86, 90, 91, 95,                                    # Right
     127, 128, 129, 131, 135, 136, 140, 141, 145, 147, 148, 149 # Down
 )
+
+wings_555 = (
+    2, 3, 4,       # Upper
+    6, 11, 16,
+    10, 15, 20,
+    22, 23, 24,
+    31, 36, 41,    # Left
+    35, 40, 45,
+    81, 86, 91,    # Right
+    85, 90, 95,
+    127, 128, 129, # Down
+    131, 136, 141,
+    135, 140, 145,
+    147, 148, 149
+)
+
 
 wing_str_map = {
     'UB' : 'UB',
@@ -1153,127 +1176,69 @@ class LookupTable555TsaiPhase2(LookupTableIDA):
         return result
 
 
-
-
-class LookupTable555TsaiPhase3ULCenters(LookupTable):
+class LookupTable555TsaiPhase3LFCenters(LookupTable):
     """
-    lookup-table-5x5x5-step51-tsai-phase3lite-UL-centers-solve.txt
-    ==============================================================
+    lookup-table-5x5x5-step51-tsai-phase3-LF-centers-solve.txt
+    ==========================================================
     1 steps has 7 entries (0 percent, 0.00x previous step)
     2 steps has 55 entries (0 percent, 7.86x previous step)
     3 steps has 400 entries (0 percent, 7.27x previous step)
-    4 steps has 2,538 entries (0 percent, 6.34x previous step)
-    5 steps has 14,184 entries (0 percent, 5.59x previous step)
-    6 steps has 69,225 entries (3 percent, 4.88x previous step)
-    7 steps has 252,240 entries (11 percent, 3.64x previous step)
-    8 steps has 604,827 entries (28 percent, 2.40x previous step)
-    9 steps has 693,234 entries (32 percent, 1.15x previous step)
-    10 steps has 390,310 entries (18 percent, 0.56x previous step)
-    11 steps has 87,692 entries (4 percent, 0.22x previous step)
-    12 steps has 2,088 entries (0 percent, 0.02x previous step)
+    4 steps has 2538 entries (0 percent, 6.34x previous step)
+    5 steps has 14184 entries (0 percent, 5.59x previous step)
+    6 steps has 69225 entries (3 percent, 4.88x previous step)
+    7 steps has 252240 entries (11 percent, 3.64x previous step)
+    8 steps has 604827 entries (28 percent, 2.40x previous step)
+    9 steps has 693234 entries (32 percent, 1.15x previous step)
+    10 steps has 390310 entries (18 percent, 0.56x previous step)
+    11 steps has 87692 entries (4 percent, 0.22x previous step)
+    12 steps has 2088 entries (0 percent, 0.02x previous step)
 
-    Total: 2,116,800 entries
+    Total: 2116800 entries
     """
-
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step51-tsai-phase3lite-UL-centers-solve.txt',
-            '3ffff000000000',
+            'lookup-table-5x5x5-step51-tsai-phase3-LF-centers-solve.txt',
+            'LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB',
             linecount=2116800)
 
     def state(self):
         parent_state = self.parent.state
-        result = ['1' if parent_state[x] in ('U', 'L') else '0' for x in centers_555]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        result = ''.join([parent_state[x] for x in LFRB_centers_555])
+        return result
 
 
-class LookupTable555TsaiPhase3UFCenters(LookupTable):
+class LookupTable555TsaiPhase3LFCenters(LookupTable):
     """
-    lookup-table-5x5x5-step52-tsai-phase3lite-UF-centers-solve.txt
-    ==============================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 71 entries (0 percent, 10.14x previous step)
-    3 steps has 630 entries (0 percent, 8.87x previous step)
-    4 steps has 4,639 entries (0 percent, 7.36x previous step)
-    5 steps has 32,060 entries (0 percent, 6.91x previous step)
-    6 steps has 198,779 entries (0 percent, 6.20x previous step)
-    7 steps has 1,011,284 entries (4 percent, 5.09x previous step)
-    8 steps has 3,826,966 entries (15 percent, 3.78x previous step)
-    9 steps has 8,611,512 entries (35 percent, 2.25x previous step)
-    10 steps has 8,194,244 entries (34 percent, 0.95x previous step)
-    11 steps has 2,062,640 entries (8 percent, 0.25x previous step)
-    12 steps has 67,152 entries (0 percent, 0.03x previous step)
-    13 steps has 16 entries (0 percent, 0.00x previous step)
+    lookup-table-5x5x5-step52-tsai-phase3-pair-four-edges-outside.txt
+    =================================================================
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 27 entries (0 percent, 6.75x previous step)
+    3 steps has 216 entries (0 percent, 8.00x previous step)
+    4 steps has 1,418 entries (0 percent, 6.56x previous step)
+    5 steps has 9,623 entries (0 percent, 6.79x previous step)
+    6 steps has 63,448 entries (1 percent, 6.59x previous step)
+    7 steps has 365,270 entries (6 percent, 5.76x previous step)
+    8 steps has 1,548,382 entries (26 percent, 4.24x previous step)
+    9 steps has 3,061,324 entries (52 percent, 1.98x previous step)
+    10 steps has 830,336 entries (14 percent, 0.27x previous step)
+    11 steps has 552 entries (0 percent, 0.00x previous step)
 
-    Total: 24,010,000 entries
+    Total: 5,880,600 entries
     """
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step52-tsai-phase3lite-UF-centers-solve.txt',
-            '3fe00ff8000000',
-            linecount=24010000)
+            'lookup-table-5x5x5-step52-tsai-phase3-pair-four-edges-outside.txt',
+            'TBD',
+            linecount=5880600)
 
+    # stopped here on tsai phase3
     def state(self):
         parent_state = self.parent.state
-        result = ['1' if parent_state[x] in ('U', 'F') else '0' for x in centers_555]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
-class LookupTable555TsaiPhase3Lite(LookupTableIDA):
-    """
-    The Lite version only solves the centers while leaving EO in place, it doesn't pair
-    the edges. This was an experiment to see if the original 5x5x5 edge pairing code could
-    pair edges fewer moves...I can't see any noticable difference.
-
-    lookup-table-5x5x5-step50-tsai-phase3lite-centers-solve.txt
-    ===========================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 83 entries (0 percent, 11.86x previous step)
-    3 steps has 842 entries (0 percent, 10.14x previous step)
-    4 steps has 8,093 entries (0 percent, 9.61x previous step)
-    5 steps has 74,516 entries (1 percent, 9.21x previous step)
-    6 steps has 656,352 entries (10 percent, 8.81x previous step)
-    7 steps has 5,373,920 entries (87 percent, 8.19x previous step)
-
-    Total: 6,113,813 entries
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step50-tsai-phase3lite-centers-solve.txt',
-            'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
-            moves_5x5x5,
-
-            # illegal moves
-            ("Rw", "Rw'", "Lw", "Lw'",
-             "Fw", "Fw'", "Bw", "Bw'",
-             "Uw", "Uw'", "Dw", "Dw'",
-             "R", "R'",
-             "L", "L'"),
-
-            # prune tables
-            (parent.lt_tsai_phase3_UL_centers,
-             parent.lt_tsai_phase3_UF_centers),
-
-            linecount=6113813)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = [parent_state[x] for x in centers_555]
-        result = ''.join(result)
         return result
 
 
@@ -1715,26 +1680,11 @@ class LookupTable555Edges(LookupTable):
         """
         state = edges_recolor_pattern_555(self.parent.state[:])
 
-        edges_state = ''.join((
-            state[2], state[3], state[4],
-            state[6], state[11], state[16],
-            state[10], state[15], state[20],
-            state[22], state[23], state[24],
-            state[31], state[36], state[41],
-            state[35], state[40], state[45],
-            state[81], state[86], state[91],
-            state[85], state[90], state[95],
-            state[127], state[128], state[129],
-            state[131], state[136], state[141],
-            state[135], state[140], state[145],
-            state[147], state[148], state[149]
-        ))
-
+        edges_state = ''.join([state[square_index] for square_index in wings_555])
         signature = get_edges_paired_binary_signature(edges_state)
         signature_width = len(signature) + 1
         edges_state = signature + '_' + edges_state
 
-        # dwalton
         pre_non_paired_wings_count = self.parent.get_non_paired_wings_count()
         log.info("%s: signature %s, %d unpaired wings, %d steps in" %
             (self, signature, pre_non_paired_wings_count, self.parent.get_solution_len_minus_rotates(self.parent.solution)))
@@ -2052,9 +2002,7 @@ class RubiksCube555(RubiksCube):
         self.lt_tsai_phase2_LR_centers = LookupTable555TsaiPhase2LRCenters(self)
         self.lt_tsai_phase2 = LookupTable555TsaiPhase2(self)
 
-        self.lt_tsai_phase3_UL_centers = LookupTable555TsaiPhase3ULCenters(self)
-        self.lt_tsai_phase3_UF_centers = LookupTable555TsaiPhase3UFCenters(self)
-        self.lt_tsai_phase3 = LookupTable555TsaiPhase3Lite(self)
+        self.lt_tsai_phase3_LF_centers = LookupTable555TsaiPhase3LFCenters(self)
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
@@ -2358,11 +2306,10 @@ class RubiksCube555(RubiksCube):
             log.info("%s: End of tsai Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
             # Test prune tables
-            #self.lt_tsai_phase3_UL_centers.solve()
-            #self.lt_tsai_phase3_UF_centers.solve()
-            #self.print_cube()
-            #log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
-            #sys.exit(0)
+            self.lt_tsai_phase3_LF_centers.solve()
+            self.print_cube()
+            log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
+            sys.exit(0)
 
             log.info("%s: Start of tsai Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             self.lt_tsai_phase3.solve()

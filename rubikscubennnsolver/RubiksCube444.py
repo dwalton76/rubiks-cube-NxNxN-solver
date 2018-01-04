@@ -48,11 +48,19 @@ edges_444 = (
     82, 83, 85, 88, 89, 92, 94, 95) # Down
 
 wings_444 = (
-    2, 3, 5, 8, 9, 12, 14, 15,      # Upper
-    21, 24, 25, 28,                 # Left
-    53, 56, 57, 60,                 # Right
-    82, 83, 85, 88, 89, 92, 94, 95) # Down
-
+    2, 3,   # Upper
+    5, 9,
+    8, 12,
+    14, 15,
+    21, 25, # Left
+    24, 28,
+    53, 57, # Right
+    56, 60,
+    82, 83, # Back
+    85, 89,
+    88, 92,
+    94, 95
+)
 
 def get_edges_paired_binary_signature(state):
     """
@@ -1202,7 +1210,9 @@ class LookupTable444Edges(LookupTable):
             parent,
             'lookup-table-4x4x4-step100-edges.txt',
             '111111111111_10425376a8b9ecfdhgkiljnm',
-            linecount=515757) # 9-deep
+            #linecount=515757) # 9-deep
+            #linecount=3335928) # 10-deep
+            linecount=31784731) # 11-deep
 
     def state(self):
         """
@@ -1220,21 +1230,7 @@ class LookupTable444Edges(LookupTable):
         """
         state = edges_recolor_pattern_444(self.parent.state[:])
 
-        edges_state = ''.join((
-            state[2], state[3],
-            state[5], state[9],
-            state[8], state[12],
-            state[14], state[15],
-            state[21], state[25],
-            state[24], state[28],
-            state[53], state[57],
-            state[56], state[60],
-            state[82], state[83],
-            state[85], state[89],
-            state[88], state[92],
-            state[94], state[95]
-        ))
-
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
         signature = get_edges_paired_binary_signature(edges_state)
         signature_width = len(signature) + 1
         edges_state = signature + '_' + edges_state
@@ -1245,6 +1241,7 @@ class LookupTable444Edges(LookupTable):
 
         # If all edges are paired return our actual state
         if self.parent.edges_paired():
+            #log.info("%s: all edges are paired" % self)
             return edges_state
 
 
@@ -1253,6 +1250,7 @@ class LookupTable444Edges(LookupTable):
         steps = self.steps(edges_state)
 
         if steps is not None:
+            #log.info("%s: edges_state %s has steps %s" % (self, edges_state, ' '.join(steps)))
             return edges_state
 
 
@@ -1273,12 +1271,25 @@ class LookupTable444Edges(LookupTable):
         loose_matching_entry = []
         max_wing_pair_count = None
 
-        for line in self.find_edge_entries_with_loose_signature(signature):
+        #log.info("%s: find_edge_entries_with_loose_signature start" % self)
+        #loose_matching_signatures = self.find_edge_entries_with_loose_signature(signature)
+        #log.info("%s: find_edge_entries_with_loose_signature end (found %d)" % (self, len(loose_matching_signatures)))
+
+        # This runs much faster because it is only looking over the signatures
+        # that are an exact match instead of a loose match. It produces longer
+        # solutions though...need to think about how to find some middle ground
+        # between this and loose matching.
+        #
+        log.info("%s: find_edge_entries_with_signature start" % self)
+        loose_matching_signatures = self.find_edge_entries_with_signature(signature)
+        log.info("%s: find_edge_entries_with_signature end (found %d)" % (self, len(loose_matching_signatures)))
+
+        for line in loose_matching_signatures:
             (phase1_state, phase1_steps) = line.split(':')
 
             common_count = get_characters_common_count(edges_state[signature_width:],
-                                                           phase1_state[signature_width:],
-                                                           self.state_width - signature_width)
+                                                       phase1_state[signature_width:],
+                                                       self.state_width - signature_width)
             wing_pair_count = int(common_count/2)
 
             # Only bother with this entry if it will pair more wings than are currently paired
@@ -1289,22 +1300,25 @@ class LookupTable444Edges(LookupTable):
                     max_wing_pair_count = wing_pair_count
 
                 elif wing_pair_count > max_wing_pair_count:
-                    loose_matching_entry = []
+                    #loose_matching_entry = []
                     loose_matching_entry.append((wing_pair_count, line))
                     max_wing_pair_count = wing_pair_count
 
                 elif wing_pair_count == max_wing_pair_count:
                     loose_matching_entry.append((wing_pair_count, line))
 
-        #log.warning("pre_paired_edges_count %d, loose_matching_entry %d" % (pre_paired_edges_count, len(loose_matching_entry)))
-        log.warning("pre_paired_edges_count %d, loose_matching_entry(%d):\n%s\n" %
-            (pre_paired_edges_count, len(loose_matching_entry), pformat(loose_matching_entry)))
+        log.warning("pre_paired_edges_count %d, loose_matching_entry %d" % (pre_paired_edges_count, len(loose_matching_entry)))
+        #log.warning("pre_paired_edges_count %d, loose_matching_entry(%d):\n%s\n" %
+        #    (pre_paired_edges_count, len(loose_matching_entry), pformat(loose_matching_entry)))
         original_state = self.parent.state[:]
         original_solution = self.parent.solution[:]
         best_score_states = []
 
         # Now run through each state:steps in loose_matching_entry
         for (wing_pair_count, line) in loose_matching_entry:
+            self.parent.state = original_state[:]
+            self.parent.solution = original_solution[:]
+
             (phase1_edges_state_fake, phase1_steps) = line.split(':')
             phase1_steps = phase1_steps.split()
 
@@ -1355,13 +1369,15 @@ class LookupTable444Edges(LookupTable):
 
                     best_score_states.append((paired_edges_count, len(phase1_steps), phase1_edges_state_fake))
 
-            self.parent.state = original_state[:]
-            self.parent.solution = original_solution[:]
+            #log.info("HERE 10 %s: %s, %s, phase1_edges_state %s, phase2 steps %s" %
+            #    (self, wing_pair_count, line, phase1_edges_state, pformat(phase2_steps)))
 
         #log.info("best_score_states: %s" % pformat(best_score_states))
         best_entry = get_best_entry(best_score_states)
         log.info("best_entry: %s" % pformat(best_entry))
 
+        self.parent.state = original_state[:]
+        self.parent.solution = original_solution[:]
         return best_entry[2]
 
 
@@ -1635,8 +1651,8 @@ class RubiksCube444(RubiksCube):
             log.info("%s: Start of Phase1" % self)
             self.lt_ULFRBD_centers_stage.avoid_oll = True
             self.lt_ULFRBD_centers_stage.solve()
-            log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             self.print_cube()
+            log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
 
             log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
@@ -2339,8 +2355,20 @@ class RubiksCube444(RubiksCube):
             #log.warning("PRUNE: %s + (2 * %d) > %s" % (edge_solution_len, non_paired_wings_count, self.min_edge_solution_len))
             return False
 
+        state = edges_recolor_pattern_444(self.state[:])
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        signature = get_edges_paired_binary_signature(edges_state)
+        signature_width = len(signature) + 1
+        edges_state = signature + '_' + edges_state
+
+        steps = self.lt_edges.steps(edges_state)
+
+        if steps is not None:
+            for step in steps:
+                self.rotate(step)
+
         # The only time this will be None is on the initial call to group_edges_recursive()
-        if edge_to_pair:
+        elif edge_to_pair:
             self.pair_edge(edge_to_pair)
 
         non_paired_edges = self.get_non_paired_edges()

@@ -416,16 +416,13 @@ class LookupTable(object):
 
         with open(self.filename, 'r') as fh:
             for line in fh:
-                line = line.strip()
-                (edges_state, steps) = line.split(':')
-                (signature, _) = edges_state.split('_')
+                signature = line.split('_')[0]
                 signature = int(signature, 2)
 
                 if (signature & signature_to_find) == signature_to_find:
-                    result.append(line)
+                    result.append(line.rstrip())
 
         return result
-
 
     def find_edge_entries_with_signature(self, signature_to_find):
         """

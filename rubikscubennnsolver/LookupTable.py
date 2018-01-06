@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import datetime as dt
 from pprint import pformat
@@ -45,6 +46,113 @@ def get_characters_common_count(strA, strB, str_len):
             result += 1
 
     return result
+
+
+def steps_cancel_out(prev_step, step):
+    """
+    >>> steps_cancel_out(None, "U")
+    False
+
+    >>> steps_cancel_out("U", "U'")
+    True
+
+    >>> steps_cancel_out("U'", "U")
+    True
+
+    >>> steps_cancel_out("U2", "U2")
+    True
+    """
+    if prev_step is None:
+        return False
+
+    # U2 followed by U2 is a no-op
+    if step == prev_step and step.endswith("2"):
+        return True
+
+    # U' followed by U is a no-op
+    if prev_step.endswith("'") and not step.endswith("'") and step == prev_step[0:-1]:
+        return True
+
+    # U followed by U' is a no-op
+    if not prev_step.endswith("'") and step.endswith("'") and step[0:-1] == prev_step:
+        return True
+
+    return False
+
+
+def steps_on_same_face_and_layer(prev_step, step):
+    """
+    >>> steps_on_same_face_and_layer(None, "U")
+    False
+
+    >>> steps_on_same_face_and_layer("U", "U")
+    True
+
+    >>> steps_on_same_face_and_layer("U", "U'")
+    True
+
+    >>> steps_on_same_face_and_layer("U", "U2")
+    True
+
+    >>> steps_on_same_face_and_layer("U", "D")
+    False
+
+    >>> steps_on_same_face_and_layer("U", "D'")
+    False
+
+    >>> steps_on_same_face_and_layer("U", "D2")
+    False
+
+    >>> steps_on_same_face_and_layer("U", "Uw")
+    False
+
+    >>> steps_on_same_face_and_layer("3Uw2", "3Uw")
+    True
+
+    >>> steps_on_same_face_and_layer("Uw2", "3Uw")
+    False
+    """
+    if prev_step is None:
+        return False
+
+    # chop the trailing '
+    if prev_step.endswith("'"):
+        prev_step = prev_step[:-1]
+
+    if step.endswith("'"):
+        step = step[:-1]
+
+    # chop the trailing 2
+    if prev_step.endswith("2"):
+        prev_step = prev_step[:-1]
+
+    if step.endswith("2"):
+        step = step[:-1]
+
+    # Note the number of rows being turned and chop it
+    if prev_step[0].isdigit():
+        prev_step_rows_to_rotate = int(prev_step[0])
+        prev_step = prev_step[1:]
+    else:
+        if 'w' in prev_step:
+            prev_step_rows_to_rotate = 2
+        else:
+            prev_step_rows_to_rotate = 1
+
+    if step[0].isdigit():
+        step_rows_to_rotate = int(step[0])
+        step = step[1:]
+    else:
+        if 'w' in step:
+            step_rows_to_rotate = 2
+        else:
+            step_rows_to_rotate = 1
+
+    if prev_step_rows_to_rotate == step_rows_to_rotate:
+        if prev_step == step:
+            return True
+
+    return False
 
 
 def get_best_entry(foo):
@@ -753,20 +861,11 @@ class LookupTableAStar(LookupTable):
                 # ==============
                 for step in self.moves_all:
 
-                    # If this step cancels out the previous step then don't bother with this branch
-                    if prev_step is not None:
+                    if steps_cancel_out(prev_step, step):
+                        continue
 
-                        # U2 followed by U2 is a no-op
-                        if step == prev_step and step.endswith("2"):
-                            continue
-
-                        # U' followed by U is a no-op
-                        if prev_step.endswith("'") and not step.endswith("'") and step == prev_step[0:-1]:
-                            continue
-
-                        # U followed by U' is a no-op
-                        if not prev_step.endswith("'") and step.endswith("'") and step[0:-1] == prev_step:
-                            continue
+                    if steps_on_same_face_and_layer(prev_step, step):
+                        continue
 
                     self.parent.state = self.rotate_xxx(prev_stateA[:], step)
 
@@ -841,20 +940,11 @@ class LookupTableIDA(LookupTableAStar):
 
         for step in self.moves_all:
 
-            # If this step cancels out the previous step then don't bother with this branch
-            if prev_step is not None:
+            if steps_cancel_out(prev_step, step):
+                continue
 
-                # U2 followed by U2 is a no-op
-                if step == prev_step and step.endswith("2"):
-                    continue
-
-                # U' followed by U is a no-op
-                if step == prev_step[0:-1] and prev_step.endswith("'") and not step.endswith("'"):
-                    continue
-
-                # U followed by U' is a no-op
-                if step[0:-1] == prev_step and not prev_step.endswith("'") and step.endswith("'"):
-                    continue
+            if steps_on_same_face_and_layer(prev_step, step):
+                continue
 
             self.parent.state = self.rotate_xxx(prev_state[:], step)
 
@@ -910,3 +1000,17 @@ class LookupTableIDA(LookupTableAStar):
         self.parent.solution = self.original_solution[:]
 
         raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+
+
+if __name__ == '__main__':
+    import doctest
+
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s %(filename)16s %(levelname)8s: %(message)s')
+    log = logging.getLogger(__name__)
+
+    # Color the errors and warnings in red
+    logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
+    logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
+
+    doctest.testmod()

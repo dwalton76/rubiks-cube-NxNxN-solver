@@ -17,11 +17,6 @@ import sys
 
 log = logging.getLogger(__name__)
 
-# NOTE: always use list slicing instead of copy for lists
-# See the 3rd post here:
-# https://stackoverflow.com/questions/2612802/how-to-clone-or-copy-a-list
-# For 100k list copy.copy() took 1.488s where slicing took 0.039s...that is a 38x improvement
-
 class ImplementThis(Exception):
     pass
 
@@ -470,7 +465,6 @@ class LookupTable(object):
             steps = self.steps(state)
 
             if steps:
-                # dwalton
                 #log.info("%s: PRE solve() state %s found %s" % (self, state, ' '.join(steps)))
                 #self.parent.print_cube()
                 #log.info("%s: %d steps" % (self, len(steps)))
@@ -861,8 +855,8 @@ class LookupTableAStar(LookupTable):
                 # ==============
                 for step in self.moves_all:
 
-                    if steps_cancel_out(prev_step, step):
-                        continue
+                    #if steps_cancel_out(prev_step, step):
+                    #    continue
 
                     if steps_on_same_face_and_layer(prev_step, step):
                         continue
@@ -940,8 +934,8 @@ class LookupTableIDA(LookupTableAStar):
 
         for step in self.moves_all:
 
-            if steps_cancel_out(prev_step, step):
-                continue
+            #if steps_cancel_out(prev_step, step):
+            #    continue
 
             if steps_on_same_face_and_layer(prev_step, step):
                 continue

@@ -33,11 +33,14 @@ class NoAStarSolution(Exception):
     pass
 
 
-def get_characters_common_count(strA, strB, str_len):
+def get_characters_common_count(strA, strB, start_index):
+    """
+    This assumes strA and strB are the same length
+    """
     result = 0
 
-    for (index, (charA, charB)) in enumerate(zip(strA, strB)):
-        if charA == charB:
+    for index in range(start_index, len(strA)):
+        if strA[index] == strB[index]:
             result += 1
 
     return result
@@ -520,11 +523,17 @@ class LookupTable(object):
 
         with open(self.filename, 'r') as fh:
             for line in fh:
-                signature = line.split('_')[0]
-                signature = int(signature, 2)
 
-                if (signature & signature_to_find) == signature_to_find:
+                # If signature_to_find is 0 we will add every line so no
+                # need to bitwise AND the signatures
+                if signature_to_find == 0:
                     result.append(line.rstrip())
+                else:
+                    signature = line.split('_')[0]
+                    signature = int(signature, 2)
+
+                    if (signature & signature_to_find) == signature_to_find:
+                        result.append(line.rstrip())
 
         return result
 

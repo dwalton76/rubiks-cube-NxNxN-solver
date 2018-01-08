@@ -1073,24 +1073,24 @@ class LookupTable444Edges(LookupTable):
         max_wing_pair_count = None
 
         #log.info("%s: find_edge_entries_with_loose_signature start" % self)
-        #loose_matching_signatures = self.find_edge_entries_with_loose_signature(signature)
-        #log.info("%s: find_edge_entries_with_loose_signature end (found %d)" % (self, len(loose_matching_signatures)))
+        #lines_to_examine = self.find_edge_entries_with_loose_signature(signature)
+        #log.info("%s: find_edge_entries_with_loose_signature end (found %d)" % (self, len(lines_to_examine)))
 
-        # This runs much faster because it is only looking over the signatures
-        # that are an exact match instead of a loose match. It produces longer
-        # solutions though...need to think about how to find some middle ground
-        # between this and loose matching.
-        #
+        # This runs much faster (than find_edge_entries_with_loose_signature) because
+        # it is only looking over the signatures that are an exact match instead of a
+        # loose match. It produces longer solutions though...need to think about how
+        # to find some middle ground between this and loose matching.
         log.info("%s: find_edge_entries_with_signature start" % self)
-        loose_matching_signatures = self.find_edge_entries_with_signature(signature)
-        log.info("%s: find_edge_entries_with_signature end (found %d)" % (self, len(loose_matching_signatures)))
+        lines_to_examine = self.find_edge_entries_with_signature(signature)
+        log.info("%s: find_edge_entries_with_signature end (found %d)" % (self, len(lines_to_examine)))
 
-        for line in loose_matching_signatures:
+        for line in lines_to_examine:
             (phase1_state, phase1_steps) = line.split(':')
 
-            common_count = get_characters_common_count(edges_state[signature_width:],
-                                                       phase1_state[signature_width:],
-                                                       self.state_width - signature_width)
+            common_count = get_characters_common_count(edges_state,
+                                                       phase1_state,
+                                                       signature_width)
+                                                       #self.state_width - signature_width)
             wing_pair_count = int(common_count/2)
 
             # Only bother with this entry if it will pair more wings than are currently paired
@@ -1156,7 +1156,8 @@ class LookupTable444Edges(LookupTable):
 
                     if phase2_edges_state in self.state_target:
                         if self.parent.edge_solution_leads_to_pll_parity():
-                            best_score_states.append((MAX_WING_PAIRS, len(phase1_steps) + len(phase2_steps) + PLL_PENALTY, phase1_edges_state_fake))
+                            #best_score_states.append((MAX_WING_PAIRS, len(phase1_steps) + len(phase2_steps) + PLL_PENALTY, phase1_edges_state_fake))
+                            pass
                         else:
                             best_score_states.append((MAX_WING_PAIRS, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
                     else:
@@ -2171,6 +2172,8 @@ class RubiksCube444(RubiksCube):
                 self.group_edges_recursive(depth+1, edge)
                 self.state = original_state[:]
                 self.solution = original_solution[:]
+
+            return False
 
         else:
 

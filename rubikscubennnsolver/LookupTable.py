@@ -616,6 +616,9 @@ class LookupTable(object):
 
         return result
 
+    def state(self):
+        raise Exception("child class must implement state()")
+
 
 class LookupTableAStar(LookupTable):
 

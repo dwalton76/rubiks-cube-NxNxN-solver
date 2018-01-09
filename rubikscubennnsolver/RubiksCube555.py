@@ -27,15 +27,6 @@ import subprocess
 import sys
 
 log = logging.getLogger(__name__)
-'''
-baseline
-
-35 steps to solve centers
-71 steps to group edges
-21 steps to solve 3x3x3
-127 steps total
-
-'''
 
 moves_5x5x5 = moves_4x4x4
 solved_5x5x5 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
@@ -56,11 +47,13 @@ LFRB_centers_555 = (
     107, 108, 109, 112, 113, 114, 117, 118, 119
 )
 
-wings_555 = (
-    2, 3, 4, 6, 10, 11, 15, 16, 20, 22, 23, 24,                # Upper
-    31, 35, 36, 40, 41, 45,                                    # Left
-    81, 85, 86, 90, 91, 95,                                    # Right
-    127, 128, 129, 131, 135, 136, 140, 141, 145, 147, 148, 149 # Down
+wings_sequential_555 = (
+    2, 3, 4, 6, 10, 11, 15, 16, 20, 22, 23, 24,                 # Upper
+    27, 28, 29, 31, 35, 36, 40, 41, 45, 47, 48, 49,             # Left
+    52, 53, 54, 56, 60, 61, 65, 66, 70, 72, 73, 74,             # Front
+    77, 78, 79, 81, 85, 86, 90, 91, 95, 97, 98, 99,             # Right
+    102, 103, 104, 106, 110, 111, 115, 116, 120, 122, 123, 124, # Back
+    127, 128, 129, 131, 135, 136, 140, 141, 145, 147, 148, 149  # Down
 )
 
 wings_555 = (
@@ -1643,6 +1636,203 @@ def edges_recolor_pattern_555(state):
     return ''.join(state)
 
 
+LR_edges_recolor_tuples_555 = (
+    ('8', 31, 110), # left
+    ('9', 35, 56),
+    ('a', 41, 120),
+    ('b', 45, 66),
+
+    ('c', 81, 60), # right
+    ('d', 85, 106),
+    ('e', 91, 70),
+    ('f', 95, 116),
+)
+
+LR_midges_recolor_tuples_555 = (
+    ('s', 36, 115), # left
+    ('t', 40, 61),
+    ('u', 86, 65),  # right
+    ('v', 90, 111),
+)
+
+def LR_edges_recolor_pattern_555(state):
+    midges_map = {
+        'BD': None,
+        'BL': None,
+        'BR': None,
+        'BU': None,
+        'DF': None,
+        'DL': None,
+        'DR': None,
+        'FL': None,
+        'FR': None,
+        'FU': None,
+        'LU': None,
+        'RU': None
+    }
+
+    for (edge_index, square_index, partner_index) in LR_midges_recolor_tuples_555:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+        midges_map[wing_str] = edge_index
+
+        # We need to indicate which way the midge is rotated.  If the square_index contains
+        # U, D, L, or R use the uppercase of the edge_index, if not use the lowercase of the
+        # edge_index.
+        if square_value == 'L':
+            state[square_index] = edge_index.upper()
+            state[partner_index] = edge_index.upper()
+        elif partner_value == 'L':
+            state[square_index] = edge_index
+            state[partner_index] = edge_index
+        elif square_value == 'R':
+            state[square_index] = edge_index.upper()
+            state[partner_index] = edge_index.upper()
+        elif partner_value == 'R':
+            state[square_index] = edge_index
+            state[partner_index] = edge_index
+        else:
+            raise Exception("We should not be here")
+
+    # Where is the midge for each high/low wing?
+    for (edge_index, square_index, partner_index) in LR_edges_recolor_tuples_555:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+
+        high_low = tsai_phase2_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+
+        # If this is a high wing use the uppercase of the midge edge_index
+        if high_low == 'U':
+            state[square_index] = midges_map[wing_str].upper()
+            state[partner_index] = midges_map[wing_str].upper()
+
+        # If this is a low wing use the lowercase of the midge edge_index
+        elif high_low == 'D':
+            state[square_index] = midges_map[wing_str]
+            state[partner_index] = midges_map[wing_str]
+
+        else:
+            raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
+
+    return ''.join(state)
+
+
+
+class LookupTable555PlaceLastFourEdges(LookupTable):
+    """
+    lookup-table-5x5x5-step102-place-last-four-edges.txt
+    ====================================================
+    1 steps has 63 entries (7 percent, 0.00x previous step)
+    2 steps has 210 entries (26 percent, 3.33x previous step)
+    3 steps has 366 entries (46 percent, 1.74x previous step)
+    4 steps has 152 entries (19 percent, 0.42x previous step)
+    5 steps has 2 entries (0 percent, 0.01x previous step)
+
+    Total: 793 entries
+    Average: 2.773014 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step102-place-last-four-edges.txt',
+            ('xxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+             'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxxxxxxxxx'),
+            linecount=793)
+
+    def state(self):
+        result = ''.join(['x' if self.parent.edge_paired(index) else 'L' for index in wings_sequential_555])
+        return result
+
+
+class LookupTable555PairLastFourEdges(LookupTable):
+    """
+    lookup-table-5x5x5-step106-pair-last-four-edges.txt
+    ===================================================
+    5 steps has 10 entries (0 percent, 0.00x previous step)
+    6 steps has 45 entries (0 percent, 4.50x previous step)
+    7 steps has 196 entries (0 percent, 4.36x previous step)
+    8 steps has 452 entries (1 percent, 2.31x previous step)
+    9 steps has 1,556 entries (3 percent, 3.44x previous step)
+    10 steps has 3,740 entries (9 percent, 2.40x previous step)
+    11 steps has 10,188 entries (25 percent, 2.72x previous step)
+    12 steps has 16,778 entries (41 percent, 1.65x previous step)
+    13 steps has 6,866 entries (17 percent, 0.41x previous step)
+    14 steps has 488 entries (1 percent, 0.07x previous step)
+
+    Total: 40,319 entries
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step106-pair-last-four-edges.txt',
+            'sSSTTtuUUVVv',
+            linecount=40319)
+
+    def state(self):
+        parent_state = self.parent.state[:]
+
+        LR_remap = {}
+        LR_remap[(parent_state[36], parent_state[115])] = 'LB'
+        LR_remap[(parent_state[115], parent_state[36])] = 'BL'
+
+        LR_remap[(parent_state[40], parent_state[61])]  = 'LF'
+        LR_remap[(parent_state[61], parent_state[40])]  = 'FL'
+
+        LR_remap[(parent_state[86], parent_state[65])]  = 'RF'
+        LR_remap[(parent_state[65], parent_state[86])]  = 'FR'
+
+        LR_remap[(parent_state[90], parent_state[111])] = 'RB'
+        LR_remap[(parent_state[111], parent_state[90])] = 'BR'
+        #log.info("LR_remap\n%s\n" % pformat(LR_remap))
+
+        for (edge_index, square_index, partner_index) in LR_midges_recolor_tuples_555:
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+
+            if (square_value, partner_value) in LR_remap:
+                parent_state[square_index] = LR_remap[(square_value, partner_value)][0]
+                parent_state[partner_index] = LR_remap[(square_value, partner_value)][1]
+
+            elif (partner_value, square_value) in LR_remap:
+                parent_state[square_index] = LR_remap[(partner_value, square_value)][0]
+                parent_state[partner_index] = LR_remap[(partner_value, square_value)][1]
+
+        for (edge_index, square_index, partner_index) in LR_edges_recolor_tuples_555:
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+
+            if (square_value, partner_value) in LR_remap:
+                parent_state[square_index] = LR_remap[(square_value, partner_value)][0]
+                parent_state[partner_index] = LR_remap[(square_value, partner_value)][1]
+
+            elif (partner_value, square_value) in LR_remap:
+                parent_state[square_index] = LR_remap[(partner_value, square_value)][0]
+                parent_state[partner_index] = LR_remap[(partner_value, square_value)][1]
+
+        state = LR_edges_recolor_pattern_555(parent_state[:])
+
+        result = ''.join(state[index] for index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95))
+        return result
+
+
 class LookupTable555Edges(LookupTable):
     """
     lookup-table-5x5x5-step100-edges.txt
@@ -2025,6 +2215,9 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_slice_forward = LookupTable555EdgeSliceForward(self)
         self.lt_edges_slice_backward = LookupTable555EdgeSliceBackward(self)
         self.lt_edges = LookupTable555Edges(self)
+
+        self.lt_edges_place_last_four = LookupTable555PlaceLastFourEdges(self)
+        self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
@@ -2682,237 +2875,6 @@ class RubiksCube555(RubiksCube):
 
         log.warning("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-    def get_two_edge_pattern_id(self):
-
-        # Build a string that represents the pattern of colors for the U-south and U-north edges
-        edges_of_interest = [52, 53, 54, 22, 23, 24, 2, 3, 4, 104, 103, 102]
-        sides_in_edges_of_interest = []
-        edges_of_interest_state = []
-
-        for square_index in edges_of_interest:
-            value = self.state[square_index]
-            edges_of_interest_state.append(value)
-
-            if value not in sides_in_edges_of_interest:
-                sides_in_edges_of_interest.append(value)
-
-        edges_of_interest_state = ''.join(edges_of_interest_state)
-        for (index, value) in enumerate(sides_in_edges_of_interest):
-            edges_of_interest_state = edges_of_interest_state.replace(value, str(index))
-        #log.info("edges_of_interest_state: %s" % edges_of_interest_state)
-
-        # 1, 5, 6, 7, and 8 are the scenarios where the outsided wings are paired...so these are the only ones
-        # you hit if you use the 4x4x4 edge solver to pair all of the outside wings first. 1 and 5 are handled
-        # via pair_checkboard_edge_555() which has been called by now so we do not need to look for those two scenarios here.
-        #
-        # See https://i.imgur.com/wsTqj.png for these patterns
-
-        # No 6 - Exchange places and flip both centers
-        if edges_of_interest_state in ('010202020101', '010232323101', '010222222101', '000121212000', '010121212101'):
-            pattern_id = 6
-            self.rotate_x_reverse()
-            self.rotate_z()
-
-        # No 7 - Exchange places, no flipping
-        elif edges_of_interest_state in ('010232101323', '010202101020', '010222101222', '010121101212', '000121000212'):
-            pattern_id = 7
-
-        # No 8 regular - Exchange places, flip one center
-        # The one that has to flip is at U-south
-        elif edges_of_interest_state in ('010232303121', '010121202111', '010222202121', '000121202010', '010202000121'):
-            pattern_id = 8
-
-        # No 8 - Exchange places, flip one center
-        # The one that has to flip is at U-north, it needs to be at U-south
-        elif edges_of_interest_state in ('010232121303', '000121010202', '010121111202', '010202121000', '010222121202'):
-            self.rotate_y()
-            self.rotate_y()
-            pattern_id = 8
-
-        # No 2 regular
-        elif edges_of_interest_state in ('001222110222', '010222101222', '001220110002', '000112000221', '001112110221', '001223110332'):
-            pattern_id = 2
-
-        # No 2 but the one at U-south needs to flip around
-        elif edges_of_interest_state in ('011122112001', '011233223001', '011200220001', '011222222001', '000122112000'):
-            self.rotate("F")
-            self.rotate("U'")
-            self.rotate("R")
-            self.rotate_y()
-            pattern_id = 2
-
-        # No 2 but the one at U-north needs to flip around
-        elif edges_of_interest_state in ('001220200011', '001223233011', '001222222011', '001112122011', '000112122000'):
-            self.rotate("U")
-            self.rotate("R")
-            self.rotate("U'")
-            self.rotate("B")
-            pattern_id = 2
-
-        # No 2 that just needs to be rotated around 180 degrees
-        elif edges_of_interest_state in ('011222100222', '011122100211', '011200100022', '011233100322', '000122000211'):
-            self.rotate_y()
-            self.rotate_y()
-            pattern_id = 2
-
-        # No 3 regular
-        elif edges_of_interest_state in ('001223213031', '000112102020', '001222212021', '001220210001', '001112112021'):
-            pattern_id = 3
-            self.rotate_x_reverse()
-            self.rotate_z()
-
-        # No 3 where it just needs to be rotated down and counter clockwise
-        elif edges_of_interest_state in ('010102122000', '011102122011', '012103133022', '012101111022', '012100100022'):
-            self.rotate_x_reverse()
-            self.rotate_z_reverse()
-            pattern_id = 3
-
-        # No 3 where it just needs to be rotated down, clockwise and the F-east edge needs to be flipped
-        elif edges_of_interest_state in ('001220100012', '001223130312', '000112020201', '001112120211', '001222120212'):
-            self.rotate_x_reverse()
-            self.rotate_z()
-            self.rotate("R")
-            self.rotate("F'")
-            self.rotate("U")
-            self.rotate("F")
-            pattern_id = 3
-
-        # No 3 where it just needs to be rotated down, counter clockwise and the F-east edge needs to be flipped
-        elif edges_of_interest_state in ('012221200122', '012321200133', '012121200111', '001210100022', '010201000122'):
-            self.rotate_x_reverse()
-            self.rotate_z_reverse()
-            self.rotate("R")
-            self.rotate("F'")
-            self.rotate("U")
-            self.rotate("F")
-            pattern_id = 3
-
-        # No 4 regular, rotate down and counter clockwise
-        elif edges_of_interest_state in ('011233203021', '000122102010', '011200200021', '011122102011', '011222202021'):
-            pattern_id = 4
-            self.rotate_x_reverse()
-            self.rotate_z_reverse()
-
-        # No 4 where it needs to be rotated down and clockwise
-        elif edges_of_interest_state in ('010201221000', '001210220001', '012321331002', '012221221002', '012121111002'):
-            self.rotate_x_reverse()
-            self.rotate_z()
-            pattern_id = 4
-
-        # No 4 where it needs to be rotated down, clockwise and F-west needs to be flipped
-        elif edges_of_interest_state in ('012103220331', '012100220001', '010102000221', '011102110221', '012101220111'):
-            self.rotate_x_reverse()
-            self.rotate_z()
-            self.rotate("L'")
-            self.rotate("F")
-            self.rotate("U'")
-            self.rotate("F'")
-            pattern_id = 4
-
-        # No 4 where it needs to be rotated down, counter clockwise and F-west needs to be flipped
-        elif edges_of_interest_state in ('011233120302', '011122110201', '000122010201', '011222120202', '011200120002'):
-            self.rotate_x_reverse()
-            self.rotate_z_reverse()
-            self.rotate("L'")
-            self.rotate("F")
-            self.rotate("U'")
-            self.rotate("F'")
-            pattern_id = 4
-
-        # No 9 regular
-        elif edges_of_interest_state in ('001210200021', '012221201022', '010201201020', '012121101012', '012321301032'):
-            pattern_id = 9
-
-        # No 9 where U-north needs to be flipped
-        elif edges_of_interest_state in ('001210120002', '012221220102', '012121210101', '012321230103', '010201020102'):
-            self.rotate("U")
-            self.rotate("R")
-            self.rotate("U'")
-            self.rotate("B")
-            pattern_id = 9
-
-        # No 10 regular
-        elif edges_of_interest_state in ('012103123032', '012100120002', '011102112021', '012101121012', '010102102020'):
-            pattern_id = 10
-
-        # No 10 where U-north needs to be flipped
-        elif edges_of_interest_state in ('011102120211', '012100200021', '012103230321', '012101210121', '010102020201'):
-            self.rotate("U")
-            self.rotate("R")
-            self.rotate("U'")
-            self.rotate("B")
-            pattern_id = 10
-
-        else:
-            self.print_cube()
-            raise SolveError("Could not determine 5x5x5 last two edges pattern ID for %s" % edges_of_interest_state)
-
-        return pattern_id
-
-    def position_last_two_edges_555(self):
-        """
-        One unpaired edge is at F-west, position it and its sister edge to U-north and U-south
-        """
-        if self.sideF.west_edge_paired():
-            raise SolveError("F-west should not be paired")
-
-        if not self.sideL.west_edge_paired():
-            self.rotate_z()
-
-        elif not self.sideB.south_edge_paired():
-            self.rotate("B'")
-            self.rotate_z()
-
-        elif not self.sideR.south_edge_paired():
-            self.rotate("D")
-            self.rotate("B'")
-            self.rotate_z()
-
-        elif not self.sideU.north_edge_paired():
-            self.rotate("F")
-
-        elif not self.sideU.east_edge_paired():
-            self.rotate("R'")
-            self.rotate_x()
-            self.rotate_y_reverse()
-
-        elif not self.sideU.south_edge_paired():
-            self.rotate("U2")
-            self.rotate("F")
-
-        elif not self.sideF.south_edge_paired():
-            self.rotate("D2")
-            self.rotate("B'")
-            self.rotate_z()
-
-        elif not self.sideL.south_edge_paired():
-            self.rotate("D'")
-            self.rotate("B'")
-            self.rotate_z()
-
-        elif not self.sideL.north_edge_paired():
-            self.rotate("U")
-            self.rotate("F")
-
-        elif not self.sideR.west_edge_paired():
-            self.rotate_z_reverse()
-            self.rotate_x()
-
-        elif not self.sideR.east_edge_paired():
-            self.rotate("R2")
-            self.rotate_z_reverse()
-            self.rotate_x()
-
-        else:
-            raise ImplementThis("sister_wing1 %s" % pformat(sister_wing1))
-
-        # Assert that U-north and U-south are not paired
-        if self.sideU.north_edge_paired():
-            raise SolveError("U-north should not be paired, sister_wing1 %s" % pformat(sister_wing1))
-
-        if self.sideU.north_edge_paired():
-            raise SolveError("U-south should not be paired, sister_wing1 %s" % pformat(sister_wing1))
-
     def position_sister_edges_555(self):
         """
         One unpaired edge is at F-west, position it and its sister edge to U-north and U-south
@@ -3013,89 +2975,89 @@ class RubiksCube555(RubiksCube):
         is always the case for the last two edges but it can happen prior to that
         as well.
         """
-        if pre_non_paired_edges_count == 2:
-            self.position_last_two_edges_555()
-            all_edges_should_pair = True
-        else:
-            if self.all_colors_on_two_edges():
-                self.position_sister_edges_555()
-                all_edges_should_pair = False
-            else:
-                return False
 
-        pattern_id = self.get_two_edge_pattern_id()
-        # log.info("pattern_id: %d" % pattern_id)
+        if not self.all_colors_on_two_edges():
+            return False
 
-        # No 2 on https://imgur.com/r/all/wsTqj
-        # 12 moves, pairs 2
-        if pattern_id == 2:
-            expected_pair_count = 2
+        # This will place the two sister edges at U-north and U-south from the original
+        # days when I used the https://i.imgur.com/wsTqj.png solutions. Rotate them
+        # down to F-west/F-east
+        self.position_sister_edges_555()
+        self.rotate_y()
+        self.rotate_x_reverse()
 
-            for step in "Lw' U2 Lw' U2 F2 Lw' F2 Rw U2 Rw' U2 Lw2".split():
-                self.rotate(step)
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
 
-        # No 3 on https://imgur.com/r/all/wsTqj
-        # 7 moves, pairs 3
-        elif pattern_id == 3:
-            expected_pair_count = 3
+        # Now we need either two solved edges at B-west/B-east or another pair of sister wings.
+        # For now keep it simple and just color those edges in as solved.
+        used_wings = [
+            (self.state[40], self.state[61]),
+            (self.state[61], self.state[40]),
+            (self.state[65], self.state[86]),
+            (self.state[86], self.state[65])
+        ]
 
-            for step in "Dw R F' U R' F Dw'".split():
-                self.rotate(step)
+        L_west_colorA = None
+        L_west_colorB = None
+        R_west_colorA = None
+        R_west_colorB = None
 
-        # No 4 on https://imgur.com/r/all/wsTqj
-        # 9 moves, pairs 4
-        elif pattern_id == 4:
-            expected_pair_count = 3
+        for (colorA, colorB) in (
+            ('U', 'B'),
+            ('U', 'L'),
+            ('U', 'R'),
+            ('U', 'F'),
+            ('L', 'B'),
+            ('L', 'F'),
+            ('R', 'B'),
+            ('R', 'F'),
+            ('D', 'B'),
+            ('D', 'L'),
+            ('D', 'R'),
+            ('D', 'F')):
 
-            for step in "Dw' L' U' L F' L F L' Dw".split():
-                self.rotate(step)
+            if (colorA, colorB) not in used_wings:
 
-        # 6, 7, and 8 are the scenarios where the outsided wings are paired...so these are
-        # the only ones you hit if you use the 4x4x4 edge solver to pair all of the outside
-        # wings first.
-        #
-        # No 6 on https://imgur.com/r/all/wsTqj
-        # 8 moves, pairs 4
-        elif pattern_id == 6:
-            expected_pair_count = 4
+                if L_west_colorA is None:
+                    L_west_colorA = colorA
+                    L_west_colorB = colorB
+                    used_wings.append((colorA, colorB))
+                    used_wings.append((colorB, colorA))
 
-            for step in "Uw2 Rw2 F2 Uw2 U2 F2 Rw2 Uw2".split():
-                self.rotate(step)
+                elif R_west_colorA is None:
+                    R_west_colorA = colorA
+                    R_west_colorB = colorB
+                    break
 
-        # No 7 on https://imgur.com/r/all/wsTqj
-        # 10 moves, pairs 4
-        elif pattern_id == 7:
-            expected_pair_count = 4
+                else:
+                    raise Exception("We should not be here")
 
-            for step in "F2 Rw D2 Rw' F2 U2 F2 Lw B2 Lw'".split():
-                self.rotate(step)
+        # recolor L-west
+        self.state[31] = L_west_colorA
+        self.state[36] = L_west_colorA
+        self.state[41] = L_west_colorA
+        self.state[110] = L_west_colorB
+        self.state[115] = L_west_colorB
+        self.state[120] = L_west_colorB
 
-        # No 8 on https://imgur.com/r/all/wsTqj
-        # 14 moves, pairs 4
-        elif pattern_id == 8:
-            expected_pair_count = 4
+        # recolor R-west
+        self.state[85] = R_west_colorA
+        self.state[90] = R_west_colorA
+        self.state[95] = R_west_colorA
+        self.state[106] = R_west_colorB
+        self.state[111] = R_west_colorB
+        self.state[116] = R_west_colorB
 
-            for step in "Rw2 B2 Rw' U2 Rw' U2 B2 Rw' B2 Rw B2 Rw' B2 Rw2".split():
-                self.rotate(step)
+        #self.print_cube()
+        self.lt_edges_pair_last_four.solve()
 
-        # No 9 on https://imgur.com/r/all/wsTqj
-        # 13 moves, pairs 4
-        elif pattern_id == 9:
-            expected_pair_count = 4
+        steps = self.solution[len(original_solution):]
+        self.state = original_state[:]
 
-            for step in "Lw U2 Lw2 U2 Lw' U2 Lw U2 Lw' U2 Lw2 U2 Lw".split():
-                self.rotate(step)
-
-        # No 10 on https://imgur.com/r/all/wsTqj
-        # 13 moves, pairs 4
-        elif pattern_id == 10:
-            expected_pair_count = 4
-
-            for step in "Rw' U2 Rw2 U2 Rw U2 Rw' U2 Rw U2 Rw2 U2 Rw'".split():
-                self.rotate(step)
-
-        else:
-            raise SolveError("unexpected pattern_id %d" % pattern_id)
+        for step in steps:
+            self.rotate(step)
 
         post_solution_len = self.get_solution_len_minus_rotates(self.solution)
         post_non_paired_edges_count = self.get_non_paired_edges_count()
@@ -3107,12 +3069,6 @@ class RubiksCube555(RubiksCube):
              post_solution_len - pre_solution_len,
              post_non_paired_wings_count,
              post_solution_len))
-
-        if wings_paired < expected_pair_count:
-            raise SolveError("Paired %d wings, expected to pair %d, pattern_id %d" % (wings_paired, expected_pair_count, pattern_id))
-
-        if all_edges_should_pair and post_non_paired_edges_count:
-            raise SolveError("All edges should be paired")
 
         return True
 
@@ -3201,182 +3157,179 @@ class RubiksCube555(RubiksCube):
         in 15 moves.
         """
 
-        if (self.state[35] == self.state[45] and
-            self.state[56] == self.state[66] and
-            self.state[56] == self.state[40] and
-            self.state[35] == self.state[61]):
-            is_checkerboard = True
+        # If the edge at F-west is not a checkboard return False
+        if not (self.state[35] == self.state[45] and
+                self.state[56] == self.state[66] and
+                self.state[56] == self.state[40] and
+                self.state[35] == self.state[61]):
+            return False
+
+        # F-east
+        if self.state[60] == self.state[86] and self.state[81] == self.state[65] and self.state[60] == self.state[70] and self.state[81] == self.state[91]:
+            pattern_id = 5
+            expected_pair_count = 4
+
+        # L-east
+        elif self.state[31] == self.state[115] and self.state[36] == self.state[110] and self.state[31] == self.state[41] and self.state[110] == self.state[120]:
+            self.rotate_y_reverse()
+            pattern_id = 5
+            expected_pair_count = 4
+
+        # U-east
+        elif self.state[10] == self.state[78] and self.state[15] == self.state[79] and self.state[10] == self.state[20] and self.state[77] == self.state[79]:
+            self.rotate("R'")
+            pattern_id = 5
+            expected_pair_count = 4
+
+        # D-east
+        elif self.state[135] == self.state[98] and self.state[140] == self.state[97] and self.state[135] == self.state[145] and self.state[97] == self.state[99]:
+            self.rotate("R")
+            pattern_id = 5
+            expected_pair_count = 4
+
+        # R-east
+        elif self.state[85] == self.state[111] and self.state[90] == self.state[106] and self.state[85] == self.state[95] and self.state[106] == self.state[116]:
+            self.rotate("R2")
+            pattern_id = 5
+            expected_pair_count = 4
+
+        # U-north
+        elif self.state[2] == self.state[103] and self.state[3] == self.state[104] and self.state[2] == self.state[4] and self.state[102] == self.state[104]:
+            self.rotate("U")
+            self.rotate("R'")
+            pattern_id = 5
+            expected_pair_count = 4
+
+        # U-south
+        elif self.state[52] == self.state[23] and self.state[22] == self.state[53] and self.state[52] == self.state[54] and self.state[22] == self.state[24]:
+            self.rotate("U'")
+            self.rotate("R'")
+            pattern_id = 5
+            expected_pair_count = 4
+
+        # U-west
+        elif self.state[6] == self.state[28] and self.state[11] == self.state[27] and self.state[6] == self.state[16] and self.state[27] == self.state[29]:
+            self.rotate("U2")
+            self.rotate("R'")
+            pattern_id = 5
+            expected_pair_count = 4
+
+        # D-north
+        elif self.state[72] == self.state[128] and self.state[73] == self.state[127] and self.state[72] == self.state[74] and self.state[127] == self.state[129]:
+            self.rotate("D")
+            self.rotate("R")
+            pattern_id = 5
+            expected_pair_count = 4
+
+        # D-south
+        elif self.state[147] == self.state[123] and self.state[148] == self.state[124] and self.state[147] == self.state[149] and self.state[122] == self.state[124]:
+            self.rotate("D'")
+            self.rotate("R")
+            pattern_id = 5
+            expected_pair_count = 4
+
+        # D-west
+        elif self.state[131] == self.state[48] and self.state[136] == self.state[49] and self.state[131] == self.state[141] and self.state[47] == self.state[49]:
+            self.rotate("D2")
+            self.rotate("R")
+            pattern_id = 5
+            expected_pair_count = 4
+
         else:
-            is_checkerboard = False
+            expected_pair_count = 2
 
-        if is_checkerboard:
-            expected_pair_count = None
-
-            # F-east
-            if self.state[60] == self.state[86] and self.state[81] == self.state[65] and self.state[60] == self.state[70] and self.state[81] == self.state[91]:
+            # Move any unpaired edge to F-east so we can use pattern_id 5 instead and save ourselves 6 steps
+            # It must be an edge without any paired wings.
+            if self.sideR.west_edge_non_paired_wings_count() == 2:
                 pattern_id = 5
-                expected_pair_count = 4
 
-            # L-east
-            elif self.state[31] == self.state[115] and self.state[36] == self.state[110] and self.state[31] == self.state[41] and self.state[110] == self.state[120]:
+            elif self.sideL.west_edge_non_paired_wings_count() == 2:
                 self.rotate_y_reverse()
+                self.rotate_z()
+                self.rotate_z()
                 pattern_id = 5
-                expected_pair_count = 4
 
-            # U-east
-            elif self.state[10] == self.state[78] and self.state[15] == self.state[79] and self.state[10] == self.state[20] and self.state[77] == self.state[79]:
+            elif self.sideR.north_edge_non_paired_wings_count() == 2:
                 self.rotate("R'")
                 pattern_id = 5
-                expected_pair_count = 4
 
-            # D-east
-            elif self.state[135] == self.state[98] and self.state[140] == self.state[97] and self.state[135] == self.state[145] and self.state[97] == self.state[99]:
-                self.rotate("R")
-                pattern_id = 5
-                expected_pair_count = 4
-
-            # R-east
-            elif self.state[85] == self.state[111] and self.state[90] == self.state[106] and self.state[85] == self.state[95] and self.state[106] == self.state[116]:
+            elif self.sideR.east_edge_non_paired_wings_count() == 2:
                 self.rotate("R2")
                 pattern_id = 5
-                expected_pair_count = 4
 
-            # U-north
-            elif self.state[2] == self.state[103] and self.state[3] == self.state[104] and self.state[2] == self.state[4] and self.state[102] == self.state[104]:
-                self.rotate("U")
-                self.rotate("R'")
+            elif self.sideR.south_edge_non_paired_wings_count() == 2:
+                self.rotate("R")
                 pattern_id = 5
-                expected_pair_count = 4
 
-            # U-south
-            elif self.state[52] == self.state[23] and self.state[22] == self.state[53] and self.state[52] == self.state[54] and self.state[22] == self.state[24]:
-                self.rotate("U'")
-                self.rotate("R'")
-                pattern_id = 5
-                expected_pair_count = 4
-
-            # U-west
-            elif self.state[6] == self.state[28] and self.state[11] == self.state[27] and self.state[6] == self.state[16] and self.state[27] == self.state[29]:
-                self.rotate("U2")
-                self.rotate("R'")
-                pattern_id = 5
-                expected_pair_count = 4
-
-            # D-north
-            elif self.state[72] == self.state[128] and self.state[73] == self.state[127] and self.state[72] == self.state[74] and self.state[127] == self.state[129]:
+            elif self.sideD.north_edge_non_paired_wings_count() == 2:
                 self.rotate("D")
                 self.rotate("R")
                 pattern_id = 5
-                expected_pair_count = 4
 
-            # D-south
-            elif self.state[147] == self.state[123] and self.state[148] == self.state[124] and self.state[147] == self.state[149] and self.state[122] == self.state[124]:
+            elif self.sideD.south_edge_non_paired_wings_count() == 2:
                 self.rotate("D'")
                 self.rotate("R")
                 pattern_id = 5
-                expected_pair_count = 4
 
-            # D-west
-            elif self.state[131] == self.state[48] and self.state[136] == self.state[49] and self.state[131] == self.state[141] and self.state[47] == self.state[49]:
+            elif self.sideD.east_edge_non_paired_wings_count() == 2:
                 self.rotate("D2")
                 self.rotate("R")
                 pattern_id = 5
-                expected_pair_count = 4
+
+            elif self.sideU.north_edge_non_paired_wings_count() == 2:
+                self.rotate("U")
+                self.rotate("R'")
+                pattern_id = 5
+
+            elif self.sideU.west_edge_non_paired_wings_count() == 2:
+                self.rotate("U2")
+                self.rotate("R'")
+                pattern_id = 5
+
+            elif self.sideU.south_edge_non_paired_wings_count() == 2:
+                self.rotate("U'")
+                self.rotate("R'")
+                pattern_id = 5
 
             else:
-                expected_pair_count = 2
+                pattern_id = 1
 
-                # Move any unpaired edge to F-east so we can use pattern_id 5 instead and save ourselves 6 steps
-                # It must be an edge without any paired wings.
-                if self.sideR.west_edge_non_paired_wings_count() == 2:
-                    pattern_id = 5
+        # Flip one middle wing in place
+        # No 1 at https://i.imgur.com/wsTqj.png
+        if pattern_id == 1:
+            self.rotate_x()
+            self.rotate_y_reverse()
 
-                elif self.sideL.west_edge_non_paired_wings_count() == 2:
-                    self.rotate_y_reverse()
-                    self.rotate_z()
-                    self.rotate_z()
-                    pattern_id = 5
+            for step in "Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2".split():
+                self.rotate(step)
 
-                elif self.sideR.north_edge_non_paired_wings_count() == 2:
-                    self.rotate("R'")
-                    pattern_id = 5
+        # Flip two middle wings in place
+        # No 5 at https://i.imgur.com/wsTqj.png
+        elif pattern_id == 5:
+            for step in "Dw Uw' R F' U R' F Dw' Uw".split():
+                self.rotate(step)
 
-                elif self.sideR.east_edge_non_paired_wings_count() == 2:
-                    self.rotate("R2")
-                    pattern_id = 5
+        else:
+            raise Exception("Invalid pattern_id %s" % pattern_id)
 
-                elif self.sideR.south_edge_non_paired_wings_count() == 2:
-                    self.rotate("R")
-                    pattern_id = 5
+        post_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        post_non_paired_edges_count = self.get_non_paired_edges_count()
+        post_non_paired_wings_count = self.get_non_paired_wings_count()
+        wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
 
-                elif self.sideD.north_edge_non_paired_wings_count() == 2:
-                    self.rotate("D")
-                    self.rotate("R")
-                    pattern_id = 5
+        log.info("pair_checkboard_edge_555() paired %d wings in %d moves (%d left to pair, %d steps in)" %
+            (wings_paired,
+             post_solution_len - pre_solution_len,
+             post_non_paired_wings_count,
+             post_solution_len))
 
-                elif self.sideD.south_edge_non_paired_wings_count() == 2:
-                    self.rotate("D'")
-                    self.rotate("R")
-                    pattern_id = 5
+        if not self.use_pair_outside_edges:
+            expected_pair_count = int(expected_pair_count/2)
 
-                elif self.sideD.east_edge_non_paired_wings_count() == 2:
-                    self.rotate("D2")
-                    self.rotate("R")
-                    pattern_id = 5
+        if wings_paired < expected_pair_count:
+            raise SolveError("Paired %d wings, expected to pair %d, pattern_id %d" % (wings_paired, expected_pair_count, pattern_id))
 
-                elif self.sideU.north_edge_non_paired_wings_count() == 2:
-                    self.rotate("U")
-                    self.rotate("R'")
-                    pattern_id = 5
-
-                elif self.sideU.west_edge_non_paired_wings_count() == 2:
-                    self.rotate("U2")
-                    self.rotate("R'")
-                    pattern_id = 5
-
-                elif self.sideU.south_edge_non_paired_wings_count() == 2:
-                    self.rotate("U'")
-                    self.rotate("R'")
-                    pattern_id = 5
-
-                else:
-                    pattern_id = 1
-
-            # Flip one middle wing in place
-            # No 1 at https://i.imgur.com/wsTqj.png
-            if pattern_id == 1:
-                self.rotate_x()
-                self.rotate_y_reverse()
-
-                for step in "Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2".split():
-                    self.rotate(step)
-
-            # Flip two middle wings in place
-            # No 5 at https://i.imgur.com/wsTqj.png
-            elif pattern_id == 5:
-                for step in "Dw Uw' R F' U R' F Dw' Uw".split():
-                    self.rotate(step)
-
-            post_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            post_non_paired_edges_count = self.get_non_paired_edges_count()
-            post_non_paired_wings_count = self.get_non_paired_wings_count()
-            wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
-
-            log.info("pair_checkboard_edge_555() paired %d wings in %d moves (%d left to pair, %d steps in)" %
-                (wings_paired,
-                 post_solution_len - pre_solution_len,
-                 post_non_paired_wings_count,
-                 post_solution_len))
-
-            if not self.use_pair_outside_edges:
-                expected_pair_count = int(expected_pair_count/2)
-
-            if wings_paired < expected_pair_count:
-                raise SolveError("Paired %d wings, expected to pair %d, pattern_id %d" % (wings_paired, expected_pair_count, pattern_id))
-
-            return True
-
-        return False
+        return True
 
     def pair_one_wing_555(self):
         original_solution_len = self.get_solution_len_minus_rotates(self.solution)
@@ -3509,6 +3462,23 @@ class RubiksCube555(RubiksCube):
         else:
             return True
 
+    def pair_last_four_555(self, pre_solution_len, pre_non_paired_wings_count):
+        self.lt_edges_place_last_four.solve()
+        self.lt_edges_pair_last_four.solve()
+
+        post_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        post_non_paired_edges_count = self.get_non_paired_edges_count()
+        post_non_paired_wings_count = self.get_non_paired_wings_count()
+        wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
+        edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
+
+        log.warning("pair_last_four_555() paired %d wings in %d moves (%d left to pair, current solution len %d)" %
+            (wings_paired,
+             post_solution_len - pre_solution_len,
+             post_non_paired_wings_count,
+             edge_solution_len))
+        return True
+
     def pair_edge(self, edge_to_pair):
 
         #log.info("pair_edge() with edge_to_pair %s" % pformat(edge_to_pair))
@@ -3517,13 +3487,17 @@ class RubiksCube555(RubiksCube):
         pre_non_paired_wings_count = self.get_non_paired_wings_count()
         self.rotate_edge_to_F_west(edge_to_pair[0])
 
+        log.info("pair_edge() for %s (%d wings and %d edges left to pair)" % (pformat(edge_to_pair), pre_non_paired_wings_count, pre_non_paired_edges_count))
+
+        if pre_non_paired_edges_count <= 4:
+            self.pair_last_four_555(pre_solution_len, pre_non_paired_wings_count)
+            return True
+
         # We need to rotate this around so the two unpaired wings are at the bottom of F-west
         if self.state[40] == self.state[45] and self.state[61] == self.state[66]:
             self.rotate_z()
             self.rotate_z()
             self.rotate_y()
-
-        log.info("pair_edge() for %s (%d wings and %d edges left to pair)" % (pformat(edge_to_pair), pre_non_paired_wings_count, pre_non_paired_edges_count))
 
         if self.sideF.west_edge_paired():
             raise SolveError("F-west should not be paired")
@@ -3559,69 +3533,6 @@ class RubiksCube555(RubiksCube):
             self.state = original_state[:]
             self.solution = original_solution[:]
             return False
-
-    def group_edges_bfs(self):
-        """
-        This works and finds a shorter solution than the DFS that is
-        group_edges_recursive() but it takes about 30x longer to do so
-        """
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        non_paired_edges = self.get_non_paired_edges()
-        workq = deque([])
-
-        for edge_to_pair in non_paired_edges:
-            workq.append([edge_to_pair,])
-
-        state_cache = {}
-        solution_cache = {}
-
-        while workq:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            edges_to_pair = workq.popleft()
-            edges_paired_ok = True
-            all_but_last_edges_to_pair = tuple(edges_to_pair[0:-1])
-
-            if all_but_last_edges_to_pair in state_cache:
-                self.state = state_cache[all_but_last_edges_to_pair][:]
-                self.solution = solution_cache[all_but_last_edges_to_pair][:]
-                edge_to_pair = edges_to_pair[-1]
-
-                if not self.pair_edge(edge_to_pair):
-                    edges_paired_ok = False
-            else:
-
-                for edge_to_pair in edges_to_pair:
-                    if not self.pair_edge(edge_to_pair):
-                        edges_paired_ok = False
-                        break
-
-            if edges_paired_ok:
-                state_cache[tuple(edges_to_pair)] = self.state[:]
-                solution_cache[tuple(edges_to_pair)] = self.solution[:]
-
-                non_paired_edges = self.get_non_paired_edges()
-
-                if non_paired_edges:
-                    for edge_to_pair in non_paired_edges:
-                        workq.append(edges_to_pair + [edge_to_pair])
-
-                else:
-                    # There are no edges left to pair, note how many steps it took pair them all
-                    edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-
-                    # Remember the solution that pairs all edges in the least number of moves
-                    if edge_solution_len < self.min_edge_solution_len:
-                        self.min_edge_solution_len = edge_solution_len
-                        self.min_edge_solution = self.solution[:]
-                        self.min_edge_solution_state = self.state[:]
-                        log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
-
-                        # since this is BFS we can go ahead and return
-                        return
 
     def group_edges_recursive(self, depth, edge_to_pair):
 
@@ -3663,25 +3574,29 @@ class RubiksCube555(RubiksCube):
         #   For our default 7x7x7 cube with 3.4 it takes 1.7s, 135/327 edge/total steps
         #   For our default 7x7x7 cube with 3.5 it takes 1.7s, 135/327 edge/total steps
 
-        if self.cpu_mode == 'max':
-            estimate_per_wing = 2.0
-        else:
-            estimate_per_wing = 3.4
+        # If there are 4-edges or fewer left to pair do not bother calculating if we should
+        # prune the branch, we can pair the last 4-edges via a lookup table.
+        if pre_non_paired_edges_count > 4:
 
-        # 9 moves is the least number of moves I know of that will pair the last 2 wings
-        if pre_non_paired_wings_count == 2:
-            estimated_solution_len = edge_solution_len + 9
-        elif pre_non_paired_wings_count == 3:
-            estimated_solution_len = edge_solution_len + 7
-        elif pre_non_paired_wings_count == 4:
-            estimated_solution_len = edge_solution_len + 8
-        else:
-            estimated_solution_len = edge_solution_len + (estimate_per_wing * pre_non_paired_wings_count)
+            if self.cpu_mode == 'max':
+                estimate_per_wing = 2.0
+            else:
+                estimate_per_wing = 2.5
 
-        if estimated_solution_len >= self.min_edge_solution_len:
-            log.info("PRUNE: %s non-paired wings, estimated_solution_len %d, %s + (%s * %d) > %s" %
-                (pre_non_paired_wings_count, estimated_solution_len, edge_solution_len, estimate_per_wing, pre_non_paired_wings_count, self.min_edge_solution_len))
-            return False
+            # 9 moves is the least number of moves I know of that will pair the last 2 wings
+            if pre_non_paired_wings_count == 2:
+                estimated_solution_len = edge_solution_len + 9
+            elif pre_non_paired_wings_count == 3:
+                estimated_solution_len = edge_solution_len + 7
+            elif pre_non_paired_wings_count == 4:
+                estimated_solution_len = edge_solution_len + 8
+            else:
+                estimated_solution_len = edge_solution_len + (estimate_per_wing * pre_non_paired_wings_count)
+
+            if estimated_solution_len >= self.min_edge_solution_len:
+                log.info("PRUNE: %s non-paired wings, estimated_solution_len %d, %s + (%s * %d) > %s" %
+                    (pre_non_paired_wings_count, estimated_solution_len, edge_solution_len, estimate_per_wing, pre_non_paired_wings_count, self.min_edge_solution_len))
+                return False
 
         # The only time this will be None is on the initial call
         if edge_to_pair:

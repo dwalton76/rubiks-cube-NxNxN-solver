@@ -1304,6 +1304,25 @@ class RubiksCube(object):
             return True
         return False
 
+    def edge_paired(self, wing_index):
+
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            if side.min_pos <= wing_index <= side.max_pos:
+
+                if wing_index in side.edge_north_pos:
+                    return side.north_edge_paired()
+
+                elif wing_index in side.edge_west_pos:
+                    return side.west_edge_paired()
+
+                elif wing_index in side.edge_south_pos:
+                    return side.south_edge_paired()
+
+                elif wing_index in side.edge_east_pos:
+                    return side.east_edge_paired()
+
+        raise Exception("Invalid wing_index %s" % wing_index)
+
     def find_edge(self, color1, color2):
         positions = []
         for (pos1, pos2) in self.all_edge_positions:

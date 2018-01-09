@@ -1763,7 +1763,7 @@ class LookupTable555PlaceLastFourEdges(LookupTable):
 
 class LookupTable555PairLastFourEdges(LookupTable):
     """
-    lookup-table-5x5x5-step106-pair-last-four-edges.txt
+    lookup-table-5x5x5-step103-pair-last-four-edges.txt
     ===================================================
     5 steps has 10 entries (0 percent, 0.00x previous step)
     6 steps has 45 entries (0 percent, 4.50x previous step)
@@ -1782,7 +1782,7 @@ class LookupTable555PairLastFourEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step106-pair-last-four-edges.txt',
+            'lookup-table-5x5x5-step103-pair-last-four-edges.txt',
             'sSSTTtuUUVVv',
             linecount=40319)
 

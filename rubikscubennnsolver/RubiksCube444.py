@@ -2204,8 +2204,8 @@ class RubiksCube444(RubiksCube):
         self.lt_init()
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        #use_recursive = True
-        use_recursive = False
+        use_recursive = True
+        #use_recursive = False
 
         # group_edges_recursive() is where the magic happens
         if use_recursive:

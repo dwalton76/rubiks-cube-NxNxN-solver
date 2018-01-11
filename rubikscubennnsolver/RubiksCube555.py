@@ -99,6 +99,8 @@ wing_str_map = {
     'FD' : 'DF',
 }
 
+class NoEdgeSolution(Exception):
+    pass
 
 def get_edges_paired_binary_signature(state):
     """
@@ -1904,6 +1906,7 @@ class LookupTable555Edges(LookupTable):
         # pair some of our unpaired edges and make some progress even though our current
         # state isn't in the lookup table.
         MAX_WING_PAIRS = 24
+        MAX_EDGES = 12
 
         # How many wings are paired?
         pre_paired_wings_count = MAX_WING_PAIRS - pre_non_paired_wings_count
@@ -1951,7 +1954,7 @@ class LookupTable555Edges(LookupTable):
                     loose_matching_entry.append((wing_pair_count, line))
 
         if not loose_matching_entry:
-            raise SolveError("could not find any edge solutions to apply to move forward")
+            raise NoEdgeSolution("could not find any edge solutions to apply to move forward")
 
         #log.warning("pre_paired_wings_count %d, loose_matching_entry(%d):\n%s" % (pre_paired_wings_count, len(loose_matching_entry), str(loose_matching_entry)))
         log.warning("pre_paired_wings_count %d, loose_matching_entry(%d)" % (pre_paired_wings_count, len(loose_matching_entry)))
@@ -1976,7 +1979,7 @@ class LookupTable555Edges(LookupTable):
             # If that got us to our state_target then phase1 alone paired all
             # of the edges...this is unlikely
             if phase1_edges_state in self.state_target:
-                best_score_states.append((MAX_WING_PAIRS, len(phase1_steps), phase1_edges_state_fake))
+                best_score_states.append((12, MAX_WING_PAIRS, len(phase1_steps), phase1_edges_state_fake))
 
             else:
                 # phase1_steps did not pair all edges so do another lookup and execute those steps
@@ -1992,17 +1995,21 @@ class LookupTable555Edges(LookupTable):
                     phase2_edges_state = phase2_signature + '_' + phase2_edges_state
 
                     if phase2_edges_state in self.state_target:
-                        best_score_states.append((MAX_WING_PAIRS, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
+                        best_score_states.append((12, MAX_WING_PAIRS, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
                     else:
                         post_non_paired_wings_count = self.parent.get_non_paired_wings_count()
+                        post_non_paired_edges_count = self.parent.get_non_paired_edges_count()
                         paired_wings_count = MAX_WING_PAIRS - post_non_paired_wings_count
+                        paired_edges_count = MAX_EDGES - post_non_paired_edges_count
 
-                        best_score_states.append((paired_wings_count, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
+                        best_score_states.append((paired_edges_count, paired_wings_count, len(phase1_steps) + len(phase2_steps), phase1_edges_state_fake))
                 else:
                     post_non_paired_wings_count = self.parent.get_non_paired_wings_count()
+                    post_non_paired_edges_count = self.parent.get_non_paired_edges_count()
                     paired_wings_count = MAX_WING_PAIRS - post_non_paired_wings_count
+                    paired_edges_count = MAX_EDGES - post_non_paired_edges_count
 
-                    best_score_states.append((paired_wings_count, len(phase1_steps), phase1_edges_state_fake))
+                    best_score_states.append((paired_edges_count, paired_wings_count, len(phase1_steps), phase1_edges_state_fake))
 
             self.parent.state = original_state[:]
             self.parent.solution = original_solution[:]
@@ -2012,7 +2019,7 @@ class LookupTable555Edges(LookupTable):
         log.info("best_entry: %s" % pformat(best_entry))
         log.info("\n\n\n\n\n\n")
 
-        return best_entry[2]
+        return best_entry[3]
 
 
 class LookupTable555TCenterSolve(LookupTable):
@@ -2091,7 +2098,6 @@ class RubiksCube555(RubiksCube):
 
     def __init__(self, state, order, colormap=None, debug=False):
         RubiksCube.__init__(self, state, order, colormap)
-        self.use_pair_outside_edges = False
 
         # This will be True when an even cube is using the 555 edge solver
         # to pair an orbit of edges
@@ -2599,8 +2605,6 @@ class RubiksCube555(RubiksCube):
                                     self.rotate(step)
 
                                 # 3Uw' Uw
-                                if self.use_pair_outside_edges:
-                                    self.rotate("Uw")
                                 self.rotate("Dw'")
                                 self.rotate_y_reverse()
 
@@ -2727,9 +2731,6 @@ class RubiksCube555(RubiksCube):
                                     self.rotate(step)
 
                                 # 3Uw Uw'
-                                if self.use_pair_outside_edges:
-                                    self.rotate("Uw'")
-
                                 self.rotate("Dw")
                                 self.rotate_y()
                                 post_non_paired_wings_count = self.get_non_paired_wings_count()
@@ -2769,111 +2770,6 @@ class RubiksCube555(RubiksCube):
                     return True
 
         return False
-
-    def pair_outside_edges(self):
-        fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
-        fake_444.cpu_mode = self.cpu_mode
-        fake_444.lt_init()
-
-        # The corners don't matter but it does make troubleshooting easier if they match
-        fake_444.state[1] = self.state[1]
-        fake_444.state[4] = self.state[5]
-        fake_444.state[13] = self.state[21]
-        fake_444.state[16] = self.state[25]
-        fake_444.state[17] = self.state[26]
-        fake_444.state[20] = self.state[30]
-        fake_444.state[29] = self.state[46]
-        fake_444.state[32] = self.state[50]
-        fake_444.state[33] = self.state[51]
-        fake_444.state[36] = self.state[55]
-        fake_444.state[45] = self.state[71]
-        fake_444.state[48] = self.state[75]
-        fake_444.state[49] = self.state[76]
-        fake_444.state[52] = self.state[80]
-        fake_444.state[61] = self.state[96]
-        fake_444.state[64] = self.state[100]
-        fake_444.state[65] = self.state[101]
-        fake_444.state[68] = self.state[105]
-        fake_444.state[77] = self.state[121]
-        fake_444.state[80] = self.state[125]
-        fake_444.state[81] = self.state[126]
-        fake_444.state[84] = self.state[130]
-        fake_444.state[93] = self.state[146]
-        fake_444.state[96] = self.state[150]
-
-        # Upper
-        fake_444.state[2] = self.state[2]
-        fake_444.state[3] = self.state[4]
-        fake_444.state[5] = self.state[6]
-        fake_444.state[8] = self.state[10]
-        fake_444.state[9] = self.state[16]
-        fake_444.state[12] = self.state[20]
-        fake_444.state[14] = self.state[22]
-        fake_444.state[15] = self.state[24]
-
-        # Left
-        fake_444.state[18] = self.state[27]
-        fake_444.state[19] = self.state[29]
-        fake_444.state[21] = self.state[31]
-        fake_444.state[24] = self.state[35]
-        fake_444.state[25] = self.state[41]
-        fake_444.state[28] = self.state[45]
-        fake_444.state[30] = self.state[47]
-        fake_444.state[31] = self.state[49]
-
-        # Front
-        fake_444.state[34] = self.state[52]
-        fake_444.state[35] = self.state[54]
-        fake_444.state[37] = self.state[56]
-        fake_444.state[40] = self.state[60]
-        fake_444.state[41] = self.state[66]
-        fake_444.state[44] = self.state[70]
-        fake_444.state[46] = self.state[72]
-        fake_444.state[47] = self.state[74]
-
-        # Right
-        fake_444.state[50] = self.state[77]
-        fake_444.state[51] = self.state[79]
-        fake_444.state[53] = self.state[81]
-        fake_444.state[56] = self.state[85]
-        fake_444.state[57] = self.state[91]
-        fake_444.state[60] = self.state[95]
-        fake_444.state[62] = self.state[97]
-        fake_444.state[63] = self.state[99]
-
-        # Back
-        fake_444.state[66] = self.state[102]
-        fake_444.state[67] = self.state[104]
-        fake_444.state[69] = self.state[106]
-        fake_444.state[72] = self.state[110]
-        fake_444.state[73] = self.state[116]
-        fake_444.state[76] = self.state[120]
-        fake_444.state[78] = self.state[122]
-        fake_444.state[79] = self.state[124]
-
-        # Down
-        fake_444.state[82] = self.state[127]
-        fake_444.state[83] = self.state[129]
-        fake_444.state[85] = self.state[131]
-        fake_444.state[88] = self.state[135]
-        fake_444.state[89] = self.state[141]
-        fake_444.state[92] = self.state[145]
-        fake_444.state[94] = self.state[147]
-        fake_444.state[95] = self.state[149]
-        fake_444.sanity_check()
-        fake_444.group_edges()
-
-        for step in fake_444.solution:
-            if step == 'EDGES_GROUPED':
-                continue
-
-            if step.startswith('4'):
-                step = '5' + step[1:]
-            elif step.startswith('3'):
-                raise ImplementThis('4x4x4 steps starts with 3')
-            self.rotate(step)
-
-        log.warning("Outside edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def position_sister_edges_555(self):
         """
@@ -3092,8 +2988,6 @@ class RubiksCube555(RubiksCube):
         # At this point we are setup to slice forward and pair 3 edges
         # log.info("PREP-FOR-3Uw-SLICE (end)....SLICE (begin), %d left to pair" % self.get_non_paired_wings_count())
         # 3Uw Uw'
-        if self.use_pair_outside_edges:
-            self.rotate("Uw'")
         self.rotate("Dw")
         self.rotate_y()
 
@@ -3126,8 +3020,6 @@ class RubiksCube555(RubiksCube):
 
         #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_wings_count())
         # 3Uw' Uw
-        if self.use_pair_outside_edges:
-            self.rotate("Uw")
         self.rotate("Dw'")
         self.rotate_y()
         #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
@@ -3323,8 +3215,7 @@ class RubiksCube555(RubiksCube):
              post_non_paired_wings_count,
              post_solution_len))
 
-        if not self.use_pair_outside_edges:
-            expected_pair_count = int(expected_pair_count/2)
+        expected_pair_count = int(expected_pair_count/2)
 
         if wings_paired < expected_pair_count:
             raise SolveError("Paired %d wings, expected to pair %d, pattern_id %d" % (wings_paired, expected_pair_count, pattern_id))
@@ -3414,8 +3305,6 @@ class RubiksCube555(RubiksCube):
 
             if sister_wing[0] == 65:
                 # 3Uw Uw'
-                if self.use_pair_outside_edges:
-                    self.rotate("Uw'")
                 self.rotate("Dw")
                 self.rotate_y()
 
@@ -3439,8 +3328,6 @@ class RubiksCube555(RubiksCube):
                 #self.print_cube()
 
                 # 3Uw' Uw
-                if self.use_pair_outside_edges:
-                    self.rotate("Uw")
                 self.rotate("Dw'")
                 self.rotate_y_reverse()
                 #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
@@ -3452,13 +3339,8 @@ class RubiksCube555(RubiksCube):
         wings_paired = original_non_paired_wings_count - current_non_paired_wings_count
         log.info("pair_one_wing_555() paired %d wings, added %d steps" % (wings_paired, self.get_solution_len_minus_rotates(self.solution) - original_solution_len))
 
-        if self.use_pair_outside_edges:
-            if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
-                raise SolveError("outside edges have been broken")
-
         if wings_paired < 1:
             return False
-            #raise SolveError("Paired %d wings" % wings_paired)
         else:
             return True
 
@@ -3501,10 +3383,6 @@ class RubiksCube555(RubiksCube):
 
         if self.sideF.west_edge_paired():
             raise SolveError("F-west should not be paired")
-
-        if self.use_pair_outside_edges:
-            if self.state[35] != self.state[45] or self.state[56] != self.state[66]:
-                raise SolveError("outside edges have been broken")
 
         if self.pair_checkboard_edge_555(pre_solution_len, pre_non_paired_wings_count):
             return True
@@ -3644,23 +3522,16 @@ class RubiksCube555(RubiksCube):
 
         depth = 0
         self.lt_init()
-
-        if self.use_pair_outside_edges:
-            self.pair_outside_edges()
-            self.print_cube()
-            log.info('outside edges paired, %d steps in' % self.get_solution_len_minus_rotates(self.solution))
-
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
+        self.min_edge_solution_len = 9999
+        self.min_edge_solution = None
+        self.min_edge_solution_state = None
         use_recursive = True
         #use_recursive = False
 
         if use_recursive:
-            self.min_edge_solution_len = 9999
-            self.min_edge_solution = None
-            self.min_edge_solution_state = None
             self.group_edges_recursive(depth, None)
-            #self.group_edges_bfs()
             self.state = self.min_edge_solution_state[:]
             self.solution = self.min_edge_solution[:]
         else:
@@ -3674,7 +3545,13 @@ class RubiksCube555(RubiksCube):
                 non_paired_edges_count = self.get_non_paired_edges_count()
                 log.info("%s: %d wings not paired, %d edges not paired" % (self, non_paired_wings_count, non_paired_edges_count))
 
-                self.lt_edges.solve()
+                try:
+                    self.lt_edges.solve()
+                except NoEdgeSolution:
+                    log.warning("caught NoEdgeSolution")
+                    self.group_edges_recursive(depth, None)
+                    self.state = self.min_edge_solution_state[:]
+                    self.solution = self.min_edge_solution[:]
 
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')

@@ -39,9 +39,15 @@ def get_characters_common_count(strA, strB, start_index):
     """
     result = 0
 
-    for index in range(start_index, len(strA)):
-        if strA[index] == strB[index]:
-            result += 1
+    try:
+        for index in range(start_index, len(strA)):
+            if strA[index] == strB[index]:
+                result += 1
+    except IndexError:
+        log.info("strA: %s" % strA)
+        log.info("strB: %s" % strB)
+        log.info("start_index: %s" % start_index)
+        raise
 
     return result
 
@@ -156,15 +162,18 @@ def steps_on_same_face_and_layer(prev_step, step):
 def get_best_entry(foo):
     best_entry = None
     best_paired_edges = None
+    best_paired_wings = None
     best_steps_len = None
 
-    for (paired_edges, steps_len, state) in foo:
+    for (paired_edges, paired_wings, steps_len, state) in foo:
         if (best_entry is None or
             paired_edges > best_paired_edges or
-            (paired_edges == best_paired_edges and steps_len < best_steps_len)):
+            (paired_edges == best_paired_edges and paired_wings > best_paired_wings) or
+            (paired_edges == best_paired_edges and paired_wings == best_paired_wings and steps_len < best_steps_len)):
 
-            best_entry = (paired_edges, steps_len, state)
+            best_entry = (paired_edges, paired_wings, steps_len, state)
             best_paired_edges = paired_edges
+            best_paired_wings = paired_wings
             best_steps_len = steps_len
     return best_entry
 

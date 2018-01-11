@@ -511,3 +511,42 @@ class Side(object):
                 return True
 
         return False
+
+    def _edge_colors(self, edge_positions, return_none_if_paired):
+        results = []
+        prev_pos1_value = None
+        prev_pos2_value = None
+        all_paired = True
+
+        for pos1 in edge_positions:
+            pos2 = self.get_wing_partner(pos1)
+            pos1_value = self.parent.state[pos1]
+            pos2_value = self.parent.state[pos2]
+            wing_str = ''.join(sorted([pos1_value, pos2_value]))
+
+            if wing_str not in results:
+                results.append(wing_str)
+
+            if prev_pos1_value is not None:
+                if pos1_value != prev_pos1_value or pos2_value != prev_pos2_value:
+                    all_paired = False
+
+            prev_pos1_value = pos1_value
+            prev_pos2_value = pos2_value
+
+        if return_none_if_paired and all_paired:
+            results = []
+
+        return results
+
+    def edge_colors_north(self, return_none_if_paired=False):
+        return self._edge_colors(self.edge_north_pos, return_none_if_paired)
+
+    def edge_colors_west(self, return_none_if_paired=False):
+        return self._edge_colors(self.edge_west_pos, return_none_if_paired)
+
+    def edge_colors_east(self, return_none_if_paired=False):
+        return self._edge_colors(self.edge_east_pos, return_none_if_paired)
+
+    def edge_colors_south(self, return_none_if_paired=False):
+        return self._edge_colors(self.edge_south_pos, return_none_if_paired)

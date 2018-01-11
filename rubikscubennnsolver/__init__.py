@@ -1,6 +1,6 @@
 
 from copy import copy
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis
 import itertools
@@ -348,6 +348,62 @@ def number_ranges(i):
     for a, b in itertools.groupby(enumerate(i), lambda x_y: x_y[1] - x_y[0]):
         b = list(b)
         yield b[0][1], b[-1][1]
+
+
+def edges_with_color(colors, color):
+    """
+    {'D-east': ['DL', 'FL', 'BR'],
+     'D-north': ['FR', 'RU', 'BD'],
+     'D-south': ['FL', 'FR', 'LU'],
+     'D-west': ['FU', 'DR', 'DL'],
+     'L-east': ['BL', 'BR', 'DF'],
+     'L-west': ['BR', 'DF', 'BL'],
+     'R-east': ['RU', 'FU', 'BU'],
+     'R-west': ['RU', 'BU'],
+     'U-east': ['LU', 'DL', 'DR'],
+     'U-north': ['DR', 'BD', 'FR'],
+     'U-south': ['BD', 'LU', 'FU'],
+     'U-west': ['FL', 'BL', 'DF']}
+
+    """
+    results = []
+
+    for (edge_name, edge_colors) in colors.items():
+        if color in edge_colors:
+            results.append(edge_name)
+
+    #log.info("edges_with_color for %s returning %s" % (color, pformat(results)))
+    return results
+
+
+def edges_involved(colors, edge_name):
+
+    # If the edge is already paired the colors list will be empty and we can return an empty list
+    if not colors[edge_name]:
+        return []
+
+    results = [edge_name, ]
+    workq = deque()
+    colors_visited = set()
+
+    for color in colors[edge_name]:
+        workq.append(color)
+        colors_visited.update(color)
+
+    while workq:
+        color = workq.popleft()
+
+        for tmp_edge_name in edges_with_color(colors, color):
+            if tmp_edge_name not in results:
+                results.append(tmp_edge_name)
+
+                for color in colors[tmp_edge_name]:
+                    if color not in colors_visited:
+                        workq.append(color)
+                        colors_visited.update(color)
+
+    #log.info("edges_involved for edge_name %s returning %s" % (edge_name, pformat(results)))
+    return list(sorted(results))
 
 
 class RubiksCube(object):
@@ -1322,6 +1378,95 @@ class RubiksCube(object):
                     return side.east_edge_paired()
 
         raise Exception("Invalid wing_index %s" % wing_index)
+
+    def get_edge_name(self, square_index):
+        side = self.get_side_for_index(square_index)
+        partner_index = side.get_wing_partner(square_index)
+        square1 = self.state[square_index]
+        square2 = self.state[partner_index]
+
+        if square_index in self.sideU.edge_north_pos or partner_index in self.sideU.edge_north_pos:
+            return 'U-north'
+
+        if square_index in self.sideU.edge_west_pos or partner_index in self.sideU.edge_west_pos:
+            return 'U-west'
+
+        if square_index in self.sideU.edge_east_pos or partner_index in self.sideU.edge_east_pos:
+            return 'U-east'
+
+        if square_index in self.sideU.edge_south_pos or partner_index in self.sideU.edge_south_pos:
+            return 'U-south'
+
+        if square_index in self.sideL.edge_west_pos or partner_index in self.sideL.edge_west_pos:
+            return 'L-west'
+
+        if square_index in self.sideL.edge_east_pos or partner_index in self.sideL.edge_east_pos:
+            return 'L-east'
+
+        if square_index in self.sideR.edge_west_pos or partner_index in self.sideR.edge_west_pos:
+            return 'R-west'
+
+        if square_index in self.sideR.edge_east_pos or partner_index in self.sideR.edge_east_pos:
+            return 'R-east'
+
+        if square_index in self.sideD.edge_north_pos or partner_index in self.sideD.edge_north_pos:
+            return 'D-north'
+
+        if square_index in self.sideD.edge_west_pos or partner_index in self.sideD.edge_west_pos:
+            return 'D-west'
+
+        if square_index in self.sideD.edge_east_pos or partner_index in self.sideD.edge_east_pos:
+            return 'D-east'
+
+        if square_index in self.sideD.edge_south_pos or partner_index in self.sideD.edge_south_pos:
+            return 'D-south'
+
+    def edges_involved(self):
+        colors = {
+            'U-north' : self.sideU.edge_colors_north(True),
+            'U-west' : self.sideU.edge_colors_west(True),
+            'U-east' : self.sideU.edge_colors_east(True),
+            'U-south' : self.sideU.edge_colors_south(True),
+            'L-west' : self.sideL.edge_colors_west(True),
+            'L-east' : self.sideL.edge_colors_east(True),
+            'R-west' : self.sideR.edge_colors_west(True),
+            'R-east' : self.sideR.edge_colors_east(True),
+            'D-north' : self.sideD.edge_colors_north(True),
+            'D-west' : self.sideD.edge_colors_west(True),
+            'D-east' : self.sideD.edge_colors_east(True),
+            'D-south' : self.sideD.edge_colors_south(True),
+        }
+        #log.info("edges_involved colors\n%s\n" % pformat(colors))
+
+        results = {
+            'U-north' : edges_involved(colors, 'U-north'),
+            'U-west' : edges_involved(colors, 'U-west'),
+            'U-east' : edges_involved(colors, 'U-east'),
+            'U-south' : edges_involved(colors, 'U-south'),
+            'L-west' : edges_involved(colors, 'L-west'),
+            'L-east' : edges_involved(colors, 'L-east'),
+            'R-west' : edges_involved(colors, 'R-west'),
+            'R-east' : edges_involved(colors, 'R-east'),
+            'D-north' : edges_involved(colors, 'D-north'),
+            'D-west' : edges_involved(colors, 'D-west'),
+            'D-east' : edges_involved(colors, 'D-east'),
+            'D-south' : edges_involved(colors, 'D-south')
+        }
+
+        #log.info("edges_involved results:\n%s\n" % pformat(results))
+        return results
+
+    def edges_involved_count(self, edge_to_pair):
+        #log.info("\n\n\n\n\n\n\n\n\n\n\n")
+        #self.print_cube()
+        edge_name = self.get_edge_name(edge_to_pair[0][0])
+        #log.info("edge_to_pair %s is on %s" % (pformat(edge_to_pair), edge_name))
+
+        # dwalton
+        foo = self.edges_involved()
+        #input("PAUSED")
+
+        return len(foo[edge_name])
 
     def find_edge(self, color1, color2):
         positions = []
@@ -4425,7 +4570,6 @@ div#page_holder {
             self.rotate_y_reverse()
             self.rotate_x()
 
-            # dwalton
             if front_side_name == 'U':
                 self.rotate_y()
                 self.rotate_y()

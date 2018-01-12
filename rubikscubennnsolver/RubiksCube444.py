@@ -997,16 +997,15 @@ class LookupTable444Edges(LookupTable):
     lookup-table-4x4x4-step100-edges.txt
     ====================================
     2 steps has 1 entries (0 percent, 0.00x previous step)
-    5 steps has 576 entries (0 percent, 576.00x previous step)
-    6 steps has 3,187 entries (0 percent, 5.53x previous step)
-    7 steps has 21,131 entries (0 percent, 6.63x previous step)
-    8 steps has 203,224 entries (0 percent, 9.62x previous step)
-    9 steps has 1,448,156 entries (4 percent, 7.13x previous step)
-    10 steps has 2,820,171 entries (8 percent, 1.95x previous step)
-    11 steps has 28,448,803 entries (86 percent, 10.09x previous step)
+    5 steps has 432 entries (0 percent, 432.00x previous step)
+    6 steps has 2,053 entries (0 percent, 4.75x previous step)
+    7 steps has 15,475 entries (0 percent, 7.54x previous step)
+    8 steps has 151,530 entries (2 percent, 9.79x previous step)
+    9 steps has 991,027 entries (13 percent, 6.54x previous step)
+    10 steps has 6,203,073 entries (84 percent, 6.26x previous step)
 
-    Total: 32,945,249 entries
-    Average: 10.804825 moves
+    Total: 7,363,591 entries
+    Average: 9.816544 moves
     """
 
     def __init__(self, parent):
@@ -1015,9 +1014,7 @@ class LookupTable444Edges(LookupTable):
             parent,
             'lookup-table-4x4x4-step100-edges.txt',
             '111111111111_10425376a8b9ecfdhgkiljnm',
-            #linecount=515757) # 9-deep
-            #linecount=3335928) # 10-deep
-            linecount=32945249) # 11-deep
+            linecount=7363591) # 10-deep
 
     def state(self):
         """
@@ -1077,11 +1074,56 @@ class LookupTable444Edges(LookupTable):
         loose_matching_entry = []
         max_wing_pair_count = None
 
+        '''
+        Thoughts on this:
+        - find_edge_entries_with_signature is fast but cannot always find a solution
+          in two passes, if it has to go to a third pass the solutions jump ~27 moves :(
+
+2018-01-12 09:03:56,313      __init__.py     INFO: group center solution (21 steps in)
+2018-01-12 09:03:56,315 RubiksCube444.py     INFO: 4x4x4-step100-edges: signature 000000000000, 12 unpaired edges
+2018-01-12 09:03:56,315 RubiksCube444.py     INFO: 4x4x4-step100-edges: find_edge_entries_with_signature start
+2018-01-12 09:03:56,364 RubiksCube444.py     INFO: 4x4x4-step100-edges: find_edge_entries_with_signature end (found 19706)
+2018-01-12 09:03:56,422 RubiksCube444.py  WARNING: pre_paired_edges_count 0, loose_matching_entry 68
+2018-01-12 09:03:56,461 RubiksCube444.py     INFO: best_entry: (4, 4, 10, '000000000000_baj9ikghl140dmcn673528ef')
+2018-01-12 09:03:56,462 RubiksCube444.py     INFO: 4x4x4-step100-edges: signature 101000000011, 8 unpaired edges
+2018-01-12 09:03:56,462 RubiksCube444.py     INFO: 4x4x4-step100-edges: find_edge_entries_with_signature start
+2018-01-12 09:03:56,468 RubiksCube444.py     INFO: 4x4x4-step100-edges: find_edge_entries_with_signature end (found 2718)
+2018-01-12 09:03:56,477 RubiksCube444.py  WARNING: pre_paired_edges_count 4, loose_matching_entry 1088
+2018-01-12 09:03:57,085 RubiksCube444.py     INFO: best_entry: (12, 12, 17, '101000000011_10if53abh6g7kde4982cljnm')
+2018-01-12 09:03:57,085 RubiksCube444.py     INFO: 4x4x4-step100-edges: signature 100110111001, 5 unpaired edges
+2018-01-12 09:03:57,086 RubiksCube444.py     INFO: 4x4x4-step100-edges: signature 111111111111, 0 unpaired edges
+2018-01-12 09:03:57,086 RubiksCube444.py     INFO: 4x4x4: edges paired, 48 steps in
+
+
+        - find_edge_entries_with_loose_signature is slow but can almost always find a
+          solution in two passes which is about 20 moves...20 is REALLY good
+
+2018-01-12 08:56:18,166      __init__.py     INFO: group center solution (21 steps in)
+2018-01-12 08:56:18,167 RubiksCube444.py     INFO: 4x4x4-step100-edges: signature 000000000000, 12 unpaired edges
+2018-01-12 08:56:18,167 RubiksCube444.py     INFO: 4x4x4-step100-edges: find_edge_entries_with_signature start
+2018-01-12 08:56:20,433 RubiksCube444.py     INFO: 4x4x4-step100-edges: find_edge_entries_with_signature end (found 7363591)
+2018-01-12 08:56:40,643 RubiksCube444.py  WARNING: pre_paired_edges_count 0, loose_matching_entry 2266
+2018-01-12 08:56:41,673 RubiksCube444.py     INFO: best_entry: (12, 12, 20, '000000011110_7a59n280614cbmfdhgkilje3')
+2018-01-12 08:56:41,849 RubiksCube444.py     INFO: 4x4x4-step100-edges: signature 101001101001, 6 unpaired edges
+2018-01-12 08:56:41,850 RubiksCube444.py     INFO: 4x4x4-step100-edges: signature 111111111111, 0 unpaired edges
+2018-01-12 08:56:41,850 RubiksCube444.py     INFO: 4x4x4: edges paired, 41 steps in
+
+        - we need to first attempt find_edge_entries_with_signature(), if it finds
+          a solution in two passes we are done, if not then use find_edge_entries_with_loose_signature
+
+        - fix LookupTable to download parts aa, ab, and ac of lookup-table-4x4x4-step100-edges.txt.gz
+
+        - maybe parts of loose could be written in C to speed it up? The string comparison stuff seems really slow
+        - loose could search until it finds a PLL free two pass solution and then stop? That would be worth trying.
+
+        # dwalton remove the "2 steps has 1 entries" entry
+        '''
         # This runs much faster (than find_edge_entries_with_loose_signature) because
         # it is only looking over the signatures that are an exact match instead of a
         # loose match. It produces slightly longer solutions but in about 1/6 the time.
         log.info("%s: find_edge_entries_with_signature start" % self)
         lines_to_examine = self.find_edge_entries_with_signature(signature)
+        #lines_to_examine = self.find_edge_entries_with_loose_signature(signature)
         log.info("%s: find_edge_entries_with_signature end (found %d)" % (self, len(lines_to_examine)))
 
         for line in lines_to_examine:
@@ -2204,8 +2246,8 @@ class RubiksCube444(RubiksCube):
         self.lt_init()
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        use_recursive = True
-        #use_recursive = False
+        #use_recursive = True
+        use_recursive = False
 
         # group_edges_recursive() is where the magic happens
         if use_recursive:

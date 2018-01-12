@@ -1468,6 +1468,25 @@ class RubiksCube(object):
 
         return len(foo[edge_name])
 
+    def get_edge_to_pair_via_last_four_edges_table(self):
+        # dwalton
+        edges_involved = self.edges_involved()
+        #log.info("edges_involved\n%s\n" % pformat(edges_involved))
+
+        for (edge_name, edge_cycles) in edges_involved.items():
+            if len(edge_cycles) == 4:
+                return edge_name
+
+        for (edge_name, edge_cycles) in edges_involved.items():
+            if len(edge_cycles) == 3:
+                return edge_name
+
+        for (edge_name, edge_cycles) in edges_involved.items():
+            if len(edge_cycles) == 2:
+                return edge_name
+
+        return None
+
     def find_edge(self, color1, color2):
         positions = []
         for (pos1, pos2) in self.all_edge_positions:

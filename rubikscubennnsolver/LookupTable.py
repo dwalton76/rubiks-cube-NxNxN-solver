@@ -166,6 +166,10 @@ def get_best_entry(foo):
     best_steps_len = None
 
     for (paired_edges, paired_wings, steps_len, state) in foo:
+        #if (best_entry is None or
+        #    paired_wings > best_paired_wings or
+        #    (paired_wings == best_paired_wings and steps_len < best_steps_len)):
+
         if (best_entry is None or
             paired_edges > best_paired_edges or
             (paired_edges == best_paired_edges and paired_wings > best_paired_wings) or

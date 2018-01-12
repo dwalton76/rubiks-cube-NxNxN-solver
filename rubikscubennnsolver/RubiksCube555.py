@@ -1847,6 +1847,16 @@ class LookupTable555Edges(LookupTable):
     9 steps has 4588466 entries (62 percent, 3.19x previous step)
 
     Total: 7393602 entries
+
+    5 steps has 126,033 entries (0 percent, 0.00x previous step)
+    6 steps has 735,318 entries (1 percent, 5.83x previous step)
+    7 steps has 2,783,133 entries (4 percent, 3.78x previous step)
+    8 steps has 7,731,009 entries (11 percent, 2.78x previous step)
+    9 steps has 13,050,599 entries (18 percent, 1.69x previous step)
+    10 steps has 44,335,611 entries (64 percent, 3.40x previous step)
+
+    Total: 68761703 entries
+    Average: 9.411977 moves
     """
 
     def __init__(self, parent):
@@ -1855,7 +1865,8 @@ class LookupTable555Edges(LookupTable):
             parent,
             'lookup-table-5x5x5-step100-edges.txt',
             '111111111111111111111111_OOopPPQQqrRRsSSTTtuUUVVvWWwxXXYYyzZZ',
-            linecount=7393602)
+            # linecount=7393602) # 9-deep
+            linecount=68761703) # 10-deep
 
     def state(self):
         """
@@ -1917,17 +1928,19 @@ class LookupTable555Edges(LookupTable):
         loose_matching_entry = []
         max_wing_pair_count = None
 
-        log.info("%s: find_edge_entries_with_loose_signature start" % self)
-        lines_to_examine = self.find_edge_entries_with_loose_signature(signature)
-        log.info("%s: find_edge_entries_with_loose_signature end (found %d)" % (self, len(lines_to_examine)))
-
         # This runs much faster (than find_edge_entries_with_loose_signature) because
         # it is only looking over the signatures that are an exact match instead of a
         # loose match. It produces longer solutions though...need to think about how
         # to find some middle ground between this and loose matching.
-        #log.info("%s: find_edge_entries_with_signature start" % self)
-        #lines_to_examine = self.find_edge_entries_with_signature(signature)
-        #log.info("%s: find_edge_entries_with_signature end (found %d)" % (self, len(lines_to_examine)))
+        log.info("%s: find_edge_entries_with_signature start" % self)
+        lines_to_examine = self.find_edge_entries_with_signature(signature)
+        log.info("%s: find_edge_entries_with_signature end (found %d)" % (self, len(lines_to_examine)))
+
+        if not lines_to_examine:
+            log.info("%s: find_edge_entries_with_loose_signature start" % self)
+            lines_to_examine = self.find_edge_entries_with_loose_signature(signature)
+            log.info("%s: find_edge_entries_with_loose_signature end (found %d)" % (self, len(lines_to_examine)))
+
 
         for line in lines_to_examine:
 
@@ -1940,25 +1953,31 @@ class LookupTable555Edges(LookupTable):
             wing_pair_count = int(common_count/2)
 
             # Only bother with this entry if it will pair more wings than are currently paired
-            if wing_pair_count > pre_paired_wings_count:
+            if wing_pair_count >= pre_paired_wings_count:
 
                 if max_wing_pair_count is None:
                     loose_matching_entry.append((wing_pair_count, line))
                     max_wing_pair_count = wing_pair_count
 
                 elif wing_pair_count > max_wing_pair_count:
-                    loose_matching_entry = []
+                    #loose_matching_entry = []
                     loose_matching_entry.append((wing_pair_count, line))
                     max_wing_pair_count = wing_pair_count
+                    log.info("NEW MAX: %d" % max_wing_pair_count)
 
+                    if pre_paired_wings_count <= 1 and max_wing_pair_count == 8:
+                        break
+
+                #elif wing_pair_count == max_wing_pair_count or wing_pair_count >= 8:
                 elif wing_pair_count == max_wing_pair_count:
                     loose_matching_entry.append((wing_pair_count, line))
 
         if not loose_matching_entry:
-            raise NoEdgeSolution("could not find any edge solutions to apply to move forward")
+            raise Exception("could not find any edge solutions to apply to move forward")
+            #raise NoEdgeSolution("could not find any edge solutions to apply to move forward")
 
-        #log.warning("pre_paired_wings_count %d, loose_matching_entry(%d):\n%s" % (pre_paired_wings_count, len(loose_matching_entry), str(loose_matching_entry)))
-        log.warning("pre_paired_wings_count %d, loose_matching_entry(%d)" % (pre_paired_wings_count, len(loose_matching_entry)))
+        log.warning("pre_paired_wings_count %d, loose_matching_entry(%d):\n%s" % (pre_paired_wings_count, len(loose_matching_entry), str(loose_matching_entry)))
+        #log.warning("pre_paired_wings_count %d, loose_matching_entry(%d)" % (pre_paired_wings_count, len(loose_matching_entry)))
         original_state = self.parent.state[:]
         original_solution = self.parent.solution[:]
         best_score_states = []
@@ -3261,7 +3280,11 @@ class RubiksCube555(RubiksCube):
         original_solution = self.solution[:]
 
         # Find the four edges involved and get them moved to LR east and west
-        edge_name = self.get_edge_name(edge_to_pair[0][0])
+        if isinstance(edge_to_pair, str):
+            edge_name = edge_to_pair
+        else:
+            edge_name = self.get_edge_name(edge_to_pair[0][0])
+
         edges_to_place = self.find_four_edges_555(edge_name)
         self.place_four_edges_555(edges_to_place)
 
@@ -3303,6 +3326,7 @@ class RubiksCube555(RubiksCube):
             self.pair_last_four_edges_555(pre_solution_len, pre_non_paired_wings_count)
             return True
 
+        # dwalton L4E reference
         involved_count = self.edges_involved_count(edge_to_pair)
 
         if involved_count <= 4:
@@ -3456,15 +3480,45 @@ class RubiksCube555(RubiksCube):
             self.solution = self.min_edge_solution[:]
         else:
             while True:
-
-                # If all edges are paired break out of the loop
-                if self.edges_paired():
-                    break
-
                 non_paired_wings_count = self.get_non_paired_wings_count()
                 non_paired_edges_count = self.get_non_paired_edges_count()
+                pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
                 log.info("%s: %d wings not paired, %d edges not paired" % (self, non_paired_wings_count, non_paired_edges_count))
+                self.print_cube()
 
+                # If all edges are paired break out of the loop
+                if not non_paired_edges_count:
+                    break
+
+                # If we are down to the last 4 edges we have a lookup table for that
+                if non_paired_edges_count <= 4:
+                    self.pair_last_four_edges_555(pre_solution_len, non_paired_wings_count)
+                    break
+
+                # dwalton
+                # If we can use the L4E table, use it
+                edge_name_to_pair = self.get_edge_to_pair_via_last_four_edges_table()
+                log.warning("edge_name_to_pair: %s" % edge_name_to_pair)
+
+                if edge_name_to_pair:
+                    self.pair_four_edges_555(pre_solution_len, non_paired_wings_count, edge_name_to_pair)
+                    continue
+
+                state = self.lt_edges.state()
+
+                if state in self.lt_edges.state_target:
+                    break
+
+                steps = self.lt_edges.steps(state)
+
+                if steps:
+                    for step in steps:
+                        self.rotate(step)
+                else:
+                    raise SolveError("%s: state %s does not have steps" % (self.lt_edges, state))
+
+
+                '''
                 try:
                     self.lt_edges.solve()
                 except NoEdgeSolution:
@@ -3472,6 +3526,7 @@ class RubiksCube555(RubiksCube):
                     self.group_edges_recursive(depth, None)
                     self.state = self.min_edge_solution_state[:]
                     self.solution = self.min_edge_solution[:]
+                '''
 
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')

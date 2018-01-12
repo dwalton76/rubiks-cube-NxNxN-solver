@@ -3384,9 +3384,12 @@ class RubiksCube555(RubiksCube):
             if self.cpu_mode == 'max':
                 estimate_per_wing = 2.0
             else:
-                estimate_per_wing = 2.7
+                if pre_non_paired_wings_count < 16:
+                    estimate_per_wing = 2.6
+                else:
+                    estimate_per_wing = 2.2
 
-            estimated_solution_len = edge_solution_len + (estimate_per_wing * pre_non_paired_wings_count)
+            estimated_solution_len = edge_solution_len + int(estimate_per_wing * pre_non_paired_wings_count)
 
             if estimated_solution_len > self.min_edge_solution_len:
                 log.info("PRUNE: %s non-paired wings, estimated_solution_len %d, %s + (%s * %d) > %s" %

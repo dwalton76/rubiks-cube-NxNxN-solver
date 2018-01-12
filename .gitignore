@@ -93,3 +93,4 @@ cache
 lookup*.hash
 lookup*.gz
 lookup*.txt
+*~

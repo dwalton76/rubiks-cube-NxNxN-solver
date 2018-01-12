@@ -3178,6 +3178,9 @@ class RubiksCube(object):
 
     def solve_OLL(self):
 
+        if self.size in (2, 3):
+            raise SolveError("OLL should never happen on a %dx%dx%d, the cube given to us to solve is invalid" % (self.size, self.size, self.size))
+
         # Check all 12 edges, rotate the one with OLL to U-south
         while True:
             has_oll = False
@@ -3249,6 +3252,10 @@ class RubiksCube(object):
                 break
 
     def solve_PLL(self):
+
+        if self.size in (2, 3):
+            raise SolveError("PLL should never happen on a %dx%dx%d, the cube given to us to solve is invalid" % (self.size, self.size, self.size))
+
         pll_id = None
 
         self.rotate_U_to_U()

@@ -3361,45 +3361,31 @@ class RubiksCube555(RubiksCube):
 
         return False
 
-    def group_edges_recursive(self, depth, edge_to_pair):
+    def prune_edges_search(self, pre_non_paired_wings_count, pre_non_paired_edges_count, edge_solution_len):
+        """
+        Should we continue down this branch or should we prune it? An estimate
+        of 2.5 moves to pair an edge is a good target to hit so if the current number of
+        steps plus 2.5 * pre_non_paired_wings_count is greater than our current minimum
+        there isn't any point in continuing down this branch so prune it and save
+        some CPU cycles.
 
-        # Should we both going down this branch or should we prune it?
-        pre_non_paired_wings_count = len(self.get_non_paired_wings())
-        pre_non_paired_edges_count = len(self.get_non_paired_edges())
-        edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-        edge_paired = False
+        Whether we use 2.5, 3.0, or 3.5 makes a big differnce in how fast the
+        solver runs and how short the solution is. All of the data below is from
+        running the solver on my laptop.
 
-        log.info("")
-        log.info("group_edges_recursive(%d) called with edge_to_pair %s (%d edges and %d wings left to pair, min solution len %s, edge sol len %d)" %
-            (depth,
-             pformat(edge_to_pair),
-             pre_non_paired_edges_count,
-             pre_non_paired_wings_count,
-             self.min_edge_solution_len,
-             edge_solution_len))
+           For 5x5x5 test with 2.5 takes 16m 36s to solve 50 cubes, avg solution 120 steps
+           For 5x5x5 test with 3.0 takes 1m 44s to solve 50 cubes, avg solution 125 steps
+           For 5x5x5 test with 3.1 takes 2m 01s to solve 50 cubes, avg solution 126 steps
+           For 5x5x5 test with 3.2 takes 1m 10s to solve 50 cubes, avg solution 127 steps
+           For 5x5x5 test with 3.3 takes 52s to solve 50 cubes, avg solution 127 steps
+           For 5x5x5 test with 3.4 takes 35s to solve 50 cubes, avg solution 129 steps
+           For 5x5x5 test with 3.5 takes 30s to solve 50 cubes, avg solution 131 steps
 
-        # Should we continue down this branch or should we prune it? An estimate
-        # of 2.5 moves to pair an edge is a good target to hit so if the current number of
-        # steps plus 2.5 * pre_non_paired_wings_count is greater than our current minimum
-        # there isn't any point in continuing down this branch so prune it and save
-        # some CPU cycles.
-        #
-        # Whether we use 2.5, 3.0, or 3.5 makes a big differnce in how fast the
-        # solver runs and how short the solution is. All of the data below is from
-        # running the solver on my laptop.
-        #
-        #   For 5x5x5 test with 2.5 takes 16m 36s to solve 50 cubes, avg solution 120 steps
-        #   For 5x5x5 test with 3.0 takes 1m 44s to solve 50 cubes, avg solution 125 steps
-        #   For 5x5x5 test with 3.1 takes 2m 01s to solve 50 cubes, avg solution 126 steps
-        #   For 5x5x5 test with 3.2 takes 1m 10s to solve 50 cubes, avg solution 127 steps
-        #   For 5x5x5 test with 3.3 takes 52s to solve 50 cubes, avg solution 127 steps
-        #   For 5x5x5 test with 3.4 takes 35s to solve 50 cubes, avg solution 129 steps
-        #   For 5x5x5 test with 3.5 takes 30s to solve 50 cubes, avg solution 131 steps
-        #
-        #   For our default 7x7x7 cube with 2.5 it takes 13.1s,110/300 edge/total steps
-        #   For our default 7x7x7 cube with 3.0 it takes 6.8s, 125/315 edge/total steps
-        #   For our default 7x7x7 cube with 3.4 it takes 1.7s, 135/327 edge/total steps
-        #   For our default 7x7x7 cube with 3.5 it takes 1.7s, 135/327 edge/total steps
+           For our default 7x7x7 cube with 2.5 it takes 13.1s,110/300 edge/total steps
+           For our default 7x7x7 cube with 3.0 it takes 6.8s, 125/315 edge/total steps
+           For our default 7x7x7 cube with 3.4 it takes 1.7s, 135/327 edge/total steps
+           For our default 7x7x7 cube with 3.5 it takes 1.7s, 135/327 edge/total steps
+        """
 
         # If there are 4-edges or fewer left to pair do not bother calculating if we should
         # prune the branch, we can pair the last 4-edges via a lookup table.
@@ -3418,7 +3404,68 @@ class RubiksCube555(RubiksCube):
             if estimated_solution_len > self.min_edge_solution_len:
                 log.info("PRUNE: %s non-paired wings, estimated_solution_len %d, %s + (%s * %d) > %s" %
                     (pre_non_paired_wings_count, estimated_solution_len, edge_solution_len, estimate_per_wing, pre_non_paired_wings_count, self.min_edge_solution_len))
-                return False
+                return True
+
+        return False
+
+    def group_edges_bfs(self):
+        """
+        This works and finds a shorter solution than the DFS that is
+        group_edges_recursive() but it takes about 30x longer to do so
+        """
+        workq = deque()
+        non_paired_edges = self.get_non_paired_edges()
+
+        for edge_to_pair in non_paired_edges:
+            workq.append((edge_to_pair, self.state[:], self.solution[:]))
+
+        while workq:
+            (edge_to_pair, self.state, self.solution) = workq.popleft()
+
+            if self.pair_edge(edge_to_pair):
+                non_paired_edges = self.get_non_paired_edges()
+
+                if non_paired_edges:
+                    pre_non_paired_wings_count = len(self.get_non_paired_wings())
+                    pre_non_paired_edges_count = len(self.get_non_paired_edges())
+                    edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
+
+                    if self.prune_edges_search(pre_non_paired_wings_count, pre_non_paired_edges_count, edge_solution_len):
+                        continue
+
+                    for edge_to_pair in non_paired_edges:
+                        workq.append((edge_to_pair, self.state[:], self.solution[:]))
+
+                else:
+                    # There are no edges left to pair, note how many steps it took pair them all
+                    edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
+
+                    # Remember the solution that pairs all edges in the least number of moves
+                    if edge_solution_len < self.min_edge_solution_len:
+                        self.min_edge_solution_len = edge_solution_len
+                        self.min_edge_solution = self.solution[:]
+                        self.min_edge_solution_state = self.state[:]
+                        log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
+
+    def group_edges_recursive(self, depth, edge_to_pair):
+
+        # Should we both going down this branch or should we prune it?
+        pre_non_paired_wings_count = len(self.get_non_paired_wings())
+        pre_non_paired_edges_count = len(self.get_non_paired_edges())
+        edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
+        edge_paired = False
+
+        log.info("")
+        log.info("group_edges_recursive(%d) called with edge_to_pair %s (%d edges and %d wings left to pair, min solution len %s, edge sol len %d)" %
+            (depth,
+             pformat(edge_to_pair),
+             pre_non_paired_edges_count,
+             pre_non_paired_wings_count,
+             self.min_edge_solution_len,
+             edge_solution_len))
+
+        if self.prune_edges_search(pre_non_paired_wings_count, pre_non_paired_edges_count, edge_solution_len):
+            return False
 
         # The only time this will be None is on the initial call
         if edge_to_pair:
@@ -3473,8 +3520,14 @@ class RubiksCube555(RubiksCube):
         self.min_edge_solution_state = None
         use_recursive = True
         #use_recursive = False
+        use_bfs = False
 
-        if use_recursive:
+        if use_bfs:
+            self.group_edges_bfs()
+            self.state = self.min_edge_solution_state[:]
+            self.solution = self.min_edge_solution[:]
+
+        elif use_recursive:
             self.group_edges_recursive(depth, None)
             self.state = self.min_edge_solution_state[:]
             self.solution = self.min_edge_solution[:]
@@ -3516,17 +3569,6 @@ class RubiksCube555(RubiksCube):
                         self.rotate(step)
                 else:
                     raise SolveError("%s: state %s does not have steps" % (self.lt_edges, state))
-
-
-                '''
-                try:
-                    self.lt_edges.solve()
-                except NoEdgeSolution:
-                    log.warning("caught NoEdgeSolution")
-                    self.group_edges_recursive(depth, None)
-                    self.state = self.min_edge_solution_state[:]
-                    self.solution = self.min_edge_solution[:]
-                '''
 
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')

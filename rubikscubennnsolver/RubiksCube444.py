@@ -1123,8 +1123,12 @@ class LookupTable444Edges(LookupTable):
         # loose match. It produces slightly longer solutions but in about 1/6 the time.
         log.info("%s: find_edge_entries_with_signature start" % self)
         lines_to_examine = self.find_edge_entries_with_signature(signature)
-        #lines_to_examine = self.find_edge_entries_with_loose_signature(signature)
         log.info("%s: find_edge_entries_with_signature end (found %d)" % (self, len(lines_to_examine)))
+
+        if not lines_to_examine:
+            log.info("%s: find_edge_entries_with_loose_signature start" % self)
+            lines_to_examine = self.find_edge_entries_with_loose_signature(signature)
+            log.info("%s: find_edge_entries_with_loose_signature end (found %d)" % (self, len(lines_to_examine)))
 
         for line in lines_to_examine:
             (phase1_state, phase1_steps) = line.split(':')
@@ -2178,7 +2182,7 @@ class RubiksCube444(RubiksCube):
         # steps plus 2 * pre_non_paired_wings_count is greater than our current minimum
         # there isn't any point in continuing down this branch so prune it and save
         # some CPU cycles.
-        estimate_per_wing = 2.0
+        estimate_per_wing = 1.6
 
         estimated_solution_len = edge_solution_len + (estimate_per_wing * pre_non_paired_wings_count)
 
@@ -2246,8 +2250,8 @@ class RubiksCube444(RubiksCube):
         self.lt_init()
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
-        #use_recursive = True
-        use_recursive = False
+        use_recursive = True
+        #use_recursive = False
 
         # group_edges_recursive() is where the magic happens
         if use_recursive:

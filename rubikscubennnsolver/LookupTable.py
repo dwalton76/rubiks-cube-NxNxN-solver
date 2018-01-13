@@ -251,6 +251,22 @@ class LookupTable(object):
                     for extension in ('aa', 'ab', 'ac', 'ad'):
                         os.unlink('lookup-table-4x4x4-step71-tsai-phase3-edges.txt.gz.part-%s' % extension)
 
+                elif self.filename_gz == 'lookup-table-4x4x4-step100-edges.txt.gz':
+
+                    # Download all parts
+                    for extension in ('aa', 'ab', 'ac'):
+                        url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/lookup-table-4x4x4-step100-edges.txt.gz.part-%s" %\
+                            (self.parent.size, self.parent.size, self.parent.size, extension)
+                        log.info("Downloading table via 'wget %s'" % url)
+                        subprocess.call(['wget', url])
+
+                    # cat them together into a .gz file
+                    subprocess.call('cat lookup-table-4x4x4-step100-edges.txt.gz.part-* > lookup-table-4x4x4-step100-edges.txt.gz', shell=True)
+
+                    # remove all of the parts
+                    for extension in ('aa', 'ab', 'ac'):
+                        os.unlink('lookup-table-4x4x4-step100-edges.txt.gz.part-%s' % extension)
+
                 # =====
                 # 5x5x5
                 # =====

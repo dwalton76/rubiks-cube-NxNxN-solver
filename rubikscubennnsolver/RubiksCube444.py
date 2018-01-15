@@ -13,6 +13,9 @@ from rubikscubennnsolver.RubiksCube444Misc import (
 from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
     get_best_entry,
+    rotations_24,
+    stage_first_four_edges_wing_str_combos,
+    wing_strs_all,
     LookupTable,
     LookupTableIDA,
     LookupTableAStar,
@@ -668,6 +671,19 @@ wings_for_edges_recolor_pattern_444 = (
     ('n', 95, 78))
 
 
+LR_edges_recolor_tuples_444 = (
+    ('8', 21, 72), # left
+    ('9', 24, 37),
+    ('a', 25, 76),
+    ('b', 28, 41),
+
+    ('c', 53, 40), # right
+    ('d', 56, 69),
+    ('e', 57, 44),
+    ('f', 60, 73),
+)
+
+
 def edges_recolor_pattern_444(state):
     edge_map = {
         'BD': [],
@@ -706,6 +722,47 @@ def edges_recolor_pattern_444(state):
             raise Exception("could not find tmp_index")
 
     return ''.join(state)
+
+
+def LR_edges_recolor_pattern_444(state):
+    edge_map = {
+        'BD': [],
+        'BL': [],
+        'BR': [],
+        'BU': [],
+        'DF': [],
+        'DL': [],
+        'DR': [],
+        'FL': [],
+        'FR': [],
+        'FU': [],
+        'LU': [],
+        'RU': []
+    }
+
+    # Record the two edge_indexes for each of the 12 edges
+    for (edge_index, square_index, partner_index) in LR_edges_recolor_tuples_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+        edge_map[wing_str].append(edge_index)
+
+    # Where is the other wing_str like us?
+    for (edge_index, square_index, partner_index) in LR_edges_recolor_tuples_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+
+        for tmp_index in edge_map[wing_str]:
+            if tmp_index != edge_index:
+                state[square_index] = tmp_index
+                state[partner_index] = tmp_index
+                break
+        else:
+            raise Exception("could not find tmp_index")
+
+    return ''.join(state)
+
 
 
 def reflect_x_444(cube):
@@ -1116,7 +1173,7 @@ class LookupTable444Edges(LookupTable):
         - maybe parts of loose could be written in C to speed it up? The string comparison stuff seems really slow
         - loose could search until it finds a PLL free two pass solution and then stop? That would be worth trying.
 
-        # dwalton remove the "2 steps has 1 entries" entry
+        # remove the "2 steps has 1 entries" entry
         '''
         # This runs much faster (than find_edge_entries_with_loose_signature) because
         # it is only looking over the signatures that are an exact match instead of a
@@ -1226,6 +1283,170 @@ class LookupTable444Edges(LookupTable):
         self.parent.state = original_state[:]
         self.parent.solution = original_solution[:]
         return best_entry[3]
+
+
+class LookupTable444StageFirstFourEdges(LookupTable):
+    """
+    lookup-table-4x4x4-step105-stage-first-four-edges.txt
+    =====================================================
+    2 steps has 3 entries (0 percent, 0.00x previous step)
+    3 steps has 6 entries (0 percent, 2.00x previous step)
+    4 steps has 72 entries (0 percent, 12.00x previous step)
+    5 steps has 586 entries (0 percent, 8.14x previous step)
+    6 steps has 3328 entries (1 percent, 5.68x previous step)
+    7 steps has 21172 entries (8 percent, 6.36x previous step)
+    8 steps has 46712 entries (17 percent, 2.21x previous step)
+    9 steps has 189384 entries (72 percent, 4.05x previous step)
+
+    Total: 261263 entries
+    Average: 8.610350 moves
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step105-stage-first-four-edges.txt',
+            'TBD',
+            linecount=261263)
+
+    def state(self, wing_strs_to_stage):
+        state = self.parent.state[:]
+
+        for square_index in wings_444:
+            side = self.parent.get_side_for_index(square_index)
+            partner_index = side.get_wing_partner(square_index)
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+
+            if wing_str in wing_strs_to_stage:
+                state[square_index] = 'L'
+                state[partner_index] = 'L'
+            else:
+                state[square_index] = 'x'
+                state[partner_index] = 'x'
+
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        return edges_state
+
+
+class LookupTable444StageSecondFourEdges(LookupTable):
+    """
+    lookup-table-4x4x4-step106-stage-second-four-edges.txt
+    ======================================================
+    2 steps has 1 entries (0 percent, 0.00x previous step)
+    3 steps has 2 entries (0 percent, 2.00x previous step)
+    4 steps has 9 entries (0 percent, 4.50x previous step)
+    5 steps has 46 entries (1 percent, 5.11x previous step)
+    6 steps has 176 entries (5 percent, 3.83x previous step)
+    7 steps has 488 entries (14 percent, 2.77x previous step)
+    8 steps has 820 entries (24 percent, 1.68x previous step)
+    9 steps has 1834 entries (54 percent, 2.24x previous step)
+
+    Total: 3376 entries
+    Average: 8.238152 moves
+
+    This table should have 12,870 entries
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step106-stage-second-four-edges.txt',
+            'TBD',
+            linecount=3376)
+
+    def state(self, wing_strs_to_stage):
+        state = self.parent.state[:]
+
+        for square_index in wings_444:
+            side = self.parent.get_side_for_index(square_index)
+            partner_index = side.get_wing_partner(square_index)
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+
+            if wing_str in wing_strs_to_stage:
+                state[square_index] = 'U'
+                state[partner_index] = 'U'
+            else:
+                state[square_index] = 'x'
+                state[partner_index] = 'x'
+
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        return edges_state
+
+
+class LookupTable444PairLastFourEdges(LookupTable):
+    """
+    lookup-table-4x4x4-step103-pair-last-four-edges.txt
+    ===================================================
+    2 steps has 1 entries (0 percent, 0.00x previous step)
+    6 steps has 7 entries (6 percent, 7.00x previous step)
+    7 steps has 24 entries (22 percent, 3.43x previous step)
+    8 steps has 8 entries (7 percent, 0.33x previous step)
+    9 steps has 40 entries (38 percent, 5.00x previous step)
+    10 steps has 11 entries (10 percent, 0.28x previous step)
+    11 steps has 14 entries (13 percent, 1.27x previous step)
+
+    Total: 105 entries
+    Average: 8.571429 moves
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step103-pair-last-four-edges.txt',
+            'a8b9ecfd',
+            linecount=105)
+
+    def state(self):
+        parent_state = self.parent.state[:]
+
+        # The lookup table was built using LB, LF, RF, and RB so we must re-color the
+        # 4 colors currently on LB, LF, RF, and RB to really be LB, LF, RF, and RB
+        LR_remap = {}
+        next_remap = 'LB'
+
+        for (edge_index, square_index, partner_index) in LR_edges_recolor_tuples_444:
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+
+            if (square_value, partner_value) not in LR_remap:
+                LR_remap[(square_value, partner_value)] = next_remap
+                LR_remap[(partner_value, square_value)] = ''.join(reversed(next_remap))
+
+                if next_remap == 'LB':
+                    next_remap = 'LF'
+
+                elif next_remap == 'LF':
+                    next_remap = 'RF'
+
+                elif next_remap == 'RF':
+                    next_remap = 'RB'
+
+                elif next_remap == 'RB':
+                    next_remap = None
+
+        #log.info("LR_remap\n%s\n" % pformat(LR_remap))
+
+        for (edge_index, square_index, partner_index) in LR_edges_recolor_tuples_444:
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+
+            if (square_value, partner_value) in LR_remap:
+                parent_state[square_index] = LR_remap[(square_value, partner_value)][0]
+                parent_state[partner_index] = LR_remap[(square_value, partner_value)][1]
+
+            elif (partner_value, square_value) in LR_remap:
+                parent_state[square_index] = LR_remap[(partner_value, square_value)][0]
+                parent_state[partner_index] = LR_remap[(partner_value, square_value)][1]
+
+        state = LR_edges_recolor_pattern_444(parent_state[:])
+
+        result = ''.join(state[index] for index in (21, 25, 24, 28, 53, 57, 56, 60))
+        return result
 
 
 class RubiksCube444(RubiksCube):
@@ -1399,6 +1620,10 @@ class RubiksCube444(RubiksCube):
         self.lt_edges_slice_forward = LookupTable444EdgesSliceForward(self)
         self.lt_edges_slice_backward = LookupTable444EdgesSliceBackward(self)
         self.lt_edges = LookupTable444Edges(self)
+
+        self.lt_edges_stage_first_four = LookupTable444StageFirstFourEdges(self)
+        self.lt_edges_stage_second_four = LookupTable444StageSecondFourEdges(self)
+        self.lt_edges_pair_last_four = LookupTable444PairLastFourEdges(self)
 
     def tsai_phase2_orient_edges_state(self, edges_to_flip, return_hex):
         state = self.state
@@ -2241,6 +2466,149 @@ class RubiksCube444(RubiksCube):
 
             return True
 
+    def stage_first_four_edges_444(self):
+        """
+        There are 495 different permutations of 4-edges out of 12-edges, use the one
+        that gives us the shortest solution for getting 4-edges staged to LB, LF, RF, RB
+        """
+        min_solution_len = None
+        min_solution_steps = None
+        min_solution_wing_strs = None
+
+        for wing_strs in stage_first_four_edges_wing_str_combos:
+            state = self.lt_edges_stage_first_four.state(wing_strs)
+            steps = self.lt_edges_stage_first_four.steps(state)
+
+            if steps:
+                log.info("%s: first four %s can be staged in %d steps" % (self, wing_strs, len(steps)))
+
+                if min_solution_len is None or len(steps) < min_solution_len:
+                    min_solution_len = len(steps)
+                    min_solution_steps = steps[:]
+                    min_solution_wing_strs = wing_strs
+
+        if min_solution_len is None:
+            raise SolveError("Could not find 4-edges to stage")
+        else:
+            self.stage_first_four_wing_strs = min_solution_wing_strs
+
+            for step in min_solution_steps:
+                self.rotate(step)
+
+    def stage_second_four_edges_444(self):
+        """
+        The first four edges have been staged to LB, LF, RF, RB. Stage the next four
+        edges to UB, UF, DF, DB (this in turn stages the final four edges).
+
+        Since there are 8-edges there are 70 different combinations of edges we can
+        choose to stage to UB, UF, DF, DB. Walk through all 70 combinations and see
+        which one leads to the shortest solution.  This accounts for the number of
+        steps that will be needed in solve_staged_edges_444().
+        """
+
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        wing_strs_for_second_four = []
+
+        for wing_str in wing_strs_all:
+            if wing_str not in self.stage_first_four_wing_strs:
+                wing_strs_for_second_four.append(wing_str)
+
+        min_solution_len = None
+        min_solution_steps = None
+
+        for wing_strs in itertools.combinations(wing_strs_for_second_four, 4):
+            state = self.lt_edges_stage_second_four.state(wing_strs)
+            steps = self.lt_edges_stage_second_four.steps(state)
+
+            if steps:
+                log.info("%s: second four %s can be staged in %d steps" % (self, wing_strs, len(steps)))
+
+                for step in steps:
+                    self.rotate(step)
+
+                # dwalton uncomment once this is working
+                self.solve_staged_edges_444(False)
+                solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+                if min_solution_len is None or solution_len < min_solution_len:
+                    min_solution_len = solution_len
+                    min_solution_steps = steps[:]
+                    log.info("NEW MIN: %s steps" % solution_len)
+
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+        if min_solution_len is None:
+            raise SolveError("Could not find 4-edges to stage")
+        else:
+            for step in min_solution_steps:
+                self.rotate(step)
+
+    def solve_staged_edges_444(self, log_msgs):
+        """
+        All edges are staged so that we can use the L4E table on each.  The order
+        that the edges are solved in can make a small difference in move count.
+
+        We only need to rotate the cube around a few ways (opening rotation), solve
+        all three planes of edges and see which opening rotation results in the
+        lowest move count.
+        """
+
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        min_solution_len = None
+        min_solution_steps = None
+
+        for steps in rotations_24:
+
+            for step in steps:
+                self.rotate(step)
+
+            self.lt_edges_pair_last_four.solve()
+
+            self.rotate("x")
+            self.lt_edges_pair_last_four.solve()
+
+            self.rotate("x")
+            self.lt_edges_pair_last_four.solve()
+            solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+            if min_solution_len is None or solution_len < min_solution_len:
+                min_solution_len = solution_len
+                min_solution_steps = steps[:]
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+        for step in min_solution_steps:
+            self.rotate(step)
+
+        self.lt_edges_pair_last_four.solve()
+
+        if log_msgs:
+            self.print_cube()
+            log.info("%s: first four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+
+        self.rotate("x")
+        self.lt_edges_pair_last_four.solve()
+
+        if log_msgs:
+            #self.print_cube()
+            log.info("%s: second four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        self.rotate("x")
+        self.lt_edges_pair_last_four.solve()
+
+        if log_msgs:
+            #self.print_cube()
+            log.info("%s: all edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
     def group_edges(self):
 
         if self.edges_paired():
@@ -2248,6 +2616,24 @@ class RubiksCube444(RubiksCube):
             return
 
         self.lt_init()
+
+        # The future
+        '''
+        self.stage_first_four_edges_444()
+        self.print_cube()
+        log.info("%s: first four edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        self.stage_second_four_edges_444()
+        self.print_cube()
+        log.info("%s: all edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.solve_staged_edges_444(True)
+        # dwalton
+        self.print_cube()
+        log.info("%s: all edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        sys.exit(0)
+        '''
+
+        #'''
         self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
         use_recursive = True
@@ -2272,6 +2658,7 @@ class RubiksCube444(RubiksCube):
                     break
 
                 self.lt_edges.solve()
+        #'''
 
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')

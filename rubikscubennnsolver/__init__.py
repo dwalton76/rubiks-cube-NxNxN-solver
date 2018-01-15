@@ -1457,19 +1457,11 @@ class RubiksCube(object):
         return results
 
     def edges_involved_count(self, edge_to_pair):
-        #log.info("\n\n\n\n\n\n\n\n\n\n\n")
-        #self.print_cube()
         edge_name = self.get_edge_name(edge_to_pair[0][0])
-        #log.info("edge_to_pair %s is on %s" % (pformat(edge_to_pair), edge_name))
-
-        # dwalton
         foo = self.edges_involved()
-        #input("PAUSED")
-
         return len(foo[edge_name])
 
     def get_edge_to_pair_via_last_four_edges_table(self):
-        # dwalton
         edges_involved = self.edges_involved()
         #log.info("edges_involved\n%s\n" % pformat(edges_involved))
 

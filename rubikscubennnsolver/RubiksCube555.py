@@ -11,6 +11,9 @@ from rubikscubennnsolver.RubiksCube444Misc import tsai_edge_mapping_combinations
 from rubikscubennnsolver.LookupTable import (
     get_best_entry,
     get_characters_common_count,
+    rotations_24,
+    stage_first_four_edges_wing_str_combos,
+    wing_strs_all,
     LookupTable,
     LookupTableIDA,
     LookupTableAStar
@@ -18,6 +21,7 @@ from rubikscubennnsolver.LookupTable import (
 
 from rubikscubennnsolver.rotate_xxx import rotate_555
 import datetime as dt
+import itertools
 import logging
 import math
 import os
@@ -98,6 +102,21 @@ wing_str_map = {
     'DF' : 'DF',
     'FD' : 'DF',
 }
+
+edge_names = (
+    'U-north',
+    'U-west',
+    'U-east',
+    'U-south',
+    'L-west',
+    'L-east',
+    'R-west',
+    'R-east',
+    'D-north',
+    'D-west',
+    'D-east',
+    'D-south'
+)
 
 class NoEdgeSolution(Exception):
     pass
@@ -1721,7 +1740,101 @@ def LR_edges_recolor_pattern_555(state):
     return ''.join(state)
 
 
+class LookupTable555StageFirstFourEdges(LookupTable):
+    """
+    lookup-table-5x5x5-step105-stage-first-four-edges.txt
+    =====================================================
+    5 steps has 384 entries (0 percent, 0.00x previous step)
+    6 steps has 5,032 entries (0 percent, 13.10x previous step)
+    7 steps has 40,712 entries (3 percent, 8.09x previous step)
+    8 steps has 136,236 entries (11 percent, 3.35x previous step)
+    9 steps has 1,034,328 entries (85 percent, 7.59x previous step)
 
+    Total: 1,216,692 entries
+    Average: 8.807435 moves
+
+    This is building to 11-deep on LJs machine
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step105-stage-first-four-edges.txt',
+            'TBD',
+            linecount=1216692)
+
+    def state(self, wing_strs_to_stage):
+        state = self.parent.state[:]
+
+        for square_index in wings_555:
+            side = self.parent.get_side_for_index(square_index)
+            partner_index = side.get_wing_partner(square_index)
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+
+            if wing_str in wing_strs_to_stage:
+                state[square_index] = 'L'
+                state[partner_index] = 'L'
+            else:
+                state[square_index] = 'x'
+                state[partner_index] = 'x'
+
+        edges_state = ''.join([state[square_index] for square_index in wings_555])
+        return edges_state
+
+
+class LookupTable555StageSecondFourEdges(LookupTable):
+    """
+    lookup-table-5x5x5-step106-stage-second-four-edges.txt
+    ======================================================
+    5 steps has 32 entries (0 percent, 0.00x previous step)
+    6 steps has 304 entries (0 percent, 9.50x previous step)
+    7 steps has 1,208 entries (0 percent, 3.97x previous step)
+    8 steps has 3,612 entries (1 percent, 2.99x previous step)
+    9 steps has 12,856 entries (3 percent, 3.56x previous step)
+    10 steps has 42,688 entries (12 percent, 3.32x previous step)
+    11 steps has 89,194 entries (26 percent, 2.09x previous step)
+    12 steps has 113,508 entries (33 percent, 1.27x previous step)
+    13 steps has 74,720 entries (22 percent, 0.66x previous step)
+
+    Total: 338,122 entries
+    Average: 11.523977 moves
+
+    This table should have 900,900 entries but I only built it
+    13-deep...that is deep enough for what we need
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step106-stage-second-four-edges.txt',
+            'TBD',
+            linecount=338122)
+
+    def state(self, wing_strs_to_stage):
+        state = self.parent.state[:]
+
+        for square_index in wings_555:
+            side = self.parent.get_side_for_index(square_index)
+            partner_index = side.get_wing_partner(square_index)
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+
+            if wing_str in wing_strs_to_stage:
+                state[square_index] = 'U'
+                state[partner_index] = 'U'
+            else:
+                state[square_index] = 'x'
+                state[partner_index] = 'x'
+
+        edges_state = ''.join([state[square_index] for square_index in wings_555])
+        return edges_state
+
+
+# TODO this will not be needed in the end
 class LookupTable555PlaceLastFourEdges(LookupTable):
     """
     lookup-table-5x5x5-step102-place-last-four-edges.txt
@@ -1792,6 +1905,8 @@ class LookupTable555PairLastFourEdges(LookupTable):
     def state(self):
         parent_state = self.parent.state[:]
 
+        # The lookup table was built using LB, LF, RF, and RB so we must re-color the
+        # 4 colors currently on LB, LF, RF, and RB to really be LB, LF, RF, and RB
         LR_remap = {}
         LR_remap[(parent_state[36], parent_state[115])] = 'LB'
         LR_remap[(parent_state[115], parent_state[36])] = 'BL'
@@ -1804,6 +1919,8 @@ class LookupTable555PairLastFourEdges(LookupTable):
 
         LR_remap[(parent_state[90], parent_state[111])] = 'RB'
         LR_remap[(parent_state[111], parent_state[90])] = 'BR'
+
+        #self.parent.print_cube()
         #log.info("LR_remap\n%s\n" % pformat(LR_remap))
 
         for (edge_index, square_index, partner_index) in LR_midges_recolor_tuples_555:
@@ -2231,7 +2348,6 @@ class RubiksCube555(RubiksCube):
         #self.lt_tsai_phase2_edges_orient = LookupTable555TsaiPhase2EdgesOrient(self)
         #self.lt_tsai_phase2_LR_centers = LookupTable555TsaiPhase2LRCenters(self)
         #self.lt_tsai_phase2 = LookupTable555TsaiPhase2(self)
-
         #self.lt_tsai_phase3_LF_centers = LookupTable555TsaiPhase3LFCenters(self)
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
@@ -2242,6 +2358,8 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_slice_backward = LookupTable555EdgeSliceBackward(self)
         self.lt_edges = LookupTable555Edges(self)
 
+        self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
+        self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
         self.lt_edges_place_last_four = LookupTable555PlaceLastFourEdges(self)
         self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
 
@@ -2984,7 +3102,6 @@ class RubiksCube555(RubiksCube):
             return True
 
     def place_four_edges_555(self, edges_to_place):
-        #log.info("place_four_edges_555: %s" % pformat(edges_to_place))
         colors_used = []
 
         for edge_name in edges_to_place:
@@ -3200,20 +3317,6 @@ class RubiksCube555(RubiksCube):
         #log.info("%d moves to place last 4-edges on LR" % (post_solution_len - pre_solution_len))
 
     def find_four_edges_555(self, edge_name_to_pair):
-        edge_names = (
-            'U-north',
-            'U-west',
-            'U-east',
-            'U-south',
-            'L-west',
-            'L-east',
-            'R-west',
-            'R-east',
-            'D-north',
-            'D-west',
-            'D-east',
-            'D-south'
-        )
 
         cycles = []
         edges_involved = self.edges_involved()
@@ -3543,10 +3646,159 @@ class RubiksCube555(RubiksCube):
                 self.min_edge_solution = self.solution[:]
                 self.min_edge_solution_state = self.state[:]
                 log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
-            #else:
-            #    log.info("LOST   : edges paired in %s vs MIN %d steps" % (edge_solution_len, self.min_edge_solution_len))
 
             return True
+
+    def stage_first_four_edges_555(self):
+        """
+        There are 495 different permutations of 4-edges out of 12-edges, use the one
+        that gives us the shortest solution for getting 4-edges staged to LB, LF, RF, RB
+        """
+        min_solution_len = None
+        min_solution_steps = None
+        min_solution_wing_strs = None
+
+        for wing_strs in stage_first_four_edges_wing_str_combos:
+            state = self.lt_edges_stage_first_four.state(wing_strs)
+            steps = self.lt_edges_stage_first_four.steps(state)
+
+            if steps:
+                log.info("%s: first four %s can be staged in %d steps" % (self, wing_strs, len(steps)))
+
+                if min_solution_len is None or len(steps) < min_solution_len:
+                    min_solution_len = len(steps)
+                    min_solution_steps = steps[:]
+                    min_solution_wing_strs = wing_strs
+
+        if min_solution_len is None:
+            raise SolveError("Could not find 4-edges to stage")
+        else:
+            self.stage_first_four_wing_strs = min_solution_wing_strs
+
+            for step in min_solution_steps:
+                self.rotate(step)
+
+    def stage_second_four_edges_555(self):
+        """
+        The first four edges have been staged to LB, LF, RF, RB. Stage the next four
+        edges to UB, UF, DF, DB (this in turn stages the final four edges).
+
+        Since there are 8-edges there are 70 different combinations of edges we can
+        choose to stage to UB, UF, DF, DB. Walk through all 70 combinations and see
+        which one leads to the shortest solution.  This accounts for the number of
+        steps that will be needed in solve_staged_edges_555().
+        """
+
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        wing_strs_for_second_four = []
+
+        for wing_str in wing_strs_all:
+            if wing_str not in self.stage_first_four_wing_strs:
+                wing_strs_for_second_four.append(wing_str)
+
+        min_solution_len = None
+        min_solution_steps = None
+
+        for wing_strs in itertools.combinations(wing_strs_for_second_four, 4):
+            state = self.lt_edges_stage_second_four.state(wing_strs)
+            steps = self.lt_edges_stage_second_four.steps(state)
+
+            if steps:
+                log.info("%s: second four %s can be staged in %d steps" % (self, wing_strs, len(steps)))
+
+                for step in steps:
+                    self.rotate(step)
+
+                self.solve_staged_edges_555(False)
+                solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+                if min_solution_len is None or solution_len < min_solution_len:
+                    min_solution_len = solution_len
+                    min_solution_steps = steps[:]
+                    log.info("NEW MIN: %s steps" % solution_len)
+
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        if min_solution_len is None:
+            raise SolveError("Could not find 4-edges to stage")
+        else:
+            for step in min_solution_steps:
+                self.rotate(step)
+
+    def solve_staged_edges_555(self, log_msgs):
+        """
+        All edges are staged so that we can use the L4E table on each.  The order
+        that the edges are solved in can make a small difference in move count.
+
+        We only need to rotate the cube around a few ways (opening rotation), solve
+        all three planes of edges and see which opening rotation results in the
+        lowest move count.
+        """
+
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        min_solution_len = None
+        min_solution_steps = None
+
+        for steps in rotations_24:
+
+            for step in steps:
+                self.rotate(step)
+
+            self.lt_edges_pair_last_four.solve()
+
+            #self.print_cube()
+            self.rotate("x")
+            #self.print_cube()
+            #sys.exit(0)
+
+            self.lt_edges_pair_last_four.solve()
+
+            # dwalton check this
+            self.rotate("z'")
+            self.lt_edges_pair_last_four.solve()
+            solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+            if min_solution_len is None or solution_len < min_solution_len:
+                min_solution_len = solution_len
+                min_solution_steps = steps[:]
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+        for step in min_solution_steps:
+            self.rotate(step)
+
+        self.lt_edges_pair_last_four.solve()
+
+        if log_msgs:
+            #self.print_cube()
+            log.info("%s: first four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+
+        self.rotate("x")
+        self.lt_edges_pair_last_four.solve()
+
+        if log_msgs:
+            #self.print_cube()
+            log.info("%s: second four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+
+        self.rotate("z'")
+        self.lt_edges_pair_last_four.solve()
+
+        if log_msgs:
+            #self.print_cube()
+            log.info("%s: all edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_edges(self):
 
@@ -3554,10 +3806,27 @@ class RubiksCube555(RubiksCube):
             self.solution.append('EDGES_GROUPED')
             return
 
-        depth = 0
         self.lt_init()
-        self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
+        # The future
+        '''
+        self.print_cube()
+        self.stage_first_four_edges_555()
+        self.print_cube()
+        log.info("%s: first four edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        self.stage_second_four_edges_555()
+        self.print_cube()
+        log.info("%s: all edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
+
+        self.solve_staged_edges_555(True)
+        '''
+
+        # The old way
+        #'''
+        depth = 0
+        self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
         self.min_edge_solution_len = 9999
         self.min_edge_solution = None
         self.min_edge_solution_state = None
@@ -3606,6 +3875,7 @@ class RubiksCube555(RubiksCube):
                         self.rotate(step)
                 else:
                     raise SolveError("%s: state %s does not have steps" % (self.lt_edges, state))
+        #'''
 
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')
@@ -4766,503 +5036,6 @@ tsai_phase2_orient_edges_555 = {
     (149, 122, 'U', 'R'): 'U'
 }
 
-stage_first_four_edges_wing_str_combos = (
-    ('BD', 'BL', 'BR', 'BU'),
-    ('BD', 'BL', 'BR', 'DF'),
-    ('BD', 'BL', 'BR', 'DL'),
-    ('BD', 'BL', 'BR', 'DR'),
-    ('BD', 'BL', 'BR', 'FL'),
-    ('BD', 'BL', 'BR', 'FR'),
-    ('BD', 'BL', 'BR', 'FU'),
-    ('BD', 'BL', 'BR', 'LU'),
-    ('BD', 'BL', 'BR', 'RU'),
-    ('BD', 'BL', 'BU', 'DF'),
-    ('BD', 'BL', 'BU', 'DL'),
-    ('BD', 'BL', 'BU', 'DR'),
-    ('BD', 'BL', 'BU', 'FL'),
-    ('BD', 'BL', 'BU', 'FR'),
-    ('BD', 'BL', 'BU', 'FU'),
-    ('BD', 'BL', 'BU', 'LU'),
-    ('BD', 'BL', 'BU', 'RU'),
-    ('BD', 'BL', 'DF', 'DL'),
-    ('BD', 'BL', 'DF', 'DR'),
-    ('BD', 'BL', 'DF', 'FL'),
-    ('BD', 'BL', 'DF', 'FR'),
-    ('BD', 'BL', 'DF', 'FU'),
-    ('BD', 'BL', 'DF', 'LU'),
-    ('BD', 'BL', 'DF', 'RU'),
-    ('BD', 'BL', 'DL', 'DR'),
-    ('BD', 'BL', 'DL', 'FL'),
-    ('BD', 'BL', 'DL', 'FR'),
-    ('BD', 'BL', 'DL', 'FU'),
-    ('BD', 'BL', 'DL', 'LU'),
-    ('BD', 'BL', 'DL', 'RU'),
-    ('BD', 'BL', 'DR', 'FL'),
-    ('BD', 'BL', 'DR', 'FR'),
-    ('BD', 'BL', 'DR', 'FU'),
-    ('BD', 'BL', 'DR', 'LU'),
-    ('BD', 'BL', 'DR', 'RU'),
-    ('BD', 'BL', 'FL', 'FR'),
-    ('BD', 'BL', 'FL', 'FU'),
-    ('BD', 'BL', 'FL', 'LU'),
-    ('BD', 'BL', 'FL', 'RU'),
-    ('BD', 'BL', 'FR', 'FU'),
-    ('BD', 'BL', 'FR', 'LU'),
-    ('BD', 'BL', 'FR', 'RU'),
-    ('BD', 'BL', 'FU', 'LU'),
-    ('BD', 'BL', 'FU', 'RU'),
-    ('BD', 'BL', 'LU', 'RU'),
-    ('BD', 'BR', 'BU', 'DF'),
-    ('BD', 'BR', 'BU', 'DL'),
-    ('BD', 'BR', 'BU', 'DR'),
-    ('BD', 'BR', 'BU', 'FL'),
-    ('BD', 'BR', 'BU', 'FR'),
-    ('BD', 'BR', 'BU', 'FU'),
-    ('BD', 'BR', 'BU', 'LU'),
-    ('BD', 'BR', 'BU', 'RU'),
-    ('BD', 'BR', 'DF', 'DL'),
-    ('BD', 'BR', 'DF', 'DR'),
-    ('BD', 'BR', 'DF', 'FL'),
-    ('BD', 'BR', 'DF', 'FR'),
-    ('BD', 'BR', 'DF', 'FU'),
-    ('BD', 'BR', 'DF', 'LU'),
-    ('BD', 'BR', 'DF', 'RU'),
-    ('BD', 'BR', 'DL', 'DR'),
-    ('BD', 'BR', 'DL', 'FL'),
-    ('BD', 'BR', 'DL', 'FR'),
-    ('BD', 'BR', 'DL', 'FU'),
-    ('BD', 'BR', 'DL', 'LU'),
-    ('BD', 'BR', 'DL', 'RU'),
-    ('BD', 'BR', 'DR', 'FL'),
-    ('BD', 'BR', 'DR', 'FR'),
-    ('BD', 'BR', 'DR', 'FU'),
-    ('BD', 'BR', 'DR', 'LU'),
-    ('BD', 'BR', 'DR', 'RU'),
-    ('BD', 'BR', 'FL', 'FR'),
-    ('BD', 'BR', 'FL', 'FU'),
-    ('BD', 'BR', 'FL', 'LU'),
-    ('BD', 'BR', 'FL', 'RU'),
-    ('BD', 'BR', 'FR', 'FU'),
-    ('BD', 'BR', 'FR', 'LU'),
-    ('BD', 'BR', 'FR', 'RU'),
-    ('BD', 'BR', 'FU', 'LU'),
-    ('BD', 'BR', 'FU', 'RU'),
-    ('BD', 'BR', 'LU', 'RU'),
-    ('BD', 'BU', 'DF', 'DL'),
-    ('BD', 'BU', 'DF', 'DR'),
-    ('BD', 'BU', 'DF', 'FL'),
-    ('BD', 'BU', 'DF', 'FR'),
-    ('BD', 'BU', 'DF', 'FU'),
-    ('BD', 'BU', 'DF', 'LU'),
-    ('BD', 'BU', 'DF', 'RU'),
-    ('BD', 'BU', 'DL', 'DR'),
-    ('BD', 'BU', 'DL', 'FL'),
-    ('BD', 'BU', 'DL', 'FR'),
-    ('BD', 'BU', 'DL', 'FU'),
-    ('BD', 'BU', 'DL', 'LU'),
-    ('BD', 'BU', 'DL', 'RU'),
-    ('BD', 'BU', 'DR', 'FL'),
-    ('BD', 'BU', 'DR', 'FR'),
-    ('BD', 'BU', 'DR', 'FU'),
-    ('BD', 'BU', 'DR', 'LU'),
-    ('BD', 'BU', 'DR', 'RU'),
-    ('BD', 'BU', 'FL', 'FR'),
-    ('BD', 'BU', 'FL', 'FU'),
-    ('BD', 'BU', 'FL', 'LU'),
-    ('BD', 'BU', 'FL', 'RU'),
-    ('BD', 'BU', 'FR', 'FU'),
-    ('BD', 'BU', 'FR', 'LU'),
-    ('BD', 'BU', 'FR', 'RU'),
-    ('BD', 'BU', 'FU', 'LU'),
-    ('BD', 'BU', 'FU', 'RU'),
-    ('BD', 'BU', 'LU', 'RU'),
-    ('BD', 'DF', 'DL', 'DR'),
-    ('BD', 'DF', 'DL', 'FL'),
-    ('BD', 'DF', 'DL', 'FR'),
-    ('BD', 'DF', 'DL', 'FU'),
-    ('BD', 'DF', 'DL', 'LU'),
-    ('BD', 'DF', 'DL', 'RU'),
-    ('BD', 'DF', 'DR', 'FL'),
-    ('BD', 'DF', 'DR', 'FR'),
-    ('BD', 'DF', 'DR', 'FU'),
-    ('BD', 'DF', 'DR', 'LU'),
-    ('BD', 'DF', 'DR', 'RU'),
-    ('BD', 'DF', 'FL', 'FR'),
-    ('BD', 'DF', 'FL', 'FU'),
-    ('BD', 'DF', 'FL', 'LU'),
-    ('BD', 'DF', 'FL', 'RU'),
-    ('BD', 'DF', 'FR', 'FU'),
-    ('BD', 'DF', 'FR', 'LU'),
-    ('BD', 'DF', 'FR', 'RU'),
-    ('BD', 'DF', 'FU', 'LU'),
-    ('BD', 'DF', 'FU', 'RU'),
-    ('BD', 'DF', 'LU', 'RU'),
-    ('BD', 'DL', 'DR', 'FL'),
-    ('BD', 'DL', 'DR', 'FR'),
-    ('BD', 'DL', 'DR', 'FU'),
-    ('BD', 'DL', 'DR', 'LU'),
-    ('BD', 'DL', 'DR', 'RU'),
-    ('BD', 'DL', 'FL', 'FR'),
-    ('BD', 'DL', 'FL', 'FU'),
-    ('BD', 'DL', 'FL', 'LU'),
-    ('BD', 'DL', 'FL', 'RU'),
-    ('BD', 'DL', 'FR', 'FU'),
-    ('BD', 'DL', 'FR', 'LU'),
-    ('BD', 'DL', 'FR', 'RU'),
-    ('BD', 'DL', 'FU', 'LU'),
-    ('BD', 'DL', 'FU', 'RU'),
-    ('BD', 'DL', 'LU', 'RU'),
-    ('BD', 'DR', 'FL', 'FR'),
-    ('BD', 'DR', 'FL', 'FU'),
-    ('BD', 'DR', 'FL', 'LU'),
-    ('BD', 'DR', 'FL', 'RU'),
-    ('BD', 'DR', 'FR', 'FU'),
-    ('BD', 'DR', 'FR', 'LU'),
-    ('BD', 'DR', 'FR', 'RU'),
-    ('BD', 'DR', 'FU', 'LU'),
-    ('BD', 'DR', 'FU', 'RU'),
-    ('BD', 'DR', 'LU', 'RU'),
-    ('BD', 'FL', 'FR', 'FU'),
-    ('BD', 'FL', 'FR', 'LU'),
-    ('BD', 'FL', 'FR', 'RU'),
-    ('BD', 'FL', 'FU', 'LU'),
-    ('BD', 'FL', 'FU', 'RU'),
-    ('BD', 'FL', 'LU', 'RU'),
-    ('BD', 'FR', 'FU', 'LU'),
-    ('BD', 'FR', 'FU', 'RU'),
-    ('BD', 'FR', 'LU', 'RU'),
-    ('BD', 'FU', 'LU', 'RU'),
-    ('BL', 'BR', 'BU', 'DF'),
-    ('BL', 'BR', 'BU', 'DL'),
-    ('BL', 'BR', 'BU', 'DR'),
-    ('BL', 'BR', 'BU', 'FL'),
-    ('BL', 'BR', 'BU', 'FR'),
-    ('BL', 'BR', 'BU', 'FU'),
-    ('BL', 'BR', 'BU', 'LU'),
-    ('BL', 'BR', 'BU', 'RU'),
-    ('BL', 'BR', 'DF', 'DL'),
-    ('BL', 'BR', 'DF', 'DR'),
-    ('BL', 'BR', 'DF', 'FL'),
-    ('BL', 'BR', 'DF', 'FR'),
-    ('BL', 'BR', 'DF', 'FU'),
-    ('BL', 'BR', 'DF', 'LU'),
-    ('BL', 'BR', 'DF', 'RU'),
-    ('BL', 'BR', 'DL', 'DR'),
-    ('BL', 'BR', 'DL', 'FL'),
-    ('BL', 'BR', 'DL', 'FR'),
-    ('BL', 'BR', 'DL', 'FU'),
-    ('BL', 'BR', 'DL', 'LU'),
-    ('BL', 'BR', 'DL', 'RU'),
-    ('BL', 'BR', 'DR', 'FL'),
-    ('BL', 'BR', 'DR', 'FR'),
-    ('BL', 'BR', 'DR', 'FU'),
-    ('BL', 'BR', 'DR', 'LU'),
-    ('BL', 'BR', 'DR', 'RU'),
-    ('BL', 'BR', 'FL', 'FR'),
-    ('BL', 'BR', 'FL', 'FU'),
-    ('BL', 'BR', 'FL', 'LU'),
-    ('BL', 'BR', 'FL', 'RU'),
-    ('BL', 'BR', 'FR', 'FU'),
-    ('BL', 'BR', 'FR', 'LU'),
-    ('BL', 'BR', 'FR', 'RU'),
-    ('BL', 'BR', 'FU', 'LU'),
-    ('BL', 'BR', 'FU', 'RU'),
-    ('BL', 'BR', 'LU', 'RU'),
-    ('BL', 'BU', 'DF', 'DL'),
-    ('BL', 'BU', 'DF', 'DR'),
-    ('BL', 'BU', 'DF', 'FL'),
-    ('BL', 'BU', 'DF', 'FR'),
-    ('BL', 'BU', 'DF', 'FU'),
-    ('BL', 'BU', 'DF', 'LU'),
-    ('BL', 'BU', 'DF', 'RU'),
-    ('BL', 'BU', 'DL', 'DR'),
-    ('BL', 'BU', 'DL', 'FL'),
-    ('BL', 'BU', 'DL', 'FR'),
-    ('BL', 'BU', 'DL', 'FU'),
-    ('BL', 'BU', 'DL', 'LU'),
-    ('BL', 'BU', 'DL', 'RU'),
-    ('BL', 'BU', 'DR', 'FL'),
-    ('BL', 'BU', 'DR', 'FR'),
-    ('BL', 'BU', 'DR', 'FU'),
-    ('BL', 'BU', 'DR', 'LU'),
-    ('BL', 'BU', 'DR', 'RU'),
-    ('BL', 'BU', 'FL', 'FR'),
-    ('BL', 'BU', 'FL', 'FU'),
-    ('BL', 'BU', 'FL', 'LU'),
-    ('BL', 'BU', 'FL', 'RU'),
-    ('BL', 'BU', 'FR', 'FU'),
-    ('BL', 'BU', 'FR', 'LU'),
-    ('BL', 'BU', 'FR', 'RU'),
-    ('BL', 'BU', 'FU', 'LU'),
-    ('BL', 'BU', 'FU', 'RU'),
-    ('BL', 'BU', 'LU', 'RU'),
-    ('BL', 'DF', 'DL', 'DR'),
-    ('BL', 'DF', 'DL', 'FL'),
-    ('BL', 'DF', 'DL', 'FR'),
-    ('BL', 'DF', 'DL', 'FU'),
-    ('BL', 'DF', 'DL', 'LU'),
-    ('BL', 'DF', 'DL', 'RU'),
-    ('BL', 'DF', 'DR', 'FL'),
-    ('BL', 'DF', 'DR', 'FR'),
-    ('BL', 'DF', 'DR', 'FU'),
-    ('BL', 'DF', 'DR', 'LU'),
-    ('BL', 'DF', 'DR', 'RU'),
-    ('BL', 'DF', 'FL', 'FR'),
-    ('BL', 'DF', 'FL', 'FU'),
-    ('BL', 'DF', 'FL', 'LU'),
-    ('BL', 'DF', 'FL', 'RU'),
-    ('BL', 'DF', 'FR', 'FU'),
-    ('BL', 'DF', 'FR', 'LU'),
-    ('BL', 'DF', 'FR', 'RU'),
-    ('BL', 'DF', 'FU', 'LU'),
-    ('BL', 'DF', 'FU', 'RU'),
-    ('BL', 'DF', 'LU', 'RU'),
-    ('BL', 'DL', 'DR', 'FL'),
-    ('BL', 'DL', 'DR', 'FR'),
-    ('BL', 'DL', 'DR', 'FU'),
-    ('BL', 'DL', 'DR', 'LU'),
-    ('BL', 'DL', 'DR', 'RU'),
-    ('BL', 'DL', 'FL', 'FR'),
-    ('BL', 'DL', 'FL', 'FU'),
-    ('BL', 'DL', 'FL', 'LU'),
-    ('BL', 'DL', 'FL', 'RU'),
-    ('BL', 'DL', 'FR', 'FU'),
-    ('BL', 'DL', 'FR', 'LU'),
-    ('BL', 'DL', 'FR', 'RU'),
-    ('BL', 'DL', 'FU', 'LU'),
-    ('BL', 'DL', 'FU', 'RU'),
-    ('BL', 'DL', 'LU', 'RU'),
-    ('BL', 'DR', 'FL', 'FR'),
-    ('BL', 'DR', 'FL', 'FU'),
-    ('BL', 'DR', 'FL', 'LU'),
-    ('BL', 'DR', 'FL', 'RU'),
-    ('BL', 'DR', 'FR', 'FU'),
-    ('BL', 'DR', 'FR', 'LU'),
-    ('BL', 'DR', 'FR', 'RU'),
-    ('BL', 'DR', 'FU', 'LU'),
-    ('BL', 'DR', 'FU', 'RU'),
-    ('BL', 'DR', 'LU', 'RU'),
-    ('BL', 'FL', 'FR', 'FU'),
-    ('BL', 'FL', 'FR', 'LU'),
-    ('BL', 'FL', 'FR', 'RU'),
-    ('BL', 'FL', 'FU', 'LU'),
-    ('BL', 'FL', 'FU', 'RU'),
-    ('BL', 'FL', 'LU', 'RU'),
-    ('BL', 'FR', 'FU', 'LU'),
-    ('BL', 'FR', 'FU', 'RU'),
-    ('BL', 'FR', 'LU', 'RU'),
-    ('BL', 'FU', 'LU', 'RU'),
-    ('BR', 'BU', 'DF', 'DL'),
-    ('BR', 'BU', 'DF', 'DR'),
-    ('BR', 'BU', 'DF', 'FL'),
-    ('BR', 'BU', 'DF', 'FR'),
-    ('BR', 'BU', 'DF', 'FU'),
-    ('BR', 'BU', 'DF', 'LU'),
-    ('BR', 'BU', 'DF', 'RU'),
-    ('BR', 'BU', 'DL', 'DR'),
-    ('BR', 'BU', 'DL', 'FL'),
-    ('BR', 'BU', 'DL', 'FR'),
-    ('BR', 'BU', 'DL', 'FU'),
-    ('BR', 'BU', 'DL', 'LU'),
-    ('BR', 'BU', 'DL', 'RU'),
-    ('BR', 'BU', 'DR', 'FL'),
-    ('BR', 'BU', 'DR', 'FR'),
-    ('BR', 'BU', 'DR', 'FU'),
-    ('BR', 'BU', 'DR', 'LU'),
-    ('BR', 'BU', 'DR', 'RU'),
-    ('BR', 'BU', 'FL', 'FR'),
-    ('BR', 'BU', 'FL', 'FU'),
-    ('BR', 'BU', 'FL', 'LU'),
-    ('BR', 'BU', 'FL', 'RU'),
-    ('BR', 'BU', 'FR', 'FU'),
-    ('BR', 'BU', 'FR', 'LU'),
-    ('BR', 'BU', 'FR', 'RU'),
-    ('BR', 'BU', 'FU', 'LU'),
-    ('BR', 'BU', 'FU', 'RU'),
-    ('BR', 'BU', 'LU', 'RU'),
-    ('BR', 'DF', 'DL', 'DR'),
-    ('BR', 'DF', 'DL', 'FL'),
-    ('BR', 'DF', 'DL', 'FR'),
-    ('BR', 'DF', 'DL', 'FU'),
-    ('BR', 'DF', 'DL', 'LU'),
-    ('BR', 'DF', 'DL', 'RU'),
-    ('BR', 'DF', 'DR', 'FL'),
-    ('BR', 'DF', 'DR', 'FR'),
-    ('BR', 'DF', 'DR', 'FU'),
-    ('BR', 'DF', 'DR', 'LU'),
-    ('BR', 'DF', 'DR', 'RU'),
-    ('BR', 'DF', 'FL', 'FR'),
-    ('BR', 'DF', 'FL', 'FU'),
-    ('BR', 'DF', 'FL', 'LU'),
-    ('BR', 'DF', 'FL', 'RU'),
-    ('BR', 'DF', 'FR', 'FU'),
-    ('BR', 'DF', 'FR', 'LU'),
-    ('BR', 'DF', 'FR', 'RU'),
-    ('BR', 'DF', 'FU', 'LU'),
-    ('BR', 'DF', 'FU', 'RU'),
-    ('BR', 'DF', 'LU', 'RU'),
-    ('BR', 'DL', 'DR', 'FL'),
-    ('BR', 'DL', 'DR', 'FR'),
-    ('BR', 'DL', 'DR', 'FU'),
-    ('BR', 'DL', 'DR', 'LU'),
-    ('BR', 'DL', 'DR', 'RU'),
-    ('BR', 'DL', 'FL', 'FR'),
-    ('BR', 'DL', 'FL', 'FU'),
-    ('BR', 'DL', 'FL', 'LU'),
-    ('BR', 'DL', 'FL', 'RU'),
-    ('BR', 'DL', 'FR', 'FU'),
-    ('BR', 'DL', 'FR', 'LU'),
-    ('BR', 'DL', 'FR', 'RU'),
-    ('BR', 'DL', 'FU', 'LU'),
-    ('BR', 'DL', 'FU', 'RU'),
-    ('BR', 'DL', 'LU', 'RU'),
-    ('BR', 'DR', 'FL', 'FR'),
-    ('BR', 'DR', 'FL', 'FU'),
-    ('BR', 'DR', 'FL', 'LU'),
-    ('BR', 'DR', 'FL', 'RU'),
-    ('BR', 'DR', 'FR', 'FU'),
-    ('BR', 'DR', 'FR', 'LU'),
-    ('BR', 'DR', 'FR', 'RU'),
-    ('BR', 'DR', 'FU', 'LU'),
-    ('BR', 'DR', 'FU', 'RU'),
-    ('BR', 'DR', 'LU', 'RU'),
-    ('BR', 'FL', 'FR', 'FU'),
-    ('BR', 'FL', 'FR', 'LU'),
-    ('BR', 'FL', 'FR', 'RU'),
-    ('BR', 'FL', 'FU', 'LU'),
-    ('BR', 'FL', 'FU', 'RU'),
-    ('BR', 'FL', 'LU', 'RU'),
-    ('BR', 'FR', 'FU', 'LU'),
-    ('BR', 'FR', 'FU', 'RU'),
-    ('BR', 'FR', 'LU', 'RU'),
-    ('BR', 'FU', 'LU', 'RU'),
-    ('BU', 'DF', 'DL', 'DR'),
-    ('BU', 'DF', 'DL', 'FL'),
-    ('BU', 'DF', 'DL', 'FR'),
-    ('BU', 'DF', 'DL', 'FU'),
-    ('BU', 'DF', 'DL', 'LU'),
-    ('BU', 'DF', 'DL', 'RU'),
-    ('BU', 'DF', 'DR', 'FL'),
-    ('BU', 'DF', 'DR', 'FR'),
-    ('BU', 'DF', 'DR', 'FU'),
-    ('BU', 'DF', 'DR', 'LU'),
-    ('BU', 'DF', 'DR', 'RU'),
-    ('BU', 'DF', 'FL', 'FR'),
-    ('BU', 'DF', 'FL', 'FU'),
-    ('BU', 'DF', 'FL', 'LU'),
-    ('BU', 'DF', 'FL', 'RU'),
-    ('BU', 'DF', 'FR', 'FU'),
-    ('BU', 'DF', 'FR', 'LU'),
-    ('BU', 'DF', 'FR', 'RU'),
-    ('BU', 'DF', 'FU', 'LU'),
-    ('BU', 'DF', 'FU', 'RU'),
-    ('BU', 'DF', 'LU', 'RU'),
-    ('BU', 'DL', 'DR', 'FL'),
-    ('BU', 'DL', 'DR', 'FR'),
-    ('BU', 'DL', 'DR', 'FU'),
-    ('BU', 'DL', 'DR', 'LU'),
-    ('BU', 'DL', 'DR', 'RU'),
-    ('BU', 'DL', 'FL', 'FR'),
-    ('BU', 'DL', 'FL', 'FU'),
-    ('BU', 'DL', 'FL', 'LU'),
-    ('BU', 'DL', 'FL', 'RU'),
-    ('BU', 'DL', 'FR', 'FU'),
-    ('BU', 'DL', 'FR', 'LU'),
-    ('BU', 'DL', 'FR', 'RU'),
-    ('BU', 'DL', 'FU', 'LU'),
-    ('BU', 'DL', 'FU', 'RU'),
-    ('BU', 'DL', 'LU', 'RU'),
-    ('BU', 'DR', 'FL', 'FR'),
-    ('BU', 'DR', 'FL', 'FU'),
-    ('BU', 'DR', 'FL', 'LU'),
-    ('BU', 'DR', 'FL', 'RU'),
-    ('BU', 'DR', 'FR', 'FU'),
-    ('BU', 'DR', 'FR', 'LU'),
-    ('BU', 'DR', 'FR', 'RU'),
-    ('BU', 'DR', 'FU', 'LU'),
-    ('BU', 'DR', 'FU', 'RU'),
-    ('BU', 'DR', 'LU', 'RU'),
-    ('BU', 'FL', 'FR', 'FU'),
-    ('BU', 'FL', 'FR', 'LU'),
-    ('BU', 'FL', 'FR', 'RU'),
-    ('BU', 'FL', 'FU', 'LU'),
-    ('BU', 'FL', 'FU', 'RU'),
-    ('BU', 'FL', 'LU', 'RU'),
-    ('BU', 'FR', 'FU', 'LU'),
-    ('BU', 'FR', 'FU', 'RU'),
-    ('BU', 'FR', 'LU', 'RU'),
-    ('BU', 'FU', 'LU', 'RU'),
-    ('DF', 'DL', 'DR', 'FL'),
-    ('DF', 'DL', 'DR', 'FR'),
-    ('DF', 'DL', 'DR', 'FU'),
-    ('DF', 'DL', 'DR', 'LU'),
-    ('DF', 'DL', 'DR', 'RU'),
-    ('DF', 'DL', 'FL', 'FR'),
-    ('DF', 'DL', 'FL', 'FU'),
-    ('DF', 'DL', 'FL', 'LU'),
-    ('DF', 'DL', 'FL', 'RU'),
-    ('DF', 'DL', 'FR', 'FU'),
-    ('DF', 'DL', 'FR', 'LU'),
-    ('DF', 'DL', 'FR', 'RU'),
-    ('DF', 'DL', 'FU', 'LU'),
-    ('DF', 'DL', 'FU', 'RU'),
-    ('DF', 'DL', 'LU', 'RU'),
-    ('DF', 'DR', 'FL', 'FR'),
-    ('DF', 'DR', 'FL', 'FU'),
-    ('DF', 'DR', 'FL', 'LU'),
-    ('DF', 'DR', 'FL', 'RU'),
-    ('DF', 'DR', 'FR', 'FU'),
-    ('DF', 'DR', 'FR', 'LU'),
-    ('DF', 'DR', 'FR', 'RU'),
-    ('DF', 'DR', 'FU', 'LU'),
-    ('DF', 'DR', 'FU', 'RU'),
-    ('DF', 'DR', 'LU', 'RU'),
-    ('DF', 'FL', 'FR', 'FU'),
-    ('DF', 'FL', 'FR', 'LU'),
-    ('DF', 'FL', 'FR', 'RU'),
-    ('DF', 'FL', 'FU', 'LU'),
-    ('DF', 'FL', 'FU', 'RU'),
-    ('DF', 'FL', 'LU', 'RU'),
-    ('DF', 'FR', 'FU', 'LU'),
-    ('DF', 'FR', 'FU', 'RU'),
-    ('DF', 'FR', 'LU', 'RU'),
-    ('DF', 'FU', 'LU', 'RU'),
-    ('DL', 'DR', 'FL', 'FR'),
-    ('DL', 'DR', 'FL', 'FU'),
-    ('DL', 'DR', 'FL', 'LU'),
-    ('DL', 'DR', 'FL', 'RU'),
-    ('DL', 'DR', 'FR', 'FU'),
-    ('DL', 'DR', 'FR', 'LU'),
-    ('DL', 'DR', 'FR', 'RU'),
-    ('DL', 'DR', 'FU', 'LU'),
-    ('DL', 'DR', 'FU', 'RU'),
-    ('DL', 'DR', 'LU', 'RU'),
-    ('DL', 'FL', 'FR', 'FU'),
-    ('DL', 'FL', 'FR', 'LU'),
-    ('DL', 'FL', 'FR', 'RU'),
-    ('DL', 'FL', 'FU', 'LU'),
-    ('DL', 'FL', 'FU', 'RU'),
-    ('DL', 'FL', 'LU', 'RU'),
-    ('DL', 'FR', 'FU', 'LU'),
-    ('DL', 'FR', 'FU', 'RU'),
-    ('DL', 'FR', 'LU', 'RU'),
-    ('DL', 'FU', 'LU', 'RU'),
-    ('DR', 'FL', 'FR', 'FU'),
-    ('DR', 'FL', 'FR', 'LU'),
-    ('DR', 'FL', 'FR', 'RU'),
-    ('DR', 'FL', 'FU', 'LU'),
-    ('DR', 'FL', 'FU', 'RU'),
-    ('DR', 'FL', 'LU', 'RU'),
-    ('DR', 'FR', 'FU', 'LU'),
-    ('DR', 'FR', 'FU', 'RU'),
-    ('DR', 'FR', 'LU', 'RU'),
-    ('DR', 'FU', 'LU', 'RU'),
-    ('FL', 'FR', 'FU', 'LU'),
-    ('FL', 'FR', 'FU', 'RU'),
-    ('FL', 'FR', 'LU', 'RU'),
-    ('FL', 'FU', 'LU', 'RU'),
-    ('FR', 'FU', 'LU', 'RU'),
-)
 
 if __name__ == '__main__':
     import doctest

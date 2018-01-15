@@ -3443,8 +3443,7 @@ class RubiksCube555(RubiksCube):
 
     def group_edges_bfs(self):
         """
-        This works and finds a shorter solution than the DFS that is
-        group_edges_recursive() but it takes about 30x longer to do so
+        Experiment - BFS equivalent of the BFS recursive function
         """
         workq = deque()
         non_paired_edges = self.get_non_paired_edges()
@@ -3502,6 +3501,17 @@ class RubiksCube555(RubiksCube):
 
         # The only time this will be None is on the initial call
         if edge_to_pair:
+
+            # If there is an edge that can be paired via the L4E table then ignore all other
+            # edges...this cuts the time to complete the edge pairing by about 66%!!
+            l4e_edge_name_to_pair = self.get_edge_to_pair_via_last_four_edges_table()
+
+            if l4e_edge_name_to_pair:
+                edge_name = self.get_edge_name(edge_to_pair[0][0])
+
+                if edge_name != l4e_edge_name_to_pair:
+                    return False
+
             edge_paired = self.pair_edge(edge_to_pair)
         else:
             edge_paired = True
@@ -3579,7 +3589,6 @@ class RubiksCube555(RubiksCube):
 
                 # If we can use the L4E table, use it
                 edge_name_to_pair = self.get_edge_to_pair_via_last_four_edges_table()
-                #log.warning("edge_name_to_pair: %s" % edge_name_to_pair)
 
                 if edge_name_to_pair:
                     self.pair_four_edges_555(pre_solution_len, non_paired_wings_count, edge_name_to_pair)

@@ -270,6 +270,16 @@ Removed --cpu-min option
 
 
 
+edges step100 table 11-deep (too large, not using this)
+=======================================================
+4x4x4 avg centers solution 18.12 steps
+4x4x4 avg edges solution 20.66 steps
+4x4x4 avg solution 59.72 steps
+4x4x4 min solution 56 steps (FLBDFBLLBFBRLRFFLDUBFBBFDDRDRFRUDULUDRURRUDLBLBBUULUBDRLBFLBDUFFRURBFRLBLDFDFUDLRUDDRUFDFULBRURL)
+4x4x4 max solution 64 steps (LRRDUDFLBBFLUDBBDFURLLBUDRUDBLLRLLLRBDUURFRRLRUDUBBLFLDDLRRBUUFBFBDBUUDDRBFDFFDFFUBDFLUFFBLFURRR)
+
+
+
 edges step100 table 10-deep
 ===========================
 4x4x4 avg centers solution 18.12 steps
@@ -277,13 +287,3 @@ edges step100 table 10-deep
 4x4x4 avg solution 62.68 steps
 4x4x4 min solution 56 steps (BLURRRBFRDFRDUFRUDUFFULUUDDBRDLULBLBDUBDDRRRRUDUBLLFBUUBLBRFLRULLFFFDDLFBFLBUDUDDRBDLBLRRFFLFFBB)
 4x4x4 max solution 69 steps (FFUUFURULBLRFRDFDBLRRFRDUUFBRDDRLDLLRBUURRLFLUBUDBLFFDFBRUDFUUFDRLBUBLFFLDBUBDRBBLLDBDBURRLDBDFL)
-
-
-
-edges step100 table 11-deep
-===========================
-4x4x4 avg centers solution 18.12 steps
-4x4x4 avg edges solution 20.66 steps
-4x4x4 avg solution 59.72 steps
-4x4x4 min solution 56 steps (FLBDFBLLBFBRLRFFLDUBFBBFDDRDRFRUDULUDRURRUDLBLBBUULUBDRLBFLBDUFFRURBFRLBLDFDFUDLRUDDRUFDFULBRURL)
-4x4x4 max solution 64 steps (LRRDUDFLBBFLUDBBDFURLLBUDRUDBLLRLLLRBDUURFRRLRUDUBBLFLDDLRRBUUFBFBDBUUDDRBFDFFDFFUBDFLUFFBLFURRR)

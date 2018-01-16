@@ -18,55 +18,6 @@ import sys
 log = logging.getLogger(__name__)
 
 
-rotations_24 = (
-    (),
-    ("y",),
-    ("y'",),
-    ("y", "y"),
-
-    ("x", "x"),
-    ("x", "x", "y"),
-    ("x", "x", "y'"),
-    ("x", "x", "y", "y"),
-
-    ("y'", "x"),
-    ("y'", "x", "y"),
-    ("y'", "x", "y'"),
-    ("y'", "x", "y", "y"),
-
-    ("x",),
-    ("x", "y"),
-    ("x", "y'"),
-    ("x", "y", "y"),
-
-    ("y", "x"),
-    ("y", "x", "y"),
-    ("y", "x", "y'"),
-    ("y", "x", "y", "y"),
-
-    ("x'",),
-    ("x'", "y"),
-    ("x'", "y'"),
-    ("x'", "y", "y")
-)
-
-
-wing_strs_all = (
-    'BD',
-    'BL',
-    'BR',
-    'BU',
-    'DF',
-    'DL',
-    'DR',
-    'FL',
-    'FR',
-    'FU',
-    'LU',
-    'RU'
-)
-
-
 class ImplementThis(Exception):
     pass
 
@@ -115,6 +66,9 @@ def steps_cancel_out(prev_step, step):
 
     >>> steps_cancel_out("U2", "U2")
     True
+
+    >>> steps_cancel_out("U", "U")
+    False
     """
     if prev_step is None:
         return False
@@ -209,29 +163,6 @@ def steps_on_same_face_and_layer(prev_step, step):
     return False
 
 
-def get_best_entry(foo):
-    best_entry = None
-    best_paired_edges = None
-    best_paired_wings = None
-    best_steps_len = None
-
-    for (paired_edges, paired_wings, steps_len, state) in foo:
-        #if (best_entry is None or
-        #    paired_wings > best_paired_wings or
-        #    (paired_wings == best_paired_wings and steps_len < best_steps_len)):
-
-        if (best_entry is None or
-            paired_edges > best_paired_edges or
-            (paired_edges == best_paired_edges and paired_wings > best_paired_wings) or
-            (paired_edges == best_paired_edges and paired_wings == best_paired_wings and steps_len < best_steps_len)):
-
-            best_entry = (paired_edges, paired_wings, steps_len, state)
-            best_paired_edges = paired_edges
-            best_paired_wings = paired_wings
-            best_steps_len = steps_len
-    return best_entry
-
-
 def pretty_time(delta):
     delta = str(delta)
 
@@ -264,7 +195,6 @@ class LookupTable(object):
         self.filename_exists = False
         self.linecount = linecount
         self.max_depth = max_depth
-        self.heuristic_stats = {}
         self.avoid_oll = False
         self.avoid_pll = False
         self.preloaded_cache = False
@@ -716,7 +646,6 @@ class LookupTableAStar(LookupTable):
 
     def ida_heuristic(self, use_lt_as_prune=False):
         cost_to_goal = 0
-        #pt_costs = []
 
         if use_lt_as_prune:
             state = self.state()
@@ -731,19 +660,8 @@ class LookupTableAStar(LookupTable):
         for pt in self.prune_tables:
             pt_cost_to_goal = pt.heuristic()
 
-            #if self.heuristic_stats:
-            #    pt_costs.append(pt_cost_to_goal)
-
             if pt_cost_to_goal > cost_to_goal:
                 cost_to_goal = pt_cost_to_goal
-
-        #if self.heuristic_stats:
-        #    pt_costs = tuple(pt_costs)
-        #    len_pt_steps = self.heuristic_stats.get(pt_costs, 0)
-        #
-        #    if len_pt_steps > cost_to_goal:
-        #        log.info("%s: %s increase heuristic from %d to %d" % (self, pformat(pt_costs), cost_to_goal, len_pt_steps))
-        #        cost_to_goal = len_pt_steps
 
         return cost_to_goal
 

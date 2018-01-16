@@ -139,16 +139,6 @@ class Side(object):
     def __str__(self):
         return 'side %s' % self.name
 
-    def is_even(self):
-        if self.size % 2 == 0:
-            return True
-        return False
-
-    def is_odd(self):
-        if self.size % 2 == 0:
-            return False
-        return True
-
     def get_face_as_2d_list(self):
         """
         Used by RubiksCube rotate()
@@ -161,93 +151,6 @@ class Side(object):
         except KeyError:
             log.info("wing_partner\n%s\n" % pformat(self.wing_partner))
             raise
-
-    def get_wing_neighbors(self, target_wing_index):
-
-        if target_wing_index in self.edge_north_pos:
-            edges_to_check = self.edge_north_pos
-
-        elif target_wing_index in self.edge_west_pos:
-            edges_to_check = self.edge_west_pos
-
-        elif target_wing_index in self.edge_south_pos:
-            edges_to_check = self.edge_south_pos
-
-        elif target_wing_index in self.edge_east_pos:
-            edges_to_check = self.edge_east_pos
-
-        else:
-            raise SolveError("%s does not have wing %d" % (self, target_wing_index))
-
-        neighbors = []
-        prev_wing = None
-
-        for wing in edges_to_check:
-            if wing == target_wing_index:
-                if prev_wing is not None:
-                    neighbors.append(prev_wing)
-            elif prev_wing == target_wing_index:
-                neighbors.append(wing)
-            prev_wing = wing
-
-        return neighbors
-
-    def paired_wings(self, check_north, check_west, check_south, check_east):
-        paired_wings = []
-
-        # north edge
-        if check_north:
-            prev_pos1 = None
-            prev_pos2 = None
-
-            for pos1 in self.edge_north_pos:
-                pos2 = self.get_wing_partner(pos1)
-                if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] == self.parent.state[pos1] and self.parent.state[prev_pos2] == self.parent.state[pos2]:
-                        paired_wings.append(((pos1, pos2), (prev_pos1, prev_pos2)))
-                prev_pos1 = pos1
-                prev_pos2 = pos2
-
-        # west edge
-        if check_west:
-            prev_pos1 = None
-            prev_pos2 = None
-
-            for pos1 in self.edge_west_pos:
-                pos2 = self.get_wing_partner(pos1)
-                if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] == self.parent.state[pos1] and self.parent.state[prev_pos2] == self.parent.state[pos2]:
-                        paired_wings.append(((pos1, pos2), (prev_pos1, prev_pos2)))
-                prev_pos1 = pos1
-                prev_pos2 = pos2
-
-        # south edge
-        if check_south:
-            prev_pos1 = None
-            prev_pos2 = None
-
-            for pos1 in self.edge_south_pos:
-                pos2 = self.get_wing_partner(pos1)
-                if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] == self.parent.state[pos1] and self.parent.state[prev_pos2] == self.parent.state[pos2]:
-                        paired_wings.append(((pos1, pos2), (prev_pos1, prev_pos2)))
-                prev_pos1 = pos1
-                prev_pos2 = pos2
-
-        # east edge
-        if check_east:
-            prev_pos1 = None
-            prev_pos2 = None
-
-            for pos1 in self.edge_east_pos:
-                pos2 = self.get_wing_partner(pos1)
-                if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] == self.parent.state[pos1] and self.parent.state[prev_pos2] == self.parent.state[pos2]:
-                        paired_wings.append(((pos1, pos2), (prev_pos1, prev_pos2)))
-                prev_pos1 = pos1
-                prev_pos2 = pos2
-
-        return paired_wings
 
     def non_paired_wings(self, check_north, check_west, check_south, check_east):
         non_paired_wings = []
@@ -379,18 +282,6 @@ class Side(object):
                 return True
         return False
 
-    def north_edge_non_paired_wings_count(self):
-        return len(self.non_paired_wings(True, False, False, False))
-
-    def west_edge_non_paired_wings_count(self):
-        return len(self.non_paired_wings(False, True, False, False))
-
-    def south_edge_non_paired_wings_count(self):
-        return len(self.non_paired_wings(False, False, True, False))
-
-    def east_edge_non_paired_wings_count(self):
-        return len(self.non_paired_wings(False, False, False, True))
-
     def north_edge_paired(self):
         return not self.north_edge_non_paired()
 
@@ -452,101 +343,3 @@ class Side(object):
                 self.wing_partner[pos1] = pos2
             elif pos2 >= self.min_pos and pos2 <= self.max_pos:
                 self.wing_partner[pos2] = pos1
-
-    def has_wing(self, wing_to_find):
-        wing_to_find_value = (self.parent.state[wing_to_find[0]], self.parent.state[wing_to_find[1]])
-
-        for square_index in self.edge_pos:
-            home_value = self.parent.state[square_index]
-            partner_index = self.get_wing_partner(square_index)
-            partner_value = self.parent.state[partner_index]
-
-            if wing_to_find_value == (home_value, partner_value) or wing_to_find_value == (partner_value, home_value):
-                if square_index in self.edge_north_pos:
-                    return 'north'
-
-                if square_index in self.edge_west_pos:
-                    return 'west'
-
-                if square_index in self.edge_south_pos:
-                    return 'south'
-
-                if square_index in self.edge_east_pos:
-                    return 'east'
-
-                raise Exception("We should not be here")
-
-        return None
-
-    def wing_is_middle_of_edge(self, square_index):
-        squares_per_edge = len(self.edge_north_pos)
-
-        if squares_per_edge % 2 == 0:
-            if self.size == 4:
-                raise Exception("Cannot call wing_is_middle_of_edge() for 4x4x4")
-            elif self.size == 6:
-
-                if (square_index in self.edge_north_pos[1:-1] or
-                    square_index in self.edge_west_pos[1:-1] or
-                    square_index in self.edge_south_pos[1:-1] or
-                    square_index in self.edge_east_pos[1:-1]):
-                    return True
-
-                '''
-                log.info("target: %s" % square_index)
-                log.info("north: %s" % pformat(self.edge_north_pos))
-                log.info("west : %s" % pformat(self.edge_west_pos))
-                log.info("south: %s" % pformat(self.edge_south_pos))
-                log.info("east : %s" % pformat(self.edge_east_pos))
-                '''
-            else:
-                raise ImplementThis("wing_is_middle_of_edge for %dx%dx%d" % (self.size, self.size, self.size))
-        else:
-            mid_index = int((squares_per_edge/2.0) - 0.5)
-
-            if (self.edge_north_pos[mid_index] == square_index or
-                self.edge_west_pos[mid_index] == square_index or
-                self.edge_south_pos[mid_index] == square_index or
-                self.edge_east_pos[mid_index] == square_index):
-                return True
-
-        return False
-
-    def _edge_colors(self, edge_positions, return_none_if_paired):
-        results = []
-        prev_pos1_value = None
-        prev_pos2_value = None
-        all_paired = True
-
-        for pos1 in edge_positions:
-            pos2 = self.get_wing_partner(pos1)
-            pos1_value = self.parent.state[pos1]
-            pos2_value = self.parent.state[pos2]
-            wing_str = ''.join(sorted([pos1_value, pos2_value]))
-
-            if wing_str not in results:
-                results.append(wing_str)
-
-            if prev_pos1_value is not None:
-                if pos1_value != prev_pos1_value or pos2_value != prev_pos2_value:
-                    all_paired = False
-
-            prev_pos1_value = pos1_value
-            prev_pos2_value = pos2_value
-
-        if return_none_if_paired and all_paired:
-            results = []
-
-        return results
-
-    def edge_colors_north(self, return_none_if_paired=False):
-        return self._edge_colors(self.edge_north_pos, return_none_if_paired)
-
-    def edge_colors_west(self, return_none_if_paired=False):
-        return self._edge_colors(self.edge_west_pos, return_none_if_paired)
-
-    def edge_colors_east(self, return_none_if_paired=False):
-        return self._edge_colors(self.edge_east_pos, return_none_if_paired)
-
-    def edge_colors_south(self, return_none_if_paired=False):
-        return self._edge_colors(self.edge_south_pos, return_none_if_paired)

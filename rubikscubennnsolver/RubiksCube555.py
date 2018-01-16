@@ -9,11 +9,9 @@ from rubikscubennnsolver.RubiksCube333 import moves_3x3x3
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_4x4x4, solved_4x4x4
 from rubikscubennnsolver.RubiksCube444Misc import tsai_edge_mapping_combinations
 from rubikscubennnsolver.LookupTable import (
-    get_best_entry,
     get_characters_common_count,
-    rotations_24,
     stage_first_four_edges_wing_str_combos,
-    wing_strs_all,
+    steps_on_same_face_and_layer,
     LookupTable,
     LookupTableIDA,
     LookupTableAStar
@@ -49,15 +47,6 @@ LFRB_centers_555 = (
     57, 58, 59, 62, 63, 64, 67, 68, 69,
     82, 83, 84, 87, 88, 89, 92, 93, 94,
     107, 108, 109, 112, 113, 114, 117, 118, 119
-)
-
-wings_sequential_555 = (
-    2, 3, 4, 6, 10, 11, 15, 16, 20, 22, 23, 24,                 # Upper
-    27, 28, 29, 31, 35, 36, 40, 41, 45, 47, 48, 49,             # Left
-    52, 53, 54, 56, 60, 61, 65, 66, 70, 72, 73, 74,             # Front
-    77, 78, 79, 81, 85, 86, 90, 91, 95, 97, 98, 99,             # Right
-    102, 103, 104, 106, 110, 111, 115, 116, 120, 122, 123, 124, # Back
-    127, 128, 129, 131, 135, 136, 140, 141, 145, 147, 148, 149  # Down
 )
 
 wings_555 = (
@@ -103,270 +92,58 @@ wing_str_map = {
     'FD' : 'DF',
 }
 
-edge_names = (
-    'U-north',
-    'U-west',
-    'U-east',
-    'U-south',
-    'L-west',
-    'L-east',
-    'R-west',
-    'R-east',
-    'D-north',
-    'D-west',
-    'D-east',
-    'D-south'
+
+wing_strs_all = (
+    'BD',
+    'BL',
+    'BR',
+    'BU',
+    'DF',
+    'DL',
+    'DR',
+    'FL',
+    'FR',
+    'FU',
+    'LU',
+    'RU'
 )
+
+
+rotations_24 = (
+    (),
+    ("y",),
+    ("y'",),
+    ("y", "y"),
+
+    ("x", "x"),
+    ("x", "x", "y"),
+    ("x", "x", "y'"),
+    ("x", "x", "y", "y"),
+
+    ("y'", "x"),
+    ("y'", "x", "y"),
+    ("y'", "x", "y'"),
+    ("y'", "x", "y", "y"),
+
+    ("x",),
+    ("x", "y"),
+    ("x", "y'"),
+    ("x", "y", "y"),
+
+    ("y", "x"),
+    ("y", "x", "y"),
+    ("y", "x", "y'"),
+    ("y", "x", "y", "y"),
+
+    ("x'",),
+    ("x'", "y"),
+    ("x'", "y'"),
+    ("x'", "y", "y")
+)
+
 
 class NoEdgeSolution(Exception):
     pass
-
-def get_edges_paired_binary_signature(state):
-    """
-    The facelets are numbered:
-                         --- 002 003 004 ---
-                         006 --- --- --- 010
-                         011 --- --- --- 015
-                         016 --- --- --- 020
-                         --- 022 023 024 ---
-
-    --- 027 028 029 ---  --- 052 053 054 ---  --- 077 078 079 ---  --- 102 103 104 ---
-    031 --- --- --- 035  056 --- --- --- 060  081 --- --- --- 085  106 --- --- --- 110
-    036 --- --- --- 040  061 --- --- --- 065  086 --- --- --- 090  111 --- --- --- 115
-    041 --- --- --- 045  066 --- --- --- 070  091 --- --- --- 095  116 --- --- --- 120
-    --- 047 048 049 ---  --- 072 073 074 ---  --- 097 098 099 ---  --- 122 123 124 ---
-
-                         --- 127 128 129 ---
-                         131 --- --- --- 135
-                         136 --- --- --- 140
-                         141 --- --- --- 145
-                         --- 147 148 149 ---
-
-
-                           ---  0   o   1  ---
-                            2  --- --- ---  3
-                            p  --- --- ---  q
-                            4  --- --- ---  5
-                           ---  6   r   7  ---
-
-    ---  2   p   4  ---    ---  6   r   7  ---    ---  5   q   3  ---    ---  1   o   0  ---
-     8  --- --- ---  9      9  --- --- ---  c      c  --- --- ---  d      d  --- --- ---  8
-     s  --- --- ---  t      t  --- --- ---  u      u  --- --- ---  v      v  --- --- ---  s
-     a  --- --- ---  b      b  --- --- ---  e      e  --- --- ---  f      f  --- --- ---  a
-    ---  k   x   i  ---    ---  g   w   h  ---    ---  j   y   l  ---    ---  n   z   m  ---
-
-                           ---  g   w   h  ---
-                            i  --- --- ---  j
-                            x  --- --- ---  y
-                            k  --- --- ---  l
-                           ---  m   z   n  ---
-
-    'state' is the relationship of the outside wings to their midge.  For the "high" wings
-    the uppercase format of the midge location is used to represent the state for that "high"
-    wing.  For "low" wings the lowercase format of the midge location is used to represent
-    the state of that "low" wing.
-
-    So if the (2,3,4) edge is paired the state string for those three wings would be OOo.
-
-    state: OOopPPQQqrRRsSSTTtuUUVVvWWwxXXYYyzZZ
-    index: 000000000011111111112222222222333333
-           012345678901234567890123456789012345
-
-    All are paired
-    >>> get_edges_paired_binary_signature('OOopPPQQqrRRsSSTTtuUUVVvWWwxXXYYyzZZ')
-    '111111111111111111111111'
-
-    None are paired
-    >>> get_edges_paired_binary_signature('UoTqpQZqsxRzRsWSTurupoVYXWVvxtPYOyZw')
-    '000000000000000000000000'
-    """
-    result = []
-
-    # state: OOopPPQQqrRRsSSTTtuUUVVvWWwxXXYYyzZZ
-    # index: 000000000011111111112222222222333333
-    #        012345678901234567890123456789012345
-
-    # Upper/Back high wing
-    if ((state[0] == 'O' and state[1] == 'O') or
-        (state[0] == 'o' and state[1] == 'o')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Upper/Back low wing
-    if ((state[2] == 'o' and state[1] == 'O') or
-        (state[2] == 'O' and state[1] == 'o')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Upper/Left low wing
-    if ((state[3] == 'p' and state[4] == 'P') or
-        (state[3] == 'P' and state[4] == 'p')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Upper/Left high wing
-    if ((state[5] == 'P' and state[4] == 'P') or
-        (state[5] == 'p' and state[4] == 'p')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Upper/Right high wing
-    if ((state[6] == 'Q' and state[7] == 'Q') or
-        (state[6] == 'q' and state[7] == 'q')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Upper/Right low wing
-    if ((state[8] == 'q' and state[7] == 'Q') or
-        (state[8] == 'Q' and state[7] == 'q')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Upper/Down low wing
-    if ((state[9] == 'r' and state[10] == 'R') or
-        (state[9] == 'R' and state[10] == 'r')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Upper/Down high wing
-    if ((state[11] == 'R' and state[10] == 'R') or
-        (state[11] == 'r' and state[10] == 'r')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Left/Back low wing
-    if ((state[12] == 's' and state[13] == 'S') or
-        (state[12] == 'S' and state[13] == 's')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Left/Back high wing
-    if ((state[14] == 'S' and state[13] == 'S') or
-        (state[14] == 's' and state[13] == 's')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Left/Right high wing
-    if ((state[15] == 'T' and state[16] == 'T') or
-        (state[15] == 't' and state[16] == 't')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Left/Right low wing
-    if ((state[17] == 't' and state[16] == 'T') or
-        (state[17] == 'T' and state[16] == 't')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Right/Front low wing
-    if ((state[18] == 'u' and state[19] == 'U') or
-        (state[18] == 'U' and state[19] == 'u')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Right/Front high wing
-    if ((state[20] == 'U' and state[19] == 'U') or
-        (state[20] == 'u' and state[19] == 'u')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Right/Back high wing
-    if ((state[21] == 'V' and state[22] == 'V') or
-        (state[21] == 'v' and state[22] == 'v')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Right/Back low wing
-    if ((state[23] == 'v' and state[22] == 'V') or
-        (state[23] == 'V' and state[22] == 'v')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Down/Front high wing
-    if ((state[24] == 'W' and state[25] == 'W') or
-        (state[24] == 'w' and state[25] == 'w')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Down/Front low wing
-    if ((state[26] == 'w' and state[25] == 'W') or
-        (state[26] == 'W' and state[25] == 'w')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Down/Left low wing
-    if ((state[27] == 'x' and state[28] == 'X') or
-        (state[27] == 'X' and state[28] == 'x')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Down/Left high wing
-    if ((state[29] == 'X' and state[28] == 'X') or
-        (state[29] == 'x' and state[28] == 'x')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Down/Right high wing
-    if ((state[30] == 'Y' and state[31] == 'Y') or
-        (state[30] == 'y' and state[31] == 'y')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Down/Right low wing
-    if ((state[32] == 'y' and state[31] == 'Y') or
-        (state[32] == 'Y' and state[31] == 'y')):
-        result.append('1')
-    else:
-        result.append('0')
-
-
-    # Down/Back low wing
-    if ((state[33] == 'z' and state[34] == 'Z') or
-        (state[33] == 'Z' and state[34] == 'z')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Down/Back high wing
-    if ((state[35] == 'Z' and state[34] == 'Z') or
-        (state[35] == 'z' and state[34] == 'z')):
-        result.append('1')
-    else:
-        result.append('0')
-
-    return ''.join(result)
-
 
 
 class LookupTable555UDTCenterStage(LookupTable):
@@ -1478,185 +1255,6 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
         return result
 
 
-class LookupTable555EdgeSliceForward(LookupTable):
-    """
-    lookup-table-5x5x5-step90-edges-slice-forward.txt
-    =================================================
-    1 steps has 7 entries (0 percent)
-    2 steps has 42 entries (0 percent)
-    3 steps has 299 entries (3 percent)
-    4 steps has 1,306 entries (16 percent)
-    5 steps has 3,449 entries (43 percent)
-    6 steps has 2,617 entries (33 percent)
-    7 steps has 200 entries (2 percent)
-
-    Total: 7920 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step90-edges-slice-forward.txt',
-            'EDGES',
-            linecount=7920)
-
-    def state(self):
-        raise Exception("This should never be called")
-
-
-class LookupTable555EdgeSliceBackward(LookupTable):
-    """
-    lookup-table-5x5x5-step91-edges-slice-backward.txt
-    ==================================================
-    1 steps has 1 entries (0 percent)
-    3 steps has 36 entries (0 percent)
-    4 steps has 66 entries (0 percent)
-    5 steps has 334 entries (4 percent)
-    6 steps has 1,369 entries (17 percent)
-    7 steps has 3,505 entries (44 percent)
-    8 steps has 2,539 entries (32 percent)
-    9 steps has 69 entries (0 percent)
-
-    Total: 7919 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step91-edges-slice-backward.txt',
-            'EDGES',
-            linecount=7919)
-
-    def state(self):
-        raise Exception("This should never be called")
-
-
-edges_recolor_tuples_555 = (
-    ('0', 2, 104), # upper
-    ('1', 4, 102),
-    ('2', 6, 27),
-    ('3', 10, 79),
-    ('4', 16, 29),
-    ('5', 20, 77),
-    ('6', 22, 52),
-    ('7', 24, 54),
-
-    ('8', 31, 110), # left
-    ('9', 35, 56),
-    ('a', 41, 120),
-    ('b', 45, 66),
-
-    ('c', 81, 60), # right
-    ('d', 85, 106),
-    ('e', 91, 70),
-    ('f', 95, 116),
-
-    ('g', 127, 72), # down
-    ('h', 129, 74),
-    ('i', 131, 49),
-    ('j', 135, 97),
-    ('k', 141, 47),
-    ('l', 145, 99),
-    ('m', 147, 124),
-    ('n', 149, 122)
-)
-
-midges_recolor_tuples_555 = (
-    ('o', 3, 103), # upper
-    ('p', 11, 28),
-    ('q', 15, 78),
-    ('r', 23, 53),
-
-    ('s', 36, 115), # left
-    ('t', 40, 61),
-
-    ('u', 86, 65),  # right
-    ('v', 90, 111),
-
-    ('w', 128, 73), # down
-    ('x', 136, 48),
-    ('y', 140, 98),
-    ('z', 148, 123)
-)
-
-def edges_recolor_pattern_555(state):
-    midges_map = {
-        'BD': None,
-        'BL': None,
-        'BR': None,
-        'BU': None,
-        'DF': None,
-        'DL': None,
-        'DR': None,
-        'FL': None,
-        'FR': None,
-        'FU': None,
-        'LU': None,
-        'RU': None
-    }
-
-    for (edge_index, square_index, partner_index) in midges_recolor_tuples_555:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-        midges_map[wing_str] = edge_index
-
-        # We need to indicate which way the midge is rotated.  If the square_index contains
-        # U, D, L, or R use the uppercase of the edge_index, if not use the lowercase of the
-        # edge_index.
-        if square_value == 'U':
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
-        elif partner_value == 'U':
-            state[square_index] = edge_index
-            state[partner_index] = edge_index
-        elif square_value == 'D':
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
-        elif partner_value == 'D':
-            state[square_index] = edge_index
-            state[partner_index] = edge_index
-        elif square_value == 'L':
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
-        elif partner_value == 'L':
-            state[square_index] = edge_index
-            state[partner_index] = edge_index
-        elif square_value == 'R':
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
-        elif partner_value == 'R':
-            state[square_index] = edge_index
-            state[partner_index] = edge_index
-        else:
-            raise Exception("We should not be here")
-
-    # Where is the midge for each high/low wing?
-    for (edge_index, square_index, partner_index) in edges_recolor_tuples_555:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-
-        high_low = tsai_phase2_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-
-        # If this is a high wing use the uppercase of the midge edge_index
-        if high_low == 'U':
-            state[square_index] = midges_map[wing_str].upper()
-            state[partner_index] = midges_map[wing_str].upper()
-
-        # If this is a low wing use the lowercase of the midge edge_index
-        elif high_low == 'D':
-            state[square_index] = midges_map[wing_str]
-            state[partner_index] = midges_map[wing_str]
-
-        else:
-            raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
-
-    return ''.join(state)
-
-
 LR_edges_recolor_tuples_555 = (
     ('8', 31, 110), # left
     ('9', 35, 56),
@@ -1832,48 +1430,6 @@ class LookupTable555StageSecondFourEdges(LookupTable):
 
         edges_state = ''.join([state[square_index] for square_index in wings_555])
         return edges_state
-
-
-# TODO this will not be needed in the end
-class LookupTable555PlaceLastFourEdges(LookupTable):
-    """
-    lookup-table-5x5x5-step102-place-last-four-edges.txt
-    ====================================================
-    1 steps has 63 entries (7 percent, 0.00x previous step)
-    2 steps has 210 entries (26 percent, 3.33x previous step)
-    3 steps has 366 entries (46 percent, 1.74x previous step)
-    4 steps has 152 entries (19 percent, 0.42x previous step)
-    5 steps has 2 entries (0 percent, 0.01x previous step)
-
-    Total: 793 entries
-    Average: 2.773014 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step102-place-last-four-edges.txt',
-            ('xxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxLLLLLLxxxxxxLxLxLxxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-             'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxLxLxLxxxxxxLxLxLxxxxxxxxxxxxxxxx'),
-            linecount=793)
-
-    def state(self):
-        result = ''.join(['x' if self.parent.edge_paired(index) else 'L' for index in wings_sequential_555])
-        return result
 
 
 class LookupTable555PairLastFourEdges(LookupTable):
@@ -2148,12 +1704,8 @@ class RubiksCube555(RubiksCube):
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
 
-        self.lt_edges_slice_forward = LookupTable555EdgeSliceForward(self)
-        self.lt_edges_slice_backward = LookupTable555EdgeSliceBackward(self)
-
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
-        self.lt_edges_place_last_four = LookupTable555PlaceLastFourEdges(self)
         self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
@@ -2318,7 +1870,6 @@ class RubiksCube555(RubiksCube):
         state = self.state
 
         for x in range(1000000):
-            added_wing_tuple = False
 
             # make random moves
             step = moves_5x5x5[randint(0, len(moves_5x5x5)-1)]
@@ -2338,7 +1889,6 @@ class RubiksCube555(RubiksCube):
 
                 if wing_tuple not in tsai_phase2_orient_edges_555:
                     tsai_phase2_orient_edges_555[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
-                    added_wing_tuple = True
 
         log.info("new tsai_phase2_orient_edges_555\n\n%s\n\n" % pformat(tsai_phase2_orient_edges_555))
         log.info("tsai_phase2_orient_edges_555 has %d entries" % len(tsai_phase2_orient_edges_555))
@@ -2464,983 +2014,7 @@ class RubiksCube555(RubiksCube):
             # All centers are staged, solve them
             self.lt_ULFRB_centers_solve.solve()
             log.info("ULFRBD centers solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
-
-    def find_moves_to_stage_slice_backward_555(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
-        state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
-        return self.lt_edges_slice_backward.steps(state)
-
-    def get_sister_wings_slice_backward_555(self):
-        results = (None, None, None, None)
-        max_pair_on_slice_back = 0
-
-        # save cube state
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        # Work with the wing at the bottom of the F-east edge
-        # Move the sister wing to F-west
-        target_wing = (self.sideF.edge_east_pos[-1], self.sideR.edge_west_pos[-1])
-
-        # Do we need to reverse sister_wing1?
-        for sister_wing1_reverse in (True, False):
-            sister_wing1 = self.get_wing_in_middle_of_edge(target_wing[0])
-
-            if sister_wing1_reverse:
-                sister_wing1 = tuple(list(reversed(sister_wing1)))
-            sister_wing1_side = self.get_side_for_index(sister_wing1[0])
-
-            sister_wing2 = None
-            sister_wing3 = None
-            #log.info("sister_wing1 %s on %s" % (pformat(sister_wing1), sister_wing1_side))
-
-            for sister_wing1_use_first_neighbor in (True, False):
-                neighbors = sister_wing1_side.get_wing_neighbors(sister_wing1[0])
-
-                if sister_wing1_use_first_neighbor:
-                    sister_wing1_neighbor = neighbors[0]
-                else:
-                    sister_wing1_neighbor = neighbors[1]
-
-                for sister_wing2_reverse in (True, False):
-                    sister_wing2 = self.get_wing_in_middle_of_edge(sister_wing1_neighbor)
-
-                    if sister_wing2_reverse:
-                        sister_wing2 = tuple(list(reversed(sister_wing2)))
-                    sister_wing2_side = self.get_side_for_index(sister_wing2[0])
-
-                    #log.info("sister_wing1_use_first_neighbor %s, sister_wing2 %s on %s" %
-                    #     (sister_wing1_use_first_neighbor, pformat(sister_wing2), sister_wing2_side))
-
-                    for sister_wing2_use_first_neighbor in (True, False):
-                        neighbors = sister_wing2_side.get_wing_neighbors(sister_wing2[0])
-
-                        if sister_wing2_use_first_neighbor:
-                            sister_wing2_neighbor = neighbors[0]
-                        else:
-                            sister_wing2_neighbor = neighbors[1]
-
-                        for sister_wing3_reverse in (True, False):
-                            sister_wing3 = self.get_wing_in_middle_of_edge(sister_wing2_neighbor)
-
-                            if sister_wing3_reverse:
-                                sister_wing3 = tuple(list(reversed(sister_wing3)))
-
-                            #log.info("sister_wing2_use_first_neighbor %s, sister_wing3 %s" %
-                            #    (sister_wing2_use_first_neighbor, pformat(sister_wing3)))
-
-                            steps = self.find_moves_to_stage_slice_backward_555(target_wing, sister_wing1, sister_wing2, sister_wing3)
-
-                            if steps:
-                                pre_non_paired_wings_count = self.get_non_paired_wings_count()
-                                for step in steps:
-                                    self.rotate(step)
-
-                                # 3Uw' Uw
-                                self.rotate("Dw'")
-                                self.rotate_y_reverse()
-
-                                post_non_paired_wings_count = self.get_non_paired_wings_count()
-
-                                # F-east must pair
-                                if self.state[70] == self.state[65] and self.state[91] == self.state[86]:
-                                    will_pair_on_slice_count = pre_non_paired_wings_count - post_non_paired_wings_count
-                                else:
-                                    will_pair_on_slice_count = 0
-
-                                #log.info("get_sister_wings_slice_backward_555() will_pair_on_slice_count %d via %s" %
-                                #    (will_pair_on_slice_count, ' '.join(steps)))
-
-                                # restore cube state
-                                self.state = original_state[:]
-                                self.solution = original_solution[:]
-
-                                if will_pair_on_slice_count > max_pair_on_slice_back:
-                                    results = (target_wing, sister_wing1, sister_wing2, sister_wing3)
-                                    max_pair_on_slice_back = will_pair_on_slice_count
-
-        # log.info("max_pair_on_slice_back is %d" % max_pair_on_slice_back)
-        return results
-
-    def prep_for_slice_back_555(self):
-
-        (target_wing, sister_wing1, sister_wing2, sister_wing3) = self.get_sister_wings_slice_backward_555()
-
-        if target_wing is None:
-            log.info("prep_for_slice_back_555() failed...get_sister_wings_slice_backward_555")
-            #raise SolveError("prep_for_slice_back_555() failed...get_sister_wings_slice_backward_555")
-            return False
-
-        steps = self.find_moves_to_stage_slice_backward_555(target_wing, sister_wing1, sister_wing2, sister_wing3)
-
-        if steps:
-            for step in steps:
-                self.rotate(step)
-            return True
-        else:
-            log.info("prep_for_slice_back_555() failed...no steps")
-            return False
-
-    def get_sister_wings_slice_forward_555(self, pre_non_paired_edges_count, pre_non_paired_wings_count):
-        results = (None, None, None, None, None)
-        max_pair_on_slice_forward = 0
-
-        # save cube state
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        # Work with the wing at the bottom of the F-west edge
-        # Move the sister wing to F-east
-        target_wing = (self.sideL.edge_east_pos[-1], self.sideF.edge_west_pos[-1])
-
-        for sister_wing1_reverse in (True, False):
-            sister_wing1 = self.get_wing_in_middle_of_edge(target_wing[0])
-
-            if sister_wing1_reverse:
-                sister_wing1 = tuple(list(reversed(sister_wing1)))
-            sister_wing1_side = self.get_side_for_index(sister_wing1[0])
-
-            sister_wing2 = None
-            sister_wing3 = None
-            #log.info("sister_wing1 %s, reverse %s, %s" % (pformat(sister_wing1), sister_wing1_reverse, sister_wing1_side))
-
-            for sister_wing1_use_first_neighbor in (True, False):
-                neighbors = sister_wing1_side.get_wing_neighbors(sister_wing1[0])
-
-                if sister_wing1_use_first_neighbor:
-                    sister_wing1_neighbor = neighbors[0]
-                else:
-                    sister_wing1_neighbor = neighbors[1]
-
-                for sister_wing2_reverse in (True, False):
-                    sister_wing2 = self.get_wing_in_middle_of_edge(sister_wing1_neighbor)
-
-                    if sister_wing2_reverse:
-                        sister_wing2 = tuple(list(reversed(sister_wing2)))
-                    sister_wing2_side = self.get_side_for_index(sister_wing2[0])
-
-                    #log.info("sister_wing1_use_first_neighbor %s, sister_wing2 %s, reverse %s, %s" %
-                    #   (sister_wing1_use_first_neighbor, pformat(sister_wing2), sister_wing2_reverse, sister_wing2_side))
-
-                    for sister_wing2_use_first_neighbor in (True, False):
-                        neighbors = sister_wing2_side.get_wing_neighbors(sister_wing2[0])
-
-                        if sister_wing2_use_first_neighbor:
-                            sister_wing2_neighbor = neighbors[0]
-                        else:
-                            sister_wing2_neighbor = neighbors[1]
-
-                        for sister_wing3_reverse in (True, False):
-
-                            # If we are pairing the last 4, 5 or 6 edges then we need sister_wing3 to
-                            # be any unpaired edge that allows us to only pair 2 edges on the slice forward
-                            if pre_non_paired_edges_count in (4, 5, 6):
-
-                                # We need sister_wing3 to be any unpaired edge that allows us
-                                # to only pair 2 on the slice forward
-                                for wing in self.get_non_paired_wings():
-                                    if (wing[0] not in (target_wing, sister_wing1, sister_wing2, sister_wing3, (40, 61), (61, 40)) and
-                                        wing[1] not in (target_wing, sister_wing1, sister_wing2, sister_wing3, (40, 61), (61, 40))):
-                                        sister_wing3 = wing[1]
-                                        break
-                            else:
-                                sister_wing3 = self.get_wing_in_middle_of_edge(sister_wing2_neighbor)
-
-                            if sister_wing3_reverse:
-                                sister_wing3 = tuple(list(reversed(sister_wing3)))
-
-                            state = self.edge_string_to_find(target_wing, sister_wing1, sister_wing2, sister_wing3)
-                            steps = self.lt_edges_slice_forward.steps(state)
-
-                            #log.info("sister_wing2_use_first_neighbor %s, sister_wing3 %s, reverse %s, state %s, steps %s" %
-                            #    (sister_wing2_use_first_neighbor, pformat(sister_wing3), sister_wing3_reverse, state, "True" if steps else "False"))
-
-                            if steps:
-                                #log.info("target_wing %s, sister_wing1 %s, sister_wing2 %s, sister_wing3 %s" %
-                                #    (pformat(target_wing), pformat(sister_wing1), pformat(sister_wing2), pformat(sister_wing3)))
-
-                                for step in steps:
-                                    self.rotate(step)
-
-                                # 3Uw Uw'
-                                self.rotate("Dw")
-                                self.rotate_y()
-                                post_non_paired_wings_count = self.get_non_paired_wings_count()
-
-                                # F-west must pair
-                                if self.state[66] == self.state[61] and self.state[45] == self.state[40]:
-                                    will_pair_on_slice_count = pre_non_paired_wings_count - post_non_paired_wings_count
-                                else:
-                                    will_pair_on_slice_count = 0
-
-                                # restore cube state
-                                self.state = original_state[:]
-                                self.solution = original_solution[:]
-
-                                if will_pair_on_slice_count > max_pair_on_slice_forward:
-                                    results = (target_wing, sister_wing1, sister_wing2, sister_wing3, steps)
-                                    max_pair_on_slice_forward = will_pair_on_slice_count
-
-        #if pre_non_paired_edges_count in (4, 5, 6):
-        #    if max_pair_on_slice_forward != 2:
-        #        raise SolveError("Should pair 2 on slice forward but will pair %d" % max_pair_on_slice_forward)
-
-        #log.info("max_pair_on_slice_forward is %d" % max_pair_on_slice_forward)
-        #if max_pair_on_slice_forward != 3:
-        #    raise SolveError("Could not find sister wings for 5x5x5 slice forward (max_pair_on_slice_forward %d)" % max_pair_on_slice_forward)
-        return results
-
-    def rotate_unpaired_wing_to_bottom_of_F_east(self):
-        """
-        Rotate an unpaired wing to the bottom of F-east (one that can be sliced back)
-        """
-        for x in range(3):
-            if self.state[65] == self.state[70] and self.state[86] == self.state[91]:
-                self.rotate_y()
-            else:
-                if self.prep_for_slice_back_555():
-                    return True
-
-        return False
-
-    def pair_four_or_six_wings_555(self, wing_to_pair, pre_non_paired_edges_count):
-        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        original_non_paired_wings_count = self.get_non_paired_wings_count()
-
-        log.info("pair_four_or_six_wings_555()")
-        # log.info("PREP-FOR-3Uw-SLICE (begin)")
-
-        (target_wing, sister_wing1, sister_wing2, sister_wing3, steps) = self.get_sister_wings_slice_forward_555(pre_non_paired_edges_count, original_non_paired_wings_count)
-
-        if target_wing is None:
-            log.info("pair_four_or_six_wings_555() failed...get_sister_wings_slice_forward_555")
-            #raise SolveError("pair_four_or_six_wings_555() failed...get_sister_wings_slice_forward_555")
-            return False
-
-        for step in steps:
-            self.rotate(step)
-
-        # At this point we are setup to slice forward and pair 3 edges
-        # log.info("PREP-FOR-3Uw-SLICE (end)....SLICE (begin), %d left to pair" % self.get_non_paired_wings_count())
-        # 3Uw Uw'
-        self.rotate("Dw")
-        self.rotate_y()
-
-        #log.info("SLICE (end), %d left to pair" % self.get_non_paired_wings_count())
-        post_slice_forward_non_paired_wings_count = self.get_non_paired_wings_count()
-        post_slice_forward_solution_len = self.get_solution_len_minus_rotates(self.solution)
-
-        log.info("pair_four_or_six_wings_555() paired %d wings in %d moves on slice forward (%d left to pair, %d steps in)" %
-            (original_non_paired_wings_count - post_slice_forward_non_paired_wings_count,
-             post_slice_forward_solution_len - original_solution_len,
-             post_slice_forward_non_paired_wings_count,
-             post_slice_forward_solution_len))
-
-        # setup for slice back
-        placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
-
-        # We paired all 8 wings on the slice forward so rotate the edges from U and D onto L and F and check again
-        if not placed_unpaired_wing:
-            self.rotate("R")
-            self.rotate("L'")
-            self.rotate("U")
-            self.rotate("D")
-            self.rotate("R'")
-            self.rotate("L")
-            placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
-
-            if not placed_unpaired_wing:
-                log.info("pair_four_or_six_wings_555() failed...no unpaired wings to move to F-east")
-                return False
-
-        #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_wings_count())
-        # 3Uw' Uw
-        self.rotate("Dw'")
-        self.rotate_y()
-        #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
-
-        post_slice_back_non_paired_wings_count = self.get_non_paired_wings_count()
-        post_slice_back_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        wings_paired = post_slice_forward_non_paired_wings_count - post_slice_back_non_paired_wings_count
-
-        log.info("pair_four_or_six_wings_555() paired %d wings in %d moves on slice back (%d left to pair, %d steps in)" %
-            (post_slice_forward_non_paired_wings_count - post_slice_back_non_paired_wings_count,
-             post_slice_back_solution_len - post_slice_forward_solution_len,
-             post_slice_back_non_paired_wings_count,
-             post_slice_back_solution_len))
-
-        if wings_paired < 1:
-            raise SolveError("Paired %d wings" % wings_paired)
-
-        return True
-
-    def pair_one_wing_555(self):
-        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        original_non_paired_wings_count = self.get_non_paired_wings_count()
-
-        if self.sideF.west_edge_paired():
-            raise SolveError("F-west should not be paired")
-
-        log.info("pair_one_wing_555() called (%d left to pair, %d steps in)" % (original_non_paired_wings_count, original_solution_len))
-
-        # Work with the edge at the bottom of F-west
-        target_wing = self.sideF.edge_west_pos[-1]
-        target_wing_value = self.get_wing_value(target_wing)
-        sister_wings = self.get_wings(target_wing)
-        checkerboard = False
-
-        # This is the scenario where the center edge is beside its two siblings it
-        # just needs to be flipped in place.
-        if not sister_wings:
-            raise SolveError("We should not be here")
-
-        # Is this a checkerboard?
-        if (40, 61) in sister_wings:
-            checkerboard = True
-            sister_wing = (40, 61)
-
-        elif (61, 40) in sister_wings:
-            checkerboard = True
-            sister_wing = (61, 40)
-
-        else:
-            # Pick the sister_wing that is in the middle of the edge
-            for x in sister_wings:
-                if x in ((3, 103), (103, 3),
-                         (11, 28), (28, 11),
-                         (15, 78), (78, 15),
-                         (23, 53), (53, 23),
-                         (36, 115), (115, 36),
-                         (40, 61), (61, 40),
-                         (65, 86), (86, 65),
-                         (48, 136), (136, 48),
-                         (73, 128), (128, 73),
-                         (90, 111), (111, 90),
-                         (98, 140), (140, 98),
-                         (123, 148), (148, 123)):
-                    sister_wing = x
-                    break
-
-            else:
-                self.print_cube()
-                raise SolveError("Could not find sister wing in the middle: %s" % pformat(sister_wings))
-
-        if checkerboard:
-            # Flip one middle wing in place
-            # No 1 at https://i.imgur.com/wsTqj.png
-            self.rotate_x()
-            self.rotate_y_reverse()
-            for step in "Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2".split():
-                self.rotate(step)
-            return True
-
-        else:
-
-            # Move sister wing to F-east
-            self.move_wing_to_F_east(sister_wing)
-
-            # We must have a sister wing at (65, 86)
-            sister_wings_on_FR_edge = self.get_wings_on_edge(target_wing, 'F', 'R')
-            if (65, 86) not in sister_wings_on_FR_edge:
-                self.print_cube()
-                log.info("sister_wings_on_FR_edge %s" % pformat(sister_wings_on_FR_edge))
-                raise SolveError("sister wing should be on FR edge")
-
-            sister_wing = (65, 86)
-            sister_wing_value = self.get_wing_value(sister_wing)
-
-            # The sister wing is in the right location but does it need to be flipped?
-            if target_wing_value != sister_wing_value:
-                for step in ("R", "U'", "B'", "R2"):
-                    self.rotate(step)
-
-            if sister_wing[0] == 65:
-                # 3Uw Uw'
-                self.rotate("Dw")
-                self.rotate_y()
-
-                placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
-
-                # We paired all 8 wings on the slice forward so rotate the edges from U and D onto L and F and check again
-                if not placed_unpaired_wing:
-                    self.rotate("R")
-                    self.rotate("L'")
-                    self.rotate("U")
-                    self.rotate("D")
-                    self.rotate("R'")
-                    self.rotate("L")
-                    placed_unpaired_wing = self.rotate_unpaired_wing_to_bottom_of_F_east()
-
-                    if not placed_unpaired_wing:
-                        log.info("pair_four_or_six_wings_555() failed...no unpaired wings to move to F-east")
-                        return False
-
-                #log.info("PREP-FOR-3Uw'-SLICE-BACK (end)...SLICE BACK (begin), %d left to pair" % self.get_non_paired_wings_count())
-                #self.print_cube()
-
-                # 3Uw' Uw
-                self.rotate("Dw'")
-                self.rotate_y_reverse()
-                #log.info("SLICE BACK (end), %d left to pair" % self.get_non_paired_wings_count())
-
-            else:
-                raise SolveError("sister_wing %s is in the wrong position" % str(sister_wing))
-
-            current_non_paired_wings_count = self.get_non_paired_wings_count()
-        wings_paired = original_non_paired_wings_count - current_non_paired_wings_count
-        log.info("pair_one_wing_555() paired %d wings, added %d steps" % (wings_paired, self.get_solution_len_minus_rotates(self.solution) - original_solution_len))
-
-        if wings_paired < 1:
-            return False
-        else:
-            return True
-
-    def place_four_edges_555(self, edges_to_place):
-        colors_used = []
-
-        for edge_name in edges_to_place:
-            if edge_name == 'U-north':
-                colors_used.extend(self.sideU.edge_colors_north())
-            elif edge_name == 'U-west':
-                colors_used.extend(self.sideU.edge_colors_west())
-            elif edge_name == 'U-east':
-                colors_used.extend(self.sideU.edge_colors_east())
-            elif edge_name == 'U-south':
-                colors_used.extend(self.sideU.edge_colors_south())
-
-            elif edge_name == 'L-west':
-                colors_used.extend(self.sideL.edge_colors_west())
-            elif edge_name == 'L-east':
-                colors_used.extend(self.sideL.edge_colors_east())
-            elif edge_name == 'R-west':
-                colors_used.extend(self.sideR.edge_colors_west())
-            elif edge_name == 'R-east':
-                colors_used.extend(self.sideR.edge_colors_east())
-
-            elif edge_name == 'D-north':
-                colors_used.extend(self.sideD.edge_colors_north())
-            elif edge_name == 'D-west':
-                colors_used.extend(self.sideD.edge_colors_west())
-            elif edge_name == 'D-east':
-                colors_used.extend(self.sideD.edge_colors_east())
-            elif edge_name == 'D-south':
-                colors_used.extend(self.sideD.edge_colors_south())
-
-        colors_used = set(colors_used)
-
-        # B D F L R U
-        colors_all = [
-            'BL',
-            'BR',
-            'BU',
-            'BD',
-            'DF',
-            'DL',
-            'DR',
-            'FL',
-            'FR',
-            'LU',
-            'RU',
-            'FU',
-        ]
-
-        colors_to_assign = []
-
-        for x in colors_all:
-            if x not in colors_used:
-                colors_to_assign.append(x)
-
-        if (len(colors_used) + len(colors_to_assign)) != 12:
-            log.info("colors_used: %s" % pformat(colors_used))
-            log.info("colors_to_assign: %s" % pformat(colors_to_assign))
-            raise SolveError("invalid color assignement")
-
-        if 'U-north' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideU.edge_north_pos:
-                partner_index = self.sideU.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'U-west' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideU.edge_west_pos:
-                partner_index = self.sideU.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'U-east' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideU.edge_east_pos:
-                partner_index = self.sideU.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'U-south' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideU.edge_south_pos:
-                partner_index = self.sideU.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'L-west' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideL.edge_west_pos:
-                partner_index = self.sideL.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'L-east' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideL.edge_east_pos:
-                partner_index = self.sideL.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'R-west' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideR.edge_west_pos:
-                partner_index = self.sideR.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'R-east' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideR.edge_east_pos:
-                partner_index = self.sideR.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'D-north' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideD.edge_north_pos:
-                partner_index = self.sideD.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'D-west' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideD.edge_west_pos:
-                partner_index = self.sideD.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'D-east' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideD.edge_east_pos:
-                partner_index = self.sideD.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        if 'D-south' not in edges_to_place:
-            (colorA, colorB) = list(colors_to_assign.pop())
-
-            for square_index in self.sideD.edge_south_pos:
-                partner_index = self.sideD.get_wing_partner(square_index)
-                self.state[square_index] = colorA
-                self.state[partner_index] = colorB
-
-        # Remember what things looked like
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
-
-        min_solution_len = None
-        min_solution_len_rotation = None
-
-        # Try all 24 rotations and use the rotation that can place the 4 edges
-        # in a way that allows them to be placed and solved in the least number
-        # of moves
-        rotations = (
-                (),
-                ("y",),
-                ("y'",),
-                ("y", "y"),
-                ("x", "x", "y"),
-                ("x", "x", "y'"),
-                ("x", "x", "y", "y"),
-                ("y'", "x", "y"),
-                ("y'", "x", "y'"),
-                ("y'", "x", "y", "y"),
-                ("x", "y"),
-                ("x", "y'"),
-                ("x", "y", "y"),
-                ("y", "x", "y"),
-                ("y", "x", "y'"),
-                ("y", "x", "y", "y"),
-                ("x'", "y"),
-                ("x'", "y'"),
-                ("x'", "y", "y")
-        )
-
-        for steps in rotations:
-
-            for step in steps:
-                self.rotate(step)
-
-            # Place and solve
-            self.lt_edges_place_last_four.solve()
-            self.lt_edges_pair_last_four.solve()
-
-            post_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            solution_len = post_solution_len - pre_solution_len
-
-            if min_solution_len is None or solution_len < min_solution_len:
-                min_solution_len = solution_len
-                min_solution_len_rotation = steps[:]
-
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-        for step in min_solution_len_rotation:
-            self.rotate(step)
-
-        self.lt_edges_place_last_four.solve()
-        post_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        #log.info("%d moves to place last 4-edges on LR" % (post_solution_len - pre_solution_len))
-
-    def find_four_edges_555(self, edge_name_to_pair):
-
-        cycles = []
-        edges_involved = self.edges_involved()
-        results = edges_involved[edge_name_to_pair]
-        edges_involved_count_for_edge_name_to_pair = len(edges_involved[edge_name_to_pair])
-
-        for (edge_name, cycle_edges) in edges_involved.items():
-            if edge_name in results:
-                continue
-
-            if cycle_edges not in cycles:
-                cycles.append(cycle_edges)
-
-        #log.info("edges_involved(all):\n%s\n" % pformat(edges_involved))
-        #log.info("cycles:\n%s\n" % pformat(cycles))
-
-        # If there are 4-edges in the cycle that is perfect, return those
-        if edges_involved_count_for_edge_name_to_pair == 4:
-            return edges_involved[edge_name_to_pair]
-
-        # If there are 3-edges in the cycle look for a checkerboard edge
-        # that we can pair along with these three
-        elif edges_involved_count_for_edge_name_to_pair == 3:
-
-            # Look for 1-edge checkerboard edge
-            for cycle in cycles:
-                if len(cycle) == 1:
-                    results.extend(cycle)
-                    return results
-
-            return results
-            #raise SolveError("ImplementThis - 3-edge cycle for %s" % edge_name_to_pair)
-
-        # If there are 2-edges in the cycle look for
-        # - another 2-edge cycle
-        # - two 1-edge (checkerboard) edges
-        # - one 1-edge (checkerboard) edge
-        elif edges_involved_count_for_edge_name_to_pair == 2:
-
-            # Look for another 2-edge cycle
-            for cycle in cycles:
-                if len(cycle) == 2:
-                    results.extend(cycle)
-                    return results
-
-            # Look for 1-edge checkerboard edge
-            for cycle in cycles:
-                if len(cycle) == 1:
-                    results.extend(cycle)
-
-                    if len(results) == 4:
-                        return results
-
-            return results
-            #raise SolveError("ImplementThis - 2-edge cycle for %s" % edge_name_to_pair)
-
-        # If there is 1-edge in the cycle look for
-        # - a 3-edge cycle
-        # - a 2-edge cycle and another 1-edge cycle
-        # - three 1-edge cycles
-        #
-        # - a 2-edge cycle
-        # - two 1-edge cycles
-        #
-        # - one 1-edge cycle
-        #
-        elif edges_involved_count_for_edge_name_to_pair == 1:
-
-            # Look for a 3-edge cycle
-            for cycle in cycles:
-                if len(cycle) == 3:
-                    results.extend(cycle)
-                    return results
-
-            # Look for a 2-edge cycle
-            for cycle in cycles:
-                if len(cycle) == 2:
-                    results.extend(cycle)
-                    break
-
-            # Look for 1-edge checkerboard edge
-            for cycle in cycles:
-                if len(cycle) == 1:
-                    results.extend(cycle)
-
-                    if len(results) == 4:
-                        break
-
-            return results
-
-        raise SolveError("We should not be here %s" % edge_name_to_pair)
-
-    def pair_four_edges_555(self, pre_solution_len, pre_non_paired_wings_count, edge_to_pair):
-        """
-        If all of the colors involved with 4, 3, 2, or 1 edges are contained to
-        only those 4, 3, 2, 1 edges then we can use the "pair the last four edges"
-        table to solve these edges
-        """
-
-        # Remember what things looked like
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        # Find the four edges involved and get them moved to LR east and west
-        if isinstance(edge_to_pair, str):
-            edge_name = edge_to_pair
-        else:
-            edge_name = self.get_edge_name(edge_to_pair[0][0])
-
-        edges_to_place = self.find_four_edges_555(edge_name)
-        self.place_four_edges_555(edges_to_place)
-
-        # Now solve those four edges
-        self.lt_edges_pair_last_four.solve()
-
-        # Note the steps we just learned, revert the cube back to where it was
-        # at the start of this function (to undo the edge re-coloring we did)
-        # and then apply the learned steps
-        steps = self.solution[len(original_solution):]
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        for step in steps:
-            self.rotate(step)
-
-        # Collect/print some stats about how many wings we paired
-        post_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        post_non_paired_edges_count = self.get_non_paired_edges_count()
-        post_non_paired_wings_count = self.get_non_paired_wings_count()
-        wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
-        edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-
-        log.info("pair_four_edges_555() paired %d wings in %d moves (%d left to pair, edge sol len %d)" %
-            (wings_paired,
-             post_solution_len - pre_solution_len,
-             post_non_paired_wings_count,
-             edge_solution_len))
-        return True
-
-    def pair_edge(self, edge_to_pair):
-        pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        pre_non_paired_edges_count = self.get_non_paired_edges_count()
-        pre_non_paired_wings_count = self.get_non_paired_wings_count()
-
-        log.info("pair_edge() for %s (%d wings and %d edges left to pair)" % (pformat(edge_to_pair), pre_non_paired_wings_count, pre_non_paired_edges_count))
-
-        involved_count = self.edges_involved_count(edge_to_pair)
-
-        if involved_count <= 4:
-            self.pair_four_edges_555(pre_solution_len, pre_non_paired_wings_count, edge_to_pair)
-            return True
-
-        self.rotate_edge_to_F_west(edge_to_pair[0])
-
-        # We need to rotate this around so the two unpaired wings are at the bottom of F-west
-        if self.state[40] == self.state[45] and self.state[61] == self.state[66]:
-            self.rotate_z()
-            self.rotate_z()
-            self.rotate_y()
-
-        if self.sideF.west_edge_paired():
-            raise SolveError("F-west should not be paired")
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        if self.pair_four_or_six_wings_555(edge_to_pair[0], pre_non_paired_edges_count):
-            return True
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        if self.pair_one_wing_555():
-            return True
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        return False
-
-    def prune_edges_search(self, pre_non_paired_wings_count, pre_non_paired_edges_count, edge_solution_len):
-        """
-        Should we continue down this branch or should we prune it? An estimate
-        of 2.5 moves to pair an edge is a good target to hit so if the current number of
-        steps plus 2.5 * pre_non_paired_wings_count is greater than our current minimum
-        there isn't any point in continuing down this branch so prune it and save
-        some CPU cycles.
-
-        Whether we use 2.5, 3.0, or 3.5 makes a big differnce in how fast the
-        solver runs and how short the solution is. All of the data below is from
-        running the solver on my laptop.
-
-           For 5x5x5 test with 2.5 takes 16m 36s to solve 50 cubes, avg solution 120 steps
-           For 5x5x5 test with 3.0 takes 1m 44s to solve 50 cubes, avg solution 125 steps
-           For 5x5x5 test with 3.1 takes 2m 01s to solve 50 cubes, avg solution 126 steps
-           For 5x5x5 test with 3.2 takes 1m 10s to solve 50 cubes, avg solution 127 steps
-           For 5x5x5 test with 3.3 takes 52s to solve 50 cubes, avg solution 127 steps
-           For 5x5x5 test with 3.4 takes 35s to solve 50 cubes, avg solution 129 steps
-           For 5x5x5 test with 3.5 takes 30s to solve 50 cubes, avg solution 131 steps
-
-           For our default 7x7x7 cube with 2.5 it takes 13.1s,110/300 edge/total steps
-           For our default 7x7x7 cube with 3.0 it takes 6.8s, 125/315 edge/total steps
-           For our default 7x7x7 cube with 3.4 it takes 1.7s, 135/327 edge/total steps
-           For our default 7x7x7 cube with 3.5 it takes 1.7s, 135/327 edge/total steps
-        """
-
-        # If there are 4-edges or fewer left to pair do not bother calculating if we should
-        # prune the branch, we can pair the last 4-edges via a lookup table.
-        if pre_non_paired_edges_count > 4:
-
-            if self.cpu_mode == 'max':
-                estimate_per_wing = 2.0
-            else:
-                if pre_non_paired_wings_count < 16:
-                    estimate_per_wing = 2.6
-                else:
-                    estimate_per_wing = 2.2
-
-            estimated_solution_len = edge_solution_len + int(estimate_per_wing * pre_non_paired_wings_count)
-
-            if estimated_solution_len > self.min_edge_solution_len:
-                log.info("PRUNE: %s non-paired wings, estimated_solution_len %d, %s + (%s * %d) > %s" %
-                    (pre_non_paired_wings_count, estimated_solution_len, edge_solution_len, estimate_per_wing, pre_non_paired_wings_count, self.min_edge_solution_len))
-                return True
-
-        return False
-
-    def group_edges_bfs(self):
-        """
-        Experiment - BFS equivalent of the BFS recursive function
-        """
-        workq = deque()
-        non_paired_edges = self.get_non_paired_edges()
-
-        for edge_to_pair in non_paired_edges:
-            workq.append((edge_to_pair, self.state[:], self.solution[:]))
-
-        while workq:
-            (edge_to_pair, self.state, self.solution) = workq.popleft()
-
-            if self.pair_edge(edge_to_pair):
-                non_paired_edges = self.get_non_paired_edges()
-
-                if non_paired_edges:
-                    pre_non_paired_wings_count = len(self.get_non_paired_wings())
-                    pre_non_paired_edges_count = len(self.get_non_paired_edges())
-                    edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-
-                    if self.prune_edges_search(pre_non_paired_wings_count, pre_non_paired_edges_count, edge_solution_len):
-                        continue
-
-                    for edge_to_pair in non_paired_edges:
-                        workq.append((edge_to_pair, self.state[:], self.solution[:]))
-
-                else:
-                    # There are no edges left to pair, note how many steps it took pair them all
-                    edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-
-                    # Remember the solution that pairs all edges in the least number of moves
-                    if edge_solution_len < self.min_edge_solution_len:
-                        self.min_edge_solution_len = edge_solution_len
-                        self.min_edge_solution = self.solution[:]
-                        self.min_edge_solution_state = self.state[:]
-                        log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
-
-    def group_edges_recursive(self, depth, edge_to_pair):
-
-        # Should we both going down this branch or should we prune it?
-        pre_non_paired_wings_count = len(self.get_non_paired_wings())
-        pre_non_paired_edges_count = len(self.get_non_paired_edges())
-        edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-        edge_paired = False
-
-        log.info("")
-        log.info("group_edges_recursive(%d) called with edge_to_pair %s (%d edges and %d wings left to pair, min solution len %s, edge sol len %d)" %
-            (depth,
-             pformat(edge_to_pair),
-             pre_non_paired_edges_count,
-             pre_non_paired_wings_count,
-             self.min_edge_solution_len,
-             edge_solution_len))
-
-        if self.prune_edges_search(pre_non_paired_wings_count, pre_non_paired_edges_count, edge_solution_len):
-            return False
-
-        # The only time this will be None is on the initial call
-        if edge_to_pair:
-
-            # If there is an edge that can be paired via the L4E table then ignore all other
-            # edges...this cuts the time to complete the edge pairing by about 66%!!
-            l4e_edge_name_to_pair = self.get_edge_to_pair_via_last_four_edges_table()
-
-            if l4e_edge_name_to_pair:
-                edge_name = self.get_edge_name(edge_to_pair[0][0])
-
-                if edge_name != l4e_edge_name_to_pair:
-                    return False
-
-            edge_paired = self.pair_edge(edge_to_pair)
-        else:
-            edge_paired = True
-
-        non_paired_edges = self.get_non_paired_edges()
-
-        # call group_edges_recursive for each edge left to pair
-        if non_paired_edges:
-            post_non_paired_wings_count = len(self.get_non_paired_wings())
-            edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-            wings_paired = pre_non_paired_wings_count - post_non_paired_wings_count
-            original_state = self.state[:]
-            original_solution = self.solution[:]
-
-            if edge_paired and edge_solution_len < self.min_edge_solution_len:
-                log.info("group_edges_recursive(%d) paired %d" % (depth, wings_paired))
-                for edge in non_paired_edges:
-                    self.group_edges_recursive(depth+1, edge)
-                    self.state = original_state[:]
-                    self.solution = original_solution[:]
-        else:
-
-            # There are no edges left to pair, note how many steps it took pair them all
-            edge_solution_len = self.get_solution_len_minus_rotates(self.solution) - self.center_solution_len
-
-            # Remember the solution that pairs all edges in the least number of moves
-            if edge_solution_len < self.min_edge_solution_len:
-                self.min_edge_solution_len = edge_solution_len
-                self.min_edge_solution = self.solution[:]
-                self.min_edge_solution_state = self.state[:]
-                log.warning("NEW MIN: edges paired in %d steps" % self.min_edge_solution_len)
-
-            return True
+            log.info("kociemba: %s" % self.get_kociemba_string(True))
 
     def stage_first_four_edges_555(self):
         """
@@ -3451,25 +2025,101 @@ class RubiksCube555(RubiksCube):
         min_solution_steps = None
         min_solution_wing_strs = None
 
-        for wing_strs in stage_first_four_edges_wing_str_combos:
-            state = self.lt_edges_stage_first_four.state(wing_strs)
-            steps = self.lt_edges_stage_first_four.steps(state)
+        # The table for staging the first 4-edges would have 364,058,145 if built to completion.
+        # Building that table the entire way is difficult though because this is a table where
+        # the centers must be kept solved...so this involves building out a HUGE table and only
+        # keeping the entries where the centers are solved.  To build one deep enough to find
+        # all 364,058,145 entries needed that also have solved centers would probably take a
+        # few months and more drive space than I have access to.
+        #
+        # To avoid building such a massive table we only build the table out 10-deep which gives
+        # us a few million entries.  We then try all 495 permutations of 4-edges out of 12-edges
+        # looking for one that does have a hit.  Most of the time this is all that is needed and
+        # we can find a hit.  On the off chance that we cannot though we need a way to find a solution
+        # so what we do is try all outer layer moves up to 3 moves deep and see if any of those
+        # sequences put the cube in a state such that one of the 495 edge permurtations does find
+        # a hit. I have yet to find a cube that cannot be solved with this approach but if I did
+        # the pre_steps_to_try could be expanded to 4-deep.
+        outer_layer_moves = (
+            "U", "U'", "U2",
+            "L", "L'", "L2",
+            "F", "F'", "F2",
+            "R", "R'", "R2",
+            "B", "B'", "B2",
+            "D", "D'", "D2",
+        )
+        pre_steps_to_try = []
+        pre_steps_to_try.append([])
 
-            if steps:
-                log.info("%s: first four %s can be staged in %d steps" % (self, wing_strs, len(steps)))
+        for step in outer_layer_moves:
+            pre_steps_to_try.append([step,])
 
-                if min_solution_len is None or len(steps) < min_solution_len:
-                    min_solution_len = len(steps)
-                    min_solution_steps = steps[:]
-                    min_solution_wing_strs = wing_strs
+        for step1 in outer_layer_moves:
+            for step2 in outer_layer_moves:
+                if not steps_on_same_face_and_layer(step1, step2):
+                    pre_steps_to_try.append([step1, step2])
 
-        if min_solution_len is None:
-            raise SolveError("Could not find 4-edges to stage")
-        else:
-            self.stage_first_four_wing_strs = min_solution_wing_strs
+        for step1 in outer_layer_moves:
+            for step2 in outer_layer_moves:
+                if not steps_on_same_face_and_layer(step1, step2):
 
-            for step in min_solution_steps:
+                    for step3 in outer_layer_moves:
+                        if not steps_on_same_face_and_layer(step2, step3):
+                            pre_steps_to_try.append([step1, step2, step3])
+
+        # uncomment this if we ever find a cube that raises the
+        # "Could not find 4-edges to stage" NoEdgeSolution exception below
+        '''
+        for step1 in outer_layer_moves:
+            for step2 in outer_layer_moves:
+                if not steps_on_same_face_and_layer(step1, step2):
+                    for step3 in outer_layer_moves:
+                        if not steps_on_same_face_and_layer(step2, step3):
+                            for step4 in outer_layer_moves:
+                                if not steps_on_same_face_and_layer(step3, step4):
+                                    pre_steps_to_try.append([step1, step2, step3, step4])
+        '''
+
+        #log.info("pre_steps_to_try\n%s" % pformat(pre_steps_to_try))
+        #log.info("%d pre_steps_to_try" % len(pre_steps_to_try))
+
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        for pre_steps in pre_steps_to_try:
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in pre_steps:
                 self.rotate(step)
+
+            # do those steps
+            for wing_strs in stage_first_four_edges_wing_str_combos:
+                state = self.lt_edges_stage_first_four.state(wing_strs)
+                steps = self.lt_edges_stage_first_four.steps(state)
+
+                if steps:
+                    log.info("%s: first four %s can be staged in %d steps" % (self, wing_strs, len(steps)))
+
+                    if min_solution_len is None or len(steps) < min_solution_len:
+                        min_solution_len = len(steps)
+                        min_solution_steps = steps[:]
+                        min_solution_wing_strs = wing_strs
+
+            if min_solution_len is not None:
+                if pre_steps:
+                    log.warning("pre-steps %s required to find a hit" % ' '.join(pre_steps))
+
+                self.stage_first_four_wing_strs = min_solution_wing_strs
+
+                for step in min_solution_steps:
+                    self.rotate(step)
+
+                break
+        else:
+            raise NoEdgeSolution("Could not find 4-edges to stage")
 
     def stage_second_four_edges_555(self):
         """
@@ -3597,8 +2247,6 @@ class RubiksCube555(RubiksCube):
 
         self.lt_init()
 
-        # The future
-        '''
         self.print_cube()
         self.stage_first_four_edges_555()
         self.print_cube()
@@ -3607,65 +2255,11 @@ class RubiksCube555(RubiksCube):
         self.stage_second_four_edges_555()
         self.print_cube()
         log.info("%s: all edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
 
         self.solve_staged_edges_555(True)
-        '''
 
-        # The old way
-        #'''
-        depth = 0
-        self.center_solution_len = self.get_solution_len_minus_rotates(self.solution)
-        self.min_edge_solution_len = 9999
-        self.min_edge_solution = None
-        self.min_edge_solution_state = None
-        use_recursive = True
-        #use_recursive = False
-        use_bfs = False
-        #use_bfs = True
-
-        if use_bfs:
-            self.group_edges_bfs()
-            self.state = self.min_edge_solution_state[:]
-            self.solution = self.min_edge_solution[:]
-
-        elif use_recursive:
-            self.group_edges_recursive(depth, None)
-            self.state = self.min_edge_solution_state[:]
-            self.solution = self.min_edge_solution[:]
-        else:
-            while True:
-                non_paired_wings_count = self.get_non_paired_wings_count()
-                non_paired_edges_count = self.get_non_paired_edges_count()
-                pre_solution_len = self.get_solution_len_minus_rotates(self.solution)
-                log.info("%s: %d wings not paired, %d edges not paired" % (self, non_paired_wings_count, non_paired_edges_count))
-                self.print_cube()
-
-                # If all edges are paired break out of the loop
-                if not non_paired_edges_count:
-                    break
-
-                # If we can use the L4E table, use it
-                edge_name_to_pair = self.get_edge_to_pair_via_last_four_edges_table()
-
-                if edge_name_to_pair:
-                    self.pair_four_edges_555(pre_solution_len, non_paired_wings_count, edge_name_to_pair)
-                    continue
-
-                state = self.lt_edges.state()
-
-                if state in self.lt_edges.state_target:
-                    break
-
-                steps = self.lt_edges.steps(state)
-
-                if steps:
-                    for step in steps:
-                        self.rotate(step)
-                else:
-                    raise SolveError("%s: state %s does not have steps" % (self.lt_edges, state))
-        #'''
-
+        # 9x9x9 test cube with old way took 83s and 164 moves to pair edges
+        # 9x9x9 test cube with new way took 23s and 153 moves to pair edges
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')
 

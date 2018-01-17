@@ -67,7 +67,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             for index in range(1, 217):
                 fake_666.state[index] = 'x'
-            fake_666.cpu_mode = self.cpu_mode
 
             start_666 = 0
             start_NNN = 0
@@ -129,7 +128,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
         for index in range(1, 295):
             fake_777.state[index] = 'x'
-        fake_777.cpu_mode = self.cpu_mode
 
         start_777 = 0
         start_NNN = 0

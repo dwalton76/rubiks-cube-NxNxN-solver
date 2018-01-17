@@ -39,7 +39,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
         for index in range(1, 295):
             fake_777.state[index] = 'x'
-        fake_777.cpu_mode = self.cpu_mode
 
         start_777 = 0
         start_NNN = 0

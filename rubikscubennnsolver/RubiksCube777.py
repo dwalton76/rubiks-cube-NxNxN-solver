@@ -1932,7 +1932,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
         for x in range(1, 151):
@@ -2011,7 +2010,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Create a fake 5x5x5 to solve 7x7x7 centers (they have been reduced to a 5x5x5)
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
         for x in range(1, 151):
@@ -2154,7 +2152,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Create a fake 6x6x6 to stage the outside UD oblique edges
         fake_666 = RubiksCube666(solved_6x6x6, 'URFDLB')
-        fake_666.cpu_mode = self.cpu_mode
         fake_666.lt_init()
 
         for x in range(1, 217):

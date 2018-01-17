@@ -14,7 +14,6 @@ class RubiksCubeNNNOddEdges(RubiksCube):
     def pair_edge_orbit_via_555(self, orbit):
         log.info("pair_edge_orbit_via_555 for %d" % orbit)
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
 
         # Fill in the corners so we can avoid certain types of parity

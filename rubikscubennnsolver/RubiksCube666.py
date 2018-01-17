@@ -1385,7 +1385,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
     def solve_reduced_555_centers(self):
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
         self.populate_fake_555_for_ULFRBD_solve(fake_555)
         fake_555.group_centers_guts()
@@ -1395,7 +1394,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
     def solve_reduced_555_t_centers(self):
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.cpu_mode = self.cpu_mode
         fake_555.lt_init()
         self.populate_fake_555_for_ULFRBD_solve(fake_555)
         fake_555.lt_ULFRBD_t_centers_solve.solve()

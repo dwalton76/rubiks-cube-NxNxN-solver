@@ -101,7 +101,6 @@ try:
             print("ERROR: Add support for %s" % size)
             sys.exit(1)
 
-        cube.cpu_mode = 'normal'
         kociemba_strings = test_cases[size]
         num_test_cases = len(kociemba_strings)
         num_test_cases_executed = 0

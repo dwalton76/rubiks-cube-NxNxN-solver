@@ -199,6 +199,7 @@ class LookupTable(object):
         self.avoid_pll = False
         self.preloaded_cache = False
         self.preloaded_state_set = False
+        self.ida_all_the_way = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -666,10 +667,17 @@ class LookupTableAStar(LookupTable):
         return cost_to_goal
 
     def search_complete(self, state, steps_to_here):
-        steps = self.steps(state)
 
-        if not steps:
-            return False
+        if self.ida_all_the_way:
+            if state not in self.state_target:
+                return False
+            steps = []
+
+        else:
+            steps = self.steps(state)
+
+            if not steps:
+                return False
 
         # =============================================
         # If there are steps for a state that means our

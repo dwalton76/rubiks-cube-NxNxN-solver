@@ -1135,14 +1135,16 @@ class LookupTable555StageFirstFourEdges(LookupTable):
     =====================================================
     5 steps has 384 entries (0 percent, 0.00x previous step)
     6 steps has 5,032 entries (0 percent, 13.10x previous step)
-    7 steps has 40,712 entries (3 percent, 8.09x previous step)
-    8 steps has 136,236 entries (11 percent, 3.35x previous step)
-    9 steps has 1,034,328 entries (85 percent, 7.59x previous step)
+    7 steps has 40,712 entries (0 percent, 8.09x previous step)
+    8 steps has 136,236 entries (2 percent, 3.35x previous step)
+    9 steps has 1,034,328 entries (19 percent, 7.59x previous step)
+    10 steps has 3,997,220 entries (76 percent, 3.86x previous step)
 
-    Total: 1,216,692 entries
-    Average: 8.807435 moves
+    Total: 5,213,912 entries
+    Average: 9.721709 moves
 
-    This is building to 11-deep on LJs machine
+    There is no need to build this any deeper...that and building it
+    to 10-deep took about 2 days on a 12-core machine.
     """
     def __init__(self, parent):
         LookupTable.__init__(
@@ -1150,7 +1152,7 @@ class LookupTable555StageFirstFourEdges(LookupTable):
             parent,
             'lookup-table-5x5x5-step105-stage-first-four-edges.txt',
             'TBD',
-            linecount=1216692)
+            linecount=5213912)
 
     def state(self, wing_strs_to_stage):
         state = self.parent.state[:]
@@ -1485,10 +1487,12 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_centers_stage_x_center_only = LookupTable555LRXCentersStage(self)
         self.lt_LR_centers_stage_t_center_only = LookupTable555LRTCentersStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
+        #self.lt_LR_centers_stage.ida_all_the_way = True
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
+        #self.lt_ULFRB_centers_solve.ida_all_the_way = True
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
@@ -1659,6 +1663,7 @@ class RubiksCube555(RubiksCube):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.lt_UD_centers_stage.solve()
+        #self.print_cube()
         log.info("UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_centers_stage_LR(self):
@@ -1670,6 +1675,7 @@ class RubiksCube555(RubiksCube):
         self.rotate_F_to_F()
 
         self.lt_LR_centers_stage.solve()
+        #self.print_cube()
         log.info("ULFRBD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
     def group_centers_guts(self):
@@ -1681,6 +1687,7 @@ class RubiksCube555(RubiksCube):
         self.lt_ULFRB_centers_solve.solve()
         log.info("ULFRBD centers solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
+        #self.print_cube()
 
     def stage_first_four_edges_555(self):
         """
@@ -1902,7 +1909,7 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_pair_last_four.solve()
 
         if log_msgs:
-            #self.print_cube()
+            self.print_cube()
             log.info("%s: all edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_edges(self):

@@ -533,7 +533,7 @@ def edges_recolor_pattern_444(state):
 
 class LookupTable444Edges(LookupTable):
     """
-    lookup-table-4x4x4-step100-edges.txt (10-deep)
+    lookup-table-4x4x4-step110-edges.txt (10-deep)
     ==============================================
     2 steps has 1 entries (0 percent, 0.00x previous step)
     5 steps has 432 entries (0 percent, 432.00x previous step)
@@ -545,31 +545,15 @@ class LookupTable444Edges(LookupTable):
 
     Total: 7,363,591 entries
     Average: 9.816544 moves
-
-
-    lookup-table-4x4x4-step100-edges.txt (11-deep)
-    ==============================================
-    2 steps has 1 entries (0 percent, 0.00x previous step)
-    5 steps has 432 entries (0 percent, 432.00x previous step)
-    6 steps has 2053 entries (0 percent, 4.75x previous step)
-    7 steps has 15475 entries (0 percent, 7.54x previous step)
-    8 steps has 151530 entries (0 percent, 9.79x previous step)
-    9 steps has 991027 entries (2 percent, 6.54x previous step)
-    10 steps has 6203073 entries (17 percent, 6.26x previous step)
-    11 steps has 27990511 entries (79 percent, 4.51x previous step)
-
-    Total: 35354102 entries
-    Average: 10.753509 moves
     """
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step100-edges.txt',
+            'lookup-table-4x4x4-step110-edges.txt',
             '111111111111_10425376a8b9ecfdhgkiljnm',
             linecount=7363591) # 10-deep
-            #linecount=35354102) # 11-deep
 
 
 class RubiksCube444(RubiksCube):

@@ -844,7 +844,7 @@ def LR_edges_recolor_pattern_555(state):
 
 class LookupTable555StageFirstFourEdges(LookupTable):
     """
-    lookup-table-5x5x5-step105-stage-first-four-edges.txt
+    lookup-table-5x5x5-step100-stage-first-four-edges.txt
     =====================================================
     5 steps has 384 entries (0 percent, 0.00x previous step)
     6 steps has 5,032 entries (0 percent, 13.10x previous step)
@@ -863,7 +863,7 @@ class LookupTable555StageFirstFourEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step105-stage-first-four-edges.txt',
+            'lookup-table-5x5x5-step100-stage-first-four-edges.txt',
             'TBD',
             linecount=5213912)
 
@@ -890,7 +890,7 @@ class LookupTable555StageFirstFourEdges(LookupTable):
 
 class LookupTable555StageSecondFourEdges(LookupTable):
     """
-    lookup-table-5x5x5-step106-stage-second-four-edges.txt
+    lookup-table-5x5x5-step101-stage-second-four-edges.txt
     ======================================================
     5 steps has 32 entries (0 percent, 0.00x previous step)
     6 steps has 304 entries (0 percent, 9.50x previous step)
@@ -913,7 +913,7 @@ class LookupTable555StageSecondFourEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step106-stage-second-four-edges.txt',
+            'lookup-table-5x5x5-step101-stage-second-four-edges.txt',
             'TBD',
             linecount=338122)
 
@@ -940,7 +940,7 @@ class LookupTable555StageSecondFourEdges(LookupTable):
 
 class LookupTable555PairLastFourEdges(LookupTable):
     """
-    lookup-table-5x5x5-step103-pair-last-four-edges.txt
+    lookup-table-5x5x5-step102-pair-last-four-edges.txt
     ===================================================
     5 steps has 10 entries (0 percent, 0.00x previous step)
     6 steps has 45 entries (0 percent, 4.50x previous step)
@@ -960,7 +960,7 @@ class LookupTable555PairLastFourEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step103-pair-last-four-edges.txt',
+            'lookup-table-5x5x5-step102-pair-last-four-edges.txt',
             'sSSTTtuUUVVv',
             linecount=40319)
 

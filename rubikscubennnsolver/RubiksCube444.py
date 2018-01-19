@@ -3,6 +3,7 @@
 from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
+    steps_on_same_face_and_layer,
     LookupTable,
     LookupTableIDA,
 )
@@ -50,6 +51,39 @@ wings_444 = (
     88, 92,
     94, 95
 )
+
+centers_solved_states_444 = set()
+centers_solved_states_444.add('UUUULLLLFFFFRRRRBBBBDDDD')
+centers_solved_states_444.add('UUUUFFFFRRRRBBBBLLLLDDDD')
+centers_solved_states_444.add('UUUURRRRBBBBLLLLFFFFDDDD')
+centers_solved_states_444.add('UUUUBBBBLLLLFFFFRRRRDDDD')
+centers_solved_states_444.add('DDDDLLLLBBBBRRRRFFFFUUUU')
+centers_solved_states_444.add('DDDDBBBBRRRRFFFFLLLLUUUU')
+centers_solved_states_444.add('DDDDRRRRFFFFLLLLBBBBUUUU')
+centers_solved_states_444.add('DDDDFFFFLLLLBBBBRRRRUUUU')
+centers_solved_states_444.add('LLLLUUUUBBBBDDDDFFFFRRRR')
+centers_solved_states_444.add('LLLLBBBBDDDDFFFFUUUURRRR')
+centers_solved_states_444.add('LLLLDDDDFFFFUUUUBBBBRRRR')
+centers_solved_states_444.add('LLLLFFFFUUUUBBBBDDDDRRRR')
+centers_solved_states_444.add('FFFFLLLLDDDDRRRRUUUUBBBB')
+centers_solved_states_444.add('FFFFDDDDRRRRUUUULLLLBBBB')
+centers_solved_states_444.add('FFFFRRRRUUUULLLLDDDDBBBB')
+centers_solved_states_444.add('FFFFUUUULLLLDDDDRRRRBBBB')
+centers_solved_states_444.add('RRRRDDDDBBBBUUUUFFFFLLLL')
+centers_solved_states_444.add('RRRRBBBBUUUUFFFFDDDDLLLL')
+centers_solved_states_444.add('RRRRUUUUFFFFDDDDBBBBLLLL')
+centers_solved_states_444.add('RRRRFFFFDDDDBBBBUUUULLLL')
+centers_solved_states_444.add('BBBBUUUURRRRDDDDLLLLFFFF')
+centers_solved_states_444.add('BBBBRRRRDDDDLLLLUUUUFFFF')
+centers_solved_states_444.add('BBBBDDDDLLLLUUUURRRRFFFF')
+centers_solved_states_444.add('BBBBLLLLUUUURRRRDDDDFFFF')
+
+def centers_solved_444(state):
+    if state[0:24] in centers_solved_states_444:
+        return True
+    return False
+
+
 
 def get_best_entry(foo):
     # TODO this can only track wings since it is only used by 4x4x4
@@ -349,6 +383,64 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
         return result
 
 
+class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
+            'TBD',
+            moves_4x4x4,
+            ("Rw", "Rw'", "Lw", "Lw'",
+             "Fw", "Fw'", "Bw", "Bw'",
+             "Uw", "Uw'", "Dw", "Dw'"),
+
+            # prune tables
+            (parent.lt_ULFRBD_centers_solve,),
+            linecount=0)
+
+    def state(self):
+        state = edges_recolor_pattern_444(self.parent.state[:])
+
+        edges = ''.join([state[square_index] for square_index in wings_444])
+        centers = ''.join([state[x] for x in centers_444])
+
+        return centers + edges
+
+    def search_complete(self, state, steps_to_here):
+
+        if centers_solved_444(state) and self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=False):
+
+            # rotate_xxx() is very fast but it does not append the
+            # steps to the solution so put the cube back in original state
+            # and execute the steps via a normal rotate() call
+            self.parent.state = self.original_state[:]
+            self.parent.solution = self.original_solution[:]
+
+            for step in steps_to_here:
+                self.parent.rotate(step)
+
+            '''
+            if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.info("%s: IDA found match but it leads to OLL" % self)
+                return False
+
+            if self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.info("%s: IDA found match but it leads to PLL" % self)
+                return False
+            '''
+
+            return True
+
+        return False
+
+
+
 """
 lookup-table-4x4x4-step201-UD-centers-solve.txt
 lookup-table-4x4x4-step202-LR-centers-solve.txt
@@ -635,6 +727,9 @@ class RubiksCube444(RubiksCube):
         # Phase2 tables
         # =============
         self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
+        self.lt_ULFRBD_centers_solve_edges_stage = LookupTable444ULFRBDCentersSolveEdgesStage(self)
+        self.lt_ULFRBD_centers_solve_edges_stage.avoid_pll = True
+        self.lt_ULFRBD_centers_solve_edges_stage.avoid_oll = True
 
         # Experiment
         #self.lt_UD_centers_solve_unstaged = LookupTable444UDCentersSolveUnstaged(self)
@@ -643,6 +738,7 @@ class RubiksCube444(RubiksCube):
         #self.lt_ULFRBD_centers_solve_unstaged = LookupTableIDA444ULFRBDCentersSolveUnstaged(self)
         #self.lt_ULFRBD_centers_solve_unstaged.avoid_oll = True
 
+        # Edges table
         self.lt_edges = LookupTable444Edges(self)
 
     def group_centers_guts(self):
@@ -675,6 +771,7 @@ class RubiksCube444(RubiksCube):
 
         log.info("%s: Start of Phase1" % self)
         self.lt_ULFRBD_centers_stage.avoid_oll = True
+        #self.lt_ULFRBD_centers_stage.ida_all_the_way = True
         self.lt_ULFRBD_centers_stage.solve()
         self.print_cube()
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
@@ -682,9 +779,94 @@ class RubiksCube444(RubiksCube):
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_ULFRBD_centers_solve.solve()
+        #self.lt_ULFRBD_centers_solve_edges_stage.solve()
         self.print_cube()
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
+
+    def solve_all_edges_444(self, use_bfs, apply_steps_if_found):
+
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        outer_layer_moves = (
+            "U", "U'", "U2",
+            "L", "L'", "L2",
+            "F", "F'", "F2",
+            "R", "R'", "R2",
+            "B", "B'", "B2",
+            "D", "D'", "D2",
+        )
+        pre_steps_to_try = []
+        pre_steps_to_try.append([])
+
+        if use_bfs:
+            for step in outer_layer_moves:
+                pre_steps_to_try.append([step,])
+
+            for step1 in outer_layer_moves:
+                for step2 in outer_layer_moves:
+                    if not steps_on_same_face_and_layer(step1, step2):
+                        pre_steps_to_try.append([step1, step2])
+
+            for step1 in outer_layer_moves:
+                for step2 in outer_layer_moves:
+                    if not steps_on_same_face_and_layer(step1, step2):
+
+                        for step3 in outer_layer_moves:
+                            if not steps_on_same_face_and_layer(step2, step3):
+                                pre_steps_to_try.append([step1, step2, step3])
+
+            '''
+            for step1 in outer_layer_moves:
+                for step2 in outer_layer_moves:
+                    if not steps_on_same_face_and_layer(step1, step2):
+                        for step3 in outer_layer_moves:
+                            if not steps_on_same_face_and_layer(step2, step3):
+                                for step4 in outer_layer_moves:
+                                    if not steps_on_same_face_and_layer(step3, step4):
+                                        pre_steps_to_try.append([step1, step2, step3, step4])
+
+            '''
+            log.warning("%d pre_steps_to_try" % len(pre_steps_to_try))
+
+        for pre_steps in pre_steps_to_try:
+            #log.info("solve_all_edges_444 trying pre_steps %s" % ' '.join(pre_steps))
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in pre_steps:
+                self.rotate(step)
+
+            state = edges_recolor_pattern_444(self.state[:])
+
+            edges_state = ''.join([state[square_index] for square_index in wings_444])
+            signature = get_edges_paired_binary_signature(edges_state)
+            signature_width = len(signature) + 1
+            edges_state = signature + '_' + edges_state
+
+
+            # If our state is in lookup-table-4x4x4-step100-edges.txt then execute
+            # those steps and we are done
+            steps = self.lt_edges.steps(edges_state)
+
+            if steps is not None:
+
+                if apply_steps_if_found:
+                    for step in steps:
+                        self.rotate(step)
+                else:
+                    self.state = original_state[:]
+                    self.solution = original_solution[:]
+
+                return True
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        return False
 
     def solve_edges_six_then_six(self):
 
@@ -863,7 +1045,10 @@ class RubiksCube444(RubiksCube):
             return
 
         self.lt_init()
-        self.solve_edges_six_then_six()
+
+        # use_bfs needs more testing...I'm not sure it buys us much
+        if not self.solve_all_edges_444(use_bfs=False, apply_steps_if_found=True):
+            self.solve_edges_six_then_six()
 
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')

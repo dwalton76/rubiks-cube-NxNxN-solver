@@ -289,10 +289,12 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
     2 steps has 98 entries (0 percent, 19.60x previous step)
     3 steps has 2,036 entries (0 percent, 20.78x previous step)
     4 steps has 41,096 entries (0 percent, 20.18x previous step)
-    5 steps has 824,950 entries (4 percent, 20.07x previous step)
-    6 steps has 16,300,291 entries (94 percent, 19.76x previous step)
+    5 steps has 824,950 entries (0 percent, 20.07x previous step)
+    6 steps has 16,300,291 entries (4 percent, 19.76x previous step)
+    7 steps has 311,709,304 entries (94 percent, 19.12x previous step)
 
-    Total: 17,168,476 entries
+    Total: 328,877,780 entries
+    Average: 6.945019 moves
     """
 
     def __init__(self, parent):
@@ -300,14 +302,14 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             self,
             parent,
             'lookup-table-5x5x5-step10-UD-centers-stage.txt',
-            '3fe000000001ff', # UUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUU
+            '3fe000000001ff',
             moves_5x5x5,
             (), # illegal_moves
 
             # prune tables
             (parent.lt_UD_T_centers_stage,
              parent.lt_UD_X_centers_stage),
-            linecount=17168476)
+            linecount=328877780)
 
     def state(self):
         parent_state = self.parent.state

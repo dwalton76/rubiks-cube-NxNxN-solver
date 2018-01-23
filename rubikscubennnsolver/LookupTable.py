@@ -606,13 +606,13 @@ class LookupTableAStar(LookupTable):
         if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
             self.parent.state = self.original_state[:]
             self.parent.solution = self.original_solution[:]
-            log.info("%s: IDA found match but it leads to OLL" % self)
+            log.debug("%s: IDA found match but it leads to OLL" % self)
             return False
 
         if self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
             self.parent.state = self.original_state[:]
             self.parent.solution = self.original_solution[:]
-            log.info("%s: IDA found match but it leads to PLL" % self)
+            log.debug("%s: IDA found match but it leads to PLL" % self)
             return False
 
         return True

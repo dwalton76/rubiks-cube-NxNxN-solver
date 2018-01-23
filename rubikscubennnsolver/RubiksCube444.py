@@ -451,143 +451,6 @@ class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
         return False
 
 
-class LookupTable444UDCenterSolveUDStaged(LookupTable):
-    """
-    lookup-table-4x4x4-step21-ULFRBD-centers-solve-UD-only.txt
-    ==========================================================
-    1 steps has 4 entries (5 percent, 0.00x previous step)
-    2 steps has 13 entries (18 percent, 3.25x previous step)
-    3 steps has 18 entries (26 percent, 1.38x previous step)
-    4 steps has 18 entries (26 percent, 1.00x previous step)
-    5 steps has 16 entries (23 percent, 0.89x previous step)
-
-    Total: 69 entries
-    Average: 3.420290 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step21-ULFRBD-centers-solve-UD-only.txt',
-            'UUUUxxxxxxxxxxxxxxxxDDDD',
-            linecount=70)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] if parent_state[x] in ('U', 'D') else 'x' for x in centers_444])
-        return result
-
-
-class LookupTable444LFRBCenterSolveUDStaged(LookupTable):
-    """
-    lookup-table-4x4x4-step22-ULFRBD-centers-solve-LFRB-only.txt
-    ============================================================
-    1 steps has 11 entries (0 percent, 0.00x previous step)
-    2 steps has 151 entries (0 percent, 13.73x previous step)
-    3 steps has 1,714 entries (0 percent, 11.35x previous step)
-    4 steps has 18,096 entries (0 percent, 10.56x previous step)
-    5 steps has 171,996 entries (0 percent, 9.50x previous step)
-    6 steps has 1,346,924 entries (2 percent, 7.83x previous step)
-    7 steps has 8,404,776 entries (13 percent, 6.24x previous step)
-    8 steps has 30,594,200 entries (48 percent, 3.64x previous step)
-    9 steps has 22,206,988 entries (35 percent, 0.73x previous step)
-    10 steps has 318,144 entries (0 percent, 0.01x previous step)
-
-    Total: 63,063,000 entries
-    Average: 8.176755 moves
-    """
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step22-ULFRBD-centers-solve-LFRB-only.txt',
-            'xxxxLLLLFFFFRRRRBBBBxxxx',
-            linecount=63063000)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] if parent_state[x] in ('L', 'F', 'R', 'B') else 'x' for x in centers_444])
-        return result
-
-
-class LookupTableIDA444ULFRBDCentersStageUDStaged(LookupTableIDA):
-    """
-    lookup-table-4x4x4-step20-ULFRBD-centers-solve.txt
-    ==================================================
-    1 steps has 11 entries (0 percent, 0.00x previous step)
-    2 steps has 187 entries (0 percent, 17.00x previous step)
-    3 steps has 2,664 entries (0 percent, 14.25x previous step)
-    4 steps has 33,031 entries (0 percent, 12.40x previous step)
-    5 steps has 369,430 entries (8 percent, 11.18x previous step)
-    6 steps has 3,754,243 entries (90 percent, 10.16x previous step)
-
-    Total: 4,159,566 entries
-    Average: 5.893189 moves
-    """
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step20-ULFRBD-centers-solve.txt',
-            'UUUULLLLFFFFRRRRBBBBDDDD',
-            moves_4x4x4,
-
-            ("Rw", "Rw'", "Lw", "Lw'",
-             "Fw", "Fw'", "Bw", "Bw'"),
-
-            # prune tables
-            (parent.lt_UD_centers_solve_UD_staged,
-             parent.lt_LFRB_centers_solve_UD_staged),
-
-            linecount=4159566)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in centers_444])
-        return result
-
-    '''
-    # Experiment to IDA search until we find a solution that happens to put
-    # the edges in a state that are in our edge table
-    #
-    # This is sloooow
-    def search_complete(self, state, steps_to_here):
-
-        if LookupTableIDA.search_complete(self, state, steps_to_here):
-
-            if self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=False):
-
-                if self.parent.center_solution_leads_to_oll_parity():
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-                    log.info("%s: IDA found match but it leads to OLL" % self)
-                    return False
-
-                tmp_state = self.parent.state[:]
-                tmp_solution = self.parent.solution[:]
-                self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=True)
-
-                if self.parent.edge_solution_leads_to_pll_parity():
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-                    log.info("%s: IDA found match but it leads to PLL" % self)
-                    return False
-
-                self.parent.state = tmp_state
-                self.parent.solution = tmp_solution
-
-                return True
-            else:
-                # log.info("found centers solution but edges not in table")
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                return False
-
-        return False
-    '''
-
-
 wings_for_edges_recolor_pattern_444 = (
     ('0', 2, 67),  # upper
     ('1', 3, 66),
@@ -771,40 +634,12 @@ class RubiksCube444(RubiksCube):
         # Edges table
         self.lt_edges = LookupTable444Edges(self)
 
-        #self.lt_UD_centers_solve_UD_staged = LookupTable444UDCenterSolveUDStaged(self)
-        #self.lt_LFRB_centers_solve_UD_staged = LookupTable444LFRBCenterSolveUDStaged(self)
-        #self.lt_ULFRBD_centers_solve_UD_staged = LookupTableIDA444ULFRBDCentersStageUDStaged(self)
-        #self.lt_ULFRBD_centers_solve_UD_staged.avoid_oll = True
-
     def group_centers_guts(self):
         self.lt_init()
 
         # If the centers are already solved then return and let group_edges() pair the edges
         if self.centers_solved():
             return
-
-        # Stage UD then solve all centers...averages 18.10 moves
-        # This requires a much larger prune table so I don't use this since
-        # it doesn't provide any significant gain.
-        '''
-        log.info("%s: Start of Phase1" % self)
-        self.lt_UD_centers_stage.solve()
-        self.print_cube()
-        log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-
-        # Test the prune tables
-        #self.lt_UD_centers_solve_UD_staged.solve()
-        #self.lt_LFRB_centers_solve_UD_staged.solve()
-        #self.print_cube()
-        #sys.exit(0)
-
-        log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_ULFRBD_centers_solve_UD_staged.solve()
-        self.print_cube()
-        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        '''
 
         # Stage all centers then solve all centers...averages 18.12 moves
         log.info("%s: Start of Phase1" % self)

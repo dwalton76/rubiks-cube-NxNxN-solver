@@ -451,119 +451,6 @@ class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
         return False
 
 
-"""
-lookup-table-4x4x4-step201-UD-centers-solve.txt
-lookup-table-4x4x4-step202-LR-centers-solve.txt
-lookup-table-4x4x4-step203-FB-centers-solve.txt
-===============================================
-1 steps has 7 entries (0 percent, 0.00x previous step)
-2 steps has 84 entries (0 percent, 12.00x previous step)
-3 steps has 1118 entries (0 percent, 13.31x previous step)
-4 steps has 14208 entries (0 percent, 12.71x previous step)
-5 steps has 163085 entries (0 percent, 11.48x previous step)
-6 steps has 1586257 entries (3 percent, 9.73x previous step)
-7 steps has 10286840 entries (19 percent, 6.48x previous step)
-8 steps has 26985405 entries (52 percent, 2.62x previous step)
-9 steps has 12258437 entries (23 percent, 0.45x previous step)
-10 steps has 187529 entries (0 percent, 0.02x previous step)
-
-Total: 51482970 entries
-Average: 7.973232 moves
-"""
-class LookupTable444UDCentersSolveUnstaged(LookupTable):
-
-    def __init__(self, parent):
-
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step201-UD-centers-solve.txt',
-            'UUUUxxxxxxxxxxxxxxxxDDDD',
-            linecount=51482970)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] if parent_state[x] in ('U', 'D') else 'x' for x in centers_444])
-        return result
-
-
-class LookupTable444LRCentersSolveUnstaged(LookupTable):
-
-    def __init__(self, parent):
-
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step202-LR-centers-solve.txt',
-            'xxxxLLLLxxxxRRRRxxxxxxxx',
-            linecount=51482970)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] if parent_state[x] in ('L', 'R') else 'x' for x in centers_444])
-        return result
-
-
-class LookupTable444FBCentersSolveUnstaged(LookupTable):
-
-    def __init__(self, parent):
-
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step203-FB-centers-solve.txt',
-            'xxxxxxxxFFFFxxxxBBBBxxxx',
-            linecount=51482970)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] if parent_state[x] in ('F', 'B') else 'x' for x in centers_444])
-        return result
-
-
-class LookupTableIDA444ULFRBDCentersSolveUnstaged(LookupTableIDA):
-    """
-    lookup-table-4x4x4-step200-ULFRBD-centers-solve-unstaged.txt
-    ============================================================
-    1 steps has 10 entries (0 percent, 0.00x previous step)
-    2 steps has 162 entries (0 percent, 16.20x previous step)
-    3 steps has 2,427 entries (0 percent, 14.98x previous step)
-    4 steps has 35,830 entries (0 percent, 14.76x previous step)
-    5 steps has 527,561 entries (0 percent, 14.72x previous step)
-    6 steps has 7,683,218 entries (6 percent, 14.56x previous step)
-    7 steps has 111,158,950 entries (93 percent, 14.47x previous step)
-
-    Total: 119,408,158 entries
-    Average: 6.925831 moves
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step200-ULFRBD-centers-solve-unstaged.txt',
-            'UUUULLLLFFFFRRRRBBBBDDDD',
-            moves_4x4x4,
-
-            # illegal_moves...ignoring these increases the average solution
-            # a little but makes the IDA search much faster
-            ("Lw", "Lw'", "Lw2",
-             "Bw", "Bw'", "Bw2",
-             "Dw", "Dw'", "Dw2"),
-
-            # prune tables
-            (parent.lt_UD_centers_solve_unstaged,
-             parent.lt_LR_centers_solve_unstaged,
-             parent.lt_FB_centers_solve_unstaged),
-            linecount=119408158)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in centers_444])
-        return result
-
-
-
 class LookupTable444UDCenterSolveUDStaged(LookupTable):
     """
     lookup-table-4x4x4-step21-ULFRBD-centers-solve-UD-only.txt
@@ -881,13 +768,6 @@ class RubiksCube444(RubiksCube):
         self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
         #self.lt_ULFRBD_centers_solve_edges_stage = LookupTable444ULFRBDCentersSolveEdgesStage(self)
 
-        # Experiment
-        #self.lt_UD_centers_solve_unstaged = LookupTable444UDCentersSolveUnstaged(self)
-        #self.lt_LR_centers_solve_unstaged = LookupTable444LRCentersSolveUnstaged(self)
-        #self.lt_FB_centers_solve_unstaged = LookupTable444FBCentersSolveUnstaged(self)
-        #self.lt_ULFRBD_centers_solve_unstaged = LookupTableIDA444ULFRBDCentersSolveUnstaged(self)
-        #self.lt_ULFRBD_centers_solve_unstaged.avoid_oll = True
-
         # Edges table
         self.lt_edges = LookupTable444Edges(self)
 
@@ -902,27 +782,6 @@ class RubiksCube444(RubiksCube):
         # If the centers are already solved then return and let group_edges() pair the edges
         if self.centers_solved():
             return
-
-        '''
-        Experiment to try solving all centers without staging...the IDA search takes
-        way too long and the tables required are huge. For my main test cube it found
-        a centers solution of 18 steps but took about 6m to do so.  My normal centers
-        solver where I stage first, then solve, takes a few seconds and finds a solution
-        21 steps long.
-
-        # test the prune tables
-        #self.lt_UD_centers_solve_unstaged.solve()
-        #self.lt_LR_centers_solve_unstaged.solve()
-        #self.lt_FB_centers_solve_unstaged.solve()
-        #self.print_cube()
-        #sys.exit(0)
-
-        log.info("%s: Start of Phase1" % self)
-        self.lt_ULFRBD_centers_solve_unstaged.solve()
-        self.print_cube()
-        log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        return
-        '''
 
         # Stage UD then solve all centers...averages 18.10 moves
         # This requires a much larger prune table so I don't use this since

@@ -383,64 +383,6 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
         return result
 
 
-class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
-            'TBD',
-            moves_4x4x4,
-            ("Rw", "Rw'", "Lw", "Lw'",
-             "Fw", "Fw'", "Bw", "Bw'",
-             "Uw", "Uw'", "Dw", "Dw'"),
-
-            # prune tables
-            (parent.lt_ULFRBD_centers_solve,),
-            linecount=0)
-
-    def state(self):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-
-        edges = ''.join([state[square_index] for square_index in wings_444])
-        centers = ''.join([state[x] for x in centers_444])
-
-        return centers + edges
-
-    def search_complete(self, state, steps_to_here):
-
-        if centers_solved_444(state) and self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=False):
-
-            # rotate_xxx() is very fast but it does not append the
-            # steps to the solution so put the cube back in original state
-            # and execute the steps via a normal rotate() call
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-
-            for step in steps_to_here:
-                self.parent.rotate(step)
-
-            '''
-            if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.info("%s: IDA found match but it leads to OLL" % self)
-                return False
-
-            if self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.info("%s: IDA found match but it leads to PLL" % self)
-                return False
-            '''
-
-            return True
-
-        return False
-
-
-
 """
 lookup-table-4x4x4-step201-UD-centers-solve.txt
 lookup-table-4x4x4-step202-LR-centers-solve.txt
@@ -631,12 +573,13 @@ class LookupTable444Edges(LookupTable):
     5 steps has 432 entries (0 percent, 432.00x previous step)
     6 steps has 2,053 entries (0 percent, 4.75x previous step)
     7 steps has 15,475 entries (0 percent, 7.54x previous step)
-    8 steps has 151,530 entries (2 percent, 9.79x previous step)
-    9 steps has 991,027 entries (13 percent, 6.54x previous step)
-    10 steps has 6,203,073 entries (84 percent, 6.26x previous step)
+    8 steps has 151,530 entries (0 percent, 9.79x previous step)
+    9 steps has 991,027 entries (1 percent, 6.54x previous step)
+    10 steps has 6,203,073 entries (9 percent, 6.26x previous step)
+    11 steps has 56,560,361 entries (88 percent, 9.12x previous step)
 
-    Total: 7,363,591 entries
-    Average: 9.816544 moves
+    Total: 63,923,952 entries
+    Average: 10.863674 moves
     """
 
     def __init__(self, parent):
@@ -645,7 +588,8 @@ class LookupTable444Edges(LookupTable):
             parent,
             'lookup-table-4x4x4-step110-edges.txt',
             '111111111111_10425376a8b9ecfdhgkiljnm',
-            linecount=7363591) # 10-deep
+            #linecount=7363591) # 10-deep
+            linecount=63923952) # 11-deep
 
 
 class RubiksCube444(RubiksCube):
@@ -727,9 +671,6 @@ class RubiksCube444(RubiksCube):
         # Phase2 tables
         # =============
         self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
-        self.lt_ULFRBD_centers_solve_edges_stage = LookupTable444ULFRBDCentersSolveEdgesStage(self)
-        self.lt_ULFRBD_centers_solve_edges_stage.avoid_pll = True
-        self.lt_ULFRBD_centers_solve_edges_stage.avoid_oll = True
 
         # Experiment
         #self.lt_UD_centers_solve_unstaged = LookupTable444UDCentersSolveUnstaged(self)
@@ -744,7 +685,7 @@ class RubiksCube444(RubiksCube):
     def group_centers_guts(self):
         self.lt_init()
 
-        # If the centers are already solve then return and let group_edges() pair the edges
+        # If the centers are already solved then return and let group_edges() pair the edges
         if self.centers_solved():
             return
 
@@ -779,7 +720,6 @@ class RubiksCube444(RubiksCube):
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_ULFRBD_centers_solve.solve()
-        #self.lt_ULFRBD_centers_solve_edges_stage.solve()
         self.print_cube()
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
@@ -918,7 +858,7 @@ class RubiksCube444(RubiksCube):
             signature_width = len(signature) + 1
             edges_state = signature + '_' + edges_state
 
-            log.info("solve_edges_six_then_six loop %d: signature %s" % (loop_count, signature))
+            log.info("%s: solve_edges_six_then_six loop %d: signature %s, edges_paired %d" % (self, loop_count, signature, pre_paired_edges_count))
 
             # Find all of the 'loose' matching entries in our lookup table. 'loose' means the
             # entry will not unpair any of our already paired wings.
@@ -928,9 +868,9 @@ class RubiksCube444(RubiksCube):
             # This runs much faster (than find_edge_entries_with_loose_signature) because
             # it is only looking over the signatures that are an exact match instead of a
             # loose match. It produces slightly longer solutions but in about 1/6 the time.
-            log.debug("%s: find_edge_entries_with_signature start" % self)
+            log.info("%s: find_edge_entries_with_signature start" % self)
             lines_to_examine = self.lt_edges.find_edge_entries_with_signature(signature)
-            log.debug("%s: find_edge_entries_with_signature end (found %d)" % (self, len(lines_to_examine)))
+            log.info("%s: find_edge_entries_with_signature end (found %d)" % (self, len(lines_to_examine)))
 
             for line in lines_to_examine:
                 (phase1_state, phase1_steps) = line.split(':')
@@ -952,12 +892,12 @@ class RubiksCube444(RubiksCube):
                         loose_matching_entry.append((wing_pair_count, line))
                         max_wing_pair_count = wing_pair_count
 
-                    elif wing_pair_count == max_wing_pair_count or wing_pair_count >= 4:
+                    elif wing_pair_count == max_wing_pair_count:
                         loose_matching_entry.append((wing_pair_count, line))
 
-            #log.warning("pre_paired_edges_count %d, loose_matching_entry %d" % (pre_paired_edges_count, len(loose_matching_entry)))
-            #log.warning("pre_paired_edges_count %d, loose_matching_entry(%d):\n%s\n" %
-            #    (pre_paired_edges_count, len(loose_matching_entry), pformat(loose_matching_entry)))
+            log.info("%s: loose_matching_entry %d" % (self, len(loose_matching_entry)))
+            #log.warning("loose_matching_entry(%d):\n%s\n" %
+            #    (len(loose_matching_entry), pformat(loose_matching_entry)))
             best_score_states = []
 
             # Now run through each state:steps in loose_matching_entry
@@ -1034,8 +974,8 @@ class RubiksCube444(RubiksCube):
             original_state = self.state[:]
             original_solution = self.solution[:]
 
-            log.info("solve_edges_six_then_six loop %d: went from %d edges to %d edges in %d moves" %
-                (loop_count, pre_paired_edges_count, best_entry[0], len(best_entry[3])))
+            log.info("%s: solve_edges_six_then_six loop %d: went from %d edges to %d edges in %d moves" %
+                (self, loop_count, pre_paired_edges_count, best_entry[0], len(best_entry[3])))
             loop_count += 1
 
     def group_edges(self):

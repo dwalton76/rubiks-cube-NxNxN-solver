@@ -634,7 +634,7 @@ class RubiksCube444(RubiksCube):
         # Edges table
         self.lt_edges = LookupTable444Edges(self)
 
-    def group_centers_guts(self):
+    def group_centers_guts(self, from_larger_cube=False):
         self.lt_init()
 
         # If the centers are already solved then return and let group_edges() pair the edges

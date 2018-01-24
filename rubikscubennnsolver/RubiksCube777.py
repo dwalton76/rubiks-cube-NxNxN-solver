@@ -2194,7 +2194,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     def solve_reduced_555_centers(self):
         fake_555 = self.create_fake_555_from_outside_centers()
-        fake_555.group_centers()
+        fake_555.group_centers(True)
 
         for step in fake_555.solution:
 

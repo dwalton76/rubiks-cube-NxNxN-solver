@@ -3465,10 +3465,10 @@ class RubiksCube(object):
 
         return ''.join(result)
 
-    def group_centers_guts(self):
+    def group_centers_guts(self, from_larger_cube=False):
         raise ImplementThis("Child class must implement group_centers_guts")
 
-    def group_centers(self):
+    def group_centers(self, from_larger_cube=False):
 
         if self.is_odd():
             self.rotate_U_to_U()
@@ -3482,7 +3482,7 @@ class RubiksCube(object):
             log.info("")
             log.info("")
             log.info("")
-            self.group_centers_guts()
+            self.group_centers_guts(from_larger_cube)
             log.info("group center solution (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
 
             if self.prevent_OLL():

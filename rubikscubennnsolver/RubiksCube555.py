@@ -1298,14 +1298,28 @@ class RubiksCube555(RubiksCube):
         #self.print_cube()
         log.info("ULFRBD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-    def group_centers_guts(self):
+    def group_centers_guts(self, from_larger_cube=False):
         self.lt_init()
-        self.group_centers_stage_UD()
-        self.group_centers_stage_LR()
 
-        # All centers are staged, solve them
-        self.lt_ULFRB_centers_solve.solve()
-        log.info("ULFRBD centers solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        # If say a 7x7x7 cube is using our centers solver it does not care at
+        # all about the edges so only focus on solving the centers
+        if from_larger_cube:
+            self.group_centers_stage_UD()
+            self.group_centers_stage_LR()
+
+            # All centers are staged, solve them
+            self.lt_ULFRB_centers_solve.solve()
+            log.info("ULFRBD centers solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
+        # But if we are solving a 5x5x5 we do want to try to pair the edges at the same time
+        else:
+            self.group_centers_stage_UD()
+            self.group_centers_stage_LR()
+
+            # All centers are staged, solve them
+            self.lt_ULFRB_centers_solve.solve()
+            log.info("ULFRBD centers solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         #self.print_cube()
 

@@ -1387,7 +1387,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.lt_init()
         self.populate_fake_555_for_ULFRBD_solve(fake_555)
-        fake_555.group_centers_guts()
+        fake_555.group_centers_guts(True)
 
         for step in fake_555.solution:
             self.rotate(step)

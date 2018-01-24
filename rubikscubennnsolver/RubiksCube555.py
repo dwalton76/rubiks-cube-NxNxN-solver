@@ -722,11 +722,13 @@ class LookupTable555StageAllEdges(LookupTable):
     lookup-table-5x5x5-step109-stage-first-four-edges.txt
     =====================================================
     5 steps has 864 entries (0 percent, 0.00x previous step)
-    6 steps has 16032 entries (5 percent, 18.56x previous step)
-    7 steps has 253872 entries (93 percent, 15.84x previous step)
+    6 steps has 16,032 entries (0 percent, 18.56x previous step)
+    7 steps has 253,872 entries (0 percent, 15.84x previous step)
+    8 steps has 3,233,180 entries (11 percent, 12.74x previous step)
+    9 steps has 24,711,480 entries (87 percent, 7.64x previous step)
 
-    Total: 270768 entries
-    Average: 6.934409 moves
+    Total: 28,215,428 entries
+    Average: 8.865589 moves
     """
     def __init__(self, parent):
         LookupTable.__init__(
@@ -734,7 +736,7 @@ class LookupTable555StageAllEdges(LookupTable):
             parent,
             'lookup-table-5x5x5-step109-stage-first-four-edges.txt',
             'TBD',
-            linecount=270768)
+            linecount=28215428)
 
     def state(self, L_wing_strs_to_stage, U_wing_strs_to_stage):
         state = self.parent.state[:]
@@ -1113,7 +1115,7 @@ class RubiksCube555(RubiksCube):
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
         #self.lt_ULFRB_centers_solve.ida_all_the_way = True
 
-        #self.lt_edges_stage_all = LookupTable555StageAllEdges(self)
+        self.lt_edges_stage_all = LookupTable555StageAllEdges(self)
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
         self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
@@ -1635,9 +1637,9 @@ class RubiksCube555(RubiksCube):
 
         self.lt_init()
 
-        #self.stage_all_edges_555()
-        #log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
+        self.stage_all_edges_555()
+        log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        sys.exit(0)
 
         self.print_cube()
         self.stage_first_four_edges_555()

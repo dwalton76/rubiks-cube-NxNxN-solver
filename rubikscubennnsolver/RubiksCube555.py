@@ -717,53 +717,6 @@ def LR_edges_recolor_pattern_555(state):
     return ''.join(state)
 
 
-class LookupTable555StageAllEdges(LookupTable):
-    """
-    lookup-table-5x5x5-step109-stage-first-four-edges.txt
-    =====================================================
-    5 steps has 864 entries (0 percent, 0.00x previous step)
-    6 steps has 16,032 entries (0 percent, 18.56x previous step)
-    7 steps has 253,872 entries (0 percent, 15.84x previous step)
-    8 steps has 3,233,180 entries (11 percent, 12.74x previous step)
-    9 steps has 24,711,480 entries (87 percent, 7.64x previous step)
-
-    Total: 28,215,428 entries
-    Average: 8.865589 moves
-    """
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step109-stage-first-four-edges.txt',
-            'TBD',
-            linecount=28215428)
-
-    def state(self, L_wing_strs_to_stage, U_wing_strs_to_stage):
-        state = self.parent.state[:]
-
-        for square_index in wings_555:
-            side = self.parent.get_side_for_index(square_index)
-            partner_index = side.get_wing_partner(square_index)
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = ''.join(sorted([square_value, partner_value]))
-
-            if wing_str in L_wing_strs_to_stage:
-                state[square_index] = 'L'
-                state[partner_index] = 'L'
-
-            elif wing_str in U_wing_strs_to_stage:
-                state[square_index] = 'U'
-                state[partner_index] = 'U'
-
-            else:
-                state[square_index] = 'x'
-                state[partner_index] = 'x'
-
-        edges_state = ''.join([state[square_index] for square_index in wings_555])
-        return edges_state
-
-
 class LookupTable555StageFirstFourEdges(LookupTable):
     """
     lookup-table-5x5x5-step100-stage-first-four-edges.txt
@@ -1115,7 +1068,6 @@ class RubiksCube555(RubiksCube):
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
         #self.lt_ULFRB_centers_solve.ida_all_the_way = True
 
-        self.lt_edges_stage_all = LookupTable555StageAllEdges(self)
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
         self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
@@ -1325,86 +1277,6 @@ class RubiksCube555(RubiksCube):
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         #self.print_cube()
 
-    def stage_all_edges_555(self):
-        min_solution_len = None
-        min_solution_steps = None
-        min_solution_wing_strs = None
-
-        # Remember what things looked like
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        outer_layer_moves = (
-            "U", "U'", "U2",
-            "L", "L'", "L2",
-            "F", "F'", "F2",
-            "R", "R'", "R2",
-            "B", "B'", "B2",
-            "D", "D'", "D2",
-        )
-        pre_steps_to_try = []
-        pre_steps_to_try.append([])
-
-        for step in outer_layer_moves:
-            pre_steps_to_try.append([step,])
-
-        for step1 in outer_layer_moves:
-            for step2 in outer_layer_moves:
-                if not steps_on_same_face_and_layer(step1, step2):
-                    pre_steps_to_try.append([step1, step2])
-
-        for step1 in outer_layer_moves:
-            for step2 in outer_layer_moves:
-                if not steps_on_same_face_and_layer(step1, step2):
-
-                    for step3 in outer_layer_moves:
-                        if not steps_on_same_face_and_layer(step2, step3):
-                            pre_steps_to_try.append([step1, step2, step3])
-
-        for pre_steps in pre_steps_to_try:
-            if pre_steps:
-                log.info("stage_all_edges_555 trying pre_steps %s" % ' '.join(pre_steps))
-
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in pre_steps:
-                self.rotate(step)
-
-            # do those steps
-            for L_wing_strs in stage_first_four_edges_wing_str_combos:
-
-                wing_strs_for_second_four = []
-
-                for wing_str in wing_strs_all:
-                    if wing_str not in L_wing_strs:
-                        wing_strs_for_second_four.append(wing_str)
-
-                for U_wing_strs in itertools.combinations(wing_strs_for_second_four, 4):
-                    state = self.lt_edges_stage_all.state(L_wing_strs, U_wing_strs)
-                    steps = self.lt_edges_stage_all.steps(state)
-
-                    if steps:
-                        log.info("%s: all edges be staged in %d steps" % (self, len(steps)))
-
-                        if min_solution_len is None or len(steps) < min_solution_len:
-                            min_solution_len = len(steps)
-                            min_solution_steps = steps[:]
-                            min_solution_wing_strs = wing_strs
-
-            if min_solution_len is not None:
-                if pre_steps:
-                    log.warning("pre-steps %s required to find a hit" % ' '.join(pre_steps))
-
-                self.stage_first_four_wing_strs = min_solution_wing_strs
-
-                for step in min_solution_steps:
-                    self.rotate(step)
-
-                break
-        else:
-            raise NoEdgeSolution("Could not find 4-edges to stage")
-
     def stage_first_four_edges_555(self):
         """
         There are 495 different permutations of 4-edges out of 12-edges, use the one
@@ -1539,13 +1411,13 @@ class RubiksCube555(RubiksCube):
             steps = self.lt_edges_stage_second_four.steps(state)
 
             if steps:
-                log.info("%s: second four %s can be staged in %d steps" % (self, wing_strs, len(steps)))
 
                 for step in steps:
                     self.rotate(step)
 
                 self.solve_staged_edges_555(False)
                 solution_len = self.get_solution_len_minus_rotates(self.solution)
+                log.info("%s: second four %s can be staged in %d steps (edges pair in %d steps)" % (self, wing_strs, len(steps), solution_len))
 
                 if min_solution_len is None or solution_len < min_solution_len:
                     min_solution_len = solution_len
@@ -1637,11 +1509,7 @@ class RubiksCube555(RubiksCube):
 
         self.lt_init()
 
-        self.stage_all_edges_555()
-        log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        sys.exit(0)
-
-        self.print_cube()
+        #self.print_cube()
         self.stage_first_four_edges_555()
         self.print_cube()
         log.info("%s: first four edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

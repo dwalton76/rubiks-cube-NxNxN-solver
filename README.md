@@ -7,13 +7,13 @@ moves it will take to solve your cube.
 
 * 2x2x2 works
 * 3x3x3 average solution is 20 moves
-* 4x4x4 average solution is 65 moves
-* 5x5x5 average solution is 129 moves
-* 6x6x6 average solution is 231 moves
-* 7x7x7 average solution is 329 moves
-* 8x8x8 average solution is 510 moves
-* 9x9x9 average solution is 652 moves
-* 10x10x10 average solution is 895 moves
+* 4x4x4 average solution is 59 moves
+* 5x5x5 average solution is 105 moves
+* 6x6x6 average solution is 192 moves
+* 7x7x7 average solution is 270 moves
+* 8x8x8 average solution is 408 moves
+* 9x9x9 average solution is 556 moves
+* 10x10x10 average solution is 768 moves
 
 All cubes 4x4x4 and larger follow the same basic approach:
 * Solve centers

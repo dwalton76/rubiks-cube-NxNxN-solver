@@ -48,45 +48,6 @@ LFRB_centers_555 = (
     107, 108, 109, 112, 113, 114, 117, 118, 119
 )
 
-edges_555 = (
-    2, 3, 4,
-    6, 10,
-    11, 15,
-    16, 20,
-    22, 23, 24,
-
-    27, 28, 29,
-    31, 35,
-    36, 40,
-    41, 45,
-    47, 48, 49,
-
-    52, 53, 54,
-    56, 60,
-    61, 65,
-    66, 70,
-    72, 73, 74,
-
-    77, 78, 79,
-    81, 85,
-    86, 90,
-    91, 95,
-    97, 98, 99,
-
-    102, 103, 104,
-    106, 110,
-    111, 115,
-    116, 120,
-    122, 123, 124,
-
-    127, 128, 129,
-    131, 135,
-    136, 140,
-    141, 145,
-    147, 148, 149
-)
-
-
 wings_555 = (
     2, 3, 4,       # Upper
     6, 11, 16,
@@ -601,59 +562,6 @@ class LookupTableUFCentersSolve(LookupTable):
         return self.hex_format % int(result, 2)
 
 
-class LookupTable555CentersSolveStageFirstFourEdgesOnly(LookupTable):
-    """
-    lookup-table-5x5x5-step41-first-four-edges-stage.txt
-    ====================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
-    3 steps has 646 entries (0 percent, 9.79x previous step)
-    4 steps has 6,408 entries (0 percent, 9.92x previous step)
-    5 steps has 74,726 entries (0 percent, 11.66x previous step)
-    6 steps has 750,924 entries (0 percent, 10.05x previous step)
-    7 steps has 5,902,260 entries (1 percent, 7.86x previous step)
-    8 steps has 35,183,414 entries (9 percent, 5.96x previous step)
-    9 steps has 122,884,432 entries (33 percent, 3.49x previous step)
-    10 steps has 161,674,730 entries (44 percent, 1.32x previous step)
-    11 steps has 37,222,334 entries (10 percent, 0.23x previous step)
-    12 steps has 358,200 entries (0 percent, 0.01x previous step)
-
-    Total: 364,058,145 entries
-    Average: 9.515352 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step41-first-four-edges-stage.txt',
-            '0001f81f81f81f8000',
-            linecount=364058145)
-
-    def state(self):
-        state = self.parent.state[:]
-        L_wing_strs_to_stage =  ('BL', 'BR', 'FL', 'FR')
-
-        for square_index in wings_555:
-            side = self.parent.get_side_for_index(square_index)
-            partner_index = side.get_wing_partner(square_index)
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = ''.join(sorted([square_value, partner_value]))
-
-            if wing_str in L_wing_strs_to_stage:
-                state[square_index] = 'L'
-                state[partner_index] = 'L'
-            else:
-                state[square_index] = 'x'
-                state[partner_index] = 'x'
-
-        result = ''.join(['1' if state[square_index] == 'L' else '0' for square_index in edges_555])
-
-        return self.hex_format % int(result, 2)
-
-
-
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     """
     Would be 117,649,000,000...I built it 7-deep.
@@ -723,98 +631,6 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
         ]
 
         result = ''.join(result)
-        return result
-
-
-class LookupTableIDA555CentersSolveStageFirstFourEdges(LookupTableIDA):
-    """
-    lookup-table-5x5x5-step40-ULFRBD-centers-solve.txt
-    ==================================================
-    1 steps has 11 entries (0 percent, 0.00x previous step)
-    2 steps has 173 entries (0 percent, 15.73x previous step)
-    3 steps has 2532 entries (0 percent, 14.64x previous step)
-    4 steps has 37645 entries (0 percent, 14.87x previous step)
-    5 steps has 574982 entries (6 percent, 15.27x previous step)
-    6 steps has 8807967 entries (93 percent, 15.32x previous step)
-
-    Total: 9423310 entries
-    Average: 5.930108 moves
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step40-ULFRBD-centers-solve-stage-first-four-edges.txt',
-            'TBD',
-            moves_5x5x5,
-
-            # These moves would destroy the staged centers
-            ("Rw", "Rw'", "Lw", "Lw'",
-             "Fw", "Fw'", "Bw", "Bw'",
-             "Uw", "Uw'", "Dw", "Dw'"),
-
-            # prune tables
-            (parent.lt_UL_centers_solve,
-             parent.lt_UF_centers_solve,
-             parent.lt_LR_first_four_edges_stage),
-            linecount=9423310)
-
-    def state(self):
-        parent_state = self.parent.state[:]
-        centers_state = [
-            # Upper
-            parent_state[7], parent_state[8], parent_state[9],
-            parent_state[12], parent_state[13], parent_state[14],
-            parent_state[17], parent_state[18], parent_state[19],
-
-            # Left
-            parent_state[32], parent_state[33], parent_state[34],
-            parent_state[37], parent_state[38], parent_state[39],
-            parent_state[42], parent_state[43], parent_state[44],
-
-            # Front
-            parent_state[57], parent_state[58], parent_state[59],
-            parent_state[62], parent_state[63], parent_state[64],
-            parent_state[67], parent_state[68], parent_state[69],
-
-            # Right
-            parent_state[82], parent_state[83], parent_state[84],
-            parent_state[87], parent_state[88], parent_state[89],
-            parent_state[92], parent_state[93], parent_state[94],
-
-            # Back
-            parent_state[107], parent_state[108], parent_state[109],
-            parent_state[112], parent_state[113], parent_state[114],
-            parent_state[117], parent_state[118], parent_state[119],
-
-            # Down
-            parent_state[132], parent_state[133], parent_state[134],
-            parent_state[137], parent_state[138], parent_state[139],
-            parent_state[142], parent_state[143], parent_state[144]
-        ]
-        centers_state = ''.join(centers_state)
-
-        L_wing_strs_to_stage =  ('BL', 'BR', 'FL', 'FR')
-
-        for square_index in wings_555:
-            side = self.parent.get_side_for_index(square_index)
-            partner_index = side.get_wing_partner(square_index)
-            square_value = parent_state[square_index]
-            partner_value = parent_state[partner_index]
-            wing_str = ''.join(sorted([square_value, partner_value]))
-
-            if wing_str in L_wing_strs_to_stage:
-                parent_state[square_index] = 'L'
-                parent_state[partner_index] = 'L'
-            else:
-                parent_state[square_index] = 'x'
-                parent_state[partner_index] = 'x'
-
-        edges_state = ''.join([parent_state[square_index] for square_index in wings_555])
-
-        result = centers_state + edges_state
-
         return result
 
 
@@ -1249,15 +1065,14 @@ class RubiksCube555(RubiksCube):
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
+        self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
+        #self.lt_ULFRB_centers_solve.ida_all_the_way = True
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
         self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
-
-        self.lt_LR_first_four_edges_stage = LookupTable555CentersSolveStageFirstFourEdgesOnly(self)
-        self.lt_ULFRB_centers_solve_edges_stage = LookupTableIDA555CentersSolveStageFirstFourEdges(self)
 
     def high_low_state(self, x, y, state_x, state_y, wing_str):
         """
@@ -1425,35 +1240,38 @@ class RubiksCube555(RubiksCube):
         #self.print_cube()
         log.info("UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
+    def group_centers_stage_LR(self):
+        """
+        Stage LR centers.  The 6x6x6 uses this that is why it is in its own method.
+        """
+        # Stage LR centers
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+
+        self.lt_LR_centers_stage.solve()
+        #self.print_cube()
+        log.info("ULFRBD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+
     def group_centers_guts(self, from_larger_cube=False):
         self.lt_init()
-        self.group_centers_stage_UD()
-
-        # Stage LR centers
-        self.lt_LR_centers_stage.solve()
-        log.info("ULFRBD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
         # If say a 7x7x7 cube is using our centers solver it does not care at
         # all about the edges so only focus on solving the centers
         if from_larger_cube:
+            self.group_centers_stage_UD()
+            self.group_centers_stage_LR()
 
             # All centers are staged, solve them
             self.lt_ULFRB_centers_solve.solve()
             log.info("ULFRBD centers solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
-        # But if we are solving a 5x5x5 we do want to stage the first four edges while solving centers
+        # But if we are solving a 5x5x5 we do want to try to pair the edges at the same time
         else:
-
-            # Test the prune tables
-            #self.lt_UL_centers_solve.solve() # cannot run this as the table only has move counts
-            #self.lt_UF_centers_solve.solve() # cannot run this as the table only has move counts
-            #self.lt_LR_first_four_edges_stage.solve()
-            #self.print_cube()
-            #log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
-            #sys.exit(0)
+            self.group_centers_stage_UD()
+            self.group_centers_stage_LR()
 
             # All centers are staged, solve them
-            self.lt_ULFRB_centers_solve_edges_stage.solve()
+            self.lt_ULFRB_centers_solve.solve()
             log.info("ULFRBD centers solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
 
         #log.info("kociemba: %s" % self.get_kociemba_string(True))

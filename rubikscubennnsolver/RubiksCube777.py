@@ -321,7 +321,9 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
             (parent.lt_UD_oblique_edge_pairing_middle_only,
              parent.lt_UD_oblique_edge_pairing_left_only,
              parent.lt_UD_oblique_edge_pairing_right_only),
-            linecount=5961573)
+
+            linecount=5961573,
+            max_depth=6)
 
     def state(self):
         parent_state = self.parent.state
@@ -611,7 +613,9 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
             (parent.lt_LR_oblique_edge_pairing_middle_only,
              parent.lt_LR_oblique_edge_pairing_left_only,
              parent.lt_LR_oblique_edge_pairing_right_only),
-            linecount=5044280)
+
+            linecount=5044280,
+            max_depth=8)
 
     def state(self):
         parent_state = self.parent.state
@@ -916,7 +920,9 @@ class LookupTableIDA777UDSolveInnerCentersAndObliqueEdges(LookupTableIDA):
             # prune tables
             (parent.lt_UD_solve_inner_centers_and_oblique_edges_center_only,
              parent.lt_UD_solve_inner_centers_and_oblique_edges_edges_only),
-            linecount=4119202)
+
+            linecount=4119202,
+            max_depth=6)
 
     def state(self):
         parent_state = self.parent.state
@@ -1749,15 +1755,15 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
     """
     lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt
     =======================================================================
-    1 steps has 14,700 entries (0 percent, 0.00x previous step)
-    2 steps has 122,500 entries (0 percent, 8.33x previous step)
-    3 steps has 904,680 entries (0 percent, 7.39x previous step)
-    4 steps has 5,805,056 entries (1 percent, 6.42x previous step)
-    5 steps has 40,353,248 entries (12 percent, 6.95x previous step)
-    6 steps has 279,725,004 entries (85 percent, 6.93x previous step)
+    1 steps has 2,993 entries (0 percent, 0.00x previous step)
+    2 steps has 19,085 entries (0 percent, 6.38x previous step)
+    3 steps has 148,529 entries (0 percent, 7.78x previous step)
+    4 steps has 1,054,714 entries (1 percent, 7.10x previous step)
+    5 steps has 7,566,773 entries (11 percent, 7.17x previous step)
+    6 steps has 54,349,943 entries (86 percent, 7.18x previous step)
 
-    Total: 326,925,188 entries
-    Average: 5.831029 moves
+    Total: 63,142,037 entries
+    Average: 5.838252 moves
     """
 
     def __init__(self, parent):
@@ -1770,9 +1776,6 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
              "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-
-             # 6-deep
-             #"3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2"),                               # do not mess up solved UD
 
              # 6-deep partial
              "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
@@ -1789,8 +1792,8 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
              parent.lt_FB_solve_inner_centers_and_oblique_edges,
             ),
 
-            #linecount=326925188) # 6-deep
-            linecount=53676046) # 6-deep partial
+            linecount=63142037,  # 6-deep partial
+            max_depth=6)
 
     def state(self):
         parent_state = self.parent.state

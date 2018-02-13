@@ -328,7 +328,8 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             (parent.lt_UD_centers_stage,
              parent.lt_LR_centers_stage,
              parent.lt_FB_centers_stage),
-            linecount=1718045)
+            linecount=1718045,
+            max_depth=6)
 
     def state(self):
         parent_state = self.parent.state
@@ -623,7 +624,6 @@ class RubiksCube444(RubiksCube):
         # Stage all centers via IDA
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = True
-        #self.lt_ULFRBD_centers_stage.ida_all_the_way = True
 
         # =============
         # Phase2 tables

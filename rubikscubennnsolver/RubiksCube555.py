@@ -347,7 +347,11 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             # prune tables
             (parent.lt_UD_T_centers_stage,
              parent.lt_UD_X_centers_stage),
-            linecount=328877780)
+
+            #linecount=17168476, # 6-deep
+            #max_depth=6)
+            linecount=328877780, # 7-deep
+            max_depth=7)
 
     def state(self):
         parent_state = self.parent.state
@@ -632,7 +636,8 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             # prune tables
             (parent.lt_UL_centers_solve,
              parent.lt_UF_centers_solve),
-            linecount=13684136)
+            linecount=13684136,
+            max_depth=7)
 
     def state(self):
         parent_state = self.parent.state
@@ -1104,7 +1109,6 @@ class RubiksCube555(RubiksCube):
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
-        #self.lt_ULFRB_centers_solve.ida_all_the_way = True
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
@@ -1320,6 +1324,12 @@ class RubiksCube555(RubiksCube):
         There are 495 different permutations of 4-edges out of 12-edges, use the one
         that gives us the shortest solution for getting 4-edges staged to LB, LF, RF, RB
         """
+
+        # return if they are already paired
+        if (self.sideL.west_edge_paired() and self.sideL.east_edge_paired and
+            self.sideR.west_edge_paired() and self.sideR.east_edge_paired):
+            return
+
         min_solution_len = None
         min_solution_steps = None
         min_solution_wing_strs = None
@@ -1430,6 +1440,11 @@ class RubiksCube555(RubiksCube):
         which one leads to the shortest solution.  This accounts for the number of
         steps that will be needed in solve_staged_edges_555().
         """
+
+        # return if they are already paired
+        if (self.sideU.north_edge_paired() and self.sideU.south_edge_paired and
+            self.sideD.north_edge_paired() and self.sideD.south_edge_paired):
+            return
 
         # Remember what things looked like
         original_state = self.state[:]

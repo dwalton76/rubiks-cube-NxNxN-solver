@@ -308,7 +308,8 @@ class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
             (parent.lt_UD_oblique_edge_pairing_left_only,
              parent.lt_UD_oblique_edge_pairing_right_only),
 
-            linecount=5614410)
+            linecount=5614410,
+            max_depth=8)
 
     def state(self):
         parent_state = self.parent.state
@@ -573,7 +574,9 @@ class LookupTableIDA666LRObliqueEdgePairing(LookupTableIDA):
             # prune tables
             (parent.lt_LR_oblique_edge_pairing_left_only,
              parent.lt_LR_oblique_edge_pairing_right_only),
-            linecount=990825)
+
+            linecount=990825,
+            max_depth=7)
 
     def state(self):
         parent_state = self.parent.state
@@ -1022,7 +1025,9 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             # prune tables
             (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
              parent.lt_FB_solve_inner_x_centers_and_oblique_edges,),
-            linecount=13681964)
+
+            linecount=13681964,
+            max_depth=5)
 
     def state(self):
         parent_state = self.parent.state

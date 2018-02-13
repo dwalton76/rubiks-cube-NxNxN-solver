@@ -200,6 +200,7 @@ class LookupTable(object):
         self.preloaded_cache = False
         self.preloaded_state_set = False
         self.ida_all_the_way = False
+        self.use_lt_as_prune = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -548,11 +549,16 @@ class LookupTableAStar(LookupTable):
             if x not in moves_illegal:
                 self.moves_all.append(x)
 
-    def ida_heuristic(self, use_lt_as_prune=False):
+    def ida_heuristic(self):
         cost_to_goal = 0
 
-        if use_lt_as_prune:
+        if self.use_lt_as_prune:
             state = self.state()
+
+            # If we are at our target then our cost_to_goal is 0
+            if state in self.state_target:
+                return cost_to_goal
+
             steps = self.steps(state)
 
             if steps is None:
@@ -787,7 +793,7 @@ class LookupTableAStar(LookupTable):
                     len_steps_to_hereA_plus_step = self.parent.get_solution_len_minus_rotates(steps_to_hereA) + 1
                     cost_to_here = len_steps_to_hereA_plus_step
 
-                    cost_to_goal = self.ida_heuristic(use_lt_as_prune=False)
+                    cost_to_goal = self.ida_heuristic()
                     f_cost = cost_to_here + cost_to_goal
 
                     # The workq must remain sorted with lowest f_cost entries coming first, use
@@ -834,8 +840,8 @@ class LookupTableIDA(LookupTableAStar):
         if self.search_complete(lt_state, steps_to_here):
             #log.info("%s: IDA found match %d steps in, %s, lt_state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
             #         (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
-            log.info("%s: IDA found match %d steps in, f_cost %d (%d + %d)" %
-                     (self, len(steps_to_here), f_cost, cost_to_here, cost_to_goal))
+            log.info("%s: IDA found match %d steps in %s, lt_state %s, f_cost %d (%d + %d)" %
+                     (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             return True
 
         # ==============

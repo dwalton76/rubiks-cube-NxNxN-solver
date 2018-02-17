@@ -204,7 +204,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         log.info("End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
             (center_orbit_id, max_center_orbits, width, cycle, max_cycle))
 
-    def group_centers_guts(self, from_larger_cube=False):
+    def group_centers_guts(self):
 
         max_center_orbits = int((self.size - 3) / 2) - 2
 

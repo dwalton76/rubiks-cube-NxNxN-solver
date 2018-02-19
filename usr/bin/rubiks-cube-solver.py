@@ -379,13 +379,13 @@ try:
     cube.www_write_cube("Initial Cube")
 
     cube.solve()
-    print("Final Cube")
+    log.info("Final Cube")
     cube.print_cube()
     cube.print_solution()
 
-    print("\n***********************************************************")
-    print("See /tmp/solution.html for more detailed solve instructions")
-    print("***********************************************************\n")
+    log.info("***********************************************************")
+    log.info("See /tmp/solution.html for more detailed solve instructions")
+    log.info("***********************************************************\n")
 
     # Now put the cube back in its initial state and verify the solution solves it
     solution = cube.solution

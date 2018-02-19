@@ -1078,7 +1078,7 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
-        print((get_cube_layout(self.size) + '\n'))
+        log.info((get_cube_layout(self.size) + '\n'))
 
     def print_cube(self, print_positions=False):
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
@@ -1142,14 +1142,16 @@ class RubiksCube(object):
         for (row_index, row) in enumerate(rows):
             if row_index < self.size or row_index >= (self.size * 2):
                 if all_digits:
-                    sys.stdout.write(' ' * (self.size * 3))
+                    log.info(' ' * (self.size * 3) + ' '.join(row))
                 else:
-                    sys.stdout.write(' ' * (self.size + self.size + 1))
+                    log.info(' ' * (self.size + self.size + 1) + ' '.join(row))
+            else:
+                log.info((' '.join(row)))
 
-            print((' '.join(row)))
             if ((row_index+1) % self.size) == 0:
-                print('')
-        print('')
+                log.info('')
+
+        log.info('')
 
     def print_case_statement_C(self, case, first_step):
         """
@@ -3646,23 +3648,24 @@ class RubiksCube(object):
         url += '&alg='
         url += '_'.join(self.solution)
         url = url.replace("'", "-")
-        print("\nURL     : %s" % url)
+        log.info("\nURL     : %s" % url)
 
-        print("\nSolution: %s" % ' '.join(self.solution))
+        log.info("\nSolution: %s" % ' '.join(self.solution))
+        print(' '.join(self.solution))
 
         if self.steps_to_rotate_cube:
-            print(("%d steps to rotate entire cube" % self.steps_to_rotate_cube))
+            log.info(("%d steps to rotate entire cube" % self.steps_to_rotate_cube))
 
         if self.steps_to_solve_centers:
-            print(("%d steps to solve centers" % self.steps_to_solve_centers))
+            log.info(("%d steps to solve centers" % self.steps_to_solve_centers))
 
         if self.steps_to_group_edges:
-            print(("%d steps to group edges" % self.steps_to_group_edges))
+            log.info(("%d steps to group edges" % self.steps_to_group_edges))
 
         if self.steps_to_solve_3x3x3:
-            print(("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3))
+            log.info(("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3))
 
-        print(("%d steps total" % len(self.solution)))
+        log.info(("%d steps total" % len(self.solution)))
 
     def nuke_corners(self):
         for side in list(self.sides.values()):

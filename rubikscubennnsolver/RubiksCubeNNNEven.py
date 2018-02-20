@@ -67,7 +67,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             for index in range(1, 217):
                 fake_666.state[index] = 'x'
-            fake_666.cpu_mode = self.cpu_mode
 
             start_666 = 0
             start_NNN = 0
@@ -106,7 +105,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             fake_666.lt_init()
             fake_666.print_cube()
             fake_666.group_centers_guts(oblique_edges_only=True)
-            #fake_666.print_solution()
             fake_666.print_cube()
 
             # Apply the 6x6x6 solution to our cube
@@ -130,7 +128,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
         for index in range(1, 295):
             fake_777.state[index] = 'x'
-        fake_777.cpu_mode = self.cpu_mode
 
         start_777 = 0
         start_NNN = 0

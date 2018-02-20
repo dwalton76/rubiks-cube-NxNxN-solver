@@ -1,6 +1,5 @@
 
 from rubikscubennnsolver import RubiksCube, SolveError
-from rubikscubennnsolver.LookupTable import LookupTable
 import logging
 
 log = logging.getLogger(__name__)
@@ -122,32 +121,6 @@ class RubiksCube222(RubiksCube):
                     s = ''.join(s[x] for x in wtf_table[y])
 
         raise SolveError("Could not find a solution")
-
-    def solve_via_table(self):
-        '''
-        For grins I built a full lookup table for 2x2x2, it is too large to put in the
-        repo though and the solver from stackoverflow works just fine but I'll leave
-        this here for a rainy day.
-
-        lookup-table-2x2x2-solve.txt
-        ============================
-        1 steps has 18 entries (0 percent, 0.00x previous step)
-        2 steps has 244 entries (0 percent, 13.56x previous step)
-        3 steps has 2,874 entries (0 percent, 11.78x previous step)
-        4 steps has 28,000 entries (0 percent, 9.74x previous step)
-        5 steps has 205,416 entries (0 percent, 7.34x previous step)
-        6 steps has 1,168,516 entries (1 percent, 5.69x previous step)
-        7 steps has 5,402,628 entries (6 percent, 4.62x previous step)
-        8 steps has 20,776,176 entries (23 percent, 3.85x previous step)
-        9 steps has 45,391,616 entries (51 percent, 2.18x previous step)
-        10 steps has 15,139,616 entries (17 percent, 0.33x previous step)
-        11 steps has 64,736 entries (0 percent, 0.00x previous step)
-
-        Total: 88,179,840 entries
-        '''
-        self.lt = LookupTable(self, 'lookup-table-2x2x2-solve.txt', 'all', 'UUUULLLLFFFFRRRRBBBBDDDD')
-        self.lt.solve()
-        self.compress_solution()
 
     def solve(self):
         self.solve_non_table()

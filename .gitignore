@@ -96,3 +96,4 @@ lookup*.txt
 ida_search
 pts_lbsearch
 perf.data
+*~

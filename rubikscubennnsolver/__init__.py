@@ -1,6 +1,6 @@
 
 from copy import copy
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis
 import itertools
@@ -19,6 +19,22 @@ log = logging.getLogger(__name__)
 
 class InvalidCubeReduction(Exception):
     pass
+
+
+def reverse_steps(steps):
+    """
+    Reverse the order of all steps and the direction of each individual step
+    """
+    results = []
+
+    for step in reversed(steps):
+        if step.endswith("'"):
+            reverse_step = step[0:-1]
+        else:
+            reverse_step = step + "'"
+        results.append(reverse_step)
+
+    return results
 
 
 def get_cube_layout(size):
@@ -352,7 +368,6 @@ class RubiksCube(object):
         self._phase = None
         self.lt_init_called = False
         self.orient_edges = {}
-        self.cpu_mode = None
 
         if colormap:
             colormap = json.loads(colormap)
@@ -1063,7 +1078,7 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
-        print((get_cube_layout(self.size) + '\n'))
+        log.info((get_cube_layout(self.size) + '\n'))
 
     def print_cube(self, print_positions=False):
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
@@ -1127,14 +1142,16 @@ class RubiksCube(object):
         for (row_index, row) in enumerate(rows):
             if row_index < self.size or row_index >= (self.size * 2):
                 if all_digits:
-                    sys.stdout.write(' ' * (self.size * 3))
+                    log.info(' ' * (self.size * 3) + ' '.join(row))
                 else:
-                    sys.stdout.write(' ' * (self.size + self.size + 1))
+                    log.info(' ' * (self.size + self.size + 1) + ' '.join(row))
+            else:
+                log.info((' '.join(row)))
 
-            print((' '.join(row)))
             if ((row_index+1) % self.size) == 0:
-                print('')
-        print('')
+                log.info('')
+
+        log.info('')
 
     def print_case_statement_C(self, case, first_step):
         """
@@ -1235,37 +1252,11 @@ class RubiksCube(object):
                 return side
         raise SolveError("We should not be here, square_index %s" % pformat(square_index))
 
-    def get_edge_colors(self, square_index):
-        side = self.get_side_for_index(square_index)
-        edge_indexes = None
-
-        if square_index in side.edge_north_pos:
-            edge_indexes = side.edge_north_pos
-        elif square_index in side.edge_west_pos:
-            edge_indexes = side.edge_west_pos
-        elif square_index in side.edge_south_pos:
-            edge_indexes = side.edge_south_pos
-        elif square_index in side.edge_east_pos:
-            edge_indexes = side.edge_east_pos
-
-        colors = []
-
-        for edge_index in edge_indexes:
-            partner_index = side.get_wing_partner(edge_index)
-            colors.append(tuple(sorted((self.state[edge_index], self.state[partner_index]))))
-
-        colors = sorted(list(set(colors)))
-        #log.info("%s colors %s" % (square_index, pformat(colors)))
-        return colors
-
     def get_non_paired_wings(self):
         return (self.sideU.non_paired_wings(True, True, True, True) +
                 self.sideF.non_paired_wings(False, True, False, True) +
                 self.sideB.non_paired_wings(False, True, False, True) +
                 self.sideD.non_paired_wings(True, True, True, True))
-
-    def get_non_paired_wings_count(self):
-        return len(self.get_non_paired_wings())
 
     def get_non_paired_edges(self):
         # north, west, south, east
@@ -1288,184 +1279,24 @@ class RubiksCube(object):
             return True
         return False
 
-    def find_edge(self, color1, color2):
-        positions = []
-        for (pos1, pos2) in self.all_edge_positions:
-            if ((self.state[pos1] == color1 and self.state[pos2] == color2) or
-                (self.state[pos1] == color2 and self.state[pos2] == color1)):
-                positions.append((pos1, pos2))
+    def edge_paired(self, wing_index):
 
-        return positions
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            if side.min_pos <= wing_index <= side.max_pos:
 
-    def get_wings(self, pos1, remove_if_in_same_edge=False):
-        pos1_side = self.get_side_for_index(pos1)
-        pos2 = pos1_side.get_wing_partner(pos1)
-        pos2_side = self.get_side_for_index(pos2)
-        color1 = self.state[pos1]
-        color2 = self.state[pos2]
+                if wing_index in side.edge_north_pos:
+                    return side.north_edge_paired()
 
-        wings = self.find_edge(color1, color2)
-        wings_to_remove = []
-        #log.info("get_wings (%d, %d), pos1_side %s, remove_if_in_same_edge %s, %s" %
-        #    (pos1, pos2, pos1_side, remove_if_in_same_edge, pformat(wings)))
+                elif wing_index in side.edge_west_pos:
+                    return side.west_edge_paired()
 
-        for (wing_pos1, wing_pos2) in wings:
+                elif wing_index in side.edge_south_pos:
+                    return side.south_edge_paired()
 
-            # Remove the one we started with
-            if (wing_pos1, wing_pos2) == (pos1, pos2):
-                wings_to_remove.append((wing_pos1, wing_pos2))
+                elif wing_index in side.edge_east_pos:
+                    return side.east_edge_paired()
 
-            elif (wing_pos1, wing_pos2) == (pos2, pos1):
-                wings_to_remove.append((wing_pos1, wing_pos2))
-
-            # Some callers do not want wings that are part of the same edge as pos1
-            elif remove_if_in_same_edge:
-                wing_pos1_side = self.get_side_for_index(wing_pos1)
-                wing_pos2_side = self.get_side_for_index(wing_pos2)
-                #log.info("wing_pos1 %s, wing_pos1_side %s, wing_pos2 %s, wing_pos2_side %s" %
-                #    (wing_pos1, wing_pos1_side, wing_pos2, wing_pos2_side))
-
-                if ((wing_pos1_side == pos1_side and wing_pos2_side == pos2_side) or
-                    (wing_pos2_side == pos1_side and wing_pos1_side == pos2_side)):
-                    wings_to_remove.append((wing_pos1, wing_pos2))
-
-        #log.info("get_wings wings_to_remove %s" % pformat(wings_to_remove))
-        for x in wings_to_remove:
-            wings.remove(x)
-
-        #log.info("get_wings returning %s\n" % pformat(wings))
-        return wings
-
-    def get_wing_in_middle_of_edge(self, pos1, remove_if_in_same_edge=False):
-        wings = self.get_wings(pos1, remove_if_in_same_edge)
-
-        for wing in wings:
-            wing_side = self.get_side_for_index(wing[0])
-            if wing_side.wing_is_middle_of_edge(wing[0]):
-                return wing
-        return None
-
-    def get_wings_on_edge(self, pos1, side1_name, side2_name):
-        wings = self.get_wings(pos1)
-        wings_to_keep = []
-        #log.info("get_wings_on_edge for pos1 %d, side1 %s, side2 %s, init_wings %s" % (pos1, side1_name, side2_name, pformat(wings)))
-
-        for (wing_pos1, wing_pos2) in wings:
-            wing_pos1_side = self.get_side_for_index(wing_pos1)
-            wing_pos2_side = self.get_side_for_index(wing_pos2)
-
-            #log.info("get_wings_on_edge wing_pos1 %d side %s, wing_pos2 %d side %s\n" %
-            #    (wing_pos1, wing_pos1_side, wing_pos2, wing_pos2_side))
-
-            if ((wing_pos1_side.name == side1_name and wing_pos2_side.name == side2_name) or
-                (wing_pos2_side.name == side1_name and wing_pos1_side.name == side2_name)):
-                wings_to_keep.append((wing_pos1, wing_pos2))
-
-        #log.info("get_wings_on_edge keeping %s\n" % pformat(wings_to_keep))
-        return wings_to_keep
-
-    def rotate_edge_to_F_west(self, edge):
-        side = self.get_side_for_index(edge[0])
-        direction = side.has_wing(edge)
-
-        if side == self.sideU:
-            if direction == 'north':
-                self.rotate_y_reverse()
-                self.rotate_x_reverse()
-
-            elif direction == 'west':
-                self.rotate_x_reverse()
-
-            elif direction == 'south':
-                self.rotate_x_reverse()
-                self.rotate_z()
-
-            elif direction == 'east':
-                self.rotate_y()
-                self.rotate_y()
-                self.rotate_x_reverse()
-
-        elif side == self.sideL:
-
-            if direction == 'north':
-                self.rotate_x_reverse()
-
-            elif direction == 'west':
-                self.rotate_x_reverse()
-                self.rotate_x_reverse()
-
-            elif direction == 'south':
-                self.rotate_x()
-
-            elif direction == 'east':
-                pass
-
-        elif side == self.sideF:
-            if direction == 'north':
-                self.rotate_z_reverse()
-
-            elif direction == 'west':
-                pass
-
-            elif direction == 'south':
-                self.rotate_z()
-
-            elif direction == 'east':
-                self.rotate_z_reverse()
-                self.rotate_z_reverse()
-
-        elif side == self.sideR:
-
-            if direction == 'north':
-                self.rotate_y()
-                self.rotate_y()
-                self.rotate_x_reverse()
-
-            elif direction == 'west':
-                self.rotate_y()
-
-            elif direction == 'south':
-                self.rotate_x()
-                self.rotate_y()
-
-            elif direction == 'east':
-                self.rotate_y()
-                self.rotate_y()
-
-        elif side == self.sideB:
-
-            if direction == 'north':
-                self.rotate_y_reverse()
-                self.rotate_x_reverse()
-
-            elif direction == 'west':
-                self.rotate_y()
-                self.rotate_y()
-
-            elif direction == 'south':
-                self.rotate_z()
-                self.rotate_x()
-                self.rotate_x()
-
-            elif direction == 'east':
-                self.rotate_y_reverse()
-
-        elif side == self.sideD:
-
-            if direction == 'north':
-                self.rotate_z()
-
-            elif direction == 'west':
-                self.rotate_x()
-
-            elif direction == 'south':
-                self.rotate_y_reverse()
-                self.rotate_x()
-
-            elif direction == 'east':
-                self.rotate_y()
-                self.rotate_y()
-                self.rotate_x()
+        raise Exception("Invalid wing_index %s" % wing_index)
 
     def move_wing_to_U_north(self, wing):
 
@@ -2115,9 +1946,6 @@ class RubiksCube(object):
         else:
             raise ImplementThis("implement wing %s to L east" % str(wing))
 
-    def move_wing_to_F_west(self, wing):
-        self.move_wing_to_L_east(wing)
-
     def move_wing_to_R_west(self, wing):
 
         if isinstance(wing, tuple) or isinstance(wing, list):
@@ -2337,9 +2165,6 @@ class RubiksCube(object):
 
         else:
             raise ImplementThis("implement wing %s to R east" % str(wing))
-
-    def move_wing_to_F_east(self, wing):
-        self.move_wing_to_R_west(wing)
 
     def move_wing_to_D_north(self, wing):
 
@@ -2799,9 +2624,6 @@ class RubiksCube(object):
     def rotate_z_reverse(self):
         self.rotate("z'")
 
-    def get_center_corner_state(self):
-        return ''.join([self.state[square_index] for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD) for square_index in side.center_corner_pos])
-
     def centers_solved(self):
         for side in list(self.sides.values()):
             prev_pos = None
@@ -2950,11 +2772,16 @@ class RubiksCube(object):
         """
         Solving OLL at the end takes 26 moves, preventing it takes 10
         """
+
+        # OLL only applies for even cubes
+        if self.is_odd():
+            return False
+
         orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
         steps = None
 
         if not orbits_with_oll_parity:
-            return True
+            return False
 
         if self.size == 4:
             if orbits_with_oll_parity == [0]:
@@ -2992,6 +2819,9 @@ class RubiksCube(object):
         return False
 
     def solve_OLL(self):
+
+        if self.size in (2, 3):
+            raise SolveError("OLL should never happen on a %dx%dx%d, the cube given to us to solve is invalid" % (self.size, self.size, self.size))
 
         # Check all 12 edges, rotate the one with OLL to U-south
         while True:
@@ -3064,6 +2894,10 @@ class RubiksCube(object):
                 break
 
     def solve_PLL(self):
+
+        if self.size in (2, 3):
+            raise SolveError("PLL should never happen on a %dx%dx%d, the cube given to us to solve is invalid" % (self.size, self.size, self.size))
+
         pll_id = None
 
         self.rotate_U_to_U()
@@ -3232,8 +3066,7 @@ class RubiksCube(object):
                 self.solve_PLL()
 
                 if not self.solved():
-                    print("We hit either OLL or PLL parity and could not solve it")
-                    sys.exit(1)
+                    raise SolveError("We hit either OLL or PLL parity and could not solve it")
 
     def get_corner_swap_count(self, debug=False):
 
@@ -3652,23 +3485,12 @@ class RubiksCube(object):
             log.info("")
             log.info("")
             self.group_centers_guts()
-            log.info("group center solution (%d steps): %s" % (self.get_solution_len_minus_rotates(self.solution), ' '.join(self.solution)))
+            log.info("group center solution (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
+
+            if self.prevent_OLL():
+                log.info("prevented OLL (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
 
         self.solution.append('CENTERS_SOLVED')
-
-    def get_wing_value(self, wing):
-        if isinstance(wing, tuple) or isinstance(wing, list):
-            square_index = wing[0]
-        else:
-            square_index = wing
-
-        side = self.get_side_for_index(square_index)
-        partner_index = side.get_wing_partner(square_index)
-
-        if square_index < partner_index:
-            return (self.state[square_index], self.state[partner_index])
-        else:
-            return (self.state[partner_index], self.state[square_index])
 
     def get_solution_len_minus_rotates(self, solution):
         count = 0
@@ -3818,67 +3640,32 @@ class RubiksCube(object):
             #self.rotate_U_to_U()
             #self.rotate_F_to_F()
 
-    def reverse_steps(self, steps):
-        """
-        Reverse the order of all steps and the direction of each individual step
-        """
-        results = []
-
-        for step in reversed(steps):
-            if step.endswith("'"):
-                reverse_step = step[0:-1]
-            else:
-                reverse_step = step + "'"
-            results.append(reverse_step)
-
-        return results
-
     def print_solution(self):
 
         # Print an alg.cubing.net URL for this setup/solution
         url = "https://alg.cubing.net/?puzzle=%dx%dx%d&setup=" % (self.size, self.size, self.size)
-        url += '_'.join(self.reverse_steps(self.solution))
+        url += '_'.join(reverse_steps(self.solution))
         url += '&alg='
         url += '_'.join(self.solution)
         url = url.replace("'", "-")
-        print("\nURL     : %s" % url)
+        log.info("\nURL     : %s" % url)
 
-        print("\nSolution: %s" % ' '.join(self.solution))
+        log.info("\nSolution: %s" % ' '.join(self.solution))
+        print(' '.join(self.solution))
 
         if self.steps_to_rotate_cube:
-            print(("%d steps to rotate entire cube" % self.steps_to_rotate_cube))
+            log.info(("%d steps to rotate entire cube" % self.steps_to_rotate_cube))
 
         if self.steps_to_solve_centers:
-            print(("%d steps to solve centers" % self.steps_to_solve_centers))
+            log.info(("%d steps to solve centers" % self.steps_to_solve_centers))
 
         if self.steps_to_group_edges:
-            print(("%d steps to group edges" % self.steps_to_group_edges))
+            log.info(("%d steps to group edges" % self.steps_to_group_edges))
 
         if self.steps_to_solve_3x3x3:
-            print(("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3))
+            log.info(("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3))
 
-        print(("%d steps total" % len(self.solution)))
-
-    def edge_string_to_find(self, target_wing, sister_wing1, sister_wing2, sister_wing3):
-
-        edge_pos_square_index = (2, 3, 4, 6, 10, 11, 15, 16, 20, 22, 23, 24, 27,
-            28, 29, 31, 35, 36, 40, 41, 45, 47, 48, 49, 52, 53, 54, 56, 60, 61,
-            65, 66, 70, 72, 73, 74, 77, 78, 79, 81, 85, 86, 90, 91, 95, 97, 98,
-            99, 102, 103, 104, 106, 110, 111, 115, 116, 120, 122, 123, 124, 127,
-            128, 129, 131, 135, 136, 140, 141, 145, 147, 148, 149)
-
-        foo = {
-            target_wing[0] : 'A',
-            target_wing[1] : 'B',
-            sister_wing1[0] : 'C',
-            sister_wing1[1] : 'D',
-            sister_wing2[0] : 'E',
-            sister_wing2[1] : 'F',
-            sister_wing3[0] : 'G',
-            sister_wing3[1] : 'H',
-        }
-
-        return ''.join([foo.get(square_index, 'x') for square_index in edge_pos_square_index])
+        log.info(("%d steps total" % len(self.solution)))
 
     def nuke_corners(self):
         for side in list(self.sides.values()):
@@ -4059,299 +3846,6 @@ div#page_holder {
 </html>
 """)
 
-    def test(self):
-        """
-        Run some tests to sanity check some things
-        """
-        for side in list(self.sides.values()):
-            for square_index in range(side.min_pos, side.max_pos+1):
-                self.state[square_index] = 'x'
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        for side in list(self.sides.values()):
-            for direction in ('north', 'south', 'east', 'west'):
-
-                if direction == 'north':
-                    edges = side.edge_north_pos
-                elif direction == 'south':
-                    edges = side.edge_south_pos
-                elif direction == 'east':
-                    edges = side.edge_east_pos
-                elif direction == 'west':
-                    edges = side.edge_west_pos
-
-                for edge_index in edges:
-                    partner_index = side.get_wing_partner(edge_index)
-                    self.state[edge_index] = 'U'
-                    self.state[partner_index] = 'U'
-                    tmp_state = self.state[:]
-                    log.info("test move_wing for %s-%s (%d, %d)" % (side, direction, edge_index, partner_index))
-
-                    # U-north
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_U_north(index_to_test)
-                        for tmp_edge_index in self.sideU.edge_north_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_U_north failed")
-                        self.state[:] = tmp_state
-
-                    # U-south
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_U_south(index_to_test)
-                        for tmp_edge_index in self.sideU.edge_south_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_U_south failed")
-                        self.state[:] = tmp_state
-
-                    # U-east
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_U_east(index_to_test)
-                        for tmp_edge_index in self.sideU.edge_east_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_U_east failed")
-                        self.state[:] = tmp_state
-
-                    # U-west
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_U_west(index_to_test)
-                        for tmp_edge_index in self.sideU.edge_west_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_U_west failed")
-                        self.state[:] = tmp_state
-
-                    # L-north
-                    '''
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_L_north(index_to_test)
-                        for tmp_edge_index in self.sideL.edge_north_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_L_north failed")
-                        self.state[:] = tmp_state
-                    '''
-
-                    # L-south
-                    '''
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_L_south(index_to_test)
-                        for tmp_edge_index in self.sideL.edge_south_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_L_south failed")
-                        self.state[:] = tmp_state
-                    '''
-
-                    # L-east
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_L_east(index_to_test)
-                        for tmp_edge_index in self.sideL.edge_east_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_L_east failed for %d" % index_to_test)
-                        self.state[:] = tmp_state
-
-                    # L-west
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_L_west(index_to_test)
-                        for tmp_edge_index in self.sideL.edge_west_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_L_west failed")
-                        self.state[:] = tmp_state
-
-                    # F-north
-                    '''
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_F_north(index_to_test)
-                        for tmp_edge_index in self.sideF.edge_north_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_F_north failed")
-                        self.state[:] = tmp_state
-                    '''
-
-                    # F-south
-                    '''
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_F_south(index_to_test)
-                        for tmp_edge_index in self.sideF.edge_south_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_F_south failed")
-                        self.state[:] = tmp_state
-                    '''
-
-                    # F-east
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_F_east(index_to_test)
-                        for tmp_edge_index in self.sideF.edge_east_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_F_east failed")
-                        self.state[:] = tmp_state
-
-                    # F-west
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_F_west(index_to_test)
-                        for tmp_edge_index in self.sideF.edge_west_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_F_west failed")
-                        self.state[:] = tmp_state
-
-                    # R-north
-                    '''
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_R_north(index_to_test)
-                        for tmp_edge_index in self.sideR.edge_north_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_R_north failed")
-                        self.state[:] = tmp_state
-                    '''
-
-                    # R-south
-                    '''
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_R_south(index_to_test)
-                        for tmp_edge_index in self.sideR.edge_south_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_R_south failed")
-                        self.state[:] = tmp_state
-                    '''
-
-                    # R-east
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_R_east(index_to_test)
-                        for tmp_edge_index in self.sideR.edge_east_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_R_east failed")
-                        self.state[:] = tmp_state
-
-                    # R-west
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_R_west(index_to_test)
-                        for tmp_edge_index in self.sideR.edge_west_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_R_west failed")
-                        self.state[:] = tmp_state
-
-                    # B-north
-                    '''
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_B_north(index_to_test)
-                        for tmp_edge_index in self.sideB.edge_north_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_B_north failed")
-                        self.state[:] = tmp_state
-                    '''
-
-                    # B-south
-                    '''
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_B_south(index_to_test)
-                        for tmp_edge_index in self.sideB.edge_south_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_B_south failed")
-                        self.state[:] = tmp_state
-                    '''
-
-                    # B-east
-                    '''
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_B_east(index_to_test)
-                        for tmp_edge_index in self.sideB.edge_east_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_B_east failed")
-                        self.state[:] = tmp_state
-                    '''
-
-                    # B-west
-                    '''
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_B_west(index_to_test)
-                        for tmp_edge_index in self.sideB.edge_west_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_B_west failed")
-                        self.state[:] = tmp_state
-                    '''
-
-                    # D-north
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_D_north(index_to_test)
-                        for tmp_edge_index in self.sideD.edge_north_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_D_north failed")
-                        self.state[:] = tmp_state
-
-                    # D-south
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_D_south(index_to_test)
-                        for tmp_edge_index in self.sideD.edge_south_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_D_south failed")
-                        self.state[:] = tmp_state
-
-                    # D-east
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_D_east(index_to_test)
-                        for tmp_edge_index in self.sideD.edge_east_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_D_east failed")
-                        self.state[:] = tmp_state
-
-                    # D-west
-                    for index_to_test in (edge_index, partner_index):
-                        self.move_wing_to_D_west(index_to_test)
-                        for tmp_edge_index in self.sideD.edge_west_pos:
-                            if self.state[tmp_edge_index] == 'U':
-                                break
-                        else:
-                            raise SolveError("move_wing_to_D_west failed")
-                        self.state[:] = tmp_state
-
-                    self.state[:] = original_state
-        self.state[:] = original_state
-
     def rotate_to_side(self, upper_side_name, front_side_name):
 
         if upper_side_name == front_side_name:
@@ -4399,15 +3893,6 @@ div#page_holder {
             self.rotate_x()
 
             if front_side_name == 'U':
-                self.rotate_y()
-                self.rotate_y()
-            elif front_side_name == 'F':
-                self.rotate_y()
-            elif front_side_name == 'D':
-                pass
-            elif front_side_name == 'B':
-                self.rotate_y_reverse()
-
                 self.rotate_y()
                 self.rotate_y()
             elif front_side_name == 'F':
@@ -4596,3 +4081,46 @@ div#page_holder {
 
                 elif self.state[square_index] == 'D':
                     self.state[square_index] = 'R'
+
+    def transform(self, target):
+        """
+        This should cover every scenario:
+
+        rotations = (
+                (),
+                ("y",),
+                ("y'",),
+                ("y", "y"),
+                ("x", "x", "y"),
+                ("x", "x", "y'"),
+                ("x", "x", "y", "y"),
+                ("y'", "x", "y"),
+                ("y'", "x", "y'"),
+                ("y'", "x", "y", "y"),
+                ("x", "y"),
+                ("x", "y'"),
+                ("x", "y", "y"),
+                ("y", "x", "y"),
+                ("y", "x", "y'"),
+                ("y", "x", "y", "y"),
+                ("x'", "y"),
+                ("x'", "y'"),
+                ("x'", "y", "y")
+        )
+        """
+        if not target:
+            pass
+        elif target == "x":
+            self.transform_x()
+        elif target == "x'":
+            self.transform_x_prime()
+        elif target == "y":
+            self.transform_y()
+        elif target == "y'":
+            self.transform_y_prime()
+        elif target == "z":
+            self.transform_z()
+        elif target == "z'":
+            self.transform_z_prime()
+        else:
+            raise Exception("Implement target %s" % target)

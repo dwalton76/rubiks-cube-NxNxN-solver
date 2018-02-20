@@ -1,85 +1,108 @@
 
-lrzip comparison
+=====
+4x4x4
+=====
+- TPR solver
+    - Testing with the following
+        ./usr/bin/rubiks-cube-solver.py --state DRFDFRUFDURDDLLUFLDLLBLULFBUUFRBLBFLLUDDUFRBURBBRBDLLDURFFBBRUFUFDRFURBUDLDBDUFFBUDRRLDRBLFBRRLB --cpu-tsai
 
-'lrzip lookup-table-4x4x4-step10-solve-UD-centers.txt'
-jdoe@laptop ~/l/r/NxNxN> ls -lh lookup-table-4x4x4-step10-solve-UD-centers.txt*
--rw-rw-r-- 1 jdoe jdoe 1.2G Mar 27 07:51 lookup-table-4x4x4-step10-solve-UD-centers.txt
--rw-rw-r-- 1 jdoe jdoe 165M Mar 27 15:49 lookup-table-4x4x4-step10-solve-UD-centers.txt.lrz
-jdoe@laptop ~/l/r/NxNxN>
+    - TPR reduces centers in 26 moves
+    - https://alg.cubing.net/?puzzle=4x4x4&setup=F2-_U-_F2-_D_U-_F2-_D_L2-_U2-_B-_D-_R_F-_D_B-_L-_B_F_L-_R_Uw_L-_B_D-_L_B-_Uw-_B-_Dw_B2-_L_U_D-_B2-_L-_Dw-_R_U-_B_R_D-_Rw_B2-_D_R-_B_D-_B_Rw-_F2-_D-_Fw2-_L_Dw2-_F_L_Bw2-_D-_Lw_U-_Lw-_Dw-_F-_Bw_U_Lw2-_Uw2-_R-_Uw&alg=Rw2_B_R-_Fw-_L-_Uw_Rw_%2F%2F_end_of_phase1%0AUw-_Rw2_B_R2_Uw_R-_%2F%2F_end_of_phase2%0AB-_F-_Fw2_R_B-_Uw2_R_U2_B-_Uw2_R-_Rw2_Uw2_x-_y2_%2F%2F_end_of_phase3
 
+    - where mine takes 34 moves
+https://alg.cubing.net/?puzzle=4x4x4&setup=R2-_U_L2-_F2-_R2-_F2-_D-_F2-_R2-_U2-_R_B-_L_R-_B2-_U_L_R2-_U2-_B2-_Lw2-_B2-_Dw2-_F2-_D2-_Lw2-_U-_F-_Lw2-_L2-_D_Lw2-_B_Uw2-_F2-_U_R-_Rw-_Fw2-_Rw-_D2-_F-_Uw2-_B_L_Fw_B-_U-_Rw_Fw2-_R-_F2-_U2-_Fw&alg=Fw-_U2_F2_R_Fw2_Rw-_U_B_Fw-_L-__%2F%2F_end_of_phase1%0AB-_Uw2_F_D2_Rw_Fw2_Rw_R__%2F%2F_end_of_phase2%0AU-_F2_Uw2_B-_Lw2_D-_L2_Lw2_F_U_Lw2_D2_F2_Dw2_B2_Lw2_%2F%2F_end_of_phase3%0AB2_U2_R2_L-_U-_B2_R_L-_B_R-_U2_R2_F2_D_F2_R2_F2_L2_U-_R2
 
-'lrzip -z lookup-table-4x4x4-step10-solve-UD-centers.txt'
-jdoe@laptop ~/l/r/NxNxN> ls -lh lookup-table-4x4x4-step10-solve-UD-centers.txt*
--rw-rw-r-- 1 jdoe jdoe 1.2G Mar 27 07:51 lookup-table-4x4x4-step10-solve-UD-centers.txt
--rw-rw-r-- 1 jdoe jdoe 132M Mar 27 16:01 lookup-table-4x4x4-step10-solve-UD-centers.txt.lrz
-jdoe@laptop ~/l/r/NxNxN>
-jdoe@laptop ~/l/r/NxNxN>
+    - The difference is the TPR solver finds 10k phase1 solutions and keeps the best 500 (the
+      ones with the lowest phase2 centers heuristic).  It then searches for a phase2 solution
+      for those 500 phase1 solutions, it does this by starting with a very low IDA threshold
+      and incrementing it by one after trying to find a solution for all 500 scenarios. It then
+      keeps the best 100 phase2 solutions and does the same basic process for finding the best
+      phase2 + phase3 combo.
 
+      I am unable to get phase2 to run fast enough to do this though. TPR does some pruning
+      that I do not understand. This is the skipAxis2 stuff...need to wrap my head around this.
 
+      Note that my phase1 does EO where all edges are oriented correctly.  I do this just to speed
+      up phase2 where it is looking for edges to be EO but in any orientation.
 
+      Long term I think bidir IDA is the way to go here, we could just combine phase 1 and phase 2
+      (which the TPR solver is somewhat doing)
 
-- code cleanup
-
-4x4x4 last two edges
-====================
-- Try with and without the tweak that pairs two edges at once. This should be
-  faster most of the time but there are cases where if we do this it always
-  leads to PLL parity. Basically resolve the edges with this enabled and if it
-  cannot find a PLL free solution then try without.
-
-- re-read the "pair 6 edges at once" page
-
-
-
-Misc
-====
-- redo how 5x5x5 centers are solved, it is a mess, use the following instead
-    http://rubik.rthost.org/5x5x5_centres.htm
-
-- redo how 555 edge parity IDs are assigned, this is also a mess at the moment
+- Add "cube.cpu_mode = 'tsai'" to test.py and run this overnight
+time ./utils/test.py --test-cubes utils/test_cubes.json.small --size 4x4x4
 
 
-5x5x5 UD center options
-=======================
-Do all three of these and see which approach solves UD centers with the fewest moves.
-Obviously #1 will be more moves than #2 but #2 requires a pretty huge lookup table so
-do this comparison to see if #2 is worth it.
+- edge pairing table is building to 11-deep on LJs machine
 
-#1 - Solve U centers, then D center edges and corners while preserving U
-#2 - Solve U centers (lookup table), then D center edges and corners while preserving U
-#3 - Solve UD center corners (lookup table), then U center edges while preserving D, then D center edges while preserving U
-#4 - Solve UD center corners (lookup table), then U center edges without preserving D, then D center edges and corners while preserving U
+=====
+5x5x5
+=====
+- edge pairing is still awful...revisit lookup tables but with pattern2 approach
+    - see ac5a482e45315345db438b61887c240e5e6732d1
 
+- tsai today is
+    - stage UD centers
+    - stage LR centers (and in turn FB)
+    - phase2 starts (solve LR centers and do EO)
 
-5x5x5 last two edges
-====================
-- find the patterns that require multiple parity ID sequences...create new parity IDs
-  from these and once we have them all, drop the "while True" loop in resolve_555_edge_parity()
-  and barf if we ever find a new one
+    we could save a lot of steps by doing
+    - stage UD centers
+    - phase2 (solve LR centers and do EO)
+    - could always build the full LRFB prube table (165 million entries) if IDA is slow
 
+- tsai phase3 needs to be finished
+    - pair edges at LB, LF, RB, RF
+    - LFRB centers must be vertical strips
 
-solver.py
-=========
-- clean up the use of pos vs square_index
-- clean up the use of wing vs edge
-
-- get_solution_score()
-    - Instead of counting the number of steps in a solution come up with a score for
-      how long we think the robot would take to solve it
-
-- compress_solution()
-    - combine "U U" into U2
-    - remove x,y,z steps
-
-- group_edges() and get_edge_we_can_solve_with_least_moves()
-    DONE - lot of cut-n-paste code
-    - Instead of calling move_wing_to_F_west just rotate xyz to get it there. This
-      should save us 5-10 moves in pairing edges for 4x4x4
-
-- bring in the python kociemba solver?
+- tsai phase4
+    - restrict F, F', B, B' to preserved the 4 edges
+    - solve centers and finish reduction
 
 
-2x2x2 solver
-============
-- ungolf the 2x2x2 solver
-    - wrap your head around how the hell this thing works
+=====
+6x6x6
+=====
+- file bug to try to improve IDA for step20 to get away from "fake_move" solution
+
+
+=====
+7x7x7
+=====
+step80...we spend 40+ moves in this phase
+    - build the main table out to 6-deep
+
+    - we solve LR and then FB prune to speed up step80...can we avoid
+      this with the extra entries of a 6-deep table? Combine these on
+      LJs machine and see how crazy big it is.
+
+    - the step80 table could be converted to hex to make it much smaller
+      Would also chop out the "x"s
+
+    - build a bunch of 24 million entry prune tables?
+
+    - ./usr/bin/rubiks-cube-solver.py --state LLDBLFDRRFDUBFLLLFLLDFLDUBRULFLFDRDRUBBUDBFLFRUBFLDBFRDRFLLRBDUUFRFURDDDBRRLDUDUBLRLLBUDRUDBUUUUBUUDLDFRURFFUFURRRDLBRFLLUFUULRUBRRURULFUBUURLDBRBDBFRLULLFLDLFRRDLRBFDBBFDDUDRBBUUFLBFBLRDDDBRFLBURFDDRBDRBRLURFUDDUFBBFBFLLRFFLLRDFDBBFBRFDLLURUFDDFLFDFBDFFUBDBRBUDDDBLFBLBRBRURFLBBULLDFURUBBLURFU
+
+
+=====
+8x8x8
+=====
+LOW - Add support in prevent_OLL()
+
+
+=================
+bidirectional IDA
+=================
+    - would open a lot of doors in terms of tackling much larger IDA searches
+        - first to try is staging all 5x5x5 centers via one phase
+        - second to try is staging all 5x5x5 centers via one phase
+        - combine phases 1 and 2 of tsai?
+
+    - start from a solved cube and work your way back to the scrambled cube
+
+    - requires us to build prune tables for each scrambled cube
+        - for 4x4x4 staging centers we can do this in ~20 minutes in python
+        - if we only build it out 4 steps deep we can do it in ~20s
+        - so this would have to be done in C and even then it would still
+          take some time.  I think this is a strategy that could only be
+          used in a fewest moves challenge given how long it will take to
+          produce solutions.

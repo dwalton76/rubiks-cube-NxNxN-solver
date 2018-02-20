@@ -679,10 +679,10 @@ ida_heuristic (char *cube, lookup_table_type type)
     switch (type)  {
     case UD_CENTERS_STAGE_555:
         get_555_UD_t_centers_stage_state(sp_cube_state_binary, pt_state);
-        int t_centers_cost = ida_prune_table_cost(pt_t_centers, "lookup-table-5x5x5-step01-UD-centers-stage-t-center-only.txt", pt_state, 14, 735471, 46);
+        int t_centers_cost = ida_prune_table_cost(pt_t_centers, "lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt", pt_state, 14, 735471, 46);
 
         get_555_UD_x_centers_stage_state(sp_cube_state_binary, pt_state);
-        int x_centers_cost = ida_prune_table_cost(pt_x_centers, "lookup-table-5x5x5-step02-UD-centers-stage-x-center-only.txt", pt_state, 14, 735471, 45);
+        int x_centers_cost = ida_prune_table_cost(pt_x_centers, "lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt", pt_state, 14, 735471, 45);
 
         max_cost = max(t_centers_cost, x_centers_cost);
         break;
@@ -717,14 +717,18 @@ ida_search_complete (char *cube, lookup_table_type type)
 
     // ida_load_cube_state(cube, type) MUST be called prior to calling this.
 
+    // LOG("ida_search_complete %s\n", sp_cube_state);
     switch (type)  {
     case UD_CENTERS_STAGE_555:
 
         // dwalton load this into a cache
-        pt_entry = hash_find(&UD_centers_555, sp_cube_state);
+        // pt_entry = hash_find(&UD_centers_555, sp_cube_state);
 
-        if (pt_entry ||
-            file_binary_search("lookup-table-5x5x5-step00-UD-centers-stage.txt", sp_cube_state, 14, 17168476, 19)) {
+	// dwalton here now
+	// file_binary_search (char *filename, char *state_to_find, int statewidth, int linecount, int linewidth)
+        //if (pt_entry ||
+        //if (file_binary_search("lookup-table-5x5x5-step10-UD-centers-stage.txt.1-deep.all_steps", sp_cube_state, 14, 5, 19)) {
+        if (file_binary_search("lookup-table-5x5x5-step10-UD-centers-stage.txt.6-deep.all_steps", sp_cube_state, 14, 17168476, 39)) {
             return 1;
         }
         break;
@@ -879,9 +883,9 @@ ida_solve (char *cube, lookup_table_type type)
     int min_ida_threshold = 0;
 
     // dwalton here now
-    //ida_prune_table_preload(&pt_t_centers, "lookup-table-5x5x5-step01-UD-centers-stage-t-center-only.txt");
-    //ida_prune_table_preload(&pt_x_centers, "lookup-table-5x5x5-step02-UD-centers-stage-x-center-only.txt");
-    //ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step00-UD-centers-stage.txt");
+    ida_prune_table_preload(&pt_t_centers, "lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt");
+    ida_prune_table_preload(&pt_x_centers, "lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt");
+    //ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt.6-deep.all_steps");
 
     ida_load_cube_state(cube, type);
     min_ida_threshold = ida_heuristic(cube, type);
@@ -930,6 +934,10 @@ main (int argc, char *argv[])
                 printf("ERROR: %s is an invalid --type\n", argv[i]);
                 exit(1);
             }
+
+        } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
+            printf("\nida_search --kociemba KOCIEMBA_STRING --type 5x5x5-UD-centers-stage\n\n");
+            exit(0);
 
         } else {
             printf("ERROR: %s is an invalid arg\n", argv[i]);

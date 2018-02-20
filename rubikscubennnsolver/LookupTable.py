@@ -114,6 +114,9 @@ def steps_on_same_face_and_layer(prev_step, step):
     >>> steps_on_same_face_and_layer("U", "Uw")
     False
 
+    >>> steps_on_same_face_and_layer("F2", "Fw'")
+    False
+
     >>> steps_on_same_face_and_layer("3Uw2", "3Uw")
     True
 

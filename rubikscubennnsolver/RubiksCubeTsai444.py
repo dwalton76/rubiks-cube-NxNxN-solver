@@ -755,7 +755,6 @@ class RubiksCubeTsai444(RubiksCube444):
         self.print_cube()
         #self.tsai_phase2_orient_edges_print()
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        sys.exit(0)
 
         # Testing the phase3 prune tables
         #self.lt_tsai_phase3_edges_solve.solve()

@@ -692,22 +692,24 @@ class LookupTableIDA(LookupTable):
             #         (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             log.info("%s: IDA found match %d steps in %s, lt_state %s, f_cost %d (%d + %d)" %
                      (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
-            return True
+            return (f_cost, True)
 
         # ==============
         # Keep Searching
         # ==============
-        if f_cost > threshold:
-            return False
+        if f_cost >= threshold:
+            return (f_cost, False)
 
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
         explored_cost_to_here = self.explored.get(lt_state)
 
         if explored_cost_to_here is not None and explored_cost_to_here <= cost_to_here:
-            return False
+            return (f_cost, False)
         self.explored[lt_state] = cost_to_here
+        skip_other_steps_this_face = None
 
+        # log.info("moves_all %s" % ' '.join(self.moves_all))
         for step in self.moves_all:
 
             #if steps_cancel_out(prev_step, step):
@@ -716,13 +718,35 @@ class LookupTableIDA(LookupTable):
             if steps_on_same_face_and_layer(prev_step, step):
                 continue
 
+            # https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            '''
+            Well, it's a simple technique to reduce the number of nodes accessed.
+            For example, we start at a position S whose pruning value is no more
+            than maxl, otherwise, S will be pruned in previous searching.  After
+            a move X, we obtain position S', whose pruning value is larger than
+            maxl, which means that X makes S farther from the solved state.  In
+            this case, we won't try X2 and X'.
+            --cs0x7f
+            '''
+            if skip_other_steps_this_face is not None:
+                if steps_on_same_face_and_layer(skip_other_steps_this_face, step):
+                    continue
+                else:
+                    skip_other_steps_this_face = None
+
             self.parent.state = self.rotate_xxx(prev_state[:], step)
 
-            if self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:]):
-                return True
+            (f_cost_tmp, found_solution) = self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:])
+            if found_solution:
+                return (f_cost_tmp, True)
+            else:
+                if f_cost_tmp > threshold:
+                    skip_other_steps_this_face = step
+                else:
+                    skip_other_steps_this_face = None
 
         self.parent.state = prev_state[:]
-        return False
+        return (f_cost, False)
 
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
         """
@@ -749,7 +773,9 @@ class LookupTableIDA(LookupTable):
             self.ida_count = 0
             self.explored = {}
 
-            if self.ida_search(steps_to_here, threshold, None, self.original_state[:]):
+            (f_cost, found_solution) = self.ida_search(steps_to_here, threshold, None, self.original_state[:])
+
+            if found_solution:
                 end_time1 = dt.datetime.now()
                 log.info("%s: IDA threshold %d, explored %d branches, took %s (%s total)" %
                     (self, threshold, self.ida_count,

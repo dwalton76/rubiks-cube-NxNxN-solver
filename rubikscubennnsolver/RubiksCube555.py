@@ -1,31 +1,18 @@
 #!/usr/bin/env python3
 
-from collections import deque
-from pprint import pformat
-from random import randint
-from rubikscubennnsolver import RubiksCube, ImplementThis
-from rubikscubennnsolver.RubiksSide import Side, SolveError
-from rubikscubennnsolver.RubiksCube333 import moves_3x3x3
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_4x4x4, solved_4x4x4
+from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver.RubiksSide import SolveError
+from rubikscubennnsolver.RubiksCube444 import moves_4x4x4
 from rubikscubennnsolver.LookupTable import (
-    get_characters_common_count,
     stage_first_four_edges_wing_str_combos,
     steps_on_same_face_and_layer,
     LookupTable,
     LookupTableIDA,
-    LookupTableAStar
 )
 
 from rubikscubennnsolver.rotate_xxx import rotate_555
-import datetime as dt
 import itertools
 import logging
-import math
-import os
-import random
-import re
-import subprocess
-import sys
 
 log = logging.getLogger(__name__)
 
@@ -2721,6 +2708,180 @@ tsai_phase2_orient_edges_555 = {
     (149, 122, 'U', 'L'): 'U',
     (149, 122, 'U', 'R'): 'U'
 }
+
+def rotate_555_U(cube):
+    return [cube[0],cube[21],cube[16],cube[11],cube[6],cube[1],cube[22],cube[17],cube[12],cube[7],cube[2],cube[23],cube[18],cube[13],cube[8],cube[3],cube[24],cube[19],cube[14],cube[9],cube[4],cube[25],cube[20],cube[15],cube[10],cube[5]] + cube[51:56] + cube[31:51] + cube[76:81] + cube[56:76] + cube[101:106] + cube[81:101] + cube[26:31] + cube[106:151]
+
+def rotate_555_U_prime(cube):
+    return [cube[0],cube[5],cube[10],cube[15],cube[20],cube[25],cube[4],cube[9],cube[14],cube[19],cube[24],cube[3],cube[8],cube[13],cube[18],cube[23],cube[2],cube[7],cube[12],cube[17],cube[22],cube[1],cube[6],cube[11],cube[16],cube[21]] + cube[101:106] + cube[31:51] + cube[26:31] + cube[56:76] + cube[51:56] + cube[81:101] + cube[76:81] + cube[106:151]
+
+def rotate_555_U2(cube):
+    return [cube[0],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]] + cube[76:81] + cube[31:51] + cube[101:106] + cube[56:76] + cube[26:31] + cube[81:101] + cube[51:56] + cube[106:151]
+
+def rotate_555_Uw(cube):
+    return [cube[0],cube[21],cube[16],cube[11],cube[6],cube[1],cube[22],cube[17],cube[12],cube[7],cube[2],cube[23],cube[18],cube[13],cube[8],cube[3],cube[24],cube[19],cube[14],cube[9],cube[4],cube[25],cube[20],cube[15],cube[10],cube[5]] + cube[51:61] + cube[36:51] + cube[76:86] + cube[61:76] + cube[101:111] + cube[86:101] + cube[26:36] + cube[111:151]
+
+def rotate_555_Uw_prime(cube):
+    return [cube[0],cube[5],cube[10],cube[15],cube[20],cube[25],cube[4],cube[9],cube[14],cube[19],cube[24],cube[3],cube[8],cube[13],cube[18],cube[23],cube[2],cube[7],cube[12],cube[17],cube[22],cube[1],cube[6],cube[11],cube[16],cube[21]] + cube[101:111] + cube[36:51] + cube[26:36] + cube[61:76] + cube[51:61] + cube[86:101] + cube[76:86] + cube[111:151]
+
+def rotate_555_Uw2(cube):
+    return [cube[0],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]] + cube[76:86] + cube[36:51] + cube[101:111] + cube[61:76] + cube[26:36] + cube[86:101] + cube[51:61] + cube[111:151]
+
+def rotate_555_L(cube):
+    return [cube[0],cube[125]] + cube[2:6] + [cube[120]] + cube[7:11] + [cube[115]] + cube[12:16] + [cube[110]] + cube[17:21] + [cube[105]] + cube[22:26] + [cube[46],cube[41],cube[36],cube[31],cube[26],cube[47],cube[42],cube[37],cube[32],cube[27],cube[48],cube[43],cube[38],cube[33],cube[28],cube[49],cube[44],cube[39],cube[34],cube[29],cube[50],cube[45],cube[40],cube[35],cube[30],cube[1]] + cube[52:56] + [cube[6]] + cube[57:61] + [cube[11]] + cube[62:66] + [cube[16]] + cube[67:71] + [cube[21]] + cube[72:105] + [cube[146]] + cube[106:110] + [cube[141]] + cube[111:115] + [cube[136]] + cube[116:120] + [cube[131]] + cube[121:125] + [cube[126],cube[51]] + cube[127:131] + [cube[56]] + cube[132:136] + [cube[61]] + cube[137:141] + [cube[66]] + cube[142:146] + [cube[71]] + cube[147:151]
+
+def rotate_555_L_prime(cube):
+    return [cube[0],cube[51]] + cube[2:6] + [cube[56]] + cube[7:11] + [cube[61]] + cube[12:16] + [cube[66]] + cube[17:21] + [cube[71]] + cube[22:26] + [cube[30],cube[35],cube[40],cube[45],cube[50],cube[29],cube[34],cube[39],cube[44],cube[49],cube[28],cube[33],cube[38],cube[43],cube[48],cube[27],cube[32],cube[37],cube[42],cube[47],cube[26],cube[31],cube[36],cube[41],cube[46],cube[126]] + cube[52:56] + [cube[131]] + cube[57:61] + [cube[136]] + cube[62:66] + [cube[141]] + cube[67:71] + [cube[146]] + cube[72:105] + [cube[21]] + cube[106:110] + [cube[16]] + cube[111:115] + [cube[11]] + cube[116:120] + [cube[6]] + cube[121:125] + [cube[1],cube[125]] + cube[127:131] + [cube[120]] + cube[132:136] + [cube[115]] + cube[137:141] + [cube[110]] + cube[142:146] + [cube[105]] + cube[147:151]
+
+def rotate_555_L2(cube):
+    return [cube[0],cube[126]] + cube[2:6] + [cube[131]] + cube[7:11] + [cube[136]] + cube[12:16] + [cube[141]] + cube[17:21] + [cube[146]] + cube[22:26] + [cube[50],cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[125]] + cube[52:56] + [cube[120]] + cube[57:61] + [cube[115]] + cube[62:66] + [cube[110]] + cube[67:71] + [cube[105]] + cube[72:105] + [cube[71]] + cube[106:110] + [cube[66]] + cube[111:115] + [cube[61]] + cube[116:120] + [cube[56]] + cube[121:125] + [cube[51],cube[1]] + cube[127:131] + [cube[6]] + cube[132:136] + [cube[11]] + cube[137:141] + [cube[16]] + cube[142:146] + [cube[21]] + cube[147:151]
+
+def rotate_555_Lw(cube):
+    return [cube[0],cube[125],cube[124]] + cube[3:6] + [cube[120],cube[119]] + cube[8:11] + [cube[115],cube[114]] + cube[13:16] + [cube[110],cube[109]] + cube[18:21] + [cube[105],cube[104]] + cube[23:26] + [cube[46],cube[41],cube[36],cube[31],cube[26],cube[47],cube[42],cube[37],cube[32],cube[27],cube[48],cube[43],cube[38],cube[33],cube[28],cube[49],cube[44],cube[39],cube[34],cube[29],cube[50],cube[45],cube[40],cube[35],cube[30]] + cube[1:3] + cube[53:56] + cube[6:8] + cube[58:61] + cube[11:13] + cube[63:66] + cube[16:18] + cube[68:71] + cube[21:23] + cube[73:104] + [cube[147],cube[146]] + cube[106:109] + [cube[142],cube[141]] + cube[111:114] + [cube[137],cube[136]] + cube[116:119] + [cube[132],cube[131]] + cube[121:124] + [cube[127],cube[126]] + cube[51:53] + cube[128:131] + cube[56:58] + cube[133:136] + cube[61:63] + cube[138:141] + cube[66:68] + cube[143:146] + cube[71:73] + cube[148:151]
+
+def rotate_555_Lw_prime(cube):
+    return [cube[0]] + cube[51:53] + cube[3:6] + cube[56:58] + cube[8:11] + cube[61:63] + cube[13:16] + cube[66:68] + cube[18:21] + cube[71:73] + cube[23:26] + [cube[30],cube[35],cube[40],cube[45],cube[50],cube[29],cube[34],cube[39],cube[44],cube[49],cube[28],cube[33],cube[38],cube[43],cube[48],cube[27],cube[32],cube[37],cube[42],cube[47],cube[26],cube[31],cube[36],cube[41],cube[46]] + cube[126:128] + cube[53:56] + cube[131:133] + cube[58:61] + cube[136:138] + cube[63:66] + cube[141:143] + cube[68:71] + cube[146:148] + cube[73:104] + [cube[22],cube[21]] + cube[106:109] + [cube[17],cube[16]] + cube[111:114] + [cube[12],cube[11]] + cube[116:119] + [cube[7],cube[6]] + cube[121:124] + [cube[2],cube[1],cube[125],cube[124]] + cube[128:131] + [cube[120],cube[119]] + cube[133:136] + [cube[115],cube[114]] + cube[138:141] + [cube[110],cube[109]] + cube[143:146] + [cube[105],cube[104]] + cube[148:151]
+
+def rotate_555_Lw2(cube):
+    return [cube[0]] + cube[126:128] + cube[3:6] + cube[131:133] + cube[8:11] + cube[136:138] + cube[13:16] + cube[141:143] + cube[18:21] + cube[146:148] + cube[23:26] + [cube[50],cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[125],cube[124]] + cube[53:56] + [cube[120],cube[119]] + cube[58:61] + [cube[115],cube[114]] + cube[63:66] + [cube[110],cube[109]] + cube[68:71] + [cube[105],cube[104]] + cube[73:104] + [cube[72],cube[71]] + cube[106:109] + [cube[67],cube[66]] + cube[111:114] + [cube[62],cube[61]] + cube[116:119] + [cube[57],cube[56]] + cube[121:124] + [cube[52],cube[51]] + cube[1:3] + cube[128:131] + cube[6:8] + cube[133:136] + cube[11:13] + cube[138:141] + cube[16:18] + cube[143:146] + cube[21:23] + cube[148:151]
+
+def rotate_555_F(cube):
+    return cube[0:21] + [cube[50],cube[45],cube[40],cube[35],cube[30]] + cube[26:30] + [cube[126]] + cube[31:35] + [cube[127]] + cube[36:40] + [cube[128]] + cube[41:45] + [cube[129]] + cube[46:50] + [cube[130],cube[71],cube[66],cube[61],cube[56],cube[51],cube[72],cube[67],cube[62],cube[57],cube[52],cube[73],cube[68],cube[63],cube[58],cube[53],cube[74],cube[69],cube[64],cube[59],cube[54],cube[75],cube[70],cube[65],cube[60],cube[55],cube[21]] + cube[77:81] + [cube[22]] + cube[82:86] + [cube[23]] + cube[87:91] + [cube[24]] + cube[92:96] + [cube[25]] + cube[97:126] + [cube[96],cube[91],cube[86],cube[81],cube[76]] + cube[131:151]
+
+def rotate_555_F_prime(cube):
+    return cube[0:21] + [cube[76],cube[81],cube[86],cube[91],cube[96]] + cube[26:30] + [cube[25]] + cube[31:35] + [cube[24]] + cube[36:40] + [cube[23]] + cube[41:45] + [cube[22]] + cube[46:50] + [cube[21],cube[55],cube[60],cube[65],cube[70],cube[75],cube[54],cube[59],cube[64],cube[69],cube[74],cube[53],cube[58],cube[63],cube[68],cube[73],cube[52],cube[57],cube[62],cube[67],cube[72],cube[51],cube[56],cube[61],cube[66],cube[71],cube[130]] + cube[77:81] + [cube[129]] + cube[82:86] + [cube[128]] + cube[87:91] + [cube[127]] + cube[92:96] + [cube[126]] + cube[97:126] + [cube[30],cube[35],cube[40],cube[45],cube[50]] + cube[131:151]
+
+def rotate_555_F2(cube):
+    return cube[0:21] + [cube[130],cube[129],cube[128],cube[127],cube[126]] + cube[26:30] + [cube[96]] + cube[31:35] + [cube[91]] + cube[36:40] + [cube[86]] + cube[41:45] + [cube[81]] + cube[46:50] + [cube[76],cube[75],cube[74],cube[73],cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65],cube[64],cube[63],cube[62],cube[61],cube[60],cube[59],cube[58],cube[57],cube[56],cube[55],cube[54],cube[53],cube[52],cube[51],cube[50]] + cube[77:81] + [cube[45]] + cube[82:86] + [cube[40]] + cube[87:91] + [cube[35]] + cube[92:96] + [cube[30]] + cube[97:126] + [cube[25],cube[24],cube[23],cube[22],cube[21]] + cube[131:151]
+
+def rotate_555_Fw(cube):
+    return cube[0:16] + [cube[49],cube[44],cube[39],cube[34],cube[29],cube[50],cube[45],cube[40],cube[35],cube[30]] + cube[26:29] + [cube[131],cube[126]] + cube[31:34] + [cube[132],cube[127]] + cube[36:39] + [cube[133],cube[128]] + cube[41:44] + [cube[134],cube[129]] + cube[46:49] + [cube[135],cube[130],cube[71],cube[66],cube[61],cube[56],cube[51],cube[72],cube[67],cube[62],cube[57],cube[52],cube[73],cube[68],cube[63],cube[58],cube[53],cube[74],cube[69],cube[64],cube[59],cube[54],cube[75],cube[70],cube[65],cube[60],cube[55],cube[21],cube[16]] + cube[78:81] + [cube[22],cube[17]] + cube[83:86] + [cube[23],cube[18]] + cube[88:91] + [cube[24],cube[19]] + cube[93:96] + [cube[25],cube[20]] + cube[98:126] + [cube[96],cube[91],cube[86],cube[81],cube[76],cube[97],cube[92],cube[87],cube[82],cube[77]] + cube[136:151]
+
+def rotate_555_Fw_prime(cube):
+    return cube[0:16] + [cube[77],cube[82],cube[87],cube[92],cube[97],cube[76],cube[81],cube[86],cube[91],cube[96]] + cube[26:29] + [cube[20],cube[25]] + cube[31:34] + [cube[19],cube[24]] + cube[36:39] + [cube[18],cube[23]] + cube[41:44] + [cube[17],cube[22]] + cube[46:49] + [cube[16],cube[21],cube[55],cube[60],cube[65],cube[70],cube[75],cube[54],cube[59],cube[64],cube[69],cube[74],cube[53],cube[58],cube[63],cube[68],cube[73],cube[52],cube[57],cube[62],cube[67],cube[72],cube[51],cube[56],cube[61],cube[66],cube[71],cube[130],cube[135]] + cube[78:81] + [cube[129],cube[134]] + cube[83:86] + [cube[128],cube[133]] + cube[88:91] + [cube[127],cube[132]] + cube[93:96] + [cube[126],cube[131]] + cube[98:126] + [cube[30],cube[35],cube[40],cube[45],cube[50],cube[29],cube[34],cube[39],cube[44],cube[49]] + cube[136:151]
+
+def rotate_555_Fw2(cube):
+    return cube[0:16] + [cube[135],cube[134],cube[133],cube[132],cube[131],cube[130],cube[129],cube[128],cube[127],cube[126]] + cube[26:29] + [cube[97],cube[96]] + cube[31:34] + [cube[92],cube[91]] + cube[36:39] + [cube[87],cube[86]] + cube[41:44] + [cube[82],cube[81]] + cube[46:49] + [cube[77],cube[76],cube[75],cube[74],cube[73],cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65],cube[64],cube[63],cube[62],cube[61],cube[60],cube[59],cube[58],cube[57],cube[56],cube[55],cube[54],cube[53],cube[52],cube[51],cube[50],cube[49]] + cube[78:81] + [cube[45],cube[44]] + cube[83:86] + [cube[40],cube[39]] + cube[88:91] + [cube[35],cube[34]] + cube[93:96] + [cube[30],cube[29]] + cube[98:126] + [cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16]] + cube[136:151]
+
+def rotate_555_R(cube):
+    return cube[0:5] + [cube[55]] + cube[6:10] + [cube[60]] + cube[11:15] + [cube[65]] + cube[16:20] + [cube[70]] + cube[21:25] + [cube[75]] + cube[26:55] + [cube[130]] + cube[56:60] + [cube[135]] + cube[61:65] + [cube[140]] + cube[66:70] + [cube[145]] + cube[71:75] + [cube[150],cube[96],cube[91],cube[86],cube[81],cube[76],cube[97],cube[92],cube[87],cube[82],cube[77],cube[98],cube[93],cube[88],cube[83],cube[78],cube[99],cube[94],cube[89],cube[84],cube[79],cube[100],cube[95],cube[90],cube[85],cube[80],cube[25]] + cube[102:106] + [cube[20]] + cube[107:111] + [cube[15]] + cube[112:116] + [cube[10]] + cube[117:121] + [cube[5]] + cube[122:130] + [cube[121]] + cube[131:135] + [cube[116]] + cube[136:140] + [cube[111]] + cube[141:145] + [cube[106]] + cube[146:150] + [cube[101]]
+
+def rotate_555_R_prime(cube):
+    return cube[0:5] + [cube[121]] + cube[6:10] + [cube[116]] + cube[11:15] + [cube[111]] + cube[16:20] + [cube[106]] + cube[21:25] + [cube[101]] + cube[26:55] + [cube[5]] + cube[56:60] + [cube[10]] + cube[61:65] + [cube[15]] + cube[66:70] + [cube[20]] + cube[71:75] + [cube[25],cube[80],cube[85],cube[90],cube[95],cube[100],cube[79],cube[84],cube[89],cube[94],cube[99],cube[78],cube[83],cube[88],cube[93],cube[98],cube[77],cube[82],cube[87],cube[92],cube[97],cube[76],cube[81],cube[86],cube[91],cube[96],cube[150]] + cube[102:106] + [cube[145]] + cube[107:111] + [cube[140]] + cube[112:116] + [cube[135]] + cube[117:121] + [cube[130]] + cube[122:130] + [cube[55]] + cube[131:135] + [cube[60]] + cube[136:140] + [cube[65]] + cube[141:145] + [cube[70]] + cube[146:150] + [cube[75]]
+
+def rotate_555_R2(cube):
+    return cube[0:5] + [cube[130]] + cube[6:10] + [cube[135]] + cube[11:15] + [cube[140]] + cube[16:20] + [cube[145]] + cube[21:25] + [cube[150]] + cube[26:55] + [cube[121]] + cube[56:60] + [cube[116]] + cube[61:65] + [cube[111]] + cube[66:70] + [cube[106]] + cube[71:75] + [cube[101],cube[100],cube[99],cube[98],cube[97],cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75]] + cube[102:106] + [cube[70]] + cube[107:111] + [cube[65]] + cube[112:116] + [cube[60]] + cube[117:121] + [cube[55]] + cube[122:130] + [cube[5]] + cube[131:135] + [cube[10]] + cube[136:140] + [cube[15]] + cube[141:145] + [cube[20]] + cube[146:150] + [cube[25]]
+
+def rotate_555_Rw(cube):
+    return cube[0:4] + cube[54:56] + cube[6:9] + cube[59:61] + cube[11:14] + cube[64:66] + cube[16:19] + cube[69:71] + cube[21:24] + cube[74:76] + cube[26:54] + cube[129:131] + cube[56:59] + cube[134:136] + cube[61:64] + cube[139:141] + cube[66:69] + cube[144:146] + cube[71:74] + cube[149:151] + [cube[96],cube[91],cube[86],cube[81],cube[76],cube[97],cube[92],cube[87],cube[82],cube[77],cube[98],cube[93],cube[88],cube[83],cube[78],cube[99],cube[94],cube[89],cube[84],cube[79],cube[100],cube[95],cube[90],cube[85],cube[80],cube[25],cube[24]] + cube[103:106] + [cube[20],cube[19]] + cube[108:111] + [cube[15],cube[14]] + cube[113:116] + [cube[10],cube[9]] + cube[118:121] + [cube[5],cube[4]] + cube[123:129] + [cube[122],cube[121]] + cube[131:134] + [cube[117],cube[116]] + cube[136:139] + [cube[112],cube[111]] + cube[141:144] + [cube[107],cube[106]] + cube[146:149] + [cube[102],cube[101]]
+
+def rotate_555_Rw_prime(cube):
+    return cube[0:4] + [cube[122],cube[121]] + cube[6:9] + [cube[117],cube[116]] + cube[11:14] + [cube[112],cube[111]] + cube[16:19] + [cube[107],cube[106]] + cube[21:24] + [cube[102],cube[101]] + cube[26:54] + cube[4:6] + cube[56:59] + cube[9:11] + cube[61:64] + cube[14:16] + cube[66:69] + cube[19:21] + cube[71:74] + cube[24:26] + [cube[80],cube[85],cube[90],cube[95],cube[100],cube[79],cube[84],cube[89],cube[94],cube[99],cube[78],cube[83],cube[88],cube[93],cube[98],cube[77],cube[82],cube[87],cube[92],cube[97],cube[76],cube[81],cube[86],cube[91],cube[96],cube[150],cube[149]] + cube[103:106] + [cube[145],cube[144]] + cube[108:111] + [cube[140],cube[139]] + cube[113:116] + [cube[135],cube[134]] + cube[118:121] + [cube[130],cube[129]] + cube[123:129] + cube[54:56] + cube[131:134] + cube[59:61] + cube[136:139] + cube[64:66] + cube[141:144] + cube[69:71] + cube[146:149] + cube[74:76]
+
+def rotate_555_Rw2(cube):
+    return cube[0:4] + cube[129:131] + cube[6:9] + cube[134:136] + cube[11:14] + cube[139:141] + cube[16:19] + cube[144:146] + cube[21:24] + cube[149:151] + cube[26:54] + [cube[122],cube[121]] + cube[56:59] + [cube[117],cube[116]] + cube[61:64] + [cube[112],cube[111]] + cube[66:69] + [cube[107],cube[106]] + cube[71:74] + [cube[102],cube[101],cube[100],cube[99],cube[98],cube[97],cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74]] + cube[103:106] + [cube[70],cube[69]] + cube[108:111] + [cube[65],cube[64]] + cube[113:116] + [cube[60],cube[59]] + cube[118:121] + [cube[55],cube[54]] + cube[123:129] + cube[4:6] + cube[131:134] + cube[9:11] + cube[136:139] + cube[14:16] + cube[141:144] + cube[19:21] + cube[146:149] + cube[24:26]
+
+def rotate_555_B(cube):
+    return [cube[0],cube[80],cube[85],cube[90],cube[95],cube[100]] + cube[6:26] + [cube[5]] + cube[27:31] + [cube[4]] + cube[32:36] + [cube[3]] + cube[37:41] + [cube[2]] + cube[42:46] + [cube[1]] + cube[47:80] + [cube[150]] + cube[81:85] + [cube[149]] + cube[86:90] + [cube[148]] + cube[91:95] + [cube[147]] + cube[96:100] + [cube[146],cube[121],cube[116],cube[111],cube[106],cube[101],cube[122],cube[117],cube[112],cube[107],cube[102],cube[123],cube[118],cube[113],cube[108],cube[103],cube[124],cube[119],cube[114],cube[109],cube[104],cube[125],cube[120],cube[115],cube[110],cube[105]] + cube[126:146] + [cube[26],cube[31],cube[36],cube[41],cube[46]]
+
+def rotate_555_B_prime(cube):
+    return [cube[0],cube[46],cube[41],cube[36],cube[31],cube[26]] + cube[6:26] + [cube[146]] + cube[27:31] + [cube[147]] + cube[32:36] + [cube[148]] + cube[37:41] + [cube[149]] + cube[42:46] + [cube[150]] + cube[47:80] + [cube[1]] + cube[81:85] + [cube[2]] + cube[86:90] + [cube[3]] + cube[91:95] + [cube[4]] + cube[96:100] + [cube[5],cube[105],cube[110],cube[115],cube[120],cube[125],cube[104],cube[109],cube[114],cube[119],cube[124],cube[103],cube[108],cube[113],cube[118],cube[123],cube[102],cube[107],cube[112],cube[117],cube[122],cube[101],cube[106],cube[111],cube[116],cube[121]] + cube[126:146] + [cube[100],cube[95],cube[90],cube[85],cube[80]]
+
+def rotate_555_B2(cube):
+    return [cube[0],cube[150],cube[149],cube[148],cube[147],cube[146]] + cube[6:26] + [cube[100]] + cube[27:31] + [cube[95]] + cube[32:36] + [cube[90]] + cube[37:41] + [cube[85]] + cube[42:46] + [cube[80]] + cube[47:80] + [cube[46]] + cube[81:85] + [cube[41]] + cube[86:90] + [cube[36]] + cube[91:95] + [cube[31]] + cube[96:100] + [cube[26],cube[125],cube[124],cube[123],cube[122],cube[121],cube[120],cube[119],cube[118],cube[117],cube[116],cube[115],cube[114],cube[113],cube[112],cube[111],cube[110],cube[109],cube[108],cube[107],cube[106],cube[105],cube[104],cube[103],cube[102],cube[101]] + cube[126:146] + [cube[5],cube[4],cube[3],cube[2],cube[1]]
+
+def rotate_555_Bw(cube):
+    return [cube[0],cube[80],cube[85],cube[90],cube[95],cube[100],cube[79],cube[84],cube[89],cube[94],cube[99]] + cube[11:26] + [cube[5],cube[10]] + cube[28:31] + [cube[4],cube[9]] + cube[33:36] + [cube[3],cube[8]] + cube[38:41] + [cube[2],cube[7]] + cube[43:46] + [cube[1],cube[6]] + cube[48:79] + [cube[145],cube[150]] + cube[81:84] + [cube[144],cube[149]] + cube[86:89] + [cube[143],cube[148]] + cube[91:94] + [cube[142],cube[147]] + cube[96:99] + [cube[141],cube[146],cube[121],cube[116],cube[111],cube[106],cube[101],cube[122],cube[117],cube[112],cube[107],cube[102],cube[123],cube[118],cube[113],cube[108],cube[103],cube[124],cube[119],cube[114],cube[109],cube[104],cube[125],cube[120],cube[115],cube[110],cube[105]] + cube[126:141] + [cube[27],cube[32],cube[37],cube[42],cube[47],cube[26],cube[31],cube[36],cube[41],cube[46]]
+
+def rotate_555_Bw_prime(cube):
+    return [cube[0],cube[46],cube[41],cube[36],cube[31],cube[26],cube[47],cube[42],cube[37],cube[32],cube[27]] + cube[11:26] + [cube[146],cube[141]] + cube[28:31] + [cube[147],cube[142]] + cube[33:36] + [cube[148],cube[143]] + cube[38:41] + [cube[149],cube[144]] + cube[43:46] + [cube[150],cube[145]] + cube[48:79] + [cube[6],cube[1]] + cube[81:84] + [cube[7],cube[2]] + cube[86:89] + [cube[8],cube[3]] + cube[91:94] + [cube[9],cube[4]] + cube[96:99] + [cube[10],cube[5],cube[105],cube[110],cube[115],cube[120],cube[125],cube[104],cube[109],cube[114],cube[119],cube[124],cube[103],cube[108],cube[113],cube[118],cube[123],cube[102],cube[107],cube[112],cube[117],cube[122],cube[101],cube[106],cube[111],cube[116],cube[121]] + cube[126:141] + [cube[99],cube[94],cube[89],cube[84],cube[79],cube[100],cube[95],cube[90],cube[85],cube[80]]
+
+def rotate_555_Bw2(cube):
+    return [cube[0],cube[150],cube[149],cube[148],cube[147],cube[146],cube[145],cube[144],cube[143],cube[142],cube[141]] + cube[11:26] + [cube[100],cube[99]] + cube[28:31] + [cube[95],cube[94]] + cube[33:36] + [cube[90],cube[89]] + cube[38:41] + [cube[85],cube[84]] + cube[43:46] + [cube[80],cube[79]] + cube[48:79] + [cube[47],cube[46]] + cube[81:84] + [cube[42],cube[41]] + cube[86:89] + [cube[37],cube[36]] + cube[91:94] + [cube[32],cube[31]] + cube[96:99] + [cube[27],cube[26],cube[125],cube[124],cube[123],cube[122],cube[121],cube[120],cube[119],cube[118],cube[117],cube[116],cube[115],cube[114],cube[113],cube[112],cube[111],cube[110],cube[109],cube[108],cube[107],cube[106],cube[105],cube[104],cube[103],cube[102],cube[101]] + cube[126:141] + [cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]]
+
+def rotate_555_D(cube):
+    return cube[0:46] + cube[121:126] + cube[51:71] + cube[46:51] + cube[76:96] + cube[71:76] + cube[101:121] + cube[96:101] + [cube[146],cube[141],cube[136],cube[131],cube[126],cube[147],cube[142],cube[137],cube[132],cube[127],cube[148],cube[143],cube[138],cube[133],cube[128],cube[149],cube[144],cube[139],cube[134],cube[129],cube[150],cube[145],cube[140],cube[135],cube[130]]
+
+def rotate_555_D_prime(cube):
+    return cube[0:46] + cube[71:76] + cube[51:71] + cube[96:101] + cube[76:96] + cube[121:126] + cube[101:121] + cube[46:51] + [cube[130],cube[135],cube[140],cube[145],cube[150],cube[129],cube[134],cube[139],cube[144],cube[149],cube[128],cube[133],cube[138],cube[143],cube[148],cube[127],cube[132],cube[137],cube[142],cube[147],cube[126],cube[131],cube[136],cube[141],cube[146]]
+
+def rotate_555_D2(cube):
+    return cube[0:46] + cube[96:101] + cube[51:71] + cube[121:126] + cube[76:96] + cube[46:51] + cube[101:121] + cube[71:76] + [cube[150],cube[149],cube[148],cube[147],cube[146],cube[145],cube[144],cube[143],cube[142],cube[141],cube[140],cube[139],cube[138],cube[137],cube[136],cube[135],cube[134],cube[133],cube[132],cube[131],cube[130],cube[129],cube[128],cube[127],cube[126]]
+
+def rotate_555_Dw(cube):
+    return cube[0:41] + cube[116:126] + cube[51:66] + cube[41:51] + cube[76:91] + cube[66:76] + cube[101:116] + cube[91:101] + [cube[146],cube[141],cube[136],cube[131],cube[126],cube[147],cube[142],cube[137],cube[132],cube[127],cube[148],cube[143],cube[138],cube[133],cube[128],cube[149],cube[144],cube[139],cube[134],cube[129],cube[150],cube[145],cube[140],cube[135],cube[130]]
+
+def rotate_555_Dw_prime(cube):
+    return cube[0:41] + cube[66:76] + cube[51:66] + cube[91:101] + cube[76:91] + cube[116:126] + cube[101:116] + cube[41:51] + [cube[130],cube[135],cube[140],cube[145],cube[150],cube[129],cube[134],cube[139],cube[144],cube[149],cube[128],cube[133],cube[138],cube[143],cube[148],cube[127],cube[132],cube[137],cube[142],cube[147],cube[126],cube[131],cube[136],cube[141],cube[146]]
+
+def rotate_555_Dw2(cube):
+    return cube[0:41] + cube[91:101] + cube[51:66] + cube[116:126] + cube[76:91] + cube[41:51] + cube[101:116] + cube[66:76] + [cube[150],cube[149],cube[148],cube[147],cube[146],cube[145],cube[144],cube[143],cube[142],cube[141],cube[140],cube[139],cube[138],cube[137],cube[136],cube[135],cube[134],cube[133],cube[132],cube[131],cube[130],cube[129],cube[128],cube[127],cube[126]]
+
+def rotate_555_x(cube):
+    return [cube[0]] + cube[51:76] + [cube[30],cube[35],cube[40],cube[45],cube[50],cube[29],cube[34],cube[39],cube[44],cube[49],cube[28],cube[33],cube[38],cube[43],cube[48],cube[27],cube[32],cube[37],cube[42],cube[47],cube[26],cube[31],cube[36],cube[41],cube[46]] + cube[126:151] + [cube[96],cube[91],cube[86],cube[81],cube[76],cube[97],cube[92],cube[87],cube[82],cube[77],cube[98],cube[93],cube[88],cube[83],cube[78],cube[99],cube[94],cube[89],cube[84],cube[79],cube[100],cube[95],cube[90],cube[85],cube[80],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1],cube[125],cube[124],cube[123],cube[122],cube[121],cube[120],cube[119],cube[118],cube[117],cube[116],cube[115],cube[114],cube[113],cube[112],cube[111],cube[110],cube[109],cube[108],cube[107],cube[106],cube[105],cube[104],cube[103],cube[102],cube[101]]
+
+def rotate_555_x_prime(cube):
+    return [cube[0],cube[125],cube[124],cube[123],cube[122],cube[121],cube[120],cube[119],cube[118],cube[117],cube[116],cube[115],cube[114],cube[113],cube[112],cube[111],cube[110],cube[109],cube[108],cube[107],cube[106],cube[105],cube[104],cube[103],cube[102],cube[101],cube[46],cube[41],cube[36],cube[31],cube[26],cube[47],cube[42],cube[37],cube[32],cube[27],cube[48],cube[43],cube[38],cube[33],cube[28],cube[49],cube[44],cube[39],cube[34],cube[29],cube[50],cube[45],cube[40],cube[35],cube[30]] + cube[1:26] + [cube[80],cube[85],cube[90],cube[95],cube[100],cube[79],cube[84],cube[89],cube[94],cube[99],cube[78],cube[83],cube[88],cube[93],cube[98],cube[77],cube[82],cube[87],cube[92],cube[97],cube[76],cube[81],cube[86],cube[91],cube[96],cube[150],cube[149],cube[148],cube[147],cube[146],cube[145],cube[144],cube[143],cube[142],cube[141],cube[140],cube[139],cube[138],cube[137],cube[136],cube[135],cube[134],cube[133],cube[132],cube[131],cube[130],cube[129],cube[128],cube[127],cube[126]] + cube[51:76]
+
+def rotate_555_y(cube):
+    return [cube[0],cube[21],cube[16],cube[11],cube[6],cube[1],cube[22],cube[17],cube[12],cube[7],cube[2],cube[23],cube[18],cube[13],cube[8],cube[3],cube[24],cube[19],cube[14],cube[9],cube[4],cube[25],cube[20],cube[15],cube[10],cube[5]] + cube[51:126] + cube[26:51] + [cube[130],cube[135],cube[140],cube[145],cube[150],cube[129],cube[134],cube[139],cube[144],cube[149],cube[128],cube[133],cube[138],cube[143],cube[148],cube[127],cube[132],cube[137],cube[142],cube[147],cube[126],cube[131],cube[136],cube[141],cube[146]]
+
+def rotate_555_y_prime(cube):
+    return [cube[0],cube[5],cube[10],cube[15],cube[20],cube[25],cube[4],cube[9],cube[14],cube[19],cube[24],cube[3],cube[8],cube[13],cube[18],cube[23],cube[2],cube[7],cube[12],cube[17],cube[22],cube[1],cube[6],cube[11],cube[16],cube[21]] + cube[101:126] + cube[26:101] + [cube[146],cube[141],cube[136],cube[131],cube[126],cube[147],cube[142],cube[137],cube[132],cube[127],cube[148],cube[143],cube[138],cube[133],cube[128],cube[149],cube[144],cube[139],cube[134],cube[129],cube[150],cube[145],cube[140],cube[135],cube[130]]
+
+def rotate_555_z(cube):
+    return [cube[0],cube[46],cube[41],cube[36],cube[31],cube[26],cube[47],cube[42],cube[37],cube[32],cube[27],cube[48],cube[43],cube[38],cube[33],cube[28],cube[49],cube[44],cube[39],cube[34],cube[29],cube[50],cube[45],cube[40],cube[35],cube[30],cube[146],cube[141],cube[136],cube[131],cube[126],cube[147],cube[142],cube[137],cube[132],cube[127],cube[148],cube[143],cube[138],cube[133],cube[128],cube[149],cube[144],cube[139],cube[134],cube[129],cube[150],cube[145],cube[140],cube[135],cube[130],cube[71],cube[66],cube[61],cube[56],cube[51],cube[72],cube[67],cube[62],cube[57],cube[52],cube[73],cube[68],cube[63],cube[58],cube[53],cube[74],cube[69],cube[64],cube[59],cube[54],cube[75],cube[70],cube[65],cube[60],cube[55],cube[21],cube[16],cube[11],cube[6],cube[1],cube[22],cube[17],cube[12],cube[7],cube[2],cube[23],cube[18],cube[13],cube[8],cube[3],cube[24],cube[19],cube[14],cube[9],cube[4],cube[25],cube[20],cube[15],cube[10],cube[5],cube[105],cube[110],cube[115],cube[120],cube[125],cube[104],cube[109],cube[114],cube[119],cube[124],cube[103],cube[108],cube[113],cube[118],cube[123],cube[102],cube[107],cube[112],cube[117],cube[122],cube[101],cube[106],cube[111],cube[116],cube[121],cube[96],cube[91],cube[86],cube[81],cube[76],cube[97],cube[92],cube[87],cube[82],cube[77],cube[98],cube[93],cube[88],cube[83],cube[78],cube[99],cube[94],cube[89],cube[84],cube[79],cube[100],cube[95],cube[90],cube[85],cube[80]]
+
+def rotate_555_z_prime(cube):
+    return [cube[0],cube[80],cube[85],cube[90],cube[95],cube[100],cube[79],cube[84],cube[89],cube[94],cube[99],cube[78],cube[83],cube[88],cube[93],cube[98],cube[77],cube[82],cube[87],cube[92],cube[97],cube[76],cube[81],cube[86],cube[91],cube[96],cube[5],cube[10],cube[15],cube[20],cube[25],cube[4],cube[9],cube[14],cube[19],cube[24],cube[3],cube[8],cube[13],cube[18],cube[23],cube[2],cube[7],cube[12],cube[17],cube[22],cube[1],cube[6],cube[11],cube[16],cube[21],cube[55],cube[60],cube[65],cube[70],cube[75],cube[54],cube[59],cube[64],cube[69],cube[74],cube[53],cube[58],cube[63],cube[68],cube[73],cube[52],cube[57],cube[62],cube[67],cube[72],cube[51],cube[56],cube[61],cube[66],cube[71],cube[130],cube[135],cube[140],cube[145],cube[150],cube[129],cube[134],cube[139],cube[144],cube[149],cube[128],cube[133],cube[138],cube[143],cube[148],cube[127],cube[132],cube[137],cube[142],cube[147],cube[126],cube[131],cube[136],cube[141],cube[146],cube[121],cube[116],cube[111],cube[106],cube[101],cube[122],cube[117],cube[112],cube[107],cube[102],cube[123],cube[118],cube[113],cube[108],cube[103],cube[124],cube[119],cube[114],cube[109],cube[104],cube[125],cube[120],cube[115],cube[110],cube[105],cube[30],cube[35],cube[40],cube[45],cube[50],cube[29],cube[34],cube[39],cube[44],cube[49],cube[28],cube[33],cube[38],cube[43],cube[48],cube[27],cube[32],cube[37],cube[42],cube[47],cube[26],cube[31],cube[36],cube[41],cube[46]]
+
+rotate_mapper_555 = {
+    "B" : rotate_555_B,
+    "B'" : rotate_555_B_prime,
+    "B2" : rotate_555_B2,
+    "Bw" : rotate_555_Bw,
+    "Bw'" : rotate_555_Bw_prime,
+    "Bw2" : rotate_555_Bw2,
+    "D" : rotate_555_D,
+    "D'" : rotate_555_D_prime,
+    "D2" : rotate_555_D2,
+    "Dw" : rotate_555_Dw,
+    "Dw'" : rotate_555_Dw_prime,
+    "Dw2" : rotate_555_Dw2,
+    "F" : rotate_555_F,
+    "F'" : rotate_555_F_prime,
+    "F2" : rotate_555_F2,
+    "Fw" : rotate_555_Fw,
+    "Fw'" : rotate_555_Fw_prime,
+    "Fw2" : rotate_555_Fw2,
+    "L" : rotate_555_L,
+    "L'" : rotate_555_L_prime,
+    "L2" : rotate_555_L2,
+    "Lw" : rotate_555_Lw,
+    "Lw'" : rotate_555_Lw_prime,
+    "Lw2" : rotate_555_Lw2,
+    "R" : rotate_555_R,
+    "R'" : rotate_555_R_prime,
+    "R2" : rotate_555_R2,
+    "Rw" : rotate_555_Rw,
+    "Rw'" : rotate_555_Rw_prime,
+    "Rw2" : rotate_555_Rw2,
+    "U" : rotate_555_U,
+    "U'" : rotate_555_U_prime,
+    "U2" : rotate_555_U2,
+    "Uw" : rotate_555_Uw,
+    "Uw'" : rotate_555_Uw_prime,
+    "Uw2" : rotate_555_Uw2,
+    "x" : rotate_555_x,
+    "x'" : rotate_555_x_prime,
+    "y" : rotate_555_y,
+    "y'" : rotate_555_y_prime,
+    "z" : rotate_555_z,
+    "z'" : rotate_555_z_prime,
+}
+
+def rotate_555(cube, step):
+    return rotate_mapper_555[step](cube)
 
 
 if __name__ == '__main__':

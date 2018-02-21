@@ -129,3 +129,105 @@ class RubiksCube222(RubiksCube):
         # Cube is solved, rotate it around so white is on top, etc
         #self.rotate_U_to_U()
         #self.rotate_F_to_F()
+
+def rotate_222_U(cube):
+    return [cube[0],cube[3],cube[1],cube[4],cube[2]] + cube[9:11] + cube[7:9] + cube[13:15] + cube[11:13] + cube[17:19] + cube[15:17] + cube[5:7] + cube[19:25]
+
+def rotate_222_U_prime(cube):
+    return [cube[0],cube[2],cube[4],cube[1],cube[3]] + cube[17:19] + cube[7:9] + cube[5:7] + cube[11:13] + cube[9:11] + cube[15:17] + cube[13:15] + cube[19:25]
+
+def rotate_222_U2(cube):
+    return [cube[0],cube[4],cube[3],cube[2],cube[1]] + cube[13:15] + cube[7:9] + cube[17:19] + cube[11:13] + cube[5:7] + cube[15:17] + cube[9:11] + cube[19:25]
+
+def rotate_222_L(cube):
+    return [cube[0],cube[20],cube[2],cube[18],cube[4],cube[7],cube[5],cube[8],cube[6],cube[1],cube[10],cube[3]] + cube[12:18] + [cube[23],cube[19],cube[21],cube[9],cube[22],cube[11],cube[24]]
+
+def rotate_222_L_prime(cube):
+    return [cube[0],cube[9],cube[2],cube[11],cube[4],cube[6],cube[8],cube[5],cube[7],cube[21],cube[10],cube[23]] + cube[12:18] + [cube[3],cube[19],cube[1],cube[20],cube[22],cube[18],cube[24]]
+
+def rotate_222_L2(cube):
+    return [cube[0],cube[21],cube[2],cube[23],cube[4],cube[8],cube[7],cube[6],cube[5],cube[20],cube[10],cube[18]] + cube[12:18] + [cube[11],cube[19],cube[9],cube[1],cube[22],cube[3],cube[24]]
+
+def rotate_222_F(cube):
+    return cube[0:3] + [cube[8],cube[6],cube[5],cube[21],cube[7],cube[22],cube[11],cube[9],cube[12],cube[10],cube[3],cube[14],cube[4]] + cube[16:21] + [cube[15],cube[13]] + cube[23:25]
+
+def rotate_222_F_prime(cube):
+    return cube[0:3] + [cube[13],cube[15],cube[5],cube[4],cube[7],cube[3],cube[10],cube[12],cube[9],cube[11],cube[22],cube[14],cube[21]] + cube[16:21] + [cube[6],cube[8]] + cube[23:25]
+
+def rotate_222_F2(cube):
+    return cube[0:3] + [cube[22],cube[21],cube[5],cube[15],cube[7],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[14],cube[6]] + cube[16:21] + [cube[4],cube[3]] + cube[23:25]
+
+def rotate_222_R(cube):
+    return cube[0:2] + [cube[10],cube[3],cube[12]] + cube[5:10] + [cube[22],cube[11],cube[24],cube[15],cube[13],cube[16],cube[14],cube[4],cube[18],cube[2]] + cube[20:22] + [cube[19],cube[23],cube[17]]
+
+def rotate_222_R_prime(cube):
+    return cube[0:2] + [cube[19],cube[3],cube[17]] + cube[5:10] + [cube[2],cube[11],cube[4],cube[14],cube[16],cube[13],cube[15],cube[24],cube[18],cube[22]] + cube[20:22] + [cube[10],cube[23],cube[12]]
+
+def rotate_222_R2(cube):
+    return cube[0:2] + [cube[22],cube[3],cube[24]] + cube[5:10] + [cube[19],cube[11],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[18],cube[10]] + cube[20:22] + [cube[2],cube[23],cube[4]]
+
+def rotate_222_B(cube):
+    return [cube[0],cube[14],cube[16]] + cube[3:5] + [cube[2],cube[6],cube[1]] + cube[8:14] + [cube[24],cube[15],cube[23],cube[19],cube[17],cube[20],cube[18]] + cube[21:23] + [cube[5],cube[7]]
+
+def rotate_222_B_prime(cube):
+    return [cube[0],cube[7],cube[5]] + cube[3:5] + [cube[23],cube[6],cube[24]] + cube[8:14] + [cube[1],cube[15],cube[2],cube[18],cube[20],cube[17],cube[19]] + cube[21:23] + [cube[16],cube[14]]
+
+def rotate_222_B2(cube):
+    return [cube[0],cube[24],cube[23]] + cube[3:5] + [cube[16],cube[6],cube[14]] + cube[8:14] + [cube[7],cube[15],cube[5],cube[20],cube[19],cube[18],cube[17]] + cube[21:23] + [cube[2],cube[1]]
+
+def rotate_222_D(cube):
+    return cube[0:7] + cube[19:21] + cube[9:11] + cube[7:9] + cube[13:15] + cube[11:13] + cube[17:19] + cube[15:17] + [cube[23],cube[21],cube[24],cube[22]]
+
+def rotate_222_D_prime(cube):
+    return cube[0:7] + cube[11:13] + cube[9:11] + cube[15:17] + cube[13:15] + cube[19:21] + cube[17:19] + cube[7:9] + [cube[22],cube[24],cube[21],cube[23]]
+
+def rotate_222_D2(cube):
+    return cube[0:7] + cube[15:17] + cube[9:11] + cube[19:21] + cube[13:15] + cube[7:9] + cube[17:19] + cube[11:13] + [cube[24],cube[23],cube[22],cube[21]]
+
+def rotate_222_x(cube):
+    return [cube[0]] + cube[9:13] + [cube[6],cube[8],cube[5],cube[7]] + cube[21:25] + [cube[15],cube[13],cube[16],cube[14],cube[4],cube[3],cube[2],cube[1],cube[20],cube[19],cube[18],cube[17]]
+
+def rotate_222_x_prime(cube):
+    return [cube[0],cube[20],cube[19],cube[18],cube[17],cube[7],cube[5],cube[8],cube[6]] + cube[1:5] + [cube[14],cube[16],cube[13],cube[15],cube[24],cube[23],cube[22],cube[21]] + cube[9:13]
+
+def rotate_222_y(cube):
+    return [cube[0],cube[3],cube[1],cube[4],cube[2]] + cube[9:21] + cube[5:9] + [cube[22],cube[24],cube[21],cube[23]]
+
+def rotate_222_y_prime(cube):
+    return [cube[0],cube[2],cube[4],cube[1],cube[3]] + cube[17:21] + cube[5:17] + [cube[23],cube[21],cube[24],cube[22]]
+
+def rotate_222_z(cube):
+    return [cube[0],cube[7],cube[5],cube[8],cube[6],cube[23],cube[21],cube[24],cube[22],cube[11],cube[9],cube[12],cube[10],cube[3],cube[1],cube[4],cube[2],cube[18],cube[20],cube[17],cube[19],cube[15],cube[13],cube[16],cube[14]]
+
+def rotate_222_z_prime(cube):
+    return [cube[0],cube[14],cube[16],cube[13],cube[15],cube[2],cube[4],cube[1],cube[3],cube[10],cube[12],cube[9],cube[11],cube[22],cube[24],cube[21],cube[23],cube[19],cube[17],cube[20],cube[18],cube[6],cube[8],cube[5],cube[7]]
+
+rotate_mapper_222 = {
+    "B" : rotate_222_B,
+    "B'" : rotate_222_B_prime,
+    "B2" : rotate_222_B2,
+    "D" : rotate_222_D,
+    "D'" : rotate_222_D_prime,
+    "D2" : rotate_222_D2,
+    "F" : rotate_222_F,
+    "F'" : rotate_222_F_prime,
+    "F2" : rotate_222_F2,
+    "L" : rotate_222_L,
+    "L'" : rotate_222_L_prime,
+    "L2" : rotate_222_L2,
+    "R" : rotate_222_R,
+    "R'" : rotate_222_R_prime,
+    "R2" : rotate_222_R2,
+    "U" : rotate_222_U,
+    "U'" : rotate_222_U_prime,
+    "U2" : rotate_222_U2,
+    "x" : rotate_222_x,
+    "x'" : rotate_222_x_prime,
+    "y" : rotate_222_y,
+    "y'" : rotate_222_y_prime,
+    "z" : rotate_222_z,
+    "z'" : rotate_222_z_prime,
+}
+
+def rotate_222(cube, step):
+    return rotate_mapper_222[step](cube)

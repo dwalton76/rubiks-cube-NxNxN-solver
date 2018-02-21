@@ -10,18 +10,7 @@ This is a work in progress
 
 from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
 from rubikscubennnsolver.LookupTable import NoSteps
-from rubikscubennnsolver.RubiksCube222 import RubiksCube222
-from rubikscubennnsolver.RubiksCube333 import RubiksCube333
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
-from rubikscubennnsolver.RubiksCubeTsai444 import RubiksCubeTsai444
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
-from rubikscubennnsolver.RubiksCube666 import RubiksCube666
-from rubikscubennnsolver.RubiksCube777 import RubiksCube777
-from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven
-from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
-from rubikscubennnsolver.rotate_xxx import rotate_444
 from math import sqrt
-from time import sleep
 import argparse
 import logging
 import os
@@ -285,23 +274,32 @@ try:
     size = int(sqrt((len(args.state) / 6)))
 
     if size == 2:
+        from rubikscubennnsolver.RubiksCube222 import RubiksCube222
         cube = RubiksCube222(args.state, args.order, args.colormap, args.debug)
     elif size == 3:
+        from rubikscubennnsolver.RubiksCube333 import RubiksCube333
         cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
     elif size == 4:
+        from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
         if args.tsai:
+            from rubikscubennnsolver.RubiksCubeTsai444 import RubiksCubeTsai444
             cube = RubiksCubeTsai444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
         else:
             cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
+        from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
         cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
     elif size == 6:
+        from rubikscubennnsolver.RubiksCube666 import RubiksCube666
         cube = RubiksCube666(args.state, args.order, args.colormap, args.debug)
     elif size == 7:
+        from rubikscubennnsolver.RubiksCube777 import RubiksCube777
         cube = RubiksCube777(args.state, args.order, args.colormap, args.debug)
     elif size % 2 == 0:
+        from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven
         cube = RubiksCubeNNNEven(args.state, args.order, args.colormap, args.debug)
     else:
+        from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
         cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
 
     # Uncomment to produce a cube from alg.cubing.net
@@ -423,8 +421,6 @@ try:
         if args.print_steps:
             cube.print_cube()
             print("\n\n\n\n")
-            sleep(1)
-            os.system('clear')
 
     cube.www_footer()
 

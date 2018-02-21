@@ -1,18 +1,15 @@
 
 from copy import copy
-from collections import OrderedDict, deque
+from collections import OrderedDict
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis
 import itertools
 import json
 import logging
 import math
-import os
 import random
-import re
 import shutil
 import subprocess
-import sys
 
 log = logging.getLogger(__name__)
 

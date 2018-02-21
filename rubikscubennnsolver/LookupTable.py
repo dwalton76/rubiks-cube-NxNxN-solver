@@ -3,16 +3,9 @@
 import datetime as dt
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
-from rubikscubennnsolver.rotate_xxx import rotate_222, rotate_444, rotate_555, rotate_666, rotate_777
-from rubikscubennnsolver import reverse_steps
-from subprocess import check_output
-import json
+from subprocess import call
 import logging
-import math
 import os
-import shutil
-import subprocess
-import sys
 
 
 log = logging.getLogger(__name__)
@@ -215,10 +208,10 @@ class LookupTable(object):
             if not os.path.exists(self.filename_gz):
                 url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
                 log.info("Downloading table via 'wget %s'" % url)
-                subprocess.call(['wget', url])
+                call(['wget', url])
 
             log.warning("gunzip %s" % self.filename_gz)
-            subprocess.call(['gunzip', self.filename_gz])
+            call(['gunzip', self.filename_gz])
 
         # Find the state_width for the entries in our .txt file
         with open(self.filename, 'r') as fh:
@@ -637,14 +630,19 @@ class LookupTableAStar(LookupTable):
         self.original_solution = self.parent.solution[:]
 
         if self.parent.size == 2:
+            from rubikscubennnsolver.RubiksCube222 import rotate_222
             self.rotate_xxx = rotate_222
         elif self.parent.size == 4:
+            from rubikscubennnsolver.RubiksCube444 import rotate_444
             self.rotate_xxx = rotate_444
         elif self.parent.size == 5:
+            from rubikscubennnsolver.RubiksCube555 import rotate_555
             self.rotate_xxx = rotate_555
         elif self.parent.size == 6:
+            from rubikscubennnsolver.RubiksCube666 import rotate_666
             self.rotate_xxx = rotate_666
         elif self.parent.size == 7:
+            from rubikscubennnsolver.RubiksCube777 import rotate_777
             self.rotate_xxx = rotate_777
         else:
             raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))

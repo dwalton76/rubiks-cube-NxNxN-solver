@@ -9,18 +9,10 @@ from rubikscubennnsolver.RubiksCube444 import (
     UD_centers_444,
     LR_centers_444,
 )
-from rubikscubennnsolver.RubiksCube444Misc import (
-    tsai_phase2_orient_edges_444,
-    tsai_edge_mapping_combinations,
-)
-from rubikscubennnsolver.LookupTable import (
-    LookupTable,
-    LookupTableIDA,
-)
+from rubikscubennnsolver.RubiksCube444Misc import tsai_phase2_orient_edges_444
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
 from rubikscubennnsolver.rotate_xxx import rotate_444
-from pprint import pformat
 import logging
-import sys
 
 log = logging.getLogger(__name__)
 

@@ -527,7 +527,7 @@ class LookupTable(object):
         raise Exception("child class must implement state()")
 
 
-class LookupTableAStar(LookupTable):
+class LookupTableIDA(LookupTable):
 
     def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth)
@@ -670,147 +670,6 @@ class LookupTableAStar(LookupTable):
         # lookup table.
         return False
 
-    def astar_search(self, solutions_target=None, max_depth=None):
-        """
-        This isn't used at the moment...I did it as an experiment.
-        """
-        import bisect
-        from sortedcontainers import SortedList
-
-        astar_countA = 0
-        exploredA = {}
-        solutions = []
-
-        self.parent.state = self.original_state[:]
-        self.parent.solution = self.original_solution[:]
-
-        # Initialize workqA
-        workqA = SortedList()
-        workqA.append((0, 0, 0, [], self.original_state[:]))
-
-        while workqA:
-            astar_countA += 1
-
-            # len_steps_to_here and cost_to_goal are just tie-breakers for sorting the
-            # better step sequencs to the front of the workq
-
-            # workq for going from scrambled to solved
-            (f_costA, _, _, steps_to_hereA, prev_stateA) = workqA.pop(0)
-            self.parent.state = prev_stateA[:]
-            lt_stateA = self.state()
-
-            use_search_complete = False
-            #use_search_complete = True
-
-            if use_search_complete:
-                if self.search_complete(lt_stateA, steps_to_hereA):
-                    log.info("%s: AStar found match %d steps in, %s, lt_state %s, AStar count %d, f_cost %d" %
-                             (self, len(steps_to_hereA), ' '.join(steps_to_hereA), lt_stateA, astar_countA, f_costA))
-
-                    if solutions_target is None:
-                        return True
-                    else:
-                        cost_to_here = self.parent.get_solution_len_minus_rotates(steps_to_hereA)
-                        cost_to_goal = self.parent.lt_tsai_phase2_centers.heuristic()
-                        f_cost = cost_to_here + cost_to_goal
-
-                        solution_tuple = (f_cost, cost_to_here, self.parent.solution[:])
-
-                        if solution_tuple not in solutions:
-                            solutions.append(solution_tuple)
-
-                        if len(solutions) >= solutions_target:
-                            return solutions
-
-            else:
-                # I used the following (instead of the search_complete() call above) to test
-                # using A* to go all the way to our goal, in other words don't use the main
-                # lookup table at all, only use the prune tables.
-                #
-                # This works but it is slower...for instance when solving 5x5x5 centers and
-                # you stage the LR centers, using search_complete() takes 30ms but
-                # using just the prune tables takes 44000ms .
-                cost_to_goal = self.ida_heuristic()
-
-                if cost_to_goal == 0:
-                    # rotate_xxx() is very fast but it does not append the
-                    # steps to the solution so put the cube back in original state
-                    # and execute the steps via a normal rotate() call
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-
-                    for step in steps_to_hereA:
-                        self.parent.rotate(step)
-
-                    lt_state = self.state()
-
-                    #log.info("%s: AStar found match %d steps in, %s, lt_state %s, AStar count %d, f_cost %d" %
-                    #         (self, len(steps_to_hereA), ' '.join(steps_to_hereA), lt_state, astar_countA, f_costA))
-
-                    if solutions_target is None:
-                        return True
-                    else:
-                        cost_to_here = self.parent.get_solution_len_minus_rotates(steps_to_hereA)
-                        cost_to_goal = self.parent.lt_tsai_phase2_centers.heuristic()
-                        f_cost = cost_to_here + cost_to_goal
-                        solutions.append((f_cost, cost_to_here, self.parent.solution[:]))
-
-                        if len(solutions) >= solutions_target:
-                            log.warning("reached solutions_target %d, we have %d" % (solutions_target, len(solutions)))
-                            return solutions
-
-            if astar_countA % 1000 == 0:
-                log.info("%s: AStar countA %d, solutions %d, workqA depth %d, f_costA %d, steps_to_hereA %s" %
-                    (self, astar_countA, len(solutions), len(workqA), f_costA, ' '.join(steps_to_hereA)))
-                #log.info("%s: AStar countB %d, workqB depth %d, f_costB %d, steps_to_hereB %s\n" % (self, astar_countB, len(workqB), f_costB, ' '.join(steps_to_hereB)))
-
-            # If we have already explored the exact same scenario down another branch
-            # then we can stop looking down this branch
-            if lt_stateA not in exploredA:
-                #exploredA[lt_stateA] = steps_to_hereA[:]
-
-                if steps_to_hereA:
-                    prev_step = steps_to_hereA[-1]
-                else:
-                    prev_step = None
-
-                # ==============
-                # Keep Searching
-                # ==============
-                for step in self.moves_all:
-
-                    #if steps_cancel_out(prev_step, step):
-                    #    continue
-
-                    if steps_on_same_face_and_layer(prev_step, step):
-                        continue
-
-                    self.parent.state = self.rotate_xxx(prev_stateA[:], step)
-
-                    # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
-                    len_steps_to_hereA_plus_step = self.parent.get_solution_len_minus_rotates(steps_to_hereA) + 1
-                    cost_to_here = len_steps_to_hereA_plus_step
-
-                    cost_to_goal = self.ida_heuristic()
-                    f_cost = cost_to_here + cost_to_goal
-
-                    # The workq must remain sorted with lowest f_cost entries coming first, use
-                    # cost_to_goal as a tie breaker
-                    #steps_to_here_plus_step = tuple(list(steps_to_hereA[:]) + [step,])
-                    steps_to_here_plus_step = steps_to_hereA[:] + [step,]
-
-                    if max_depth is not None and len_steps_to_hereA_plus_step > max_depth:
-                        continue
-
-                    workq_tuple = (f_cost, len_steps_to_hereA_plus_step, cost_to_goal, steps_to_here_plus_step, self.parent.state[:])
-                    insert_position = bisect.bisect_right(workqA, workq_tuple)
-                    workqA.insert(insert_position, workq_tuple)
-
-        if solutions:
-            return solutions
-        else:
-            raise NoAStarSolution("%s FAILED" % self)
-
     def solve(self):
         start_time0 = dt.datetime.now()
 
@@ -818,9 +677,6 @@ class LookupTableAStar(LookupTable):
             return True
 
         return self.astar_search()
-
-
-class LookupTableIDA(LookupTableAStar):
 
     def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
         """

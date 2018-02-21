@@ -1075,7 +1075,7 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
-        log.info((get_cube_layout(self.size) + '\n'))
+        log.info('\n' + get_cube_layout(self.size) + '\n')
 
     def print_cube(self, print_positions=False):
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')

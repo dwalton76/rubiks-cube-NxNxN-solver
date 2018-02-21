@@ -23,10 +23,6 @@ class NoIDASolution(Exception):
     pass
 
 
-class NoAStarSolution(Exception):
-    pass
-
-
 def get_characters_common_count(strA, strB, start_index):
     """
     This assumes strA and strB are the same length
@@ -530,7 +526,7 @@ class LookupTable(object):
         raise Exception("child class must implement state()")
 
 
-class LookupTableAStar(LookupTable):
+class LookupTableIDA(LookupTable):
 
     def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth)
@@ -673,147 +669,6 @@ class LookupTableAStar(LookupTable):
         # lookup table.
         return False
 
-    def astar_search(self, solutions_target=None, max_depth=None):
-        """
-        This isn't used at the moment...I did it as an experiment.
-        """
-        import bisect
-        from sortedcontainers import SortedList
-
-        astar_countA = 0
-        exploredA = {}
-        solutions = []
-
-        self.parent.state = self.original_state[:]
-        self.parent.solution = self.original_solution[:]
-
-        # Initialize workqA
-        workqA = SortedList()
-        workqA.append((0, 0, 0, [], self.original_state[:]))
-
-        while workqA:
-            astar_countA += 1
-
-            # len_steps_to_here and cost_to_goal are just tie-breakers for sorting the
-            # better step sequencs to the front of the workq
-
-            # workq for going from scrambled to solved
-            (f_costA, _, _, steps_to_hereA, prev_stateA) = workqA.pop(0)
-            self.parent.state = prev_stateA[:]
-            lt_stateA = self.state()
-
-            use_search_complete = False
-            #use_search_complete = True
-
-            if use_search_complete:
-                if self.search_complete(lt_stateA, steps_to_hereA):
-                    log.info("%s: AStar found match %d steps in, %s, lt_state %s, AStar count %d, f_cost %d" %
-                             (self, len(steps_to_hereA), ' '.join(steps_to_hereA), lt_stateA, astar_countA, f_costA))
-
-                    if solutions_target is None:
-                        return True
-                    else:
-                        cost_to_here = self.parent.get_solution_len_minus_rotates(steps_to_hereA)
-                        cost_to_goal = self.parent.lt_tsai_phase2_centers.heuristic()
-                        f_cost = cost_to_here + cost_to_goal
-
-                        solution_tuple = (f_cost, cost_to_here, self.parent.solution[:])
-
-                        if solution_tuple not in solutions:
-                            solutions.append(solution_tuple)
-
-                        if len(solutions) >= solutions_target:
-                            return solutions
-
-            else:
-                # I used the following (instead of the search_complete() call above) to test
-                # using A* to go all the way to our goal, in other words don't use the main
-                # lookup table at all, only use the prune tables.
-                #
-                # This works but it is slower...for instance when solving 5x5x5 centers and
-                # you stage the LR centers, using search_complete() takes 30ms but
-                # using just the prune tables takes 44000ms .
-                cost_to_goal = self.ida_heuristic()
-
-                if cost_to_goal == 0:
-                    # rotate_xxx() is very fast but it does not append the
-                    # steps to the solution so put the cube back in original state
-                    # and execute the steps via a normal rotate() call
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-
-                    for step in steps_to_hereA:
-                        self.parent.rotate(step)
-
-                    lt_state = self.state()
-
-                    #log.info("%s: AStar found match %d steps in, %s, lt_state %s, AStar count %d, f_cost %d" %
-                    #         (self, len(steps_to_hereA), ' '.join(steps_to_hereA), lt_state, astar_countA, f_costA))
-
-                    if solutions_target is None:
-                        return True
-                    else:
-                        cost_to_here = self.parent.get_solution_len_minus_rotates(steps_to_hereA)
-                        cost_to_goal = self.parent.lt_tsai_phase2_centers.heuristic()
-                        f_cost = cost_to_here + cost_to_goal
-                        solutions.append((f_cost, cost_to_here, self.parent.solution[:]))
-
-                        if len(solutions) >= solutions_target:
-                            log.warning("reached solutions_target %d, we have %d" % (solutions_target, len(solutions)))
-                            return solutions
-
-            if astar_countA % 1000 == 0:
-                log.info("%s: AStar countA %d, solutions %d, workqA depth %d, f_costA %d, steps_to_hereA %s" %
-                    (self, astar_countA, len(solutions), len(workqA), f_costA, ' '.join(steps_to_hereA)))
-                #log.info("%s: AStar countB %d, workqB depth %d, f_costB %d, steps_to_hereB %s\n" % (self, astar_countB, len(workqB), f_costB, ' '.join(steps_to_hereB)))
-
-            # If we have already explored the exact same scenario down another branch
-            # then we can stop looking down this branch
-            if lt_stateA not in exploredA:
-                #exploredA[lt_stateA] = steps_to_hereA[:]
-
-                if steps_to_hereA:
-                    prev_step = steps_to_hereA[-1]
-                else:
-                    prev_step = None
-
-                # ==============
-                # Keep Searching
-                # ==============
-                for step in self.moves_all:
-
-                    #if steps_cancel_out(prev_step, step):
-                    #    continue
-
-                    if steps_on_same_face_and_layer(prev_step, step):
-                        continue
-
-                    self.parent.state = self.rotate_xxx(prev_stateA[:], step)
-
-                    # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
-                    len_steps_to_hereA_plus_step = self.parent.get_solution_len_minus_rotates(steps_to_hereA) + 1
-                    cost_to_here = len_steps_to_hereA_plus_step
-
-                    cost_to_goal = self.ida_heuristic()
-                    f_cost = cost_to_here + cost_to_goal
-
-                    # The workq must remain sorted with lowest f_cost entries coming first, use
-                    # cost_to_goal as a tie breaker
-                    #steps_to_here_plus_step = tuple(list(steps_to_hereA[:]) + [step,])
-                    steps_to_here_plus_step = steps_to_hereA[:] + [step,]
-
-                    if max_depth is not None and len_steps_to_hereA_plus_step > max_depth:
-                        continue
-
-                    workq_tuple = (f_cost, len_steps_to_hereA_plus_step, cost_to_goal, steps_to_here_plus_step, self.parent.state[:])
-                    insert_position = bisect.bisect_right(workqA, workq_tuple)
-                    workqA.insert(insert_position, workq_tuple)
-
-        if solutions:
-            return solutions
-        else:
-            raise NoAStarSolution("%s FAILED" % self)
-
     def solve(self):
         start_time0 = dt.datetime.now()
 
@@ -821,9 +676,6 @@ class LookupTableAStar(LookupTable):
             return True
 
         return self.astar_search()
-
-
-class LookupTableIDA(LookupTableAStar):
 
     def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
         """
@@ -843,25 +695,24 @@ class LookupTableIDA(LookupTableAStar):
             #         (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             log.info("%s: IDA found match %d steps in %s, lt_state %s, f_cost %d (%d + %d)" %
                      (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
-            return True
+            return (f_cost, True)
 
-        # ===============
-        # Abort Searching
-        # ===============
-        if f_cost > threshold:
-            return False
+        # ==============
+        # Keep Searching
+        # ==============
+        if f_cost >= threshold:
+            return (f_cost, False)
 
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
         explored_cost_to_here = self.explored.get(lt_state)
 
         if explored_cost_to_here is not None and explored_cost_to_here <= cost_to_here:
-            return False
+            return (f_cost, False)
         self.explored[lt_state] = cost_to_here
+        skip_other_steps_this_face = None
 
-        # ==============
-        # Keep Searching
-        # ==============
+        # log.info("moves_all %s" % ' '.join(self.moves_all))
         for step in self.moves_all:
 
             #if steps_cancel_out(prev_step, step):
@@ -870,13 +721,35 @@ class LookupTableIDA(LookupTableAStar):
             if steps_on_same_face_and_layer(prev_step, step):
                 continue
 
+            # https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            '''
+            Well, it's a simple technique to reduce the number of nodes accessed.
+            For example, we start at a position S whose pruning value is no more
+            than maxl, otherwise, S will be pruned in previous searching.  After
+            a move X, we obtain position S', whose pruning value is larger than
+            maxl, which means that X makes S farther from the solved state.  In
+            this case, we won't try X2 and X'.
+            --cs0x7f
+            '''
+            if skip_other_steps_this_face is not None:
+                if steps_on_same_face_and_layer(skip_other_steps_this_face, step):
+                    continue
+                else:
+                    skip_other_steps_this_face = None
+
             self.parent.state = self.rotate_xxx(prev_state[:], step)
 
-            if self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:]):
-                return True
+            (f_cost_tmp, found_solution) = self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:])
+            if found_solution:
+                return (f_cost_tmp, True)
+            else:
+                if f_cost_tmp > threshold:
+                    skip_other_steps_this_face = step
+                else:
+                    skip_other_steps_this_face = None
 
         self.parent.state = prev_state[:]
-        return False
+        return (f_cost, False)
 
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
         """
@@ -903,7 +776,9 @@ class LookupTableIDA(LookupTableAStar):
             self.ida_count = 0
             self.explored = {}
 
-            if self.ida_search(steps_to_here, threshold, None, self.original_state[:]):
+            (f_cost, found_solution) = self.ida_search(steps_to_here, threshold, None, self.original_state[:])
+
+            if found_solution:
                 end_time1 = dt.datetime.now()
                 log.info("%s: IDA threshold %d, explored %d branches, took %s (%s total)" %
                     (self, threshold, self.ida_count,
@@ -924,504 +799,6 @@ class LookupTableIDA(LookupTableAStar):
         self.parent.solution = self.original_solution[:]
 
         raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
-
-stage_first_four_edges_wing_str_combos = (
-    ('BD', 'BL', 'BR', 'BU'),
-    ('BD', 'BL', 'BR', 'DF'),
-    ('BD', 'BL', 'BR', 'DL'),
-    ('BD', 'BL', 'BR', 'DR'),
-    ('BD', 'BL', 'BR', 'FL'),
-    ('BD', 'BL', 'BR', 'FR'),
-    ('BD', 'BL', 'BR', 'FU'),
-    ('BD', 'BL', 'BR', 'LU'),
-    ('BD', 'BL', 'BR', 'RU'),
-    ('BD', 'BL', 'BU', 'DF'),
-    ('BD', 'BL', 'BU', 'DL'),
-    ('BD', 'BL', 'BU', 'DR'),
-    ('BD', 'BL', 'BU', 'FL'),
-    ('BD', 'BL', 'BU', 'FR'),
-    ('BD', 'BL', 'BU', 'FU'),
-    ('BD', 'BL', 'BU', 'LU'),
-    ('BD', 'BL', 'BU', 'RU'),
-    ('BD', 'BL', 'DF', 'DL'),
-    ('BD', 'BL', 'DF', 'DR'),
-    ('BD', 'BL', 'DF', 'FL'),
-    ('BD', 'BL', 'DF', 'FR'),
-    ('BD', 'BL', 'DF', 'FU'),
-    ('BD', 'BL', 'DF', 'LU'),
-    ('BD', 'BL', 'DF', 'RU'),
-    ('BD', 'BL', 'DL', 'DR'),
-    ('BD', 'BL', 'DL', 'FL'),
-    ('BD', 'BL', 'DL', 'FR'),
-    ('BD', 'BL', 'DL', 'FU'),
-    ('BD', 'BL', 'DL', 'LU'),
-    ('BD', 'BL', 'DL', 'RU'),
-    ('BD', 'BL', 'DR', 'FL'),
-    ('BD', 'BL', 'DR', 'FR'),
-    ('BD', 'BL', 'DR', 'FU'),
-    ('BD', 'BL', 'DR', 'LU'),
-    ('BD', 'BL', 'DR', 'RU'),
-    ('BD', 'BL', 'FL', 'FR'),
-    ('BD', 'BL', 'FL', 'FU'),
-    ('BD', 'BL', 'FL', 'LU'),
-    ('BD', 'BL', 'FL', 'RU'),
-    ('BD', 'BL', 'FR', 'FU'),
-    ('BD', 'BL', 'FR', 'LU'),
-    ('BD', 'BL', 'FR', 'RU'),
-    ('BD', 'BL', 'FU', 'LU'),
-    ('BD', 'BL', 'FU', 'RU'),
-    ('BD', 'BL', 'LU', 'RU'),
-    ('BD', 'BR', 'BU', 'DF'),
-    ('BD', 'BR', 'BU', 'DL'),
-    ('BD', 'BR', 'BU', 'DR'),
-    ('BD', 'BR', 'BU', 'FL'),
-    ('BD', 'BR', 'BU', 'FR'),
-    ('BD', 'BR', 'BU', 'FU'),
-    ('BD', 'BR', 'BU', 'LU'),
-    ('BD', 'BR', 'BU', 'RU'),
-    ('BD', 'BR', 'DF', 'DL'),
-    ('BD', 'BR', 'DF', 'DR'),
-    ('BD', 'BR', 'DF', 'FL'),
-    ('BD', 'BR', 'DF', 'FR'),
-    ('BD', 'BR', 'DF', 'FU'),
-    ('BD', 'BR', 'DF', 'LU'),
-    ('BD', 'BR', 'DF', 'RU'),
-    ('BD', 'BR', 'DL', 'DR'),
-    ('BD', 'BR', 'DL', 'FL'),
-    ('BD', 'BR', 'DL', 'FR'),
-    ('BD', 'BR', 'DL', 'FU'),
-    ('BD', 'BR', 'DL', 'LU'),
-    ('BD', 'BR', 'DL', 'RU'),
-    ('BD', 'BR', 'DR', 'FL'),
-    ('BD', 'BR', 'DR', 'FR'),
-    ('BD', 'BR', 'DR', 'FU'),
-    ('BD', 'BR', 'DR', 'LU'),
-    ('BD', 'BR', 'DR', 'RU'),
-    ('BD', 'BR', 'FL', 'FR'),
-    ('BD', 'BR', 'FL', 'FU'),
-    ('BD', 'BR', 'FL', 'LU'),
-    ('BD', 'BR', 'FL', 'RU'),
-    ('BD', 'BR', 'FR', 'FU'),
-    ('BD', 'BR', 'FR', 'LU'),
-    ('BD', 'BR', 'FR', 'RU'),
-    ('BD', 'BR', 'FU', 'LU'),
-    ('BD', 'BR', 'FU', 'RU'),
-    ('BD', 'BR', 'LU', 'RU'),
-    ('BD', 'BU', 'DF', 'DL'),
-    ('BD', 'BU', 'DF', 'DR'),
-    ('BD', 'BU', 'DF', 'FL'),
-    ('BD', 'BU', 'DF', 'FR'),
-    ('BD', 'BU', 'DF', 'FU'),
-    ('BD', 'BU', 'DF', 'LU'),
-    ('BD', 'BU', 'DF', 'RU'),
-    ('BD', 'BU', 'DL', 'DR'),
-    ('BD', 'BU', 'DL', 'FL'),
-    ('BD', 'BU', 'DL', 'FR'),
-    ('BD', 'BU', 'DL', 'FU'),
-    ('BD', 'BU', 'DL', 'LU'),
-    ('BD', 'BU', 'DL', 'RU'),
-    ('BD', 'BU', 'DR', 'FL'),
-    ('BD', 'BU', 'DR', 'FR'),
-    ('BD', 'BU', 'DR', 'FU'),
-    ('BD', 'BU', 'DR', 'LU'),
-    ('BD', 'BU', 'DR', 'RU'),
-    ('BD', 'BU', 'FL', 'FR'),
-    ('BD', 'BU', 'FL', 'FU'),
-    ('BD', 'BU', 'FL', 'LU'),
-    ('BD', 'BU', 'FL', 'RU'),
-    ('BD', 'BU', 'FR', 'FU'),
-    ('BD', 'BU', 'FR', 'LU'),
-    ('BD', 'BU', 'FR', 'RU'),
-    ('BD', 'BU', 'FU', 'LU'),
-    ('BD', 'BU', 'FU', 'RU'),
-    ('BD', 'BU', 'LU', 'RU'),
-    ('BD', 'DF', 'DL', 'DR'),
-    ('BD', 'DF', 'DL', 'FL'),
-    ('BD', 'DF', 'DL', 'FR'),
-    ('BD', 'DF', 'DL', 'FU'),
-    ('BD', 'DF', 'DL', 'LU'),
-    ('BD', 'DF', 'DL', 'RU'),
-    ('BD', 'DF', 'DR', 'FL'),
-    ('BD', 'DF', 'DR', 'FR'),
-    ('BD', 'DF', 'DR', 'FU'),
-    ('BD', 'DF', 'DR', 'LU'),
-    ('BD', 'DF', 'DR', 'RU'),
-    ('BD', 'DF', 'FL', 'FR'),
-    ('BD', 'DF', 'FL', 'FU'),
-    ('BD', 'DF', 'FL', 'LU'),
-    ('BD', 'DF', 'FL', 'RU'),
-    ('BD', 'DF', 'FR', 'FU'),
-    ('BD', 'DF', 'FR', 'LU'),
-    ('BD', 'DF', 'FR', 'RU'),
-    ('BD', 'DF', 'FU', 'LU'),
-    ('BD', 'DF', 'FU', 'RU'),
-    ('BD', 'DF', 'LU', 'RU'),
-    ('BD', 'DL', 'DR', 'FL'),
-    ('BD', 'DL', 'DR', 'FR'),
-    ('BD', 'DL', 'DR', 'FU'),
-    ('BD', 'DL', 'DR', 'LU'),
-    ('BD', 'DL', 'DR', 'RU'),
-    ('BD', 'DL', 'FL', 'FR'),
-    ('BD', 'DL', 'FL', 'FU'),
-    ('BD', 'DL', 'FL', 'LU'),
-    ('BD', 'DL', 'FL', 'RU'),
-    ('BD', 'DL', 'FR', 'FU'),
-    ('BD', 'DL', 'FR', 'LU'),
-    ('BD', 'DL', 'FR', 'RU'),
-    ('BD', 'DL', 'FU', 'LU'),
-    ('BD', 'DL', 'FU', 'RU'),
-    ('BD', 'DL', 'LU', 'RU'),
-    ('BD', 'DR', 'FL', 'FR'),
-    ('BD', 'DR', 'FL', 'FU'),
-    ('BD', 'DR', 'FL', 'LU'),
-    ('BD', 'DR', 'FL', 'RU'),
-    ('BD', 'DR', 'FR', 'FU'),
-    ('BD', 'DR', 'FR', 'LU'),
-    ('BD', 'DR', 'FR', 'RU'),
-    ('BD', 'DR', 'FU', 'LU'),
-    ('BD', 'DR', 'FU', 'RU'),
-    ('BD', 'DR', 'LU', 'RU'),
-    ('BD', 'FL', 'FR', 'FU'),
-    ('BD', 'FL', 'FR', 'LU'),
-    ('BD', 'FL', 'FR', 'RU'),
-    ('BD', 'FL', 'FU', 'LU'),
-    ('BD', 'FL', 'FU', 'RU'),
-    ('BD', 'FL', 'LU', 'RU'),
-    ('BD', 'FR', 'FU', 'LU'),
-    ('BD', 'FR', 'FU', 'RU'),
-    ('BD', 'FR', 'LU', 'RU'),
-    ('BD', 'FU', 'LU', 'RU'),
-    ('BL', 'BR', 'BU', 'DF'),
-    ('BL', 'BR', 'BU', 'DL'),
-    ('BL', 'BR', 'BU', 'DR'),
-    ('BL', 'BR', 'BU', 'FL'),
-    ('BL', 'BR', 'BU', 'FR'),
-    ('BL', 'BR', 'BU', 'FU'),
-    ('BL', 'BR', 'BU', 'LU'),
-    ('BL', 'BR', 'BU', 'RU'),
-    ('BL', 'BR', 'DF', 'DL'),
-    ('BL', 'BR', 'DF', 'DR'),
-    ('BL', 'BR', 'DF', 'FL'),
-    ('BL', 'BR', 'DF', 'FR'),
-    ('BL', 'BR', 'DF', 'FU'),
-    ('BL', 'BR', 'DF', 'LU'),
-    ('BL', 'BR', 'DF', 'RU'),
-    ('BL', 'BR', 'DL', 'DR'),
-    ('BL', 'BR', 'DL', 'FL'),
-    ('BL', 'BR', 'DL', 'FR'),
-    ('BL', 'BR', 'DL', 'FU'),
-    ('BL', 'BR', 'DL', 'LU'),
-    ('BL', 'BR', 'DL', 'RU'),
-    ('BL', 'BR', 'DR', 'FL'),
-    ('BL', 'BR', 'DR', 'FR'),
-    ('BL', 'BR', 'DR', 'FU'),
-    ('BL', 'BR', 'DR', 'LU'),
-    ('BL', 'BR', 'DR', 'RU'),
-    ('BL', 'BR', 'FL', 'FR'),
-    ('BL', 'BR', 'FL', 'FU'),
-    ('BL', 'BR', 'FL', 'LU'),
-    ('BL', 'BR', 'FL', 'RU'),
-    ('BL', 'BR', 'FR', 'FU'),
-    ('BL', 'BR', 'FR', 'LU'),
-    ('BL', 'BR', 'FR', 'RU'),
-    ('BL', 'BR', 'FU', 'LU'),
-    ('BL', 'BR', 'FU', 'RU'),
-    ('BL', 'BR', 'LU', 'RU'),
-    ('BL', 'BU', 'DF', 'DL'),
-    ('BL', 'BU', 'DF', 'DR'),
-    ('BL', 'BU', 'DF', 'FL'),
-    ('BL', 'BU', 'DF', 'FR'),
-    ('BL', 'BU', 'DF', 'FU'),
-    ('BL', 'BU', 'DF', 'LU'),
-    ('BL', 'BU', 'DF', 'RU'),
-    ('BL', 'BU', 'DL', 'DR'),
-    ('BL', 'BU', 'DL', 'FL'),
-    ('BL', 'BU', 'DL', 'FR'),
-    ('BL', 'BU', 'DL', 'FU'),
-    ('BL', 'BU', 'DL', 'LU'),
-    ('BL', 'BU', 'DL', 'RU'),
-    ('BL', 'BU', 'DR', 'FL'),
-    ('BL', 'BU', 'DR', 'FR'),
-    ('BL', 'BU', 'DR', 'FU'),
-    ('BL', 'BU', 'DR', 'LU'),
-    ('BL', 'BU', 'DR', 'RU'),
-    ('BL', 'BU', 'FL', 'FR'),
-    ('BL', 'BU', 'FL', 'FU'),
-    ('BL', 'BU', 'FL', 'LU'),
-    ('BL', 'BU', 'FL', 'RU'),
-    ('BL', 'BU', 'FR', 'FU'),
-    ('BL', 'BU', 'FR', 'LU'),
-    ('BL', 'BU', 'FR', 'RU'),
-    ('BL', 'BU', 'FU', 'LU'),
-    ('BL', 'BU', 'FU', 'RU'),
-    ('BL', 'BU', 'LU', 'RU'),
-    ('BL', 'DF', 'DL', 'DR'),
-    ('BL', 'DF', 'DL', 'FL'),
-    ('BL', 'DF', 'DL', 'FR'),
-    ('BL', 'DF', 'DL', 'FU'),
-    ('BL', 'DF', 'DL', 'LU'),
-    ('BL', 'DF', 'DL', 'RU'),
-    ('BL', 'DF', 'DR', 'FL'),
-    ('BL', 'DF', 'DR', 'FR'),
-    ('BL', 'DF', 'DR', 'FU'),
-    ('BL', 'DF', 'DR', 'LU'),
-    ('BL', 'DF', 'DR', 'RU'),
-    ('BL', 'DF', 'FL', 'FR'),
-    ('BL', 'DF', 'FL', 'FU'),
-    ('BL', 'DF', 'FL', 'LU'),
-    ('BL', 'DF', 'FL', 'RU'),
-    ('BL', 'DF', 'FR', 'FU'),
-    ('BL', 'DF', 'FR', 'LU'),
-    ('BL', 'DF', 'FR', 'RU'),
-    ('BL', 'DF', 'FU', 'LU'),
-    ('BL', 'DF', 'FU', 'RU'),
-    ('BL', 'DF', 'LU', 'RU'),
-    ('BL', 'DL', 'DR', 'FL'),
-    ('BL', 'DL', 'DR', 'FR'),
-    ('BL', 'DL', 'DR', 'FU'),
-    ('BL', 'DL', 'DR', 'LU'),
-    ('BL', 'DL', 'DR', 'RU'),
-    ('BL', 'DL', 'FL', 'FR'),
-    ('BL', 'DL', 'FL', 'FU'),
-    ('BL', 'DL', 'FL', 'LU'),
-    ('BL', 'DL', 'FL', 'RU'),
-    ('BL', 'DL', 'FR', 'FU'),
-    ('BL', 'DL', 'FR', 'LU'),
-    ('BL', 'DL', 'FR', 'RU'),
-    ('BL', 'DL', 'FU', 'LU'),
-    ('BL', 'DL', 'FU', 'RU'),
-    ('BL', 'DL', 'LU', 'RU'),
-    ('BL', 'DR', 'FL', 'FR'),
-    ('BL', 'DR', 'FL', 'FU'),
-    ('BL', 'DR', 'FL', 'LU'),
-    ('BL', 'DR', 'FL', 'RU'),
-    ('BL', 'DR', 'FR', 'FU'),
-    ('BL', 'DR', 'FR', 'LU'),
-    ('BL', 'DR', 'FR', 'RU'),
-    ('BL', 'DR', 'FU', 'LU'),
-    ('BL', 'DR', 'FU', 'RU'),
-    ('BL', 'DR', 'LU', 'RU'),
-    ('BL', 'FL', 'FR', 'FU'),
-    ('BL', 'FL', 'FR', 'LU'),
-    ('BL', 'FL', 'FR', 'RU'),
-    ('BL', 'FL', 'FU', 'LU'),
-    ('BL', 'FL', 'FU', 'RU'),
-    ('BL', 'FL', 'LU', 'RU'),
-    ('BL', 'FR', 'FU', 'LU'),
-    ('BL', 'FR', 'FU', 'RU'),
-    ('BL', 'FR', 'LU', 'RU'),
-    ('BL', 'FU', 'LU', 'RU'),
-    ('BR', 'BU', 'DF', 'DL'),
-    ('BR', 'BU', 'DF', 'DR'),
-    ('BR', 'BU', 'DF', 'FL'),
-    ('BR', 'BU', 'DF', 'FR'),
-    ('BR', 'BU', 'DF', 'FU'),
-    ('BR', 'BU', 'DF', 'LU'),
-    ('BR', 'BU', 'DF', 'RU'),
-    ('BR', 'BU', 'DL', 'DR'),
-    ('BR', 'BU', 'DL', 'FL'),
-    ('BR', 'BU', 'DL', 'FR'),
-    ('BR', 'BU', 'DL', 'FU'),
-    ('BR', 'BU', 'DL', 'LU'),
-    ('BR', 'BU', 'DL', 'RU'),
-    ('BR', 'BU', 'DR', 'FL'),
-    ('BR', 'BU', 'DR', 'FR'),
-    ('BR', 'BU', 'DR', 'FU'),
-    ('BR', 'BU', 'DR', 'LU'),
-    ('BR', 'BU', 'DR', 'RU'),
-    ('BR', 'BU', 'FL', 'FR'),
-    ('BR', 'BU', 'FL', 'FU'),
-    ('BR', 'BU', 'FL', 'LU'),
-    ('BR', 'BU', 'FL', 'RU'),
-    ('BR', 'BU', 'FR', 'FU'),
-    ('BR', 'BU', 'FR', 'LU'),
-    ('BR', 'BU', 'FR', 'RU'),
-    ('BR', 'BU', 'FU', 'LU'),
-    ('BR', 'BU', 'FU', 'RU'),
-    ('BR', 'BU', 'LU', 'RU'),
-    ('BR', 'DF', 'DL', 'DR'),
-    ('BR', 'DF', 'DL', 'FL'),
-    ('BR', 'DF', 'DL', 'FR'),
-    ('BR', 'DF', 'DL', 'FU'),
-    ('BR', 'DF', 'DL', 'LU'),
-    ('BR', 'DF', 'DL', 'RU'),
-    ('BR', 'DF', 'DR', 'FL'),
-    ('BR', 'DF', 'DR', 'FR'),
-    ('BR', 'DF', 'DR', 'FU'),
-    ('BR', 'DF', 'DR', 'LU'),
-    ('BR', 'DF', 'DR', 'RU'),
-    ('BR', 'DF', 'FL', 'FR'),
-    ('BR', 'DF', 'FL', 'FU'),
-    ('BR', 'DF', 'FL', 'LU'),
-    ('BR', 'DF', 'FL', 'RU'),
-    ('BR', 'DF', 'FR', 'FU'),
-    ('BR', 'DF', 'FR', 'LU'),
-    ('BR', 'DF', 'FR', 'RU'),
-    ('BR', 'DF', 'FU', 'LU'),
-    ('BR', 'DF', 'FU', 'RU'),
-    ('BR', 'DF', 'LU', 'RU'),
-    ('BR', 'DL', 'DR', 'FL'),
-    ('BR', 'DL', 'DR', 'FR'),
-    ('BR', 'DL', 'DR', 'FU'),
-    ('BR', 'DL', 'DR', 'LU'),
-    ('BR', 'DL', 'DR', 'RU'),
-    ('BR', 'DL', 'FL', 'FR'),
-    ('BR', 'DL', 'FL', 'FU'),
-    ('BR', 'DL', 'FL', 'LU'),
-    ('BR', 'DL', 'FL', 'RU'),
-    ('BR', 'DL', 'FR', 'FU'),
-    ('BR', 'DL', 'FR', 'LU'),
-    ('BR', 'DL', 'FR', 'RU'),
-    ('BR', 'DL', 'FU', 'LU'),
-    ('BR', 'DL', 'FU', 'RU'),
-    ('BR', 'DL', 'LU', 'RU'),
-    ('BR', 'DR', 'FL', 'FR'),
-    ('BR', 'DR', 'FL', 'FU'),
-    ('BR', 'DR', 'FL', 'LU'),
-    ('BR', 'DR', 'FL', 'RU'),
-    ('BR', 'DR', 'FR', 'FU'),
-    ('BR', 'DR', 'FR', 'LU'),
-    ('BR', 'DR', 'FR', 'RU'),
-    ('BR', 'DR', 'FU', 'LU'),
-    ('BR', 'DR', 'FU', 'RU'),
-    ('BR', 'DR', 'LU', 'RU'),
-    ('BR', 'FL', 'FR', 'FU'),
-    ('BR', 'FL', 'FR', 'LU'),
-    ('BR', 'FL', 'FR', 'RU'),
-    ('BR', 'FL', 'FU', 'LU'),
-    ('BR', 'FL', 'FU', 'RU'),
-    ('BR', 'FL', 'LU', 'RU'),
-    ('BR', 'FR', 'FU', 'LU'),
-    ('BR', 'FR', 'FU', 'RU'),
-    ('BR', 'FR', 'LU', 'RU'),
-    ('BR', 'FU', 'LU', 'RU'),
-    ('BU', 'DF', 'DL', 'DR'),
-    ('BU', 'DF', 'DL', 'FL'),
-    ('BU', 'DF', 'DL', 'FR'),
-    ('BU', 'DF', 'DL', 'FU'),
-    ('BU', 'DF', 'DL', 'LU'),
-    ('BU', 'DF', 'DL', 'RU'),
-    ('BU', 'DF', 'DR', 'FL'),
-    ('BU', 'DF', 'DR', 'FR'),
-    ('BU', 'DF', 'DR', 'FU'),
-    ('BU', 'DF', 'DR', 'LU'),
-    ('BU', 'DF', 'DR', 'RU'),
-    ('BU', 'DF', 'FL', 'FR'),
-    ('BU', 'DF', 'FL', 'FU'),
-    ('BU', 'DF', 'FL', 'LU'),
-    ('BU', 'DF', 'FL', 'RU'),
-    ('BU', 'DF', 'FR', 'FU'),
-    ('BU', 'DF', 'FR', 'LU'),
-    ('BU', 'DF', 'FR', 'RU'),
-    ('BU', 'DF', 'FU', 'LU'),
-    ('BU', 'DF', 'FU', 'RU'),
-    ('BU', 'DF', 'LU', 'RU'),
-    ('BU', 'DL', 'DR', 'FL'),
-    ('BU', 'DL', 'DR', 'FR'),
-    ('BU', 'DL', 'DR', 'FU'),
-    ('BU', 'DL', 'DR', 'LU'),
-    ('BU', 'DL', 'DR', 'RU'),
-    ('BU', 'DL', 'FL', 'FR'),
-    ('BU', 'DL', 'FL', 'FU'),
-    ('BU', 'DL', 'FL', 'LU'),
-    ('BU', 'DL', 'FL', 'RU'),
-    ('BU', 'DL', 'FR', 'FU'),
-    ('BU', 'DL', 'FR', 'LU'),
-    ('BU', 'DL', 'FR', 'RU'),
-    ('BU', 'DL', 'FU', 'LU'),
-    ('BU', 'DL', 'FU', 'RU'),
-    ('BU', 'DL', 'LU', 'RU'),
-    ('BU', 'DR', 'FL', 'FR'),
-    ('BU', 'DR', 'FL', 'FU'),
-    ('BU', 'DR', 'FL', 'LU'),
-    ('BU', 'DR', 'FL', 'RU'),
-    ('BU', 'DR', 'FR', 'FU'),
-    ('BU', 'DR', 'FR', 'LU'),
-    ('BU', 'DR', 'FR', 'RU'),
-    ('BU', 'DR', 'FU', 'LU'),
-    ('BU', 'DR', 'FU', 'RU'),
-    ('BU', 'DR', 'LU', 'RU'),
-    ('BU', 'FL', 'FR', 'FU'),
-    ('BU', 'FL', 'FR', 'LU'),
-    ('BU', 'FL', 'FR', 'RU'),
-    ('BU', 'FL', 'FU', 'LU'),
-    ('BU', 'FL', 'FU', 'RU'),
-    ('BU', 'FL', 'LU', 'RU'),
-    ('BU', 'FR', 'FU', 'LU'),
-    ('BU', 'FR', 'FU', 'RU'),
-    ('BU', 'FR', 'LU', 'RU'),
-    ('BU', 'FU', 'LU', 'RU'),
-    ('DF', 'DL', 'DR', 'FL'),
-    ('DF', 'DL', 'DR', 'FR'),
-    ('DF', 'DL', 'DR', 'FU'),
-    ('DF', 'DL', 'DR', 'LU'),
-    ('DF', 'DL', 'DR', 'RU'),
-    ('DF', 'DL', 'FL', 'FR'),
-    ('DF', 'DL', 'FL', 'FU'),
-    ('DF', 'DL', 'FL', 'LU'),
-    ('DF', 'DL', 'FL', 'RU'),
-    ('DF', 'DL', 'FR', 'FU'),
-    ('DF', 'DL', 'FR', 'LU'),
-    ('DF', 'DL', 'FR', 'RU'),
-    ('DF', 'DL', 'FU', 'LU'),
-    ('DF', 'DL', 'FU', 'RU'),
-    ('DF', 'DL', 'LU', 'RU'),
-    ('DF', 'DR', 'FL', 'FR'),
-    ('DF', 'DR', 'FL', 'FU'),
-    ('DF', 'DR', 'FL', 'LU'),
-    ('DF', 'DR', 'FL', 'RU'),
-    ('DF', 'DR', 'FR', 'FU'),
-    ('DF', 'DR', 'FR', 'LU'),
-    ('DF', 'DR', 'FR', 'RU'),
-    ('DF', 'DR', 'FU', 'LU'),
-    ('DF', 'DR', 'FU', 'RU'),
-    ('DF', 'DR', 'LU', 'RU'),
-    ('DF', 'FL', 'FR', 'FU'),
-    ('DF', 'FL', 'FR', 'LU'),
-    ('DF', 'FL', 'FR', 'RU'),
-    ('DF', 'FL', 'FU', 'LU'),
-    ('DF', 'FL', 'FU', 'RU'),
-    ('DF', 'FL', 'LU', 'RU'),
-    ('DF', 'FR', 'FU', 'LU'),
-    ('DF', 'FR', 'FU', 'RU'),
-    ('DF', 'FR', 'LU', 'RU'),
-    ('DF', 'FU', 'LU', 'RU'),
-    ('DL', 'DR', 'FL', 'FR'),
-    ('DL', 'DR', 'FL', 'FU'),
-    ('DL', 'DR', 'FL', 'LU'),
-    ('DL', 'DR', 'FL', 'RU'),
-    ('DL', 'DR', 'FR', 'FU'),
-    ('DL', 'DR', 'FR', 'LU'),
-    ('DL', 'DR', 'FR', 'RU'),
-    ('DL', 'DR', 'FU', 'LU'),
-    ('DL', 'DR', 'FU', 'RU'),
-    ('DL', 'DR', 'LU', 'RU'),
-    ('DL', 'FL', 'FR', 'FU'),
-    ('DL', 'FL', 'FR', 'LU'),
-    ('DL', 'FL', 'FR', 'RU'),
-    ('DL', 'FL', 'FU', 'LU'),
-    ('DL', 'FL', 'FU', 'RU'),
-    ('DL', 'FL', 'LU', 'RU'),
-    ('DL', 'FR', 'FU', 'LU'),
-    ('DL', 'FR', 'FU', 'RU'),
-    ('DL', 'FR', 'LU', 'RU'),
-    ('DL', 'FU', 'LU', 'RU'),
-    ('DR', 'FL', 'FR', 'FU'),
-    ('DR', 'FL', 'FR', 'LU'),
-    ('DR', 'FL', 'FR', 'RU'),
-    ('DR', 'FL', 'FU', 'LU'),
-    ('DR', 'FL', 'FU', 'RU'),
-    ('DR', 'FL', 'LU', 'RU'),
-    ('DR', 'FR', 'FU', 'LU'),
-    ('DR', 'FR', 'FU', 'RU'),
-    ('DR', 'FR', 'LU', 'RU'),
-    ('DR', 'FU', 'LU', 'RU'),
-    ('FL', 'FR', 'FU', 'LU'),
-    ('FL', 'FR', 'FU', 'RU'),
-    ('FL', 'FR', 'LU', 'RU'),
-    ('FL', 'FU', 'LU', 'RU'),
-    ('FR', 'FU', 'LU', 'RU'),
-)
 
 
 if __name__ == '__main__':

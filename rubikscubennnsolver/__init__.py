@@ -8,6 +8,7 @@ import json
 import logging
 import math
 import random
+import os
 import shutil
 import subprocess
 
@@ -3686,11 +3687,20 @@ class RubiksCube(object):
         side_margin = 10
         square_size = 40
         size = self.size # 3 for 3x3x3, etc
-        shutil.copy('www/solution.js', '/tmp/')
-        shutil.copy('www/Arrow-Next.png', '/tmp/')
-        shutil.copy('www/Arrow-Prev.png', '/tmp/')
 
-        with open('/tmp/solution.html', 'w') as fh:
+        for filename in ('solution.js', 'Arrow-Next.png', 'Arrow-Prev.png'):
+            www_filename = os.path.join('www', filename)
+            tmp_filename = os.path.join('/tmp', filename)
+
+            if not os.path.exists(tmp_filename):
+                shutil.copy(www_filename, '/tmp/')
+                os.chmod(tmp_filename, 0o777)
+
+        solution_filename = '/tmp/solution.html'
+        if os.path.exists(solution_filename):
+            os.unlink(solution_filename)
+
+        with open(solution_filename, 'w') as fh:
             fh.write("""<!DOCTYPE html>
 <html>
 <head>
@@ -3787,6 +3797,7 @@ div#page_holder {
 <div id="page_holder">
 """ % (square_size, square_size, square_size, square_size, square_size, square_size,
        (square_size * size * 4) + square_size + (4 * side_margin)))
+        os.chmod(solution_filename, 0o777)
 
     def www_write_cube(self, desc):
         """

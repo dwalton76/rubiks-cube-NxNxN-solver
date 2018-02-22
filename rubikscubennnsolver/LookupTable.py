@@ -29,15 +29,9 @@ def get_characters_common_count(strA, strB, start_index):
     """
     result = 0
 
-    try:
-        for index in range(start_index, len(strA)):
-            if strA[index] == strB[index]:
-                result += 1
-    except IndexError:
-        log.info("strA: %s" % strA)
-        log.info("strB: %s" % strB)
-        log.info("start_index: %s" % start_index)
-        raise
+    for (charA, charB) in zip(strA[start_index:], strB[start_index:]):
+        if charA == charB:
+            result += 1
 
     return result
 
@@ -445,7 +439,7 @@ class LookupTable(object):
         Given a signature such as 001001010110, return a list of all of the lines
         in our lookup-table that start with that signature.
 
-        This is only used by the 4x4x4 and 5x5x5 edges tables
+        This is only used by 4x4x4 edges tables
         """
         self.fh_txt.seek(0)
         result = []

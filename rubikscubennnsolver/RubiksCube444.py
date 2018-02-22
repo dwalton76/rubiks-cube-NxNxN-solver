@@ -382,6 +382,68 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
         return result
 
 
+class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
+    """
+    IDA search for a centers solution that also happens to pair two or more edges.
+    We do this to (drastically) speed up the edges table lookup later. If no
+    edges are paired the edges signature is 000000000000 and there are about
+    600k of those entries in lookup-table-4x4x4-step110-edges.txt that we will
+    have to evaluate.
+
+    If we can pair two though that drops us down to about 40k edge entries to deal with.
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
+            'TBD',
+            moves_4x4x4,
+            ("Rw", "Rw'", "Lw", "Lw'",
+             "Fw", "Fw'", "Bw", "Bw'",
+             "Uw", "Uw'", "Dw", "Dw'"),
+
+            # prune tables
+            (parent.lt_ULFRBD_centers_solve,),
+            linecount=0)
+
+    def state(self):
+        state = self.parent.state
+        edges = ''.join([state[square_index] for square_index in wings_444])
+        centers = ''.join([state[x] for x in centers_444])
+        return centers + edges
+
+    def search_complete(self, state, steps_to_here):
+        """
+        return True if centers are solved and at least 2 edges are paired
+        """
+
+        if centers_solved_444(state):
+            paired_edges_count = 12 - self.parent.get_non_paired_edges_count()
+
+            if paired_edges_count >= 2:
+
+                if self.parent.center_solution_leads_to_oll_parity():
+                    self.parent.state = self.original_state[:]
+                    self.parent.solution = self.original_solution[:]
+                    log.info("%s: IDA found match but it leads to OLL" % self)
+                    return False
+
+                # rotate_xxx() is very fast but it does not append the
+                # steps to the solution so put the cube back in original state
+                # and execute the steps via a normal rotate() call
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+
+                for step in steps_to_here:
+                    self.parent.rotate(step)
+
+                return True
+
+        return False
+
+
 class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
     """
     Experiment to IDA search until we find a solution that happens to put
@@ -627,6 +689,7 @@ class RubiksCube444(RubiksCube):
         # Phase2 tables
         # =============
         self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
+        self.lt_ULFRBD_centers_solve_pair_two_edges = LookupTable444ULFRBDCentersSolvePairTwoEdges(self)
         #self.lt_ULFRBD_centers_solve_edges_stage = LookupTable444ULFRBDCentersSolveEdgesStage(self)
 
         # Edges table
@@ -648,11 +711,12 @@ class RubiksCube444(RubiksCube):
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.rotate_for_best_centers_solving()
-        self.lt_ULFRBD_centers_solve.solve()
+        #self.lt_ULFRBD_centers_solve.solve()
+        self.lt_ULFRBD_centers_solve_pair_two_edges.solve()
 
         # This will IDA search for a centers solution that happens to put the
         # edges in a state that are in our table.  It works and produces
-        # solutions in the 50-52 range but can take a few minutes.
+        # solutions in the 50-53 range but can take a few minutes.
         #self.lt_ULFRBD_centers_solve_edges_stage.solve()
         self.print_cube()
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 import datetime as dt
+from bitarray import bitarray
+from mmh3 import hash as mmh3_hash
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
 from subprocess import call
 import logging
 import os
+import math
 
 
 log = logging.getLogger(__name__)
@@ -183,6 +186,134 @@ def pretty_time(delta):
         return "\033[91m%s\033[0m" % delta
 
 
+class BloomFilter(object):
+    """
+    Class for Bloom filter, using murmur3 hash function
+
+    https://www.geeksforgeeks.org/bloom-filters-introduction-and-python-implementation/
+    """
+ 
+    def __init__(self, items_count, fp_prob, filename):
+        """
+        items_count : int
+            Number of items expected to be stored in bloom filter
+        fp_prob : float
+            False Positive probability in decimal
+        """
+        # False posible probability in decimal
+        self.fp_prob = fp_prob
+ 
+        # Size of bit array to use
+        self.size = self.get_size(items_count, fp_prob)
+ 
+        # number of hash functions to use
+        self.hash_count = self.get_hash_count(self.size, items_count)
+ 
+        # Bit array of given size
+        self.bit_array = bitarray(self.size)
+ 
+        # initialize all bits as 0
+        self.bit_array.setall(0)
+
+        self.filename = filename
+        self.filename_bf = filename + '.bf'
+ 
+    def __str__(self):
+        return self.filename
+
+    def add(self, item):
+        """
+        Add an item in the filter
+        """
+        digests = []
+        for i in range(self.hash_count):
+ 
+            # create digest for given item.
+            # i work as seed to mmh3.hash() function
+            # With different seed, digest created is different
+            digest = mmh3_hash(item,i) % self.size
+            digests.append(digest)
+ 
+            # set the bit True in bit_array
+            self.bit_array[digest] = 1
+ 
+    def check(self, item):
+        """
+        Check for existence of an item in filter
+        """
+        #log.info("%s: check start for %s" % (self, item))
+        for i in range(self.hash_count):
+            digest = mmh3_hash(item, i) % self.size
+
+            if not self.bit_array[digest] or self.bit_array[digest] == '0':
+ 
+                # if any of bit is False then, its not present
+                # in filter else there is probability that it exist
+                #log.info("%s: check end for   %s, i %d/%d (False)\n" % (self, item, i, self.hash_count))
+                return False
+
+        #log.info("%s: check end   for %s (True)\n" % (self, item))
+        return True
+ 
+    def get_size(self,n,p):
+        """
+        Return the size of bit array(m) to used using
+        following formula
+        m = -(n * lg(p)) / (lg(2)^2)
+        n : int
+            number of items expected to be stored in filter
+        p : float
+            False Positive probability in decimal
+        """
+        m = -(n * math.log(p))/(math.log(2)**2)
+        return int(m)
+ 
+    def get_hash_count(self, m, n):
+        """
+        Return the hash function(k) to be used using
+        following formula
+        k = (m/n) * lg(2)
+ 
+        m : int
+            size of bit array
+        n : int
+            number of items expected to be stored in filter
+        """
+        k = (m/n) * math.log(2)
+        return int(k)
+
+    def save_bit_array(self):
+        with open(self.filename_bf, 'w') as fh:
+            fh.write(''.join(map(str, self.bit_array)) + '\n')
+
+    def load_bit_array(self):
+        with open(self.filename_bf, 'r') as fh:
+            line = next(fh)
+            line = line.strip()
+            self.bit_array = list(line)
+
+
+class BloomFilterFromFile(BloomFilter):
+
+    def __init__(self, items_count, filename):
+        self.filename = filename
+        self.filename_bf = filename + '.bf'
+
+        log.info("%s: load bit_array start" % self)
+        with open(self.filename_bf, 'r') as fh:
+            line = next(fh)
+            line = line.strip()
+            self.bit_array = list(line)
+        log.info("%s: load bit_array end" % self)
+
+        # Size of bit array to use
+        self.size = len(self.bit_array)
+
+        # number of hash functions to use
+        self.hash_count = self.get_hash_count(self.size, items_count)
+        log.info("%s: hash_count %d" % (self, self.hash_count))
+
+
 class LookupTable(object):
 
     def __init__(self, parent, filename, state_target, linecount, max_depth=None):
@@ -200,6 +331,7 @@ class LookupTable(object):
         self.preloaded_state_set = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
+        self.bloom_filter = None
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -254,7 +386,11 @@ class LookupTable(object):
         self.cache = {}
         for line in self.fh_txt:
             (state, steps) = line.decode('utf-8').rstrip().split(':')
-            self.cache[state] = steps.split()
+
+            if steps.isdigit():
+                self.cache[state] = steps
+            else:
+                self.cache[state] = str(len(steps.split()))
 
         log.info("%s: preload_cache end" % self)
         self.preloaded_cache = True
@@ -276,6 +412,11 @@ class LookupTable(object):
         self.preloaded_state_set = True
 
     def binary_search(self, state_to_find):
+
+        if self.bloom_filter is not None:
+            if not self.bloom_filter.check(state_to_find):
+                return None
+
         first = 0
         last = self.linecount - 1
         b_state_to_find = bytearray(state_to_find, encoding='utf-8')
@@ -547,6 +688,9 @@ class LookupTableIDA(LookupTable):
         for x in moves_all:
             if x not in moves_illegal:
                 self.moves_all.append(x)
+
+    def load_bloom_filter(self):
+        self.bloom_filter = BloomFilterFromFile(self.linecount, self.filename)
 
     def ida_heuristic(self):
         cost_to_goal = 0

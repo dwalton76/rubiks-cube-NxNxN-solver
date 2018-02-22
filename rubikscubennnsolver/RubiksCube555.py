@@ -9,7 +9,6 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableIDA,
 )
 
-from rubikscubennnsolver.rotate_xxx import rotate_555
 import itertools
 import logging
 
@@ -1089,6 +1088,7 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
         self.lt_UD_X_centers_stage = LookupTable555UDXCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
+        #self.lt_UD_centers_stage.load_bloom_filter()
 
     def high_low_state(self, x, y, state_x, state_y, wing_str):
         """
@@ -1253,8 +1253,11 @@ class RubiksCube555(RubiksCube):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.lt_UD_centers_stage.solve()
-        #self.print_cube()
         log.info("UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        # dwalton
+        self.print_cube()
+        import sys
+        sys.exit(0)
 
     def group_centers_stage_LR(self):
         """

@@ -115,6 +115,13 @@ def steps_on_same_face_and_layer(prev_step, step):
     if prev_step is None:
         return False
 
+    if prev_step[0] != step[0]:
+        return False
+
+    if prev_step[0].isdigit():
+        if prev_step[1] != step[1]:
+            return False
+
     # chop the trailing '
     if prev_step.endswith("'"):
         prev_step = prev_step[:-1]
@@ -697,9 +704,9 @@ class LookupTableIDA(LookupTable):
                      (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             return (f_cost, True)
 
-        # ==============
-        # Keep Searching
-        # ==============
+        # ================
+        # Abort Searching?
+        # ================
         if f_cost >= threshold:
             return (f_cost, False)
 
@@ -712,7 +719,7 @@ class LookupTableIDA(LookupTable):
         self.explored[lt_state] = cost_to_here
         skip_other_steps_this_face = None
 
-        # log.info("moves_all %s" % ' '.join(self.moves_all))
+        #log.info("moves_all %s" % ' '.join(self.moves_all))
         for step in self.moves_all:
 
             #if steps_cancel_out(prev_step, step):

@@ -162,9 +162,9 @@ int
 file_binary_search (char *filename, char *state_to_find, int statewidth, int linecount, int linewidth)
 {
     FILE *fh_read = NULL;
-    int first = 0;
-    int midpoint = 0;
-    int last = linecount - 1;
+    unsigned long first = 0;
+    unsigned long midpoint = 0;
+    unsigned long last = linecount - 1;
     char line[128];
     int str_cmp_result;
     char *foo;
@@ -178,11 +178,16 @@ file_binary_search (char *filename, char *state_to_find, int statewidth, int lin
     while (first <= last) {
         midpoint = (int) ((first + last)/2);
         fseek(fh_read, midpoint * linewidth, SEEK_SET);
-        foo = fgets(line, 128, fh_read);
+	fread(line, statewidth, 1, fh_read);
 
         str_cmp_result = strncmp(state_to_find, line, statewidth);
 
         if (str_cmp_result == 0) {
+
+	    // read the entire line, not just the state
+            fseek(fh_read, midpoint * linewidth, SEEK_SET);
+	    fread(line, linewidth, 1, fh_read);
+
             strstrip(line);
             strcpy(sp_binary_search, line);
             fclose(fh_read);
@@ -607,7 +612,7 @@ moves_cost (char *moves)
 
 
 void
-ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
+ida_prune_table_preload (struct key_value_pair **hashtable, char *filename, int linewidth)
 {
     FILE *fh_read = NULL;
     int BUFFER_SIZE = 128;
@@ -627,6 +632,7 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
 
     LOG("ida_prune_table_preload %s: start\n", filename);
 
+    //while (fread(buffer, linewidth-1, 1, fh_read)) { // crashes...dig more later
     while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
         strstrip(buffer);
 
@@ -721,14 +727,9 @@ ida_search_complete (char *cube, lookup_table_type type)
     switch (type)  {
     case UD_CENTERS_STAGE_555:
 
-        // dwalton load this into a cache
-        // pt_entry = hash_find(&UD_centers_555, sp_cube_state);
-
-	// dwalton here now
-	// file_binary_search (char *filename, char *state_to_find, int statewidth, int linecount, int linewidth)
-        //if (pt_entry ||
-        //if (file_binary_search("lookup-table-5x5x5-step10-UD-centers-stage.txt.1-deep.all_steps", sp_cube_state, 14, 5, 19)) {
-        if (file_binary_search("lookup-table-5x5x5-step10-UD-centers-stage.txt.6-deep.all_steps", sp_cube_state, 14, 17168476, 39)) {
+	//if (file_binary_search("lookup-table-5x5x5-step10-UD-centers-stage.txt.6-deep.all_steps", sp_cube_state, 14, 17168476, 39)) {
+        if (file_binary_search("lookup-table-5x5x5-step10-UD-centers-stage.txt.7-deep.first_step_only", sp_cube_state, 14, 328877780, 19)) {
+            LOG("UD_CENTERS_STAGE_555 sp_cube_state %s\n", sp_cube_state);
             return 1;
         }
         break;
@@ -882,9 +883,8 @@ ida_solve (char *cube, lookup_table_type type)
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
 
-    // dwalton here now
-    ida_prune_table_preload(&pt_t_centers, "lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt");
-    ida_prune_table_preload(&pt_x_centers, "lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt");
+    //ida_prune_table_preload(&pt_t_centers, "lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt", 46);
+    //ida_prune_table_preload(&pt_x_centers, "lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt", 45);
     //ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt.6-deep.all_steps");
 
     ida_load_cube_state(cube, type);

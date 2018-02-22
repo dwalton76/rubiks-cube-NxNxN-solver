@@ -543,8 +543,8 @@ class LookupTable444Edges(LookupTable):
             parent,
             'lookup-table-4x4x4-step110-edges.txt',
             '111111111111_10425376a8b9ecfdhgkiljnm',
-            linecount=7363591) # 10-deep
-            #linecount=63923952) # 11-deep
+            #linecount=7363591) # 10-deep
+            linecount=63923952) # 11-deep
 
 
 class RubiksCube444(RubiksCube):
@@ -647,6 +647,7 @@ class RubiksCube444(RubiksCube):
         log.info("")
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.rotate_for_best_centers_solving()
         self.lt_ULFRBD_centers_solve.solve()
 
         # This will IDA search for a centers solution that happens to put the

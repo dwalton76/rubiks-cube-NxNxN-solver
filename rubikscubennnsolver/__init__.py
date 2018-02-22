@@ -3465,6 +3465,178 @@ class RubiksCube(object):
 
         return ''.join(result)
 
+    def get_staged_centers_count(self):
+        staged = 0
+
+        for side in list(self.sides.values()):
+            for pos in side.center_pos:
+
+                if side.name == 'U' or side.name == 'D':
+                    if self.state[pos] == 'U' or self.state[pos] == 'D':
+                        staged += 1
+
+                elif side.name == 'L' or side.name == 'R':
+                    if self.state[pos] == 'L' or self.state[pos] == 'R':
+                        staged += 1
+
+                elif side.name == 'F' or side.name == 'B':
+                    if self.state[pos] == 'F' or self.state[pos] == 'B':
+                        staged += 1
+
+        return staged
+
+    def get_solved_centers_count(self):
+        solved = 0
+
+        for side in list(self.sides.values()):
+            for pos in side.center_pos:
+                if side.name == self.state[pos]:
+                    solved += 1
+
+        return solved
+
+    def rotate_for_best_centers(self, staging):
+        max_best_centers = 0
+        max_best_centers_state = None
+        max_best_centers_solution = None
+
+        # save cube state
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        for upper_side_name in ('U', 'D', 'L', 'F', 'R', 'B'):
+            for front_side_name in ('F', 'R', 'B', 'L', 'U', 'D'):
+
+                if upper_side_name == front_side_name:
+                    continue
+
+                # Put the cube back in its original state
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                if upper_side_name == 'U':
+
+                    if front_side_name == 'D':
+                        continue
+
+                    if front_side_name == 'L':
+                        self.rotate_y_reverse()
+                    elif front_side_name == 'F':
+                        pass
+                    elif front_side_name == 'R':
+                        self.rotate_y()
+                    elif front_side_name == 'B':
+                        self.rotate_y()
+                        self.rotate_y()
+
+                elif upper_side_name == 'D':
+
+                    if front_side_name == 'U':
+                        continue
+
+                    self.rotate_x()
+                    self.rotate_x()
+
+                    if front_side_name == 'L':
+                        self.rotate_y_reverse()
+                    elif front_side_name == 'F':
+                        self.rotate_y()
+                        self.rotate_y()
+                    elif front_side_name == 'R':
+                        self.rotate_y()
+                    elif front_side_name == 'B':
+                        pass
+
+                elif upper_side_name == 'L':
+
+                    if front_side_name == 'R':
+                        continue
+
+                    self.rotate_y_reverse()
+                    self.rotate_x()
+
+                    if front_side_name == 'U':
+                        self.rotate_y()
+                        self.rotate_y()
+                    elif front_side_name == 'F':
+                        self.rotate_y()
+                    elif front_side_name == 'D':
+                        pass
+                    elif front_side_name == 'B':
+                        self.rotate_y_reverse()
+
+                elif upper_side_name == 'F':
+
+                    if front_side_name == 'B':
+                        continue
+
+                    self.rotate_x()
+
+                    if front_side_name == 'L':
+                        self.rotate_y_reverse()
+                    elif front_side_name == 'U':
+                        self.rotate_y()
+                        self.rotate_y()
+                    elif front_side_name == 'R':
+                        self.rotate_y()
+                    elif front_side_name == 'D':
+                        pass
+
+                elif upper_side_name == 'R':
+
+                    if front_side_name == 'L':
+                        continue
+
+                    self.rotate_y()
+                    self.rotate_x()
+
+                    if front_side_name == 'U':
+                        self.rotate_y()
+                        self.rotate_y()
+                    elif front_side_name == 'F':
+                        self.rotate_y_reverse()
+                    elif front_side_name == 'D':
+                        pass
+                    elif front_side_name == 'B':
+                        self.rotate_y()
+
+                elif upper_side_name == 'B':
+
+                    if front_side_name == 'F':
+                        continue
+
+                    self.rotate_x_reverse()
+
+                    if front_side_name == 'L':
+                        self.rotate_y_reverse()
+                    elif front_side_name == 'U':
+                        pass
+                    elif front_side_name == 'R':
+                        self.rotate_y()
+                    elif front_side_name == 'D':
+                        self.rotate_y()
+                        self.rotate_y()
+
+                if staging:
+                    best_centers = self.get_staged_centers_count()
+                else:
+                    best_centers = self.get_solved_centers_count()
+
+                if best_centers > max_best_centers:
+                    max_best_centers = best_centers
+                    max_best_centers_state = self.state[:]
+                    max_best_centers_solution = self.solution[:]
+                    log.info("%s: upper %s, front %s, stages %d centers" % (self, upper_side_name, front_side_name, max_best_centers))
+
+        self.state = max_best_centers_state[:]
+        self.solution = max_best_centers_solution[:]
+
+    def rotate_for_best_centers_staging(self):
+        self.rotate_for_best_centers(True)
+
+    def rotate_for_best_centers_solving(self):
+        self.rotate_for_best_centers(False)
+
     def group_centers_guts(self):
         raise ImplementThis("Child class must implement group_centers_guts")
 
@@ -3473,6 +3645,8 @@ class RubiksCube(object):
         if self.is_odd():
             self.rotate_U_to_U()
             self.rotate_F_to_F()
+        else:
+            self.rotate_for_best_centers_staging()
 
         if self.centers_solved():
             self.rotate_U_to_U()

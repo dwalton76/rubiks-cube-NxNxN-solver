@@ -612,68 +612,6 @@ class LookupTableIDA(LookupTable):
 
         return True
 
-    def _solve(self):
-        """
-        solving prep work used by both AStar and IDA* solve()
-
-        Returns True if cube is already "solved"
-        """
-        # save cube state
-        self.original_state = self.parent.state[:]
-        self.original_solution = self.parent.solution[:]
-
-        if self.parent.size == 2:
-            from rubikscubennnsolver.RubiksCube222 import rotate_222
-            self.rotate_xxx = rotate_222
-        elif self.parent.size == 4:
-            from rubikscubennnsolver.RubiksCube444 import rotate_444
-            self.rotate_xxx = rotate_444
-        elif self.parent.size == 5:
-            from rubikscubennnsolver.RubiksCube555 import rotate_555
-            self.rotate_xxx = rotate_555
-        elif self.parent.size == 6:
-            from rubikscubennnsolver.RubiksCube666 import rotate_666
-            self.rotate_xxx = rotate_666
-        elif self.parent.size == 7:
-            from rubikscubennnsolver.RubiksCube777 import rotate_777
-            self.rotate_xxx = rotate_777
-        else:
-            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
-
-        state = self.state()
-        #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
-
-        # The cube is already in the desired state, nothing to do
-        if state in self.state_target:
-            log.info("%s: IDA/AStar, cube is already at the target state %s" % (self, state))
-            return True
-
-        # The cube is already in a state that is in our lookup table, nothing for IDA to do
-        steps = self.steps(state)
-
-        if steps:
-            log.info("%s: IDA/Star, cube is already in a state %s that is in our lookup table" % (self, state))
-
-            # The cube is now in a state where it is in the lookup table, we may need
-            # to do several lookups to get to our target state though. Use
-            # LookupTabele's solve() to take us the rest of the way to the target state.
-            LookupTable.solve(self)
-            return True
-
-        # If we are here (odds are very high we will be) it means that the current
-        # cube state was not in the lookup table.  We must now perform an IDA search
-        # until we find a sequence of moves that takes us to a state that IS in the
-        # lookup table.
-        return False
-
-    def solve(self):
-        start_time0 = dt.datetime.now()
-
-        if self._solve():
-            return True
-
-        return self.astar_search()
-
     def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
         """
         https://algorithmsinsight.wordpress.com/graph-theory-2/ida-star-algorithm-in-general/
@@ -755,8 +693,52 @@ class LookupTableIDA(LookupTable):
         """
         start_time0 = dt.datetime.now()
 
-        if self._solve():
+        # save cube state
+        self.original_state = self.parent.state[:]
+        self.original_solution = self.parent.solution[:]
+
+        if self.parent.size == 2:
+            from rubikscubennnsolver.RubiksCube222 import rotate_222
+            self.rotate_xxx = rotate_222
+        elif self.parent.size == 4:
+            from rubikscubennnsolver.RubiksCube444 import rotate_444
+            self.rotate_xxx = rotate_444
+        elif self.parent.size == 5:
+            from rubikscubennnsolver.RubiksCube555 import rotate_555
+            self.rotate_xxx = rotate_555
+        elif self.parent.size == 6:
+            from rubikscubennnsolver.RubiksCube666 import rotate_666
+            self.rotate_xxx = rotate_666
+        elif self.parent.size == 7:
+            from rubikscubennnsolver.RubiksCube777 import rotate_777
+            self.rotate_xxx = rotate_777
+        else:
+            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+
+        state = self.state()
+        #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
+
+        # The cube is already in the desired state, nothing to do
+        if state in self.state_target:
+            log.info("%s: cube is already at the target state %s" % (self, state))
             return True
+
+        # The cube is already in a state that is in our lookup table, nothing for IDA to do
+        steps = self.steps(state)
+
+        if steps:
+            log.info("%s: cube is already in a state %s that is in our lookup table" % (self, state))
+
+            # The cube is now in a state where it is in the lookup table, we may need
+            # to do several lookups to get to our target state though. Use
+            # LookupTabele's solve() to take us the rest of the way to the target state.
+            LookupTable.solve(self)
+            return True
+
+        # If we are here (odds are very high we will be) it means that the current
+        # cube state was not in the lookup table.  We must now perform an IDA search
+        # until we find a sequence of moves that takes us to a state that IS in the
+        # lookup table.
 
         if min_ida_threshold is None:
             min_ida_threshold = self.ida_heuristic()

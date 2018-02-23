@@ -584,7 +584,7 @@ def edges_recolor_pattern_444(state):
 
 class LookupTable444Edges(LookupTable):
     """
-    lookup-table-4x4x4-step110-edges.txt (10-deep)
+    lookup-table-4x4x4-step110-edges.txt (11-deep)
     ==============================================
     2 steps has 1 entries (0 percent, 0.00x previous step)
     5 steps has 432 entries (0 percent, 432.00x previous step)
@@ -605,8 +605,8 @@ class LookupTable444Edges(LookupTable):
             parent,
             'lookup-table-4x4x4-step110-edges.txt',
             '111111111111_10425376a8b9ecfdhgkiljnm',
-            #linecount=7363591) # 10-deep
-            linecount=63923952) # 11-deep
+            linecount=7363591) # 10-deep
+            #linecount=63923952) # 11-deep
 
 
 class RubiksCube444(RubiksCube):
@@ -705,12 +705,12 @@ class RubiksCube444(RubiksCube):
         # Stage all centers then solve all centers...averages 18.12 moves
         log.info("%s: Start of Phase1" % self)
         self.lt_ULFRBD_centers_stage.solve()
+        self.rotate_for_best_centers_solving()
         self.print_cube()
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.rotate_for_best_centers_solving()
         #self.lt_ULFRBD_centers_solve.solve()
         self.lt_ULFRBD_centers_solve_pair_two_edges.solve()
 

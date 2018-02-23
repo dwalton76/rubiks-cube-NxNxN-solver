@@ -626,9 +626,9 @@ class LookupTableIDA(LookupTable):
                      (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             return (f_cost, True)
 
-        # ==============
-        # Keep Searching
-        # ==============
+        # ================
+        # Abort Searching?
+        # ================
         if f_cost >= threshold:
             return (f_cost, False)
 
@@ -727,7 +727,13 @@ class LookupTableIDA(LookupTable):
             # to do several lookups to get to our target state though. Use
             # LookupTabele's solve() to take us the rest of the way to the target state.
             LookupTable.solve(self)
-            return True
+
+            if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
+                log.info("%s: but the current state leads to OLL so we must IDA" % self)
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+            else:
+                return True
 
         # If we are here (odds are very high we will be) it means that the current
         # cube state was not in the lookup table.  We must now perform an IDA search

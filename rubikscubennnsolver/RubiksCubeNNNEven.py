@@ -306,4 +306,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 self.solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle)
 
         log.info("Centers are solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
         self.print_cube()

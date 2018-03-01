@@ -1466,6 +1466,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         else:
             self.solve_reduced_555_centers()
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
             self.print_cube()
             log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
 

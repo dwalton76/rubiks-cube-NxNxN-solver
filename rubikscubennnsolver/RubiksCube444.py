@@ -718,6 +718,8 @@ class RubiksCube444(RubiksCube):
         # edges in a state that are in our table.  It works and produces
         # solutions in the 50-53 range but can take a few minutes.
         #self.lt_ULFRBD_centers_solve_edges_stage.solve()
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
         self.print_cube()
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")

@@ -340,8 +340,11 @@ class LookupTable(object):
             #log.info("%s: steps_cost None for %s (stage_target)" % (self, state_to_find))
             return 0
         else:
-            #log.info("%s: steps_cost %d for %s (%s)" % (self, len(steps), state_to_find, ' '.join(steps)))
-            return len(steps)
+            if steps[0].isdigit():
+                return int(steps[0])
+            else:
+                #log.info("%s: steps_cost %d for %s (%s)" % (self, len(steps), state_to_find, ' '.join(steps)))
+                return len(steps)
 
     def solve(self):
 
@@ -551,6 +554,13 @@ class LookupTableIDA(LookupTable):
                 cost_to_goal = len(steps)
 
         for pt in self.prune_tables:
+
+            # If there is no way this pt will have a higher cost than the prune
+            # tables we have already examined do not bother looking up the cost
+            # for this pt
+            if cost_to_goal >= pt.max_depth:
+                continue
+
             pt_cost_to_goal = pt.heuristic()
 
             if pt_cost_to_goal > cost_to_goal:
@@ -619,7 +629,11 @@ class LookupTableIDA(LookupTable):
 
         lt_state = self.state()
 
-        if self.search_complete(lt_state, steps_to_here):
+        # If our cost_to_goal is greater than the max_depth of our main lookup table then there is no
+        # need to do a binary search through the main lookup table to look for our current state...this
+        # saves us some disk IO
+        if (cost_to_goal <= self.max_depth and
+            self.search_complete(lt_state, steps_to_here)):
             #log.info("%s: IDA found match %d steps in, %s, lt_state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
             #         (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             log.info("%s: IDA found match %d steps in %s, lt_state %s, f_cost %d (%d + %d)" %

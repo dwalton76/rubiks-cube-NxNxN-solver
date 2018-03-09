@@ -248,7 +248,8 @@ class LookupTable444UDCentersStage(LookupTable):
             parent,
             'lookup-table-4x4x4-step11-UD-centers-stage.txt',
             'f0000f',
-            linecount=735471)
+            linecount=735471,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -266,7 +267,8 @@ class LookupTable444LRCentersStage(LookupTable):
             parent,
             'lookup-table-4x4x4-step12-LR-centers-stage.txt',
             '0f0f00',
-            linecount=735471)
+            linecount=735471,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -284,7 +286,8 @@ class LookupTable444FBCentersStage(LookupTable):
             parent,
             'lookup-table-4x4x4-step13-FB-centers-stage.txt',
             '00f0f0',
-            linecount=735471)
+            linecount=735471,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -374,7 +377,8 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
             parent,
             'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
             'UUUULLLLFFFFRRRRBBBBDDDD',
-            linecount=2058000)
+            linecount=2058000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -406,7 +410,8 @@ class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
 
             # prune tables
             (parent.lt_ULFRBD_centers_solve,),
-            linecount=0)
+            linecount=0,
+            max_depth=99)
 
     def state(self):
         state = self.parent.state

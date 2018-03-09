@@ -114,7 +114,8 @@ class LookupTable666UDObliqueEdgePairingLeftOnly(LookupTable):
             parent,
             'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.txt',
             '990000000099',
-            linecount=12870)
+            linecount=12870,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -187,7 +188,8 @@ class LookupTable666UDObliqueEdgePairingRightOnly(LookupTable):
             parent,
             'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt',
             '660000000066',
-            linecount=12870)
+            linecount=12870,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -431,7 +433,8 @@ class LookupTable666LRObliqueEdgePairingLeftOnly(LookupTable):
             parent,
             'lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt',
             '4182000041820000',
-            linecount=12870)
+            linecount=12870,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -492,7 +495,8 @@ class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
             parent,
             'lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt',
             '2814000028140000',
-            linecount=12870)
+            linecount=12870,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -817,7 +821,8 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
              'xRRxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
              'xRRxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxLLxxxxxxxxxxxxxxxxx',
              'xRRxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxLLxxxxxxxxxxxxxxxxx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -946,7 +951,8 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
              'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxBBx',
              'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxBBx',
              'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxBBx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state

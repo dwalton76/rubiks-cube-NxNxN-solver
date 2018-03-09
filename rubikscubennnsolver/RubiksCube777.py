@@ -38,7 +38,8 @@ class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
             '462000000000000462',
-            linecount=735471)
+            linecount=735471,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -121,7 +122,8 @@ class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
             '891000000000000891',
-            linecount=735471)
+            linecount=735471,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -204,7 +206,8 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
             '30c00000000000030c',
-            linecount=735471)
+            linecount=735471,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -394,7 +397,8 @@ class LookupTable777LRObliqueEdgePairingMiddleOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
             '462000462000',
-            linecount=12870)
+            linecount=12870,
+            max_depth=10)
 
     def state(self):
         parent_state = self.parent.state
@@ -459,7 +463,8 @@ class LookupTable777LRObliqueEdgePairingLeftOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
             '891000891000',
-            linecount=12870)
+            linecount=12870,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -524,7 +529,8 @@ class LookupTable777LRObliqueEdgePairingRightOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt',
             '30c00030c000',
-            linecount=12870)
+            linecount=12870,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -670,7 +676,8 @@ class LookupTable777UDSolveInnerCentersAndObliqueEdgesCenterOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt',
             'xxxxxxUUUxxUxUxxUUUxxxxxxxxxxxxDDDxxDxDxxDDDxxxxxx',
-            linecount=4900)
+            linecount=4900,
+            max_depth=8)
 
     def state(self):
         parent_state = self.parent.state
@@ -787,7 +794,8 @@ class LookupTable777UDSolveInnerCentersAndObliqueEdgesEdgesOnly(LookupTable):
              'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxUUUx',
              'xDDDxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxUUUx',
              'xDDDxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxUUUx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -1031,7 +1039,8 @@ class LookupTable777LRSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
              'xxRxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxLxx',
              'xxRxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxLxx',
              'xxRxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxLxx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -1152,7 +1161,8 @@ class LookupTable777LRSolveObliqueEdge(LookupTable):
              'xRRRxRxxxRRxxxRRxxxRxLLLxxLLLxRxxxLRxxxLRxxxLxLLLx',
              'xRRRxRxxxRRxxxRRxxxRxLLLxxRRRxLxxxLLxxxLLxxxLxLLLx',
              'xRRRxRxxxRRxxxRRxxxRxRRRxxLLLxLxxxLLxxxLLxxxLxLLLx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -1402,7 +1412,8 @@ class LookupTable777FBSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
              'xxBxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxFxx',
              'xxBxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxFxx',
              'xxBxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxFxx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -1523,7 +1534,8 @@ class LookupTable777FBSolveObliqueEdge(LookupTable):
              'xBBBxBxxxBBxxxBBxxxBxFFFxxFFFxBxxxFBxxxFBxxxFxFFFx',
              'xBBBxBxxxBBxxxBBxxxBxFFFxxBBBxFxxxFFxxxFFxxxFxFFFx',
              'xBBBxBxxxBBxxxBBxxxBxBBBxxFFFxFxxxFFxxxFFxxxFxFFFx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -1711,7 +1723,8 @@ class LookupTableIDA777LFRBSolveInnerCenters(LookupTable):
             parent,
             'lookup-table-7x7x7-step81-LFRB-solve-inner-centers.txt',
             'LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB',
-            linecount=24010005)
+            linecount=24010005,
+            max_depth=17)
 
     def state(self):
         parent_state = self.parent.state

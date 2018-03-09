@@ -197,7 +197,8 @@ class LookupTable555UDTCenterStage(LookupTable):
             parent,
             'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
             '174000000000ba',
-            linecount=735471)
+            linecount=735471,
+            max_depth=8)
 
     def state(self):
         parent_state = self.parent.state
@@ -262,7 +263,8 @@ class LookupTable555UDXCenterStage(LookupTable):
             parent,
             'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
             '2aa00000000155',
-            linecount=735471)
+            linecount=735471,
+            max_depth=8)
 
     def state(self):
         parent_state = self.parent.state
@@ -472,7 +474,8 @@ class LookupTableULCentersSolve(LookupTable):
             parent,
             'lookup-table-5x5x5-step31-UL-centers-solve.txt',
             '3ffff000000000',
-            linecount=24010000)
+            linecount=24010000,
+            max_depth=13)
 
     def state(self):
         parent_state = self.parent.state
@@ -547,7 +550,8 @@ class LookupTableUFCentersSolve(LookupTable):
             parent,
             'lookup-table-5x5x5-step33-UF-centers-solve.txt',
             '3fe00ff8000000',
-            linecount=24010000)
+            linecount=24010000,
+            max_depth=13)
 
     def state(self):
         parent_state = self.parent.state

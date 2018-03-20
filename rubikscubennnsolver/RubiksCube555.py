@@ -196,7 +196,7 @@ class LookupTable555UDTCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
-            '174000000000ba',
+            'f0000f',
             linecount=735471,
             max_depth=8)
 
@@ -204,34 +204,34 @@ class LookupTable555UDTCenterStage(LookupTable):
         parent_state = self.parent.state
         result = [
             # Upper
-            'x', parent_state[8], 'x',
-            parent_state[12], parent_state[13], parent_state[14],
-            'x', parent_state[18], 'x',
+            parent_state[8],
+            parent_state[12], parent_state[14],
+            parent_state[18],
 
             # Left
-            'x', parent_state[33], 'x',
-            parent_state[37], parent_state[38], parent_state[39],
-            'x', parent_state[43], 'x',
+            parent_state[33],
+            parent_state[37], parent_state[39],
+            parent_state[43],
 
             # Front
-            'x', parent_state[58], 'x',
-            parent_state[62], parent_state[63], parent_state[64],
-            'x', parent_state[68], 'x',
+            parent_state[58],
+            parent_state[62], parent_state[64],
+            parent_state[68],
 
             # Right
-            'x', parent_state[83], 'x',
-            parent_state[87], parent_state[88], parent_state[89],
-            'x', parent_state[93], 'x',
+            parent_state[83],
+            parent_state[87], parent_state[89],
+            parent_state[93],
 
             # Back
-            'x', parent_state[108], 'x',
-            parent_state[112], parent_state[113], parent_state[114],
-            'x', parent_state[118], 'x',
+            parent_state[108],
+            parent_state[112], parent_state[114],
+            parent_state[118],
 
             # Down
-            'x', parent_state[133], 'x',
-            parent_state[137], parent_state[138], parent_state[139],
-            'x', parent_state[143], 'x'
+            parent_state[133],
+            parent_state[137], parent_state[139],
+            parent_state[143]
         ]
 
         result = ['1' if x in ('U', 'D') else '0' for x in result]
@@ -262,7 +262,7 @@ class LookupTable555UDXCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
-            '2aa00000000155',
+            'f0000f',
             linecount=735471,
             max_depth=8)
 
@@ -270,34 +270,28 @@ class LookupTable555UDXCenterStage(LookupTable):
         parent_state = self.parent.state
         result = [
             # Upper
-            parent_state[7], 'x', parent_state[9],
-            'x', parent_state[13], 'x',
-            parent_state[17], 'x', parent_state[19],
+            parent_state[7], parent_state[9],
+            parent_state[17], parent_state[19],
 
             # Left
-            parent_state[32], 'x', parent_state[34],
-            'x', parent_state[38], 'x',
-            parent_state[42], 'x', parent_state[44],
+            parent_state[32], parent_state[34],
+            parent_state[42], parent_state[44],
 
             # Front
-            parent_state[57], 'x', parent_state[59],
-            'x', parent_state[63], 'x',
-            parent_state[67], 'x', parent_state[69],
+            parent_state[57], parent_state[59],
+            parent_state[67], parent_state[69],
 
             # Right
-            parent_state[82], 'x', parent_state[84],
-            'x', parent_state[88], 'x',
-            parent_state[92], 'x', parent_state[94],
+            parent_state[82], parent_state[84],
+            parent_state[92], parent_state[94],
 
             # Back
-            parent_state[107], 'x', parent_state[109],
-            'x', parent_state[113], 'x',
-            parent_state[117], 'x', parent_state[119],
+            parent_state[107], parent_state[109],
+            parent_state[117], parent_state[119],
 
             # Down
-            parent_state[132], 'x', parent_state[134],
-            'x', parent_state[138], 'x',
-            parent_state[142], 'x', parent_state[144]
+            parent_state[132], parent_state[134],
+            parent_state[142], parent_state[144]
         ]
 
         result = ['1' if x in ('U', 'D') else '0' for x in result]
@@ -1268,6 +1262,11 @@ class RubiksCube555(RubiksCube):
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
+
+        # Test the prune tables
+        #self.lt_UD_T_centers_stage.solve()
+        #self.lt_UD_X_centers_stage.solve()
+
         self.lt_UD_centers_stage.solve()
         #self.print_cube()
         log.info("UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))

@@ -287,3 +287,7 @@ step10 now at 7-deep (runs much faster)
 Took 2m 10s
 
 
+cost-only tables
+================
+same move count
+Took 1m 33s

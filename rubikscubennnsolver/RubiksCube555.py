@@ -6,6 +6,7 @@ from rubikscubennnsolver.RubiksCube444 import moves_4x4x4
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
+    LookupTableCostOnly,
     LookupTableIDA,
 )
 
@@ -240,6 +241,54 @@ class LookupTable555UDTCenterStage(LookupTable):
         # Convert to hex
         return self.hex_format % int(result, 2)
 
+class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt',
+            'TBD',
+            linecount=735471,
+            max_depth=8)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = [
+            # Upper
+            parent_state[8],
+            parent_state[12], parent_state[14],
+            parent_state[18],
+
+            # Left
+            parent_state[33],
+            parent_state[37], parent_state[39],
+            parent_state[43],
+
+            # Front
+            parent_state[58],
+            parent_state[62], parent_state[64],
+            parent_state[68],
+
+            # Right
+            parent_state[83],
+            parent_state[87], parent_state[89],
+            parent_state[93],
+
+            # Back
+            parent_state[108],
+            parent_state[112], parent_state[114],
+            parent_state[118],
+
+            # Down
+            parent_state[133],
+            parent_state[137], parent_state[139],
+            parent_state[143]
+        ]
+
+        result = ''.join(['1' if x in ('U', 'D') else '0' for x in result])
+        return int(result, 2)
+
 
 class LookupTable555UDXCenterStage(LookupTable):
     """
@@ -299,6 +348,50 @@ class LookupTable555UDXCenterStage(LookupTable):
 
         # Convert to hex
         return self.hex_format % int(result, 2)
+
+
+class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt',
+            'f0000f',
+            linecount=735471,
+            max_depth=8)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = [
+            # Upper
+            parent_state[7], parent_state[9],
+            parent_state[17], parent_state[19],
+
+            # Left
+            parent_state[32], parent_state[34],
+            parent_state[42], parent_state[44],
+
+            # Front
+            parent_state[57], parent_state[59],
+            parent_state[67], parent_state[69],
+
+            # Right
+            parent_state[82], parent_state[84],
+            parent_state[92], parent_state[94],
+
+            # Back
+            parent_state[107], parent_state[109],
+            parent_state[117], parent_state[119],
+
+            # Down
+            parent_state[132], parent_state[134],
+            parent_state[142], parent_state[144]
+        ]
+
+        result = ''.join(['1' if x in ('U', 'D') else '0' for x in result])
+
+        return int(result, 2)
 
 
 class LookupTableIDA555UDCentersStage(LookupTableIDA):
@@ -1084,8 +1177,13 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
-        self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
-        self.lt_UD_X_centers_stage = LookupTable555UDXCenterStage(self)
+        # 50 cubes took 2m 10s
+        #self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
+        #self.lt_UD_X_centers_stage = LookupTable555UDXCenterStage(self)
+
+        # 50 cubes took 1m 33s
+        self.lt_UD_T_centers_stage = LookupTable555UDTCenterStageCostOnly(self)
+        self.lt_UD_X_centers_stage = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
 
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)

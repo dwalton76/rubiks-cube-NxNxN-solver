@@ -107,17 +107,17 @@ def steps_on_same_face_and_layer(prev_step, step):
         return False
 
     # chop the trailing '
-    if prev_step.endswith("'"):
+    if prev_step[-1] == "'":
         prev_step = prev_step[:-1]
 
-    if step.endswith("'"):
+    if step[-1] == "'":
         step = step[:-1]
 
     # chop the trailing 2
-    if prev_step.endswith("2"):
+    if prev_step[-1] == "2":
         prev_step = prev_step[:-1]
 
-    if step.endswith("2"):
+    if step[-1] == "2":
         step = step[:-1]
 
     # Note the number of rows being turned and chop it
@@ -184,6 +184,7 @@ class LookupTable(object):
         self.preloaded_state_set = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
+        self.fh_txt_seek_calls = 0
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -267,6 +268,7 @@ class LookupTable(object):
         while first <= last:
             midpoint = int((first + last)/2)
             self.fh_txt.seek(midpoint * self.width)
+            self.fh_txt_seek_calls += 1
 
             # Only read the 'state' part of the line (for speed)
             b_state = self.fh_txt.read(self.state_width)
@@ -384,19 +386,13 @@ class LookupTable(object):
 
     def heuristic(self):
         pt_state = self.state()
-        pt_steps = self.steps(pt_state)
+        pt_steps_cost = self.steps_cost(pt_state)
 
         if pt_state in self.state_target:
             len_pt_steps = 0
 
-        elif pt_steps:
-            len_pt_steps = len(pt_steps)
-
-            # There are few prune tables that I built where instead of listing the steps
-            # for a state I just listed how many steps there would be.  I did this to save
-            # space.  lookup-table-5x5x5-step13-UD-centers-stage-UFDB-only.txt is one such table.
-            if len_pt_steps == 1 and pt_steps[0].isdigit():
-                len_pt_steps = int(pt_steps[0])
+        elif pt_steps_cost:
+            len_pt_steps = pt_steps_cost
 
         elif self.max_depth:
             # This is the exception to the rule but some prune tables such
@@ -520,6 +516,75 @@ class LookupTable(object):
         raise Exception("child class must implement state()")
 
 
+class LookupTableCostOnly(LookupTable):
+
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None):
+        self.parent = parent
+        self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
+        self.filename = filename
+        self.filename_gz = filename + '.gz'
+        self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
+        self.filename_exists = False
+        self.linecount = linecount
+        self.max_depth = max_depth
+        self.avoid_oll = False
+        self.avoid_pll = False
+        self.preloaded_cache = False
+        self.preloaded_state_set = False
+        self.ida_all_the_way = False
+        self.use_lt_as_prune = False
+
+        assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
+        assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
+
+        if 'dummy' not in self.filename:
+            assert self.linecount, "%s linecount is %s" % (self, self.linecount)
+
+        if not os.path.exists(self.filename):
+            if not os.path.exists(self.filename_gz):
+                url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
+                log.info("Downloading table via 'wget %s'" % url)
+                call(['wget', url])
+
+            log.warning("gunzip %s" % self.filename_gz)
+            call(['gunzip', self.filename_gz])
+
+        '''
+        # Find the state_width for the entries in our .txt file
+        with open(self.filename, 'r') as fh:
+            first_line = next(fh)
+            self.width = len(first_line)
+            (state, steps) = first_line.split(':')
+            self.state_width = len(state)
+
+        self.hex_format = '%' + "0%dx" % self.state_width
+        '''
+
+        self.filename_exists = True
+
+        if isinstance(state_target, tuple):
+            self.state_target = set(state_target)
+        elif isinstance(state_target, list):
+            self.state_target = set(state_target)
+        else:
+            self.state_target = set((state_target, ))
+
+        self.cache = {}
+
+        with open(self.filename, 'r') as fh:
+            for line in fh:
+                self.content = line
+        self.fh_txt_seek_calls = 1
+
+    def steps_cost(self, state_to_find=None):
+
+        if state_to_find is None:
+            state_to_find = self.state()
+
+        # state_to_find is an integer, there is one byte in the file for each possible state
+        return int(self.content[state_to_find])
+
+
 class LookupTableIDA(LookupTable):
 
     def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None):
@@ -636,6 +701,11 @@ class LookupTableIDA(LookupTable):
             self.search_complete(lt_state, steps_to_here)):
             #log.info("%s: IDA found match %d steps in, %s, lt_state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
             #         (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
+            log.info("%s: %d seek calls" % (self, self.fh_txt_seek_calls))
+
+            for pt in self.prune_tables:
+                log.info("%s: %d seek calls" % (pt, pt.fh_txt_seek_calls))
+
             log.info("%s: IDA found match %d steps in %s, lt_state %s, f_cost %d (%d + %d)" %
                      (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             return (f_cost, True)

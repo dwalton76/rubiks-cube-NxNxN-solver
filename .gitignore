@@ -94,3 +94,4 @@ lookup*.hash
 lookup*.gz
 lookup*.txt
 *~
+*.bak

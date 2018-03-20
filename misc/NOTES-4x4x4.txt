@@ -311,3 +311,9 @@ centers solve pair two edges (10-deep)
 
 The 10-deep table is 527M
 This took 1m 8s
+Eventually got this down to 57s via misc changes...not sure what
+
+
+using cost-only prune tables
+============================
+Same move counts as above but took 29.680s!!

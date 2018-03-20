@@ -5,9 +5,11 @@ from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
     steps_on_same_face_and_layer,
     LookupTable,
+    LookupTableCostOnly,
     LookupTableIDA,
 )
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -259,6 +261,24 @@ class LookupTable444UDCentersStage(LookupTable):
         return self.hex_format % int(result, 2)
 
 
+class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt',
+            'f0000f',
+            linecount=735471,
+            max_depth=9)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in centers_444])
+        return int(result, 2)
+
+
 class LookupTable444LRCentersStage(LookupTable):
 
     def __init__(self, parent):
@@ -276,6 +296,23 @@ class LookupTable444LRCentersStage(LookupTable):
 
         # Convert to hex
         return self.hex_format % int(result, 2)
+
+class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt',
+            '0f0f00',
+            linecount=735471,
+            max_depth=9)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in centers_444])
+        return int(result, 2)
+
 
 
 class LookupTable444FBCentersStage(LookupTable):
@@ -295,6 +332,23 @@ class LookupTable444FBCentersStage(LookupTable):
 
         # Convert to hex
         return self.hex_format % int(result, 2)
+
+class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt',
+            '00f0f0',
+            linecount=735471,
+            max_depth=9)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = ''.join(['1' if parent_state[x] in ('F', 'B') else '0' for x in centers_444])
+        return int(result, 2)
+
 
 
 class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
@@ -334,21 +388,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        result = []
-
-        for index in centers_444:
-            x = parent_state[index]
-
-            if x in ('L', 'F', 'U'):
-                result.append(x)
-            elif x == 'R':
-                result.append('L')
-            elif x == 'B':
-                result.append('F')
-            elif x == 'D':
-                result.append('U')
-
-        result = ''.join(result)
+        result = ''.join(['L' if parent_state[x] in ('L', 'R') else 'F' if parent_state[x] in ('F', 'B') else 'U' for x in centers_444])
         return result
 
 
@@ -682,9 +722,16 @@ class RubiksCube444(RubiksCube):
         # Phase 1 tables
         # ==============
         # prune tables
-        self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
-        self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
-        self.lt_FB_centers_stage = LookupTable444FBCentersStage(self)
+
+        # Solving 50 cubes where you binary search through the prune table files takes 57s
+        #self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
+        #self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
+        #self.lt_FB_centers_stage = LookupTable444FBCentersStage(self)
+
+        # Solving 50 cubes using the cost-only tables takes 30s!!
+        self.lt_UD_centers_stage = LookupTable444UDCentersStageCostOnly(self)
+        self.lt_LR_centers_stage = LookupTable444LRCentersStageCostOnly(self)
+        self.lt_FB_centers_stage = LookupTable444FBCentersStageCostOnly(self)
 
         # Stage all centers via IDA
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
@@ -709,6 +756,7 @@ class RubiksCube444(RubiksCube):
 
         # Stage all centers then solve all centers...averages 18.12 moves
         log.info("%s: Start of Phase1" % self)
+        #self.lt_ULFRBD_centers_stage.ida_all_the_way = True
         self.lt_ULFRBD_centers_stage.solve()
         self.rotate_for_best_centers_solving()
         self.print_cube()

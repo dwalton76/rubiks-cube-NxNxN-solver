@@ -626,9 +626,6 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     Total: 343,000 entries
     """
 
-    # TODO this pairs and solves the UD oblique edges, we need to build
-    # the 70 tables that let them go anywhere on sides U or D
-    # These are building now
     def __init__(self, parent):
         LookupTable.__init__(
             self,

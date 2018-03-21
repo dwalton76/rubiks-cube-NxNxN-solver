@@ -3,6 +3,7 @@ from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class LookupTable666UDInnerXCenterStage(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt',
-            '066000000000000000000660',
+            'f0000f',
             linecount=735471)
 
     def state(self):
@@ -48,44 +49,31 @@ class LookupTable666UDInnerXCenterStage(LookupTable):
 
         result = [
             # Upper
-            'x', 'x', 'x', 'x',
-            'x', parent_state[15], parent_state[16], 'x',
-            'x', parent_state[21], parent_state[22], 'x',
-            'x', 'x', 'x', 'x',
+            parent_state[15], parent_state[16],
+            parent_state[21], parent_state[22],
 
             # Left
-            'x', 'x', 'x', 'x',
-            'x', parent_state[51], parent_state[52], 'x',
-            'x', parent_state[57], parent_state[58], 'x',
-            'x', 'x', 'x', 'x',
+            parent_state[51], parent_state[52],
+            parent_state[57], parent_state[58],
 
             # Front
-            'x', 'x', 'x', 'x',
-            'x', parent_state[87], parent_state[88], 'x',
-            'x', parent_state[93], parent_state[94], 'x',
-            'x', 'x', 'x', 'x',
+            parent_state[87], parent_state[88],
+            parent_state[93], parent_state[94],
 
             # Right
-            'x', 'x', 'x', 'x',
-            'x', parent_state[123], parent_state[124], 'x',
-            'x', parent_state[129], parent_state[130], 'x',
-            'x', 'x', 'x', 'x',
+            parent_state[123], parent_state[124],
+            parent_state[129], parent_state[130],
 
             # Back
-            'x', 'x', 'x', 'x',
-            'x', parent_state[159], parent_state[160], 'x',
-            'x', parent_state[165], parent_state[166], 'x',
-            'x', 'x', 'x', 'x',
+            parent_state[159], parent_state[160],
+            parent_state[165], parent_state[166],
 
             # Down
-            'x', 'x', 'x', 'x',
-            'x', parent_state[195], parent_state[196], 'x',
-            'x', parent_state[201], parent_state[202], 'x',
-            'x', 'x', 'x', 'x'
+            parent_state[195], parent_state[196],
+            parent_state[201], parent_state[202]
         ]
 
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if x in ('U', 'D') else '0' for x in result])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -121,45 +109,15 @@ class LookupTable666UDObliqueEdgePairingLeftOnly(LookupTable):
         parent_state = self.parent.state
 
         result = [
-            # Upper
-            parent_state[9], 'x',
-            'x', parent_state[17],
-            parent_state[20], 'x',
-            'x', parent_state[28],
-
-            # Left
-            parent_state[45], 'x',
-            'x', parent_state[53],
-            parent_state[56], 'x',
-            'x', parent_state[64],
-
-            # Front
-            parent_state[81], 'x',
-            'x', parent_state[89],
-            parent_state[92], 'x',
-            'x', parent_state[100],
-
-            # Right
-            parent_state[117], 'x',
-            'x', parent_state[125],
-            parent_state[128], 'x',
-            'x', parent_state[136],
-
-            # Back
-            parent_state[153], 'x',
-            'x', parent_state[161],
-            parent_state[164], 'x',
-            'x', parent_state[172],
-
-            # Down
-            parent_state[189], 'x',
-            'x', parent_state[197],
-            parent_state[200], 'x',
-            'x', parent_state[208],
+            parent_state[9], parent_state[17], parent_state[20], parent_state[28],
+            parent_state[45], parent_state[53], parent_state[56], parent_state[64],
+            parent_state[81], parent_state[89], parent_state[92], parent_state[100],
+            parent_state[117], parent_state[125], parent_state[128], parent_state[136],
+            parent_state[153], parent_state[161], parent_state[164], parent_state[172],
+            parent_state[189], parent_state[197], parent_state[200], parent_state[208]
         ]
 
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if x in ('U', 'D') else '0' for x in result])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -195,46 +153,15 @@ class LookupTable666UDObliqueEdgePairingRightOnly(LookupTable):
         parent_state = self.parent.state
 
         result = [
-            # Upper
-            'x', parent_state[10],
-            parent_state[14], 'x',
-            'x', parent_state[23],
-            parent_state[27], 'x',
-
-            # Left
-            'x', parent_state[46],
-            parent_state[50], 'x',
-            'x', parent_state[59],
-            parent_state[63], 'x',
-
-
-            # Front
-            'x', parent_state[82],
-            parent_state[86], 'x',
-            'x', parent_state[95],
-            parent_state[99], 'x',
-
-            # Right
-            'x', parent_state[118],
-            parent_state[122], 'x',
-            'x', parent_state[131],
-            parent_state[135], 'x',
-
-            # Back
-            'x', parent_state[154],
-            parent_state[158], 'x',
-            'x', parent_state[167],
-            parent_state[171], 'x',
-
-            # Down
-            'x', parent_state[190],
-            parent_state[194], 'x',
-            'x', parent_state[203],
-            parent_state[207], 'x',
+            parent_state[10], parent_state[14], parent_state[23], parent_state[27],
+            parent_state[46], parent_state[50], parent_state[59], parent_state[63],
+            parent_state[82], parent_state[86], parent_state[95], parent_state[99],
+            parent_state[118], parent_state[122], parent_state[131], parent_state[135],
+            parent_state[154], parent_state[158], parent_state[167], parent_state[171],
+            parent_state[190], parent_state[194], parent_state[203], parent_state[207]
         ]
 
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if x in ('U', 'D') else '0' for x in result])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -371,40 +298,20 @@ class LookupTable666LRInnerXCenters(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step30-LR-inner-x-centers-stage.txt',
-            '0660000006600000',
+            'f0f0',
             linecount=12870)
 
     def state(self):
         parent_state = self.parent.state
 
         result = [
-            # Left
-            'x', 'x', 'x', 'x',
-            'x', parent_state[51], parent_state[52], 'x',
-            'x', parent_state[57], parent_state[58], 'x',
-            'x', 'x', 'x', 'x',
-
-            # Front
-            'x', 'x', 'x', 'x',
-            'x', parent_state[87], parent_state[88], 'x',
-            'x', parent_state[93], parent_state[94], 'x',
-            'x', 'x', 'x', 'x',
-
-            # Right
-            'x', 'x', 'x', 'x',
-            'x', parent_state[123], parent_state[124], 'x',
-            'x', parent_state[129], parent_state[130], 'x',
-            'x', 'x', 'x', 'x',
-
-            # Back
-            'x', 'x', 'x', 'x',
-            'x', parent_state[159], parent_state[160], 'x',
-            'x', parent_state[165], parent_state[166], 'x',
-            'x', 'x', 'x', 'x',
+            parent_state[51], parent_state[52], parent_state[57], parent_state[58],
+            parent_state[87], parent_state[88], parent_state[93], parent_state[94],
+            parent_state[123], parent_state[124], parent_state[129], parent_state[130],
+            parent_state[159], parent_state[160], parent_state[165], parent_state[166]
         ]
 
-        result = ['1' if x in ('L', 'R') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if x in ('L', 'R') else '0' for x in result])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -432,7 +339,7 @@ class LookupTable666LRObliqueEdgePairingLeftOnly(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.txt',
-            '4182000041820000',
+            'f0f0',
             linecount=12870,
             max_depth=9)
 
@@ -440,33 +347,13 @@ class LookupTable666LRObliqueEdgePairingLeftOnly(LookupTable):
         parent_state = self.parent.state
 
         result = [
-            # Left
-            'x', parent_state[45], 'x', 'x',
-            'x', 'x', 'x', parent_state[53],
-            parent_state[56], 'x', 'x', 'x',
-            'x', 'x', parent_state[64], 'x',
-
-            # Front
-            'x', parent_state[81], 'x', 'x',
-            'x', 'x', 'x', parent_state[89],
-            parent_state[92], 'x', 'x', 'x',
-            'x', 'x', parent_state[100], 'x',
-
-            # Right
-            'x', parent_state[117], 'x', 'x',
-            'x', 'x', 'x', parent_state[125],
-            parent_state[128], 'x', 'x', 'x',
-            'x', 'x', parent_state[136], 'x',
-
-            # Back
-            'x', parent_state[153], 'x', 'x',
-            'x', 'x', 'x', parent_state[161],
-            parent_state[164], 'x', 'x', 'x',
-            'x', 'x', parent_state[172], 'x',
+            parent_state[45], parent_state[53], parent_state[56], parent_state[64],
+            parent_state[81], parent_state[89], parent_state[92], parent_state[100],
+            parent_state[117], parent_state[125], parent_state[128], parent_state[136],
+            parent_state[153], parent_state[161], parent_state[164], parent_state[172]
         ]
 
-        result = ['1' if x in ('L', 'R') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if x in ('L', 'R') else '0' for x in result])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -494,7 +381,7 @@ class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt',
-            '2814000028140000',
+            'f0f0',
             linecount=12870,
             max_depth=9)
 
@@ -502,33 +389,13 @@ class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
         parent_state = self.parent.state
 
         result = [
-            # Left
-            'x', 'x', parent_state[46], 'x',
-             parent_state[50], 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[59],
-            'x', parent_state[63], 'x', 'x',
-
-            # Front
-            'x', 'x', parent_state[82], 'x',
-            parent_state[86], 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[95],
-            'x', parent_state[99], 'x', 'x',
-
-            # Right
-            'x', 'x', parent_state[118], 'x',
-            parent_state[122], 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[131],
-            'x', parent_state[135], 'x', 'x',
-
-            # Back
-            'x', 'x', parent_state[154], 'x',
-            parent_state[158], 'x', 'x', 'x',
-            'x', 'x', 'x', parent_state[167],
-            'x', parent_state[171], 'x', 'x',
+             parent_state[46], parent_state[50], parent_state[59], parent_state[63],
+             parent_state[82], parent_state[86], parent_state[95], parent_state[99],
+             parent_state[118], parent_state[122], parent_state[131], parent_state[135],
+             parent_state[154], parent_state[158], parent_state[167], parent_state[171]
         ]
 
-        result = ['1' if x in ('L', 'R') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if x in ('L', 'R') else '0' for x in result])
 
         # Convert to hex
         return self.hex_format % int(result, 2)

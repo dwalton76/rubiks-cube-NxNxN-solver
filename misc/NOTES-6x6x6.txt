@@ -104,4 +104,10 @@ Took 1m 45s
 
 cost-only for 5x5x5
 ===================
-Took 1m 36s
+As low as 1m 36s...but is normally around 1m 50s
+
+
+cost-only for 6x6x6
+===================
+Took 1m 37s one time, 1m 23s the next
+

@@ -1,7 +1,7 @@
 
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableCostOnly, LookupTableIDA
 import logging
 import sys
 
@@ -123,6 +123,34 @@ class LookupTable666UDObliqueEdgePairingLeftOnly(LookupTable):
         return self.hex_format % int(result, 2)
 
 
+class LookupTable666UDObliqueEdgePairingLeftOnlyCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step21-UD-oblique-edge-pairing-left-only.cost-only.txt',
+            '990000000099',
+            linecount=12870,
+            max_depth=9)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            parent_state[9], parent_state[17], parent_state[20], parent_state[28],
+            parent_state[45], parent_state[53], parent_state[56], parent_state[64],
+            parent_state[81], parent_state[89], parent_state[92], parent_state[100],
+            parent_state[117], parent_state[125], parent_state[128], parent_state[136],
+            parent_state[153], parent_state[161], parent_state[164], parent_state[172],
+            parent_state[189], parent_state[197], parent_state[200], parent_state[208]
+        ]
+
+        result = ''.join(['1' if x in ('U', 'D') else '0' for x in result])
+
+        return int(result, 2)
+
+
 class LookupTable666UDObliqueEdgePairingRightOnly(LookupTable):
     """
     lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.txt
@@ -165,6 +193,34 @@ class LookupTable666UDObliqueEdgePairingRightOnly(LookupTable):
 
         # Convert to hex
         return self.hex_format % int(result, 2)
+
+
+class LookupTable666UDObliqueEdgePairingRightOnlyCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step22-UD-oblique-edge-pairing-right-only.cost-only.txt',
+            '660000000066',
+            linecount=12870,
+            max_depth=9)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            parent_state[10], parent_state[14], parent_state[23], parent_state[27],
+            parent_state[46], parent_state[50], parent_state[59], parent_state[63],
+            parent_state[82], parent_state[86], parent_state[95], parent_state[99],
+            parent_state[118], parent_state[122], parent_state[131], parent_state[135],
+            parent_state[154], parent_state[158], parent_state[167], parent_state[171],
+            parent_state[190], parent_state[194], parent_state[203], parent_state[207]
+        ]
+
+        result = ''.join(['1' if x in ('U', 'D') else '0' for x in result])
+
+        return int(result, 2)
 
 
 class LookupTableIDA666UDObliqueEdgePairing(LookupTableIDA):
@@ -359,6 +415,32 @@ class LookupTable666LRObliqueEdgePairingLeftOnly(LookupTable):
         return self.hex_format % int(result, 2)
 
 
+class LookupTable666LRObliqueEdgePairingLeftOnlyCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step41-LR-oblique-pairing-left-only.cost-only.txt',
+            'f0f0',
+            linecount=12870,
+            max_depth=9)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+            parent_state[45], parent_state[53], parent_state[56], parent_state[64],
+            parent_state[81], parent_state[89], parent_state[92], parent_state[100],
+            parent_state[117], parent_state[125], parent_state[128], parent_state[136],
+            parent_state[153], parent_state[161], parent_state[164], parent_state[172]
+        ]
+
+        result = ''.join(['1' if x in ('L', 'R') else '0' for x in result])
+
+        return int(result, 2)
+
+
 class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
     """
     lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.txt
@@ -399,6 +481,32 @@ class LookupTable666LRObliqueEdgePairingRightOnly(LookupTable):
 
         # Convert to hex
         return self.hex_format % int(result, 2)
+
+
+class LookupTable666LRObliqueEdgePairingRightOnlyCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step42-LR-oblique-pairing-right-only.cost-only.txt',
+            'f0f0',
+            linecount=12870,
+            max_depth=9)
+
+    def state(self):
+        parent_state = self.parent.state
+
+        result = [
+             parent_state[46], parent_state[50], parent_state[59], parent_state[63],
+             parent_state[82], parent_state[86], parent_state[95], parent_state[99],
+             parent_state[118], parent_state[122], parent_state[131], parent_state[135],
+             parent_state[154], parent_state[158], parent_state[167], parent_state[171]
+        ]
+
+        result = ''.join(['1' if x in ('L', 'R') else '0' for x in result])
+
+        return int(result, 2)
 
 
 class LookupTableIDA666LRObliqueEdgePairing(LookupTableIDA):
@@ -1005,14 +1113,14 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCenterStage(self)
 
-        self.lt_UD_oblique_edge_pairing_left_only = LookupTable666UDObliqueEdgePairingLeftOnly(self)
-        self.lt_UD_oblique_edge_pairing_right_only = LookupTable666UDObliqueEdgePairingRightOnly(self)
+        self.lt_UD_oblique_edge_pairing_left_only = LookupTable666UDObliqueEdgePairingLeftOnlyCostOnly(self)
+        self.lt_UD_oblique_edge_pairing_right_only = LookupTable666UDObliqueEdgePairingRightOnlyCostOnly(self)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA666UDObliqueEdgePairing(self)
 
         self.lt_LR_inner_x_centers = LookupTable666LRInnerXCenters(self)
 
-        self.lt_LR_oblique_edge_pairing_left_only = LookupTable666LRObliqueEdgePairingLeftOnly(self)
-        self.lt_LR_oblique_edge_pairing_right_only = LookupTable666LRObliqueEdgePairingRightOnly(self)
+        self.lt_LR_oblique_edge_pairing_left_only = LookupTable666LRObliqueEdgePairingLeftOnlyCostOnly(self)
+        self.lt_LR_oblique_edge_pairing_right_only = LookupTable666LRObliqueEdgePairingRightOnlyCostOnly(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA666LRObliqueEdgePairing(self)
 
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)

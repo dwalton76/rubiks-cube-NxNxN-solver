@@ -120,7 +120,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                     self.rotate(step)
             fake_666 = None
 
-        log.info("Big plus sign formed, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("%s: Big plus sign formed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.print_cube()
 
     def solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle):
@@ -133,8 +133,8 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         start_NNN = 0
         row0_midpoint = ceil(self.size/2)
 
-        log.info("Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
-            (center_orbit_id, max_center_orbits, width, cycle, max_cycle))
+        log.info("%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
+            (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle))
 
         for x in range(6):
             mid_NNN_row1 = start_NNN + row0_midpoint + (self.size * (max_center_orbits - center_orbit_id + 1))
@@ -290,8 +290,8 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 self.rotate(step)
 
         self.print_cube()
-        log.info("End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
-            (center_orbit_id, max_center_orbits, width, cycle, max_cycle))
+        log.info("%s: End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
+            (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle))
 
     def group_centers_guts(self):
         self.make_plus_sign()
@@ -305,7 +305,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             for cycle in range(max_cycle+1):
                 self.solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle)
 
-        log.info("Centers are solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("%s: Centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.print_cube()

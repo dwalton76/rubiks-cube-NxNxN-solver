@@ -841,12 +841,115 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
 
+        #self.lt_UD_centers_stage.avoid_oll = True
+        #self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.avoid_oll = True
+
     def populate_fake_555_for_ULFRBD_solve(self, fake_555):
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
 
-        # Upper
+        # Upper corners
+        fake_555.state[1] = self.state[1]
+        fake_555.state[5] = self.state[6]
+        fake_555.state[21] = self.state[31]
+        fake_555.state[25] = self.state[36]
+
+        # Left corners
+        fake_555.state[26] = self.state[37]
+        fake_555.state[30] = self.state[42]
+        fake_555.state[46] = self.state[67]
+        fake_555.state[50] = self.state[72]
+
+        # Front corners
+        fake_555.state[51] = self.state[73]
+        fake_555.state[55] = self.state[78]
+        fake_555.state[71] = self.state[103]
+        fake_555.state[75] = self.state[108]
+
+        # Right corners
+        fake_555.state[76] = self.state[109]
+        fake_555.state[80] = self.state[114]
+        fake_555.state[96] = self.state[139]
+        fake_555.state[100] = self.state[144]
+
+        # Back corners
+        fake_555.state[101] = self.state[145]
+        fake_555.state[105] = self.state[150]
+        fake_555.state[121] = self.state[175]
+        fake_555.state[125] = self.state[180]
+
+        # Down corners
+        fake_555.state[126] = self.state[181]
+        fake_555.state[130] = self.state[186]
+        fake_555.state[146] = self.state[211]
+        fake_555.state[150] = self.state[216]
+
+        # TODO for 5x5x5 OLL checking
+        # Upper edges (orbit 1)
+        '''
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+
+        # Left edges (orbit 1)
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+
+        # Front edges (orbit 1)
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+
+        # Right edges (orbit 1)
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+
+        # Back edges (orbit 1)
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+
+        # Down edges (orbit 1)
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        fake_555.state[] = self.state[]
+        '''
+
+
+        # Upper centers
         fake_555.state[7] = self.state[8]
         fake_555.state[8] = self.state[9]
         fake_555.state[9] = self.state[11]
@@ -857,7 +960,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555.state[18] = self.state[27]
         fake_555.state[19] = self.state[29]
 
-        # Left
+        # Left centers
         fake_555.state[32] = self.state[44]
         fake_555.state[33] = self.state[45]
         fake_555.state[34] = self.state[47]
@@ -868,7 +971,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555.state[43] = self.state[63]
         fake_555.state[44] = self.state[65]
 
-        # Front
+        # Front centers
         fake_555.state[57] = self.state[80]
         fake_555.state[58] = self.state[81]
         fake_555.state[59] = self.state[83]
@@ -879,7 +982,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555.state[68] = self.state[99]
         fake_555.state[69] = self.state[101]
 
-        # Right
+        # Right centers
         fake_555.state[82] = self.state[116]
         fake_555.state[83] = self.state[117]
         fake_555.state[84] = self.state[119]
@@ -890,7 +993,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555.state[93] = self.state[135]
         fake_555.state[94] = self.state[137]
 
-        # Back
+        # Back centers
         fake_555.state[107] = self.state[152]
         fake_555.state[108] = self.state[153]
         fake_555.state[109] = self.state[155]
@@ -901,7 +1004,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555.state[118] = self.state[171]
         fake_555.state[119] = self.state[173]
 
-        # Down
+        # Down centers
         fake_555.state[132] = self.state[188]
         fake_555.state[133] = self.state[189]
         fake_555.state[134] = self.state[191]
@@ -1235,13 +1338,13 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             if x == 0:
                 #self.print_cube()
                 self.rotate_y()
-                log.info("UD (1st pass) inner-x-centers and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+                log.info("%s: UD (1st pass) inner-x-centers and oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
                 log.info("")
                 log.info("")
             else:
                 self.rotate_y_reverse()
                 self.print_cube()
-                log.info("UD (2nd pass) inner-x-centers and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+                log.info("%s: UD (2nd pass) inner-x-centers and oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         log.info("")
         log.info("")
@@ -1275,12 +1378,12 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         if LR_count_on_FB > LR_count_on_UD:
             self.rotate("x")
 
-        log.info("LR_count_on_FB %d, LR_count_on_UD %d" % (LR_count_on_FB, LR_count_on_UD))
+        log.info("%s: LR_count_on_FB %d, LR_count_on_UD %d" % (self, LR_count_on_FB, LR_count_on_UD))
         self.lt_UD_centers_stage.solve()
 
         self.rotate("z'")
         self.print_cube()
-        log.info("LR inner-x-centers and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("%s: LR inner-x-centers and oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -1291,6 +1394,9 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.lt_init()
         self.populate_fake_555_for_ULFRBD_solve(fake_555)
+        # TODO for 5x5x5 OLL checking
+        #fake_555.print_cube()
+        #fake_555.lt_ULFRB_centers_solve.avoid_oll = True
         fake_555.group_centers_guts()
 
         for step in fake_555.solution:
@@ -1316,7 +1422,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # - solve the FB inner x-centers and pair the FB oblique edges
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
         self.print_cube()
-        log.info("UD inner x-center solved and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("%s: UD inner x-center solved and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("")
         log.info("")
@@ -1332,7 +1438,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
         self.print_cube()
-        log.info("LFRB inner x-center and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("%s: LFRB inner x-center and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -1345,14 +1451,14 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             # solve their centers. We must "solve" the t-centers in this scenario.
             self.solve_reduced_555_t_centers()
             self.print_cube()
-            log.info("Took %d steps to solve oblique edges" % self.get_solution_len_minus_rotates(self.solution))
+            log.info("%s: Took %d steps to solve oblique edges" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         else:
             self.solve_reduced_555_centers()
             self.rotate_U_to_U()
             self.rotate_F_to_F()
             self.print_cube()
-            log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
+            log.info("%s: Took %d steps to solve centers" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def phase(self):
         if self._phase is None:

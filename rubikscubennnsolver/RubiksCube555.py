@@ -1062,7 +1062,7 @@ class RubiksCube555(RubiksCube):
 
         self.lt_UD_centers_stage.solve()
         #self.print_cube()
-        log.info("UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_stage_LR(self):
         """
@@ -1074,7 +1074,7 @@ class RubiksCube555(RubiksCube):
 
         self.lt_LR_centers_stage.solve()
         #self.print_cube()
-        log.info("ULFRBD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("%s: ULFRBD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_guts(self):
         self.lt_init()
@@ -1084,7 +1084,7 @@ class RubiksCube555(RubiksCube):
 
         # All centers are staged, solve them
         self.lt_ULFRB_centers_solve.solve()
-        log.info("ULFRBD centers solved, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("%s: ULFRBD centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         #self.print_cube()

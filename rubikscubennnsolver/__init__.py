@@ -11,6 +11,7 @@ import random
 import os
 import shutil
 import subprocess
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -301,21 +302,35 @@ def apply_rotations(size, step, rotations):
 
 
 def orbit_matches(edges_per_side, orbit, edge_index):
+
     if orbit is None:
         return True
 
-    if orbit == 0:
-        if edge_index == 0 or edge_index == edges_per_side-1:
+    # Even cube
+    if edges_per_side % 2 == 0:
+        if orbit == 0:
+            if edge_index == 0 or edge_index == edges_per_side-1:
+                return True
+            return False
+
+        if orbit == 1:
+            if edge_index == 1 or edge_index == edges_per_side-2:
+                return True
+            return False
+
+        if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
+            return True
+
+    # Odd cube
+    else:
+        if orbit == 0:
+            raise Exception("This should not be called for orbit 0 on an odd cube")
+
+        center_edge_index = int(edges_per_side/2)
+
+        if edge_index == center_edge_index - orbit or edge_index == center_edge_index + orbit:
             return True
         return False
-
-    if orbit == 1:
-        if edge_index == 1 or edge_index == edges_per_side-2:
-            return True
-        return False
-
-    if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
-        return True
 
     return False
 
@@ -3130,6 +3145,9 @@ class RubiksCube(object):
 
         edges_per_side = len(self.sideU.edge_north_pos)
 
+        #log.warning("edges_paired %s, orbit %s, edges_per_side %s" % (edges_paired, orbit, edges_per_side))
+        #debug = True
+
         # Upper
         for (edge_index, square_index) in enumerate(self.sideU.edge_north_pos):
             if edges_paired:
@@ -3275,6 +3293,9 @@ class RubiksCube(object):
             partner_index = side.get_wing_partner(square_index)
             square1 = self.state[square_index]
             square2 = self.state[partner_index]
+
+            # dwalton
+            #log.info("side %s, (%d, %d) is %s%s" % (side, square_index, partner_index, square1, square2))
 
             if square1 in ('U', 'D'):
                 wing_str = square1 + square2
@@ -3442,9 +3463,22 @@ class RubiksCube(object):
             self.rotate_F_to_F()
         orbits_with_oll_parity = []
 
-        orbits = int((self.size - 2) / 2)
+        # OLL only applies to even cubes but there are times when an even cube
+        # is reduced to an odd cube...this happens when solving a 6x6x6, it is
+        # reduced to a 5x5x5. So we must support OLL detection on odd cubes also.
+        if self.is_even():
+            orbit_start = 0
+            orbits = int((self.size - 2) / 2)
+        else:
+            if self.size == 3:
+                return []
 
-        for orbit in range(orbits):
+            orbit_start = 1
+            orbits = int((self.size - 2 - 1) / 2) + 1
+
+        #log.info("orbit_start %d, orbits %d" % (orbit_start, orbits))
+
+        for orbit in range(orbit_start, orbits):
             # OLL Parity - "...is caused by solving the centers such that the edge permutation is odd"
             # http://www.speedcubing.com/chris/4speedsolve3.html
             if self.edge_swaps_odd(False, orbit, debug):

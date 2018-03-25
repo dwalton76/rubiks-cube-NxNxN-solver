@@ -10,6 +10,36 @@ log = logging.getLogger(__name__)
 moves_7x7x7 = moves_6x6x6
 solved_7x7x7 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
+step80_centers_777 = (
+    # Left
+    59, 60, 61,
+    65, 66, 67, 68, 69,
+    72, 73, 74, 75, 76,
+    79, 80, 81, 82, 83,
+    87, 88, 89,
+
+    # Front
+    108, 109, 110,
+    114, 115, 116, 117, 118,
+    121, 122, 123, 124, 125,
+    128, 129, 130, 131, 132,
+    136, 137, 138,
+
+    # Right
+    157, 158, 159,
+    163, 164, 165, 166, 167,
+    170, 171, 172, 173, 174,
+    177, 178, 179, 180, 181,
+    185, 186, 187,
+
+    # Back
+    206, 207, 208,
+    212, 213, 214, 215, 216,
+    219, 220, 221, 222, 223,
+    226, 227, 228, 229, 230,
+    234, 235, 236,
+)
+
 
 class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
     """
@@ -1801,39 +1831,7 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-
-        result = [
-            # Left
-            parent_state[59], parent_state[60], parent_state[61],
-            parent_state[65], parent_state[66], parent_state[67], parent_state[68], parent_state[69],
-            parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
-            parent_state[79], parent_state[80], parent_state[81], parent_state[82], parent_state[83],
-            parent_state[87], parent_state[88], parent_state[89],
-
-            # Front
-            parent_state[108], parent_state[109], parent_state[110],
-            parent_state[114], parent_state[115], parent_state[116], parent_state[117], parent_state[118],
-            parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125],
-            parent_state[128], parent_state[129], parent_state[130], parent_state[131], parent_state[132],
-            parent_state[136], parent_state[137], parent_state[138],
-
-            # Right
-            parent_state[157], parent_state[158], parent_state[159],
-            parent_state[163], parent_state[164], parent_state[165], parent_state[166], parent_state[167],
-            parent_state[170], parent_state[171], parent_state[172], parent_state[173], parent_state[174],
-            parent_state[177], parent_state[178], parent_state[179], parent_state[180], parent_state[181],
-            parent_state[185], parent_state[186], parent_state[187],
-
-            # Back
-            parent_state[206], parent_state[207], parent_state[208],
-            parent_state[212], parent_state[213], parent_state[214], parent_state[215], parent_state[216],
-            parent_state[219], parent_state[220], parent_state[221], parent_state[222], parent_state[223],
-            parent_state[226], parent_state[227], parent_state[228], parent_state[229], parent_state[230],
-            parent_state[234], parent_state[235], parent_state[236],
-        ]
-
-        result = ''.join(result)
-        result = result.replace('L', '1').replace('R', '0').replace('F', '1').replace('B', '0')
+        result = ''.join(['1' if parent_state[x] in ('L', 'F') else '0' for x in step80_centers_777])
 
         # Convert to hex
         return self.hex_format % int(result, 2)

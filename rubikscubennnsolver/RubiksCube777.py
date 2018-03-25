@@ -2169,7 +2169,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     def group_inside_UD_centers(self):
         fake_555 = self.create_fake_555_from_inside_centers()
-        fake_555.group_centers_stage_UD()
+        fake_555.stage_oblique_edges_UD()
 
         for step in fake_555.solution:
 
@@ -2356,7 +2356,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     def group_outside_UD_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
-        fake_666.group_centers_stage_UD()
+        fake_666.stage_oblique_edges_UD()
 
         for step in fake_666.solution:
 
@@ -2370,7 +2370,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     def group_outside_LR_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
-        fake_666.group_centers_stage_LR()
+        fake_666.stage_oblique_edges_LR()
 
         for step in fake_666.solution:
 

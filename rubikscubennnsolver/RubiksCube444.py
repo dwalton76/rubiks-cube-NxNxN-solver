@@ -241,26 +241,6 @@ lookup-table-4x4x4-step13-FB-centers-stage.txt
 
 Total: 735,471 entries
 '''
-class LookupTable444UDCentersStage(LookupTable):
-
-    def __init__(self, parent):
-
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step11-UD-centers-stage.txt',
-            'f0000f',
-            linecount=735471,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in centers_444])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
 class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
 
     def __init__(self, parent):
@@ -279,24 +259,6 @@ class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
         return int(result, 2)
 
 
-class LookupTable444LRCentersStage(LookupTable):
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step12-LR-centers-stage.txt',
-            '0f0f00',
-            linecount=735471,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in centers_444])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
 class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
 
     def __init__(self, parent):
@@ -313,25 +275,6 @@ class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
         result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in centers_444])
         return int(result, 2)
 
-
-
-class LookupTable444FBCentersStage(LookupTable):
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step13-FB-centers-stage.txt',
-            '00f0f0',
-            linecount=735471,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('F', 'B') else '0' for x in centers_444])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
 
 class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
 
@@ -724,10 +667,6 @@ class RubiksCube444(RubiksCube):
         # prune tables
 
         # Solving 50 cubes where you binary search through the prune table files takes 57s
-        #self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
-        #self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
-        #self.lt_FB_centers_stage = LookupTable444FBCentersStage(self)
-
         # Solving 50 cubes using the cost-only tables takes 30s!!
         self.lt_UD_centers_stage = LookupTable444UDCentersStageCostOnly(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStageCostOnly(self)

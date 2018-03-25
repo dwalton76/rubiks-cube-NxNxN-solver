@@ -213,7 +213,7 @@ class NoEdgeSolution(Exception):
     pass
 
 
-class LookupTable555UDTCenterStage(LookupTable):
+class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
     """
     There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
     We cannot build a table that large so we will build it 7 moves deep and use
@@ -236,24 +236,6 @@ class LookupTable555UDTCenterStage(LookupTable):
     """
 
     def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
-            'f0000f',
-            linecount=735471,
-            max_depth=8)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in t_centers_555])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
-
-    def __init__(self, parent):
         LookupTableCostOnly.__init__(
             self,
             parent,
@@ -268,7 +250,7 @@ class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
         return int(result, 2)
 
 
-class LookupTable555UDXCenterStage(LookupTable):
+class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
     """
     lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
     ============================================================
@@ -283,25 +265,6 @@ class LookupTable555UDXCenterStage(LookupTable):
 
     Total: 735,471 entries
     """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
-            'f0000f',
-            linecount=735471,
-            max_depth=8)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in x_centers_555])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
-class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
 
     def __init__(self, parent):
         LookupTableCostOnly.__init__(
@@ -912,11 +875,8 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
-        # 50 cubes took 2m 10s
-        #self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
-        #self.lt_UD_X_centers_stage = LookupTable555UDXCenterStage(self)
-
-        # 50 cubes took 1m 33s
+        # 50 cubes took 2m 10s without CostOnly
+        # 50 cubes took 1m 33s with CostOnly
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStageCostOnly(self)
         self.lt_UD_X_centers_stage = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)

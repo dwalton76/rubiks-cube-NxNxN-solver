@@ -518,7 +518,7 @@ class LookupTable(object):
 
 class LookupTableCostOnly(LookupTable):
 
-    def __init__(self, parent, filename, state_target, linecount, max_depth=None):
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.filename = filename
@@ -549,17 +549,6 @@ class LookupTableCostOnly(LookupTable):
             log.warning("gunzip %s" % self.filename_gz)
             call(['gunzip', self.filename_gz])
 
-        '''
-        # Find the state_width for the entries in our .txt file
-        with open(self.filename, 'r') as fh:
-            first_line = next(fh)
-            self.width = len(first_line)
-            (state, steps) = first_line.split(':')
-            self.state_width = len(state)
-
-        self.hex_format = '%' + "0%dx" % self.state_width
-        '''
-
         self.filename_exists = True
 
         if isinstance(state_target, tuple):
@@ -570,19 +559,42 @@ class LookupTableCostOnly(LookupTable):
             self.state_target = set((state_target, ))
 
         self.cache = {}
+        self.fh_txt_seek_calls = 0
+        self.fh_txt = None
 
-        with open(self.filename, 'r') as fh:
-            for line in fh:
-                self.content = line
-        self.fh_txt_seek_calls = 1
+        # Some cost-only tables are 2^32 characters, we do not want to read a 4G
+        # string into memory so for those we will seek()/read() through the file.
+        # We do not have to binary_search() though so that cuts way down on the
+        # number of reads.
+        if load_string:
+            with open(self.filename, 'r') as fh:
+                for line in fh:
+                    self.content = line
+            self.fh_txt_seek_calls += 1
+        else:
+            # 'rb' mode is about 3x faster than 'r' mode
+            self.fh_txt = open(self.filename, mode='rb')
+            self.content = None
 
     def steps_cost(self, state_to_find=None):
 
         if state_to_find is None:
             state_to_find = self.state()
 
-        # state_to_find is an integer, there is one byte in the file for each possible state
-        return int(self.content[state_to_find])
+        # state_to_find is an integer, there is a one byte hex character in the file for each possible state.
+        # This hex character is the number of steps required to solve the corresponding state.
+        if self.content is None:
+            self.fh_txt.seek(state_to_find)
+            result = int(self.fh_txt.read(1).decode('utf-8'), 16)
+
+            #if result == 0:
+            #    raise Exception("%s: table is hosed...result for %d is 0" % (self, state_to_find))
+
+            self.fh_txt_seek_calls += 1
+            return result
+
+        else:
+            return int(self.content[state_to_find], 16)
 
 
 class LookupTableIDA(LookupTable):
@@ -599,6 +611,14 @@ class LookupTableIDA(LookupTable):
         for x in moves_all:
             if x not in moves_illegal:
                 self.moves_all.append(x)
+
+    def ida_heuristic_total(self):
+        total = 0
+
+        for pt in self.prune_tables:
+            total += pt.heuristic()
+
+        return total
 
     def ida_heuristic(self):
         cost_to_goal = 0
@@ -635,6 +655,7 @@ class LookupTableIDA(LookupTable):
 
     def search_complete(self, state, steps_to_here):
 
+        #log.info("%s: FOO %s" % (self, state))
         if self.ida_all_the_way:
             if state not in self.state_target:
                 return False
@@ -702,9 +723,11 @@ class LookupTableIDA(LookupTable):
             #log.info("%s: IDA found match %d steps in, %s, lt_state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
             #         (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             log.info("%s: %d seek calls" % (self, self.fh_txt_seek_calls))
+            self.fh_txt_seek_calls = 0
 
             for pt in self.prune_tables:
                 log.info("%s: %d seek calls" % (pt, pt.fh_txt_seek_calls))
+                pt.fh_txt_seek_calls = 0
 
             log.info("%s: IDA found match %d steps in %s, lt_state %s, f_cost %d (%d + %d)" %
                      (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
@@ -832,6 +855,7 @@ class LookupTableIDA(LookupTable):
             raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
 
         log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold))
+        total_ida_count = 0
 
         for threshold in range(min_ida_threshold, max_ida_threshold+1):
             steps_to_here = []
@@ -840,17 +864,21 @@ class LookupTableIDA(LookupTable):
             self.explored = {}
 
             (f_cost, found_solution) = self.ida_search(steps_to_here, threshold, None, self.original_state[:])
+            total_ida_count += self.ida_count
 
             if found_solution:
                 end_time1 = dt.datetime.now()
-                log.info("%s: IDA threshold %d, explored %d branches, took %s (%s total)" %
+                log.info("%s: IDA threshold %d, explored %d nodes, took %s (%s total)" %
                     (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
                      pretty_time(end_time1 - start_time0)))
+                delta = end_time1 - start_time0
+                nodes_per_sec = int(total_ida_count / delta.total_seconds())
+                log.info("%s: IDA explored %d nodes in %s, %d nodes-per-sec" % (self, total_ida_count, delta, nodes_per_sec))
                 return True
             else:
                 end_time1 = dt.datetime.now()
-                log.info("%s: IDA threshold %d, explored %d branches, took %s" %
+                log.info("%s: IDA threshold %d, explored %d nodes, took %s" %
                     (self, threshold, self.ida_count, pretty_time(end_time1 - start_time1)))
 
         # The only time we will get here is when max_ida_threshold is a low number.  It will be up to the caller to:

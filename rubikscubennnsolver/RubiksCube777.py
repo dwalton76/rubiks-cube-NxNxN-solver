@@ -2369,7 +2369,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     def group_outside_LR_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
-        fake_666.lt_LR_oblique_edge_pairing.solve()
+        fake_666.group_centers_stage_LR()
 
         for step in fake_666.solution:
 
@@ -2389,6 +2389,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         log.info("")
         log.info("")
         log.info("")
+        # dwalton
 
         # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
         self.group_outside_UD_oblique_edges()

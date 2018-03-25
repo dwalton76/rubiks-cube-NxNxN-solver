@@ -9,8 +9,6 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableCostOnly,
     LookupTableIDA,
 )
-
-from rubikscubennnsolver.rotate_xxx import rotate_555
 import itertools
 import logging
 
@@ -33,6 +31,51 @@ LFRB_centers_555 = (
     57, 58, 59, 62, 63, 64, 67, 68, 69,
     82, 83, 84, 87, 88, 89, 92, 93, 94,
     107, 108, 109, 112, 113, 114, 117, 118, 119
+)
+
+edge_orbit_0_555 = (
+    2, 4, 10, 20, 24, 22, 16, 6,
+    27, 29, 35, 45, 49, 47, 41, 31,
+    52, 54, 60, 70, 74, 72, 66, 56,
+    77, 79, 85, 95, 99, 97, 91, 81,
+    102, 104, 110, 120, 124, 122, 116, 106,
+    127, 129, 135, 145, 149, 147, 141, 131
+)
+
+edge_orbit_1_555 = (
+    3, 15, 23, 11,
+    28, 40, 48, 36,
+    53, 65, 73, 61,
+    78, 90, 98, 86,
+    103, 115, 123, 111,
+    128, 140, 148, 136
+)
+
+corners_555 = (
+    1, 5, 21, 25,
+    26, 30, 46, 50,
+    51, 55, 71, 75,
+    76, 80, 96, 100,
+    101, 105, 121, 125,
+    126, 130, 146, 150
+)
+
+x_centers_555 = (
+    7, 9, 17, 19,
+    32, 34, 42, 44,
+    57, 59, 67, 69,
+    82, 84, 92, 94,
+    107, 109, 117, 119,
+    132, 134, 142, 144
+)
+
+t_centers_555 = (
+    8, 12, 14, 18,
+    33, 37, 39, 43,
+    58, 62, 64, 68,
+    83, 87, 89, 93,
+    108, 112, 114, 118,
+    133, 137, 139, 143
 )
 
 edges_555 = (
@@ -203,40 +246,7 @@ class LookupTable555UDTCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = [
-            # Upper
-            parent_state[8],
-            parent_state[12], parent_state[14],
-            parent_state[18],
-
-            # Left
-            parent_state[33],
-            parent_state[37], parent_state[39],
-            parent_state[43],
-
-            # Front
-            parent_state[58],
-            parent_state[62], parent_state[64],
-            parent_state[68],
-
-            # Right
-            parent_state[83],
-            parent_state[87], parent_state[89],
-            parent_state[93],
-
-            # Back
-            parent_state[108],
-            parent_state[112], parent_state[114],
-            parent_state[118],
-
-            # Down
-            parent_state[133],
-            parent_state[137], parent_state[139],
-            parent_state[143]
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in t_centers_555])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -254,39 +264,7 @@ class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
 
     def state(self):
         parent_state = self.parent.state
-        result = [
-            # Upper
-            parent_state[8],
-            parent_state[12], parent_state[14],
-            parent_state[18],
-
-            # Left
-            parent_state[33],
-            parent_state[37], parent_state[39],
-            parent_state[43],
-
-            # Front
-            parent_state[58],
-            parent_state[62], parent_state[64],
-            parent_state[68],
-
-            # Right
-            parent_state[83],
-            parent_state[87], parent_state[89],
-            parent_state[93],
-
-            # Back
-            parent_state[108],
-            parent_state[112], parent_state[114],
-            parent_state[118],
-
-            # Down
-            parent_state[133],
-            parent_state[137], parent_state[139],
-            parent_state[143]
-        ]
-
-        result = ''.join(['1' if x in ('U', 'D') else '0' for x in result])
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in t_centers_555])
         return int(result, 2)
 
 
@@ -317,34 +295,7 @@ class LookupTable555UDXCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = [
-            # Upper
-            parent_state[7], parent_state[9],
-            parent_state[17], parent_state[19],
-
-            # Left
-            parent_state[32], parent_state[34],
-            parent_state[42], parent_state[44],
-
-            # Front
-            parent_state[57], parent_state[59],
-            parent_state[67], parent_state[69],
-
-            # Right
-            parent_state[82], parent_state[84],
-            parent_state[92], parent_state[94],
-
-            # Back
-            parent_state[107], parent_state[109],
-            parent_state[117], parent_state[119],
-
-            # Down
-            parent_state[132], parent_state[134],
-            parent_state[142], parent_state[144]
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in x_centers_555])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -363,33 +314,7 @@ class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
 
     def state(self):
         parent_state = self.parent.state
-        result = [
-            # Upper
-            parent_state[7], parent_state[9],
-            parent_state[17], parent_state[19],
-
-            # Left
-            parent_state[32], parent_state[34],
-            parent_state[42], parent_state[44],
-
-            # Front
-            parent_state[57], parent_state[59],
-            parent_state[67], parent_state[69],
-
-            # Right
-            parent_state[82], parent_state[84],
-            parent_state[92], parent_state[94],
-
-            # Back
-            parent_state[107], parent_state[109],
-            parent_state[117], parent_state[119],
-
-            # Down
-            parent_state[132], parent_state[134],
-            parent_state[142], parent_state[144]
-        ]
-
-        result = ''.join(['1' if x in ('U', 'D') else '0' for x in result])
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in x_centers_555])
 
         return int(result, 2)
 
@@ -430,41 +355,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[7], parent_state[8], parent_state[9],
-            parent_state[12], parent_state[13], parent_state[14],
-            parent_state[17], parent_state[18], parent_state[19],
-
-            # Left
-            parent_state[32], parent_state[33], parent_state[34],
-            parent_state[37], parent_state[38], parent_state[39],
-            parent_state[42], parent_state[43], parent_state[44],
-
-            # Front
-            parent_state[57], parent_state[58], parent_state[59],
-            parent_state[62], parent_state[63], parent_state[64],
-            parent_state[67], parent_state[68], parent_state[69],
-
-            # Right
-            parent_state[82], parent_state[83], parent_state[84],
-            parent_state[87], parent_state[88], parent_state[89],
-            parent_state[92], parent_state[93], parent_state[94],
-
-            # Back
-            parent_state[107], parent_state[108], parent_state[109],
-            parent_state[112], parent_state[113], parent_state[114],
-            parent_state[117], parent_state[118], parent_state[119],
-
-            # Down
-            parent_state[132], parent_state[133], parent_state[134],
-            parent_state[137], parent_state[138], parent_state[139],
-            parent_state[142], parent_state[143], parent_state[144]
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in centers_555])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -500,30 +391,7 @@ class LookupTableIDA555LRCentersStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = [
-            # Left
-            parent_state[32], parent_state[33], parent_state[34],
-            parent_state[37], parent_state[38], parent_state[39],
-            parent_state[42], parent_state[43], parent_state[44],
-
-            # Front
-            parent_state[57], parent_state[58], parent_state[59],
-            parent_state[62], parent_state[63], parent_state[64],
-            parent_state[67], parent_state[68], parent_state[69],
-
-            # Right
-            parent_state[82], parent_state[83], parent_state[84],
-            parent_state[87], parent_state[88], parent_state[89],
-            parent_state[92], parent_state[93], parent_state[94],
-
-            # Back
-            parent_state[107], parent_state[108], parent_state[109],
-            parent_state[112], parent_state[113], parent_state[114],
-            parent_state[117], parent_state[118], parent_state[119]
-        ]
-
-        result = ['1' if x in ('L', 'R') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in LFRB_centers_555])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -566,40 +434,7 @@ class LookupTableULCentersSolve(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = [
-            # Upper
-            parent_state[7], parent_state[8], parent_state[9],
-            parent_state[12], parent_state[13], parent_state[14],
-            parent_state[17], parent_state[18], parent_state[19],
-
-            # Left
-            parent_state[32], parent_state[33], parent_state[34],
-            parent_state[37], parent_state[38], parent_state[39],
-            parent_state[42], parent_state[43], parent_state[44],
-
-            # Front
-            parent_state[57], parent_state[58], parent_state[59],
-            parent_state[62], parent_state[63], parent_state[64],
-            parent_state[67], parent_state[68], parent_state[69],
-
-            # Right
-            parent_state[82], parent_state[83], parent_state[84],
-            parent_state[87], parent_state[88], parent_state[89],
-            parent_state[92], parent_state[93], parent_state[94],
-
-            # Back
-            parent_state[107], parent_state[108], parent_state[109],
-            parent_state[112], parent_state[113], parent_state[114],
-            parent_state[117], parent_state[118], parent_state[119],
-
-            # Down
-            parent_state[132], parent_state[133], parent_state[134],
-            parent_state[137], parent_state[138], parent_state[139],
-            parent_state[142], parent_state[143], parent_state[144]
-        ]
-
-        result = ['1' if x in ('U', 'L') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if parent_state[x] in ('U', 'L') else '0' for x in centers_555])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -642,40 +477,7 @@ class LookupTableUFCentersSolve(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = [
-            # Upper
-            parent_state[7], parent_state[8], parent_state[9],
-            parent_state[12], parent_state[13], parent_state[14],
-            parent_state[17], parent_state[18], parent_state[19],
-
-            # Left
-            parent_state[32], parent_state[33], parent_state[34],
-            parent_state[37], parent_state[38], parent_state[39],
-            parent_state[42], parent_state[43], parent_state[44],
-
-            # Front
-            parent_state[57], parent_state[58], parent_state[59],
-            parent_state[62], parent_state[63], parent_state[64],
-            parent_state[67], parent_state[68], parent_state[69],
-
-            # Right
-            parent_state[82], parent_state[83], parent_state[84],
-            parent_state[87], parent_state[88], parent_state[89],
-            parent_state[92], parent_state[93], parent_state[94],
-
-            # Back
-            parent_state[107], parent_state[108], parent_state[109],
-            parent_state[112], parent_state[113], parent_state[114],
-            parent_state[117], parent_state[118], parent_state[119],
-
-            # Down
-            parent_state[132], parent_state[133], parent_state[134],
-            parent_state[137], parent_state[138], parent_state[139],
-            parent_state[142], parent_state[143], parent_state[144]
-        ]
-
-        result = ['1' if x in ('U', 'F') else '0' for x in result]
-        result = ''.join(result)
+        result = ''.join(['1' if parent_state[x] in ('U', 'F') else '0' for x in centers_555])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -718,39 +520,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        result = [
-            # Upper
-            parent_state[7], parent_state[8], parent_state[9],
-            parent_state[12], parent_state[13], parent_state[14],
-            parent_state[17], parent_state[18], parent_state[19],
-
-            # Left
-            parent_state[32], parent_state[33], parent_state[34],
-            parent_state[37], parent_state[38], parent_state[39],
-            parent_state[42], parent_state[43], parent_state[44],
-
-            # Front
-            parent_state[57], parent_state[58], parent_state[59],
-            parent_state[62], parent_state[63], parent_state[64],
-            parent_state[67], parent_state[68], parent_state[69],
-
-            # Right
-            parent_state[82], parent_state[83], parent_state[84],
-            parent_state[87], parent_state[88], parent_state[89],
-            parent_state[92], parent_state[93], parent_state[94],
-
-            # Back
-            parent_state[107], parent_state[108], parent_state[109],
-            parent_state[112], parent_state[113], parent_state[114],
-            parent_state[117], parent_state[118], parent_state[119],
-
-            # Down
-            parent_state[132], parent_state[133], parent_state[134],
-            parent_state[137], parent_state[138], parent_state[139],
-            parent_state[142], parent_state[143], parent_state[144]
-        ]
-
-        result = ''.join(result)
+        result = ''.join([parent_state[x] for x in centers_555])
         return result
 
 
@@ -1119,48 +889,13 @@ class RubiksCube555(RubiksCube):
         return self._phase
 
     def sanity_check(self):
-        edge_orbit_0 = (2, 4, 10, 20, 24, 22, 16, 6,
-                        27, 29, 35, 45, 49, 47, 41, 31,
-                        52, 54, 60, 70, 74, 72, 66, 56,
-                        77, 79, 85, 95, 99, 97, 91, 81,
-                        102, 104, 110, 120, 124, 122, 116, 106,
-                        127, 129, 135, 145, 149, 147, 141, 131)
-
-        edge_orbit_1 = (3, 15, 23, 11,
-                        28, 40, 48, 36,
-                        53, 65, 73, 61,
-                        78, 90, 98, 86,
-                        103, 115, 123, 111,
-                        128, 140, 148, 136)
-
-        corners = (1, 5, 21, 25,
-                   26, 30, 46, 50,
-                   51, 55, 71, 75,
-                   76, 80, 96, 100,
-                   101, 105, 121, 125,
-                   126, 130, 146, 150)
-
-        x_centers = (7, 9, 17, 19,
-                     32, 34, 42, 44,
-                     57, 59, 67, 69,
-                     82, 84, 92, 94,
-                     107, 109, 117, 119,
-                     132, 134, 142, 144)
-
-        t_centers = (8, 12, 14, 18,
-                     33, 37, 39, 43,
-                     58, 62, 64, 68,
-                     83, 87, 89, 93,
-                     108, 112, 114, 118,
-                     133, 137, 139, 143)
-
         centers = (13, 38, 63, 88, 113, 138)
 
-        self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
-        self._sanity_check('edge-orbit-1', edge_orbit_1, 4)
-        self._sanity_check('corners', corners, 4)
-        self._sanity_check('x-centers', x_centers, 4)
-        self._sanity_check('t-centers', t_centers, 4)
+        self._sanity_check('edge-orbit-0', edge_orbit_0_555, 8)
+        self._sanity_check('edge-orbit-1', edge_orbit_1_555, 4)
+        self._sanity_check('corners', corners_555, 4)
+        self._sanity_check('x-centers', x_centers_555, 4)
+        self._sanity_check('t-centers', t_centers_555, 4)
         self._sanity_check('centers', centers, 1)
 
     def rotate(self, step):

@@ -291,3 +291,9 @@ cost-only tables
 ================
 same move count
 Took 1m 33s
+
+
+list comp improvements
+======================
+same move count
+Took 1m 22s

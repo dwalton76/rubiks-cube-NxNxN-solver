@@ -180,7 +180,6 @@ class LookupTable(object):
         self.max_depth = max_depth
         self.avoid_oll = False
         self.avoid_pll = False
-        self.preloaded_cache = False
         self.preloaded_state_set = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
@@ -218,47 +217,11 @@ class LookupTable(object):
         else:
             self.state_target = set((state_target, ))
 
-        self.cache = {}
-
         # 'rb' mode is about 3x faster than 'r' mode
         self.fh_txt = open(self.filename, mode='rb')
 
     def __str__(self):
         return self.desc
-
-    def preload_cache(self):
-        """
-        This is experimental, it would typically be used to load the
-        contents of a prune table. For solving one cube it probably
-        doesn't buy you much but if one were to make a daemon that
-        loads all of the prune tables up front (that would take a lot
-        of memory) it might be worth it then.
-        """
-        log.info("%s: preload_cache start" % self)
-
-        self.cache = {}
-        for line in self.fh_txt:
-            (state, steps) = line.decode('utf-8').rstrip().split(':')
-            self.cache[state] = steps.split()
-
-        log.info("%s: preload_cache end" % self)
-        self.preloaded_cache = True
-
-    def preload_state_set(self):
-        """
-        This is experimental, it would typically be used to load only the keys
-        of an IDA lookup table. This would allow you to avoid doing a binary
-        search of the huge IDA lookup tables for keys that are not there.
-        """
-        log.info("%s: preload_state_set start" % self)
-
-        self.state_set = set()
-        for line in self.fh_txt:
-            (state, _) = line.decode('utf-8').strip().split(':')
-            self.state_set.add(state)
-
-        log.info("%s: preload_state_set end" % self)
-        self.preloaded_state_set = True
 
     def binary_search(self, state_to_find):
         first = 0
@@ -298,38 +261,15 @@ class LookupTable(object):
         if state_to_find in self.state_target:
             return None
 
-        if self.preloaded_cache:
-            return self.cache.get(state_to_find)
+        line = self.binary_search(state_to_find)
 
-        elif self.preloaded_state_set:
-
-            if state_to_find in self.state_set:
-                line = self.binary_search(state_to_find)
-
-                if line:
-                    (state, steps) = line.strip().split(':')
-                    return steps.split()
-                else:
-                    raise Exception("should not be here")
-            else:
-                return None
+        if line:
+            (state, steps) = line.strip().split(':')
+            steps_list = steps.split()
+            return steps_list
 
         else:
-            try:
-                return self.cache[state_to_find]
-            except KeyError:
-
-                line = self.binary_search(state_to_find)
-
-                if line:
-                    (state, steps) = line.strip().split(':')
-                    steps_list = steps.split()
-                    self.cache[state_to_find] = steps_list
-                    return steps_list
-
-                else:
-                    self.cache[state_to_find] = None
-                    return None
+            return None
 
     def steps_cost(self, state_to_find=None):
 
@@ -529,7 +469,6 @@ class LookupTableCostOnly(LookupTable):
         self.max_depth = max_depth
         self.avoid_oll = False
         self.avoid_pll = False
-        self.preloaded_cache = False
         self.preloaded_state_set = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
@@ -558,7 +497,6 @@ class LookupTableCostOnly(LookupTable):
         else:
             self.state_target = set((state_target, ))
 
-        self.cache = {}
         self.fh_txt_seek_calls = 0
         self.fh_txt = None
 

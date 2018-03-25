@@ -24,6 +24,9 @@ moves_6x6x6 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
 solved_6x6x6 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 
+set_UD = set(('U', 'D'))
+set_LR = set(('L', 'R'))
+
 centers_666 = (
     8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29,
     44, 45, 46, 47, 50, 51, 52, 53, 56, 57, 58, 59, 62, 63, 64, 65,
@@ -125,6 +128,12 @@ UFBD_inner_x_centers_right_oblique_edges_666 = (
     190, 194, 203, 207
 )
 
+UFBD_oblique_edges_666 = (
+    9, 10, 14, 17, 20, 23, 27, 28,
+    81, 82, 86, 89, 92, 95, 99, 100,
+    153, 154, 158, 161, 164, 167, 171, 172,
+    189, 190, 194, 197, 200, 203, 207, 208
+)
 
 
 class LookupTable666UDInnerXCentersLeftObliqueEdgesCostOnly(LookupTableCostOnly):
@@ -158,7 +167,7 @@ class LookupTable666UDInnerXCentersLeftObliqueEdgesCostOnly(LookupTableCostOnly)
             linecount=165636900,
             max_depth=13,
             load_string=False)
-        self.target_faces = set(('U', 'D'))
+        self.target_faces = set_UD
 
     def state(self):
         parent_state = self.parent.state
@@ -167,7 +176,7 @@ class LookupTable666UDInnerXCentersLeftObliqueEdgesCostOnly(LookupTableCostOnly)
         return int(result, 2)
 
 
-class LookupTable666UDObliqueEdgePairing(LookupTable):
+class LookupTable666UDObliqueEdgePairingCostOnly(LookupTableCostOnly):
     """
     lookup-table-6x6x6-step12-UD-oblique-edge-pairing.txt
     =====================================================
@@ -179,36 +188,30 @@ class LookupTable666UDObliqueEdgePairing(LookupTable):
     6 steps has 2,469,430 entries (1 percent, 12.57x previous step)
     7 steps has 23,998,264 entries (14 percent, 9.72x previous step)
     8 steps has 98,531,134 entries (59 percent, 4.11x previous step)
-    9 steps has 31,859,650 entries (19 percent, 0.32x previous step)
-    10 steps has 8,508,746 entries (5 percent, 0.27x previous step)
-    11 steps has 54,228 entries (0 percent, 0.01x previous step)
-    12 steps has 339 entries (0 percent, 0.01x previous step)
-    13 steps has 2 entries (0 percent, 0.01x previous step)
+    9 steps has 40,379,696 entries (24 percent, 0.41x previous step)
+    10 steps has 46,320 entries (0 percent, 0.00x previous step)
 
-    Total: 165,633,849 entries
-    Average: 8.117434 moves
-
-    TODO this is missing about 3k entries (kids machine ran out of drive space) it
-    is rebuilding now on the kids machine
+    Total: 165,636,900 entries
+    Average: 8.065699 moves
     """
 
     def __init__(self, parent):
-        LookupTable.__init__(
+        LookupTableCostOnly.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step12-UD-oblique-edge-pairing.txt',
-            'ff00000000ff',
-            linecount=165633849,
-            max_depth=13)
-        self.target_faces = set(('U', 'D'))
+            'lookup-table-6x6x6-step12-UD-oblique-edge-pairing.cost-only.txt',
+            'ff0000ff',
+            linecount=165636900,
+            max_depth=10,
+            load_string=False)
+        self.target_faces = set_UD
 
     def state(self):
         parent_state = self.parent.state
         target_faces = self.target_faces
-        result = ''.join(['1' if parent_state[x] in target_faces else '0' for x in oblique_edges_666])
+        result = ''.join(['1' if parent_state[x] in target_faces else '0' for x in UFBD_oblique_edges_666])
 
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        return int(result, 2)
 
 
 class LookupTable666UDInnerXCentersRightObliqueEdgesCostOnly(LookupTableCostOnly):
@@ -242,7 +245,7 @@ class LookupTable666UDInnerXCentersRightObliqueEdgesCostOnly(LookupTableCostOnly
             linecount=165636900,
             max_depth=13,
             load_string=False)
-        self.target_faces = set(('U', 'D'))
+        self.target_faces = set_UD
 
     def state(self):
         parent_state = self.parent.state
@@ -280,18 +283,18 @@ class LookupTableIDA666UDCentersStage(LookupTableIDA):
              "3Uw", "3Uw'", "3Dw", "3Dw'", "Uw", "Uw'", "Dw", "Dw'"),    # used for "fake" move to speed up IDA
 
             # prune tables
-            #(parent.lt_UD_inner_x_center_left_oblique_edge,
-            # parent.lt_UD_inner_x_center_right_oblique_edge,
-            # parent.lt_UD_oblique_edge_pairing),
             (parent.lt_UD_inner_x_center_left_oblique_edge,
-             parent.lt_UD_inner_x_center_right_oblique_edge),
+             parent.lt_UD_inner_x_center_right_oblique_edge,
+             parent.lt_UD_oblique_edge_pairing),
+            #(parent.lt_UD_inner_x_center_left_oblique_edge,
+            # parent.lt_UD_inner_x_center_right_oblique_edge),
 
             linecount=51220606, # 7-deep
             max_depth=7)
             #linecount=3602896, # 6-deep
             #max_depth=6)
 
-        self.target_faces = set(('U', 'D'))
+        self.target_faces = set_UD
 
     def state(self):
         parent_state = self.parent.state
@@ -830,7 +833,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             return
         self.lt_init_called = True
 
-        # self.lt_UD_oblique_edge_pairing = LookupTable666UDObliqueEdgePairing(self)
+        self.lt_UD_oblique_edge_pairing = LookupTable666UDObliqueEdgePairingCostOnly(self)
         self.lt_UD_inner_x_center_left_oblique_edge = LookupTable666UDInnerXCentersLeftObliqueEdgesCostOnly(self)
         self.lt_UD_inner_x_center_right_oblique_edge = LookupTable666UDInnerXCentersRightObliqueEdgesCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA666UDCentersStage(self)
@@ -1303,10 +1306,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         """
         Stage UD inner x-centers and oblique edges. The 7x7x7 uses this that is why it is in its own method.
         """
-        # self.lt_UD_oblique_edge_pairing.target_faces = set(('U', 'D'))
-        self.lt_UD_inner_x_center_left_oblique_edge.target_faces = set(('U', 'D'))
-        self.lt_UD_inner_x_center_right_oblique_edge.target_faces = set(('U', 'D'))
-        self.lt_UD_centers_stage.target_faces = set(('U', 'D'))
+        self.lt_UD_oblique_edge_pairing.target_faces = set_UD
+        self.lt_UD_inner_x_center_left_oblique_edge.target_faces = set_UD
+        self.lt_UD_inner_x_center_right_oblique_edge.target_faces = set_UD
+        self.lt_UD_centers_stage.target_faces = set_UD
 
         # See the comments where self.lt_UD_oblique_edge_pairing is declared for
         # an explanation on what is happening here
@@ -1358,10 +1361,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # oblique-edges...it is the exact same problem. This in turn
         # stages FB inner-x-centers and oblique-edges
         self.rotate("z")
-        # self.lt_UD_oblique_edge_pairing.target_faces = set(('L', 'R'))
-        self.lt_UD_inner_x_center_left_oblique_edge.target_faces = set(('L', 'R'))
-        self.lt_UD_inner_x_center_right_oblique_edge.target_faces = set(('L', 'R'))
-        self.lt_UD_centers_stage.target_faces = set(('L', 'R'))
+        self.lt_UD_oblique_edge_pairing.target_faces = set_LR
+        self.lt_UD_inner_x_center_left_oblique_edge.target_faces = set_LR
+        self.lt_UD_inner_x_center_right_oblique_edge.target_faces = set_LR
+        self.lt_UD_centers_stage.target_faces = set_LR
 
         # rotate the cube to put the most LR squares on sides UD
         LR_count_on_UD = 0

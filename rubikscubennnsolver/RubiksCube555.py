@@ -807,6 +807,46 @@ class LookupTable555TCenterSolve(LookupTable):
         return result
 
 
+class LookupTable555LRTCenterSolve(LookupTable):
+    """
+    Only used by 7x7x7 to speed up its step80 IDA search
+
+    lookup-table-5x5x5-step40-LR-t-centers-solve.txt
+    ================================================
+    1 steps has 5 entries (7 percent, 0.00x previous step)
+    2 steps has 18 entries (25 percent, 3.60x previous step)
+    3 steps has 34 entries (48 percent, 1.89x previous step)
+    4 steps has 13 entries (18 percent, 0.38x previous step)
+
+    Total: 70 entries
+    Average: 2.785714 moves
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step40-LR-t-centers-solve.txt',
+            'LLLLRRRR',
+            linecount=70)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = [
+            # Left
+            parent_state[33],
+            parent_state[37], parent_state[39],
+            parent_state[43],
+
+            # Right
+            parent_state[83],
+            parent_state[87], parent_state[89],
+            parent_state[93],
+        ]
+
+        result = ''.join(result)
+        return result
+
+
 class RubiksCube555(RubiksCube):
     """
     5x5x5 strategy
@@ -892,6 +932,8 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
+
+        self.lt_LR_t_centers_solve = LookupTable555LRTCenterSolve(self)
 
     def high_low_state(self, x, y, state_x, state_y, wing_str):
         """

@@ -4,6 +4,7 @@ from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6, moves_6x6x6
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -1213,8 +1214,7 @@ class LookupTable777LRSolveObliqueEdge(LookupTable):
             'x', parent_state[185], parent_state[186], parent_state[187], 'x'
         ]
 
-        result = ['x' if x in ('U', 'D', 'F', 'B') else x for x in result]
-        result = ''.join(result)
+        result = ''.join(['x' if x in ('U', 'D', 'F', 'B') else x for x in result])
 
         return result
 
@@ -1342,8 +1342,7 @@ class LookupTableIDA777LRSolveInnerCentersAndObliqueEdges(LookupTableIDA):
             'x', parent_state[185], parent_state[186], parent_state[187], 'x'
         ]
 
-        result = ['x' if x in ('U', 'D', 'F', 'B') else x for x in result]
-        result = ''.join(result)
+        result = ''.join(['x' if x in ('U', 'D', 'F', 'B') else x for x in result])
 
         return result
 
@@ -2011,6 +2010,29 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_LFRB_solve_inner_centers = LookupTableIDA777LFRBSolveInnerCenters(self)
         self.lt_LFRB_solve_inner_centers_and_oblique_edges = LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(self)
 
+    def create_fake_555_for_LR_t_centers(self):
+
+        # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.lt_init()
+
+        for x in range(1, 151):
+            fake_555.state[x] = 'x'
+
+        # Left
+        fake_555.state[33] = self.state[60]
+        fake_555.state[37] = self.state[72]
+        fake_555.state[39] = self.state[76]
+        fake_555.state[43] = self.state[88]
+
+        # Right
+        fake_555.state[83] = self.state[158]
+        fake_555.state[87] = self.state[170]
+        fake_555.state[89] = self.state[174]
+        fake_555.state[93] = self.state[186]
+
+        return fake_555
+
     def create_fake_555_from_inside_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
@@ -2489,6 +2511,23 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         log.info("")
         log.info("")
         log.info("")
+
+        # Solve the LR t-centers...this speeds up the step80 IDA a good bit because the centers of
+        # sides L and R do not get as scrambled while solving FB if LR t-centers are already solved.
+        fake_555 = self.create_fake_555_for_LR_t_centers()
+        fake_555.lt_LR_t_centers_solve.solve()
+
+        for step in fake_555.solution:
+            if step.startswith('5'):
+                step = '7' + step[1:]
+            elif step.startswith('3'):
+                step = '4' + step[1:]
+
+            self.rotate(step)
+
+        self.print_cube()
+        log.info("%s: LR outer t-centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
 
         # Test prune tables
         #self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge.solve()

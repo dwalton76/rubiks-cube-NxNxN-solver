@@ -2522,12 +2522,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                 step = '7' + step[1:]
             elif step.startswith('3'):
                 step = '4' + step[1:]
-
             self.rotate(step)
 
         self.print_cube()
         log.info("%s: LR outer t-centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
         # Test prune tables
         #self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge.solve()

@@ -2419,7 +2419,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
         self.group_outside_UD_oblique_edges()
         self.print_cube()
-        log.info("%s: Outside UD oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: Outside UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2432,10 +2432,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.print_cube()
         #sys.exit(0)
 
-        # Now pair the "inside" oblique edge with the already paired outside oblique edges...for UD
+        # Now stage the "inside" oblique UD edges with the already staged outside oblique UD edges
         self.lt_UD_oblique_edge_pairing.solve()
         self.print_cube()
-        log.info("%s: UD oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2444,7 +2444,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for LR
         self.group_inside_LR_centers()
         self.print_cube()
-        log.info("%s: post group_inside_LR_centers" % self)
+        log.info("%s: Inside LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2453,7 +2453,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # Uses 6x6x6 solver to pair the "outside" oblique edges for LR
         self.group_outside_LR_oblique_edges()
         self.print_cube()
-        log.info("%s: post group_outside_LR_oblique_edges" % self)
+        log.info("%s: Outside LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2466,10 +2466,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.print_cube()
         #sys.exit(0)
 
-        # Now pair the "inside" oblique edge with the already paired outside oblique edges...for LR
+        # Now stage the "inside" oblique LR edges with the already staged outside oblique LR edges
         self.lt_LR_oblique_edge_pairing.solve()
         self.print_cube()
-        log.info("%s: inner x-center and oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2484,7 +2484,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         self.lt_UD_solve_inner_centers_and_oblique_edges.solve()
         self.print_cube()
-        log.info("%s: UD inner-centers solved, UD oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: UD centers reduced to 5x5x5 centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #log.info("state: %s" % self.get_kociemba_string(True))
         log.info("")
         log.info("")

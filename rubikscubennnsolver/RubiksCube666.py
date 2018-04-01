@@ -258,13 +258,13 @@ class LookupTable666UDObliqueEdgesStage(LookupTableIDA):
     take on a 300Mhz EV3. I need to revisit this someday...we need a prune table
     that is larger than 735,471 to make this run in a reasonable amount of time.
 
-    Anyway, to speed this up I did something unusual here...I built the step20
+    Anyway, to speed this up I did something unusual here...I built the step10
     table but restricted moves so that UD obliques can only move to sides UFDB.
     The cube will be very scrambled though and there will be UD obliques on sides
     LR.  What I do is "fake move" these obliques to side UFDB so that I can use
-    the step20 table.  At that point there will only be UD obliques on sides ULDR
+    the step10 table.  At that point there will only be UD obliques on sides ULDR
     so I then do a rotate_y() one time to make LR free of UD obliques again. Then
-    I do another lookup in the step20 table.
+    I do another lookup in the step10 table.
 
     I only built the table to 7-deep, it would have 165 million entries if
     I built it the whole way out but that would be too large to check into
@@ -1286,7 +1286,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                     if not left_fake_move_count:
                         break
 
-        # dwalton
         if right_fake_move_count > 0:
             for square_index in (10, 23, 27, 14, 190, 203, 207, 194, 82, 95, 99, 86, 154, 167, 171, 158):
                 if self.state[square_index] not in ('U', 'D'):

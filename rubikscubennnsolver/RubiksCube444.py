@@ -412,7 +412,7 @@ class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
 
             if paired_edges_count >= 2:
 
-                if self.parent.center_solution_leads_to_oll_parity():
+                if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
                     self.parent.state = self.original_state[:]
                     self.parent.solution = self.original_solution[:]
                     log.info("%s: IDA found match but it leads to OLL" % self)
@@ -701,6 +701,12 @@ class RubiksCube444(RubiksCube):
         self.print_cube()
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
+
+        # If the centers were already staged we may not be able to avoid OLL when solving the centers
+        if self.get_solution_len_minus_rotates(self.solution) == 0:
+            self.lt_ULFRBD_centers_solve_pair_two_edges.avoid_oll = False
+        else:
+            self.lt_ULFRBD_centers_solve_pair_two_edges.avoid_oll = True
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #self.lt_ULFRBD_centers_solve.solve()

@@ -289,3 +289,31 @@ edges step110 table 11-deep
 4x4x4 max solution 66 steps (LRLRBRLUUDUBLDUUFDFDFRULFLFRBLBRFLLLFLBRFFRRURFURDLRUFLDLDUDLURFBURDDUBDLDBUBFBFBBBUBFRFBBDUDDRD)
 
 
+centers solve pair two edges (11-deep)
+======================================
+4x4x4 avg centers solution 18.48 steps
+4x4x4 avg edges solution 18.86 steps
+4x4x4 avg solution 58.24 steps
+4x4x4 min solution 54 steps (FBFBLLLFRURDLFFBDFUDLRFLLLRRFULFBDLRBRBDBDBBRRRRUUDUUBDRFDUDDLDUDUBUFFLUUUUDRRBBLRRLUBFLDFDFLBBF)
+4x4x4 max solution 63 steps (RRRBBBLDDUDFRUDRBURULLURBDDDFLRUDLBDFRRUBFLRFDUUDLBLLLFFFFUDDRRBFLLFDBBLDFRULUBLRFUUBDUFBRBFLFUB)
+
+The 11-deep table is 4.8G
+This took 1m 39s
+
+
+centers solve pair two edges (10-deep)
+======================================
+4x4x4 avg centers solution 18.48 steps
+4x4x4 avg edges solution 20.1 steps
+4x4x4 avg solution 59.5 steps
+4x4x4 min solution 55 steps (LDUFULBLULRFFFLLDRDLRDRDFDBFFLFRLDUBDBRBRLFDULUDBUBRRUDFLDLUDBBUBRRULURRLFUBBBFRDBLURFUBUFBFFDDR)
+4x4x4 max solution 68 steps (RRRBBBLDDUDFRUDRBURULLURBDDDFLRUDLBDFRRUBFLRFDUUDLBLLLFFFFUDDRRBFLLFDBBLDFRULUBLRFUUBDUFBRBFLFUB)
+
+The 10-deep table is 527M
+This took 1m 8s
+Eventually got this down to 57s via misc changes...not sure what
+
+
+using cost-only prune tables
+============================
+Same move counts as above but took 29.680s!!

@@ -4,11 +4,42 @@ from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6, moves_6x6x6
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
 moves_7x7x7 = moves_6x6x6
 solved_7x7x7 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+
+step80_centers_777 = (
+    # Left
+    59, 60, 61,
+    65, 66, 67, 68, 69,
+    72, 73, 74, 75, 76,
+    79, 80, 81, 82, 83,
+    87, 88, 89,
+
+    # Front
+    108, 109, 110,
+    114, 115, 116, 117, 118,
+    121, 122, 123, 124, 125,
+    128, 129, 130, 131, 132,
+    136, 137, 138,
+
+    # Right
+    157, 158, 159,
+    163, 164, 165, 166, 167,
+    170, 171, 172, 173, 174,
+    177, 178, 179, 180, 181,
+    185, 186, 187,
+
+    # Back
+    206, 207, 208,
+    212, 213, 214, 215, 216,
+    219, 220, 221, 222, 223,
+    226, 227, 228, 229, 230,
+    234, 235, 236,
+)
 
 
 class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
@@ -38,7 +69,8 @@ class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
             '462000000000000462',
-            linecount=735471)
+            linecount=735471,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -121,7 +153,8 @@ class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
             '891000000000000891',
-            linecount=735471)
+            linecount=735471,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -204,7 +237,8 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
             '30c00000000000030c',
-            linecount=735471)
+            linecount=735471,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -394,7 +428,8 @@ class LookupTable777LRObliqueEdgePairingMiddleOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
             '462000462000',
-            linecount=12870)
+            linecount=12870,
+            max_depth=10)
 
     def state(self):
         parent_state = self.parent.state
@@ -459,7 +494,8 @@ class LookupTable777LRObliqueEdgePairingLeftOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
             '891000891000',
-            linecount=12870)
+            linecount=12870,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -524,7 +560,8 @@ class LookupTable777LRObliqueEdgePairingRightOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt',
             '30c00030c000',
-            linecount=12870)
+            linecount=12870,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -670,7 +707,8 @@ class LookupTable777UDSolveInnerCentersAndObliqueEdgesCenterOnly(LookupTable):
             parent,
             'lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt',
             'xxxxxxUUUxxUxUxxUUUxxxxxxxxxxxxDDDxxDxDxxDDDxxxxxx',
-            linecount=4900)
+            linecount=4900,
+            max_depth=8)
 
     def state(self):
         parent_state = self.parent.state
@@ -787,7 +825,8 @@ class LookupTable777UDSolveInnerCentersAndObliqueEdgesEdgesOnly(LookupTable):
              'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxUUUx',
              'xDDDxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxUUUx',
              'xDDDxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxUUUx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -1031,7 +1070,8 @@ class LookupTable777LRSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
              'xxRxxxLLLxRLLLRxLLLxxxLxxxxLxxxRRRxRRRRLxRRRxxxLxx',
              'xxRxxxLLLxRLLLRxLLLxxxLxxxxRxxxRRRxLRRRLxRRRxxxLxx',
              'xxRxxxLLLxRLLLRxLLLxxxRxxxxLxxxRRRxLRRRLxRRRxxxLxx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -1152,7 +1192,8 @@ class LookupTable777LRSolveObliqueEdge(LookupTable):
              'xRRRxRxxxRRxxxRRxxxRxLLLxxLLLxRxxxLRxxxLRxxxLxLLLx',
              'xRRRxRxxxRRxxxRRxxxRxLLLxxRRRxLxxxLLxxxLLxxxLxLLLx',
              'xRRRxRxxxRRxxxRRxxxRxRRRxxLLLxLxxxLLxxxLLxxxLxLLLx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -1173,8 +1214,7 @@ class LookupTable777LRSolveObliqueEdge(LookupTable):
             'x', parent_state[185], parent_state[186], parent_state[187], 'x'
         ]
 
-        result = ['x' if x in ('U', 'D', 'F', 'B') else x for x in result]
-        result = ''.join(result)
+        result = ''.join(['x' if x in ('U', 'D', 'F', 'B') else x for x in result])
 
         return result
 
@@ -1302,8 +1342,7 @@ class LookupTableIDA777LRSolveInnerCentersAndObliqueEdges(LookupTableIDA):
             'x', parent_state[185], parent_state[186], parent_state[187], 'x'
         ]
 
-        result = ['x' if x in ('U', 'D', 'F', 'B') else x for x in result]
-        result = ''.join(result)
+        result = ''.join(['x' if x in ('U', 'D', 'F', 'B') else x for x in result])
 
         return result
 
@@ -1402,7 +1441,8 @@ class LookupTable777FBSolveInnerXCenterTCenterMiddleObliqueEdge(LookupTable):
              'xxBxxxFFFxBFFFBxFFFxxxFxxxxFxxxBBBxBBBBFxBBBxxxFxx',
              'xxBxxxFFFxBFFFBxFFFxxxFxxxxBxxxBBBxFBBBFxBBBxxxFxx',
              'xxBxxxFFFxBFFFBxFFFxxxBxxxxFxxxBBBxFBBBFxBBBxxxFxx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -1523,7 +1563,8 @@ class LookupTable777FBSolveObliqueEdge(LookupTable):
              'xBBBxBxxxBBxxxBBxxxBxFFFxxFFFxBxxxFBxxxFBxxxFxFFFx',
              'xBBBxBxxxBBxxxBBxxxBxFFFxxBBBxFxxxFFxxxFFxxxFxFFFx',
              'xBBBxBxxxBBxxxBBxxxBxBBBxxFFFxFxxxFFxxxFFxxxFxFFFx'),
-            linecount=343000)
+            linecount=343000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -1711,7 +1752,8 @@ class LookupTableIDA777LFRBSolveInnerCenters(LookupTable):
             parent,
             'lookup-table-7x7x7-step81-LFRB-solve-inner-centers.txt',
             'LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB',
-            linecount=24010005)
+            linecount=24010005,
+            max_depth=17)
 
     def state(self):
         parent_state = self.parent.state
@@ -1788,39 +1830,7 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-
-        result = [
-            # Left
-            parent_state[59], parent_state[60], parent_state[61],
-            parent_state[65], parent_state[66], parent_state[67], parent_state[68], parent_state[69],
-            parent_state[72], parent_state[73], parent_state[74], parent_state[75], parent_state[76],
-            parent_state[79], parent_state[80], parent_state[81], parent_state[82], parent_state[83],
-            parent_state[87], parent_state[88], parent_state[89],
-
-            # Front
-            parent_state[108], parent_state[109], parent_state[110],
-            parent_state[114], parent_state[115], parent_state[116], parent_state[117], parent_state[118],
-            parent_state[121], parent_state[122], parent_state[123], parent_state[124], parent_state[125],
-            parent_state[128], parent_state[129], parent_state[130], parent_state[131], parent_state[132],
-            parent_state[136], parent_state[137], parent_state[138],
-
-            # Right
-            parent_state[157], parent_state[158], parent_state[159],
-            parent_state[163], parent_state[164], parent_state[165], parent_state[166], parent_state[167],
-            parent_state[170], parent_state[171], parent_state[172], parent_state[173], parent_state[174],
-            parent_state[177], parent_state[178], parent_state[179], parent_state[180], parent_state[181],
-            parent_state[185], parent_state[186], parent_state[187],
-
-            # Back
-            parent_state[206], parent_state[207], parent_state[208],
-            parent_state[212], parent_state[213], parent_state[214], parent_state[215], parent_state[216],
-            parent_state[219], parent_state[220], parent_state[221], parent_state[222], parent_state[223],
-            parent_state[226], parent_state[227], parent_state[228], parent_state[229], parent_state[230],
-            parent_state[234], parent_state[235], parent_state[236],
-        ]
-
-        result = ''.join(result)
-        result = result.replace('L', '1').replace('R', '0').replace('F', '1').replace('B', '0')
+        result = ''.join(['1' if parent_state[x] in ('L', 'F') else '0' for x in step80_centers_777])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -1999,6 +2009,29 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         self.lt_LFRB_solve_inner_centers = LookupTableIDA777LFRBSolveInnerCenters(self)
         self.lt_LFRB_solve_inner_centers_and_oblique_edges = LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(self)
+
+    def create_fake_555_for_LR_t_centers(self):
+
+        # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
+        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555.lt_init()
+
+        for x in range(1, 151):
+            fake_555.state[x] = 'x'
+
+        # Left
+        fake_555.state[33] = self.state[60]
+        fake_555.state[37] = self.state[72]
+        fake_555.state[39] = self.state[76]
+        fake_555.state[43] = self.state[88]
+
+        # Right
+        fake_555.state[83] = self.state[158]
+        fake_555.state[87] = self.state[170]
+        fake_555.state[89] = self.state[174]
+        fake_555.state[93] = self.state[186]
+
+        return fake_555
 
     def create_fake_555_from_inside_centers(self):
 
@@ -2345,7 +2378,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     def group_outside_UD_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
-        fake_666.group_centers_stage_UD()
+        fake_666.stage_oblique_edges_UD()
 
         for step in fake_666.solution:
 
@@ -2353,10 +2386,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                 step = '7' + step[1:]
 
             self.rotate(step)
+
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
 
     def group_outside_LR_oblique_edges(self):
         fake_666 = self.create_fake_666_centers()
-        fake_666.lt_LR_oblique_edge_pairing.solve()
+        fake_666.stage_oblique_edges_LR()
 
         for step in fake_666.solution:
 
@@ -2364,14 +2400,17 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                 step = '7' + step[1:]
 
             self.rotate(step)
+
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
 
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
 
         # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for UD
         self.group_inside_UD_centers()
-        log.info("Inside UD centers staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        log.info("%s: Inside UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2379,8 +2418,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
         self.group_outside_UD_oblique_edges()
-        log.info("Outside UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        log.info("%s: Outside UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2393,10 +2432,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.print_cube()
         #sys.exit(0)
 
-        # Now pair the "inside" oblique edge with the already paired outside oblique edges...for UD
+        # Now stage the "inside" oblique UD edges with the already staged outside oblique UD edges
         self.lt_UD_oblique_edge_pairing.solve()
-        log.info("UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        log.info("%s: UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2404,8 +2443,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for LR
         self.group_inside_LR_centers()
-        log.info('post group_inside_LR_centers')
         self.print_cube()
+        log.info("%s: Inside LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2413,8 +2452,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Uses 6x6x6 solver to pair the "outside" oblique edges for LR
         self.group_outside_LR_oblique_edges()
-        log.info('post group_outside_LR_oblique_edges')
         self.print_cube()
+        log.info("%s: Outside LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2427,10 +2466,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.print_cube()
         #sys.exit(0)
 
-        # Now pair the "inside" oblique edge with the already paired outside oblique edges...for LR
+        # Now stage the "inside" oblique LR edges with the already staged outside oblique LR edges
         self.lt_LR_oblique_edge_pairing.solve()
-        log.info("inner x-center and oblique edges staged, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2439,13 +2478,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # Test pruning tables
         #self.lt_UD_solve_inner_centers_and_oblique_edges_center_only.solve()
         #self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only.solve()
-        #log.info("UD inner-centers solved, UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        #log.info("%s: UD inner-centers solved, UD oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #self.print_cube()
         #sys.exit(0)
 
         self.lt_UD_solve_inner_centers_and_oblique_edges.solve()
-        log.info("UD inner-centers solved, UD oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        log.info("%s: UD centers reduced to 5x5x5 centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #log.info("state: %s" % self.get_kociemba_string(True))
         log.info("")
         log.info("")
@@ -2458,7 +2497,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.lt_LR_solve_inner_x_center_t_center_middle_oblique_edge.solve()
         #self.lt_LR_solve_oblique_edge.solve()
         #self.print_cube()
-        #log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #sys.exit(0)
 
         # Reduce LFRB centers to 5x5x5 via
@@ -2466,8 +2505,27 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # uncomment if using 6-deep partial table
         # Reduce LR centers to 5x5x5 by solving the inner x-centers, t-centers and oblique edges
         self.lt_LR_solve_inner_centers_and_oblique_edges.solve()
-        log.info("LR inner-centers solved and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        log.info("%s: LR inner-centers solved and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
+
+        # Solve the LR t-centers...this speeds up the step80 IDA a good bit because the centers of
+        # sides L and R do not get as scrambled while solving FB if LR t-centers are already solved.
+        fake_555 = self.create_fake_555_for_LR_t_centers()
+        fake_555.lt_LR_t_centers_solve.solve()
+
+        for step in fake_555.solution:
+            if step.startswith('5'):
+                step = '7' + step[1:]
+            elif step.startswith('3'):
+                step = '4' + step[1:]
+            self.rotate(step)
+
+        self.print_cube()
+        log.info("%s: LR outer t-centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2477,14 +2535,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.lt_FB_solve_inner_x_center_t_center_middle_oblique_edge.solve()
         #self.lt_FB_solve_oblique_edge.solve()
         #self.print_cube()
-        #log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #sys.exit(0)
 
         '''
         # Reduce FB centers to 5x5x5 by solving the inner x-centers, t-centers and oblique edges
         self.lt_FB_solve_inner_centers_and_oblique_edges.solve()
-        log.info("FB inner-centers solved and oblique edges paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        log.info("%s: FB inner-centers solved and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2493,8 +2551,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Reduce LRFB centers to 5x5x5 by solving the inner x-centers, t-centers and oblique edges
         self.lt_LFRB_solve_inner_centers_and_oblique_edges.solve()
-        log.info("LFRB centers reduced to 5x5x5 centers, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
         self.print_cube()
+        log.info("%s: LFRB centers reduced to 5x5x5 centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -2507,11 +2565,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             # solve their centers. We must "solve" the t-centers in this scenario.
             self.solve_reduced_555_t_centers()
             self.print_cube()
-            log.info("Took %d steps to solve oblique edges and t-centers" % self.get_solution_len_minus_rotates(self.solution))
+            log.info("%s: Took %d steps to solve oblique edges and t-centers" % (self, self.get_solution_len_minus_rotates(self.solution)))
         else:
             self.solve_reduced_555_centers()
             self.print_cube()
-            log.info("Took %d steps to solve centers" % self.get_solution_len_minus_rotates(self.solution))
+            log.info("%s: Took %d steps to solve centers" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
 
 

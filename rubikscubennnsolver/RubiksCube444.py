@@ -5,9 +5,11 @@ from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
     steps_on_same_face_and_layer,
     LookupTable,
+    LookupTableCostOnly,
     LookupTableIDA,
 )
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -239,59 +241,57 @@ lookup-table-4x4x4-step13-FB-centers-stage.txt
 
 Total: 735,471 entries
 '''
-class LookupTable444UDCentersStage(LookupTable):
+class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
 
     def __init__(self, parent):
 
-        LookupTable.__init__(
+        LookupTableCostOnly.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step11-UD-centers-stage.txt',
+            'lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt',
             'f0000f',
-            linecount=735471)
+            linecount=735471,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in centers_444])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        return int(result, 2)
 
 
-class LookupTable444LRCentersStage(LookupTable):
+class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
 
     def __init__(self, parent):
-        LookupTable.__init__(
+        LookupTableCostOnly.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step12-LR-centers-stage.txt',
+            'lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt',
             '0f0f00',
-            linecount=735471)
+            linecount=735471,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in centers_444])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        return int(result, 2)
 
 
-class LookupTable444FBCentersStage(LookupTable):
+class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
 
     def __init__(self, parent):
-        LookupTable.__init__(
+        LookupTableCostOnly.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step13-FB-centers-stage.txt',
+            'lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt',
             '00f0f0',
-            linecount=735471)
+            linecount=735471,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('F', 'B') else '0' for x in centers_444])
+        return int(result, 2)
 
-        # Convert to hex
-        return self.hex_format % int(result, 2)
 
 
 class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
@@ -331,21 +331,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        result = []
-
-        for index in centers_444:
-            x = parent_state[index]
-
-            if x in ('L', 'F', 'U'):
-                result.append(x)
-            elif x == 'R':
-                result.append('L')
-            elif x == 'B':
-                result.append('F')
-            elif x == 'D':
-                result.append('U')
-
-        result = ''.join(result)
+        result = ''.join(['L' if parent_state[x] in ('L', 'R') else 'F' if parent_state[x] in ('F', 'B') else 'U' for x in centers_444])
         return result
 
 
@@ -374,12 +360,76 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
             parent,
             'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
             'UUUULLLLFFFFRRRRBBBBDDDD',
-            linecount=2058000)
+            linecount=2058000,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
         result = ''.join([parent_state[x] for x in centers_444])
         return result
+
+
+class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
+    """
+    IDA search for a centers solution that also happens to pair two or more edges.
+    We do this to (drastically) speed up the edges table lookup later. If no
+    edges are paired the edges signature is 000000000000 and there are about
+    600k of those entries in lookup-table-4x4x4-step110-edges.txt that we will
+    have to evaluate.
+
+    If we can pair two though that drops us down to about 40k edge entries to deal with.
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
+            'TBD',
+            moves_4x4x4,
+            ("Rw", "Rw'", "Lw", "Lw'",
+             "Fw", "Fw'", "Bw", "Bw'",
+             "Uw", "Uw'", "Dw", "Dw'"),
+
+            # prune tables
+            (parent.lt_ULFRBD_centers_solve,),
+            linecount=0,
+            max_depth=99)
+
+    def state(self):
+        state = self.parent.state
+        edges = ''.join([state[square_index] for square_index in wings_444])
+        centers = ''.join([state[x] for x in centers_444])
+        return centers + edges
+
+    def search_complete(self, state, steps_to_here):
+        """
+        return True if centers are solved and at least 2 edges are paired
+        """
+
+        if centers_solved_444(state):
+            paired_edges_count = 12 - self.parent.get_non_paired_edges_count()
+
+            if paired_edges_count >= 2:
+
+                if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
+                    self.parent.state = self.original_state[:]
+                    self.parent.solution = self.original_solution[:]
+                    log.info("%s: IDA found match but it leads to OLL" % self)
+                    return False
+
+                # rotate_xxx() is very fast but it does not append the
+                # steps to the solution so put the cube back in original state
+                # and execute the steps via a normal rotate() call
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+
+                for step in steps_to_here:
+                    self.parent.rotate(step)
+
+                return True
+
+        return False
 
 
 class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
@@ -522,7 +572,7 @@ def edges_recolor_pattern_444(state):
 
 class LookupTable444Edges(LookupTable):
     """
-    lookup-table-4x4x4-step110-edges.txt (10-deep)
+    lookup-table-4x4x4-step110-edges.txt (11-deep)
     ==============================================
     2 steps has 1 entries (0 percent, 0.00x previous step)
     5 steps has 432 entries (0 percent, 432.00x previous step)
@@ -615,9 +665,12 @@ class RubiksCube444(RubiksCube):
         # Phase 1 tables
         # ==============
         # prune tables
-        self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
-        self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
-        self.lt_FB_centers_stage = LookupTable444FBCentersStage(self)
+
+        # Solving 50 cubes where you binary search through the prune table files takes 57s
+        # Solving 50 cubes using the cost-only tables takes 30s!!
+        self.lt_UD_centers_stage = LookupTable444UDCentersStageCostOnly(self)
+        self.lt_LR_centers_stage = LookupTable444LRCentersStageCostOnly(self)
+        self.lt_FB_centers_stage = LookupTable444FBCentersStageCostOnly(self)
 
         # Stage all centers via IDA
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
@@ -627,6 +680,7 @@ class RubiksCube444(RubiksCube):
         # Phase2 tables
         # =============
         self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
+        self.lt_ULFRBD_centers_solve_pair_two_edges = LookupTable444ULFRBDCentersSolvePairTwoEdges(self)
         #self.lt_ULFRBD_centers_solve_edges_stage = LookupTable444ULFRBDCentersSolveEdgesStage(self)
 
         # Edges table
@@ -641,18 +695,29 @@ class RubiksCube444(RubiksCube):
 
         # Stage all centers then solve all centers...averages 18.12 moves
         log.info("%s: Start of Phase1" % self)
+        #self.lt_ULFRBD_centers_stage.ida_all_the_way = True
         self.lt_ULFRBD_centers_stage.solve()
+        self.rotate_for_best_centers_solving()
         self.print_cube()
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
 
+        # If the centers were already staged we may not be able to avoid OLL when solving the centers
+        if self.get_solution_len_minus_rotates(self.solution) == 0:
+            self.lt_ULFRBD_centers_solve_pair_two_edges.avoid_oll = False
+        else:
+            self.lt_ULFRBD_centers_solve_pair_two_edges.avoid_oll = True
+
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_ULFRBD_centers_solve.solve()
+        #self.lt_ULFRBD_centers_solve.solve()
+        self.lt_ULFRBD_centers_solve_pair_two_edges.solve()
 
         # This will IDA search for a centers solution that happens to put the
         # edges in a state that are in our table.  It works and produces
-        # solutions in the 50-52 range but can take a few minutes.
+        # solutions in the 50-53 range but can take a few minutes.
         #self.lt_ULFRBD_centers_solve_edges_stage.solve()
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
         self.print_cube()
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")

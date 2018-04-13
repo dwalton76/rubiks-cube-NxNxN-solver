@@ -39,7 +39,8 @@ class LookupTable444TsaiPhase1(LookupTable):
             parent,
             'lookup-table-4x4x4-step50-tsai-phase1.txt',
             '0f0f00',
-            linecount=735471)
+            linecount=735471,
+            max_depth=8)
 
     def state(self):
         parent_state = self.parent.state
@@ -83,7 +84,8 @@ class LookupTable444TsaiPhase2Centers(LookupTable):
              'UUUULRLRFFFFLRLRFFFFUUUU',
              'UUUURLLRFFFFLRRLFFFFUUUU',
              'UUUULRRLFFFFRLLRFFFFUUUU'),
-            linecount=900900)
+            linecount=900900,
+            max_depth=9)
 
     def state(self):
         parent_state = self.parent.state
@@ -133,7 +135,8 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             # dwalton how can we use an edge prune table here?
             # prune tables
             (parent.lt_tsai_phase2_centers,),
-            linecount=0)
+            linecount=0,
+            max_depth=99)
 
     def state(self):
         babel = {
@@ -463,7 +466,8 @@ class LookupTable444TsaiPhase3Edges(LookupTable):
             parent,
             'lookup-table-4x4x4-step71-tsai-phase3-edges.txt',
             '213098ba6574',
-            linecount=14999140)
+            linecount=14999140,
+            max_depth=13)
 
     def state(self):
         parent_state = self.parent.state
@@ -518,7 +522,8 @@ class LookupTable444TsaiPhase3CentersSolve(LookupTable):
             parent,
             'lookup-table-4x4x4-step72-tsai-phase3-centers.txt',
             'UUUULLLLFFFFRRRRBBBBDDDD',
-            linecount=58800)
+            linecount=58800,
+            max_depth=11)
 
     def state(self):
         parent_state = self.parent.state
@@ -601,7 +606,8 @@ class LookupTableIDA444TsaiPhase3(LookupTableIDA):
             # prune tables
             (parent.lt_tsai_phase3_edges_solve,
              parent.lt_tsai_phase3_centers_solve),
-            linecount=4313742)
+            linecount=4313742,
+            max_depth=7)
 
     def state(self):
         state = edges_recolor_pattern_444(self.parent.state[:])

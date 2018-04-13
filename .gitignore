@@ -97,3 +97,4 @@ ida_search
 pts_lbsearch
 perf.data
 *~
+*.bak

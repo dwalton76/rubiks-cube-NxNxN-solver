@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 class RubiksCubeNNNOddEdges(RubiksCube):
 
     def pair_edge_orbit_via_555(self, orbit):
-        log.info("pair_edge_orbit_via_555 for %d" % orbit)
+        log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
         fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
         fake_555.lt_init()
 
@@ -121,5 +121,5 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             self.pair_edge_orbit_via_555(orbit)
 
         self.solution.append('EDGES_GROUPED')
-        log.info("Edges are paired, %d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.print_cube()

@@ -8,8 +8,10 @@ import json
 import logging
 import math
 import random
+import os
 import shutil
 import subprocess
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -300,21 +302,35 @@ def apply_rotations(size, step, rotations):
 
 
 def orbit_matches(edges_per_side, orbit, edge_index):
+
     if orbit is None:
         return True
 
-    if orbit == 0:
-        if edge_index == 0 or edge_index == edges_per_side-1:
+    # Even cube
+    if edges_per_side % 2 == 0:
+        if orbit == 0:
+            if edge_index == 0 or edge_index == edges_per_side-1:
+                return True
+            return False
+
+        if orbit == 1:
+            if edge_index == 1 or edge_index == edges_per_side-2:
+                return True
+            return False
+
+        if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
+            return True
+
+    # Odd cube
+    else:
+        if orbit == 0:
+            raise Exception("This should not be called for orbit 0 on an odd cube")
+
+        center_edge_index = int(edges_per_side/2)
+
+        if edge_index == center_edge_index - orbit or edge_index == center_edge_index + orbit:
             return True
         return False
-
-    if orbit == 1:
-        if edge_index == 1 or edge_index == edges_per_side-2:
-            return True
-        return False
-
-    if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
-        return True
 
     return False
 
@@ -3129,6 +3145,9 @@ class RubiksCube(object):
 
         edges_per_side = len(self.sideU.edge_north_pos)
 
+        #log.warning("edges_paired %s, orbit %s, edges_per_side %s" % (edges_paired, orbit, edges_per_side))
+        #debug = True
+
         # Upper
         for (edge_index, square_index) in enumerate(self.sideU.edge_north_pos):
             if edges_paired:
@@ -3274,6 +3293,9 @@ class RubiksCube(object):
             partner_index = side.get_wing_partner(square_index)
             square1 = self.state[square_index]
             square2 = self.state[partner_index]
+
+            # dwalton
+            #log.info("side %s, (%d, %d) is %s%s" % (side, square_index, partner_index, square1, square2))
 
             if square1 in ('U', 'D'):
                 wing_str = square1 + square2
@@ -3441,9 +3463,22 @@ class RubiksCube(object):
             self.rotate_F_to_F()
         orbits_with_oll_parity = []
 
-        orbits = int((self.size - 2) / 2)
+        # OLL only applies to even cubes but there are times when an even cube
+        # is reduced to an odd cube...this happens when solving a 6x6x6, it is
+        # reduced to a 5x5x5. So we must support OLL detection on odd cubes also.
+        if self.is_even():
+            orbit_start = 0
+            orbits = int((self.size - 2) / 2)
+        else:
+            if self.size == 3:
+                return []
 
-        for orbit in range(orbits):
+            orbit_start = 1
+            orbits = int((self.size - 2 - 1) / 2) + 1
+
+        #log.info("orbit_start %d, orbits %d" % (orbit_start, orbits))
+
+        for orbit in range(orbit_start, orbits):
             # OLL Parity - "...is caused by solving the centers such that the edge permutation is odd"
             # http://www.speedcubing.com/chris/4speedsolve3.html
             if self.edge_swaps_odd(False, orbit, debug):
@@ -3464,6 +3499,178 @@ class RubiksCube(object):
 
         return ''.join(result)
 
+    def get_staged_centers_count(self):
+        staged = 0
+
+        for side in list(self.sides.values()):
+            for pos in side.center_pos:
+
+                if side.name == 'U' or side.name == 'D':
+                    if self.state[pos] == 'U' or self.state[pos] == 'D':
+                        staged += 1
+
+                elif side.name == 'L' or side.name == 'R':
+                    if self.state[pos] == 'L' or self.state[pos] == 'R':
+                        staged += 1
+
+                elif side.name == 'F' or side.name == 'B':
+                    if self.state[pos] == 'F' or self.state[pos] == 'B':
+                        staged += 1
+
+        return staged
+
+    def get_solved_centers_count(self):
+        solved = 0
+
+        for side in list(self.sides.values()):
+            for pos in side.center_pos:
+                if side.name == self.state[pos]:
+                    solved += 1
+
+        return solved
+
+    def rotate_for_best_centers(self, staging):
+        max_best_centers = 0
+        max_best_centers_state = None
+        max_best_centers_solution = None
+
+        # save cube state
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        for upper_side_name in ('U', 'D', 'L', 'F', 'R', 'B'):
+            for front_side_name in ('F', 'R', 'B', 'L', 'U', 'D'):
+
+                if upper_side_name == front_side_name:
+                    continue
+
+                # Put the cube back in its original state
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                if upper_side_name == 'U':
+
+                    if front_side_name == 'D':
+                        continue
+
+                    if front_side_name == 'L':
+                        self.rotate_y_reverse()
+                    elif front_side_name == 'F':
+                        pass
+                    elif front_side_name == 'R':
+                        self.rotate_y()
+                    elif front_side_name == 'B':
+                        self.rotate_y()
+                        self.rotate_y()
+
+                elif upper_side_name == 'D':
+
+                    if front_side_name == 'U':
+                        continue
+
+                    self.rotate_x()
+                    self.rotate_x()
+
+                    if front_side_name == 'L':
+                        self.rotate_y_reverse()
+                    elif front_side_name == 'F':
+                        self.rotate_y()
+                        self.rotate_y()
+                    elif front_side_name == 'R':
+                        self.rotate_y()
+                    elif front_side_name == 'B':
+                        pass
+
+                elif upper_side_name == 'L':
+
+                    if front_side_name == 'R':
+                        continue
+
+                    self.rotate_y_reverse()
+                    self.rotate_x()
+
+                    if front_side_name == 'U':
+                        self.rotate_y()
+                        self.rotate_y()
+                    elif front_side_name == 'F':
+                        self.rotate_y()
+                    elif front_side_name == 'D':
+                        pass
+                    elif front_side_name == 'B':
+                        self.rotate_y_reverse()
+
+                elif upper_side_name == 'F':
+
+                    if front_side_name == 'B':
+                        continue
+
+                    self.rotate_x()
+
+                    if front_side_name == 'L':
+                        self.rotate_y_reverse()
+                    elif front_side_name == 'U':
+                        self.rotate_y()
+                        self.rotate_y()
+                    elif front_side_name == 'R':
+                        self.rotate_y()
+                    elif front_side_name == 'D':
+                        pass
+
+                elif upper_side_name == 'R':
+
+                    if front_side_name == 'L':
+                        continue
+
+                    self.rotate_y()
+                    self.rotate_x()
+
+                    if front_side_name == 'U':
+                        self.rotate_y()
+                        self.rotate_y()
+                    elif front_side_name == 'F':
+                        self.rotate_y_reverse()
+                    elif front_side_name == 'D':
+                        pass
+                    elif front_side_name == 'B':
+                        self.rotate_y()
+
+                elif upper_side_name == 'B':
+
+                    if front_side_name == 'F':
+                        continue
+
+                    self.rotate_x_reverse()
+
+                    if front_side_name == 'L':
+                        self.rotate_y_reverse()
+                    elif front_side_name == 'U':
+                        pass
+                    elif front_side_name == 'R':
+                        self.rotate_y()
+                    elif front_side_name == 'D':
+                        self.rotate_y()
+                        self.rotate_y()
+
+                if staging:
+                    best_centers = self.get_staged_centers_count()
+                else:
+                    best_centers = self.get_solved_centers_count()
+
+                if best_centers > max_best_centers:
+                    max_best_centers = best_centers
+                    max_best_centers_state = self.state[:]
+                    max_best_centers_solution = self.solution[:]
+                    log.info("%s: upper %s, front %s, stages %d centers" % (self, upper_side_name, front_side_name, max_best_centers))
+
+        self.state = max_best_centers_state[:]
+        self.solution = max_best_centers_solution[:]
+
+    def rotate_for_best_centers_staging(self):
+        self.rotate_for_best_centers(True)
+
+    def rotate_for_best_centers_solving(self):
+        self.rotate_for_best_centers(False)
+
     def group_centers_guts(self):
         raise ImplementThis("Child class must implement group_centers_guts")
 
@@ -3472,6 +3679,8 @@ class RubiksCube(object):
         if self.is_odd():
             self.rotate_U_to_U()
             self.rotate_F_to_F()
+        else:
+            self.rotate_for_best_centers_staging()
 
         if self.centers_solved():
             self.rotate_U_to_U()
@@ -3686,11 +3895,20 @@ class RubiksCube(object):
         side_margin = 10
         square_size = 40
         size = self.size # 3 for 3x3x3, etc
-        shutil.copy('www/solution.js', '/tmp/')
-        shutil.copy('www/Arrow-Next.png', '/tmp/')
-        shutil.copy('www/Arrow-Prev.png', '/tmp/')
 
-        with open('/tmp/solution.html', 'w') as fh:
+        for filename in ('solution.js', 'Arrow-Next.png', 'Arrow-Prev.png'):
+            www_filename = os.path.join('www', filename)
+            tmp_filename = os.path.join('/tmp', filename)
+
+            if not os.path.exists(tmp_filename):
+                shutil.copy(www_filename, '/tmp/')
+                os.chmod(tmp_filename, 0o777)
+
+        solution_filename = '/tmp/solution.html'
+        if os.path.exists(solution_filename):
+            os.unlink(solution_filename)
+
+        with open(solution_filename, 'w') as fh:
             fh.write("""<!DOCTYPE html>
 <html>
 <head>
@@ -3787,6 +4005,7 @@ div#page_holder {
 <div id="page_holder">
 """ % (square_size, square_size, square_size, square_size, square_size, square_size,
        (square_size * size * 4) + square_size + (4 * side_margin)))
+        os.chmod(solution_filename, 0o777)
 
     def www_write_cube(self, desc):
         """

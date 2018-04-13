@@ -32,15 +32,9 @@ def get_characters_common_count(strA, strB, start_index):
     """
     result = 0
 
-    try:
-        for index in range(start_index, len(strA)):
-            if strA[index] == strB[index]:
-                result += 1
-    except IndexError:
-        log.info("strA: %s" % strA)
-        log.info("strB: %s" % strB)
-        log.info("start_index: %s" % start_index)
-        raise
+    for (charA, charB) in zip(strA[start_index:], strB[start_index:]):
+        if charA == charB:
+            result += 1
 
     return result
 
@@ -126,17 +120,17 @@ def steps_on_same_face_and_layer(prev_step, step):
             return False
 
     # chop the trailing '
-    if prev_step.endswith("'"):
+    if prev_step[-1] == "'":
         prev_step = prev_step[:-1]
 
-    if step.endswith("'"):
+    if step[-1] == "'":
         step = step[:-1]
 
     # chop the trailing 2
-    if prev_step.endswith("2"):
+    if prev_step[-1] == "2":
         prev_step = prev_step[:-1]
 
-    if step.endswith("2"):
+    if step[-1] == "2":
         step = step[:-1]
 
     # Note the number of rows being turned and chop it
@@ -327,11 +321,10 @@ class LookupTable(object):
         self.max_depth = max_depth
         self.avoid_oll = False
         self.avoid_pll = False
-        self.preloaded_cache = False
         self.preloaded_state_set = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
-        self.bloom_filter = None
+        self.fh_txt_seek_calls = 0
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -365,51 +358,11 @@ class LookupTable(object):
         else:
             self.state_target = set((state_target, ))
 
-        self.cache = {}
-
         # 'rb' mode is about 3x faster than 'r' mode
         self.fh_txt = open(self.filename, mode='rb')
 
     def __str__(self):
         return self.desc
-
-    def preload_cache(self):
-        """
-        This is experimental, it would typically be used to load the
-        contents of a prune table. For solving one cube it probably
-        doesn't buy you much but if one were to make a daemon that
-        loads all of the prune tables up front (that would take a lot
-        of memory) it might be worth it then.
-        """
-        log.info("%s: preload_cache start" % self)
-
-        self.cache = {}
-        for line in self.fh_txt:
-            (state, steps) = line.decode('utf-8').rstrip().split(':')
-
-            if steps.isdigit():
-                self.cache[state] = steps
-            else:
-                self.cache[state] = str(len(steps.split()))
-
-        log.info("%s: preload_cache end" % self)
-        self.preloaded_cache = True
-
-    def preload_state_set(self):
-        """
-        This is experimental, it would typically be used to load only the keys
-        of an IDA lookup table. This would allow you to avoid doing a binary
-        search of the huge IDA lookup tables for keys that are not there.
-        """
-        log.info("%s: preload_state_set start" % self)
-
-        self.state_set = set()
-        for line in self.fh_txt:
-            (state, _) = line.decode('utf-8').strip().split(':')
-            self.state_set.add(state)
-
-        log.info("%s: preload_state_set end" % self)
-        self.preloaded_state_set = True
 
     def binary_search(self, state_to_find):
 
@@ -424,6 +377,7 @@ class LookupTable(object):
         while first <= last:
             midpoint = int((first + last)/2)
             self.fh_txt.seek(midpoint * self.width)
+            self.fh_txt_seek_calls += 1
 
             # Only read the 'state' part of the line (for speed)
             b_state = self.fh_txt.read(self.state_width)
@@ -453,38 +407,15 @@ class LookupTable(object):
         if state_to_find in self.state_target:
             return None
 
-        if self.preloaded_cache:
-            return self.cache.get(state_to_find)
+        line = self.binary_search(state_to_find)
 
-        elif self.preloaded_state_set:
-
-            if state_to_find in self.state_set:
-                line = self.binary_search(state_to_find)
-
-                if line:
-                    (state, steps) = line.strip().split(':')
-                    return steps.split()
-                else:
-                    raise Exception("should not be here")
-            else:
-                return None
+        if line:
+            (state, steps) = line.strip().split(':')
+            steps_list = steps.split()
+            return steps_list
 
         else:
-            try:
-                return self.cache[state_to_find]
-            except KeyError:
-
-                line = self.binary_search(state_to_find)
-
-                if line:
-                    (state, steps) = line.strip().split(':')
-                    steps_list = steps.split()
-                    self.cache[state_to_find] = steps_list
-                    return steps_list
-
-                else:
-                    self.cache[state_to_find] = None
-                    return None
+            return None
 
     def steps_cost(self, state_to_find=None):
 
@@ -497,8 +428,11 @@ class LookupTable(object):
             #log.info("%s: steps_cost None for %s (stage_target)" % (self, state_to_find))
             return 0
         else:
-            #log.info("%s: steps_cost %d for %s (%s)" % (self, len(steps), state_to_find, ' '.join(steps)))
-            return len(steps)
+            if steps[0].isdigit():
+                return int(steps[0])
+            else:
+                #log.info("%s: steps_cost %d for %s (%s)" % (self, len(steps), state_to_find, ' '.join(steps)))
+                return len(steps)
 
     def solve(self):
 
@@ -538,19 +472,13 @@ class LookupTable(object):
 
     def heuristic(self):
         pt_state = self.state()
-        pt_steps = self.steps(pt_state)
+        pt_steps_cost = self.steps_cost(pt_state)
 
         if pt_state in self.state_target:
             len_pt_steps = 0
 
-        elif pt_steps:
-            len_pt_steps = len(pt_steps)
-
-            # There are few prune tables that I built where instead of listing the steps
-            # for a state I just listed how many steps there would be.  I did this to save
-            # space.  lookup-table-5x5x5-step13-UD-centers-stage-UFDB-only.txt is one such table.
-            if len_pt_steps == 1 and pt_steps[0].isdigit():
-                len_pt_steps = int(pt_steps[0])
+        elif pt_steps_cost:
+            len_pt_steps = pt_steps_cost
 
         elif self.max_depth:
             # This is the exception to the rule but some prune tables such
@@ -596,7 +524,7 @@ class LookupTable(object):
         Given a signature such as 001001010110, return a list of all of the lines
         in our lookup-table that start with that signature.
 
-        This is only used by the 4x4x4 and 5x5x5 edges tables
+        This is only used by 4x4x4 edges tables
         """
         self.fh_txt.seek(0)
         result = []
@@ -674,6 +602,85 @@ class LookupTable(object):
         raise Exception("child class must implement state()")
 
 
+class LookupTableCostOnly(LookupTable):
+
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True):
+        self.parent = parent
+        self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
+        self.filename = filename
+        self.filename_gz = filename + '.gz'
+        self.desc = filename.replace('lookup-table-', '').replace('.txt', '')
+        self.filename_exists = False
+        self.linecount = linecount
+        self.max_depth = max_depth
+        self.avoid_oll = False
+        self.avoid_pll = False
+        self.preloaded_state_set = False
+        self.ida_all_the_way = False
+        self.use_lt_as_prune = False
+
+        assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
+        assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
+
+        if 'dummy' not in self.filename:
+            assert self.linecount, "%s linecount is %s" % (self, self.linecount)
+
+        if not os.path.exists(self.filename):
+            if not os.path.exists(self.filename_gz):
+                url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
+                log.info("Downloading table via 'wget %s'" % url)
+                call(['wget', url])
+
+            log.warning("gunzip %s" % self.filename_gz)
+            call(['gunzip', self.filename_gz])
+
+        self.filename_exists = True
+
+        if isinstance(state_target, tuple):
+            self.state_target = set(state_target)
+        elif isinstance(state_target, list):
+            self.state_target = set(state_target)
+        else:
+            self.state_target = set((state_target, ))
+
+        self.fh_txt_seek_calls = 0
+        self.fh_txt = None
+
+        # Some cost-only tables are 2^32 characters, we do not want to read a 4G
+        # string into memory so for those we will seek()/read() through the file.
+        # We do not have to binary_search() though so that cuts way down on the
+        # number of reads.
+        if load_string:
+            with open(self.filename, 'r') as fh:
+                for line in fh:
+                    self.content = line
+            self.fh_txt_seek_calls += 1
+        else:
+            # 'rb' mode is about 3x faster than 'r' mode
+            self.fh_txt = open(self.filename, mode='rb')
+            self.content = None
+
+    def steps_cost(self, state_to_find=None):
+
+        if state_to_find is None:
+            state_to_find = self.state()
+
+        # state_to_find is an integer, there is a one byte hex character in the file for each possible state.
+        # This hex character is the number of steps required to solve the corresponding state.
+        if self.content is None:
+            self.fh_txt.seek(state_to_find)
+            result = int(self.fh_txt.read(1).decode('utf-8'), 16)
+
+            #if result == 0:
+            #    raise Exception("%s: table is hosed...result for %d is 0" % (self, state_to_find))
+
+            self.fh_txt_seek_calls += 1
+            return result
+
+        else:
+            return int(self.content[state_to_find], 16)
+
+
 class LookupTableIDA(LookupTable):
 
     def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None):
@@ -689,8 +696,13 @@ class LookupTableIDA(LookupTable):
             if x not in moves_illegal:
                 self.moves_all.append(x)
 
-    def load_bloom_filter(self):
-        self.bloom_filter = BloomFilterFromFile(self.linecount, self.filename)
+    def ida_heuristic_total(self):
+        total = 0
+
+        for pt in self.prune_tables:
+            total += pt.heuristic()
+
+        return total
 
     def ida_heuristic(self):
         cost_to_goal = 0
@@ -711,6 +723,13 @@ class LookupTableIDA(LookupTable):
                 cost_to_goal = len(steps)
 
         for pt in self.prune_tables:
+
+            # If there is no way this pt will have a higher cost than the prune
+            # tables we have already examined do not bother looking up the cost
+            # for this pt
+            if cost_to_goal >= pt.max_depth:
+                continue
+
             pt_cost_to_goal = pt.heuristic()
 
             if pt_cost_to_goal > cost_to_goal:
@@ -720,6 +739,7 @@ class LookupTableIDA(LookupTable):
 
     def search_complete(self, state, steps_to_here):
 
+        #log.info("%s: FOO %s" % (self, state))
         if self.ida_all_the_way:
             if state not in self.state_target:
                 return False
@@ -766,68 +786,6 @@ class LookupTableIDA(LookupTable):
 
         return True
 
-    def _solve(self):
-        """
-        solving prep work used by both AStar and IDA* solve()
-
-        Returns True if cube is already "solved"
-        """
-        # save cube state
-        self.original_state = self.parent.state[:]
-        self.original_solution = self.parent.solution[:]
-
-        if self.parent.size == 2:
-            from rubikscubennnsolver.RubiksCube222 import rotate_222
-            self.rotate_xxx = rotate_222
-        elif self.parent.size == 4:
-            from rubikscubennnsolver.RubiksCube444 import rotate_444
-            self.rotate_xxx = rotate_444
-        elif self.parent.size == 5:
-            from rubikscubennnsolver.RubiksCube555 import rotate_555
-            self.rotate_xxx = rotate_555
-        elif self.parent.size == 6:
-            from rubikscubennnsolver.RubiksCube666 import rotate_666
-            self.rotate_xxx = rotate_666
-        elif self.parent.size == 7:
-            from rubikscubennnsolver.RubiksCube777 import rotate_777
-            self.rotate_xxx = rotate_777
-        else:
-            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
-
-        state = self.state()
-        #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
-
-        # The cube is already in the desired state, nothing to do
-        if state in self.state_target:
-            log.info("%s: IDA/AStar, cube is already at the target state %s" % (self, state))
-            return True
-
-        # The cube is already in a state that is in our lookup table, nothing for IDA to do
-        steps = self.steps(state)
-
-        if steps:
-            log.info("%s: IDA/Star, cube is already in a state %s that is in our lookup table" % (self, state))
-
-            # The cube is now in a state where it is in the lookup table, we may need
-            # to do several lookups to get to our target state though. Use
-            # LookupTabele's solve() to take us the rest of the way to the target state.
-            LookupTable.solve(self)
-            return True
-
-        # If we are here (odds are very high we will be) it means that the current
-        # cube state was not in the lookup table.  We must now perform an IDA search
-        # until we find a sequence of moves that takes us to a state that IS in the
-        # lookup table.
-        return False
-
-    def solve(self):
-        start_time0 = dt.datetime.now()
-
-        if self._solve():
-            return True
-
-        return self.astar_search()
-
     def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
         """
         https://algorithmsinsight.wordpress.com/graph-theory-2/ida-star-algorithm-in-general/
@@ -841,9 +799,20 @@ class LookupTableIDA(LookupTable):
 
         lt_state = self.state()
 
-        if self.search_complete(lt_state, steps_to_here):
+        # If our cost_to_goal is greater than the max_depth of our main lookup table then there is no
+        # need to do a binary search through the main lookup table to look for our current state...this
+        # saves us some disk IO
+        if (cost_to_goal <= self.max_depth and
+            self.search_complete(lt_state, steps_to_here)):
             #log.info("%s: IDA found match %d steps in, %s, lt_state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
             #         (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
+            log.info("%s: %d seek calls" % (self, self.fh_txt_seek_calls))
+            self.fh_txt_seek_calls = 0
+
+            for pt in self.prune_tables:
+                log.info("%s: %d seek calls" % (pt, pt.fh_txt_seek_calls))
+                pt.fh_txt_seek_calls = 0
+
             log.info("%s: IDA found match %d steps in %s, lt_state %s, f_cost %d (%d + %d)" %
                      (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             return (f_cost, True)
@@ -909,8 +878,58 @@ class LookupTableIDA(LookupTable):
         """
         start_time0 = dt.datetime.now()
 
-        if self._solve():
+        # save cube state
+        self.original_state = self.parent.state[:]
+        self.original_solution = self.parent.solution[:]
+
+        if self.parent.size == 2:
+            from rubikscubennnsolver.RubiksCube222 import rotate_222
+            self.rotate_xxx = rotate_222
+        elif self.parent.size == 4:
+            from rubikscubennnsolver.RubiksCube444 import rotate_444
+            self.rotate_xxx = rotate_444
+        elif self.parent.size == 5:
+            from rubikscubennnsolver.RubiksCube555 import rotate_555
+            self.rotate_xxx = rotate_555
+        elif self.parent.size == 6:
+            from rubikscubennnsolver.RubiksCube666 import rotate_666
+            self.rotate_xxx = rotate_666
+        elif self.parent.size == 7:
+            from rubikscubennnsolver.RubiksCube777 import rotate_777
+            self.rotate_xxx = rotate_777
+        else:
+            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+
+        state = self.state()
+        #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
+
+        # The cube is already in the desired state, nothing to do
+        if state in self.state_target:
+            log.info("%s: cube is already at the target state %s" % (self, state))
             return True
+
+        # The cube is already in a state that is in our lookup table, nothing for IDA to do
+        steps = self.steps(state)
+
+        if steps:
+            log.info("%s: cube is already in a state %s that is in our lookup table" % (self, state))
+
+            # The cube is now in a state where it is in the lookup table, we may need
+            # to do several lookups to get to our target state though. Use
+            # LookupTabele's solve() to take us the rest of the way to the target state.
+            LookupTable.solve(self)
+
+            if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
+                log.info("%s: but the current state leads to OLL so we must IDA" % self)
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+            else:
+                return True
+
+        # If we are here (odds are very high we will be) it means that the current
+        # cube state was not in the lookup table.  We must now perform an IDA search
+        # until we find a sequence of moves that takes us to a state that IS in the
+        # lookup table.
 
         if min_ida_threshold is None:
             min_ida_threshold = self.ida_heuristic()
@@ -920,6 +939,7 @@ class LookupTableIDA(LookupTable):
             raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
 
         log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold))
+        total_ida_count = 0
 
         for threshold in range(min_ida_threshold, max_ida_threshold+1):
             steps_to_here = []
@@ -928,17 +948,21 @@ class LookupTableIDA(LookupTable):
             self.explored = {}
 
             (f_cost, found_solution) = self.ida_search(steps_to_here, threshold, None, self.original_state[:])
+            total_ida_count += self.ida_count
 
             if found_solution:
                 end_time1 = dt.datetime.now()
-                log.info("%s: IDA threshold %d, explored %d branches, took %s (%s total)" %
+                log.info("%s: IDA threshold %d, explored %d nodes, took %s (%s total)" %
                     (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
                      pretty_time(end_time1 - start_time0)))
+                delta = end_time1 - start_time0
+                nodes_per_sec = int(total_ida_count / delta.total_seconds())
+                log.info("%s: IDA explored %d nodes in %s, %d nodes-per-sec" % (self, total_ida_count, delta, nodes_per_sec))
                 return True
             else:
                 end_time1 = dt.datetime.now()
-                log.info("%s: IDA threshold %d, explored %d branches, took %s" %
+                log.info("%s: IDA threshold %d, explored %d nodes, took %s" %
                     (self, threshold, self.ida_count, pretty_time(end_time1 - start_time1)))
 
         # The only time we will get here is when max_ida_threshold is a low number.  It will be up to the caller to:

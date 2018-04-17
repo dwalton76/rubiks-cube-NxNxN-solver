@@ -365,11 +365,6 @@ class LookupTable(object):
         return self.desc
 
     def binary_search(self, state_to_find):
-
-        if self.bloom_filter is not None:
-            if not self.bloom_filter.check(state_to_find):
-                return None
-
         first = 0
         last = self.linecount - 1
         b_state_to_find = bytearray(state_to_find, encoding='utf-8')

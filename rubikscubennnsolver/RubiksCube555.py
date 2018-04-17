@@ -11,6 +11,7 @@ from rubikscubennnsolver.LookupTable import (
 )
 import itertools
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -920,7 +921,18 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStageCostOnly(self)
         self.lt_UD_X_centers_stage = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
-        #self.lt_UD_centers_stage.load_bloom_filter()
+
+        self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
+
+        self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
+        self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
+        self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
+
+        self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
+        self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
+        self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
+
+        self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
         self.lt_LR_t_centers_solve = LookupTable555LRTCenterSolve(self)
 
@@ -1092,7 +1104,11 @@ class RubiksCube555(RubiksCube):
         #self.lt_UD_X_centers_stage.solve()
 
         self.lt_UD_centers_stage.solve()
+        self.print_cube()
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # dwalton
+        sys.exit(0)
 
     def group_centers_stage_LR(self):
         """
@@ -1103,7 +1119,7 @@ class RubiksCube555(RubiksCube):
         self.rotate_F_to_F()
 
         self.lt_LR_centers_stage.solve()
-        #self.print_cube()
+        self.print_cube()
         log.info("%s: ULFRBD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_guts(self):
@@ -1114,10 +1130,9 @@ class RubiksCube555(RubiksCube):
 
         # All centers are staged, solve them
         self.lt_ULFRB_centers_solve.solve()
+        self.print_cube()
         log.info("%s: ULFRBD centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
-        #self.print_cube()
 
     def stage_first_four_edges_555(self):
         """

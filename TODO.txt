@@ -1,0 +1,71 @@
+
+
+4x4x4
+=====
+What if we built a "stage all centers" prune table? Could we then solve centers without staging?
+24!/(8!*8!*8!) is 9,465,511,770
+(24!/(8!*8!*8!)) / (24!/(4!*4!*4!*4!*4!*4!)) is 0.000 002 915451895
+
+
+There are also UD and UF prune tables where
+24!/(4!*4!*16!) is 51,482,970
+(24!/(4!*4!*16!)) / (24!/(4!*4!*4!*4!*4!*4!)) is 0.000 000 0158571587
+There 3 ways to use the UD table and 12 ways to use the UF table
+
+So those 15 prune tables combined with the "stage all centers" prune table
+might be enough to make this feasible. We could not binary search through
+the stage-all table though..that file would be huge at 9 billion entries.
+Even the cost-only version of it would be 8.8 GB but we could potentially
+get that down to 4.4 GB (store 2 costs per byte since max cost would be <= 15).
+
+If we built a cost-only table of all 3^24 or 282,429,536,481 the file would
+be 263 GB so that won't work.  We would need an effecient way to compute
+the permutation rank so that we could build a cost-only file with only the
+9,465,511,770 entries.
+
+4x4x4 idea
+==========
+phase1
+- solve centers without staging
+- use UD prune table 3x and UF prune table 12x
+- 12-14 steps typically
+- once that is working solve centers in a way that puts edges in a
+  state that is in the 11-deep edges table
+
+
+phase2
+- pair edges via table
+- 11 steps
+
+phase3
+- solve 3x3x3
+- 20 steps
+
+That would put us in the low 40s
+
+
+
+6x6x6
+=====
+- fake move for step10 now does inner-x-centers and oblique-edges
+- step10 table is used to do the same for LR
+- this saved us about 10 steps!!
+- this is using two prune tables, the third is building on LJs machine, test to see if the 3rd buys us much
+- I tried to also have it stage the outer-x-centers but that is too slow
+
+
+self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
+- do this in a way that leaves the inside orbit of edges in a state that is in the 4x4x4 edges table
+- pair the edges prior to solving the 5x5x5 centers
+- do not bother with this if oblique_edges_only is True
+- we should also avoid OLL if we can...see center_solution_leads_to_oll_parity
+
+
+7x7x7
+=====
+- group inside centers via 5x5x5
+- fake_move to group oblique edges? This is the approach we use for step10 of 6x6x6
+- then rotate z and do the same for LR
+
+
+

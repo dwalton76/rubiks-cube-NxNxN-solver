@@ -211,37 +211,6 @@ file_binary_search (char *filename, char *state_to_find, int statewidth, int lin
     return 0;
 }
 
-void
-init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
-{
-    int squares_per_side = size * size;
-    int square_count = squares_per_side * 6;
-    int U_start = 1;
-    int L_start = U_start + squares_per_side;
-    int F_start = L_start + squares_per_side;
-    int R_start = F_start + squares_per_side;
-    int B_start = R_start + squares_per_side;
-    int D_start = B_start + squares_per_side;
-
-    // kociemba_string is in URFDLB order
-    int U_start_kociemba = 0;
-    int R_start_kociemba = U_start_kociemba + squares_per_side;
-    int F_start_kociemba = R_start_kociemba + squares_per_side;
-    int D_start_kociemba = F_start_kociemba + squares_per_side;
-    int L_start_kociemba = D_start_kociemba + squares_per_side;
-    int B_start_kociemba = L_start_kociemba + squares_per_side;
-
-    memset(cube, 0, sizeof(char) * (square_count + 2));
-    cube[0] = 'x'; // placeholder
-    memcpy(&cube[U_start], &kociemba[U_start_kociemba], squares_per_side);
-    memcpy(&cube[L_start], &kociemba[L_start_kociemba], squares_per_side);
-    memcpy(&cube[F_start], &kociemba[F_start_kociemba], squares_per_side);
-    memcpy(&cube[R_start], &kociemba[R_start_kociemba], squares_per_side);
-    memcpy(&cube[B_start], &kociemba[B_start_kociemba], squares_per_side);
-    memcpy(&cube[D_start], &kociemba[D_start_kociemba], squares_per_side);
-    // LOG("cube:\n%s\n\n", cube);
-}
-
 
 void
 print_cube(char *cube, int size)
@@ -404,6 +373,52 @@ max (int a, int b)
 }
 
 
+
+void
+init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
+{
+    int squares_per_side = size * size;
+    int square_count = squares_per_side * 6;
+    int U_start = 1;
+    int L_start = U_start + squares_per_side;
+    int F_start = L_start + squares_per_side;
+    int R_start = F_start + squares_per_side;
+    int B_start = R_start + squares_per_side;
+    int D_start = B_start + squares_per_side;
+
+    // kociemba_string is in URFDLB order
+    int U_start_kociemba = 0;
+    int R_start_kociemba = U_start_kociemba + squares_per_side;
+    int F_start_kociemba = R_start_kociemba + squares_per_side;
+    int D_start_kociemba = F_start_kociemba + squares_per_side;
+    int L_start_kociemba = D_start_kociemba + squares_per_side;
+    int B_start_kociemba = L_start_kociemba + squares_per_side;
+
+    char ones_UD[3] = {'U', 'D'};
+
+    memset(cube, 0, sizeof(char) * (square_count + 2));
+    cube[0] = 'x'; // placeholder
+    memcpy(&cube[U_start], &kociemba[U_start_kociemba], squares_per_side);
+    memcpy(&cube[L_start], &kociemba[L_start_kociemba], squares_per_side);
+    memcpy(&cube[F_start], &kociemba[F_start_kociemba], squares_per_side);
+    memcpy(&cube[R_start], &kociemba[R_start_kociemba], squares_per_side);
+    memcpy(&cube[B_start], &kociemba[B_start_kociemba], squares_per_side);
+    memcpy(&cube[D_start], &kociemba[D_start_kociemba], squares_per_side);
+    // LOG("cube:\n%s\n\n", cube);
+
+    switch (type)  {
+    case UD_CENTERS_STAGE_555:
+        // Convert to 1s and 0s
+        str_replace_for_binary(cube, ones_UD);
+        print_cube(cube, size);
+        break;
+    default:
+        printf("ERROR: init_cube() does not yet support this --type\n");
+        exit(1);
+    }
+}
+
+
 /*
  * 5x5x5 template
 
@@ -487,119 +502,79 @@ get_555_centers(char *cube)
 }
 
 
-void
-get_555_t_centers(char *parent_state, char *pt_state)
-{
-    sprintf(pt_state,
-        "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-        // Upper
-        parent_state[1],
-        parent_state[3], parent_state[5],
-        parent_state[7],
-
-        // Left
-        parent_state[10],
-        parent_state[12], parent_state[14],
-        parent_state[16],
-
-        // Front
-        parent_state[19],
-        parent_state[21], parent_state[23],
-        parent_state[25],
-
-        // Right
-        parent_state[28],
-        parent_state[30], parent_state[32],
-        parent_state[34],
-
-        // Back
-        parent_state[37],
-        parent_state[39], parent_state[41],
-        parent_state[43],
-
-        // Down
-        parent_state[46],
-        parent_state[48], parent_state[50],
-        parent_state[52]);
-}
-
-void
-get_555_x_centers(char *parent_state, char *pt_state)
-{
-    sprintf(pt_state,
-        "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-        // Upper
-        parent_state[0], parent_state[2],
-        parent_state[6], parent_state[8],
-
-        // Left
-        parent_state[9], parent_state[11],
-        parent_state[15], parent_state[17],
-
-        // Front
-        parent_state[18], parent_state[20],
-        parent_state[24], parent_state[26],
-
-        // Right
-        parent_state[27], parent_state[29],
-        parent_state[33], parent_state[35],
-
-        // Back
-        parent_state[36], parent_state[38],
-        parent_state[42], parent_state[44],
-
-        // Down
-        parent_state[45], parent_state[47],
-        parent_state[51], parent_state[53]);
-}
-
-
-void
-get_555_UD_centers_stage_state(char *cube)
-{
-    get_555_centers(cube);
-
-    // Convert to 1s and 0s
-    char ones[3] = {'U', 'D'};
-    str_replace_for_binary(sp_cube_state, ones);
-
-    //memset(sp_cube_state_binary, 0, sizeof(char) * array_size);
-    strcpy(sp_cube_state_binary, sp_cube_state);
-
-    // convert to hex, pad 0s up to 14 characters
-    sprintf(sp_cube_state, "%014lx", strtoul(sp_cube_state, NULL, 2));
-}
-
-void
-get_555_UD_t_centers_stage_state(char *parent_state, char *pt_state)
-{
-    get_555_t_centers(parent_state, pt_state);
-
-    // convert to hex, pad 0s up to 6 characters
-    sprintf(pt_state, "%06lx", strtoul(pt_state, NULL, 2));
-}
-
 int
-get_555_UD_t_centers_stage_state_cost_only(char *parent_state, char *pt_state)
+get_555_t_centers(char *cube)
 {
-    get_555_t_centers(parent_state, pt_state);
+    int MAX_PT_STATE_CHARS = 24;
+    char pt_state[MAX_PT_STATE_CHARS];
+
+    sprintf(pt_state,
+        "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+        // Upper
+        cube[8],
+        cube[12], cube[14],
+        cube[18],
+
+        // Left
+        cube[33],
+        cube[37], cube[39],
+        cube[43],
+
+        // Front
+        cube[58],
+        cube[62], cube[64],
+        cube[68],
+
+        // Right
+        cube[83],
+        cube[87], cube[89],
+        cube[93],
+
+        // Back
+        cube[108],
+        cube[112], cube[114],
+        cube[118],
+
+        // Down
+        cube[133],
+        cube[137], cube[139],
+        cube[143]);
 
     return strtoul(pt_state, NULL, 2);
 }
 
-void
-get_555_UD_x_centers_stage_state(char *parent_state, char *pt_state)
-{
-    get_555_x_centers(parent_state, pt_state);
-
-    // convert to hex, pad 0s up to 6 characters
-    sprintf(pt_state, "%06lx", strtoul(pt_state, NULL, 2));
-}
 
 int
-get_555_UD_x_centers_stage_state_cost_only(char *parent_state, char *pt_state)
+get_555_x_centers(char *cube)
 {
-    get_555_x_centers(parent_state, pt_state);
+    int MAX_PT_STATE_CHARS = 24;
+    char pt_state[MAX_PT_STATE_CHARS];
+
+    sprintf(pt_state,
+        "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+        // Upper
+        cube[7], cube[9],
+        cube[17], cube[19],
+
+        // Left
+        cube[32], cube[34],
+        cube[42], cube[44],
+
+        // Front
+        cube[57], cube[59],
+        cube[67], cube[69],
+
+        // Right
+        cube[82], cube[84],
+        cube[92], cube[94],
+
+        // Back
+        cube[107], cube[109],
+        cube[117], cube[119],
+
+        // Down
+        cube[132], cube[134],
+        cube[142], cube[144]);
 
     return strtoul(pt_state, NULL, 2);
 }
@@ -675,6 +650,7 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename, int 
 char *
 ida_cost_only_preload (char *filename, int size)
 {
+    // dwalton mall
     FILE *fh_read = NULL;
     char *ptr = malloc(sizeof(char) * size);
     memset(ptr, 0, sizeof(char) * size);
@@ -690,9 +666,11 @@ ida_cost_only_preload (char *filename, int size)
     fclose(fh_read);
     LOG("ida_cost_only_preload: end   %s, ptr 0x%x\n", filename, ptr);
 
-    //for (int i = 0; i <= 1000; i++) {
+    //for (int i = 2182470; i <= 2182480; i++) {
     //    LOG("%d: %c\n", i, ptr[i]);
+    //    // LOG("%d: %d\n", i, ptr[i]);
     //}
+
     return ptr;
 }
 
@@ -717,46 +695,53 @@ ida_prune_table_cost (struct key_value_pair *hashtable, char *filename, char *st
     return cost;
 }
 
+
 int
-ida_prune_table_cost_only (char *filename, int state_to_find)
+hex_to_int(char value)
 {
-    // dwalton this needs to look in pt_t_centers_cost_only or pt_x_centers_cost_only
-    if (strmatch(filename, "lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt")) {
-        char foo = pt_t_centers_cost_only[state_to_find];
-        int tmp = (int)strtoul(&foo, NULL, 16);
-        //LOG("ida_prune_table_cost_only %s, state_to_find %d, pt_t_centers_cost_only[state_to_find] %c, cost %d\n",
-        //    filename, state_to_find, pt_t_centers_cost_only[state_to_find], tmp);
-        return tmp;
-    } else {
-        char foo = pt_x_centers_cost_only[state_to_find];
-        int tmp = (int)strtoul(&foo, NULL, 16);
-        return tmp;
-        //return (int)strtoul(&pt_x_centers_cost_only[state_to_find], NULL, 16);
-    } 
-
-    FILE *fh_read = NULL;
-    char hexstring[1];
-    fh_read = fopen(filename, "r");
-
-    if (fh_read == NULL) {
-        printf("ERROR: ida_prune_table_cost_only could not open %s\n", filename);
+    switch (value) {
+    case '0':
+        return 0;
+    case '1':
+        return 1;
+    case '2':
+        return 2;
+    case '3':
+        return 3;
+    case '4':
+        return 4;
+    case '5':
+        return 5;
+    case '6':
+        return 6;
+    case '7':
+        return 7;
+    case '8':
+        return 8;
+    case '9':
+        return 9;
+    case 'a':
+        return 10;
+    case 'b':
+        return 11;
+    case 'c':
+        return 12;
+    case 'd':
+        return 13;
+    case 'e':
+        return 14;
+    case 'f':
+        return 15;
+    default:
+        printf("ERROR: hex_to_int does not support %c", value);
         exit(1);
-    }
-
-    fseek(fh_read, state_to_find, SEEK_SET);
-    fread(hexstring, 1, 1, fh_read);
-    fclose(fh_read);
-
-    return (int)strtoul(hexstring, NULL, 16);
+    };
 }
-
 
 int
 ida_heuristic (char *cube, lookup_table_type type)
 {
-    int MAX_PT_STATE_CHARS = 64;
     int max_cost = 0;
-    char pt_state[MAX_PT_STATE_CHARS];
     int UD_t_centers_state = 0;
     int UD_x_centers_state = 0;
     int UD_t_centers_cost = 0;
@@ -764,24 +749,20 @@ ida_heuristic (char *cube, lookup_table_type type)
 
     switch (type)  {
     case UD_CENTERS_STAGE_555:
-        //get_555_UD_t_centers_stage_state(sp_cube_state_binary, pt_state);
-        //int t_centers_cost = ida_prune_table_cost(pt_t_centers, "lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt", pt_state, 6, 735471, 38);
+        UD_t_centers_state = get_555_t_centers(cube);
+        UD_t_centers_cost = hex_to_int(pt_t_centers_cost_only[UD_t_centers_state]);
+        //LOG("ida_heuristic t-centers state %d, cost %d\n", UD_t_centers_state, UD_t_centers_cost);
 
-        //get_555_UD_x_centers_stage_state(sp_cube_state_binary, pt_state);
-        //int x_centers_cost = ida_prune_table_cost(pt_x_centers, "lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt", pt_state, 6, 735471, 37);
-
-        // dwalton here now
-        UD_t_centers_state = get_555_UD_t_centers_stage_state_cost_only(sp_cube_state_binary, pt_state);
-        UD_t_centers_cost = ida_prune_table_cost_only("lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt", UD_t_centers_state);
-
-        UD_x_centers_state = get_555_UD_x_centers_stage_state_cost_only(sp_cube_state_binary, pt_state);
-        UD_x_centers_cost = ida_prune_table_cost_only("lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt", UD_x_centers_state);
+        UD_x_centers_state = get_555_x_centers(cube);
+        UD_x_centers_cost = hex_to_int(pt_x_centers_cost_only[UD_x_centers_state]);
+        //LOG("ida_heuristic x-centers state %d, cost %d\n", UD_x_centers_state, UD_x_centers_cost);
 
         max_cost = max(UD_t_centers_cost, UD_x_centers_cost);
-        // LOG("ida_heuristic t-centers %d, x-centers %d, max_cost %d\n", t_centers_cost, x_centers_cost, max_cost);
+        //LOG("ida_heuristic t-centers %d, x-centers %d, max_cost %d\n", UD_t_centers_cost, UD_x_centers_cost, max_cost);
         break;
+
     default:
-        printf("ERROR: ida_heuristic does not yet support this --type\n");
+        printf("ERROR: ida_heuristic() does not yet support this --type\n");
         exit(1);
     }
 
@@ -795,10 +776,15 @@ ida_load_cube_state (char *cube, lookup_table_type type)
 {
     switch (type)  {
     case UD_CENTERS_STAGE_555:
-        get_555_UD_centers_stage_state(cube);
+        get_555_centers(cube);
+
+        // convert to hex, pad 0s up to 14 characters
+        sprintf(sp_cube_state, "%014lx", strtoul(sp_cube_state, NULL, 2));
+        //LOG("ida_load_cube_state() %s\n", sp_cube_state);
         break;
+
     default:
-        printf("ERROR: ida_load_cube_state does not yet support type %d\n", type);
+        printf("ERROR: ida_load_cube_state() does not yet support type %d\n", type);
         exit(1);
     }
 }
@@ -815,11 +801,36 @@ ida_search_complete (char *cube, lookup_table_type type)
     switch (type)  {
     case UD_CENTERS_STAGE_555:
 
+        if (cube[7] == '1' &&
+            cube[8] == '1' &&
+            cube[9] == '1' &&
+            cube[12] == '1' &&
+            cube[13] == '1' &&
+            cube[14] == '1' &&
+            cube[17] == '1' &&
+            cube[18] == '1' &&
+            cube[19] == '1' &&
+
+            cube[132] == '1' &&
+            cube[133] == '1' &&
+            cube[134] == '1' &&
+            cube[137] == '1' &&
+            cube[138] == '1' &&
+            cube[139] == '1' &&
+            cube[142] == '1' &&
+            cube[143] == '1' &&
+            cube[144] == '1') {
+            LOG("UD_CENTERS_STAGE_555 sp_cube_state %s\n", sp_cube_state);
+            return 1;
+        }
+
+        /*
         // 3fe000000001ff
         if (strmatch(sp_cube_state, "3fe000000001ff")) {
             LOG("UD_CENTERS_STAGE_555 sp_cube_state %s\n", sp_cube_state);
             return 1;
         }
+        */
 
         // dwalton avoid the file IO all together...IDA all the way
         /*
@@ -831,7 +842,7 @@ ida_search_complete (char *cube, lookup_table_type type)
         break;
 
     default:
-        printf("ERROR: ida_search_complete does not yet support type %d\n", type);
+        printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
         exit(1);
     }
 
@@ -1126,6 +1137,14 @@ ida_search (int cost_to_here,
 
     hash_add(&ida_explored, my_ida_explored_state, 0);
 
+    /*
+    if (hash_find(&ida_explored, sp_cube_state)) {
+        return 0;
+    }
+
+    hash_add(&ida_explored, sp_cube_state, 0);
+    */
+
     for (int i = 0; i < MOVE_COUNT_555; i++) {
         move = moves_555[i];
 
@@ -1163,13 +1182,12 @@ ida_solve (char *cube, lookup_table_type type)
     //ida_prune_table_preload(&pt_x_centers, "lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt", 45);
     //ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt.6-deep.all_steps");
 
-    // dwalton here now
     pt_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt", 16711681);
     pt_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt", 16711681);
 
-
     ida_load_cube_state(cube, type);
     min_ida_threshold = ida_heuristic(cube, type);
+    LOG("min_ida_threshold %d\n", min_ida_threshold);
 
     for (int threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {
         ida_count = 0;

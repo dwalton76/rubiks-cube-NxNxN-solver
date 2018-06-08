@@ -8,6 +8,9 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableCostOnly,
     LookupTableIDA,
 )
+from rubikscubennnsolver.RubiksCube444Misc import (
+    low_edges_444,
+)
 import logging
 import sys
 
@@ -293,7 +296,6 @@ class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
         return int(result, 2)
 
 
-
 class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
     """
     lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
@@ -339,19 +341,20 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
     """
     lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt
     ==================================================
-    1 steps has 96 entries (0 percent, 0.00x previous step)
-    2 steps has 1,008 entries (0 percent, 10.50x previous step)
-    3 steps has 8,208 entries (0 percent, 8.14x previous step)
-    4 steps has 41,712 entries (2 percent, 5.08x previous step)
-    5 steps has 145,560 entries (7 percent, 3.49x previous step)
-    6 steps has 321,576 entries (15 percent, 2.21x previous step)
-    7 steps has 514,896 entries (25 percent, 1.60x previous step)
-    8 steps has 496,560 entries (24 percent, 0.96x previous step)
-    9 steps has 324,096 entries (15 percent, 0.65x previous step)
-    10 steps has 177,408 entries (8 percent, 0.55x previous step)
-    11 steps has 26,880 entries (1 percent, 0.15x previous step)
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 99 entries (0 percent, 14.14x previous step)
+    3 steps has 996 entries (0 percent, 10.06x previous step)
+    4 steps has 6,477 entries (1 percent, 6.50x previous step)
+    5 steps has 23,540 entries (6 percent, 3.63x previous step)
+    6 steps has 53,537 entries (15 percent, 2.27x previous step)
+    7 steps has 86,464 entries (25 percent, 1.62x previous step)
+    8 steps has 83,240 entries (24 percent, 0.96x previous step)
+    9 steps has 54,592 entries (15 percent, 0.66x previous step)
+    10 steps has 29,568 entries (8 percent, 0.54x previous step)
+    11 steps has 4,480 entries (1 percent, 0.15x previous step)
 
-    Total: 2,058,000 entries
+    Total: 343,000 entries
+    Average: 7.508685 moves
     """
 
     def __init__(self, parent):
@@ -360,8 +363,9 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
             parent,
             'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
             'UUUULLLLFFFFRRRRBBBBDDDD',
-            linecount=2058000,
-            max_depth=11)
+            linecount=343000,
+            max_depth=11,
+            filesize=21609000)
 
     def state(self):
         parent_state = self.parent.state
@@ -453,7 +457,8 @@ class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
 
             # prune tables
             (parent.lt_ULFRBD_centers_solve,),
-            linecount=0)
+            linecount=0,
+            max_depth=99)
 
     def state(self):
         state = edges_recolor_pattern_444(self.parent.state[:])
@@ -675,11 +680,13 @@ class RubiksCube444(RubiksCube):
         # Stage all centers via IDA
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = True
+        #self.lt_ULFRBD_centers_stage.preload_cache()
 
         # =============
         # Phase2 tables
         # =============
         self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
+        #self.lt_ULFRBD_centers_solve.preload_cache()
         self.lt_ULFRBD_centers_solve_pair_two_edges = LookupTable444ULFRBDCentersSolvePairTwoEdges(self)
         #self.lt_ULFRBD_centers_solve_edges_stage = LookupTable444ULFRBDCentersSolveEdgesStage(self)
 
@@ -991,6 +998,25 @@ class RubiksCube444(RubiksCube):
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')
 
+    def edges_possibly_oriented(self):
+        """
+        Return True if edges "might" be oriented into high/low groups
+        """
+        state = self.state
+        wing_strs_found = set()
+
+        for (low_edge_index, square_index, partner_index) in low_edges_444:
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+
+            if wing_str in wing_strs_found:
+                return False
+            else:
+                wing_strs_found.add(wing_str)
+
+        return True
+
 
 def rotate_444_U(cube):
     return [cube[0],cube[13],cube[9],cube[5],cube[1],cube[14],cube[10],cube[6],cube[2],cube[15],cube[11],cube[7],cube[3],cube[16],cube[12],cube[8],cube[4]] + cube[33:37] + cube[21:33] + cube[49:53] + cube[37:49] + cube[65:69] + cube[53:65] + cube[17:21] + cube[69:97]
@@ -1117,6 +1143,34 @@ def rotate_444_z(cube):
 
 def rotate_444_z_prime(cube):
     return [cube[0],cube[52],cube[56],cube[60],cube[64],cube[51],cube[55],cube[59],cube[63],cube[50],cube[54],cube[58],cube[62],cube[49],cube[53],cube[57],cube[61],cube[4],cube[8],cube[12],cube[16],cube[3],cube[7],cube[11],cube[15],cube[2],cube[6],cube[10],cube[14],cube[1],cube[5],cube[9],cube[13],cube[36],cube[40],cube[44],cube[48],cube[35],cube[39],cube[43],cube[47],cube[34],cube[38],cube[42],cube[46],cube[33],cube[37],cube[41],cube[45],cube[84],cube[88],cube[92],cube[96],cube[83],cube[87],cube[91],cube[95],cube[82],cube[86],cube[90],cube[94],cube[81],cube[85],cube[89],cube[93],cube[77],cube[73],cube[69],cube[65],cube[78],cube[74],cube[70],cube[66],cube[79],cube[75],cube[71],cube[67],cube[80],cube[76],cube[72],cube[68],cube[20],cube[24],cube[28],cube[32],cube[19],cube[23],cube[27],cube[31],cube[18],cube[22],cube[26],cube[30],cube[17],cube[21],cube[25],cube[29]]
+
+
+def reflect_x_444(cube):
+    return [cube[0],
+           cube[93], cube[94], cube[95], cube[96],
+           cube[89], cube[90], cube[91], cube[92],
+           cube[85], cube[86], cube[87], cube[88],
+           cube[81], cube[82], cube[83], cube[84],
+           cube[29], cube[30], cube[31], cube[32],
+           cube[25], cube[26], cube[27], cube[28],
+           cube[21], cube[22], cube[23], cube[24],
+           cube[17], cube[18], cube[19], cube[20],
+           cube[45], cube[46], cube[47], cube[48],
+           cube[41], cube[42], cube[43], cube[44],
+           cube[37], cube[38], cube[39], cube[40],
+           cube[33], cube[34], cube[35], cube[36],
+           cube[61], cube[62], cube[63], cube[64],
+           cube[57], cube[58], cube[59], cube[60],
+           cube[53], cube[54], cube[55], cube[56],
+           cube[49], cube[50], cube[51], cube[52],
+           cube[77], cube[78], cube[79], cube[80],
+           cube[73], cube[74], cube[75], cube[76],
+           cube[69], cube[70], cube[71], cube[72],
+           cube[65], cube[66], cube[67], cube[68],
+           cube[13], cube[14], cube[15], cube[16],
+           cube[9], cube[10], cube[11], cube[12],
+           cube[5], cube[6], cube[7], cube[8],
+           cube[1], cube[2], cube[3], cube[4]]
 
 rotate_mapper_444 = {
     "B" : rotate_444_B,

@@ -6,6 +6,7 @@ from rubikscubennnsolver.RubiksSide import SolveError
 from subprocess import call
 import logging
 import os
+import sys
 
 
 log = logging.getLogger(__name__)
@@ -169,7 +170,7 @@ def pretty_time(delta):
 
 class LookupTable(object):
 
-    def __init__(self, parent, filename, state_target, linecount, max_depth=None):
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, filesize=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.filename = filename
@@ -181,15 +182,27 @@ class LookupTable(object):
         self.avoid_oll = False
         self.avoid_pll = False
         self.preloaded_state_set = False
+        self.preloaded_cache = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
         self.fh_txt_seek_calls = 0
+        self.cache = {}
+        self.filesize = filesize
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
 
         if 'dummy' not in self.filename:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
+
+        # This only happens if a new copy of the lookup table has been checked in...we need to delete
+        # the one we have and download the new one.
+        if os.path.exists(self.filename) and self.filesize is not None and os.path.getsize(self.filename) != self.filesize:
+            log.info("%s: filesize %s does not equal target filesize %s" % (self, os.path.getsize(self.filename), self.filesize))
+            os.remove(self.filename)
+
+            if os.path.exists(self.filename_gz):
+                os.remove(self.filename_gz)
 
         if not os.path.exists(self.filename):
             if not os.path.exists(self.filename_gz):
@@ -250,6 +263,23 @@ class LookupTable(object):
 
         return None
 
+    def preload_cache(self):
+        log.info("%s: begin preload cache" % self)
+
+        # Another option here would be to store a list of (state, step) tuples and
+        # then binary search through it. That takes about 1/6 the amount of memory
+        # but would be slower.  I have not measured how much slower.
+        with open(self.filename, 'r') as fh:
+
+            # The bottleneck is the building of the dictionary, moreso that reading from disk.
+            for line in fh:
+                (state, steps) = line.rstrip().split(':')
+                steps_split = steps.split()
+                self.cache[state] = str(len(steps_split))
+
+        self.preloaded_cache = True
+        log.info("%s: end preload cache (%d bytes)" % (self, sys.getsizeof(self.cache)))
+
     def steps(self, state_to_find=None):
         """
         Return a list of the steps found in the lookup table for the current cube state
@@ -260,6 +290,9 @@ class LookupTable(object):
         # If we are at one of our state_targets we do not need to do anything
         if state_to_find in self.state_target:
             return None
+
+        if self.preloaded_cache:
+            return self.cache.get(state_to_find)
 
         line = self.binary_search(state_to_find)
 
@@ -326,25 +359,25 @@ class LookupTable(object):
 
     def heuristic(self):
         pt_state = self.state()
-        pt_steps_cost = self.steps_cost(pt_state)
 
         if pt_state in self.state_target:
-            len_pt_steps = 0
-
-        elif pt_steps_cost:
-            len_pt_steps = pt_steps_cost
-
-        elif self.max_depth:
-            # This is the exception to the rule but some prune tables such
-            # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
-            # are partial tables so use the max_depth of the table +1
-            len_pt_steps = self.max_depth + 1
+            return 0
 
         else:
-            self.parent.print_cube()
-            raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (self, pt_state, self.state_width))
+            pt_steps_cost = self.steps_cost(pt_state)
 
-        return len_pt_steps
+            if pt_steps_cost:
+                return pt_steps_cost
+
+            elif self.max_depth:
+                # This is the exception to the rule but some prune tables such
+                # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
+                # are partial tables so use the max_depth of the table +1
+                return self.max_depth + 1
+
+        self.parent.print_cube()
+        raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (self, pt_state, self.state_width))
+
 
     def find_edge_entries_with_loose_signature(self, signature_to_find):
         """

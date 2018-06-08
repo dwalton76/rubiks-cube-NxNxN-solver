@@ -8,11 +8,17 @@ from rubikscubennnsolver.RubiksCube444 import (
     wings_444,
     UD_centers_444,
     LR_centers_444,
+    rotate_444,
+    reflect_x_444
 )
-from rubikscubennnsolver.RubiksCube444Misc import tsai_phase2_orient_edges_444
+from rubikscubennnsolver.RubiksCube444Misc import (
+    high_edges_444,
+    low_edges_444,
+    tsai_phase2_orient_edges_444
+)
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
-from rubikscubennnsolver.rotate_xxx import rotate_444
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -132,7 +138,6 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
              "Uw", "Uw'", "Dw", "Dw'", # illegal_moves
              "Bw2", "Dw2", "Lw", "Lw'", "Lw2"), # TPR also restricts these
 
-            # dwalton how can we use an edge prune table here?
             # prune tables
             (parent.lt_tsai_phase2_centers,),
             linecount=0,
@@ -205,79 +210,25 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
         if LR_centers not in tsai_phase2_LR_center_targets:
             return False
 
-        # If we are here then our centers are all good...check the edges.
-        # If the edges are not in lt_tsai_phase3_edges_solve it may throw a KeyError
-        try:
-            if self.parent.lt_tsai_phase3_edges_solve.steps() is not None and self.parent.edge_swaps_even(False, None, False):
+        if not self.parent.edges_possibly_oriented():
+            return False
 
-                #log.warning("phase3_edges state %s, steps %s" % (
-                #    self.parent.lt_tsai_phase3_edges_solve.state(),
-                #    ' '.join(self.parent.lt_tsai_phase3_edges_solve.steps())))
+        p3_edges_state = self.parent.lt_tsai_phase3_edges_solve.state()
+        p3_edges_cost = self.parent.lt_tsai_phase3_edges_solve.steps_cost(p3_edges_state)
 
-                # rotate_xxx() is very fast but it does not append the
-                # steps to the solution so put the cube back in original state
-                # and execute the steps via a normal rotate() call
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
+        if p3_edges_cost == 0:
+            return False
 
-                for step in steps_to_here:
-                    self.parent.rotate(step)
+        # rotate_xxx() is very fast but it does not append the
+        # steps to the solution so put the cube back in original state
+        # and execute the steps via a normal rotate() call
+        self.parent.state = self.original_state[:]
+        self.parent.solution = self.original_solution[:]
 
-                return True
+        for step in steps_to_here:
+            self.parent.rotate(step)
 
-        except KeyError:
-            pass
-
-        return False
-
-
-symmetry_rotations_tsai_phase3_444 =\
-    ("",
-     "y y",
-     "x",
-     "x y y",
-     "x'",
-     "x' y y",
-     "x x",
-     "x x y y",
-     "reflect-x",
-     "reflect-x y y",
-     "reflect-x x",
-     "reflect-x x y y",
-     "reflect-x x'",
-     "reflect-x x' y y",
-     "reflect-x x x",
-     "reflect-x x x y y")
-
-# 12-23 are high edges, make these U (1)
-# 0-11 are low edges, make these D (6)
-# https://github.com/cs0x7f/TPR-4x4x4-Solver/blob/master/src/FullCube.java
-high_edges_444 = ((14, 2, 67),  # upper
-                  (13, 9, 19),
-                  (15, 8, 51),
-                  (12, 15, 35),
-                  (21, 25, 76), # left
-                  (20, 24, 37),
-                  (23, 57, 44), # right
-                  (22, 56, 69),
-                  (18, 82, 46), # down
-                  (17, 89, 30),
-                  (19, 88, 62),
-                  (16, 95, 78))
-
-
-low_edges_444 = ((2, 3, 66),  # upper
-                 (1, 5, 18),
-                 (3, 12, 50),
-                 (0, 14, 34),
-                 (9, 21, 72), # left
-                 (8, 28, 41),
-                 (11, 53, 40), # right
-                 (10, 60, 73),
-                 (6, 83, 47), # down
-                 (5, 85, 31),
-                 (7, 92, 63),
-                 (4, 94, 79))
+        return True
 
 
 def edges_high_low_recolor_444(state):
@@ -316,6 +267,7 @@ def edges_high_low_recolor_444(state):
         wing_str = ''.join(sorted([square_value, partner_value]))
         state[square_index] = low_edge_map[wing_str]
         state[partner_index] = low_edge_map[wing_str]
+
     return state
 
 
@@ -389,40 +341,12 @@ def edges_recolor_pattern_444(state):
     return ''.join(state)
 
 
-def reflect_x_444(cube):
-    return [cube[0],
-           cube[93], cube[94], cube[95], cube[96],
-           cube[89], cube[90], cube[91], cube[92],
-           cube[85], cube[86], cube[87], cube[88],
-           cube[81], cube[82], cube[83], cube[84],
-           cube[29], cube[30], cube[31], cube[32],
-           cube[25], cube[26], cube[27], cube[28],
-           cube[21], cube[22], cube[23], cube[24],
-           cube[17], cube[18], cube[19], cube[20],
-           cube[45], cube[46], cube[47], cube[48],
-           cube[41], cube[42], cube[43], cube[44],
-           cube[37], cube[38], cube[39], cube[40],
-           cube[33], cube[34], cube[35], cube[36],
-           cube[61], cube[62], cube[63], cube[64],
-           cube[57], cube[58], cube[59], cube[60],
-           cube[53], cube[54], cube[55], cube[56],
-           cube[49], cube[50], cube[51], cube[52],
-           cube[77], cube[78], cube[79], cube[80],
-           cube[73], cube[74], cube[75], cube[76],
-           cube[69], cube[70], cube[71], cube[72],
-           cube[65], cube[66], cube[67], cube[68],
-           cube[13], cube[14], cube[15], cube[16],
-           cube[9], cube[10], cube[11], cube[12],
-           cube[5], cube[6], cube[7], cube[8],
-           cube[1], cube[2], cube[3], cube[4]]
-
-
 class LookupTable444TsaiPhase3Edges(LookupTable):
     """
     lookup-table-4x4x4-step71-tsai-phase3-edges.txt
     - without symmetry
     - we use the copy with symmetry I just left this here for the history
-    ===============================================
+    ======================================================
     1 steps has 4 entries (0 percent, 0.00x previous step)
     2 steps has 20 entries (0 percent, 5.00x previous step)
     3 steps has 140 entries (0 percent, 7.00x previous step)
@@ -441,8 +365,7 @@ class LookupTable444TsaiPhase3Edges(LookupTable):
 
 
     lookup-table-4x4x4-step71-tsai-phase3-edges.txt
-    - with symmetry
-    ===============================================
+    ======================================================
     1 steps has 3 entries (0 percent, 0.00x previous step)
     2 steps has 7 entries (0 percent, 2.33x previous step)
     3 steps has 24 entries (0 percent, 3.43x previous step)
@@ -465,13 +388,30 @@ class LookupTable444TsaiPhase3Edges(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step71-tsai-phase3-edges.txt',
-            '213098ba6574',
-            linecount=14999140,
+            '213098ba6574', # this is the same with/without symmetry
+            #linecount=239500800, # without symmetry
+            linecount=14999140,   # with symmetry
             max_depth=13)
 
     def state(self):
         parent_state = self.parent.state
         original_state = list('x' + ''.join(parent_state[1:]))
+
+        # Without symmetry
+        '''
+        state = original_state[:]
+        state = edges_high_low_recolor_444(state[:])
+
+        # record the state of all edges
+        state = ''.join(state)
+        state = ''.join((state[2],   state[9],  state[8],  state[15],
+                         state[25], state[24],
+                         state[57], state[56],
+                         state[82], state[89], state[88], state[95]))
+        return state
+        '''
+
+        # With symmetry
         results = []
 
         for seq in symmetry_rotations_tsai_phase3_444:
@@ -486,12 +426,11 @@ class LookupTable444TsaiPhase3Edges(LookupTable):
             state = edges_high_low_recolor_444(state[:])
 
             # record the state of all edges
-            state = ''.join(state)
             state = ''.join((state[2],   state[9],  state[8],  state[15],
                              state[25], state[24],
                              state[57], state[56],
                              state[82], state[89], state[88], state[95]))
-            results.append(state[:])
+            results.append(state)
 
         results = sorted(results)
         return results[0]
@@ -527,48 +466,27 @@ class LookupTable444TsaiPhase3CentersSolve(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[6],
-            parent_state[7],
-            parent_state[10],
-            parent_state[11],
-
-            # Left
-            parent_state[22],
-            parent_state[23],
-            parent_state[26],
-            parent_state[27],
-
-            # Front
-            parent_state[38],
-            parent_state[39],
-            parent_state[42],
-            parent_state[43],
-
-            # Right
-            parent_state[54],
-            parent_state[55],
-            parent_state[58],
-            parent_state[59],
-
-            # Back
-            parent_state[70],
-            parent_state[71],
-            parent_state[74],
-            parent_state[75],
-
-            # Down
-            parent_state[86],
-            parent_state[87],
-            parent_state[90],
-            parent_state[91]
-        ]
-
-        result = ''.join(result)
+        result = ''.join([parent_state[square_index] for square_index in centers_444])
         return result
 
+
+symmetry_rotations_tsai_phase3_444 =\
+    ("",
+     "y y",
+     "x",
+     "x y y",
+     "x'",
+     "x' y y",
+     "x x",
+     "x x y y",
+     "reflect-x",
+     "reflect-x y y",
+     "reflect-x x",
+     "reflect-x x y y",
+     "reflect-x x'",
+     "reflect-x x' y y",
+     "reflect-x x x",
+     "reflect-x x x y y")
 
 class LookupTableIDA444TsaiPhase3(LookupTableIDA):
     """
@@ -606,7 +524,8 @@ class LookupTableIDA444TsaiPhase3(LookupTableIDA):
             # prune tables
             (parent.lt_tsai_phase3_edges_solve,
              parent.lt_tsai_phase3_centers_solve),
-            linecount=4313742,
+            # linecount=43866828, # 8-deep
+            linecount=4313742, # 7-deep
             max_depth=7)
 
     def state(self):
@@ -640,6 +559,7 @@ class RubiksCubeTsai444(RubiksCube444):
         # - solve LR centers to one of 12 states
         # - stage UD and FB centers
         self.lt_tsai_phase2_centers = LookupTable444TsaiPhase2Centers(self)
+        self.lt_tsai_phase2_centers.preload_cache()
         self.lt_tsai_phase2 = LookupTableIDA444TsaiPhase2(self)
 
 
@@ -647,8 +567,12 @@ class RubiksCubeTsai444(RubiksCube444):
         # Phase3 tables
         # =============
         self.lt_tsai_phase3_edges_solve = LookupTable444TsaiPhase3Edges(self)
+        #self.lt_tsai_phase3_edges_solve.preload_cache()
         self.lt_tsai_phase3_centers_solve = LookupTable444TsaiPhase3CentersSolve(self)
+        #self.lt_tsai_phase3_centers_solve.preload_cache()
         self.lt_tsai_phase3 = LookupTableIDA444TsaiPhase3(self)
+        #self.lt_tsai_phase3.preload_cache()
+        #self.lt_tsai_phase3.ida_all_the_way = True
 
         # For tsai this tables is only used if the centers have already been solved
         # For non-tsai it is always used

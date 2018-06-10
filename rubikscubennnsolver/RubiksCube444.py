@@ -32,6 +32,8 @@ UD_centers_444 = (6, 7, 10, 11, 86, 87, 90, 91)
 
 LR_centers_444 = (22, 23, 26, 27, 54, 55, 58, 59)
 
+UFBD_centers_444 = (6, 7, 10, 10, 38, 39, 42, 43, 70, 71, 74, 75, 86, 87, 90, 91)
+
 edges_444 = (
     2, 3, 5, 8, 9, 12, 14, 15,      # Upper
     18, 19, 21, 24, 25, 28, 30, 31, # Left
@@ -86,7 +88,75 @@ def centers_solved_444(state):
         return True
     return False
 
-
+# If all 3 groups of edges have been staged for L4E each of them has
+# 105 possible patterns but only 4 of those patterns are solveablve
+# via w half turns only. 4^3 is 64...below are the 64 of these edge patterns.
+edge_patterns_solveablve_via_half_turns = set((
+    '103524769b8adfcehgjliknm',
+    '10352476a8b9ecfdhgjliknm',
+    '10352476dfce9b8ahgjliknm',
+    '10352476ecfda8b9hgjliknm',
+    '104253769b8adfcehgkiljnm',
+    '10425376a8b9ecfdhgkiljnm',
+    '10425376dfce9b8ahgkiljnm',
+    '10425376ecfda8b9hgkiljnm',
+    '10jlik769b8adfcehg3524nm',
+    '10jlik76a8b9ecfdhg3524nm',
+    '10jlik76dfce9b8ahg3524nm',
+    '10jlik76ecfda8b9hg3524nm',
+    '10kilj769b8adfcehg4253nm',
+    '10kilj76a8b9ecfdhg4253nm',
+    '10kilj76dfce9b8ahg4253nm',
+    '10kilj76ecfda8b9hg4253nm',
+    '673524019b8adfcemnjlikgh',
+    '67352401a8b9ecfdmnjlikgh',
+    '67352401dfce9b8amnjlikgh',
+    '67352401ecfda8b9mnjlikgh',
+    '674253019b8adfcemnkiljgh',
+    '67425301a8b9ecfdmnkiljgh',
+    '67425301dfce9b8amnkiljgh',
+    '67425301ecfda8b9mnkiljgh',
+    '67jlik019b8adfcemn3524gh',
+    '67jlik01a8b9ecfdmn3524gh',
+    '67jlik01dfce9b8amn3524gh',
+    '67jlik01ecfda8b9mn3524gh',
+    '67kilj019b8adfcemn4253gh',
+    '67kilj01a8b9ecfdmn4253gh',
+    '67kilj01dfce9b8amn4253gh',
+    '67kilj01ecfda8b9mn4253gh',
+    'hg3524nm9b8adfce10jlik76',
+    'hg3524nma8b9ecfd10jlik76',
+    'hg3524nmdfce9b8a10jlik76',
+    'hg3524nmecfda8b910jlik76',
+    'hg4253nm9b8adfce10kilj76',
+    'hg4253nma8b9ecfd10kilj76',
+    'hg4253nmdfce9b8a10kilj76',
+    'hg4253nmecfda8b910kilj76',
+    'hgjliknm9b8adfce10352476',
+    'hgjliknma8b9ecfd10352476',
+    'hgjliknmdfce9b8a10352476',
+    'hgjliknmecfda8b910352476',
+    'hgkiljnm9b8adfce10425376',
+    'hgkiljnma8b9ecfd10425376',
+    'hgkiljnmdfce9b8a10425376',
+    'hgkiljnmecfda8b910425376',
+    'mn3524gh9b8adfce67jlik01',
+    'mn3524gha8b9ecfd67jlik01',
+    'mn3524ghdfce9b8a67jlik01',
+    'mn3524ghecfda8b967jlik01',
+    'mn4253gh9b8adfce67kilj01',
+    'mn4253gha8b9ecfd67kilj01',
+    'mn4253ghdfce9b8a67kilj01',
+    'mn4253ghecfda8b967kilj01',
+    'mnjlikgh9b8adfce67352401',
+    'mnjlikgha8b9ecfd67352401',
+    'mnjlikghdfce9b8a67352401',
+    'mnjlikghecfda8b967352401',
+    'mnkiljgh9b8adfce67425301',
+    'mnkiljgha8b9ecfd67425301',
+    'mnkiljghdfce9b8a67425301',
+    'mnkiljghecfda8b967425301',
+))
 
 def get_best_entry(foo):
     # TODO this can only track wings since it is only used by 4x4x4
@@ -462,10 +532,8 @@ class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
 
     def state(self):
         state = edges_recolor_pattern_444(self.parent.state[:])
-
         edges = ''.join([state[square_index] for square_index in wings_444])
         centers = ''.join([state[x] for x in centers_444])
-
         return centers + edges
 
     def search_complete(self, state, steps_to_here):
@@ -1016,6 +1084,15 @@ class RubiksCube444(RubiksCube):
                 wing_strs_found.add(wing_str)
 
         return True
+
+    def edges_solveable_via_half_turns(self):
+        state = edges_recolor_pattern_444(self.state[:])
+        edges_pattern = ''.join([state[square_index] for square_index in wings_444])
+
+        if edges_pattern in edge_patterns_solveablve_via_half_turns:
+            return True
+        else:
+            return False
 
 
 def rotate_444_U(cube):

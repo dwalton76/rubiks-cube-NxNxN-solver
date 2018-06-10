@@ -3293,8 +3293,6 @@ class RubiksCube(object):
             partner_index = side.get_wing_partner(square_index)
             square1 = self.state[square_index]
             square2 = self.state[partner_index]
-
-            # dwalton
             #log.info("side %s, (%d, %d) is %s%s" % (side, square_index, partner_index, square1, square2))
 
             if square1 in ('U', 'D'):

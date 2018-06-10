@@ -791,7 +791,7 @@ class LookupTableIDA(LookupTable):
         #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
 
         # The cube is already in the desired state, nothing to do
-        if state in self.state_target:
+        if state in self.state_target or self.search_complete(state, []):
             log.info("%s: cube is already at the target state %s" % (self, state))
             return True
 

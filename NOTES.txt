@@ -1,0 +1,198 @@
+
+4x4x4
+=====
+
+brainstorm #1
+-------------
+- am building out edges table on LJ's machine but am doing so such that the
+  edges are oriented.  There should be 239,500,800 entries, the breakdown on
+  the distribution when I did an EO table for tsai phase 3 was:
+
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 20 entries (0 percent, 5.00x previous step)
+    3 steps has 140 entries (0 percent, 7.00x previous step)
+    4 steps has 1,141 entries (0 percent, 8.15x previous step)
+    5 steps has 8,059 entries (0 percent, 7.06x previous step)
+    6 steps has 62,188 entries (0 percent, 7.72x previous step)
+    7 steps has 442,293 entries (0 percent, 7.11x previous step)
+    8 steps has 2,958,583 entries (1 percent, 6.69x previous step)
+    9 steps has 17,286,512 entries (7 percent, 5.84x previous step)
+    10 steps has 69,004,356 entries (28 percent, 3.99x previous step)
+    11 steps has 122,416,936 entries (51 percent, 1.77x previous step)
+    12 steps has 27,298,296 entries (11 percent, 0.22x previous step)
+    13 steps has 22,272 entries (0 percent, 0.00x previous step)
+
+    Total: 239,500,800 entries
+
+  I am building this table to 13-deep, so far it has finished 11-deep with the
+  following distribution
+
+    5 steps has 64 entries (0 percent, 0.00x previous step)
+    6 steps has 407 entries (0 percent, 6.36x previous step)
+    7 steps has 1686 entries (0 percent, 4.14x previous step)
+    8 steps has 10676 entries (0 percent, 6.33x previous step)
+    9 steps has 58670 entries (2 percent, 5.50x previous step)
+    10 steps has 293851 entries (11 percent, 5.01x previous step)
+    11 steps has 2145245 entries (85 percent, 7.30x previous step)
+    
+    Total: 2,510,599 entries
+
+  In theory at step 12 I will see ~18,327,372 entries and at step 13 another ~133,789,815
+  That will put me at ~154,627,786 or 64% of the 239 million entries. I may be able to build
+  this table to 15-deep on LJs machine...will see. I might also be able to take whatever I
+  have built and add states to it by doing outer layer moves only.  I think I should only do
+  this if I cannot go to 15-deep on LJs machine. Before I go to 15-deep I need to fix repopulate-workq
+  to do a better job of building even size files...today they vary a lot so we end up only
+  using one or two cores for a long period of time.
+
+  In order to take advantage of the edges table with all of these EO states, when
+  I do phase2 to solve centers I need to put the edges in EO. I need to build an EO table
+  for this. This is historically pretty tricky though because there are 2048 ways you
+  can "map" the edges for EO. This may be as simple as dusting off the class that looks
+  for a centers solution until it finds a hit in the edges table.
+
+  NOTE that this only works when solving a 4x4x4, if we are solving the inside orbit of some
+  larger NxNxN even cube the edges will not be in EO.  Two options:
+  - keep the current 4x4x4 edge pairing code...it takes about 20 steps on average.
+  - build a table that can put the edges in EO while maintaining solved centers.  This
+    would allow us to delete some messy edge pairing code in 4x4x4.  I need to see how
+    many steps it would take to do this though.
+
+
+brainstorm #2
+-------------
+phase1
+- stage LR centers
+- should be ~6 steps to here
+
+phase2
+- put LR centers in 1 of 12 states
+- stage UD and FB centers
+- EO edges
+- should be ~14 steps to here
+
+phase3
+- put UD and FB centers in 1 of 12 states
+    - build prune tables for these
+
+- put edges into three L4E groups. Each of these L4E groups will need to be in 1 of 4 states
+  that can be solved when using only w2 turns (there are 105 L4E states but the others all
+  require quarter w turns which we cannot do because they would hose our centers).
+
+  Since the edges have been EOed there are (12!/(4!*4!*4!))^2 or 1,200,622,500 possible
+  edge states. This table is building now on LJs machine.
+
+- put corners into high/low groups? I probably need to build a 3x3x3 solver to really
+  understand this part.
+
+- I am guessing ~26 steps to here?
+
+2018-06-09 12:29:44,932 RubiksCubeTsai444.py     INFO: 4x4x4: Start of Phase1, 0 steps in
+2018-06-09 12:29:44,943      __init__.py     INFO:          L D B F
+2018-06-09 12:29:44,943      __init__.py     INFO:          F D D D
+2018-06-09 12:29:44,943      __init__.py     INFO:          B D F L
+2018-06-09 12:29:44,944      __init__.py     INFO:          R L F L
+2018-06-09 12:29:44,944      __init__.py     INFO:
+2018-06-09 12:29:44,944      __init__.py     INFO: U L R U  F F U D  F U F D  R U L F
+2018-06-09 12:29:44,944      __init__.py     INFO: D R L D  R B F L  U L R R  D F B L
+2018-06-09 12:29:44,944      __init__.py     INFO: B R L D  F F U F  U R L R  F B U D
+2018-06-09 12:29:44,944      __init__.py     INFO: B B U L  D F D D  R U B R  U B B L
+2018-06-09 12:29:44,944      __init__.py     INFO:
+2018-06-09 12:29:44,944      __init__.py     INFO:          B R B B
+2018-06-09 12:29:44,944      __init__.py     INFO:          R U D R
+2018-06-09 12:29:44,944      __init__.py     INFO:          L U B U
+2018-06-09 12:29:44,944      __init__.py     INFO:          U L R B
+2018-06-09 12:29:44,944      __init__.py     INFO:
+2018-06-09 12:29:44,944      __init__.py     INFO:
+2018-06-09 12:29:44,944 RubiksCubeTsai444.py     INFO: 4x4x4: End of Phase1, 6 steps in
+2018-06-09 12:29:44,944 RubiksCubeTsai444.py     INFO: 4x4x4: Start of Phase2, 6 steps in
+2018-06-09 12:29:44,945   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold range 7->99
+2018-06-09 12:29:44,945   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold 7, explored 1 nodes, took 0ms
+2018-06-09 12:29:44,956   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold 8, explored 313 nodes, took 10ms
+2018-06-09 12:29:45,118 RubiksCubeTsai444.py     INFO: 4x4x4-step60-tsai-phase2-dummy: found solution but edges are not in phase4 table
+2018-06-09 12:29:45,133   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: 0 seek calls
+2018-06-09 12:29:45,133   LookupTable.py     INFO: 4x4x4-step61-tsai-phase2-centers: 0 seek calls
+2018-06-09 12:29:45,133   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA found match 9 steps in F2 Rw F Fw2 L Fw2 B Rw U, lt_state BDUUUURUUFFFLUFRLFDRLBBULRUFFLRFFDUDULDRLFRRLDLUBRLFFRFFFLFLBRRUUBDUUBBD, f_cost 9 (9 + 0)
+2018-06-09 12:29:45,133   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold 9, explored 5175 nodes, took 177ms (188ms total)
+2018-06-09 12:29:45,133   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA explored 5489 nodes in 0:00:00.188692, 29089 nodes-per-sec
+2018-06-09 12:29:45,133      __init__.py     INFO:          F B D L
+2018-06-09 12:29:45,133      __init__.py     INFO:          U D D U
+2018-06-09 12:29:45,133      __init__.py     INFO:          R D U F
+2018-06-09 12:29:45,133      __init__.py     INFO:          L F F U
+2018-06-09 12:29:45,134      __init__.py     INFO:
+2018-06-09 12:29:45,134      __init__.py     INFO: D L U F  U L R F  R U L B  D B R L
+2018-06-09 12:29:45,134      __init__.py     INFO: F R L F  U F B L  D R L F  L B F R
+2018-06-09 12:29:45,134      __init__.py     INFO: D R L B  R B F D  R R L D  F F B L
+2018-06-09 12:29:45,152      __init__.py     INFO: L B U U  B U D B  D L U R  D F L U
+2018-06-09 12:29:45,152      __init__.py     INFO:
+2018-06-09 12:29:45,152      __init__.py     INFO:          R B R R
+2018-06-09 12:29:45,152      __init__.py     INFO:          R U U B
+2018-06-09 12:29:45,152      __init__.py     INFO:          D U D B
+2018-06-09 12:29:45,152      __init__.py     INFO:          B B D F
+2018-06-09 12:29:45,152      __init__.py     INFO:
+2018-06-09 12:29:45,152      __init__.py     INFO:
+2018-06-09 12:29:45,152 RubiksCubeTsai444.py     INFO: 4x4x4: End of Phase2, 15 steps in
+2018-06-09 12:29:45,152 RubiksCubeTsai444.py     INFO: 4x4x4: Start of Phase4, 15 steps in
+2018-06-09 12:29:45,153   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold range 9->99
+2018-06-09 12:29:45,153   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold 9, explored 1 nodes, took 0ms
+2018-06-09 12:29:45,174   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold 10, explored 56 nodes, took 20ms
+2018-06-09 12:29:45,228   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold 11, explored 198 nodes, took 54ms
+2018-06-09 12:29:45,761   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold 12, explored 2454 nodes, took 533ms
+2018-06-09 12:29:50,272   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold 13, explored 21918 nodes, took 0:00:04.510565
+2018-06-09 12:30:33,770   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold 14, explored 228865 nodes, took 0:00:43.498000
+2018-06-09 12:33:00,945   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: 0 seek calls
+2018-06-09 12:33:00,946   LookupTable.py     INFO: 4x4x4-step400-edges-stage: 0 seek calls
+2018-06-09 12:33:00,946   LookupTable.py     INFO: 4x4x4-step500-tsai-phase4-centers: 0 seek calls
+2018-06-09 12:33:00,946   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA found match 14 steps in F' U B2 U Uw2 F Fw2 D L2 D B Uw2 F' D, lt_state UUDDBFFBFBBFDDUUFFUUUUFFUULLLLUUFFLLLLFFUULLLLUUFFLLLLFFFFUUUUFF, f_cost 14 (14 + 0)
+2018-06-09 12:33:00,946   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA threshold 15, explored 778164 nodes, took 0:02:27.175412 (0:03:15.793351 total)
+2018-06-09 12:33:00,946   LookupTable.py     INFO: 4x4x4-step60-tsai-phase2-dummy: IDA explored 1031656 nodes in 0:03:15.793351, 5269 nodes-per-sec
+2018-06-09 12:33:00,946      __init__.py     INFO:          R B D R
+2018-06-09 12:33:00,946      __init__.py     INFO:          R U U R
+2018-06-09 12:33:00,946      __init__.py     INFO:          U D D U
+2018-06-09 12:33:00,946      __init__.py     INFO:          L D F L
+2018-06-09 12:33:00,946      __init__.py     INFO:
+2018-06-09 12:33:00,946      __init__.py     INFO: U U L B  D B U U  B L U U  F F U B
+2018-06-09 12:33:00,946      __init__.py     INFO: B L L F  R B F L  B R R F  L F B R
+2018-06-09 12:33:00,946      __init__.py     INFO: B R R F  R F B L  B L L F  L B F R
+2018-06-09 12:33:00,946      __init__.py     INFO: U D L L  F F U F  R L D D  R B U L
+2018-06-09 12:33:00,946      __init__.py     INFO:
+2018-06-09 12:33:00,946      __init__.py     INFO:          D D B D
+2018-06-09 12:33:00,946      __init__.py     INFO:          D D D D
+2018-06-09 12:33:00,946      __init__.py     INFO:          R U U R
+2018-06-09 12:33:00,947      __init__.py     INFO:          F F D B
+2018-06-09 12:33:00,947      __init__.py     INFO:
+2018-06-09 12:33:00,947      __init__.py     INFO:
+2018-06-09 12:33:00,947 RubiksCubeTsai444.py     INFO: kociemba: RBDRRUURUDDULDFLBLUUBRRFBLLFRLDDDBUURBFLRFBLFFUFDDBDDDDDRUURFFDBUULBBLLFBRRFUDLLFFUBLFBRLBFRRBUL
+2018-06-09 12:33:00,947 RubiksCubeTsai444.py     INFO: 4x4x4: End of Phase4, 29 steps in
+
+
+phase4
+- solve centers
+- pair edges
+- do so in a way that satisfies the first phase of solving 3x3x3? I think that is the only
+  way this approach will produce a reasonably low move count.
+- heck could we solve from here without reducing to 3x3x3?
+
+
+brainstorm #3
+-------------
+- just work on improving the tsai solver
+    - build phase3 edges table without symmetry...this should also speed up phase2
+    
+      I did this but it didn't help much and the file was HUGE!! We spend a decent
+      amount of CPU calculating the edges state/pattern...that is the case with or
+      without symmetry.
+
+    - build phase3 table to 8-deep. It is 7-deep, 313M, 55M zipped and is growing at 10x.
+      So 8-deep will be around 500M...that is doable with LFS on github.
+
+      I did this but you are better off using a 7-deep table and preloading it...8-deep
+      would be too big to preload.
+
+I was able to speed up phase2 a LOT by:
+- preloading the centers table
+- added edges_possibly_oriented() to reduce the number of times we look in the phase3 edges
+  table to see if the edges have been EOed
+
+phase3 is reasonably fast if you preload all of the tables.  We need to move to
+client/server model for this.

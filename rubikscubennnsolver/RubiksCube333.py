@@ -29,7 +29,7 @@ corners_333 = (
 )
 
 
-class LookupTable333Phase1Edges(LookupTable):
+class LookupTable333Phase2Edges(LookupTable):
     """
     lookup-table-3x3x3-step11-edges.txt
     ===================================
@@ -65,7 +65,7 @@ class LookupTable333Phase1Edges(LookupTable):
         return result
 
 
-class LookupTable333Phase1Corners(LookupTable):
+class LookupTable333Phase2Corners(LookupTable):
     """
     lookup-table-3x3x3-step12-corners.txt
     =====================================
@@ -120,8 +120,8 @@ class RubiksCube333(RubiksCube):
             return
         self.lt_init_called = True
 
-        self.lt_phase1_edges = LookupTable333Phase1Edges(self)
-        self.lt_phase1_corners = LookupTable333Phase1Corners(self)
+        self.lt_phase2_edges = LookupTable333Phase2Edges(self)
+        self.lt_phase2_corners = LookupTable333Phase2Corners(self)
 
 
 def rotate_333_U(cube):

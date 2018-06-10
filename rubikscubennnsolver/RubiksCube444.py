@@ -26,13 +26,40 @@ moves_4x4x4 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2",
 
 solved_4x4x4 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
 
-centers_444 = (6, 7, 10, 11, 22, 23, 26, 27, 38, 39, 42, 43, 54, 55, 58, 59, 70, 71, 74, 75, 86, 87, 90, 91)
+centers_444 = (
+    6, 7, 10, 11,
+    22, 23, 26, 27,
+    38, 39, 42, 43,
+    54, 55, 58, 59,
+    70, 71, 74, 75,
+    86, 87, 90, 91
+)
 
-UD_centers_444 = (6, 7, 10, 11, 86, 87, 90, 91)
+UD_centers_444 = (
+    6, 7, 10, 11,
+    86, 87, 90, 91
+)
 
-LR_centers_444 = (22, 23, 26, 27, 54, 55, 58, 59)
+LR_centers_444 = (
+    22, 23, 26, 27,
+    54, 55, 58, 59
+)
 
-UFBD_centers_444 = (6, 7, 10, 10, 38, 39, 42, 43, 70, 71, 74, 75, 86, 87, 90, 91)
+UFBD_centers_444 = (
+    6, 7, 10, 10,
+    38, 39, 42, 43,
+    70, 71, 74, 75,
+    86, 87, 90, 91
+)
+
+corners_444 = (
+    1, 4, 13, 16,
+    17, 20, 29, 32,
+    33, 36, 45, 48,
+    49, 52, 61, 64,
+    65, 68, 77, 80,
+    81, 84, 93, 96
+)
 
 edges_444 = (
     2, 3, 5, 8, 9, 12, 14, 15,      # Upper
@@ -704,20 +731,6 @@ class RubiksCube444(RubiksCube):
         return self._phase
 
     def sanity_check(self):
-        corners = (1, 4, 13, 16,
-                   17, 20, 29, 32,
-                   33, 36, 45, 48,
-                   49, 52, 61, 64,
-                   65, 68, 77, 80,
-                   81, 84, 93, 96)
-
-        centers = (6, 7, 10, 11,
-                   22, 23, 26, 27,
-                   38, 39, 42, 43,
-                   54, 55, 58, 59,
-                   70, 71, 74, 75,
-                   86, 87, 90, 91)
-
         edge_orbit_0 = (2, 3, 8, 12, 15, 14, 9, 5,
                         18, 19, 24, 28, 31, 30, 25, 21,
                         34, 35, 40, 44, 47, 46, 41, 37,
@@ -725,8 +738,8 @@ class RubiksCube444(RubiksCube):
                         66, 67, 72, 76, 79, 78, 73, 69,
                         82, 83, 88, 92, 95, 94, 89, 85)
 
-        self._sanity_check('corners', corners, 4)
-        self._sanity_check('centers', centers, 4)
+        self._sanity_check('corners', corners_444, 4)
+        self._sanity_check('centers', centers_444, 4)
         self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
 
     def lt_init(self):

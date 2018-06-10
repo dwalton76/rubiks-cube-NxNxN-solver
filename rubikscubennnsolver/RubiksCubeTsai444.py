@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
+from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_3x3x3, corners_333
 from rubikscubennnsolver.RubiksCube444 import (
     RubiksCube444,
     LookupTable444Edges,
     moves_4x4x4,
     centers_444,
+    corners_444,
     edges_444,
     wings_444,
     UD_centers_444,
@@ -91,6 +93,22 @@ class LookupTable444TsaiPhase1(LookupTable):
         return self.hex_format % int(result, 2)
 
 
+tsai_phase2_LR_center_targets = set((
+    'LLLLRRRR',
+    'RRRRLLLL',
+    'LLRRRRLL',
+    'LLRRLLRR',
+    'RRLLRRLL',
+    'RRLLLLRR',
+    'RLRLRLRL',
+    'RLRLLRLR',
+    'LRLRRLRL',
+    'LRLRLRLR',
+    'RLLRLRRL',
+    'LRRLRLLR'
+))
+
+
 class LookupTable444TsaiPhase2Centers(LookupTable):
     """
     lookup-table-4x4x4-step61-centers.txt
@@ -146,20 +164,6 @@ class LookupTable444TsaiPhase2Centers(LookupTable):
         return result
 
 
-tsai_phase2_LR_center_targets = set((
-    'LLLLRRRR',
-    'RRRRLLLL',
-    'LLRRRRLL',
-    'LLRRLLRR',
-    'RRLLRRLL',
-    'RRLLLLRR',
-    'RLRLRLRL',
-    'RLRLLRLR',
-    'LRLRRLRL',
-    'LRLRLRLR',
-    'RLLRLRRL',
-    'LRRLRLLR'))
-
 class LookupTableIDA444TsaiPhase2(LookupTableIDA):
 
     def __init__(self, parent):
@@ -167,7 +171,7 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             self,
             parent,
             'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
-            '111111111111_10425376a8b9ecfdhgkiljnm',
+            'TBD',
             moves_4x4x4,
             ("Fw", "Fw'", "Bw", "Bw'",
              "Uw", "Uw'", "Dw", "Dw'", # illegal_moves
@@ -177,6 +181,9 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             (parent.lt_tsai_phase2_centers,),
             linecount=0,
             max_depth=99)
+
+        #self.cube_333 = RubiksCube333(solved_3x3x3, order='URFDLB')
+        #self.cube_333.lt_init()
 
     def state(self):
         babel = {
@@ -188,7 +195,6 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             'U' : 'U',
         }
         parent_state = self.parent.state
-
         result = [
             # Upper
             parent_state[2], parent_state[3],
@@ -232,15 +238,15 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
 
     def search_complete(self, state, steps_to_here):
         parent_state = self.parent.state
+        UD = ('U', 'D')
 
         # Are UD and FB staged? Check UD, if it is staged FB has to be staged too.
         for x in UD_centers_444:
-            if parent_state[x] not in ('U', 'D'):
+            if parent_state[x] not in UD:
                 return False
 
         # Are the LR sides in 1 of the 12 states we want?
-        LR_centers = [parent_state[x] for x in LR_centers_444]
-        LR_centers = ''.join(LR_centers)
+        LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
 
         if LR_centers not in tsai_phase2_LR_center_targets:
             return False
@@ -260,6 +266,16 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
         if p4_edges_cost == 0 or p4_edges_cost > 9:
             log.info("%s: found solution but edges are not in phase4 table" % self)
             return False
+
+        # TODO come back to this later
+        '''
+        for (corner_index_333, corner_index_444) in zip(corners_333, corners_444):
+            self.cube_333.state[corner_index_333] = self.parent.state[corner_index_444]
+
+        if not self.cube_333.lt_phase2_edges.steps():
+            log.info("%s: found solution but corners are not in 3x3x3 phase2 table" % self)
+            return False
+        '''
 
         # rotate_xxx() is very fast but it does not append the
         # steps to the solution so put the cube back in original state
@@ -566,6 +582,7 @@ class LookupTableIDA444TsaiPhase3(LookupTableIDA):
             # prune tables
             (parent.lt_tsai_phase3_edges_solve,
              parent.lt_tsai_phase3_centers_solve),
+
             # linecount=43866828, # 8-deep
             linecount=4313742, # 7-deep
             max_depth=7)
@@ -998,7 +1015,6 @@ class RubiksCubeTsai444(RubiksCube444):
         # =============
         # Phase3 tables
         # =============
-        '''
         self.lt_tsai_phase3_edges_solve = LookupTable444TsaiPhase3Edges(self)
         #self.lt_tsai_phase3_edges_solve.preload_cache()
         self.lt_tsai_phase3_centers_solve = LookupTable444TsaiPhase3CentersSolve(self)
@@ -1006,7 +1022,6 @@ class RubiksCubeTsai444(RubiksCube444):
         self.lt_tsai_phase3 = LookupTableIDA444TsaiPhase3(self)
         #self.lt_tsai_phase3.preload_cache()
         #self.lt_tsai_phase3.ida_all_the_way = True
-        '''
 
         # For tsai this tables is only used if the centers have already been solved
         # For non-tsai it is always used
@@ -1130,7 +1145,6 @@ class RubiksCubeTsai444(RubiksCube444):
 
         # Test the phase2 prune tables
         #self.lt_tsai_phase2_centers.solve()
-        #self.tsai_phase2_orient_edges_print()
         #self.print_cube()
         #sys.exit(0)
 
@@ -1142,6 +1156,7 @@ class RubiksCubeTsai444(RubiksCube444):
         #self.tsai_phase2_orient_edges_print()
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        sys.exit(0)
 
         # This is the old way...saving for a rainy day
         '''
@@ -1185,10 +1200,8 @@ class RubiksCubeTsai444(RubiksCube444):
 
         # Are we setup to skip phase1 of 3x3x3?
         '''
-        from rubikscubennnsolver.RubiksCube333 import RubiksCube333
         kociemba_string_333 = self.get_kociemba_string(False)
         cube_333 = RubiksCube333(kociemba_string_333, order='URFDLB')
-        #cube_333.print_cube()
         cube_333.lt_init()
 
         log.info("%s: edges %s, steps %s" %

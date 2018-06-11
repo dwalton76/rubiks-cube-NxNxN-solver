@@ -499,7 +499,7 @@ class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
 
     def state(self):
         state = self.parent.state
-        edges = ''.join([state[square_index] for square_index in wings_444])
+        edges = ''.join([state[square_index] for square_index in edges_444])
         centers = ''.join([state[x] for x in centers_444])
         return centers + edges
 
@@ -511,6 +511,11 @@ class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
         if centers_solved_444(state):
             paired_edges_count = 12 - self.parent.get_non_paired_edges_count()
 
+            # Some stats against 50 test cubes
+            # - pairing 1 here averages 62.08 moves and took 1m 11s
+            # - pairing 2 here averages 59.54 moves and took 1m 7s
+            # - pairing 3 here averages 58.54 moves and took 1m 46s
+            # - pairing 4 here averages 58.10 moves and took 10m 26s
             if paired_edges_count >= 2:
 
                 if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
@@ -558,14 +563,21 @@ class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
             max_depth=99)
 
     def state(self):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-        edges = ''.join([state[square_index] for square_index in wings_444])
-        centers = ''.join([state[x] for x in centers_444])
+        # I used to compute the edge state here via edges_recolor_pattern_444 but that
+        # is a much larger CPU hit and the only difference it makes is we prune off a
+        # few more branches due to checking for the state in 'explored'.
+        parent_state = self.parent.state
+        centers = ''.join([parent_state[x] for x in centers_444])
+        edges = ''.join([parent_state[x] for x in edges_444])
+
         return centers + edges
 
     def search_complete(self, state, steps_to_here):
 
-        if centers_solved_444(state) and self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=False):
+        if (centers_solved_444(state) and
+            self.parent.edges_possibly_oriented() and
+            self.parent.lt_edges.steps()):
+            #self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=False)):
 
             if self.parent.center_solution_leads_to_oll_parity():
                 self.parent.state = self.original_state[:]
@@ -695,6 +707,13 @@ class LookupTable444Edges(LookupTable):
             '111111111111_10425376a8b9ecfdhgkiljnm',
             linecount=7363591) # 10-deep
             #linecount=63923952) # 11-deep
+            #linecount=58632685) # EO 13-deep
+
+    def state(self):
+        state = edges_recolor_pattern_444(self.parent.state[:])
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        signature = get_edges_paired_binary_signature(edges_state)
+        return signature + '_' + edges_state
 
 
 class RubiksCube444(RubiksCube):
@@ -761,13 +780,13 @@ class RubiksCube444(RubiksCube):
         # Stage all centers via IDA
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = True
-        #self.lt_ULFRBD_centers_stage.preload_cache()
+        self.lt_ULFRBD_centers_stage.preload_cache()
 
         # =============
         # Phase2 tables
         # =============
         self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
-        #self.lt_ULFRBD_centers_solve.preload_cache()
+        self.lt_ULFRBD_centers_solve.preload_cache()
         self.lt_ULFRBD_centers_solve_pair_two_edges = LookupTable444ULFRBDCentersSolvePairTwoEdges(self)
         #self.lt_ULFRBD_centers_solve_edges_stage = LookupTable444ULFRBDCentersSolveEdgesStage(self)
 
@@ -783,7 +802,6 @@ class RubiksCube444(RubiksCube):
 
         # Stage all centers then solve all centers...averages 18.12 moves
         log.info("%s: Start of Phase1" % self)
-        #self.lt_ULFRBD_centers_stage.ida_all_the_way = True
         self.lt_ULFRBD_centers_stage.solve()
         self.rotate_for_best_centers_solving()
         self.print_cube()

@@ -680,7 +680,7 @@ class RubiksCube444(RubiksCube):
         # Stage all centers via IDA
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = True
-        #self.lt_ULFRBD_centers_stage.preload_cache()
+        self.lt_ULFRBD_centers_stage.preload_cache()
 
         # =============
         # Phase2 tables

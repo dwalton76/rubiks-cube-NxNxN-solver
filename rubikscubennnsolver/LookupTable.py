@@ -274,8 +274,7 @@ class LookupTable(object):
             # The bottleneck is the building of the dictionary, moreso that reading from disk.
             for line in fh:
                 (state, steps) = line.rstrip().split(':')
-                steps_split = steps.split()
-                self.cache[state] = str(len(steps_split))
+                self.cache[state] = steps.split()
 
         self.preloaded_cache = True
         log.info("%s: end preload cache (%d bytes)" % (self, sys.getsizeof(self.cache)))

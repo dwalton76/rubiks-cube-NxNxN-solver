@@ -1,7 +1,7 @@
 
 from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from math import ceil
 import logging
 import sys
@@ -13,7 +13,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
 
     def pair_edge_orbit_via_555(self, orbit):
         log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555 = RubiksCube555(solved_555, 'URFDLB')
         fake_555.lt_init()
 
         # Fill in the corners so we can avoid certain types of parity

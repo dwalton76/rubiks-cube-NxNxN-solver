@@ -2,7 +2,7 @@
 
 from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.RubiksSide import SolveError
-from rubikscubennnsolver.RubiksCube444 import moves_4x4x4
+from rubikscubennnsolver.RubiksCube444 import moves_444
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
@@ -11,11 +11,12 @@ from rubikscubennnsolver.LookupTable import (
 )
 import itertools
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
-moves_5x5x5 = moves_4x4x4
-solved_5x5x5 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
+moves_555 = moves_444
+solved_555 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 centers_555 = (
     7, 8, 9, 12, 13, 14, 17, 18, 19,
@@ -304,15 +305,15 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             parent,
             'lookup-table-5x5x5-step10-UD-centers-stage.txt',
             '3fe000000001ff',
-            moves_5x5x5,
+            moves_555,
             (), # illegal_moves
 
             # prune tables
             (parent.lt_UD_T_centers_stage,
              parent.lt_UD_X_centers_stage),
 
+            #linecount=868185, # 5-deep
             #linecount=17168476, # 6-deep
-            #max_depth=6)
             linecount=328877780, # 7-deep
             max_depth=7)
 
@@ -324,7 +325,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
         return self.hex_format % int(result, 2)
 
 
-class LookupTableIDA555LRCentersStage(LookupTable):
+class LookupTable555LRCentersStage(LookupTable):
     """
     lookup-table-5x5x5-step20-LR-centers-stage.txt
     ==============================================
@@ -448,7 +449,6 @@ class LookupTableUFCentersSolve(LookupTable):
 
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     """
-    Would be 117,649,000,000...I built it 7-deep.
     24,010,000/117,649,000,000 is 0.000204082 so this will be a fast IDA search
 
     lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
@@ -470,7 +470,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             parent,
             'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
             'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
-            moves_5x5x5,
+            moves_555,
 
             # These moves would destroy the staged centers
             ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),
@@ -920,8 +920,9 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStageCostOnly(self)
         self.lt_UD_X_centers_stage = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
+        #self.lt_UD_centers_stage.preload_cache()
 
-        self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
+        self.lt_LR_centers_stage = LookupTable555LRCentersStage(self)
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)

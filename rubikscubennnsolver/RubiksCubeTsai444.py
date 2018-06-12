@@ -4,7 +4,7 @@ from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_3x3x3, corne
 from rubikscubennnsolver.RubiksCube444 import (
     RubiksCube444,
     LookupTable444Edges,
-    moves_4x4x4,
+    moves_444,
     centers_444,
     corners_444,
     edges_444,
@@ -172,7 +172,7 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             parent,
             'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
             'TBD',
-            moves_4x4x4,
+            moves_444,
             ("Fw", "Fw'", "Bw", "Bw'",
              "Uw", "Uw'", "Dw", "Dw'", # illegal_moves
              "Bw2", "Dw2", "Lw", "Lw'", "Lw2"), # TPR also restricts these
@@ -567,7 +567,7 @@ class LookupTableIDA444TsaiPhase3(LookupTableIDA):
             parent,
             'lookup-table-4x4x4-step70-tsai-phase3.txt',
             'UUUULLLLFFFFRRRRBBBBDDDD10425376a8b9ecfdhgkiljnm',
-            moves_4x4x4,
+            moves_444,
 
             # illegal moves
             ("Fw", "Fw'",

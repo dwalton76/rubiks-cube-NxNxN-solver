@@ -1,8 +1,8 @@
 
 from itertools import combinations
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableCostOnly,
@@ -16,13 +16,15 @@ import sys
 log = logging.getLogger(__name__)
 
 
-moves_6x6x6 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
-               "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2",
-               "F" , "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2",
-               "R" , "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2",
-               "B" , "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",
-               "D" , "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2")
-solved_6x6x6 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+moves_666 = (
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2",
+    "F" , "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2",
+    "R" , "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2",
+    "B" , "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",
+    "D" , "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2"
+)
+solved_666 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 
 set_UD = set(('U', 'D'))
@@ -290,7 +292,7 @@ class LookupTable666UDObliqueEdgesStage(LookupTableIDA):
             parent,
             'lookup-table-6x6x6-step10-UD-oblique-edge-stage.txt',
             'ff00000000ff',
-            moves_6x6x6,
+            moves_666,
 
             # illegal_moves
             ("3Uw", "3Uw'", "3Dw", "3Dw'",
@@ -409,7 +411,7 @@ class LookupTable666LRObliqueEdgesStage(LookupTableIDA):
             parent,
             'lookup-table-6x6x6-step20-LR-oblique-edge-stage.txt',
             'ff00ff00',
-            moves_6x6x6,
+            moves_666,
 
             # illegal_moves
             ("3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged inner-x-centers
@@ -834,7 +836,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             # There are 4900 of them so they are at the bottom of the file
             lt_LFRB_solve_inner_x_centers_and_oblique_edges_state_targets,
 
-            moves_6x6x6,
+            moves_666,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
              "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
@@ -1342,7 +1344,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         obliques AND stage the outer-x-centers.  That table would have 12870^3 states
         with 12870^2 prune tables so the IDA search would be doable but on the slow side.
         """
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555 = RubiksCube555(solved_555, 'URFDLB')
         fake_555.lt_init()
         self.populate_fake_555_for_UD_stage(fake_555)
         fake_555.print_cube()
@@ -1375,7 +1377,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
 
     def solve_reduced_555_centers(self):
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555 = RubiksCube555(solved_555, 'URFDLB')
         fake_555.lt_init()
         self.populate_fake_555_for_ULFRBD_solve(fake_555)
         fake_555.group_centers_guts()
@@ -1384,7 +1386,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.rotate(step)
 
     def solve_reduced_555_t_centers(self):
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555 = RubiksCube555(solved_555, 'URFDLB')
         fake_555.lt_init()
         self.populate_fake_555_for_ULFRBD_solve(fake_555)
         fake_555.lt_ULFRBD_t_centers_solve.solve()
@@ -1397,7 +1399,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         Stage inner-x-centers via 4x4x4 solver
         """
 
-        fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
+        fake_444 = RubiksCube444(solved_444, 'URFDLB')
         fake_444.lt_init()
         self.populate_fake_444_for_ULFRBD_stage(fake_444)
         fake_444.lt_ULFRBD_centers_stage.avoid_oll = False

@@ -11,6 +11,7 @@ from rubikscubennnsolver.LookupTable import (
 )
 import itertools
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -311,8 +312,8 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             (parent.lt_UD_T_centers_stage,
              parent.lt_UD_X_centers_stage),
 
+            #linecount=868185, # 5-deep
             #linecount=17168476, # 6-deep
-            #max_depth=6)
             linecount=328877780, # 7-deep
             max_depth=7)
 
@@ -324,7 +325,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
         return self.hex_format % int(result, 2)
 
 
-class LookupTableIDA555LRCentersStage(LookupTable):
+class LookupTable555LRCentersStage(LookupTable):
     """
     lookup-table-5x5x5-step20-LR-centers-stage.txt
     ==============================================
@@ -448,7 +449,6 @@ class LookupTableUFCentersSolve(LookupTable):
 
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     """
-    Would be 117,649,000,000...I built it 7-deep.
     24,010,000/117,649,000,000 is 0.000204082 so this will be a fast IDA search
 
     lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
@@ -920,8 +920,9 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStageCostOnly(self)
         self.lt_UD_X_centers_stage = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
+        #self.lt_UD_centers_stage.preload_cache()
 
-        self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
+        self.lt_LR_centers_stage = LookupTable555LRCentersStage(self)
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)

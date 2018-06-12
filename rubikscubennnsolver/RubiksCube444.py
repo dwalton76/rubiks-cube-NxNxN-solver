@@ -17,20 +17,35 @@ import sys
 log = logging.getLogger(__name__)
 
 
-moves_4x4x4 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2",
-               "L", "L'", "L2", "Lw", "Lw'", "Lw2",
-               "F" , "F'", "F2", "Fw", "Fw'", "Fw2",
-               "R" , "R'", "R2", "Rw", "Rw'", "Rw2",
-               "B" , "B'", "B2", "Bw", "Bw'", "Bw2",
-               "D" , "D'", "D2", "Dw", "Dw'", "Dw2")
+moves_444 = (
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2",
+    "F" , "F'", "F2", "Fw", "Fw'", "Fw2",
+    "R" , "R'", "R2", "Rw", "Rw'", "Rw2",
+    "B" , "B'", "B2", "Bw", "Bw'", "Bw2",
+    "D" , "D'", "D2", "Dw", "Dw'", "Dw2"
+)
 
-solved_4x4x4 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
+solved_444 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
 
-centers_444 = (6, 7, 10, 11, 22, 23, 26, 27, 38, 39, 42, 43, 54, 55, 58, 59, 70, 71, 74, 75, 86, 87, 90, 91)
+centers_444 = (
+    6, 7, 10, 11,
+    22, 23, 26, 27,
+    38, 39, 42, 43,
+    54, 55, 58, 59,
+    70, 71, 74, 75,
+    86, 87, 90, 91
+)
 
-UD_centers_444 = (6, 7, 10, 11, 86, 87, 90, 91)
+UD_centers_444 = (
+    6, 7, 10, 11,
+    86, 87, 90, 91
+)
 
-LR_centers_444 = (22, 23, 26, 27, 54, 55, 58, 59)
+LR_centers_444 = (
+    22, 23, 26, 27,
+    54, 55, 58, 59
+)
 
 edges_444 = (
     2, 3, 5, 8, 9, 12, 14, 15,      # Upper
@@ -38,7 +53,8 @@ edges_444 = (
     34, 35, 37, 40, 41, 44, 46, 47, # Front
     50, 51, 53, 56, 57, 60, 62, 63, # Right
     66, 67, 69, 72, 73, 76, 78, 79, # Back
-    82, 83, 85, 88, 89, 92, 94, 95) # Down
+    82, 83, 85, 88, 89, 92, 94, 95  # Down
+)
 
 wings_444 = (
     2, 3,   # Upper
@@ -316,7 +332,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             parent,
             'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
             'UUUULLLLFFFFLLLLFFFFUUUU',
-            moves_4x4x4,
+            moves_444,
 
             # illegal_moves...ignoring these increases the average solution
             # by less than 1 move but makes the IDA search about 20x faster
@@ -390,7 +406,7 @@ class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
             parent,
             'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
             'TBD',
-            moves_4x4x4,
+            moves_444,
             ("Rw", "Rw'", "Lw", "Lw'",
              "Fw", "Fw'", "Bw", "Bw'",
              "Uw", "Uw'", "Dw", "Dw'"),
@@ -455,7 +471,7 @@ class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
             parent,
             'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
             'TBD',
-            moves_4x4x4,
+            moves_444,
             ("Rw", "Rw'", "Lw", "Lw'",
              "Fw", "Fw'", "Bw", "Bw'",
              "Uw", "Uw'", "Dw", "Dw'"),

@@ -16,8 +16,8 @@ import sys
 from rubikscubennnsolver import reverse_steps
 from rubikscubennnsolver.rotate_xxx import rotate_444
 from rubikscubennnsolver.RubiksCube444 import (
-    moves_4x4x4,
-    solved_4x4x4,
+    moves_444,
+    solved_444,
     RubiksCube444,
     LookupTableIDA444ULFRBDCentersStage,
     LookupTable444UDCentersStage,
@@ -54,7 +54,7 @@ def build_state_table():
     FB_explored = {}
     count = 0
 
-    for step in moves_4x4x4:
+    for step in moves_444:
         workq.append(([step,], cube.state[:]))
 
     while workq:
@@ -105,7 +105,7 @@ def build_state_table():
 
             prev_step = steps[-1]
 
-            for step in moves_4x4x4:
+            for step in moves_444:
 
                 # U2 followed by U2 is a no-op
                 if step == prev_step and step.endswith("2"):

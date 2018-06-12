@@ -1,15 +1,15 @@
 
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
-from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6, moves_6x6x6
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666, moves_666
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA
 import logging
 import sys
 
 log = logging.getLogger(__name__)
 
-moves_7x7x7 = moves_6x6x6
-solved_7x7x7 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+moves_777 = moves_666
+solved_777 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 step80_centers_777 = (
     # Left
@@ -337,7 +337,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
             parent,
             'lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
             'fff000000000000fff',
-            moves_7x7x7,
+            moves_777,
 
             # do not mess up UD 5x5x5 centers
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"),
@@ -631,7 +631,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
             parent,
             'lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt',
             'fff000fff000',
-            moves_7x7x7,
+            moves_777,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # do not mess up UD 5x5x5 centers
              "Rw",  "Rw'",  "Lw",  "Lw'",  "Fw",  "Fw'",  "Bw",  "Bw'", # do not mess up UD oblique edges
@@ -942,7 +942,7 @@ class LookupTableIDA777UDSolveInnerCentersAndObliqueEdges(LookupTableIDA):
              'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxUUUx',
              'xDDDxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxUUUx',
              'xDDDxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxUUUx'),
-            moves_7x7x7,
+            moves_777,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
              "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),            # do not mess up staged centers
@@ -1310,7 +1310,7 @@ class LookupTableIDA777LRSolveInnerCentersAndObliqueEdges(LookupTableIDA):
              'xRRRxRLLLRRLLLRRLLLRxLLLxxLLLxRRRRLRRRRLRRRRLxLLLx',
              'xRRRxRLLLRRLLLRRLLLRxLLLxxRRRxLRRRLLRRRLLRRRLxLLLx',
              'xRRRxRLLLRRLLLRRLLLRxRRRxxLLLxLRRRLLRRRLLRRRLxLLLx'),
-            moves_7x7x7,
+            moves_777,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
              "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
@@ -1682,7 +1682,7 @@ class LookupTableIDA777FBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
              'xBBBxBFFFBBFFFBBFFFBxFFFxxFFFxBBBBFBBBBFBBBBFxFFFx',
              'xBBBxBFFFBBFFFBBFFFBxFFFxxBBBxFBBBFFBBBFFBBBFxFFFx',
              'xBBBxBFFFBBFFFBBFFFBxBBBxxFFFxFBBBFFBBBFFBBBFxFFFx'),
-            moves_7x7x7,
+            moves_777,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
              "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
@@ -1805,7 +1805,7 @@ class LookupTableIDA777LFRBSolveInnerCentersAndObliqueEdges(LookupTableIDA):
             parent,
             'lookup-table-7x7x7-step80-LFRB-solve-inner-center-and-oblique-edges.txt',
             lt_LFRB_solve_inner_centers_and_oblique_edges_state_targets, # There are 4900 of them
-            moves_7x7x7,
+            moves_777,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
              "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
@@ -2013,7 +2013,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def create_fake_555_for_LR_t_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555 = RubiksCube555(solved_555, 'URFDLB')
         fake_555.lt_init()
 
         for x in range(1, 151):
@@ -2036,7 +2036,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def create_fake_555_from_inside_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555 = RubiksCube555(solved_555, 'URFDLB')
         fake_555.lt_init()
 
         for x in range(1, 151):
@@ -2114,7 +2114,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def create_fake_555_from_outside_centers(self):
 
         # Create a fake 5x5x5 to solve 7x7x7 centers (they have been reduced to a 5x5x5)
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555 = RubiksCube555(solved_555, 'URFDLB')
         fake_555.lt_init()
 
         for x in range(1, 151):
@@ -2256,7 +2256,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def create_fake_666_centers(self):
 
         # Create a fake 6x6x6 to stage the outside UD oblique edges
-        fake_666 = RubiksCube666(solved_6x6x6, 'URFDLB')
+        fake_666 = RubiksCube666(solved_666, 'URFDLB')
         fake_666.lt_init()
 
         for x in range(1, 217):

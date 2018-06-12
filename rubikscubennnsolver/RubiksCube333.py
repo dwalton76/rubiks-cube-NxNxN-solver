@@ -1,12 +1,12 @@
 
 from rubikscubennnsolver import RubiksCube
-from rubikscubennnsolver.RubiksCube222 import moves_2x2x2
+from rubikscubennnsolver.RubiksCube222 import moves_222
 import logging
 
 log = logging.getLogger(__name__)
 
-moves_3x3x3 = moves_2x2x2
-solved_3x3x3 = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
+moves_333 = moves_222
+solved_333 = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
 
 
 class RubiksCube333(RubiksCube):

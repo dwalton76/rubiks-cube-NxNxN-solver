@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
-from rubikscubennnsolver.RubiksCube222 import RubiksCube222, solved_2x2x2
-from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_3x3x3
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
-from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_6x6x6
-from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_7x7x7
-from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven, solved_8x8x8, solved_10x10x10, solved_12x12x12, solved_14x14x14
-from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd, solved_9x9x9, solved_11x11x11, solved_13x13x13, solved_15x15x15
+from rubikscubennnsolver.RubiksCube222 import RubiksCube222, solved_222
+from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_333
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666
+from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
+from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven, solved_888, solved_101010, solved_121212, solved_141414
+from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd, solved_999, solved_111111, solved_131313, solved_151515
 import argparse
 import json
 import logging
@@ -52,50 +52,50 @@ try:
 
         # solve the cube
         if size == '2x2x2':
-            cube = RubiksCube222(solved_2x2x2, order)
+            cube = RubiksCube222(solved_222, order)
 
         elif size == '3x3x3':
-            cube = RubiksCube333(solved_3x3x3, order)
+            cube = RubiksCube333(solved_333, order)
 
         elif size == '4x4x4':
-            cube = RubiksCube444(solved_4x4x4, order)
+            cube = RubiksCube444(solved_444, order)
 
         elif size == '5x5x5':
-            cube = RubiksCube555(solved_5x5x5, order)
+            cube = RubiksCube555(solved_555, order)
 
         elif size == '6x6x6':
-            cube = RubiksCube666(solved_6x6x6, order)
+            cube = RubiksCube666(solved_666, order)
 
         elif size == '7x7x7':
-            cube = RubiksCube777(solved_7x7x7, order)
+            cube = RubiksCube777(solved_777, order)
 
         elif size == '8x8x8':
-            cube = RubiksCubeNNNEven(solved_8x8x8, order)
+            cube = RubiksCubeNNNEven(solved_888, order)
 
         elif size == '9x9x9':
-            cube = RubiksCubeNNNOdd(solved_9x9x9, order)
+            cube = RubiksCubeNNNOdd(solved_999, order)
 
         elif size == '10x10x10':
-            cube = RubiksCubeNNNEven(solved_10x10x10, order)
+            cube = RubiksCubeNNNEven(solved_101010, order)
 
         elif size == '11x11x11':
-            cube = RubiksCubeNNNOdd(solved_11x11x11, order)
+            cube = RubiksCubeNNNOdd(solved_111111, order)
 
         elif size == '12x12x12':
             continue # no need to test above 10x10x10
-            cube = RubiksCubeNNNEven(solved_12x12x12, order)
+            cube = RubiksCubeNNNEven(solved_121212, order)
 
         elif size == '13x13x13':
             continue # no need to test above 11x11x11
-            cube = RubiksCubeNNNOdd(solved_13x13x13, order)
+            cube = RubiksCubeNNNOdd(solved_131313, order)
 
         elif size == '14x14x14':
             continue # no need to test above 10x10x10
-            cube = RubiksCubeNNNEven(solved_14x14x14, order)
+            cube = RubiksCubeNNNEven(solved_141414, order)
 
         elif size == '15x15x15':
             continue # no need to test above 11x11x11
-            cube = RubiksCubeNNNOdd(solved_15x15x15, order)
+            cube = RubiksCubeNNNOdd(solved_151515, order)
 
         else:
             print("ERROR: Add support for %s" % size)

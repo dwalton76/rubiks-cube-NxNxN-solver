@@ -2,7 +2,7 @@
 
 from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.RubiksSide import SolveError
-from rubikscubennnsolver.RubiksCube444 import moves_4x4x4
+from rubikscubennnsolver.RubiksCube444 import moves_444
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
@@ -15,8 +15,8 @@ import sys
 
 log = logging.getLogger(__name__)
 
-moves_5x5x5 = moves_4x4x4
-solved_5x5x5 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
+moves_555 = moves_444
+solved_555 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 centers_555 = (
     7, 8, 9, 12, 13, 14, 17, 18, 19,
@@ -305,7 +305,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             parent,
             'lookup-table-5x5x5-step10-UD-centers-stage.txt',
             '3fe000000001ff',
-            moves_5x5x5,
+            moves_555,
             (), # illegal_moves
 
             # prune tables
@@ -470,7 +470,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             parent,
             'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
             'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
-            moves_5x5x5,
+            moves_555,
 
             # These moves would destroy the staged centers
             ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),

@@ -1,7 +1,7 @@
 
 from rubikscubennnsolver import RubiksCube, ImplementThis
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 import logging
 import sys
 
@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 class RubiksCubeNNNEvenEdges(RubiksCube):
 
     def pair_inside_edges_via_444(self):
-        fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
+        fake_444 = RubiksCube444(solved_444, 'URFDLB')
         fake_444.lt_init()
 
         # Fill in the corners so that we can avoid PLL parity when pairing the edges
@@ -72,7 +72,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
     def pair_edge_orbit_via_555(self, orbit):
         log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
+        fake_555 = RubiksCube555(solved_555, 'URFDLB')
         fake_555.lt_init()
 
         # Fill in the corners so we can avoid certain types of parity

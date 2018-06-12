@@ -5,13 +5,15 @@ import logging
 log = logging.getLogger(__name__)
 
 
-moves_2x2x2 = ("U", "U'", "U2",
-               "L", "L'", "L2",
-               "F" , "F'", "F2",
-               "R" , "R'", "R2",
-               "B" , "B'", "B2",
-               "D" , "D'", "D2")
-solved_2x2x2 = 'UUUURRRRFFFFDDDDLLLLBBBB'
+moves_222 = (
+    "U", "U'", "U2",
+    "L", "L'", "L2",
+    "F" , "F'", "F2",
+    "R" , "R'", "R2",
+    "B" , "B'", "B2",
+    "D" , "D'", "D2"
+)
+solved_222 = 'UUUURRRRFFFFDDDDLLLLBBBB'
 
 
 class RubiksCube222(RubiksCube):

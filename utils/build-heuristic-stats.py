@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube
-from rubikscubennnsolver.RubiksCube555 import solved_5x5x5
+from rubikscubennnsolver.RubiksCube555 import solved_555
 import json
 import logging
 
@@ -39,7 +39,7 @@ stats = {
 '''
 for x in range(5):
 
-    cube = RubiksCube(solved_5x5x5, 'URFDLB')
+    cube = RubiksCube(solved_555, 'URFDLB')
     cube.randomize()
     ks = cube.get_kociemba_string(True)
     stats["5x5x5"].append(ks)

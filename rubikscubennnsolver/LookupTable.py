@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import datetime as dt
-from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
+from pprint import pformat
+from pyhashxx import hashxx
 from subprocess import call
 import logging
 import os
@@ -502,6 +503,7 @@ class LookupTableCostOnly(LookupTable):
         self.avoid_oll = False
         self.avoid_pll = False
         self.preloaded_state_set = False
+        self.preloaded_cache = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
 
@@ -565,6 +567,33 @@ class LookupTableCostOnly(LookupTable):
 
         else:
             return int(self.content[state_to_find], 16)
+
+
+class LookupTableHashCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True, bucketcount=None):
+        LookupTableCostOnly.__init__(self, parent, filename, state_target, linecount, max_depth, load_string)
+        self.bucketcount = bucketcount
+
+    def steps_cost(self, state_to_find=None):
+
+        if state_to_find is None:
+            state_to_find = self.state()
+
+        # compute the hash_index for state_to_find, look that many bytes into the
+        # file/self.conten and retrieve a single hex character. This hex character
+        # is the number of steps required to solve the corresponding state.
+        hash_raw = hashxx(state_to_find.encode('utf-8'))
+        hash_index = int(hash_raw % self.bucketcount)
+
+        if self.content is None:
+            self.fh_txt.seek(hash_index)
+            result = int(self.fh_txt.read(1).decode('utf-8'), 16)
+            self.fh_txt_seek_calls += 1
+            return result
+
+        else:
+            return int(self.content[hash_index], 16)
 
 
 class LookupTableIDA(LookupTable):

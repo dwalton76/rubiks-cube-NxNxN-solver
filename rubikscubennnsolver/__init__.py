@@ -1128,7 +1128,7 @@ class RubiksCube(object):
 
                 # end of the row
                 if square_index % self.size == 0:
-                    if square_state.endswith('x'):
+                    if square_state.endswith('x') or square_state.endswith('.'):
                         rows[row_index].append("%s " % square_state)
                     else:
                         if all_digits:
@@ -1138,7 +1138,7 @@ class RubiksCube(object):
 
                     row_index += 1
                 else:
-                    if square_state.endswith('x'):
+                    if square_state.endswith('x') or square_state.endswith('.'):
                         rows[row_index].append("%s" % square_state)
                     else:
                         if all_digits:

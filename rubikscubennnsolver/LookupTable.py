@@ -278,7 +278,7 @@ class LookupTable(object):
                 self.cache[state] = steps.split()
 
         self.preloaded_cache = True
-        log.info("%s: end preload cache (%d bytes)" % (self, sys.getsizeof(self.cache)))
+        log.info("{}: end preload cache ({:,} bytes)".format(self, sys.getsizeof(self.cache)))
 
     def steps(self, state_to_find=None):
         """
@@ -525,11 +525,16 @@ class LookupTableCostOnly(LookupTable):
         self.filename_exists = True
 
         if isinstance(state_target, tuple):
+            self.state_width = len(state_target[0])
             self.state_target = set(state_target)
         elif isinstance(state_target, list):
+            self.state_width = len(state_target[0])
             self.state_target = set(state_target)
         else:
+            self.state_width = len(state_target)
             self.state_target = set((state_target, ))
+
+        self.hex_format = '%' + "0%dx" % self.state_width
 
         self.fh_txt_seek_calls = 0
         self.fh_txt = None
@@ -598,8 +603,8 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
 
 class LookupTableIDA(LookupTable):
 
-    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None):
-        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth)
+    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None):
+        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.prune_tables = prune_tables
 
         for x in moves_illegal:

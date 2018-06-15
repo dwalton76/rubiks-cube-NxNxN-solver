@@ -477,7 +477,8 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             (parent.lt_UL_centers_solve,
              parent.lt_UF_centers_solve),
             linecount=142153,
-            max_depth=5)
+            max_depth=5,
+            filesize=10661475)
 
     def state(self):
         parent_state = self.parent.state

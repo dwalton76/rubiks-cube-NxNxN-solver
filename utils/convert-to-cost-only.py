@@ -45,7 +45,7 @@ def permutation_rank(word):
     return rank
 
 
-def convert_to_cost_only(filename, use_permutation_ranke):
+def convert_to_cost_only(filename, use_permutation_rank):
     filename_new = filename.replace('.txt', '.cost-only.txt')
     prev_state_int = None
     first_permutation_rank = None
@@ -65,7 +65,7 @@ def convert_to_cost_only(filename, use_permutation_ranke):
                     first_permutation_rank = state_int
 
                 #state_int -= first_permutation_rank
-                log.info("%s: permutation rank %d" % (state, state_int))
+                #log.info("%s: permutation rank %d" % (state, state_int))
 
                 # Add 0s for every state from prev_state_int to state_int
                 if prev_state_int is None:
@@ -74,7 +74,7 @@ def convert_to_cost_only(filename, use_permutation_ranke):
                     zeroes_between_prev_and_now = (state_int - prev_state_int - 1)
 
                 if zeroes_between_prev_and_now > 0:
-                    log.info("zeroes_between_prev_and_now %s" % zeroes_between_prev_and_now)
+                    #log.info("zeroes_between_prev_and_now %s" % zeroes_between_prev_and_now)
                     zeroes_between_prev_and_now = zeroes_between_prev_and_now * '0'
                     fh_new.write(zeroes_between_prev_and_now)
 

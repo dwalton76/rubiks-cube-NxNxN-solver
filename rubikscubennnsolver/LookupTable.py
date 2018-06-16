@@ -265,7 +265,10 @@ class LookupTable(object):
         return None
 
     def preload_cache(self):
-        log.info("%s: begin preload cache" % self)
+        log.warning("%s: begin preload cache" % self)
+
+        if isinstance(self, LookupTableCostOnly):
+            raise Exception("%s is a CostOnly table, no need to call preload_cache()" % self)
 
         # Another option here would be to store a list of (state, step) tuples and
         # then binary search through it. That takes about 1/6 the amount of memory
@@ -278,7 +281,7 @@ class LookupTable(object):
                 self.cache[state] = steps.split()
 
         self.preloaded_cache = True
-        log.info("{}: end preload cache ({:,} bytes)".format(self, sys.getsizeof(self.cache)))
+        log.warning("{}: end preload cache ({:,} bytes)".format(self, sys.getsizeof(self.cache)))
 
     def steps(self, state_to_find=None):
         """

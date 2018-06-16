@@ -2013,8 +2013,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def create_fake_555_for_LR_t_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
-        fake_555 = RubiksCube555(solved_555, 'URFDLB')
-        fake_555.lt_init()
+        if self.fake_555 is None:
+            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+            self.fake_555.lt_init()
+        else:
+            self.fake_555.re_init()
+        fake_555 = self.fake_555
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
@@ -2031,13 +2035,15 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         fake_555.state[89] = self.state[174]
         fake_555.state[93] = self.state[186]
 
-        return fake_555
-
     def create_fake_555_from_inside_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
-        fake_555 = RubiksCube555(solved_555, 'URFDLB')
-        fake_555.lt_init()
+        if self.fake_555 is None:
+            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+            self.fake_555.lt_init()
+        else:
+            self.fake_555.re_init()
+        fake_555 = self.fake_555
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
@@ -2109,13 +2115,15 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         fake_555.state[144] = self.state[278]
         fake_555.sanity_check()
 
-        return fake_555
-
     def create_fake_555_from_outside_centers(self):
 
         # Create a fake 5x5x5 to solve 7x7x7 centers (they have been reduced to a 5x5x5)
-        fake_555 = RubiksCube555(solved_555, 'URFDLB')
-        fake_555.lt_init()
+        if self.fake_555 is None:
+            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+            self.fake_555.lt_init()
+        else:
+            self.fake_555.re_init()
+        fake_555 = self.fake_555
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
@@ -2187,13 +2195,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         fake_555.state[144] = self.state[286]
         fake_555.sanity_check()
 
-        return fake_555
-
     def group_inside_UD_centers(self):
-        fake_555 = self.create_fake_555_from_inside_centers()
-        fake_555.group_centers_stage_UD()
+        self.create_fake_555_from_inside_centers()
+        self.fake_555.group_centers_stage_UD()
 
-        for step in fake_555.solution:
+        for step in self.fake_555.solution:
 
             if step.startswith('5'):
                 step = '7' + step[1:]
@@ -2205,10 +2211,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             self.rotate(step)
 
     def group_inside_LR_centers(self):
-        fake_555 = self.create_fake_555_from_inside_centers()
-        fake_555.lt_LR_centers_stage.solve()
+        self.create_fake_555_from_inside_centers()
+        self.fake_555.lt_LR_centers_stage.solve()
 
-        for step in fake_555.solution:
+        for step in self.fake_555.solution:
 
             if step.startswith('5'):
                 step = '7' + step[1:]
@@ -2220,10 +2226,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             self.rotate(step)
 
     def solve_reduced_555_centers(self):
-        fake_555 = self.create_fake_555_from_outside_centers()
-        fake_555.group_centers()
+        self.create_fake_555_from_outside_centers()
+        self.fake_555.group_centers()
 
-        for step in fake_555.solution:
+        for step in self.fake_555.solution:
 
             if step == 'CENTERS_SOLVED':
                 continue
@@ -2237,10 +2243,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             self.rotate(step)
 
     def solve_reduced_555_t_centers(self):
-        fake_555 = self.create_fake_555_from_outside_centers()
-        fake_555.lt_ULFRBD_t_centers_solve.solve()
+        self.create_fake_555_from_outside_centers()
+        self.fake_555.lt_ULFRBD_t_centers_solve.solve()
 
-        for step in fake_555.solution:
+        for step in self.fake_555.solution:
 
             if step == 'CENTERS_SOLVED':
                 continue
@@ -2256,8 +2262,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def create_fake_666_centers(self):
 
         # Create a fake 6x6x6 to stage the outside UD oblique edges
-        fake_666 = RubiksCube666(solved_666, 'URFDLB')
-        fake_666.lt_init()
+        if self.fake_666 is None:
+            self.fake_666 = RubiksCube666(solved_666, 'URFDLB')
+            self.fake_666.lt_init()
+        else:
+            self.fake_666.re_init()
+        fake_666 = self.fake_666
 
         for x in range(1, 217):
             fake_666.state[x] = 'x'
@@ -2374,13 +2384,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         fake_666.state[209] = self.state[286]
         fake_666.sanity_check()
 
-        return fake_666
-
     def group_outside_UD_oblique_edges(self):
-        fake_666 = self.create_fake_666_centers()
-        fake_666.stage_oblique_edges_UD()
+        self.create_fake_666_centers()
+        self.fake_666.stage_oblique_edges_UD()
 
-        for step in fake_666.solution:
+        for step in self.fake_666.solution:
 
             if step.startswith('6'):
                 step = '7' + step[1:]
@@ -2391,10 +2399,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.rotate_F_to_F()
 
     def group_outside_LR_oblique_edges(self):
-        fake_666 = self.create_fake_666_centers()
-        fake_666.stage_oblique_edges_LR()
+        self.create_fake_666_centers()
+        self.fake_666.stage_oblique_edges_LR()
 
-        for step in fake_666.solution:
+        for step in self.fake_666.solution:
 
             if step.startswith('6'):
                 step = '7' + step[1:]
@@ -2514,10 +2522,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Solve the LR t-centers...this speeds up the step80 IDA a good bit because the centers of
         # sides L and R do not get as scrambled while solving FB if LR t-centers are already solved.
-        fake_555 = self.create_fake_555_for_LR_t_centers()
-        fake_555.lt_LR_t_centers_solve.solve()
+        self.create_fake_555_for_LR_t_centers()
+        self.fake_555.lt_LR_t_centers_solve.solve()
 
-        for step in fake_555.solution:
+        for step in self.fake_555.solution:
             if step.startswith('5'):
                 step = '7' + step[1:]
             elif step.startswith('3'):

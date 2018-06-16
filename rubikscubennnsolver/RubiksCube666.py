@@ -973,14 +973,20 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LR_oblique_edge_stage_left_only = LookupTable666LRObliqueEdgesStageLeftOnly(self)
         self.lt_LR_oblique_edge_stage_right_only = LookupTable666LRObliqueEdgesStageRightOnly(self)
         self.lt_LR_oblique_edge_stage = LookupTable666LRObliqueEdgesStage(self)
+        self.lt_LR_oblique_edge_stage.preload_cache()
 
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
 
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
         self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
+        self.lt_LR_solve_inner_x_centers_and_oblique_edges.preload_cache()
+        self.lt_FB_solve_inner_x_centers_and_oblique_edges.preload_cache()
+        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.preload_cache()
 
-    def populate_fake_444_for_ULFRBD_stage(self, fake_444):
+    def populate_fake_444_for_ULFRBD_stage(self):
+        fake_444 = self.fake_444
+        fake_444.re_init()
         fake_444.nuke_corners()
         fake_444.nuke_edges()
 
@@ -1020,7 +1026,9 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_444.state[90] = self.state[201]
         fake_444.state[91] = self.state[202]
 
-    def populate_fake_555_for_UD_stage(self, fake_555):
+    def populate_fake_555_for_UD_stage(self):
+        fake_555 = self.fake_555
+        fake_555.re_init()
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
@@ -1092,7 +1100,9 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555.state[144] = self.state[209]
         #fake_555.sanity_check()
 
-    def populate_fake_555_for_ULFRBD_solve(self, fake_555):
+    def populate_fake_555_for_ULFRBD_solve(self):
+        fake_555 = self.fake_555
+        fake_555.re_init()
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
@@ -1344,13 +1354,17 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         obliques AND stage the outer-x-centers.  That table would have 12870^3 states
         with 12870^2 prune tables so the IDA search would be doable but on the slow side.
         """
-        fake_555 = RubiksCube555(solved_555, 'URFDLB')
-        fake_555.lt_init()
-        self.populate_fake_555_for_UD_stage(fake_555)
-        fake_555.print_cube()
-        fake_555.group_centers_stage_UD()
+        if self.fake_555 is None:
+            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+            self.fake_555.lt_init()
+        else:
+            self.fake_555.re_init()
 
-        for step in fake_555.solution:
+        self.populate_fake_555_for_UD_stage()
+        self.fake_555.print_cube()
+        self.fake_555.group_centers_stage_UD()
+
+        for step in self.fake_555.solution:
             self.rotate(step)
 
         self.print_cube()
@@ -1377,35 +1391,48 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
 
     def solve_reduced_555_centers(self):
-        fake_555 = RubiksCube555(solved_555, 'URFDLB')
-        fake_555.lt_init()
-        self.populate_fake_555_for_ULFRBD_solve(fake_555)
-        fake_555.group_centers_guts()
 
-        for step in fake_555.solution:
+        if self.fake_555 is None:
+            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+            self.fake_555.lt_init()
+        else:
+            self.fake_555.re_init()
+
+        self.populate_fake_555_for_ULFRBD_solve()
+        self.fake_555.group_centers_guts()
+
+        for step in self.fake_555.solution:
             self.rotate(step)
 
     def solve_reduced_555_t_centers(self):
-        fake_555 = RubiksCube555(solved_555, 'URFDLB')
-        fake_555.lt_init()
-        self.populate_fake_555_for_ULFRBD_solve(fake_555)
-        fake_555.lt_ULFRBD_t_centers_solve.solve()
 
-        for step in fake_555.solution:
+        if self.fake_555 is None:
+            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+            self.fake_555.lt_init()
+        else:
+            self.fake_555.re_init()
+
+        self.populate_fake_555_for_ULFRBD_solve()
+        self.fake_555.lt_ULFRBD_t_centers_solve.solve()
+
+        for step in self.fake_555.solution:
             self.rotate(step)
 
     def stage_inner_x_centers(self):
         """
         Stage inner-x-centers via 4x4x4 solver
         """
+        if self.fake_444 is None:
+            self.fake_444 = RubiksCube444(solved_444, 'URFDLB')
+            self.fake_444.lt_init()
+        else:
+            self.fake_444.re_init()
 
-        fake_444 = RubiksCube444(solved_444, 'URFDLB')
-        fake_444.lt_init()
-        self.populate_fake_444_for_ULFRBD_stage(fake_444)
-        fake_444.lt_ULFRBD_centers_stage.avoid_oll = False
-        fake_444.lt_ULFRBD_centers_stage.solve()
+        self.populate_fake_444_for_ULFRBD_stage()
+        self.fake_444.lt_ULFRBD_centers_stage.avoid_oll = False
+        self.fake_444.lt_ULFRBD_centers_stage.solve()
 
-        for step in fake_444.solution:
+        for step in self.fake_444.solution:
             if 'w' in step:
                 step = '3' + step
             self.rotate(step)

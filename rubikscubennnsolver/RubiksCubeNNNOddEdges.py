@@ -13,8 +13,13 @@ class RubiksCubeNNNOddEdges(RubiksCube):
 
     def pair_edge_orbit_via_555(self, orbit):
         log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
-        fake_555 = RubiksCube555(solved_555, 'URFDLB')
-        fake_555.lt_init()
+
+        if self.fake_555 is None:
+            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+            self.fake_555.lt_init()
+        else:
+            self.fake_555.re_init()
+        fake_555 = self.fake_555
 
         # Fill in the corners so we can avoid certain types of parity
         start_555 = 0

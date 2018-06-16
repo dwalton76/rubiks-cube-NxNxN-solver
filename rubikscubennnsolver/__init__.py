@@ -381,6 +381,10 @@ class RubiksCube(object):
         self._phase = None
         self.lt_init_called = False
         self.orient_edges = {}
+        self.fake_444 = None
+        self.fake_555 = None
+        self.fake_666 = None
+        self.fake_777 = None
 
         if colormap:
             colormap = json.loads(colormap)
@@ -441,6 +445,7 @@ class RubiksCube(object):
             log.setLevel(logging.DEBUG)
 
         self.load_state(state_string, order)
+        self.state_backup = self.state[:]
 
         self.sides = OrderedDict()
         self.sides['U'] = Side(self, 'U')
@@ -533,6 +538,12 @@ class RubiksCube(object):
             if value != expected_count:
                 self.print_cube()
                 raise InvalidCubeReduction("side %s %s count is %d (should be %d)" % (desc, side, value, expected_count))
+
+    def re_init(self):
+        self.state = self.state_backup[:]
+        self.solution = []
+        self.original_state = self.state_backup[:]
+        self.original_solution = []
 
     def sanity_check(self):
         """

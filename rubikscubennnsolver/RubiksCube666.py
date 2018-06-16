@@ -848,9 +848,9 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
              parent.lt_FB_solve_inner_x_centers_and_oblique_edges,),
 
-            linecount=2576680,
-            max_depth=4,
-            filesize=211287760)
+            linecount=459200,
+            max_depth=3,
+            filesize=35817600)
 
     def state(self):
         parent_state = self.parent.state

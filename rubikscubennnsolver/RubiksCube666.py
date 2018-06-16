@@ -819,12 +819,11 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt
     ==========================================================================
     1 steps has 9,800 entries (0 percent, 0.00x previous step)
-    2 steps has 58,800 entries (0 percent, 6.00x previous step)
-    3 steps has 390,600 entries (2 percent, 6.64x previous step)
-    4 steps has 2,117,480 entries (15 percent, 5.42x previous step)
-    5 steps has 11,105,284 entries (81 percent, 5.24x previous step)
+    2 steps has 58,800 entries (2 percent, 6.00x previous step)
+    3 steps has 390,600 entries (15 percent, 6.64x previous step)
+    4 steps has 2,117,480 entries (82 percent, 5.42x previous step)
 
-    Total: 13,681,964 entries
+    Total: 2,576,680 entries
     """
 
     def __init__(self, parent):
@@ -849,8 +848,9 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
              parent.lt_FB_solve_inner_x_centers_and_oblique_edges,),
 
-            linecount=13681964,
-            max_depth=5)
+            linecount=2576680,
+            max_depth=4,
+            filesize=211287760)
 
     def state(self):
         parent_state = self.parent.state

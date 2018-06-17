@@ -278,7 +278,9 @@ class LookupTable(object):
             # The bottleneck is the building of the dictionary, moreso that reading from disk.
             for line in fh:
                 (state, steps) = line.rstrip().split(':')
-                self.cache[state] = steps.split()
+                # Store this as a string, not a list.  It takes more than 2x the memory to store steps.split()
+                # For solving a 7x7x7 this is the difference in requiring 3G of RAM vs 7G!!.
+                self.cache[state] = steps
 
         self.preloaded_cache = True
         log.warning("{}: end preload cache ({:,} bytes)".format(self, sys.getsizeof(self.cache)))
@@ -295,7 +297,11 @@ class LookupTable(object):
             return None
 
         if self.preloaded_cache:
-            return self.cache.get(state_to_find)
+            steps = self.cache.get(state_to_find)
+            if steps:
+                return steps.split()
+            else:
+                return None
 
         line = self.binary_search(state_to_find)
 
@@ -547,10 +553,13 @@ class LookupTableCostOnly(LookupTable):
         # We do not have to binary_search() though so that cuts way down on the
         # number of reads.
         if load_string:
+
+            log.warning("%s: begin preload cost-only" % self)
             with open(self.filename, 'r') as fh:
                 for line in fh:
                     self.content = line
             self.fh_txt_seek_calls += 1
+            log.warning("{}: end preload cost-only ({:,} bytes)".format(self, sys.getsizeof(self.content)))
         else:
             # 'rb' mode is about 3x faster than 'r' mode
             self.fh_txt = open(self.filename, mode='rb')

@@ -12,8 +12,10 @@ from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
 from rubikscubennnsolver.LookupTable import NoSteps
 from math import sqrt
 import argparse
+import datetime as dt
 import logging
 import os
+import resource
 import sys
 
 def remove_slices(solution):
@@ -182,6 +184,7 @@ def remove_slices(solution):
 
     return results
 
+start_time = dt.datetime.now()
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)20s %(levelname)8s: %(message)s')
@@ -417,6 +420,11 @@ try:
 
         raise SolveError("cube should be solved but is not, edge parity %d, corner parity %d, kociemba %s" %
             (edge_swap_count, corner_swap_count, kociemba_string))
+
+    end_time = dt.datetime.now()
+    print("\nMemory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    print("Time   : %s" % (end_time - start_time))
+    print("")
 
 except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
     cube.print_cube_layout()

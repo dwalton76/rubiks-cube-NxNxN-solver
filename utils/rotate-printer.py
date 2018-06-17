@@ -13,10 +13,6 @@ from rubikscubennnsolver.RubiksCube444 import solved_444, moves_444
 from rubikscubennnsolver.RubiksCube555 import solved_555, moves_555
 from rubikscubennnsolver.RubiksCube666 import solved_666, moves_666
 from rubikscubennnsolver.RubiksCube777 import solved_777, moves_777
-from rubikscubennnsolver.RubiksCubeNNNEven import solved_888, moves_888
-from rubikscubennnsolver.RubiksCubeNNNOdd import solved_999
-from rubikscubennnsolver.RubiksCubeNNNEven import moves_888 as moves_999
-from rubikscubennnsolver.RubiksCubeNNNEven import solved_101010, moves_101010
 import logging
 
 logging.basicConfig(level=logging.INFO,
@@ -54,9 +50,6 @@ for (size, solved_state) in (
     (5, solved_555),
     (6, solved_666),
     (7, solved_777),
-    (8, solved_888),
-    (9, solved_999),
-    (10, solved_101010),
     ):
 
     cube = RubiksCube(solved_state, 'URFDLB')
@@ -85,15 +78,6 @@ for (size, solved_state) in (
 
     elif size == 7:
         steps = moves_777
-
-    elif size == 8:
-        steps = moves_888
-
-    elif size == 9:
-        steps = moves_999
-
-    elif size == 10:
-        steps = moves_101010
 
     else:
         raise Exception("Add support for size %s" % size)

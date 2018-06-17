@@ -120,8 +120,8 @@ class RubiksCube333(RubiksCube):
             return
         self.lt_init_called = True
 
-        self.lt_phase2_edges = LookupTable333Phase2Edges(self)
-        self.lt_phase2_corners = LookupTable333Phase2Corners(self)
+        #self.lt_phase2_edges = LookupTable333Phase2Edges(self)
+        #self.lt_phase2_corners = LookupTable333Phase2Corners(self)
 
 
 def rotate_333_U(cube):

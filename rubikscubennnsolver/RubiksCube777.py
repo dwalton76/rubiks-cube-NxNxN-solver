@@ -1850,6 +1850,25 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     """
 
+    instantiated = False
+
+    def __init__(self, state, order, colormap=None, debug=False):
+        RubiksCubeNNNOddEdges.__init__(self, state, order, colormap, debug)
+
+        if RubiksCube777.instantiated:
+            #raise Exception("Another 7x7x7 instance is being created")
+            log.warning("Another 7x7x7 instance is being created")
+        else:
+            RubiksCube777.instantiated = True
+
+    def get_fake_666(self):
+        if self.fake_666 is None:
+            self.fake_666 = RubiksCube666(solved_666, 'URFDLB')
+            self.fake_666.lt_init()
+        else:
+            self.fake_666.re_init()
+        return self.fake_666
+
     def phase(self):
         if self._phase is None:
             self._phase = 'Stage UD centers'
@@ -2010,12 +2029,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def create_fake_555_for_LR_t_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
-        if self.fake_555 is None:
-            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
-            self.fake_555.lt_init()
-        else:
-            self.fake_555.re_init()
-        fake_555 = self.fake_555
+        fake_555 = self.get_fake_555()
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
@@ -2035,12 +2049,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def create_fake_555_from_inside_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
-        if self.fake_555 is None:
-            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
-            self.fake_555.lt_init()
-        else:
-            self.fake_555.re_init()
-        fake_555 = self.fake_555
+        fake_555 = self.get_fake_555()
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
@@ -2115,12 +2124,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def create_fake_555_from_outside_centers(self):
 
         # Create a fake 5x5x5 to solve 7x7x7 centers (they have been reduced to a 5x5x5)
-        if self.fake_555 is None:
-            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
-            self.fake_555.lt_init()
-        else:
-            self.fake_555.re_init()
-        fake_555 = self.fake_555
+        fake_555 = self.get_fake_555()
 
         for x in range(1, 151):
             fake_555.state[x] = 'x'
@@ -2259,12 +2263,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def create_fake_666_centers(self):
 
         # Create a fake 6x6x6 to stage the outside UD oblique edges
-        if self.fake_666 is None:
-            self.fake_666 = RubiksCube666(solved_666, 'URFDLB')
-            self.fake_666.lt_init()
-        else:
-            self.fake_666.re_init()
-        fake_666 = self.fake_666
+        fake_666 = self.get_fake_666()
 
         for x in range(1, 217):
             fake_666.state[x] = 'x'

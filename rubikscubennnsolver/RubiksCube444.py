@@ -772,9 +772,17 @@ class LookupTable444Edges(LookupTable):
 
 class RubiksCube444(RubiksCube):
 
+    instantiated = False
+
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube.__init__(self, state, order, colormap, debug)
         self.avoid_pll = avoid_pll
+
+        if RubiksCube444.instantiated:
+            #raise Exception("Another 4x4x4 instance is being created")
+            log.warning("Another 4x4x4 instance is being created")
+        else:
+            RubiksCube444.instantiated = True
 
         if debug:
             log.setLevel(logging.DEBUG)

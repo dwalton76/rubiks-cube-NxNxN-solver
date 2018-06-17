@@ -34,8 +34,16 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
     def phase(self):
         return 'Solve Odd NxNxN'
 
+    def get_fake_777(self):
+        if self.fake_777 is None:
+            self.fake_777 = RubiksCube777(solved_777, 'URFDLB')
+            self.fake_777.lt_init()
+        else:
+            self.fake_777.re_init()
+        return self.fake_777
+
     def solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle):
-        fake_777 = RubiksCube777(solved_777, 'URFDLB')
+        fake_777 = self.get_fake_777()
 
         for index in range(1, 295):
             fake_777.state[index] = 'x'
@@ -180,7 +188,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         # Group LR centers (in turn groups FB)
         fake_777.sanity_check()
         fake_777.print_cube()
-        fake_777.lt_init()
 
         # Apply the 7x7x7 solution to our cube
         half_size = str(ceil(self.size/2) - 1 - cycle)

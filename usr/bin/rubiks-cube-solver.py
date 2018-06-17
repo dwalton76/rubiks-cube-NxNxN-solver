@@ -387,24 +387,7 @@ try:
 
     # Now put the cube back in its initial state and verify the solution solves it
     solution = cube.solution
-
-    if size == 2:
-        cube = RubiksCube222(args.state, args.order, args.colormap)
-    elif size == 3:
-        cube = RubiksCube333(args.state, args.order, args.colormap)
-    elif size == 4:
-        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True)
-    elif size == 5:
-        cube = RubiksCube555(args.state, args.order, args.colormap)
-    elif size == 6:
-        cube = RubiksCube666(args.state, args.order, args.colormap)
-    elif size == 7:
-        cube = RubiksCube777(args.state, args.order, args.colormap)
-    elif size % 2 == 0:
-        cube = RubiksCubeNNNEven(args.state, args.order, args.colormap, args.debug)
-    else:
-        cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
-
+    cube.re_init()
     len_steps = len(solution)
 
     for (i, step) in enumerate(solution):

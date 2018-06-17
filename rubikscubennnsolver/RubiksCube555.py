@@ -855,6 +855,7 @@ class RubiksCube555(RubiksCube):
     - pair edges
     - solve as 3x3x3
     """
+    instantiated = False
 
     def __init__(self, state, order, colormap=None, debug=False):
         RubiksCube.__init__(self, state, order, colormap)
@@ -862,6 +863,12 @@ class RubiksCube555(RubiksCube):
         # This will be True when an even cube is using the 555 edge solver
         # to pair an orbit of edges
         self.avoid_pll = False
+
+        if RubiksCube555.instantiated:
+            #raise Exception("Another 5x5x5 instance is being created")
+            log.warning("Another 5x5x5 instance is being created")
+        else:
+            RubiksCube555.instantiated = True
 
         if debug:
             log.setLevel(logging.DEBUG)

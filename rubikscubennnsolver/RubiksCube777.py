@@ -1762,7 +1762,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for UD
         self.group_inside_UD_centers()
         self.print_cube()
-        log.info("%s: Inside UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: UD inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -1771,7 +1771,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
         self.group_outside_UD_oblique_edges()
         self.print_cube()
-        log.info("%s: Outside UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: UD oblique edges (outside only) staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -1795,7 +1795,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for LR
         self.group_inside_LR_centers()
         self.print_cube()
-        log.info("%s: Inside LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: LR inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")
@@ -1804,7 +1804,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # Uses 6x6x6 solver to pair the "outside" oblique edges for LR
         self.group_outside_LR_oblique_edges()
         self.print_cube()
-        log.info("%s: Outside LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: LR oblique edges (outside only) staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
         log.info("")
         log.info("")

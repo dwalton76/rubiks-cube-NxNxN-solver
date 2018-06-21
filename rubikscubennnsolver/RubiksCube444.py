@@ -47,6 +47,22 @@ LR_centers_444 = (
     54, 55, 58, 59
 )
 
+UFBD_centers_444 = (
+    6, 7, 10, 10,
+    38, 39, 42, 43,
+    70, 71, 74, 75,
+    86, 87, 90, 91
+)
+
+corners_444 = (
+    1, 4, 13, 16,
+    17, 20, 29, 32,
+    33, 36, 45, 48,
+    49, 52, 61, 64,
+    65, 68, 77, 80,
+    81, 84, 93, 96
+)
+
 edges_444 = (
     2, 3, 5, 8, 9, 12, 14, 15,      # Upper
     18, 19, 21, 24, 25, 28, 30, 31, # Left
@@ -70,6 +86,57 @@ wings_444 = (
     88, 92,
     94, 95
 )
+
+edges_partner_444 = {
+    2: 67,
+    3: 66,
+    5: 18,
+    8: 51,
+    9: 19,
+    12: 50,
+    14: 34,
+    15: 35,
+    18: 5,
+    19: 9,
+    21: 72,
+    24: 37,
+    25: 76,
+    28: 41,
+    30: 89,
+    31: 85,
+    34: 14,
+    35: 15,
+    37: 24,
+    40: 53,
+    41: 28,
+    44: 57,
+    46: 82,
+    47: 83,
+    50: 12,
+    51: 8,
+    53: 40,
+    56: 69,
+    57: 44,
+    60: 73,
+    62: 88,
+    63: 92,
+    66: 3,
+    67: 2,
+    69: 56,
+    72: 21,
+    73: 60,
+    76: 25,
+    78: 95,
+    79: 94,
+    82: 46,
+    83: 47,
+    85: 31,
+    88: 62,
+    89: 30,
+    92: 63,
+    94: 79,
+    95: 78
+}
 
 centers_solved_states_444 = set()
 centers_solved_states_444.add('UUUULLLLFFFFRRRRBBBBDDDD')
@@ -102,7 +169,75 @@ def centers_solved_444(state):
         return True
     return False
 
-
+# If all 3 groups of edges have been staged for L4E each of them has
+# 105 possible patterns but only 4 of those patterns are solveablve
+# via w half turns only. 4^3 is 64...below are the 64 of these edge patterns.
+edge_patterns_solveablve_via_half_turns = set((
+    '103524769b8adfcehgjliknm',
+    '10352476a8b9ecfdhgjliknm',
+    '10352476dfce9b8ahgjliknm',
+    '10352476ecfda8b9hgjliknm',
+    '104253769b8adfcehgkiljnm',
+    '10425376a8b9ecfdhgkiljnm',
+    '10425376dfce9b8ahgkiljnm',
+    '10425376ecfda8b9hgkiljnm',
+    '10jlik769b8adfcehg3524nm',
+    '10jlik76a8b9ecfdhg3524nm',
+    '10jlik76dfce9b8ahg3524nm',
+    '10jlik76ecfda8b9hg3524nm',
+    '10kilj769b8adfcehg4253nm',
+    '10kilj76a8b9ecfdhg4253nm',
+    '10kilj76dfce9b8ahg4253nm',
+    '10kilj76ecfda8b9hg4253nm',
+    '673524019b8adfcemnjlikgh',
+    '67352401a8b9ecfdmnjlikgh',
+    '67352401dfce9b8amnjlikgh',
+    '67352401ecfda8b9mnjlikgh',
+    '674253019b8adfcemnkiljgh',
+    '67425301a8b9ecfdmnkiljgh',
+    '67425301dfce9b8amnkiljgh',
+    '67425301ecfda8b9mnkiljgh',
+    '67jlik019b8adfcemn3524gh',
+    '67jlik01a8b9ecfdmn3524gh',
+    '67jlik01dfce9b8amn3524gh',
+    '67jlik01ecfda8b9mn3524gh',
+    '67kilj019b8adfcemn4253gh',
+    '67kilj01a8b9ecfdmn4253gh',
+    '67kilj01dfce9b8amn4253gh',
+    '67kilj01ecfda8b9mn4253gh',
+    'hg3524nm9b8adfce10jlik76',
+    'hg3524nma8b9ecfd10jlik76',
+    'hg3524nmdfce9b8a10jlik76',
+    'hg3524nmecfda8b910jlik76',
+    'hg4253nm9b8adfce10kilj76',
+    'hg4253nma8b9ecfd10kilj76',
+    'hg4253nmdfce9b8a10kilj76',
+    'hg4253nmecfda8b910kilj76',
+    'hgjliknm9b8adfce10352476',
+    'hgjliknma8b9ecfd10352476',
+    'hgjliknmdfce9b8a10352476',
+    'hgjliknmecfda8b910352476',
+    'hgkiljnm9b8adfce10425376',
+    'hgkiljnma8b9ecfd10425376',
+    'hgkiljnmdfce9b8a10425376',
+    'hgkiljnmecfda8b910425376',
+    'mn3524gh9b8adfce67jlik01',
+    'mn3524gha8b9ecfd67jlik01',
+    'mn3524ghdfce9b8a67jlik01',
+    'mn3524ghecfda8b967jlik01',
+    'mn4253gh9b8adfce67kilj01',
+    'mn4253gha8b9ecfd67kilj01',
+    'mn4253ghdfce9b8a67kilj01',
+    'mn4253ghecfda8b967kilj01',
+    'mnjlikgh9b8adfce67352401',
+    'mnjlikgha8b9ecfd67352401',
+    'mnjlikghdfce9b8a67352401',
+    'mnjlikghecfda8b967352401',
+    'mnkiljgh9b8adfce67425301',
+    'mnkiljgha8b9ecfd67425301',
+    'mnkiljghdfce9b8a67425301',
+    'mnkiljghecfda8b967425301',
+))
 
 def get_best_entry(foo):
     # TODO this can only track wings since it is only used by 4x4x4
@@ -637,9 +772,17 @@ class LookupTable444Edges(LookupTable):
 
 class RubiksCube444(RubiksCube):
 
+    instantiated = False
+
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube.__init__(self, state, order, colormap, debug)
         self.avoid_pll = avoid_pll
+
+        if RubiksCube444.instantiated:
+            #raise Exception("Another 4x4x4 instance is being created")
+            log.warning("Another 4x4x4 instance is being created")
+        else:
+            RubiksCube444.instantiated = True
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -669,20 +812,6 @@ class RubiksCube444(RubiksCube):
         return self._phase
 
     def sanity_check(self):
-        corners = (1, 4, 13, 16,
-                   17, 20, 29, 32,
-                   33, 36, 45, 48,
-                   49, 52, 61, 64,
-                   65, 68, 77, 80,
-                   81, 84, 93, 96)
-
-        centers = (6, 7, 10, 11,
-                   22, 23, 26, 27,
-                   38, 39, 42, 43,
-                   54, 55, 58, 59,
-                   70, 71, 74, 75,
-                   86, 87, 90, 91)
-
         edge_orbit_0 = (2, 3, 8, 12, 15, 14, 9, 5,
                         18, 19, 24, 28, 31, 30, 25, 21,
                         34, 35, 40, 44, 47, 46, 41, 37,
@@ -690,8 +819,8 @@ class RubiksCube444(RubiksCube):
                         66, 67, 72, 76, 79, 78, 73, 69,
                         82, 83, 88, 92, 95, 94, 89, 85)
 
-        self._sanity_check('corners', corners, 4)
-        self._sanity_check('centers', centers, 4)
+        self._sanity_check('corners', corners_444, 4)
+        self._sanity_check('centers', centers_444, 4)
         self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
 
     def lt_init(self):
@@ -1048,6 +1177,15 @@ class RubiksCube444(RubiksCube):
                 wing_strs_found.add(wing_str)
 
         return True
+
+    def edges_solveable_via_half_turns(self):
+        state = edges_recolor_pattern_444(self.state[:])
+        edges_pattern = ''.join([state[square_index] for square_index in wings_444])
+
+        if edges_pattern in edge_patterns_solveablve_via_half_turns:
+            return True
+        else:
+            return False
 
 
 def rotate_444_U(cube):

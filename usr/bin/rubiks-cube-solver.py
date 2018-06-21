@@ -12,8 +12,10 @@ from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
 from rubikscubennnsolver.LookupTable import NoSteps
 from math import sqrt
 import argparse
+import datetime as dt
 import logging
 import os
+import resource
 import sys
 
 def remove_slices(solution):
@@ -182,9 +184,10 @@ def remove_slices(solution):
 
     return results
 
+start_time = dt.datetime.now()
 
 logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(filename)16s %(levelname)8s: %(message)s')
+                    format='%(asctime)s %(filename)20s %(levelname)8s: %(message)s')
 log = logging.getLogger(__name__)
 
 # Color the errors and warnings in red
@@ -387,24 +390,7 @@ try:
 
     # Now put the cube back in its initial state and verify the solution solves it
     solution = cube.solution
-
-    if size == 2:
-        cube = RubiksCube222(args.state, args.order, args.colormap)
-    elif size == 3:
-        cube = RubiksCube333(args.state, args.order, args.colormap)
-    elif size == 4:
-        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True)
-    elif size == 5:
-        cube = RubiksCube555(args.state, args.order, args.colormap)
-    elif size == 6:
-        cube = RubiksCube666(args.state, args.order, args.colormap)
-    elif size == 7:
-        cube = RubiksCube777(args.state, args.order, args.colormap)
-    elif size % 2 == 0:
-        cube = RubiksCubeNNNEven(args.state, args.order, args.colormap, args.debug)
-    else:
-        cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
-
+    cube.re_init()
     len_steps = len(solution)
 
     for (i, step) in enumerate(solution):
@@ -434,6 +420,11 @@ try:
 
         raise SolveError("cube should be solved but is not, edge parity %d, corner parity %d, kociemba %s" %
             (edge_swap_count, corner_swap_count, kociemba_string))
+
+    end_time = dt.datetime.now()
+    print("\nMemory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    print("Time   : %s" % (end_time - start_time))
+    print("")
 
 except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
     cube.print_cube_layout()

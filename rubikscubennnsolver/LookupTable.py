@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import datetime as dt
-from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
+from pprint import pformat
+from pyhashxx import hashxx
 from subprocess import call
 import logging
 import os
@@ -264,7 +265,10 @@ class LookupTable(object):
         return None
 
     def preload_cache(self):
-        log.info("%s: begin preload cache" % self)
+        log.warning("%s: begin preload cache" % self)
+
+        if isinstance(self, LookupTableCostOnly):
+            raise Exception("%s is a CostOnly table, no need to call preload_cache()" % self)
 
         # Another option here would be to store a list of (state, step) tuples and
         # then binary search through it. That takes about 1/6 the amount of memory
@@ -274,10 +278,12 @@ class LookupTable(object):
             # The bottleneck is the building of the dictionary, moreso that reading from disk.
             for line in fh:
                 (state, steps) = line.rstrip().split(':')
-                self.cache[state] = steps.split()
+                # Store this as a string, not a list.  It takes more than 2x the memory to store steps.split()
+                # For solving a 7x7x7 this is the difference in requiring 3G of RAM vs 7G!!.
+                self.cache[state] = steps
 
         self.preloaded_cache = True
-        log.info("%s: end preload cache (%d bytes)" % (self, sys.getsizeof(self.cache)))
+        log.warning("{}: end preload cache ({:,} bytes)".format(self, sys.getsizeof(self.cache)))
 
     def steps(self, state_to_find=None):
         """
@@ -291,7 +297,11 @@ class LookupTable(object):
             return None
 
         if self.preloaded_cache:
-            return self.cache.get(state_to_find)
+            steps = self.cache.get(state_to_find)
+            if steps:
+                return steps.split()
+            else:
+                return None
 
         line = self.binary_search(state_to_find)
 
@@ -502,6 +512,7 @@ class LookupTableCostOnly(LookupTable):
         self.avoid_oll = False
         self.avoid_pll = False
         self.preloaded_state_set = False
+        self.preloaded_cache = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
 
@@ -523,11 +534,16 @@ class LookupTableCostOnly(LookupTable):
         self.filename_exists = True
 
         if isinstance(state_target, tuple):
+            self.state_width = len(state_target[0])
             self.state_target = set(state_target)
         elif isinstance(state_target, list):
+            self.state_width = len(state_target[0])
             self.state_target = set(state_target)
         else:
+            self.state_width = len(state_target)
             self.state_target = set((state_target, ))
+
+        self.hex_format = '%' + "0%dx" % self.state_width
 
         self.fh_txt_seek_calls = 0
         self.fh_txt = None
@@ -537,10 +553,13 @@ class LookupTableCostOnly(LookupTable):
         # We do not have to binary_search() though so that cuts way down on the
         # number of reads.
         if load_string:
+
+            log.warning("%s: begin preload cost-only" % self)
             with open(self.filename, 'r') as fh:
                 for line in fh:
                     self.content = line
             self.fh_txt_seek_calls += 1
+            log.warning("{}: end preload cost-only ({:,} bytes)".format(self, sys.getsizeof(self.content)))
         else:
             # 'rb' mode is about 3x faster than 'r' mode
             self.fh_txt = open(self.filename, mode='rb')
@@ -567,10 +586,37 @@ class LookupTableCostOnly(LookupTable):
             return int(self.content[state_to_find], 16)
 
 
+class LookupTableHashCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True, bucketcount=None):
+        LookupTableCostOnly.__init__(self, parent, filename, state_target, linecount, max_depth, load_string)
+        self.bucketcount = bucketcount
+
+    def steps_cost(self, state_to_find=None):
+
+        if state_to_find is None:
+            state_to_find = self.state()
+
+        # compute the hash_index for state_to_find, look that many bytes into the
+        # file/self.conten and retrieve a single hex character. This hex character
+        # is the number of steps required to solve the corresponding state.
+        hash_raw = hashxx(state_to_find.encode('utf-8'))
+        hash_index = int(hash_raw % self.bucketcount)
+
+        if self.content is None:
+            self.fh_txt.seek(hash_index)
+            result = int(self.fh_txt.read(1).decode('utf-8'), 16)
+            self.fh_txt_seek_calls += 1
+            return result
+
+        else:
+            return int(self.content[hash_index], 16)
+
+
 class LookupTableIDA(LookupTable):
 
-    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None):
-        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth)
+    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None):
+        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.prune_tables = prune_tables
 
         for x in moves_illegal:
@@ -790,7 +836,7 @@ class LookupTableIDA(LookupTable):
         #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
 
         # The cube is already in the desired state, nothing to do
-        if state in self.state_target:
+        if state in self.state_target or self.search_complete(state, []):
             log.info("%s: cube is already at the target state %s" % (self, state))
             return True
 

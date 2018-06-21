@@ -11,9 +11,24 @@ log = logging.getLogger(__name__)
 
 class RubiksCubeNNNEvenEdges(RubiksCube):
 
+    def get_fake_444(self):
+        if self.fake_444 is None:
+            self.fake_444 = RubiksCube444(solved_444, 'URFDLB')
+            self.fake_444.lt_init()
+        else:
+            self.fake_444.re_init()
+        return self.fake_444
+
+    def get_fake_555(self):
+        if self.fake_555 is None:
+            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+            self.fake_555.lt_init()
+        else:
+            self.fake_555.re_init()
+        return self.fake_555
+
     def pair_inside_edges_via_444(self):
-        fake_444 = RubiksCube444(solved_444, 'URFDLB')
-        fake_444.lt_init()
+        fake_444 = self.get_fake_444()
 
         # Fill in the corners so that we can avoid PLL parity when pairing the edges
         start_444 = 0
@@ -72,8 +87,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
     def pair_edge_orbit_via_555(self, orbit):
         log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
-        fake_555 = RubiksCube555(solved_555, 'URFDLB')
-        fake_555.lt_init()
+        fake_555 = self.get_fake_555()
 
         # Fill in the corners so we can avoid certain types of parity
         start_555 = 0

@@ -48,6 +48,33 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
     def phase(self):
         return 'Solve Even NxNxN'
 
+    def get_fake_666(self):
+        if self.fake_666 is None:
+            self.fake_666 = RubiksCube666(solved_666, 'URFDLB')
+            self.fake_666.lt_init()
+        else:
+            self.fake_666.re_init()
+
+        if self.fake_555:
+            self.fake_666.fake_555 = self.fake_555
+
+        return self.fake_666
+
+    def get_fake_777(self):
+        if self.fake_777 is None:
+            self.fake_777 = RubiksCube777(solved_777, 'URFDLB')
+            self.fake_777.lt_init()
+        else:
+            self.fake_777.re_init()
+
+        if self.fake_666:
+            self.fake_777.fake_666 = self.fake_666
+
+        if self.fake_555:
+            self.fake_777.fake_555 = self.fake_555
+
+        return self.fake_777
+
     def make_plus_sign(self):
         """
         Pair the middle two columns/rows in order to convert this Even cube into
@@ -63,7 +90,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             # Group UD centers
             # - create a fake 6x6x6 to solve the inside 4x4 block
-            fake_666 = RubiksCube666(solved_666, 'URFDLB')
+            fake_666 = self.get_fake_666()
 
             for index in range(1, 217):
                 fake_666.state[index] = 'x'
@@ -102,7 +129,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             fake_666.sanity_check()
 
             # Group LR centers (in turn groups FB)
-            fake_666.lt_init()
             fake_666.print_cube()
             fake_666.group_centers_guts(oblique_edges_only=True)
             fake_666.print_cube()
@@ -118,13 +144,12 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                     self.rotate(wide_size + step)
                 else:
                     self.rotate(step)
-            fake_666 = None
 
         log.info("%s: Big plus sign formed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.print_cube()
 
     def solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle):
-        fake_777 = RubiksCube777(solved_777, 'URFDLB')
+        fake_777 = self.get_fake_777()
 
         for index in range(1, 295):
             fake_777.state[index] = 'x'
@@ -269,7 +294,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         # Group LR centers (in turn groups FB)
         fake_777.sanity_check()
         fake_777.print_cube()
-        fake_777.lt_init()
 
         # Apply the 7x7x7 solution to our cube
         half_size = str( ceil(self.size/2) - 1 - cycle )

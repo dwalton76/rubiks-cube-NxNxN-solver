@@ -24,6 +24,7 @@ def reverse_steps(steps):
     """
     Reverse the order of all steps and the direction of each individual step
     """
+    assert isinstance(steps, list)
     results = []
 
     for step in reversed(steps):

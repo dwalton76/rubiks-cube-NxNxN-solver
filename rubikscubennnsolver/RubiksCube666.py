@@ -931,79 +931,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_444.state[90] = self.state[201]
         fake_444.state[91] = self.state[202]
 
-    def populate_fake_555_for_UD_stage(self):
-        fake_555 = self.fake_555
-
-        for x in range(1, 151):
-            fake_555.state[x] = 'x'
-
-        # Upper centers
-        fake_555.state[7] = self.state[8]
-        fake_555.state[8] = 'U'
-        fake_555.state[9] = self.state[11]
-        fake_555.state[12] = 'U'
-        fake_555.state[13] = 'U'
-        fake_555.state[14] = 'U'
-        fake_555.state[17] = self.state[26]
-        fake_555.state[18] = 'U'
-        fake_555.state[19] = self.state[29]
-
-        # Left centers
-        fake_555.state[32] = self.state[44]
-        fake_555.state[33] = self.state[45]
-        fake_555.state[34] = self.state[47]
-        fake_555.state[37] = self.state[50]
-        fake_555.state[38] = self.state[51]
-        fake_555.state[39] = self.state[53]
-        fake_555.state[42] = self.state[62]
-        fake_555.state[43] = self.state[63]
-        fake_555.state[44] = self.state[65]
-
-        # Front centers
-        fake_555.state[57] = self.state[80]
-        fake_555.state[58] = self.state[81]
-        fake_555.state[59] = self.state[83]
-        fake_555.state[62] = self.state[86]
-        fake_555.state[63] = self.state[87]
-        fake_555.state[64] = self.state[89]
-        fake_555.state[67] = self.state[98]
-        fake_555.state[68] = self.state[99]
-        fake_555.state[69] = self.state[101]
-
-        # Right centers
-        fake_555.state[82] = self.state[116]
-        fake_555.state[83] = self.state[117]
-        fake_555.state[84] = self.state[119]
-        fake_555.state[87] = self.state[122]
-        fake_555.state[88] = self.state[123]
-        fake_555.state[89] = self.state[125]
-        fake_555.state[92] = self.state[134]
-        fake_555.state[93] = self.state[135]
-        fake_555.state[94] = self.state[137]
-
-        # Back centers
-        fake_555.state[107] = self.state[152]
-        fake_555.state[108] = self.state[153]
-        fake_555.state[109] = self.state[155]
-        fake_555.state[112] = self.state[158]
-        fake_555.state[113] = self.state[159]
-        fake_555.state[114] = self.state[161]
-        fake_555.state[117] = self.state[170]
-        fake_555.state[118] = self.state[171]
-        fake_555.state[119] = self.state[173]
-
-        # Down centers
-        fake_555.state[132] = self.state[188]
-        fake_555.state[133] = 'U'
-        fake_555.state[134] = self.state[191]
-        fake_555.state[137] = 'U'
-        fake_555.state[138] = 'D'
-        fake_555.state[139] = 'U'
-        fake_555.state[142] = self.state[206]
-        fake_555.state[143] = 'U'
-        fake_555.state[144] = self.state[209]
-        #fake_555.sanity_check()
-
     def populate_fake_555_for_ULFRBD_solve(self):
         fake_555 = self.fake_555
 
@@ -1251,27 +1178,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
         log.info("")
 
-    def stage_outside_x_centers_UD(self):
-        """
-        Not used at the moment...doing this opens the door for step20 to stage LR
-        obliques AND stage the outer-x-centers.  That table would have 12870^3 states
-        with 12870^2 prune tables so the IDA search would be doable but on the slow side.
-        """
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_UD_stage()
-        fake_555.print_cube()
-        fake_555.group_centers_stage_UD()
-
-        for step in fake_555.solution:
-            self.rotate(step)
-
-        self.print_cube()
-        log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-
     def stage_oblique_edges_LR(self):
 
         # Test the prune tables
@@ -1325,7 +1231,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_init()
         self.stage_inner_x_centers()
         self.stage_oblique_edges_UD()
-        # self.stage_outside_x_centers_UD()
         self.stage_oblique_edges_LR()
 
         # Reduce the centers to 5x5x5 centers

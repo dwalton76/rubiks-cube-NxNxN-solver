@@ -3697,8 +3697,6 @@ class RubiksCube(object):
         if self.is_odd():
             self.rotate_U_to_U()
             self.rotate_F_to_F()
-        else:
-            self.rotate_for_best_centers_staging()
 
         if self.centers_solved():
             self.rotate_U_to_U()

@@ -1132,6 +1132,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.populate_fake_444_for_ULFRBD_stage()
         fake_444.lt_ULFRBD_centers_stage.avoid_oll = True
         fake_444.lt_ULFRBD_centers_stage.solve()
+        fake_444.rotate_for_best_centers_solving()
 
         for step in fake_444.solution:
             if 'w' in step:

@@ -383,17 +383,17 @@ lookup-table-4x4x4-step11-UD-centers-stage.txt
 lookup-table-4x4x4-step12-LR-centers-stage.txt
 lookup-table-4x4x4-step13-FB-centers-stage.txt
 ==============================================
-1 steps has 3 entries (0 percent, 0.00x previous step)
-2 steps has 36 entries (0 percent, 12.00x previous step)
-3 steps has 484 entries (0 percent, 13.44x previous step)
-4 steps has 5,408 entries (0 percent, 11.17x previous step)
-5 steps has 48,955 entries (6 percent, 9.05x previous step)
-6 steps has 242,011 entries (32 percent, 4.94x previous step)
-7 steps has 362,453 entries (49 percent, 1.50x previous step)
-8 steps has 75,955 entries (10 percent, 0.21x previous step)
-9 steps has 166 entries (0 percent, 0.00x previous step)
+1 steps has 9 entries (0 percent, 0.00x previous step)
+2 steps has 108 entries (0 percent, 12.00x previous step)
+3 steps has 1,434 entries (0 percent, 13.28x previous step)
+4 steps has 15,210 entries (2 percent, 10.61x previous step)
+5 steps has 126,306 entries (17 percent, 8.30x previous step)
+6 steps has 420,312 entries (57 percent, 3.33x previous step)
+7 steps has 171,204 entries (23 percent, 0.41x previous step)
+8 steps has 888 entries (0 percent, 0.01x previous step)
 
 Total: 735,471 entries
+Average: 6.02 moves
 '''
 class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
 
@@ -405,7 +405,8 @@ class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
             'lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt',
             'f0000f',
             linecount=735471,
-            max_depth=9)
+            max_depth=8,
+            filesize=16711681)
 
     def state(self):
         parent_state = self.parent.state
@@ -422,7 +423,8 @@ class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
             'lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt',
             '0f0f00',
             linecount=735471,
-            max_depth=9)
+            max_depth=8,
+            filesize=16711681)
 
     def state(self):
         parent_state = self.parent.state
@@ -439,7 +441,8 @@ class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
             'lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt',
             '00f0f0',
             linecount=735471,
-            max_depth=9)
+            max_depth=8,
+            filesize=16711681)
 
     def state(self):
         parent_state = self.parent.state
@@ -451,14 +454,14 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
     """
     lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
     ==================================================
-    1 steps has 4 entries (0 percent, 0.00x previous step)
-    2 steps has 54 entries (0 percent, 13.50x previous step)
-    3 steps has 726 entries (0 percent, 13.44x previous step)
-    4 steps has 9,300 entries (0 percent, 12.81x previous step)
-    5 steps has 121,407 entries (7 percent, 13.05x previous step)
-    6 steps has 1,586,554 entries (92 percent, 13.07x previous step)
+    1 steps has 24 entries (0 percent, 0.00x previous step)
+    2 steps has 324 entries (0 percent, 13.50x previous step)
+    3 steps has 4,302 entries (0 percent, 13.28x previous step)
+    4 steps has 53,730 entries (7 percent, 12.49x previous step)
+    5 steps has 697,806 entries (92 percent, 12.99x previous step)
 
-    Total: 1,718,045 entries
+    Total: 756,186 entries
+    Average: 4.92 moves
     """
 
     def __init__(self, parent):
@@ -466,7 +469,12 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             self,
             parent,
             'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
-            'UUUULLLLFFFFLLLLFFFFUUUU',
+            ('FFFFLLLLUUUULLLLUUUUFFFF',
+             'FFFFUUUULLLLUUUULLLLFFFF',
+             'LLLLFFFFUUUUFFFFUUUULLLL',
+             'LLLLUUUUFFFFUUUUFFFFLLLL',
+             'UUUUFFFFLLLLFFFFLLLLUUUU',
+             'UUUULLLLFFFFLLLLFFFFUUUU'),
             moves_444,
 
             # illegal_moves...ignoring these increases the average solution
@@ -479,8 +487,9 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             (parent.lt_UD_centers_stage,
              parent.lt_LR_centers_stage,
              parent.lt_FB_centers_stage),
-            linecount=1718045,
-            max_depth=6)
+            linecount=756186,
+            max_depth=5,
+            filesize=34028370)
 
     def state(self):
         parent_state = self.parent.state

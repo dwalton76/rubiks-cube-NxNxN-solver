@@ -500,7 +500,7 @@ class LookupTable(object):
 
 class LookupTableCostOnly(LookupTable):
 
-    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True):
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True, filesize=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.filename = filename
@@ -515,12 +515,22 @@ class LookupTableCostOnly(LookupTable):
         self.preloaded_cache = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
+        self.filesize = filesize
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
 
         if 'dummy' not in self.filename:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
+
+        # This only happens if a new copy of the lookup table has been checked in...we need to delete
+        # the one we have and download the new one.
+        if os.path.exists(self.filename) and self.filesize is not None and os.path.getsize(self.filename) != self.filesize:
+            log.info("%s: filesize %s does not equal target filesize %s" % (self, os.path.getsize(self.filename), self.filesize))
+            os.remove(self.filename)
+
+            if os.path.exists(self.filename_gz):
+                os.remove(self.filename_gz)
 
         if not os.path.exists(self.filename):
             if not os.path.exists(self.filename_gz):

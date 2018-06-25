@@ -28,10 +28,16 @@ def reverse_steps(steps):
     results = []
 
     for step in reversed(steps):
-        if step.endswith("'"):
+
+        if step.endswith("2"):
+            reverse_step = step
+
+        elif step.endswith("'"):
             reverse_step = step[0:-1]
+
         else:
             reverse_step = step + "'"
+
         results.append(reverse_step)
 
     return results

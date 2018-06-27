@@ -12,6 +12,7 @@ from rubikscubennnsolver.RubiksCube444 import (
     wings_444,
     UD_centers_444,
     LR_centers_444,
+    FB_centers_444,
     UFBD_centers_444,
     rotate_444,
     reflect_x_444
@@ -138,7 +139,7 @@ class LookupTableIDA444TsaiPhase1(LookupTableIDA):
         # About 30% of phase2 edge states and 30% of phase2 center states are
         # 6 moves or less so IDA until we find a phase1 solution that puts both
         # of those at <= 6 moves. We do this to speed up the phase2 search.
-        if self.parent.lt_tsai_phase2_edges.steps_cost() > 6:
+        if self.parent.lt_tsai_phase2_edges_lr_centers.steps_cost() > 7:
             #log.info("%s: phase2 edges cost %s" % (self, self.parent.lt_tsai_phase2_edges.steps_cost()))
             return False
 
@@ -249,6 +250,83 @@ class LookupTable444TsaiPhase2Edges(LookupTable):
         return self.parent.tsai_phase2_orient_edges_state([], return_hex=False)
 
 
+
+class LookupTable444TsaiPhase2EdgesLRCenters(LookupTableHashCostOnly):
+    """
+    lookup-table-4x4x4-step62-tsai-phase2-edges-and-LR-centers.txt
+    ==============================================================
+    1 steps has 48 entries (0 percent, 0.00x previous step)
+    2 steps has 540 entries (0 percent, 11.25x previous step)
+    3 steps has 7,308 entries (0 percent, 13.53x previous step)
+    4 steps has 88,284 entries (0 percent, 12.08x previous step)
+    5 steps has 1,085,824 entries (0 percent, 12.30x previous step)
+    6 steps has 11,021,634 entries (5 percent, 10.15x previous step)
+    7 steps has 63,017,888 entries (33 percent, 5.72x previous step)
+    8 steps has 101,139,062 entries (53 percent, 1.60x previous step)
+    9 steps has 12,929,280 entries (6 percent, 0.13x previous step)
+    10 steps has 1,052 entries (0 percent, 0.00x previous step)
+
+    Total: 189,290,920 entries
+    Average: 7.60 moves
+    """
+
+    def __init__(self, parent):
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step62-tsai-phase2-edges-and-LR-centers.hash-cost-only.txt',
+            ('UDDUUDDUDUDLLUULLDUDDUUDDUUDDUDRRUURRDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDLLUURRDUDDUUDDUUDDUDLLUURRDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDLLUURRDUDDUUDDUUDDUDRRUULLDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDLRUULRDUDDUUDDUUDDUDLRUULRDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDLRUULRDUDDUUDDUUDDUDRLUURLDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDLRUURLDUDDUUDDUUDDUDRLUULRDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDRLUULRDUDDUUDDUUDDUDLRUURLDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDRLUURLDUDDUUDDUUDDUDLRUULRDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDRLUURLDUDDUUDDUUDDUDRLUURLDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDRRUULLDUDDUUDDUUDDUDLLUURRDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDRRUULLDUDDUUDDUUDDUDRRUULLDUDDUUDDUUDUDDUUDDU',
+             'UDDUUDDUDUDRRUURRDUDDUUDDUUDDUDLLUULLDUDDUUDDUUDUDDUUDDU'),
+            linecount=189290920,
+            max_depth=10,
+            bucketcount=378581849)
+
+    def state(self):
+        # UDDUUDDU
+        # DUDUUDUD
+        # DUUDDUUD
+        # DUDUUDUD
+        # DUUDDUUD
+        # UDDUUDDU
+        parent_state = self.parent.state
+        edges = self.parent.tsai_phase2_orient_edges_state([], return_hex=False)
+        U_edges = edges[0:8]
+        L_edges = ''.join(edges[8:16])
+        F_edges = edges[16:24]
+        R_edges = ''.join(edges[24:32])
+        B_edges = edges[32:40]
+        D_edges = edges[40:48]
+
+        # LLLLRRRR
+        centers = ''.join([parent_state[x] for x in LR_centers_444])
+
+        result = ''.join([
+                    U_edges,
+                    ''.join([L_edges[0], L_edges[1],
+                             L_edges[2], centers[0], centers[1], L_edges[3],
+                             L_edges[4], centers[2], centers[3], L_edges[5],
+                             L_edges[6], L_edges[7]]),
+                    F_edges,
+                    ''.join([R_edges[0], R_edges[1],
+                             R_edges[2], centers[4], centers[5], R_edges[3],
+                             R_edges[4], centers[6], centers[7], R_edges[5],
+                             R_edges[6], R_edges[7]]),
+                    B_edges,
+                    D_edges])
+
+        return result
+
+
 class LookupTableIDA444TsaiPhase2(LookupTableIDA):
     """
     lookup-table-4x4x4-step60-tsai-phase2.txt
@@ -287,73 +365,13 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
 
             # prune tables
             (parent.lt_tsai_phase2_centers,
-             parent.lt_tsai_phase2_edges),
+             parent.lt_tsai_phase2_edges_lr_centers),
             linecount=1419536,
             max_depth=5)
 
     def state(self):
         return self.parent.lt_tsai_phase2_centers.state() + self.parent.lt_tsai_phase2_edges.state()
 
-        """
-    def search_complete(self, state, steps_to_here):
-        parent_state = self.parent.state
-        UD = ('U', 'D')
-
-        # Are UD and FB staged? Check UD, if it is staged FB has to be staged too.
-        UD_centers = ''.join([parent_state[x] for x in UD_centers_444])
-        if UD_centers.count('U') != 4 or UD_centers.count('D') != 4:
-            #log.info("%s: phase2 UD centers %s not staged" % (self, UD_centers))
-            return False
-
-        # Are the LR sides in 1 of the 12 states we want?
-        LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
-
-        if LR_centers not in tsai_phase2_LR_center_targets:
-            #log.info("%s: phase2 LR centers %s not staged" % (self, LR_centers))
-            return False
-
-        if not self.parent.edges_possibly_oriented():
-            #log.info("%s: phase2 edges not possibly oriented" % self)
-            return False
-
-        if self.parent.lt_tsai_phase2_edges.state() not in self.parent.lt_tsai_phase2_edges.state_target:
-            log.info("%s: phase2 edges %s not in %s" % (self, self.parent.lt_tsai_phase2_edges.state(), pformat(self.parent.lt_tsai_phase2_edges.state_target)))
-            return False
-
-        '''
-        p3_edges_cost = self.parent.lt_tsai_phase3_edges_solve.steps_cost()
-
-        if p3_edges_cost == 0:
-            return False
-
-        # Avoid phase2 solutions that are going to lead to longer phase4 solutions
-        p4_edges_cost = self.parent.lt_tsai_phase4_edges.steps_cost()
-        if p4_edges_cost > 11:
-            log.info("%s: found solution but edges are not in phase4 table" % self)
-            return False
-        '''
-
-        # TODO come back to this later
-        '''
-        for (corner_index_333, corner_index_444) in zip(corners_333, corners_444):
-            self.cube_333.state[corner_index_333] = self.parent.state[corner_index_444]
-
-        if not self.cube_333.lt_phase2_edges.steps():
-            log.info("%s: found solution but corners are not in 3x3x3 phase2 table" % self)
-            return False
-        '''
-
-        # rotate_xxx() is very fast but it does not append the
-        # steps to the solution so put the cube back in original state
-        # and execute the steps via a normal rotate() call
-        self.parent.state = self.original_state[:]
-        self.parent.solution = self.original_solution[:]
-
-        for step in steps_to_here:
-            self.parent.rotate(step)
-
-        return True
-        """
 
 def edges_high_low_recolor_444(state):
     """
@@ -496,238 +514,58 @@ class LookupTable444TsaiPhase3Edges(LookupTableHashCostOnly):
             linecount=239500800,
             max_depth=13,
             bucketcount=479001629)
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step71-tsai-phase3-edges.txt',
+            '213098ba6574',
+            linecount=239500800,
+            max_depth=13)
+        '''
 
     def state(self):
         state = edges_high_low_recolor_444(self.parent.state[:])
         result = ''.join([state[x] for x in edges_for_high_low_recolor_444])
         return result
 
-
-class LookupTable444TsaiPhase4Edges(LookupTableHashCostOnly):
-    """
-    Stage edges into three L4E groups. Our edges have been oriented into high/low
-    groups (12 in each) so this table will have (12!/(4!*4!*4!))^2 entries.
-
-    lookup-table-4x4x4-step400-edges-stage.txt
-    ==========================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 42 entries (0 percent, 8.40x previous step)
-    3 steps has 352 entries (0 percent, 8.38x previous step)
-    4 steps has 3,202 entries (0 percent, 9.10x previous step)
-    5 steps has 27,410 entries (0 percent, 8.56x previous step)
-    6 steps has 213,613 entries (0 percent, 7.79x previous step)
-    7 steps has 1,727,326 entries (0 percent, 8.09x previous step)
-    8 steps has 13,028,086 entries (1 percent, 7.54x previous step)
-    9 steps has 80,892,742 entries (6 percent, 6.21x previous step)
-    10 steps has 363,038,080 entries (30 percent, 4.49x previous step)
-    11 steps has 603,695,058 entries (50 percent, 1.66x previous step)
-    12 steps has 137,340,852 entries (11 percent, 0.23x previous step)
-    13 steps has 655,732 entries (0 percent, 0.00x previous step)
-
-    Total: 1,200,622,500 entries
-    Average: 10.639001 moves
-
-    NOTE: This is the largest prune table I have ever built!! :)
-    """
-    def __init__(self, parent):
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step400-edges-stage.hash-cost-only.txt',
-            'FFUUUUFFUULLLLUUFFLLLLFFUULLLLUUFFLLLLFFFFUUUUFF',
-            linecount=1200622500,
-            max_depth=13,
-            bucketcount=2401245031)
-
-    def state(self):
-        parent_state = self.parent.state
-        #result = []
-        #for square_index in edges_444:
-        #    partner_index = edges_partner_444[square_index]
-        #    square_value = parent_state[square_index]
-        #    partner_value = parent_state[partner_index]
-        #    wing_str = ''.join([square_value, partner_value])
-        #    result.append(edge_map_to_ULF[wing_str])
-        #result = ''.join(result)
-        result = ''.join([edge_map_to_ULF[''.join((parent_state[square_index], parent_state[edges_partner_444[square_index]]))] for square_index in edges_444])
-        return result
-
-
-class LookupTable444TsaiPhase4Centers(LookupTable):
-    """
-    lookup-table-4x4x4-step500-tsai-phase4-centers.txt
-    ==================================================
-    1 steps has 384 entries (7 percent, 0.00x previous step)
-    2 steps has 484 entries (9 percent, 1.26x previous step)
-    3 steps has 768 entries (15 percent, 1.59x previous step)
-    4 steps has 1152 entries (23 percent, 1.50x previous step)
-    5 steps has 1088 entries (22 percent, 0.94x previous step)
-    6 steps has 832 entries (16 percent, 0.76x previous step)
-    7 steps has 192 entries (3 percent, 0.23x previous step)
-
-    Total: 4900 entries
-    Average: 4.089796 moves
-    """
+# dwalton stopped here...waiting for this table to build.
+# If we can stage the corners that would be huge, it at least cuts off
+# 10 moves when doing 3x3x3 solve.
+'''
+class LookupTable444TsaiPhase3Corners(LookupTable):
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step500-tsai-phase4-centers.txt',
-            ('UUUUFFFFBBBBDDDD',
-             'UUUUFFBBFFBBDDDD',
-             'UUUUFFBBBBFFDDDD',
-             'UUUUFBFBFBFBDDDD',
-             'UUUUFBFBBFBFDDDD',
-             'UUUUFBBFBFFBDDDD',
-             'UUUUBFFBFBBFDDDD',
-             'UUUUBFBFFBFBDDDD',
-             'UUUUBFBFBFBFDDDD',
-             'UUUUBBFFFFBBDDDD',
-             'UUUUBBFFBBFFDDDD',
-             'UUUUBBBBFFFFDDDD',
-             'UUDDFFFFBBBBUUDD',
-             'UUDDFFFFBBBBDDUU',
-             'UUDDFFBBFFBBUUDD',
-             'UUDDFFBBFFBBDDUU',
-             'UUDDFFBBBBFFUUDD',
-             'UUDDFFBBBBFFDDUU',
-             'UUDDFBFBFBFBUUDD',
-             'UUDDFBFBFBFBDDUU',
-             'UUDDFBFBBFBFUUDD',
-             'UUDDFBFBBFBFDDUU',
-             'UUDDFBBFBFFBUUDD',
-             'UUDDFBBFBFFBDDUU',
-             'UUDDBFFBFBBFUUDD',
-             'UUDDBFFBFBBFDDUU',
-             'UUDDBFBFFBFBUUDD',
-             'UUDDBFBFFBFBDDUU',
-             'UUDDBFBFBFBFUUDD',
-             'UUDDBFBFBFBFDDUU',
-             'UUDDBBFFFFBBUUDD',
-             'UUDDBBFFFFBBDDUU',
-             'UUDDBBFFBBFFUUDD',
-             'UUDDBBFFBBFFDDUU',
-             'UUDDBBBBFFFFUUDD',
-             'UUDDBBBBFFFFDDUU',
-             'UDUDFFFFBBBBUDUD',
-             'UDUDFFFFBBBBDUDU',
-             'UDUDFFBBFFBBUDUD',
-             'UDUDFFBBFFBBDUDU',
-             'UDUDFFBBBBFFUDUD',
-             'UDUDFFBBBBFFDUDU',
-             'UDUDFBFBFBFBUDUD',
-             'UDUDFBFBFBFBDUDU',
-             'UDUDFBFBBFBFUDUD',
-             'UDUDFBFBBFBFDUDU',
-             'UDUDFBBFBFFBUDUD',
-             'UDUDFBBFBFFBDUDU',
-             'UDUDBFFBFBBFUDUD',
-             'UDUDBFFBFBBFDUDU',
-             'UDUDBFBFFBFBUDUD',
-             'UDUDBFBFFBFBDUDU',
-             'UDUDBFBFBFBFUDUD',
-             'UDUDBFBFBFBFDUDU',
-             'UDUDBBFFFFBBUDUD',
-             'UDUDBBFFFFBBDUDU',
-             'UDUDBBFFBBFFUDUD',
-             'UDUDBBFFBBFFDUDU',
-             'UDUDBBBBFFFFUDUD',
-             'UDUDBBBBFFFFDUDU',
-             'UDDUFFFFBBBBDUUD',
-             'UDDUFFBBFFBBDUUD',
-             'UDDUFFBBBBFFDUUD',
-             'UDDUFBFBFBFBDUUD',
-             'UDDUFBFBBFBFDUUD',
-             'UDDUFBBFBFFBDUUD',
-             'UDDUBFFBFBBFDUUD',
-             'UDDUBFBFFBFBDUUD',
-             'UDDUBFBFBFBFDUUD',
-             'UDDUBBFFFFBBDUUD',
-             'UDDUBBFFBBFFDUUD',
-             'UDDUBBBBFFFFDUUD',
-             'DUUDFFFFBBBBUDDU',
-             'DUUDFFBBFFBBUDDU',
-             'DUUDFFBBBBFFUDDU',
-             'DUUDFBFBFBFBUDDU',
-             'DUUDFBFBBFBFUDDU',
-             'DUUDFBBFBFFBUDDU',
-             'DUUDBFFBFBBFUDDU',
-             'DUUDBFBFFBFBUDDU',
-             'DUUDBFBFBFBFUDDU',
-             'DUUDBBFFFFBBUDDU',
-             'DUUDBBFFBBFFUDDU',
-             'DUUDBBBBFFFFUDDU',
-             'DUDUFFFFBBBBUDUD',
-             'DUDUFFFFBBBBDUDU',
-             'DUDUFFBBFFBBUDUD',
-             'DUDUFFBBFFBBDUDU',
-             'DUDUFFBBBBFFUDUD',
-             'DUDUFFBBBBFFDUDU',
-             'DUDUFBFBFBFBUDUD',
-             'DUDUFBFBFBFBDUDU',
-             'DUDUFBFBBFBFUDUD',
-             'DUDUFBFBBFBFDUDU',
-             'DUDUFBBFBFFBUDUD',
-             'DUDUFBBFBFFBDUDU',
-             'DUDUBFFBFBBFUDUD',
-             'DUDUBFFBFBBFDUDU',
-             'DUDUBFBFFBFBUDUD',
-             'DUDUBFBFFBFBDUDU',
-             'DUDUBFBFBFBFUDUD',
-             'DUDUBFBFBFBFDUDU',
-             'DUDUBBFFFFBBUDUD',
-             'DUDUBBFFFFBBDUDU',
-             'DUDUBBFFBBFFUDUD',
-             'DUDUBBFFBBFFDUDU',
-             'DUDUBBBBFFFFUDUD',
-             'DUDUBBBBFFFFDUDU',
-             'DDUUFFFFBBBBUUDD',
-             'DDUUFFFFBBBBDDUU',
-             'DDUUFFBBFFBBUUDD',
-             'DDUUFFBBFFBBDDUU',
-             'DDUUFFBBBBFFUUDD',
-             'DDUUFFBBBBFFDDUU',
-             'DDUUFBFBFBFBUUDD',
-             'DDUUFBFBFBFBDDUU',
-             'DDUUFBFBBFBFUUDD',
-             'DDUUFBFBBFBFDDUU',
-             'DDUUFBBFBFFBUUDD',
-             'DDUUFBBFBFFBDDUU',
-             'DDUUBFFBFBBFUUDD',
-             'DDUUBFFBFBBFDDUU',
-             'DDUUBFBFFBFBUUDD',
-             'DDUUBFBFFBFBDDUU',
-             'DDUUBFBFBFBFUUDD',
-             'DDUUBFBFBFBFDDUU',
-             'DDUUBBFFFFBBUUDD',
-             'DDUUBBFFFFBBDDUU',
-             'DDUUBBFFBBFFUUDD',
-             'DDUUBBFFBBFFDDUU',
-             'DDUUBBBBFFFFUUDD',
-             'DDUUBBBBFFFFDDUU',
-             'DDDDFFFFBBBBUUUU',
-             'DDDDFFBBFFBBUUUU',
-             'DDDDFFBBBBFFUUUU',
-             'DDDDFBFBFBFBUUUU',
-             'DDDDFBFBBFBFUUUU',
-             'DDDDFBBFBFFBUUUU',
-             'DDDDBFFBFBBFUUUU',
-             'DDDDBFBFFBFBUUUU',
-             'DDDDBFBFBFBFUUUU',
-             'DDDDBBFFFFBBUUUU',
-             'DDDDBBFFBBFFUUUU',
-             'DDDDBBBBFFFFUUUU'),
-            linecount=4900,
-            max_depth=7)
+            'lookup-table-4x4x4-step72-tsai-phase3-corners.txt',
+            'TBD',
+            linecount=239500800,
+            max_depth=13)
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([parent_state[square_index] for square_index in UFBD_centers_444])
-        return result
+        return ''.join([parent_state[x] for x in corners_444])
+'''
 
 
-class LookupTableIDA444TsaiPhase4(LookupTableIDA):
+tsai_phase3_FB_center_targets = set((
+    'FFFFBBBB',
+    'BBBBFFFF',
+    'FFBBBBFF',
+    'FFBBFFBB',
+    'BBFFBBFF',
+    'BBFFFFBB',
+    'BFBFBFBF',
+    'BFBFFBFB',
+    'FBFBBFBF',
+    'FBFBFBFB',
+    'BFFBFBBF',
+    'FBBFBFFB'
+))
+
+class LookupTableIDA444TsaiPhase3(LookupTableIDA):
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -748,20 +586,23 @@ class LookupTableIDA444TsaiPhase4(LookupTableIDA):
              "L", "L'"),
 
             # prune tables
-            (parent.lt_tsai_phase4_edges,
-             parent.lt_tsai_phase3_edges_solve,
-             parent.lt_tsai_phase4_centers),
+            (parent.lt_tsai_phase3_edges,),
 
             linecount=0,
             max_depth=99)
 
     def state(self):
-        return self.parent.lt_tsai_phase4_centers.state() + self.parent.lt_tsai_phase4_edges.state()
+        parent_state = self.parent.state
+        centers = ''.join([parent_state[x] for x in FB_centers_444])
+        edges = self.parent.lt_tsai_phase3_edges.state()
+        return centers + edges
 
     def search_complete(self, state, steps_to_here):
-        if (self.parent.lt_tsai_phase4_centers.state() in self.parent.lt_tsai_phase4_centers.state_target and
-            self.parent.lt_tsai_phase4_edges.state() in self.parent.lt_tsai_phase4_edges.state_target and
-            self.parent.edges_solveable_via_half_turns()):
+        parent_state = self.parent.state
+        FB_centers = ''.join([parent_state[x] for x in FB_centers_444])
+
+        if (FB_centers in tsai_phase3_FB_center_targets and
+            self.parent.lt_tsai_phase3_edges.state() in self.parent.lt_tsai_phase3_edges.state_target):
 
             # rotate_xxx() is very fast but it does not append the
             # steps to the solution so put the cube back in original state
@@ -773,125 +614,129 @@ class LookupTableIDA444TsaiPhase4(LookupTableIDA):
                 self.parent.rotate(step)
 
             return True
-        else:
-            return False
+
+        return False
 
 
-class LookupTable444TsaiPhase5Edges(LookupTable):
+class LookupTable444TsaiPhase4Edges(LookupTable):
     """
-    lookup-table-4x4x4-step602-tsai-phase5-edges.txt
-    ================================================
-    1 steps has 4 entries (6 percent, 0.00x previous step)
-    2 steps has 12 entries (18 percent, 3.00x previous step)
-    3 steps has 24 entries (37 percent, 2.00x previous step)
-    4 steps has 17 entries (26 percent, 0.71x previous step)
-    5 steps has 7 entries (10 percent, 0.41x previous step)
+    lookup-table-4x4x4-step81-edges.txt
+    ===================================
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 16 entries (0 percent, 4.00x previous step)
+    3 steps has 66 entries (0 percent, 4.12x previous step)
+    4 steps has 299 entries (0 percent, 4.53x previous step)
+    5 steps has 1,253 entries (1 percent, 4.19x previous step)
+    6 steps has 4,388 entries (5 percent, 3.50x previous step)
+    7 steps has 12,928 entries (16 percent, 2.95x previous step)
+    8 steps has 26,366 entries (32 percent, 2.04x previous step)
+    9 steps has 27,960 entries (34 percent, 1.06x previous step)
+    10 steps has 7,328 entries (9 percent, 0.26x previous step)
+    11 steps has 32 entries (0 percent, 0.00x previous step)
 
-    Total: 64 entries
-    Average: 3.171875 moves
+    Total: 80,640 entries
+    Average: 8.19 moves
     """
+
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step602-tsai-phase5-edges.txt',
+            'lookup-table-4x4x4-step81-edges.txt',
             '10425376a8b9ecfdhgkiljnm',
-            linecount=64,
-            max_depth=5)
+            linecount=80640,
+            max_depth=11)
 
     def state(self):
         state = edges_recolor_pattern_444(self.parent.state[:])
-        edges_state = ''.join([state[square_index] for square_index in wings_444])
-        return edges_state
+        result = ''.join([state[x] for x in wings_444])
+        return result
 
 
-class LookupTable444TsaiPhase5Centers(LookupTable):
+class LookupTable444TsaiPhase4Centers(LookupTable):
     """
-    lookup-table-4x4x4-step601-tsai-phase5-centers.txt
-    ==================================================
+    lookup-table-4x4x4-step82-centers.txt
+    =====================================
     1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 51 entries (2 percent, 7.29x previous step)
-    3 steps has 276 entries (15 percent, 5.41x previous step)
-    4 steps has 599 entries (34 percent, 2.17x previous step)
-    5 steps has 494 entries (28 percent, 0.82x previous step)
-    6 steps has 261 entries (15 percent, 0.53x previous step)
-    7 steps has 40 entries (2 percent, 0.15x previous step)
+    2 steps has 67 entries (0 percent, 9.57x previous step)
+    3 steps has 484 entries (4 percent, 7.22x previous step)
+    4 steps has 1,897 entries (18 percent, 3.92x previous step)
+    5 steps has 3,456 entries (34 percent, 1.82x previous step)
+    6 steps has 2,721 entries (26 percent, 0.79x previous step)
+    7 steps has 1,320 entries (13 percent, 0.49x previous step)
+    8 steps has 128 entries (1 percent, 0.10x previous step)
 
-    Total: 1728 entries
-    Average: 4.426505 moves
+    Total: 10,080 entries
+    Average: 5.26 moves
     """
+
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step601-tsai-phase5-centers.txt',
+            'lookup-table-4x4x4-step82-centers.txt',
             'UUUULLLLFFFFRRRRBBBBDDDD',
-            linecount=1728,
-            max_depth=7)
+            linecount=10080,
+            max_depth=8)
 
     def state(self):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-        centers_state = ''.join([state[square_index] for square_index in centers_444])
-        return centers_state
+        return ''.join([self.parent.state[x] for x in centers_444])
 
 
-class LookupTableIDA444TsaiPhase5(LookupTableIDA):
-    """
-    lookup-table-4x4x4-step600-tsai-phase5.txt
-    ==========================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 51 entries (0 percent, 7.29x previous step)
-    3 steps has 288 entries (0 percent, 5.65x previous step)
-    4 steps has 911 entries (0 percent, 3.16x previous step)
-    5 steps has 2682 entries (2 percent, 2.94x previous step)
-    6 steps has 7629 entries (6 percent, 2.84x previous step)
-    7 steps has 16504 entries (14 percent, 2.16x previous step)
-    8 steps has 27996 entries (25 percent, 1.70x previous step)
-    9 steps has 31052 entries (28 percent, 1.11x previous step)
-    10 steps has 19408 entries (17 percent, 0.63x previous step)
-    11 steps has 3864 entries (3 percent, 0.20x previous step)
-    12 steps has 200 entries (0 percent, 0.05x previous step)
-
-    Total: 110592 entries
-    Average: 8.334681 moves
-    """
-    # TODO we need to rebuild this but account for OLL and PLL...right now the only
-    # reason we are doing IDA is to avoid OLL/PLL. I only built this 6-deep.
+class LookupTableIDA444TsaiPhase4(LookupTableIDA):
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step600-tsai-phase5.txt',
-            'UUUULLLLFFFFRRRRBBBBDDDD10425376a8b9ecfdhgkiljnm',
+            'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
+            'TBD',
             moves_444,
 
             # illegal moves
-            ("Uw", "Uw'",
-             "Lw", "Lw'",
-             "Fw", "Fw'",
+            ("Fw", "Fw'",
+             "Uw", "Uw'",
              "Rw", "Rw'",
-             "Bw", "Bw'",
-             "Dw", "Dw'",
-             "U", "U'",
+             "Lw", "Lw'", "Lw2",
+             "Bw", "Bw'", "Bw2",
+             "Dw", "Dw'", "Dw2",
+             "R", "R'",
              "L", "L'",
              "F", "F'",
-             "R", "R'",
-             "B", "B'",
-             "D", "D'"),
+             "B", "B'"),
 
             # prune tables
-            (parent.lt_tsai_phase5_edges,
-             parent.lt_tsai_phase5_centers),
+            (parent.lt_tsai_phase4_edges,
+             parent.lt_tsai_phase4_centers),
+            #(parent.lt_tsai_phase4_centers,),
 
-            linecount=11568,
-            max_depth=6)
+            linecount=0,
+            max_depth=99)
 
     def state(self):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-        centers_state = ''.join([state[square_index] for square_index in centers_444])
-        edges_state = ''.join([state[square_index] for square_index in wings_444])
-        return centers_state + edges_state
+        return self.parent.lt_tsai_phase4_centers.state() + self.parent.lt_tsai_phase4_edges.state()
+
+    def search_complete(self, state, steps_to_here):
+        if self.parent.centers_solved() and self.parent.edges_paired():
+
+            if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
+                return False
+
+            if self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
+                return False
+
+            # rotate_xxx() is very fast but it does not append the
+            # steps to the solution so put the cube back in original state
+            # and execute the steps via a normal rotate() call
+            self.parent.state = self.original_state[:]
+            self.parent.solution = self.original_solution[:]
+
+            for step in steps_to_here:
+                self.parent.rotate(step)
+
+            return True
+
+        return False
 
 
 tsai_phase2_orient_edges_wing_str_map = {
@@ -959,7 +804,7 @@ class RubiksCubeTsai444(RubiksCube444):
         self.lt_tsai_phase2_centers = LookupTable444TsaiPhase2Centers(self)
         self.lt_tsai_phase2_centers.preload_cache()
         self.lt_tsai_phase2_edges = LookupTable444TsaiPhase2Edges(self)
-        self.lt_tsai_phase2_edges.preload_cache()
+        self.lt_tsai_phase2_edges_lr_centers = LookupTable444TsaiPhase2EdgesLRCenters(self)
         self.lt_tsai_phase2 = LookupTableIDA444TsaiPhase2(self)
         self.lt_tsai_phase2.preload_cache()
 
@@ -967,32 +812,24 @@ class RubiksCubeTsai444(RubiksCube444):
         # =============
         # Phase3 tables
         # =============
-        self.lt_tsai_phase3_edges_solve = LookupTable444TsaiPhase3Edges(self)
+        self.lt_tsai_phase3_edges = LookupTable444TsaiPhase3Edges(self)
+        #self.lt_tsai_phase3_corners = LookupTable444TsaiPhase3Corners(self)
+        self.lt_tsai_phase3 = LookupTableIDA444TsaiPhase3(self)
 
-        # For tsai this tables is only used if the centers have already been solved
-        # For non-tsai it is always used
-        self.lt_edges = LookupTable444Edges(self)
 
         # =============
         # Phase4 tables
         # =============
-        self.lt_tsai_phase4_centers = LookupTable444TsaiPhase4Centers(self)
-        self.lt_tsai_phase4_centers.preload_cache()
         self.lt_tsai_phase4_edges = LookupTable444TsaiPhase4Edges(self)
+        self.lt_tsai_phase4_centers = LookupTable444TsaiPhase4Centers(self)
         self.lt_tsai_phase4 = LookupTableIDA444TsaiPhase4(self)
+        self.lt_tsai_phase4_edges.preload_cache()
+        self.lt_tsai_phase4_centers.preload_cache()
+        self.lt_tsai_phase4.preload_cache()
 
-        # =============
-        # Phase5 tables
-        # =============
-        self.lt_tsai_phase5_centers = LookupTable444TsaiPhase5Centers(self)
-        self.lt_tsai_phase5_centers.preload_cache()
-        self.lt_tsai_phase5_edges = LookupTable444TsaiPhase5Edges(self)
-        self.lt_tsai_phase5_edges.preload_cache()
-        self.lt_tsai_phase5 = LookupTableIDA444TsaiPhase5(self)
-        self.lt_tsai_phase5.preload_cache()
-        self.lt_tsai_phase5.avoid_oll = True
-        self.lt_tsai_phase5.avoid_pll = True
-        self.lt_tsai_phase5.ida_all_the_way = True
+        # For tsai this tables is only used if the centers have already been solved
+        # For non-tsai it is always used
+        self.lt_edges = LookupTable444Edges(self)
 
     def tsai_phase2_orient_edges_state(self, edges_to_flip, return_hex):
         state = self.state
@@ -1060,69 +897,54 @@ class RubiksCubeTsai444(RubiksCube444):
         self.print_cube()
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("%s: phase2 centers cost %d" % (self, self.lt_tsai_phase2_centers.steps_cost()))
-        log.info("%s: phase2 edges cost %d" % (self, self.lt_tsai_phase2_edges.steps_cost()))
+        log.info("%s: phase2 edges and LR centers cost %d" % (self, self.lt_tsai_phase2_edges_lr_centers.steps_cost()))
 
         # Test the phase2 prune tables
         #self.lt_tsai_phase2_centers.solve()
-        #self.lt_tsai_phase2_edges.solve()
-        #self.tsai_phase2_orient_edges_print()
+        #self.lt_tsai_phase2_edges_lr_centers.solve()
         #self.print_cube()
+        #self.tsai_phase2_orient_edges_print()
         #sys.exit(0)
 
-        # dwalton
-        # 19 steps to the end of phase2 LURFLDURLUUDBUURFFFULLLLULLULFBBULBUBBFBLBFFBRFDDDRFDDUDUDDUFUDUDFBLDRRRDRRDDLRRLBRBFFFBFBBBRLRR
-        # 34 steps to the end of phase4 LUULUUUUUUUULUURFRLFLRRLLLLLRLRBFBBUBBFBFBFFBFFFUDDDDDDDDDDDDDDUDLRDRRRRRLLRBRLLUFFBBBFBFBFFRBBR
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_tsai_phase2.avoid_oll = True
-        self.lt_tsai_phase2.avoid_pll = True
+        #self.lt_tsai_phase2.avoid_pll = True
         self.lt_tsai_phase2.solve()
         self.print_cube()
-        self.tsai_phase2_orient_edges_print()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
-        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
-
-        # This is the old way...saving for a rainy day
-        '''
-        # Testing the phase3 prune tables
-        #self.lt_tsai_phase3_edges_solve.solve()
-        #self.lt_tsai_phase3_centers_solve.solve()
         #self.tsai_phase2_orient_edges_print()
+        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # Testing the phase3 prune tables
+        #self.lt_tsai_phase3_edges.solve()
+        #self.lt_tsai_phase3_corners.solve()
         #self.print_cube()
+        #sys.exit(0)
 
         log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_tsai_phase3.avoid_oll = True
-        self.lt_tsai_phase3.avoid_pll = True
         self.lt_tsai_phase3.solve()
         self.print_cube()
         log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
-        '''
 
-        # Test the phase4 prune tables
+        # Testing the phase4 prune tables
         #self.lt_tsai_phase4_centers.solve()
         #self.lt_tsai_phase4_edges.solve()
         #self.print_cube()
         #sys.exit(0)
+        # dwalton
 
         log.info("%s: Start of Phase4, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.lt_tsai_phase4.avoid_oll = True
+        self.lt_tsai_phase4.avoid_pll = True
         self.lt_tsai_phase4.solve()
         self.print_cube()
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: End of Phase4, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-        # Testing the phase5 prune tables
-        #self.lt_tsai_phase5_centers.solve()
-        #self.lt_tsai_phase5_edges.solve()
-        #self.print_cube()
-        #sys.exit(0)
-
-        log.info("%s: Start of Phase5, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_tsai_phase5.solve()
-        self.print_cube()
-        log.info("%s: End of Phase5, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
 
         # Are we setup to skip phase1 of 3x3x3?
+        '''
         kociemba_string_333 = self.get_kociemba_string(False)
         cube_333 = RubiksCube333(kociemba_string_333, order='URFDLB')
         cube_333.lt_init()
@@ -1136,7 +958,7 @@ class RubiksCubeTsai444(RubiksCube444):
             (cube_333.lt_phase2_corners,
              cube_333.lt_phase2_corners.state(),
              pformat(cube_333.lt_phase2_corners.steps())))
-        #sys.exit(0)
+        '''
 
 
 if __name__ == '__main__':

@@ -874,11 +874,16 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_oblique_edge_stage_left_only = LookupTable666UDObliqueEdgesStageLeftOnly(self)
         self.lt_UD_oblique_edge_stage_right_only = LookupTable666UDObliqueEdgesStageRightOnly(self)
         self.lt_UD_oblique_edge_stage = LookupTable666UDObliqueEdgesStage(self)
+        self.lt_UD_oblique_edge_stage_left_only.preload_cache()
+        self.lt_UD_oblique_edge_stage_right_only.preload_cache()
+        self.lt_UD_oblique_edge_stage.preload_cache()
+        #self.lt_UD_oblique_edge_stage.avoid_oll = True
 
         self.lt_LR_oblique_edge_stage_left_only = LookupTable666LRObliqueEdgesStageLeftOnly(self)
         self.lt_LR_oblique_edge_stage_right_only = LookupTable666LRObliqueEdgesStageRightOnly(self)
         self.lt_LR_oblique_edge_stage = LookupTable666LRObliqueEdgesStage(self)
         self.lt_LR_oblique_edge_stage.preload_cache()
+        #self.lt_LR_oblique_edge_stage.avoid_oll = True
 
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
 
@@ -888,293 +893,120 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LR_solve_inner_x_centers_and_oblique_edges.preload_cache()
         self.lt_FB_solve_inner_x_centers_and_oblique_edges.preload_cache()
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.preload_cache()
+        #self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.avoid_oll = True
 
     def populate_fake_444_for_ULFRBD_stage(self):
         fake_444 = self.fake_444
         fake_444.re_init()
         fake_444.nuke_corners()
         fake_444.nuke_edges()
+        fake_444.nuke_centers()
 
-        # Upper
-        fake_444.state[6] = self.state[15]
-        fake_444.state[7] = self.state[16]
-        fake_444.state[10] = self.state[21]
-        fake_444.state[11] = self.state[22]
+        for side_index in range(6):
+            offset_444 = side_index * 16
+            offset_666 = side_index * 36
 
-        # Left
-        fake_444.state[22] = self.state[51]
-        fake_444.state[23] = self.state[52]
-        fake_444.state[26] = self.state[57]
-        fake_444.state[27] = self.state[58]
+            # centers
+            fake_444.state[6 + offset_444] = self.state[15 + offset_666]
+            fake_444.state[7 + offset_444] = self.state[16 + offset_666]
+            fake_444.state[10 + offset_444] = self.state[21 + offset_666]
+            fake_444.state[11 + offset_444] = self.state[22 + offset_666]
 
-        # Front
-        fake_444.state[38] = self.state[87]
-        fake_444.state[39] = self.state[88]
-        fake_444.state[42] = self.state[93]
-        fake_444.state[43] = self.state[94]
+            # edges...so we can avoid OLL
+            fake_444.state[2 + offset_444] = self.state[3 + offset_666]
+            fake_444.state[3 + offset_444] = self.state[4 + offset_666]
+            fake_444.state[5 + offset_444] = self.state[13 + offset_666]
+            fake_444.state[8 + offset_444] = self.state[18 + offset_666]
+            fake_444.state[9 + offset_444] = self.state[19 + offset_666]
+            fake_444.state[12 + offset_444] = self.state[24 + offset_666]
+            fake_444.state[14 + offset_444] = self.state[33 + offset_666]
+            fake_444.state[15 + offset_444] = self.state[34 + offset_666]
 
-        # Right
-        fake_444.state[54] = self.state[123]
-        fake_444.state[55] = self.state[124]
-        fake_444.state[58] = self.state[129]
-        fake_444.state[59] = self.state[130]
+    def populate_fake_555_for_ULFRBD_stage(self):
+        fake_555 = self.get_fake_555()
+        fake_555.nuke_corners()
+        fake_555.nuke_edges()
+        fake_555.nuke_centers()
 
-        # Back
-        fake_444.state[70] = self.state[159]
-        fake_444.state[71] = self.state[160]
-        fake_444.state[74] = self.state[165]
-        fake_444.state[75] = self.state[166]
+        side_index_to_letter = {
+            0 : 'U',
+            1 : 'L',
+            2 : 'F',
+            3 : 'L',
+            4 : 'F',
+            5 : 'D',
+        }
 
-        # Down
-        fake_444.state[86] = self.state[195]
-        fake_444.state[87] = self.state[196]
-        fake_444.state[90] = self.state[201]
-        fake_444.state[91] = self.state[202]
+        for side_index in range(6):
+            offset_555 = side_index * 25
+            offset_666 = side_index * 36
+            side_letter = side_index_to_letter[side_index]
 
-    def populate_fake_555_for_UD_stage(self):
-        fake_555 = self.fake_555
+            # Centers
+            fake_555.state[7 + offset_555] = self.state[8 + offset_666]
+            fake_555.state[8 + offset_555] = side_letter
+            fake_555.state[9 + offset_555] = self.state[11 + offset_666]
+            fake_555.state[12 + offset_555] = side_letter
+            fake_555.state[13 + offset_555] = side_letter
+            fake_555.state[14 + offset_555] = side_letter
+            fake_555.state[17 + offset_555] = self.state[26 + offset_666]
+            fake_555.state[18 + offset_555] = side_letter
+            fake_555.state[19 + offset_555] = self.state[29 + offset_666]
 
-        for x in range(1, 151):
-            fake_555.state[x] = 'x'
-
-        # Upper centers
-        fake_555.state[7] = self.state[8]
-        fake_555.state[8] = 'U'
-        fake_555.state[9] = self.state[11]
-        fake_555.state[12] = 'U'
-        fake_555.state[13] = 'U'
-        fake_555.state[14] = 'U'
-        fake_555.state[17] = self.state[26]
-        fake_555.state[18] = 'U'
-        fake_555.state[19] = self.state[29]
-
-        # Left centers
-        fake_555.state[32] = self.state[44]
-        fake_555.state[33] = self.state[45]
-        fake_555.state[34] = self.state[47]
-        fake_555.state[37] = self.state[50]
-        fake_555.state[38] = self.state[51]
-        fake_555.state[39] = self.state[53]
-        fake_555.state[42] = self.state[62]
-        fake_555.state[43] = self.state[63]
-        fake_555.state[44] = self.state[65]
-
-        # Front centers
-        fake_555.state[57] = self.state[80]
-        fake_555.state[58] = self.state[81]
-        fake_555.state[59] = self.state[83]
-        fake_555.state[62] = self.state[86]
-        fake_555.state[63] = self.state[87]
-        fake_555.state[64] = self.state[89]
-        fake_555.state[67] = self.state[98]
-        fake_555.state[68] = self.state[99]
-        fake_555.state[69] = self.state[101]
-
-        # Right centers
-        fake_555.state[82] = self.state[116]
-        fake_555.state[83] = self.state[117]
-        fake_555.state[84] = self.state[119]
-        fake_555.state[87] = self.state[122]
-        fake_555.state[88] = self.state[123]
-        fake_555.state[89] = self.state[125]
-        fake_555.state[92] = self.state[134]
-        fake_555.state[93] = self.state[135]
-        fake_555.state[94] = self.state[137]
-
-        # Back centers
-        fake_555.state[107] = self.state[152]
-        fake_555.state[108] = self.state[153]
-        fake_555.state[109] = self.state[155]
-        fake_555.state[112] = self.state[158]
-        fake_555.state[113] = self.state[159]
-        fake_555.state[114] = self.state[161]
-        fake_555.state[117] = self.state[170]
-        fake_555.state[118] = self.state[171]
-        fake_555.state[119] = self.state[173]
-
-        # Down centers
-        fake_555.state[132] = self.state[188]
-        fake_555.state[133] = 'U'
-        fake_555.state[134] = self.state[191]
-        fake_555.state[137] = 'U'
-        fake_555.state[138] = 'D'
-        fake_555.state[139] = 'U'
-        fake_555.state[142] = self.state[206]
-        fake_555.state[143] = 'U'
-        fake_555.state[144] = self.state[209]
-        #fake_555.sanity_check()
+            # Edges
+            fake_555.state[2 + offset_555] = self.state[2 + offset_666]
+            fake_555.state[3 + offset_555] = self.state[3 + offset_666]
+            fake_555.state[4 + offset_555] = self.state[5 + offset_666]
+            fake_555.state[6 + offset_555] = self.state[7 + offset_666]
+            fake_555.state[10 + offset_555] = self.state[12 + offset_666]
+            fake_555.state[11 + offset_555] = self.state[13 + offset_666]
+            fake_555.state[15 + offset_555] = self.state[18 + offset_666]
+            fake_555.state[16 + offset_555] = self.state[25 + offset_666]
+            fake_555.state[20 + offset_555] = self.state[30 + offset_666]
+            fake_555.state[22 + offset_555] = self.state[32 + offset_666]
+            fake_555.state[23 + offset_555] = self.state[33 + offset_666]
+            fake_555.state[24 + offset_555] = self.state[35 + offset_666]
 
     def populate_fake_555_for_ULFRBD_solve(self):
-        fake_555 = self.fake_555
+        fake_555 = self.get_fake_555()
+        fake_555.nuke_corners()
+        fake_555.nuke_edges()
+        fake_555.nuke_centers()
 
-        for x in range(1, 151):
-            fake_555.state[x] = 'x'
+        for side_index in range(6):
+            offset_555 = side_index * 25
+            offset_666 = side_index * 36
 
-        # Upper corners
-        fake_555.state[1] = self.state[1]
-        fake_555.state[5] = self.state[6]
-        fake_555.state[21] = self.state[31]
-        fake_555.state[25] = self.state[36]
+            # Corners
+            fake_555.state[1 + offset_555] = self.state[1 + offset_666]
+            fake_555.state[5 + offset_555] = self.state[6 + offset_666]
+            fake_555.state[21 + offset_555] = self.state[31 + offset_666]
+            fake_555.state[25 + offset_555] = self.state[36 + offset_666]
 
-        # Left corners
-        fake_555.state[26] = self.state[37]
-        fake_555.state[30] = self.state[42]
-        fake_555.state[46] = self.state[67]
-        fake_555.state[50] = self.state[72]
+            # Centers
+            fake_555.state[7 + offset_555] = self.state[8 + offset_666]
+            fake_555.state[8 + offset_555] = self.state[9 + offset_666]
+            fake_555.state[9 + offset_555] = self.state[11 + offset_666]
+            fake_555.state[12 + offset_555] = self.state[14 + offset_666]
+            fake_555.state[13 + offset_555] = self.state[15 + offset_666]
+            fake_555.state[14 + offset_555] = self.state[17 + offset_666]
+            fake_555.state[17 + offset_555] = self.state[26 + offset_666]
+            fake_555.state[18 + offset_555] = self.state[27 + offset_666]
+            fake_555.state[19 + offset_555] = self.state[29 + offset_666]
 
-        # Front corners
-        fake_555.state[51] = self.state[73]
-        fake_555.state[55] = self.state[78]
-        fake_555.state[71] = self.state[103]
-        fake_555.state[75] = self.state[108]
-
-        # Right corners
-        fake_555.state[76] = self.state[109]
-        fake_555.state[80] = self.state[114]
-        fake_555.state[96] = self.state[139]
-        fake_555.state[100] = self.state[144]
-
-        # Back corners
-        fake_555.state[101] = self.state[145]
-        fake_555.state[105] = self.state[150]
-        fake_555.state[121] = self.state[175]
-        fake_555.state[125] = self.state[180]
-
-        # Down corners
-        fake_555.state[126] = self.state[181]
-        fake_555.state[130] = self.state[186]
-        fake_555.state[146] = self.state[211]
-        fake_555.state[150] = self.state[216]
-
-        # TODO for 5x5x5 OLL checking
-        # Upper edges (orbit 1)
-        '''
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-
-        # Left edges (orbit 1)
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-
-        # Front edges (orbit 1)
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-
-        # Right edges (orbit 1)
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-
-        # Back edges (orbit 1)
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-
-        # Down edges (orbit 1)
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        '''
-
-        # Upper centers
-        fake_555.state[7] = self.state[8]
-        fake_555.state[8] = self.state[9]
-        fake_555.state[9] = self.state[11]
-        fake_555.state[12] = self.state[14]
-        fake_555.state[13] = self.state[15]
-        fake_555.state[14] = self.state[17]
-        fake_555.state[17] = self.state[26]
-        fake_555.state[18] = self.state[27]
-        fake_555.state[19] = self.state[29]
-
-        # Left centers
-        fake_555.state[32] = self.state[44]
-        fake_555.state[33] = self.state[45]
-        fake_555.state[34] = self.state[47]
-        fake_555.state[37] = self.state[50]
-        fake_555.state[38] = self.state[51]
-        fake_555.state[39] = self.state[53]
-        fake_555.state[42] = self.state[62]
-        fake_555.state[43] = self.state[63]
-        fake_555.state[44] = self.state[65]
-
-        # Front centers
-        fake_555.state[57] = self.state[80]
-        fake_555.state[58] = self.state[81]
-        fake_555.state[59] = self.state[83]
-        fake_555.state[62] = self.state[86]
-        fake_555.state[63] = self.state[87]
-        fake_555.state[64] = self.state[89]
-        fake_555.state[67] = self.state[98]
-        fake_555.state[68] = self.state[99]
-        fake_555.state[69] = self.state[101]
-
-        # Right centers
-        fake_555.state[82] = self.state[116]
-        fake_555.state[83] = self.state[117]
-        fake_555.state[84] = self.state[119]
-        fake_555.state[87] = self.state[122]
-        fake_555.state[88] = self.state[123]
-        fake_555.state[89] = self.state[125]
-        fake_555.state[92] = self.state[134]
-        fake_555.state[93] = self.state[135]
-        fake_555.state[94] = self.state[137]
-
-        # Back centers
-        fake_555.state[107] = self.state[152]
-        fake_555.state[108] = self.state[153]
-        fake_555.state[109] = self.state[155]
-        fake_555.state[112] = self.state[158]
-        fake_555.state[113] = self.state[159]
-        fake_555.state[114] = self.state[161]
-        fake_555.state[117] = self.state[170]
-        fake_555.state[118] = self.state[171]
-        fake_555.state[119] = self.state[173]
-
-        # Down centers
-        fake_555.state[132] = self.state[188]
-        fake_555.state[133] = self.state[189]
-        fake_555.state[134] = self.state[191]
-        fake_555.state[137] = self.state[194]
-        fake_555.state[138] = self.state[195]
-        fake_555.state[139] = self.state[197]
-        fake_555.state[142] = self.state[206]
-        fake_555.state[143] = self.state[207]
-        fake_555.state[144] = self.state[209]
-        fake_555.sanity_check()
+            # Edges
+            fake_555.state[2 + offset_555] = self.state[2 + offset_666]
+            fake_555.state[3 + offset_555] = self.state[3 + offset_666]
+            fake_555.state[4 + offset_555] = self.state[5 + offset_666]
+            fake_555.state[6 + offset_555] = self.state[7 + offset_666]
+            fake_555.state[10 + offset_555] = self.state[12 + offset_666]
+            fake_555.state[11 + offset_555] = self.state[13 + offset_666]
+            fake_555.state[15 + offset_555] = self.state[18 + offset_666]
+            fake_555.state[16 + offset_555] = self.state[25 + offset_666]
+            fake_555.state[20 + offset_555] = self.state[30 + offset_666]
+            fake_555.state[22 + offset_555] = self.state[32 + offset_666]
+            fake_555.state[23 + offset_555] = self.state[33 + offset_666]
+            fake_555.state[24 + offset_555] = self.state[35 + offset_666]
 
     def fake_move_UD_to_UFDB(self):
 
@@ -1251,27 +1083,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
         log.info("")
 
-    def stage_outside_x_centers_UD(self):
-        """
-        Not used at the moment...doing this opens the door for step20 to stage LR
-        obliques AND stage the outer-x-centers.  That table would have 12870^3 states
-        with 12870^2 prune tables so the IDA search would be doable but on the slow side.
-        """
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_UD_stage()
-        fake_555.print_cube()
-        fake_555.group_centers_stage_UD()
-
-        for step in fake_555.solution:
-            self.rotate(step)
-
-        self.print_cube()
-        log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-
     def stage_oblique_edges_LR(self):
 
         # Test the prune tables
@@ -1287,6 +1098,15 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("")
         log.info("")
         log.info("")
+
+    def solve_reduced_555_centers_and_edges(self):
+        fake_555 = self.get_fake_555()
+        self.populate_fake_555_for_ULFRBD_solve()
+        fake_555.group_centers_guts()
+        fake_555.group_edges()
+
+        for step in fake_555.solution:
+            self.rotate(step)
 
     def solve_reduced_555_centers(self):
         fake_555 = self.get_fake_555()
@@ -1310,8 +1130,9 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         """
         fake_444 = self.get_fake_444()
         self.populate_fake_444_for_ULFRBD_stage()
-        fake_444.lt_ULFRBD_centers_stage.avoid_oll = False
+        fake_444.lt_ULFRBD_centers_stage.avoid_oll = True
         fake_444.lt_ULFRBD_centers_stage.solve()
+        fake_444.rotate_for_best_centers_solving()
 
         for step in fake_444.solution:
             if 'w' in step:
@@ -1325,8 +1146,22 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_init()
         self.stage_inner_x_centers()
         self.stage_oblique_edges_UD()
-        # self.stage_outside_x_centers_UD()
         self.stage_oblique_edges_LR()
+
+        # Stage the outer x-centers
+        self.populate_fake_555_for_ULFRBD_stage()
+        self.fake_555.group_centers_stage_UD()
+        self.fake_555.group_centers_stage_LR()
+        for step in self.fake_555.solution:
+            self.rotate(step)
+
+        self.print_cube()
+        log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges
@@ -1351,26 +1186,27 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
         self.print_cube()
         log.info("%s: LFRB inner x-center and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+        log.info("\n\n\n\n\n")
 
+        # We must "solve" the t-centers so that we can use the 4x4x4 solver to pair the inside edges.
+        # That solver needs the centers to be solved.
+        self.solve_reduced_555_t_centers()
+        self.print_cube()
+        log.info("%s: Took %d steps to solve oblique edges" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("\n\n\n\n\n")
+
+        # If we are here it is because a larger cube is using the 6x6x6 solver to
+        # solve their centers.
         if oblique_edges_only:
+            return
 
-            # If we are here it is because a larger cube is using the 6x6x6 solver to
-            # solve their centers. We must "solve" the t-centers in this scenario.
-            self.solve_reduced_555_t_centers()
-            self.print_cube()
-            log.info("%s: Took %d steps to solve oblique edges" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.prevent_OLL()
+        self.pair_inside_edges_via_444()
+        log.info("%s: Took %d steps to reduce 5x5x5" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        else:
-            self.solve_reduced_555_centers()
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-            self.print_cube()
-            log.info("%s: Took %d steps to solve centers" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.solve_reduced_555_centers_and_edges()
+        self.print_cube()
+        log.info("%s: Took %d steps to reduce to 3x3x3" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def phase(self):
         if self._phase is None:

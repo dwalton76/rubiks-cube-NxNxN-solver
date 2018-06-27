@@ -24,13 +24,20 @@ def reverse_steps(steps):
     """
     Reverse the order of all steps and the direction of each individual step
     """
+    assert isinstance(steps, list)
     results = []
 
     for step in reversed(steps):
-        if step.endswith("'"):
+
+        if step.endswith("2"):
+            reverse_step = step
+
+        elif step.endswith("'"):
             reverse_step = step[0:-1]
+
         else:
             reverse_step = step + "'"
+
         results.append(reverse_step)
 
     return results
@@ -2815,17 +2822,24 @@ class RubiksCube(object):
                                     (self.size, self.size, self.size, pformat(orbits_with_oll_parity)))
 
         elif self.size == 6:
+            if self.edges_paired():
+                log.info("edges are already paired, cannot prevent OLL without unpairing them")
+                return False
+
             # 10 steps
             if orbits_with_oll_parity == [0,1]:
                 steps = "3Rw U2 3Rw U2 3Rw U2 3Rw U2 3Rw U2"
+                log.info("6x6x6 has OLL on orbits 0 and 1")
 
             # 10 steps
             elif orbits_with_oll_parity == [0]:
                 steps = "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2"
+                log.info("6x6x6 has OLL on orbit 0")
 
             # 15 steps for an inside orbit
             elif orbits_with_oll_parity == [1]:
                 steps = "3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2"
+                log.info("6x6x6 has OLL on orbit 1")
 
             else:
                 raise SolveError("prevent_OLL for %sx%sx%s, orbits %s have parity issues" %
@@ -2909,10 +2923,11 @@ class RubiksCube(object):
 
                 # 26 moves :(
                 oll_solution = "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
-                log.warning("Solving OLL %s" % oll_solution)
+                oll_solution = oll_solution.split()
+                log.warning("Solving OLL in %d steps" % len(oll_solution))
                 self.print_cube()
 
-                for step in oll_solution.split():
+                for step in oll_solution:
                     self.rotate(step)
             else:
                 break
@@ -3688,8 +3703,6 @@ class RubiksCube(object):
         if self.is_odd():
             self.rotate_U_to_U()
             self.rotate_F_to_F()
-        else:
-            self.rotate_for_best_centers_staging()
 
         if self.centers_solved():
             self.rotate_U_to_U()

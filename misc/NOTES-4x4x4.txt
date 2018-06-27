@@ -311,3 +311,13 @@ centers solve pair two edges (10-deep)
 
 The 10-deep table is 527M
 This took 1m 8s
+
+
+Staging center is now more flexible
+===================================
+4x4x4 avg centers solution 18.06 steps
+4x4x4 avg edges solution 20.22 steps
+4x4x4 avg solution 58.92 steps
+4x4x4 min solution 54 steps (FBFBLLLFRURDLFFBDFUDLRFLLLRRFULFBDLRBRBDBDBBRRRRUUDUUBDRFDUDDLDUDUBUFFLUUUUDRRBBLRRLUBFLDFDFLBBF)
+4x4x4 max solution 67 steps (DUDUURURLFRULRUDRFDLLDBFBFFFRBUBDBRBULLUFFRLRFRFFDBDLBUDLRUFBFBLLLDBRBLRDUDDUBDUFBBFLBDFRLDRUULR)
+

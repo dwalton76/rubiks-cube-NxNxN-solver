@@ -178,6 +178,46 @@ wing_strs_all = (
 )
 
 
+edges_partner_555 = {
+    2: 104,
+    3: 103,
+    4: 102,
+    6: 27,
+    10: 79,
+    11: 28,
+    15: 78,
+    16: 29,
+    20: 77,
+    22: 52,
+    23: 53,
+    24: 54,
+    31: 110,
+    35: 56,
+    36: 115,
+    40: 61,
+    41: 120,
+    45: 66,
+    81: 60,
+    85: 106,
+    86: 65,
+    90: 111,
+    91: 70,
+    95: 116,
+    127: 72,
+    128: 73,
+    129: 74,
+    131: 49,
+    135: 97,
+    136: 48,
+    140: 98,
+    141: 47,
+    145: 99,
+    147: 124,
+    148: 123,
+    149: 122
+}
+
+
 rotations_24 = (
     (),
     ("y",),
@@ -598,8 +638,7 @@ class LookupTable555StageFirstFourEdges(LookupTable):
         state = self.parent.state[:]
 
         for square_index in wings_555:
-            side = self.parent.get_side_for_index(square_index)
-            partner_index = side.get_wing_partner(square_index)
+            partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
             wing_str = ''.join(sorted([square_value, partner_value]))
@@ -648,8 +687,7 @@ class LookupTable555StageSecondFourEdges(LookupTable):
         state = self.parent.state[:]
 
         for square_index in wings_555:
-            side = self.parent.get_side_for_index(square_index)
-            partner_index = side.get_wing_partner(square_index)
+            partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
             wing_str = ''.join(sorted([square_value, partner_value]))

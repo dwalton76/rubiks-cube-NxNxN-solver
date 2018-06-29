@@ -681,7 +681,6 @@ class LookupTableIDA(LookupTable):
 
     def search_complete(self, state, steps_to_here):
 
-        #log.info("%s: FOO %s" % (self, state))
         if self.ida_all_the_way:
             if state not in self.state_target:
                 return False
@@ -746,8 +745,6 @@ class LookupTableIDA(LookupTable):
         # saves us some disk IO
         if (cost_to_goal <= self.max_depth and
             self.search_complete(lt_state, steps_to_here)):
-            #log.info("%s: IDA found match %d steps in, %s, lt_state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
-            #         (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             log.info("%s: %d seek calls" % (self, self.fh_txt_seek_calls))
             self.fh_txt_seek_calls = 0
 

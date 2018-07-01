@@ -971,7 +971,6 @@ class RubiksCubeTsai444(RubiksCube444):
         self.tsai_phase2_orient_edges_print()
         log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        sys.exit(0)
 
         # Testing the phase3 prune tables
         #self.lt_tsai_phase3_edges.solve()
@@ -981,6 +980,7 @@ class RubiksCubeTsai444(RubiksCube444):
 
         log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_tsai_phase3.avoid_oll = True
+        self.lt_tsai_phase3.avoid_pll = True
         self.lt_tsai_phase3.solve()
         self.print_cube()
         log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

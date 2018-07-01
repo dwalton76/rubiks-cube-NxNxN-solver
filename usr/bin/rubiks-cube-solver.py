@@ -316,21 +316,22 @@ try:
     print(kociemba_string)
     cube.print_cube()
     sys.exit(0)
-    '''
 
     # compress a solution
-    '''
     cube = RubiksCube555(solved_555, args.order, args.colormap)
     cube.solution = "Rw' Lw x F2 Rw Lw' x' F' Uw Dw' y' B' Uw Dw' y' B Uw Dw' y' B Uw Dw' y' B' Uw Dw' y' F'".split()
     cube.compress_solution()
     cube.print_solution()
     sys.exit(0)
-    '''
 
     # run build_tsai_phase2_orient_edges_555
-    '''
     cube = RubiksCube555(solved_555, args.order, args.colormap)
-    cube.build_tsai_phase2_orient_edges_555()
+    cube.build_tsai_phase3_orient_edges_555()
+    sys.exit(0)
+
+    from rubikscubennnsolver.RubiksCubeTsai444 import RubiksCubeTsai444
+    cube = RubiksCubeTsai444(solved_444, args.order, args.colormap)
+    cube.build_tsai_phase2_orient_edges_444()
     sys.exit(0)
     '''
 

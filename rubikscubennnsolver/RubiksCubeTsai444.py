@@ -278,6 +278,7 @@ class LookupTable444TsaiPhase2Edges(LookupTable):
         return self.parent.tsai_phase2_orient_edges_state()
 
 
+#class LookupTable444TsaiPhase2EdgesLRCenters(LookupTable):
 class LookupTable444TsaiPhase2EdgesLRCenters(LookupTableHashCostOnly):
     """
     lookup-table-4x4x4-step62-tsai-phase2-edges-and-LR-centers.txt
@@ -348,9 +349,9 @@ class LookupTable444TsaiPhase2EdgesLRCenters(LookupTableHashCostOnly):
         parent_state = self.parent.state
         edges = self.parent.tsai_phase2_orient_edges_state()
         U_edges = edges[0:8]
-        L_edges = ''.join(edges[8:16])
+        L_edges = edges[8:16]
         F_edges = edges[16:24]
-        R_edges = ''.join(edges[24:32])
+        R_edges = edges[24:32]
         B_edges = edges[32:40]
         D_edges = edges[40:48]
 
@@ -385,7 +386,7 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
     5 steps has 1,317,948 entries (92 percent, 14.07x previous step)
 
     Total: 1,419,536 entries
-    Average: 4.922392 moves
+    Average: 4.92 moves
     """
 
     def __init__(self, parent):
@@ -393,18 +394,18 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             self,
             parent,
             'lookup-table-4x4x4-step60-tsai-phase2.txt',
-            ('UUUULLLLFFFFRRRRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURRRRFFFFLLLLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUULLRRFFFFRRLLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUULLRRFFFFLLRRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURRLLFFFFRRLLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURRLLFFFFLLRRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURLRLFFFFRLRLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURLRLFFFFLRLRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUULRLRFFFFRLRLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUULRLRFFFFLRLRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURLLRFFFFLRRLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUULRRLFFFFRLLRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU'),
+            ('UDDUUUUUUDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDLLUURRDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDLLUURRDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDLRUULRDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDLRUULRDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDLRUURLDUDDUUFFDDFFUUDDUDRLUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRLUULRDUDDUUFFDDFFUUDDUDLRUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRLUURLDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRLUURLDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRRUULLDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRRUULLDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRRUURRDUDDUUFFDDFFUUDDUDLLUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU'),
             moves_444,
             ("Fw", "Fw'", "Bw", "Bw'",
              "Uw", "Uw'", "Dw", "Dw'", # illegal_moves
@@ -418,7 +419,64 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             max_depth=5)
 
     def state(self):
-        return self.parent.lt_tsai_phase2_centers.state() + self.parent.lt_tsai_phase2_edges.state()
+        # UDDUUDDU
+        # DUDUUDUD
+        # DUUDDUUD
+        # DUDUUDUD
+        # DUUDDUUD
+        # UDDUUDDU
+        parent_state = self.parent.state
+        edges = self.parent.tsai_phase2_orient_edges_state()
+        U_edges = edges[0:8]
+        L_edges = edges[8:16]
+        F_edges = edges[16:24]
+        R_edges = edges[24:32]
+        B_edges = edges[32:40]
+        D_edges = edges[40:48]
+
+        centers = []
+
+        for x in centers_444:
+            if parent_state[x] in ('U', 'D'):
+                centers.append('U')
+            elif parent_state[x] in ('L', 'R'):
+                centers.append(parent_state[x])
+            elif parent_state[x] in ('F', 'B'):
+                centers.append('F')
+
+        result = ''.join([
+                    ''.join([U_edges[0], U_edges[1],
+                             U_edges[2], centers[0], centers[1], U_edges[3],
+                             U_edges[4], centers[2], centers[3], U_edges[5],
+                             U_edges[6], U_edges[7]]),
+
+                    ''.join([L_edges[0], L_edges[1],
+                             L_edges[2], centers[4], centers[5], L_edges[3],
+                             L_edges[4], centers[6], centers[7], L_edges[5],
+                             L_edges[6], L_edges[7]]),
+
+                    ''.join([F_edges[0], F_edges[1],
+                             F_edges[2], centers[8], centers[9], F_edges[3],
+                             F_edges[4], centers[10], centers[11], F_edges[5],
+                             F_edges[6], F_edges[7]]),
+
+                    ''.join([R_edges[0], R_edges[1],
+                             R_edges[2], centers[12], centers[13], R_edges[3],
+                             R_edges[4], centers[14], centers[15], R_edges[5],
+                             R_edges[6], R_edges[7]]),
+
+                    ''.join([B_edges[0], B_edges[1],
+                             B_edges[2], centers[16], centers[17], B_edges[3],
+                             B_edges[4], centers[18], centers[19], B_edges[5],
+                             B_edges[6], B_edges[7]]),
+
+                    ''.join([D_edges[0], D_edges[1],
+                             D_edges[2], centers[20], centers[21], D_edges[3],
+                             D_edges[4], centers[22], centers[23], D_edges[5],
+                             D_edges[6], D_edges[7]])
+                    ])
+
+        return result
 
 
 def phase3_edges_high_low_recolor_444(state):
@@ -951,7 +1009,8 @@ class RubiksCubeTsai444(RubiksCube444):
         original_solution = self.solution[:]
 
         log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_tsai_phase1.solve()
+        self.lt_tsai_phase1_centers.solve()
+        #self.lt_tsai_phase1.solve()
         self.print_cube()
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
@@ -969,7 +1028,7 @@ class RubiksCubeTsai444(RubiksCube444):
         self.lt_tsai_phase2.solve()
         self.print_cube()
         self.tsai_phase2_orient_edges_print()
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Testing the phase3 prune tables

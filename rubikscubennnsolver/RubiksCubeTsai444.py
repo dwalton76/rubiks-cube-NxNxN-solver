@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_333, corners_333
 from rubikscubennnsolver.RubiksCube444 import (
     RubiksCube444,
     LookupTable444Edges,
@@ -12,6 +11,7 @@ from rubikscubennnsolver.RubiksCube444 import (
     wings_444,
     UD_centers_444,
     LR_centers_444,
+    FB_centers_444,
     UFBD_centers_444,
     rotate_444,
     reflect_x_444
@@ -28,6 +28,7 @@ from rubikscubennnsolver.LookupTable import (
 )
 from pyhashxx import hashxx
 from pprint import pformat
+from random import randint
 import logging
 import sys
 
@@ -72,6 +73,33 @@ edge_map_to_ULF = {
     'BD' : 'F',
 }
 
+
+wing_str_map = {
+    'UB' : 'UB',
+    'BU' : 'UB',
+    'UL' : 'UL',
+    'LU' : 'UL',
+    'UR' : 'UR',
+    'RU' : 'UR',
+    'UF' : 'UF',
+    'FU' : 'UF',
+    'LB' : 'LB',
+    'BL' : 'LB',
+    'LF' : 'LF',
+    'FL' : 'LF',
+    'RB' : 'RB',
+    'BR' : 'RB',
+    'RF' : 'RF',
+    'FR' : 'RF',
+    'DB' : 'DB',
+    'BD' : 'DB',
+    'DL' : 'DL',
+    'LD' : 'DL',
+    'DR' : 'DR',
+    'RD' : 'DR',
+    'DF' : 'DF',
+    'FD' : 'DF',
+}
 
 class LookupTable444TsaiPhase1Centers(LookupTable):
     """
@@ -138,7 +166,7 @@ class LookupTableIDA444TsaiPhase1(LookupTableIDA):
         # About 30% of phase2 edge states and 30% of phase2 center states are
         # 6 moves or less so IDA until we find a phase1 solution that puts both
         # of those at <= 6 moves. We do this to speed up the phase2 search.
-        if self.parent.lt_tsai_phase2_edges.steps_cost() > 6:
+        if self.parent.lt_tsai_phase2_edges_lr_centers.steps_cost() > 7:
             #log.info("%s: phase2 edges cost %s" % (self, self.parent.lt_tsai_phase2_edges.steps_cost()))
             return False
 
@@ -219,36 +247,7 @@ class LookupTable444TsaiPhase2Centers(LookupTable):
         return result
 
 
-class LookupTable444TsaiPhase2Edges(LookupTable):
-    """
-    lookup-table-4x4x4-step62-tsai-phase2-edges.txt
-    ===============================================
-    1 steps has 4 entries (0 percent, 0.00x previous step)
-    2 steps has 45 entries (0 percent, 11.25x previous step)
-    3 steps has 599 entries (0 percent, 13.31x previous step)
-    4 steps has 6,935 entries (0 percent, 11.58x previous step)
-    5 steps has 81,080 entries (2 percent, 11.69x previous step)
-    6 steps has 665,003 entries (24 percent, 8.20x previous step)
-    7 steps has 1,660,156 entries (61 percent, 2.50x previous step)
-    8 steps has 290,334 entries (10 percent, 0.17x previous step)
-
-    Total: 2,704,156 entries
-    Average: 6.792808 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step62-tsai-phase2-edges.txt',
-            'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-            linecount=2704156,
-            max_depth=8)
-
-    def state(self):
-        return self.parent.tsai_phase2_orient_edges_state([], return_hex=False)
-
-
+#class LookupTable444TsaiPhase2EdgesLRCenters(LookupTable):
 class LookupTable444TsaiPhase2EdgesLRCenters(LookupTableHashCostOnly):
     """
     lookup-table-4x4x4-step62-tsai-phase2-edges-and-LR-centers.txt
@@ -310,22 +309,16 @@ class LookupTable444TsaiPhase2EdgesLRCenters(LookupTableHashCostOnly):
         '''
 
     def state(self):
-        # UDDUUDDU
-        # DUDUUDUD
-        # DUUDDUUD
-        # DUDUUDUD
-        # DUUDDUUD
-        # UDDUUDDU
         parent_state = self.parent.state
-        edges = self.parent.tsai_phase2_orient_edges_state([], return_hex=False)
+
+        edges = self.parent.tsai_phase2_orient_edges_state()
         U_edges = edges[0:8]
-        L_edges = ''.join(edges[8:16])
+        L_edges = edges[8:16]
         F_edges = edges[16:24]
-        R_edges = ''.join(edges[24:32])
+        R_edges = edges[24:32]
         B_edges = edges[32:40]
         D_edges = edges[40:48]
 
-        # LLLLRRRR
         centers = ''.join([parent_state[x] for x in LR_centers_444])
 
         result = ''.join([
@@ -356,7 +349,7 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
     5 steps has 1,317,948 entries (92 percent, 14.07x previous step)
 
     Total: 1,419,536 entries
-    Average: 4.922392 moves
+    Average: 4.92 moves
     """
 
     def __init__(self, parent):
@@ -364,18 +357,18 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             self,
             parent,
             'lookup-table-4x4x4-step60-tsai-phase2.txt',
-            ('UUUULLLLFFFFRRRRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURRRRFFFFLLLLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUULLRRFFFFRRLLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUULLRRFFFFLLRRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURRLLFFFFRRLLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURRLLFFFFLLRRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURLRLFFFFRLRLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURLRLFFFFLRLRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUULRLRFFFFRLRLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUULRLRFFFFLRLRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUURLLRFFFFLRRLFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
-             'UUUULRRLFFFFRLLRFFFFUUUUUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU'),
+            ('UDDUUUUUUDDUDUDLLUULLDUDDUUFFDDFFUUDDUDRRUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDLLUURRDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDLLUURRDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDLRUULRDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDLRUULRDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDLRUURLDUDDUUFFDDFFUUDDUDRLUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRLUULRDUDDUUFFDDFFUUDDUDLRUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRLUURLDUDDUUFFDDFFUUDDUDLRUULRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRLUURLDUDDUUFFDDFFUUDDUDRLUURLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRRUULLDUDDUUFFDDFFUUDDUDLLUURRDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRRUULLDUDDUUFFDDFFUUDDUDRRUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU',
+             'UDDUUUUUUDDUDUDRRUURRDUDDUUFFDDFFUUDDUDLLUULLDUDDUUFFDDFFUUDUDDUUUUUUDDU'),
             moves_444,
             ("Fw", "Fw'", "Bw", "Bw'",
              "Uw", "Uw'", "Dw", "Dw'", # illegal_moves
@@ -388,47 +381,59 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             max_depth=5)
 
     def state(self):
-        return self.parent.lt_tsai_phase2_centers.state() + self.parent.lt_tsai_phase2_edges.state()
+        parent_state = self.parent.state
 
+        edges = self.parent.tsai_phase2_orient_edges_state()
+        U_edges = edges[0:8]
+        L_edges = edges[8:16]
+        F_edges = edges[16:24]
+        R_edges = edges[24:32]
+        B_edges = edges[32:40]
+        D_edges = edges[40:48]
 
-def phase3_edges_high_low_recolor_444(state):
-    """
-    Look at all of the high edges and find the low edge for each.
-    Return a string that represents where all the low edge siblings live in relation to their high edge counterpart.
-    """
-    #assert len(state) == 97, "Invalid state %s, len is %d" % (state, len(state))
-    low_edge_map = {}
+        centers = []
 
-    for (low_edge_index, square_index, partner_index) in low_edges_444:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        #assert square_value != partner_value, "both squares are %s" % square_value
-        wing_str = ''.join(sorted([square_value, partner_value]))
-        low_edge_index = str(hex(low_edge_index))[2:]
-        state[square_index] = low_edge_index
-        state[partner_index] = low_edge_index
+        for x in centers_444:
+            if parent_state[x] in ('U', 'D'):
+                centers.append('U')
+            elif parent_state[x] in ('L', 'R'):
+                centers.append(parent_state[x])
+            elif parent_state[x] in ('F', 'B'):
+                centers.append('F')
 
-        #assert wing_str not in low_edge_map, "We have two %s wings, one at high_index %s %s and one at high_index %s (%d, %d), state %s" %\
-        #    (wing_str,
-        #     low_edge_map[wing_str],
-        #     pformat(low_edges_444[int(low_edge_map[wing_str])]),
-        #     low_edge_index,
-        #     square_index, partner_index,
-        #     ''.join(state[1:]))
+        result = ''.join([
+                    ''.join([U_edges[0], U_edges[1],
+                             U_edges[2], centers[0], centers[1], U_edges[3],
+                             U_edges[4], centers[2], centers[3], U_edges[5],
+                             U_edges[6], U_edges[7]]),
 
-        # save low_edge_index in hex and chop the leading 0x via [2:]
-        low_edge_map[wing_str] = low_edge_index
+                    ''.join([L_edges[0], L_edges[1],
+                             L_edges[2], centers[4], centers[5], L_edges[3],
+                             L_edges[4], centers[6], centers[7], L_edges[5],
+                             L_edges[6], L_edges[7]]),
 
-    #assert len(low_edge_map.keys()) == 12, "Invalid low_edge_map\n%s\n" % pformat(low_edge_map)
+                    ''.join([F_edges[0], F_edges[1],
+                             F_edges[2], centers[8], centers[9], F_edges[3],
+                             F_edges[4], centers[10], centers[11], F_edges[5],
+                             F_edges[6], F_edges[7]]),
 
-    for (high_edge_index, square_index, partner_index) in high_edges_444:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-        state[square_index] = low_edge_map[wing_str]
-        state[partner_index] = low_edge_map[wing_str]
+                    ''.join([R_edges[0], R_edges[1],
+                             R_edges[2], centers[12], centers[13], R_edges[3],
+                             R_edges[4], centers[14], centers[15], R_edges[5],
+                             R_edges[6], R_edges[7]]),
 
-    return state
+                    ''.join([B_edges[0], B_edges[1],
+                             B_edges[2], centers[16], centers[17], B_edges[3],
+                             B_edges[4], centers[18], centers[19], B_edges[5],
+                             B_edges[6], B_edges[7]]),
+
+                    ''.join([D_edges[0], D_edges[1],
+                             D_edges[2], centers[20], centers[21], D_edges[3],
+                             D_edges[4], centers[22], centers[23], D_edges[5],
+                             D_edges[6], D_edges[7]])
+                    ])
+
+        return result
 
 
 wings_for_edges_recolor_pattern_444 = (
@@ -504,7 +509,7 @@ def edges_recolor_pattern_444(state):
 class LookupTable444TsaiPhase3Edges(LookupTableHashCostOnly):
     """
     lookup-table-4x4x4-step71-tsai-phase3-edges.txt
-    ======================================================
+    ===============================================
     1 steps has 4 entries (0 percent, 0.00x previous step)
     2 steps has 20 entries (0 percent, 5.00x previous step)
     3 steps has 140 entries (0 percent, 7.00x previous step)
@@ -528,15 +533,24 @@ class LookupTable444TsaiPhase3Edges(LookupTableHashCostOnly):
             self,
             parent,
             'lookup-table-4x4x4-step71-tsai-phase3-edges.hash-cost-only.txt',
-            '213098ba6574',
+            '10425376a8b9ecfdhgkiljnm',
             linecount=239500800,
             max_depth=13,
             bucketcount=479001629)
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step71-tsai-phase3-edges.txt',
+            '10425376a8b9ecfdhgkiljnm',
+            linecount=239500800,
+            max_depth=13)
+        '''
 
     def state(self):
-        state = phase3_edges_high_low_recolor_444(self.parent.state[:])
-        result = ''.join([state[x] for x in edges_for_high_low_recolor_444])
-        return result
+        state = edges_recolor_pattern_444(self.parent.state[:])
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        return edges_state
 
 
 class LookupTable444TsaiPhase3CentersSolve(LookupTable):
@@ -662,7 +676,6 @@ class RubiksCubeTsai444(RubiksCube444):
 
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube444.__init__(self, state, order, colormap, debug)
-        self.edge_mapping = {}
 
     def lt_init(self):
         if self.lt_init_called:
@@ -685,7 +698,6 @@ class RubiksCubeTsai444(RubiksCube444):
         # - stage UD and FB centers
         self.lt_tsai_phase2_centers = LookupTable444TsaiPhase2Centers(self)
         self.lt_tsai_phase2_centers.preload_cache()
-        self.lt_tsai_phase2_edges = LookupTable444TsaiPhase2Edges(self)
         self.lt_tsai_phase2_edges_lr_centers = LookupTable444TsaiPhase2EdgesLRCenters(self)
         self.lt_tsai_phase2 = LookupTableIDA444TsaiPhase2(self)
         self.lt_tsai_phase2.preload_cache()
@@ -699,43 +711,191 @@ class RubiksCubeTsai444(RubiksCube444):
         self.lt_tsai_phase3_centers_solve.preload_cache()
         self.lt_tsai_phase3.preload_cache()
 
-        # For tsai this tables is only used if the centers have already been solved
-        # For non-tsai it is always used
-        self.lt_edges = LookupTable444Edges(self)
+    def high_low_state(self, x, y, state_x, state_y, wing_str):
+        """
+        Return U if this is a high edge, D if it is a low edge
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
 
-    def tsai_phase2_orient_edges_state(self, edges_to_flip, return_hex):
+        # Nuke everything except the one wing we are interested in
+        self.nuke_corners()
+        self.nuke_centers()
+        self.nuke_edges()
+
+        self.state[x] = state_x
+        self.state[y] = state_y
+
+        # Now move that wing to its home edge
+        if wing_str.startswith('U'):
+
+            if wing_str == 'UB':
+                self.move_wing_to_U_north(x)
+                high_edge_index = 2
+                low_edge_index = 3
+
+            elif wing_str == 'UL':
+                self.move_wing_to_U_west(x)
+                high_edge_index = 9
+                low_edge_index = 5
+
+            elif wing_str == 'UR':
+                self.move_wing_to_U_east(x)
+                high_edge_index = 8
+                low_edge_index = 12
+
+            elif wing_str == 'UF':
+                self.move_wing_to_U_south(x)
+                high_edge_index = 15
+                low_edge_index = 14
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'U':
+                result = 'U'
+            elif self.state[low_edge_index] == 'U':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('L'):
+
+            if wing_str == 'LB':
+                self.move_wing_to_L_west(x)
+                high_edge_index = 25
+                low_edge_index = 21
+
+            elif wing_str == 'LF':
+                self.move_wing_to_L_east(x)
+                high_edge_index = 24
+                low_edge_index = 28
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'L':
+                result = 'U'
+            elif self.state[low_edge_index] == 'L':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('R'):
+
+            if wing_str == 'RB':
+                self.move_wing_to_R_east(x)
+                high_edge_index = 56
+                low_edge_index = 60
+
+            elif wing_str == 'RF':
+                self.move_wing_to_R_west(x)
+                high_edge_index = 57
+                low_edge_index = 53
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'R':
+                result = 'U'
+            elif self.state[low_edge_index] == 'R':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('D'):
+            if wing_str == 'DB':
+                self.move_wing_to_D_south(x)
+                high_edge_index = 95
+                low_edge_index = 94
+
+            elif wing_str == 'DL':
+                self.move_wing_to_D_west(x)
+                high_edge_index = 89
+                low_edge_index = 85
+
+            elif wing_str == 'DR':
+                self.move_wing_to_D_east(x)
+                high_edge_index = 88
+                low_edge_index = 92
+
+            elif wing_str == 'DF':
+                self.move_wing_to_D_north(x)
+                high_edge_index = 82
+                low_edge_index = 83
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'D':
+                result = 'U'
+            elif self.state[low_edge_index] == 'D':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        else:
+            raise Exception("invalid wing_str %s" % wing_str)
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        assert result in ('U', 'D')
+        return result
+
+    def build_tsai_phase2_orient_edges_444(self):
         state = self.state
+        new_tsai_phase2_orient_edges_444 = {}
 
-        if edges_to_flip:
-            result = []
+        for x in range(1000000):
+
+            # make random moves
+            step = moves_444[randint(0, len(moves_444)-1)]
+            self.rotate(step)
+
             for (x, y) in tsai_phase2_orient_edges_tuples:
-                state_x = state[x]
-                state_y = state[y]
-                high_low = tsai_phase2_orient_edges_444[(x, y, state_x, state_y)]
-                wing_str = tsai_phase2_orient_edges_wing_str_map[''.join((state_x, state_y))]
 
-                if wing_str in edges_to_flip:
-                    if high_low == 'U':
-                        high_low = 'D'
-                    else:
-                        high_low = 'U'
+                state_x = self.state[x]
+                state_y = self.state[y]
+                wing_str = wing_str_map[''.join((state_x, state_y))]
+                wing_tuple = (x, y, state_x, state_y)
 
-                result.append(high_low)
-        else:
-            #for (x, y) in tsai_phase2_orient_edges_tuples:
-            #    state_x = state[x]
-            #    state_y = state[y]
-            #    high_low = tsai_phase2_orient_edges_444[(x, y, state_x, state_y)]
-            #    result.append(high_low)
-            result = [tsai_phase2_orient_edges_444[(x, y, state[x], state[y])] for (x, y) in tsai_phase2_orient_edges_tuples]
+                if wing_tuple not in new_tsai_phase2_orient_edges_444:
+                    new_tsai_phase2_orient_edges_444[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
+        print("new tsai_phase2_orient_edges_444\n\n%s\n\n" % pformat(new_tsai_phase2_orient_edges_444))
+        log.info("new_tsai_phase2_orient_edges_444 has %d entries" % len(new_tsai_phase2_orient_edges_444))
+        sys.exit(0)
+
+    def tsai_phase2_orient_edges_state(self):
+        state = self.state
+        result = [tsai_phase2_orient_edges_444[(x, y, state[x], state[y])] for (x, y) in tsai_phase2_orient_edges_tuples]
         result = ''.join(result)
-
-        if return_hex:
-            result = result.replace('D', '0').replace('U', '1')
-            return "%012x" % int(result, 2)
-        else:
-            return result
+        return result
 
     def tsai_phase2_orient_edges_print(self):
 
@@ -746,7 +906,7 @@ class RubiksCubeTsai444(RubiksCube444):
         self.nuke_corners()
         self.nuke_centers()
 
-        orient_edge_state = list(self.tsai_phase2_orient_edges_state(self.edge_mapping, return_hex=False))
+        orient_edge_state = list(self.tsai_phase2_orient_edges_state())
         orient_edge_state_index = 0
         for side in list(self.sides.values()):
             for square_index in side.edge_pos:
@@ -765,33 +925,33 @@ class RubiksCubeTsai444(RubiksCube444):
         original_solution = self.solution[:]
 
         log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_tsai_phase1.solve()
+        self.lt_tsai_phase1_centers.solve()
+        #self.lt_tsai_phase1.solve()
         self.print_cube()
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Test the phase2 prune tables
         #self.lt_tsai_phase2_centers.solve()
-        #self.lt_tsai_phase2_edges.solve()
         #self.lt_tsai_phase2_edges_lr_centers.solve()
-        #self.tsai_phase2_orient_edges_print()
         #self.print_cube()
+        #self.tsai_phase2_orient_edges_print()
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #sys.exit(0)
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_tsai_phase2.avoid_oll = True
-        #self.lt_tsai_phase2.avoid_pll = True
         self.lt_tsai_phase2.solve()
         self.print_cube()
         self.tsai_phase2_orient_edges_print()
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
 
         # Testing the phase3 prune tables
         #self.lt_tsai_phase3_edges_solve.solve()
         #self.lt_tsai_phase3_centers_solve.solve()
-        #self.tsai_phase2_orient_edges_print()
         #self.print_cube()
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
 
         log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_tsai_phase3.avoid_oll = True

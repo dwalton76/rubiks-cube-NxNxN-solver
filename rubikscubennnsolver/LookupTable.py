@@ -891,7 +891,7 @@ class LookupTableIDA(LookupTable):
 
             if found_solution:
                 end_time1 = dt.datetime.now()
-                log.info("%s: IDA threshold %d, explored %d nodes, took %s (%s total)" %
+                log.info("%s: IDA threshold %d, explored %d nodes in %s (%s total)" %
                     (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
                      pretty_time(end_time1 - start_time0)))
@@ -901,8 +901,10 @@ class LookupTableIDA(LookupTable):
                 return True
             else:
                 end_time1 = dt.datetime.now()
-                log.info("%s: IDA threshold %d, explored %d nodes, took %s" %
-                    (self, threshold, self.ida_count, pretty_time(end_time1 - start_time1)))
+                delta = end_time1 - start_time1
+                nodes_per_sec = int(total_ida_count / delta.total_seconds())
+                log.info("%s: IDA threshold %d, explored %d nodes in %s, %d nodes-per-sec" %
+                    (self, threshold, self.ida_count, pretty_time(delta), nodes_per_sec))
 
         # The only time we will get here is when max_ida_threshold is a low number.  It will be up to the caller to:
         # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily

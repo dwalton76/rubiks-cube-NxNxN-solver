@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_333, corners_333
 from rubikscubennnsolver.RubiksCube444 import (
     RubiksCube444,
     LookupTable444Edges,
@@ -437,46 +436,6 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
         return result
 
 
-def phase3_edges_high_low_recolor_444(state):
-    """
-    Look at all of the high edges and find the low edge for each.
-    Return a string that represents where all the low edge siblings live in relation to their high edge counterpart.
-    """
-    #assert len(state) == 97, "Invalid state %s, len is %d" % (state, len(state))
-    low_edge_map = {}
-
-    for (low_edge_index, square_index, partner_index) in low_edges_444:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        #assert square_value != partner_value, "both squares are %s" % square_value
-        wing_str = ''.join(sorted([square_value, partner_value]))
-        low_edge_index = str(hex(low_edge_index))[2:]
-        state[square_index] = low_edge_index
-        state[partner_index] = low_edge_index
-
-        #assert wing_str not in low_edge_map, "We have two %s wings, one at high_index %s %s and one at high_index %s (%d, %d), state %s" %\
-        #    (wing_str,
-        #     low_edge_map[wing_str],
-        #     pformat(low_edges_444[int(low_edge_map[wing_str])]),
-        #     low_edge_index,
-        #     square_index, partner_index,
-        #     ''.join(state[1:]))
-
-        # save low_edge_index in hex and chop the leading 0x via [2:]
-        low_edge_map[wing_str] = low_edge_index
-
-    #assert len(low_edge_map.keys()) == 12, "Invalid low_edge_map\n%s\n" % pformat(low_edge_map)
-
-    for (high_edge_index, square_index, partner_index) in high_edges_444:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-        state[square_index] = low_edge_map[wing_str]
-        state[partner_index] = low_edge_map[wing_str]
-
-    return state
-
-
 wings_for_edges_recolor_pattern_444 = (
     ('0', 2, 67),  # upper
     ('1', 3, 66),
@@ -550,7 +509,7 @@ def edges_recolor_pattern_444(state):
 class LookupTable444TsaiPhase3Edges(LookupTableHashCostOnly):
     """
     lookup-table-4x4x4-step71-tsai-phase3-edges.txt
-    ======================================================
+    ===============================================
     1 steps has 4 entries (0 percent, 0.00x previous step)
     2 steps has 20 entries (0 percent, 5.00x previous step)
     3 steps has 140 entries (0 percent, 7.00x previous step)
@@ -574,7 +533,7 @@ class LookupTable444TsaiPhase3Edges(LookupTableHashCostOnly):
             self,
             parent,
             'lookup-table-4x4x4-step71-tsai-phase3-edges.hash-cost-only.txt',
-            '213098ba6574',
+            '10425376a8b9ecfdhgkiljnm',
             linecount=239500800,
             max_depth=13,
             bucketcount=479001629)
@@ -583,15 +542,15 @@ class LookupTable444TsaiPhase3Edges(LookupTableHashCostOnly):
             self,
             parent,
             'lookup-table-4x4x4-step71-tsai-phase3-edges.txt',
-            '213098ba6574',
+            '10425376a8b9ecfdhgkiljnm',
             linecount=239500800,
             max_depth=13)
         '''
 
     def state(self):
-        state = phase3_edges_high_low_recolor_444(self.parent.state[:])
-        result = ''.join([state[x] for x in edges_for_high_low_recolor_444])
-        return result
+        state = edges_recolor_pattern_444(self.parent.state[:])
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        return edges_state
 
 
 class LookupTable444TsaiPhase3CentersSolve(LookupTable):
@@ -988,9 +947,10 @@ class RubiksCubeTsai444(RubiksCube444):
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Testing the phase3 prune tables
-        #self.lt_tsai_phase3_edges.solve()
-        #self.lt_tsai_phase3_corners.solve()
+        #self.lt_tsai_phase3_edges_solve.solve()
+        #self.lt_tsai_phase3_centers_solve.solve()
         #self.print_cube()
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #sys.exit(0)
 
         log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

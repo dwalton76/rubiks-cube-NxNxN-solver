@@ -9,6 +9,8 @@ from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven, solved_888, solved_101010, solved_121212, solved_141414
 from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd, solved_999, solved_111111, solved_131313, solved_151515
+from pprint import pformat
+from statistics import median
 import argparse
 import json
 import logging
@@ -141,7 +143,6 @@ try:
                 results.append("\033[91m%s FAIL (not solved)\033[0m: %s" % (size, kociemba_string))
                 cube.print_cube()
                 cube.print_solution()
-                break
                 '''
                 for result in results:
                     print(result)
@@ -162,6 +163,15 @@ try:
             if max_solution is None or solution_length > max_solution:
                 max_solution = solution_length
                 max_solution_kociemba_string = kociemba_string
+
+
+        if cube.heuristic_stats:
+            results.append("%s: heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
+
+            for (key, value) in cube.heuristic_stats.items():
+                cube.heuristic_stats[key] = int(median(value))
+
+            results.append("%s: heuristic_stats median\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
 
         results.append("%s avg centers solution %s steps" % (size, float(centers_solution_total/num_test_cases_executed)))
         results.append("%s avg edges solution %s steps" % (size, float(edges_solution_total/num_test_cases_executed)))

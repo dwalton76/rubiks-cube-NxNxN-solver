@@ -1730,7 +1730,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     def group_outside_UD_oblique_edges(self):
         self.create_fake_666_centers()
-        self.fake_666.stage_oblique_edges_UD()
+        self.fake_666.stage_UD_oblique_edges()
 
         for step in self.fake_666.solution:
 
@@ -1744,7 +1744,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     def group_outside_LR_oblique_edges(self):
         self.create_fake_666_centers()
-        self.fake_666.stage_oblique_edges_LR()
+        self.fake_666.stage_LR_oblique_edges()
 
         for step in self.fake_666.solution:
 

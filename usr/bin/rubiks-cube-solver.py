@@ -11,6 +11,8 @@ This is a work in progress
 from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
 from rubikscubennnsolver.LookupTable import NoSteps
 from math import sqrt
+from pprint import pformat
+from statistics import median
 import argparse
 import datetime as dt
 import logging
@@ -421,6 +423,14 @@ try:
 
         raise SolveError("cube should be solved but is not, edge parity %d, corner parity %d, kociemba %s" %
             (edge_swap_count, corner_swap_count, kociemba_string))
+
+    if cube.heuristic_stats:
+        log.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
+
+        for (key, value) in cube.heuristic_stats.items():
+            cube.heuristic_stats[key] = int(median(value))
+
+        log.info("%s: heuristic_stats median\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
 
     end_time = dt.datetime.now()
     print("\nMemory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))

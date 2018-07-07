@@ -392,6 +392,7 @@ class RubiksCube(object):
         self.fake_555 = None
         self.fake_666 = None
         self.fake_777 = None
+        self.heuristic_stats = {}
 
         if colormap:
             colormap = json.loads(colormap)
@@ -3523,11 +3524,14 @@ class RubiksCube(object):
 
         return ''.join(result)
 
-    def get_staged_centers_count(self):
+    def get_staged_centers_count(self, centers):
         staged = 0
 
         for side in list(self.sides.values()):
             for pos in side.center_pos:
+
+                if centers is not None and pos not in centers:
+                    continue
 
                 if side.name == 'U' or side.name == 'D':
                     if self.state[pos] == 'U' or self.state[pos] == 'D':
@@ -3543,17 +3547,21 @@ class RubiksCube(object):
 
         return staged
 
-    def get_solved_centers_count(self):
+    def get_solved_centers_count(self, centers):
         solved = 0
 
         for side in list(self.sides.values()):
             for pos in side.center_pos:
+
+                if centers is not None and pos not in centers:
+                    continue
+
                 if side.name == self.state[pos]:
                     solved += 1
 
         return solved
 
-    def rotate_for_best_centers(self, staging):
+    def rotate_for_best_centers(self, staging, centers):
         max_best_centers = 0
         max_best_centers_state = None
         max_best_centers_solution = None
@@ -3676,9 +3684,9 @@ class RubiksCube(object):
                         self.rotate_y()
 
                 if staging:
-                    best_centers = self.get_staged_centers_count()
+                    best_centers = self.get_staged_centers_count(centers)
                 else:
-                    best_centers = self.get_solved_centers_count()
+                    best_centers = self.get_solved_centers_count(centers)
 
                 if best_centers > max_best_centers:
                     max_best_centers = best_centers
@@ -3689,11 +3697,11 @@ class RubiksCube(object):
         self.state = max_best_centers_state[:]
         self.solution = max_best_centers_solution[:]
 
-    def rotate_for_best_centers_staging(self):
-        self.rotate_for_best_centers(True)
+    def rotate_for_best_centers_staging(self, centers=None):
+        self.rotate_for_best_centers(True, centers)
 
-    def rotate_for_best_centers_solving(self):
-        self.rotate_for_best_centers(False)
+    def rotate_for_best_centers_solving(self, centers=None):
+        self.rotate_for_best_centers(False, centers)
 
     def group_centers_guts(self):
         raise ImplementThis("Child class must implement group_centers_guts")
@@ -3894,6 +3902,9 @@ class RubiksCube(object):
             log.info(("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3))
 
         log.info(("%d steps total" % len(self.solution)))
+
+        with open('/tmp/solution.txt', 'w') as fh:
+            fh.write(' '.join(self.solution) + "\n")
 
     def nuke_corners(self):
         for side in list(self.sides.values()):

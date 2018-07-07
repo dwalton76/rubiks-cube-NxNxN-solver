@@ -130,6 +130,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             # Group LR centers (in turn groups FB)
             fake_666.print_cube()
+            fake_666.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = False
             fake_666.group_centers_guts(oblique_edges_only=True)
             fake_666.print_cube()
 

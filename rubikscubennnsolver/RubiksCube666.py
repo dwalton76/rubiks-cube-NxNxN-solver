@@ -34,9 +34,6 @@ moves_666 = (
 solved_666 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 
-set_UD = set(('U', 'D'))
-set_LR = set(('L', 'R'))
-
 inner_x_centers_666 = (
     15, 16, 21, 22,
     51, 52, 57, 58,
@@ -44,13 +41,6 @@ inner_x_centers_666 = (
     123, 124, 129, 130,
     159, 160, 165, 166,
     195, 196, 201, 202
-)
-
-LFRB_inner_x_centers_666 = (
-    51, 52, 57, 58,
-    87, 88, 93, 94,
-    123, 124, 129, 130,
-    159, 160, 165, 166,
 )
 
 centers_666 = (
@@ -247,35 +237,6 @@ LFRB_right_oblique_edges_666 = (
     154, 158, 167, 171
 )
 
-LFRB_oblique_edges_666 = (
-    45, 46, 50, 53, 56, 59, 63, 64,
-    81, 82, 86, 89, 92, 95, 99, 100,
-    117, 118, 122, 125, 128, 131, 135, 136,
-    153, 154, 158, 161, 164, 167, 171, 172
-)
-
-
-LFRB_inner_x_centers_oblique_edges_666 = (
-        45, 46,
-    50, 51, 52, 53,
-    56, 57, 58, 59,
-        63, 64,
-
-        81, 82,
-    86, 87, 88, 89,
-    92, 93, 94, 95,
-        99, 100,
-
-         117, 118,
-    122, 123, 124, 125,
-    128, 129, 130, 131,
-         135, 136,
-
-         153, 154,
-    158, 159, 160, 161,
-    164, 165, 166, 167,
-         171, 172,
-)
 
 oblique_edge_pairs_666 = (
     (9, 10), (14, 20), (17, 23), (27, 28),
@@ -562,6 +523,13 @@ class LookupTable666LRObliqueEdgesStage(LookupTableHashCostOnly):
     Total: 165,636,900 entries
     Average: 4.89 moves
     """
+    LFRB_oblique_edges_666 = (
+        45, 46, 50, 53, 56, 59, 63, 64,
+        81, 82, 86, 89, 92, 95, 99, 100,
+        117, 118, 122, 125, 128, 131, 135, 136,
+        153, 154, 158, 161, 164, 167, 171, 172
+    )
+
 
     def __init__(self, parent):
         LookupTableHashCostOnly.__init__(
@@ -585,8 +553,7 @@ class LookupTable666LRObliqueEdgesStage(LookupTableHashCostOnly):
 
     def state(self):
         parent_state = self.parent.state
-        LR = ('L', 'R')
-        result = ''.join(['1' if parent_state[x] in LR else '0' for x in LFRB_oblique_edges_666])
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_oblique_edges_666])
         return self.hex_format % int(result, 2)
 
 
@@ -605,6 +572,13 @@ class LookupTable666LRInnerXCentersStage(LookupTableCostOnly):
     Total: 12,870 entries
     Average: 5.45 moves
     """
+    LFRB_inner_x_centers_666 = (
+        51, 52, 57, 58,
+        87, 88, 93, 94,
+        123, 124, 129, 130,
+        159, 160, 165, 166,
+    )
+
     def __init__(self, parent):
         LookupTableCostOnly.__init__(
             self,
@@ -616,9 +590,7 @@ class LookupTable666LRInnerXCentersStage(LookupTableCostOnly):
 
     def state(self):
         parent_state = self.parent.state
-        LR = ('L', 'R')
-        result = ''.join(['1' if parent_state[x] in LR else '0' for x in LFRB_inner_x_centers_666])
-        #return self.hex_format % int(result, 2)
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_inner_x_centers_666])
         return int(result, 2)
 
 
@@ -631,6 +603,28 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
 
     Total: 1,352,512 entries
     """
+    LFRB_inner_x_centers_oblique_edges_666 = (
+            45, 46,
+        50, 51, 52, 53,
+        56, 57, 58, 59,
+            63, 64,
+
+            81, 82,
+        86, 87, 88, 89,
+        92, 93, 94, 95,
+            99, 100,
+
+             117, 118,
+        122, 123, 124, 125,
+        128, 129, 130, 131,
+             135, 136,
+
+             153, 154,
+        158, 159, 160, 161,
+        164, 165, 166, 167,
+             171, 172,
+    )
+
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -659,8 +653,7 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        LR = ('L', 'R')
-        result = ''.join(['1' if parent_state[x] in LR else '0' for x in LFRB_inner_x_centers_oblique_edges_666])
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_inner_x_centers_oblique_edges_666])
         return self.hex_format % int(result, 2)
 
 

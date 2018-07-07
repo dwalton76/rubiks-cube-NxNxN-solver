@@ -362,8 +362,6 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
     def state(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in centers_555])
-
-        # Convert to hex
         return self.hex_format % int(result, 2)
 
 
@@ -433,8 +431,7 @@ class LookupTable555LRTCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        LR = ('L', 'R')
-        result = ''.join(['1' if parent_state[x] in LR else '0' for x in LFRB_t_centers_555])
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in LFRB_t_centers_555])
         return self.hex_format % int(result, 2)
 
 
@@ -477,8 +474,6 @@ class LookupTableULCentersSolve(LookupTableHashCostOnly):
     def state(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('U', 'L') else '0' for x in centers_555])
-
-        # Convert to hex
         return self.hex_format % int(result, 2)
 
 
@@ -521,8 +516,6 @@ class LookupTableUFCentersSolve(LookupTableHashCostOnly):
     def state(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('U', 'F') else '0' for x in centers_555])
-
-        # Convert to hex
         return self.hex_format % int(result, 2)
 
 

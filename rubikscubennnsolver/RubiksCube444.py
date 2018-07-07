@@ -632,7 +632,6 @@ class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
         parent_state = self.parent.state
         centers = ''.join([parent_state[x] for x in centers_444])
         edges = ''.join([parent_state[x] for x in edges_444])
-
         return centers + edges
 
     def search_complete(self, state, steps_to_here):

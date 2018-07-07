@@ -3895,6 +3895,9 @@ class RubiksCube(object):
 
         log.info(("%d steps total" % len(self.solution)))
 
+        with open('/tmp/solution.txt', 'w') as fh:
+            fh.write(' '.join(self.solution) + "\n")
+
     def nuke_corners(self):
         for side in list(self.sides.values()):
             for square_index in side.corner_pos:

@@ -1197,12 +1197,14 @@ class RubiksCube444(RubiksCube):
         Return True if edges are split into high/low groups
         """
         # The nested for loops below are expensive but the "possibly" check is not
-        # so do that first to save us some CPU cycles.
-        if self.edges_possibly_oriented_into_high_low_groups():
+        # so do that first to save us some CPU cycles. It is also a requirement that
+        # the number of edge swaps be even so check that too.
+        if self.edges_possibly_oriented_into_high_low_groups() and self.edge_swaps_even(False, 0, False):
             for num_edges_to_flip in tsai_edge_mapping_combinations:
                 for edges_to_flip in tsai_edge_mapping_combinations[num_edges_to_flip]:
                     edges_state = self.tsai_phase2_orient_edges_state(edges_to_flip)
                     if edges_state == 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU':
+                        self.edge_mapping = edges_to_flip
                         return True
         return False
 

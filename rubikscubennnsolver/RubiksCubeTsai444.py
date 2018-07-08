@@ -19,7 +19,8 @@ from rubikscubennnsolver.RubiksCube444 import (
 from rubikscubennnsolver.RubiksCube444Misc import (
     high_edges_444,
     low_edges_444,
-    tsai_phase2_orient_edges_444
+    tsai_phase2_orient_edges_444,
+    tsai_edge_mapping_combinations,
 )
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
@@ -311,7 +312,7 @@ class LookupTable444TsaiPhase2EdgesLRCenters(LookupTableHashCostOnly):
     def state(self):
         parent_state = self.parent.state
 
-        edges = self.parent.tsai_phase2_orient_edges_state()
+        edges = self.parent.tsai_phase2_orient_edges_state(self.parent.edge_mapping)
         U_edges = edges[0:8]
         L_edges = edges[8:16]
         F_edges = edges[16:24]
@@ -336,6 +337,36 @@ class LookupTable444TsaiPhase2EdgesLRCenters(LookupTableHashCostOnly):
                     D_edges])
 
         return result
+
+
+class LookupTable444TsaiPhase2Edges(LookupTable):
+    """
+    lookup-table-4x4x4-step62-tsai-phase2-edges.txt
+    ===============================================
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 45 entries (0 percent, 11.25x previous step)
+    3 steps has 599 entries (0 percent, 13.31x previous step)
+    4 steps has 6,935 entries (0 percent, 11.58x previous step)
+    5 steps has 81,080 entries (2 percent, 11.69x previous step)
+    6 steps has 665,003 entries (24 percent, 8.20x previous step)
+    7 steps has 1,660,156 entries (61 percent, 2.50x previous step)
+    8 steps has 290,334 entries (10 percent, 0.17x previous step)
+
+    Total: 2,704,156 entries
+    Average: 6.792808 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step62-tsai-phase2-edges.txt',
+            'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+            linecount=2704156,
+            max_depth=8)
+
+    def state(self):
+        return self.parent.tsai_phase2_orient_edges_state(self.parent.edge_mappping)
 
 
 class LookupTableIDA444TsaiPhase2(LookupTableIDA):
@@ -383,7 +414,7 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
     def state(self):
         parent_state = self.parent.state
 
-        edges = self.parent.tsai_phase2_orient_edges_state()
+        edges = self.parent.tsai_phase2_orient_edges_state(self.parent.edge_mapping)
         U_edges = edges[0:8]
         L_edges = edges[8:16]
         F_edges = edges[16:24]
@@ -676,6 +707,7 @@ class RubiksCubeTsai444(RubiksCube444):
 
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube444.__init__(self, state, order, colormap, debug)
+        self.edge_mapping = {}
 
     def lt_init(self):
         if self.lt_init_called:
@@ -698,6 +730,7 @@ class RubiksCubeTsai444(RubiksCube444):
         # - stage UD and FB centers
         self.lt_tsai_phase2_centers = LookupTable444TsaiPhase2Centers(self)
         self.lt_tsai_phase2_centers.preload_cache()
+        self.lt_tsai_phase2_edges = LookupTable444TsaiPhase2Edges(self)
         self.lt_tsai_phase2_edges_lr_centers = LookupTable444TsaiPhase2EdgesLRCenters(self)
         self.lt_tsai_phase2 = LookupTableIDA444TsaiPhase2(self)
         self.lt_tsai_phase2.preload_cache()
@@ -891,9 +924,27 @@ class RubiksCubeTsai444(RubiksCube444):
         log.info("new_tsai_phase2_orient_edges_444 has %d entries" % len(new_tsai_phase2_orient_edges_444))
         sys.exit(0)
 
-    def tsai_phase2_orient_edges_state(self):
+    def tsai_phase2_orient_edges_state(self, edges_to_flip):
         state = self.state
-        result = [tsai_phase2_orient_edges_444[(x, y, state[x], state[y])] for (x, y) in tsai_phase2_orient_edges_tuples]
+
+        if edges_to_flip:
+            result = []
+            for (x, y) in tsai_phase2_orient_edges_tuples:
+                state_x = state[x]
+                state_y = state[y]
+                high_low = tsai_phase2_orient_edges_444[(x, y, state_x, state_y)]
+                wing_str = tsai_phase2_orient_edges_wing_str_map[''.join((state_x, state_y))]
+
+                if wing_str in edges_to_flip:
+                    if high_low == 'U':
+                        high_low = 'D'
+                    else:
+                        high_low = 'U'
+
+                result.append(high_low)
+        else:
+            result = [tsai_phase2_orient_edges_444[(x, y, state[x], state[y])] for (x, y) in tsai_phase2_orient_edges_tuples]
+
         result = ''.join(result)
         return result
 
@@ -906,7 +957,7 @@ class RubiksCubeTsai444(RubiksCube444):
         self.nuke_corners()
         self.nuke_centers()
 
-        orient_edge_state = list(self.tsai_phase2_orient_edges_state())
+        orient_edge_state = list(self.tsai_phase2_orient_edges_state(self.edge_mapping))
         orient_edge_state_index = 0
         for side in list(self.sides.values()):
             for square_index in side.edge_pos:
@@ -937,6 +988,26 @@ class RubiksCubeTsai444(RubiksCube444):
         #self.tsai_phase2_orient_edges_print()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #sys.exit(0)
+
+        # Walks through all 2048 possible edge mapping scenarios to find the one that has
+        # the lowest cost.  In theory this should reduce the number of moves in phase2 but
+        # it didn't really work out that way. Saving for a rainy day.
+        '''
+        min_cost_edges_to_flip = None
+        min_cost = None
+
+        for num_edges_to_flip in tsai_edge_mapping_combinations:
+            for edges_to_flip in tsai_edge_mapping_combinations[num_edges_to_flip]:
+                edges_state = self.tsai_phase2_orient_edges_state(edges_to_flip)
+                edges_cost = self.lt_tsai_phase2_edges.steps_cost(edges_state)
+
+                if min_cost is None or edges_cost < min_cost:
+                    log.info("edges_to_flip %s, edges_state %s, edges_cost %s" % (edges_to_flip, edges_state, edges_cost))
+                    min_cost_edges_to_flip = edges_to_flip
+                    min_cost = edges_cost
+        self.edge_mapping = min_cost_edges_to_flip
+        log.warning("edge_mapping: %s" % pformat(self.edge_mapping))
+        '''
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_tsai_phase2.avoid_oll = True

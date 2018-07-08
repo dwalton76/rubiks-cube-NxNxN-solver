@@ -10,6 +10,7 @@ from rubikscubennnsolver.LookupTable import (
 )
 from rubikscubennnsolver.RubiksCube444Misc import (
     low_edges_444,
+    tsai_edge_mapping_combinations,
 )
 import logging
 import sys
@@ -642,7 +643,7 @@ class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
     def search_complete(self, state, steps_to_here):
 
         if (centers_solved_444(state) and
-            self.parent.edges_possibly_oriented() and
+            self.parent.edges_possibly_oriented_into_high_low_groups() and
             self.parent.lt_edges.steps()):
             #self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=False)):
 
@@ -1172,7 +1173,7 @@ class RubiksCube444(RubiksCube):
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')
 
-    def edges_possibly_oriented(self):
+    def edges_possibly_oriented_into_high_low_groups(self):
         """
         Return True if edges "might" be oriented into high/low groups
         """
@@ -1190,6 +1191,20 @@ class RubiksCube444(RubiksCube):
                 wing_strs_found.add(wing_str)
 
         return True
+
+    def edges_oriented_into_high_low_groups(self):
+        """
+        Return True if edges are split into high/low groups
+        """
+        # The nested for loops below are expensive but the "possibly" check is not
+        # so do that first to save us some CPU cycles.
+        if self.edges_possibly_oriented_into_high_low_groups():
+            for num_edges_to_flip in tsai_edge_mapping_combinations:
+                for edges_to_flip in tsai_edge_mapping_combinations[num_edges_to_flip]:
+                    edges_state = self.tsai_phase2_orient_edges_state(edges_to_flip)
+                    if edges_state == 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU':
+                        return True
+        return False
 
     def edges_solveable_via_half_turns(self):
         state = edges_recolor_pattern_444(self.state[:])

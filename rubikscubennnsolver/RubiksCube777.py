@@ -1638,7 +1638,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
             # Stage the UD centers
             self.create_fake_555_from_outside_centers()
-            self.fake_555.group_centers_stage_UD()
+
+            if oblique_edges_only:
+                self.fake_555.lt_UD_T_centers_stage.solve()
+            else:
+                self.fake_555.group_centers_stage_UD()
 
             for step in self.fake_555.solution:
                 if step.startswith('5'):
@@ -1677,7 +1681,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
             # Stage the LR centers
             self.create_fake_555_from_outside_centers()
-            self.fake_555.group_centers_stage_LR()
+
+            if oblique_edges_only:
+                self.fake_555.lt_LR_T_centers_stage.solve()
+            else:
+                self.fake_555.group_centers_stage_LR()
 
             for step in self.fake_555.solution:
                 if step.startswith('5'):

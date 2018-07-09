@@ -458,6 +458,10 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         # return math.ceil(UD_unpaired_obliques/4)
 
         UD_unpaired_obliques = self.get_UD_unpaired_obliques_count()
+
+        if not UD_unpaired_obliques:
+            return 0
+
         two_count = self.get_UD_obliques_two_pair_setup_count()
         four_count = self.get_UD_obliques_four_pair_setup_count()
         state_tuple = (UD_unpaired_obliques, two_count, four_count)
@@ -470,9 +474,17 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             return math.ceil(UD_unpaired_obliques/4)
 
     def search_complete(self, state, steps_to_here):
-        steps = self.steps(state)
+        cost_to_goal = self.ida_heuristic()
 
-        if self.ida_heuristic() == 0 or steps:
+        if cost_to_goal == 0:
+            steps = None
+        else:
+            steps = self.steps(state)
+
+        if cost_to_goal == 0 or steps:
+
+            if steps is None:
+                steps = []
 
             # rotate_xxx() is very fast but it does not append the
             # steps to the solution so put the cube back in original state
@@ -480,9 +492,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             self.parent.state = self.original_state[:]
             self.parent.solution = self.original_solution[:]
             steps_to_go = len(steps_to_here) + len(steps)
-
-            if steps is None:
-                steps = []
 
             for step in steps_to_here + steps:
 
@@ -1136,21 +1145,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         for step in fake_555.solution:
             self.rotate(step)
 
-    def stage_LR_oblique_edges(self):
-        """
-        Used by the 7x7x7 solver...this stages the LR oblique edges to sides L or R
-        """
-        self.lt_LR_inner_x_centers_and_oblique_edges_stage.solve()
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_ULFRBD_solve()
-        fake_555.lt_LR_T_centers_stage.solve()
-
-        for step in fake_555.solution:
-            self.rotate(step)
-
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
-
         self.lt_UD_inner_x_centers_stage.solve()
         self.rotate_for_best_centers_solving(inner_x_centers_666)
         self.print_cube()

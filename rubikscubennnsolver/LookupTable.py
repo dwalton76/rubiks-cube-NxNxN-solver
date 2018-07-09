@@ -843,33 +843,18 @@ class LookupTableIDA(LookupTable):
         #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
 
         # The cube is already in the desired state, nothing to do
-        if state in self.state_target or self.search_complete(state, []):
+        if state in self.state_target:
             log.info("%s: cube is already at the target state %s" % (self, state))
             return True
 
-        # The cube is already in a state that is in our lookup table, nothing for IDA to do
-        steps = self.steps(state)
-
-        if steps:
+        if self.search_complete(state, []):
             log.info("%s: cube is already in a state %s that is in our lookup table" % (self, state))
-
-            # The cube is now in a state where it is in the lookup table, we may need
-            # to do several lookups to get to our target state though. Use
-            # LookupTabele's solve() to take us the rest of the way to the target state.
-            LookupTable.solve(self)
-
-            if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
-                log.info("%s: but the current state leads to OLL so we must IDA" % self)
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-            else:
-                return True
+            return True
 
         # If we are here (odds are very high we will be) it means that the current
         # cube state was not in the lookup table.  We must now perform an IDA search
         # until we find a sequence of moves that takes us to a state that IS in the
         # lookup table.
-
         if min_ida_threshold is None:
             min_ida_threshold = self.ida_heuristic()
 

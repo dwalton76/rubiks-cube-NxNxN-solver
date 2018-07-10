@@ -617,10 +617,15 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
             self.fh_txt.seek(hash_index)
             result = int(self.fh_txt.read(1).decode('utf-8'), 16)
             self.fh_txt_seek_calls += 1
-            return result
 
         else:
-            return int(self.content[hash_index], 16)
+            result = int(self.content[hash_index], 16)
+
+        # This should never be zero
+        if not result:
+            raise SolveError("%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s" % (self, state_to_find, hash_raw, hash_index, result))
+
+        return result
 
 
 class LookupTableIDA(LookupTable):
@@ -745,15 +750,20 @@ class LookupTableIDA(LookupTable):
         # saves us some disk IO
         if (cost_to_goal <= self.max_depth and
             self.search_complete(lt_state, steps_to_here)):
-            log.info("%s: %d seek calls" % (self, self.fh_txt_seek_calls))
+            #log.info("%s: %d seek calls" % (self, self.fh_txt_seek_calls))
             self.fh_txt_seek_calls = 0
 
             for pt in self.prune_tables:
-                log.info("%s: %d seek calls" % (pt, pt.fh_txt_seek_calls))
+                #log.info("%s: %d seek calls" % (pt, pt.fh_txt_seek_calls))
                 pt.fh_txt_seek_calls = 0
 
-            log.info("%s: IDA found match %d steps in %s, lt_state %s, f_cost %d (%d + %d)" %
-                     (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
+            solution_steps = self.parent.solution[len(self.original_solution):]
+
+            #log.info("%s: lt_state %s" % (self, lt_state))
+            log.info("%s: IDA found match %d steps, solution length %d, f_cost %d (%d + %d)" %
+                     (self, len(steps_to_here), len(solution_steps),
+                      f_cost, cost_to_here, cost_to_goal))
+
             return (f_cost, True)
 
         # ================
@@ -765,17 +775,14 @@ class LookupTableIDA(LookupTable):
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
         explored_cost_to_here = self.explored.get(lt_state)
-
         if explored_cost_to_here is not None and explored_cost_to_here <= cost_to_here:
             return (f_cost, False)
         self.explored[lt_state] = cost_to_here
+
         skip_other_steps_this_face = None
 
         # log.info("moves_all %s" % ' '.join(self.moves_all))
         for step in self.moves_all:
-
-            #if steps_cancel_out(prev_step, step):
-            #    continue
 
             if steps_on_same_face_and_layer(prev_step, step):
                 continue

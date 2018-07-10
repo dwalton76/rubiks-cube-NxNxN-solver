@@ -4,6 +4,7 @@ from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222, solved_222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCubeTsai444 import RubiksCubeTsai444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
@@ -27,7 +28,7 @@ logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelNam
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--size', type=str, default='4x4x4')
-parser.add_argument('--test-cubes', type=str, default='test_cubes.json')
+parser.add_argument('--test-cubes', type=str, default='./utils/test-cubes.json.small')
 parser.add_argument('--start', type=int, default=0)
 args = parser.parse_args()
 
@@ -60,6 +61,7 @@ try:
             cube = RubiksCube333(solved_333, order)
 
         elif size == '4x4x4':
+            #cube = RubiksCubeTsai444(solved_444, order)
             cube = RubiksCube444(solved_444, order)
 
         elif size == '5x5x5':

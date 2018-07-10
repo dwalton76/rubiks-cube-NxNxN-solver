@@ -25,7 +25,7 @@ from rubikscubennnsolver.RubiksCube444Misc import (
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableHashCostOnly,
-    LookupTableIDA
+    LookupTableIDA,
 )
 from pyhashxx import hashxx
 from pprint import pformat
@@ -210,8 +210,9 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
             'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
             'TBD',
             moves_444,
+            # illegal moves
             ("Fw", "Fw'", "Bw", "Bw'",
-             "Uw", "Uw'", "Dw", "Dw'", # illegal_moves
+             "Uw", "Uw'", "Dw", "Dw'",
              "Bw2", "Dw2", "Lw", "Lw'", "Lw2"), # TPR also restricts these
 
             # prune tables
@@ -231,14 +232,14 @@ class LookupTableIDA444TsaiPhase2(LookupTableIDA):
 
     def search_complete(self, state, steps_to_here):
         parent_state = self.parent.state
-        LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
-
-        # Are LR centers staged?
-        if LR_centers not in self.tsai_phase2_LR_center_targets:
-            return False
 
         # Are UD centers staged?
         if not (all(parent_state[x] in ('U', 'D') for x in UD_centers_444)):
+            return False
+
+        # Are LR centers staged?
+        LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
+        if LR_centers not in self.tsai_phase2_LR_center_targets:
             return False
 
         # Are edges split into high/low groups?
@@ -753,7 +754,11 @@ class RubiksCubeTsai444(RubiksCube444):
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-    def group_centers_guts(self):
+    def solve(self):
+
+        if self.solved():
+            return
+
         self.lt_init()
 
         # save cube state
@@ -796,6 +801,10 @@ class RubiksCubeTsai444(RubiksCube444):
         self.print_cube()
         log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
+        self.solution.append('CENTERS_SOLVED')
+
+        self.solve_333()
+        self.compress_solution()
 
 
 if __name__ == '__main__':

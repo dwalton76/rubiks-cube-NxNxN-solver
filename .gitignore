@@ -95,3 +95,4 @@ lookup*.gz
 lookup*.txt
 *~
 *.bak
+tmp

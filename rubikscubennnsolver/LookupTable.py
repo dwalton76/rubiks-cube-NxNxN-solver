@@ -193,33 +193,36 @@ class LookupTable(object):
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
 
-        if 'dummy' not in self.filename:
+        if 'dummy' in self.filename:
+            self.width = 0
+            self.state_width = 0
+        else:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
 
-        # This only happens if a new copy of the lookup table has been checked in...we need to delete
-        # the one we have and download the new one.
-        if os.path.exists(self.filename) and self.filesize is not None and os.path.getsize(self.filename) != self.filesize:
-            log.info("%s: filesize %s does not equal target filesize %s" % (self, os.path.getsize(self.filename), self.filesize))
-            os.remove(self.filename)
+            # This only happens if a new copy of the lookup table has been checked in...we need to delete
+            # the one we have and download the new one.
+            if os.path.exists(self.filename) and self.filesize is not None and os.path.getsize(self.filename) != self.filesize:
+                log.info("%s: filesize %s does not equal target filesize %s" % (self, os.path.getsize(self.filename), self.filesize))
+                os.remove(self.filename)
 
-            if os.path.exists(self.filename_gz):
-                os.remove(self.filename_gz)
+                if os.path.exists(self.filename_gz):
+                    os.remove(self.filename_gz)
 
-        if not os.path.exists(self.filename):
-            if not os.path.exists(self.filename_gz):
-                url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
-                log.info("Downloading table via 'wget %s'" % url)
-                call(['wget', url])
+            if not os.path.exists(self.filename):
+                if not os.path.exists(self.filename_gz):
+                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
+                    log.info("Downloading table via 'wget %s'" % url)
+                    call(['wget', url])
 
-            log.warning("gunzip %s" % self.filename_gz)
-            call(['gunzip', self.filename_gz])
+                log.warning("gunzip %s" % self.filename_gz)
+                call(['gunzip', self.filename_gz])
 
-        # Find the state_width for the entries in our .txt file
-        with open(self.filename, 'r') as fh:
-            first_line = next(fh)
-            self.width = len(first_line)
-            (state, steps) = first_line.split(':')
-            self.state_width = len(state)
+            # Find the state_width for the entries in our .txt file
+            with open(self.filename, 'r') as fh:
+                first_line = next(fh)
+                self.width = len(first_line)
+                (state, steps) = first_line.split(':')
+                self.state_width = len(state)
 
         self.hex_format = '%' + "0%dx" % self.state_width
         self.filename_exists = True
@@ -232,7 +235,10 @@ class LookupTable(object):
             self.state_target = set((state_target, ))
 
         # 'rb' mode is about 3x faster than 'r' mode
-        self.fh_txt = open(self.filename, mode='rb')
+        if 'dummy' in self.filename:
+            self.fh_txt = None
+        else:
+            self.fh_txt = open(self.filename, mode='rb')
 
     def __str__(self):
         return self.desc
@@ -270,17 +276,20 @@ class LookupTable(object):
         if isinstance(self, LookupTableCostOnly):
             raise Exception("%s is a CostOnly table, no need to call preload_cache()" % self)
 
-        # Another option here would be to store a list of (state, step) tuples and
-        # then binary search through it. That takes about 1/6 the amount of memory
-        # but would be slower.  I have not measured how much slower.
-        with open(self.filename, 'r') as fh:
+        if 'dummy' in self.filename:
+            self.cache = {}
+        else:
+            # Another option here would be to store a list of (state, step) tuples and
+            # then binary search through it. That takes about 1/6 the amount of memory
+            # but would be slower.  I have not measured how much slower.
+            with open(self.filename, 'r') as fh:
 
-            # The bottleneck is the building of the dictionary, moreso that reading from disk.
-            for line in fh:
-                (state, steps) = line.rstrip().split(':')
-                # Store this as a string, not a list.  It takes more than 2x the memory to store steps.split()
-                # For solving a 7x7x7 this is the difference in requiring 3G of RAM vs 7G!!.
-                self.cache[state] = steps
+                # The bottleneck is the building of the dictionary, moreso that reading from disk.
+                for line in fh:
+                    (state, steps) = line.rstrip().split(':')
+                    # Store this as a string, not a list.  It takes more than 2x the memory to store steps.split()
+                    # For solving a 7x7x7 this is the difference in requiring 3G of RAM vs 7G!!.
+                    self.cache[state] = steps
 
         self.preloaded_cache = True
         log.warning("{}: end preload cache ({:,} bytes)".format(self, sys.getsizeof(self.cache)))
@@ -371,18 +380,13 @@ class LookupTable(object):
 
         if pt_state in self.state_target:
             return 0
-
         else:
-            pt_steps_cost = self.steps_cost(pt_state)
+            result = self.steps_cost(pt_state)
 
-            if pt_steps_cost:
-                return pt_steps_cost
+            if result == 0:
+                raise SolveError("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
 
-            elif self.max_depth:
-                # This is the exception to the rule but some prune tables such
-                # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
-                # are partial tables so use the max_depth of the table +1
-                return self.max_depth + 1
+            return result
 
         self.parent.print_cube()
         raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (self, pt_state, self.state_width))
@@ -630,9 +634,12 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
 
 class LookupTableIDA(LookupTable):
 
-    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None):
+    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None, exit_asap=True):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.prune_tables = prune_tables
+        self.ida_solutions = []
+        self.next_phase = None
+        self.exit_asap = exit_asap
 
         for x in moves_illegal:
             if x not in moves_all:
@@ -760,11 +767,32 @@ class LookupTableIDA(LookupTable):
             solution_steps = self.parent.solution[len(self.original_solution):]
 
             #log.info("%s: lt_state %s" % (self, lt_state))
-            log.info("%s: IDA found match %d steps, solution length %d, f_cost %d (%d + %d)" %
-                     (self, len(steps_to_here), len(solution_steps),
-                      f_cost, cost_to_here, cost_to_goal))
+            if self.exit_asap:
+                log.info("%s: IDA found match %d steps, solution length %d, f_cost %d (%d + %d)" %
+                         (self, len(steps_to_here), len(solution_steps),
+                          f_cost, cost_to_here, cost_to_goal))
 
-            return (f_cost, True)
+            # We use the heuristic of the next phase to rank the solutions in this phase
+            if self.next_phase:
+                next_phase_ida_heuristic = self.next_phase.ida_heuristic()
+                next_phase_ida_heuristic_total = self.next_phase.ida_heuristic_total()
+            else:
+                next_phase_ida_heuristic = 0
+                next_phase_ida_heuristic_total = 0
+
+            this_solution = self.parent.solution[len(self.original_solution):]
+            this_solution_len = self.parent.get_solution_len_minus_rotates(this_solution)
+            self.ida_solutions.append((
+                this_solution_len + next_phase_ida_heuristic,
+                next_phase_ida_heuristic_total,
+                this_solution_len,
+                this_solution))
+
+            self.parent.state = self.original_state[:]
+            self.parent.solution = self.original_solution[:]
+
+            if self.exit_asap:
+                return (f_cost, True)
 
         # ================
         # Abort Searching?
@@ -772,12 +800,18 @@ class LookupTableIDA(LookupTable):
         if f_cost >= threshold:
             return (f_cost, False)
 
+        if hasattr(self, 'state_for_explored'):
+            lt_state_for_explored = self.state_for_explored()
+            #log.info("using state_for_explored %s" % lt_state_for_explored)
+        else:
+            lt_state_for_explored = lt_state
+
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
-        explored_cost_to_here = self.explored.get(lt_state)
+        explored_cost_to_here = self.explored.get(lt_state_for_explored)
         if explored_cost_to_here is not None and explored_cost_to_here <= cost_to_here:
             return (f_cost, False)
-        self.explored[lt_state] = cost_to_here
+        self.explored[lt_state_for_explored] = cost_to_here
 
         skip_other_steps_this_face = None
 
@@ -877,16 +911,33 @@ class LookupTableIDA(LookupTable):
             start_time1 = dt.datetime.now()
             self.ida_count = 0
             self.explored = {}
+            self.ida_solutions = []
 
-            (f_cost, found_solution) = self.ida_search(steps_to_here, threshold, None, self.original_state[:])
+            self.ida_search(steps_to_here, threshold, None, self.original_state[:])
             total_ida_count += self.ida_count
 
-            if found_solution:
+            if self.ida_solutions:
+
+                self.ida_solutions = sorted(self.ida_solutions)
+                min_solution = self.ida_solutions[0][3]
+
+                if not self.exit_asap:
+                    log.info("%s: top 5 ida_solutions\n\n"
+                        "(this_solution_len + next_phase_ida_heuristic, next_phase_ida_heuristic_total, this_solution_len, solution)\n\n"
+                        "%s\n" % (self, pformat(self.ida_solutions[0:5], width=256)))
+
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+
+                for step in min_solution:
+                    self.parent.rotate(step)
+
                 end_time1 = dt.datetime.now()
-                log.info("%s: IDA threshold %d, explored %d nodes in %s (%s total)" %
+                log.info("%s: IDA threshold %d, explored %d nodes in %s (%s total), found %d solutions" %
                     (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
-                     pretty_time(end_time1 - start_time0)))
+                     pretty_time(end_time1 - start_time0),
+                     len(self.ida_solutions)))
                 delta = end_time1 - start_time0
                 nodes_per_sec = int(total_ida_count / delta.total_seconds())
                 log.info("%s: IDA explored %d nodes in %s, %d nodes-per-sec" % (self, total_ida_count, delta, nodes_per_sec))

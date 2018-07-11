@@ -607,79 +607,6 @@ class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
         return False
 
 
-class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
-    """
-    Experiment to IDA search until we find a solution that happens to put
-    the edges in a state that are in our edge table
-
-    This is sloooow
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
-            'TBD',
-            moves_444,
-            ("Rw", "Rw'", "Lw", "Lw'",
-             "Fw", "Fw'", "Bw", "Bw'",
-             "Uw", "Uw'", "Dw", "Dw'"),
-
-            # prune tables
-            (parent.lt_ULFRBD_centers_solve,),
-            linecount=0,
-            max_depth=99)
-
-    def state(self):
-        # I used to compute the edge state here via edges_recolor_pattern_444 but that
-        # is a much larger CPU hit and the only difference it makes is we prune off a
-        # few more branches due to checking for the state in 'explored'.
-        parent_state = self.parent.state
-        centers = ''.join([parent_state[x] for x in centers_444])
-        edges = ''.join([parent_state[x] for x in edges_444])
-        return centers + edges
-
-    def search_complete(self, state, steps_to_here):
-
-        if (centers_solved_444(state) and
-            self.parent.edges_possibly_oriented_into_high_low_groups() and
-            self.parent.lt_edges.steps()):
-            #self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=False)):
-
-            if self.parent.center_solution_leads_to_oll_parity():
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.info("%s: IDA found match but it leads to OLL" % self)
-                return False
-
-            tmp_state = self.parent.state[:]
-            tmp_solution = self.parent.solution[:]
-            self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=True)
-
-            if self.parent.edge_solution_leads_to_pll_parity():
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.info("%s: IDA found match but it leads to PLL" % self)
-                return False
-
-            self.parent.state = tmp_state
-            self.parent.solution = tmp_solution
-
-            # rotate_xxx() is very fast but it does not append the
-            # steps to the solution so put the cube back in original state
-            # and execute the steps via a normal rotate() call
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-
-            for step in steps_to_here:
-                self.parent.rotate(step)
-
-            return True
-
-        return False
-
-
 wings_for_edges_recolor_pattern_444 = (
     ('0', 2, 67),  # upper
     ('1', 3, 66),
@@ -864,7 +791,6 @@ class RubiksCube444(RubiksCube):
         self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
         self.lt_ULFRBD_centers_solve.preload_cache()
         self.lt_ULFRBD_centers_solve_pair_two_edges = LookupTable444ULFRBDCentersSolvePairTwoEdges(self)
-        #self.lt_ULFRBD_centers_solve_edges_stage = LookupTable444ULFRBDCentersSolveEdgesStage(self)
 
         # Edges table
         self.lt_edges = LookupTable444Edges(self)
@@ -1172,41 +1098,6 @@ class RubiksCube444(RubiksCube):
 
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')
-
-    def edges_possibly_oriented_into_high_low_groups(self):
-        """
-        Return True if edges "might" be oriented into high/low groups
-        """
-        state = self.state
-        wing_strs_found = set()
-
-        for (low_edge_index, square_index, partner_index) in low_edges_444:
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = ''.join(sorted([square_value, partner_value]))
-
-            if wing_str in wing_strs_found:
-                return False
-            else:
-                wing_strs_found.add(wing_str)
-
-        return True
-
-    def edges_oriented_into_high_low_groups(self):
-        """
-        Return True if edges are split into high/low groups
-        """
-        # The nested for loops below are expensive but the "possibly" check is not
-        # so do that first to save us some CPU cycles. It is also a requirement that
-        # the number of edge swaps be even so check that too.
-        if self.edges_possibly_oriented_into_high_low_groups() and self.edge_swaps_even(False, 0, False):
-            for num_edges_to_flip in tsai_edge_mapping_combinations:
-                for edges_to_flip in tsai_edge_mapping_combinations[num_edges_to_flip]:
-                    edges_state = self.tsai_phase2_orient_edges_state(edges_to_flip)
-                    if edges_state == 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU':
-                        self.edge_mapping = edges_to_flip
-                        return True
-        return False
 
     def edges_solveable_via_half_turns(self):
         state = edges_recolor_pattern_444(self.state[:])

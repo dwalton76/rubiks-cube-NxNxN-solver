@@ -544,6 +544,22 @@ class LookupTable777LRLeftMiddleObliqueEdgePairing(LookupTableHashCostOnly):
         return self.hex_format % int(result, 2)
 
 
+class LookupTable777LRRightMiddleObliqueEdgePairing(LookupTable777LRLeftMiddleObliqueEdgePairing):
+
+    # The order here looks weird but this is so we can re-use the left-middle step32 prune table
+    LFRB_right_middle_oblique_edges_777 = (
+        61, 60, 65, 76, 72, 83, 88, 87, # Left
+        110, 109, 114, 125, 121, 132, 137, 136, # Front
+        159, 158, 163, 174, 170, 181, 186, 185, # Right
+        208, 207, 212, 223, 219, 230, 235, 234, # Back
+    )
+
+    def state(self):
+        parent_state = self.parent.state
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_right_middle_oblique_edges_777])
+        return self.hex_format % int(result, 2)
+
+
 class LookupTable777LRObliqueEdgePairingInadmisibble(LookupTable):
 
     LFRB_oblique_edge_pairs_777 = (
@@ -668,6 +684,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
             # prune tables
             (parent.lt_LR_outside_oblique_edge_pairing,
              parent.lt_LR_left_middle_oblique_edge_pairing,
+             parent.lt_LR_right_middle_oblique_edge_pairing,
              parent.lt_LR_oblique_edge_pairing_inadmissible),
 
             linecount=9919742,
@@ -1312,6 +1329,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         self.lt_LR_outside_oblique_edge_pairing = LookupTable777LROutsideObliqueEdgePairing(self)
         self.lt_LR_left_middle_oblique_edge_pairing = LookupTable777LRLeftMiddleObliqueEdgePairing(self)
+        self.lt_LR_right_middle_oblique_edge_pairing = LookupTable777LRRightMiddleObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing_inadmissible = LookupTable777LRObliqueEdgePairingInadmisibble(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing.preload_cache()

@@ -191,7 +191,7 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
     24!/(8!*16!) is 735,471
 
     lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt
-    =================================================================
+    ================================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
     2 steps has 66 entries (0 percent, 13.20x previous step)
     3 steps has 850 entries (0 percent, 12.88x previous step)
@@ -621,7 +621,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
 class LookupTable777Step41(LookupTableHashCostOnly):
     """
     lookup-table-7x7x7-step41.txt
-    ==============================
+    =============================
     1 steps has 226 entries (0 percent, 0.00x previous step)
     2 steps has 1,433 entries (0 percent, 6.34x previous step)
     3 steps has 8,986 entries (0 percent, 6.27x previous step)
@@ -714,7 +714,7 @@ class LookupTable777Step41(LookupTableHashCostOnly):
 class LookupTable777Step42(LookupTableHashCostOnly):
     """
     lookup-table-7x7x7-step42.txt
-    ==============================
+    =============================
     1 steps has 250 entries (0 percent, 0.00x previous step)
     2 steps has 1,845 entries (0 percent, 7.38x previous step)
     3 steps has 12,756 entries (0 percent, 6.91x previous step)
@@ -805,15 +805,15 @@ class LookupTable777Step42(LookupTableHashCostOnly):
 class LookupTableIDA777Step40(LookupTableIDA):
     """
     lookup-table-7x7x7-step40.txt
-    ==============================
+    =============================
     1 steps has 250 entries (0 percent, 0.00x previous step)
     2 steps has 1,981 entries (0 percent, 7.92x previous step)
-    3 steps has 15,782 entries (1 percent, 7.97x previous step)
-    4 steps has 123,053 entries (11 percent, 7.80x previous step)
-    5 steps has 931,072 entries (86 percent, 7.57x previous step)
+    3 steps has 15,782 entries (0 percent, 7.97x previous step)
+    4 steps has 123,053 entries (1 percent, 7.80x previous step)
+    5 steps has 931,072 entries (11 percent, 7.57x previous step)
+    6 steps has 6,799,621 entries (86 percent, 7.30x previous step)
 
-    Total: 1,072,138 entries
-    Average: 4.85 moves
+    Total: 7,871,759 entries
     """
 
     state_targets = (
@@ -879,9 +879,9 @@ class LookupTableIDA777Step40(LookupTableIDA):
             # prune tables
             (parent.lt_step41,
              parent.lt_step42),
-            linecount=1072138,
-            max_depth=5,
-            filesize=81482488)
+            linecount=7871759,
+            max_depth=6,
+            filesize=637612479)
 
     def state(self):
         parent_state = self.parent.state
@@ -893,7 +893,7 @@ class LookupTableIDA777Step40(LookupTableIDA):
 class LookupTable777Step51(LookupTableHashCostOnly):
     """
     lookup-table-7x7x7-step51.txt
-    ==============================
+    =============================
     1 steps has 226 entries (0 percent, 0.00x previous step)
     2 steps has 1,433 entries (0 percent, 6.34x previous step)
     3 steps has 8,986 entries (0 percent, 6.27x previous step)
@@ -986,7 +986,7 @@ class LookupTable777Step51(LookupTableHashCostOnly):
 class LookupTable777Step52(LookupTableHashCostOnly):
     """
     lookup-table-7x7x7-step52.txt
-    ==============================
+    =============================
     1 steps has 250 entries (0 percent, 0.00x previous step)
     2 steps has 1,845 entries (0 percent, 7.38x previous step)
     3 steps has 12,756 entries (0 percent, 6.91x previous step)
@@ -1077,14 +1077,15 @@ class LookupTable777Step52(LookupTableHashCostOnly):
 class LookupTableIDA777Step50(LookupTableIDA):
     """
     lookup-table-7x7x7-step50.txt
-    ==============================
+    =============================
     1 steps has 250 entries (0 percent, 0.00x previous step)
     2 steps has 1,981 entries (0 percent, 7.92x previous step)
-    3 steps has 15,782 entries (1 percent, 7.97x previous step)
-    4 steps has 123,053 entries (11 percent, 7.80x previous step)
-    5 steps has 931,072 entries (86 percent, 7.57x previous step)
+    3 steps has 15,782 entries (0 percent, 7.97x previous step)
+    4 steps has 123,053 entries (1 percent, 7.80x previous step)
+    5 steps has 931,072 entries (11 percent, 7.57x previous step)
+    6 steps has 6,799,621 entries (86 percent, 7.30x previous step)
 
-    Total: 1,072,138 entries
+    Total: 7,871,759 entries
     """
 
     state_targets = (
@@ -1153,9 +1154,9 @@ class LookupTableIDA777Step50(LookupTableIDA):
             # prune tables
             (parent.lt_step51,
              parent.lt_step52),
-            linecount=1072138,
-            max_depth=5,
-            filesize=81482488)
+            linecount=7871759,
+            max_depth=6,
+            filesize=629740720)
 
     def state(self):
         parent_state = self.parent.state
@@ -1167,7 +1168,7 @@ class LookupTableIDA777Step50(LookupTableIDA):
 class LookupTable777Step61(LookupTableHashCostOnly):
     """
     lookup-table-7x7x7-step61.txt
-    ==============================
+    =============================
     1 steps has 9 entries (0 percent, 0.00x previous step)
     2 steps has 56 entries (0 percent, 6.22x previous step)
     3 steps has 340 entries (0 percent, 6.07x previous step)
@@ -1223,7 +1224,7 @@ class LookupTable777Step61(LookupTableHashCostOnly):
 class LookupTable777Step62(LookupTableHashCostOnly):
     """
     lookup-table-7x7x7-step62.txt
-    ==============================
+    =============================
     1 steps has 9 entries (0 percent, 0.00x previous step)
     2 steps has 68 entries (0 percent, 7.56x previous step)
     3 steps has 464 entries (0 percent, 6.82x previous step)
@@ -1277,15 +1278,16 @@ class LookupTable777Step62(LookupTableHashCostOnly):
 class LookupTableIDA777Step60(LookupTableIDA):
     """
     lookup-table-7x7x7-step60.txt
-    ==============================
+    =============================
     1 steps has 9 entries (0 percent, 0.00x previous step)
     2 steps has 108 entries (0 percent, 12.00x previous step)
     3 steps has 1,192 entries (0 percent, 11.04x previous step)
     4 steps has 12,762 entries (0 percent, 10.71x previous step)
-    5 steps has 133,624 entries (8 percent, 10.47x previous step)
-    6 steps has 1,382,900 entries (90 percent, 10.35x previous step)
+    5 steps has 133,624 entries (0 percent, 10.47x previous step)
+    6 steps has 1,382,900 entries (8 percent, 10.35x previous step)
+    7 steps has 13,876,960 entries (90 percent, 10.03x previous step)
 
-    Total: 1,530,595 entries
+    Total: 15,407,555 entries
     """
 
     state_indexes = (
@@ -1323,9 +1325,9 @@ class LookupTableIDA777Step60(LookupTableIDA):
             # prune tables
             (parent.lt_step61,
              parent.lt_step62),
-            linecount=1530595,
-            max_depth=6,
-            filesize=277037695)
+            linecount=15407555,
+            max_depth=7,
+            filesize=2850397675)
 
     def state(self):
         parent_state = self.parent.state

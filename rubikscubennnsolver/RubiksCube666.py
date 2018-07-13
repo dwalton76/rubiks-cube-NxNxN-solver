@@ -1108,15 +1108,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             fake_555.state[23 + offset_555] = self.state[33 + offset_666]
             fake_555.state[24 + offset_555] = self.state[35 + offset_666]
 
-    def solve_reduced_555_centers_and_edges(self):
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_ULFRBD_solve()
-        fake_555.group_centers_guts()
-        fake_555.group_edges()
-
-        for step in fake_555.solution:
-            self.rotate(step)
-
     def solve_reduced_555_centers(self):
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
@@ -1224,21 +1215,17 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         log.info("%s: LFRB inner x-center and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("\n\n\n\n\n")
 
-        # We must "solve" the t-centers so that we can use the 4x4x4 solver to pair the inside edges.
-        # That solver needs the centers to be solved.
-        self.solve_reduced_555_t_centers()
-        self.print_cube()
-        log.info("%s: Took %d steps to solve oblique edges" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("\n\n\n\n\n")
-
-        if not oblique_edges_only:
-            self.prevent_OLL()
-            self.pair_inside_edges_via_444()
-            log.info("%s: Took %d steps to reduce 5x5x5" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-            self.solve_reduced_555_centers_and_edges()
+        if oblique_edges_only:
+            self.solve_reduced_555_t_centers()
             self.print_cube()
-            log.info("%s: Took %d steps to reduce to 3x3x3" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("%s: solved T-centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("\n\n\n\n\n")
+        else:
+            self.solve_reduced_555_centers()
+            self.print_cube()
+            log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("\n\n\n\n\n")
+
 
     def phase(self):
         if self._phase is None:

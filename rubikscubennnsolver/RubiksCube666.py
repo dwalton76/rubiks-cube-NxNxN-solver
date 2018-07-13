@@ -607,10 +607,11 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
     """
     lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt
     ====================================================================
-    1 steps has 95,346 entries (7 percent, 0.00x previous step)
-    2 steps has 1,257,166 entries (92 percent, 13.19x previous step)
+    1 steps has 95,346 entries (0 percent, 0.00x previous step)
+    2 steps has 1,257,166 entries (7 percent, 13.19x previous step)
+    3 steps has 16,312,708 entries (92 percent, 12.98x previous step)
 
-    Total: 1,352,512 entries
+    Total: 17,665,220 entries
     """
     LFRB_inner_x_centers_oblique_edges_666 = (
             45, 46,
@@ -657,8 +658,9 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
             (parent.lt_LR_oblique_edges_stage,
              parent.lt_LR_inner_x_centers_stage),
 
-            linecount=1352512,
-            max_depth=2),
+            linecount=17665220,
+            max_depth=3,
+            filesize=317973960),
 
     def state(self):
         parent_state = self.parent.state
@@ -901,11 +903,12 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     """
     lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt
     ==========================================================================
-    1 steps has 9,800 entries (1 percent, 0.00x previous step)
-    2 steps has 74,480 entries (10 percent, 7.60x previous step)
-    3 steps has 645,960 entries (88 percent, 8.67x previous step)
+    1 steps has 9,800 entries (0 percent, 0.00x previous step)
+    2 steps has 74,480 entries (1 percent, 7.60x previous step)
+    3 steps has 645,960 entries (12 percent, 8.67x previous step)
+    4 steps has 4,589,992 entries (86 percent, 7.11x previous step)
 
-    Total: 730,240 entries
+    Total: 5,320,232 entries
     """
 
     def __init__(self, parent):
@@ -928,9 +931,9 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
              parent.lt_FB_solve_inner_x_centers_and_oblique_edges,),
 
-            linecount=730240,
-            max_depth=3,
-            filesize=46005120)
+            linecount=5320232,
+            max_depth=4,
+            filesize=287292528)
 
     def state(self):
         parent_state = self.parent.state

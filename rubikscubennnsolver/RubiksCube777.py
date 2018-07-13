@@ -881,7 +881,7 @@ class LookupTableIDA777Step40(LookupTableIDA):
              parent.lt_step42),
             linecount=7871759,
             max_depth=6,
-            filesize=637612479)
+            filesize=440818504)
 
     def state(self):
         parent_state = self.parent.state
@@ -1156,7 +1156,7 @@ class LookupTableIDA777Step50(LookupTableIDA):
              parent.lt_step52),
             linecount=7871759,
             max_depth=6,
-            filesize=629740720)
+            filesize=440818504)
 
     def state(self):
         parent_state = self.parent.state
@@ -1327,7 +1327,7 @@ class LookupTableIDA777Step60(LookupTableIDA):
              parent.lt_step62),
             linecount=15407555,
             max_depth=7,
-            filesize=2850397675)
+            filesize=2403578580)
 
     def state(self):
         parent_state = self.parent.state

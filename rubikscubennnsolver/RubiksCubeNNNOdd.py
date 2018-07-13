@@ -55,6 +55,15 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         log.info("%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
             (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle))
 
+        side_name = {
+            0 : 'U',
+            1 : 'L',
+            2 : 'F',
+            3 : 'R',
+            4 : 'B',
+            5 : 'D',
+        }
+
         for x in range(6):
             mid_NNN_row1 = start_NNN + row0_midpoint + (self.size * (max_center_orbits - center_orbit_id + 1))
             start_NNN_row1 = mid_NNN_row1 - (2 + cycle)
@@ -153,10 +162,12 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
             else:
                 #fake_777.state[start_777+9] = self.state[row1_col1]
+                fake_777.state[start_777+9] = side_name[x]
                 fake_777.state[start_777+10] = self.state[row1_col2]
                 fake_777.state[start_777+11] = self.state[row1_col3]
                 fake_777.state[start_777+12] = self.state[row1_col4]
                 #fake_777.state[start_777+13] = self.state[row1_col5]
+                fake_777.state[start_777+13] = side_name[x]
 
                 fake_777.state[start_777+16] = self.state[row2_col1]
                 fake_777.state[start_777+17] = self.state[row2_col2]
@@ -177,10 +188,12 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                 fake_777.state[start_777+34] = self.state[row4_col5]
 
                 #fake_777.state[start_777+37] = self.state[row5_col1]
+                fake_777.state[start_777+37] = side_name[x]
                 fake_777.state[start_777+38] = self.state[row5_col2]
                 fake_777.state[start_777+39] = self.state[row5_col3]
                 fake_777.state[start_777+40] = self.state[row5_col4]
                 #fake_777.state[start_777+41] = self.state[row5_col5]
+                fake_777.state[start_777+41] = side_name[x]
 
             start_777 += 49
             start_NNN += (self.size * self.size)
@@ -193,11 +206,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         half_size = str(ceil(self.size/2) - 1 - cycle)
         wide_size = str(ceil(self.size/2) - 2 - center_orbit_id)
 
-        if ((center_orbit_id == 0 and cycle == 0) or
-            (center_orbit_id == max_center_orbits and cycle == max_cycle)):
-            fake_777.group_centers_guts()
-        else:
-            fake_777.group_centers_guts(oblique_edges_only=True)
+        fake_777.group_centers_guts()
 
         for step in fake_777.solution:
             if step.startswith("3"):

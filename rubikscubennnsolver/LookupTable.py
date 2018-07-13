@@ -602,8 +602,8 @@ class LookupTableCostOnly(LookupTable):
 
 class LookupTableHashCostOnly(LookupTableCostOnly):
 
-    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True, bucketcount=None):
-        LookupTableCostOnly.__init__(self, parent, filename, state_target, linecount, max_depth, load_string)
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True, bucketcount=None, filesize=None):
+        LookupTableCostOnly.__init__(self, parent, filename, state_target, linecount, max_depth, load_string, filesize)
         self.bucketcount = bucketcount
 
     def steps_cost(self, state_to_find=None):
@@ -771,6 +771,7 @@ class LookupTableIDA(LookupTable):
                 log.info("%s: IDA found match %d steps, solution length %d, f_cost %d (%d + %d)" %
                          (self, len(steps_to_here), len(solution_steps),
                           f_cost, cost_to_here, cost_to_goal))
+                #log.info("%s: solution %s" % (self, ' '.join(solution_steps)))
 
             # We use the heuristic of the next phase to rank the solutions in this phase
             if self.next_phase:
@@ -945,7 +946,7 @@ class LookupTableIDA(LookupTable):
             else:
                 end_time1 = dt.datetime.now()
                 delta = end_time1 - start_time1
-                nodes_per_sec = int(total_ida_count / delta.total_seconds())
+                nodes_per_sec = int(self.ida_count / delta.total_seconds())
                 log.info("%s: IDA threshold %d, explored %d nodes in %s, %d nodes-per-sec" %
                     (self, threshold, self.ida_count, pretty_time(delta), nodes_per_sec))
 

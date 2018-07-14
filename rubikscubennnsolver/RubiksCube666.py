@@ -1050,12 +1050,12 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(self)
         self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
-        self.lt_UD_oblique_edge_stage.preload_cache()
+        self.lt_UD_oblique_edge_stage.preload_cache_set()
 
         self.lt_LR_oblique_edges_stage = LookupTable666LRObliqueEdgesStage(self)
         self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCentersStage(self)
         self.lt_LR_inner_x_centers_and_oblique_edges_stage = LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(self)
-        self.lt_LR_inner_x_centers_and_oblique_edges_stage.preload_cache()
+        self.lt_LR_inner_x_centers_and_oblique_edges_stage.preload_cache_set()
         #self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = True
 
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
@@ -1063,9 +1063,9 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
         self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
-        self.lt_LR_solve_inner_x_centers_and_oblique_edges.preload_cache()
-        self.lt_FB_solve_inner_x_centers_and_oblique_edges.preload_cache()
-        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.preload_cache()
+        self.lt_LR_solve_inner_x_centers_and_oblique_edges.preload_cache_dict()
+        self.lt_FB_solve_inner_x_centers_and_oblique_edges.preload_cache_dict()
+        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.preload_cache_set()
         #self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.avoid_oll = True
 
     def populate_fake_555_for_ULFRBD_solve(self):

@@ -1428,31 +1428,31 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_UD_oblique_edge_pairing_left_only = LookupTable777UDObliqueEdgePairingLeftOnly(self)
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable777UDObliqueEdgePairingRightOnly(self)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
-        self.lt_UD_oblique_edge_pairing_middle_only.preload_cache()
-        self.lt_UD_oblique_edge_pairing_left_only.preload_cache()
-        self.lt_UD_oblique_edge_pairing_right_only.preload_cache()
-        self.lt_UD_oblique_edge_pairing.preload_cache()
+        self.lt_UD_oblique_edge_pairing_middle_only.preload_cache_dict()
+        self.lt_UD_oblique_edge_pairing_left_only.preload_cache_dict()
+        self.lt_UD_oblique_edge_pairing_right_only.preload_cache_dict()
+        self.lt_UD_oblique_edge_pairing.preload_cache_dict()
 
         self.lt_LR_outside_oblique_edge_pairing = LookupTable777LROutsideObliqueEdgePairing(self)
         self.lt_LR_left_middle_oblique_edge_pairing = LookupTable777LRLeftMiddleObliqueEdgePairing(self)
         self.lt_LR_right_middle_oblique_edge_pairing = LookupTable777LRRightMiddleObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
-        self.lt_LR_oblique_edge_pairing.preload_cache()
+        self.lt_LR_oblique_edge_pairing.preload_cache_set()
 
         self.lt_step41 = LookupTable777Step41(self)
         self.lt_step42 = LookupTable777Step42(self)
         self.lt_step40 = LookupTableIDA777Step40(self)
-        self.lt_step40.preload_cache()
+        self.lt_step40.preload_cache_set()
 
         self.lt_step51 = LookupTable777Step51(self)
         self.lt_step52 = LookupTable777Step52(self)
         self.lt_step50 = LookupTableIDA777Step50(self)
-        self.lt_step50.preload_cache()
+        self.lt_step50.preload_cache_set()
 
         self.lt_step61 = LookupTable777Step61(self)
         self.lt_step62 = LookupTable777Step62(self)
         self.lt_step60 = LookupTableIDA777Step60(self)
-        self.lt_step60.preload_cache()
+        self.lt_step60.preload_cache_set()
 
     def create_fake_555_from_inside_centers(self):
 

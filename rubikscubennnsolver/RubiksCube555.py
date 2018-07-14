@@ -997,22 +997,39 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
         self.lt_UD_X_centers_stage = LookupTable555UDXCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
-        self.lt_UD_T_centers_stage.preload_cache()
-        self.lt_UD_X_centers_stage.preload_cache()
-        self.lt_UD_centers_stage.preload_cache()
+        self.lt_UD_T_centers_stage.preload_cache_dict()
+        self.lt_UD_X_centers_stage.preload_cache_dict()
+
+        # Some stats for the various ways we can preload lt_UD_centers_stage
+        #
+        # list
+        # Memory : 1,142,951,936 bytes
+        # 22989 nodes-per-sec
+        #
+        # dict
+        # Memory : 2,799,235,072 bytes
+        # 29441 nodes-per-sec
+        #
+        # set
+        # Memory : 2,139,684,864 bytes
+        # 28203 nodes-per-sec
+        #
+        #self.lt_UD_centers_stage.preload_cache_list()
+        #self.lt_UD_centers_stage.preload_cache_dict()
+        self.lt_UD_centers_stage.preload_cache_set()
 
         self.lt_LR_centers_stage = LookupTable555LRCentersStage(self)
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
-        self.lt_ULFRB_centers_solve.preload_cache()
+        self.lt_ULFRB_centers_solve.preload_cache_dict()
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
-        #self.lt_edges_stage_first_four.preload_cache()
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
-        self.lt_edges_stage_second_four.preload_cache()
+        self.lt_edges_stage_second_four.preload_cache_dict()
         self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
+        self.lt_edges_pair_last_four.preload_cache_dict()
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 

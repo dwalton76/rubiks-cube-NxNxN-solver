@@ -682,9 +682,9 @@ class RubiksCubeTsai444(RubiksCube444):
         # ==============
         # Stage LR centers
         self.lt_tsai_phase1_centers = LookupTable444TsaiPhase1Centers(self)
-        self.lt_tsai_phase1_centers.preload_cache()
+        self.lt_tsai_phase1_centers.preload_cache_dict()
         self.lt_tsai_phase1 = LookupTableIDA444TsaiPhase1(self)
-        self.lt_tsai_phase1.preload_cache()
+        self.lt_tsai_phase1.preload_cache_dict()
 
         # =============
         # Phase2 tables
@@ -694,8 +694,8 @@ class RubiksCubeTsai444(RubiksCube444):
         # - stage UD and FB centers
         self.lt_tsai_phase2_centers = LookupTable444TsaiPhase2Centers(self)
         #self.lt_tsai_phase2_edges = LookupTable444TsaiPhase2Edges(self)
-        #self.lt_tsai_phase2_edges.preload_cache()
-        self.lt_tsai_phase2_centers.preload_cache()
+        #self.lt_tsai_phase2_edges.preload_cache_dict()
+        self.lt_tsai_phase2_centers.preload_cache_dict()
         self.lt_tsai_phase2 = LookupTableIDA444TsaiPhase2(self)
 
         # =============
@@ -705,8 +705,8 @@ class RubiksCubeTsai444(RubiksCube444):
         self.lt_tsai_phase3_edges_solve = LookupTable444TsaiPhase3Edges(self)
         self.lt_tsai_phase3_centers_solve = LookupTable444TsaiPhase3CentersSolve(self)
         self.lt_tsai_phase3 = LookupTableIDA444TsaiPhase3(self)
-        self.lt_tsai_phase3_centers_solve.preload_cache()
-        self.lt_tsai_phase3.preload_cache()
+        self.lt_tsai_phase3_centers_solve.preload_cache_dict()
+        self.lt_tsai_phase3.preload_cache_set()
 
     def high_low_state(self, x, y, state_x, state_y, wing_str):
         """

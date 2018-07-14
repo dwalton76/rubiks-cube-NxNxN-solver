@@ -6,9 +6,11 @@ from rubikscubennnsolver.RubiksSide import SolveError
 from pprint import pformat
 from pyhashxx import hashxx
 from subprocess import call
+import gc
 import logging
 import os
 import sys
+import resource
 
 
 log = logging.getLogger(__name__)
@@ -183,12 +185,15 @@ class LookupTable(object):
         self.max_depth = max_depth
         self.avoid_oll = False
         self.avoid_pll = False
-        self.preloaded_state_set = False
-        self.preloaded_cache = False
+        self.preloaded_cache_dict = False
+        self.preloaded_cache_set = False
+        self.preloaded_cache_list = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
         self.fh_txt_seek_calls = 0
         self.cache = {}
+        self.cache_set = set()
+        self.cache_list = []
         self.filesize = filesize
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
@@ -247,7 +252,6 @@ class LookupTable(object):
     def binary_search(self, state_to_find):
         first = 0
         last = self.linecount - 1
-        b_state_to_find = bytearray(state_to_find, encoding='utf-8')
 
         while first <= last:
             midpoint = int((first + last)/2)
@@ -257,11 +261,11 @@ class LookupTable(object):
             # Only read the 'state' part of the line (for speed)
             b_state = self.fh_txt.read(self.state_width)
 
-            if b_state_to_find < b_state:
+            if state_to_find < b_state:
                 last = midpoint - 1
 
             # If this is the line we are looking for, then read the entire line
-            elif b_state_to_find == b_state:
+            elif state_to_find == b_state:
                 self.fh_txt.seek(midpoint * self.width)
                 line = self.fh_txt.read(self.width)
                 return line.decode('utf-8').rstrip()
@@ -271,8 +275,26 @@ class LookupTable(object):
 
         return None
 
-    def preload_cache(self):
-        log.warning("%s: begin preload cache" % self)
+    def binary_search_cache_list(self, state_to_find):
+        first = 0
+        last = len(self.cache_list) - 1
+
+        while first <= last:
+            midpoint = int((first + last)/2)
+            state = self.cache_list[midpoint]
+
+            if state_to_find < state:
+                last = midpoint - 1
+            elif state_to_find == state:
+                return True
+            else:
+                first = midpoint + 1
+
+        return False
+
+    def preload_cache_dict(self):
+        log.warning("%s: begin preload cache dict" % self)
+        memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
         if isinstance(self, LookupTableCostOnly):
             raise Exception("%s is a CostOnly table, no need to call preload_cache()" % self)
@@ -290,10 +312,64 @@ class LookupTable(object):
                     (state, steps) = line.rstrip().split(':')
                     # Store this as a string, not a list.  It takes more than 2x the memory to store steps.split()
                     # For solving a 7x7x7 this is the difference in requiring 3G of RAM vs 7G!!.
-                    self.cache[state] = steps
+                    self.cache[bytes(state, 'ascii')] = steps
 
-        self.preloaded_cache = True
-        log.warning("{}: end preload cache ({:,} bytes)".format(self, sys.getsizeof(self.cache)))
+        self.preloaded_cache_dict = True
+        memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        memory_delta = memory_post - memory_pre
+        log.warning("{}: end preload cache dict ({:,} bytes)".format(self, memory_delta))
+
+    def preload_cache_set(self):
+        log.warning("%s: begin preload cache set" % self)
+        memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        states = []
+
+        if isinstance(self, LookupTableCostOnly):
+            raise Exception("%s is a CostOnly table, no need to call preload_cache_set()" % self)
+
+        if 'dummy' in self.filename:
+            pass
+        else:
+            # Another option here would be to store a list of (state, step) tuples and
+            # then binary search through it. That takes about 1/6 the amount of memory
+            # but would be slower.  I have not measured how much slower.
+            with open(self.filename, 'r') as fh:
+
+                # The bottleneck is the building of the dictionary, moreso that reading from disk.
+                for line in fh:
+                    state = line[:self.state_width]
+                    states.append(bytes(state, 'ascii'))
+
+        self.cache_set = set(states)
+        self.preloaded_cache_set = True
+        memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        memory_delta = memory_post - memory_pre
+        log.warning("{}: end preload cache set ({:,} bytes)".format(self, memory_delta))
+
+    def preload_cache_list(self):
+        log.warning("%s: begin preload cache list" % self)
+        memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        self.cache_list = []
+        state_len = 0
+
+        if isinstance(self, LookupTableCostOnly):
+            raise Exception("%s is a CostOnly table, no need to call preload_cache_set()" % self)
+
+        if 'dummy' in self.filename:
+            pass
+        else:
+            with open(self.filename, 'r') as fh:
+
+                # The bottleneck is the building of the dictionary, moreso that reading from disk.
+                for line in fh:
+                    state = line[:self.state_width]
+                    #(state, steps) = line.rstrip().split(':')
+                    self.cache_list.append(bytes(state, 'ascii'))
+
+        self.preloaded_cache_list = True
+        memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        memory_delta = memory_post - memory_pre
+        log.warning("{}: end preload cache list ({:,} bytes)".format(self, memory_delta))
 
     def steps(self, state_to_find=None):
         """
@@ -306,22 +382,46 @@ class LookupTable(object):
         if state_to_find in self.state_target:
             return None
 
-        if self.preloaded_cache:
+        state_to_find = bytes(state_to_find, encoding='utf-8')
+
+        if self.preloaded_cache_dict:
             steps = self.cache.get(state_to_find)
             if steps:
                 return steps.split()
             else:
                 return None
 
-        line = self.binary_search(state_to_find)
+        elif self.preloaded_cache_set:
 
-        if line:
-            (state, steps) = line.strip().split(':')
-            steps_list = steps.split()
-            return steps_list
+            if state_to_find in self.cache_set:
+                # Binary search the file to get the value
+                line = self.binary_search(state_to_find)
+                #log.info("%s: %s is in cache_set, line %s" % (self, state_to_find, line))
+                (state, steps) = line.strip().split(':')
+                steps_list = steps.split()
+                return steps_list
 
+        elif self.preloaded_cache_list:
+
+            if self.binary_search_cache_list(state_to_find):
+                # Binary search the file to get the value
+                line = self.binary_search(state_to_find)
+                #log.info("%s: %s is in cache_set, line %s" % (self, state_to_find, line))
+                (state, steps) = line.strip().split(':')
+                steps_list = steps.split()
+                return steps_list
+
+        # Binary search the file to get the value
         else:
-            return None
+            #log.warning("%s: neither preload_cache() or preload_cache_set() were called" % self)
+
+            line = self.binary_search(state_to_find)
+            if line:
+                (state, steps) = line.strip().split(':')
+                steps_list = steps.split()
+                return steps_list
+
+        return None
 
     def steps_cost(self, state_to_find=None):
 
@@ -516,8 +616,9 @@ class LookupTableCostOnly(LookupTable):
         self.max_depth = max_depth
         self.avoid_oll = False
         self.avoid_pll = False
-        self.preloaded_state_set = False
-        self.preloaded_cache = False
+        self.preloaded_cache_dict = False
+        self.preloaded_cache_set = False
+        self.preloaded_cache_list = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
         self.filesize = filesize

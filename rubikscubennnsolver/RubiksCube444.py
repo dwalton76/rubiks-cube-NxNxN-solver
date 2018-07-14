@@ -783,13 +783,13 @@ class RubiksCube444(RubiksCube):
         # Stage all centers via IDA
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = True
-        self.lt_ULFRBD_centers_stage.preload_cache()
+        self.lt_ULFRBD_centers_stage.preload_cache_set()
 
         # =============
         # Phase2 tables
         # =============
         self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
-        self.lt_ULFRBD_centers_solve.preload_cache()
+        self.lt_ULFRBD_centers_solve.preload_cache_set()
         self.lt_ULFRBD_centers_solve_pair_two_edges = LookupTable444ULFRBDCentersSolvePairTwoEdges(self)
 
         # Edges table

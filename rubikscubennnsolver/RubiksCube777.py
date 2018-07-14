@@ -481,84 +481,6 @@ class LookupTable777LRRightMiddleObliqueEdgePairing(LookupTable777LRLeftMiddleOb
         return self.hex_format % int(result, 2)
 
 
-class LookupTable777LRObliqueEdgePairingInadmisibble(LookupTable):
-
-    LFRB_oblique_edge_pairs_777 = (
-        #(10, 11, 12), (16, 23, 30), (20, 27, 34), (38, 39, 40),             # Upper
-        (59, 60, 61), (65, 72, 79), (69, 76, 83), (87, 88, 89),             # Left
-        (108, 109, 110), (114, 121, 128), (118, 125, 132), (136, 137, 138), # Front
-        (157, 158, 159), (163, 170, 177), (167, 174, 181), (185, 186, 187), # Right
-        (206, 207, 208), (212, 219, 226), (216, 223, 230), (234, 235, 236), # Back
-        #(255, 256, 257), (261, 268, 275), (265, 272, 279), (283, 284, 285), # Down
-    )
-
-    LFRB_left_oblique_edge_pairs_777 = (
-        #(10, 11), (23, 30), (20, 27), (39, 40),         # Upper
-        (59, 60), (72, 79), (69, 76), (88, 89),         # Left
-        (108, 109), (121, 128), (118, 125), (137, 138), # Front
-        (157, 158), (170, 177), (167, 174), (186, 187), # Right
-        (206, 207), (219, 226), (216, 223), (235, 236), # Back
-        #(255, 256), (268, 275), (265, 272), (284, 285), # Down
-    )
-
-    LFRB_right_oblique_edge_pairs_777 = (
-        #(11, 12), (16, 23), (27, 34), (38, 39),         # Upper
-        (60, 61), (65, 72), (76, 83), (87, 88),         # Left
-        (109, 110), (114, 121), (125, 132), (136, 137), # Front
-        (158, 159), (163, 170), (174, 181), (185, 186), # Right
-        (207, 208), (212, 219), (223, 230), (234, 235), # Back
-        #(256, 257), (261, 268), (272, 279), (283, 284), # Down
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step34-stage-lr-oblique-edges-inadmissible-dummy.txt',
-            'TBD',
-            linecount=0,
-            max_depth=4) # 4 is the max heuristic() can return
-
-    def get_LR_unpaired_obliques_count(self):
-        parent_state = self.parent.state
-        paired_obliques = 0
-
-        for (x, y, z) in self.LFRB_oblique_edge_pairs_777:
-            if parent_state[x] in ('L', 'R') and parent_state[y] in ('L', 'R') and parent_state[z] in ('L', 'R'):
-                paired_obliques += 1
-
-        return 8 - paired_obliques
-
-    def get_LR_left_unpaired_obliques_count(self):
-        parent_state = self.parent.state
-        paired_obliques = 0
-
-        for (x, y) in self.LFRB_left_oblique_edge_pairs_777:
-            if parent_state[x] in ('L', 'R') and parent_state[y] in ('L', 'R'):
-                paired_obliques += 1
-
-        return 8 - paired_obliques
-
-    def get_LR_right_unpaired_obliques_count(self):
-        parent_state = self.parent.state
-        paired_obliques = 0
-
-        for (x, y) in self.LFRB_right_oblique_edge_pairs_777:
-            if parent_state[x] in ('L', 'R') and parent_state[y] in ('L', 'R'):
-                paired_obliques += 1
-
-        return 8 - paired_obliques
-
-    def heuristic(self):
-        LR_left_unpaired_obliques = self.get_LR_left_unpaired_obliques_count()
-        LR_right_unpaired_obliques = self.get_LR_right_unpaired_obliques_count()
-
-        # This returns 3 about 99% of the time
-        result = max(math.ceil(LR_left_unpaired_obliques/2), math.ceil(LR_right_unpaired_obliques/2))
-        #log.info("left %d, right %d, return %d" % (LR_left_unpaired_obliques, LR_right_unpaired_obliques, result))
-        return result
-
-
 class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
     """
     lookup-table-7x7x7-step30-stage-lr-oblique-edges.txt
@@ -605,8 +527,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
             # prune tables
             (parent.lt_LR_outside_oblique_edge_pairing,
              parent.lt_LR_left_middle_oblique_edge_pairing,
-             parent.lt_LR_right_middle_oblique_edge_pairing,
-             parent.lt_LR_oblique_edge_pairing_inadmissible),
+             parent.lt_LR_right_middle_oblique_edge_pairing),
 
             linecount=9919742,
             max_depth=3),
@@ -1515,7 +1436,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_LR_outside_oblique_edge_pairing = LookupTable777LROutsideObliqueEdgePairing(self)
         self.lt_LR_left_middle_oblique_edge_pairing = LookupTable777LRLeftMiddleObliqueEdgePairing(self)
         self.lt_LR_right_middle_oblique_edge_pairing = LookupTable777LRRightMiddleObliqueEdgePairing(self)
-        self.lt_LR_oblique_edge_pairing_inadmissible = LookupTable777LRObliqueEdgePairingInadmisibble(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing.preload_cache()
 

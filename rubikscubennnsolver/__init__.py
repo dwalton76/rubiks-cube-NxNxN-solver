@@ -361,15 +361,6 @@ def get_important_square_indexes(size):
     return (first_squares, last_squares, last_UBD_squares)
 
 
-def number_ranges(i):
-    """
-    https://stackoverflow.com/questions/4628333/converting-a-list-of-integers-into-range-in-python
-    """
-    for a, b in itertools.groupby(enumerate(i), lambda x_y: x_y[1] - x_y[0]):
-        b = list(b)
-        yield b[0][1], b[-1][1]
-
-
 class RubiksCube(object):
 
     def __init__(self, state_string, order, colormap=None, debug=False):
@@ -1203,7 +1194,7 @@ class RubiksCube(object):
                 print(("        cube[%s] = cube_tmp[%s];" % (key, value)))
         print("")
 
-    def print_case_statement_python(self, case):
+    def print_case_statement_python(self, function_name, case):
         """
         This is called via utils/rotate-printer.py, it is used to print the
         contents of rotate_xxx.py
@@ -1213,31 +1204,7 @@ class RubiksCube(object):
         for (key, value) in enumerate(self.state[1:]):
             numbers.append(int(value))
 
-        '''
-        If you feed number_ranges()
-            [0, 1, 2, 3, 4, 7, 8, 9, 11]
-
-        It will return:
-            [(0, 4), (7, 9), (11, 11)]
-        '''
-        lists = []
-        indexes_outside_streak = []
-
-        for (start_index, last_index) in number_ranges(numbers):
-            if start_index == last_index:
-                indexes_outside_streak.append("cube[%d]" % start_index)
-            else:
-                if indexes_outside_streak:
-                    # cube[11], cube[13]
-                    lists.append("[%s]" % ','.join(indexes_outside_streak))
-                    indexes_outside_streak = []
-                lists.append("cube[%d:%d]" % (start_index, last_index+1))
-
-        if indexes_outside_streak:
-            lists.append("[%s]" % ','.join(indexes_outside_streak))
-            indexes_outside_streak = []
-
-        print(("    return %s" % ' + '.join(lists)))
+        return tuple(numbers)
 
     def randomize(self):
         """

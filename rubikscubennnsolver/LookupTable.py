@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import cProfile as profile
 import datetime as dt
 from rubikscubennnsolver.RubiksSide import SolveError
 from pprint import pformat
@@ -838,7 +839,7 @@ class LookupTableIDA(LookupTable):
                 else:
                     skip_other_steps_this_face = None
 
-            self.parent.state = self.rotate_xxx(prev_state[:], step)
+            self.parent.state = self.rotate_xxx(prev_state, step)
 
             (f_cost_tmp, found_solution) = self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:])
             if found_solution:
@@ -852,6 +853,13 @@ class LookupTableIDA(LookupTable):
         self.parent.state = prev_state[:]
         return (f_cost, False)
 
+    # uncomment to cProfile solve()
+    '''
+    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
+            profile.runctx('self.solve_guts()', globals(), locals())
+
+    def solve_guts(self, min_ida_threshold=None, max_ida_threshold=99):
+    '''
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
         """
         The goal is to find a sequence of moves that will put the cube in a state that is

@@ -6,6 +6,7 @@ https://github.com/dwalton76/rubiks-cube-lookup-tables/blob/master/rotate.c
 """
 
 from copy import copy
+from pprint import pformat
 from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.RubiksCube222 import solved_222, moves_222
 from rubikscubennnsolver.RubiksCube333 import solved_333, moves_333
@@ -113,24 +114,14 @@ for (size, solved_state) in (
 
         for step in steps:
             step_pretty = step.replace("'", "_prime")
-
             function_name = "rotate_%d%d%d_%s" % (size, size, size, step_pretty)
-            print("")
-            print("def %s(cube):" % function_name)
             rotate_mapper[step] = function_name
 
             cube.rotate(step)
-            cube.print_case_statement_python(step)
+            rotate_mapper[step] = cube.print_case_statement_python(function_name, step)
             cube.state = copy(original_state)
-            #print("\n\n")
 
-        print("")
-        print("rotate_mapper_%d%d%d = {" % (size, size, size))
-        for step in sorted(rotate_mapper.keys()):
-            print("    \"%s\" : %s," % (step, rotate_mapper[step]))
-        print("}")
-
-        print("")
-        print("def rotate_%d%d%d(cube, step):" % (size, size, size))
-        print("    return rotate_mapper_%d%d%d[step](cube)" % (size, size, size))
+        print("swaps_%d%d%d = %s" % (size, size, size, pformat(rotate_mapper, width=10024)))
+        print("\ndef rotate_%d%d%d(cube, step):" % (size, size, size))
+        print("    return [cube[x] for x in swaps_%d%d%d[step]]" % (size, size, size))
         print("")

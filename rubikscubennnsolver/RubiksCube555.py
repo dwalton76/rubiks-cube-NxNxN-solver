@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.RubiksCube444 import moves_444
 from rubikscubennnsolver.LookupTable import (
@@ -336,10 +337,11 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
     1 steps has 5 entries (0 percent, 0.00x previous step)
     2 steps has 98 entries (0 percent, 19.60x previous step)
     3 steps has 2,036 entries (0 percent, 20.78x previous step)
-    4 steps has 41,096 entries (4 percent, 20.18x previous step)
-    5 steps has 824,950 entries (95 percent, 20.07x previous step)
+    4 steps has 41,096 entries (0 percent, 20.18x previous step)
+    5 steps has 824,950 entries (4 percent, 20.07x previous step)
+    6 steps has 16,300,291 entries (94 percent, 19.76x previous step)
 
-    Total: 868,185 entries
+    Total: 17,168,476 entries
     """
 
     def __init__(self, parent):
@@ -355,9 +357,9 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             (parent.lt_UD_T_centers_stage,
              parent.lt_UD_X_centers_stage),
 
-            linecount=868185,
-            max_depth=5,
-            filesize=30386475)
+            linecount=17168476,
+            max_depth=6,
+            filesize=669570564)
 
     def state(self):
         parent_state = self.parent.state
@@ -1240,6 +1242,9 @@ class RubiksCube555(RubiksCube):
         # sequences put the cube in a state such that one of the 495 edge permurtations does find
         # a hit. I have yet to find a cube that cannot be solved with this approach but if I did
         # the pre_steps_to_try could be expanded to 4-deep.
+
+        # Ran this once to generate pre_steps_to_try
+        '''
         outer_layer_moves = (
             "U", "U'", "U2",
             "L", "L'", "L2",
@@ -1252,12 +1257,12 @@ class RubiksCube555(RubiksCube):
         pre_steps_to_try.append([])
 
         for step in outer_layer_moves:
-            pre_steps_to_try.append([step,])
+            pre_steps_to_try.append((step,))
 
         for step1 in outer_layer_moves:
             for step2 in outer_layer_moves:
                 if not steps_on_same_face_and_layer(step1, step2):
-                    pre_steps_to_try.append([step1, step2])
+                    pre_steps_to_try.append((step1, step2))
 
         for step1 in outer_layer_moves:
             for step2 in outer_layer_moves:
@@ -1265,11 +1270,15 @@ class RubiksCube555(RubiksCube):
 
                     for step3 in outer_layer_moves:
                         if not steps_on_same_face_and_layer(step2, step3):
-                            pre_steps_to_try.append([step1, step2, step3])
+                            pre_steps_to_try.append((step1, step2, step3))
+
+        from pprint import pformat
+        log.info("pre_steps_to_try: %d" % len(pre_steps_to_try))
+        log.info("pre_steps_to_try:\n%s\n" % pformat(pre_steps_to_try))
+        sys.exit(0)
 
         # uncomment this if we ever find a cube that raises the
         # "Could not find 4-edges to stage" NoEdgeSolution exception below
-        '''
         for step1 in outer_layer_moves:
             for step2 in outer_layer_moves:
                 if not steps_on_same_face_and_layer(step1, step2):
@@ -1279,9 +1288,6 @@ class RubiksCube555(RubiksCube):
                                 if not steps_on_same_face_and_layer(step3, step4):
                                     pre_steps_to_try.append([step1, step2, step3, step4])
         '''
-
-        #log.info("pre_steps_to_try\n%s" % pformat(pre_steps_to_try))
-        #log.info("%d pre_steps_to_try" % len(pre_steps_to_try))
 
         # Remember what things looked like
         original_state = self.state[:]

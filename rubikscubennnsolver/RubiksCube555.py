@@ -359,7 +359,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
 
             linecount=17168476,
             max_depth=6,
-            filesize=669570564)
+            filesize=326201044)
 
     def state(self):
         parent_state = self.parent.state
@@ -523,7 +523,7 @@ class LookupTableUFCentersSolve(LookupTableHashCostOnly):
 
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     """
-    24,010,000/117,649,000,000 is 0.000204082 so this will be a fast IDA search
+    24,010,000/117,649,000,000 is 0.000 204 so this will be a fast IDA search
 
     lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
     ==================================================
@@ -534,7 +534,6 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     5 steps has 128,730 entries (90 percent, 10.57x previous step)
 
     Total: 142,153 entries
-    Average: 4.90 moves
     """
 
     def __init__(self, parent):
@@ -553,7 +552,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
              parent.lt_UF_centers_solve),
             linecount=142153,
             max_depth=5,
-            filesize=10661475)
+            filesize=8387027)
 
     def state(self):
         parent_state = self.parent.state

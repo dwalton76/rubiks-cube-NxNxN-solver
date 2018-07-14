@@ -530,7 +530,8 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
              parent.lt_LR_right_middle_oblique_edge_pairing),
 
             linecount=9919742,
-            max_depth=3),
+            max_depth=3,
+            filesize=178555356),
 
     def state(self):
         parent_state = self.parent.state

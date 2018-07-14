@@ -495,7 +495,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
              parent.lt_FB_centers_stage),
             linecount=756186,
             max_depth=5,
-            filesize=34028370)
+            filesize=21929394)
 
     def state(self):
         parent_state = self.parent.state

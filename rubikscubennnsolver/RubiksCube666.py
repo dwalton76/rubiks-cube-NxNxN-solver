@@ -287,9 +287,8 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
     lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt
     ====================================================
     1 steps has 4,171,103 entries (7 percent, 0.00x previous step)
-    2 steps has 55,048,136 entries (92 percent, 13.20x previous step)
 
-    Total: 59,219,239 entries
+    Total: 4,171,103 entries
     """
     UD_unpaired_obliques_heuristic_666 = {
         (1, 0, 0): 1,

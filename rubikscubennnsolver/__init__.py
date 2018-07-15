@@ -3433,8 +3433,14 @@ class RubiksCube(object):
         return False
 
     def edge_solution_leads_to_pll_parity(self, debug=False):
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
+
+        # I don't know why but long ago when I wrote this I had it rotate U and F
+        # to their targets...it should not make any difference for calculating
+        # parity though. Will leave this here but commented out for a while just
+        # in case. 07/14/2018
+        #
+        #self.rotate_U_to_U()
+        #self.rotate_F_to_F()
 
         if self.edge_swaps_even(edges_paired=True, orbit=None, debug=debug) == self.corner_swaps_even(debug):
             if debug:
@@ -3450,9 +3456,15 @@ class RubiksCube(object):
         http://www.speedcubing.com/chris/4speedsolve3.html
         http://www.rubik.rthost.org/4x4x4_edges.htm
         """
-        if self.centers_solved():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
+
+        # I don't know why but long ago when I wrote this I had it rotate U and F
+        # to their targets...it should not make any difference for calculating
+        # parity though. Will leave this here but commented out for a while just
+        # in case. 07/14/2018
+        #
+        #if self.centers_solved():
+        #    self.rotate_U_to_U()
+        #    self.rotate_F_to_F()
         orbits_with_oll_parity = []
 
         # OLL only applies to even cubes but there are times when an even cube
@@ -3664,11 +3676,17 @@ class RubiksCube(object):
         self.state = max_best_centers_state[:]
         self.solution = max_best_centers_solution[:]
 
+        # Return True if we rotated the cube
+        if self.solution == original_solution:
+            return False
+        else:
+            return True
+
     def rotate_for_best_centers_staging(self, centers=None):
-        self.rotate_for_best_centers(True, centers)
+        return self.rotate_for_best_centers(True, centers)
 
     def rotate_for_best_centers_solving(self, centers=None):
-        self.rotate_for_best_centers(False, centers)
+        return self.rotate_for_best_centers(False, centers)
 
     def group_centers_guts(self):
         raise ImplementThis("Child class must implement group_centers_guts")

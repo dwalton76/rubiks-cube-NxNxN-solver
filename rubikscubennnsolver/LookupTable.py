@@ -866,14 +866,15 @@ class LookupTableIDA(LookupTable):
                 #log.info("%s: %d seek calls" % (pt, pt.fh_txt_seek_calls))
                 pt.fh_txt_seek_calls = 0
 
-            solution_steps = self.parent.solution[len(self.original_solution):]
+            this_solution = self.parent.solution[len(self.original_solution):]
+            this_solution_len = self.parent.get_solution_len_minus_rotates(this_solution)
 
             #log.info("%s: lt_state %s" % (self, lt_state))
             if self.exit_asap:
                 log.info("%s: IDA found match %d steps, solution length %d, f_cost %d (%d + %d)" %
-                         (self, len(steps_to_here), len(solution_steps),
+                         (self, len(steps_to_here), this_solution_len,
                           f_cost, cost_to_here, cost_to_goal))
-                #log.info("%s: solution %s" % (self, ' '.join(solution_steps)))
+                #log.info("%s: solution %s" % (self, ' '.join(this_solution)))
 
             # We use the heuristic of the next phase to rank the solutions in this phase
             if self.next_phase:
@@ -883,8 +884,6 @@ class LookupTableIDA(LookupTable):
                 next_phase_ida_heuristic = 0
                 next_phase_ida_heuristic_total = 0
 
-            this_solution = self.parent.solution[len(self.original_solution):]
-            this_solution_len = self.parent.get_solution_len_minus_rotates(this_solution)
             self.ida_solutions.append((
                 this_solution_len + next_phase_ida_heuristic,
                 next_phase_ida_heuristic_total,

@@ -7,11 +7,13 @@ from rubikscubennnsolver.RubiksCube444 import moves_444
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
+    LookupTableCostOnly,
     LookupTableHashCostOnly,
     LookupTableIDA,
 )
 import itertools
 import logging
+import resource
 import sys
 
 log = logging.getLogger(__name__)
@@ -60,24 +62,6 @@ corners_555 = (
     76, 80, 96, 100,
     101, 105, 121, 125,
     126, 130, 146, 150
-)
-
-x_centers_555 = (
-    7, 9, 17, 19,
-    32, 34, 42, 44,
-    57, 59, 67, 69,
-    82, 84, 92, 94,
-    107, 109, 117, 119,
-    132, 134, 142, 144
-)
-
-t_centers_555 = (
-    8, 12, 14, 18,
-    33, 37, 39, 43,
-    58, 62, 64, 68,
-    83, 87, 89, 93,
-    108, 112, 114, 118,
-    133, 137, 139, 143
 )
 
 LFRB_t_centers_555 = (
@@ -282,7 +266,17 @@ class LookupTable555UDTCenterStage(LookupTable):
     8 steps has 13,324 entries (1 percent, 0.04x previous step)
 
     Total: 735,471 entries
+    Average: 6.31 moves
     """
+
+    t_centers_555 = (
+        8, 12, 14, 18,
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118,
+        133, 137, 139, 143
+    )
 
     def __init__(self, parent):
         LookupTable.__init__(
@@ -295,11 +289,37 @@ class LookupTable555UDTCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in t_centers_555])
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.t_centers_555])
         return self.hex_format % int(result, 2)
 
 
-class LookupTable555UDXCenterStage(LookupTable):
+class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
+
+    t_centers_555 = (
+        8, 12, 14, 18,
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118,
+        133, 137, 139, 143
+    )
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt',
+            'f0000f',
+            linecount=735471,
+            max_depth=8)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.t_centers_555])
+        return int(result, 2)
+
+
+class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
     """
     lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
     ============================================================
@@ -313,21 +333,31 @@ class LookupTable555UDXCenterStage(LookupTable):
     8 steps has 896 entries (0 percent, 0.01x previous step)
 
     Total: 735,471 entries
+    Average: 6.03 moves
     """
 
+    x_centers_555 = (
+        7, 9, 17, 19,
+        32, 34, 42, 44,
+        57, 59, 67, 69,
+        82, 84, 92, 94,
+        107, 109, 117, 119,
+        132, 134, 142, 144
+    )
+
     def __init__(self, parent):
-        LookupTable.__init__(
+        LookupTableCostOnly.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
+            'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt',
             'f0000f',
             linecount=735471,
             max_depth=8)
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in x_centers_555])
-        return self.hex_format % int(result, 2)
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.x_centers_555])
+        return int(result, 2)
 
 
 class LookupTableIDA555UDCentersStage(LookupTableIDA):
@@ -339,9 +369,8 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
     3 steps has 2,036 entries (0 percent, 20.78x previous step)
     4 steps has 41,096 entries (0 percent, 20.18x previous step)
     5 steps has 824,950 entries (4 percent, 20.07x previous step)
-    6 steps has 16,300,291 entries (94 percent, 19.76x previous step)
 
-    Total: 17,168,476 entries
+    Total: 868,185 entries
     """
 
     def __init__(self, parent):
@@ -354,12 +383,12 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             (), # illegal_moves
 
             # prune tables
-            (parent.lt_UD_T_centers_stage,
-             parent.lt_UD_X_centers_stage),
+            (parent.lt_UD_T_centers_stage_co,
+             parent.lt_UD_X_centers_stage_co),
 
-            linecount=17168476,
-            max_depth=6,
-            filesize=326201044)
+            linecount=868185,
+            max_depth=5,
+            filesize=30386475)
 
     def state(self):
         parent_state = self.parent.state
@@ -975,8 +1004,8 @@ class RubiksCube555(RubiksCube):
         self._sanity_check('edge-orbit-0', edge_orbit_0_555, 8)
         self._sanity_check('edge-orbit-1', edge_orbit_1_555, 4)
         self._sanity_check('corners', corners_555, 4)
-        self._sanity_check('x-centers', x_centers_555, 4)
-        self._sanity_check('t-centers', t_centers_555, 4)
+        #self._sanity_check('x-centers', x_centers_555, 4)
+        #self._sanity_check('t-centers', t_centers_555, 4)
         self._sanity_check('centers', centers, 1)
 
     def rotate(self, step):
@@ -994,10 +1023,9 @@ class RubiksCube555(RubiksCube):
         self.lt_init_called = True
 
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
-        self.lt_UD_X_centers_stage = LookupTable555UDXCenterStage(self)
+        self.lt_UD_T_centers_stage_co = LookupTable555UDTCenterStageCostOnly(self)
+        self.lt_UD_X_centers_stage_co = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
-        self.lt_UD_T_centers_stage.preload_cache_dict()
-        self.lt_UD_X_centers_stage.preload_cache_dict()
 
         # Some stats for the various ways we can preload lt_UD_centers_stage
         #
@@ -1195,10 +1223,6 @@ class RubiksCube555(RubiksCube):
         """
         Stage UD centers.  The 7x7x7 uses this that is why it is in its own method.
         """
-        # Test the prune tables
-        #self.lt_UD_T_centers_stage.solve()
-        #self.lt_UD_X_centers_stage.solve()
-
         self.lt_UD_centers_stage.solve()
         #self.print_cube()
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

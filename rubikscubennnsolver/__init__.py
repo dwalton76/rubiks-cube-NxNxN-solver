@@ -3691,28 +3691,6 @@ class RubiksCube(object):
     def group_centers_guts(self):
         raise ImplementThis("Child class must implement group_centers_guts")
 
-    def group_centers(self):
-
-        if self.is_odd():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-
-        if self.centers_solved():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-            log.info("group center solution: centers are already solved")
-        else:
-            log.info("")
-            log.info("")
-            log.info("")
-            self.group_centers_guts()
-            log.info("group center solution (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
-
-            if self.prevent_OLL():
-                log.info("prevented OLL (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
-
-        self.solution.append('CENTERS_SOLVED')
-
     def get_solution_len_minus_rotates(self, solution):
         count = 0
         size_str = str(self.size)
@@ -3819,7 +3797,7 @@ class RubiksCube(object):
         self.steps_to_solve_3x3x3 = 0
         index = 0
 
-        # log.info("pre compress; %s" % ' '.join(self.solution))
+        #log.info("pre compress; %s" % ' '.join(self.solution))
         for step in solution_string.split():
             if step.startswith(str(self.size)):
                 self.steps_to_rotate_cube += 1
@@ -3845,10 +3823,31 @@ class RubiksCube(object):
         if self.solved():
             return
 
-        self.group_centers()
+        if self.is_odd():
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
 
-        if not self.edges_paired():
+        if self.centers_solved():
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
+            log.info("centers are already solved")
+        else:
+            self.group_centers_guts()
+            #log.info("group center solution (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
+
+            if self.prevent_OLL():
+                log.info("prevented OLL (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
+
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+        self.solution.append('CENTERS_SOLVED')
+        log.info("kociemba: %s" % self.get_kociemba_string(True))
+
+        if self.edges_paired():
+            log.info("edges are already paired")
+        else:
             self.group_edges()
+        self.solution.append('EDGES_GROUPED')
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()

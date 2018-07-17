@@ -66,9 +66,6 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
         for step in fake_444.solution:
 
-            if step == 'EDGES_GROUPED':
-                continue
-
             # Rotate the entire cube
             if step.startswith('4'):
                 step = str(self.size) + step[1:]
@@ -169,9 +166,6 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         wide_str = str(orbit + 2)
         for step in fake_555.solution:
 
-            if step == 'EDGES_GROUPED':
-                continue
-
             # Rotate the entire cube
             if step.startswith('5'):
                 step = str(self.size) + step[1:]
@@ -187,11 +181,6 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             self.rotate(step)
 
     def group_edges(self):
-
-        if self.edges_paired():
-            self.solution.append('EDGES_GROUPED')
-            return
-
         # Pair the inside edges via fake 4x4x4
         self.pair_inside_edges_via_444()
 
@@ -204,6 +193,5 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         for orbit in reversed(list(range(0, max_orbit-1))):
             self.pair_edge_orbit_via_555(orbit)
 
-        self.solution.append('EDGES_GROUPED')
-        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.print_cube()
+        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

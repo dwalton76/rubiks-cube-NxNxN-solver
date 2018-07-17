@@ -7,11 +7,15 @@ from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableCostOnly,
     LookupTableIDA,
+    LookupTableHashCostOnly,
 )
 from rubikscubennnsolver.RubiksCube444Misc import (
+    high_edges_444,
     low_edges_444,
-    tsai_edge_mapping_combinations,
+    highlow_edge_mapping_combinations,
+    highlow_edge_values,
 )
+from pprint import pformat
 import logging
 import sys
 
@@ -503,110 +507,6 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
         return result
 
 
-class LookupTable444ULFRBDCentersSolve(LookupTable):
-    """
-    lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt
-    ==================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 99 entries (0 percent, 14.14x previous step)
-    3 steps has 996 entries (0 percent, 10.06x previous step)
-    4 steps has 6,477 entries (1 percent, 6.50x previous step)
-    5 steps has 23,540 entries (6 percent, 3.63x previous step)
-    6 steps has 53,537 entries (15 percent, 2.27x previous step)
-    7 steps has 86,464 entries (25 percent, 1.62x previous step)
-    8 steps has 83,240 entries (24 percent, 0.96x previous step)
-    9 steps has 54,592 entries (15 percent, 0.66x previous step)
-    10 steps has 29,568 entries (8 percent, 0.54x previous step)
-    11 steps has 4,480 entries (1 percent, 0.15x previous step)
-
-    Total: 343,000 entries
-    Average: 7.508685 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
-            'UUUULLLLFFFFRRRRBBBBDDDD',
-            linecount=343000,
-            max_depth=11,
-            filesize=21609000)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in centers_444])
-        return result
-
-
-class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
-    """
-    IDA search for a centers solution that also happens to pair two or more edges.
-    We do this to (drastically) speed up the edges table lookup later. If no
-    edges are paired the edges signature is 000000000000 and there are about
-    600k of those entries in lookup-table-4x4x4-step110-edges.txt that we will
-    have to evaluate.
-
-    If we can pair two though that drops us down to about 40k edge entries to deal with.
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
-            'TBD',
-            moves_444,
-            ("Rw", "Rw'", "Lw", "Lw'",
-             "Fw", "Fw'", "Bw", "Bw'",
-             "Uw", "Uw'", "Dw", "Dw'"),
-
-            # prune tables
-            (parent.lt_ULFRBD_centers_solve,),
-            linecount=0,
-            max_depth=99)
-
-    def state(self):
-        state = self.parent.state
-        edges = ''.join([state[square_index] for square_index in edges_444])
-        centers = ''.join([state[x] for x in centers_444])
-        return centers + edges
-
-    def search_complete(self, state, steps_to_here):
-        """
-        return True if centers are solved and at least 2 edges are paired
-        """
-
-        if centers_solved_444(state):
-            paired_edges_count = 12 - self.parent.get_non_paired_edges_count()
-
-            # Some stats against 50 test cubes
-            # - pairing 1 here averages 62.08 moves and took 1m 11s
-            # - pairing 2 here averages 59.54 moves and took 1m 7s
-            # - pairing 3 here averages 58.54 moves and took 1m 46s
-            # - pairing 4 here averages 58.10 moves and took 10m 26s
-            if paired_edges_count >= 2:
-
-                if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-                    log.info("%s: IDA found match but it leads to OLL" % self)
-                    return False
-
-                # rotate_xxx() is very fast but it does not append the
-                # steps to the solution so put the cube back in original state
-                # and execute the steps via a normal rotate() call
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-
-                for step in steps_to_here:
-                    self.parent.rotate(step)
-
-                return True
-
-        return False
-
-
 wings_for_edges_recolor_pattern_444 = (
     ('0', 2, 67),  # upper
     ('1', 3, 66),
@@ -677,43 +577,412 @@ def edges_recolor_pattern_444(state):
     return ''.join(state)
 
 
-class LookupTable444Edges(LookupTable):
-    """
-    lookup-table-4x4x4-step110-edges.txt (11-deep)
-    ==============================================
-    2 steps has 1 entries (0 percent, 0.00x previous step)
-    5 steps has 432 entries (0 percent, 432.00x previous step)
-    6 steps has 2,053 entries (0 percent, 4.75x previous step)
-    7 steps has 15,475 entries (0 percent, 7.54x previous step)
-    8 steps has 151,530 entries (0 percent, 9.79x previous step)
-    9 steps has 991,027 entries (1 percent, 6.54x previous step)
-    10 steps has 6,203,073 entries (9 percent, 6.26x previous step)
-    11 steps has 56,560,361 entries (88 percent, 9.12x previous step)
+edges_for_high_low_recolor_444 = (
+    2, 9, 8, 15,
+    25, 24,
+    57, 56,
+    82, 89, 88, 95
+)
 
-    Total: 63,923,952 entries
-    Average: 10.863674 moves
+edge_map_to_ULF = {
+    # U edges
+    'UL' : 'U',
+    'LU' : 'U',
+    'LD' : 'U',
+    'DL' : 'U',
+    'RD' : 'U',
+    'DR' : 'U',
+    'UR' : 'U',
+    'RU' : 'U',
+
+    # L edges
+    'BL' : 'L',
+    'LB' : 'L',
+    'FL' : 'L',
+    'LF' : 'L',
+    'FR' : 'L',
+    'RF' : 'L',
+    'BR' : 'L',
+    'RB' : 'L',
+
+    # F edges
+    'UB' : 'F',
+    'BU' : 'F',
+    'UF' : 'F',
+    'FU' : 'F',
+    'FD' : 'F',
+    'DF' : 'F',
+    'DB' : 'F',
+    'BD' : 'F',
+}
+
+wing_str_sort_map = {
+    'UB' : 'UB',
+    'BU' : 'UB',
+    'UL' : 'UL',
+    'LU' : 'UL',
+    'UR' : 'UR',
+    'RU' : 'UR',
+    'UF' : 'UF',
+    'FU' : 'UF',
+    'LB' : 'LB',
+    'BL' : 'LB',
+    'LF' : 'LF',
+    'FL' : 'LF',
+    'RB' : 'RB',
+    'BR' : 'RB',
+    'RF' : 'RF',
+    'FR' : 'RF',
+    'DB' : 'DB',
+    'BD' : 'DB',
+    'DL' : 'DL',
+    'LD' : 'DL',
+    'DR' : 'DR',
+    'RD' : 'DR',
+    'DF' : 'DF',
+    'FD' : 'DF',
+}
+
+
+class LookupTable444HighLowEdgesEdges(LookupTable):
+    """
+    lookup-table-4x4x4-step21-highlow-edges-edges.txt
+    =================================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 29 entries (0 percent, 9.67x previous step)
+    3 steps has 278 entries (0 percent, 9.59x previous step)
+    4 steps has 1,934 entries (0 percent, 6.96x previous step)
+    5 steps has 15,640 entries (0 percent, 8.09x previous step)
+    6 steps has 124,249 entries (4 percent, 7.94x previous step)
+    7 steps has 609,241 entries (22 percent, 4.90x previous step)
+    8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
+    9 steps has 688,124 entries (25 percent, 0.56x previous step)
+    10 steps has 40,560 entries (1 percent, 0.06x previous step)
+
+    Total: 2,704,156 entries
+    Average: 7.95 moves
     """
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step110-edges.txt',
-            '111111111111_10425376a8b9ecfdhgkiljnm',
-            linecount=7363591) # 10-deep
-            #linecount=63923952) # 11-deep
-            #linecount=58632685) # EO 13-deep
+            'lookup-table-4x4x4-step21-highlow-edges-edges.txt',
+            'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+            linecount=2704156,
+            max_depth=10,
+            filesize=227149104)
+
+    def state(self):
+        return self.parent.highlow_edges_state(self.parent.edge_mapping)
+
+
+class LookupTable444HighLowEdgesCenters(LookupTable):
+    """
+    lookup-table-4x4x4-step22-highlow-edges-centers.txt
+    ===================================================
+    1 steps has 22 entries (31 percent, 0.00x previous step)
+    2 steps has 16 entries (22 percent, 0.73x previous step)
+    3 steps has 16 entries (22 percent, 1.00x previous step)
+    4 steps has 16 entries (22 percent, 1.00x previous step)
+
+    Total: 70 entries
+    Average: 2.37 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step22-highlow-edges-centers.txt',
+            ('LLLLRRRR',
+             'LLRRLLRR',
+             'LLRRRRLL',
+             'LRLRLRLR',
+             'LRLRRLRL',
+             'LRRLRLLR',
+             'RLLRLRRL',
+             'RLRLLRLR',
+             'RLRLRLRL',
+             'RRLLLLRR',
+             'RRLLRRLL',
+             'RRRRLLLL'),
+            linecount=70,
+            max_depth=4,
+            filesize=1610)
+
+    def state (self, state_to_find=None):
+        parent_state = self.parent.state
+        result = ''.join([parent_state[x] for x in LR_centers_444])
+        return result
+
+
+class LookupTableIDA444HighLowEdges(LookupTableIDA):
+    """
+    lookup-table-4x4x4-step20-highlow-edges.txt
+    ===========================================
+    1 steps has 36 entries (0 percent, 0.00x previous step)
+    2 steps has 348 entries (0 percent, 9.67x previous step)
+    3 steps has 3,416 entries (0 percent, 9.82x previous step)
+    4 steps has 26,260 entries (0 percent, 7.69x previous step)
+    5 steps has 226,852 entries (1 percent, 8.64x previous step)
+    6 steps has 2,048,086 entries (11 percent, 9.03x previous step)
+
+    Total: 2,304,998 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step20-highlow-edges.txt',
+            ('LLLLRRRRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'LLRRLLRRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'LLRRRRLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'LRLRLRLRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'LRLRRLRLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'LRRLRLLRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RLLRLRRLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RLRLLRLRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RLRLRLRLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RRLLLLRRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RRLLRRLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RRRRLLLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU'),
+            moves_444,
+
+            ("Uw", "Uw'",
+             "Dw", "Dw'",
+             "Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'"),
+
+            (parent.lt_highlow_edges_edges,
+             parent.lt_highlow_edges_centers),
+            linecount=2304998,
+            max_depth=6,
+            filesize=182094842)
+
+    def state(self):
+        parent_state = self.parent.state
+        LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
+        edges = self.parent.highlow_edges_state(self.parent.edge_mapping)
+        return LR_centers + edges
+
+
+wings_for_edges_recolor_pattern_444 = (
+    ('0', 2, 67),  # upper
+    ('1', 3, 66),
+    ('2', 5, 18),
+    ('3', 8, 51),
+    ('4', 9, 19),
+    ('5', 12, 50),
+    ('6', 14, 34),
+    ('7', 15, 35),
+
+    ('8', 21, 72), # left
+    ('9', 24, 37),
+    ('a', 25, 76),
+    ('b', 28, 41),
+
+    ('c', 53, 40), # right
+    ('d', 56, 69),
+    ('e', 57, 44),
+    ('f', 60, 73),
+
+    ('g', 82, 46), # down
+    ('h', 83, 47),
+    ('i', 85, 31),
+    ('j', 88, 62),
+    ('k', 89, 30),
+    ('l', 92, 63),
+    ('m', 94, 79),
+    ('n', 95, 78))
+
+
+def edges_recolor_pattern_444(state):
+
+    edge_map = {
+        'UB' : [],
+        'UL' : [],
+        'UR' : [],
+        'UF' : [],
+        'LB' : [],
+        'LF' : [],
+        'RB' : [],
+        'RF' : [],
+        'DB' : [],
+        'DL' : [],
+        'DR' : [],
+        'DF' : [],
+    }
+
+    # Record the two edge_indexes for each of the 12 edges
+    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = wing_str_sort_map[''.join((square_value, partner_value))]
+        edge_map[wing_str].append(edge_index)
+
+    # Where is the other wing_str like us?
+    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = wing_str_sort_map[''.join((square_value, partner_value))]
+
+        for tmp_index in edge_map[wing_str]:
+            if tmp_index != edge_index:
+                state[square_index] = tmp_index
+                state[partner_index] = tmp_index
+                break
+        else:
+            raise Exception("could not find tmp_index")
+
+    return ''.join(state)
+
+
+class LookupTable444Reduce333Edges(LookupTableHashCostOnly):
+    """
+    lookup-table-4x4x4-step31-reduce333-edges.txt
+    =============================================
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 20 entries (0 percent, 5.00x previous step)
+    3 steps has 140 entries (0 percent, 7.00x previous step)
+    4 steps has 1,141 entries (0 percent, 8.15x previous step)
+    5 steps has 8,059 entries (0 percent, 7.06x previous step)
+    6 steps has 62,188 entries (0 percent, 7.72x previous step)
+    7 steps has 442,293 entries (0 percent, 7.11x previous step)
+    8 steps has 2,958,583 entries (1 percent, 6.69x previous step)
+    9 steps has 17,286,512 entries (7 percent, 5.84x previous step)
+    10 steps has 69,004,356 entries (28 percent, 3.99x previous step)
+    11 steps has 122,416,936 entries (51 percent, 1.77x previous step)
+    12 steps has 27,298,296 entries (11 percent, 0.22x previous step)
+    13 steps has 22,272 entries (0 percent, 0.00x previous step)
+
+    Total: 239,500,800 entries
+    Average: 10.635709 moves
+    """
+
+    def __init__(self, parent):
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt',
+            '10425376a8b9ecfdhgkiljnm',
+            linecount=239500800,
+            max_depth=13,
+            bucketcount=479001629,
+            filesize=479001630)
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step31-reduce333-edges.txt',
+            '10425376a8b9ecfdhgkiljnm',
+            linecount=239500800,
+            max_depth=13,
+            filesize=479001630)
+        '''
 
     def state(self):
         state = edges_recolor_pattern_444(self.parent.state[:])
         edges_state = ''.join([state[square_index] for square_index in wings_444])
-        signature = get_edges_paired_binary_signature(edges_state)
-        return signature + '_' + edges_state
+        return edges_state
+
+
+class LookupTable444Reduce333CentersSolve(LookupTable):
+    """
+    lookup-table-4x4x4-step32-reduce333-centers.txt
+    ===============================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 83 entries (0 percent, 11.86x previous step)
+    3 steps has 724 entries (1 percent, 8.72x previous step)
+    4 steps has 3,851 entries (6 percent, 5.32x previous step)
+    5 steps has 10,426 entries (17 percent, 2.71x previous step)
+    6 steps has 16,693 entries (28 percent, 1.60x previous step)
+    7 steps has 16,616 entries (28 percent, 1.00x previous step)
+    8 steps has 8,928 entries (15 percent, 0.54x previous step)
+    9 steps has 1,472 entries (2 percent, 0.16x previous step)
+
+    Total: 58,800 entries
+    Average: 6.31 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step32-reduce333-centers.txt',
+            'UUUULLLLFFFFRRRRBBBBDDDD',
+            linecount=58800,
+            max_depth=9,
+            filesize=3351600)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = ''.join([parent_state[square_index] for square_index in centers_444])
+        return result
+
+
+class LookupTableIDA444Reduce333(LookupTableIDA):
+    """
+    lookup-table-4x4x4-step30-reduce333.txt
+    =======================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 83 entries (0 percent, 11.86x previous step)
+    3 steps has 960 entries (0 percent, 11.57x previous step)
+    4 steps has 10,303 entries (0 percent, 10.73x previous step)
+    5 steps has 107,490 entries (8 percent, 10.43x previous step)
+    6 steps has 1,124,449 entries (90 percent, 10.46x previous step)
+
+    Total: 1,243,292 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step30-reduce333.txt',
+            'UUUULLLLFFFFRRRRBBBBDDDD10425376a8b9ecfdhgkiljnm',
+            moves_444,
+
+            # illegal moves
+            ("Fw", "Fw'",
+             "Uw", "Uw'",
+             "Rw", "Rw'",
+             "Lw", "Lw'", "Lw2",
+             "Bw", "Bw'", "Bw2",
+             "Dw", "Dw'", "Dw2",
+             "R", "R'",
+             "L", "L'"),
+
+            # prune tables
+            (parent.lt_reduce333_edges_solve,
+             parent.lt_reduce333_centers_solve),
+
+            linecount=1243292,
+            max_depth=6,
+            filesize=89517024)
+
+    def state(self):
+        state = edges_recolor_pattern_444(self.parent.state[:])
+        centers_state = ''.join([state[square_index] for square_index in centers_444])
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        return centers_state + edges_state
 
 
 class RubiksCube444(RubiksCube):
 
     instantiated = False
+
+    reduce333_orient_edges_tuples = (
+        (2, 67), (3, 66), (5, 18), (8, 51), (9, 19), (12, 50), (14, 34), (15, 35),
+        (18, 5), (19, 9), (21, 72), (24, 37), (25, 76), (28, 41), (30, 89), (31, 85),
+        (34, 14), (35, 15), (37, 24), (40, 53), (41, 28), (44, 57), (46, 82), (47, 83),
+        (50, 12), (51, 8), (53, 40), (56, 69), (57, 44), (60, 73), (62, 88), (63, 92),
+        (66, 3), (67, 2), (69, 56), (72, 21), (73, 60), (76, 25), (78, 95), (79, 94),
+        (82, 46), (83, 47), (85, 31), (88, 62), (89, 30), (92, 63), (94, 79), (95, 78)
+    )
 
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube.__init__(self, state, order, colormap, debug)
@@ -764,349 +1033,466 @@ class RubiksCube444(RubiksCube):
         self._sanity_check('centers', centers_444, 4)
         self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
 
+    def high_low_state(self, x, y, state_x, state_y, wing_str):
+        """
+        Return U if this is a high edge, D if it is a low edge
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        # Nuke everything except the one wing we are interested in
+        self.nuke_corners()
+        self.nuke_centers()
+        self.nuke_edges()
+
+        self.state[x] = state_x
+        self.state[y] = state_y
+
+        # Now move that wing to its home edge
+        if wing_str.startswith('U'):
+
+            if wing_str == 'UB':
+                self.move_wing_to_U_north(x)
+                high_edge_index = 2
+                low_edge_index = 3
+
+            elif wing_str == 'UL':
+                self.move_wing_to_U_west(x)
+                high_edge_index = 9
+                low_edge_index = 5
+
+            elif wing_str == 'UR':
+                self.move_wing_to_U_east(x)
+                high_edge_index = 8
+                low_edge_index = 12
+
+            elif wing_str == 'UF':
+                self.move_wing_to_U_south(x)
+                high_edge_index = 15
+                low_edge_index = 14
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'U':
+                result = 'U'
+            elif self.state[low_edge_index] == 'U':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('L'):
+
+            if wing_str == 'LB':
+                self.move_wing_to_L_west(x)
+                high_edge_index = 25
+                low_edge_index = 21
+
+            elif wing_str == 'LF':
+                self.move_wing_to_L_east(x)
+                high_edge_index = 24
+                low_edge_index = 28
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'L':
+                result = 'U'
+            elif self.state[low_edge_index] == 'L':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('R'):
+
+            if wing_str == 'RB':
+                self.move_wing_to_R_east(x)
+                high_edge_index = 56
+                low_edge_index = 60
+
+            elif wing_str == 'RF':
+                self.move_wing_to_R_west(x)
+                high_edge_index = 57
+                low_edge_index = 53
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'R':
+                result = 'U'
+            elif self.state[low_edge_index] == 'R':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('D'):
+            if wing_str == 'DB':
+                self.move_wing_to_D_south(x)
+                high_edge_index = 95
+                low_edge_index = 94
+
+            elif wing_str == 'DL':
+                self.move_wing_to_D_west(x)
+                high_edge_index = 89
+                low_edge_index = 85
+
+            elif wing_str == 'DR':
+                self.move_wing_to_D_east(x)
+                high_edge_index = 88
+                low_edge_index = 92
+
+            elif wing_str == 'DF':
+                self.move_wing_to_D_north(x)
+                high_edge_index = 82
+                low_edge_index = 83
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'D':
+                result = 'U'
+            elif self.state[low_edge_index] == 'D':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        else:
+            raise Exception("invalid wing_str %s" % wing_str)
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        assert result in ('U', 'D')
+        return result
+
+    def build_highlow_edge_values(self):
+        state = self.state
+        new_highlow_edge_values = {}
+
+        for x in range(1000000):
+
+            # make random moves
+            step = moves_444[randint(0, len(moves_444)-1)]
+            self.rotate(step)
+
+            for (x, y) in self.reduce333_orient_edges_tuples:
+                state_x = self.state[x]
+                state_y = self.state[y]
+                wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+                wing_tuple = (x, y, state_x, state_y)
+
+                if wing_tuple not in new_highlow_edge_values:
+                    new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
+
+        print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
+        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
+        sys.exit(0)
+
+    def highlow_edges_state(self, edges_to_flip):
+        state = self.state
+
+        if edges_to_flip:
+            result = []
+            for (x, y) in self.reduce333_orient_edges_tuples:
+                state_x = state[x]
+                state_y = state[y]
+                high_low = highlow_edge_values[(x, y, state_x, state_y)]
+                wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+
+                if wing_str in edges_to_flip:
+                    if high_low == 'U':
+                        high_low = 'D'
+                    else:
+                        high_low = 'U'
+
+                result.append(high_low)
+        else:
+            result = [highlow_edge_values[(x, y, state[x], state[y])] for (x, y) in self.reduce333_orient_edges_tuples]
+
+        result = ''.join(result)
+        return result
+
+    def highlow_edges_print(self):
+
+        # save cube state
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        self.nuke_corners()
+        self.nuke_centers()
+
+        orient_edge_state = list(self.highlow_edges_state(self.edge_mapping))
+        orient_edge_state_index = 0
+        for side in list(self.sides.values()):
+            for square_index in side.edge_pos:
+                self.state[square_index] = orient_edge_state[orient_edge_state_index]
+                orient_edge_state_index += 1
+        self.print_cube()
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+    def edges_possibly_oriented_into_high_low_groups(self, debug=False):
+        """
+        Return True if edges "might" be oriented into high/low groups
+        """
+        state = self.state
+        wing_strs_found = set()
+
+        for (low_edge_index, square_index, partner_index) in low_edges_444:
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = wing_str_sort_map[''.join((square_value, partner_value))]
+
+            if wing_str in wing_strs_found:
+                if debug:
+                    log.info("edges_possibly_oriented_into_high_low_groups: wing_str %s already in wing_strs_found %s" % (wing_str, pformat(wing_strs_found)))
+                    log.info("low_edges_444: %s" % pformat(low_edges_444))
+                return False
+            else:
+                wing_strs_found.add(wing_str)
+
+        return True
+
+    def edges_oriented_into_high_low_groups(self, debug=False):
+        """
+        Return True if edges are split into high/low groups
+        """
+        if not self.edges_possibly_oriented_into_high_low_groups(debug):
+            if debug:
+                log.info("edges_oriented_into_high_low_groups False: edges_possibly_oriented_into_high_low_groups returned False")
+            return False
+
+        DU_wing_strs = self.get_flipped_edges()
+        edges_state = self.highlow_edges_state(DU_wing_strs)
+
+        # edge swaps must be even...not technially true but if they are odd it would lead to PLL
+        if len(DU_wing_strs) % 2 == 0:
+
+            if edges_state == 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU' and self.edge_swaps_even(False, 0, False):
+                self.edge_mapping = DU_wing_strs
+                return True
+
+            if debug:
+                log.info("edges_oriented_into_high_low_groups False: DU_wing_strs %s" % pformat(DU_wing_strs))
+                log.info("edges_oriented_into_high_low_groups False: edges_state %s" % edges_state)
+                log.info("edges_oriented_into_high_low_groups False: edge_swaps_even %s" % self.edge_swaps_even(False, 0, False))
+
+        else:
+            if edges_state == 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU' and self.edge_swaps_odd(False, 0, False):
+                self.edge_mapping = DU_wing_strs
+                return True
+
+            if debug:
+                log.info("edges_oriented_into_high_low_groups False: DU_wing_strs %s" % pformat(DU_wing_strs))
+                log.info("edges_oriented_into_high_low_groups False: edges_state %s" % edges_state)
+                log.info("edges_oriented_into_high_low_groups False: edge_swaps_odd %s" % self.edge_swaps_odd(False, 0, False))
+
+        return False
+
+    def get_flipped_edges(self):
+        wing_str_high_low = {
+            'UB' : [],
+            'UL' : [],
+            'UR' : [],
+            'UF' : [],
+            'LB' : [],
+            'LF' : [],
+            'RB' : [],
+            'RF' : [],
+            'DB' : [],
+            'DL' : [],
+            'DR' : [],
+            'DF' : [],
+        }
+        state = self.state
+
+        for (_, x, y) in high_edges_444:
+            state_x = state[x]
+            state_y = state[y]
+            wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+            high_low = highlow_edge_values[(x, y, state_x, state_y)]
+            wing_str_high_low[wing_str].append(high_low)
+
+        for (_, x, y) in low_edges_444:
+            state_x = state[x]
+            state_y = state[y]
+            wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+            high_low = highlow_edge_values[(x, y, state_x, state_y)]
+            wing_str_high_low[wing_str].append(high_low)
+
+        DU_wing_strs = set()
+
+        for (wing_str, high_low) in wing_str_high_low.items():
+            if high_low == ['U', 'D']:
+                pass
+            elif high_low == ['D', 'U']:
+                DU_wing_strs.add(wing_str)
+            else:
+                return False
+
+        return DU_wing_strs
+
     def lt_init(self):
         if self.lt_init_called:
             return
         self.lt_init_called = True
 
-        # ==============
-        # Phase 1 tables
-        # ==============
-        # prune tables
-
-        # Solving 50 cubes where you binary search through the prune table files takes 57s
-        # Solving 50 cubes using the cost-only tables takes 30s!!
         self.lt_UD_centers_stage = LookupTable444UDCentersStageCostOnly(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStageCostOnly(self)
         self.lt_FB_centers_stage = LookupTable444FBCentersStageCostOnly(self)
-
-        # Stage all centers via IDA
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = True
         self.lt_ULFRBD_centers_stage.preload_cache_set()
 
-        # =============
-        # Phase2 tables
-        # =============
-        self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
-        self.lt_ULFRBD_centers_solve.preload_cache_set()
-        self.lt_ULFRBD_centers_solve_pair_two_edges = LookupTable444ULFRBDCentersSolvePairTwoEdges(self)
+        self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
+        self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
+        self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
+        self.lt_highlow_edges.preload_cache_dict()
+        #self.lt_highlow_edges_centers.preload_cache_dict()
+        #self.lt_highlow_edges_edges.preload_cache_dict()
 
-        # Edges table
-        self.lt_edges = LookupTable444Edges(self)
+        self.lt_reduce333_edges_solve = LookupTable444Reduce333Edges(self)
+        self.lt_reduce333_centers_solve = LookupTable444Reduce333CentersSolve(self)
+        self.lt_reduce333 = LookupTableIDA444Reduce333(self)
+        self.lt_reduce333_centers_solve.preload_cache_dict()
+        self.lt_reduce333.preload_cache_set()
 
     def group_centers_guts(self):
         self.lt_init()
 
-        # If the centers are already solved then return and let group_edges() pair the edges
-        if self.centers_solved():
-            return
+        # save cube state
+        self.original_state = self.state[:]
+        self.original_solution = self.solution[:]
 
-        # Stage all centers then solve all centers...averages 18.12 moves
-        log.info("%s: Start of Phase1" % self)
+        log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_ULFRBD_centers_stage.solve()
-        self.rotate_for_best_centers_solving()
         self.print_cube()
+
+        if self.rotate_for_best_centers_staging():
+            self.print_cube()
+        log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
 
-        # If the centers were already staged we may not be able to avoid OLL when solving the centers
-        if self.get_solution_len_minus_rotates(self.solution) == 0:
-            self.lt_ULFRBD_centers_solve_pair_two_edges.avoid_oll = False
-        else:
-            self.lt_ULFRBD_centers_solve_pair_two_edges.avoid_oll = True
+        # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
+        # We need the edge swaps to be even for our edges lookup table to work.
+        if self.edge_swaps_odd(False, 0, False):
+            log.warning("%s: edge swaps are odd, running prevent_OLL to correct" % self)
+            self.prevent_OLL()
+            self.print_cube()
+            log.info("%s: End of prevent_OLL, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #self.lt_ULFRBD_centers_solve.solve()
-        self.lt_ULFRBD_centers_solve_pair_two_edges.solve()
+        # Pick the best edge_mapping
+        # - an edge_mapping that gives us a hit in the phase2 table is ideal
+        #     - pick the best among those
+        # - if not pick the one that has the lowest edges_cost
+        # - build the phase2 table out to 7-deep to help here
+        # - this needs to consider the heuristic for phase3
+        min_phase23_cost = None
+        tmp_state = self.state[:]
+        tmp_solution = self.solution[:]
+        log.info("%s: Start of find best edge_mapping" % self)
 
-        # This will IDA search for a centers solution that happens to put the
-        # edges in a state that are in our table.  It works and produces
-        # solutions in the 50-53 range but can take a few minutes.
-        #self.lt_ULFRBD_centers_solve_edges_stage.solve()
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-        self.print_cube()
-        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
+        for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
+            for edge_mapping in edges_to_flip_sets:
+                self.state[:] = tmp_state[:]
+                self.solution[:] = tmp_solution[:]
 
-    def solve_all_edges_444(self, use_bfs, apply_steps_if_found):
+                self.edge_mapping = edge_mapping
+                phase23_cost = self.lt_highlow_edges.steps_cost()
 
-        # Remember what things looked like
-        original_state = self.state[:]
-        original_solution = self.solution[:]
+                if phase23_cost == 0:
+                    continue
 
-        outer_layer_moves = (
-            "U", "U'", "U2",
-            "L", "L'", "L2",
-            "F", "F'", "F2",
-            "R", "R'", "R2",
-            "B", "B'", "B2",
-            "D", "D'", "D2",
-        )
-        pre_steps_to_try = []
-        pre_steps_to_try.append([])
-
-        if use_bfs:
-            for step in outer_layer_moves:
-                pre_steps_to_try.append([step,])
-
-            for step1 in outer_layer_moves:
-                for step2 in outer_layer_moves:
-                    if not steps_on_same_face_and_layer(step1, step2):
-                        pre_steps_to_try.append([step1, step2])
-
-            for step1 in outer_layer_moves:
-                for step2 in outer_layer_moves:
-                    if not steps_on_same_face_and_layer(step1, step2):
-
-                        for step3 in outer_layer_moves:
-                            if not steps_on_same_face_and_layer(step2, step3):
-                                pre_steps_to_try.append([step1, step2, step3])
-
-            '''
-            for step1 in outer_layer_moves:
-                for step2 in outer_layer_moves:
-                    if not steps_on_same_face_and_layer(step1, step2):
-                        for step3 in outer_layer_moves:
-                            if not steps_on_same_face_and_layer(step2, step3):
-                                for step4 in outer_layer_moves:
-                                    if not steps_on_same_face_and_layer(step3, step4):
-                                        pre_steps_to_try.append([step1, step2, step3, step4])
-
-            '''
-            log.warning("%d pre_steps_to_try" % len(pre_steps_to_try))
-
-        for pre_steps in pre_steps_to_try:
-            #log.info("solve_all_edges_444 trying pre_steps %s" % ' '.join(pre_steps))
-
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in pre_steps:
-                self.rotate(step)
-
-            state = edges_recolor_pattern_444(self.state[:])
-
-            edges_state = ''.join([state[square_index] for square_index in wings_444])
-            signature = get_edges_paired_binary_signature(edges_state)
-            signature_width = len(signature) + 1
-            edges_state = signature + '_' + edges_state
-
-
-            # If our state is in lookup-table-4x4x4-step100-edges.txt then execute
-            # those steps and we are done
-            steps = self.lt_edges.steps(edges_state)
-
-            if steps is not None:
-
-                if apply_steps_if_found:
-                    for step in steps:
-                        self.rotate(step)
-                else:
-                    self.state = original_state[:]
-                    self.solution = original_solution[:]
-
-                return True
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        return False
-
-    def solve_edges_six_then_six(self):
-
-        if self.edges_paired():
-            return True
-
-        state = edges_recolor_pattern_444(self.state[:])
-
-        edges_state = ''.join([state[square_index] for square_index in wings_444])
-        signature = get_edges_paired_binary_signature(edges_state)
-        signature_width = len(signature) + 1
-        edges_state = signature + '_' + edges_state
-
-        # If our state is in lookup-table-4x4x4-step100-edges.txt then execute
-        # those steps and we are done
-        steps = self.lt_edges.steps(edges_state)
-
-        if steps is not None:
-            for step in steps:
-                self.rotate(step)
-                return True
-
-        # If we are here then we need to look through lookup-table-4x4x4-step100-edges.txt
-        # to find the line whose state is the closest match to our own. This allows us to
-        # pair some of our unpaired edges and make some progress even though our current
-        # state isn't in the lookup table.
-        MAX_WING_PAIRS = 12
-        MAX_EDGES = 12
-
-        # It takes 12 steps to solve PLL
-        PLL_PENALTY = 12
-
-        STATE_TARGET = '111111111111_10425376a8b9ecfdhgkiljnm'
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        loop_count = 0
-
-        while not self.edges_paired():
-
-            # How many edges are paired?
-            pre_non_paired_edges_count = self.get_non_paired_edges_count()
-            pre_paired_edges_count = MAX_WING_PAIRS - pre_non_paired_edges_count
-
-            state = edges_recolor_pattern_444(self.state[:])
-
-            edges_state = ''.join([state[square_index] for square_index in wings_444])
-            signature = get_edges_paired_binary_signature(edges_state)
-            signature_width = len(signature) + 1
-            edges_state = signature + '_' + edges_state
-
-            log.info("%s: solve_edges_six_then_six loop %d: signature %s, edges_paired %d" % (self, loop_count, signature, pre_paired_edges_count))
-
-            # Find all of the 'loose' matching entries in our lookup table. 'loose' means the
-            # entry will not unpair any of our already paired wings.
-            loose_matching_entry = []
-            max_wing_pair_count = None
-
-            # This runs much faster (than find_edge_entries_with_loose_signature) because
-            # it is only looking over the signatures that are an exact match instead of a
-            # loose match. It produces slightly longer solutions but in about 1/6 the time.
-            log.info("%s: find_edge_entries_with_signature start" % self)
-            lines_to_examine = self.lt_edges.find_edge_entries_with_signature(signature)
-            log.info("%s: find_edge_entries_with_signature end (found %d)" % (self, len(lines_to_examine)))
-
-            for line in lines_to_examine:
-                (phase1_state, phase1_steps) = line.split(':')
-
-                common_count = get_characters_common_count(edges_state,
-                                                           phase1_state,
-                                                           signature_width)
-                wing_pair_count = int(common_count/2)
-
-                # Only bother with this entry if it will pair more wings than are currently paired
-                if wing_pair_count > pre_paired_edges_count:
-
-                    if max_wing_pair_count is None:
-                        loose_matching_entry.append((wing_pair_count, line))
-                        max_wing_pair_count = wing_pair_count
-
-                    elif wing_pair_count > max_wing_pair_count:
-                        #loose_matching_entry = []
-                        loose_matching_entry.append((wing_pair_count, line))
-                        max_wing_pair_count = wing_pair_count
-
-                    elif wing_pair_count == max_wing_pair_count:
-                        loose_matching_entry.append((wing_pair_count, line))
-
-            log.info("%s: loose_matching_entry %d" % (self, len(loose_matching_entry)))
-            #log.warning("loose_matching_entry(%d):\n%s\n" %
-            #    (len(loose_matching_entry), pformat(loose_matching_entry)))
-            best_score_states = []
-
-            # Now run through each state:steps in loose_matching_entry
-            for (wing_pair_count, line) in loose_matching_entry:
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                (phase1_edges_state_fake, phase1_steps) = line.split(':')
-                phase1_steps = phase1_steps.split()
-
-                # Apply the phase1 steps
-                for step in phase1_steps:
+                phase2_steps = self.lt_highlow_edges.steps()
+                for step in phase2_steps:
                     self.rotate(step)
 
-                phase1_state = edges_recolor_pattern_444(self.state[:])
-                phase1_edges_state = ''.join([phase1_state[square_index] for square_index in wings_444])
-                phase1_signature = get_edges_paired_binary_signature(phase1_edges_state)
-                phase1_edges_state = phase1_signature + '_' + phase1_edges_state
+                #if not self.edges_oriented_into_high_low_groups(debug=True):
+                #    log.warning("%s: edges are NOT in high/low groups\n" % self)
+                #    continue
+                #edges_state = self.highlow_edges_state(edge_mapping)
+                #edges_cost = self.lt_highlow_edges_edges.steps_cost(edges_state)
 
-                # If that got us to our state_target then phase1 alone paired all
-                # of the edges...this is unlikely
-                if phase1_edges_state == STATE_TARGET:
-                    if self.edge_solution_leads_to_pll_parity():
-                        #best_score_states.append((MAX_EDGES, MAX_WING_PAIRS, len(phase1_steps) + PLL_PENALTY, phase1_steps[:]))
-                        pass
-                    else:
-                        best_score_states.append((MAX_EDGES, MAX_WING_PAIRS, len(phase1_steps), phase1_steps[:]))
+                phase3_heuristic = self.lt_reduce333.ida_heuristic()
+                phase23_cost += phase3_heuristic
 
-                else:
-                    # phase1_steps did not pair all edges so do another lookup and execute those steps
-                    phase2_steps = self.lt_edges.steps(phase1_edges_state)
+                if min_phase23_cost is None or phase23_cost < min_phase23_cost:
+                    min_phase23_cost = phase23_cost
+                    min_edge_mapping = edge_mapping
+                    log.info("%s: using edge_mapping %s, phase2+3 cost %s" % (self, edge_mapping, phase23_cost))
 
-                    if phase2_steps is not None:
-                        for step in phase2_steps:
-                            self.rotate(step)
+        if min_edge_mapping is None:
+            assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
+        log.info("%s: End of find best edge_mapping" % self)
 
-                        phase2_state = edges_recolor_pattern_444(self.state[:])
-                        phase2_edges_state = ''.join([phase2_state[square_index] for square_index in wings_444])
-                        phase2_signature = get_edges_paired_binary_signature(phase2_edges_state)
-                        phase2_edges_state = phase2_signature + '_' + phase2_edges_state
-                        phase12_steps = phase1_steps + phase2_steps
+        self.state[:] = tmp_state[:]
+        self.solution[:] = tmp_solution[:]
+        self.edge_mapping = min_edge_mapping
 
-                        if phase2_edges_state == STATE_TARGET:
+        # Test the prune tables
+        #self.lt_highlow_edges_centers.solve()
+        #self.lt_highlow_edges_edges.solve()
+        #self.print_cube()
+        #self.highlow_edges_print()
+        #sys.exit(0)
 
-                            if self.edge_solution_leads_to_pll_parity():
-                                #best_score_states.append((MAX_EDGES, MAX_WING_PAIRS, len(phase12_steps) + PLL_PENALTY, phase12_steps[:]))
-                                pass
-                            else:
-                                best_score_states.append((MAX_EDGES, MAX_WING_PAIRS, len(phase12_steps), phase12_steps[:]))
-                        else:
-                            post_non_paired_edges_count = self.get_non_paired_edges_count()
-                            paired_edges_count = MAX_WING_PAIRS - post_non_paired_edges_count
+        log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.lt_highlow_edges.next_phase = self.lt_reduce333
+        self.lt_highlow_edges.solve()
+        self.print_cube()
+        self.highlow_edges_print()
+        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-                            best_score_states.append((paired_edges_count, paired_edges_count, len(phase12_steps), phase12_steps[:]))
-                    else:
-                        post_non_paired_edges_count = self.get_non_paired_edges_count()
-                        paired_edges_count = MAX_WING_PAIRS - post_non_paired_edges_count
+        # Testing the phase3 prune tables
+        #self.lt_reduce333_edges_solve.solve()
+        #self.lt_reduce333_centers_solve.solve()
+        #self.print_cube()
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
 
-                        best_score_states.append((paired_edges_count, paired_edges_count, len(phase1_steps), phase1_steps[:]))
+        log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.lt_reduce333.avoid_oll = True
+        self.lt_reduce333.avoid_pll = True
+        self.lt_reduce333.solve()
 
-                #log.info("HERE 10 %s: %s, %s, phase1_edges_state %s, phase2 steps %s" %
-                #    (self, wing_pair_count, line, phase1_edges_state, pformat(phase2_steps)))
+        if self.state[6] != 'U' or self.state[38] != 'F':
+            self.print_cube()
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
 
-            #log.info("best_score_states:\n%s" % pformat(best_score_states))
-            best_entry = get_best_entry(best_score_states)
-            #log.info("best_entry: %s" % pformat(best_entry))
-
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in best_entry[3]:
-                self.rotate(step)
-
-            original_state = self.state[:]
-            original_solution = self.solution[:]
-
-            log.info("%s: solve_edges_six_then_six loop %d: went from %d edges to %d edges in %d moves" %
-                (self, loop_count, pre_paired_edges_count, best_entry[0], len(best_entry[3])))
-            loop_count += 1
+        self.print_cube()
+        log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
 
     def group_edges(self):
-
-        if self.edges_paired():
-            self.solution.append('EDGES_GROUPED')
-            return
-
-        self.lt_init()
-
-        # use_bfs needs more testing...I'm not sure it buys us much
-        if not self.solve_all_edges_444(use_bfs=False, apply_steps_if_found=True):
-            self.solve_edges_six_then_six()
-
+        self.group_centers_guts()
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.solution.append('EDGES_GROUPED')
 
-    def edges_solveable_via_half_turns(self):
-        state = edges_recolor_pattern_444(self.state[:])
-        edges_pattern = ''.join([state[square_index] for square_index in wings_444])
-
-        if edges_pattern in edge_patterns_solveablve_via_half_turns:
-            return True
-        else:
-            return False
 
 swaps_444 = {'B': (0, 52, 56, 60, 64, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 4, 18, 19, 20, 3, 22, 23, 24, 2, 26, 27, 28, 1, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 96, 53, 54, 55, 95, 57, 58, 59, 94, 61, 62, 63, 93, 77, 73, 69, 65, 78, 74, 70, 66, 79, 75, 71, 67, 80, 76, 72, 68, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 17, 21, 25, 29),
  "B'": (0, 29, 25, 21, 17, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 93, 18, 19, 20, 94, 22, 23, 24, 95, 26, 27, 28, 96, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 1, 53, 54, 55, 2, 57, 58, 59, 3, 61, 62, 63, 4, 68, 72, 76, 80, 67, 71, 75, 79, 66, 70, 74, 78, 65, 69, 73, 77, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 64, 60, 56, 52),

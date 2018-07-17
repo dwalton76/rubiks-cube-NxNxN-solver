@@ -1468,11 +1468,6 @@ class RubiksCube555(RubiksCube):
             log.info("%s: all edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_edges(self):
-
-        if self.edges_paired():
-            self.solution.append('EDGES_GROUPED')
-            return
-
         self.lt_init()
 
         #self.print_cube()
@@ -1489,7 +1484,6 @@ class RubiksCube555(RubiksCube):
         # 9x9x9 test cube with old way took 83s and 164 moves to pair edges
         # 9x9x9 test cube with new way took 23s and 153 moves to pair edges
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.solution.append('EDGES_GROUPED')
 
 
 tsai_phase2_orient_edges_555 = {

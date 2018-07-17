@@ -485,6 +485,7 @@ class LookupTable(object):
             result = self.steps_cost(pt_state)
 
             if result == 0:
+                #log.warning("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
                 raise SolveError("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
 
             return result
@@ -729,6 +730,7 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
 
         # This should never be zero
         if not result:
+            #log.warning("%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s" % (self, state_to_find, hash_raw, hash_index, result))
             raise SolveError("%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s" % (self, state_to_find, hash_raw, hash_index, result))
 
         return result
@@ -879,16 +881,21 @@ class LookupTableIDA(LookupTable):
             # We use the heuristic of the next phase to rank the solutions in this phase
             if self.next_phase:
                 next_phase_ida_heuristic = self.next_phase.ida_heuristic()
-                next_phase_ida_heuristic_total = self.next_phase.ida_heuristic_total()
             else:
                 next_phase_ida_heuristic = 0
-                next_phase_ida_heuristic_total = 0
 
             self.ida_solutions.append((
                 this_solution_len + next_phase_ida_heuristic,
-                next_phase_ida_heuristic_total,
                 this_solution_len,
                 this_solution))
+
+            # TODO...how to prevent this?
+            '''
+            for foo in self.ida_solutions:
+                if foo[-1] == this_solution:
+                    log.info(pformat(foo[-1]))
+                    assert False, "this_solution %s is already in ida_solutions, steps_to_here %s" % (pformat(this_solution), pformat(steps_to_here))
+            '''
 
             self.parent.state = self.original_state[:]
             self.parent.solution = self.original_solution[:]
@@ -953,6 +960,7 @@ class LookupTableIDA(LookupTable):
         self.parent.state = prev_state[:]
         return (f_cost, False)
 
+    # dwalton
     # uncomment to cProfile solve()
     '''
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
@@ -1028,11 +1036,12 @@ class LookupTableIDA(LookupTable):
             if self.ida_solutions:
 
                 self.ida_solutions = sorted(self.ida_solutions)
-                min_solution = self.ida_solutions[0][3]
+                min_solution = self.ida_solutions[0][-1]
 
                 if not self.exit_asap:
                     log.info("%s: top 5 ida_solutions\n\n"
-                        "(this_solution_len + next_phase_ida_heuristic, next_phase_ida_heuristic_total, this_solution_len, solution)\n\n"
+                        #"(this_solution_len + next_phase_ida_heuristic, next_phase_ida_heuristic_total, this_solution_len, solution)\n\n"
+                        "(this_solution_len + next_phase_ida_heuristic, this_solution_len, solution)\n\n"
                         "%s\n" % (self, pformat(self.ida_solutions[0:5], width=256)))
 
                 self.parent.state = self.original_state[:]

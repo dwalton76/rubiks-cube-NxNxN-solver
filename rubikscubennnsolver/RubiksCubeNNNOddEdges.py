@@ -101,9 +101,6 @@ class RubiksCubeNNNOddEdges(RubiksCube):
 
         for step in fake_555.solution:
 
-            if step == 'EDGES_GROUPED':
-                continue
-
             # Rotate the entire cube
             if step.startswith('5'):
                 step = str(self.size) + step[1:]
@@ -120,10 +117,6 @@ class RubiksCubeNNNOddEdges(RubiksCube):
 
     def group_edges(self):
 
-        if not self.get_non_paired_edges():
-            self.solution.append('EDGES_GROUPED')
-            return
-
         # How many orbits of edges does this cube have?
         max_orbit = int((self.size/2) - 1)
 
@@ -131,6 +124,5 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         for orbit in reversed(list(range(0, max_orbit))):
             self.pair_edge_orbit_via_555(orbit)
 
-        self.solution.append('EDGES_GROUPED')
-        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.print_cube()
+        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

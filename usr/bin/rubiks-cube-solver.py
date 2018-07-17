@@ -203,8 +203,6 @@ parser.add_argument('--debug', default=False, action='store_true', help='set log
 
 # CPU mode
 action = parser.add_mutually_exclusive_group(required=False)
-action.add_argument('--tsai', default=False, help='Use the tsai solver, 4x4x4 only', action='store_true')
-
 parser.add_argument('--colormap', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--order', type=str, default='URFDLB', help='order of sides in --state, default kociemba URFDLB')
 parser.add_argument('--state', type=str, help='Cube state',
@@ -286,11 +284,7 @@ try:
         cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
     elif size == 4:
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-        if args.tsai:
-            from rubikscubennnsolver.RubiksCubeTsai444 import RubiksCubeTsai444
-            cube = RubiksCubeTsai444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
-        else:
-            cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
+        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
         from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
         cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
@@ -332,11 +326,6 @@ try:
     # run build_tsai_phase2_orient_edges_555
     cube = RubiksCube555(solved_555, args.order, args.colormap)
     cube.build_tsai_phase3_orient_edges_555()
-    sys.exit(0)
-
-    from rubikscubennnsolver.RubiksCubeTsai444 import RubiksCubeTsai444
-    cube = RubiksCubeTsai444(solved_444, args.order, args.colormap)
-    cube.build_tsai_phase2_orient_edges_444()
     sys.exit(0)
     '''
 
@@ -443,7 +432,6 @@ try:
 except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
     cube.print_cube_layout()
     cube.print_cube()
-    #cube.tsai_phase2_orient_edges_print()
     cube.print_solution()
     print((cube.get_kociemba_string(True)))
     raise

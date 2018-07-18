@@ -1372,9 +1372,7 @@ class RubiksCube444(RubiksCube):
         self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
         self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
-        self.lt_highlow_edges.preload_cache_dict()
-        #self.lt_highlow_edges_centers.preload_cache_dict()
-        #self.lt_highlow_edges_edges.preload_cache_dict()
+        self.lt_highlow_edges.preload_cache_string()
 
         self.lt_reduce333_edges_solve = LookupTable444Reduce333Edges(self)
         self.lt_reduce333_centers_solve = LookupTable444Reduce333CentersSolve(self)

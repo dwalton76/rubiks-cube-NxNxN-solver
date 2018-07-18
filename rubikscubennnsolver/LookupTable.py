@@ -238,6 +238,8 @@ class LookupTable(object):
             self.state_target = set(state_target)
         elif isinstance(state_target, list):
             self.state_target = set(state_target)
+        elif isinstance(state_target, set):
+            self.state_target = state_target
         else:
             self.state_target = set((state_target, ))
 
@@ -404,7 +406,7 @@ class LookupTable(object):
     def preload_cache_string(self):
         log.warning("%s: begin preload cache string" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        self.cache_string = ""
+        self.cache_string = None
         state_len = 0
 
         if isinstance(self, LookupTableCostOnly):
@@ -413,6 +415,7 @@ class LookupTable(object):
         if 'dummy' in self.filename:
             pass
         else:
+            # FYI if you try this on a file 2G or larger it will barf with an OS error 22
             with open(self.filename, 'rb') as fh:
                 self.cache_string = fh.read()
 

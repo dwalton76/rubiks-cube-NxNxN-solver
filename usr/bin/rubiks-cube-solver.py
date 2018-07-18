@@ -8,7 +8,7 @@ Solve any size rubiks cube:
 This is a work in progress
 """
 
-from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
+from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop, NotSolving
 from rubikscubennnsolver.LookupTable import NoSteps
 from math import sqrt
 from pprint import pformat
@@ -374,7 +374,21 @@ try:
     cube.www_header()
     cube.www_write_cube("Initial Cube")
 
-    cube.solve()
+    try:
+        cube.solve()
+    except NotSolving:
+        if cube.heuristic_stats:
+            log.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
+
+            for (key, value) in cube.heuristic_stats.items():
+                cube.heuristic_stats[key] = int(median(value))
+
+            log.info("%s: heuristic_stats median\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
+            sys.exit(0)
+        else:
+            raise
+
+    end_time = dt.datetime.now()
     log.info("Final Cube")
     cube.print_cube()
     cube.print_solution()
@@ -416,15 +430,6 @@ try:
         raise SolveError("cube should be solved but is not, edge parity %d, corner parity %d, kociemba %s" %
             (edge_swap_count, corner_swap_count, kociemba_string))
 
-    if cube.heuristic_stats:
-        log.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
-
-        for (key, value) in cube.heuristic_stats.items():
-            cube.heuristic_stats[key] = int(median(value))
-
-        log.info("%s: heuristic_stats median\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
-
-    end_time = dt.datetime.now()
     print("\nMemory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
     print("Time   : %s" % (end_time - start_time))
     print("")

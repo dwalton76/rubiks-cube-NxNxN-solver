@@ -407,18 +407,15 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
     def state(self):
         results = []
         tmp_state = self.parent.state[:]
-        rotate_xxx = self.parent.lt_UD_centers_stage.rotate_xxx
 
         # always add the base symmetry
-        parent_state = tmp_state[:]
-        results.append(''.join(['U' if parent_state[x] in ('U', 'D') else 'x' for x in centers_555]))
+        results.append(''.join(['U' if tmp_state[x] in ('U', 'D') else 'x' for x in centers_555]))
 
         for seq in self.symmetries:
-            parent_state = rotate_xxx(tmp_state[:], seq)
+            parent_state = rotate_555(tmp_state[:], seq)
             results.append(''.join(['U' if parent_state[x] in ('U', 'D') else 'x' for x in centers_555]))
 
-        self.parent.state = tmp_state[:]
-        result = results.sort()
+        results.sort()
         result = results[0].replace('U', '1').replace('x', '0')
 
         return self.hex_format % int(result, 2)
@@ -456,7 +453,9 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
              parent.lt_LR_X_centers_stage),
             linecount=43502,
             max_depth=5,
-            filesize=1305060)
+            filesize=1305060,
+            #exit_asap=False,
+            )
 
     def state(self):
         parent_state = self.parent.state
@@ -652,10 +651,17 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             moves_555,
 
             # These moves would destroy the staged centers
-            ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),
+            ("Rw", "Rw'",
+             "Lw", "Lw'",
+             "Fw", "Fw'",
+             "Bw", "Bw'",
+             "Uw", "Uw'",
+             "Dw", "Dw'"),
 
             # prune tables
             (parent.lt_UL_centers_solve,
+
+             # It is plenty fast without this other prune table...save some memory
              #parent.lt_UF_centers_solve,
             ),
             linecount=142153,

@@ -2,7 +2,7 @@
 from copy import copy
 from collections import OrderedDict
 from pprint import pformat
-from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis
+from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis, NotSolving
 import itertools
 import json
 import logging

@@ -388,7 +388,7 @@ def print_cubes(filename):
         for step in seq:
             cube.state = rotate_xxx(cube.state[:], step)
 
-        if True or cube.state == tmp_state:
+        if cube.state == tmp_state:
             log.info("================")
             log.info(' '.join(seq))
             log.info("================")
@@ -453,7 +453,7 @@ if __name__ == '__main__':
 
     #print_reflect_y(4)
     #print_reflect_z(4)
-    build_symmetry_48()
+    #build_symmetry_48()
 
     #print_reflect_x(2)
     #print_reflect_x(3)
@@ -469,11 +469,9 @@ if __name__ == '__main__':
     #print_symmetry_swaps(6)
     #print_symmetry_swaps(7)
 
-    '''
     if len(sys.argv) < 2:
         print("symmetry.py FILENAME")
         sys.exit(1)
 
     filename = sys.argv[1]
     print_cubes(filename)
-    '''

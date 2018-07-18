@@ -1,10 +1,12 @@
 
 from itertools import combinations
+from rubikscubennnsolver import NotSolving
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666Misc import (
     lt_LFRB_solve_inner_x_centers_and_oblique_edges_state_targets,
+    state_targets_step20,
     state_targets_step30,
     state_targets_step31,
 )
@@ -143,15 +145,6 @@ outer_x_centers_666 = set((
     188, 191, 206, 209
 ))
 
-oblique_edges_666 = (
-    9, 10, 14, 17, 20, 23, 27, 28,
-    45, 46, 50, 53, 56, 59, 63, 64,
-    81, 82, 86, 89, 92, 95, 99, 100,
-    117, 118, 122, 125, 128, 131, 135, 136,
-    153, 154, 158, 161, 164, 167, 171, 172,
-    189, 190, 194, 197, 200, 203, 207, 208
-)
-
 outer_x_center_inner_x_centers_666 = (
     # outer x-centers
     8, 11, 26, 29,
@@ -238,15 +231,6 @@ LFRB_right_oblique_edges_666 = (
 )
 
 
-oblique_edge_pairs_666 = (
-    (9, 10), (14, 20), (17, 23), (27, 28),
-    (45, 46), (50, 56), (53, 59), (63, 64),
-    (81, 82), (86, 92), (89, 95), (99, 100),
-    (117, 118), (122, 128), (125, 131), (135, 136),
-    (153, 154), (158, 164), (161, 167), (171, 172),
-    (189, 190), (194, 200), (197, 203), (207, 208)
-)
-
 class LookupTable666UDInnerXCentersStage(LookupTable):
     """
     starting-states-6x6x6-step10-UD-inner-x-centers-stage.txt
@@ -290,6 +274,66 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
 
     Total: 4,171,103 entries
     """
+    oblique_edges_666 = (
+        9, 10, 14, 17, 20, 23, 27, 28,
+        45, 46, 50, 53, 56, 59, 63, 64,
+        81, 82, 86, 89, 92, 95, 99, 100,
+        117, 118, 122, 125, 128, 131, 135, 136,
+        153, 154, 158, 161, 164, 167, 171, 172,
+        189, 190, 194, 197, 200, 203, 207, 208
+    )
+
+    oblique_edge_pairs_666 = (
+        (9, 10), (14, 20), (17, 23), (27, 28),
+        (45, 46), (50, 56), (53, 59), (63, 64),
+        (81, 82), (86, 92), (89, 95), (99, 100),
+        (117, 118), (122, 128), (125, 131), (135, 136),
+        (153, 154), (158, 164), (161, 167), (171, 172),
+        (189, 190), (194, 200), (197, 203), (207, 208)
+    )
+
+    oblique_edge_four_pairs_666 = (
+        # Upper
+        (9, 27, 189, 207,  82, 100, 153, 171),
+        (10, 28, 190, 208,  81, 99, 154, 172),
+        (14, 17, 200, 203,  46, 64, 117, 135),
+        (20, 23, 194, 197,  45, 63, 118, 136),
+
+        # Left
+        (50, 53, 122, 125,  92, 95, 164, 167),
+        (56, 59, 128, 131,  86, 89, 158, 161)
+    )
+
+    oblique_edge_two_pairs_666 = (
+        # Upper
+        (9, 27,  82, 100), (9, 27, 190, 208), (9, 27, 153, 171),
+        (10, 28, 81, 99), (10, 28, 189, 207), (10, 28, 154, 172),
+        (14, 17, 46, 64), (14, 17, 117, 135), (14, 17, 194, 197),
+        (20, 23, 45, 63), (20, 23, 118, 136), (20, 23, 200, 203),
+
+        # Left
+        (45, 63, 194, 197), (45, 63, 117, 135),
+        (46, 64, 200, 203), (46, 64, 118, 136),
+        (50, 53, 92, 95), (50, 53, 128, 131), (50, 53, 164, 167),
+        (56, 59, 86, 89), (56, 59, 122, 125), (56, 59, 158, 161),
+
+        # Front
+        (81, 99, 190, 208), (81, 99, 153, 171),
+        (82, 100, 189, 207), (82, 100, 154, 172),
+        (86, 89, 128, 131), (86, 89, 164, 167),
+        (92, 95, 122, 125), (92, 95, 158, 161),
+
+        # Right
+        (117, 135, 200, 203),
+        (118, 136, 194, 197),
+        (122, 125, 164, 167),
+        (128, 131, 158, 161),
+
+        # Back
+        (153, 171, 189, 207),
+        (154, 172, 190, 208),
+    )
+
     UD_unpaired_obliques_heuristic_666 = {
         (1, 0, 0): 1,
         (1, 1, 0): 1,
@@ -352,7 +396,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             self,
             parent,
             'lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt',
-            'TBD',
+            state_targets_step20,
             moves_666,
 
             # illegal_moves
@@ -364,11 +408,13 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             # prune tables
             (),
             linecount=4171103,
-            max_depth=1)
+            max_depth=1,
+            #exit_asap=False,
+            )
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in oblique_edges_666])
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.oblique_edges_666])
 
         # Convert to hex
         return self.hex_format % int(result, 2)
@@ -378,7 +424,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         UD_paired_obliques = 0
         UD = ('U', 'D')
 
-        for (x, y) in oblique_edge_pairs_666:
+        for (x, y) in self.oblique_edge_pairs_666:
             if parent_state[x] in UD and parent_state[y] in UD:
                 UD_paired_obliques += 1
 
@@ -390,17 +436,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         result = 0
         UD = ('U', 'D')
 
-        for xy in (
-            # Upper
-            (9, 27, 189, 207,  82, 100, 153, 171),
-            (10, 28, 190, 208,  81, 99, 154, 172),
-            (14, 17, 200, 203,  46, 64, 117, 135),
-            (20, 23, 194, 197,  45, 63, 118, 136),
-
-            # Left
-            (50, 53, 122, 125,  92, 95, 164, 167),
-            (56, 59, 128, 131,  86, 89, 158, 161)):
-
+        for xy in self.oblique_edge_four_pairs_666:
             for index in xy:
                 if parent_state[index] not in UD:
                     break
@@ -414,35 +450,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         result = 0
         UD = ('U', 'D')
 
-        for xy in (
-            # Upper
-            (9, 27,  82, 100), (9, 27, 190, 208), (9, 27, 153, 171),
-            (10, 28, 81, 99), (10, 28, 189, 207), (10, 28, 154, 172),
-            (14, 17, 46, 64), (14, 17, 117, 135), (14, 17, 194, 197),
-            (20, 23, 45, 63), (20, 23, 118, 136), (20, 23, 200, 203),
-
-            # Left
-            (45, 63, 194, 197), (45, 63, 117, 135),
-            (46, 64, 200, 203), (46, 64, 118, 136),
-            (50, 53, 92, 95), (50, 53, 128, 131), (50, 53, 164, 167),
-            (56, 59, 86, 89), (56, 59, 122, 125), (56, 59, 158, 161),
-
-            # Front
-            (81, 99, 190, 208), (81, 99, 153, 171),
-            (82, 100, 189, 207), (82, 100, 154, 172),
-            (86, 89, 128, 131), (86, 89, 164, 167),
-            (92, 95, 122, 125), (92, 95, 158, 161),
-
-            # Right
-            (117, 135, 200, 203),
-            (118, 136, 194, 197),
-            (122, 125, 164, 167),
-            (128, 131, 158, 161),
-
-            # Back
-            (153, 171, 189, 207),
-            (154, 172, 190, 208),
-            ):
+        for xy in self.oblique_edge_two_pairs_666:
             for index in xy:
                 if parent_state[index] not in UD:
                     break
@@ -453,13 +461,14 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         return result
 
     def ida_heuristic(self):
-        # Used to build UD_unpaired_obliques_heuristic_666
-        # return math.ceil(UD_unpaired_obliques/4)
-
         UD_unpaired_obliques = self.get_UD_unpaired_obliques_count()
 
         if not UD_unpaired_obliques:
             return 0
+
+        # dwalton
+        # Used to build UD_unpaired_obliques_heuristic_666
+        #return math.ceil(UD_unpaired_obliques/4)
 
         two_count = self.get_UD_obliques_two_pair_setup_count()
         four_count = self.get_UD_obliques_four_pair_setup_count()
@@ -473,6 +482,9 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             return math.ceil(UD_unpaired_obliques/4)
 
     def search_complete(self, state, steps_to_here):
+        """
+        Used to build UD_unpaired_obliques_heuristic_666
+        """
         cost_to_goal = self.ida_heuristic()
 
         if cost_to_goal == 0:
@@ -494,8 +506,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
 
             for step in steps_to_here + steps:
 
-                # Used to build UD_unpaired_obliques_heuristic_666
-                '''
                 UD_unpaired_obliques = self.get_UD_unpaired_obliques_count()
                 four_count = self.get_UD_obliques_four_pair_setup_count()
                 two_count = self.get_UD_obliques_two_pair_setup_count()
@@ -505,7 +515,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
                 if state_tuple not in self.parent.heuristic_stats:
                     self.parent.heuristic_stats[state_tuple] = []
                 self.parent.heuristic_stats[state_tuple].append(steps_to_go)
-                '''
 
                 self.parent.rotate(step)
                 steps_to_go -= 1
@@ -1049,13 +1058,12 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(self)
         self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
-        self.lt_UD_oblique_edge_stage.preload_cache_set()
+        self.lt_UD_oblique_edge_stage.preload_cache_string()
 
         self.lt_LR_oblique_edges_stage = LookupTable666LRObliqueEdgesStage(self)
         self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCentersStage(self)
         self.lt_LR_inner_x_centers_and_oblique_edges_stage = LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(self)
-        self.lt_LR_inner_x_centers_and_oblique_edges_stage.preload_cache_set()
-        #self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = True
+        self.lt_LR_inner_x_centers_and_oblique_edges_stage.preload_cache_string()
 
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
 
@@ -1064,7 +1072,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
         self.lt_LR_solve_inner_x_centers_and_oblique_edges.preload_cache_dict()
         self.lt_FB_solve_inner_x_centers_and_oblique_edges.preload_cache_dict()
-        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.preload_cache_set()
+        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.preload_cache_string()
         #self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.avoid_oll = True
 
     def populate_fake_555_for_ULFRBD_solve(self):
@@ -1147,7 +1155,12 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_UD_oblique_edge_stage.solve()
         self.print_cube()
-        log.info("%s: UD oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: UD oblique edges paired (not staged), %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # dwalton
+        #self.print_cube()
+        #log.info("%s: UD oblique edges paired (not staged), %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #raise NotSolving("Building UD_unpaired_obliques_heuristic_666")
 
         # Stage UD centers via 555
         fake_555 = self.get_fake_555()

@@ -531,13 +531,44 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
 
             linecount=9919742,
             max_depth=3,
-            filesize=178555356),
+            filesize=277752776),
 
     def state(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_oblique_edges_777])
         return self.hex_format % int(result, 2)
 
+        '''
+            linecount=12680832,
+            max_depth=4,
+            filesize=190212480),
+
+        self.symmetries=(
+            "x x",
+            "y y",
+            "z z",
+            "reflect-x",
+            "reflect-x x x",
+            "reflect-x y y",
+            "reflect-x z z"
+        )
+
+    def state(self):
+        results = []
+        tmp_state = self.parent.state[:]
+
+        # always add the base symmetry
+        results.append(''.join(['L' if tmp_state[x] in ('L', 'R') else 'x' for x in self.LFRB_oblique_edges_777]))
+
+        for seq in self.symmetries:
+            parent_state = rotate_777(tmp_state[:], seq)
+            results.append(''.join(['L' if parent_state[x] in ('L', 'R') else 'x' for x in self.LFRB_oblique_edges_777]))
+
+        results.sort()
+        result = results[0].replace('L', '1').replace('x', '0')
+
+        return self.hex_format % int(result, 2)
+        '''
 
 #class LookupTable777Step41(LookupTable):
 class LookupTable777Step41(LookupTableHashCostOnly):
@@ -739,42 +770,42 @@ class LookupTableIDA777Step40(LookupTableIDA):
     """
 
     state_targets = (
-        'LLLLLLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRRRRRR',
-        'LLLLRLLLLRLLLLRLLLLRLLLLRLRRRRLRRRRLRRRRLRRRRLRRRR',
-        'LLLLRLLLLRLLLLRLLLLRLLLLRRRRRLRRRRLRRRRLRRRRLRRRRL',
-        'LLLRLLLLRLLLLRLLLLRLLLLRLRLRRRRLRRRRLRRRRLRRRRLRRR',
-        'LLLRLLLLRLLLLRLLLLRLLLLRLRRRLRRRRLRRRRLRRRRLRRRRLR',
-        'LLLRRLLLRRLLLRRLLLRRLLLRRLLRRRLLRRRLLRRRLLRRRLLRRR',
-        'LLLRRLLLRRLLLRRLLLRRLLLRRLRRLRLRRLRLRRLRLRRLRLRRLR',
-        'LLLRRLLLRRLLLRRLLLRRLLLRRRLRRLRLRRLRLRRLRLRRLRLRRL',
-        'LLLRRLLLRRLLLRRLLLRRLLLRRRRRLLRRRLLRRRLLRRRLLRRRLL',
-        'LRLLLLRLLLLRLLLLRLLLLRLLLRLRRRRLRRRRLRRRRLRRRRLRRR',
-        'LRLLLLRLLLLRLLLLRLLLLRLLLRRRLRRRRLRRRRLRRRRLRRRRLR',
-        'LRLLRLRLLRLRLLRLRLLRLRLLRLLRRRLLRRRLLRRRLLRRRLLRRR',
-        'LRLLRLRLLRLRLLRLRLLRLRLLRLRRLRLRRLRLRRLRLRRLRLRRLR',
-        'LRLLRLRLLRLRLLRLRLLRLRLLRRLRRLRLRRLRLRRLRLRRLRLRRL',
-        'LRLLRLRLLRLRLLRLRLLRLRLLRRRRLLRRRLLRRRLLRRRLLRRRLL',
-        'LRLRLLRLRLLRLRLLRLRLLRLRLRLRLRRLRLRRLRLRRLRLRRLRLR',
-        'LRLRRLRLRRLRLRRLRLRRLRLRRLLRLRLLRLRLLRLRLLRLRLLRLR',
-        'LRLRRLRLRRLRLRRLRLRRLRLRRRLRLLRLRLLRLRLLRLRLLRLRLL',
-        'RLLLLRLLLLRLLLLRLLLLRLLLLLRRRRLRRRRLRRRRLRRRRLRRRR',
-        'RLLLLRLLLLRLLLLRLLLLRLLLLRRRRLRRRRLRRRRLRRRRLRRRRL',
-        'RLLLRRLLLRRLLLRRLLLRRLLLRLRRRLLRRRLLRRRLLRRRLLRRRL',
-        'RLLRLRLLRLRLLRLRLLRLRLLRLLLRRRLLRRRLLRRRLLRRRLLRRR',
-        'RLLRLRLLRLRLLRLRLLRLRLLRLLRRLRLRRLRLRRLRLRRLRLRRLR',
-        'RLLRLRLLRLRLLRLRLLRLRLLRLRLRRLRLRRLRLRRLRLRRLRLRRL',
-        'RLLRLRLLRLRLLRLRLLRLRLLRLRRRLLRRRLLRRRLLRRRLLRRRLL',
-        'RLLRRRLLRRRLLRRRLLRRRLLRRLLRRLLLRRLLLRRLLLRRLLLRRL',
-        'RLLRRRLLRRRLLRRRLLRRRLLRRLRRLLLRRLLLRRLLLRRLLLRRLL',
-        'RRLLLRRLLLRRLLLRRLLLRRLLLLLRRRLLRRRLLRRRLLRRRLLRRR',
-        'RRLLLRRLLLRRLLLRRLLLRRLLLLRRLRLRRLRLRRLRLRRLRLRRLR',
-        'RRLLLRRLLLRRLLLRRLLLRRLLLRLRRLRLRRLRLRRLRLRRLRLRRL',
-        'RRLLLRRLLLRRLLLRRLLLRRLLLRRRLLRRRLLRRRLLRRRLLRRRLL',
-        'RRLLRRRLLRRRLLRRRLLRRRLLRLLRRLLLRRLLLRRLLLRRLLLRRL',
-        'RRLLRRRLLRRRLLRRRLLRRRLLRLRRLLLRRLLLRRLLLRRLLLRRLL',
-        'RRLRLRRLRLRRLRLRRLRLRRLRLLLRLRLLRLRLLRLRLLRLRLLRLR',
-        'RRLRLRRLRLRRLRLRRLRLRRLRLRLRLLRLRLLRLRLLRLRLLRLRLL',
-        'RRLRRRRLRRRRLRRRRLRRRRLRRLLRLLLLRLLLLRLLLLRLLLLRLL'
+        '0842109bdef7b',
+        '0a5294ab5ad6b',
+        '0a5294bad6b5a',
+        '0c6318d39ce73',
+        '0c6318d9ce739',
+        '0e739ce318c63',
+        '0e739ce94a529',
+        '0e739cf294a52',
+        '0e739cf8c6318',
+        '18c631939ce73',
+        '18c63199ce739',
+        '1ad6b5a318c63',
+        '1ad6b5a94a529',
+        '1ad6b5b294a52',
+        '1ad6b5b8c6318',
+        '1ce739d18c631',
+        '1ef7bde108421',
+        '1ef7bdf084210',
+        '294a528b5ad6b',
+        '294a529ad6b5a',
+        '2b5ad6aa5294a',
+        '2d6b5ac318c63',
+        '2d6b5ac94a529',
+        '2d6b5ad294a52',
+        '2d6b5ad8c6318',
+        '2f7bdee210842',
+        '2f7bdee842108',
+        '39ce738318c63',
+        '39ce73894a529',
+        '39ce739294a52',
+        '39ce7398c6318',
+        '3bdef7a210842',
+        '3bdef7a842108',
+        '3def7bc108421',
+        '3def7bd084210',
+        '3fffffe000000',
     )
 
     centers_step40_777 = (
@@ -803,12 +834,12 @@ class LookupTableIDA777Step40(LookupTableIDA):
              parent.lt_step42),
             linecount=7871759,
             max_depth=6,
-            filesize=440818504)
+            filesize=149563421)
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in self.centers_step40_777])
-        return result
+        result = ''.join(['1' if parent_state[x] == 'L' else '0' for x in self.centers_step40_777])
+        return self.hex_format % int(result, 2)
 
 
 #class LookupTable777Step51(LookupTable):
@@ -1011,42 +1042,42 @@ class LookupTableIDA777Step50(LookupTableIDA):
     """
 
     state_targets = (
-        'DDUDDDDUDDDDUDDDDUDDDDUDDUUDUUUUDUUUUDUUUUDUUUUDUU',
-        'DDUDUDDUDUDDUDUDDUDUDDUDUDUDUUDUDUUDUDUUDUDUUDUDUU',
-        'DDUDUDDUDUDDUDUDDUDUDDUDUUUDUDUUDUDUUDUDUUDUDUUDUD',
-        'DDUUDDDUUDDDUUDDDUUDDDUUDUDDUUUDDUUUDDUUUDDUUUDDUU',
-        'DDUUDDDUUDDDUUDDDUUDDDUUDUUDDUUUDDUUUDDUUUDDUUUDDU',
-        'DDUUUDDUUUDDUUUDDUUUDDUUUDDDUUDDDUUDDDUUDDDUUDDDUU',
-        'DDUUUDDUUUDDUUUDDUUUDDUUUDUDDUDUDDUDUDDUDUDDUDUDDU',
-        'DDUUUDDUUUDDUUUDDUUUDDUUUUDDUDUDDUDUDDUDUDDUDUDDUD',
-        'DDUUUDDUUUDDUUUDDUUUDDUUUUUDDDUUDDDUUDDDUUDDDUUDDD',
-        'DUUDDDUUDDDUUDDDUUDDDUUDDUDDUUUDDUUUDDUUUDDUUUDDUU',
-        'DUUDDDUUDDDUUDDDUUDDDUUDDUUDDUUUDDUUUDDUUUDDUUUDDU',
-        'DUUDUDUUDUDUUDUDUUDUDUUDUDDDUUDDDUUDDDUUDDDUUDDDUU',
-        'DUUDUDUUDUDUUDUDUUDUDUUDUDUDDUDUDDUDUDDUDUDDUDUDDU',
-        'DUUDUDUUDUDUUDUDUUDUDUUDUUDDUDUDDUDUDDUDUDDUDUDDUD',
-        'DUUDUDUUDUDUUDUDUUDUDUUDUUUDDDUUDDDUUDDDUUDDDUUDDD',
-        'DUUUDDUUUDDUUUDDUUUDDUUUDUDDDUUDDDUUDDDUUDDDUUDDDU',
-        'DUUUUDUUUUDUUUUDUUUUDUUUUDDDDUDDDDUDDDDUDDDDUDDDDU',
-        'DUUUUDUUUUDUUUUDUUUUDUUUUUDDDDUDDDDUDDDDUDDDDUDDDD',
-        'UDUDDUDUDDUDUDDUDUDDUDUDDDUDUUDUDUUDUDUUDUDUUDUDUU',
-        'UDUDDUDUDDUDUDDUDUDDUDUDDUUDUDUUDUDUUDUDUUDUDUUDUD',
-        'UDUDUUDUDUUDUDUUDUDUUDUDUDUDUDDUDUDDUDUDDUDUDDUDUD',
-        'UDUUDUDUUDUDUUDUDUUDUDUUDDDDUUDDDUUDDDUUDDDUUDDDUU',
-        'UDUUDUDUUDUDUUDUDUUDUDUUDDUDDUDUDDUDUDDUDUDDUDUDDU',
-        'UDUUDUDUUDUDUUDUDUUDUDUUDUDDUDUDDUDUDDUDUDDUDUDDUD',
-        'UDUUDUDUUDUDUUDUDUUDUDUUDUUDDDUUDDDUUDDDUUDDDUUDDD',
-        'UDUUUUDUUUUDUUUUDUUUUDUUUDDDUDDDDUDDDDUDDDDUDDDDUD',
-        'UDUUUUDUUUUDUUUUDUUUUDUUUDUDDDDUDDDDUDDDDUDDDDUDDD',
-        'UUUDDUUUDDUUUDDUUUDDUUUDDDDDUUDDDUUDDDUUDDDUUDDDUU',
-        'UUUDDUUUDDUUUDDUUUDDUUUDDDUDDUDUDDUDUDDUDUDDUDUDDU',
-        'UUUDDUUUDDUUUDDUUUDDUUUDDUDDUDUDDUDUDDUDUDDUDUDDUD',
-        'UUUDDUUUDDUUUDDUUUDDUUUDDUUDDDUUDDDUUDDDUUDDDUUDDD',
-        'UUUDUUUUDUUUUDUUUUDUUUUDUDDDUDDDDUDDDDUDDDDUDDDDUD',
-        'UUUDUUUUDUUUUDUUUUDUUUUDUDUDDDDUDDDDUDDDDUDDDDUDDD',
-        'UUUUDUUUUDUUUUDUUUUDUUUUDDDDDUDDDDUDDDDUDDDDUDDDDU',
-        'UUUUDUUUUDUUUUDUUUUDUUUUDUDDDDUDDDDUDDDDUDDDDUDDDD',
-        'UUUUUUUUUUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDDDDDDDDDD'
+        '0842109bdef7b',
+        '0a5294ab5ad6b',
+        '0a5294bad6b5a',
+        '0c6318d39ce73',
+        '0c6318d9ce739',
+        '0e739ce318c63',
+        '0e739ce94a529',
+        '0e739cf294a52',
+        '0e739cf8c6318',
+        '18c631939ce73',
+        '18c63199ce739',
+        '1ad6b5a318c63',
+        '1ad6b5a94a529',
+        '1ad6b5b294a52',
+        '1ad6b5b8c6318',
+        '1ce739d18c631',
+        '1ef7bde108421',
+        '1ef7bdf084210',
+        '294a528b5ad6b',
+        '294a529ad6b5a',
+        '2b5ad6aa5294a',
+        '2d6b5ac318c63',
+        '2d6b5ac94a529',
+        '2d6b5ad294a52',
+        '2d6b5ad8c6318',
+        '2f7bdee210842',
+        '2f7bdee842108',
+        '39ce738318c63',
+        '39ce73894a529',
+        '39ce739294a52',
+        '39ce7398c6318',
+        '3bdef7a210842',
+        '3bdef7a842108',
+        '3def7bc108421',
+        '3def7bd084210',
+        '3fffffe000000',
     )
 
     centers_step50_777 = (
@@ -1078,12 +1109,12 @@ class LookupTableIDA777Step50(LookupTableIDA):
              parent.lt_step52),
             linecount=7871759,
             max_depth=6,
-            filesize=440818504)
+            filesize=149563421)
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in self.centers_step50_777])
-        return result
+        result = ''.join(['1' if parent_state[x] == 'U' else '0' for x in self.centers_step50_777])
+        return self.hex_format % int(result, 2)
 
 
 #class LookupTable777Step61(LookupTable):
@@ -1226,7 +1257,7 @@ class LookupTableIDA777Step60(LookupTableIDA):
             self,
             parent,
             'lookup-table-7x7x7-step60.txt',
-            'UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD',
+            '3ffffffffffffffffff8000000000000000000',
             moves_777,
 
             # illegal moves
@@ -1249,12 +1280,12 @@ class LookupTableIDA777Step60(LookupTableIDA):
              parent.lt_step62),
             linecount=15407555,
             max_depth=7,
-            filesize=2403578580)
+            filesize=677932420)
 
     def state(self):
         parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in self.state_indexes])
-        return result
+        result = ''.join(['1' if parent_state[x] in ('U', 'L', 'F') else '0' for x in self.state_indexes])
+        return self.hex_format % int(result, 2)
 
 
 class RubiksCube777(RubiksCubeNNNOddEdges):
@@ -1438,22 +1469,22 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_LR_left_middle_oblique_edge_pairing = LookupTable777LRLeftMiddleObliqueEdgePairing(self)
         self.lt_LR_right_middle_oblique_edge_pairing = LookupTable777LRRightMiddleObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
-        self.lt_LR_oblique_edge_pairing.preload_cache_set()
+        self.lt_LR_oblique_edge_pairing.preload_cache_string()
 
         self.lt_step41 = LookupTable777Step41(self)
         self.lt_step42 = LookupTable777Step42(self)
         self.lt_step40 = LookupTableIDA777Step40(self)
-        self.lt_step40.preload_cache_set()
+        self.lt_step40.preload_cache_string()
 
         self.lt_step51 = LookupTable777Step51(self)
         self.lt_step52 = LookupTable777Step52(self)
         self.lt_step50 = LookupTableIDA777Step50(self)
-        self.lt_step50.preload_cache_set()
+        self.lt_step50.preload_cache_string()
 
         self.lt_step61 = LookupTable777Step61(self)
         self.lt_step62 = LookupTable777Step62(self)
         self.lt_step60 = LookupTableIDA777Step60(self)
-        self.lt_step60.preload_cache_set()
+        self.lt_step60.preload_cache_string()
 
     def create_fake_555_from_inside_centers(self):
 

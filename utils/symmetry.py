@@ -119,6 +119,11 @@ def build_symmetry_48():
     #print("attempts: %d" % attempts)
     log.info("symmetry_48 = \n%s\n" % pformat(symmetry_48))
 
+    print("symmetry_48 = (")
+    for seq in symmetry_48:
+        print("    \"%s\"," % ' '.join(seq))
+    print(")")
+
 
 def print_reflect_x(size):
     per_side_size = size * size
@@ -446,7 +451,9 @@ if __name__ == '__main__':
     logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
     logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-    #build_symmetry_48()
+    #print_reflect_y(4)
+    #print_reflect_z(4)
+    build_symmetry_48()
 
     #print_reflect_x(2)
     #print_reflect_x(3)

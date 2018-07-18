@@ -390,7 +390,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             ),
 
             linecount=20561744,
-            max_depth=7)
+            max_depth=7,
             filesize=349549648)
 
         self.symmetries = (

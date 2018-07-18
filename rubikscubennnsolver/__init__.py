@@ -16,6 +16,57 @@ import sys
 log = logging.getLogger(__name__)
 
 
+symmetry_48 = (
+    (),
+    ('x',),
+    ("x'",),
+    ('y',),
+    ("y'",),
+    ('z',),
+    ("z'",),
+    ('x', 'x'),
+    ('y', 'y'),
+    ('z', 'z'),
+    ('x', 'y'),
+    ('x', "y'"),
+    ('x', 'z'),
+    ('x', "z'"),
+    ('x', 'y', 'y'),
+    ('x', 'z', 'z'),
+    ("x'", 'y'),
+    ("x'", "y'"),
+    ("x'", 'z'),
+    ("x'", "z'"),
+    ('y', 'x', 'x'),
+    ('y', 'z', 'z'),
+    ('z', 'x', 'x'),
+    ('z', 'y', 'y'),
+    ('reflect-x',),
+    ('reflect-x', 'x'),
+    ('reflect-x', "x'"),
+    ('reflect-x', 'y'),
+    ('reflect-x', "y'"),
+    ('reflect-x', 'z'),
+    ('reflect-x', "z'"),
+    ('reflect-x', 'x', 'x'),
+    ('reflect-x', 'y', 'y'),
+    ('reflect-x', 'z', 'z'),
+    ('reflect-x', 'x', 'y'),
+    ('reflect-x', 'x', "y'"),
+    ('reflect-x', 'x', 'z'),
+    ('reflect-x', 'x', "z'"),
+    ('reflect-x', 'x', 'y', 'y'),
+    ('reflect-x', 'x', 'z', 'z'),
+    ('reflect-x', "x'", 'y'),
+    ('reflect-x', "x'", "y'"),
+    ('reflect-x', "x'", 'z'),
+    ('reflect-x', "x'", "z'"),
+    ('reflect-x', 'y', 'x', 'x'),
+    ('reflect-x', 'y', 'z', 'z'),
+    ('reflect-x', 'z', 'x', 'x'),
+    ('reflect-x', 'z', 'y', 'y')
+)
+
 class InvalidCubeReduction(Exception):
     pass
 
@@ -3394,7 +3445,7 @@ class RubiksCube(object):
                             wing_str += str(max_edge_index - edge_index)
 
                         # This is commented out because we used this once upon a time to generate the
-                        # orbit_index_444, etc dictionaries in https://github.com/dwalton76/rubiks-color-resolver
+                        # orbit_index_444, etc dictionaries in https://github.com/d walton76/rubiks-color-resolver
                         #
                         # The workflow was:
                         # - tweak code to call center_solution_leads_to_oll_parity() for odd cubes too
@@ -3887,17 +3938,17 @@ class RubiksCube(object):
     def nuke_corners(self):
         for side in list(self.sides.values()):
             for square_index in side.corner_pos:
-                self.state[square_index] = 'x'
+                self.state[square_index] = '.'
 
     def nuke_centers(self):
         for side in list(self.sides.values()):
             for square_index in side.center_pos:
-                self.state[square_index] = 'x'
+                self.state[square_index] = '.'
 
     def nuke_edges(self):
         for side in list(self.sides.values()):
             for square_index in side.edge_pos:
-                self.state[square_index] = 'x'
+                self.state[square_index] = '.'
 
     def www_header(self):
         """

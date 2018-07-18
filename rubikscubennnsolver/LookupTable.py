@@ -188,6 +188,7 @@ class LookupTable(object):
         self.preloaded_cache_dict = False
         self.preloaded_cache_set = False
         self.preloaded_cache_list = False
+        self.preloaded_cache_string = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
         self.fh_txt_seek_calls = 0
@@ -252,6 +253,7 @@ class LookupTable(object):
     def binary_search(self, state_to_find):
         first = 0
         last = self.linecount - 1
+        state_to_find = bytes(state_to_find, encoding='utf-8')
 
         while first <= last:
             midpoint = int((first + last)/2)
@@ -292,6 +294,34 @@ class LookupTable(object):
 
         return False
 
+    def binary_search_cache_string(self, state_to_find):
+        first = 0
+        last = self.linecount - 1
+
+        state_to_find = bytes(state_to_find, encoding='utf-8')
+
+        while first <= last:
+            midpoint = int((first + last)/2)
+
+            # Only read the 'state' part of the line (for speed)
+            state_start = midpoint * self.width
+            state_end = state_start + self.state_width
+            state = self.cache_string[state_start:state_end]
+
+            if state_to_find < state:
+                last = midpoint - 1
+
+            # If this is the line we are looking for, then read the entire line
+            elif state_to_find == state:
+                line_end = state_start + self.width
+                line = self.cache_string[state_start:line_end]
+                return line.decode('utf-8').rstrip()
+
+            else:
+                first = midpoint + 1
+
+        return None
+
     def preload_cache_dict(self):
         log.warning("%s: begin preload cache dict" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
@@ -312,7 +342,7 @@ class LookupTable(object):
                     (state, steps) = line.rstrip().split(':')
                     # Store this as a string, not a list.  It takes more than 2x the memory to store steps.split()
                     # For solving a 7x7x7 this is the difference in requiring 3G of RAM vs 7G!!.
-                    self.cache[bytes(state, 'ascii')] = steps
+                    self.cache[state] = steps
 
         self.preloaded_cache_dict = True
         memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
@@ -338,7 +368,7 @@ class LookupTable(object):
                 # The bottleneck is the building of the dictionary, moreso that reading from disk.
                 for line in fh:
                     state = line[:self.state_width]
-                    states.append(bytes(state, 'ascii'))
+                    states.append(state)
 
         self.cache_set = set(states)
         self.preloaded_cache_set = True
@@ -364,12 +394,33 @@ class LookupTable(object):
                 for line in fh:
                     state = line[:self.state_width]
                     #(state, steps) = line.rstrip().split(':')
-                    self.cache_list.append(bytes(state, 'ascii'))
+                    self.cache_list.append(state)
 
         self.preloaded_cache_list = True
         memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         memory_delta = memory_post - memory_pre
         log.warning("{}: end preload cache list ({:,} bytes)".format(self, memory_delta))
+
+    def preload_cache_string(self):
+        log.warning("%s: begin preload cache string" % self)
+        memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        self.cache_string = ""
+        state_len = 0
+
+        if isinstance(self, LookupTableCostOnly):
+            raise Exception("%s is a CostOnly table, no need to call preload_cache_set()" % self)
+
+        if 'dummy' in self.filename:
+            pass
+        else:
+            with open(self.filename, 'rb') as fh:
+                self.cache_string = fh.read()
+
+        self.preloaded_cache_string = True
+        memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        memory_delta = memory_post - memory_pre
+        #log.info("{}: {:,} characters in cache".format(self, len(self.cache_string)))
+        log.warning("{}: end preload cache string ({:,} bytes)".format(self, memory_delta))
 
     def steps(self, state_to_find=None):
         """
@@ -381,8 +432,6 @@ class LookupTable(object):
         # If we are at one of our state_targets we do not need to do anything
         if state_to_find in self.state_target:
             return None
-
-        state_to_find = bytes(state_to_find, encoding='utf-8')
 
         if self.preloaded_cache_dict:
             steps = self.cache.get(state_to_find)
@@ -407,6 +456,15 @@ class LookupTable(object):
                 # Binary search the file to get the value
                 line = self.binary_search(state_to_find)
                 #log.info("%s: %s is in cache_set, line %s" % (self, state_to_find, line))
+                (state, steps) = line.strip().split(':')
+                steps_list = steps.split()
+                return steps_list
+
+        elif self.preloaded_cache_string:
+            line = self.binary_search_cache_string(state_to_find)
+
+            if line:
+                #log.info("%s: %s is in cache_string, line %s" % (self, state_to_find, line))
                 (state, steps) = line.strip().split(':')
                 steps_list = steps.split()
                 return steps_list
@@ -451,6 +509,7 @@ class LookupTable(object):
             tbd = False
 
         while True:
+            #log.info("%s: top of loop" % self)
             state = self.state()
 
             if tbd:
@@ -466,8 +525,39 @@ class LookupTable(object):
                 #self.parent.print_cube()
                 #log.info("%s: %d steps" % (self, len(steps)))
 
-                for step in steps:
-                    self.parent.rotate(step)
+                # If our table contains the move count instead of the move sequence
+                # find the move that takes us closer to our goal.
+                if steps[0].isdigit():
+                    current_distance = int(steps[0])
+                    #log.info("%s: state %s has distance %d" % (self, state, current_distance))
+                    orig_state = self.parent.state[:]
+                    orig_solution = self.parent.solution[:]
+
+                    for step in self.moves_all:
+                        self.parent.rotate(step)
+                        tmp_state = self.state()
+                        tmp_steps = self.steps(tmp_state)
+
+                        if current_distance == 1:
+                            if tmp_state in self.state_target:
+                                log.info("%s: %s takes us to state_target %s" % (self, step, tmp_state))
+                                break
+                            else:
+                                self.parent.state = orig_state[:]
+                                self.parent.solution = orig_solution[:]
+                        else:
+                            if tmp_steps and int(tmp_steps[0]) < current_distance:
+                                log.info("%s: %s takes us to state %s with distance %d" % (self, step, tmp_state, int(tmp_steps[0])))
+                                break
+                            else:
+                                self.parent.state = orig_state[:]
+                                self.parent.solution = orig_solution[:]
+                    else:
+                        raise Exception("failed to advance")
+
+                else:
+                    for step in steps:
+                        self.parent.rotate(step)
 
                 #log.info("%s: POST solve()" % self)
                 #self.parent.print_cube()
@@ -670,11 +760,9 @@ class LookupTableCostOnly(LookupTable):
         # We do not have to binary_search() though so that cuts way down on the
         # number of reads.
         if load_string:
-
             log.warning("%s: begin preload cost-only" % self)
             with open(self.filename, 'r') as fh:
-                for line in fh:
-                    self.content = line
+                self.content = fh.read()
             self.fh_txt_seek_calls += 1
             log.warning("{}: end preload cost-only ({:,} bytes)".format(self, sys.getsizeof(self.content)))
         else:
@@ -821,9 +909,6 @@ class LookupTableIDA(LookupTable):
         for step in steps_to_here:
             self.parent.rotate(step)
 
-        for step in steps:
-            self.parent.rotate(step)
-
         # The cube is now in a state where it is in the lookup table, we may need
         # to do several lookups to get to our target state though. Use
         # LookupTabele's solve() to take us the rest of the way to the target state.
@@ -960,7 +1045,6 @@ class LookupTableIDA(LookupTable):
         self.parent.state = prev_state[:]
         return (f_cost, False)
 
-    # dwalton
     # uncomment to cProfile solve()
     '''
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):

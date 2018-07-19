@@ -200,6 +200,7 @@ logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelNam
 parser = argparse.ArgumentParser()
 parser.add_argument('--print-steps', default=False, action='store_true', help='Display animated step-by-step solution')
 parser.add_argument('--debug', default=False, action='store_true', help='set loglevel to DEBUG')
+parser.add_argument('--min-memory', default=False, action='store_true', help='Load smaller tables to use less memory...takes longer to run')
 
 # CPU mode
 action = parser.add_mutually_exclusive_group(required=False)
@@ -370,6 +371,7 @@ try:
     sys.exit(0)
     '''
 
+    cube.min_memory = args.min_memory
     cube.sanity_check()
     cube.print_cube()
     cube.www_header()

@@ -255,7 +255,7 @@ class LookupTable(object):
                     log.info("Downloading table via 'wget %s'" % url)
                     call(['wget', url])
 
-                log.warning("gunzip %s" % self.filename_gz)
+                log.info("gunzip %s" % self.filename_gz)
                 call(['gunzip', self.filename_gz])
 
             # Find the state_width for the entries in our .txt file
@@ -409,7 +409,7 @@ class LookupTable(object):
         return None
 
     def preload_cache_dict(self):
-        log.warning("%s: begin preload cache dict" % self)
+        log.info("%s: begin preload cache dict" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
         if isinstance(self, LookupTableCostOnly):
@@ -433,10 +433,10 @@ class LookupTable(object):
         self.preloaded_cache_dict = True
         memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         memory_delta = memory_post - memory_pre
-        log.warning("{}: end preload cache dict ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
+        log.info("{}: end preload cache dict ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
 
     def preload_cache_set(self):
-        log.warning("%s: begin preload cache set" % self)
+        log.info("%s: begin preload cache set" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         states = []
 
@@ -460,10 +460,10 @@ class LookupTable(object):
         self.preloaded_cache_set = True
         memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         memory_delta = memory_post - memory_pre
-        log.warning("{}: end preload cache set ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
+        log.info("{}: end preload cache set ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
 
     def preload_cache_list(self):
-        log.warning("%s: begin preload cache list" % self)
+        log.info("%s: begin preload cache list" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         self.cache_list = []
         state_len = 0
@@ -485,10 +485,10 @@ class LookupTable(object):
         self.preloaded_cache_list = True
         memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         memory_delta = memory_post - memory_pre
-        log.warning("{}: end preload cache list ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
+        log.info("{}: end preload cache list ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
 
     def preload_cache_string(self):
-        log.warning("%s: begin preload cache string" % self)
+        log.info("%s: begin preload cache string" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         self.cache_string = None
         state_len = 0
@@ -507,7 +507,7 @@ class LookupTable(object):
         memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         memory_delta = memory_post - memory_pre
         #log.info("{}: {:,} characters in cache".format(self, len(self.cache_string)))
-        log.warning("{}: end preload cache string ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
+        log.info("{}: end preload cache string ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
 
     def steps(self, state_to_find=None):
         """
@@ -822,7 +822,7 @@ class LookupTableCostOnly(LookupTable):
                 log.info("Downloading table via 'wget %s'" % url)
                 call(['wget', url])
 
-            log.warning("gunzip %s" % self.filename_gz)
+            log.info("gunzip %s" % self.filename_gz)
             call(['gunzip', self.filename_gz])
 
         self.filename_exists = True
@@ -847,7 +847,7 @@ class LookupTableCostOnly(LookupTable):
         # We do not have to binary_search() though so that cuts way down on the
         # number of reads.
         if load_string:
-            log.warning("%s: begin preload cost-only" % self)
+            log.info("%s: begin preload cost-only" % self)
             memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
             with open(self.filename, 'rb') as fh:
@@ -856,7 +856,7 @@ class LookupTableCostOnly(LookupTable):
 
             memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
             memory_delta = memory_post - memory_pre
-            log.warning("{}: end preload cost-only ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
+            log.info("{}: end preload cost-only ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
         else:
             # 'rb' mode is about 3x faster than 'r' mode
             self.fh_txt = open(self.filename, mode='rb')

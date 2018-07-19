@@ -172,6 +172,40 @@ def pretty_time(delta):
         return "\033[91m%s\033[0m" % delta
 
 
+def find_first_last(linecount, cache, b_state_to_find):
+    cache.sort()
+    first = 0
+    last = linecount - 1
+    to_delete = 0
+    #log.info("find_first_last for %s with cache\n%s" % (b_state_to_find, pformat(cache)))
+
+    for (offset, state) in cache:
+
+        if state < b_state_to_find:
+            to_delete += 1
+            first = offset
+            #log.info("state %s < b_state_to_find %s, to_delete %d, first %s" % (state, b_state_to_find, to_delete, first))
+
+        elif state == b_state_to_find:
+            first = offset
+            last = offset
+            #log.info("state %s == b_state_to_find %s, to_delete %d, first %s, last %s" % (state, b_state_to_find, first, last))
+            break
+
+        else:
+            last = offset
+            #log.info("state %s > b_state_to_find %s, last %s" % (state, b_state_to_find, last))
+            break
+
+    to_delete -= 1
+
+    if to_delete > 0:
+        cache = cache[to_delete:]
+
+    #log.info("find_first_last for %s, deleted %s, first %s, last %s, cache\n%s" % (b_state_to_find, to_delete, first, last, pformat(cache)))
+    return (cache, first, last)
+
+
 class LookupTable(object):
 
     def __init__(self, parent, filename, state_target, linecount, max_depth=None, filesize=None):
@@ -251,6 +285,56 @@ class LookupTable(object):
 
     def __str__(self):
         return self.desc
+
+    def binary_search_multiple(self, states_to_find):
+        states_to_find.sort()
+        cache = []
+        results = {}
+        linecount = self.linecount
+        width = self.width
+        state_width = self.state_width
+        fh_txt = self.fh_txt
+        #log.info("\n\n\n\n\n\n")
+        #log.info("binary_search_multiple called for %s" % pformat(states_to_find))
+
+        for state_to_find in states_to_find:
+            b_state_to_find = bytearray(state_to_find, encoding='utf-8')
+
+            if cache:
+                (cache, first, last) = find_first_last(linecount, cache, b_state_to_find)
+            else:
+                first = 0
+                last = linecount - 1
+
+            #log.info("state_to_find %s, first %s, last %s, cache\n%s" % (state_to_find, first, last, pformat(cache)))
+            while first <= last:
+                midpoint = int((first + last)/2)
+                fh_txt.seek(midpoint * width)
+
+                # Only read the 'state' part of the line (for speed)
+                b_state = fh_txt.read(state_width)
+
+                # We did a read...reads are expensive...cache the read
+                cache.append((midpoint, b_state))
+
+                if b_state_to_find < b_state:
+                    last = midpoint - 1
+
+                # If this is the line we are looking for, then read the entire line
+                elif b_state_to_find == b_state:
+                    fh_txt.seek(midpoint * width)
+                    line = fh_txt.read(width)
+                    (_, value) = line.decode('utf-8').rstrip().split(':')
+                    results[state_to_find] = value
+                    break
+
+                else:
+                    first = midpoint + 1
+            else:
+                #results[state_to_find] = None
+                pass
+
+        return results
 
     def binary_search(self, state_to_find):
         first = 0

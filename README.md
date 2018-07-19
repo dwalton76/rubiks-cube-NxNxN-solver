@@ -23,11 +23,11 @@ I am working on bringing this down but these are the memory requirements for run
 
 | Size | Memory |
 | ------ | ------ |
-| 4x4x4 | 1G |
+| 4x4x4 | 700M |
 | 5x5x5 | 600M |
-| 6x6x6 | 3G |
-| 7x7x7 | 4.2G |
-| NxNxN | 4.4G |
+| 6x6x6 | 2.5G |
+| 7x7x7 | 4.0G |
+| NxNxN | 4.2G |
 
 
 ## Install

@@ -1367,18 +1367,17 @@ class RubiksCube444(RubiksCube):
         self.lt_FB_centers_stage = LookupTable444FBCentersStageCostOnly(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = True
-        self.lt_ULFRBD_centers_stage.preload_cache_set()
+        self.lt_ULFRBD_centers_stage.preload_cache_string()
 
         self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
         self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
-        self.lt_highlow_edges.preload_cache_string()
 
         self.lt_reduce333_edges_solve = LookupTable444Reduce333Edges(self)
         self.lt_reduce333_centers_solve = LookupTable444Reduce333CentersSolve(self)
         self.lt_reduce333 = LookupTableIDA444Reduce333(self)
         self.lt_reduce333_centers_solve.preload_cache_dict()
-        self.lt_reduce333.preload_cache_set()
+        self.lt_reduce333.preload_cache_string()
 
     def group_centers_guts(self):
         self.lt_init()
@@ -1415,41 +1414,48 @@ class RubiksCube444(RubiksCube):
         tmp_solution = self.solution[:]
         log.info("%s: Start of find best edge_mapping" % self)
 
+        # Build a list of all 2048 states we need to find in the step20-highlow-edges table.
+        # We do this so we can leverage binary_search_multiple() which runs about a million
+        # times faster than binary searching for all 2048 states one at a time. This allows
+        # us to NOT load this file into memory.
+        high_low_states_to_find = []
+        edge_mapping_for_phase2_state = {}
+
         for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
             for edge_mapping in edges_to_flip_sets:
                 self.state[:] = tmp_state[:]
                 self.solution[:] = tmp_solution[:]
 
                 self.edge_mapping = edge_mapping
-                phase23_cost = self.lt_highlow_edges.steps_cost()
+                phase2_state = self.lt_highlow_edges.state()
+                edge_mapping_for_phase2_state[phase2_state] = edge_mapping
+                high_low_states_to_find.append(phase2_state)
 
-                if phase23_cost == 0:
-                    continue
+        high_low_states = self.lt_highlow_edges.binary_search_multiple(high_low_states_to_find)
 
-                phase2_steps = self.lt_highlow_edges.steps()
-                for step in phase2_steps:
-                    self.rotate(step)
+        for (phase2_state, phase2_steps) in sorted(high_low_states.items()):
+            self.state = tmp_state[:]
+            self.solution = tmp_solution[:]
+            phase2_steps = phase2_steps.split()
+            phase2_cost = len(phase2_steps)
 
-                #if not self.edges_oriented_into_high_low_groups(debug=True):
-                #    log.warning("%s: edges are NOT in high/low groups\n" % self)
-                #    continue
-                #edges_state = self.highlow_edges_state(edge_mapping)
-                #edges_cost = self.lt_highlow_edges_edges.steps_cost(edges_state)
+            for step in phase2_steps:
+                self.rotate(step)
 
-                phase3_heuristic = self.lt_reduce333.ida_heuristic()
-                phase23_cost += phase3_heuristic
+            phase3_cost = self.lt_reduce333.ida_heuristic()
+            phase23_cost = phase2_cost + phase3_cost
 
-                if min_phase23_cost is None or phase23_cost < min_phase23_cost:
-                    min_phase23_cost = phase23_cost
-                    min_edge_mapping = edge_mapping
-                    log.info("%s: using edge_mapping %s, phase2+3 cost %s" % (self, edge_mapping, phase23_cost))
+            if min_phase23_cost is None or phase23_cost < min_phase23_cost:
+                min_phase23_cost = phase23_cost
+                min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
+                log.info("%s: using edge_mapping %s, phase2+3 cost %s" % (self, min_edge_mapping, phase23_cost))
 
         if min_edge_mapping is None:
             assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
         log.info("%s: End of find best edge_mapping" % self)
 
-        self.state[:] = tmp_state[:]
-        self.solution[:] = tmp_solution[:]
+        self.state = tmp_state[:]
+        self.solution = tmp_solution[:]
         self.edge_mapping = min_edge_mapping
 
         # Test the prune tables

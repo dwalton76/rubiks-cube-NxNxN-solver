@@ -4,7 +4,6 @@ from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666Misc import (
-    state_targets_step20,
     state_targets_step30,
     state_targets_step31,
     state_targets_step60,
@@ -396,7 +395,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             self,
             parent,
             'lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt',
-            state_targets_step20,
+            'TBD',
             moves_666,
 
             # illegal_moves
@@ -478,7 +477,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         if result is not None:
             return result
         else:
-            log.warning("UD_unpaired_obliques_heuristic_666 needs entry for %s" % pformat(state_tuple))
+            #log.warning("UD_unpaired_obliques_heuristic_666 needs entry for %s" % pformat(state_tuple))
             return math.ceil(UD_unpaired_obliques/4)
 
     def search_complete(self, state, steps_to_here):

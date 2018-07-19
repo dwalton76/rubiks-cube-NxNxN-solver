@@ -1,14 +1,13 @@
 
-from itertools import combinations
 from rubikscubennnsolver import NotSolving
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666Misc import (
-    lt_LFRB_solve_inner_x_centers_and_oblique_edges_state_targets,
     state_targets_step20,
     state_targets_step30,
     state_targets_step31,
+    state_targets_step60,
 )
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
@@ -20,6 +19,7 @@ from pprint import pformat
 import json
 import logging
 import math
+import resource
 import sys
 
 log = logging.getLogger(__name__)
@@ -924,7 +924,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             self,
             parent,
             'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt',
-            lt_LFRB_solve_inner_x_centers_and_oblique_edges_state_targets,
+            state_targets_step60,
 
             moves_666,
 

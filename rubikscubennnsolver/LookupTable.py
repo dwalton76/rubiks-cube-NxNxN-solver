@@ -232,7 +232,7 @@ class LookupTable(object):
         self.filesize = filesize
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
-        assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
+        #assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
 
         if 'dummy' in self.filename:
             self.width = 0

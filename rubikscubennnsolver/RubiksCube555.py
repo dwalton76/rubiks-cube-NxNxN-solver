@@ -369,10 +369,22 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
     """
 
     def __init__(self, parent):
+
+        if parent.min_memory:
+            filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt.6-deep'
+            linecount = 1074501
+            max_depth = 6
+            filesize = 18266517
+        else:
+            filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt'
+            linecount = 20561744
+            max_depth = 7
+            filesize = 349549648
+
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step10-UD-centers-stage.txt',
+            filename,
             '3fe000000001ff',
             moves_555,
             (), # illegal_moves
@@ -382,9 +394,9 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
              parent.lt_UD_X_centers_stage_co,
             ),
 
-            linecount=20561744,
-            max_depth=7,
-            filesize=349549648)
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize)
 
         self.symmetries = (
             "y",

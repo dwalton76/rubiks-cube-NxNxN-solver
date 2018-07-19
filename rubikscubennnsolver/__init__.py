@@ -435,6 +435,7 @@ class RubiksCube(object):
         self.fake_666 = None
         self.fake_777 = None
         self.heuristic_stats = {}
+        self.min_memory = False
 
         if colormap:
             colormap = json.loads(colormap)

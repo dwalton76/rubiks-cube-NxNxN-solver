@@ -230,6 +230,7 @@ class LookupTable(object):
         self.cache_set = set()
         self.cache_list = []
         self.filesize = filesize
+        self.collect_stats = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         #assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -608,6 +609,7 @@ class LookupTable(object):
             steps = self.steps(state)
 
             if steps:
+
                 #log.info("%s: PRE solve() state %s found %s" % (self, state, ' '.join(steps)))
                 #self.parent.print_cube()
                 #log.info("%s: %d steps" % (self, len(steps)))
@@ -944,6 +946,14 @@ class LookupTableIDA(LookupTable):
 
         return total
 
+    def ida_heuristic_tuple(self):
+        result = []
+
+        for pt in self.prune_tables:
+            result.append(pt.heuristic())
+
+        return tuple(result)
+
     def ida_heuristic(self):
         cost_to_goal = 0
 
@@ -1225,8 +1235,22 @@ class LookupTableIDA(LookupTable):
                 self.parent.state = self.original_state[:]
                 self.parent.solution = self.original_solution[:]
 
-                for step in min_solution:
-                    self.parent.rotate(step)
+                if self.collect_stats:
+                    steps_to_go = len(min_solution)
+
+                    for step in min_solution:
+                        self.parent.rotate(step)
+                        heuristic_tuple = self.ida_heuristic_tuple()
+
+                        if heuristic_tuple not in self.parent.heuristic_stats:
+                            self.parent.heuristic_stats[heuristic_tuple] = []
+
+                        self.parent.heuristic_stats[heuristic_tuple].append(steps_to_go)
+                        steps_to_go -= 1
+                else:
+                    for step in min_solution:
+                        self.parent.rotate(step)
+
 
                 end_time1 = dt.datetime.now()
                 log.info("%s: IDA threshold %d, explored %d nodes in %s (%s total), found %d solutions" %

@@ -337,14 +337,18 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         (1, 0, 0): 1,
         (1, 1, 0): 1,
         (1, 2, 0): 1,
+        (1, 3, 0): 1,
         (2, 0, 0): 1,
         (2, 1, 0): 1,
         (2, 2, 0): 1,
+        (2, 2, 1): 1,
         (2, 3, 0): 1,
         (2, 3, 1): 2,
         (2, 4, 0): 1,
         (2, 5, 0): 2,
         (2, 5, 1): 1,
+        (2, 6, 0): 2,
+        (2, 7, 0): 1,
         (3, 0, 0): 3,
         (3, 1, 0): 2,
         (3, 2, 0): 2,
@@ -352,42 +356,48 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         (3, 3, 0): 2,
         (3, 3, 1): 2,
         (3, 4, 0): 1,
-        (3, 5, 0): 3,
-        (4, 0, 0): 3,
+        (3, 5, 0): 2,
+        (4, 0, 0): 4,
         (4, 1, 0): 3,
         (4, 2, 0): 3,
         (4, 2, 1): 1,
         (4, 3, 0): 2,
         (4, 3, 1): 2,
         (4, 4, 0): 1,
-        (4, 5, 0): 3,
+        (4, 5, 0): 2,
+        (4, 5, 1): 3,
         (4, 6, 0): 2,
-        (5, 0, 0): 5,
+        (5, 0, 0): 6,
         (5, 1, 0): 5,
         (5, 2, 0): 5,
-        (5, 2, 1): 2,
-        (5, 3, 0): 5,
-        (5, 4, 0): 4,
+        (5, 2, 1): 4,
+        (5, 3, 0): 4,
+        (5, 3, 1): 2,
+        (5, 4, 0): 2,
         (5, 5, 0): 4,
         (6, 0, 0): 6,
-        (6, 1, 0): 5,
-        (6, 2, 0): 5,
-        (6, 2, 1): 4,
+        (6, 1, 0): 6,
+        (6, 2, 0): 6,
+        (6, 2, 1): 3,
         (6, 3, 0): 5,
-        (6, 4, 0): 4,
+        (6, 3, 1): 2,
+        (6, 4, 0): 5,
+        (6, 5, 0): 5,
         (7, 0, 0): 6,
         (7, 1, 0): 6,
         (7, 2, 0): 6,
         (7, 2, 1): 2,
-        (7, 3, 0): 5,
-        (7, 4, 0): 4,
+        (7, 3, 0): 6,
+        (7, 4, 0): 5,
+        (7, 5, 0): 5,
         (7, 6, 0): 4,
         (8, 0, 0): 6,
         (8, 1, 0): 6,
         (8, 2, 0): 5,
-        (8, 3, 0): 6,
-        (8, 4, 0): 4,
-        (8, 5, 0): 4
+        (8, 2, 1): 3,
+        (8, 3, 0): 5,
+        (8, 4, 0): 5,
+        (8, 5, 0): 5,
     }
 
     def __init__(self, parent):
@@ -408,7 +418,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             (),
             linecount=4171103,
             max_depth=1,
-            #exit_asap=False,
             )
 
     def state(self):
@@ -465,7 +474,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         if not UD_unpaired_obliques:
             return 0
 
-        # dwalton
         # Used to build UD_unpaired_obliques_heuristic_666
         #return math.ceil(UD_unpaired_obliques/4)
 
@@ -614,11 +622,11 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
     """
     lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt
     ====================================================================
-    1 steps has 95,346 entries (0 percent, 0.00x previous step)
-    2 steps has 1,257,166 entries (7 percent, 13.19x previous step)
-    3 steps has 16,312,708 entries (92 percent, 12.98x previous step)
+    1 steps has 140,504 entries (0 percent, 0.00x previous step)
+    2 steps has 1,525,128 entries (7 percent, 10.85x previous step)
+    3 steps has 18,193,324 entries (91 percent, 11.93x previous step)
 
-    Total: 17,665,220 entries
+    Total: 19,858,956 entries
     """
     LFRB_inner_x_centers_oblique_edges_666 = (
             45, 46,
@@ -665,9 +673,9 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
             (parent.lt_LR_oblique_edges_stage,
              parent.lt_LR_inner_x_centers_stage),
 
-            linecount=17665220,
+            linecount=19858956,
             max_depth=3,
-            filesize=317973960),
+            filesize=357461208),
 
     def state(self):
         parent_state = self.parent.state
@@ -1148,7 +1156,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
         self.lt_UD_inner_x_centers_stage.solve()
-        self.rotate_for_best_centers_solving(inner_x_centers_666)
+        self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
         log.info("%s: UD inner-x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
@@ -1156,7 +1164,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.print_cube()
         log.info("%s: UD oblique edges paired (not staged), %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        # dwalton
         #self.print_cube()
         #log.info("%s: UD oblique edges paired (not staged), %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #raise NotSolving("Building UD_unpaired_obliques_heuristic_666")
@@ -1173,7 +1180,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         for step in fake_555.solution:
             self.rotate(step)
 
-        self.rotate_for_best_centers_solving(inner_x_centers_666)
+        self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
@@ -1186,6 +1193,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         # Stage the LR inner x-centers and oblique edges
         self.lt_LR_inner_x_centers_and_oblique_edges_stage.solve()
+        self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
         log.info("%s: LR oblique edges and inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 

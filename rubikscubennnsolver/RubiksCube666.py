@@ -563,7 +563,8 @@ class LookupTable666LRObliqueEdgesStage(LookupTableHashCostOnly):
             state_targets_step31,
             linecount=165636900,
             max_depth=7,
-            bucketcount=331273823)
+            bucketcount=165636907,
+            filesize=165636908)
 
         '''
         LookupTable.__init__(

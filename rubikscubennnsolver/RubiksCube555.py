@@ -598,48 +598,6 @@ class LookupTableULCentersSolve(LookupTableHashCostOnly):
         return self.hex_format % int(result, 2)
 
 
-class LookupTableUFCentersSolve(LookupTableHashCostOnly):
-    """
-    This tables solves sides U and F which in turn also solve D and B.  When
-    the table was built the Fs were replaced with Us so that we were left with
-    only 'U' and 'x' squares so that we could save the states in hex which
-    makes the table take up much less disk space.
-
-    lookup-table-5x5x5-step33-UF-centers-solve.txt
-    ==============================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 71 entries (0 percent, 10.14x previous step)
-    3 steps has 630 entries (0 percent, 8.87x previous step)
-    4 steps has 4,639 entries (0 percent, 7.36x previous step)
-    5 steps has 32,060 entries (0 percent, 6.91x previous step)
-    6 steps has 198,779 entries (0 percent, 6.20x previous step)
-    7 steps has 1,011,284 entries (4 percent, 5.09x previous step)
-    8 steps has 3,826,966 entries (15 percent, 3.78x previous step)
-    9 steps has 8,611,512 entries (35 percent, 2.25x previous step)
-    10 steps has 8,194,244 entries (34 percent, 0.95x previous step)
-    11 steps has 2,062,640 entries (8 percent, 0.25x previous step)
-    12 steps has 67,152 entries (0 percent, 0.03x previous step)
-    13 steps has 16 entries (0 percent, 0.00x previous step)
-
-    Total: 24,010,000 entries
-    """
-
-    def __init__(self, parent):
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step33-UF-centers-solve.hash-cost-only.txt',
-            '3fe00ff8000000',
-            linecount=24010000,
-            max_depth=13,
-            bucketcount=48020003)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'F') else '0' for x in centers_555])
-        return self.hex_format % int(result, 2)
-
-
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     """
     24,010,000/117,649,000,000 is 0.000 204 so this will be a fast IDA search
@@ -672,11 +630,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
              "Dw", "Dw'"),
 
             # prune tables
-            (parent.lt_UL_centers_solve,
-
-             # It is plenty fast without this other prune table...save some memory
-             #parent.lt_UF_centers_solve,
-            ),
+            (parent.lt_UL_centers_solve,),
             linecount=142153,
             max_depth=5,
             filesize=8387027)
@@ -1112,7 +1066,6 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_centers_stage.preload_cache_dict()
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
-        #self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
         self.lt_ULFRB_centers_solve.preload_cache_string()
 

@@ -395,7 +395,8 @@ class LookupTable777LROutsideObliqueEdgePairing(LookupTableHashCostOnly):
             state_targets_step31,
             linecount=165636900,
             max_depth=10,
-            bucketcount=331273823)
+            bucketcount=165636907,
+            filesize=165636908)
 
         '''
         LookupTable.__init__(
@@ -447,7 +448,8 @@ class LookupTable777LRLeftMiddleObliqueEdgePairing(LookupTableHashCostOnly):
             state_targets_step32,
             linecount=165636900,
             max_depth=11,
-            bucketcount=331273823)
+            bucketcount=165636907,
+            filesize=165636908)
 
         '''
         LookupTable.__init__(
@@ -654,8 +656,8 @@ class LookupTable777Step41(LookupTableHashCostOnly):
             self.state_targets,
             linecount=24010000,
             max_depth=12,
-            bucketcount=48020003,
-            filesize=48020004)
+            bucketcount=24010031,
+            filesize=24010032)
 
     def state(self):
         parent_state = self.parent.state
@@ -746,8 +748,8 @@ class LookupTable777Step42(LookupTableHashCostOnly):
             self.state_targets,
             linecount=24010000,
             max_depth=11,
-            bucketcount=48020003,
-            filesize=48020004)
+            bucketcount=24010031,
+            filesize=24010032)
 
     def state(self):
         parent_state = self.parent.state
@@ -926,8 +928,8 @@ class LookupTable777Step51(LookupTableHashCostOnly):
             self.state_targets,
             linecount=24010000,
             max_depth=12,
-            bucketcount=48020003,
-            filesize=48020004)
+            bucketcount=24010031,
+            filesize=24010032)
 
     def state(self):
         parent_state = self.parent.state
@@ -1018,8 +1020,8 @@ class LookupTable777Step52(LookupTableHashCostOnly):
             self.state_targets,
             linecount=24010000,
             max_depth=11,
-            bucketcount=48020003,
-            filesize=48020004)
+            bucketcount=24010031,
+            filesize=24010032)
 
     def state(self):
         parent_state = self.parent.state
@@ -1164,8 +1166,8 @@ class LookupTable777Step61(LookupTableHashCostOnly):
             'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
             linecount=24010000,
             max_depth=14,
-            bucketcount=48020003,
-            filesize=48020004)
+            bucketcount=24010031,
+            filesize=24010032)
 
     def state(self):
         parent_state = self.parent.state
@@ -1219,8 +1221,8 @@ class LookupTable777Step62(LookupTableHashCostOnly):
             'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
             linecount=24010000,
             max_depth=13,
-            bucketcount=48020003,
-            filesize=48020004)
+            bucketcount=24010031,
+            filesize=24010032)
 
     def state(self):
         parent_state = self.parent.state

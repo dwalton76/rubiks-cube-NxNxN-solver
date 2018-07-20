@@ -9,6 +9,7 @@ from rubikscubennnsolver.RubiksCube666 import solved_666
 from rubikscubennnsolver.RubiksCube777 import solved_777
 from rubikscubennnsolver.RubiksCubeNNNEven import solved_888, solved_101010, solved_121212, solved_141414
 from rubikscubennnsolver.RubiksCubeNNNOdd import solved_999, solved_111111, solved_131313, solved_151515, solved_171717
+from collections import OrderedDict
 import json
 import logging
 
@@ -20,102 +21,50 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-test_cases = {
-    "2x2x2" : [],
-    "3x3x3" : [],
-    "4x4x4" : [],
-    "5x5x5" : [],
-    "6x6x6" : [],
-    "7x7x7" : [],
-    "8x8x8" : [],
-    "9x9x9" : [],
-    "10x10x10" : [],
-    "11x11x11" : [],
-    "12x12x12" : [],
-    "13x13x13" : [],
-    "14x14x14" : [],
-    "15x15x15" : [],
-    "17x17x17" : [],
-}
+test_cases = OrderedDict()
+test_cases["2x2x2"] = []
+test_cases["3x3x3"] = []
+test_cases["4x4x4"] = []
+test_cases["5x5x5"] = []
+test_cases["6x6x6"] = []
+test_cases["7x7x7"] = []
+test_cases["8x8x8"] = []
+test_cases["9x9x9"] = []
+test_cases["10x10x10"] = []
+test_cases["11x11x11"] = []
+test_cases["12x12x12"] = []
+test_cases["13x13x13"] = []
+test_cases["14x14x14"] = []
+test_cases["15x15x15"] = []
+test_cases["17x17x17"] = []
 
-#for x in range(500):
-for x in range(5):
-    cube = RubiksCube(solved_222, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["2x2x2"].append(ks)
+cubes = OrderedDict()
+#cubes["2x2x2"] = RubiksCube(solved_222, 'URFDLB')
+#cubes["3x3x3"] = RubiksCube(solved_333, 'URFDLB')
+#cubes["4x4x4"] = RubiksCube(solved_444, 'URFDLB')
+#cubes["5x5x5"] = RubiksCube(solved_555, 'URFDLB')
+#cubes["6x6x6"] = RubiksCube(solved_666, 'URFDLB')
+cubes["7x7x7"] = RubiksCube(solved_777, 'URFDLB')
+#cubes["8x8x8"] = RubiksCube(solved_888, 'URFDLB')
+#cubes["9x9x9"] = RubiksCube(solved_999, 'URFDLB')
+#cubes["10x10x10"] = RubiksCube(solved_101010, 'URFDLB')
+#cubes["11x11x11"] = RubiksCube(solved_111111, 'URFDLB')
+#cubes["12x12x12"] = RubiksCube(solved_121212, 'URFDLB')
+#cubes["13x13x13"] = RubiksCube(solved_131313, 'URFDLB')
+#cubes["14x14x14"] = RubiksCube(solved_141414, 'URFDLB')
+#cubes["15x15x15"] = RubiksCube(solved_151515, 'URFDLB')
+#cubes["17x17x17"] = RubiksCube(solved_171717, 'URFDLB')
 
-    cube = RubiksCube(solved_333, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["3x3x3"].append(ks)
+for (size, cube) in cubes.items():
+    log.info("size %s has cube %s" % (size, cube))
+    for x in range(5):
+        cube.re_init()
+        cube.randomize()
+        ks = cube.get_kociemba_string(True)
+        test_cases[size].append(ks)
 
-    cube = RubiksCube(solved_444, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["4x4x4"].append(ks)
 
-    cube = RubiksCube(solved_555, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["5x5x5"].append(ks)
-
-    cube = RubiksCube(solved_666, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["6x6x6"].append(ks)
-
-    cube = RubiksCube(solved_777, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["7x7x7"].append(ks)
-
-    cube = RubiksCube(solved_888, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["8x8x8"].append(ks)
-
-    cube = RubiksCube(solved_999, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["9x9x9"].append(ks)
-
-    cube = RubiksCube(solved_101010, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["10x10x10"].append(ks)
-
-    cube = RubiksCube(solved_111111, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["11x11x11"].append(ks)
-
-    cube = RubiksCube(solved_121212, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["12x12x12"].append(ks)
-
-    cube = RubiksCube(solved_131313, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["13x13x13"].append(ks)
-
-    cube = RubiksCube(solved_141414, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["14x14x14"].append(ks)
-
-    cube = RubiksCube(solved_151515, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["15x15x15"].append(ks)
-
-    cube = RubiksCube(solved_171717, 'URFDLB')
-    cube.randomize()
-    ks = cube.get_kociemba_string(True)
-    test_cases["17x17x17"].append(ks)
-
-print(json.dumps(test_cases, indent=4, sort_keys=True))
+print(json.dumps(test_cases, indent=4))
 
 # Build cube in:
 # https://www.speedsolving.com/forum/threads/arnauds-5x5x5-edge-pairing-method-examples.1447/

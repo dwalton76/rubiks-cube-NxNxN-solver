@@ -232,7 +232,7 @@ LFRB_right_oblique_edges_666 = (
 
 class LookupTable666UDInnerXCentersStage(LookupTable):
     """
-    starting-states-6x6x6-step10-UD-inner-x-centers-stage.txt
+    lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt
     =========================================================
     1 steps has 9 entries (0 percent, 0.00x previous step)
     2 steps has 108 entries (0 percent, 12.00x previous step)
@@ -270,8 +270,9 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
     lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt
     ====================================================
     1 steps has 4,171,103 entries (7 percent, 0.00x previous step)
+    2 steps has 55,048,136 entries (92 percent, 13.20x previous step)
 
-    Total: 4,171,103 entries
+    Total: 59,219,239 entries
     """
     oblique_edges_666 = (
         9, 10, 14, 17, 20, 23, 27, 28,
@@ -416,8 +417,9 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
 
             # prune tables
             (),
-            linecount=4171103,
-            max_depth=1,
+            linecount=59219239,
+            max_depth=2,
+            filesize=1362042497,
             )
 
     def state(self):

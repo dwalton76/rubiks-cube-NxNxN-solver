@@ -589,7 +589,8 @@ class LookupTableULCentersSolve(LookupTableHashCostOnly):
             '3ffff000000000',
             linecount=24010000,
             max_depth=13,
-            bucketcount=48020003)
+            bucketcount=24010031,
+            filesize=24010032)
 
     def state(self):
         parent_state = self.parent.state
@@ -1113,7 +1114,7 @@ class RubiksCube555(RubiksCube):
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         #self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
-        self.lt_ULFRB_centers_solve.preload_cache_dict()
+        self.lt_ULFRB_centers_solve.preload_cache_string()
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)

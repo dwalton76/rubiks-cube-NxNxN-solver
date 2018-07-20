@@ -871,8 +871,8 @@ class LookupTable444Reduce333Edges(LookupTableHashCostOnly):
             '10425376a8b9ecfdhgkiljnm',
             linecount=239500800,
             max_depth=13,
-            bucketcount=479001629,
-            filesize=479001630)
+            bucketcount=239500847,
+            filesize=239500848)
         '''
         LookupTable.__init__(
             self,

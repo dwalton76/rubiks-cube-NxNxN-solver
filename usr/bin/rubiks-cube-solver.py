@@ -425,6 +425,10 @@ try:
     if args.print_steps:
         cube.print_cube()
 
+    print("\nMemory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    print("Time   : %s" % (end_time - start_time))
+    print("")
+
     if not cube.solved():
         kociemba_string = cube.get_kociemba_string(False)
         edge_swap_count = cube.get_edge_swap_count(edges_paired=True, orbit=None, debug=True)
@@ -432,10 +436,6 @@ try:
 
         raise SolveError("cube should be solved but is not, edge parity %d, corner parity %d, kociemba %s" %
             (edge_swap_count, corner_swap_count, kociemba_string))
-
-    print("\nMemory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
-    print("Time   : %s" % (end_time - start_time))
-    print("")
 
 except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
     cube.print_cube_layout()

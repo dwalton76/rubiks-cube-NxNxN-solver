@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
+from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop, NotSolving
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222, solved_222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
@@ -126,6 +126,19 @@ try:
             try:
                 cube.solve()
                 solution = cube.solution
+            except NotSolving:
+
+                if num_test_cases_executed % 100 == 0:
+                    #log.info("%s: heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
+                    tmp_heuristic_stats = {}
+
+                    for (key, value) in cube.heuristic_stats.items():
+                        tmp_heuristic_stats[key] = int(median(value))
+
+                    log.info("%s: heuristic_stats median\n%s\n\n" % (size, pformat(tmp_heuristic_stats)))
+
+                continue
+
             except Exception as e:
                 results.append("\033[91m%s FAIL (exception) \033[0m: %s\n%s\n" % (size, kociemba_string, str(e)))
                 continue
@@ -166,12 +179,12 @@ try:
 
 
         if cube.heuristic_stats:
-            results.append("%s: heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
+            results.append("%s: FINAL heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
 
             for (key, value) in cube.heuristic_stats.items():
                 cube.heuristic_stats[key] = int(median(value))
 
-            results.append("%s: heuristic_stats median\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
+            results.append("%s: FINAL heuristic_stats median\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
 
         results.append("%s avg centers solution %s steps" % (size, float(centers_solution_total/num_test_cases_executed)))
         results.append("%s avg edges solution %s steps" % (size, float(edges_solution_total/num_test_cases_executed)))

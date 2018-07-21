@@ -207,6 +207,10 @@ def find_first_last(linecount, cache, b_state_to_find):
 
 
 class LookupTable(object):
+    heuristic_stats = {}
+
+    # This is for tweaking the valeus in heuristic_stats
+    heuristic_stats_error = 0
 
     def __init__(self, parent, filename, state_target, linecount, max_depth=None, filesize=None):
         self.parent = parent
@@ -972,18 +976,30 @@ class LookupTableIDA(LookupTable):
             else:
                 cost_to_goal = len(steps)
 
-        for pt in self.prune_tables:
+        if self.heuristic_stats:
+            heuristic_tuple = self.ida_heuristic_tuple()
+            cost_to_goal = self.heuristic_stats.get(heuristic_tuple)
 
-            # If there is no way this pt will have a higher cost than the prune
-            # tables we have already examined do not bother looking up the cost
-            # for this pt
-            if cost_to_goal >= pt.max_depth:
-                continue
+            if cost_to_goal is None:
+                cost_to_goal = max(heuristic_tuple)
+                #log.info("%s: heuristic_tuple %s does not have a known cost" % (self, pformat(heuristic_tuple)))
+            else:
+                #log.info("%s: heuristic_tuple %s has cost %d" % (self, pformat(heuristic_tuple), cost_to_goal))
+                return cost_to_goal - self.heuristic_stats_error
 
-            pt_cost_to_goal = pt.heuristic()
+        else:
+            for pt in self.prune_tables:
 
-            if pt_cost_to_goal > cost_to_goal:
-                cost_to_goal = pt_cost_to_goal
+                # If there is no way this pt will have a higher cost than the prune
+                # tables we have already examined do not bother looking up the cost
+                # for this pt
+                if cost_to_goal >= pt.max_depth:
+                    continue
+
+                pt_cost_to_goal = pt.heuristic()
+
+                if pt_cost_to_goal > cost_to_goal:
+                    cost_to_goal = pt_cost_to_goal
 
         return cost_to_goal
 

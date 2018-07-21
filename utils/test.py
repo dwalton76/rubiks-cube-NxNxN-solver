@@ -27,7 +27,7 @@ logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelNam
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--size', type=str, default='4x4x4')
-parser.add_argument('--test-cubes', type=str, default='./utils/test-cubes.json.small')
+parser.add_argument('--test-cubes', type=str, default='./utils/test-cubes.json')
 parser.add_argument('--start', type=int, default=0)
 args = parser.parse_args()
 

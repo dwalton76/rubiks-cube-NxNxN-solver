@@ -942,6 +942,22 @@ class LookupTableIDA(LookupTable):
             if x not in moves_illegal:
                 self.moves_all.append(x)
 
+        # Cache the results of steps_on_same_face_and_layer() for all
+        # combinations of moves we will see while searching.
+        self.steps_on_same_face_and_layer_cache = {}
+        self.steps_not_on_same_face_and_layer = {}
+
+        for step1 in self.moves_all + [None]:
+            for step2 in self.moves_all:
+                if steps_on_same_face_and_layer(step1, step2):
+                    self.steps_on_same_face_and_layer_cache[(step1, step2)] = True
+                else:
+                    self.steps_on_same_face_and_layer_cache[(step1, step2)] = False
+
+                    if step1 not in self.steps_not_on_same_face_and_layer:
+                        self.steps_not_on_same_face_and_layer[step1] = []
+                    self.steps_not_on_same_face_and_layer[step1].append(step2)
+
     def ida_heuristic_total(self):
         total = 0
 
@@ -1114,26 +1130,23 @@ class LookupTableIDA(LookupTable):
         if f_cost >= threshold:
             return (f_cost, False)
 
-        if hasattr(self, 'state_for_explored'):
-            lt_state_for_explored = self.state_for_explored()
-            #log.info("using state_for_explored %s" % lt_state_for_explored)
-        else:
-            lt_state_for_explored = lt_state
+        # Not used by any tables right now so commenting out
+        #if hasattr(self, 'state_for_explored'):
+        #    lt_state_for_explored = self.state_for_explored()
+        #else:
+        #    lt_state_for_explored = lt_state
 
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
-        explored_cost_to_here = self.explored.get(lt_state_for_explored)
+        #explored_cost_to_here = self.explored.get(lt_state_for_explored)
+        explored_cost_to_here = self.explored.get(lt_state)
         if explored_cost_to_here is not None and explored_cost_to_here <= cost_to_here:
             return (f_cost, False)
-        self.explored[lt_state_for_explored] = cost_to_here
-
+        #self.explored[lt_state_for_explored] = cost_to_here
+        self.explored[lt_state] = cost_to_here
         skip_other_steps_this_face = None
 
-        # log.info("moves_all %s" % ' '.join(self.moves_all))
-        for step in self.moves_all:
-
-            if steps_on_same_face_and_layer(prev_step, step):
-                continue
+        for step in self.steps_not_on_same_face_and_layer[prev_step]:
 
             # https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
             '''
@@ -1146,7 +1159,7 @@ class LookupTableIDA(LookupTable):
             --cs0x7f
             '''
             if skip_other_steps_this_face is not None:
-                if steps_on_same_face_and_layer(skip_other_steps_this_face, step):
+                if self.steps_on_same_face_and_layer_cache[(skip_other_steps_this_face, step)]:
                     continue
                 else:
                     skip_other_steps_this_face = None

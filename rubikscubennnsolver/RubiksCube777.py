@@ -174,6 +174,10 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
         257, 261, 279, 283, # Down
     )
 
+    set_left_oblique_edge_777 = set(left_oblique_edge_777)
+    set_middle_oblique_edge_777 = set(middle_oblique_edge_777)
+    set_right_oblique_edge_777 = set(right_oblique_edge_777)
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -217,9 +221,9 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
         right_state = 0
         lt_state = 0
 
-        set_left_oblique_edge_777 = set(self.left_oblique_edge_777)
-        set_middle_oblique_edge_777 = set(self.middle_oblique_edge_777)
-        set_right_oblique_edge_777 = set(self.right_oblique_edge_777)
+        set_left_oblique_edge_777 = self.set_left_oblique_edge_777
+        set_middle_oblique_edge_777 = self.set_middle_oblique_edge_777
+        set_right_oblique_edge_777 = self.set_right_oblique_edge_777
 
         for x in self.oblique_edges_777:
 
@@ -376,6 +380,9 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
         206, 208, 212, 216, 226, 230, 234, 236, # Back
     )
 
+    set_LFRB_left_right_oblique_edges_777 = set(LFRB_left_right_oblique_edges_777)
+    set_LFRB_left_middle_oblique_edges_777 = set(LFRB_left_middle_oblique_edges_777)
+
     heuristic_stats = {
         (0, 0): 1,
         (0, 1): 3,
@@ -505,8 +512,8 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
         left_right_state = 0
         lt_state = 0
 
-        set_LFRB_left_right_oblique_edges_777 = set(self.LFRB_left_right_oblique_edges_777)
-        set_LFRB_left_middle_oblique_edges_777 = set(self.LFRB_left_middle_oblique_edges_777)
+        set_LFRB_left_right_oblique_edges_777 = self.set_LFRB_left_right_oblique_edges_777
+        set_LFRB_left_middle_oblique_edges_777 = self.set_LFRB_left_middle_oblique_edges_777
 
         for x in self.LFRB_oblique_edges_777:
             x_state = parent_state[x]
@@ -778,6 +785,9 @@ class LookupTableIDA777Step40(LookupTableIDA):
         156, 158, 160, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 184, 186, 188, # Right
     )
 
+    set_centers_step41_777 = set(centers_step41_777)
+    set_centers_step42_777 = set(centers_step42_777)
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -807,8 +817,8 @@ class LookupTableIDA777Step40(LookupTableIDA):
         step41_state = []
         step42_state = []
 
-        set_centers_step41_777 = set(self.centers_step41_777)
-        set_centers_step42_777 = set(self.centers_step42_777)
+        set_centers_step41_777 = self.set_centers_step41_777
+        set_centers_step42_777 = self.set_centers_step42_777
 
         for x in self.centers_step40_777:
             x_state = parent_state[x]
@@ -1069,6 +1079,9 @@ class LookupTableIDA777Step50(LookupTableIDA):
         254, 256, 258, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 282, 284, 286, # Down
     )
 
+    set_centers_step51_777 = set(centers_step51_777)
+    set_centers_step52_777 = set(centers_step52_777)
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -1101,8 +1114,8 @@ class LookupTableIDA777Step50(LookupTableIDA):
         step51_state = []
         step52_state = []
 
-        set_centers_step51_777 = set(self.centers_step51_777)
-        set_centers_step52_777 = set(self.centers_step52_777)
+        set_centers_step51_777 = self.set_centers_step51_777
+        set_centers_step52_777 = self.set_centers_step52_777
 
         for x in self.centers_step50_777:
             x_state = parent_state[x]
@@ -1255,6 +1268,9 @@ class LookupTableIDA777Step60(LookupTableIDA):
         205, 207, 209, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 233, 235, 237, # Back
     )
 
+    set_state_indexes_step61 = set(state_indexes_step61)
+    set_state_indexes_step62 = set(state_indexes_step62)
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -1291,8 +1307,8 @@ class LookupTableIDA777Step60(LookupTableIDA):
         step61_state = []
         step62_state = []
 
-        set_state_indexes_step61 = set(self.state_indexes_step61)
-        set_state_indexes_step62 = set(self.state_indexes_step62)
+        set_state_indexes_step61 = self.set_state_indexes_step61
+        set_state_indexes_step62 = self.set_state_indexes_step62
 
         for x in self.state_indexes_step60:
             x_state = parent_state[x]

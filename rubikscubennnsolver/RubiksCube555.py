@@ -356,6 +356,9 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
         132, 134, 142, 144
     )
 
+    set_x_centers_555 = set(x_centers_555)
+    set_t_centers_555 = set(t_centers_555)
+
     def __init__(self, parent):
 
         if parent.min_memory:
@@ -402,9 +405,8 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
         lt_state = 0
         x_centers_state = 0
         t_centers_state = 0
-
-        set_x_centers_555 = set(self.x_centers_555)
-        set_t_centers_555 = set(self.t_centers_555)
+        set_x_centers_555 = self.set_x_centers_555
+        set_t_centers_555 = self.set_t_centers_555
 
         for x in centers_555:
             cubie_state = parent_state[x]
@@ -539,6 +541,9 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
         107, 109, 117, 119
     )
 
+    set_x_centers_555 = set(LFRB_x_centers_555)
+    set_t_centers_555 = set(LFRB_t_centers_555)
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -573,9 +578,8 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
         lt_state = 0
         x_centers_state = 0
         t_centers_state = 0
-
-        set_x_centers_555 = set(self.LFRB_x_centers_555)
-        set_t_centers_555 = set(self.LFRB_t_centers_555)
+        set_x_centers_555 = self.set_x_centers_555
+        set_t_centers_555 = self.set_t_centers_555
 
         for x in LFRB_centers_555:
             cubie_state = parent_state[x]

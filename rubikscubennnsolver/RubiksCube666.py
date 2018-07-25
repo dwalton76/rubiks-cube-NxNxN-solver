@@ -280,7 +280,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         (154, 172, 190, 208),
     )
 
-    #UD_unpaired_obliques_heuristic_666 = {
     heuristic_stats = {
         (1, 0, 0): 1,
         (1, 1, 0): 1,
@@ -435,7 +434,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         lt_state = lt_state >> 1
         lt_state = self.hex_format % lt_state
 
-        #lt_state = ''.join(['1' if parent_state[x] == 'U' else '0' for x in self.oblique_edges_666])
         UD_unpaired_obliques = self.get_UD_unpaired_obliques_count()
 
         if not UD_unpaired_obliques:
@@ -448,7 +446,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         two_count = self.get_UD_obliques_two_pair_setup_count()
         four_count = self.get_UD_obliques_four_pair_setup_count()
         state_tuple = (UD_unpaired_obliques, two_count, four_count)
-        #cost_to_goal = self.UD_unpaired_obliques_heuristic_666.get(state_tuple)
         cost_to_goal = self.heuristic_stats.get(state_tuple)
 
         if cost_to_goal is None:
@@ -604,6 +601,8 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
         159, 160, 165, 166,
     )
 
+    set_LFRB_inner_x_centers_666 = set(LFRB_inner_x_centers_666)
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -653,8 +652,7 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
         edges_state = 0
         lt_state = 0
 
-        #set_LFRB_oblique_edges_666 = set(self.LFRB_oblique_edges_666)
-        set_LFRB_inner_x_centers_666 = set(self.LFRB_inner_x_centers_666)
+        set_LFRB_inner_x_centers_666 = self.set_LFRB_inner_x_centers_666
 
         for x in self.LFRB_inner_x_centers_oblique_edges_666:
             x_state = parent_state[x]
@@ -1069,6 +1067,9 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
              171, 172,
     )
 
+    set_step61_centers_666 = set(step61_centers_666)
+    set_step62_centers_666 = set(step62_centers_666)
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -1095,12 +1096,13 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             filesize=287292528)
 
     def ida_heuristic(self):
-        set_step61_centers_666 = set(self.step61_centers_666)
-        set_step62_centers_666 = set(self.step62_centers_666)
         lt_state = []
         step61_state = []
         step62_state = []
         parent_state = self.parent.state
+
+        set_step61_centers_666 = self.set_step61_centers_666
+        set_step62_centers_666 = self.set_step62_centers_666
 
         for x in self.step60_centers_666:
             x_state = parent_state[x]

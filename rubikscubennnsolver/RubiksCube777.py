@@ -1856,6 +1856,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             #sys.exit(0)
 
+            log.info("kociemba: %s" % self.get_kociemba_string(True))
             self.lt_LR_oblique_edge_pairing.solve()
             self.print_cube()
             log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

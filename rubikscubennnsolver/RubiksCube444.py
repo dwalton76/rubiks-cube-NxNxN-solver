@@ -418,11 +418,6 @@ class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
             max_depth=8,
             filesize=16711681)
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in centers_444])
-        return int(result, 2)
-
 
 class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
 
@@ -436,11 +431,6 @@ class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
             max_depth=8,
             filesize=16711681)
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in centers_444])
-        return int(result, 2)
-
 
 class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
 
@@ -453,11 +443,6 @@ class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
             linecount=735471,
             max_depth=8,
             filesize=16711681)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('F', 'B') else '0' for x in centers_444])
-        return int(result, 2)
 
 
 class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
@@ -501,10 +486,48 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             max_depth=5,
             filesize=21929394)
 
-    def state(self):
+        self.recolor_positions = centers_444
+        self.recolor_map = {
+            'D' : 'U',
+            'R' : 'L',
+            'B' : 'F',
+        }
+        self.nuke_corners = True
+
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        result = ''.join(['L' if parent_state[x] in ('L', 'R') else 'F' if parent_state[x] in ('F', 'B') else 'U' for x in centers_444])
-        return result
+        lt_state = []
+        UD_state = 0
+        LR_state = 0
+        FB_state = 0
+
+        for x in centers_444:
+            x_state = parent_state[x]
+            lt_state.append(x_state)
+
+            if x_state == 'U':
+                UD_state = UD_state | 0x1
+            elif x_state == 'L':
+                LR_state = LR_state | 0x1
+            else:
+                FB_state = FB_state | 0x1
+
+            UD_state = UD_state << 1
+            LR_state = LR_state << 1
+            FB_state = FB_state << 1
+
+        UD_state = UD_state >> 1
+        LR_state = LR_state >> 1
+        FB_state = FB_state >> 1
+
+        cost_to_goal = max(
+            self.parent.lt_UD_centers_stage.heuristic(UD_state),
+            self.parent.lt_LR_centers_stage.heuristic(LR_state),
+            self.parent.lt_FB_centers_stage.heuristic(FB_state),
+        )
+
+        #log.info("%s: UD_state %s, LR_state %s, FB_state %s, cost_to_goal %d" % (self, UD_state, LR_state, FB_state, cost_to_goal))
+        return (''.join(lt_state), cost_to_goal)
 
 
 wings_for_edges_recolor_pattern_444 = (
@@ -673,9 +696,6 @@ class LookupTable444HighLowEdgesEdges(LookupTable):
             max_depth=10,
             filesize=227149104)
 
-    def state(self):
-        return self.parent.highlow_edges_state(self.parent.edge_mapping)
-
 
 class LookupTable444HighLowEdgesCenters(LookupTable):
     """
@@ -710,11 +730,6 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
             linecount=70,
             max_depth=4,
             filesize=1610)
-
-    def state (self, state_to_find=None):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in LR_centers_444])
-        return result
 
 
 class LookupTableIDA444HighLowEdges(LookupTableIDA):
@@ -768,6 +783,19 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
         LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
         edges = self.parent.highlow_edges_state(self.parent.edge_mapping)
         return LR_centers + edges
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
+        edges_state = self.parent.highlow_edges_state(self.parent.edge_mapping)
+        lt_state = LR_centers + edges_state
+
+        cost_to_goal = max(
+            self.parent.lt_highlow_edges_edges.heuristic(edges_state),
+            self.parent.lt_highlow_edges_centers.heuristic(LR_centers),
+        )
+
+        return (lt_state, cost_to_goal)
 
 
 wings_for_edges_recolor_pattern_444 = (
@@ -884,11 +912,6 @@ class LookupTable444Reduce333Edges(LookupTableHashCostOnly):
             filesize=479001630)
         '''
 
-    def state(self):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-        edges_state = ''.join([state[square_index] for square_index in wings_444])
-        return edges_state
-
 
 class LookupTable444Reduce333CentersSolve(LookupTable):
     """
@@ -917,11 +940,6 @@ class LookupTable444Reduce333CentersSolve(LookupTable):
             linecount=58800,
             max_depth=9,
             filesize=3351600)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[square_index] for square_index in centers_444])
-        return result
 
 
 class LookupTableIDA444Reduce333(LookupTableIDA):
@@ -964,11 +982,19 @@ class LookupTableIDA444Reduce333(LookupTableIDA):
             max_depth=6,
             filesize=89517024)
 
-    def state(self):
+    def ida_heuristic(self):
         state = edges_recolor_pattern_444(self.parent.state[:])
         centers_state = ''.join([state[square_index] for square_index in centers_444])
         edges_state = ''.join([state[square_index] for square_index in wings_444])
-        return centers_state + edges_state
+        lt_state = centers_state + edges_state
+
+        cost_to_goal = max(
+            self.parent.lt_reduce333_centers_solve.heuristic(centers_state),
+            self.parent.lt_reduce333_edges_solve.heuristic(edges_state),
+        )
+
+        return (lt_state, cost_to_goal)
+
 
 
 class RubiksCube444(RubiksCube):
@@ -1387,13 +1413,17 @@ class RubiksCube444(RubiksCube):
         self.original_solution = self.solution[:]
 
         log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU
+        # 1006738 nodes in 0:00:26.641613
+        #self.lt_ULFRBD_centers_stage.ida_all_the_way = True
         self.lt_ULFRBD_centers_stage.solve()
         self.print_cube()
 
         if self.rotate_for_best_centers_staging():
             self.print_cube()
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
         # We need the edge swaps to be even for our edges lookup table to work.
@@ -1442,7 +1472,7 @@ class RubiksCube444(RubiksCube):
             for step in phase2_steps:
                 self.rotate(step)
 
-            phase3_cost = self.lt_reduce333.ida_heuristic()
+            (_, phase3_cost) = self.lt_reduce333.ida_heuristic()
             phase23_cost = phase2_cost + phase3_cost
 
             if min_phase23_cost is None or phase23_cost < min_phase23_cost:

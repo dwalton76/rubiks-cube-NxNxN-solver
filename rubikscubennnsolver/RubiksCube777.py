@@ -17,6 +17,15 @@ log = logging.getLogger(__name__)
 moves_777 = moves_666
 solved_777 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
+centers_777 = (
+    9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, # Upper
+    58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90, # Left
+    107, 108, 109, 110, 111, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 128, 129, 130, 131, 132, 135, 136, 137, 138, 139, # Front
+    156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188, # Right
+    205, 206, 207, 208, 209, 212, 213, 214, 215, 216, 219, 220, 221, 222, 223, 226, 227, 228, 229, 230, 233, 234, 235, 236, 237, # Back
+    254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286, # Down
+)
+
 
 class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
     """
@@ -47,59 +56,6 @@ class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
             '462000000000000462',
             linecount=735471,
             max_depth=11)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            'x', parent_state[11], 'x',
-            'x', 'x',
-            parent_state[23], parent_state[27],
-            'x', 'x',
-            'x', parent_state[39], 'x',
-
-            # Left
-            'x', parent_state[60], 'x',
-            'x', 'x',
-            parent_state[72], parent_state[76],
-            'x', 'x',
-            'x', parent_state[88], 'x',
-
-            # Front
-            'x', parent_state[109], 'x',
-            'x', 'x',
-            parent_state[121], parent_state[125],
-            'x', 'x',
-            'x', parent_state[137], 'x',
-
-            # Right
-            'x', parent_state[158], 'x',
-            'x', 'x',
-            parent_state[170], parent_state[174],
-            'x', 'x',
-            'x', parent_state[186], 'x',
-
-            # Back
-            'x', parent_state[207], 'x',
-            'x', 'x',
-            parent_state[219], parent_state[223],
-            'x', 'x',
-            'x', parent_state[235], 'x',
-
-            # Down
-            'x', parent_state[256], 'x',
-            'x', 'x',
-            parent_state[268], parent_state[272],
-            'x', 'x',
-            'x', parent_state[284], 'x'
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
 
 
 class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
@@ -132,59 +88,6 @@ class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
             linecount=735471,
             max_depth=11)
 
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[10], 'x', 'x',
-            'x', parent_state[20],
-            'x', 'x',
-            parent_state[30], 'x',
-            'x', 'x', parent_state[40],
-
-            # Left
-            parent_state[59], 'x', 'x',
-            'x', parent_state[69],
-            'x', 'x',
-            parent_state[79], 'x',
-            'x', 'x', parent_state[89],
-
-            # Front
-            parent_state[108], 'x', 'x',
-            'x', parent_state[118],
-            'x', 'x',
-            parent_state[128], 'x',
-            'x', 'x', parent_state[138],
-
-            # Right
-            parent_state[157], 'x', 'x',
-            'x', parent_state[167],
-            'x', 'x',
-            parent_state[177], 'x',
-            'x', 'x', parent_state[187],
-
-            # Back
-            parent_state[206], 'x', 'x',
-            'x', parent_state[216],
-            'x', 'x',
-            parent_state[226], 'x',
-            'x', 'x', parent_state[236],
-
-            # Down
-            parent_state[255], 'x', 'x',
-            'x', parent_state[265],
-            'x', 'x',
-            parent_state[275], 'x',
-            'x', 'x', parent_state[285]
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
 
 class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
     """
@@ -216,59 +119,6 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
             linecount=735471,
             max_depth=11)
 
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            'x', 'x', parent_state[12],
-            parent_state[16], 'x',
-            'x', 'x',
-            'x', parent_state[34],
-            parent_state[38], 'x', 'x',
-
-            # Left
-            'x', 'x', parent_state[61],
-            parent_state[65], 'x',
-            'x', 'x',
-            'x', parent_state[83],
-            parent_state[87], 'x', 'x',
-
-            # Front
-            'x', 'x', parent_state[110],
-            parent_state[114], 'x',
-            'x', 'x',
-            'x', parent_state[132],
-            parent_state[136], 'x', 'x',
-
-            # Right
-            'x', 'x', parent_state[159],
-            parent_state[163], 'x',
-            'x', 'x',
-            'x', parent_state[181],
-            parent_state[185], 'x', 'x',
-
-            # Back
-            'x', 'x', parent_state[208],
-            parent_state[212], 'x',
-            'x', 'x',
-            'x', parent_state[230],
-            parent_state[234], 'x', 'x',
-
-            # Down
-            'x', 'x', parent_state[257],
-            parent_state[261], 'x',
-            'x', 'x',
-            'x', parent_state[279],
-            parent_state[283], 'x', 'x',
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
 
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
     """
@@ -287,6 +137,42 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
 
     Total: 380,023 entries
     """
+
+    oblique_edges_777 = (
+        10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40, # Upper
+        59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89, # Left
+        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138, # Front
+        157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187, # Right
+        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, # Back
+        255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285, # Down
+    )
+
+    left_oblique_edge_777 = (
+        10, 20, 30, 40, # Upper
+        59, 69, 79, 89, # Left
+        108, 118, 128, 138, # Front
+        157, 167, 177, 187, # Right
+        206, 216, 226, 236, # Back
+        255, 265, 275, 285, # Down
+    )
+
+    middle_oblique_edge_777 = (
+        11, 23, 27, 39, # Upper
+        60, 72, 76, 88, # Left
+        109, 121, 125, 137, # Front
+        158, 170, 174, 186, # Right
+        207, 219, 223, 235, # Back
+        256, 268, 272, 284, # Down
+    )
+
+    right_oblique_edge_777 = (
+        12, 16, 34, 38, # Upper
+        61, 65, 83, 87, # Left
+        110, 114, 132, 136, # Front
+        159, 163, 181, 185, # Right
+        208, 212, 230, 234, # Back
+        257, 261, 279, 283, # Down
+    )
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -308,61 +194,75 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
             max_depth=5,
             filesize=21661311)
 
-    def state(self):
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        self.parent.print_cube()
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_777:
+            if x in self.oblique_edges_777:
+                if self.parent.state[x] == 'U' or self.parent.state[x] == 'D':
+                    self.parent.state[x] = 'U'
+                else:
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+        self.parent.print_cube()
+
+    def ida_heuristic(self):
         parent_state = self.parent.state
+        left_state = 0
+        middle_state = 0
+        right_state = 0
+        lt_state = 0
 
-        result = [
-            # Upper
-            parent_state[10], parent_state[11], parent_state[12],
-            parent_state[16], parent_state[20],
-            parent_state[23], parent_state[27],
-            parent_state[30], parent_state[34],
-            parent_state[38], parent_state[39], parent_state[40],
+        set_left_oblique_edge_777 = set(self.left_oblique_edge_777)
+        set_middle_oblique_edge_777 = set(self.middle_oblique_edge_777)
+        set_right_oblique_edge_777 = set(self.right_oblique_edge_777)
 
-            # Left
-            parent_state[59], parent_state[60], parent_state[61],
-            parent_state[65], parent_state[69],
-            parent_state[72], parent_state[76],
-            parent_state[79], parent_state[83],
-            parent_state[87], parent_state[88], parent_state[89],
+        for x in self.oblique_edges_777:
 
-            # Front
-            parent_state[108], parent_state[109], parent_state[110],
-            parent_state[114], parent_state[118],
-            parent_state[121], parent_state[125],
-            parent_state[128], parent_state[132],
-            parent_state[136], parent_state[137], parent_state[138],
+            if parent_state[x] == 'U':
+                if x in set_left_oblique_edge_777:
+                    left_state = left_state | 0x1
 
-            # Right
-            parent_state[157], parent_state[158], parent_state[159],
-            parent_state[163], parent_state[167],
-            parent_state[170], parent_state[174],
-            parent_state[177], parent_state[181],
-            parent_state[185], parent_state[186], parent_state[187],
+                elif x in set_middle_oblique_edge_777:
+                    middle_state = middle_state | 0x1
 
-            # Back
-            parent_state[206], parent_state[207], parent_state[208],
-            parent_state[212], parent_state[216],
-            parent_state[219], parent_state[223],
-            parent_state[226], parent_state[230],
-            parent_state[234], parent_state[235], parent_state[236],
+                elif x in set_right_oblique_edge_777:
+                    right_state = right_state | 0x1
 
-            # Down
-            parent_state[255], parent_state[256], parent_state[257],
-            parent_state[261], parent_state[265],
-            parent_state[268], parent_state[272],
-            parent_state[275], parent_state[279],
-            parent_state[283], parent_state[284], parent_state[285],
-        ]
+                lt_state = lt_state | 0x1
 
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
+            left_state = left_state << 1
+            middle_state = middle_state << 1
+            right_state = right_state << 1
+            lt_state = lt_state << 1
 
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        left_state = left_state >> 1
+        middle_state = middle_state >> 1
+        right_state = right_state >> 1
+        lt_state = lt_state >> 1
+
+        # convert to hex format
+        left_state = self.parent.lt_UD_oblique_edge_pairing_left_only.hex_format % left_state
+        middle_state = self.parent.lt_UD_oblique_edge_pairing_middle_only.hex_format % middle_state
+        right_state = self.parent.lt_UD_oblique_edge_pairing_right_only.hex_format % right_state
+        lt_state = self.hex_format % lt_state
+
+        cost_to_goal = max(
+             self.parent.lt_UD_oblique_edge_pairing_left_only.heuristic(left_state),
+             self.parent.lt_UD_oblique_edge_pairing_middle_only.heuristic(middle_state),
+             self.parent.lt_UD_oblique_edge_pairing_right_only.heuristic(right_state),
+        )
+
+        #log.info("%s: lt_state %s, left_state %s, middle_state %s, right_state %s, cost_to_goal %d" %
+        #    (self, lt_state, left_state, middle_state, right_state, cost_to_goal))
+        return (lt_state, cost_to_goal)
 
 
-class LookupTable777LROutsideObliqueEdgePairing(LookupTableHashCostOnly):
+class LookupTable777LRLeftRightObliqueEdgePairing(LookupTableHashCostOnly):
     """
     lookup-table-7x7x7-step31-stage-lr-oblique-edges.txt
     ====================================================
@@ -380,12 +280,6 @@ class LookupTable777LROutsideObliqueEdgePairing(LookupTableHashCostOnly):
     Total: 165,636,900 entries
     Average: 5.76 moves
     """
-    LFRB_outside_oblique_edges_777 = (
-        59, 61, 65, 69, 79, 83, 87, 89, # Left
-        108, 110, 114, 118, 128, 132, 136, 138, # Front
-        157, 159, 163, 167, 177, 181, 185, 187, # Right
-        206, 208, 212, 216, 226, 230, 234, 236, # Back
-    )
 
     def __init__(self, parent):
         LookupTableHashCostOnly.__init__(
@@ -408,11 +302,6 @@ class LookupTable777LROutsideObliqueEdgePairing(LookupTableHashCostOnly):
             max_depth=10)
         '''
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_outside_oblique_edges_777])
-        return self.hex_format % int(result, 2)
-
 
 class LookupTable777LRLeftMiddleObliqueEdgePairing(LookupTableHashCostOnly):
     """
@@ -433,12 +322,6 @@ class LookupTable777LRLeftMiddleObliqueEdgePairing(LookupTableHashCostOnly):
     Total: 165,636,900 entries
     Average: 5.86 moves
     """
-    LFRB_left_middle_oblique_edges_777 = (
-        59, 60, 69, 72, 76, 79, 88, 89, # Left
-        108, 109, 118, 121, 125, 128, 137, 138, # Front
-        157, 158, 167, 170, 174, 177, 186, 187, # Right
-        206, 207, 216, 219, 223, 226, 235, 236, # Back
-    )
 
     def __init__(self, parent):
         LookupTableHashCostOnly.__init__(
@@ -461,27 +344,6 @@ class LookupTable777LRLeftMiddleObliqueEdgePairing(LookupTableHashCostOnly):
             max_depth=11)
         '''
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_left_middle_oblique_edges_777])
-        return self.hex_format % int(result, 2)
-
-
-class LookupTable777LRRightMiddleObliqueEdgePairing(LookupTable777LRLeftMiddleObliqueEdgePairing):
-
-    # The order here looks weird but this is so we can re-use the left-middle step32 prune table
-    LFRB_right_middle_oblique_edges_777 = (
-        61, 60, 65, 76, 72, 83, 88, 87, # Left
-        110, 109, 114, 125, 121, 132, 137, 136, # Front
-        159, 158, 163, 174, 170, 181, 186, 185, # Right
-        208, 207, 212, 223, 219, 230, 235, 234, # Back
-    )
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_right_middle_oblique_edges_777])
-        return self.hex_format % int(result, 2)
-
 
 class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
     """
@@ -500,368 +362,102 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
         206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, # Back
     )
 
+    LFRB_left_middle_oblique_edges_777 = (
+        59, 60, 69, 72, 76, 79, 88, 89, # Left
+        108, 109, 118, 121, 125, 128, 137, 138, # Front
+        157, 158, 167, 170, 174, 177, 186, 187, # Right
+        206, 207, 216, 219, 223, 226, 235, 236, # Back
+    )
+
+    LFRB_left_right_oblique_edges_777 = (
+        59, 61, 65, 69, 79, 83, 87, 89, # Left
+        108, 110, 114, 118, 128, 132, 136, 138, # Front
+        157, 159, 163, 167, 177, 181, 185, 187, # Right
+        206, 208, 212, 216, 226, 230, 234, 236, # Back
+    )
+
     heuristic_stats = {
-        (0, 0, 0): 1,
-        (0, 1, 1): 3,
-        (0, 2, 2): 3,
-        (0, 2, 3): 4,
-        (0, 2, 4): 5,
-        (0, 3, 2): 4,
-        (0, 3, 3): 4,
-        (0, 3, 4): 5,
-        (0, 4, 3): 5,
-        (0, 4, 4): 6,
-        (0, 4, 5): 8,
-        (0, 5, 5): 7,
-        (0, 6, 5): 8,
-        (1, 0, 1): 2,
-        (1, 0, 2): 4,
-        (1, 1, 0): 2,
-        (1, 1, 1): 2,
-        (1, 1, 2): 6,
-        (1, 1, 3): 4,
-        (1, 2, 0): 6,
-        (1, 2, 2): 4,
-        (1, 2, 3): 4,
-        (1, 2, 4): 5,
-        (1, 3, 1): 4,
-        (1, 3, 2): 4,
-        (1, 3, 3): 4,
-        (1, 3, 4): 5,
-        (1, 3, 5): 7,
-        (1, 3, 6): 10,
-        (1, 4, 2): 5,
-        (1, 4, 3): 5,
-        (1, 4, 4): 6,
-        (1, 4, 5): 8,
-        (1, 5, 4): 7,
-        (1, 5, 5): 8,
-        (1, 5, 6): 7,
-        (1, 6, 5): 10,
-        (1, 6, 6): 9,
-        (1, 7, 5): 10,
-        (1, 7, 6): 11,
-        (2, 0, 1): 3,
-        (2, 0, 2): 3,
-        (2, 0, 3): 3,
-        (2, 1, 0): 3,
-        (2, 1, 1): 3,
-        (2, 1, 2): 3,
-        (2, 1, 3): 4,
-        (2, 1, 4): 5,
-        (2, 2, 0): 3,
-        (2, 2, 1): 3,
-        (2, 2, 2): 3,
-        (2, 2, 3): 3,
-        (2, 2, 4): 3,
-        (2, 2, 5): 8,
-        (2, 2, 6): 10,
-        (2, 3, 0): 4,
-        (2, 3, 1): 4,
-        (2, 3, 2): 5,
-        (2, 3, 3): 5,
-        (2, 3, 4): 5,
-        (2, 3, 5): 4,
-        (2, 3, 6): 9,
-        (2, 4, 1): 5,
-        (2, 4, 2): 5,
-        (2, 4, 3): 5,
-        (2, 4, 4): 6,
-        (2, 4, 5): 8,
-        (2, 4, 6): 8,
-        (2, 4, 7): 10,
-        (2, 5, 3): 8,
-        (2, 5, 4): 8,
-        (2, 5, 5): 8,
-        (2, 5, 6): 9,
-        (2, 5, 7): 10,
-        (2, 6, 4): 10,
-        (2, 6, 5): 9,
-        (2, 6, 6): 9,
-        (2, 6, 7): 10,
-        (2, 7, 4): 9,
-        (2, 7, 5): 10,
-        (2, 7, 6): 10,
-        (2, 7, 7): 11,
-        (2, 8, 7): 12,
-        (3, 0, 2): 4,
-        (3, 0, 3): 4,
-        (3, 0, 4): 4,
-        (3, 1, 1): 4,
-        (3, 1, 2): 4,
-        (3, 1, 3): 4,
-        (3, 1, 4): 4,
-        (3, 1, 6): 8,
-        (3, 1, 7): 10,
-        (3, 2, 0): 4,
-        (3, 2, 1): 4,
-        (3, 2, 2): 4,
-        (3, 2, 3): 4,
-        (3, 2, 4): 5,
-        (3, 2, 5): 4,
-        (3, 2, 6): 8,
-        (3, 3, 0): 4,
-        (3, 3, 1): 4,
-        (3, 3, 2): 4,
-        (3, 3, 3): 6,
-        (3, 3, 4): 5,
-        (3, 3, 5): 7,
-        (3, 3, 6): 9,
-        (3, 3, 7): 9,
-        (3, 4, 0): 6,
-        (3, 4, 1): 5,
-        (3, 4, 2): 5,
-        (3, 4, 3): 6,
-        (3, 4, 4): 7,
-        (3, 4, 5): 8,
-        (3, 4, 6): 9,
-        (3, 4, 7): 9,
-        (3, 5, 1): 9,
-        (3, 5, 2): 8,
-        (3, 5, 3): 8,
-        (3, 5, 4): 8,
-        (3, 5, 5): 8,
-        (3, 5, 6): 9,
-        (3, 5, 7): 11,
-        (3, 5, 8): 13,
-        (3, 6, 2): 9,
-        (3, 6, 3): 9,
-        (3, 6, 4): 9,
-        (3, 6, 5): 9,
-        (3, 6, 6): 9,
-        (3, 6, 7): 10,
-        (3, 6, 8): 12,
-        (3, 7, 3): 11,
-        (3, 7, 4): 9,
-        (3, 7, 5): 10,
-        (3, 7, 6): 9,
-        (3, 7, 7): 10,
-        (3, 7, 8): 12,
-        (3, 8, 5): 11,
-        (3, 8, 6): 11,
-        (3, 8, 7): 11,
-        (4, 0, 3): 5,
-        (4, 0, 4): 5,
-        (4, 1, 1): 5,
-        (4, 1, 2): 5,
-        (4, 1, 3): 5,
-        (4, 1, 4): 5,
-        (4, 1, 5): 9,
-        (4, 1, 6): 9,
-        (4, 2, 0): 5,
-        (4, 2, 1): 5,
-        (4, 2, 2): 5,
-        (4, 2, 3): 5,
-        (4, 2, 4): 5,
-        (4, 2, 5): 8,
-        (4, 2, 6): 9,
-        (4, 2, 7): 9,
-        (4, 3, 0): 5,
-        (4, 3, 1): 5,
-        (4, 3, 2): 5,
-        (4, 3, 3): 5,
-        (4, 3, 4): 6,
-        (4, 3, 5): 8,
-        (4, 3, 6): 9,
-        (4, 3, 7): 10,
-        (4, 3, 8): 11,
-        (4, 4, 0): 5,
-        (4, 4, 1): 5,
-        (4, 4, 2): 6,
-        (4, 4, 3): 6,
-        (4, 4, 4): 7,
-        (4, 4, 5): 8,
-        (4, 4, 6): 9,
-        (4, 4, 7): 10,
-        (4, 5, 1): 8,
-        (4, 5, 2): 8,
-        (4, 5, 3): 8,
-        (4, 5, 4): 8,
-        (4, 5, 5): 8,
-        (4, 5, 6): 9,
-        (4, 5, 7): 10,
-        (4, 5, 8): 11,
-        (4, 6, 2): 9,
-        (4, 6, 3): 9,
-        (4, 6, 4): 9,
-        (4, 6, 5): 9,
-        (4, 6, 6): 9,
-        (4, 6, 7): 10,
-        (4, 6, 8): 11,
-        (4, 7, 3): 10,
-        (4, 7, 4): 11,
-        (4, 7, 5): 10,
-        (4, 7, 6): 10,
-        (4, 7, 7): 10,
-        (4, 8, 3): 10,
-        (4, 8, 4): 11,
-        (4, 8, 5): 11,
-        (4, 8, 6): 10,
-        (4, 8, 7): 10,
-        (4, 8, 8): 11,
-        (4, 9, 7): 13,
-        (5, 0, 5): 7,
-        (5, 1, 4): 8,
-        (5, 1, 5): 8,
-        (5, 1, 6): 9,
-        (5, 2, 2): 6,
-        (5, 2, 3): 7,
-        (5, 2, 4): 8,
-        (5, 2, 5): 8,
-        (5, 2, 6): 9,
-        (5, 2, 7): 10,
-        (5, 3, 2): 7,
-        (5, 3, 3): 8,
-        (5, 3, 4): 8,
-        (5, 3, 5): 8,
-        (5, 3, 6): 9,
-        (5, 3, 7): 10,
-        (5, 3, 8): 10,
-        (5, 4, 0): 8,
-        (5, 4, 1): 8,
-        (5, 4, 2): 8,
-        (5, 4, 3): 8,
-        (5, 4, 4): 8,
-        (5, 4, 5): 8,
-        (5, 4, 6): 9,
-        (5, 4, 7): 10,
-        (5, 4, 8): 11,
-        (5, 5, 0): 8,
-        (5, 5, 1): 7,
-        (5, 5, 2): 8,
-        (5, 5, 3): 8,
-        (5, 5, 4): 8,
-        (5, 5, 5): 9,
-        (5, 5, 6): 10,
-        (5, 5, 7): 10,
-        (5, 5, 8): 11,
-        (5, 5, 9): 11,
-        (5, 6, 1): 9,
-        (5, 6, 2): 9,
-        (5, 6, 3): 9,
-        (5, 6, 4): 9,
-        (5, 6, 5): 9,
-        (5, 6, 6): 10,
-        (5, 6, 7): 10,
-        (5, 6, 8): 11,
-        (5, 7, 2): 9,
-        (5, 7, 3): 11,
-        (5, 7, 4): 10,
-        (5, 7, 5): 10,
-        (5, 7, 6): 10,
-        (5, 7, 7): 11,
-        (5, 7, 8): 11,
-        (5, 8, 3): 12,
-        (5, 8, 4): 10,
-        (5, 8, 5): 11,
-        (5, 8, 6): 11,
-        (5, 8, 7): 12,
-        (5, 8, 8): 13,
-        (5, 9, 3): 10,
-        (6, 1, 5): 9,
-        (6, 2, 3): 11,
-        (6, 2, 4): 9,
-        (6, 2, 5): 8,
-        (6, 2, 6): 9,
-        (6, 2, 7): 11,
-        (6, 3, 2): 10,
-        (6, 3, 3): 9,
-        (6, 3, 4): 9,
-        (6, 3, 5): 9,
-        (6, 3, 6): 9,
-        (6, 3, 7): 10,
-        (6, 4, 2): 10,
-        (6, 4, 3): 9,
-        (6, 4, 4): 9,
-        (6, 4, 5): 9,
-        (6, 4, 6): 10,
-        (6, 4, 7): 10,
-        (6, 4, 8): 11,
-        (6, 5, 1): 9,
-        (6, 5, 2): 9,
-        (6, 5, 3): 9,
-        (6, 5, 4): 9,
-        (6, 5, 5): 10,
-        (6, 5, 6): 10,
-        (6, 5, 7): 10,
-        (6, 5, 8): 11,
-        (6, 6, 1): 9,
-        (6, 6, 2): 8,
-        (6, 6, 3): 10,
-        (6, 6, 4): 9,
-        (6, 6, 5): 10,
-        (6, 6, 6): 10,
-        (6, 6, 7): 11,
-        (6, 6, 8): 11,
-        (6, 7, 1): 10,
-        (6, 7, 2): 10,
-        (6, 7, 3): 10,
-        (6, 7, 4): 10,
-        (6, 7, 5): 11,
-        (6, 7, 6): 11,
-        (6, 7, 7): 11,
-        (6, 7, 8): 11,
-        (6, 8, 3): 13,
-        (6, 8, 4): 11,
-        (6, 8, 5): 11,
-        (6, 8, 6): 12,
-        (6, 8, 7): 11,
-        (6, 8, 8): 12,
-        (6, 9, 4): 12,
-        (6, 9, 5): 12,
-        (6, 9, 7): 12,
-        (7, 2, 4): 10,
-        (7, 2, 5): 11,
-        (7, 2, 7): 11,
-        (7, 2, 8): 12,
-        (7, 3, 4): 10,
-        (7, 3, 5): 10,
-        (7, 3, 6): 10,
-        (7, 3, 7): 9,
-        (7, 4, 3): 12,
-        (7, 4, 4): 10,
-        (7, 4, 5): 10,
-        (7, 4, 6): 10,
-        (7, 4, 7): 11,
-        (7, 4, 8): 11,
-        (7, 5, 3): 10,
-        (7, 5, 4): 10,
-        (7, 5, 5): 10,
-        (7, 5, 6): 10,
-        (7, 5, 7): 11,
-        (7, 5, 8): 10,
-        (7, 6, 2): 10,
-        (7, 6, 3): 10,
-        (7, 6, 4): 10,
-        (7, 6, 5): 10,
-        (7, 6, 6): 10,
-        (7, 6, 7): 10,
-        (7, 6, 8): 9,
-        (7, 7, 2): 11,
-        (7, 7, 3): 9,
-        (7, 7, 4): 11,
-        (7, 7, 5): 10,
-        (7, 7, 6): 11,
-        (7, 7, 7): 11,
-        (7, 8, 3): 9,
-        (7, 8, 4): 10,
-        (7, 8, 5): 12,
-        (7, 8, 6): 11,
-        (7, 8, 8): 11,
-        (8, 4, 5): 11,
-        (8, 4, 6): 12,
-        (8, 4, 7): 11,
-        (8, 5, 7): 11,
-        (8, 6, 4): 11,
-        (8, 6, 6): 10,
-        (8, 7, 4): 13,
-        (8, 8, 5): 12
+        (0, 0): 1,
+        (0, 1): 3,
+        (0, 2): 3,
+        (0, 3): 4,
+        (0, 4): 5,
+        (0, 5): 7,
+        (0, 6): 8,
+        (1, 0): 2,
+        (1, 1): 2,
+        (1, 2): 4,
+        (1, 3): 4,
+        (1, 4): 5,
+        (1, 5): 7,
+        (1, 6): 9,
+        (1, 7): 10,
+        (2, 0): 3,
+        (2, 1): 3,
+        (2, 2): 3,
+        (2, 3): 4,
+        (2, 4): 5,
+        (2, 5): 8,
+        (2, 6): 9,
+        (2, 7): 9,
+        (2, 8): 12,
+        (3, 0): 4,
+        (3, 1): 4,
+        (3, 2): 4,
+        (3, 3): 4,
+        (3, 4): 5,
+        (3, 5): 8,
+        (3, 6): 9,
+        (3, 7): 9,
+        (3, 8): 11,
+        (4, 0): 5,
+        (4, 1): 5,
+        (4, 2): 5,
+        (4, 3): 5,
+        (4, 3): 6,
+        (4, 4): 5,
+        (4, 5): 8,
+        (4, 6): 9,
+        (4, 7): 10,
+        (4, 8): 10,
+        (4, 9): 13,
+        (5, 0): 7,
+        (5, 1): 8,
+        (5, 2): 6,
+        (5, 3): 7,
+        (5, 4): 8,
+        (5, 5): 7,
+        (5, 6): 9,
+        (5, 7): 9,
+        (5, 8): 10,
+        (5, 9): 10,
+        (6, 1): 9,
+        (6, 2): 8,
+        (6, 3): 9,
+        (6, 4): 9,
+        (6, 5): 9,
+        (6, 6): 8,
+        (6, 7): 10,
+        (6, 8): 11,
+        (6, 9): 12,
+        (7, 2): 10,
+        (7, 3): 9,
+        (7, 4): 10,
+        (7, 5): 10,
+        (7, 6): 9,
+        (7, 7): 9,
+        (7, 8): 9,
+        (8, 4): 11,
+        (8, 5): 11,
+        (8, 6): 10,
+        (8, 7): 13,
+        (8, 8): 12
     }
 
     # The stats above are all median values from solving 5000 7x7x7 cubes. Experimenting
     # shows that subtracting 1 from all of those speeds up some searches a good bit (from
     # 2m down to 5s).
-    heuristic_stats_error = 1
+    #heuristic_stats_error = 1
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -878,19 +474,75 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
              "Fw", "Fw'", "Bw", "Bw'"),
 
             # prune tables
-            (parent.lt_LR_outside_oblique_edge_pairing,
+            (parent.lt_LR_left_right_oblique_edge_pairing,
              parent.lt_LR_left_middle_oblique_edge_pairing,
-             parent.lt_LR_right_middle_oblique_edge_pairing),
+            ),
 
             linecount=9919742,
             max_depth=3,
             filesize=277752776,
         )
 
-    def state(self):
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        self.parent.print_cube()
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_777:
+            if x in self.LFRB_oblique_edges_777:
+                if self.parent.state[x] == 'L' or self.parent.state[x] == 'R':
+                    self.parent.state[x] = 'L'
+                else:
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+        self.parent.print_cube()
+
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_oblique_edges_777])
-        return self.hex_format % int(result, 2)
+        left_middle_state = 0
+        left_right_state = 0
+        lt_state = 0
+
+        set_LFRB_left_right_oblique_edges_777 = set(self.LFRB_left_right_oblique_edges_777)
+        set_LFRB_left_middle_oblique_edges_777 = set(self.LFRB_left_middle_oblique_edges_777)
+
+        for x in self.LFRB_oblique_edges_777:
+            x_state = parent_state[x]
+
+            if x in set_LFRB_left_right_oblique_edges_777:
+                if x_state == 'L':
+                    left_right_state = left_right_state | 0x1
+                left_right_state = left_right_state << 1
+
+            if x in set_LFRB_left_middle_oblique_edges_777:
+                if x_state == 'L':
+                    left_middle_state = left_middle_state | 0x1
+                left_middle_state = left_middle_state << 1
+
+            if x_state == 'L':
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+
+        left_middle_state = left_middle_state >> 1
+        left_right_state = left_right_state >> 1
+        lt_state = lt_state >> 1
+
+        # convert to hex format
+        left_right_state = self.parent.lt_LR_left_right_oblique_edge_pairing.hex_format % left_right_state
+        left_middle_state = self.parent.lt_LR_left_middle_oblique_edge_pairing.hex_format % left_middle_state
+        lt_state = self.hex_format % lt_state
+
+        left_right_cost = self.parent.lt_LR_left_right_oblique_edge_pairing.heuristic(left_right_state)
+        left_middle_cost = self.parent.lt_LR_left_middle_oblique_edge_pairing.heuristic(left_middle_state)
+
+        cost_to_goal = self.heuristic_stats.get((left_right_cost, left_middle_cost))
+
+        if cost_to_goal is None:
+            cost_to_goal = max(left_right_cost, left_middle_cost)
+
+        return (lt_state, cost_to_goal)
 
 
 #class LookupTable777Step41(LookupTable):
@@ -954,11 +606,6 @@ class LookupTable777Step41(LookupTableHashCostOnly):
         'RRRRLRRRLRRRLRRRRLLLLRLLLRLLLRLLLL'
     )
 
-    centers_step41_777 = (
-        59, 61, 65, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 83, 87, 89, # Left
-        157, 159, 163, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 181, 185, 187, # Right
-    )
-
     def __init__(self, parent):
         '''
         LookupTable.__init__(
@@ -979,11 +626,6 @@ class LookupTable777Step41(LookupTableHashCostOnly):
             max_depth=12,
             bucketcount=24010031,
             filesize=24010032)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in self.centers_step41_777])
-        return result
 
 
 #class LookupTable777Step42(LookupTable):
@@ -1046,11 +688,6 @@ class LookupTable777Step42(LookupTableHashCostOnly):
         'RLRRLRRRLRRRLRRLRLRLLRLLLRLLLRLLRL'
     )
 
-    centers_step42_777 = (
-        58, 60, 62, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 86, 88, 90, # Left
-        156, 158, 160, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 184, 186, 188, # Right
-    )
-
     def __init__(self, parent):
         '''
         LookupTable.__init__(
@@ -1071,11 +708,6 @@ class LookupTable777Step42(LookupTableHashCostOnly):
             max_depth=11,
             bucketcount=24010031,
             filesize=24010032)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in self.centers_step42_777])
-        return result
 
 
 class LookupTableIDA777Step40(LookupTableIDA):
@@ -1136,6 +768,16 @@ class LookupTableIDA777Step40(LookupTableIDA):
         156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188, # Right
     )
 
+    centers_step41_777 = (
+        59, 61, 65, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 83, 87, 89, # Left
+        157, 159, 163, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 181, 185, 187, # Right
+    )
+
+    centers_step42_777 = (
+        58, 60, 62, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 86, 88, 90, # Left
+        156, 158, 160, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 184, 186, 188, # Right
+    )
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -1159,10 +801,39 @@ class LookupTableIDA777Step40(LookupTableIDA):
             max_depth=6,
             filesize=149563421)
 
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] == 'L' else '0' for x in self.centers_step40_777])
-        return self.hex_format % int(result, 2)
+        lt_state = 0
+        step41_state = []
+        step42_state = []
+
+        set_centers_step41_777 = set(self.centers_step41_777)
+        set_centers_step42_777 = set(self.centers_step42_777)
+
+        for x in self.centers_step40_777:
+            x_state = parent_state[x]
+
+            if x in set_centers_step41_777:
+                step41_state.append(x_state)
+
+            if x in set_centers_step42_777:
+                step42_state.append(x_state)
+
+            if x_state == 'L':
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+
+        step41_state = ''.join(step41_state)
+        step42_state = ''.join(step42_state)
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
+
+        cost_to_goal = max(
+            self.parent.lt_step41.heuristic(step41_state),
+            self.parent.lt_step42.heuristic(step42_state),
+        )
+
+        return (lt_state, cost_to_goal)
 
 
 #class LookupTable777Step51(LookupTable):
@@ -1226,11 +897,6 @@ class LookupTable777Step51(LookupTableHashCostOnly):
         'UUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDD'
     )
 
-    centers_step51_777 = (
-        10, 12, 16, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 34, 38, 40, # Upper
-        255, 257, 261, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 279, 283, 285, # Down
-    )
-
     def __init__(self, parent):
         '''
         LookupTable.__init__(
@@ -1251,11 +917,6 @@ class LookupTable777Step51(LookupTableHashCostOnly):
             max_depth=12,
             bucketcount=24010031,
             filesize=24010032)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in self.centers_step51_777])
-        return result
 
 
 #class LookupTable777Step52(LookupTable):
@@ -1318,11 +979,6 @@ class LookupTable777Step52(LookupTableHashCostOnly):
         'UUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDD'
     )
 
-    centers_step52_777 = (
-        9, 11, 13, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 37, 39, 41, # Upper
-        254, 256, 258, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 282, 284, 286, # Down
-    )
-
     def __init__(self, parent):
         '''
         LookupTable.__init__(
@@ -1343,11 +999,6 @@ class LookupTable777Step52(LookupTableHashCostOnly):
             max_depth=11,
             bucketcount=24010031,
             filesize=24010032)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in self.centers_step52_777])
-        return result
 
 
 class LookupTableIDA777Step50(LookupTableIDA):
@@ -1408,6 +1059,16 @@ class LookupTableIDA777Step50(LookupTableIDA):
         254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286, # Down
     )
 
+    centers_step51_777 = (
+        10, 12, 16, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 34, 38, 40, # Upper
+        255, 257, 261, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 279, 283, 285, # Down
+    )
+
+    centers_step52_777 = (
+        9, 11, 13, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 37, 39, 41, # Upper
+        254, 256, 258, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 282, 284, 286, # Down
+    )
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -1434,10 +1095,39 @@ class LookupTableIDA777Step50(LookupTableIDA):
             max_depth=6,
             filesize=149563421)
 
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] == 'U' else '0' for x in self.centers_step50_777])
-        return self.hex_format % int(result, 2)
+        lt_state = 0
+        step51_state = []
+        step52_state = []
+
+        set_centers_step51_777 = set(self.centers_step51_777)
+        set_centers_step52_777 = set(self.centers_step52_777)
+
+        for x in self.centers_step50_777:
+            x_state = parent_state[x]
+
+            if x in set_centers_step51_777:
+                step51_state.append(x_state)
+
+            if x in set_centers_step52_777:
+                step52_state.append(x_state)
+
+            if x_state == 'U':
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+
+        step51_state = ''.join(step51_state)
+        step52_state = ''.join(step52_state)
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
+
+        cost_to_goal = max(
+            self.parent.lt_step51.heuristic(step51_state),
+            self.parent.lt_step52.heuristic(step52_state),
+        )
+
+        return (lt_state, cost_to_goal)
 
 
 #class LookupTable777Step61(LookupTable):
@@ -1464,11 +1154,6 @@ class LookupTable777Step61(LookupTableHashCostOnly):
     Average: 10.11 moves
     """
 
-    state_indexes = (
-        108, 110, 114, 115, 116, 117, 118, 122, 123, 124, 128, 129, 130, 131, 132, 136, 138, # Front
-        206, 208, 212, 213, 214, 215, 216, 220, 221, 222, 226, 227, 228, 229, 230, 234, 236, # Back
-    )
-
     def __init__(self, parent):
         '''
         LookupTable.__init__(
@@ -1489,11 +1174,6 @@ class LookupTable777Step61(LookupTableHashCostOnly):
             max_depth=14,
             bucketcount=24010031,
             filesize=24010032)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in self.state_indexes])
-        return result
 
 
 #class LookupTable777Step62(LookupTable):
@@ -1519,11 +1199,6 @@ class LookupTable777Step62(LookupTableHashCostOnly):
     Average: 9.58 moves
     """
 
-    state_indexes = (
-        107, 109, 111, 115, 116, 117, 121, 122, 123, 124, 125, 129, 130, 131, 135, 137, 139, # Front
-        205, 207, 209, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 233, 235, 237, # Back
-    )
-
     def __init__(self, parent):
         '''
         LookupTable.__init__(
@@ -1545,11 +1220,6 @@ class LookupTable777Step62(LookupTableHashCostOnly):
             bucketcount=24010031,
             filesize=24010032)
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in self.state_indexes])
-        return result
-
 
 class LookupTableIDA777Step60(LookupTableIDA):
     """
@@ -1566,13 +1236,23 @@ class LookupTableIDA777Step60(LookupTableIDA):
     Total: 15,407,555 entries
     """
 
-    state_indexes = (
+    state_indexes_step60 = (
         9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, # Upper
         58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90, # Left
         107, 108, 109, 110, 111, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 128, 129, 130, 131, 132, 135, 136, 137, 138, 139, # Front
         156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188, # Right
         205, 206, 207, 208, 209, 212, 213, 214, 215, 216, 219, 220, 221, 222, 223, 226, 227, 228, 229, 230, 233, 234, 235, 236, 237, # Back
         254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286, # Down
+    )
+
+    state_indexes_step61 = (
+        108, 110, 114, 115, 116, 117, 118, 122, 123, 124, 128, 129, 130, 131, 132, 136, 138, # Front
+        206, 208, 212, 213, 214, 215, 216, 220, 221, 222, 226, 227, 228, 229, 230, 234, 236, # Back
+    )
+
+    state_indexes_step62 = (
+        107, 109, 111, 115, 116, 117, 121, 122, 123, 124, 125, 129, 130, 131, 135, 137, 139, # Front
+        205, 207, 209, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 233, 235, 237, # Back
     )
 
     def __init__(self, parent):
@@ -1605,10 +1285,39 @@ class LookupTableIDA777Step60(LookupTableIDA):
             max_depth=7,
             filesize=677932420)
 
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'L', 'F') else '0' for x in self.state_indexes])
-        return self.hex_format % int(result, 2)
+        lt_state = 0
+        step61_state = []
+        step62_state = []
+
+        set_state_indexes_step61 = set(self.state_indexes_step61)
+        set_state_indexes_step62 = set(self.state_indexes_step62)
+
+        for x in self.state_indexes_step60:
+            x_state = parent_state[x]
+
+            if x in set_state_indexes_step61:
+                step61_state.append(x_state)
+
+            if x in set_state_indexes_step62:
+                step62_state.append(x_state)
+
+            if x_state in ('U', 'L', 'F'):
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+
+        step61_state = ''.join(step61_state)
+        step62_state = ''.join(step62_state)
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
+
+        cost_to_goal = max(
+            self.parent.lt_step61.heuristic(step61_state),
+            self.parent.lt_step62.heuristic(step62_state),
+        )
+
+        return (lt_state, cost_to_goal)
 
 
 class RubiksCube777(RubiksCubeNNNOddEdges):
@@ -1788,9 +1497,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_UD_oblique_edge_pairing_right_only.preload_cache_dict()
         self.lt_UD_oblique_edge_pairing.preload_cache_dict()
 
-        self.lt_LR_outside_oblique_edge_pairing = LookupTable777LROutsideObliqueEdgePairing(self)
+        self.lt_LR_left_right_oblique_edge_pairing = LookupTable777LRLeftRightObliqueEdgePairing(self)
         self.lt_LR_left_middle_oblique_edge_pairing = LookupTable777LRLeftMiddleObliqueEdgePairing(self)
-        self.lt_LR_right_middle_oblique_edge_pairing = LookupTable777LRRightMiddleObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing.preload_cache_string()
 
@@ -2125,7 +1833,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             log.info("")
 
             # Test the pruning tables
-            #self.lt_LR_outside_oblique_edge_pairing.solve()
+            #self.lt_LR_left_right_oblique_edge_pairing.solve()
             #self.lt_LR_left_middle_oblique_edge_pairing.solve()
             #self.print_cube()
             #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
@@ -2160,7 +1868,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #sys.exit(0)
 
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
         self.lt_step40.solve()
         self.print_cube()
         log.info("kociemba: %s" % self.get_kociemba_string(True))

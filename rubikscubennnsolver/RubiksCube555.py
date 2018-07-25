@@ -280,22 +280,13 @@ class LookupTable555UDTCenterStage(LookupTable):
             linecount=735471,
             max_depth=8)
 
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.t_centers_555])
-        return self.hex_format % int(result, 2)
+        return (self.hex_format % int(result, 2), 0)
 
 
 class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
-
-    t_centers_555 = (
-        8, 12, 14, 18,
-        33, 37, 39, 43,
-        58, 62, 64, 68,
-        83, 87, 89, 93,
-        108, 112, 114, 118,
-        133, 137, 139, 143
-    )
 
     def __init__(self, parent):
         LookupTableCostOnly.__init__(
@@ -305,11 +296,6 @@ class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
             'f0000f',
             linecount=735471,
             max_depth=8)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.t_centers_555])
-        return int(result, 2)
 
 
 class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
@@ -329,6 +315,38 @@ class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
     Average: 6.03 moves
     """
 
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt',
+            'f0000f',
+            linecount=735471,
+            max_depth=8)
+
+
+class LookupTableIDA555UDCentersStage(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step10-UD-centers-stage.txt
+    ==============================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 98 entries (0 percent, 19.60x previous step)
+    3 steps has 2,036 entries (0 percent, 20.78x previous step)
+    4 steps has 41,096 entries (0 percent, 20.18x previous step)
+    5 steps has 824,950 entries (4 percent, 20.07x previous step)
+    6 steps has 16,300,291 entries (94 percent, 19.76x previous step)
+
+    Total: 17,168,476 entries
+    """
+    t_centers_555 = (
+        8, 12, 14, 18,
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118,
+        133, 137, 139, 143
+    )
+
     x_centers_555 = (
         7, 9, 17, 19,
         32, 34, 42, 44,
@@ -339,47 +357,17 @@ class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
     )
 
     def __init__(self, parent):
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt',
-            'f0000f',
-            linecount=735471,
-            max_depth=8)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.x_centers_555])
-        return int(result, 2)
-
-
-class LookupTableIDA555UDCentersStage(LookupTableIDA):
-    """
-    lookup-table-5x5x5-step10-UD-centers-stage.txt
-    ==============================================
-    1 steps has 2 entries (0 percent, 0.00x previous step)
-    2 steps has 9 entries (0 percent, 4.50x previous step)
-    3 steps has 142 entries (0 percent, 15.78x previous step)
-    4 steps has 2,623 entries (0 percent, 18.47x previous step)
-    5 steps has 51,793 entries (0 percent, 19.75x previous step)
-    6 steps has 1,019,932 entries (4 percent, 19.69x previous step)
-    7 steps has 19,487,243 entries (94 percent, 19.11x previous step)
-
-    Total: 20,561,744 entries
-    """
-
-    def __init__(self, parent):
 
         if parent.min_memory:
-            filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt.6-deep'
-            linecount = 1074501
-            max_depth = 6
-            filesize = 18266517
+            filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt.5-deep'
+            linecount = 868185
+            max_depth = 5
+            filesize = 16495515
         else:
             filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt'
-            linecount = 20561744
-            max_depth = 7
-            filesize = 349549648
+            linecount = 17168476
+            max_depth = 6
+            filesize = 326201044
 
         LookupTableIDA.__init__(
             self,
@@ -390,89 +378,69 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             (), # illegal_moves
 
             # prune tables
-            (parent.lt_UD_T_centers_stage_co,
-             parent.lt_UD_X_centers_stage_co,
+            (parent.lt_UD_X_centers_stage_co,
+             parent.lt_UD_T_centers_stage_co,
             ),
 
             linecount=linecount,
             max_depth=max_depth,
-            filesize=filesize)
-
-        self.symmetries = (
-            "y",
-            "y'",
-            "x x",
-            "y y",
-            "z z",
-            "y x x",
-            "y z z",
-            "reflect-x",
-            "reflect-x y",
-            "reflect-x y'",
-            "reflect-x x x",
-            "reflect-x y y",
-            "reflect-x z z",
-            "reflect-x y x x",
-            "reflect-x y z z"
+            filesize=filesize,
+            exit_asap=True,
         )
 
-    def state(self):
-        results = []
-        tmp_state = self.parent.state[:]
+        self.recolor_positions = centers_555
+        self.recolor_map = {
+            'D' : 'U',
+            'R' : 'L',
+            'B' : 'F',
+        }
+        self.nuke_corners = True
+        self.nuke_edges = True
 
-        # always add the base symmetry
-        results.append(''.join(['U' if tmp_state[x] in ('U', 'D') else 'x' for x in centers_555]))
-
-        for seq in self.symmetries:
-            parent_state = rotate_555(tmp_state[:], seq)
-            results.append(''.join(['U' if parent_state[x] in ('U', 'D') else 'x' for x in centers_555]))
-
-        results.sort()
-        result = results[0].replace('U', '1').replace('x', '0')
-
-        return self.hex_format % int(result, 2)
-
-
-class LookupTableIDA555LRCenterStage(LookupTableIDA):
-    """
-    lookup-table-5x5x5-step20-LR-centers-solve.txt
-    ==============================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 33 entries (0 percent, 11.00x previous step)
-    3 steps has 374 entries (0 percent, 11.33x previous step)
-    4 steps has 3,838 entries (8 percent, 10.26x previous step)
-    5 steps has 39,254 entries (90 percent, 10.23x previous step)
-
-    Total: 43,502 entries
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step20-LR-centers-stage.txt',
-            'ff803fe00',
-            moves_555,
-            # illegal moves
-            ("Fw", "Fw'",
-             "Bw", "Bw'",
-             "Lw", "Lw'",
-             "Rw", "Rw'",
-            ),
-
-            # prune tables
-            (parent.lt_LR_T_centers_stage,
-             parent.lt_LR_X_centers_stage),
-            linecount=43502,
-            max_depth=5,
-            filesize=1305060,
-            #exit_asap=False,
-            )
-
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in LFRB_centers_555])
-        return self.hex_format % int(result, 2)
+        lt_state = 0
+        x_centers_state = 0
+        t_centers_state = 0
+
+        set_x_centers_555 = set(self.x_centers_555)
+        set_t_centers_555 = set(self.t_centers_555)
+
+        for x in centers_555:
+            cubie_state = parent_state[x]
+
+            if x in set_x_centers_555:
+
+                if cubie_state == 'U':
+                    x_centers_state = x_centers_state | 0x1
+                    lt_state = lt_state | 0x1
+                x_centers_state = x_centers_state << 1
+
+            elif x in set_t_centers_555:
+
+                if cubie_state == 'U':
+                    t_centers_state = t_centers_state | 0x1
+                    lt_state = lt_state | 0x1
+                t_centers_state = t_centers_state << 1
+
+            else:
+                if cubie_state == 'U':
+                    lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+
+        x_centers_state = x_centers_state >> 1
+        t_centers_state = t_centers_state >> 1
+        lt_state = lt_state >> 1
+
+        cost_to_goal = max(
+            self.parent.lt_UD_X_centers_stage_co.heuristic(x_centers_state),
+            self.parent.lt_UD_T_centers_stage_co.heuristic(t_centers_state),
+        )
+
+        result = self.hex_format % lt_state
+
+        #log.info("%s: x_centers_state %s, t_centers_state %s, cost_to_goal %d" % (self, x_centers_state, t_centers_state, cost_to_goal))
+        return (result, cost_to_goal)
 
 
 class LookupTable555LRTCenterStage(LookupTable):
@@ -510,10 +478,11 @@ class LookupTable555LRTCenterStage(LookupTable):
             max_depth=9,
             filesize=476190)
 
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_t_centers_555])
-        return self.hex_format % int(result, 2)
+        return (self.hex_format % int(result, 2), 0)
+
 
 
 class LookupTable555LRXCenterStage(LookupTable):
@@ -532,13 +501,6 @@ class LookupTable555LRXCenterStage(LookupTable):
     Average: 5.45 moves
     """
 
-    LFRB_x_centers_555 = (
-        32, 34, 42, 44,
-        57, 59, 67, 69,
-        82, 84, 92, 94,
-        107, 109, 117, 119
-    )
-
     def __init__(self, parent):
         LookupTable.__init__(
             self,
@@ -549,10 +511,109 @@ class LookupTable555LRXCenterStage(LookupTable):
             max_depth=7,
             filesize=398970)
 
-    def state(self):
+
+class LookupTableIDA555LRCenterStage(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step20-LR-centers-solve.txt
+    ==============================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 33 entries (0 percent, 11.00x previous step)
+    3 steps has 374 entries (0 percent, 11.33x previous step)
+    4 steps has 3,838 entries (8 percent, 10.26x previous step)
+    5 steps has 39,254 entries (90 percent, 10.23x previous step)
+
+    Total: 43,502 entries
+    """
+
+    LFRB_t_centers_555 = (
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118
+    )
+
+    LFRB_x_centers_555 = (
+        32, 34, 42, 44,
+        57, 59, 67, 69,
+        82, 84, 92, 94,
+        107, 109, 117, 119
+    )
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step20-LR-centers-stage.txt',
+            'ff803fe00',
+            moves_555,
+            # illegal moves
+            ("Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'",
+            ),
+
+            # prune tables
+            (parent.lt_LR_T_centers_stage,
+             parent.lt_LR_X_centers_stage),
+            linecount=43502,
+            max_depth=5,
+            filesize=1305060,
+            )
+
+        self.recolor_positions = LFRB_centers_555
+        self.recolor_map = {
+            'R' : 'L',
+        }
+        self.nuke_corners = True
+        self.nuke_edges = True
+
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_x_centers_555])
-        return self.hex_format % int(result, 2)
+        lt_state = 0
+        x_centers_state = 0
+        t_centers_state = 0
+
+        set_x_centers_555 = set(self.LFRB_x_centers_555)
+        set_t_centers_555 = set(self.LFRB_t_centers_555)
+
+        for x in LFRB_centers_555:
+            cubie_state = parent_state[x]
+
+            if x in set_x_centers_555:
+
+                if cubie_state == 'L':
+                    x_centers_state = x_centers_state | 0x1
+                    lt_state = lt_state | 0x1
+                x_centers_state = x_centers_state << 1
+
+            elif x in set_t_centers_555:
+
+                if cubie_state == 'L':
+                    t_centers_state = t_centers_state | 0x1
+                    lt_state = lt_state | 0x1
+                t_centers_state = t_centers_state << 1
+
+            else:
+                if cubie_state == 'L':
+                    lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+
+        x_centers_state = x_centers_state >> 1
+        t_centers_state = t_centers_state >> 1
+        lt_state = lt_state >> 1
+
+        t_centers_state = self.parent.lt_LR_T_centers_stage.hex_format % t_centers_state
+        x_centers_state = self.parent.lt_LR_X_centers_stage.hex_format % x_centers_state
+
+        cost_to_goal = max(
+            self.parent.lt_LR_T_centers_stage.heuristic(t_centers_state),
+            self.parent.lt_LR_X_centers_stage.heuristic(x_centers_state),
+        )
+
+        result = self.hex_format % lt_state
+        # log.info("%s: result %s, x_centers_state %s, t_centers_state %s, cost_to_goal %d" % (self, result, x_centers_state, t_centers_state, cost_to_goal))
+        return (result, cost_to_goal)
 
 
 class LookupTableULCentersSolve(LookupTableHashCostOnly):
@@ -592,11 +653,6 @@ class LookupTableULCentersSolve(LookupTableHashCostOnly):
             bucketcount=24010031,
             filesize=24010032)
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'L') else '0' for x in centers_555])
-        return self.hex_format % int(result, 2)
-
 
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     """
@@ -618,7 +674,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             self,
             parent,
             'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
-            'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
+            'UUUUUUUUULLLLLLLLLFFFFFFFFFxxxxxxxxxxxxxxxxxxxxxxxxxxx',
             moves_555,
 
             # These moves would destroy the staged centers
@@ -633,12 +689,38 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             (parent.lt_UL_centers_solve,),
             linecount=142153,
             max_depth=5,
-            filesize=8387027)
+            filesize=8387027,
+            exit_asap=True,
+        )
 
-    def state(self):
+        self.recolor_positions = centers_555
+        self.recolor_map = {
+            'D' : 'x',
+            'R' : 'x',
+            'B' : 'x',
+        }
+        self.nuke_corners = True
+        self.nuke_edges = True
+
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in centers_555])
-        return result
+        lt_state = []
+        UL_state = 0
+
+        for x in centers_555:
+            cubie_state = parent_state[x]
+            lt_state.append(cubie_state)
+
+            if cubie_state == 'U' or cubie_state == 'L':
+                UL_state = UL_state | 0x1
+            UL_state = UL_state << 1
+
+        UL_state = UL_state >> 1
+        UL_state = self.parent.lt_UL_centers_solve.hex_format % UL_state
+        cost_to_goal = self.parent.lt_UL_centers_solve.heuristic(UL_state)
+
+        return (''.join(lt_state), cost_to_goal)
+
 
 
 LR_edges_recolor_tuples_555 = (
@@ -844,7 +926,7 @@ class LookupTable555PairLastFourEdges(LookupTable):
             'sSSTTtuUUVVv',
             linecount=40319)
 
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state[:]
 
         # The lookup table was built using LB, LF, RF, and RB so we must re-color the
@@ -892,7 +974,8 @@ class LookupTable555PairLastFourEdges(LookupTable):
         state = LR_edges_recolor_pattern_555(parent_state[:])
 
         result = ''.join(state[index] for index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95))
-        return result
+        cost_to_goal = None
+        return (result, cost_to_goal)
 
 
 class LookupTable555TCenterSolve(LookupTable):
@@ -921,7 +1004,7 @@ class LookupTable555TCenterSolve(LookupTable):
             'xUxUUUxUxxLxLLLxLxxFxFFFxFxxRxRRRxRxxBxBBBxBxxDxDDDxDx',
             linecount=343000)
 
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = [
             # Upper
@@ -956,7 +1039,7 @@ class LookupTable555TCenterSolve(LookupTable):
         ]
 
         result = ''.join(result)
-        return result
+        return (result, 0)
 
 
 class RubiksCube555(RubiksCube):
@@ -1037,26 +1120,14 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
         self.lt_UD_T_centers_stage_co = LookupTable555UDTCenterStageCostOnly(self)
         self.lt_UD_X_centers_stage_co = LookupTable555UDXCenterStageCostOnly(self)
-        #self.lt_UD_symmetric_prune_table = LookupTableIDA555UDCentersStageSymmetricPruneTable(self)
-        #self.lt_UD_symmetric_prune_table.preload_cache_dict()
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
 
-        # Some stats for the various ways we can preload lt_UD_centers_stage
-        #
-        # list
-        # Memory : 1,142,951,936 bytes
-        # 22989 nodes-per-sec
-        #
-        # dict
-        # Memory : 2,799,235,072 bytes
-        # 29441 nodes-per-sec
-        #
-        # set
-        # Memory : 2,139,684,864 bytes
-        # 28203 nodes-per-sec
-        #
+        # Loading the 6-deep table into a dict takes 18s and 3.2G of memory...so don't do that
         self.lt_UD_centers_stage.preload_cache_string()
-        #self.lt_UD_centers_stage.preload_cache_dict()
+        #if self.min_memory:
+        #    self.lt_UD_centers_stage.preload_cache_string()
+        #else:
+        #    self.lt_UD_centers_stage.preload_cache_dict()
 
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_X_centers_stage = LookupTable555LRXCenterStage(self)
@@ -1071,9 +1142,14 @@ class RubiksCube555(RubiksCube):
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
-        self.lt_edges_stage_second_four.preload_cache_dict()
         self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
-        self.lt_edges_pair_last_four.preload_cache_dict()
+
+        if self.min_memory:
+            self.lt_edges_stage_second_four.preload_cache_string()
+            self.lt_edges_pair_last_four.preload_cache_string()
+        else:
+            self.lt_edges_stage_second_four.preload_cache_dict()
+            self.lt_edges_pair_last_four.preload_cache_dict()
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
@@ -1256,7 +1332,7 @@ class RubiksCube555(RubiksCube):
         #sys.exit(0)
 
         self.lt_LR_centers_stage.solve()
-        #self.print_cube()
+        self.print_cube()
         log.info("%s: ULFRBD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_guts(self):

@@ -17777,7 +17777,6 @@ state_targets_step60 = (
 
 
 state_targets_step30 = (
-
 '000198e67fff',
 '00019b267fff',
 '00019bc47fff',

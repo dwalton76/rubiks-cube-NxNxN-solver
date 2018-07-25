@@ -89,6 +89,7 @@ ENV/
 .ropeproject
 
 *.swp
+*.swo
 cache
 lookup*.hash
 lookup*.gz

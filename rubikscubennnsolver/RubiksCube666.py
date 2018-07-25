@@ -70,60 +70,6 @@ UFBD_centers_666 = (
     188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209
 )
 
-step60_centers_666 = (
-    # Left
-        45, 46,
-    50, 51, 52, 53,
-    56, 57, 58, 59,
-        63, 64,
-
-    # Front
-        81, 82,
-    86, 87, 88, 89,
-    92, 93, 94, 95,
-        99, 100,
-
-    # Right
-         117, 118,
-    122, 123, 124, 125,
-    128, 129, 130, 131,
-         135, 136,
-
-    # Back
-         153, 154,
-    158, 159, 160, 161,
-    164, 165, 166, 167,
-         171, 172,
-)
-
-step61_centers_666 = (
-    # Left
-        45, 46,
-    50, 51, 52, 53,
-    56, 57, 58, 59,
-        63, 64,
-
-    # Right
-         117, 118,
-    122, 123, 124, 125,
-    128, 129, 130, 131,
-         135, 136,
-)
-
-step62_centers_666 = (
-    # Front
-        81, 82,
-    86, 87, 88, 89,
-    92, 93, 94, 95,
-        99, 100,
-
-    # Back
-         153, 154,
-    158, 159, 160, 161,
-    164, 165, 166, 167,
-         171, 172,
-)
-
 UDFB_left_oblique_edges = (9, 17, 28, 20, 189, 197, 208, 200, 81, 89, 100, 92, 153, 161, 172, 164)
 UDFB_right_oblique_edges = (10, 23, 27, 14, 190, 203, 207, 194, 82, 95, 99, 86, 154, 167, 171, 158)
 UDFB_outer_x_centers = (8, 11, 26, 29, 188, 191, 206, 209, 80, 83, 98, 101, 152, 155, 170, 173)
@@ -256,10 +202,10 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
             linecount=735471,
             max_depth=8)
 
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in inner_x_centers_666])
-        return self.hex_format % int(result, 2)
+        return (self.hex_format % int(result, 2), 0)
 
 
 class LookupTable666UDObliquEdgeStage(LookupTableIDA):
@@ -334,7 +280,8 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         (154, 172, 190, 208),
     )
 
-    UD_unpaired_obliques_heuristic_666 = {
+    #UD_unpaired_obliques_heuristic_666 = {
+    heuristic_stats = {
         (1, 0, 0): 1,
         (1, 1, 0): 1,
         (1, 2, 0): 1,
@@ -422,20 +369,29 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             filesize=1362042497,
             )
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.oblique_edges_666])
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        self.parent.print_cube()
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
 
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        for x in centers_666:
+            if x in self.oblique_edges_666:
+                if self.parent.state[x] == 'U' or self.parent.state[x] == 'D':
+                    self.parent.state[x] = 'U'
+                else:
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+
+        self.parent.print_cube()
 
     def get_UD_unpaired_obliques_count(self):
         parent_state = self.parent.state
         UD_paired_obliques = 0
-        UD = ('U', 'D')
 
         for (x, y) in self.oblique_edge_pairs_666:
-            if parent_state[x] in UD and parent_state[y] in UD:
+            if parent_state[x] == 'U' and parent_state[y] == 'U':
                 UD_paired_obliques += 1
 
         UD_unpaired_obliques = 8 - UD_paired_obliques
@@ -444,11 +400,10 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
     def get_UD_obliques_four_pair_setup_count(self):
         parent_state = self.parent.state
         result = 0
-        UD = ('U', 'D')
 
         for xy in self.oblique_edge_four_pairs_666:
             for index in xy:
-                if parent_state[index] not in UD:
+                if parent_state[index] != 'U':
                     break
             else:
                 #log.info("four count at %s" % pformat(xy))
@@ -458,11 +413,10 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
     def get_UD_obliques_two_pair_setup_count(self):
         parent_state = self.parent.state
         result = 0
-        UD = ('U', 'D')
 
         for xy in self.oblique_edge_two_pairs_666:
             for index in xy:
-                if parent_state[index] not in UD:
+                if parent_state[index] != 'U':
                     break
             else:
                 result += 1
@@ -471,24 +425,37 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         return result
 
     def ida_heuristic(self):
+        parent_state = self.parent.state
+        lt_state = 0
+
+        for x in self.oblique_edges_666:
+            if parent_state[x] == 'U':
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
+
+        #lt_state = ''.join(['1' if parent_state[x] == 'U' else '0' for x in self.oblique_edges_666])
         UD_unpaired_obliques = self.get_UD_unpaired_obliques_count()
 
         if not UD_unpaired_obliques:
-            return 0
+            # 0 is the cost_to_goal
+            return (lt_state, 0)
 
         # Used to build UD_unpaired_obliques_heuristic_666
-        #return math.ceil(UD_unpaired_obliques/4)
+        #return (lt_state, math.ceil(UD_unpaired_obliques/4))
 
         two_count = self.get_UD_obliques_two_pair_setup_count()
         four_count = self.get_UD_obliques_four_pair_setup_count()
         state_tuple = (UD_unpaired_obliques, two_count, four_count)
-        result = self.UD_unpaired_obliques_heuristic_666.get(state_tuple)
+        #cost_to_goal = self.UD_unpaired_obliques_heuristic_666.get(state_tuple)
+        cost_to_goal = self.heuristic_stats.get(state_tuple)
 
-        if result is not None:
-            return result
-        else:
+        if cost_to_goal is None:
             #log.warning("UD_unpaired_obliques_heuristic_666 needs entry for %s" % pformat(state_tuple))
-            return math.ceil(UD_unpaired_obliques/4)
+            cost_to_goal = math.ceil(UD_unpaired_obliques/4)
+
+        return (lt_state, cost_to_goal)
 
     def search_complete(self, state, steps_to_here):
         """
@@ -549,13 +516,6 @@ class LookupTable666LRObliqueEdgesStage(LookupTableHashCostOnly):
     Total: 165,636,900 entries
     Average: 4.89 moves
     """
-    LFRB_oblique_edges_666 = (
-        45, 46, 50, 53, 56, 59, 63, 64,
-        81, 82, 86, 89, 92, 95, 99, 100,
-        117, 118, 122, 125, 128, 131, 135, 136,
-        153, 154, 158, 161, 164, 167, 171, 172
-    )
-
 
     def __init__(self, parent):
         LookupTableHashCostOnly.__init__(
@@ -578,11 +538,6 @@ class LookupTable666LRObliqueEdgesStage(LookupTableHashCostOnly):
             max_depth=7)
         '''
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_oblique_edges_666])
-        return self.hex_format % int(result, 2)
-
 
 class LookupTable666LRInnerXCentersStage(LookupTableCostOnly):
     """
@@ -599,12 +554,6 @@ class LookupTable666LRInnerXCentersStage(LookupTableCostOnly):
     Total: 12,870 entries
     Average: 5.45 moves
     """
-    LFRB_inner_x_centers_666 = (
-        51, 52, 57, 58,
-        87, 88, 93, 94,
-        123, 124, 129, 130,
-        159, 160, 165, 166,
-    )
 
     def __init__(self, parent):
         LookupTableCostOnly.__init__(
@@ -614,11 +563,6 @@ class LookupTable666LRInnerXCentersStage(LookupTableCostOnly):
             'f0f0',
             linecount=12870,
             max_depth=7)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_inner_x_centers_666])
-        return int(result, 2)
 
 
 class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
@@ -653,6 +597,12 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
              171, 172,
     )
 
+    LFRB_inner_x_centers_666 = (
+        51, 52, 57, 58,
+        87, 88, 93, 94,
+        123, 124, 129, 130,
+        159, 160, 165, 166,
+    )
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -680,10 +630,62 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
             max_depth=3,
             filesize=357461208),
 
-    def state(self):
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        self.parent.print_cube()
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_666:
+            if x in self.LFRB_inner_x_centers_oblique_edges_666:
+                if self.parent.state[x] == 'L' or self.parent.state[x] == 'R':
+                    self.parent.state[x] = 'L'
+                else:
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+
+        self.parent.print_cube()
+
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_inner_x_centers_oblique_edges_666])
-        return self.hex_format % int(result, 2)
+        centers_state = 0
+        edges_state = 0
+        lt_state = 0
+
+        #set_LFRB_oblique_edges_666 = set(self.LFRB_oblique_edges_666)
+        set_LFRB_inner_x_centers_666 = set(self.LFRB_inner_x_centers_666)
+
+        for x in self.LFRB_inner_x_centers_oblique_edges_666:
+            x_state = parent_state[x]
+
+            if x in set_LFRB_inner_x_centers_666:
+                if x_state == 'L':
+                    centers_state = centers_state | 0x1
+                    lt_state = lt_state | 0x1
+                centers_state = centers_state << 1
+            else:
+                if x_state == 'L':
+                    edges_state = edges_state | 0x1
+                    lt_state = lt_state | 0x1
+                edges_state = edges_state << 1
+
+            lt_state = lt_state << 1
+
+        centers_state = centers_state >> 1
+        edges_state = edges_state >> 1
+        lt_state = lt_state >> 1
+
+        edges_state = self.parent.lt_LR_oblique_edges_stage.hex_format % edges_state
+
+        cost_to_goal = max(
+            self.parent.lt_LR_oblique_edges_stage.heuristic(edges_state),
+            self.parent.lt_LR_inner_x_centers_stage.heuristic(centers_state),
+        )
+
+        lt_state = self.hex_format % lt_state
+        #log.info("%s: lt_state %s, centers_state %s, edges_state %s, cost_to_goal %s" % (self, lt_state, centers_state, edges_state, cost_to_goal))
+        return (lt_state, cost_to_goal)
 
 
 class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
@@ -783,7 +785,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
             linecount=343000,
             max_depth=8)
 
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state
 
         result = [
@@ -801,7 +803,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
         ]
 
         result = ''.join(result)
-        return result
+        return (result, 0)
 
 
 class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
@@ -902,19 +904,104 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
             max_depth=10,
             filesize=21609000)
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in step61_centers_666])
-        return result
-
 
 class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable666LRInnerXCenterAndObliqueEdges):
+    """
+    lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
+    =======================================================================
+    1 steps has 140 entries (0 percent, 0.00x previous step)
+    2 steps has 476 entries (0 percent, 3.40x previous step)
+    3 steps has 2,166 entries (0 percent, 4.55x previous step)
+    4 steps has 10,430 entries (3 percent, 4.82x previous step)
+    5 steps has 37,224 entries (10 percent, 3.57x previous step)
+    6 steps has 89,900 entries (26 percent, 2.42x previous step)
+    7 steps has 124,884 entries (36 percent, 1.39x previous step)
+    8 steps has 70,084 entries (20 percent, 0.56x previous step)
+    9 steps has 7,688 entries (2 percent, 0.11x previous step)
+    10 steps has 8 entries (0 percent, 0.00x previous step)
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['L' if parent_state[x] == 'F' else 'R' for x in step62_centers_666])
-        return result
+    Total: 343,000 entries
+    Average: 6.64 moves
+    """
 
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
+            ('FFFFFFFFFFFFBBBBBBBBBBBB',
+             'FFFFFFFFFFBBFFBBBBBBBBBB',
+             'FFFFFFFFFFBBBBFBBBFBBBBB',
+             'FFFFFFFFFFBBBBBBBFBBBFBB',
+             'FFFFFFFFFFBBBBBBBBBBBBFF',
+             'FFFFFBFFFBFFFFBBBBBBBBBB',
+             'FFFFFBFFFBFFBBFBBBFBBBBB',
+             'FFFFFBFFFBFFBBBBBFBBBFBB',
+             'FFFFFBFFFBFFBBBBBBBBBBFF',
+             'FFFFFBFFFBBBFFFBBBFBBBBB',
+             'FFFFFBFFFBBBFFBBBFBBBFBB',
+             'FFFFFBFFFBBBFFBBBBBBBBFF',
+             'FFFFFBFFFBBBBBFBBFFBBFBB',
+             'FFFFFBFFFBBBBBFBBBFBBBFF',
+             'FFFFFBFFFBBBBBBBBFBBBFFF',
+             'FFBFFFBFFFFFFFBBBBBBBBBB',
+             'FFBFFFBFFFFFBBFBBBFBBBBB',
+             'FFBFFFBFFFFFBBBBBFBBBFBB',
+             'FFBFFFBFFFFFBBBBBBBBBBFF',
+             'FFBFFFBFFFBBFFFBBBFBBBBB',
+             'FFBFFFBFFFBBFFBBBFBBBFBB',
+             'FFBFFFBFFFBBFFBBBBBBBBFF',
+             'FFBFFFBFFFBBBBFBBFFBBFBB',
+             'FFBFFFBFFFBBBBFBBBFBBBFF',
+             'FFBFFFBFFFBBBBBBBFBBBFFF',
+             'FFBFFBBFFBFFFFFBBBFBBBBB',
+             'FFBFFBBFFBFFFFBBBFBBBFBB',
+             'FFBFFBBFFBFFFFBBBBBBBBFF',
+             'FFBFFBBFFBFFBBFBBFFBBFBB',
+             'FFBFFBBFFBFFBBFBBBFBBBFF',
+             'FFBFFBBFFBFFBBBBBFBBBFFF',
+             'FFBFFBBFFBBBFFFBBFFBBFBB',
+             'FFBFFBBFFBBBFFFBBBFBBBFF',
+             'FFBFFBBFFBBBFFBBBFBBBFFF',
+             'FFBFFBBFFBBBBBFBBFFBBFFF',
+             'BBFFFFFFFFFFFFBBBBBBBBBB',
+             'BBFFFFFFFFFFBBFBBBFBBBBB',
+             'BBFFFFFFFFFFBBBBBFBBBFBB',
+             'BBFFFFFFFFFFBBBBBBBBBBFF',
+             'BBFFFFFFFFBBFFFBBBFBBBBB',
+             'BBFFFFFFFFBBFFBBBFBBBFBB',
+             'BBFFFFFFFFBBFFBBBBBBBBFF',
+             'BBFFFFFFFFBBBBFBBFFBBFBB',
+             'BBFFFFFFFFBBBBFBBBFBBBFF',
+             'BBFFFFFFFFBBBBBBBFBBBFFF',
+             'BBFFFBFFFBFFFFFBBBFBBBBB',
+             'BBFFFBFFFBFFFFBBBFBBBFBB',
+             'BBFFFBFFFBFFFFBBBBBBBBFF',
+             'BBFFFBFFFBFFBBFBBFFBBFBB',
+             'BBFFFBFFFBFFBBFBBBFBBBFF',
+             'BBFFFBFFFBFFBBBBBFBBBFFF',
+             'BBFFFBFFFBBBFFFBBFFBBFBB',
+             'BBFFFBFFFBBBFFFBBBFBBBFF',
+             'BBFFFBFFFBBBFFBBBFBBBFFF',
+             'BBFFFBFFFBBBBBFBBFFBBFFF',
+             'BBBFFFBFFFFFFFFBBBFBBBBB',
+             'BBBFFFBFFFFFFFBBBFBBBFBB',
+             'BBBFFFBFFFFFFFBBBBBBBBFF',
+             'BBBFFFBFFFFFBBFBBFFBBFBB',
+             'BBBFFFBFFFFFBBFBBBFBBBFF',
+             'BBBFFFBFFFFFBBBBBFBBBFFF',
+             'BBBFFFBFFFBBFFFBBFFBBFBB',
+             'BBBFFFBFFFBBFFFBBBFBBBFF',
+             'BBBFFFBFFFBBFFBBBFBBBFFF',
+             'BBBFFFBFFFBBBBFBBFFBBFFF',
+             'BBBFFBBFFBFFFFFBBFFBBFBB',
+             'BBBFFBBFFBFFFFFBBBFBBBFF',
+             'BBBFFBBFFBFFFFBBBFBBBFFF',
+             'BBBFFBBFFBFFBBFBBFFBBFFF',
+             'BBBFFBBFFBBBFFFBBFFBBFFF'),
+            linecount=343000,
+            max_depth=10,
+            filesize=22295000)
 
 
 class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
@@ -928,6 +1015,59 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
 
     Total: 5,320,232 entries
     """
+    step60_centers_666 = (
+        # Left
+            45, 46,
+        50, 51, 52, 53,
+        56, 57, 58, 59,
+            63, 64,
+
+        # Front
+            81, 82,
+        86, 87, 88, 89,
+        92, 93, 94, 95,
+            99, 100,
+
+        # Right
+             117, 118,
+        122, 123, 124, 125,
+        128, 129, 130, 131,
+             135, 136,
+
+        # Back
+             153, 154,
+        158, 159, 160, 161,
+        164, 165, 166, 167,
+             171, 172,
+    )
+
+    step61_centers_666 = (
+        # Left
+            45, 46,
+        50, 51, 52, 53,
+        56, 57, 58, 59,
+            63, 64,
+
+        # Right
+             117, 118,
+        122, 123, 124, 125,
+        128, 129, 130, 131,
+             135, 136,
+    )
+
+    step62_centers_666 = (
+        # Front
+            81, 82,
+        86, 87, 88, 89,
+        92, 93, 94, 95,
+            99, 100,
+
+        # Back
+             153, 154,
+        158, 159, 160, 161,
+        164, 165, 166, 167,
+             171, 172,
+    )
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -947,16 +1087,39 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
 
             # prune tables
             (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
-             parent.lt_FB_solve_inner_x_centers_and_oblique_edges,),
+             parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
+            ),
 
             linecount=5320232,
             max_depth=4,
             filesize=287292528)
 
-    def state(self):
+    def ida_heuristic(self):
+        set_step61_centers_666 = set(self.step61_centers_666)
+        set_step62_centers_666 = set(self.step62_centers_666)
+        lt_state = []
+        step61_state = []
+        step62_state = []
         parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in step60_centers_666])
-        return result
+
+        for x in self.step60_centers_666:
+            x_state = parent_state[x]
+            lt_state.append(x_state)
+
+            if x in set_step61_centers_666:
+                step61_state.append(x_state)
+            elif x in set_step62_centers_666:
+                step62_state.append(x_state)
+
+        step61_state = ''.join(step61_state)
+        step62_state = ''.join(step62_state)
+        cost_to_goal = max(
+            self.parent.lt_LR_solve_inner_x_centers_and_oblique_edges.heuristic(step61_state),
+            self.parent.lt_FB_solve_inner_x_centers_and_oblique_edges.heuristic(step62_state),
+        )
+
+        lt_state = ''.join(lt_state)
+        return (lt_state, cost_to_goal)
 
 
 class RubiksCube666(RubiksCubeNNNEvenEdges):

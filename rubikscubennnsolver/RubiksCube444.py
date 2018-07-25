@@ -892,15 +892,27 @@ class LookupTable444Reduce333Edges(LookupTableHashCostOnly):
     """
 
     def __init__(self, parent):
+
+        # Provides an option for running the 444 solver on ~300M
+        if parent.min_memory:
+            filename = 'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt.half-buckets'
+            bucketcount = 119750417
+            filesize = 119750418
+        else:
+            filename = 'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt'
+            bucketcount = 239500847
+            filesize = 239500848
+
         LookupTableHashCostOnly.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt',
+            filename,
             '10425376a8b9ecfdhgkiljnm',
             linecount=239500800,
             max_depth=13,
-            bucketcount=239500847,
-            filesize=239500848)
+            bucketcount=bucketcount,
+            filesize=filesize)
+
         '''
         LookupTable.__init__(
             self,
@@ -980,7 +992,7 @@ class LookupTableIDA444Reduce333(LookupTableIDA):
 
             linecount=1243292,
             max_depth=6,
-            filesize=89517024)
+            filesize=65894476)
 
     def ida_heuristic(self):
         state = edges_recolor_pattern_444(self.parent.state[:])
@@ -994,7 +1006,6 @@ class LookupTableIDA444Reduce333(LookupTableIDA):
         )
 
         return (lt_state, cost_to_goal)
-
 
 
 class RubiksCube444(RubiksCube):

@@ -21,13 +21,13 @@ I am not working on those solvers so I did not include them in the table above.
 
 I am working on bringing this down but these are the memory requirements for running the solver
 
-| Size | Memory |
-| ------ | ------ |
-| 4x4x4 | 450M |
-| 5x5x5 | 600M |
-| 6x6x6 | 3.5G |
-| 7x7x7 | 4.0G |
-| NxNxN | 4.2G |
+| Size | Memory | --min-memory Memory |
+| ------ | ------ | ------ |
+| 4x4x4 | 415M | 300M |
+| 5x5x5 | 450M | 150M |
+| 6x6x6 | 3.2G | 3.5G |
+| 7x7x7 | 4.0G | 4.0G |
+| NxNxN | 4.2G | 4.2G |
 
 
 ## Install

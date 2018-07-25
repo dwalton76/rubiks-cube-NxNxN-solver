@@ -516,7 +516,7 @@ class LookupTable(object):
         memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         memory_delta = memory_post - memory_pre
         #log.info("{}: {:,} characters in cache".format(self, len(self.cache_string)))
-        log.info("{}: end preload cache string ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
+        log.info("{}: end preload cache string ({:,} bytes delta, {:,} bytes total, {:,} characters)".format(self, memory_delta, memory_post, len(self.cache_string)))
 
     def steps(self, state_to_find=None):
         """
@@ -809,7 +809,7 @@ class LookupTableCostOnly(LookupTable):
         self.filesize = filesize
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
-        assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
+        #assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
 
         if 'dummy' not in self.filename:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)

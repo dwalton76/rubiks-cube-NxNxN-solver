@@ -371,7 +371,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
-        self.parent.print_cube()
+        #self.parent.print_cube()
         self.parent.nuke_corners()
         self.parent.nuke_edges()
 
@@ -384,7 +384,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             else:
                 self.parent.state[x] = '.'
 
-        self.parent.print_cube()
+        #self.parent.print_cube()
 
     def get_UD_unpaired_obliques_count(self):
         parent_state = self.parent.state
@@ -632,7 +632,7 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
-        self.parent.print_cube()
+        #self.parent.print_cube()
         self.parent.nuke_corners()
         self.parent.nuke_edges()
 
@@ -645,7 +645,7 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
             else:
                 self.parent.state[x] = '.'
 
-        self.parent.print_cube()
+        #self.parent.print_cube()
 
     def ida_heuristic(self):
         parent_state = self.parent.state

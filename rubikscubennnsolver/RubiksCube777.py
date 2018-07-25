@@ -196,7 +196,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
-        self.parent.print_cube()
+        #self.parent.print_cube()
         self.parent.nuke_corners()
         self.parent.nuke_edges()
 
@@ -208,7 +208,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
                     self.parent.state[x] = 'x'
             else:
                 self.parent.state[x] = '.'
-        self.parent.print_cube()
+        #self.parent.print_cube()
 
     def ida_heuristic(self):
         parent_state = self.parent.state
@@ -485,7 +485,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
-        self.parent.print_cube()
+        #self.parent.print_cube()
         self.parent.nuke_corners()
         self.parent.nuke_edges()
 
@@ -497,7 +497,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
                     self.parent.state[x] = 'x'
             else:
                 self.parent.state[x] = '.'
-        self.parent.print_cube()
+        #self.parent.print_cube()
 
     def ida_heuristic(self):
         parent_state = self.parent.state

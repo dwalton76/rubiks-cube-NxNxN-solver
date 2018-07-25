@@ -1386,6 +1386,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         if self.fake_666 is None:
             self.fake_666 = RubiksCube666(solved_666, 'URFDLB')
             self.fake_666.lt_init()
+            self.fake_666.enable_print_cube = False
         else:
             self.fake_666.re_init()
         return self.fake_666

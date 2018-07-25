@@ -1156,6 +1156,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         if self.fake_444 is None:
             self.fake_444 = RubiksCube444(solved_444, 'URFDLB')
             self.fake_444.lt_init()
+            self.fake_444.enable_print_cube = False
         else:
             self.fake_444.re_init()
         return self.fake_444
@@ -1164,6 +1165,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         if self.fake_555 is None:
             self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
             self.fake_555.lt_init()
+            self.fake_555.enable_print_cube = False
         else:
             self.fake_555.re_init()
         return self.fake_555

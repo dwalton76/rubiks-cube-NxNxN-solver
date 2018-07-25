@@ -436,6 +436,7 @@ class RubiksCube(object):
         self.fake_777 = None
         self.heuristic_stats = {}
         self.min_memory = False
+        self.enable_print_cube = True
 
         if colormap:
             colormap = json.loads(colormap)
@@ -1153,9 +1154,13 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
+        if not self.enable_print_cube:
+            return
         log.info('\n' + get_cube_layout(self.size) + '\n')
 
     def print_cube(self, print_positions=False):
+        if not self.enable_print_cube:
+            return
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
         side_name_index = 0
         rows = []

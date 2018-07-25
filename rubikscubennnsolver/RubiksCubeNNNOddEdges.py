@@ -16,8 +16,10 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             if self.fake_777 and self.fake_777.fake_555:
                 self.fake_555 = self.fake_777.fake_555
                 self.fake_555.re_init()
+                self.fake_555.enable_print_cube = False
             else:
                 self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+                self.fake_555.enable_print_cube = False
                 self.fake_555.lt_init()
         else:
             self.fake_555.re_init()

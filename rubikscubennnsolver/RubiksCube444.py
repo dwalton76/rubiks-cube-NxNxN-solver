@@ -15,6 +15,7 @@ from rubikscubennnsolver.RubiksCube444Misc import (
     highlow_edge_mapping_combinations,
     highlow_edge_values,
 )
+from rubikscubennnsolver.cLibrary import ida_heuristic_states_step10_444
 from pprint import pformat
 import logging
 import sys
@@ -413,7 +414,7 @@ class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
             self,
             parent,
             'lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt',
-            'f0000f',
+            0xf0000f,
             linecount=735471,
             max_depth=8,
             filesize=16711681)
@@ -426,7 +427,7 @@ class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
             self,
             parent,
             'lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt',
-            '0f0f00',
+            0x0f0f00,
             linecount=735471,
             max_depth=8,
             filesize=16711681)
@@ -439,7 +440,7 @@ class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
             self,
             parent,
             'lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt',
-            '00f0f0',
+            0x00f0f0,
             linecount=735471,
             max_depth=8,
             filesize=16711681)
@@ -495,39 +496,16 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
         self.nuke_corners = True
 
     def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = []
-        UD_state = 0
-        LR_state = 0
-        FB_state = 0
-
-        for x in centers_444:
-            x_state = parent_state[x]
-            lt_state.append(x_state)
-
-            if x_state == 'U':
-                UD_state = UD_state | 0x1
-            elif x_state == 'L':
-                LR_state = LR_state | 0x1
-            else:
-                FB_state = FB_state | 0x1
-
-            UD_state = UD_state << 1
-            LR_state = LR_state << 1
-            FB_state = FB_state << 1
-
-        UD_state = UD_state >> 1
-        LR_state = LR_state >> 1
-        FB_state = FB_state >> 1
+        parent = self.parent
+        (lt_state, UD_state, LR_state, FB_state) = ida_heuristic_states_step10_444(parent.state, centers_444)
 
         cost_to_goal = max(
-            self.parent.lt_UD_centers_stage.heuristic(UD_state),
-            self.parent.lt_LR_centers_stage.heuristic(LR_state),
-            self.parent.lt_FB_centers_stage.heuristic(FB_state),
+            parent.lt_UD_centers_stage.heuristic(UD_state),
+            parent.lt_LR_centers_stage.heuristic(LR_state),
+            parent.lt_FB_centers_stage.heuristic(FB_state),
         )
 
-        #log.info("%s: UD_state %s, LR_state %s, FB_state %s, cost_to_goal %d" % (self, UD_state, LR_state, FB_state, cost_to_goal))
-        return (''.join(lt_state), cost_to_goal)
+        return (lt_state, cost_to_goal)
 
 
 wings_for_edges_recolor_pattern_444 = (
@@ -1423,10 +1401,11 @@ class RubiksCube444(RubiksCube):
         self.original_state = self.state[:]
         self.original_solution = self.solution[:]
 
-        log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         # FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU
-        # 1006738 nodes in 0:00:26.641613
+        # is a good test cube for ida_all_the_way
         #self.lt_ULFRBD_centers_stage.ida_all_the_way = True
+
+        log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_ULFRBD_centers_stage.solve()
         self.print_cube()
 
@@ -1434,7 +1413,6 @@ class RubiksCube444(RubiksCube):
             self.print_cube()
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
         # We need the edge swaps to be even for our edges lookup table to work.

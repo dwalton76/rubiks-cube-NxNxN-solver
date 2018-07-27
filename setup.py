@@ -1,4 +1,6 @@
-from setuptools import setup
+
+import sys
+from distutils.core import setup, Extension
 
 setup(
     name='rubikscubennnsolver',
@@ -11,5 +13,6 @@ setup(
     license='GPLv3',
     scripts=['usr/bin/rubiks-cube-solver.py'],
     packages=['rubikscubennnsolver'],
+    ext_modules = [Extension('rubikscubennnsolver.cLibrary', ['rubikscubennnsolver/cLibrary.c'])]
 )
 

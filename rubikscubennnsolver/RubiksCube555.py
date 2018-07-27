@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver import RubiksCube, NotSolving
+from rubikscubennnsolver.cLibrary import ida_heuristic_states_step10_555
 from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.RubiksCube444 import moves_444
@@ -401,48 +402,30 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
         self.nuke_edges = True
 
     def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = 0
-        x_centers_state = 0
-        t_centers_state = 0
-        set_x_centers_555 = self.set_x_centers_555
-        set_t_centers_555 = self.set_t_centers_555
+        # - write this in C
+        # - build the table to 5-deep and load into a dict instead of string
+        # - see how much memory that takes and are there any cubes with long searches
+        #   - the 6-deep cache_string takes 326M
+        #   - if 5-deep in a dict takes a lot of memory try 4-deep
+        parent = self.parent
 
-        for x in centers_555:
-            cubie_state = parent_state[x]
-
-            if x in set_x_centers_555:
-
-                if cubie_state == 'U':
-                    x_centers_state = x_centers_state | 0x1
-                    lt_state = lt_state | 0x1
-                x_centers_state = x_centers_state << 1
-
-            elif x in set_t_centers_555:
-
-                if cubie_state == 'U':
-                    t_centers_state = t_centers_state | 0x1
-                    lt_state = lt_state | 0x1
-                t_centers_state = t_centers_state << 1
-
-            else:
-                if cubie_state == 'U':
-                    lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-
-        x_centers_state = x_centers_state >> 1
-        t_centers_state = t_centers_state >> 1
-        lt_state = lt_state >> 1
+        (lt_state, x_centers_state, t_centers_state) =\
+            ida_heuristic_states_step10_555(
+                parent.state,
+                centers_555,
+                self.set_x_centers_555,
+                self.set_t_centers_555,
+            )
 
         cost_to_goal = max(
             self.parent.lt_UD_X_centers_stage_co.heuristic(x_centers_state),
             self.parent.lt_UD_T_centers_stage_co.heuristic(t_centers_state),
         )
 
-        result = self.hex_format % lt_state
-
-        #log.info("%s: x_centers_state %s, t_centers_state %s, cost_to_goal %d" % (self, x_centers_state, t_centers_state, cost_to_goal))
-        return (result, cost_to_goal)
+        #log.info("%s: lt_state %s, x_centers_state %s, t_centers_state %s, cost_to_goal %d" %
+        #    (self, lt_state, x_centers_state, t_centers_state, cost_to_goal))
+        lt_state = self.hex_format % lt_state
+        return (lt_state, cost_to_goal)
 
 
 class LookupTable555LRTCenterStage(LookupTable):
@@ -1126,12 +1109,25 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_X_centers_stage_co = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
 
-        # Loading the 6-deep table into a dict takes 18s and 3.2G of memory...so don't do that
+        # The nps and "took XYZms" numbers are for this cube:
+        # DFFURRULDLDLURLBDDRRBFRURFBFBFRBDLBBFRBLRFBRBBFLULDLBLULLFRUBUFLDFFLDULDDLUURRDRFBRLULUDRBDUUUBBRFFDBDFURDBBDDRULBUDRDLLLBDRFDLRDLLFDBBUFBRURFFUFFUUFU
+        #
+        # I tried several variations of table depth and loading into string vs set vs dict. In a nutshell
+        # loading into a set/dict just takes a lot of memory. Even though it runs at about half the nps
+        # of loading into a dict, a 6-deep table in a string provides a pretty good memory/speed tradeoff.
+        #
+        # Loading the 6-deep table into a string takes 250ms and 326M of memory, 32k nps, search took 389ms
+        # Loading the 6-deep table into a set takes 9s and 2.2G of memory, 60k nps, search took 225ms
+        # Loading the 6-deep table into a dict takes 18s and 2.2G of memory, 61k nps, search took 200ms
+        #
+        # Loading the 5-deep table into a string takes 8ms and 16M of memory, 60k nps, search took 4.7s
+        # Loading the 5-deep table into a dict takes 800ms and 172M of memory, 68k nps, search took 3.9s
+        #
+        # Loading the 4-deep table into a string takes 1ms and 800k of memory, 69k nps, search took 37s
+        # Loading the 4-deep table into a dict takes 30ms and 7M of memory, 71k nps, search took 37s
         self.lt_UD_centers_stage.preload_cache_string()
-        #if self.min_memory:
-        #    self.lt_UD_centers_stage.preload_cache_string()
-        #else:
-        #    self.lt_UD_centers_stage.preload_cache_dict()
+        #self.lt_UD_centers_stage.preload_cache_set()
+        #self.lt_UD_centers_stage.preload_cache_dict()
 
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_X_centers_stage = LookupTable555LRXCenterStage(self)

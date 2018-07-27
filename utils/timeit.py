@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444, rotate_444
+from myModule import bitfield_rotate_face_90 as C_bitfield_rotate_face_90
+from myModule import rotate_444 as C_rotate_444
+from pprint import pformat
 import datetime as dt
-
-solved_777 = 'xUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+import logging
 
 
 def pretty_time(delta):
@@ -25,23 +28,128 @@ def pretty_time(delta):
     else:
         return "\033[91m%s\033[0m" % delta
 
-rotate_777_3Lw_swaps = ((1, 245), (2, 244), (3, 243), (8, 238), (9, 237), (10, 236), (15, 231), (16, 230), (17, 229), (22, 224), (23, 223), (24, 222), (29, 217), (30, 216), (31, 215), (36, 210), (37, 209), (38, 208), (43, 203), (44, 202), (45, 201), (50, 92), (51, 85), (52, 78), (53, 71), (54, 64), (55, 57), (50, 56), (57, 93), (58, 86), (59, 79), (60, 72), (61, 65), (58, 62), (51, 63), (64, 94), (65, 87), (66, 80), (67, 73), (66, 68), (59, 69), (52, 70), (71, 95), (72, 88), (73, 81), (67, 75), (60, 76), (53, 77), (78, 96), (79, 89), (80, 82), (75, 81), (68, 82), (61, 83), (54, 84), (85, 97), (86, 90), (83, 87), (76, 88), (69, 89), (62, 90), (55, 91), (92, 98), (91, 93), (84, 94), (77, 95), (70, 96), (63, 97), (56, 98), (1, 99), (2, 100), (3, 101), (8, 106), (9, 107), (10, 108), (15, 113), (16, 114), (17, 115), (22, 120), (23, 121), (24, 122), (29, 127), (30, 128), (31, 129), (36, 134), (37, 135), (38, 136), (43, 141), (44, 142), (45, 143), (201, 290), (202, 289), (203, 288), (208, 283), (209, 282), (210, 281), (215, 276), (216, 275), (217, 274), (222, 269), (223, 268), (224, 267), (229, 262), (230, 261), (231, 260), (236, 255), (237, 254), (238, 253), (243, 248), (244, 247), (245, 246), (99, 246), (100, 247), (101, 248), (106, 253), (107, 254), (108, 255), (113, 260), (114, 261), (115, 262), (120, 267), (121, 268), (122, 269), (127, 274), (128, 275), (129, 276), (134, 281), (135, 282), (136, 283), (141, 288), (142, 289), (143, 290))
 
-def rotate_777_3Lw(cube):
-    for (x, y) in rotate_777_3Lw_swaps:
-        cube[x], cube[y] = cube[y], cube[x]
+def python_bitfield_rotate_face_90(bitfield):
+    return (
+        (((bitfield >> 12) & 0xF) << 60) | # c30 -> c00
+        (((bitfield >> 28) & 0xF) << 56) | # c20 -> c01
+        (((bitfield >> 44) & 0xF) << 52) | # c10 -> c02
+        (((bitfield >> 60) & 0xF) << 48) | # c00 -> c03
 
-cube = list(solved_777)
+        (((bitfield >>  8) & 0xF) << 44) | # c31 -> c10
+        (((bitfield >> 24) & 0xF) << 40) | # c21 -> c11
+        (((bitfield >> 40) & 0xF) << 36) | # c11 -> c12
+        (((bitfield >> 56) & 0xF) << 32) | # c01 -> c13
 
-cube = 4200000000
-ROW_01 = 0xFFFFF00000000000
-NOT_ROW_01 = 0x00000FFFFFFFFFFF
+        (((bitfield >>  4) & 0xF) << 28) | # c32 -> c20
+        (((bitfield >> 20) & 0xF) << 24) | # c22 -> c21
+        (((bitfield >> 36) & 0xF) << 20) | # c12 -> c22
+        (((bitfield >> 52) & 0xF) << 16) | # c02 -> c23
 
+        (((bitfield >>  0) & 0xF) << 12) | # c33 -> c30
+        (((bitfield >> 16) & 0xF) <<  8) | # c23 -> c31
+        (((bitfield >> 32) & 0xF) <<  4) | # c13 -> c32
+        (((bitfield >> 48) & 0xF) <<  0)   # c03 -> c33
+    )
+
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(filename)20s %(levelname)8s: %(message)s')
+log = logging.getLogger(__name__)
+
+# Color the errors and warnings in red
+logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
+logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
+
+
+COUNT = 1000000
+#COUNT = 10000
+cube = RubiksCube444(solved_444, 'URFDLB')
+state = cube.state[:]
+
+
+# For 1,000,000 this took 0:00:05.157367 at 193,897 nodes-per-sec
 start_time0 = dt.datetime.now()
-for x in range(1000000):
-    cube = (cube & NOT_ROW_01) | (cube & ROW_01)
-    #rotate_777_3Lw(cube)
+for x in range(COUNT):
+    state = rotate_444(state[:], "U")
+end_time0= dt.datetime.now()
+delta = end_time0 - start_time0
+print ("{:,} rotates using python rotate_444() took {} at {:,} nodes-per-sec".format(COUNT, pretty_time(delta), int(COUNT/delta.total_seconds())))
+
+
+# For 1,000,000 this took 0:00:18.350457 at 54,494 nodes-per-sec
+'''
+cube.re_init()
+start_time0 = dt.datetime.now()
+for x in range(COUNT):
+    cube.rotate("U")
+end_time0= dt.datetime.now()
+delta = end_time0 - start_time0
+print ("{:,} rotates using rotate() took {} at {:,} nodes-per-sec".format(COUNT, pretty_time(delta), int(COUNT/delta.total_seconds())))
+'''
+
+
+
+
+cube.re_init()
+#cube.print_cube()
+state = cube.state[:]
+#state = C_rotate_444(state[:], "U")
+#cube.state = state
+#cube.print_cube()
+
+#cube.re_init()
+#cube.print_cube()
+state = cube.state[:]
+#print("0: %s" % pformat(state))
+start_time0 = dt.datetime.now()
+for x in range(COUNT):
+    #state = C_rotate_444(state[:], "U")
+    C_rotate_444(state, "U")
+    #print("%d: %s" % (x, pformat(state, width=500)))
+    #cube.state = state
+    #cube.print_cube()
 
 end_time0= dt.datetime.now()
 delta = end_time0 - start_time0
-print ("Took %s" % pretty_time(delta))
+print ("{:,} rotates using C      rotate_444() took {} at {:,} nodes-per-sec".format(COUNT, pretty_time(delta), int(COUNT/delta.total_seconds())))
+
+
+
+# For 1,000,000 this took 0:00:02.641851 at 378,522 nodes-per-sec
+state_U = 1234567890
+start_time0 = dt.datetime.now()
+for x in range(COUNT):
+    state_U = python_bitfield_rotate_face_90(state_U)
+end_time0= dt.datetime.now()
+delta = end_time0 - start_time0
+print ("{:,} rotates using python bitfield_rotate_face_90() took {} at {:,} nodes-per-sec".format(COUNT, pretty_time(delta), int(COUNT/delta.total_seconds())))
+
+
+# For 1,000,000 this took 196ms at 5,090,483 nodes-per-sec
+state_U = 1234567890
+state_F = 9876543219
+state_R = 7843789758
+state_B = 8747497897
+state_L = 1334443112
+new_state_F = 0
+new_state_R = 0
+new_state_B = 0
+new_state_L = 0
+ROW_01     = 0xFFFF000000000000
+NOT_ROW_01 = 0x0000FFFFFFFFFFFF
+start_time0 = dt.datetime.now()
+for x in range(COUNT):
+    #new_state_F = (state_F & NOT_ROW_01) | (state_R & ROW_01)
+    #new_state_R = (state_R & NOT_ROW_01) | (state_B & ROW_01)
+    #new_state_B = (state_B & NOT_ROW_01) | (state_L & ROW_01)
+    #new_state_L = (state_L & NOT_ROW_01) | (state_F & ROW_01)
+    state_U = C_bitfield_rotate_face_90(state_U)
+    #state_F = new_state_F
+    #state_R = new_state_R
+    #state_B = new_state_B
+    #state_L = new_state_L
+
+end_time0= dt.datetime.now()
+delta = end_time0 - start_time0
+print ("{:,} rotates using C      bitfield_rotate_face_90() took {} at {:,} nodes-per-sec".format(COUNT, pretty_time(delta), int(COUNT/delta.total_seconds())))

@@ -577,11 +577,7 @@ class LookupTable(object):
 
         return None
 
-    def steps_cost(self, state_to_find=None):
-
-        if state_to_find is None:
-            state_to_find = self.state()
-
+    def steps_cost(self, state_to_find):
         steps = self.steps(state_to_find)
 
         if steps is None:
@@ -837,9 +833,15 @@ class LookupTableCostOnly(LookupTable):
         if isinstance(state_target, tuple):
             self.state_width = len(state_target[0])
             self.state_target = set(state_target)
+
         elif isinstance(state_target, list):
             self.state_width = len(state_target[0])
             self.state_target = set(state_target)
+
+        elif isinstance(state_target, int):
+            self.state_width = 0
+            self.state_target = set((state_target, ))
+
         else:
             self.state_width = len(state_target)
             self.state_target = set((state_target, ))
@@ -856,7 +858,7 @@ class LookupTableCostOnly(LookupTable):
         log.info("%s: begin preload cost-only" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
-        with open(self.filename, 'rb') as fh:
+        with open(self.filename, 'r') as fh:
             self.content = fh.read()
         self.fh_txt_seek_calls += 1
 
@@ -864,15 +866,10 @@ class LookupTableCostOnly(LookupTable):
         memory_delta = memory_post - memory_pre
         log.info("{}: end preload cost-only ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
 
-    def steps_cost(self, state_to_find=None):
-
-        if state_to_find is None:
-            state_to_find = self.state()
-
+    def steps_cost(self, state_to_find):
         # state_to_find is an integer, there is a one byte hex character in the file for each possible state.
         # This hex character is the number of steps required to solve the corresponding state.
-        result = chr(self.content[state_to_find])
-        return int(result, 16)
+        return int(self.content[state_to_find], 16)
 
 
 class LookupTableHashCostOnly(LookupTableCostOnly):
@@ -881,10 +878,7 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
         LookupTableCostOnly.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.bucketcount = bucketcount
 
-    def steps_cost(self, state_to_find=None):
-
-        if state_to_find is None:
-            state_to_find = self.state()
+    def steps_cost(self, state_to_find):
 
         # compute the hash_index for state_to_find, look that many bytes into the
         # file/self.conten and retrieve a single hex character. This hex character
@@ -892,8 +886,7 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
         hash_raw = hashxx(state_to_find.encode('utf-8'))
         hash_index = int(hash_raw % self.bucketcount)
 
-        result = chr(self.content[hash_index])
-        result = int(result, 16)
+        result = int(self.content[hash_index], 16)
 
         # This should never be zero
         if not result:
@@ -1189,13 +1182,13 @@ class LookupTableIDA(LookupTable):
             #sys.exit(0)
 
     # uncomment to cProfile solve()
-    '''
+    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
+        '''
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
             profile.runctx('self.solve_guts()', globals(), locals())
 
     def solve_guts(self, min_ida_threshold=None, max_ida_threshold=99):
-    '''
-    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
+        '''
         """
         The goal is to find a sequence of moves that will put the cube in a state that is
         in our lookup table

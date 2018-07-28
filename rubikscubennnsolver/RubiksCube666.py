@@ -346,12 +346,28 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         (8, 4, 0): 5,
         (8, 5, 0): 5,
     }
+    # uncomment to test step20 without heuristic_stats
+    #heuristic_stats = {}
 
     def __init__(self, parent):
+        if parent.min_memory:
+            filename = 'lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt.1-deep'
+            linecount = 4171103
+            max_depth = 1
+            filesize = 75079854
+            exit_asap = True
+        else:
+            filename = 'lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt'
+            linecount = 59219239
+            max_depth = 2
+            filesize = 1065946302
+            #exit_asap = False 
+            exit_asap = True
+
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt',
+            filename,
             'TBD',
             moves_666,
 
@@ -363,10 +379,11 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
 
             # prune tables
             (),
-            linecount=59219239,
-            max_depth=2,
-            filesize=1362042497,
-            )
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize,
+            exit_asap=exit_asap,
+        )
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
@@ -458,12 +475,12 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         """
         Used to build UD_unpaired_obliques_heuristic_666
         """
-        cost_to_goal = self.ida_heuristic()
+        (lt_state, cost_to_goal) = self.ida_heuristic()
 
         if cost_to_goal == 0:
             steps = None
         else:
-            steps = self.steps(state)
+            steps = self.steps(lt_state)
 
         if cost_to_goal == 0 or steps:
 
@@ -479,18 +496,28 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
 
             for step in steps_to_here + steps:
 
-                UD_unpaired_obliques = self.get_UD_unpaired_obliques_count()
-                four_count = self.get_UD_obliques_four_pair_setup_count()
-                two_count = self.get_UD_obliques_two_pair_setup_count()
-                two_count -= four_count * 2 # so as to not double count these
-                state_tuple = (UD_unpaired_obliques, two_count, four_count)
+                #UD_unpaired_obliques = self.get_UD_unpaired_obliques_count()
+                #four_count = self.get_UD_obliques_four_pair_setup_count()
+                #two_count = self.get_UD_obliques_two_pair_setup_count()
+                #two_count -= four_count * 2 # so as to not double count these
+                #state_tuple = (UD_unpaired_obliques, two_count, four_count)
 
-                if state_tuple not in self.parent.heuristic_stats:
-                    self.parent.heuristic_stats[state_tuple] = []
-                self.parent.heuristic_stats[state_tuple].append(steps_to_go)
+                #if state_tuple not in self.parent.heuristic_stats:
+                #    self.parent.heuristic_stats[state_tuple] = []
+                #self.parent.heuristic_stats[state_tuple].append(steps_to_go)
 
                 self.parent.rotate(step)
                 steps_to_go -= 1
+
+            (lt_state, cost_to_goal) = self.ida_heuristic()
+            while cost_to_goal > 0:
+                steps = self.steps(lt_state)
+
+                if steps:
+                    for step in steps:
+                        self.parent.rotate(step)
+
+                (lt_state, cost_to_goal) = self.ida_heuristic()
 
             return True
 
@@ -604,10 +631,22 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
     set_LFRB_inner_x_centers_666 = set(LFRB_inner_x_centers_666)
 
     def __init__(self, parent):
+
+        if parent.min_memory:
+            filename = 'lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt.2-deep'
+            linecount = 1665632
+            max_depth = 2
+            filesize = 29981376
+        else:
+            filename = 'lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt'
+            linecount = 19858956
+            max_depth = 3
+            filesize = 357461208
+
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt',
+            filename,
             state_targets_step30,
             moves_666,
 
@@ -625,9 +664,9 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
             (parent.lt_LR_oblique_edges_stage,
              parent.lt_LR_inner_x_centers_stage),
 
-            linecount=19858956,
-            max_depth=3,
-            filesize=357461208),
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize),
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
@@ -692,116 +731,69 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
 
     lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
-    1 steps has 350 entries (0 percent, 0.00x previous step)
-    2 steps has 1,358 entries (0 percent, 3.88x previous step)
-    3 steps has 5,148 entries (1 percent, 3.79x previous step)
-    4 steps has 21,684 entries (6 percent, 4.21x previous step)
-    5 steps has 75,104 entries (21 percent, 3.46x previous step)
-    6 steps has 134,420 entries (39 percent, 1.79x previous step)
-    7 steps has 91,784 entries (26 percent, 0.68x previous step)
-    8 steps has 13,152 entries (3 percent, 0.14x previous step)
+    1 steps has 210 entries (0 percent, 0.00x previous step)
+    2 steps has 924 entries (0 percent, 4.40x previous step)
+    3 steps has 4,148 entries (1 percent, 4.49x previous step)
+    4 steps has 19,330 entries (5 percent, 4.66x previous step)
+    5 steps has 70,702 entries (20 percent, 3.66x previous step)
+    6 steps has 134,068 entries (39 percent, 1.90x previous step)
+    7 steps has 98,376 entries (28 percent, 0.73x previous step)
+    8 steps has 15,218 entries (4 percent, 0.15x previous step)
+    9 steps has 24 entries (0 percent, 0.00x previous step)
 
     Total: 343,000 entries
-    Average: 5.93 moves
+    Average: 6.01 moves
+
+    We could chop all but the first step on this table but this is one that
+    we do not load into memory and it is only 15M so we will keep all of the
+    steps.
     """
+
+    UD_inner_x_centers_and_oblique_edges = (
+        # Upper
+             9, 10,
+        14, 15, 16, 17,
+        20, 21, 22, 23,
+            27, 28,
+
+        # Down
+             189, 190,
+        194, 195, 196, 197,
+        200, 201, 202, 203,
+             207, 208,
+    )
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
             'lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt',
-            ('xDDxDUUDDUUDxDDxxUUxUDDUUDDUxUUx',
-             'xDDxDUUDDUUDxUUxxDDxUDDUUDDUxUUx',
-             'xDDxDUUDDUUDxUUxxUUxDDDUDDDUxUUx',
-             'xDDxDUUDDUUDxUUxxUUxUDDDUDDDxUUx',
-             'xDDxDUUDDUUDxUUxxUUxUDDUUDDUxDDx',
-             'xDDxDUUUDUUUxDDxxDDxUDDUUDDUxUUx',
-             'xDDxDUUUDUUUxDDxxUUxDDDUDDDUxUUx',
-             'xDDxDUUUDUUUxDDxxUUxUDDDUDDDxUUx',
-             'xDDxDUUUDUUUxDDxxUUxUDDUUDDUxDDx',
-             'xDDxDUUUDUUUxUUxxDDxDDDUDDDUxUUx',
-             'xDDxDUUUDUUUxUUxxDDxUDDDUDDDxUUx',
-             'xDDxDUUUDUUUxUUxxDDxUDDUUDDUxDDx',
-             'xDDxDUUUDUUUxUUxxUUxDDDDDDDDxUUx',
-             'xDDxDUUUDUUUxUUxxUUxDDDUDDDUxDDx',
-             'xDDxDUUUDUUUxUUxxUUxUDDDUDDDxDDx',
-             'xDDxUUUDUUUDxDDxxDDxUDDUUDDUxUUx',
-             'xDDxUUUDUUUDxDDxxUUxDDDUDDDUxUUx',
-             'xDDxUUUDUUUDxDDxxUUxUDDDUDDDxUUx',
-             'xDDxUUUDUUUDxDDxxUUxUDDUUDDUxDDx',
-             'xDDxUUUDUUUDxUUxxDDxDDDUDDDUxUUx',
-             'xDDxUUUDUUUDxUUxxDDxUDDDUDDDxUUx',
-             'xDDxUUUDUUUDxUUxxDDxUDDUUDDUxDDx',
-             'xDDxUUUDUUUDxUUxxUUxDDDDDDDDxUUx',
-             'xDDxUUUDUUUDxUUxxUUxDDDUDDDUxDDx',
-             'xDDxUUUDUUUDxUUxxUUxUDDDUDDDxDDx',
-             'xDDxUUUUUUUUxDDxxDDxDDDUDDDUxUUx',
-             'xDDxUUUUUUUUxDDxxDDxUDDDUDDDxUUx',
-             'xDDxUUUUUUUUxDDxxDDxUDDUUDDUxDDx',
-             'xDDxUUUUUUUUxDDxxUUxDDDDDDDDxUUx',
-             'xDDxUUUUUUUUxDDxxUUxDDDUDDDUxDDx',
-             'xDDxUUUUUUUUxDDxxUUxUDDDUDDDxDDx',
-             'xDDxUUUUUUUUxUUxxDDxDDDDDDDDxUUx',
-             'xDDxUUUUUUUUxUUxxDDxDDDUDDDUxDDx',
-             'xDDxUUUUUUUUxUUxxDDxUDDDUDDDxDDx',
-             'xDDxUUUUUUUUxUUxxUUxDDDDDDDDxDDx',
-             'xUUxDUUDDUUDxDDxxDDxUDDUUDDUxUUx',
-             'xUUxDUUDDUUDxDDxxUUxDDDUDDDUxUUx',
-             'xUUxDUUDDUUDxDDxxUUxUDDDUDDDxUUx',
-             'xUUxDUUDDUUDxDDxxUUxUDDUUDDUxDDx',
-             'xUUxDUUDDUUDxUUxxDDxDDDUDDDUxUUx',
-             'xUUxDUUDDUUDxUUxxDDxUDDDUDDDxUUx',
-             'xUUxDUUDDUUDxUUxxDDxUDDUUDDUxDDx',
-             'xUUxDUUDDUUDxUUxxUUxDDDDDDDDxUUx',
-             'xUUxDUUDDUUDxUUxxUUxDDDUDDDUxDDx',
-             'xUUxDUUDDUUDxUUxxUUxUDDDUDDDxDDx',
-             'xUUxDUUUDUUUxDDxxDDxDDDUDDDUxUUx',
-             'xUUxDUUUDUUUxDDxxDDxUDDDUDDDxUUx',
-             'xUUxDUUUDUUUxDDxxDDxUDDUUDDUxDDx',
-             'xUUxDUUUDUUUxDDxxUUxDDDDDDDDxUUx',
-             'xUUxDUUUDUUUxDDxxUUxDDDUDDDUxDDx',
-             'xUUxDUUUDUUUxDDxxUUxUDDDUDDDxDDx',
-             'xUUxDUUUDUUUxUUxxDDxDDDDDDDDxUUx',
-             'xUUxDUUUDUUUxUUxxDDxDDDUDDDUxDDx',
-             'xUUxDUUUDUUUxUUxxDDxUDDDUDDDxDDx',
-             'xUUxDUUUDUUUxUUxxUUxDDDDDDDDxDDx',
-             'xUUxUUUDUUUDxDDxxDDxDDDUDDDUxUUx',
-             'xUUxUUUDUUUDxDDxxDDxUDDDUDDDxUUx',
-             'xUUxUUUDUUUDxDDxxDDxUDDUUDDUxDDx',
-             'xUUxUUUDUUUDxDDxxUUxDDDDDDDDxUUx',
-             'xUUxUUUDUUUDxDDxxUUxDDDUDDDUxDDx',
-             'xUUxUUUDUUUDxDDxxUUxUDDDUDDDxDDx',
-             'xUUxUUUDUUUDxUUxxDDxDDDDDDDDxUUx',
-             'xUUxUUUDUUUDxUUxxDDxDDDUDDDUxDDx',
-             'xUUxUUUDUUUDxUUxxDDxUDDDUDDDxDDx',
-             'xUUxUUUDUUUDxUUxxUUxDDDDDDDDxDDx',
-             'xUUxUUUUUUUUxDDxxDDxDDDDDDDDxUUx',
-             'xUUxUUUUUUUUxDDxxDDxDDDUDDDUxDDx',
-             'xUUxUUUUUUUUxDDxxDDxUDDDUDDDxDDx',
-             'xUUxUUUUUUUUxDDxxUUxDDDDDDDDxDDx',
-             'xUUxUUUUUUUUxUUxxDDxDDDDDDDDxDDx'),
+            ('198e67', '19b267', '19bc47', '19be23', '19be64', '1dc267', '1dcc47', '1dce23',
+             '1dce64', '1df047', '1df223', '1df264', '1dfc03', '1dfc44', '1dfe20', '3b8267',
+             '3b8c47', '3b8e23', '3b8e64', '3bb047', '3bb223', '3bb264', '3bbc03', '3bbc44',
+             '3bbe20', '3fc047', '3fc223', '3fc264', '3fcc03', '3fcc44', '3fce20', '3ff003',
+             '3ff044', '3ff220', '3ffc00', 'd98267', 'd98c47', 'd98e23', 'd98e64', 'd9b047',
+             'd9b223', 'd9b264', 'd9bc03', 'd9bc44', 'd9be20', 'ddc047', 'ddc223', 'ddc264',
+             'ddcc03', 'ddcc44', 'ddce20', 'ddf003', 'ddf044', 'ddf220', 'ddfc00', 'fb8047',
+             'fb8223', 'fb8264', 'fb8c03', 'fb8c44', 'fb8e20', 'fbb003', 'fbb044', 'fbb220',
+             'fbbc00', 'ffc003', 'ffc044', 'ffc220', 'ffcc00', 'fff000'),
             linecount=343000,
-            max_depth=8)
+            max_depth=9,
+            filesize=15435000,
+        )
 
     def ida_heuristic(self):
         parent_state = self.parent.state
+        lt_state = 0
 
-        result = [
-            # Upper
-            'x', parent_state[9], parent_state[10], 'x',
-            parent_state[14], parent_state[15], parent_state[16], parent_state[17],
-            parent_state[20], parent_state[21], parent_state[22], parent_state[23],
-            'x', parent_state[27], parent_state[28], 'x',
+        for x in self.UD_inner_x_centers_and_oblique_edges:
+            if parent_state[x] == 'U':
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
 
-            # Down
-            'x', parent_state[189], parent_state[190], 'x',
-            parent_state[194], parent_state[195], parent_state[196], parent_state[197],
-            parent_state[200], parent_state[201], parent_state[202], parent_state[203],
-            'x', parent_state[207], parent_state[208], 'x'
-        ]
-
-        result = ''.join(result)
-        return (result, 0)
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
+        return (lt_state, 0)
 
 
 class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
@@ -828,79 +820,18 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt',
-            ('LLLLLLLLLLLLRRRRRRRRRRRR',
-             'LLLLLLLLLLRRLLRRRRRRRRRR',
-             'LLLLLLLLLLRRRRLRRRLRRRRR',
-             'LLLLLLLLLLRRRRRRRLRRRLRR',
-             'LLLLLLLLLLRRRRRRRRRRRRLL',
-             'LLLLLRLLLRLLLLRRRRRRRRRR',
-             'LLLLLRLLLRLLRRLRRRLRRRRR',
-             'LLLLLRLLLRLLRRRRRLRRRLRR',
-             'LLLLLRLLLRLLRRRRRRRRRRLL',
-             'LLLLLRLLLRRRLLLRRRLRRRRR',
-             'LLLLLRLLLRRRLLRRRLRRRLRR',
-             'LLLLLRLLLRRRLLRRRRRRRRLL',
-             'LLLLLRLLLRRRRRLRRLLRRLRR',
-             'LLLLLRLLLRRRRRLRRRLRRRLL',
-             'LLLLLRLLLRRRRRRRRLRRRLLL',
-             'LLRLLLRLLLLLLLRRRRRRRRRR',
-             'LLRLLLRLLLLLRRLRRRLRRRRR',
-             'LLRLLLRLLLLLRRRRRLRRRLRR',
-             'LLRLLLRLLLLLRRRRRRRRRRLL',
-             'LLRLLLRLLLRRLLLRRRLRRRRR',
-             'LLRLLLRLLLRRLLRRRLRRRLRR',
-             'LLRLLLRLLLRRLLRRRRRRRRLL',
-             'LLRLLLRLLLRRRRLRRLLRRLRR',
-             'LLRLLLRLLLRRRRLRRRLRRRLL',
-             'LLRLLLRLLLRRRRRRRLRRRLLL',
-             'LLRLLRRLLRLLLLLRRRLRRRRR',
-             'LLRLLRRLLRLLLLRRRLRRRLRR',
-             'LLRLLRRLLRLLLLRRRRRRRRLL',
-             'LLRLLRRLLRLLRRLRRLLRRLRR',
-             'LLRLLRRLLRLLRRLRRRLRRRLL',
-             'LLRLLRRLLRLLRRRRRLRRRLLL',
-             'LLRLLRRLLRRRLLLRRLLRRLRR',
-             'LLRLLRRLLRRRLLLRRRLRRRLL',
-             'LLRLLRRLLRRRLLRRRLRRRLLL',
-             'LLRLLRRLLRRRRRLRRLLRRLLL',
-             'RRLLLLLLLLLLLLRRRRRRRRRR',
-             'RRLLLLLLLLLLRRLRRRLRRRRR',
-             'RRLLLLLLLLLLRRRRRLRRRLRR',
-             'RRLLLLLLLLLLRRRRRRRRRRLL',
-             'RRLLLLLLLLRRLLLRRRLRRRRR',
-             'RRLLLLLLLLRRLLRRRLRRRLRR',
-             'RRLLLLLLLLRRLLRRRRRRRRLL',
-             'RRLLLLLLLLRRRRLRRLLRRLRR',
-             'RRLLLLLLLLRRRRLRRRLRRRLL',
-             'RRLLLLLLLLRRRRRRRLRRRLLL',
-             'RRLLLRLLLRLLLLLRRRLRRRRR',
-             'RRLLLRLLLRLLLLRRRLRRRLRR',
-             'RRLLLRLLLRLLLLRRRRRRRRLL',
-             'RRLLLRLLLRLLRRLRRLLRRLRR',
-             'RRLLLRLLLRLLRRLRRRLRRRLL',
-             'RRLLLRLLLRLLRRRRRLRRRLLL',
-             'RRLLLRLLLRRRLLLRRLLRRLRR',
-             'RRLLLRLLLRRRLLLRRRLRRRLL',
-             'RRLLLRLLLRRRLLRRRLRRRLLL',
-             'RRLLLRLLLRRRRRLRRLLRRLLL',
-             'RRRLLLRLLLLLLLLRRRLRRRRR',
-             'RRRLLLRLLLLLLLRRRLRRRLRR',
-             'RRRLLLRLLLLLLLRRRRRRRRLL',
-             'RRRLLLRLLLLLRRLRRLLRRLRR',
-             'RRRLLLRLLLLLRRLRRRLRRRLL',
-             'RRRLLLRLLLLLRRRRRLRRRLLL',
-             'RRRLLLRLLLRRLLLRRLLRRLRR',
-             'RRRLLLRLLLRRLLLRRRLRRRLL',
-             'RRRLLLRLLLRRLLRRRLRRRLLL',
-             'RRRLLLRLLLRRRRLRRLLRRLLL',
-             'RRRLLRRLLRLLLLLRRLLRRLRR',
-             'RRRLLRRLLRLLLLLRRRLRRRLL',
-             'RRRLLRRLLRLLLLRRRLRRRLLL',
-             'RRRLLRRLLRLLRRLRRLLRRLLL',
-             'RRRLLRRLLRRRLLLRRLLRRLLL'),
+            ('198e67', '19b267', '19bc47', '19be23', '19be64', '1dc267', '1dcc47', '1dce23',
+             '1dce64', '1df047', '1df223', '1df264', '1dfc03', '1dfc44', '1dfe20', '3b8267',
+             '3b8c47', '3b8e23', '3b8e64', '3bb047', '3bb223', '3bb264', '3bbc03', '3bbc44',
+             '3bbe20', '3fc047', '3fc223', '3fc264', '3fcc03', '3fcc44', '3fce20', '3ff003',
+             '3ff044', '3ff220', '3ffc00', 'd98267', 'd98c47', 'd98e23', 'd98e64', 'd9b047',
+             'd9b223', 'd9b264', 'd9bc03', 'd9bc44', 'd9be20', 'ddc047', 'ddc223', 'ddc264',
+             'ddcc03', 'ddcc44', 'ddce20', 'ddf003', 'ddf044', 'ddf220', 'ddfc00', 'fb8047',
+             'fb8223', 'fb8264', 'fb8c03', 'fb8c44', 'fb8e20', 'fbb003', 'fbb044', 'fbb220',
+             'fbbc00', 'ffc003', 'ffc044', 'ffc220', 'ffcc00', 'fff000'),
             linecount=343000,
             max_depth=10,
-            filesize=21609000)
+            filesize=3430000)
 
 
 class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable666LRInnerXCenterAndObliqueEdges):
@@ -927,79 +858,18 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable666LRInnerXCenterAn
             self,
             parent,
             'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
-            ('FFFFFFFFFFFFBBBBBBBBBBBB',
-             'FFFFFFFFFFBBFFBBBBBBBBBB',
-             'FFFFFFFFFFBBBBFBBBFBBBBB',
-             'FFFFFFFFFFBBBBBBBFBBBFBB',
-             'FFFFFFFFFFBBBBBBBBBBBBFF',
-             'FFFFFBFFFBFFFFBBBBBBBBBB',
-             'FFFFFBFFFBFFBBFBBBFBBBBB',
-             'FFFFFBFFFBFFBBBBBFBBBFBB',
-             'FFFFFBFFFBFFBBBBBBBBBBFF',
-             'FFFFFBFFFBBBFFFBBBFBBBBB',
-             'FFFFFBFFFBBBFFBBBFBBBFBB',
-             'FFFFFBFFFBBBFFBBBBBBBBFF',
-             'FFFFFBFFFBBBBBFBBFFBBFBB',
-             'FFFFFBFFFBBBBBFBBBFBBBFF',
-             'FFFFFBFFFBBBBBBBBFBBBFFF',
-             'FFBFFFBFFFFFFFBBBBBBBBBB',
-             'FFBFFFBFFFFFBBFBBBFBBBBB',
-             'FFBFFFBFFFFFBBBBBFBBBFBB',
-             'FFBFFFBFFFFFBBBBBBBBBBFF',
-             'FFBFFFBFFFBBFFFBBBFBBBBB',
-             'FFBFFFBFFFBBFFBBBFBBBFBB',
-             'FFBFFFBFFFBBFFBBBBBBBBFF',
-             'FFBFFFBFFFBBBBFBBFFBBFBB',
-             'FFBFFFBFFFBBBBFBBBFBBBFF',
-             'FFBFFFBFFFBBBBBBBFBBBFFF',
-             'FFBFFBBFFBFFFFFBBBFBBBBB',
-             'FFBFFBBFFBFFFFBBBFBBBFBB',
-             'FFBFFBBFFBFFFFBBBBBBBBFF',
-             'FFBFFBBFFBFFBBFBBFFBBFBB',
-             'FFBFFBBFFBFFBBFBBBFBBBFF',
-             'FFBFFBBFFBFFBBBBBFBBBFFF',
-             'FFBFFBBFFBBBFFFBBFFBBFBB',
-             'FFBFFBBFFBBBFFFBBBFBBBFF',
-             'FFBFFBBFFBBBFFBBBFBBBFFF',
-             'FFBFFBBFFBBBBBFBBFFBBFFF',
-             'BBFFFFFFFFFFFFBBBBBBBBBB',
-             'BBFFFFFFFFFFBBFBBBFBBBBB',
-             'BBFFFFFFFFFFBBBBBFBBBFBB',
-             'BBFFFFFFFFFFBBBBBBBBBBFF',
-             'BBFFFFFFFFBBFFFBBBFBBBBB',
-             'BBFFFFFFFFBBFFBBBFBBBFBB',
-             'BBFFFFFFFFBBFFBBBBBBBBFF',
-             'BBFFFFFFFFBBBBFBBFFBBFBB',
-             'BBFFFFFFFFBBBBFBBBFBBBFF',
-             'BBFFFFFFFFBBBBBBBFBBBFFF',
-             'BBFFFBFFFBFFFFFBBBFBBBBB',
-             'BBFFFBFFFBFFFFBBBFBBBFBB',
-             'BBFFFBFFFBFFFFBBBBBBBBFF',
-             'BBFFFBFFFBFFBBFBBFFBBFBB',
-             'BBFFFBFFFBFFBBFBBBFBBBFF',
-             'BBFFFBFFFBFFBBBBBFBBBFFF',
-             'BBFFFBFFFBBBFFFBBFFBBFBB',
-             'BBFFFBFFFBBBFFFBBBFBBBFF',
-             'BBFFFBFFFBBBFFBBBFBBBFFF',
-             'BBFFFBFFFBBBBBFBBFFBBFFF',
-             'BBBFFFBFFFFFFFFBBBFBBBBB',
-             'BBBFFFBFFFFFFFBBBFBBBFBB',
-             'BBBFFFBFFFFFFFBBBBBBBBFF',
-             'BBBFFFBFFFFFBBFBBFFBBFBB',
-             'BBBFFFBFFFFFBBFBBBFBBBFF',
-             'BBBFFFBFFFFFBBBBBFBBBFFF',
-             'BBBFFFBFFFBBFFFBBFFBBFBB',
-             'BBBFFFBFFFBBFFFBBBFBBBFF',
-             'BBBFFFBFFFBBFFBBBFBBBFFF',
-             'BBBFFFBFFFBBBBFBBFFBBFFF',
-             'BBBFFBBFFBFFFFFBBFFBBFBB',
-             'BBBFFBBFFBFFFFFBBBFBBBFF',
-             'BBBFFBBFFBFFFFBBBFBBBFFF',
-             'BBBFFBBFFBFFBBFBBFFBBFFF',
-             'BBBFFBBFFBBBFFFBBFFBBFFF'),
+            ('198e67', '19b267', '19bc47', '19be23', '19be64', '1dc267', '1dcc47', '1dce23',
+             '1dce64', '1df047', '1df223', '1df264', '1dfc03', '1dfc44', '1dfe20', '3b8267',
+             '3b8c47', '3b8e23', '3b8e64', '3bb047', '3bb223', '3bb264', '3bbc03', '3bbc44',
+             '3bbe20', '3fc047', '3fc223', '3fc264', '3fcc03', '3fcc44', '3fce20', '3ff003',
+             '3ff044', '3ff220', '3ffc00', 'd98267', 'd98c47', 'd98e23', 'd98e64', 'd9b047',
+             'd9b223', 'd9b264', 'd9bc03', 'd9bc44', 'd9be20', 'ddc047', 'ddc223', 'ddc264',
+             'ddcc03', 'ddcc44', 'ddce20', 'ddf003', 'ddf044', 'ddf220', 'ddfc00', 'fb8047',
+             'fb8223', 'fb8264', 'fb8c03', 'fb8c44', 'fb8e20', 'fbb003', 'fbb044', 'fbb220',
+             'fbbc00', 'ffc003', 'ffc044', 'ffc220', 'ffcc00', 'fff000'),
             linecount=343000,
             max_depth=10,
-            filesize=22295000)
+            filesize=3430000)
 
 
 class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
@@ -1071,10 +941,25 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     set_step62_centers_666 = set(step62_centers_666)
 
     def __init__(self, parent):
+        # LBBFDRLUDDDRUUUUDFFUUUDBRDDDUDDBDLULFFURBUFLLRLRDLRRLDURLRRFDRRLRRDFBBUBRLBUBDUFFBFDLBFFFRUBBBFLLBFBFLLRBDDRUBLFBFRUUUUUDUDDUDRUDDULBDDDDRULURLLDURDUBDLLRLFLLLLRFFRLRLRBRLRRURDFLDFFRURLBFFFFBLRBFBFDLBBFBUFBFBBUUFBBFB
+        if parent.min_memory:
+            # 3-deep
+            filename = 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.3-deep'
+            linecount = 730240
+            max_depth = 3
+            filesize = 13144320
+
+        else:
+            # 4-deep
+            filename = 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.4-deep'
+            linecount = 5320232
+            max_depth = 4
+            filesize = 95764176
+
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt',
+            filename,
             state_targets_step60,
 
             moves_666,
@@ -1091,36 +976,74 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
              parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
             ),
 
-            linecount=5320232,
-            max_depth=4,
-            filesize=287292528)
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize,
+        )
+
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        #self.parent.print_cube()
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_666:
+            if x in self.set_step61_centers_666:
+                if self.parent.state[x] == 'R':
+                    self.parent.state[x] = 'x'
+
+            elif x in self.set_step62_centers_666:
+                if self.parent.state[x] == 'B':
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+
+        #self.parent.print_cube()
 
     def ida_heuristic(self):
-        lt_state = []
-        step61_state = []
-        step62_state = []
+        parent = self.parent
         parent_state = self.parent.state
-
         set_step61_centers_666 = self.set_step61_centers_666
         set_step62_centers_666 = self.set_step62_centers_666
 
+        lt_state = 0
+        step61_state = 0
+        step62_state = 0
+
         for x in self.step60_centers_666:
             x_state = parent_state[x]
-            lt_state.append(x_state)
 
             if x in set_step61_centers_666:
-                step61_state.append(x_state)
-            elif x in set_step62_centers_666:
-                step62_state.append(x_state)
 
-        step61_state = ''.join(step61_state)
-        step62_state = ''.join(step62_state)
+                if x_state == 'L':
+                    step61_state = step61_state | 0x1
+                    lt_state = lt_state | 0x1
+
+                step61_state = step61_state << 1
+
+            elif x in set_step62_centers_666:
+
+                if x_state == 'F':
+                    step62_state = step62_state | 0x1
+                    lt_state = lt_state | 0x1
+
+                step62_state = step62_state << 1
+
+            lt_state = lt_state << 1
+
+        lt_state = lt_state >> 1
+        step61_state = step61_state >> 1
+        step62_state = step62_state >> 1
+
+        step61_state = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.hex_format % step61_state
+        step62_state = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.hex_format % step62_state
+        lt_state = self.hex_format % lt_state
+
         cost_to_goal = max(
-            self.parent.lt_LR_solve_inner_x_centers_and_oblique_edges.heuristic(step61_state),
-            self.parent.lt_FB_solve_inner_x_centers_and_oblique_edges.heuristic(step62_state),
+            parent.lt_LR_solve_inner_x_centers_and_oblique_edges.heuristic(step61_state),
+            parent.lt_FB_solve_inner_x_centers_and_oblique_edges.heuristic(step62_state),
         )
 
-        lt_state = ''.join(lt_state)
         return (lt_state, cost_to_goal)
 
 
@@ -1389,7 +1312,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
         self.print_cube()
         log.info("%s: UD inner x-center solved and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
+        log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("")
         log.info("")
         log.info("")

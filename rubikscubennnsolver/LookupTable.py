@@ -267,11 +267,12 @@ class LookupTable(object):
             with open(self.filename, 'r') as fh:
                 first_line = next(fh)
                 self.width = len(first_line)
-                (state, steps) = first_line.split(':')
+                (state, steps) = first_line.strip().split(':')
                 self.state_width = len(state)
 
                 if steps.isdigit():
                     self.use_isdigit = True
+                    log.info("%s: use_isdigit is True" % self)
 
         self.hex_format = '%' + "0%dx" % self.state_width
         self.filename_exists = True
@@ -378,6 +379,7 @@ class LookupTable(object):
         state_to_find = bytes(state_to_find, encoding='utf-8')
 
         while first <= last:
+            self.fh_txt_seek_calls += 1
             midpoint = int((first + last)/2)
 
             # Only read the 'state' part of the line (for speed)
@@ -613,6 +615,8 @@ class LookupTable(object):
 
             if result == 0:
                 #log.warning("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
+                self.parent.enable_print_cube = True
+                self.parent.print_cube()
                 raise SolveError("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
 
             return result
@@ -804,7 +808,12 @@ class LookupTableCostOnly(LookupTable):
         log.info("%s: begin preload cost-only" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
-        with open(self.filename, 'r') as fh:
+        # There is a CPU/memory tradeoff to be made here with 'r' vs 'rb'. 'rb' takes
+        # 1/2 the memory of 'r' but requires steps_cost() to call chr() everytime. This
+        # is not super expensive though and a lot of the tables we load here are 165 million
+        # entries so we are talking about using 165M vs 330M for each of those. We are
+        # memory bound on raspberry Pi3 so use 'rb' and take the minor CPU hit.
+        with open(self.filename, 'rb') as fh:
             self.content = fh.read()
         self.fh_txt_seek_calls += 1
 
@@ -815,7 +824,7 @@ class LookupTableCostOnly(LookupTable):
     def steps_cost(self, state_to_find):
         # state_to_find is an integer, there is a one byte hex character in the file for each possible state.
         # This hex character is the number of steps required to solve the corresponding state.
-        return int(self.content[state_to_find], 16)
+        return int(chr(self.content[state_to_find]), 16)
 
 
 class LookupTableHashCostOnly(LookupTableCostOnly):
@@ -832,7 +841,7 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
         hash_raw = hashxx(state_to_find.encode('utf-8'))
         hash_index = int(hash_raw % self.bucketcount)
 
-        result = int(self.content[hash_index], 16)
+        result = int(chr(self.content[hash_index]), 16)
 
         # This should never be zero
         if not result:
@@ -1173,7 +1182,7 @@ class LookupTableIDA(LookupTable):
         (state, cost_to_goal) = self.ida_heuristic()
 
         # The cube is already in the desired state, nothing to do
-        if state in self.state_target:
+        if state in self.state_target or cost_to_goal == 0:
             self.parent.state = self.pre_recolor_state[:]
             self.parent.solution = self.pre_recolor_solution[:]
             log.info("%s: cube is already at the target state %s" % (self, state))

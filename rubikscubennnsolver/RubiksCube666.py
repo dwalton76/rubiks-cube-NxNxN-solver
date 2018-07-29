@@ -361,7 +361,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             linecount = 59219239
             max_depth = 2
             filesize = 1065946302
-            #exit_asap = False 
+            #exit_asap = False
             exit_asap = True
 
         LookupTableIDA.__init__(
@@ -951,7 +951,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
 
         else:
             # 4-deep
-            filename = 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.4-deep'
+            filename = 'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt'
             linecount = 5320232
             max_depth = 4
             filesize = 95764176

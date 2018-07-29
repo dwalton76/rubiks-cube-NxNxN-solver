@@ -279,7 +279,9 @@ class LookupTable555UDTCenterStage(LookupTable):
             'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
             'f0000f',
             linecount=735471,
-            max_depth=8)
+            max_depth=8,
+            filesize=27947898,
+        )
 
     def ida_heuristic(self):
         parent_state = self.parent.state
@@ -296,7 +298,9 @@ class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
             'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt',
             'f0000f',
             linecount=735471,
-            max_depth=8)
+            max_depth=8,
+            filesize=16711681,
+        )
 
 
 class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
@@ -323,7 +327,9 @@ class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
             'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt',
             'f0000f',
             linecount=735471,
-            max_depth=8)
+            max_depth=8,
+            filesize=16711681,
+        )
 
 
 class LookupTableIDA555UDCentersStage(LookupTableIDA):
@@ -1168,7 +1174,7 @@ class RubiksCube555(RubiksCube):
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
-        self.lt_UD_centers_stage.next_phase = self.lt_LR_centers_stage
+        #self.lt_UD_centers_stage.next_phase = self.lt_LR_centers_stage
         #self.lt_LR_centers_stage.next_phase = self.lt_ULFRB_centers_solve
 
     def high_low_state(self, x, y, state_x, state_y, wing_str):

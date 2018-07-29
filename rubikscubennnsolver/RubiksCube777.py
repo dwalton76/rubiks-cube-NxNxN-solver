@@ -257,7 +257,9 @@ class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
             'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
             '462000000000000462',
             linecount=735471,
-            max_depth=11)
+            max_depth=11,
+            filesize=16180362,
+        )
 
 
 class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
@@ -288,7 +290,9 @@ class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
             'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
             '891000000000000891',
             linecount=735471,
-            max_depth=11)
+            max_depth=11,
+            filesize=15444891,
+        )
 
 
 class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
@@ -319,25 +323,30 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
             'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
             '30c00000000000030c',
             linecount=735471,
-            max_depth=11)
+            max_depth=11,
+            filesize=15444891,
+        )
 
 
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
     """
-    This is 5-deep...6-deep has 5 million entries which takes too much memory to preload
+    This is 6-deep...this table is odd because it "locks" the outside UD oblique
+    edges together which results in these weird move counts per level.
 
     lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
     =====================================================
-    1 steps has 4 entries (0 percent, 0.00x previous step)
-    2 steps has 67 entries (0 percent, 16.75x previous step)
-    3 steps has 916 entries (0 percent, 13.67x previous step)
-    4 steps has 10,132 entries (2 percent, 11.06x previous step)
-    5 steps has 92,068 entries (24 percent, 9.09x previous step)
-    6 steps has 229,615 entries (60 percent, 2.49x previous step)
-    7 steps has 46,431 entries (12 percent, 0.20x previous step)
-    8 steps has 790 entries (0 percent, 0.02x previous step)
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 66 entries (0 percent, 13.20x previous step)
+    3 steps has 916 entries (0 percent, 13.88x previous step)
+    4 steps has 10,132 entries (0 percent, 11.06x previous step)
+    5 steps has 92,070 entries (1 percent, 9.09x previous step)
+    6 steps has 558,950 entries (9 percent, 6.07x previous step)
+    7 steps has 3,861,635 entries (64 percent, 6.91x previous step)
+    8 steps has 1,365,844 entries (22 percent, 0.35x previous step)
+    9 steps has 71,797 entries (1 percent, 0.05x previous step)
+    10 steps has 158 entries (0 percent, 0.00x previous step)
 
-    Total: 380,023 entries
+    Total: 5,961,573 entries
     """
 
     oblique_edges_777 = (
@@ -396,9 +405,10 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
              parent.lt_UD_oblique_edge_pairing_left_only,
              parent.lt_UD_oblique_edge_pairing_right_only),
 
-            linecount=380023,
-            max_depth=5,
-            filesize=21661311)
+            linecount=5961573,
+            max_depth=6,
+            filesize=399425391,
+        )
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
@@ -1712,7 +1722,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_UD_oblique_edge_pairing_middle_only.preload_cache_dict()
         self.lt_UD_oblique_edge_pairing_left_only.preload_cache_dict()
         self.lt_UD_oblique_edge_pairing_right_only.preload_cache_dict()
-        self.lt_UD_oblique_edge_pairing.preload_cache_dict()
+        self.lt_UD_oblique_edge_pairing.preload_cache_string()
 
         self.lt_LR_left_right_oblique_edge_pairing = LookupTable777LRLeftRightObliqueEdgePairing(self)
         self.lt_LR_left_middle_oblique_edge_pairing = LookupTable777LRLeftMiddleObliqueEdgePairing(self)

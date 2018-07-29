@@ -22,7 +22,6 @@ import sys
 
 log = logging.getLogger(__name__)
 
-
 moves_444 = (
     "U", "U'", "U2", "Uw", "Uw'", "Uw2",
     "L", "L'", "L2", "Lw", "Lw'", "Lw2",
@@ -34,33 +33,16 @@ moves_444 = (
 
 solved_444 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
 
-centers_444 = (
-    6, 7, 10, 11,
-    22, 23, 26, 27,
-    38, 39, 42, 43,
-    54, 55, 58, 59,
-    70, 71, 74, 75,
-    86, 87, 90, 91
-)
-
-UD_centers_444 = (
-    6, 7, 10, 11,
-    86, 87, 90, 91
-)
-
 LR_centers_444 = (
     22, 23, 26, 27,
     54, 55, 58, 59
 )
 
-FB_centers_444 = (
+centers_444 = (
+    6, 7, 10, 11,
+    22, 23, 26, 27,
     38, 39, 42, 43,
-    70, 71, 74, 75,
-)
-
-UFBD_centers_444 = (
-    6, 7, 10, 10,
-    38, 39, 42, 43,
+    54, 55, 58, 59,
     70, 71, 74, 75,
     86, 87, 90, 91
 )
@@ -149,264 +131,82 @@ edges_partner_444 = {
     95: 78
 }
 
-centers_solved_states_444 = set()
-centers_solved_states_444.add('UUUULLLLFFFFRRRRBBBBDDDD')
-centers_solved_states_444.add('UUUUFFFFRRRRBBBBLLLLDDDD')
-centers_solved_states_444.add('UUUURRRRBBBBLLLLFFFFDDDD')
-centers_solved_states_444.add('UUUUBBBBLLLLFFFFRRRRDDDD')
-centers_solved_states_444.add('DDDDLLLLBBBBRRRRFFFFUUUU')
-centers_solved_states_444.add('DDDDBBBBRRRRFFFFLLLLUUUU')
-centers_solved_states_444.add('DDDDRRRRFFFFLLLLBBBBUUUU')
-centers_solved_states_444.add('DDDDFFFFLLLLBBBBRRRRUUUU')
-centers_solved_states_444.add('LLLLUUUUBBBBDDDDFFFFRRRR')
-centers_solved_states_444.add('LLLLBBBBDDDDFFFFUUUURRRR')
-centers_solved_states_444.add('LLLLDDDDFFFFUUUUBBBBRRRR')
-centers_solved_states_444.add('LLLLFFFFUUUUBBBBDDDDRRRR')
-centers_solved_states_444.add('FFFFLLLLDDDDRRRRUUUUBBBB')
-centers_solved_states_444.add('FFFFDDDDRRRRUUUULLLLBBBB')
-centers_solved_states_444.add('FFFFRRRRUUUULLLLDDDDBBBB')
-centers_solved_states_444.add('FFFFUUUULLLLDDDDRRRRBBBB')
-centers_solved_states_444.add('RRRRDDDDBBBBUUUUFFFFLLLL')
-centers_solved_states_444.add('RRRRBBBBUUUUFFFFDDDDLLLL')
-centers_solved_states_444.add('RRRRUUUUFFFFDDDDBBBBLLLL')
-centers_solved_states_444.add('RRRRFFFFDDDDBBBBUUUULLLL')
-centers_solved_states_444.add('BBBBUUUURRRRDDDDLLLLFFFF')
-centers_solved_states_444.add('BBBBRRRRDDDDLLLLUUUUFFFF')
-centers_solved_states_444.add('BBBBDDDDLLLLUUUURRRRFFFF')
-centers_solved_states_444.add('BBBBLLLLUUUURRRRDDDDFFFF')
+wing_str_sort_map = {
+    'UB' : 'UB',
+    'BU' : 'UB',
+    'UL' : 'UL',
+    'LU' : 'UL',
+    'UR' : 'UR',
+    'RU' : 'UR',
+    'UF' : 'UF',
+    'FU' : 'UF',
+    'LB' : 'LB',
+    'BL' : 'LB',
+    'LF' : 'LF',
+    'FL' : 'LF',
+    'RB' : 'RB',
+    'BR' : 'RB',
+    'RF' : 'RF',
+    'FR' : 'RF',
+    'DB' : 'DB',
+    'BD' : 'DB',
+    'DL' : 'DL',
+    'LD' : 'DL',
+    'DR' : 'DR',
+    'RD' : 'DR',
+    'DF' : 'DF',
+    'FD' : 'DF',
+}
 
-def centers_solved_444(state):
-    if state[0:24] in centers_solved_states_444:
-        return True
-    return False
+wings_for_edges_recolor_pattern_444 = (
+    ('0', 2, 67),  # upper
+    ('1', 3, 66),
+    ('2', 5, 18),
+    ('3', 8, 51),
+    ('4', 9, 19),
+    ('5', 12, 50),
+    ('6', 14, 34),
+    ('7', 15, 35),
 
-# If all 3 groups of edges have been staged for L4E each of them has
-# 105 possible patterns but only 4 of those patterns are solveablve
-# via w half turns only. 4^3 is 64...below are the 64 of these edge patterns.
-edge_patterns_solveablve_via_half_turns = set((
-    '103524769b8adfcehgjliknm',
-    '10352476a8b9ecfdhgjliknm',
-    '10352476dfce9b8ahgjliknm',
-    '10352476ecfda8b9hgjliknm',
-    '104253769b8adfcehgkiljnm',
-    '10425376a8b9ecfdhgkiljnm',
-    '10425376dfce9b8ahgkiljnm',
-    '10425376ecfda8b9hgkiljnm',
-    '10jlik769b8adfcehg3524nm',
-    '10jlik76a8b9ecfdhg3524nm',
-    '10jlik76dfce9b8ahg3524nm',
-    '10jlik76ecfda8b9hg3524nm',
-    '10kilj769b8adfcehg4253nm',
-    '10kilj76a8b9ecfdhg4253nm',
-    '10kilj76dfce9b8ahg4253nm',
-    '10kilj76ecfda8b9hg4253nm',
-    '673524019b8adfcemnjlikgh',
-    '67352401a8b9ecfdmnjlikgh',
-    '67352401dfce9b8amnjlikgh',
-    '67352401ecfda8b9mnjlikgh',
-    '674253019b8adfcemnkiljgh',
-    '67425301a8b9ecfdmnkiljgh',
-    '67425301dfce9b8amnkiljgh',
-    '67425301ecfda8b9mnkiljgh',
-    '67jlik019b8adfcemn3524gh',
-    '67jlik01a8b9ecfdmn3524gh',
-    '67jlik01dfce9b8amn3524gh',
-    '67jlik01ecfda8b9mn3524gh',
-    '67kilj019b8adfcemn4253gh',
-    '67kilj01a8b9ecfdmn4253gh',
-    '67kilj01dfce9b8amn4253gh',
-    '67kilj01ecfda8b9mn4253gh',
-    'hg3524nm9b8adfce10jlik76',
-    'hg3524nma8b9ecfd10jlik76',
-    'hg3524nmdfce9b8a10jlik76',
-    'hg3524nmecfda8b910jlik76',
-    'hg4253nm9b8adfce10kilj76',
-    'hg4253nma8b9ecfd10kilj76',
-    'hg4253nmdfce9b8a10kilj76',
-    'hg4253nmecfda8b910kilj76',
-    'hgjliknm9b8adfce10352476',
-    'hgjliknma8b9ecfd10352476',
-    'hgjliknmdfce9b8a10352476',
-    'hgjliknmecfda8b910352476',
-    'hgkiljnm9b8adfce10425376',
-    'hgkiljnma8b9ecfd10425376',
-    'hgkiljnmdfce9b8a10425376',
-    'hgkiljnmecfda8b910425376',
-    'mn3524gh9b8adfce67jlik01',
-    'mn3524gha8b9ecfd67jlik01',
-    'mn3524ghdfce9b8a67jlik01',
-    'mn3524ghecfda8b967jlik01',
-    'mn4253gh9b8adfce67kilj01',
-    'mn4253gha8b9ecfd67kilj01',
-    'mn4253ghdfce9b8a67kilj01',
-    'mn4253ghecfda8b967kilj01',
-    'mnjlikgh9b8adfce67352401',
-    'mnjlikgha8b9ecfd67352401',
-    'mnjlikghdfce9b8a67352401',
-    'mnjlikghecfda8b967352401',
-    'mnkiljgh9b8adfce67425301',
-    'mnkiljgha8b9ecfd67425301',
-    'mnkiljghdfce9b8a67425301',
-    'mnkiljghecfda8b967425301',
-))
+    ('8', 21, 72), # left
+    ('9', 24, 37),
+    ('a', 25, 76),
+    ('b', 28, 41),
 
-def get_best_entry(foo):
-    # TODO this can only track wings since it is only used by 4x4x4
-    best_entry = None
-    best_paired_edges = None
-    best_paired_wings = None
-    best_steps_len = None
+    ('c', 53, 40), # right
+    ('d', 56, 69),
+    ('e', 57, 44),
+    ('f', 60, 73),
 
-    for (paired_edges, paired_wings, steps_len, state) in foo:
-        if (best_entry is None or
-            paired_edges > best_paired_edges or
-            (paired_edges == best_paired_edges and paired_wings > best_paired_wings) or
-            (paired_edges == best_paired_edges and paired_wings == best_paired_wings and steps_len < best_steps_len)):
-
-            best_entry = (paired_edges, paired_wings, steps_len, state)
-            best_paired_edges = paired_edges
-            best_paired_wings = paired_wings
-            best_steps_len = steps_len
-    return best_entry
+    ('g', 82, 46), # down
+    ('h', 83, 47),
+    ('i', 85, 31),
+    ('j', 88, 62),
+    ('k', 89, 30),
+    ('l', 92, 63),
+    ('m', 94, 79),
+    ('n', 95, 78)
+)
 
 
-def get_edges_paired_binary_signature(state):
-    """
-    The facelets are numbered:
-
-                  - 02 03 -
-                 05  - -  08
-                 09  - -  12
-                  - 14 15 -
-
-     - 18 19 -    - 34 35 -    - 50 51 -    - 66 67 -
-    21  - -  24  37  - -  40  53  - -  56  69  - -  72
-    25  - -  28  41  - -  44  57  - -  60  73  - -  76
-     - 30 31 -    - 46 47 -    - 62 63 -    - 78 79 -
-
-                  - 82 83 -
-                 85  - -  88
-                 89  - -  92
-                  - 94 95 -
-
-
-    The wings are labeled 0123456789abcdefghijklmn
-
-                  -  0 1  -
-                  2  - -  3
-                  4  - -  5
-                  -  6 7 -
-
-     -  2 4  -    -  6 7  -    -  5 3  -    -  1 0  -
-     8  - -  9    9  - -  c    c  - -  d    d  - -  8
-     a  - -  b    b  - -  e    e  - -  f    f  - -  a
-     -  k i  -    -  g h  -    -  j l  -    -  n m  -
-
-                  -  g h  -
-                  i  - -  j
-                  k  - -  l
-                  -  m n  -
-
-    'state' goes wing by # wing and records the location of where the sibling wing is located.
-
-    state: 10425376a8b9ecfdhgkiljnm
-
-    index: 000000000011111111112222
-           012345678901234567890123
-
-    get_edges_paired_binary_signature('10425376a8b9ecfdhgkiljnm')
-    111111111111
-
-    get_edges_paired_binary_signature('7ad9nlg0j14cbm2i6kfh85e3')
-    000000000000
-    """
-    result = []
-
-    # Upper
-    if state[0] == '1':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[2] == '4':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[4] == '5':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[6] == '7':
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Left
-    if state[8] == 'a':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[10] == 'b':
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Right
-    if state[12] == 'e':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[14] == 'f':
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Down
-    if state[16] == 'h':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[18] == 'k':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[20] == 'l':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[22] == 'n':
-        result.append('1')
-    else:
-        result.append('0')
-
-    return ''.join(result)
-
-
-'''
-lookup-table-4x4x4-step11-UD-centers-stage.txt
-lookup-table-4x4x4-step12-LR-centers-stage.txt
-lookup-table-4x4x4-step13-FB-centers-stage.txt
-==============================================
-1 steps has 9 entries (0 percent, 0.00x previous step)
-2 steps has 108 entries (0 percent, 12.00x previous step)
-3 steps has 1,434 entries (0 percent, 13.28x previous step)
-4 steps has 15,210 entries (2 percent, 10.61x previous step)
-5 steps has 126,306 entries (17 percent, 8.30x previous step)
-6 steps has 420,312 entries (57 percent, 3.33x previous step)
-7 steps has 171,204 entries (23 percent, 0.41x previous step)
-8 steps has 888 entries (0 percent, 0.01x previous step)
-
-Total: 735,471 entries
-Average: 6.02 moves
-'''
 class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
+    """
+    lookup-table-4x4x4-step11-UD-centers-stage.txt
+    lookup-table-4x4x4-step12-LR-centers-stage.txt
+    lookup-table-4x4x4-step13-FB-centers-stage.txt
+    ==============================================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 108 entries (0 percent, 12.00x previous step)
+    3 steps has 1,434 entries (0 percent, 13.28x previous step)
+    4 steps has 15,210 entries (2 percent, 10.61x previous step)
+    5 steps has 126,306 entries (17 percent, 8.30x previous step)
+    6 steps has 420,312 entries (57 percent, 3.33x previous step)
+    7 steps has 171,204 entries (23 percent, 0.41x previous step)
+    8 steps has 888 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.02 moves
+    """
 
     def __init__(self, parent):
 
@@ -508,36 +308,6 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
         return (lt_state, cost_to_goal)
 
 
-wings_for_edges_recolor_pattern_444 = (
-    ('0', 2, 67),  # upper
-    ('1', 3, 66),
-    ('2', 5, 18),
-    ('3', 8, 51),
-    ('4', 9, 19),
-    ('5', 12, 50),
-    ('6', 14, 34),
-    ('7', 15, 35),
-
-    ('8', 21, 72), # left
-    ('9', 24, 37),
-    ('a', 25, 76),
-    ('b', 28, 41),
-
-    ('c', 53, 40), # right
-    ('d', 56, 69),
-    ('e', 57, 44),
-    ('f', 60, 73),
-
-    ('g', 82, 46), # down
-    ('h', 83, 47),
-    ('i', 85, 31),
-    ('j', 88, 62),
-    ('k', 89, 30),
-    ('l', 92, 63),
-    ('m', 94, 79),
-    ('n', 95, 78))
-
-
 def edges_recolor_pattern_444(state):
     edge_map = {
         'BD': [],
@@ -576,73 +346,6 @@ def edges_recolor_pattern_444(state):
             raise Exception("could not find tmp_index")
 
     return ''.join(state)
-
-
-edges_for_high_low_recolor_444 = (
-    2, 9, 8, 15,
-    25, 24,
-    57, 56,
-    82, 89, 88, 95
-)
-
-edge_map_to_ULF = {
-    # U edges
-    'UL' : 'U',
-    'LU' : 'U',
-    'LD' : 'U',
-    'DL' : 'U',
-    'RD' : 'U',
-    'DR' : 'U',
-    'UR' : 'U',
-    'RU' : 'U',
-
-    # L edges
-    'BL' : 'L',
-    'LB' : 'L',
-    'FL' : 'L',
-    'LF' : 'L',
-    'FR' : 'L',
-    'RF' : 'L',
-    'BR' : 'L',
-    'RB' : 'L',
-
-    # F edges
-    'UB' : 'F',
-    'BU' : 'F',
-    'UF' : 'F',
-    'FU' : 'F',
-    'FD' : 'F',
-    'DF' : 'F',
-    'DB' : 'F',
-    'BD' : 'F',
-}
-
-wing_str_sort_map = {
-    'UB' : 'UB',
-    'BU' : 'UB',
-    'UL' : 'UL',
-    'LU' : 'UL',
-    'UR' : 'UR',
-    'RU' : 'UR',
-    'UF' : 'UF',
-    'FU' : 'UF',
-    'LB' : 'LB',
-    'BL' : 'LB',
-    'LF' : 'LF',
-    'FL' : 'LF',
-    'RB' : 'RB',
-    'BR' : 'RB',
-    'RF' : 'RF',
-    'FR' : 'RF',
-    'DB' : 'DB',
-    'BD' : 'DB',
-    'DL' : 'DL',
-    'LD' : 'DL',
-    'DR' : 'DR',
-    'RD' : 'DR',
-    'DF' : 'DF',
-    'FD' : 'DF',
-}
 
 
 class LookupTable444HighLowEdgesEdges(LookupTable):
@@ -774,36 +477,6 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
         )
 
         return (lt_state, cost_to_goal)
-
-
-wings_for_edges_recolor_pattern_444 = (
-    ('0', 2, 67),  # upper
-    ('1', 3, 66),
-    ('2', 5, 18),
-    ('3', 8, 51),
-    ('4', 9, 19),
-    ('5', 12, 50),
-    ('6', 14, 34),
-    ('7', 15, 35),
-
-    ('8', 21, 72), # left
-    ('9', 24, 37),
-    ('a', 25, 76),
-    ('b', 28, 41),
-
-    ('c', 53, 40), # right
-    ('d', 56, 69),
-    ('e', 57, 44),
-    ('f', 60, 73),
-
-    ('g', 82, 46), # down
-    ('h', 83, 47),
-    ('i', 85, 31),
-    ('j', 88, 62),
-    ('k', 89, 30),
-    ('l', 92, 63),
-    ('m', 94, 79),
-    ('n', 95, 78))
 
 
 def edges_recolor_pattern_444(state):

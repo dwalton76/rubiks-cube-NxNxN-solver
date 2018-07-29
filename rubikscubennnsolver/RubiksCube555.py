@@ -1002,51 +1002,31 @@ class LookupTable555TCenterSolve(LookupTable):
     8 steps has 9,835 entries (2 percent, 0.08x previous step)
 
     Total: 343,000 entries
+    Average: 6.23 moves
     """
+
+    t_centers_555 = (
+        8, 12, 14, 18,
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118,
+        133, 137, 139, 143
+    )
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
             'lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt',
-            'xUxUUUxUxxLxLLLxLxxFxFFFxFxxRxRRRxRxxBxBBBxBxxDxDDDxDx',
-            linecount=343000)
+            'UUUULLLLFFFFRRRRBBBBDDDD',
+            linecount=343000,
+            filesize=19551000,
+        )
 
     def ida_heuristic(self):
         parent_state = self.parent.state
-        result = [
-            # Upper
-            'x', parent_state[8], 'x',
-            parent_state[12], parent_state[13], parent_state[14],
-            'x', parent_state[18], 'x',
-
-            # Left
-            'x', parent_state[33], 'x',
-            parent_state[37], parent_state[38], parent_state[39],
-            'x', parent_state[43], 'x',
-
-            # Front
-            'x', parent_state[58], 'x',
-            parent_state[62], parent_state[63], parent_state[64],
-            'x', parent_state[68], 'x',
-
-            # Right
-            'x', parent_state[83], 'x',
-            parent_state[87], parent_state[88], parent_state[89],
-            'x', parent_state[93], 'x',
-
-            # Back
-            'x', parent_state[108], 'x',
-            parent_state[112], parent_state[113], parent_state[114],
-            'x', parent_state[118], 'x',
-
-            # Down
-            'x', parent_state[133], 'x',
-            parent_state[137], parent_state[138], parent_state[139],
-            'x', parent_state[143], 'x'
-        ]
-
-        result = ''.join(result)
+        result = ''.join([parent_state[x] for x in self.t_centers_555])
         return (result, 0)
 
 

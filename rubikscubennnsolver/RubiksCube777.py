@@ -196,19 +196,6 @@ class LookupTableIDA777UDOutsideObliqueEdgePairing(LookupTableIDA):
                 right_state = right_state << 1
 
             lt_state = lt_state << 1
-            '''
-            if parent_state[x] == 'U':
-                if x in set_left_oblique_edge_777:
-                    left_state = left_state | 0x1
-
-                elif x in set_right_oblique_edge_777:
-                    right_state = right_state | 0x1
-
-                lt_state = lt_state | 0x1
-
-            right_state = right_state << 1
-            lt_state = lt_state << 1
-            '''
 
         left_state = left_state >> 1
         right_state = right_state >> 1
@@ -699,7 +686,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
 
             linecount=9919742,
             max_depth=3,
-            filesize=277752776,
+            filesize=178555356,
         )
 
     def recolor(self):

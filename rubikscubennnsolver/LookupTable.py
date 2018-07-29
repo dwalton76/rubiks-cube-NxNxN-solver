@@ -1033,7 +1033,7 @@ class LookupTableIDA(LookupTable):
 
             # We use the heuristic of the next phase to rank the solutions in this phase
             if self.next_phase:
-                next_phase_ida_heuristic = self.next_phase.ida_heuristic()
+                (_, next_phase_ida_heuristic) = self.next_phase.ida_heuristic()
             else:
                 next_phase_ida_heuristic = 0
 

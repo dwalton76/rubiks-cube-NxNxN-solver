@@ -367,11 +367,13 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             linecount = 868185
             max_depth = 5
             filesize = 16495515
+            exit_asap = True
         else:
             filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt'
             linecount = 17168476
             max_depth = 6
             filesize = 326201044
+            exit_asap = False
 
         LookupTableIDA.__init__(
             self,
@@ -389,7 +391,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             linecount=linecount,
             max_depth=max_depth,
             filesize=filesize,
-            exit_asap=True,
+            exit_asap=exit_asap,
         )
 
         self.recolor_positions = centers_555
@@ -528,6 +530,12 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
     set_t_centers_555 = set(LFRB_t_centers_555)
 
     def __init__(self, parent):
+
+        if parent.min_memory:
+            exit_asap = True
+        else:
+            exit_asap = False
+
         LookupTableIDA.__init__(
             self,
             parent,
@@ -547,7 +555,8 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
             linecount=43502,
             max_depth=5,
             filesize=1305060,
-            )
+            exit_asap=exit_asap,
+        )
 
         self.recolor_positions = LFRB_centers_555
         self.recolor_map = {
@@ -657,6 +666,12 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     """
 
     def __init__(self, parent):
+
+        if parent.min_memory:
+            exit_asap = True
+        else:
+            exit_asap = False
+
         LookupTableIDA.__init__(
             self,
             parent,
@@ -677,7 +692,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             linecount=142153,
             max_depth=5,
             filesize=8387027,
-            exit_asap=True,
+            exit_asap=exit_asap,
         )
 
         self.recolor_positions = centers_555
@@ -1152,6 +1167,9 @@ class RubiksCube555(RubiksCube):
             self.lt_edges_pair_last_four.preload_cache_dict()
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
+
+        self.lt_UD_centers_stage.next_phase = self.lt_LR_centers_stage
+        #self.lt_LR_centers_stage.next_phase = self.lt_ULFRB_centers_solve
 
     def high_low_state(self, x, y, state_x, state_y, wing_str):
         """

@@ -376,7 +376,8 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
         'FR': None,
         'FU': None,
         'LU': None,
-        'RU': None
+        'RU': None,
+        '--': None,
     }
 
     for (edge_index, square_index, partner_index) in midges_recolor_tuples_555:
@@ -412,9 +413,9 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
         elif partner_value == 'R':
             state[square_index] = edge_index
             state[partner_index] = edge_index
-        elif square_value == 'x' or partner_value == 'x':
-            state[square_index] = 'x'
-            state[partner_index] = 'x'
+        elif square_value == '-' or partner_value == '-':
+            state[square_index] = '-'
+            state[partner_index] = '-'
         else:
             raise Exception("We should not be here, state[%d] %s, partner state [%d] %s" % (square_index, state[square_index], partner_index, state[partner_index]))
 
@@ -423,15 +424,15 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
         square_value = state[square_index]
         partner_value = state[partner_index]
 
-        if square_value == 'x' or partner_value == 'x':
+        if square_value == '-' or partner_value == '-':
             pass
         else:
             high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
             wing_str = ''.join(sorted([square_value, partner_value]))
 
             if only_colors and wing_str not in only_colors:
-                state[square_index] = 'x'
-                state[partner_index] = 'x'
+                state[square_index] = '-'
+                state[partner_index] = '-'
 
             # If this is a high wing use the uppercase of the midge edge_index
             elif high_low == 'U':

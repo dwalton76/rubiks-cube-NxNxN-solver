@@ -1,0 +1,34 @@
+baseline
+========
+2018-07-28 09:34:27,819       LookupTable.py     INFO: 6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges: begin preload cache dict
+2018-07-28 09:34:28,165       LookupTable.py     INFO: 6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges: end preload cache dict (73,592,832 bytes delta, 1,690,251,264 bytes total)
+2018-07-28 09:34:28,165       LookupTable.py     INFO: 6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges: begin preload cache dict
+2018-07-28 09:34:28,505       LookupTable.py     INFO: 6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges: end preload cache dict (65,413,120 bytes delta, 1,755,664,384 bytes total)
+2018-07-28 09:34:28,505       LookupTable.py     INFO: 6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges: begin preload cache string
+2018-07-28 09:34:28,686       LookupTable.py     INFO: 6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges: end preload cache string (287,293,440 bytes delta, 2,042,957,824 bytes total, 287,292,528 characters)
+
+
+
+
+post converting tables to hex
+=============================
+2018-07-28 09:53:28,010       LookupTable.py     INFO: 6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges: begin preload cache dict
+2018-07-28 09:53:28,308       LookupTable.py     INFO: 6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges: end preload cache dict (64,942,080 bytes delta, 1,680,814,080 bytes total)
+2018-07-28 09:53:28,309       LookupTable.py     INFO: 6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges: begin preload cache dict
+2018-07-28 09:53:28,583       LookupTable.py     INFO: 6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges: end preload cache dict (56,987,648 bytes delta, 1,737,801,728 bytes total)
+2018-07-28 09:53:28,584       LookupTable.py     INFO: 6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges: begin preload cache string
+2018-07-28 09:53:28,676       LookupTable.py     INFO: 6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges: end preload cache string (164,929,536 bytes delta, 1,902,731,264 bytes total, 164,927,192 characters)
+
+
+
+
+post storing cost only in prune tables
+and chopping all but first step on step60 table
+======================================
+2018-07-28 10:36:53,277       LookupTable.py     INFO: 6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges: begin preload cache dict
+2018-07-28 10:36:53,490       LookupTable.py     INFO: 6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges: end preload cache dict (38,178,816 bytes delta, 1,654,247,424 bytes total)
+2018-07-28 10:36:53,490       LookupTable.py     INFO: 6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges: begin preload cache dict
+2018-07-28 10:36:53,693       LookupTable.py     INFO: 6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges: end preload cache dict (30,138,368 bytes delta, 1,684,389,888 bytes total)
+2018-07-28 10:36:53,693       LookupTable.py     INFO: 6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges: begin preload cache string
+2018-07-28 10:36:53,748       LookupTable.py     INFO: 6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges: end preload cache string (95,764,480 bytes delta, 1,780,158,464 bytes total, 95,764,176 characters)
+

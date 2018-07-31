@@ -1,0 +1,11 @@
+BRRLBDRBBBLFURBRUBDRFUDDUFULUDDFFLDFBRLLRLBUFDURBDULRBLLBUDLUUFDDFFLBDDLBBFRDURLLBDRRDDDRBUDFDDUBFDRUFUBRUULUBFRLLRLLUFRRFBUBLFFFLRRRFFDFBDLLLURBFFUUB
+
+
+2018-07-27 09:58:42,538       LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold range 7->99
+2018-07-27 09:58:42,538       LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 7, explored 1 nodes in 0ms, 37037 nodes-per-sec
+2018-07-27 09:58:42,562       LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 8, explored 606 nodes in 23ms, 25695 nodes-per-sec
+2018-07-27 09:58:43,101       LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 9, explored 14539 nodes in 538ms, 26993 nodes-per-sec
+2018-07-27 09:58:48,662       LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA found match 6 steps, solution length 12, f_cost 11 (6 + 5)
+2018-07-27 09:58:48,663       LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 10, explored 148175 nodes in 0:00:05.561707 (0:00:06.124527 total), found 1 solutions
+2018-07-27 09:58:48,663       LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA explored 163321 nodes in 0:00:06.124527, 26666 nodes-per-sec
+2018-07-27 09:58:48,664     RubiksCube555.py     INFO: 5x5x5: UD centers staged, 12 steps in

@@ -1,0 +1,56 @@
+Testing using ida_all_the_way=True for step10 and cube
+FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU
+
+baseline
+--------
+2018-07-24 09:12:52,683       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold range 7->99
+2018-07-24 09:12:52,683       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 7, explored 1 nodes in 0ms, 21739 nodes-per-sec
+2018-07-24 09:12:52,685       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 8, explored 93 nodes in 2ms, 40364 nodes-per-sec
+2018-07-24 09:12:52,734       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 9, explored 2129 nodes in 49ms, 43389 nodes-per-sec
+2018-07-24 09:12:53,675       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 10, explored 40464 nodes in 940ms, 43028 nodes-per-sec
+2018-07-24 09:13:08,436       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 11, explored 633666 nodes in 0:00:14.761001, 42928 nodes-per-sec
+2018-07-24 09:13:16,165       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA found match 11 steps, solution length 11, f_cost 12 (11 + 1)
+2018-07-24 09:13:16,165       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 12, explored 330385 nodes in 0:00:07.729257 (0:00:23.482849 total), found 1 solutions
+2018-07-24 09:13:16,165       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA explored 1006738 nodes in 0:00:23.482849, 42871 nodes-per-sec
+2018-07-24 09:13:16,170     RubiksCube444.py     INFO: 4x4x4: End of Phase1, 11 steps in
+
+
+
+take 01
+-------
+step10 will now only make one loop over centers_444, it will extract the state, UD_state, LR_state and FB_state
+2018-07-24 09:14:19,015       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold range 7->99
+2018-07-24 09:14:19,016       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 7, explored 1 nodes in 0ms, 31250 nodes-per-sec
+2018-07-24 09:14:19,018       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 8, explored 93 nodes in 2ms, 37651 nodes-per-sec
+2018-07-24 09:14:19,066       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 9, explored 2129 nodes in 47ms, 44377 nodes-per-sec
+2018-07-24 09:14:19,838       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 10, explored 40464 nodes in 771ms, 52418 nodes-per-sec
+2018-07-24 09:14:32,001       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 11, explored 633666 nodes in 0:00:12.162505, 52099 nodes-per-sec
+2018-07-24 09:14:38,427       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA found match 11 steps, solution length 11, f_cost 12 (11 + 1)
+2018-07-24 09:14:38,427       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 12, explored 330385 nodes in 0:00:06.426254 (0:00:19.411932 total), found 1 solutions
+2018-07-24 09:14:38,427       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA explored 1006738 nodes in 0:00:19.411932, 51861 nodes-per-sec
+2018-07-24 09:14:38,431     RubiksCube444.py     INFO: 4x4x4: End of Phase1, 11 steps in
+
+- clean this up
+- do this same basic thing for all IDA searches
+- check this in
+
+Of the 19s I know that ~4.5s is in rotate_444() and ~9s is in the step10 state(). That leaves 6s unaccounted for.
+Lets say we get that 13s down to 1s by porting those parts to C, so 7s total, that would be ~143k nodes-per-sec.
+
+
+
+take 02
+-------
+use C module for ida_heuristic for step10
+2018-07-27 09:33:10,110       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold range 7->99
+2018-07-27 09:33:10,110       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 7, explored 1 nodes in 0ms, 40000 nodes-per-sec
+2018-07-27 09:33:10,111       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 8, explored 93 nodes in 1ms, 64093 nodes-per-sec
+2018-07-27 09:33:10,141       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 9, explored 2129 nodes in 29ms, 72382 nodes-per-sec
+2018-07-27 09:33:10,580       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 10, explored 40464 nodes in 438ms, 92270 nodes-per-sec
+2018-07-27 09:33:17,735       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 11, explored 633686 nodes in 0:00:07.155640, 88557 nodes-per-sec
+2018-07-27 09:33:21,821       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA found match 11 steps, solution length 11, f_cost 11 (11 + 0)
+2018-07-27 09:33:21,821       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 12, explored 330405 nodes in 0:00:04.085929 (0:00:11.711771 total), found 1 solutions
+2018-07-27 09:33:21,822       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA explored 1006778 nodes in 0:00:11.711771, 85962 nodes-per-sec
+2018-07-27 09:33:21,825     RubiksCube444.py     INFO: 4x4x4: End of Phase1, 11 steps in
+
+Of this 11.7s about 6s of it is spent in rotate_444(). Moving to a bitfield model would speed this up a lot but that is a lot of work.

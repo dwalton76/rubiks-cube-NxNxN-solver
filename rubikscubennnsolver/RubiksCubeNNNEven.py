@@ -5,6 +5,7 @@ from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from math import ceil
+import gc
 import logging
 import sys
 
@@ -68,9 +69,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             self.fake_777.enable_print_cube = False
         else:
             self.fake_777.re_init()
-
-        if self.fake_666:
-            self.fake_777.fake_666 = self.fake_666
 
         if self.fake_555:
             self.fake_777.fake_555 = self.fake_555
@@ -148,6 +146,8 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 else:
                     self.rotate(step)
 
+        fake_666 = None
+        gc.collect()
         log.info("%s: Big plus sign formed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.print_cube()
 

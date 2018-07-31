@@ -1310,6 +1310,128 @@ class RubiksCube555(RubiksCube):
 
         return self._phase
 
+    def l4e_in_x_plane(self):
+        state = self.state
+        edges_in_plane = set()
+
+        for square_index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95):
+            partner_index = edges_partner_555[square_index]
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+            edges_in_plane.update(wing_str)
+
+        return len(edges_in_plane) == 4
+
+    def l4e_in_y_plane(self):
+        state = self.state
+        edges_in_plane = set()
+
+        for square_index in (2, 3, 4, 22, 23, 24, 127, 128, 129, 147, 148, 149):
+            partner_index = edges_partner_555[square_index]
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+            edges_in_plane.update(wing_str)
+
+        return len(edges_in_plane) == 4
+
+    def l4e_in_z_plane(self):
+        state = self.state
+        edges_in_plane = set()
+
+        for square_index in (6, 11, 16, 10, 15, 20, 131, 136, 141, 135, 140, 145):
+            partner_index = edges_partner_555[square_index]
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+            edges_in_plane.update(wing_str)
+
+        return len(edges_in_plane) == 4
+
+    def LFRB_centers_horizontal_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (32, 33, 34),
+            (37, 38, 39),
+            (42, 43, 44),
+
+            (57, 58, 59),
+            (62, 63, 64),
+            (67, 68, 69),
+
+            (82, 83, 84),
+            (87, 88, 89),
+            (92, 93, 94),
+
+            (107, 108, 109),
+            (112, 113, 114),
+            (117, 118, 119)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def UFDB_centers_vertical_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (7, 12, 17),
+            (8, 13, 18),
+            (9, 14, 19),
+
+            (57, 62, 67),
+            (58, 63, 68),
+            (59, 64, 69),
+
+            (132, 137, 142),
+            (133, 138, 143),
+            (134, 139, 144),
+
+            (107, 112, 117),
+            (108, 113, 118),
+            (109, 114, 119)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def LR_centers_vertical_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (32, 37, 42),
+            (33, 38, 43),
+            (34, 39, 44),
+
+            (82, 87, 92),
+            (83, 88, 93),
+            (84, 89, 94)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def UD_centers_horizontal_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (7, 8, 9),
+            (12, 13, 14),
+            (17, 18, 19),
+
+            (132, 133, 134),
+            (137, 138, 139),
+            (142, 143, 144)):
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
     def sanity_check(self):
         centers = (13, 38, 63, 88, 113, 138)
 

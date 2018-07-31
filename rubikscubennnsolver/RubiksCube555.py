@@ -12,6 +12,7 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableHashCostOnly,
     LookupTableIDA,
 )
+from pprint import pformat
 import itertools
 import logging
 import resource
@@ -1310,6 +1311,18 @@ class RubiksCube555(RubiksCube):
 
         return self._phase
 
+    def get_x_plane_wing_strs(self):
+        state = self.state
+        edges_in_plane = set()
+
+        for square_index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95):
+            partner_index = edges_partner_555[square_index]
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+            edges_in_plane.add(wing_str)
+        return edges_in_plane
+
     def l4e_in_x_plane(self):
         state = self.state
         edges_in_plane = set()
@@ -1319,8 +1332,9 @@ class RubiksCube555(RubiksCube):
             square_value = state[square_index]
             partner_value = state[partner_index]
             wing_str = ''.join(sorted([square_value, partner_value]))
-            edges_in_plane.update(wing_str)
+            edges_in_plane.add(wing_str)
 
+        log.info("l4e_in_x_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
 
     def l4e_in_y_plane(self):
@@ -1332,8 +1346,9 @@ class RubiksCube555(RubiksCube):
             square_value = state[square_index]
             partner_value = state[partner_index]
             wing_str = ''.join(sorted([square_value, partner_value]))
-            edges_in_plane.update(wing_str)
+            edges_in_plane.add(wing_str)
 
+        log.info("l4e_in_y_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
 
     def l4e_in_z_plane(self):
@@ -1345,8 +1360,9 @@ class RubiksCube555(RubiksCube):
             square_value = state[square_index]
             partner_value = state[partner_index]
             wing_str = ''.join(sorted([square_value, partner_value]))
-            edges_in_plane.update(wing_str)
+            edges_in_plane.add(wing_str)
 
+        log.info("l4e_in_z_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
 
     def LFRB_centers_horizontal_bars(self):
@@ -1709,9 +1725,9 @@ class RubiksCube555(RubiksCube):
         that gives us the shortest solution for getting 4-edges staged to LB, LF, RF, RB
         """
 
-        # return if they are already paired
-        if (self.sideL.west_edge_paired() and self.sideL.east_edge_paired and
-            self.sideR.west_edge_paired() and self.sideR.east_edge_paired):
+        # return if they are already staged
+        if self.l4e_in_x_plane():
+            self.stage_first_four_wing_strs = self.get_x_plane_wing_strs()
             return
 
         min_solution_len = None
@@ -1829,9 +1845,8 @@ class RubiksCube555(RubiksCube):
         steps that will be needed in solve_staged_edges_555().
         """
 
-        # return if they are already paired
-        if (self.sideU.north_edge_paired() and self.sideU.south_edge_paired and
-            self.sideD.north_edge_paired() and self.sideD.south_edge_paired):
+        # return if they are already staged
+        if self.l4e_in_y_plane() and self.l4e_in_z_plane():
             return
 
         # Remember what things looked like
@@ -1952,6 +1967,7 @@ class RubiksCube555(RubiksCube):
 
         self.stage_second_four_edges_555()
         self.print_cube()
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: all edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.solve_staged_edges_555(True)

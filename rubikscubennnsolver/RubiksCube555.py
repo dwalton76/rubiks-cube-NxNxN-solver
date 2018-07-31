@@ -1334,7 +1334,7 @@ class RubiksCube555(RubiksCube):
             wing_str = ''.join(sorted([square_value, partner_value]))
             edges_in_plane.add(wing_str)
 
-        log.info("l4e_in_x_plane %s" % pformat(edges_in_plane))
+        #log.info("l4e_in_x_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
 
     def l4e_in_y_plane(self):
@@ -1348,7 +1348,7 @@ class RubiksCube555(RubiksCube):
             wing_str = ''.join(sorted([square_value, partner_value]))
             edges_in_plane.add(wing_str)
 
-        log.info("l4e_in_y_plane %s" % pformat(edges_in_plane))
+        #log.info("l4e_in_y_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
 
     def l4e_in_z_plane(self):
@@ -1362,7 +1362,7 @@ class RubiksCube555(RubiksCube):
             wing_str = ''.join(sorted([square_value, partner_value]))
             edges_in_plane.add(wing_str)
 
-        log.info("l4e_in_z_plane %s" % pformat(edges_in_plane))
+        #log.info("l4e_in_z_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
 
     def LFRB_centers_horizontal_bars(self):

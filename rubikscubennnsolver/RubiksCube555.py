@@ -693,7 +693,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             linecount = 17168476
             max_depth = 6
             filesize = 326201044
-            exit_asap = False
+            exit_asap = True
 
         LookupTableIDA.__init__(
             self,

@@ -1226,10 +1226,9 @@ class LookupTableIDA(LookupTable):
                         "(this_solution_len + next_phase_ida_heuristic, this_solution_len, solution)\n\n"
                         "%s\n" % (self, pformat(self.ida_solutions[0:5], width=256)))
 
-                self.parent.state = self.pre_recolor_state[:]
-                self.parent.solution = self.pre_recolor_solution[:]
-
                 if self.collect_stats:
+                    self.parent.state = self.original_state[:]
+                    self.parent.solution = self.original_solution[:]
                     steps_to_go = len(min_solution)
 
                     for step in min_solution:
@@ -1241,10 +1240,12 @@ class LookupTableIDA(LookupTable):
 
                         self.parent.heuristic_stats[heuristic_tuple].append(steps_to_go)
                         steps_to_go -= 1
-                else:
-                    for step in min_solution:
-                        self.parent.rotate(step)
 
+                self.parent.state = self.pre_recolor_state[:]
+                self.parent.solution = self.pre_recolor_solution[:]
+
+                for step in min_solution:
+                    self.parent.rotate(step)
 
                 end_time1 = dt.datetime.now()
                 log.info("%s: IDA threshold %d, explored %d nodes in %s (%s total), found %d solutions" %

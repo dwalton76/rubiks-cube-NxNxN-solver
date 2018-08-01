@@ -110,7 +110,7 @@ ida_heuristic_states_step10_555(PyObject* self, PyObject* args)
     PyObject *set_t_centers_555;
     PyObject *cubie_index_object;
     PyObject *cubie_state_object;
-    unsigned long cubie_index;
+    unsigned long cubie_index = 0;
     char *cubie_state;
 
     unsigned long lt_state = 0;
@@ -203,13 +203,107 @@ ida_heuristic_states_step10_555(PyObject* self, PyObject* args)
 }
 
 
+static PyObject*
+ida_heuristic_states_step00_777(PyObject* self, PyObject* args)
+{
+    PyObject *cube;
+    PyObject *outside_oblique_edges_777;
+    PyObject *set_left_oblique_edge_777;
+    PyObject *set_right_oblique_edge_777;
+    PyObject *cubie_index_object;
+    PyObject *cubie_state_object;
+    unsigned long cubie_index;
+    char *cubie_state;
+
+    unsigned long lt_state = 0;
+    unsigned long left_state = 0;
+    unsigned long right_state = 0;
+    unsigned long outside_oblique_edges_777_size = 0;
+
+    if (! PyArg_ParseTuple(args, "O!O!O!O!",
+                           &PyList_Type, &cube,
+                           &PyTuple_Type, &outside_oblique_edges_777,
+                           &PySet_Type, &set_left_oblique_edge_777,
+                           &PySet_Type, &set_right_oblique_edge_777)) {
+        return NULL;
+    }
+
+    // The original python code for this was:
+    /*
+        left_state = 0
+        right_state = 0
+        lt_state = 0
+
+        set_left_oblique_edge_777 = self.set_left_oblique_edge_777
+        set_right_oblique_edge_777 = self.set_right_oblique_edge_777
+
+        for x in self.outside_oblique_edges_777:
+
+            if x in set_left_oblique_edge_777:
+                if parent_state[x] == 'U':
+                    left_state = left_state | 0x1
+                    lt_state = lt_state | 0x1
+                left_state = left_state << 1
+
+            if x in set_right_oblique_edge_777:
+                if parent_state[x] == 'U':
+                    right_state = right_state | 0x1
+                    lt_state = lt_state | 0x1
+                right_state = right_state << 1
+
+            lt_state = lt_state << 1
+
+        left_state = left_state >> 1
+        right_state = right_state >> 1
+        lt_state = lt_state >> 1
+    */
+
+    outside_oblique_edges_777_size = PyTuple_Size(outside_oblique_edges_777);
+
+    for (unsigned long i = 0; i < outside_oblique_edges_777_size; i++) {
+        // PyTuple_GetItem does error checking, PyTuple_GET_ITEM does not
+        cubie_index_object = PyTuple_GET_ITEM(outside_oblique_edges_777, i);
+        cubie_index = PyLong_AsUnsignedLong(cubie_index_object);
+        cubie_state_object = PyList_GET_ITEM(cube, cubie_index);
+        cubie_state = PyBytes_AS_STRING(PyUnicode_AsEncodedString(cubie_state_object, "utf-8", "Error ~"));
+
+        if (PySet_Contains(set_left_oblique_edge_777, cubie_index_object)) {
+            if (strcmp(cubie_state, "U") == 0) {
+                left_state = left_state | 0x1;
+                lt_state = lt_state | 0x1;
+            }
+            left_state = left_state << 1;
+
+        }
+
+        if (PySet_Contains(set_right_oblique_edge_777, cubie_index_object)) {
+            if (strcmp(cubie_state, "U") == 0) {
+                right_state = right_state | 0x1;
+                lt_state = lt_state | 0x1;
+            }
+            right_state = right_state << 1;
+        }
+
+        lt_state = lt_state << 1;
+    }
+
+    left_state = left_state >> 1;
+    right_state = right_state >> 1;
+    lt_state = lt_state >> 1;
+
+    return Py_BuildValue("(kkk)", lt_state, left_state, right_state);
+}
+
+
+
 // Our Module's Function Definition struct
 // We require this `NULL` to signal the end of our method
-// definition 
+// definition
 static PyMethodDef myMethods[] = {
     // { "bitfield_rotate_face_90", bitfield_rotate_face_90, METH_VARARGS, "Rotate a 4x4x4 bitfield 90 degrees" },
     { "ida_heuristic_states_step10_444", ida_heuristic_states_step10_444, METH_VARARGS, "Calc heurisitic states" },
     { "ida_heuristic_states_step10_555", ida_heuristic_states_step10_555, METH_VARARGS, "Calc heurisitic states" },
+    { "ida_heuristic_states_step00_777", ida_heuristic_states_step00_777, METH_VARARGS, "Calc heurisitic states" },
     { NULL, NULL, 0, NULL }
 };
 

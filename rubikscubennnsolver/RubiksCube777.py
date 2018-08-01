@@ -1,4 +1,5 @@
 
+from rubikscubennnsolver import NotSolving
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666, moves_666
@@ -7,6 +8,7 @@ from rubikscubennnsolver.RubiksCube777Misc import (
     state_targets_step31,
     state_targets_step32,
 )
+from rubikscubennnsolver.cLibrary import ida_heuristic_states_step00_777
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, LookupTableHashCostOnly
 import logging
 import math
@@ -133,6 +135,50 @@ class LookupTableIDA777UDOutsideObliqueEdgePairing(LookupTableIDA):
     set_left_oblique_edge_777 = set(left_oblique_edge_777)
     set_right_oblique_edge_777 = set(right_oblique_edge_777)
 
+    heuristic_stats = {
+        (0, 0): 1,
+        (0, 2): 10,
+        (0, 3): 11,
+        (1, 1): 2,
+        (1, 2): 7,
+        (1, 4): 6,
+        (2, 0): 10,
+        (2, 1): 8,
+        (2, 2): 3,
+        (2, 3): 4,
+        (2, 4): 7,
+        (2, 5): 7,
+        (3, 1): 9,
+        (3, 2): 4,
+        (3, 3): 4,
+        (3, 4): 6,
+        (3, 5): 7,
+        (3, 6): 11,
+        (3, 7): 13,
+        (4, 2): 7,
+        (4, 3): 6,
+        (4, 4): 6,
+        (4, 5): 7,
+        (4, 6): 10,
+        (4, 7): 13,
+        (5, 2): 7,
+        (5, 3): 8,
+        (5, 4): 7,
+        (5, 5): 8,
+        (5, 6): 10,
+        (5, 7): 12,
+        (6, 2): 12,
+        (6, 3): 12,
+        (6, 4): 10,
+        (6, 5): 10,
+        (6, 6): 11,
+        (6, 7): 12,
+        (7, 4): 12,
+        (7, 5): 12,
+        (7, 6): 12,
+        (7, 7): 12,
+    }
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -154,7 +200,8 @@ class LookupTableIDA777UDOutsideObliqueEdgePairing(LookupTableIDA):
 
             linecount=7271027,
             max_depth=6,
-            filesize=130878486)
+            filesize=130878486,
+        )
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
@@ -173,43 +220,27 @@ class LookupTableIDA777UDOutsideObliqueEdgePairing(LookupTableIDA):
         #self.parent.print_cube()
 
     def ida_heuristic(self):
-        parent_state = self.parent.state
-        left_state = 0
-        right_state = 0
-        lt_state = 0
-
-        set_left_oblique_edge_777 = self.set_left_oblique_edge_777
-        set_right_oblique_edge_777 = self.set_right_oblique_edge_777
-
-        for x in self.outside_oblique_edges_777:
-
-            if x in set_left_oblique_edge_777:
-                if parent_state[x] == 'U':
-                    left_state = left_state | 0x1
-                    lt_state = lt_state | 0x1
-                left_state = left_state << 1
-
-            if x in set_right_oblique_edge_777:
-                if parent_state[x] == 'U':
-                    right_state = right_state | 0x1
-                    lt_state = lt_state | 0x1
-                right_state = right_state << 1
-
-            lt_state = lt_state << 1
-
-        left_state = left_state >> 1
-        right_state = right_state >> 1
-        lt_state = lt_state >> 1
+        parent = self.parent
+        (lt_state, left_state, right_state) =\
+            ida_heuristic_states_step00_777(
+                parent.state,
+                self.outside_oblique_edges_777,
+                self.set_left_oblique_edge_777,
+                self.set_right_oblique_edge_777
+            )
 
         # convert to hex format
-        left_state = self.parent.lt_UD_outside_oblique_edge_pairing_left_only.hex_format % left_state
-        right_state = self.parent.lt_UD_outside_oblique_edge_pairing_right_only.hex_format % right_state
+        left_state = parent.lt_UD_outside_oblique_edge_pairing_left_only.hex_format % left_state
+        right_state = parent.lt_UD_outside_oblique_edge_pairing_right_only.hex_format % right_state
         lt_state = self.hex_format % lt_state
 
-        cost_to_goal = max(
-             self.parent.lt_UD_outside_oblique_edge_pairing_left_only.heuristic(left_state),
-             self.parent.lt_UD_outside_oblique_edge_pairing_right_only.heuristic(right_state),
-        )
+        left_cost = parent.lt_UD_outside_oblique_edge_pairing_left_only.heuristic(left_state)
+        right_cost = parent.lt_UD_outside_oblique_edge_pairing_right_only.heuristic(right_state)
+
+        cost_to_goal = self.heuristic_stats.get((left_cost, right_cost))
+
+        if cost_to_goal is None:
+            cost_to_goal = max(left_cost, right_cost)
 
         #log.info("%s: lt_state %s, left_state %s, right_state %s, cost_to_goal %d" %
         #    (self, lt_state, left_state, right_state, cost_to_goal))

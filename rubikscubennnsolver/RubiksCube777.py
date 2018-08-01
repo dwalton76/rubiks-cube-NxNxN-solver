@@ -8,7 +8,12 @@ from rubikscubennnsolver.RubiksCube777Misc import (
     state_targets_step31,
     state_targets_step32,
 )
-from rubikscubennnsolver.cLibrary import ida_heuristic_states_step00_777
+from rubikscubennnsolver.cLibrary import (
+    ida_heuristic_states_step00_777,
+    ida_heuristic_states_step40_777,
+    ida_heuristic_states_step50_777,
+    ida_heuristic_states_step60_777,
+)
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, LookupTableHashCostOnly
 import logging
 import math
@@ -1042,30 +1047,15 @@ class LookupTableIDA777Step40(LookupTableIDA):
             filesize=149563421)
 
     def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = 0
-        step41_state = []
-        step42_state = []
+        parent = self.parent
 
-        set_centers_step41_777 = self.set_centers_step41_777
-        set_centers_step42_777 = self.set_centers_step42_777
+        (lt_state, step41_state, step42_state) = ida_heuristic_states_step40_777(
+            parent.state,
+            self.centers_step40_777,
+            self.set_centers_step41_777,
+            self.set_centers_step42_777
+        )
 
-        for x in self.centers_step40_777:
-            x_state = parent_state[x]
-
-            if x in set_centers_step41_777:
-                step41_state.append(x_state)
-
-            if x in set_centers_step42_777:
-                step42_state.append(x_state)
-
-            if x_state == 'L':
-                lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-
-        step41_state = ''.join(step41_state)
-        step42_state = ''.join(step42_state)
-        lt_state = lt_state >> 1
         lt_state = self.hex_format % lt_state
 
         cost_to_goal = max(
@@ -1339,35 +1329,20 @@ class LookupTableIDA777Step50(LookupTableIDA):
             filesize=149563421)
 
     def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = 0
-        step51_state = []
-        step52_state = []
+        parent = self.parent
 
-        set_centers_step51_777 = self.set_centers_step51_777
-        set_centers_step52_777 = self.set_centers_step52_777
+        (lt_state, step51_state, step52_state) = ida_heuristic_states_step50_777(
+            parent.state,
+            self.centers_step50_777,
+            self.set_centers_step51_777,
+            self.set_centers_step52_777
+        )
 
-        for x in self.centers_step50_777:
-            x_state = parent_state[x]
-
-            if x in set_centers_step51_777:
-                step51_state.append(x_state)
-
-            if x in set_centers_step52_777:
-                step52_state.append(x_state)
-
-            if x_state == 'U':
-                lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-
-        step51_state = ''.join(step51_state)
-        step52_state = ''.join(step52_state)
-        lt_state = lt_state >> 1
         lt_state = self.hex_format % lt_state
 
         cost_to_goal = max(
-            self.parent.lt_step51.heuristic(step51_state),
-            self.parent.lt_step52.heuristic(step52_state),
+            parent.lt_step51.heuristic(step51_state),
+            parent.lt_step52.heuristic(step52_state),
         )
 
         return (lt_state, cost_to_goal)
@@ -1532,35 +1507,20 @@ class LookupTableIDA777Step60(LookupTableIDA):
             filesize=677932420)
 
     def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = 0
-        step61_state = []
-        step62_state = []
+        parent = self.parent
 
-        set_state_indexes_step61 = self.set_state_indexes_step61
-        set_state_indexes_step62 = self.set_state_indexes_step62
-
-        for x in self.state_indexes_step60:
-            x_state = parent_state[x]
-
-            if x in set_state_indexes_step61:
-                step61_state.append(x_state)
-
-            if x in set_state_indexes_step62:
-                step62_state.append(x_state)
-
-            if x_state in ('U', 'L', 'F'):
-                lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-
-        step61_state = ''.join(step61_state)
-        step62_state = ''.join(step62_state)
-        lt_state = lt_state >> 1
+        (lt_state, step61_state, step62_state) = ida_heuristic_states_step60_777(
+            parent.state,
+            self.state_indexes_step60,
+            self.set_state_indexes_step61,
+            self.set_state_indexes_step62
+        )
+        lt_state = int(lt_state, 2)
         lt_state = self.hex_format % lt_state
 
         cost_to_goal = max(
-            self.parent.lt_step61.heuristic(step61_state),
-            self.parent.lt_step62.heuristic(step62_state),
+            parent.lt_step61.heuristic(step61_state),
+            parent.lt_step62.heuristic(step62_state),
         )
 
         return (lt_state, cost_to_goal)

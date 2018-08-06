@@ -481,8 +481,7 @@ class LookupTable(object):
         """
         Return a list of the steps found in the lookup table for the current cube state
         """
-        if state_to_find is None:
-            state_to_find = self.state()
+        assert state_to_find
 
         # If we are at one of our state_targets we do not need to do anything
         if state_to_find in self.state_target:
@@ -576,7 +575,7 @@ class LookupTable(object):
 
                     for step in self.moves_all:
                         self.parent.rotate(step)
-                        tmp_state = self.state()
+                        (tmp_state, _) = self.ida_heuristic()
                         tmp_steps = self.steps(tmp_state)
 
                         if current_distance == 1:

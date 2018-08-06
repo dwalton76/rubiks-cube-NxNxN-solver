@@ -1195,7 +1195,7 @@ class RubiksCube(object):
 
                 # end of the row
                 if square_index % self.size == 0:
-                    if square_state.endswith('x') or square_state.endswith('.'):
+                    if square_state.endswith('x') or square_state.endswith('.') or square_state.endswith('-'):
                         rows[row_index].append("%s " % square_state)
                     else:
                         if all_digits:
@@ -1205,7 +1205,7 @@ class RubiksCube(object):
 
                     row_index += 1
                 else:
-                    if square_state.endswith('x') or square_state.endswith('.'):
+                    if square_state.endswith('x') or square_state.endswith('.') or square_state.endswith('-'):
                         rows[row_index].append("%s" % square_state)
                     else:
                         if all_digits:
@@ -1314,6 +1314,9 @@ class RubiksCube(object):
                 self.sideB.non_paired_wings(False, True, False, True) +
                 self.sideD.non_paired_wings(True, True, True, True))
 
+    def get_non_paired_wings_count(self):
+        return len(self.get_non_paired_wings())
+
     def get_non_paired_edges(self):
         # north, west, south, east
         return (self.sideU.non_paired_edges(True, True, True, True) +
@@ -1324,11 +1327,13 @@ class RubiksCube(object):
     def get_non_paired_edges_count(self):
         non_paired_edges = self.get_non_paired_edges()
         result = len(non_paired_edges)
-
         if result > 12:
             raise SolveError("Found %d unpaired edges but a cube only has 12 edges" % result)
 
         return result
+
+    def get_paired_edges_count(self):
+        return 12 - self.get_non_paired_edges_count()
 
     def edges_paired(self):
         if self.get_non_paired_edges_count() == 0:
@@ -2682,12 +2687,9 @@ class RubiksCube(object):
 
     def centers_solved(self):
         for side in list(self.sides.values()):
-            prev_pos = None
-            for pos in side.center_pos:
-                if prev_pos is not None:
-                    if self.state[prev_pos] != self.state[pos]:
-                        return False
-                prev_pos = pos
+            if not side.centers_solved():
+                return False
+
         return True
 
     def UD_centers_staged(self):

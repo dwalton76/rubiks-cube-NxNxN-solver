@@ -1659,41 +1659,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             fake_666.state[28 + offset_666] = self.state[40 + offset_777]
             fake_666.state[29 + offset_666] = self.state[41 + offset_777]
 
-    def group_outside_UD_oblique_edges(self):
-
-        # Use 666 to pair the outer UD oblique edges
-        self.create_fake_666_centers()
-        self.fake_666.lt_UD_oblique_edge_stage.solve()
-
-        for step in self.fake_666.solution:
-
-            if step.startswith('6'):
-                step = '7' + step[1:]
-
-            self.rotate(step)
-
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-        self.print_cube()
-        log.info("%s: UD outer oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-        # Now use 555 to stage the paired UD oblique edges, to sides UD
-        self.create_fake_555_from_outside_centers_for_UD_oblique_edges()
-        self.fake_555.lt_UD_T_centers_stage.solve()
-
-        for step in self.fake_555.solution:
-            if step.startswith('5'):
-                step = '7' + step[1:]
-            elif step.startswith('3'):
-                raise Exception("5x5x5 solution has 3 wide turn")
-            self.rotate(step)
-
-        self.print_cube()
-        log.info("%s: UD outer oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-
     def group_centers_guts(self):
         self.lt_init()
 
@@ -1708,7 +1673,21 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             log.info("")
 
             # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
-            self.group_outside_UD_oblique_edges()
+            self.create_fake_666_centers()
+            self.fake_666.lt_UD_oblique_edge_stage.solve()
+
+            for step in self.fake_666.solution:
+                if step.startswith('6'):
+                    step = '7' + step[1:]
+                self.rotate(step)
+
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
+            self.print_cube()
+            log.info("%s: UD outer oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+            log.info("")
+            log.info("")
 
             # Test the prune tables
             #self.lt_UD_oblique_edge_pairing_middle_only.solve()
@@ -1716,16 +1695,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             #self.lt_UD_oblique_edge_pairing_right_only.solve()
             #self.print_cube()
 
-            # Now stage the "inside" oblique UD edges with the already staged outside oblique UD edges
+            # Now pair the "inside" oblique UD edges with the already staged outside oblique UD edges
             self.lt_UD_oblique_edge_pairing.solve()
-            '''
             self.print_cube()
-            log.info("%s: UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("%s: UD oblique edges paired/staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
             log.info("")
             log.info("")
             log.info("")
-            '''
 
             # Stage the UD centers
             self.create_fake_555_from_outside_centers()

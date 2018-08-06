@@ -1002,6 +1002,9 @@ class RubiksCube444(RubiksCube):
 
         return False
 
+    def get_paired_wings_count(self):
+        return self.get_paired_edges_count()
+
     def get_flipped_edges(self):
         wing_str_high_low = {
             'UB' : [],

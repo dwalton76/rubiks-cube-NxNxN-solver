@@ -1151,7 +1151,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self._sanity_check('outside x-center', outside_x_centers, 4)
         self._sanity_check('inside x-center', inside_x_centers, 4)
 
-    def lt_init(self):
+    def lt_init(self, UD_oblique_edge_only=False):
         if self.lt_init_called:
             return
         self.lt_init_called = True
@@ -1159,6 +1159,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(self)
         self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
         self.lt_UD_oblique_edge_stage.preload_cache_string()
+
+        # This is the case if a 777 is using 666 to pair its UD oblique edges
+        if UD_oblique_edge_only:
+            return
 
         self.lt_LR_oblique_edges_stage = LookupTable666LRObliqueEdgesStage(self)
         self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCentersStage(self)
@@ -1230,18 +1234,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
         fake_555.lt_ULFRBD_t_centers_solve.solve()
-
-        for step in fake_555.solution:
-            self.rotate(step)
-
-    def stage_UD_oblique_edges(self):
-        """
-        Used by the 7x7x7 solver...this stages the UD oblique edges to sides U or D
-        """
-        self.lt_UD_oblique_edge_stage.solve()
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_ULFRBD_solve()
-        fake_555.lt_UD_T_centers_stage.solve()
 
         for step in fake_555.solution:
             self.rotate(step)

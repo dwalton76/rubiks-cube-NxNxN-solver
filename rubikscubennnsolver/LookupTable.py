@@ -1189,6 +1189,13 @@ class LookupTableIDA(LookupTable):
 
         if self.search_complete(state, []):
             log.info("%s: cube is already in a state %s that is in our lookup table" % (self, state))
+            tmp_solution = self.parent.solution[:]
+            self.parent.state = self.pre_recolor_state[:]
+            self.parent.solution = self.pre_recolor_solution[:]
+
+            for step in tmp_solution[len(self.original_solution):]:
+                self.parent.rotate(step)
+
             return True
 
         # If we are here (odds are very high we will be) it means that the current

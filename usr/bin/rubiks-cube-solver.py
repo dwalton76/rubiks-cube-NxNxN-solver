@@ -438,6 +438,7 @@ try:
             (edge_swap_count, corner_swap_count, kociemba_string))
 
 except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
+    cube.enable_print_cube = True
     cube.print_cube_layout()
     cube.print_cube()
     cube.print_solution()

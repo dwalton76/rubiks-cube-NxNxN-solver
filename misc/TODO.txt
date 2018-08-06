@@ -1,5 +1,8 @@
 
 
+- remove the 777 step00, 01, and 02 tables
+
+
 555 edges
 =========
 - pair the first four edges...maybe. There are 7920 starting points where 4-edges are paired.
@@ -28,40 +31,6 @@
 
 
 rubikscubennnsolver/RubiksCubeNNNEven.py stop using fake_666
-
-
-
-right now...
-------------
-
-- 777 UD oblique edge tables are building on LJs machine. There are two
-  165million entry tables to build. The main lookup table should have 
-  the same symmetries as 555 step10 so it may be worth using sym here.
-
-  This will allow us to chop a lot of messy code. It also means 777 will
-  no longer have to create a fake_666 which would be nice.
-
-  This is slow as dirt right now (it ran overnight and never finished). I
-  think this is because getting them paired AND staged is just too many
-  moves.  This needs to pair only but that means no big lookup table.
-
-
-- python extensions in C
-    - take some notes on nodes-per-sec for each IDA search we do today
-    - take some notes on how long it takes to solve each cube size today
-
-    - write rotate_444 in C and build a python module for it
-        How many nodes-per-sec does that get us? It saves us from rewriting everything to use bitfields.
-
-    - 444 step10 ida_heuristic(), write the guts of this in C
-
-
-    - are things fast enough to no longer use heuristic_stats anywhere?
-    - are things fast enough to make some tables smaller? 555 step10 and 666 step20 are both HUGE!!
-
-- LookupTable string binary_search...should we cache entries? Test with step10 of this cube..
-it does 36k nps but if you load that table into a dict it is 61k nps
-DFFURRULDLDLURLBDDRRBFRURFBFBFRBDLBBFRBLRFBRBBFLULDLBLULLFRUBUFLDFFLDULDDLUURRDRFBRLULUDRBDUUUBBRFFDBDFURDBBDDRULBUDRDLLLBDRFDLRDLLFDBBUFBRURFFUFFUUFU
 
 
 444

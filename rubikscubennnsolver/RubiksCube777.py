@@ -34,224 +34,6 @@ centers_777 = (
 )
 
 
-class LookupTable777UDOutsideObliqueEdgePairingLeftOnly(LookupTable):
-    """
-    24!/(8!*16!) is 735,471
-
-    lookup-table-7x7x7-step01-UD-oblique-edges-stage-left.txt
-    =========================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1,198 entries (0 percent, 14.61x previous step)
-    4 steps has 13,818 entries (1 percent, 11.53x previous step)
-    5 steps has 115,638 entries (15 percent, 8.37x previous step)
-    6 steps has 399,478 entries (54 percent, 3.45x previous step)
-    7 steps has 204,612 entries (27 percent, 0.51x previous step)
-    8 steps has 640 entries (0 percent, 0.00x previous step)
-
-    Total: 735,471 entries
-    Average: 6.08 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step01-UD-oblique-edges-stage-left.txt',
-            'f0000f',
-            linecount=735471,
-            max_depth=8,
-            filesize=6619239,
-        )
-
-
-class LookupTable777UDOutsideObliqueEdgePairingRightOnly(LookupTable):
-    """
-    24!/(8!*16!) is 735,471
-
-    lookup-table-7x7x7-step02-UD-oblique-edges-stage-right.txt
-    ==========================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1,198 entries (0 percent, 14.61x previous step)
-    4 steps has 13,818 entries (1 percent, 11.53x previous step)
-    5 steps has 115,638 entries (15 percent, 8.37x previous step)
-    6 steps has 399,478 entries (54 percent, 3.45x previous step)
-    7 steps has 204,612 entries (27 percent, 0.51x previous step)
-    8 steps has 640 entries (0 percent, 0.00x previous step)
-
-    Total: 735,471 entries
-    Average: 6.08 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step02-UD-oblique-edges-stage-right.txt',
-            'f0000f',
-            linecount=735471,
-            max_depth=8,
-            filesize=6619239,
-        )
-
-
-class LookupTableIDA777UDOutsideObliqueEdgePairing(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step00-UD-oblique-edges-stage.txt
-    ====================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1,434 entries (0 percent, 17.49x previous step)
-    4 steps has 24,198 entries (0 percent, 16.87x previous step)
-    5 steps has 405,916 entries (5 percent, 16.77x previous step)
-    6 steps has 6,839,392 entries (94 percent, 16.85x previous step)
-
-    Total: 7,271,027 entries
-    """
-
-    outside_oblique_edges_777 = (
-        10, 12, 16, 20, 30, 34, 38, 40, # Upper
-        59, 61, 65, 69, 79, 83, 87, 89, # Left
-        108, 110, 114, 118, 128, 132, 136, 138, # Front
-        157, 159, 163, 167, 177, 181, 185, 187, # Right
-        206, 208, 212, 216, 226, 230, 234, 236, # Back
-        255, 257, 261, 265, 275, 279, 283, 285, # Down
-    )
-
-    left_oblique_edge_777 = (
-        10, 20, 30, 40, # Upper
-        59, 69, 79, 89, # Left
-        108, 118, 128, 138, # Front
-        157, 167, 177, 187, # Right
-        206, 216, 226, 236, # Back
-        255, 265, 275, 285, # Down
-    )
-
-    right_oblique_edge_777 = (
-        12, 16, 34, 38, # Upper
-        61, 65, 83, 87, # Left
-        110, 114, 132, 136, # Front
-        159, 163, 181, 185, # Right
-        208, 212, 230, 234, # Back
-        257, 261, 279, 283, # Down
-    )
-
-    set_left_oblique_edge_777 = set(left_oblique_edge_777)
-    set_right_oblique_edge_777 = set(right_oblique_edge_777)
-
-    heuristic_stats = {
-        (0, 0): 1,
-        (0, 2): 10,
-        (0, 3): 11,
-        (1, 1): 2,
-        (1, 2): 7,
-        (1, 4): 6,
-        (2, 0): 10,
-        (2, 1): 8,
-        (2, 2): 3,
-        (2, 3): 4,
-        (2, 4): 7,
-        (2, 5): 7,
-        (3, 1): 9,
-        (3, 2): 4,
-        (3, 3): 4,
-        (3, 4): 6,
-        (3, 5): 7,
-        (3, 6): 11,
-        (3, 7): 13,
-        (4, 2): 7,
-        (4, 3): 6,
-        (4, 4): 6,
-        (4, 5): 7,
-        (4, 6): 10,
-        (4, 7): 13,
-        (5, 2): 7,
-        (5, 3): 8,
-        (5, 4): 7,
-        (5, 5): 8,
-        (5, 6): 10,
-        (5, 7): 12,
-        (6, 2): 12,
-        (6, 3): 12,
-        (6, 4): 10,
-        (6, 5): 10,
-        (6, 6): 11,
-        (6, 7): 12,
-        (7, 4): 12,
-        (7, 5): 12,
-        (7, 6): 12,
-        (7, 7): 12,
-    }
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step00-UD-oblique-edges-stage.txt',
-            'ff00000000ff',
-            moves_777,
-
-            # do not mess up UD 5x5x5 centers
-            ("3Rw", "3Rw'",
-             "3Lw", "3Lw'",
-             "3Fw", "3Fw'",
-             "3Bw", "3Bw'"
-            ),
-
-            # prune tables
-            (parent.lt_UD_outside_oblique_edge_pairing_left_only,
-             parent.lt_UD_outside_oblique_edge_pairing_right_only),
-
-            linecount=7271027,
-            max_depth=6,
-            filesize=130878486,
-        )
-
-    def recolor(self):
-        log.info("%s: recolor (custom)" % self)
-        #self.parent.print_cube()
-        self.parent.nuke_corners()
-        self.parent.nuke_edges()
-
-        for x in centers_777:
-            if x in self.outside_oblique_edges_777:
-                if self.parent.state[x] == 'U' or self.parent.state[x] == 'D':
-                    self.parent.state[x] = 'U'
-                else:
-                    self.parent.state[x] = 'x'
-            else:
-                self.parent.state[x] = '.'
-        #self.parent.print_cube()
-
-    def ida_heuristic(self):
-        parent = self.parent
-        (lt_state, left_state, right_state) =\
-            ida_heuristic_states_step00_777(
-                parent.state,
-                self.outside_oblique_edges_777,
-                self.set_left_oblique_edge_777,
-                self.set_right_oblique_edge_777
-            )
-
-        # convert to hex format
-        left_state = parent.lt_UD_outside_oblique_edge_pairing_left_only.hex_format % left_state
-        right_state = parent.lt_UD_outside_oblique_edge_pairing_right_only.hex_format % right_state
-        lt_state = self.hex_format % lt_state
-
-        left_cost = parent.lt_UD_outside_oblique_edge_pairing_left_only.heuristic(left_state)
-        right_cost = parent.lt_UD_outside_oblique_edge_pairing_right_only.heuristic(right_state)
-
-        cost_to_goal = self.heuristic_stats.get((left_cost, right_cost))
-
-        if cost_to_goal is None:
-            cost_to_goal = max(left_cost, right_cost)
-
-        #log.info("%s: lt_state %s, left_state %s, right_state %s, cost_to_goal %d" %
-        #    (self, lt_state, left_state, right_state, cost_to_goal))
-        return (lt_state, cost_to_goal)
-
-
 class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
     """
     24!/(8!*16!) is 735,471
@@ -1572,6 +1354,15 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         else:
             RubiksCube777.instantiated = True
 
+    def get_fake_666(self):
+        if self.fake_666 is None:
+            self.fake_666 = RubiksCube666(solved_666, 'URFDLB')
+            self.fake_666.lt_init(UD_oblique_edge_only=True)
+            self.fake_666.enable_print_cube = False
+        else:
+            self.fake_666.re_init()
+        return self.fake_666
+
     def phase(self):
         if self._phase is None:
             self._phase = 'Stage UD centers'
@@ -1686,13 +1477,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
         self.lt_init_called = True
 
-        self.lt_UD_outside_oblique_edge_pairing_left_only = LookupTable777UDOutsideObliqueEdgePairingLeftOnly(self)
-        self.lt_UD_outside_oblique_edge_pairing_right_only = LookupTable777UDOutsideObliqueEdgePairingRightOnly(self)
-        self.lt_UD_outside_oblique_edge_pairing = LookupTableIDA777UDOutsideObliqueEdgePairing(self)
-        self.lt_UD_outside_oblique_edge_pairing_left_only.preload_cache_dict()
-        self.lt_UD_outside_oblique_edge_pairing_right_only.preload_cache_dict()
-        self.lt_UD_outside_oblique_edge_pairing.preload_cache_string()
-
         self.lt_UD_oblique_edge_pairing_middle_only = LookupTable777UDObliqueEdgePairingMiddleOnly(self)
         self.lt_UD_oblique_edge_pairing_left_only = LookupTable777UDObliqueEdgePairingLeftOnly(self)
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable777UDObliqueEdgePairingRightOnly(self)
@@ -1764,6 +1548,29 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             fake_555.state[18 + offset_555] = self.state[39 + offset_777]
             fake_555.state[19 + offset_555] = self.state[41 + offset_777]
 
+    def create_fake_555_from_outside_centers_for_UD_oblique_edges(self):
+        # This is only used when we are staging the UD outer x-centers and paired
+        # UD outer oblique edges, to sides UD
+        fake_555 = self.get_fake_555()
+        fake_555.nuke_corners()
+        fake_555.nuke_edges()
+        fake_555.nuke_centers()
+
+        for side_index in range(6):
+            offset_555 = side_index * 25
+            offset_777 = side_index * 49
+            fake_555.state[7 + offset_555] = self.state[9 + offset_777]
+            fake_555.state[8 + offset_555] = self.state[10 + offset_777]
+            fake_555.state[9 + offset_555] = self.state[13 + offset_777]
+
+            fake_555.state[12 + offset_555] = self.state[16 + offset_777]
+            fake_555.state[13 + offset_555] = self.state[25 + offset_777]
+            fake_555.state[14 + offset_555] = self.state[20 + offset_777]
+
+            fake_555.state[17 + offset_555] = self.state[37 + offset_777]
+            fake_555.state[18 + offset_555] = self.state[38 + offset_777]
+            fake_555.state[19 + offset_555] = self.state[41 + offset_777]
+
     def UD_inside_centers_staged(self):
         state = self.state
 
@@ -1820,10 +1627,72 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
             self.rotate(step)
 
+    def create_fake_666_centers(self):
+
+        # Create a fake 6x6x6 to stage the outside UD oblique edges
+        fake_666 = self.get_fake_666()
+        fake_666.nuke_corners()
+        fake_666.nuke_edges()
+        fake_666.nuke_centers()
+
+        for side_index in range(6):
+            offset_666 = side_index * 36
+            offset_777 = side_index * 49
+
+            fake_666.state[8 + offset_666] = self.state[9 + offset_777]
+            fake_666.state[9 + offset_666] = self.state[10 + offset_777]
+            fake_666.state[10 + offset_666] = self.state[12 + offset_777]
+            fake_666.state[11 + offset_666] = self.state[13 + offset_777]
+
+            fake_666.state[14 + offset_666] = self.state[16 + offset_777]
+            fake_666.state[15 + offset_666] = self.state[17 + offset_777]
+            fake_666.state[16 + offset_666] = self.state[19 + offset_777]
+            fake_666.state[17 + offset_666] = self.state[20 + offset_777]
+
+            fake_666.state[20 + offset_666] = self.state[30 + offset_777]
+            fake_666.state[21 + offset_666] = self.state[31 + offset_777]
+            fake_666.state[22 + offset_666] = self.state[33 + offset_777]
+            fake_666.state[23 + offset_666] = self.state[34 + offset_777]
+
+            fake_666.state[26 + offset_666] = self.state[37 + offset_777]
+            fake_666.state[27 + offset_666] = self.state[38 + offset_777]
+            fake_666.state[28 + offset_666] = self.state[40 + offset_777]
+            fake_666.state[29 + offset_666] = self.state[41 + offset_777]
+
     def group_outside_UD_oblique_edges(self):
-        self.lt_UD_outside_oblique_edge_pairing.solve()
+
+        # Use 666 to pair the outer UD oblique edges
+        self.create_fake_666_centers()
+        self.fake_666.lt_UD_oblique_edge_stage.solve()
+
+        for step in self.fake_666.solution:
+
+            if step.startswith('6'):
+                step = '7' + step[1:]
+
+            self.rotate(step)
+
         self.rotate_U_to_U()
         self.rotate_F_to_F()
+        self.print_cube()
+        log.info("%s: UD outer oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # Now use 555 to stage the paired UD oblique edges, to sides UD
+        self.create_fake_555_from_outside_centers_for_UD_oblique_edges()
+        self.fake_555.lt_UD_T_centers_stage.solve()
+
+        for step in self.fake_555.solution:
+            if step.startswith('5'):
+                step = '7' + step[1:]
+            elif step.startswith('3'):
+                raise Exception("5x5x5 solution has 3 wide turn")
+            self.rotate(step)
+
+        self.print_cube()
+        log.info("%s: UD outer oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
+        log.info("")
+        log.info("")
 
     def group_centers_guts(self):
         self.lt_init()
@@ -1840,12 +1709,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
             # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
             self.group_outside_UD_oblique_edges()
-            self.print_cube()
-            log.info("%s: UD oblique edges (outside only) staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
 
             # Test the prune tables
             #self.lt_UD_oblique_edge_pairing_middle_only.solve()
@@ -1855,12 +1718,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
             # Now stage the "inside" oblique UD edges with the already staged outside oblique UD edges
             self.lt_UD_oblique_edge_pairing.solve()
+            '''
             self.print_cube()
             log.info("%s: UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
             log.info("")
             log.info("")
             log.info("")
+            '''
 
             # Stage the UD centers
             self.create_fake_555_from_outside_centers()

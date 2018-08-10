@@ -464,7 +464,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         two_count = self.get_UD_obliques_two_pair_setup_count()
         four_count = self.get_UD_obliques_four_pair_setup_count()
         cost_to_goal = self.heuristic_stats.get((UD_unpaired_obliques, two_count, four_count), 0)
-        cost_to_goal = max(math.ceil(UD_unpaired_obliques/4), , cost_to_goal - self.heuristic_stats_error)
+        cost_to_goal = max(math.ceil(UD_unpaired_obliques/4), cost_to_goal - self.heuristic_stats_error)
 
         return (lt_state, cost_to_goal)
 

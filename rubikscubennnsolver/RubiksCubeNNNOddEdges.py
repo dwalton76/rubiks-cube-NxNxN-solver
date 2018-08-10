@@ -65,11 +65,11 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             row5_col2 = row1_col2 + ((self.size - 1) * self.size)
             row5_col3 = row1_col3 + ((self.size - 1) * self.size)
 
-            log.info("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
-            log.info("%d row2: %s, %s" % (x, row2_col1, row2_col3))
-            log.info("%d row3: %s, %s" % (x, row3_col1, row3_col3))
-            log.info("%d row4: %s, %s" % (x, row4_col1, row4_col3))
-            log.info("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
+            log.debug("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
+            log.debug("%d row2: %s, %s" % (x, row2_col1, row2_col3))
+            log.debug("%d row3: %s, %s" % (x, row3_col1, row3_col3))
+            log.debug("%d row4: %s, %s" % (x, row4_col1, row4_col3))
+            log.debug("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
 
             # row1
             fake_555.state[start_555+2] = self.state[row1_col1]

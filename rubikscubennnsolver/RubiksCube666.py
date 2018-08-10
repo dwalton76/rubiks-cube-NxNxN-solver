@@ -346,8 +346,9 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         (8, 4, 0): 5,
         (8, 5, 0): 5,
     }
-    # uncomment to test step20 without heuristic_stats
-    #heuristic_stats = {}
+
+    # 99 disables heuristic_stats
+    heuristic_stats_error = 0
 
     def __init__(self, parent):
         if parent.min_memory:
@@ -462,12 +463,8 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
 
         two_count = self.get_UD_obliques_two_pair_setup_count()
         four_count = self.get_UD_obliques_four_pair_setup_count()
-        state_tuple = (UD_unpaired_obliques, two_count, four_count)
-        cost_to_goal = self.heuristic_stats.get(state_tuple)
-
-        if cost_to_goal is None:
-            #log.warning("UD_unpaired_obliques_heuristic_666 needs entry for %s" % pformat(state_tuple))
-            cost_to_goal = math.ceil(UD_unpaired_obliques/4)
+        cost_to_goal = self.heuristic_stats.get((UD_unpaired_obliques, two_count, four_count), 0)
+        cost_to_goal = max(math.ceil(UD_unpaired_obliques/4), , cost_to_goal - self.heuristic_stats_error)
 
         return (lt_state, cost_to_goal)
 

@@ -3900,7 +3900,7 @@ class RubiksCube(object):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.solution.append('CENTERS_SOLVED')
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
 
         if self.edges_paired():
             log.info("edges are already paired")

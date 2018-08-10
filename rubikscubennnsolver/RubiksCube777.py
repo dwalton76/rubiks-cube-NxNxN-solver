@@ -21,6 +21,28 @@ import sys
 
 log = logging.getLogger(__name__)
 
+'''
+baseline without heuristic_stats on step10, 40, 50, and 60
+----------------------------------------------------------
+7x7x7 avg centers solution 123.81818181818181 steps
+7x7x7 avg edges solution 104.0909090909091 steps
+7x7x7 avg solution 249.1818181818182 steps
+7x7x7 min solution 243 steps (DBRFBBRLRBULFDLBBURDLBRRUUFLUFDFUFRRBUBUFRRLUFLDULBFUDLUDBDFDDFDFLDUFFFUFRRLDBBFUDUFDLRLUBUDRRRDBFUFFUBFBURLDDFLURDUFFRDRDFDLDDBURULULDDBDDRFFFBLFBDULRURRDUDUURUBLLLDFUDDDDRBUBULLRBRRLDUBLLLBLRBLDBUBLFFBDURFRURBBBBRRRUFFLLLLULFBBBLLFLBLRBFBDRRBLFUDLFULDLRRFURDRBFFUUBRBBLDBDLRBLULFBFDRDFRURFFDU)
+7x7x7 max solution 257 steps (UURDDFBLDBBDRRUDDRUBDURLUFFFBFBRDLBDUBLFBBDRUUUDDFUDLFUUBDRBULUDRFRRUFURLRFRBURLLBFFFBRRLDDLBBUDLFRBBFLRRFLUFBLLFURDDBRDFBFDDRFBUURURLFLDDDRLULLBBUFBDDLLBUFLDRLRBLFUFRRBBUDBULLFBDLLRBRBULUDBDDRFLURDLBRBBLUFUBFDFDLUUUUBBDLBLRFUUBRDUUFFLLBFDDBRUFDRRBFUFFRBDDURFRFLRDDRDULBFFLLDBFFRDFRFLRULLULFLRL)
+
+
+real    7m59.150s
+user    6m4.337s
+sys     1m51.039s
+
+
+
+with heuristic_stats on step10, 40, 50, and 60
+----------------------------------------------
+I only solved 200 cubes when I built the stats, that isn't enough for the stats
+to be useful so I set the error to 99 for all of them for now.
+'''
+
 moves_777 = moves_666
 solved_777 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
@@ -190,6 +212,104 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
         257, 261, 279, 283, # Down
     )
 
+    heuristic_stats = {
+        (0, 0, 0): 1,
+        (0, 3, 0): 5,
+        (0, 4, 0): 6,
+        (1, 1, 1): 2,
+        (1, 2, 1): 10,
+        (1, 3, 1): 4,
+        (1, 4, 1): 6,
+        (1, 5, 1): 9,
+        (1, 7, 1): 8,
+        (2, 1, 2): 11,
+        (2, 2, 2): 3,
+        (2, 2, 3): 4,
+        (2, 3, 2): 5,
+        (2, 3, 3): 4,
+        (2, 4, 2): 5,
+        (2, 4, 3): 7,
+        (2, 5, 2): 7,
+        (2, 6, 2): 7,
+        (2, 7, 2): 8,
+        (3, 1, 3): 10,
+        (3, 2, 2): 4,
+        (3, 2, 3): 10,
+        (3, 3, 3): 9,
+        (3, 3, 4): 9,
+        (3, 4, 3): 8,
+        (3, 4, 4): 7,
+        (3, 5, 3): 7,
+        (3, 5, 4): 9,
+        (3, 6, 3): 8,
+        (3, 7, 3): 8,
+        (3, 7, 4): 9,
+        (4, 1, 5): 4,
+        (4, 2, 4): 3,
+        (4, 2, 5): 4,
+        (4, 3, 4): 11,
+        (4, 3, 5): 8,
+        (4, 3, 6): 9,
+        (4, 4, 3): 7,
+        (4, 4, 4): 11,
+        (4, 4, 5): 6,
+        (4, 4, 6): 6,
+        (4, 5, 4): 11,
+        (4, 5, 5): 11,
+        (4, 6, 4): 13,
+        (4, 7, 4): 14,
+        (5, 2, 4): 6,
+        (5, 2, 5): 9,
+        (5, 2, 6): 9,
+        (5, 3, 5): 4,
+        (5, 3, 6): 8,
+        (5, 4, 4): 9,
+        (5, 4, 5): 11,
+        (5, 4, 6): 7,
+        (5, 5, 4): 8,
+        (5, 5, 5): 12,
+        (5, 5, 6): 8,
+        (5, 6, 4): 8,
+        (5, 6, 5): 13,
+        (5, 6, 6): 7,
+        (5, 7, 5): 15,
+        (5, 8, 5): 14,
+        (5, 8, 6): 15,
+        (6, 2, 5): 9,
+        (6, 2, 6): 8,
+        (6, 3, 5): 9,
+        (6, 3, 6): 14,
+        (6, 4, 4): 9,
+        (6, 4, 5): 7,
+        (6, 4, 6): 12,
+        (6, 4, 7): 6,
+        (6, 5, 5): 8,
+        (6, 5, 6): 13,
+        (6, 5, 7): 7,
+        (6, 6, 4): 7,
+        (6, 6, 5): 7,
+        (6, 6, 6): 14,
+        (6, 7, 6): 15,
+        (6, 7, 7): 14,
+        (6, 8, 6): 15,
+        (7, 3, 7): 9,
+        (7, 4, 6): 7,
+        (7, 4, 7): 15,
+        (7, 5, 4): 14,
+        (7, 5, 6): 8,
+        (7, 5, 7): 14,
+        (7, 6, 7): 15,
+        (7, 7, 7): 15,
+        (7, 8, 7): 16,
+        (7, 9, 7): 15,
+        (8, 6, 8): 14,
+        (8, 7, 8): 16,
+        (8, 8, 8): 14,
+    }
+
+    # 99 disables heuristic_stats
+    heuristic_stats_error = 99
+
     set_left_oblique_edge_777 = set(left_oblique_edge_777)
     set_middle_oblique_edge_777 = set(middle_oblique_edge_777)
     set_right_oblique_edge_777 = set(right_oblique_edge_777)
@@ -214,6 +334,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
             max_depth=6,
             filesize=399425391,
         )
+        #self.collect_stats = True
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
@@ -231,7 +352,8 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
                 self.parent.state[x] = '.'
         #self.parent.print_cube()
 
-    def ida_heuristic(self):
+    def ida_heuristic_tuple(self):
+        parent = self.parent
         parent_state = self.parent.state
         left_state = 0
         middle_state = 0
@@ -267,16 +389,65 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
         lt_state = lt_state >> 1
 
         # convert to hex format
-        left_state = self.parent.lt_UD_oblique_edge_pairing_left_only.hex_format % left_state
-        middle_state = self.parent.lt_UD_oblique_edge_pairing_middle_only.hex_format % middle_state
-        right_state = self.parent.lt_UD_oblique_edge_pairing_right_only.hex_format % right_state
+        left_state = parent.lt_UD_oblique_edge_pairing_left_only.hex_format % left_state
+        middle_state = parent.lt_UD_oblique_edge_pairing_middle_only.hex_format % middle_state
+        right_state = parent.lt_UD_oblique_edge_pairing_right_only.hex_format % right_state
         lt_state = self.hex_format % lt_state
 
-        cost_to_goal = max(
-             self.parent.lt_UD_oblique_edge_pairing_left_only.heuristic(left_state),
-             self.parent.lt_UD_oblique_edge_pairing_middle_only.heuristic(middle_state),
-             self.parent.lt_UD_oblique_edge_pairing_right_only.heuristic(right_state),
-        )
+        left_cost = parent.lt_UD_oblique_edge_pairing_left_only.heuristic(left_state)
+        middle_cost = parent.lt_UD_oblique_edge_pairing_middle_only.heuristic(middle_state)
+        right_cost = parent.lt_UD_oblique_edge_pairing_right_only.heuristic(right_state)
+        return (str(self), left_cost, middle_cost, right_cost)
+
+    def ida_heuristic(self):
+        parent = self.parent
+        parent_state = self.parent.state
+        left_state = 0
+        middle_state = 0
+        right_state = 0
+        lt_state = 0
+
+        set_left_oblique_edge_777 = self.set_left_oblique_edge_777
+        set_middle_oblique_edge_777 = self.set_middle_oblique_edge_777
+        set_right_oblique_edge_777 = self.set_right_oblique_edge_777
+
+        for x in self.oblique_edges_777:
+
+            if parent_state[x] == 'U':
+                if x in set_left_oblique_edge_777:
+                    left_state = left_state | 0x1
+
+                elif x in set_middle_oblique_edge_777:
+                    middle_state = middle_state | 0x1
+
+                elif x in set_right_oblique_edge_777:
+                    right_state = right_state | 0x1
+
+                lt_state = lt_state | 0x1
+
+            left_state = left_state << 1
+            middle_state = middle_state << 1
+            right_state = right_state << 1
+            lt_state = lt_state << 1
+
+        left_state = left_state >> 1
+        middle_state = middle_state >> 1
+        right_state = right_state >> 1
+        lt_state = lt_state >> 1
+
+        # convert to hex format
+        left_state = parent.lt_UD_oblique_edge_pairing_left_only.hex_format % left_state
+        middle_state = parent.lt_UD_oblique_edge_pairing_middle_only.hex_format % middle_state
+        right_state = parent.lt_UD_oblique_edge_pairing_right_only.hex_format % right_state
+        lt_state = self.hex_format % lt_state
+
+        left_cost = parent.lt_UD_oblique_edge_pairing_left_only.heuristic(left_state)
+        middle_cost = parent.lt_UD_oblique_edge_pairing_middle_only.heuristic(middle_state)
+        right_cost = parent.lt_UD_oblique_edge_pairing_right_only.heuristic(right_state)
+        cost_to_goal = self.heuristic_stats.get((left_cost, middle_cost, right_cost), 0)
+        #log.warning("%s: (%s, %s, %s) cost_to_goal %s" % (self, left_cost, middle_cost, right_cost, cost_to_goal))
+        cost_to_goal = max(left_cost, middle_cost, right_cost, cost_to_goal - self.heuristic_stats_error)
+        #log.info("%s: final cost_to_goal %s" % (self, cost_to_goal))
 
         #log.info("%s: lt_state %s, left_state %s, middle_state %s, right_state %s, cost_to_goal %d" %
         #    (self, lt_state, left_state, middle_state, right_state, cost_to_goal))
@@ -481,6 +652,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
     # The stats above are all median values from solving 5000 7x7x7 cubes. Experimenting
     # shows that subtracting 1 from all of those speeds up some searches a good bit (from
     # 2m down to 5s).
+    # 99 disables heuristic_stats
     #heuristic_stats_error = 1
 
     def __init__(self, parent):
@@ -560,11 +732,8 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
 
         left_right_cost = self.parent.lt_LR_left_right_oblique_edge_pairing.heuristic(left_right_state)
         left_middle_cost = self.parent.lt_LR_left_middle_oblique_edge_pairing.heuristic(left_middle_state)
-
-        cost_to_goal = self.heuristic_stats.get((left_right_cost, left_middle_cost))
-
-        if cost_to_goal is None:
-            cost_to_goal = max(left_right_cost, left_middle_cost)
+        cost_to_goal = self.heuristic_stats.get((left_right_cost, left_middle_cost), 0)
+        cost_to_goal = max(left_right_cost, left_middle_cost, cost_to_goal - self.heuristic_stats_error)
 
         return (lt_state, cost_to_goal)
 
@@ -802,6 +971,77 @@ class LookupTableIDA777Step40(LookupTableIDA):
         156, 158, 160, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 184, 186, 188, # Right
     )
 
+    heuristic_stats = {
+        (0, 0): 1,
+        (0, 1): 2,
+        (0, 2): 3,
+        (0, 3): 4,
+        (0, 4): 5,
+        (1, 0): 7,
+        (1, 1): 2,
+        (1, 2): 3,
+        (1, 3): 4,
+        (1, 4): 5,
+        (1, 5): 6,
+        (2, 0): 8,
+        (2, 1): 4,
+        (2, 2): 3,
+        (2, 3): 4,
+        (2, 4): 5,
+        (2, 5): 6,
+        (2, 6): 7,
+        (3, 1): 8,
+        (3, 2): 5,
+        (3, 3): 4,
+        (3, 4): 5,
+        (3, 5): 6,
+        (3, 6): 7,
+        (4, 2): 6,
+        (4, 3): 6,
+        (4, 4): 6,
+        (4, 5): 6,
+        (4, 6): 7,
+        (4, 7): 12,
+        (5, 1): 6,
+        (5, 2): 8,
+        (5, 3): 8,
+        (5, 4): 8,
+        (5, 5): 8,
+        (5, 6): 9,
+        (5, 7): 11,
+        (5, 8): 12,
+        (5, 9): 12,
+        (6, 3): 9,
+        (6, 4): 10,
+        (6, 5): 10,
+        (6, 6): 9,
+        (6, 7): 12,
+        (6, 8): 12,
+        (7, 3): 10,
+        (7, 4): 10,
+        (7, 5): 11,
+        (7, 6): 11,
+        (7, 7): 11,
+        (7, 8): 13,
+        (7, 9): 13,
+        (8, 4): 12,
+        (8, 5): 12,
+        (8, 6): 12,
+        (8, 7): 13,
+        (8, 8): 13,
+        (8, 9): 13,
+        (9, 5): 12,
+        (9, 6): 13,
+        (9, 7): 13,
+        (9, 8): 13,
+        (9, 9): 13,
+        (10, 7): 14,
+        (10, 8): 16,
+    }
+
+    # 99 disables heuristic_stats
+    heuristic_stats_error = 99
+
     set_centers_step41_777 = set(centers_step41_777)
     set_centers_step42_777 = set(centers_step42_777)
 
@@ -827,6 +1067,21 @@ class LookupTableIDA777Step40(LookupTableIDA):
             linecount=7871759,
             max_depth=6,
             filesize=149563421)
+        #self.collect_stats = True
+
+    def ida_heuristic_tuple(self):
+        parent = self.parent
+
+        (lt_state, step41_state, step42_state) = ida_heuristic_states_step40_777(
+            parent.state,
+            self.centers_step40_777,
+            self.set_centers_step41_777,
+            self.set_centers_step42_777
+        )
+        step41_cost = parent.lt_step41.heuristic(step41_state)
+        step42_cost = parent.lt_step42.heuristic(step42_state)
+
+        return (str(self), step41_cost, step42_cost)
 
     def ida_heuristic(self):
         parent = self.parent
@@ -839,11 +1094,10 @@ class LookupTableIDA777Step40(LookupTableIDA):
         )
 
         lt_state = self.hex_format % lt_state
-
-        cost_to_goal = max(
-            self.parent.lt_step41.heuristic(step41_state),
-            self.parent.lt_step42.heuristic(step42_state),
-        )
+        step41_cost = parent.lt_step41.heuristic(step41_state)
+        step42_cost = parent.lt_step42.heuristic(step42_state)
+        cost_to_goal = self.heuristic_stats.get((step41_cost, step42_cost), 0)
+        cost_to_goal = max(step41_cost, step42_cost, cost_to_goal - self.heuristic_stats_error)
 
         return (lt_state, cost_to_goal)
 
@@ -1081,6 +1335,75 @@ class LookupTableIDA777Step50(LookupTableIDA):
         254, 256, 258, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 282, 284, 286, # Down
     )
 
+    heuristic_stats = {
+        (0, 0): 1,
+        (0, 1): 2,
+        (0, 2): 3,
+        (0, 3): 4,
+        (0, 4): 5,
+        (1, 0): 8,
+        (1, 1): 2,
+        (1, 2): 4,
+        (1, 3): 4,
+        (1, 4): 5,
+        (1, 5): 6,
+        (2, 0): 7,
+        (2, 1): 6,
+        (2, 2): 3,
+        (2, 3): 5,
+        (2, 4): 5,
+        (2, 5): 6,
+        (2, 6): 7,
+        (3, 0): 6,
+        (3, 1): 7,
+        (3, 2): 6,
+        (3, 3): 6,
+        (3, 4): 6,
+        (3, 5): 6,
+        (3, 6): 7,
+        (4, 1): 7,
+        (4, 2): 8,
+        (4, 3): 9,
+        (4, 4): 8,
+        (4, 5): 8,
+        (4, 6): 9,
+        (4, 7): 14,
+        (4, 8): 15,
+        (5, 3): 10,
+        (5, 4): 9,
+        (5, 5): 9,
+        (5, 6): 10,
+        (5, 7): 12,
+        (5, 8): 12,
+        (6, 3): 12,
+        (6, 4): 12,
+        (6, 5): 11,
+        (6, 6): 11,
+        (6, 7): 11,
+        (6, 8): 13,
+        (6, 9): 13,
+        (7, 4): 12,
+        (7, 5): 12,
+        (7, 6): 12,
+        (7, 7): 13,
+        (7, 8): 13,
+        (7, 9): 15,
+        (8, 3): 11,
+        (8, 5): 13,
+        (8, 6): 13,
+        (8, 7): 13,
+        (8, 8): 13,
+        (8, 9): 13,
+        (9, 5): 12,
+        (9, 6): 15,
+        (9, 7): 14,
+        (9, 8): 13,
+        (9, 9): 13,
+    }
+
+    # 99 disables heuristic_stats
+    heuristic_stats_error = 99
+
     set_centers_step51_777 = set(centers_step51_777)
     set_centers_step52_777 = set(centers_step52_777)
 
@@ -1109,6 +1432,22 @@ class LookupTableIDA777Step50(LookupTableIDA):
             linecount=7871759,
             max_depth=6,
             filesize=149563421)
+        #self.collect_stats = True
+
+    def ida_heuristic_tuple(self):
+        parent = self.parent
+
+        (lt_state, step51_state, step52_state) = ida_heuristic_states_step50_777(
+            parent.state,
+            self.centers_step50_777,
+            self.set_centers_step51_777,
+            self.set_centers_step52_777
+        )
+
+        step51_cost = parent.lt_step51.heuristic(step51_state)
+        step52_cost = parent.lt_step52.heuristic(step52_state)
+
+        return (str(self), step51_cost, step52_cost)
 
     def ida_heuristic(self):
         parent = self.parent
@@ -1121,11 +1460,10 @@ class LookupTableIDA777Step50(LookupTableIDA):
         )
 
         lt_state = self.hex_format % lt_state
-
-        cost_to_goal = max(
-            parent.lt_step51.heuristic(step51_state),
-            parent.lt_step52.heuristic(step52_state),
-        )
+        step51_cost = parent.lt_step51.heuristic(step51_state)
+        step52_cost = parent.lt_step52.heuristic(step52_state)
+        cost_to_goal = self.heuristic_stats.get((step51_cost, step52_cost), 0)
+        cost_to_goal = max(step51_cost, step52_cost, cost_to_goal - self.heuristic_stats_error)
 
         return (lt_state, cost_to_goal)
 
@@ -1255,6 +1593,96 @@ class LookupTableIDA777Step60(LookupTableIDA):
         205, 207, 209, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 233, 235, 237, # Back
     )
 
+    heuristic_stats = {
+        (0, 0): 1,
+        (0, 1): 8,
+        (0, 2): 9,
+        (0, 3): 4,
+        (0, 4): 6,
+        (0, 5): 6,
+        (1, 0): 9,
+        (1, 1): 2,
+        (1, 2): 6,
+        (1, 3): 8,
+        (1, 4): 5,
+        (2, 0): 9,
+        (2, 1): 8,
+        (2, 2): 4,
+        (2, 3): 6,
+        (2, 4): 8,
+        (2, 5): 6,
+        (2, 6): 7,
+        (3, 1): 11,
+        (3, 2): 9,
+        (3, 3): 7,
+        (3, 4): 6,
+        (3, 5): 8,
+        (3, 6): 14,
+        (4, 2): 11,
+        (4, 3): 10,
+        (4, 4): 9,
+        (4, 5): 10,
+        (4, 6): 13,
+        (4, 7): 15,
+        (5, 3): 12,
+        (5, 4): 11,
+        (5, 5): 11,
+        (5, 6): 12,
+        (5, 7): 15,
+        (5, 8): 16,
+        (6, 4): 13,
+        (6, 5): 12,
+        (6, 6): 13,
+        (6, 7): 14,
+        (6, 8): 15,
+        (6, 9): 15,
+        (7, 4): 15,
+        (7, 5): 14,
+        (7, 6): 13,
+        (7, 7): 14,
+        (7, 8): 15,
+        (7, 9): 16,
+        (7, 10): 18,
+        (7, 11): 18,
+        (8, 5): 16,
+        (8, 6): 15,
+        (8, 7): 15,
+        (8, 8): 15,
+        (8, 9): 16,
+        (8, 10): 18,
+        (8, 11): 16,
+        (9, 5): 17,
+        (9, 6): 16,
+        (9, 7): 16,
+        (9, 8): 16,
+        (9, 9): 17,
+        (9, 10): 17,
+        (9, 11): 19,
+        (10, 6): 17,
+        (10, 7): 16,
+        (10, 8): 17,
+        (10, 9): 17,
+        (10, 10): 19,
+        (10, 11): 18,
+        (10, 12): 16,
+        (11, 7): 17,
+        (11, 8): 18,
+        (11, 9): 18,
+        (11, 10): 18,
+        (11, 11): 19,
+        (12, 9): 19,
+        (12, 10): 19,
+        (12, 11): 20,
+    }
+
+    # 99 disables heuristic_stats
+    # error 99 is 15s, 21 steps
+    # error 4 is 3s, 26 steps
+    # error 3 is 7s, 26 steps
+    # error 2 is 17s, 26 steps
+    # error 1 is 35s, 26 steps
+    heuristic_stats_error = 99
+
     set_state_indexes_step61 = set(state_indexes_step61)
     set_state_indexes_step62 = set(state_indexes_step62)
 
@@ -1287,6 +1715,22 @@ class LookupTableIDA777Step60(LookupTableIDA):
             linecount=15407555,
             max_depth=7,
             filesize=677932420)
+        #self.collect_stats = True
+
+    def ida_heuristic_tuple(self):
+        parent = self.parent
+
+        (lt_state, step61_state, step62_state) = ida_heuristic_states_step60_777(
+            parent.state,
+            self.state_indexes_step60,
+            self.set_state_indexes_step61,
+            self.set_state_indexes_step62
+        )
+
+        step61_cost = parent.lt_step61.heuristic(step61_state)
+        step62_cost = parent.lt_step62.heuristic(step62_state)
+
+        return (str(self), step61_cost, step62_cost)
 
     def ida_heuristic(self):
         parent = self.parent
@@ -1300,10 +1744,10 @@ class LookupTableIDA777Step60(LookupTableIDA):
         lt_state = int(lt_state, 2)
         lt_state = self.hex_format % lt_state
 
-        cost_to_goal = max(
-            parent.lt_step61.heuristic(step61_state),
-            parent.lt_step62.heuristic(step62_state),
-        )
+        step61_cost = parent.lt_step61.heuristic(step61_state)
+        step62_cost = parent.lt_step62.heuristic(step62_state)
+        cost_to_goal = self.heuristic_stats.get((step61_cost, step62_cost), 0)
+        cost_to_goal = max(step61_cost, step62_cost, cost_to_goal - self.heuristic_stats_error)
 
         return (lt_state, cost_to_goal)
 
@@ -1703,6 +2147,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             log.info("")
             log.info("")
             log.info("")
+            # dwalton
+            sys.exit(0)
 
             # Stage the UD centers
             self.create_fake_555_from_outside_centers()
@@ -1737,7 +2183,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             #self.lt_LR_left_middle_oblique_edge_pairing.solve()
             #self.print_cube()
             #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            #sys.exit(0)
 
             log.info("kociemba: %s" % self.get_kociemba_string(True))
             self.lt_LR_oblique_edge_pairing.solve()
@@ -1767,7 +2212,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.lt_step42.solve()
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
 
         self.lt_step40.solve()
         self.print_cube()
@@ -1779,7 +2223,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.lt_step52.solve()
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
 
         self.lt_step50.solve()
 
@@ -1795,11 +2238,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.lt_step62.solve()
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
 
         self.lt_step60.solve()
         self.print_cube()
         log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
 
 swaps_777 = {'3Bw': (0, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 7, 14, 21, 53, 54, 55, 56, 6, 13, 20, 60, 61, 62, 63, 5, 12, 19, 67, 68, 69, 70, 4, 11, 18, 74, 75, 76, 77, 3, 10, 17, 81, 82, 83, 84, 2, 9, 16, 88, 89, 90, 91, 1, 8, 15, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 280, 287, 294, 155, 156, 157, 158, 279, 286, 293, 162, 163, 164, 165, 278, 285, 292, 169, 170, 171, 172, 277, 284, 291, 176, 177, 178, 179, 276, 283, 290, 183, 184, 185, 186, 275, 282, 289, 190, 191, 192, 193, 274, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92),
  "3Bw'": (0, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 288, 281, 274, 53, 54, 55, 56, 289, 282, 275, 60, 61, 62, 63, 290, 283, 276, 67, 68, 69, 70, 291, 284, 277, 74, 75, 76, 77, 292, 285, 278, 81, 82, 83, 84, 293, 286, 279, 88, 89, 90, 91, 294, 287, 280, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 15, 8, 1, 155, 156, 157, 158, 16, 9, 2, 162, 163, 164, 165, 17, 10, 3, 169, 170, 171, 172, 18, 11, 4, 176, 177, 178, 179, 19, 12, 5, 183, 184, 185, 186, 20, 13, 6, 190, 191, 192, 193, 21, 14, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154),

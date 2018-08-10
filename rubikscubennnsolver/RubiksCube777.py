@@ -2147,8 +2147,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             log.info("")
             log.info("")
             log.info("")
-            # dwalton
-            sys.exit(0)
 
             # Stage the UD centers
             self.create_fake_555_from_outside_centers()

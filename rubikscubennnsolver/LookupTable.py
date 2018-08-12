@@ -852,7 +852,7 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
 
 class LookupTableIDA(LookupTable):
 
-    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None, exit_asap=True):
+    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None, exit_asap=1):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.prune_tables = prune_tables
         self.ida_solutions = []
@@ -1024,7 +1024,7 @@ class LookupTableIDA(LookupTable):
             this_solution_len = self.parent.get_solution_len_minus_rotates(this_solution)
 
             #log.info("%s: lt_state %s" % (self, lt_state))
-            if self.exit_asap:
+            if threshold >= self.exit_asap:
                 log.info("%s: IDA found match %d steps, solution length %d, f_cost %d (%d + %d)" %
                          (self, len(steps_to_here), this_solution_len,
                           f_cost, cost_to_here, cost_to_goal))
@@ -1041,18 +1041,10 @@ class LookupTableIDA(LookupTable):
                 this_solution_len,
                 this_solution))
 
-            # TODO...how to prevent this?
-            '''
-            for foo in self.ida_solutions:
-                if foo[-1] == this_solution:
-                    log.info(pformat(foo[-1]))
-                    assert False, "this_solution %s is already in ida_solutions, steps_to_here %s" % (pformat(this_solution), pformat(steps_to_here))
-            '''
-
             self.parent.state = self.original_state[:]
             self.parent.solution = self.original_solution[:]
 
-            if self.exit_asap:
+            if threshold >= self.exit_asap:
                 return (f_cost, True)
 
         # ================

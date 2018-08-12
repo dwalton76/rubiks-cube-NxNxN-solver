@@ -86,7 +86,6 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         self.rotate_F_to_F()
         self.print_cube()
         log.info("%s: Inside edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("\n\n\n\n\n")
 
     def pair_edge_orbit_via_555(self, orbit):
         log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))

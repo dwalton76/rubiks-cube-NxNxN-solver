@@ -3515,17 +3515,6 @@ class RubiksCube(object):
         http://www.speedcubing.com/chris/4speedsolve3.html
         http://www.rubik.rthost.org/4x4x4_edges.htm
         """
-
-        # I don't know why but long ago when I wrote this I had it rotate U and F
-        # to their targets...it should not make any difference for calculating
-        # parity though. Will leave this here but commented out for a while just
-        # in case. 07/14/2018
-        #
-        #if self.centers_solved():
-        #    self.rotate_U_to_U()
-        #    self.rotate_F_to_F()
-        orbits_with_oll_parity = []
-
         # OLL only applies to even cubes but there are times when an even cube
         # is reduced to an odd cube...this happens when solving a 6x6x6, it is
         # reduced to a 5x5x5. So we must support OLL detection on odd cubes also.
@@ -3539,7 +3528,7 @@ class RubiksCube(object):
             orbit_start = 1
             orbits = int((self.size - 2 - 1) / 2) + 1
 
-        #log.info("orbit_start %d, orbits %d" % (orbit_start, orbits))
+        orbits_with_oll_parity = []
 
         for orbit in range(orbit_start, orbits):
             # OLL Parity - "...is caused by solving the centers such that the edge permutation is odd"
@@ -3892,7 +3881,6 @@ class RubiksCube(object):
             log.info("centers are already solved")
         else:
             self.group_centers_guts()
-            #log.info("group center solution (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
 
             if self.prevent_OLL():
                 log.info("prevented OLL (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))

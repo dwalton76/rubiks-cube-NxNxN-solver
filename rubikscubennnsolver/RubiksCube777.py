@@ -9,7 +9,6 @@ from rubikscubennnsolver.RubiksCube777Misc import (
     state_targets_step32,
 )
 from rubikscubennnsolver.cLibrary import (
-    ida_heuristic_states_step00_777,
     ida_heuristic_states_step40_777,
     ida_heuristic_states_step50_777,
     ida_heuristic_states_step60_777,
@@ -2223,8 +2222,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.lt_step50.solve()
-
-        # Make the LR bars horizontal for the next phase
         self.rotate("L")
         self.rotate("R")
         self.print_cube()

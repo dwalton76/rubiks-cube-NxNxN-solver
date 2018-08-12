@@ -287,13 +287,10 @@ step10 now at 7-deep (runs much faster)
 Took 2m 10s
 
 
-cost-only tables
-================
-same move count
-Took 1m 33s
+======================================
+5x5x5 avg centers solution 34.74 steps
+5x5x5 avg edges solution 52.18 steps
+5x5x5 avg solution 107.92 steps
+5x5x5 min solution 97 steps (LFFDFBLDURDBUDUUDFDLUBDFBRFFFRUDDDRLBRDRUBBURLLRDBFDLDUFBULLDUFUBBRLLFFBLRBDRUUDUFURUFLDBFBRRBRFLUBRBLBBLRLFFDURLFRLURFRDLLBLULDUUDFRUFBLBFBURLBFDDRDR)
+5x5x5 max solution 114 steps (RLBFBDBLUDBRUBUFFRBRBBLDUFBRLURBDLBDFRLDBUURDRBFDFLRUFLUBULUBLFFFURDFUFFFLURRUFFDURDUBLDURFURRBLLLDLBRRUDDDBDRFBLFDLLBFLURLFDRUUBDLRDDBRFBULLLDFUDRDFB)
 
-
-list comp improvements
-======================
-same move count
-Took 1m 22s

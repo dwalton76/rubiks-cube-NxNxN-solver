@@ -2,7 +2,7 @@
 
 from rubikscubennnsolver import RubiksCube, NotSolving
 from rubikscubennnsolver.cLibrary import ida_heuristic_states_step10_555
-from rubikscubennnsolver.misc import pre_steps_to_try
+from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.RubiksCube444 import moves_444
 from rubikscubennnsolver.LookupTable import (
@@ -22,6 +22,56 @@ log = logging.getLogger(__name__)
 
 moves_555 = moves_444
 solved_555 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
+
+
+# OOopPPQQqrRRsSSTTtuUUVVvWWwxXXYYyzZZ
+# 012345678911111111112222222222333333
+#           01234567890123456789012345
+midge_indexes = set((1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34))
+#midge_chars = ("o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
+
+def get_wings_edges_will_pair(stringA, stringB):
+    matches_per_midge_char = {
+        "o" : 0,
+        "p" : 0,
+        "q" : 0,
+        "r" : 0,
+        "s" : 0,
+        "t" : 0,
+        "u" : 0,
+        "v" : 0,
+        "w" : 0,
+        "x" : 0,
+        "y" : 0,
+        "z" : 0,
+    }
+    midges_that_match = set()
+    #log.info("stringA: %s" % stringA)
+    #log.info("stringB: %s" % stringB)
+
+    for (index, (charA, charB)) in enumerate(zip(stringA, stringB)):
+        if charA == charB:
+            matches_per_midge_char[charA.lower()] += 1
+
+            if index in midge_indexes:
+                midges_that_match.add(charA.lower())
+
+    #log.info("midges_that_match:\n%s\n\n" % pformat(midges_that_match))
+    #log.info("matches_per_midge_char:\n%s\n\n" % pformat(matches_per_midge_char))
+    wings = 0
+    edges = 0
+
+    for midge_char in midges_that_match:
+        matches = matches_per_midge_char[midge_char]
+        if matches == 3:
+            wings += 2
+            edges += 1
+        elif matches == 2:
+            wings += 1
+
+    #log.info("return (%d, %d)" % (wings, edges))
+    return (wings, edges)
+
 
 centers_555 = (
     7, 8, 9, 12, 13, 14, 17, 18, 19,
@@ -145,6 +195,7 @@ wing_str_map = {
     'RD' : 'DR',
     'DF' : 'DF',
     'FD' : 'DF',
+    '--' : '--',
 }
 
 
@@ -161,6 +212,25 @@ wing_strs_all = (
     'FU',
     'LU',
     'RU'
+)
+
+
+wings_for_edges_pattern_555 = (
+    2, 3, 4, # Upper
+    6, 11, 16,
+    10, 15, 20,
+    22, 23, 24,
+
+    31, 36, 41, # Left
+    35, 40, 45,
+
+    81, 86, 91, # Right
+    85, 90, 95,
+
+    127, 128, 129, # Down
+    131, 136, 141,
+    135, 140, 145,
+    147, 148, 149
 )
 
 
@@ -381,42 +451,92 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
         '--': None,
     }
 
+    paired_edges_indexes = []
+
+    for (s1, s2, s3) in (
+        (2, 3, 4), # Upper
+        (6, 11, 16),
+        (10, 15, 20),
+        (22, 23, 24),
+
+        (31, 36, 41), # Left
+        (35, 40, 45),
+
+        (81, 86, 91), # Right
+        (85, 90, 95),
+
+        (127, 128, 129), # Down
+        (131, 136, 141),
+        (135, 140, 145),
+        (147, 148, 149)):
+
+        s1_value = state[s1]
+        s2_value = state[s2]
+        s3_value = state[s3]
+
+        p1 = edges_partner_555[s1]
+        p2 = edges_partner_555[s2]
+        p3 = edges_partner_555[s3]
+
+        p1_value = state[p1]
+        p2_value = state[p2]
+        p3_value = state[p3]
+
+        if (s1_value != "-" and
+            s1_value == s2_value and s2_value == s3_value and
+            p1_value == p2_value and p2_value == p3_value):
+            paired_edges_indexes.extend([s1, s2, s3, p1, p2, p3])
+
     for (edge_index, square_index, partner_index) in midges_recolor_tuples_555:
         square_value = state[square_index]
         partner_value = state[partner_index]
         wing_str = ''.join(sorted([square_value, partner_value]))
         midges_map[wing_str] = edge_index
 
-        # We need to indicate which way the midge is rotated.  If the square_index contains
-        # U, D, L, or R use the uppercase of the edge_index, if not use the lowercase of the
-        # edge_index.
-        if square_value == 'U':
+        # If the edge is paired always use an uppercase letter to represent this edge
+        if square_index in paired_edges_indexes:
             state[square_index] = edge_index.upper()
             state[partner_index] = edge_index.upper()
+
+        # If not, we need to indicate which way the midge is rotated.  If the square_index contains
+        # U, D, L, or R use the uppercase of the edge_index, if not use the lowercase of the
+        # edge_index.
+        elif square_value == 'U':
+            state[square_index] = edge_index.upper()
+            state[partner_index] = edge_index.upper()
+
         elif partner_value == 'U':
             state[square_index] = edge_index
             state[partner_index] = edge_index
+
         elif square_value == 'D':
             state[square_index] = edge_index.upper()
             state[partner_index] = edge_index.upper()
+
         elif partner_value == 'D':
             state[square_index] = edge_index
             state[partner_index] = edge_index
+
         elif square_value == 'L':
             state[square_index] = edge_index.upper()
             state[partner_index] = edge_index.upper()
+
         elif partner_value == 'L':
             state[square_index] = edge_index
             state[partner_index] = edge_index
+
         elif square_value == 'R':
             state[square_index] = edge_index.upper()
             state[partner_index] = edge_index.upper()
+
         elif partner_value == 'R':
             state[square_index] = edge_index
             state[partner_index] = edge_index
+
         elif square_value == '-' or partner_value == '-':
             state[square_index] = '-'
             state[partner_index] = '-'
+
         else:
             raise Exception("We should not be here, state[%d] %s, partner state [%d] %s" % (square_index, state[square_index], partner_index, state[partner_index]))
 
@@ -428,25 +548,32 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
         if square_value == '-' or partner_value == '-':
             pass
         else:
-            high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
             wing_str = ''.join(sorted([square_value, partner_value]))
 
             if only_colors and wing_str not in only_colors:
                 state[square_index] = '-'
                 state[partner_index] = '-'
 
-            # If this is a high wing use the uppercase of the midge edge_index
-            elif high_low == 'U':
+            # If the edge is paired always use an uppercase letter to represent this edge
+            elif square_index in paired_edges_indexes:
                 state[square_index] = midges_map[wing_str].upper()
                 state[partner_index] = midges_map[wing_str].upper()
 
-            # If this is a low wing use the lowercase of the midge edge_index
-            elif high_low == 'D':
-                state[square_index] = midges_map[wing_str]
-                state[partner_index] = midges_map[wing_str]
-
             else:
-                raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
+                high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
+
+                # If this is a high wing use the uppercase of the midge edge_index
+                if high_low == 'U':
+                    state[square_index] = midges_map[wing_str].upper()
+                    state[partner_index] = midges_map[wing_str].upper()
+
+                # If this is a low wing use the lowercase of the midge edge_index
+                elif high_low == 'D':
+                    state[square_index] = midges_map[wing_str]
+                    state[partner_index] = midges_map[wing_str]
+
+                else:
+                    raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
 
     return ''.join(state)
 
@@ -687,13 +814,13 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             linecount = 868185
             max_depth = 5
             filesize = 16495515
-            exit_asap = True
+            exit_asap = 1
         else:
             filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt'
             linecount = 17168476
             max_depth = 6
             filesize = 326201044
-            exit_asap = True
+            exit_asap = 9
 
         LookupTableIDA.__init__(
             self,
@@ -716,19 +843,16 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
 
         self.recolor_positions = centers_555
         self.recolor_map = {
-            'D' : 'U',
+            'L' : 'L',
+            'F' : 'x',
             'R' : 'L',
-            'B' : 'F',
+            'B' : 'x',
+            'D' : 'U',
         }
         self.nuke_corners = True
         self.nuke_edges = True
 
     def ida_heuristic(self):
-        # - write this in C
-        # - build the table to 5-deep and load into a dict instead of string
-        # - see how much memory that takes and are there any cubes with long searches
-        #   - the 6-deep cache_string takes 326M
-        #   - if 5-deep in a dict takes a lot of memory try 4-deep
         parent = self.parent
 
         (lt_state, x_centers_state, t_centers_state) =\
@@ -852,9 +976,9 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
     def __init__(self, parent):
 
         if parent.min_memory:
-            exit_asap = True
+            exit_asap = 1
         else:
-            exit_asap = False
+            exit_asap = 99
 
         LookupTableIDA.__init__(
             self,
@@ -878,10 +1002,6 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
             exit_asap=exit_asap,
         )
 
-        self.recolor_positions = LFRB_centers_555
-        self.recolor_map = {
-            'R' : 'L',
-        }
         self.nuke_corners = True
         self.nuke_edges = True
 
@@ -898,20 +1018,20 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
 
             if x in set_x_centers_555:
 
-                if cubie_state == 'L':
+                if cubie_state == 'L' or cubie_state == 'R':
                     x_centers_state = x_centers_state | 0x1
                     lt_state = lt_state | 0x1
                 x_centers_state = x_centers_state << 1
 
             elif x in set_t_centers_555:
 
-                if cubie_state == 'L':
+                if cubie_state == 'L' or cubie_state == 'R':
                     t_centers_state = t_centers_state | 0x1
                     lt_state = lt_state | 0x1
                 t_centers_state = t_centers_state << 1
 
             else:
-                if cubie_state == 'L':
+                if cubie_state == 'L' or cubie_state == 'R':
                     lt_state = lt_state | 0x1
             lt_state = lt_state << 1
 
@@ -988,9 +1108,9 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     def __init__(self, parent):
 
         if parent.min_memory:
-            exit_asap = True
+            exit_asap = 1
         else:
-            exit_asap = False
+            exit_asap = 99
 
         LookupTableIDA.__init__(
             self,
@@ -1048,18 +1168,20 @@ class LookupTable555StageFirstFourEdges(LookupTable):
     """
     lookup-table-5x5x5-step100-stage-first-four-edges.txt
     =====================================================
-    5 steps has 384 entries (0 percent, 0.00x previous step)
-    6 steps has 5,032 entries (0 percent, 13.10x previous step)
-    7 steps has 40,712 entries (0 percent, 8.09x previous step)
-    8 steps has 136,236 entries (2 percent, 3.35x previous step)
-    9 steps has 1,034,328 entries (19 percent, 7.59x previous step)
-    10 steps has 3,997,220 entries (76 percent, 3.86x previous step)
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 72 entries (0 percent, 8.00x previous step)
+    3 steps has 330 entries (0 percent, 4.58x previous step)
+    4 steps has 84 entries (0 percent, 0.25x previous step)
+    5 steps has 1,152 entries (0 percent, 13.71x previous step)
+    6 steps has 10,200 entries (0 percent, 8.85x previous step)
+    7 steps has 53,040 entries (3 percent, 5.20x previous step)
+    8 steps has 187,296 entries (11 percent, 3.53x previous step)
+    9 steps has 1,357,482 entries (84 percent, 7.25x previous step)
 
-    Total: 5,213,912 entries
-    Average: 9.721709 moves
+    Total: 1,609,665 entries
 
     There is no need to build this any deeper...that and building it
-    to 10-deep took about 2 days on a 12-core machine.
+    to 10-deep takes about 2 days on a 12-core machine.
     """
     def __init__(self, parent):
         LookupTable.__init__(
@@ -1067,7 +1189,9 @@ class LookupTable555StageFirstFourEdges(LookupTable):
             parent,
             'lookup-table-5x5x5-step100-stage-first-four-edges.txt',
             'TBD',
-            linecount=5213912)
+            linecount=1609665,
+            filesize=86921910,
+        )
 
     def state(self, wing_strs_to_stage):
         state = self.parent.state[:]
@@ -1079,13 +1203,15 @@ class LookupTable555StageFirstFourEdges(LookupTable):
             wing_str = ''.join(sorted([square_value, partner_value]))
 
             if wing_str in wing_strs_to_stage:
-                state[square_index] = 'L'
-                state[partner_index] = 'L'
+                state[square_index] = '1'
+                state[partner_index] = '1'
             else:
-                state[square_index] = 'x'
-                state[partner_index] = 'x'
+                state[square_index] = '0'
+                state[partner_index] = '0'
 
-        edges_state = ''.join([state[square_index] for square_index in l4e_wings_555])
+        edges_state = ''.join([state[square_index] for square_index in edges_555])
+        edges_state = int(edges_state, 2)
+        edges_state = self.hex_format % edges_state
         return edges_state
 
 
@@ -1093,21 +1219,24 @@ class LookupTable555StageSecondFourEdges(LookupTable):
     """
     lookup-table-5x5x5-step101-stage-second-four-edges.txt
     ======================================================
-    5 steps has 32 entries (0 percent, 0.00x previous step)
-    6 steps has 304 entries (0 percent, 9.50x previous step)
-    7 steps has 1,208 entries (0 percent, 3.97x previous step)
-    8 steps has 3,612 entries (1 percent, 2.99x previous step)
-    9 steps has 12,856 entries (3 percent, 3.56x previous step)
-    10 steps has 42,688 entries (12 percent, 3.32x previous step)
-    11 steps has 89,194 entries (26 percent, 2.09x previous step)
-    12 steps has 113,508 entries (33 percent, 1.27x previous step)
-    13 steps has 74,720 entries (22 percent, 0.66x previous step)
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 8 entries (0 percent, 2.00x previous step)
+    3 steps has 30 entries (0 percent, 3.75x previous step)
+    4 steps has 28 entries (0 percent, 0.93x previous step)
+    5 steps has 64 entries (0 percent, 2.29x previous step)
+    6 steps has 400 entries (0 percent, 6.25x previous step)
+    7 steps has 1,224 entries (0 percent, 3.06x previous step)
+    8 steps has 3,864 entries (2 percent, 3.16x previous step)
+    9 steps has 13,630 entries (8 percent, 3.53x previous step)
+    10 steps has 45,090 entries (29 percent, 3.31x previous step)
+    11 steps has 90,482 entries (58 percent, 2.01x previous step)
 
-    Total: 338,122 entries
-    Average: 11.523977 moves
+    Total: 154,824 entries
 
-    This table should have 900,900 entries but I only built it
-    13-deep...that is deep enough for what we need
+    This should have (16!/(8!*8!)) * (8!/(4!*4!)) or 900,900 entries
+    if you built it out the entire way. We do not need to build it that deep
+    though, we can try enough edge color combinations to find a hit
+    in 11-deep.
     """
 
     def __init__(self, parent):
@@ -1116,7 +1245,8 @@ class LookupTable555StageSecondFourEdges(LookupTable):
             parent,
             'lookup-table-5x5x5-step101-stage-second-four-edges.txt',
             'TBD',
-            linecount=338122)
+            linecount=154824,
+            filesize=9289440)
 
     def state(self, wing_strs_to_stage):
         state = self.parent.state[:]
@@ -1128,13 +1258,15 @@ class LookupTable555StageSecondFourEdges(LookupTable):
             wing_str = ''.join(sorted([square_value, partner_value]))
 
             if wing_str in wing_strs_to_stage:
-                state[square_index] = 'U'
-                state[partner_index] = 'U'
+                state[square_index] = '1'
+                state[partner_index] = '1'
             else:
-                state[square_index] = 'x'
-                state[partner_index] = 'x'
+                state[square_index] = '0'
+                state[partner_index] = '0'
 
-        edges_state = ''.join([state[square_index] for square_index in l4e_wings_555])
+        edges_state = ''.join([state[square_index] for square_index in edges_555])
+        edges_state = int(edges_state, 2)
+        edges_state = self.hex_format % edges_state
         return edges_state
 
 
@@ -1280,7 +1412,8 @@ class RubiksCube555(RubiksCube):
 
         if RubiksCube555.instantiated:
             #raise Exception("Another 5x5x5 instance is being created")
-            log.warning("Another 5x5x5 instance is being created")
+            #log.warning("Another 5x5x5 instance is being created")
+            pass
         else:
             RubiksCube555.instantiated = True
 
@@ -1323,6 +1456,14 @@ class RubiksCube555(RubiksCube):
             edges_in_plane.add(wing_str)
         return edges_in_plane
 
+    def l4e_in_x_plane_paired(self):
+        if (self.sideL.west_edge_paired() and
+            self.sideL.east_edge_paired() and
+            self.sideR.west_edge_paired() and
+            self.sideR.east_edge_paired()):
+            return True
+        return False
+
     def l4e_in_x_plane(self):
         state = self.state
         edges_in_plane = set()
@@ -1336,6 +1477,14 @@ class RubiksCube555(RubiksCube):
 
         #log.info("l4e_in_x_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
+
+    def l4e_in_y_plane_paired(self):
+        if (self.sideU.north_edge_paired() and
+            self.sideU.south_edge_paired() and
+            self.sideD.north_edge_paired() and
+            self.sideD.south_edge_paired()):
+            return True
+        return False
 
     def l4e_in_y_plane(self):
         state = self.state
@@ -1351,6 +1500,14 @@ class RubiksCube555(RubiksCube):
         #log.info("l4e_in_y_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
 
+    def l4e_in_z_plane_paired(self):
+        if (self.sideU.west_edge_paired() and
+            self.sideU.east_edge_paired() and
+            self.sideD.west_edge_paired() and
+            self.sideD.east_edge_paired()):
+            return True
+        return False
+
     def l4e_in_z_plane(self):
         state = self.state
         edges_in_plane = set()
@@ -1364,6 +1521,9 @@ class RubiksCube555(RubiksCube):
 
         #log.info("l4e_in_z_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
+
+    def get_paired_wings_count(self):
+        return 24 - self.get_non_paired_wings_count()
 
     def LFRB_centers_horizontal_bars(self):
         state = self.state
@@ -1700,7 +1860,6 @@ class RubiksCube555(RubiksCube):
         #self.lt_LR_T_centers_stage.solve()
         #self.lt_LR_X_centers_stage.solve()
         #self.print_cube()
-        #sys.exit(0)
 
         self.lt_LR_centers_stage.solve()
         self.print_cube()
@@ -1715,9 +1874,91 @@ class RubiksCube555(RubiksCube):
         # All centers are staged, solve them
         self.lt_ULFRB_centers_solve.solve()
         log.info("%s: ULFRBD centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
+
+    def x_plane_has_LB_LF_RB_RF_edge(self):
+        state = self.state
+        LB_LF_RB_RF = set(('LB', 'LF', 'RB', 'RF'))
+
+        for square_index in (36, 40, 86, 90):
+            partner_index = edges_partner_555[square_index]
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in LB_LF_RB_RF:
+                return True
+
+        return False
+
+    def y_plane_has_LB_LF_RB_RF_edge(self):
+        state = self.state
+        LB_LF_RB_RF = set(('LB', 'LF', 'RB', 'RF'))
+
+        for square_index in (3, 23, 128, 148):
+            partner_index = edges_partner_555[square_index]
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in LB_LF_RB_RF:
+                return True
+
+        return False
+
+    def z_plane_has_LB_LF_RB_RF_edge(self):
+        state = self.state
+        LB_LF_RB_RF = set(('LB', 'LF', 'RB', 'RF'))
+
+        for square_index in (11, 15, 136, 140):
+            partner_index = edges_partner_555[square_index]
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in LB_LF_RB_RF:
+                return True
+
+        return False
+
+    def solve_last_four_edges_555(self):
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        # Traverse a table of moves that place L4E in one of three planes
+        for pre_steps in pre_steps_stage_l4e:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in pre_steps:
+                self.rotate(step)
+
+            if self.l4e_in_x_plane() and not self.l4e_in_x_plane_paired():
+                if pre_steps:
+                    log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
+                else:
+                    log.info("%s: L4E group in x-plane" % self)
+                break
+
+            elif self.l4e_in_y_plane() and not self.l4e_in_y_plane_paired():
+                if pre_steps:
+                    log.info("%s: %s puts L4E group in y-plane" % (self, "".join(pre_steps)))
+                else:
+                    log.info("%s: L4E group in y-plane" % self)
+                self.rotate("z")
+                break
+
+            elif self.l4e_in_z_plane() and not self.l4e_in_z_plane_paired():
+                if pre_steps:
+                    log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
+                else:
+                    log.info("%s: L4E group in z-plane" % self)
+                self.rotate("x")
+                break
+
+        self.lt_edges_pair_last_four.solve()
         #self.print_cube()
+        #log.info("%s: %s L4E paired, %d steps in" % (self, edges_pattern_pretty, self.get_solution_len_minus_rotates(self.solution)))
 
     def stage_first_four_edges_555(self):
         """
@@ -1782,7 +2023,6 @@ class RubiksCube555(RubiksCube):
         from pprint import pformat
         log.info("pre_steps_to_try: %d" % len(pre_steps_to_try))
         log.info("pre_steps_to_try:\n%s\n" % pformat(pre_steps_to_try))
-        sys.exit(0)
 
         # uncomment this if we ever find a cube that raises the
         # "Could not find 4-edges to stage" NoEdgeSolution exception below
@@ -1799,32 +2039,51 @@ class RubiksCube555(RubiksCube):
         # Remember what things looked like
         original_state = self.state[:]
         original_solution = self.solution[:]
+        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
         for pre_steps in pre_steps_to_try:
 
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in pre_steps:
-                self.rotate(step)
-
             # do those steps
             for wing_strs in stage_first_four_edges_wing_str_combos:
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in pre_steps:
+                    self.rotate(step)
+
                 state = self.lt_edges_stage_first_four.state(wing_strs)
                 steps = self.lt_edges_stage_first_four.steps(state)
 
                 if steps:
-                    log.info("%s: first four %s can be staged in %d steps" % (self, wing_strs, len(steps)))
 
-                    if min_solution_len is None or len(steps) < min_solution_len:
-                        min_solution_len = len(steps)
-                        min_solution_steps = steps[:]
+                    # Pair the 4-edges so we can pick the wing_strs whose solution will be the shortest
+                    for step in steps:
+                        self.rotate(step)
+
+                    if self.l4e_in_x_plane() and not self.l4e_in_x_plane_paired():
+                        pass
+                    elif self.l4e_in_y_plane() and not self.l4e_in_y_plane_paired():
+                        self.rotate("z")
+                    elif self.l4e_in_z_plane() and not self.l4e_in_z_plane_paired():
+                        self.rotate("x")
+
+                    self.lt_edges_pair_last_four.solve()
+                    solution_len = self.get_solution_len_minus_rotates(self.solution) - original_solution_len
+
+                    # self.print_cube()
+                    log.info("%s: first four %s can be staged/paired in %d steps" % (self, wing_strs, solution_len))
+
+                    if min_solution_len is None or solution_len < min_solution_len:
+                        min_solution_len = solution_len
+                        min_solution_steps = self.solution[len(original_solution):]
                         min_solution_wing_strs = wing_strs
 
             if min_solution_len is not None:
                 if pre_steps:
                     log.warning("pre-steps %s required to find a hit" % ' '.join(pre_steps))
 
+                self.state = original_state[:]
+                self.solution = original_solution[:]
                 self.stage_first_four_wing_strs = min_solution_wing_strs
 
                 for step in min_solution_steps:
@@ -1959,15 +2218,14 @@ class RubiksCube555(RubiksCube):
 
     def group_edges(self):
         self.lt_init()
+        self.print_cube()
 
-        #self.print_cube()
         self.stage_first_four_edges_555()
         self.print_cube()
-        log.info("%s: first four edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: first four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.stage_second_four_edges_555()
         self.print_cube()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: all edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.solve_staged_edges_555(True)

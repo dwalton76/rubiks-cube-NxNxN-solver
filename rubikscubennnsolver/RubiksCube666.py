@@ -45,12 +45,12 @@ inner_x_centers_666 = (
 )
 
 centers_666 = (
-    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29,
-    44, 45, 46, 47, 50, 51, 52, 53, 56, 57, 58, 59, 62, 63, 64, 65,
-    80, 81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101,
-    116, 117, 118, 119, 122, 123, 124, 125, 128, 129, 130, 131, 134, 135, 136, 137,
-    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173,
-    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209
+    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29, # Upper
+    44, 45, 46, 47, 50, 51, 52, 53, 56, 57, 58, 59, 62, 63, 64, 65, # Left
+    80, 81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101, # Front
+    116, 117, 118, 119, 122, 123, 124, 125, 128, 129, 130, 131, 134, 135, 136, 137, # Right
+    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173, # Back
+    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209 # Down
 )
 
 UD_centers_666 = (
@@ -348,7 +348,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
     }
 
     # 99 disables heuristic_stats
-    heuristic_stats_error = 0
+    heuristic_stats_error = 1
 
     def __init__(self, parent):
         if parent.min_memory:
@@ -356,14 +356,13 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
             linecount = 4171103
             max_depth = 1
             filesize = 75079854
-            exit_asap = True
+            exit_asap = 1
         else:
             filename = 'lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt'
             linecount = 59219239
             max_depth = 2
             filesize = 1065946302
-            #exit_asap = False
-            exit_asap = True
+            exit_asap = 7
 
         LookupTableIDA.__init__(
             self,
@@ -634,11 +633,13 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
             linecount = 1665632
             max_depth = 2
             filesize = 29981376
+            exit_asap = 1
         else:
             filename = 'lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt'
             linecount = 19858956
             max_depth = 3
             filesize = 357461208
+            exit_asap = 8
 
         LookupTableIDA.__init__(
             self,
@@ -663,7 +664,9 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
 
             linecount=linecount,
             max_depth=max_depth,
-            filesize=filesize),
+            filesize=filesize,
+            exit_asap=exit_asap,
+        ),
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)

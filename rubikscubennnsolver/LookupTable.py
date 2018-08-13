@@ -983,11 +983,14 @@ class LookupTableIDA(LookupTable):
         # LookupTabele's solve() to take us the rest of the way to the target state.
         LookupTable.solve(self)
 
-        if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-            log.info("%s: IDA found match but it leads to OLL" % self)
-            return False
+        if self.avoid_oll:
+            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
+
+            if orbits_with_oll and (self.avoid_oll is True or self.avoid_oll in orbits_with_oll):
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.debug("%s: IDA found match but it leads to OLL" % self)
+                return False
 
         if self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
             self.parent.state = self.original_state[:]
@@ -1007,6 +1010,18 @@ class LookupTableIDA(LookupTable):
         cost_to_here = len(steps_to_here)
         (lt_state, cost_to_goal) = self.ida_heuristic()
         f_cost = cost_to_here + cost_to_goal
+
+        # ================
+        # Abort Searching?
+        # ================
+        # I have gone back and forth many times over whether this should be done
+        # before or after the search_complete() call. If you put it after we will
+        # find a solution faster but it basically violates the rules of IDA and
+        # we will find a solution that is not the shortest...which kinda defeats
+        # the purpose of using IDA* in the first place. So leave it here and take
+        # the CPU hit on searching a little longer.
+        if f_cost >= threshold:
+            return (f_cost, False)
 
         # If our cost_to_goal is greater than the max_depth of our main lookup table then there is no
         # need to do a binary search through the main lookup table to look for our current state...this
@@ -1037,8 +1052,8 @@ class LookupTableIDA(LookupTable):
                 next_phase_ida_heuristic = 0
 
             self.ida_solutions.append((
-                this_solution_len + next_phase_ida_heuristic,
                 this_solution_len,
+                this_solution_len + next_phase_ida_heuristic,
                 this_solution))
 
             self.parent.state = self.original_state[:]
@@ -1046,12 +1061,6 @@ class LookupTableIDA(LookupTable):
 
             if threshold >= self.exit_asap:
                 return (f_cost, True)
-
-        # ================
-        # Abort Searching?
-        # ================
-        if f_cost >= threshold:
-            return (f_cost, False)
 
         # Not used by any tables right now so commenting out
         #if hasattr(self, 'state_for_explored'):
@@ -1200,6 +1209,13 @@ class LookupTableIDA(LookupTable):
         # If this is the case the range loop below isn't worth running
         if min_ida_threshold >= max_ida_threshold+1:
             raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+
+        if self.avoid_oll:
+            for step in self.moves_all:
+                if "w" in step and not step.endswith("2"):
+                    break
+            else:
+                raise Exception("%s: has avoid_oll %s but there are no quarter wide turns among moves_all %s" % (self, self.avoid_oll, " ".join(self.moves_all)))
 
         log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold))
         total_ida_count = 0

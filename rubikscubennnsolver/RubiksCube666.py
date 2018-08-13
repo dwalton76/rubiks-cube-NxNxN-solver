@@ -669,7 +669,6 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
         log.info("%s: recolor (custom)" % self)
         #self.parent.print_cube()
         self.parent.nuke_corners()
-        self.parent.nuke_edges()
 
         for x in centers_666:
             if x in self.LFRB_inner_x_centers_oblique_edges_666:
@@ -1165,6 +1164,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCentersStage(self)
         self.lt_LR_inner_x_centers_and_oblique_edges_stage = LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(self)
         self.lt_LR_inner_x_centers_and_oblique_edges_stage.preload_cache_string()
+        self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
 
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
 
@@ -1174,7 +1174,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LR_solve_inner_x_centers_and_oblique_edges.preload_cache_dict()
         self.lt_FB_solve_inner_x_centers_and_oblique_edges.preload_cache_dict()
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.preload_cache_string()
-        #self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.avoid_oll = True
 
     def populate_fake_555_for_ULFRBD_solve(self):
         fake_555 = self.get_fake_555()
@@ -1286,7 +1285,9 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         if oblique_edges_only:
             fake_555.lt_LR_T_centers_stage.solve()
         else:
+            fake_555.lt_LR_centers_stage.avoid_oll = True
             fake_555.group_centers_stage_LR()
+            fake_555.lt_LR_centers_stage.avoid_oll = False
 
         for step in fake_555.solution:
             self.rotate(step)

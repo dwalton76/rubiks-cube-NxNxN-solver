@@ -1175,7 +1175,6 @@ class RubiksCube444(RubiksCube):
         #sys.exit(0)
 
         log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_reduce333.avoid_oll = True
         self.lt_reduce333.avoid_pll = True
         self.lt_reduce333.solve()
 

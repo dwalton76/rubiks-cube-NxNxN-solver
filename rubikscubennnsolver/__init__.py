@@ -3882,9 +3882,6 @@ class RubiksCube(object):
         else:
             self.group_centers_guts()
 
-            if self.prevent_OLL():
-                log.info("prevented OLL (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
-
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.solution.append('CENTERS_SOLVED')

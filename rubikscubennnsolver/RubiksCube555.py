@@ -820,7 +820,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             linecount = 17168476
             max_depth = 6
             filesize = 326201044
-            exit_asap = 9
+            exit_asap = 99
 
         LookupTableIDA.__init__(
             self,
@@ -1003,7 +1003,6 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
         )
 
         self.nuke_corners = True
-        self.nuke_edges = True
 
     def ida_heuristic(self):
         parent_state = self.parent.state

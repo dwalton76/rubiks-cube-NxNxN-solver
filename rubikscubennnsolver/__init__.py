@@ -562,8 +562,13 @@ class RubiksCube(object):
         for (pos1, pos2) in zip(reversed(self.sideB.edge_south_pos), self.sideD.edge_south_pos):
             self.all_edge_positions.append((pos1, pos2))
 
+        self.index_to_side = {}
+
         for side in list(self.sides.values()):
             side.calculate_wing_partners()
+
+            for x in range(side.min_pos, side.max_pos+1):
+                self.index_to_side[x] = side
 
     def __str__(self):
         return "%dx%dx%d" % (self.size, self.size, self.size)
@@ -3112,10 +3117,6 @@ class RubiksCube(object):
             kociemba_ok = False
 
         if not kociemba_ok:
-            #edge_swap_count = self.get_edge_swap_count(edges_paired=True, debug=True)
-            #corner_swap_count = self.get_corner_swap_count(debug=True)
-            #raise SolveError("parity error made kociemba barf, edge parity %d, corner parity %d, kociemba %s" %
-            #    (edge_swap_count, corner_swap_count, kociemba_string))
             raise SolveError("parity error made kociemba barf,  kociemba %s" % kociemba_string)
 
         log.debug("kociemba       : %s" % kociemba_string)
@@ -3336,27 +3337,27 @@ class RubiksCube(object):
                 else:
                     to_check_str += "%4s" % x
 
-            log.info("to_check     :%s" % to_check_str)
-            log.info("needed edges : %s" % ' '.join(needed_edges))
+            log.info("orbit %d to_check     :%s" % (orbit, to_check_str))
+            log.info("orbit %d needed edges : %s" % (orbit, ' '.join(needed_edges)))
 
         current_edges = []
 
         for square_index in to_check:
-            side = self.get_side_for_index(square_index)
+            side = self.index_to_side[square_index]
             partner_index = side.get_wing_partner(square_index)
             square1 = self.state[square_index]
             square2 = self.state[partner_index]
             #log.info("side %s, (%d, %d) is %s%s" % (side, square_index, partner_index, square1, square2))
 
-            if square1 in ('U', 'D'):
+            if square1 == 'U' or square1 == 'D':
                 wing_str = square1 + square2
-            elif square2 in ('U', 'D'):
+            elif square2 == 'U' or square2 == 'D':
                 wing_str = square2 + square1
-            elif square1 in ('L', 'R'):
+            elif square1 == 'L' or square1 == 'R':
                 wing_str = square1 + square2
-            elif square2 in ('L', 'R'):
+            elif square2 == 'L' or square2 == 'R':
                 wing_str = square2 + square1
-            elif (square1, square2) == ('x', 'x'):
+            elif square1 == 'x' and square2 == 'x':
                 continue
             else:
                 raise Exception("Could not determine wing_str for (%s, %s)" % (square1, square2))
@@ -3477,7 +3478,7 @@ class RubiksCube(object):
             current_edges.append(wing_str)
 
         if debug:
-            log.info("current edges: %s" % ' '.join(current_edges))
+            log.info("orbit %d current edges: %s" % (orbit, ' '.join(current_edges)))
 
         return get_swap_count(needed_edges, current_edges, debug)
 

@@ -3,7 +3,7 @@
 from rubikscubennnsolver.misc import parse_ascii_777
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555, get_wings_edges_will_pair
 import logging
 import sys
 
@@ -14,6 +14,13 @@ log = logging.getLogger(__name__)
 # Color the errors and warnings in red
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
+
+get_wings_edges_will_pair(
+    "OOOyPXzqRQrPSSSTTTUUUVVVqWwxxWrYYpZZ",
+    "OOO---z-----SSSTTTUUUVVV-Ww---YYYWZZ"
+)
+
+sys.exit(0)
 
 cube = RubiksCube555(solved_555, 'URFDLB')
 cube.nuke_corners()

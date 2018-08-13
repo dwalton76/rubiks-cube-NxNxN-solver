@@ -272,7 +272,7 @@ class LookupTable(object):
 
                 if steps.isdigit():
                     self.use_isdigit = True
-                    log.info("%s: use_isdigit is True" % self)
+                    #log.info("%s: use_isdigit is True" % self)
 
         self.hex_format = '%' + "0%dx" % self.state_width
         self.filename_exists = True
@@ -402,7 +402,7 @@ class LookupTable(object):
         return None
 
     def preload_cache_dict(self):
-        log.info("%s: begin preload cache dict" % self)
+        #log.info("%s: begin preload cache dict" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
         if isinstance(self, LookupTableCostOnly):
@@ -429,7 +429,7 @@ class LookupTable(object):
         log.info("{}: end preload cache dict ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
 
     def preload_cache_set(self):
-        log.info("%s: begin preload cache set" % self)
+        #log.info("%s: begin preload cache set" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         states = []
 
@@ -456,7 +456,7 @@ class LookupTable(object):
         log.info("{}: end preload cache set ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
 
     def preload_cache_string(self):
-        log.info("%s: begin preload cache string" % self)
+        #log.info("%s: begin preload cache string" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         self.cache_string = None
         state_len = 0
@@ -575,6 +575,7 @@ class LookupTable(object):
 
                     for step in self.moves_all:
                         self.parent.rotate(step)
+
                         (tmp_state, _) = self.ida_heuristic()
                         tmp_steps = self.steps(tmp_state)
 
@@ -804,7 +805,7 @@ class LookupTableCostOnly(LookupTable):
         # string into memory so for those we will seek()/read() through the file.
         # We do not have to binary_search() though so that cuts way down on the
         # number of reads.
-        log.info("%s: begin preload cost-only" % self)
+        #log.info("%s: begin preload cost-only" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
         # There is a CPU/memory tradeoff to be made here with 'r' vs 'rb'. 'rb' takes
@@ -976,7 +977,9 @@ class LookupTableIDA(LookupTable):
         self.parent.solution = self.original_solution[:]
 
         for step in steps_to_here:
-            self.parent.rotate(step)
+            #self.parent.rotate(step)
+            self.parent.state = self.rotate_xxx(self.parent.state[:], step)
+            self.parent.solution.append(step)
 
         # The cube is now in a state where it is in the lookup table, we may need
         # to do several lookups to get to our target state though. Use
@@ -1026,24 +1029,10 @@ class LookupTableIDA(LookupTable):
         # If our cost_to_goal is greater than the max_depth of our main lookup table then there is no
         # need to do a binary search through the main lookup table to look for our current state...this
         # saves us some disk IO
-        if (cost_to_goal <= self.max_depth and
-            self.search_complete(lt_state, steps_to_here)):
-            #log.info("%s: %d seek calls" % (self, self.fh_txt_seek_calls))
-            self.fh_txt_seek_calls = 0
-
-            for pt in self.prune_tables:
-                #log.info("%s: %d seek calls" % (pt, pt.fh_txt_seek_calls))
-                pt.fh_txt_seek_calls = 0
+        if (cost_to_goal <= self.max_depth and self.search_complete(lt_state, steps_to_here)):
 
             this_solution = self.parent.solution[len(self.original_solution):]
             this_solution_len = self.parent.get_solution_len_minus_rotates(this_solution)
-
-            #log.info("%s: lt_state %s" % (self, lt_state))
-            if threshold >= self.exit_asap:
-                log.info("%s: IDA found match %d steps, solution length %d, f_cost %d (%d + %d)" %
-                         (self, len(steps_to_here), this_solution_len,
-                          f_cost, cost_to_here, cost_to_goal))
-                #log.info("%s: solution %s" % (self, ' '.join(this_solution)))
 
             # We use the heuristic of the next phase to rank the solutions in this phase
             if self.next_phase:
@@ -1060,6 +1049,17 @@ class LookupTableIDA(LookupTable):
             self.parent.solution = self.original_solution[:]
 
             if threshold >= self.exit_asap:
+                #log.info("%s: %d seek calls" % (self, self.fh_txt_seek_calls))
+                self.fh_txt_seek_calls = 0
+
+                for pt in self.prune_tables:
+                    #log.info("%s: %d seek calls" % (pt, pt.fh_txt_seek_calls))
+                    pt.fh_txt_seek_calls = 0
+
+                log.info("%s: IDA found match %d steps, solution length %d, f_cost %d (%d + %d)" %
+                         (self, len(steps_to_here), this_solution_len,
+                          f_cost, cost_to_here, cost_to_goal))
+                #log.info("%s: solution %s" % (self, ' '.join(this_solution)))
                 return (f_cost, True)
 
         # Not used by any tables right now so commenting out
@@ -1136,6 +1136,17 @@ class LookupTableIDA(LookupTable):
             #self.parent.print_cube()
             #sys.exit(0)
 
+    def get_best_ida_solution(self):
+
+        if self.ida_solutions:
+            self.ida_solutions.sort()
+            log.info("%s: top ida_solutions\n\n"
+                "(this_solution_len, this_solution_len + next_phase_ida_heuristic, solution)\n\n"
+                "%s\n" % (self, pformat(self.ida_solutions[0:5], width=256)))
+            return self.ida_solutions[0][-1]
+        else:
+            return None
+
     # uncomment to cProfile solve()
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
         '''
@@ -1210,6 +1221,10 @@ class LookupTableIDA(LookupTable):
         if min_ida_threshold >= max_ida_threshold+1:
             raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
 
+        # Avoiding OLL is done by changing the edge parity from odd to even.
+        # The edge parity toggles from odd to even or even to odd with every
+        # quarter wide turn. Sanity check that avoiding OLL is possible for
+        # this table.
         if self.avoid_oll:
             for step in self.moves_all:
                 if "w" in step and not step.endswith("2"):
@@ -1229,23 +1244,16 @@ class LookupTableIDA(LookupTable):
 
             self.ida_search(steps_to_here, threshold, None, self.original_state[:])
             total_ida_count += self.ida_count
+            best_solution = self.get_best_ida_solution()
 
-            if self.ida_solutions:
-
-                self.ida_solutions = sorted(self.ida_solutions)
-                min_solution = self.ida_solutions[0][-1]
-
-                if not self.exit_asap:
-                    log.info("%s: top 5 ida_solutions\n\n"
-                        "(this_solution_len + next_phase_ida_heuristic, this_solution_len, solution)\n\n"
-                        "%s\n" % (self, pformat(self.ida_solutions[0:5], width=256)))
+            if best_solution:
 
                 if self.collect_stats:
                     self.parent.state = self.original_state[:]
                     self.parent.solution = self.original_solution[:]
-                    steps_to_go = len(min_solution)
+                    steps_to_go = len(best_solution)
 
-                    for step in min_solution:
+                    for step in best_solution:
                         self.parent.rotate(step)
                         heuristic_tuple = self.ida_heuristic_tuple()
 
@@ -1258,7 +1266,7 @@ class LookupTableIDA(LookupTable):
                 self.parent.state = self.pre_recolor_state[:]
                 self.parent.solution = self.pre_recolor_solution[:]
 
-                for step in min_solution:
+                for step in best_solution:
                     self.parent.rotate(step)
 
                 end_time1 = dt.datetime.now()

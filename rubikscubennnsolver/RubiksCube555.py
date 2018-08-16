@@ -866,7 +866,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
     # -  2: 11 moves in 11s
     # -  1: 12 moves in 1200ms
     # -  0: 12 moves in 800ms
-    heuristic_stats_error = 2
+    heuristic_stats_error = 99
 
     def __init__(self, parent):
 
@@ -904,6 +904,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             filesize=filesize,
             exit_asap=exit_asap
         )
+        self.exit_asap = 99
 
         self.recolor_positions = centers_555
         self.recolor_map = {
@@ -1907,6 +1908,7 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_centers_stage.solve()
         self.print_cube()
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info(" ".join(self.solution))
 
     def group_centers_stage_LR(self):
         """

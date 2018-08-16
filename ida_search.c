@@ -514,7 +514,7 @@ get_555_centers(char *cube)
 int
 get_555_t_centers(char *cube)
 {
-    int MAX_PT_STATE_CHARS = 24;
+    int MAX_PT_STATE_CHARS = 25;
     char pt_state[MAX_PT_STATE_CHARS];
 
     sprintf(pt_state,
@@ -556,7 +556,7 @@ get_555_t_centers(char *cube)
 int
 get_555_x_centers(char *cube)
 {
-    int MAX_PT_STATE_CHARS = 24;
+    int MAX_PT_STATE_CHARS = 25;
     char pt_state[MAX_PT_STATE_CHARS];
 
     sprintf(pt_state,
@@ -748,7 +748,7 @@ hex_to_int(char value)
 int
 ida_heuristic (char *cube, lookup_table_type type)
 {
-    int max_cost = 0;
+    int cost_to_goal = 0;
     int UD_t_centers_state = 0;
     int UD_x_centers_state = 0;
     int UD_t_centers_cost = 0;
@@ -764,8 +764,8 @@ ida_heuristic (char *cube, lookup_table_type type)
         UD_x_centers_cost = hex_to_int(pt_x_centers_cost_only[UD_x_centers_state]);
         //LOG("ida_heuristic x-centers state %d, cost %d\n", UD_x_centers_state, UD_x_centers_cost);
 
-        max_cost = max(UD_t_centers_cost, UD_x_centers_cost);
-        //LOG("ida_heuristic t-centers %d, x-centers %d, max_cost %d\n", UD_t_centers_cost, UD_x_centers_cost, max_cost);
+        cost_to_goal = max(UD_t_centers_cost, UD_x_centers_cost);
+        //LOG("ida_heuristic t-centers %d, x-centers %d, cost_to_goal %d\n", UD_t_centers_cost, UD_x_centers_cost, cost_to_goal);
         break;
 
     default:
@@ -773,7 +773,7 @@ ida_heuristic (char *cube, lookup_table_type type)
         exit(1);
     }
 
-    return max_cost;
+    return cost_to_goal;
 }
 
 
@@ -801,7 +801,6 @@ int
 ida_search_complete (char *cube, lookup_table_type type)
 {
     struct key_value_pair * pt_entry = NULL;
-
     // ida_load_cube_state(cube, type) MUST be called prior to calling this.
 
     // LOG("ida_search_complete %s\n", sp_cube_state);
@@ -829,6 +828,8 @@ ida_search_complete (char *cube, lookup_table_type type)
             cube[144] == '1') {
             LOG("UD_CENTERS_STAGE_555 sp_cube_state %s\n", sp_cube_state);
             return 1;
+        } else {
+            return 0;
         }
 
         /*
@@ -839,8 +840,10 @@ ida_search_complete (char *cube, lookup_table_type type)
         }
         */
 
-        // dwalton avoid the file IO all together...IDA all the way
+        LOG("UD_CENTERS_STAGE_555 sp_cube_state %s\n", sp_cube_state);
+
         /*
+        // dwalton avoid the file IO all together...IDA all the way
         if (file_binary_search("lookup-table-5x5x5-step10-UD-centers-stage.txt", sp_cube_state, 14, 328877780, 19)) {
             LOG("UD_CENTERS_STAGE_555 sp_cube_state %s\n", sp_cube_state);
             return 1;
@@ -1111,13 +1114,17 @@ ida_search (int cost_to_here,
     cost_to_goal = ida_heuristic(cube, type);
     f_cost = cost_to_here + cost_to_goal;
 
+    // Abort Searching
+    if (f_cost >= threshold) {
+        return 0;
+    }
+
     // We are finished!!
     // If our cost_to_goal is greater than the max_depth of our main lookup table then there is no
     // need to do a binary search through the main lookup table to look for our current state...this
     // saves us some disk IO
-
-    //if (ida_search_complete(cube, type)) { // 1,827,532 seek_calls
-    if (cost_to_goal <= max_depth && ida_search_complete(cube, type)) { // 1,827,194 seek_calls
+    //if (cost_to_goal <= max_depth && ida_search_complete(cube, type)) { // 1,827,194 seek_calls
+    if (ida_search_complete(cube, type)) { // 1,827,194 seek_calls
         LOG("IDA count %d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
         LOG("VICTORY\n\n");
@@ -1125,14 +1132,9 @@ ida_search (int cost_to_here,
         return 1;
     }
 
-    // Abort Searching
-    if (f_cost >= threshold) {
-        return 0;
-    }
-
     // TODO fix this hard coded 14
     // 14 because that is how many characters the UD state is
-    char my_ida_explored_state[14 + 2];
+    char my_ida_explored_state[14 + 3];
     strcpy(my_ida_explored_state, sp_cube_state);
     char cost_to_here_str[3];
     sprintf(cost_to_here_str, "%d", cost_to_here);
@@ -1144,20 +1146,8 @@ ida_search (int cost_to_here,
 
     hash_add(&ida_explored, my_ida_explored_state, 0);
 
-    /*
-    if (hash_find(&ida_explored, sp_cube_state)) {
-        return 0;
-    }
-
-    hash_add(&ida_explored, sp_cube_state, 0);
-    */
-
     for (int i = 0; i < MOVE_COUNT_555; i++) {
         move = moves_555[i];
-
-        //if (moves_cancel_out(move, prev_move)) {
-        //    continue;
-        //}
 
         if (steps_on_same_face_and_layer(move, prev_move)) {
             continue;
@@ -1165,7 +1155,6 @@ ida_search (int cost_to_here,
 
         char cube_copy[array_size];
         memcpy(cube_copy, cube, sizeof(char) * array_size);
-
         rotate_555(cube_copy, cube_tmp, array_size, move);
         moves_to_here[cost_to_here] = move;
 
@@ -1289,4 +1278,62 @@ main (int argc, char *argv[])
     // print_cube(cube, cube_size);
     ida_solve(cube, type);
     printf("%d seek_calls", seek_calls);
+
+    // dwalton
+    /*
+static const move_type moves_555[MOVE_COUNT_555] = {
+    U, U_PRIME, U2, Uw, Uw_PRIME, Uw2,
+    L, L_PRIME, L2, Lw, Lw_PRIME, Lw2,
+    F, F_PRIME, F2, Fw, Fw_PRIME, Fw2,
+    R, R_PRIME, R2, Rw, Rw_PRIME, Rw2,
+    B, B_PRIME, B2, Bw, Bw_PRIME, Bw2,
+    D, D_PRIME, D2, Dw, Dw_PRIME, Dw2
+};
+    */
+
+    // Fw2 Dw' Rw B' Lw' F D' B' Lw' Dw Bw'
+    /*
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, Fw2);
+
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, Dw_PRIME);
+
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, Rw);
+
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, B_PRIME);
+
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, Lw_PRIME);
+
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, F);
+
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, D_PRIME);
+
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, B_PRIME);
+
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, Lw_PRIME);
+
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, Dw);
+
+    memcpy(cube_tmp, cube, sizeof(char) * array_size);
+    rotate_555(cube, cube_tmp, array_size, Bw_PRIME);
+
+    print_cube(cube, cube_size);
+
+    ida_load_cube_state(cube, type);
+
+    if (ida_search_complete(cube, type)) { // 1,827,194 seek_calls
+        printf("ida_search_complete returned True\n");
+    } else {
+        printf("ida_search_complete returned False\n");
+    }
+    */
 }

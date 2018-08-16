@@ -1908,9 +1908,6 @@ class RubiksCube555(RubiksCube):
         self.print_cube()
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        # dwalton
-        sys.exit(0)
-
     def group_centers_stage_LR(self):
         """
         Stage LR centers.  The 6x6x6 uses this that is why it is in its own method.

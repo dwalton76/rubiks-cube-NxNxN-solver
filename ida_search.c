@@ -739,6 +739,24 @@ hex_to_int(char value)
     };
 }
 
+int t_centers_555[24] = {
+    8, 12, 14, 18,
+    33, 37, 39, 43,
+    58, 62, 64, 68,
+    83, 87, 89, 93,
+    108, 112, 114, 118,
+    133, 137, 139, 143
+};
+
+int x_centers_555[24] = {
+    7, 9, 17, 19,
+    32, 34, 42, 44,
+    57, 59, 67, 69,
+    82, 84, 92, 94,
+    107, 109, 117, 119,
+    132, 134, 142, 144
+};
+
 unsigned long
 ida_heuristic (char *cube, lookup_table_type type, int debug)
 {
@@ -747,11 +765,41 @@ ida_heuristic (char *cube, lookup_table_type type, int debug)
     unsigned long UD_x_centers_state = 0;
     unsigned long UD_t_centers_cost = 0;
     unsigned long UD_x_centers_cost = 0;
+    int cube_index;
 
     switch (type)  {
     case UD_CENTERS_STAGE_555:
-        UD_t_centers_state = get_555_t_centers(cube);
-        UD_x_centers_state = get_555_x_centers(cube);
+        //UD_t_centers_state = get_555_t_centers(cube);
+        //UD_x_centers_state = get_555_x_centers(cube);
+
+        /*
+[2018-08-16T10:38:43.344] IDA threshold 7, explored 1 branches
+[2018-08-16T10:38:43.349] IDA threshold 8, explored 1225 branches
+[2018-08-16T10:38:43.422] IDA threshold 9, explored 23764 branches
+[2018-08-16T10:38:44.842] IDA threshold 10, explored 556549 branches
+[2018-08-16T10:39:17.241] IDA threshold 11, explored 12439783 branches
+        */
+
+        // dwalton
+        UD_t_centers_state = 0;
+        UD_x_centers_state = 0;
+        for (int i = 0; i < 24; i++) {
+            cube_index = t_centers_555[i];
+            if (cube[cube_index] == '1') {
+                UD_t_centers_state = UD_t_centers_state | 0x1;
+            }
+            UD_t_centers_state = UD_t_centers_state << 1;
+        }
+        UD_t_centers_state = UD_t_centers_state >> 1;
+
+        for (int i = 0; i < 24; i++) {
+            cube_index = x_centers_555[i];
+            if (cube[cube_index] == '1') {
+                UD_x_centers_state = UD_x_centers_state | 0x1;
+            }
+            UD_x_centers_state = UD_x_centers_state << 1;
+        }
+        UD_x_centers_state = UD_x_centers_state >> 1;
 
         // check for state-target
         if (UD_t_centers_state == 0xf0000f) {
@@ -1217,7 +1265,6 @@ ida_solve (char *cube, lookup_table_type type)
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
 
-    // dwalton
     //ida_prune_table_preload(&pt_t_centers, "lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt", 46);
     //ida_prune_table_preload(&pt_x_centers, "lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt", 45);
     //ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt.6-deep.all_steps");

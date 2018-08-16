@@ -20,9 +20,9 @@
 char sp_binary_search[255];
 char *sp_cube_state;
 char *sp_cube_state_binary;
-int array_size;
-int ida_count;
-int seek_calls = 0;
+unsigned long array_size;
+unsigned long ida_count;
+unsigned long seek_calls = 0;
 
 typedef enum {
     NONE,
@@ -56,12 +56,12 @@ void LOG(const char *fmt, ...) {
 //
 struct key_value_pair {
     char state[64]; /* we'll use this field as the key */
-    int value;
+    unsigned long value;
     UT_hash_handle hh; /* makes this structure hashable */
 };
 
 void
-hash_add (struct key_value_pair **hashtable, char *state_key, int value)
+hash_add (struct key_value_pair **hashtable, char *state_key, unsigned long value)
 {
     struct key_value_pair *s;
 
@@ -98,11 +98,11 @@ hash_delete_all(struct key_value_pair **hashtable)
     }
 }
 
-int
+unsigned long
 hash_count (struct key_value_pair **hashtable)
 {
     struct key_value_pair *s;
-    int count = 0;
+    unsigned long count = 0;
 
     for (s = *hashtable; s != NULL; s= (struct key_value_pair*)(s->hh.next)) {
         count++;
@@ -118,7 +118,7 @@ hash_print_all (struct key_value_pair **hashtable)
     struct key_value_pair *s;
 
     for(s = *hashtable; s != NULL; s= (struct key_value_pair*)(s->hh.next)) {
-        printf("key %s  value %d\n", s->state, s->value);
+        printf("key %s  value %lu\n", s->state, s->value);
     }
 }
 
@@ -162,8 +162,8 @@ strstrip (char *s)
 
 
 /* The file must be sorted and all lines must be the same width */
-int
-file_binary_search (char *filename, char *state_to_find, int statewidth, int linecount, int linewidth)
+unsigned long
+file_binary_search (char *filename, char *state_to_find, int statewidth, unsigned long linecount, int linewidth)
 {
     FILE *fh_read = NULL;
     unsigned long first = 0;
@@ -181,7 +181,7 @@ file_binary_search (char *filename, char *state_to_find, int statewidth, int lin
     }
 
     while (first <= last) {
-        midpoint = (int) ((first + last)/2);
+        midpoint = (unsigned long) ((first + last)/2);
         fseek(fh_read, midpoint * linewidth, SEEK_SET);
 
         if (fread(line, statewidth, 1, fh_read)) {
@@ -371,8 +371,8 @@ str_replace_list_of_chars (char *str, char *old, char new)
 }
 
 
-int
-max (int a, int b)
+unsigned long
+max (unsigned long a, unsigned long b)
 {
     if (a >= b) {
         return a;
@@ -511,7 +511,7 @@ get_555_centers(char *cube)
 }
 
 
-int
+unsigned long
 get_555_t_centers(char *cube)
 {
     int MAX_PT_STATE_CHARS = 25;
@@ -553,7 +553,7 @@ get_555_t_centers(char *cube)
 }
 
 
-int
+unsigned long
 get_555_x_centers(char *cube)
 {
     int MAX_PT_STATE_CHARS = 25;
@@ -657,9 +657,8 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename, int 
 
 
 char *
-ida_cost_only_preload (char *filename, int size)
+ida_cost_only_preload (char *filename, unsigned long size)
 {
-    // dwalton mall
     FILE *fh_read = NULL;
     char *ptr = malloc(sizeof(char) * size);
     memset(ptr, 0, sizeof(char) * size);
@@ -683,7 +682,7 @@ ida_cost_only_preload (char *filename, int size)
 
 
 int
-ida_prune_table_cost (struct key_value_pair *hashtable, char *filename, char *state_to_find, int statewidth, int linecount, int linewidth)
+ida_prune_table_cost (struct key_value_pair *hashtable, char *state_to_find)
 {
     int cost = 0;
     struct key_value_pair * pt_entry = NULL;
@@ -692,18 +691,13 @@ ida_prune_table_cost (struct key_value_pair *hashtable, char *filename, char *st
 
     if (pt_entry) {
         cost = pt_entry->value;
-    } else {
-        if (file_binary_search(filename, state_to_find, statewidth, linecount, linewidth)) {
-            cost = moves_cost(sp_binary_search);
-            hash_add(&hashtable, state_to_find, cost);
-        }
     }
 
     return cost;
 }
 
 
-int
+unsigned long
 hex_to_int(char value)
 {
     switch (value) {
@@ -745,27 +739,38 @@ hex_to_int(char value)
     };
 }
 
-int
-ida_heuristic (char *cube, lookup_table_type type)
+unsigned long
+ida_heuristic (char *cube, lookup_table_type type, int debug)
 {
-    int cost_to_goal = 0;
-    int UD_t_centers_state = 0;
-    int UD_x_centers_state = 0;
-    int UD_t_centers_cost = 0;
-    int UD_x_centers_cost = 0;
+    unsigned long cost_to_goal = 0;
+    unsigned long UD_t_centers_state = 0;
+    unsigned long UD_x_centers_state = 0;
+    unsigned long UD_t_centers_cost = 0;
+    unsigned long UD_x_centers_cost = 0;
 
     switch (type)  {
     case UD_CENTERS_STAGE_555:
+        // dwalton
+
         UD_t_centers_state = get_555_t_centers(cube);
         UD_t_centers_cost = hex_to_int(pt_t_centers_cost_only[UD_t_centers_state]);
-        //LOG("ida_heuristic t-centers state %d, cost %d\n", UD_t_centers_state, UD_t_centers_cost);
+
+        if (debug) {
+            LOG("ida_heuristic t-centers state %d or 0x%x, cost %d\n", UD_t_centers_state, UD_t_centers_state, UD_t_centers_cost);
+        }
 
         UD_x_centers_state = get_555_x_centers(cube);
         UD_x_centers_cost = hex_to_int(pt_x_centers_cost_only[UD_x_centers_state]);
-        //LOG("ida_heuristic x-centers state %d, cost %d\n", UD_x_centers_state, UD_x_centers_cost);
+
+        if (debug) {
+            LOG("ida_heuristic x-centers state %d or 0x%x, cost %d\n", UD_x_centers_state, UD_x_centers_state, UD_x_centers_cost);
+        }
 
         cost_to_goal = max(UD_t_centers_cost, UD_x_centers_cost);
-        //LOG("ida_heuristic t-centers %d, x-centers %d, cost_to_goal %d\n", UD_t_centers_cost, UD_x_centers_cost, cost_to_goal);
+
+        if (debug) {
+            LOG("ida_heuristic t-centers %d, x-centers %d, cost_to_goal %d\n", UD_t_centers_cost, UD_x_centers_cost, cost_to_goal);
+        }
         break;
 
     default:
@@ -843,7 +848,7 @@ ida_search_complete (char *cube, lookup_table_type type)
         LOG("UD_CENTERS_STAGE_555 sp_cube_state %s\n", sp_cube_state);
 
         /*
-        // dwalton avoid the file IO all together...IDA all the way
+        // avoid the file IO all together...IDA all the way
         if (file_binary_search("lookup-table-5x5x5-step10-UD-centers-stage.txt", sp_cube_state, 14, 328877780, 19)) {
             LOG("UD_CENTERS_STAGE_555 sp_cube_state %s\n", sp_cube_state);
             return 1;
@@ -1109,13 +1114,137 @@ ida_search (int cost_to_here,
     move_type move;
     char cube_tmp[array_size];
 
+    int debug = 0;
+
+    // U Fw2 Dw' Rw F' Uw L2 Bw R' Dw Rw
+    // 0   1   2  3 4   5  6  7 8   9 10
+    if (cost_to_here == 1) {
+        if (moves_to_here[0] == U) {
+            debug = 1;
+        }
+
+    } else if (cost_to_here == 2) {
+        if (moves_to_here[0] == U &&
+            moves_to_here[1] == Fw2) {
+            debug = 1;
+        }
+
+    } else if (cost_to_here == 3) {
+        if (moves_to_here[0] == U &&
+            moves_to_here[1] == Fw2 &&
+            moves_to_here[2] == Dw_PRIME) {
+            debug = 1;
+        }
+
+    } else if (cost_to_here == 4) {
+        if (moves_to_here[0] == U &&
+            moves_to_here[1] == Fw2 &&
+            moves_to_here[2] == Dw_PRIME &&
+            moves_to_here[3] == Rw) {
+            debug = 1;
+        }
+
+    } else if (cost_to_here == 5) {
+        if (moves_to_here[0] == U &&
+            moves_to_here[1] == Fw2 &&
+            moves_to_here[2] == Dw_PRIME &&
+            moves_to_here[3] == Rw &&
+            moves_to_here[4] == F_PRIME) {
+            debug = 1;
+        }
+
+    } else if (cost_to_here == 6) {
+        if (moves_to_here[0] == U &&
+            moves_to_here[1] == Fw2 &&
+            moves_to_here[2] == Dw_PRIME &&
+            moves_to_here[3] == Rw &&
+            moves_to_here[4] == F_PRIME &&
+            moves_to_here[5] == Uw) {
+            debug = 1;
+        }
+
+    } else if (cost_to_here == 7) {
+        if (moves_to_here[0] == U &&
+            moves_to_here[1] == Fw2 &&
+            moves_to_here[2] == Dw_PRIME &&
+            moves_to_here[3] == Rw &&
+            moves_to_here[4] == F_PRIME &&
+            moves_to_here[5] == Uw &&
+            moves_to_here[6] == L2) {
+            debug = 1;
+        }
+
+    } else if (cost_to_here == 8) {
+        if (moves_to_here[0] == U &&
+            moves_to_here[1] == Fw2 &&
+            moves_to_here[2] == Dw_PRIME &&
+            moves_to_here[3] == Rw &&
+            moves_to_here[4] == F_PRIME &&
+            moves_to_here[5] == Uw &&
+            moves_to_here[6] == L2 &&
+            moves_to_here[7] == Bw) {
+            debug = 1;
+        }
+
+    } else if (cost_to_here == 9) {
+        if (moves_to_here[0] == U &&
+            moves_to_here[1] == Fw2 &&
+            moves_to_here[2] == Dw_PRIME &&
+            moves_to_here[3] == Rw &&
+            moves_to_here[4] == F_PRIME &&
+            moves_to_here[5] == Uw &&
+            moves_to_here[6] == L2 &&
+            moves_to_here[7] == Bw &&
+            moves_to_here[8] == R_PRIME) {
+            debug = 1;
+        }
+
+    } else if (cost_to_here == 10) {
+        if (moves_to_here[0] == U &&
+            moves_to_here[1] == Fw2 &&
+            moves_to_here[2] == Dw_PRIME &&
+            moves_to_here[3] == Rw &&
+            moves_to_here[4] == F_PRIME &&
+            moves_to_here[5] == Uw &&
+            moves_to_here[6] == L2 &&
+            moves_to_here[7] == Bw &&
+            moves_to_here[8] == R_PRIME &&
+            moves_to_here[9] == Dw) {
+            debug = 1;
+        }
+
+    } else if (cost_to_here == 11) {
+        if (moves_to_here[0] == U &&
+            moves_to_here[1] == Fw2 &&
+            moves_to_here[2] == Dw_PRIME &&
+            moves_to_here[3] == Rw &&
+            moves_to_here[4] == F_PRIME &&
+            moves_to_here[5] == Uw &&
+            moves_to_here[6] == L2 &&
+            moves_to_here[7] == Bw &&
+            moves_to_here[8] == R_PRIME &&
+            moves_to_here[9] == Dw &&
+            moves_to_here[10] == Rw) {
+            debug = 1;
+        }
+    }
+
+    if (debug) {
+        print_moves(moves_to_here, cost_to_here);
+    }
+
     ida_count++;
     ida_load_cube_state(cube, type);
-    cost_to_goal = ida_heuristic(cube, type);
+    cost_to_goal = ida_heuristic(cube, type, debug);
     f_cost = cost_to_here + cost_to_goal;
 
     // Abort Searching
     if (f_cost >= threshold) {
+        if (debug) {
+            LOG("IDA prune f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
+                f_cost, threshold, cost_to_here, cost_to_goal);
+            LOG("\n");
+        }
         return 0;
     }
 
@@ -1174,6 +1303,7 @@ ida_solve (char *cube, lookup_table_type type)
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
 
+    // dwalton
     //ida_prune_table_preload(&pt_t_centers, "lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt", 46);
     //ida_prune_table_preload(&pt_x_centers, "lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt", 45);
     //ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt.6-deep.all_steps");
@@ -1182,7 +1312,7 @@ ida_solve (char *cube, lookup_table_type type)
     pt_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt", 16711681);
 
     ida_load_cube_state(cube, type);
-    min_ida_threshold = ida_heuristic(cube, type);
+    min_ida_threshold = ida_heuristic(cube, type, 0);
     LOG("min_ida_threshold %d\n", min_ida_threshold);
 
     for (int threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {
@@ -1190,8 +1320,8 @@ ida_solve (char *cube, lookup_table_type type)
         memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_SEARCH_DEPTH);
         hash_delete_all(&ida_explored);
 
-        // TODO fix this hard-coded 7 (for 7-deep)
-        if (ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, type, 7)) {
+        // TODO fix this hard-coded 6 (for 6-deep)
+        if (ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, type, 6)) {
             LOG("IDA threshold %d, explored %d branches, found solution\n", threshold, ida_count);
             free(pt_t_centers_cost_only);
             pt_t_centers_cost_only = NULL;
@@ -1199,7 +1329,7 @@ ida_solve (char *cube, lookup_table_type type)
             pt_x_centers_cost_only = NULL;
             return 1;
         } else {
-            LOG("IDA threshold %d, explored %d branches\n", threshold, ida_count);
+            LOG("IDA threshold %d, explored %d branches\n\n\n\n\n", threshold, ida_count);
         }
     }
 
@@ -1277,9 +1407,8 @@ main (int argc, char *argv[])
 
     // print_cube(cube, cube_size);
     ida_solve(cube, type);
-    printf("%d seek_calls", seek_calls);
+    printf("%lu seek_calls", seek_calls);
 
-    // dwalton
     /*
 static const move_type moves_555[MOVE_COUNT_555] = {
     U, U_PRIME, U2, Uw, Uw_PRIME, Uw2,

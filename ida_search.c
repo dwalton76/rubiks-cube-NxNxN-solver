@@ -41,7 +41,7 @@ void LOG(const char *fmt, ...) {
     /* print the progname, version, and timestamp */
     gettimeofday(&tv, NULL);
     strftime(date, sizeof(date) / sizeof(*date), "%Y-%m-%dT%H:%M:%S", gmtime(&tv.tv_sec));
-    printf("[%s.%03ld] ", date, tv.tv_usec / 1000);
+    printf("[%s.%03d] ", date, (int)tv.tv_usec / 1000);
 
     /* printf like normal */
     va_start(args, fmt);
@@ -183,27 +183,36 @@ file_binary_search (char *filename, char *state_to_find, int statewidth, int lin
     while (first <= last) {
         midpoint = (int) ((first + last)/2);
         fseek(fh_read, midpoint * linewidth, SEEK_SET);
-        fread(line, statewidth, 1, fh_read);
-        seek_calls++;
 
-        str_cmp_result = strncmp(state_to_find, line, statewidth);
+        if (fread(line, statewidth, 1, fh_read)) {
+            seek_calls++;
 
-        if (str_cmp_result == 0) {
+            str_cmp_result = strncmp(state_to_find, line, statewidth);
 
-	        // read the entire line, not just the state
-            fseek(fh_read, midpoint * linewidth, SEEK_SET);
-	        fread(line, linewidth, 1, fh_read);
+            if (str_cmp_result == 0) {
 
-            strstrip(line);
-            strcpy(sp_binary_search, line);
-            fclose(fh_read);
-            return 1;
+                // read the entire line, not just the state
+                fseek(fh_read, midpoint * linewidth, SEEK_SET);
 
-        } else if (str_cmp_result < 0) {
-            last = midpoint - 1;
+                if (fread(line, linewidth, 1, fh_read)) {
+                    strstrip(line);
+                    strcpy(sp_binary_search, line);
+                    fclose(fh_read);
+                    return 1;
+                } else {
+                    printf("ERROR: linewidth read failed for %s\n", filename);
+                    exit(1);
+                }
 
+            } else if (str_cmp_result < 0) {
+                last = midpoint - 1;
+
+            } else {
+                first = midpoint + 1;
+            }
         } else {
-            first = midpoint + 1;
+            printf("ERROR: statewidth read failed for %s\n", filename);
+            exit(1);
         }
     }
 
@@ -662,16 +671,14 @@ ida_cost_only_preload (char *filename, int size)
         exit(1);
     }
 
-    fread(ptr, size, 1, fh_read);
-    fclose(fh_read);
-    LOG("ida_cost_only_preload: end   %s, ptr 0x%x\n", filename, ptr);
-
-    //for (int i = 2182470; i <= 2182480; i++) {
-    //    LOG("%d: %c\n", i, ptr[i]);
-    //    // LOG("%d: %d\n", i, ptr[i]);
-    //}
-
-    return ptr;
+    if (fread(ptr, size, 1, fh_read)) {
+        fclose(fh_read);
+        LOG("ida_cost_only_preload: end   %s, ptr 0x%x\n", filename, ptr);
+        return ptr;
+    } else {
+        printf("ERROR: ida_cost_only_preload read failed %s\n", filename);
+        exit(1);
+    }
 }
 
 
@@ -1217,7 +1224,7 @@ ida_solve (char *cube, lookup_table_type type)
 }
 
 
-void
+int
 main (int argc, char *argv[])
 {
     lookup_table_type type = NONE;

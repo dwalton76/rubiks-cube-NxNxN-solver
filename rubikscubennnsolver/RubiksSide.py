@@ -31,12 +31,16 @@ class SolveError(Exception):
     pass
 
 
+class NotSolving(Exception):
+    pass
+
+
 class StuckInALoop(Exception):
-    pass 
+    pass
 
 
 class ImplementThis(Exception):
-    pass 
+    pass
 
 
 class Side(object):
@@ -343,3 +347,18 @@ class Side(object):
                 self.wing_partner[pos1] = pos2
             elif pos2 >= self.min_pos and pos2 <= self.max_pos:
                 self.wing_partner[pos2] = pos1
+
+    def centers_solved(self):
+        prev_pos = None
+        for pos in self.center_pos:
+            if prev_pos is not None:
+                if self.parent.state[prev_pos] != self.parent.state[pos]:
+                    return False
+            prev_pos = pos
+
+        return True
+
+    def edges_paired(self):
+        if self.non_paired_edges(True, True, True, True):
+            return False
+        return True

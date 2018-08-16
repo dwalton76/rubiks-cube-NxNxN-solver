@@ -1,5 +1,36 @@
 
-tsai_phase2_orient_edges_444 = {
+# 12-23 are high edges, make these U (1)
+# 0-11 are low edges, make these D (6)
+# https://github.com/cs0x7f/TPR-4x4x4-Solver/blob/master/src/FullCube.java
+high_edges_444 = ((14, 2, 67),  # upper
+                  (13, 9, 19),
+                  (15, 8, 51),
+                  (12, 15, 35),
+                  (21, 25, 76), # left
+                  (20, 24, 37),
+                  (23, 57, 44), # right
+                  (22, 56, 69),
+                  (18, 82, 46), # down
+                  (17, 89, 30),
+                  (19, 88, 62),
+                  (16, 95, 78))
+
+
+low_edges_444 = ((2, 3, 66),  # upper
+                 (1, 5, 18),
+                 (3, 12, 50),
+                 (0, 14, 34),
+                 (9, 21, 72), # left
+                 (8, 28, 41),
+                 (11, 53, 40), # right
+                 (10, 60, 73),
+                 (6, 83, 47), # down
+                 (5, 85, 31),
+                 (7, 92, 63),
+                 (4, 94, 79))
+
+
+highlow_edge_values = {
     (2, 67, 'B', 'D'): 'D',
     (2, 67, 'B', 'L'): 'D',
     (2, 67, 'B', 'R'): 'D',
@@ -1156,7 +1187,7 @@ tsai_phase2_orient_edges_444 = {
 
 
 # These apply to 4x4x4 and 5x5x5
-tsai_edge_mapping_combinations = {
+highlow_edge_mapping_combinations = {
     0 : (set()),
     2 : (
         set(('UB', 'UL')),

@@ -8,12 +8,16 @@ Solve any size rubiks cube:
 This is a work in progress
 """
 
-from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop
+from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop, NotSolving
 from rubikscubennnsolver.LookupTable import NoSteps
 from math import sqrt
+from pprint import pformat
+from statistics import median
 import argparse
+import datetime as dt
 import logging
 import os
+import resource
 import sys
 
 def remove_slices(solution):
@@ -182,9 +186,10 @@ def remove_slices(solution):
 
     return results
 
+start_time = dt.datetime.now()
 
 logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(filename)16s %(levelname)8s: %(message)s')
+                    format='%(asctime)s %(filename)20s %(levelname)8s: %(message)s')
 log = logging.getLogger(__name__)
 
 # Color the errors and warnings in red
@@ -195,11 +200,10 @@ logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelNam
 parser = argparse.ArgumentParser()
 parser.add_argument('--print-steps', default=False, action='store_true', help='Display animated step-by-step solution')
 parser.add_argument('--debug', default=False, action='store_true', help='set loglevel to DEBUG')
+parser.add_argument('--min-memory', default=False, action='store_true', help='Load smaller tables to use less memory...takes longer to run')
 
 # CPU mode
 action = parser.add_mutually_exclusive_group(required=False)
-action.add_argument('--tsai', default=False, help='Use the tsai solver, 4x4x4 only', action='store_true')
-
 parser.add_argument('--colormap', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--order', type=str, default='URFDLB', help='order of sides in --state, default kociemba URFDLB')
 parser.add_argument('--state', type=str, help='Cube state',
@@ -217,7 +221,8 @@ parser.add_argument('--state', type=str, help='Cube state',
 
 # 4x4x4
 #    default='FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU')
-    default='DRFDFRUFDURDDLLUFLDLLBLULFBUUFRBLBFLLUDDUFRBURBBRBDLLDURFFBBRUFUFDRFURBUDLDBDUFFBUDRRLDRBLFBRRLB') # xyzzy test cube
+    #default='DRFDFRUFDURDDLLUFLDLLBLULFBUUFRBLBFLLUDDUFRBURBBRBDLLDURFFBBRUFUFDRFURBUDLDBDUFFBUDRRLDRBLFBRRLB') # xyzzy test cube
+    default='FLDFDLBDFBLFFRRBDRFRRURBRDUBBDLURUDRRBFFBDLUBLUULUFRRFBLDDUULBDBDFLDBLUBFRFUFBDDUBFLLRFLURDULLRU') # TPR cube
 #    default='UDRFFBFLFUDLBDDDRUFLBBBFBDUDBBFFUBRBBRRUBRRUFULDRFDLLDFLDUFLUFLRBRDLFDBRRUFRLBBDDULRRLLURLLUUUDF') # OLL
 #    default='DRDBBBRFBBDFLDUURRRDDUUBLFRRUFUUFLFFUUFRURLFURRRLBBBDBLDFLDLDLDLFLLDUUBFDDDBBLBBLFURUFLLUFRRFBDR') # OLL
 #    default='RRRRRRRLRRRLRRRFLBBFBBBBBBBBRBBBUUUUUDDDUDDDDDDULLLFLLLRLLLRLFFLBFFBLFFFLFFFBFFFDDDDUUUUUUUUUDDD')
@@ -266,7 +271,7 @@ if args.debug:
 
 # no longer used
 #if args.test:
-#    cube = RubiksCube444(solved_4x4x4, args.order, args.colormap, avoid_pll=True, debug=args.debug)
+#    cube = RubiksCube444(solved_444, args.order, args.colormap, avoid_pll=True, debug=args.debug)
 #    cube.test()
 #    sys.exit(0)
 
@@ -280,14 +285,10 @@ try:
         from rubikscubennnsolver.RubiksCube333 import RubiksCube333
         cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
     elif size == 4:
-        from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
-        if args.tsai:
-            from rubikscubennnsolver.RubiksCubeTsai444 import RubiksCubeTsai444
-            cube = RubiksCubeTsai444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
-        else:
-            cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
+        from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
-        from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
+        from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
         cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
     elif size == 6:
         from rubikscubennnsolver.RubiksCube666 import RubiksCube666
@@ -302,38 +303,37 @@ try:
         from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
         cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
 
+    # TPR cube FLDFDLBDFBLFFRRBDRFRRURBRDUBBDLURUDRRBFFBDLUBLUULUFRRFBLDDUULBDBDFLDBLUBFRFUFBDDUBFLLRFLURDULLRU for
+    # https://alg.cubing.net/?puzzle=4x4x4&alg=B_Fw-_L-_Uw_R2_B_Fw-_Uw_%2F%2F_end_of_phase1_(8%2F8_moves)%0AB_Fw_D-_R_F__%2F%2F_end_of_phase_2_(5%2F13_moves)%0ARw2_D_Fw2_U_R2_Fw2_Uw2_Fw2_D-_U2_Fw2_%2F%2Fend_of_phase3_(11%2F24_moves)&setup=B_D-_R2-_D_B2-_L2-_U_R2-_D_F2-_L2-_B_L_B-_R_B-_R2-_U_F2-_L_Uw2-_Rw2-_R_Uw2-_B_U2-_R-_Uw2-_B_R-_Fw2-_F_B_R_Uw-_R2-_B-_Rw2-_Uw_Rw-_Uw-_L_Fw_R_B-_Rw2-&view=playback
+
     # Uncomment to produce a cube from alg.cubing.net
     # https://alg.cubing.net/?alg=R_Rw-_D_Uw_R2_Fw2_Uw2_F2_Uw_Fw_%2F%2F_stage_centres%0AU_L_Fw2_D2_L_Fw2_U_Rw2_U-_%2F%2F_3_dedges_%26%232b%3B_partial_centres%0AB_D-_B-_Uw2_L_U-_F_R_Fw2_%2F%2F_6_dedges_%26%232b%3B_centres%0ARw2_U_R-_U-_D-_L2_D_Rw2_%2F%2F_9_dedges%0AFw2_D-_F-_D_Fw2_%2F%2F_12_dedges%0AL2_U-_D_R2_L-_B2_D-_F_%2F%2F_Kociemba_phase_1%0AR2_F2_U2_R2_L2_F2_U-_R2_U-_L2_U2_R2_B2_%2F%2F_Kociemba_phase_2&puzzle=4x4x4&setup=(R1_Rw3_D1_Uw1_R2_Fw2_Uw2_F2_Uw1_Fw1_U1_L1_Fw2_D2_L1_Fw2_U1_Rw2_U3_B1_D3_B3_Uw2_L1_U3_F1_R1_Fw2_Rw2_U1_R3_U3_D3_L2_D1_Rw2_Fw2_D3_F3_D1_Fw2_L2_U3_D1_R2_L3_B2_D3_F1_R2_F2_U2_R2_L2_F2_U3_R2_U3_L2_U2_R2_B2_x-_z-)-&view=playback
     '''
-    cube = RubiksCube555(solved_5x5x5, args.order, args.colormap)
-    for step in remove_slices("y' L 2F2 R 2R2 U D2 R 2U2 D' R 3R2 L' 3R L2 R2 L2 3R L2 B D 2R 3R2 3F 2B' 3U2 2D' L 3R2 2R 3U2 L' B 2U 3U 2B' L2 2U2 2R2 F L 2R' U 2D 2L 2B 2F 3R2 2D2 L' F' 2U' 2L' U2 B R' 3F2 2U2 F 2U' R2 2U' 2D2 L' 3U2 2R2 2F2 2R 2F' 2B 3R2 2U 2F' 3U 3R' D2 2L2 2U F' 2L F' 2B' 3F' U R' F 2R2 2F 3F 2B' 2L2 3U' 2R 3R2 U2 2R' 2B2 2U' 2D 2U2 R2".split()):
+    cube = RubiksCube444(solved_444, args.order, args.colormap)
+    for step in remove_slices("B D' R2' D B2' L2' U R2' D F2' L2' B L B' R B' R2' U F2' L Uw2' Rw2' R Uw2' B U2' R' Uw2' B R' Fw2' F B R Uw' R2' B' Rw2' Uw Rw' Uw' L Fw R B' Rw2'".split()):
         cube.rotate(step)
 
     kociemba_string = cube.get_kociemba_string(True)
     print(kociemba_string)
     cube.print_cube()
     sys.exit(0)
-    '''
 
     # compress a solution
-    '''
-    cube = RubiksCube555(solved_5x5x5, args.order, args.colormap)
+    cube = RubiksCube555(solved_555, args.order, args.colormap)
     cube.solution = "Rw' Lw x F2 Rw Lw' x' F' Uw Dw' y' B' Uw Dw' y' B Uw Dw' y' B Uw Dw' y' B' Uw Dw' y' F'".split()
     cube.compress_solution()
     cube.print_solution()
     sys.exit(0)
-    '''
 
     # run build_tsai_phase2_orient_edges_555
-    '''
-    cube = RubiksCube555(solved_5x5x5, args.order, args.colormap)
-    cube.build_tsai_phase2_orient_edges_555()
+    cube = RubiksCube555(solved_555, args.order, args.colormap)
+    cube.build_tsai_phase3_orient_edges_555()
     sys.exit(0)
     '''
 
     # print cube rotations
     '''
-    cube = RubiksCube444(solved_4x4x4, args.order, args.colormap)
+    cube = RubiksCube444(solved_444, args.order, args.colormap)
     original_state = cube.state[:]
     rotations = (
                 (),
@@ -371,12 +371,27 @@ try:
     sys.exit(0)
     '''
 
+    cube.min_memory = args.min_memory
     cube.sanity_check()
     cube.print_cube()
     cube.www_header()
     cube.www_write_cube("Initial Cube")
 
-    cube.solve()
+    try:
+        cube.solve()
+    except NotSolving:
+        if cube.heuristic_stats:
+            log.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
+
+            for (key, value) in cube.heuristic_stats.items():
+                cube.heuristic_stats[key] = int(median(value))
+
+            log.info("%s: heuristic_stats median\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
+            sys.exit(0)
+        else:
+            raise
+
+    end_time = dt.datetime.now()
     log.info("Final Cube")
     cube.print_cube()
     cube.print_solution()
@@ -387,24 +402,7 @@ try:
 
     # Now put the cube back in its initial state and verify the solution solves it
     solution = cube.solution
-
-    if size == 2:
-        cube = RubiksCube222(args.state, args.order, args.colormap)
-    elif size == 3:
-        cube = RubiksCube333(args.state, args.order, args.colormap)
-    elif size == 4:
-        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True)
-    elif size == 5:
-        cube = RubiksCube555(args.state, args.order, args.colormap)
-    elif size == 6:
-        cube = RubiksCube666(args.state, args.order, args.colormap)
-    elif size == 7:
-        cube = RubiksCube777(args.state, args.order, args.colormap)
-    elif size % 2 == 0:
-        cube = RubiksCubeNNNEven(args.state, args.order, args.colormap, args.debug)
-    else:
-        cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
-
+    cube.re_init()
     len_steps = len(solution)
 
     for (i, step) in enumerate(solution):
@@ -427,6 +425,10 @@ try:
     if args.print_steps:
         cube.print_cube()
 
+    print("\nMemory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    print("Time   : %s" % (end_time - start_time))
+    print("")
+
     if not cube.solved():
         kociemba_string = cube.get_kociemba_string(False)
         edge_swap_count = cube.get_edge_swap_count(edges_paired=True, orbit=None, debug=True)
@@ -436,9 +438,9 @@ try:
             (edge_swap_count, corner_swap_count, kociemba_string))
 
 except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
+    cube.enable_print_cube = True
     cube.print_cube_layout()
     cube.print_cube()
-    #cube.tsai_phase2_orient_edges_print()
     cube.print_solution()
     print((cube.get_kociemba_string(True)))
     raise

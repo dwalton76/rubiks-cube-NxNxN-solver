@@ -1,7 +1,7 @@
 
 from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from math import ceil
 import logging
 import sys
@@ -11,10 +11,23 @@ log = logging.getLogger(__name__)
 
 class RubiksCubeNNNOddEdges(RubiksCube):
 
+    def get_fake_555(self):
+        if self.fake_555 is None:
+            if self.fake_777 and self.fake_777.fake_555:
+                self.fake_555 = self.fake_777.fake_555
+                self.fake_555.re_init()
+                self.fake_555.enable_print_cube = False
+            else:
+                self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+                self.fake_555.enable_print_cube = False
+                self.fake_555.lt_init()
+        else:
+            self.fake_555.re_init()
+        return self.fake_555
+
     def pair_edge_orbit_via_555(self, orbit):
         log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.lt_init()
+        fake_555 = self.get_fake_555()
 
         # Fill in the corners so we can avoid certain types of parity
         start_555 = 0
@@ -52,11 +65,11 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             row5_col2 = row1_col2 + ((self.size - 1) * self.size)
             row5_col3 = row1_col3 + ((self.size - 1) * self.size)
 
-            log.info("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
-            log.info("%d row2: %s, %s" % (x, row2_col1, row2_col3))
-            log.info("%d row3: %s, %s" % (x, row3_col1, row3_col3))
-            log.info("%d row4: %s, %s" % (x, row4_col1, row4_col3))
-            log.info("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
+            log.debug("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
+            log.debug("%d row2: %s, %s" % (x, row2_col1, row2_col3))
+            log.debug("%d row3: %s, %s" % (x, row3_col1, row3_col3))
+            log.debug("%d row4: %s, %s" % (x, row4_col1, row4_col3))
+            log.debug("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
 
             # row1
             fake_555.state[start_555+2] = self.state[row1_col1]
@@ -90,9 +103,6 @@ class RubiksCubeNNNOddEdges(RubiksCube):
 
         for step in fake_555.solution:
 
-            if step == 'EDGES_GROUPED':
-                continue
-
             # Rotate the entire cube
             if step.startswith('5'):
                 step = str(self.size) + step[1:]
@@ -109,10 +119,6 @@ class RubiksCubeNNNOddEdges(RubiksCube):
 
     def group_edges(self):
 
-        if not self.get_non_paired_edges():
-            self.solution.append('EDGES_GROUPED')
-            return
-
         # How many orbits of edges does this cube have?
         max_orbit = int((self.size/2) - 1)
 
@@ -120,6 +126,5 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         for orbit in reversed(list(range(0, max_orbit))):
             self.pair_edge_orbit_via_555(orbit)
 
-        self.solution.append('EDGES_GROUPED')
-        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.print_cube()
+        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

@@ -6,17 +6,14 @@ https://github.com/dwalton76/rubiks-cube-lookup-tables/blob/master/rotate.c
 """
 
 from copy import copy
+from pprint import pformat
 from rubikscubennnsolver import RubiksCube
-from rubikscubennnsolver.RubiksCube222 import solved_2x2x2, moves_2x2x2
-from rubikscubennnsolver.RubiksCube333 import solved_3x3x3, moves_3x3x3
-from rubikscubennnsolver.RubiksCube444 import solved_4x4x4, moves_4x4x4
-from rubikscubennnsolver.RubiksCube555 import solved_5x5x5, moves_5x5x5
-from rubikscubennnsolver.RubiksCube666 import solved_6x6x6, moves_6x6x6
-from rubikscubennnsolver.RubiksCube777 import solved_7x7x7, moves_7x7x7
-from rubikscubennnsolver.RubiksCubeNNNEven import solved_8x8x8, moves_8x8x8
-from rubikscubennnsolver.RubiksCubeNNNOdd import solved_9x9x9
-from rubikscubennnsolver.RubiksCubeNNNEven import moves_8x8x8 as moves_9x9x9
-from rubikscubennnsolver.RubiksCubeNNNEven import solved_10x10x10, moves_10x10x10
+from rubikscubennnsolver.RubiksCube222 import solved_222, moves_222
+from rubikscubennnsolver.RubiksCube333 import solved_333, moves_333
+from rubikscubennnsolver.RubiksCube444 import solved_444, moves_444
+from rubikscubennnsolver.RubiksCube555 import solved_555, moves_555
+from rubikscubennnsolver.RubiksCube666 import solved_666, moves_666
+from rubikscubennnsolver.RubiksCube777 import solved_777, moves_777
 import logging
 
 logging.basicConfig(level=logging.INFO,
@@ -48,15 +45,12 @@ strmatch (char *str1, char *str2)
 """)
 
 for (size, solved_state) in (
-    (2, solved_2x2x2),
-    (3, solved_3x3x3),
-    (4, solved_4x4x4),
-    (5, solved_5x5x5),
-    (6, solved_6x6x6),
-    (7, solved_7x7x7),
-    (8, solved_8x8x8),
-    (9, solved_9x9x9),
-    (10, solved_10x10x10),
+    (2, solved_222),
+    (3, solved_333),
+    (4, solved_444),
+    (5, solved_555),
+    (6, solved_666),
+    (7, solved_777),
     ):
 
     cube = RubiksCube(solved_state, 'URFDLB')
@@ -69,31 +63,22 @@ for (size, solved_state) in (
     original_state = copy(cube.state)
 
     if size == 2:
-        steps = moves_2x2x2
+        steps = moves_222
 
     elif size == 3:
-        steps = moves_3x3x3
+        steps = moves_333
 
     elif size == 4:
-        steps = moves_4x4x4
+        steps = moves_444
 
     elif size == 5:
-        steps = moves_5x5x5
+        steps = moves_555
 
     elif size == 6:
-        steps = moves_6x6x6
+        steps = moves_666
 
     elif size == 7:
-        steps = moves_7x7x7
-
-    elif size == 8:
-        steps = moves_8x8x8
-
-    elif size == 9:
-        steps = moves_9x9x9
-
-    elif size == 10:
-        steps = moves_10x10x10
+        steps = moves_777
 
     else:
         raise Exception("Add support for size %s" % size)
@@ -129,24 +114,14 @@ for (size, solved_state) in (
 
         for step in steps:
             step_pretty = step.replace("'", "_prime")
-
             function_name = "rotate_%d%d%d_%s" % (size, size, size, step_pretty)
-            print("")
-            print("def %s(cube):" % function_name)
             rotate_mapper[step] = function_name
 
             cube.rotate(step)
-            cube.print_case_statement_python(step)
+            rotate_mapper[step] = cube.print_case_statement_python(function_name, step)
             cube.state = copy(original_state)
-            #print("\n\n")
 
-        print("")
-        print("rotate_mapper_%d%d%d = {" % (size, size, size))
-        for step in sorted(rotate_mapper.keys()):
-            print("    \"%s\" : %s," % (step, rotate_mapper[step]))
-        print("}")
-
-        print("")
-        print("def rotate_%d%d%d(cube, step):" % (size, size, size))
-        print("    return rotate_mapper_%d%d%d[step](cube)" % (size, size, size))
+        print("swaps_%d%d%d = %s" % (size, size, size, pformat(rotate_mapper, width=10024)))
+        print("\ndef rotate_%d%d%d(cube, step):" % (size, size, size))
+        print("    return [cube[x] for x in swaps_%d%d%d[step]]" % (size, size, size))
         print("")

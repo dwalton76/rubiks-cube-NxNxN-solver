@@ -1,40 +1,57 @@
 
-from itertools import combinations
+from rubikscubennnsolver import NotSolving
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+from rubikscubennnsolver.RubiksCube666Misc import (
+    state_targets_step20,
+    state_targets_step30,
+    state_targets_step31,
+    state_targets_step60,
+)
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableCostOnly,
+    LookupTableHashCostOnly,
     LookupTableIDA
 )
 from pprint import pformat
 import json
 import logging
+import math
+import resource
 import sys
 
 log = logging.getLogger(__name__)
 
 
-moves_6x6x6 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
-               "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2",
-               "F" , "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2",
-               "R" , "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2",
-               "B" , "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",
-               "D" , "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2")
-solved_6x6x6 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+moves_666 = (
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2",
+    "F" , "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2",
+    "R" , "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2",
+    "B" , "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",
+    "D" , "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2"
+)
+solved_666 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 
-set_UD = set(('U', 'D'))
-set_LR = set(('L', 'R'))
+inner_x_centers_666 = (
+    15, 16, 21, 22,
+    51, 52, 57, 58,
+    87, 88, 93, 94,
+    123, 124, 129, 130,
+    159, 160, 165, 166,
+    195, 196, 201, 202
+)
 
 centers_666 = (
-    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29,
-    44, 45, 46, 47, 50, 51, 52, 53, 56, 57, 58, 59, 62, 63, 64, 65,
-    80, 81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101,
-    116, 117, 118, 119, 122, 123, 124, 125, 128, 129, 130, 131, 134, 135, 136, 137,
-    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173,
-    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209
+    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29, # Upper
+    44, 45, 46, 47, 50, 51, 52, 53, 56, 57, 58, 59, 62, 63, 64, 65, # Left
+    80, 81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101, # Front
+    116, 117, 118, 119, 122, 123, 124, 125, 128, 129, 130, 131, 134, 135, 136, 137, # Right
+    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173, # Back
+    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209 # Down
 )
 
 UD_centers_666 = (
@@ -73,15 +90,6 @@ outer_x_centers_666 = set((
     152, 155, 170, 173,
     188, 191, 206, 209
 ))
-
-oblique_edges_666 = (
-    9, 10, 14, 17, 20, 23, 27, 28,
-    45, 46, 50, 53, 56, 59, 63, 64,
-    81, 82, 86, 89, 92, 95, 99, 100,
-    117, 118, 122, 125, 128, 131, 135, 136,
-    153, 154, 158, 161, 164, 167, 171, 172,
-    189, 190, 194, 197, 200, 203, 207, 208
-)
 
 outer_x_center_inner_x_centers_666 = (
     # outer x-centers
@@ -168,272 +176,487 @@ LFRB_right_oblique_edges_666 = (
     154, 158, 167, 171
 )
 
-LFRB_oblique_edges_666 = (
-    45, 46, 50, 53, 56, 59, 63, 64,
-    81, 82, 86, 89, 92, 95, 99, 100,
-    117, 118, 122, 125, 128, 131, 135, 136,
-    153, 154, 158, 161, 164, 167, 171, 172
-)
 
-class LookupTable666UDObliqueEdgesStageLeftOnly(LookupTable):
+class LookupTable666UDInnerXCentersStage(LookupTable):
     """
-    lookup-table-6x6x6-step11-UD-oblique-edge-stage-left-only.txt
-    =============================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 238 entries (1 percent, 8.21x previous step)
-    4 steps has 742 entries (5 percent, 3.12x previous step)
-    5 steps has 1836 entries (14 percent, 2.47x previous step)
-    6 steps has 4405 entries (34 percent, 2.40x previous step)
-    7 steps has 3774 entries (29 percent, 0.86x previous step)
-    8 steps has 1721 entries (13 percent, 0.46x previous step)
-    9 steps has 122 entries (0 percent, 0.07x previous step)
+    lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt
+    =========================================================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 108 entries (0 percent, 12.00x previous step)
+    3 steps has 1,434 entries (0 percent, 13.28x previous step)
+    4 steps has 15,210 entries (2 percent, 10.61x previous step)
+    5 steps has 126,306 entries (17 percent, 8.30x previous step)
+    6 steps has 420,312 entries (57 percent, 3.33x previous step)
+    7 steps has 171,204 entries (23 percent, 0.41x previous step)
+    8 steps has 888 entries (0 percent, 0.01x previous step)
 
-    Total: 12870 entries
-    Average: 6.265501 moves
+    Total: 735,471 entries
+    Average: 6.02 moves
     """
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step11-UD-oblique-edge-stage-left-only.txt',
-            'f0000f',
-            linecount=12870,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in left_oblique_edges_666])
-
-        return self.hex_format % int(result, 2)
+            'lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt',
+            ('f0000f', '0f0f00', '00f0f0'),
+            linecount=735471,
+            max_depth=8,
+            filesize=31625253,
+        )
 
 
-class LookupTable666UDObliqueEdgesStageRightOnly(LookupTable):
+class LookupTableIDA666UDInnerXCentersStage(LookupTableIDA):
     """
-    lookup-table-6x6x6-step12-UD-oblique-edge-stage-right-only.txt
-    ==============================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 238 entries (1 percent, 8.21x previous step)
-    4 steps has 742 entries (5 percent, 3.12x previous step)
-    5 steps has 1836 entries (14 percent, 2.47x previous step)
-    6 steps has 4405 entries (34 percent, 2.40x previous step)
-    7 steps has 3774 entries (29 percent, 0.86x previous step)
-    8 steps has 1721 entries (13 percent, 0.46x previous step)
-    9 steps has 122 entries (0 percent, 0.07x previous step)
-
-    Total: 12870 entries
-    Average: 6.265501 moves
+    We use IDA here so we can avoid OLL on the inside orbit
     """
 
     def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt',
+            ('f0000f', '0f0f00', '00f0f0'),
+            moves_666,
+
+            # illegal_moves
+            (),
+
+            # prune tables
+            (parent.lt_UD_inner_x_centers_stage_pt,),
+            linecount=735471,
+            max_depth=8,
+            filesize=31625253,
+        )
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        lt_state = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in inner_x_centers_666])
+        lt_state = self.hex_format % int(lt_state, 2)
+        cost_to_goal = self.parent.lt_UD_inner_x_centers_stage_pt.heuristic(lt_state)
+        return (lt_state, cost_to_goal)
+
+
+class LookupTable666UDObliquEdgeStage(LookupTableIDA):
+    """
+    All we care about is getting the UD oblique edges paired, we do
+    not need them to be placed on sides UD at this point.
+
+    lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt
+    ====================================================
+    1 steps has 4,171,103 entries (7 percent, 0.00x previous step)
+    2 steps has 55,048,136 entries (92 percent, 13.20x previous step)
+
+    Total: 59,219,239 entries
+    """
+    oblique_edges_666 = (
+        9, 10, 14, 17, 20, 23, 27, 28,
+        45, 46, 50, 53, 56, 59, 63, 64,
+        81, 82, 86, 89, 92, 95, 99, 100,
+        117, 118, 122, 125, 128, 131, 135, 136,
+        153, 154, 158, 161, 164, 167, 171, 172,
+        189, 190, 194, 197, 200, 203, 207, 208
+    )
+
+    oblique_edge_pairs_666 = (
+        (9, 10), (14, 20), (17, 23), (27, 28),
+        (45, 46), (50, 56), (53, 59), (63, 64),
+        (81, 82), (86, 92), (89, 95), (99, 100),
+        (117, 118), (122, 128), (125, 131), (135, 136),
+        (153, 154), (158, 164), (161, 167), (171, 172),
+        (189, 190), (194, 200), (197, 203), (207, 208)
+    )
+
+    def __init__(self, parent):
+
+        # uses 74M
+        if parent.min_memory:
+            filename = "lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt.1-deep"
+            linecount = 4171103
+            max_depth = 1
+            filesize = 75079854
+
+        # uses 1.3G
+        else:
+            filename = "lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt"
+            linecount = 59219239
+            max_depth = 2
+            filesize = 1362042497
+
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            filename,
+            state_targets_step20,
+            moves_666,
+
+            # illegal_moves
+            ("3Fw", "3Fw'",
+             "3Bw", "3Bw'",
+             "3Lw", "3Lw'",
+             "3Rw", "3Rw'"),
+
+            # prune tables
+            (),
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize,
+            exit_asap=1,
+        )
+
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        #self.parent.print_cube()
+        self.parent.nuke_corners()
+        #self.parent.nuke_edges()
+
+        for x in centers_666:
+            if x in self.oblique_edges_666:
+                if self.parent.state[x] == 'U' or self.parent.state[x] == 'D':
+                    self.parent.state[x] = 'U'
+                else:
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+
+        #self.parent.print_cube()
+
+    def get_UD_unpaired_obliques_count(self):
+        parent_state = self.parent.state
+        UD_paired_obliques = 0
+
+        for (x, y) in self.oblique_edge_pairs_666:
+            if parent_state[x] == 'U' and parent_state[y] == 'U':
+                UD_paired_obliques += 1
+
+        UD_unpaired_obliques = 8 - UD_paired_obliques
+        return UD_unpaired_obliques
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        lt_state = 0
+
+        for x in self.oblique_edges_666:
+            if parent_state[x] == 'U':
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
+
+        # admissable but slow
+        #cost_to_goal = int(self.get_UD_unpaired_obliques_count() / 4)
+
+        # not admissable but fast, assume that each
+        # unpaired UD oblique edge pair will take 1 move.
+        cost_to_goal = self.get_UD_unpaired_obliques_count()
+
+        return (lt_state, cost_to_goal)
+
+
+#class LookupTable666LRObliqueEdgesStage(LookupTable):
+class LookupTable666LRObliqueEdgesStage(LookupTableHashCostOnly):
+    """
+    lookup-table-6x6x6-step31-LR-oblique-edges-stage.txt
+    ====================================================
+    1 steps has 70,110 entries (0 percent, 0.00x previous step)
+    2 steps has 612,996 entries (0 percent, 8.74x previous step)
+    3 steps has 5,513,448 entries (3 percent, 8.99x previous step)
+    4 steps has 35,146,680 entries (21 percent, 6.37x previous step)
+    5 steps has 93,485,152 entries (56 percent, 2.66x previous step)
+    6 steps has 30,737,090 entries (18 percent, 0.33x previous step)
+    7 steps has 71,424 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 4.89 moves
+    """
+
+    def __init__(self, parent):
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step31-LR-oblique-edges-stage.hash-cost-only.txt',
+            state_targets_step31,
+            linecount=165636900,
+            max_depth=7,
+            bucketcount=165636907,
+            filesize=165636908)
+
+        '''
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step12-UD-oblique-edge-stage-right-only.txt',
-            'f0000f',
-            linecount=12870,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in right_oblique_edges_666])
-
-        return self.hex_format % int(result, 2)
-
-
-class LookupTable666UDObliqueEdgesStage(LookupTableIDA):
-    """
-    Now pair the UD oblique edges so that we can reduce the 6x6x6 centers to a 5x5x5
-    (24!/(8!*16!))^2 is 540,917,591,841 so this is too large for us to build so use
-    IDA and build it 8 steps deep.
-
-    Our prune tables will be to solve on the left or right oblique edges. Each of these
-    tables are 24!/(8!*16!) or 735,471
-    735471/540917591841 is 0.000 001 3596729171
-
-    Originally I did what is described above but the IDA search took 4 minutes
-    (on my laptop) for some cubes...I can only imagine how long that would
-    take on a 300Mhz EV3. I need to revisit this someday...we need a prune table
-    that is larger than 735,471 to make this run in a reasonable amount of time.
-
-    Anyway, to speed this up I did something unusual here...I built the step10
-    table but restricted moves so that UD obliques can only move to sides UFDB.
-    The cube will be very scrambled though and there will be UD obliques on sides
-    LR.  What I do is "fake move" these obliques to side UFDB so that I can use
-    the step10 table.  At that point there will only be UD obliques on sides ULDR
-    so I then do a rotate_y() one time to make LR free of UD obliques again. Then
-    I do another lookup in the step10 table.
-
-    I only built the table to 7-deep, it would have 165 million entries if
-    I built it the whole way out but that would be too large to check into
-    the repo so I use IDA.
-
-    lookup-table-6x6x6-step10-UD-oblique-edge-stage.txt
-    ===================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 286 entries (0 percent, 9.86x previous step)
-    4 steps has 2052 entries (0 percent, 7.17x previous step)
-    5 steps has 16348 entries (1 percent, 7.97x previous step)
-    6 steps has 127859 entries (12 percent, 7.82x previous step)
-    7 steps has 844248 entries (85 percent, 6.60x previous step)
-
-    Total: 990825 entries
-    Average: 6.830426 moves
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-6x6x6-step10-UD-oblique-edge-stage.txt',
-            'ff00000000ff',
-            moves_6x6x6,
-
-            # illegal_moves
-            ("3Uw", "3Uw'", "3Dw", "3Dw'",
-             "3Lw", "3Lw'", "3Rw", "3Rw'",
-             "3Fw", "3Fw'", "3Bw", "3Bw'",
-
-             # used for "fake" move to speed up IDA
-             "Fw", "Fw'", "Bw", "Bw'",
-             "3Uw", "3Uw'", "3Dw", "3Dw'", "Uw", "Uw'", "Dw", "Dw'",
-
-             # can skip these for 6x6x6 cubes
-             "3Lw", "3Lw'", "3Lw2",
-             "3Dw", "3Dw'", "3Dw2",
-             "3Bw", "3Bw'", "3Bw2"),
-
-            # prune tables
-            (parent.lt_UD_oblique_edge_stage_left_only,
-             parent.lt_UD_oblique_edge_stage_right_only),
-
-            linecount=990825, # 7-deep
+            'lookup-table-6x6x6-step31-LR-oblique-edges-stage.txt',
+            state_targets_step31,
+            linecount=165636900,
             max_depth=7)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in oblique_edges_666])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        '''
 
 
-class LookupTable666LRObliqueEdgesStageLeftOnly(LookupTableCostOnly):
+class LookupTable666LRInnerXCentersStage(LookupTableCostOnly):
     """
-    lookup-table-6x6x6-step21-LR-oblique-edge-stage-left-only.txt
-    =============================================================
+    lookup-table-6x6x6-step32-LR-inner-x-center-stage.txt
+    =====================================================
     1 steps has 3 entries (0 percent, 0.00x previous step)
     2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 238 entries (1 percent, 8.21x previous step)
-    4 steps has 742 entries (5 percent, 3.12x previous step)
-    5 steps has 1836 entries (14 percent, 2.47x previous step)
-    6 steps has 4405 entries (34 percent, 2.40x previous step)
-    7 steps has 3774 entries (29 percent, 0.86x previous step)
-    8 steps has 1721 entries (13 percent, 0.46x previous step)
-    9 steps has 122 entries (0 percent, 0.07x previous step)
+    3 steps has 234 entries (1 percent, 8.07x previous step)
+    4 steps has 1,246 entries (9 percent, 5.32x previous step)
+    5 steps has 4,466 entries (34 percent, 3.58x previous step)
+    6 steps has 6,236 entries (48 percent, 1.40x previous step)
+    7 steps has 656 entries (5 percent, 0.11x previous step)
 
-    Total: 12870 entries
-    Average: 6.265501 moves
+    Total: 12,870 entries
+    Average: 5.45 moves
     """
 
     def __init__(self, parent):
         LookupTableCostOnly.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step21-LR-oblique-edge-stage-left-only.cost-only.txt',
+            'lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt',
             'f0f0',
             linecount=12870,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in LFRB_left_oblique_edges_666])
-        return int(result, 2)
+            max_depth=7)
 
 
-class LookupTable666LRObliqueEdgesStageRightOnly(LookupTableCostOnly):
+class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDA):
     """
-    lookup-table-6x6x6-step22-LR-oblique-edge-stage-right-only.txt
-    ==============================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 238 entries (1 percent, 8.21x previous step)
-    4 steps has 742 entries (5 percent, 3.12x previous step)
-    5 steps has 1836 entries (14 percent, 2.47x previous step)
-    6 steps has 4405 entries (34 percent, 2.40x previous step)
-    7 steps has 3774 entries (29 percent, 0.86x previous step)
-    8 steps has 1721 entries (13 percent, 0.46x previous step)
-    9 steps has 122 entries (0 percent, 0.07x previous step)
+    lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt
+    ====================================================================
+    1 steps has 140,504 entries (0 percent, 0.00x previous step)
+    2 steps has 1,525,128 entries (7 percent, 10.85x previous step)
+    3 steps has 18,193,324 entries (91 percent, 11.93x previous step)
 
-    Total: 12870 entries
-    Average: 6.265501 moves
+    Total: 19,858,956 entries
     """
+    LFRB_inner_x_centers_oblique_edges_666 = (
+            45, 46,
+        50, 51, 52, 53,
+        56, 57, 58, 59,
+            63, 64,
+
+            81, 82,
+        86, 87, 88, 89,
+        92, 93, 94, 95,
+            99, 100,
+
+             117, 118,
+        122, 123, 124, 125,
+        128, 129, 130, 131,
+             135, 136,
+
+             153, 154,
+        158, 159, 160, 161,
+        164, 165, 166, 167,
+             171, 172,
+    )
+
+    LFRB_inner_x_centers_666 = (
+        51, 52, 57, 58,
+        87, 88, 93, 94,
+        123, 124, 129, 130,
+        159, 160, 165, 166,
+    )
+
+    set_LFRB_inner_x_centers_666 = set(LFRB_inner_x_centers_666)
+
+    heuristic_stats = {
+        (0, 1): 0,
+        (0, 2): 0,
+        (0, 3): 4,
+        (1, 1): 1,
+        (1, 2): 1,
+        (1, 3): 3,
+        (1, 4): 5,
+        (1, 5): 6,
+        (2, 1): 2,
+        (2, 2): 2,
+        (2, 3): 3,
+        (2, 4): 5,
+        (2, 5): 7,
+        (2, 6): 7,
+        (2, 7): 8,
+        (3, 1): 3,
+        (3, 2): 3,
+        (3, 3): 4,
+        (3, 4): 5,
+        (3, 5): 7,
+        (3, 6): 8,
+        (3, 7): 9,
+        (4, 1): 4,
+        (4, 2): 4,
+        (4, 3): 5,
+        (4, 4): 5,
+        (4, 5): 7,
+        (4, 6): 8,
+        (4, 7): 8,
+        (5, 2): 5,
+        (5, 3): 6,
+        (5, 4): 6,
+        (5, 5): 7,
+        (5, 6): 8,
+        (5, 7): 8,
+        (6, 2): 6,
+        (6, 3): 7,
+        (6, 4): 7,
+        (6, 5): 8,
+        (6, 6): 8,
+        (6, 7): 8,
+    }
+
+    # The higher this number the less you honor the heuristic_stats
+    # -  0 uses the heuristic_stats exactly as reported
+    # -  1 subtracts 1 from the heuristic_stats value
+    # - 99 disables heuristic_stats
+    #
+    # You want to put this as high as you can but low enough
+    # to still speed up the slow IDA searches.
+    #
+    # 99 : 10 moves in 7m 22s
+    #  0 : 11 moves in 3m 22s
+    # -1 : 12 moves in 1m 35s
+    heuristic_stats_error = 0
 
     def __init__(self, parent):
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-6x6x6-step22-LR-oblique-edge-stage-right-only.cost-only.txt',
-            'f0f0',
-            linecount=12870,
-            max_depth=9)
 
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in LFRB_right_oblique_edges_666])
-        return int(result, 2)
+        # uses 38M
+        if parent.min_memory:
+            filename = "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt.2-deep"
+            linecount = 1665632
+            max_depth = 2
+            filesize = 38309536
+            exit_asap = 9
 
+        # uses 556M
+        else:
+            filename = "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt"
+            linecount = 19858956
+            max_depth = 3
+            filesize = 556050768
+            exit_asap = 9
 
-class LookupTable666LRObliqueEdgesStage(LookupTableIDA):
-    """
-    lookup-table-6x6x6-step20-LR-oblique-edge-stage.txt
-    ===================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 286 entries (0 percent, 9.86x previous step)
-    4 steps has 2052 entries (0 percent, 7.17x previous step)
-    5 steps has 16348 entries (1 percent, 7.97x previous step)
-    6 steps has 127859 entries (12 percent, 7.82x previous step)
-    7 steps has 844248 entries (85 percent, 6.60x previous step)
-
-    Total: 990825 entries
-    Average: 6.830426 moves
-    """
-
-    def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step20-LR-oblique-edge-stage.txt',
-            'ff00ff00',
-            moves_6x6x6,
+            filename,
+            state_targets_step30,
+            moves_666,
 
-            # illegal_moves
-            ("3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged inner-x-centers
-             "3Lw", "3Lw'", "3Rw", "3Rw'",
-             "3Fw", "3Fw'", "3Bw", "3Bw'",
-             "Rw", "Rw'", "Lw", "Lw'",     # do not mess up staged UD oblique pairs
-             "Fw", "Fw'", "Bw", "Bw'",
-             "3Lw", "3Lw'", "3Lw2",        # can skip these for 6x6x6 cubes
-             "3Dw", "3Dw'", "3Dw2",
-             "3Bw", "3Bw'", "3Bw2"),
+            # illegal moves
+            ("3Fw", "3Fw'",
+             "3Bw", "3Bw'",
+             "3Lw", "3Lw'",
+             "3Rw", "3Rw'",
+             "Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'"),
 
             # prune tables
-            (parent.lt_LR_oblique_edge_stage_left_only,
-             parent.lt_LR_oblique_edge_stage_right_only),
+            (parent.lt_LR_oblique_edges_stage,
+             parent.lt_LR_inner_x_centers_stage),
 
-            linecount=990825, # 7-deep
-            max_depth=7)
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize,
+            exit_asap=exit_asap,
+        ),
 
-    def state(self):
+        #self.exit_asap = 99
+        #self.collect_stats = True
+
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        #self.parent.print_cube()
+        self.parent.nuke_corners()
+
+        for x in centers_666:
+            if x in self.LFRB_inner_x_centers_oblique_edges_666:
+                if self.parent.state[x] == 'L' or self.parent.state[x] == 'R':
+                    self.parent.state[x] = 'L'
+                else:
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+
+        #self.parent.print_cube()
+
+    def ida_heuristic_tuple(self):
         parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in LFRB_oblique_edges_666])
+        centers_state = 0
+        edges_state = 0
+        lt_state = 0
 
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        set_LFRB_inner_x_centers_666 = self.set_LFRB_inner_x_centers_666
+
+        for x in self.LFRB_inner_x_centers_oblique_edges_666:
+            x_state = parent_state[x]
+
+            if x in set_LFRB_inner_x_centers_666:
+                if x_state == 'L':
+                    centers_state = centers_state | 0x1
+                    lt_state = lt_state | 0x1
+                centers_state = centers_state << 1
+            else:
+                if x_state == 'L':
+                    edges_state = edges_state | 0x1
+                    lt_state = lt_state | 0x1
+                edges_state = edges_state << 1
+
+            lt_state = lt_state << 1
+
+        centers_state = centers_state >> 1
+        edges_state = edges_state >> 1
+        lt_state = lt_state >> 1
+
+        edges_state = self.parent.lt_LR_oblique_edges_stage.hex_format % edges_state
+
+        edges_cost = self.parent.lt_LR_oblique_edges_stage.heuristic(edges_state)
+        centers_cost = self.parent.lt_LR_inner_x_centers_stage.heuristic(centers_state)
+
+        return (str(self), edges_cost, centers_cost)
+
+    def ida_heuristic(self, ida_threshold):
+        parent = self.parent
+        parent_state = self.parent.state
+        centers_state = 0
+        edges_state = 0
+        lt_state = 0
+
+        set_LFRB_inner_x_centers_666 = self.set_LFRB_inner_x_centers_666
+
+        for x in self.LFRB_inner_x_centers_oblique_edges_666:
+            x_state = parent_state[x]
+
+            if x in set_LFRB_inner_x_centers_666:
+                if x_state == 'L':
+                    centers_state = centers_state | 0x1
+                    lt_state = lt_state | 0x1
+                centers_state = centers_state << 1
+            else:
+                if x_state == 'L':
+                    edges_state = edges_state | 0x1
+                    lt_state = lt_state | 0x1
+                edges_state = edges_state << 1
+
+            lt_state = lt_state << 1
+
+        centers_state = centers_state >> 1
+        edges_state = edges_state >> 1
+        edges_state = self.parent.lt_LR_oblique_edges_stage.hex_format % edges_state
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
+
+        edges_cost = parent.lt_LR_oblique_edges_stage.heuristic(edges_state)
+        centers_cost = parent.lt_LR_inner_x_centers_stage.heuristic(centers_state)
+
+        if ida_threshold >= self.exit_asap:
+            heuristic_stats_cost = self.heuristic_stats.get((edges_cost, centers_cost), 0)
+            cost_to_goal = max(edges_cost, centers_cost, heuristic_stats_cost - self.heuristic_stats_error)
+        else:
+            cost_to_goal = max(edges_cost, centers_cost)
+
+        #log.info("%s: lt_state %s, centers_state %s, edges_state %s, cost_to_goal %s" % (self, lt_state, centers_state, edges_state, cost_to_goal))
+        return (lt_state, cost_to_goal)
 
 
 class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
@@ -442,114 +665,69 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
 
     lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
-    1 steps has 350 entries (0 percent, 0.00x previous step)
-    2 steps has 1,358 entries (0 percent, 3.88x previous step)
-    3 steps has 5,148 entries (1 percent, 3.79x previous step)
-    4 steps has 21,684 entries (6 percent, 4.21x previous step)
-    5 steps has 75,104 entries (21 percent, 3.46x previous step)
-    6 steps has 134,420 entries (39 percent, 1.79x previous step)
-    7 steps has 91,784 entries (26 percent, 0.68x previous step)
-    8 steps has 13,152 entries (3 percent, 0.14x previous step)
+    1 steps has 210 entries (0 percent, 0.00x previous step)
+    2 steps has 924 entries (0 percent, 4.40x previous step)
+    3 steps has 4,148 entries (1 percent, 4.49x previous step)
+    4 steps has 19,330 entries (5 percent, 4.66x previous step)
+    5 steps has 70,702 entries (20 percent, 3.66x previous step)
+    6 steps has 134,068 entries (39 percent, 1.90x previous step)
+    7 steps has 98,376 entries (28 percent, 0.73x previous step)
+    8 steps has 15,218 entries (4 percent, 0.15x previous step)
+    9 steps has 24 entries (0 percent, 0.00x previous step)
 
     Total: 343,000 entries
+    Average: 6.01 moves
+
+    We could chop all but the first step on this table but this is one that
+    we do not load into memory and it is only 15M so we will keep all of the
+    steps.
     """
+
+    UD_inner_x_centers_and_oblique_edges = (
+        # Upper
+             9, 10,
+        14, 15, 16, 17,
+        20, 21, 22, 23,
+            27, 28,
+
+        # Down
+             189, 190,
+        194, 195, 196, 197,
+        200, 201, 202, 203,
+             207, 208,
+    )
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
             'lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt',
-            ('xDDxDUUDDUUDxDDxxUUxUDDUUDDUxUUx',
-             'xDDxDUUDDUUDxUUxxDDxUDDUUDDUxUUx',
-             'xDDxDUUDDUUDxUUxxUUxDDDUDDDUxUUx',
-             'xDDxDUUDDUUDxUUxxUUxUDDDUDDDxUUx',
-             'xDDxDUUDDUUDxUUxxUUxUDDUUDDUxDDx',
-             'xDDxDUUUDUUUxDDxxDDxUDDUUDDUxUUx',
-             'xDDxDUUUDUUUxDDxxUUxDDDUDDDUxUUx',
-             'xDDxDUUUDUUUxDDxxUUxUDDDUDDDxUUx',
-             'xDDxDUUUDUUUxDDxxUUxUDDUUDDUxDDx',
-             'xDDxDUUUDUUUxUUxxDDxDDDUDDDUxUUx',
-             'xDDxDUUUDUUUxUUxxDDxUDDDUDDDxUUx',
-             'xDDxDUUUDUUUxUUxxDDxUDDUUDDUxDDx',
-             'xDDxDUUUDUUUxUUxxUUxDDDDDDDDxUUx',
-             'xDDxDUUUDUUUxUUxxUUxDDDUDDDUxDDx',
-             'xDDxDUUUDUUUxUUxxUUxUDDDUDDDxDDx',
-             'xDDxUUUDUUUDxDDxxDDxUDDUUDDUxUUx',
-             'xDDxUUUDUUUDxDDxxUUxDDDUDDDUxUUx',
-             'xDDxUUUDUUUDxDDxxUUxUDDDUDDDxUUx',
-             'xDDxUUUDUUUDxDDxxUUxUDDUUDDUxDDx',
-             'xDDxUUUDUUUDxUUxxDDxDDDUDDDUxUUx',
-             'xDDxUUUDUUUDxUUxxDDxUDDDUDDDxUUx',
-             'xDDxUUUDUUUDxUUxxDDxUDDUUDDUxDDx',
-             'xDDxUUUDUUUDxUUxxUUxDDDDDDDDxUUx',
-             'xDDxUUUDUUUDxUUxxUUxDDDUDDDUxDDx',
-             'xDDxUUUDUUUDxUUxxUUxUDDDUDDDxDDx',
-             'xDDxUUUUUUUUxDDxxDDxDDDUDDDUxUUx',
-             'xDDxUUUUUUUUxDDxxDDxUDDDUDDDxUUx',
-             'xDDxUUUUUUUUxDDxxDDxUDDUUDDUxDDx',
-             'xDDxUUUUUUUUxDDxxUUxDDDDDDDDxUUx',
-             'xDDxUUUUUUUUxDDxxUUxDDDUDDDUxDDx',
-             'xDDxUUUUUUUUxDDxxUUxUDDDUDDDxDDx',
-             'xDDxUUUUUUUUxUUxxDDxDDDDDDDDxUUx',
-             'xDDxUUUUUUUUxUUxxDDxDDDUDDDUxDDx',
-             'xDDxUUUUUUUUxUUxxDDxUDDDUDDDxDDx',
-             'xDDxUUUUUUUUxUUxxUUxDDDDDDDDxDDx',
-             'xUUxDUUDDUUDxDDxxDDxUDDUUDDUxUUx',
-             'xUUxDUUDDUUDxDDxxUUxDDDUDDDUxUUx',
-             'xUUxDUUDDUUDxDDxxUUxUDDDUDDDxUUx',
-             'xUUxDUUDDUUDxDDxxUUxUDDUUDDUxDDx',
-             'xUUxDUUDDUUDxUUxxDDxDDDUDDDUxUUx',
-             'xUUxDUUDDUUDxUUxxDDxUDDDUDDDxUUx',
-             'xUUxDUUDDUUDxUUxxDDxUDDUUDDUxDDx',
-             'xUUxDUUDDUUDxUUxxUUxDDDDDDDDxUUx',
-             'xUUxDUUDDUUDxUUxxUUxDDDUDDDUxDDx',
-             'xUUxDUUDDUUDxUUxxUUxUDDDUDDDxDDx',
-             'xUUxDUUUDUUUxDDxxDDxDDDUDDDUxUUx',
-             'xUUxDUUUDUUUxDDxxDDxUDDDUDDDxUUx',
-             'xUUxDUUUDUUUxDDxxDDxUDDUUDDUxDDx',
-             'xUUxDUUUDUUUxDDxxUUxDDDDDDDDxUUx',
-             'xUUxDUUUDUUUxDDxxUUxDDDUDDDUxDDx',
-             'xUUxDUUUDUUUxDDxxUUxUDDDUDDDxDDx',
-             'xUUxDUUUDUUUxUUxxDDxDDDDDDDDxUUx',
-             'xUUxDUUUDUUUxUUxxDDxDDDUDDDUxDDx',
-             'xUUxDUUUDUUUxUUxxDDxUDDDUDDDxDDx',
-             'xUUxDUUUDUUUxUUxxUUxDDDDDDDDxDDx',
-             'xUUxUUUDUUUDxDDxxDDxDDDUDDDUxUUx',
-             'xUUxUUUDUUUDxDDxxDDxUDDDUDDDxUUx',
-             'xUUxUUUDUUUDxDDxxDDxUDDUUDDUxDDx',
-             'xUUxUUUDUUUDxDDxxUUxDDDDDDDDxUUx',
-             'xUUxUUUDUUUDxDDxxUUxDDDUDDDUxDDx',
-             'xUUxUUUDUUUDxDDxxUUxUDDDUDDDxDDx',
-             'xUUxUUUDUUUDxUUxxDDxDDDDDDDDxUUx',
-             'xUUxUUUDUUUDxUUxxDDxDDDUDDDUxDDx',
-             'xUUxUUUDUUUDxUUxxDDxUDDDUDDDxDDx',
-             'xUUxUUUDUUUDxUUxxUUxDDDDDDDDxDDx',
-             'xUUxUUUUUUUUxDDxxDDxDDDDDDDDxUUx',
-             'xUUxUUUUUUUUxDDxxDDxDDDUDDDUxDDx',
-             'xUUxUUUUUUUUxDDxxDDxUDDDUDDDxDDx',
-             'xUUxUUUUUUUUxDDxxUUxDDDDDDDDxDDx',
-             'xUUxUUUUUUUUxUUxxDDxDDDDDDDDxDDx'),
-            linecount=343000)
+            ('198e67', '19b267', '19bc47', '19be23', '19be64', '1dc267', '1dcc47', '1dce23',
+             '1dce64', '1df047', '1df223', '1df264', '1dfc03', '1dfc44', '1dfe20', '3b8267',
+             '3b8c47', '3b8e23', '3b8e64', '3bb047', '3bb223', '3bb264', '3bbc03', '3bbc44',
+             '3bbe20', '3fc047', '3fc223', '3fc264', '3fcc03', '3fcc44', '3fce20', '3ff003',
+             '3ff044', '3ff220', '3ffc00', 'd98267', 'd98c47', 'd98e23', 'd98e64', 'd9b047',
+             'd9b223', 'd9b264', 'd9bc03', 'd9bc44', 'd9be20', 'ddc047', 'ddc223', 'ddc264',
+             'ddcc03', 'ddcc44', 'ddce20', 'ddf003', 'ddf044', 'ddf220', 'ddfc00', 'fb8047',
+             'fb8223', 'fb8264', 'fb8c03', 'fb8c44', 'fb8e20', 'fbb003', 'fbb044', 'fbb220',
+             'fbbc00', 'ffc003', 'ffc044', 'ffc220', 'ffcc00', 'fff000'),
+            linecount=343000,
+            max_depth=9,
+            filesize=15435000,
+        )
 
-    def state(self):
+    def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
+        lt_state = 0
 
-        result = [
-            # Upper
-            'x', parent_state[9], parent_state[10], 'x',
-            parent_state[14], parent_state[15], parent_state[16], parent_state[17],
-            parent_state[20], parent_state[21], parent_state[22], parent_state[23],
-            'x', parent_state[27], parent_state[28], 'x',
+        for x in self.UD_inner_x_centers_and_oblique_edges:
+            if parent_state[x] == 'U':
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
 
-            # Down
-            'x', parent_state[189], parent_state[190], 'x',
-            parent_state[194], parent_state[195], parent_state[196], parent_state[197],
-            parent_state[200], parent_state[201], parent_state[202], parent_state[203],
-            'x', parent_state[207], parent_state[208], 'x'
-        ]
-
-        result = ''.join(result)
-        return result
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
+        return (lt_state, 0)
 
 
 class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
@@ -557,18 +735,18 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
     lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
     ========================================================================
     1 steps has 140 entries (0 percent, 0.00x previous step)
-    2 steps has 420 entries (0 percent, 3.00x previous step)
-    3 steps has 1390 entries (0 percent, 3.31x previous step)
-    4 steps has 5,794 entries (1 percent, 4.17x previous step)
-    5 steps has 17,606 entries (5 percent, 3.04x previous step)
-    6 steps has 51,580 entries (15 percent, 2.93x previous step)
-    7 steps has 102,466 entries (29 percent, 1.99x previous step)
-    8 steps has 114,764 entries (33 percent, 1.12x previous step)
-    9 steps has 45,068 entries (13 percent, 0.39x previous step)
-    10 steps has 3,656 entries (1 percent, 0.08x previous step)
-    11 steps has 116 entries (0 percent, 0.03x previous step)
+    2 steps has 476 entries (0 percent, 3.40x previous step)
+    3 steps has 2,166 entries (0 percent, 4.55x previous step)
+    4 steps has 10,430 entries (3 percent, 4.82x previous step)
+    5 steps has 37,224 entries (10 percent, 3.57x previous step)
+    6 steps has 89,900 entries (26 percent, 2.42x previous step)
+    7 steps has 124,884 entries (36 percent, 1.39x previous step)
+    8 steps has 70,084 entries (20 percent, 0.56x previous step)
+    9 steps has 7,688 entries (2 percent, 0.11x previous step)
+    10 steps has 8 entries (0 percent, 0.00x previous step)
 
     Total: 343,000 entries
+    Average: 6.64 moves
     """
 
     def __init__(self, parent):
@@ -576,129 +754,37 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt',
-            ('xLLxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRRRRRRxRRxxxxxxxxxxxxxxxxx',
-             'xLLxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxRRxxxxxxxxxxxxxxxxx',
-             'xLLxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
-             'xLLxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
-             'xLLxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
-             'xLLxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxRRxxxxxxxxxxxxxxxxx',
-             'xLLxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
-             'xLLxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
-             'xLLxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
-             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
-             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
-             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
-             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
-             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
-             'xLLxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
-             'xLLxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxRRxxxxxxxxxxxxxxxxx',
-             'xLLxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
-             'xLLxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
-             'xLLxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
-             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
-             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
-             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
-             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
-             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
-             'xLLxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
-             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
-             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
-             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
-             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
-             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
-             'xLLxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
-             'xLLxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
-             'xLLxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
-             'xLLxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
-             'xLLxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxLLxxxxxxxxxxxxxxxxx',
-             'xRRxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxRRxxxxxxxxxxxxxxxxx',
-             'xRRxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
-             'xRRxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
-             'xRRxLLLLLLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
-             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
-             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
-             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
-             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
-             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
-             'xRRxLLLLLLLLxRRxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
-             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
-             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
-             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
-             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
-             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
-             'xRRxLLLRLLLRxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
-             'xRRxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
-             'xRRxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
-             'xRRxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
-             'xRRxLLLRLLLRxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxLLxxxxxxxxxxxxxxxxx',
-             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxRRxxxxxxxxxxxxxxxxx',
-             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxRRxxxxxxxxxxxxxxxxx',
-             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxLLxRRRRRRRRxLLxxxxxxxxxxxxxxxxx',
-             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
-             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
-             'xRRxRLLLRLLLxLLxxxxxxxxxxxxxxxxxxRRxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
-             'xRRxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
-             'xRRxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
-             'xRRxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
-             'xRRxRLLLRLLLxRRxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxLLxxxxxxxxxxxxxxxxx',
-             'xRRxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxRRxxxxxxxxxxxxxxxxx',
-             'xRRxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxLRRRLRRRxLLxxxxxxxxxxxxxxxxx',
-             'xRRxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxLLxRRRLRRRLxLLxxxxxxxxxxxxxxxxx',
-             'xRRxRLLRRLLRxLLxxxxxxxxxxxxxxxxxxRRxLRRLLRRLxLLxxxxxxxxxxxxxxxxx',
-             'xRRxRLLRRLLRxRRxxxxxxxxxxxxxxxxxxLLxLRRLLRRLxLLxxxxxxxxxxxxxxxxx'),
+            ('198e67', '19b267', '19bc47', '19be23', '19be64', '1dc267', '1dcc47', '1dce23',
+             '1dce64', '1df047', '1df223', '1df264', '1dfc03', '1dfc44', '1dfe20', '3b8267',
+             '3b8c47', '3b8e23', '3b8e64', '3bb047', '3bb223', '3bb264', '3bbc03', '3bbc44',
+             '3bbe20', '3fc047', '3fc223', '3fc264', '3fcc03', '3fcc44', '3fce20', '3ff003',
+             '3ff044', '3ff220', '3ffc00', 'd98267', 'd98c47', 'd98e23', 'd98e64', 'd9b047',
+             'd9b223', 'd9b264', 'd9bc03', 'd9bc44', 'd9be20', 'ddc047', 'ddc223', 'ddc264',
+             'ddcc03', 'ddcc44', 'ddce20', 'ddf003', 'ddf044', 'ddf220', 'ddfc00', 'fb8047',
+             'fb8223', 'fb8264', 'fb8c03', 'fb8c44', 'fb8e20', 'fbb003', 'fbb044', 'fbb220',
+             'fbbc00', 'ffc003', 'ffc044', 'ffc220', 'ffcc00', 'fff000'),
             linecount=343000,
-            max_depth=11)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Left
-            'x', parent_state[45], parent_state[46], 'x',
-            parent_state[50], parent_state[51], parent_state[52], parent_state[53],
-            parent_state[56], parent_state[57], parent_state[58], parent_state[59],
-            'x', parent_state[63], parent_state[64], 'x',
-
-            # Front
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-
-            # Right
-            'x', parent_state[117], parent_state[118], 'x',
-            parent_state[122], parent_state[123], parent_state[124], parent_state[125],
-            parent_state[128], parent_state[129], parent_state[130], parent_state[131],
-            'x', parent_state[135], parent_state[136], 'x',
-
-            # Back
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-        ]
-
-        result = ''.join(result)
-        return result
+            max_depth=10,
+            filesize=3430000)
 
 
-class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
+class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable666LRInnerXCenterAndObliqueEdges):
     """
     lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
-    ========================================================================
+    =======================================================================
     1 steps has 140 entries (0 percent, 0.00x previous step)
-    2 steps has 420 entries (0 percent, 3.00x previous step)
-    3 steps has 1,390 entries (0 percent, 3.31x previous step)
-    4 steps has 5,794 entries (1 percent, 4.17x previous step)
-    5 steps has 17,606 entries (5 percent, 3.04x previous step)
-    6 steps has 51,580 entries (15 percent, 2.93x previous step)
-    7 steps has 102,466 entries (29 percent, 1.99x previous step)
-    8 steps has 114,764 entries (33 percent, 1.12x previous step)
-    9 steps has 45,068 entries (13 percent, 0.39x previous step)
-    10 steps has 3,656 entries (1 percent, 0.08x previous step)
-    11 steps has 116 entries (0 percent, 0.03x previous step)
+    2 steps has 476 entries (0 percent, 3.40x previous step)
+    3 steps has 2,166 entries (0 percent, 4.55x previous step)
+    4 steps has 10,430 entries (3 percent, 4.82x previous step)
+    5 steps has 37,224 entries (10 percent, 3.57x previous step)
+    6 steps has 89,900 entries (26 percent, 2.42x previous step)
+    7 steps has 124,884 entries (36 percent, 1.39x previous step)
+    8 steps has 70,084 entries (20 percent, 0.56x previous step)
+    9 steps has 7,688 entries (2 percent, 0.11x previous step)
+    10 steps has 8 entries (0 percent, 0.00x previous step)
 
     Total: 343,000 entries
+    Average: 6.64 moves
     """
 
     def __init__(self, parent):
@@ -706,181 +792,339 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
             self,
             parent,
             'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
-            ('xxxxxxxxxxxxxxxxxBBxBFFBBFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBFFBBFxFFx',
-             'xxxxxxxxxxxxxxxxxBBxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxFFx',
-             'xxxxxxxxxxxxxxxxxBBxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxFFx',
-             'xxxxxxxxxxxxxxxxxBBxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxFFx',
-             'xxxxxxxxxxxxxxxxxBBxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxFBBFFBBFxBBx',
-             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxFFx',
-             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxFFx',
-             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxFFx',
-             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxFBBFFBBFxBBx',
-             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
-             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
-             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
-             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
-             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
-             'xxxxxxxxxxxxxxxxxBBxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
-             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxFFx',
-             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxFFx',
-             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxFFx',
-             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBFFBBFxBBx',
-             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
-             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
-             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
-             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
-             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
-             'xxxxxxxxxxxxxxxxxBBxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
-             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
-             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
-             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
-             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
-             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
-             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
-             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxFFx',
-             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxBBx',
-             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxBBx',
-             'xxxxxxxxxxxxxxxxxBBxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxBBx',
-             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxFFx',
-             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxFFx',
-             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxFFx',
-             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBFFBBFxBBx',
-             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
-             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
-             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
-             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
-             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
-             'xxxxxxxxxxxxxxxxxFFxBFFBBFFBxFFxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
-             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
-             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
-             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
-             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
-             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
-             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
-             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxFFx',
-             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxBBx',
-             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxBBx',
-             'xxxxxxxxxxxxxxxxxFFxBFFFBFFFxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxBBx',
-             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxFFx',
-             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxFFx',
-             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxBBxFBBFFBBFxBBx',
-             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxFFx',
-             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxBBBFBBBFxBBx',
-             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxBBxxxxxxxxxxxxxxxxxxFFxFBBBFBBBxBBx',
-             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxFFx',
-             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxBBx',
-             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxBBx',
-             'xxxxxxxxxxxxxxxxxFFxFFFBFFFBxFFxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxBBx',
-             'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxFFx',
-             'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxBBBFBBBFxBBx',
-             'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxBBxFBBBFBBBxBBx',
-             'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxBBxxxxxxxxxxxxxxxxxxFFxBBBBBBBBxBBx',
-             'xxxxxxxxxxxxxxxxxFFxFFFFFFFFxFFxxxxxxxxxxxxxxxxxxBBxBBBBBBBBxBBx'),
+            ('198e67', '19b267', '19bc47', '19be23', '19be64', '1dc267', '1dcc47', '1dce23',
+             '1dce64', '1df047', '1df223', '1df264', '1dfc03', '1dfc44', '1dfe20', '3b8267',
+             '3b8c47', '3b8e23', '3b8e64', '3bb047', '3bb223', '3bb264', '3bbc03', '3bbc44',
+             '3bbe20', '3fc047', '3fc223', '3fc264', '3fcc03', '3fcc44', '3fce20', '3ff003',
+             '3ff044', '3ff220', '3ffc00', 'd98267', 'd98c47', 'd98e23', 'd98e64', 'd9b047',
+             'd9b223', 'd9b264', 'd9bc03', 'd9bc44', 'd9be20', 'ddc047', 'ddc223', 'ddc264',
+             'ddcc03', 'ddcc44', 'ddce20', 'ddf003', 'ddf044', 'ddf220', 'ddfc00', 'fb8047',
+             'fb8223', 'fb8264', 'fb8c03', 'fb8c44', 'fb8e20', 'fbb003', 'fbb044', 'fbb220',
+             'fbbc00', 'ffc003', 'ffc044', 'ffc220', 'ffcc00', 'fff000'),
             linecount=343000,
-            max_depth=11)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Left
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-
-            # Front
-            'x', parent_state[81], parent_state[82], 'x',
-            parent_state[86], parent_state[87], parent_state[88], parent_state[89],
-            parent_state[92], parent_state[93], parent_state[94], parent_state[95],
-            'x', parent_state[99], parent_state[100], 'x',
-
-            # Right
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-            'x', 'x', 'x', 'x',
-
-            # Back
-            'x', parent_state[153], parent_state[154], 'x',
-            parent_state[158], parent_state[159], parent_state[160], parent_state[161],
-            parent_state[164], parent_state[165], parent_state[166], parent_state[167],
-            'x', parent_state[171], parent_state[172], 'x',
-        ]
-
-        result = ''.join(result)
-        return result
+            max_depth=10,
+            filesize=3430000)
 
 
 class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     """
     lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt
-    ==========================================================================
+    =========================================================================
     1 steps has 9,800 entries (0 percent, 0.00x previous step)
-    2 steps has 58,800 entries (0 percent, 6.00x previous step)
-    3 steps has 390,600 entries (2 percent, 6.64x previous step)
-    4 steps has 2,117,480 entries (15 percent, 5.42x previous step)
-    5 steps has 11,105,284 entries (81 percent, 5.24x previous step)
+    2 steps has 74,480 entries (0 percent, 7.60x previous step)
+    3 steps has 645,960 entries (1 percent, 8.67x previous step)
+    4 steps has 4,589,992 entries (12 percent, 7.11x previous step)
+    5 steps has 30,485,500 entries (85 percent, 6.64x previous step)
 
-    Total: 13,681,964 entries
+    Total: 35,805,732 entries
     """
+    step60_centers_666 = (
+        # Left
+            45, 46,
+        50, 51, 52, 53,
+        56, 57, 58, 59,
+            63, 64,
+
+        # Front
+            81, 82,
+        86, 87, 88, 89,
+        92, 93, 94, 95,
+            99, 100,
+
+        # Right
+             117, 118,
+        122, 123, 124, 125,
+        128, 129, 130, 131,
+             135, 136,
+
+        # Back
+             153, 154,
+        158, 159, 160, 161,
+        164, 165, 166, 167,
+             171, 172,
+    )
+
+    step61_centers_666 = (
+        # Left
+            45, 46,
+        50, 51, 52, 53,
+        56, 57, 58, 59,
+            63, 64,
+
+        # Right
+             117, 118,
+        122, 123, 124, 125,
+        128, 129, 130, 131,
+             135, 136,
+    )
+
+    step62_centers_666 = (
+        # Front
+            81, 82,
+        86, 87, 88, 89,
+        92, 93, 94, 95,
+            99, 100,
+
+        # Back
+             153, 154,
+        158, 159, 160, 161,
+        164, 165, 166, 167,
+             171, 172,
+    )
+
+    set_step61_centers_666 = set(step61_centers_666)
+    set_step62_centers_666 = set(step62_centers_666)
+
+    heuristic_stats = {
+        (0, 0): 0,
+        (0, 2): 3,
+        (0, 3): 3,
+        (0, 4): 4,
+        (0, 5): 5,
+        (0, 6): 6,
+        (1, 1): 1,
+        (1, 2): 2,
+        (1, 3): 3,
+        (1, 4): 5,
+        (1, 5): 6,
+        (1, 6): 6,
+        (1, 7): 7,
+        (2, 0): 3,
+        (2, 1): 2,
+        (2, 2): 3,
+        (2, 3): 4,
+        (2, 4): 5,
+        (2, 5): 6,
+        (2, 6): 7,
+        (2, 7): 8,
+        (2, 8): 8,
+        (3, 0): 4,
+        (3, 1): 3,
+        (3, 2): 4,
+        (3, 3): 4,
+        (3, 4): 5,
+        (3, 5): 6,
+        (3, 6): 7,
+        (3, 7): 8,
+        (3, 8): 9,
+        (4, 1): 5,
+        (4, 2): 5,
+        (4, 3): 5,
+        (4, 4): 5,
+        (4, 5): 6,
+        (4, 6): 8,
+        (4, 7): 9,
+        (4, 8): 10,
+        (5, 1): 6,
+        (5, 2): 6,
+        (5, 3): 6,
+        (5, 4): 6,
+        (5, 5): 7,
+        (5, 6): 8,
+        (5, 7): 9,
+        (5, 8): 10,
+        (5, 9): 11,
+        (6, 2): 7,
+        (6, 3): 7,
+        (6, 4): 7,
+        (6, 5): 8,
+        (6, 6): 9,
+        (6, 7): 10,
+        (6, 8): 11,
+        (6, 9): 11,
+        (7, 2): 8,
+        (7, 3): 8,
+        (7, 4): 9,
+        (7, 5): 9,
+        (7, 6): 9,
+        (7, 7): 10,
+        (7, 8): 11,
+        (7, 9): 12,
+        (8, 2): 9,
+        (8, 3): 9,
+        (8, 4): 10,
+        (8, 5): 10,
+        (8, 6): 11,
+        (8, 7): 11,
+        (8, 8): 12,
+        (8, 9): 12,
+        (9, 5): 10,
+        (9, 6): 11,
+        (9, 7): 11,
+        (9, 8): 12
+    }
+
+    # The higher this number the less you honor the heuristic_stats
+    # -  0 uses the heuristic_stats exactly as reported
+    # -  1 subtracts 1 from the heuristic_stats value
+    # - 99 disables heuristic_stats
+    #
+    # You want to put this as high as you can but low enough
+    # to still speed up the slow IDA searches.
+    # 99 : 13 moves in 9s
+    #  2 : 13 moves in 1500ms
+    #  1 : 13 moves in 100ms
+    #  0 : 13 moves in 100ms
+    heuristic_stats_error = 1
 
     def __init__(self, parent):
+
+        # uses 165M
+        if True or parent.min_memory:
+            filename = "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.4-deep"
+            linecount = 5320232
+            max_depth = 4
+            filesize = 164927192
+            exit_asap = 13
+
+        # uses 1.3G
+        else:
+            filename = "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt"
+            linecount = 35805732
+            max_depth = 5
+            filesize = 1289006352
+            exit_asap = 13
+
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt',
-
-            # There are 4900 of them so they are at the bottom of the file
-            lt_LFRB_solve_inner_x_centers_and_oblique_edges_state_targets,
-
-            moves_6x6x6,
+            filename,
+            state_targets_step60,
+            moves_666,
 
             ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
              "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-             "3Rw2", "3Lw2", "3Fw2", "3Bw2", "Rw2", "Lw2", "Fw2", "Bw2",                               # do not mess up solved UD
+             "3Rw2", "3Lw2", "3Fw2", "3Bw2",                                                           # do not mess up solved UD
              "3Lw", "3Lw'", "3Lw2",        # can skip these for 6x6x6 cubes
              "3Dw", "3Dw'", "3Dw2",
              "3Bw", "3Bw'", "3Bw2"),
 
             # prune tables
             (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
-             parent.lt_FB_solve_inner_x_centers_and_oblique_edges,),
+             parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
+            ),
 
-            linecount=13681964,
-            max_depth=5)
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize,
+            exit_asap=exit_asap,
+        )
 
-    def state(self):
+        #self.exit_asap = 99
+        #self.collect_stats = True
+
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        #self.parent.print_cube()
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_666:
+            if x in self.set_step61_centers_666:
+                if self.parent.state[x] == 'R':
+                    self.parent.state[x] = 'x'
+
+            elif x in self.set_step62_centers_666:
+                if self.parent.state[x] == 'B':
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+
+        #self.parent.print_cube()
+
+    def ida_heuristic_tuple(self):
         parent_state = self.parent.state
+        parent = self.parent
+        parent_state = self.parent.state
+        set_step61_centers_666 = self.set_step61_centers_666
+        set_step62_centers_666 = self.set_step62_centers_666
 
-        result = [
-            # Left
-            'x', parent_state[45], parent_state[46], 'x',
-            parent_state[50], parent_state[51], parent_state[52], parent_state[53],
-            parent_state[56], parent_state[57], parent_state[58], parent_state[59],
-            'x', parent_state[63], parent_state[64], 'x',
+        lt_state = 0
+        step61_state = 0
+        step62_state = 0
 
-            # Front
-            'x', parent_state[81], parent_state[82], 'x',
-            parent_state[86], parent_state[87], parent_state[88], parent_state[89],
-            parent_state[92], parent_state[93], parent_state[94], parent_state[95],
-            'x', parent_state[99], parent_state[100], 'x',
+        for x in self.step60_centers_666:
+            x_state = parent_state[x]
 
-            # Right
-            'x', parent_state[117], parent_state[118], 'x',
-            parent_state[122], parent_state[123], parent_state[124], parent_state[125],
-            parent_state[128], parent_state[129], parent_state[130], parent_state[131],
-            'x', parent_state[135], parent_state[136], 'x',
+            if x in set_step61_centers_666:
 
-            # Back
-            'x', parent_state[153], parent_state[154], 'x',
-            parent_state[158], parent_state[159], parent_state[160], parent_state[161],
-            parent_state[164], parent_state[165], parent_state[166], parent_state[167],
-            'x', parent_state[171], parent_state[172], 'x'
-        ]
+                if x_state == 'L':
+                    step61_state = step61_state | 0x1
+                    lt_state = lt_state | 0x1
 
-        result = ''.join(result)
-        return result
+                step61_state = step61_state << 1
+
+            elif x in set_step62_centers_666:
+
+                if x_state == 'F':
+                    step62_state = step62_state | 0x1
+                    lt_state = lt_state | 0x1
+
+                step62_state = step62_state << 1
+
+            lt_state = lt_state << 1
+
+        lt_state = lt_state >> 1
+        step61_state = step61_state >> 1
+        step62_state = step62_state >> 1
+
+        step61_state = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.hex_format % step61_state
+        step62_state = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.hex_format % step62_state
+
+        step61_cost = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.heuristic(step61_state)
+        step62_cost = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.heuristic(step62_state)
+
+        return (str(self), step61_cost, step62_cost)
+
+    def ida_heuristic(self, ida_threshold):
+        parent = self.parent
+        parent_state = self.parent.state
+        set_step61_centers_666 = self.set_step61_centers_666
+        set_step62_centers_666 = self.set_step62_centers_666
+
+        lt_state = 0
+        step61_state = 0
+        step62_state = 0
+
+        for x in self.step60_centers_666:
+            x_state = parent_state[x]
+
+            if x in set_step61_centers_666:
+
+                if x_state == 'L':
+                    step61_state = step61_state | 0x1
+                    lt_state = lt_state | 0x1
+
+                step61_state = step61_state << 1
+
+            elif x in set_step62_centers_666:
+
+                if x_state == 'F':
+                    step62_state = step62_state | 0x1
+                    lt_state = lt_state | 0x1
+
+                step62_state = step62_state << 1
+
+            lt_state = lt_state << 1
+
+        lt_state = lt_state >> 1
+        step61_state = step61_state >> 1
+        step62_state = step62_state >> 1
+
+        step61_state = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.hex_format % step61_state
+        step62_state = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.hex_format % step62_state
+        lt_state = self.hex_format % lt_state
+
+        step61_cost = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.heuristic(step61_state)
+        step62_cost = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.heuristic(step62_state)
+
+        if ida_threshold >= self.exit_asap:
+            heuristic_stats_cost = self.heuristic_stats.get((step61_cost, step62_cost), 0)
+            cost_to_goal = max(step61_cost, step62_cost, heuristic_stats_cost - self.heuristic_stats_error)
+        else:
+            cost_to_goal = max(step61_cost, step62_cost)
+
+        return (lt_state, cost_to_goal)
 
 
 class RubiksCube666(RubiksCubeNNNEvenEdges):
@@ -900,6 +1144,34 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
            /            \
     RubiksCubeNNNEven RubiksCube666
     """
+    instantiated = False
+
+    def __init__(self, state, order, colormap=None, debug=False):
+        RubiksCubeNNNEvenEdges.__init__(self, state, order, colormap, debug)
+
+        if RubiksCube666.instantiated:
+            #raise Exception("Another 6x6x6 instance is being created")
+            log.warning("Another 6x6x6 instance is being created")
+        else:
+            RubiksCube666.instantiated = True
+
+    def get_fake_444(self):
+        if self.fake_444 is None:
+            self.fake_444 = RubiksCube444(solved_444, 'URFDLB')
+            self.fake_444.lt_init()
+            self.fake_444.enable_print_cube = False
+        else:
+            self.fake_444.re_init()
+        return self.fake_444
+
+    def get_fake_555(self):
+        if self.fake_555 is None:
+            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+            self.fake_555.lt_init()
+            self.fake_555.enable_print_cube = False
+        else:
+            self.fake_555.re_init()
+        return self.fake_555
 
     def sanity_check(self):
         edge_orbit_0 = (2, 5, 12, 30, 35, 32, 25, 7,
@@ -959,464 +1231,164 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self._sanity_check('outside x-center', outside_x_centers, 4)
         self._sanity_check('inside x-center', inside_x_centers, 4)
 
-    def lt_init(self):
+    def lt_init(self, UD_oblique_edge_only=False):
         if self.lt_init_called:
             return
         self.lt_init_called = True
 
-        self.lt_UD_oblique_edge_stage_left_only = LookupTable666UDObliqueEdgesStageLeftOnly(self)
-        self.lt_UD_oblique_edge_stage_right_only = LookupTable666UDObliqueEdgesStageRightOnly(self)
-        self.lt_UD_oblique_edge_stage = LookupTable666UDObliqueEdgesStage(self)
+        self.lt_UD_inner_x_centers_stage_pt = LookupTable666UDInnerXCentersStage(self)
+        self.lt_UD_inner_x_centers_stage = LookupTableIDA666UDInnerXCentersStage(self)
+        self.lt_UD_inner_x_centers_stage.avoid_oll = 1
+        self.lt_UD_inner_x_centers_stage_pt.preload_cache_string()
+        self.lt_UD_inner_x_centers_stage.preload_cache_string()
 
-        self.lt_LR_oblique_edge_stage_left_only = LookupTable666LRObliqueEdgesStageLeftOnly(self)
-        self.lt_LR_oblique_edge_stage_right_only = LookupTable666LRObliqueEdgesStageRightOnly(self)
-        self.lt_LR_oblique_edge_stage = LookupTable666LRObliqueEdgesStage(self)
+        self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
+        self.lt_UD_oblique_edge_stage.preload_cache_string()
+
+        # This is the case if a 777 is using 666 to pair its UD oblique edges
+        if UD_oblique_edge_only:
+            return
+        self.lt_UD_oblique_edge_stage.avoid_oll = 1
+
+        self.lt_LR_oblique_edges_stage = LookupTable666LRObliqueEdgesStage(self)
+        self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCentersStage(self)
+        self.lt_LR_inner_x_centers_and_oblique_edges_stage = LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(self)
+        self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
+        self.lt_LR_inner_x_centers_and_oblique_edges_stage.preload_cache_string()
 
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
 
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
         self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
+        self.lt_LR_solve_inner_x_centers_and_oblique_edges.preload_cache_dict()
+        self.lt_FB_solve_inner_x_centers_and_oblique_edges.preload_cache_dict()
+        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.preload_cache_string()
 
-    def populate_fake_444_for_ULFRBD_stage(self, fake_444):
-        fake_444.nuke_corners()
-        fake_444.nuke_edges()
+    def populate_fake_555_for_ULFRBD_solve(self):
+        fake_555 = self.get_fake_555()
+        fake_555.nuke_corners()
+        fake_555.nuke_edges()
+        fake_555.nuke_centers()
+        side_names = ('U', 'L', 'F', 'R', 'B', 'D')
 
-        # Upper
-        fake_444.state[6] = self.state[15]
-        fake_444.state[7] = self.state[16]
-        fake_444.state[10] = self.state[21]
-        fake_444.state[11] = self.state[22]
+        for side_index in range(6):
+            offset_555 = side_index * 25
+            offset_666 = side_index * 36
+            side_name = side_names[side_index]
 
-        # Left
-        fake_444.state[22] = self.state[51]
-        fake_444.state[23] = self.state[52]
-        fake_444.state[26] = self.state[57]
-        fake_444.state[27] = self.state[58]
+            # Corners
+            fake_555.state[1 + offset_555] = self.state[1 + offset_666]
+            fake_555.state[5 + offset_555] = self.state[6 + offset_666]
+            fake_555.state[21 + offset_555] = self.state[31 + offset_666]
+            fake_555.state[25 + offset_555] = self.state[36 + offset_666]
 
-        # Front
-        fake_444.state[38] = self.state[87]
-        fake_444.state[39] = self.state[88]
-        fake_444.state[42] = self.state[93]
-        fake_444.state[43] = self.state[94]
+            # Centers
+            fake_555.state[7 + offset_555] = self.state[8 + offset_666]
+            fake_555.state[8 + offset_555] = self.state[9 + offset_666]
+            fake_555.state[9 + offset_555] = self.state[11 + offset_666]
+            fake_555.state[12 + offset_555] = self.state[14 + offset_666]
+            fake_555.state[13 + offset_555] = side_name
+            fake_555.state[14 + offset_555] = self.state[17 + offset_666]
+            fake_555.state[17 + offset_555] = self.state[26 + offset_666]
+            fake_555.state[18 + offset_555] = self.state[27 + offset_666]
+            fake_555.state[19 + offset_555] = self.state[29 + offset_666]
 
-        # Right
-        fake_444.state[54] = self.state[123]
-        fake_444.state[55] = self.state[124]
-        fake_444.state[58] = self.state[129]
-        fake_444.state[59] = self.state[130]
-
-        # Back
-        fake_444.state[70] = self.state[159]
-        fake_444.state[71] = self.state[160]
-        fake_444.state[74] = self.state[165]
-        fake_444.state[75] = self.state[166]
-
-        # Down
-        fake_444.state[86] = self.state[195]
-        fake_444.state[87] = self.state[196]
-        fake_444.state[90] = self.state[201]
-        fake_444.state[91] = self.state[202]
-
-    def populate_fake_555_for_UD_stage(self, fake_555):
-
-        for x in range(1, 151):
-            fake_555.state[x] = 'x'
-
-        # Upper centers
-        fake_555.state[7] = self.state[8]
-        fake_555.state[8] = 'U'
-        fake_555.state[9] = self.state[11]
-        fake_555.state[12] = 'U'
-        fake_555.state[13] = 'U'
-        fake_555.state[14] = 'U'
-        fake_555.state[17] = self.state[26]
-        fake_555.state[18] = 'U'
-        fake_555.state[19] = self.state[29]
-
-        # Left centers
-        fake_555.state[32] = self.state[44]
-        fake_555.state[33] = self.state[45]
-        fake_555.state[34] = self.state[47]
-        fake_555.state[37] = self.state[50]
-        fake_555.state[38] = self.state[51]
-        fake_555.state[39] = self.state[53]
-        fake_555.state[42] = self.state[62]
-        fake_555.state[43] = self.state[63]
-        fake_555.state[44] = self.state[65]
-
-        # Front centers
-        fake_555.state[57] = self.state[80]
-        fake_555.state[58] = self.state[81]
-        fake_555.state[59] = self.state[83]
-        fake_555.state[62] = self.state[86]
-        fake_555.state[63] = self.state[87]
-        fake_555.state[64] = self.state[89]
-        fake_555.state[67] = self.state[98]
-        fake_555.state[68] = self.state[99]
-        fake_555.state[69] = self.state[101]
-
-        # Right centers
-        fake_555.state[82] = self.state[116]
-        fake_555.state[83] = self.state[117]
-        fake_555.state[84] = self.state[119]
-        fake_555.state[87] = self.state[122]
-        fake_555.state[88] = self.state[123]
-        fake_555.state[89] = self.state[125]
-        fake_555.state[92] = self.state[134]
-        fake_555.state[93] = self.state[135]
-        fake_555.state[94] = self.state[137]
-
-        # Back centers
-        fake_555.state[107] = self.state[152]
-        fake_555.state[108] = self.state[153]
-        fake_555.state[109] = self.state[155]
-        fake_555.state[112] = self.state[158]
-        fake_555.state[113] = self.state[159]
-        fake_555.state[114] = self.state[161]
-        fake_555.state[117] = self.state[170]
-        fake_555.state[118] = self.state[171]
-        fake_555.state[119] = self.state[173]
-
-        # Down centers
-        fake_555.state[132] = self.state[188]
-        fake_555.state[133] = 'U'
-        fake_555.state[134] = self.state[191]
-        fake_555.state[137] = 'U'
-        fake_555.state[138] = 'D'
-        fake_555.state[139] = 'U'
-        fake_555.state[142] = self.state[206]
-        fake_555.state[143] = 'U'
-        fake_555.state[144] = self.state[209]
-        #fake_555.sanity_check()
-
-    def populate_fake_555_for_ULFRBD_solve(self, fake_555):
-
-        for x in range(1, 151):
-            fake_555.state[x] = 'x'
-
-        # Upper corners
-        fake_555.state[1] = self.state[1]
-        fake_555.state[5] = self.state[6]
-        fake_555.state[21] = self.state[31]
-        fake_555.state[25] = self.state[36]
-
-        # Left corners
-        fake_555.state[26] = self.state[37]
-        fake_555.state[30] = self.state[42]
-        fake_555.state[46] = self.state[67]
-        fake_555.state[50] = self.state[72]
-
-        # Front corners
-        fake_555.state[51] = self.state[73]
-        fake_555.state[55] = self.state[78]
-        fake_555.state[71] = self.state[103]
-        fake_555.state[75] = self.state[108]
-
-        # Right corners
-        fake_555.state[76] = self.state[109]
-        fake_555.state[80] = self.state[114]
-        fake_555.state[96] = self.state[139]
-        fake_555.state[100] = self.state[144]
-
-        # Back corners
-        fake_555.state[101] = self.state[145]
-        fake_555.state[105] = self.state[150]
-        fake_555.state[121] = self.state[175]
-        fake_555.state[125] = self.state[180]
-
-        # Down corners
-        fake_555.state[126] = self.state[181]
-        fake_555.state[130] = self.state[186]
-        fake_555.state[146] = self.state[211]
-        fake_555.state[150] = self.state[216]
-
-        # TODO for 5x5x5 OLL checking
-        # Upper edges (orbit 1)
-        '''
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-
-        # Left edges (orbit 1)
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-
-        # Front edges (orbit 1)
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-
-        # Right edges (orbit 1)
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-
-        # Back edges (orbit 1)
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-
-        # Down edges (orbit 1)
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        fake_555.state[] = self.state[]
-        '''
-
-        # Upper centers
-        fake_555.state[7] = self.state[8]
-        fake_555.state[8] = self.state[9]
-        fake_555.state[9] = self.state[11]
-        fake_555.state[12] = self.state[14]
-        fake_555.state[13] = self.state[15]
-        fake_555.state[14] = self.state[17]
-        fake_555.state[17] = self.state[26]
-        fake_555.state[18] = self.state[27]
-        fake_555.state[19] = self.state[29]
-
-        # Left centers
-        fake_555.state[32] = self.state[44]
-        fake_555.state[33] = self.state[45]
-        fake_555.state[34] = self.state[47]
-        fake_555.state[37] = self.state[50]
-        fake_555.state[38] = self.state[51]
-        fake_555.state[39] = self.state[53]
-        fake_555.state[42] = self.state[62]
-        fake_555.state[43] = self.state[63]
-        fake_555.state[44] = self.state[65]
-
-        # Front centers
-        fake_555.state[57] = self.state[80]
-        fake_555.state[58] = self.state[81]
-        fake_555.state[59] = self.state[83]
-        fake_555.state[62] = self.state[86]
-        fake_555.state[63] = self.state[87]
-        fake_555.state[64] = self.state[89]
-        fake_555.state[67] = self.state[98]
-        fake_555.state[68] = self.state[99]
-        fake_555.state[69] = self.state[101]
-
-        # Right centers
-        fake_555.state[82] = self.state[116]
-        fake_555.state[83] = self.state[117]
-        fake_555.state[84] = self.state[119]
-        fake_555.state[87] = self.state[122]
-        fake_555.state[88] = self.state[123]
-        fake_555.state[89] = self.state[125]
-        fake_555.state[92] = self.state[134]
-        fake_555.state[93] = self.state[135]
-        fake_555.state[94] = self.state[137]
-
-        # Back centers
-        fake_555.state[107] = self.state[152]
-        fake_555.state[108] = self.state[153]
-        fake_555.state[109] = self.state[155]
-        fake_555.state[112] = self.state[158]
-        fake_555.state[113] = self.state[159]
-        fake_555.state[114] = self.state[161]
-        fake_555.state[117] = self.state[170]
-        fake_555.state[118] = self.state[171]
-        fake_555.state[119] = self.state[173]
-
-        # Down centers
-        fake_555.state[132] = self.state[188]
-        fake_555.state[133] = self.state[189]
-        fake_555.state[134] = self.state[191]
-        fake_555.state[137] = self.state[194]
-        fake_555.state[138] = self.state[195]
-        fake_555.state[139] = self.state[197]
-        fake_555.state[142] = self.state[206]
-        fake_555.state[143] = self.state[207]
-        fake_555.state[144] = self.state[209]
-        fake_555.sanity_check()
-
-    def fake_move_UD_to_UFDB(self):
-
-        # How many UD squares are on sides LR? We need to "fake move" those to somewhere on FB for our lookup table to work.
-        left_fake_move_count = 0
-        right_fake_move_count = 0
-
-        for square_index in (45, 53, 64, 56, 117, 125, 136, 128):
-            if self.state[square_index] in ('U', 'D'):
-                self.state[square_index] = 'L'
-                left_fake_move_count += 1
-
-        for square_index in (46, 59, 63, 50, 118, 131, 135, 122):
-            if self.state[square_index] in ('U', 'D'):
-                self.state[square_index] = 'L'
-                right_fake_move_count += 1
-
-        if left_fake_move_count > 0:
-            for square_index in (9, 17, 28, 20, 189, 197, 208, 200, 81, 89, 100, 92, 153, 161, 172, 164):
-                if self.state[square_index] not in ('U', 'D'):
-                    self.state[square_index] = 'U'
-                    left_fake_move_count -= 1
-
-                    if not left_fake_move_count:
-                        break
-
-        if right_fake_move_count > 0:
-            for square_index in (10, 23, 27, 14, 190, 203, 207, 194, 82, 95, 99, 86, 154, 167, 171, 158):
-                if self.state[square_index] not in ('U', 'D'):
-                    self.state[square_index] = 'U'
-                    right_fake_move_count -= 1
-
-                    if not right_fake_move_count:
-                        break
-
-    def stage_oblique_edges_UD(self):
-        """
-        The 7x7x7 uses this that is why it is in its own method.
-        """
-
-        # See the comments LookupTable666UDObliqueEdgesStage for
-        # an explanation on what is happening here
-        for x in range(2):
-            original_state = self.state[:]
-            original_solution = self.solution[:]
-            original_solution_len = len(self.solution)
-
-            self.fake_move_UD_to_UFDB()
-
-            # Test the prune tables
-            #self.lt_UD_oblique_edge_stage_left_only.solve()
-            #self.lt_UD_oblique_edge_stage_right_only.solve()
-            #self.print_cube()
-            #sys.exit(0)
-
-            self.lt_UD_oblique_edge_stage.solve()
-
-            tmp_solution = self.solution[original_solution_len:]
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in tmp_solution:
-                self.rotate(step)
-
-            if x == 0:
-                self.rotate_y()
-            else:
-                self.rotate_y_reverse()
-
-        self.print_cube()
-        log.info("%s: UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-
-    def stage_outside_x_centers_UD(self):
-        """
-        Not used at the moment...doing this opens the door for step20 to stage LR
-        obliques AND stage the outer-x-centers.  That table would have 12870^3 states
-        with 12870^2 prune tables so the IDA search would be doable but on the slow side.
-        """
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.lt_init()
-        self.populate_fake_555_for_UD_stage(fake_555)
-        fake_555.print_cube()
-        fake_555.group_centers_stage_UD()
-
-        for step in fake_555.solution:
-            self.rotate(step)
-
-        self.print_cube()
-        log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-
-    def stage_oblique_edges_LR(self):
-
-        # Test the prune tables
-        #self.lt_LR_oblique_edge_stage_left_only.solve()
-        #self.lt_LR_oblique_edge_stage_right_only.solve()
-        #self.print_cube()
-        #sys.exit(0)
-
-        self.lt_LR_oblique_edge_stage.solve()
-        self.print_cube()
-        log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+            # Edges
+            fake_555.state[2 + offset_555] = self.state[2 + offset_666]
+            fake_555.state[3 + offset_555] = self.state[3 + offset_666]
+            fake_555.state[4 + offset_555] = self.state[5 + offset_666]
+            fake_555.state[6 + offset_555] = self.state[7 + offset_666]
+            fake_555.state[10 + offset_555] = self.state[12 + offset_666]
+            fake_555.state[11 + offset_555] = self.state[13 + offset_666]
+            fake_555.state[15 + offset_555] = self.state[18 + offset_666]
+            fake_555.state[16 + offset_555] = self.state[25 + offset_666]
+            fake_555.state[20 + offset_555] = self.state[30 + offset_666]
+            fake_555.state[22 + offset_555] = self.state[32 + offset_666]
+            fake_555.state[23 + offset_555] = self.state[33 + offset_666]
+            fake_555.state[24 + offset_555] = self.state[35 + offset_666]
 
     def solve_reduced_555_centers(self):
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.lt_init()
-        self.populate_fake_555_for_ULFRBD_solve(fake_555)
-        fake_555.group_centers_guts()
+        fake_555 = self.get_fake_555()
+        self.populate_fake_555_for_ULFRBD_solve()
+        fake_555.lt_ULFRB_centers_solve.solve()
 
         for step in fake_555.solution:
             self.rotate(step)
 
     def solve_reduced_555_t_centers(self):
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.lt_init()
-        self.populate_fake_555_for_ULFRBD_solve(fake_555)
+        fake_555 = self.get_fake_555()
+        self.populate_fake_555_for_ULFRBD_solve()
         fake_555.lt_ULFRBD_t_centers_solve.solve()
 
         for step in fake_555.solution:
             self.rotate(step)
 
-    def stage_inner_x_centers(self):
-        """
-        Stage inner-x-centers via 4x4x4 solver
-        """
+    def group_centers_guts(self, oblique_edges_only=False):
+        self.lt_init()
+        self.lt_UD_inner_x_centers_stage.solve()
+        self.rotate_for_best_centers_staging(inner_x_centers_666)
+        self.print_cube()
+        log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
+        log.info("%s: UD inner-x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
-        fake_444.lt_init()
-        self.populate_fake_444_for_ULFRBD_stage(fake_444)
-        fake_444.lt_ULFRBD_centers_stage.avoid_oll = False
-        fake_444.lt_ULFRBD_centers_stage.solve()
+        self.lt_UD_oblique_edge_stage.solve()
+        self.print_cube()
+        log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
+        log.info("%s: UD oblique edges paired (not staged), %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        for step in fake_444.solution:
-            if 'w' in step:
-                step = '3' + step
+        #self.print_cube()
+        #log.info("%s: UD oblique edges paired (not staged), %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # Stage UD centers via 555
+        fake_555 = self.get_fake_555()
+        self.populate_fake_555_for_ULFRBD_solve()
+
+        if oblique_edges_only:
+            fake_555.lt_UD_T_centers_stage.solve()
+        else:
+            fake_555.lt_UD_centers_stage.avoid_oll = 0
+            fake_555.group_centers_stage_UD()
+            fake_555.lt_UD_centers_stage.avoid_oll = None
+
+        for step in fake_555.solution:
+            self.rotate(step)
+
+        self.rotate_for_best_centers_staging(inner_x_centers_666)
+        self.print_cube()
+        log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
+        log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # Test the prune tables
+        #self.lt_LR_oblique_edges_stage.solve()
+        #self.lt_LR_inner_x_centers_stage.solve()
+        #self.print_cube()
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # Stage the LR inner x-centers and oblique edges
+        self.lt_LR_inner_x_centers_and_oblique_edges_stage.solve()
+        self.rotate_for_best_centers_staging(inner_x_centers_666)
+        self.print_cube()
+        log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
+        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        log.info("%s: LR oblique edges and inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # Stage LR centers via 555
+        fake_555 = self.get_fake_555()
+        self.populate_fake_555_for_ULFRBD_solve()
+
+        if oblique_edges_only:
+            fake_555.lt_LR_T_centers_stage.solve()
+        else:
+            fake_555.lt_LR_centers_stage.avoid_oll = 0
+            fake_555.group_centers_stage_LR()
+            fake_555.lt_LR_centers_stage.avoid_oll = None
+
+        for step in fake_555.solution:
             self.rotate(step)
 
         self.print_cube()
-        log.info("%s: inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-    def group_centers_guts(self, oblique_edges_only=False):
-        self.lt_init()
-        self.stage_inner_x_centers()
-        self.stage_oblique_edges_UD()
-        # self.stage_outside_x_centers_UD()
-        self.stage_oblique_edges_LR()
+        log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges
@@ -1426,41 +1398,25 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.print_cube()
         log.info("%s: UD inner x-center solved and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
 
         # Test the prune tables
         #self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
         #self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
         #self.print_cube()
-        #sys.exit(0)
 
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
         self.print_cube()
         log.info("%s: LFRB inner x-center and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
 
         if oblique_edges_only:
-
-            # If we are here it is because a larger cube is using the 6x6x6 solver to
-            # solve their centers. We must "solve" the t-centers in this scenario.
             self.solve_reduced_555_t_centers()
             self.print_cube()
-            log.info("%s: Took %d steps to solve oblique edges" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
+            log.info("%s: solved T-centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         else:
             self.solve_reduced_555_centers()
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
             self.print_cube()
-            log.info("%s: Took %d steps to solve centers" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
 
     def phase(self):
         if self._phase is None:
@@ -1486,5153 +1442,108 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         return self._phase
 
-
-lt_LFRB_solve_inner_x_centers_and_oblique_edges_state_targets = (
-    'xLLxLLLLLLLLxLLxxBBxBFFBBFFBxBBxxRRxRRRRRRRRxRRxxFFxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxLLxxFFxFFFFFFFFxFFxxRRxRRRRRRRRxRRxxBBxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxBBx',
-    'xLLxLLLLLLLLxRRxxFFxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxLLxxFFxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxBBx',
-    'xLLxLLLRLLLRxRRxxFFxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxLLxxFFxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxBBx',
-    'xLLxRLLLRLLLxRRxxFFxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxLLxxFFxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxBBx',
-    'xLLxRLLRRLLRxRRxxFFxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxFFxxLLxRRRRRRRRxRRxxBBxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxFFxxRRxLRRRLRRRxRRxxBBxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxFFxxRRxRRRLRRRLxRRxxBBxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxLLxxFFxFFFFFFFFxFFxxRRxRRRRRRRRxLLxxBBxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxBBx',
-    'xRRxLLLLLLLLxRRxxFFxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxLLxxFFxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxBBx',
-    'xRRxLLLRLLLRxRRxxFFxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxBBxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFBBFFBxFFxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxBFFFBFFFxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxLLxRRRRRRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxBBxxRRxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFBFFFBxFFxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxLLxRRRRRRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxBBxxRRxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxFFxxLLxLRRRLRRRxRRxxBBxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxFFxxLLxRRRLRRRLxRRxxBBxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxFFxxLLxRRRRRRRRxLLxxBBxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxFFxxRRxLRRLLRRLxRRxxBBxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxFFxxRRxLRRRLRRRxLLxxBBxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxLLxxFFxFFFFFFFFxFFxxRRxRRRLRRRLxLLxxBBxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxBBx',
-    'xRRxRLLLRLLLxRRxxFFxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxBBxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFBBFFBxFFxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxBFFFBFFFxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxRRxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxLRRRLRRRxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxLLxRRRLRRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxBBxxRRxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFBFFFBxFFxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxRRxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxLRRRLRRRxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxLLxRRRLRRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxBBxxRRxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxFFxxLLxLRRLLRRLxRRxxBBxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxFFxxLLxLRRRLRRRxLLxxBBxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxFFxxLLxRRRLRRRLxLLxxBBxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxLLxxFFxFFFFFFFFxFFxxRRxLRRLLRRLxLLxxBBxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxRRxxBBxBFFBBFFBxBBxxLLxLRRLLRRLxLLxxFFxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxRRxxBBxBFFBBFFBxFFxxLLxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxRRxxBBxBFFFBFFFxBBxxLLxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxRRxxBBxBFFFBFFFxFFxxLLxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxRRxxBBxFFFBFFFBxBBxxLLxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxRRxxBBxFFFBFFFBxFFxxLLxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxRRxxBBxFFFFFFFFxBBxxLLxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxRRxxBBxFFFFFFFFxFFxxLLxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxLLxxBBxFBBFFBBFxFFx',
-    'xRRxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxLLxxFFxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxLLxxFFxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxRRxxFFxBFFBBFFBxBBxxLLxLRRLLRRLxLLxxFFxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxRRxxFFxBFFBBFFBxFFxxLLxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxRRxxFFxBFFFBFFFxBBxxLLxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxRRxxFFxBFFFBFFFxFFxxLLxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxLLxxBBxBBBFBBBFxFFx',
-    'xRRxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxLLxxBBxFBBBFBBBxFFx',
-    'xRRxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxLLxxBBxFBBFFBBFxBBx',
-    'xRRxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxLLxxFFxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxLLxxFFxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxRRxxFFxFFFBFFFBxBBxxLLxLRRLLRRLxLLxxFFxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxRRxxFFxFFFBFFFBxFFxxLLxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxLLxxBBxBBBBBBBBxFFx',
-    'xRRxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxLLxxBBxBBBFBBBFxBBx',
-    'xRRxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxLLxxBBxFBBBFBBBxBBx',
-    'xRRxRLLRRLLRxRRxxFFxFFFFFFFFxBBxxLLxLRRLLRRLxLLxxFFxBBBBBBBBxBBx',
-    'xRRxRLLRRLLRxRRxxFFxFFFFFFFFxFFxxLLxLRRLLRRLxLLxxBBxBBBBBBBBxBBx',
-)
-
-
-def rotate_666_U(cube):
-    return [cube[0],cube[31],cube[25],cube[19],cube[13],cube[7],cube[1],cube[32],cube[26],cube[20],cube[14],cube[8],cube[2],cube[33],cube[27],cube[21],cube[15],cube[9],cube[3],cube[34],cube[28],cube[22],cube[16],cube[10],cube[4],cube[35],cube[29],cube[23],cube[17],cube[11],cube[5],cube[36],cube[30],cube[24],cube[18],cube[12],cube[6]] + cube[73:79] + cube[43:73] + cube[109:115] + cube[79:109] + cube[145:151] + cube[115:145] + cube[37:43] + cube[151:217]
-
-def rotate_666_U_prime(cube):
-    return [cube[0],cube[6],cube[12],cube[18],cube[24],cube[30],cube[36],cube[5],cube[11],cube[17],cube[23],cube[29],cube[35],cube[4],cube[10],cube[16],cube[22],cube[28],cube[34],cube[3],cube[9],cube[15],cube[21],cube[27],cube[33],cube[2],cube[8],cube[14],cube[20],cube[26],cube[32],cube[1],cube[7],cube[13],cube[19],cube[25],cube[31]] + cube[145:151] + cube[43:73] + cube[37:43] + cube[79:109] + cube[73:79] + cube[115:145] + cube[109:115] + cube[151:217]
-
-def rotate_666_U2(cube):
-    return [cube[0],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]] + cube[109:115] + cube[43:73] + cube[145:151] + cube[79:109] + cube[37:43] + cube[115:145] + cube[73:79] + cube[151:217]
-
-def rotate_666_Uw(cube):
-    return [cube[0],cube[31],cube[25],cube[19],cube[13],cube[7],cube[1],cube[32],cube[26],cube[20],cube[14],cube[8],cube[2],cube[33],cube[27],cube[21],cube[15],cube[9],cube[3],cube[34],cube[28],cube[22],cube[16],cube[10],cube[4],cube[35],cube[29],cube[23],cube[17],cube[11],cube[5],cube[36],cube[30],cube[24],cube[18],cube[12],cube[6]] + cube[73:85] + cube[49:73] + cube[109:121] + cube[85:109] + cube[145:157] + cube[121:145] + cube[37:49] + cube[157:217]
-
-def rotate_666_Uw_prime(cube):
-    return [cube[0],cube[6],cube[12],cube[18],cube[24],cube[30],cube[36],cube[5],cube[11],cube[17],cube[23],cube[29],cube[35],cube[4],cube[10],cube[16],cube[22],cube[28],cube[34],cube[3],cube[9],cube[15],cube[21],cube[27],cube[33],cube[2],cube[8],cube[14],cube[20],cube[26],cube[32],cube[1],cube[7],cube[13],cube[19],cube[25],cube[31]] + cube[145:157] + cube[49:73] + cube[37:49] + cube[85:109] + cube[73:85] + cube[121:145] + cube[109:121] + cube[157:217]
-
-def rotate_666_Uw2(cube):
-    return [cube[0],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]] + cube[109:121] + cube[49:73] + cube[145:157] + cube[85:109] + cube[37:49] + cube[121:145] + cube[73:85] + cube[157:217]
-
-def rotate_666_3Uw(cube):
-    return [cube[0],cube[31],cube[25],cube[19],cube[13],cube[7],cube[1],cube[32],cube[26],cube[20],cube[14],cube[8],cube[2],cube[33],cube[27],cube[21],cube[15],cube[9],cube[3],cube[34],cube[28],cube[22],cube[16],cube[10],cube[4],cube[35],cube[29],cube[23],cube[17],cube[11],cube[5],cube[36],cube[30],cube[24],cube[18],cube[12],cube[6]] + cube[73:91] + cube[55:73] + cube[109:127] + cube[91:109] + cube[145:163] + cube[127:145] + cube[37:55] + cube[163:217]
-
-def rotate_666_3Uw_prime(cube):
-    return [cube[0],cube[6],cube[12],cube[18],cube[24],cube[30],cube[36],cube[5],cube[11],cube[17],cube[23],cube[29],cube[35],cube[4],cube[10],cube[16],cube[22],cube[28],cube[34],cube[3],cube[9],cube[15],cube[21],cube[27],cube[33],cube[2],cube[8],cube[14],cube[20],cube[26],cube[32],cube[1],cube[7],cube[13],cube[19],cube[25],cube[31]] + cube[145:163] + cube[55:73] + cube[37:55] + cube[91:109] + cube[73:91] + cube[127:145] + cube[109:127] + cube[163:217]
-
-def rotate_666_3Uw2(cube):
-    return [cube[0],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]] + cube[109:127] + cube[55:73] + cube[145:163] + cube[91:109] + cube[37:55] + cube[127:145] + cube[73:91] + cube[163:217]
-
-def rotate_666_L(cube):
-    return [cube[0],cube[180]] + cube[2:7] + [cube[174]] + cube[8:13] + [cube[168]] + cube[14:19] + [cube[162]] + cube[20:25] + [cube[156]] + cube[26:31] + [cube[150]] + cube[32:37] + [cube[67],cube[61],cube[55],cube[49],cube[43],cube[37],cube[68],cube[62],cube[56],cube[50],cube[44],cube[38],cube[69],cube[63],cube[57],cube[51],cube[45],cube[39],cube[70],cube[64],cube[58],cube[52],cube[46],cube[40],cube[71],cube[65],cube[59],cube[53],cube[47],cube[41],cube[72],cube[66],cube[60],cube[54],cube[48],cube[42],cube[1]] + cube[74:79] + [cube[7]] + cube[80:85] + [cube[13]] + cube[86:91] + [cube[19]] + cube[92:97] + [cube[25]] + cube[98:103] + [cube[31]] + cube[104:150] + [cube[211]] + cube[151:156] + [cube[205]] + cube[157:162] + [cube[199]] + cube[163:168] + [cube[193]] + cube[169:174] + [cube[187]] + cube[175:180] + [cube[181],cube[73]] + cube[182:187] + [cube[79]] + cube[188:193] + [cube[85]] + cube[194:199] + [cube[91]] + cube[200:205] + [cube[97]] + cube[206:211] + [cube[103]] + cube[212:217]
-
-def rotate_666_L_prime(cube):
-    return [cube[0],cube[73]] + cube[2:7] + [cube[79]] + cube[8:13] + [cube[85]] + cube[14:19] + [cube[91]] + cube[20:25] + [cube[97]] + cube[26:31] + [cube[103]] + cube[32:37] + [cube[42],cube[48],cube[54],cube[60],cube[66],cube[72],cube[41],cube[47],cube[53],cube[59],cube[65],cube[71],cube[40],cube[46],cube[52],cube[58],cube[64],cube[70],cube[39],cube[45],cube[51],cube[57],cube[63],cube[69],cube[38],cube[44],cube[50],cube[56],cube[62],cube[68],cube[37],cube[43],cube[49],cube[55],cube[61],cube[67],cube[181]] + cube[74:79] + [cube[187]] + cube[80:85] + [cube[193]] + cube[86:91] + [cube[199]] + cube[92:97] + [cube[205]] + cube[98:103] + [cube[211]] + cube[104:150] + [cube[31]] + cube[151:156] + [cube[25]] + cube[157:162] + [cube[19]] + cube[163:168] + [cube[13]] + cube[169:174] + [cube[7]] + cube[175:180] + [cube[1],cube[180]] + cube[182:187] + [cube[174]] + cube[188:193] + [cube[168]] + cube[194:199] + [cube[162]] + cube[200:205] + [cube[156]] + cube[206:211] + [cube[150]] + cube[212:217]
-
-def rotate_666_L2(cube):
-    return [cube[0],cube[181]] + cube[2:7] + [cube[187]] + cube[8:13] + [cube[193]] + cube[14:19] + [cube[199]] + cube[20:25] + [cube[205]] + cube[26:31] + [cube[211]] + cube[32:37] + [cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65],cube[64],cube[63],cube[62],cube[61],cube[60],cube[59],cube[58],cube[57],cube[56],cube[55],cube[54],cube[53],cube[52],cube[51],cube[50],cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[180]] + cube[74:79] + [cube[174]] + cube[80:85] + [cube[168]] + cube[86:91] + [cube[162]] + cube[92:97] + [cube[156]] + cube[98:103] + [cube[150]] + cube[104:150] + [cube[103]] + cube[151:156] + [cube[97]] + cube[157:162] + [cube[91]] + cube[163:168] + [cube[85]] + cube[169:174] + [cube[79]] + cube[175:180] + [cube[73],cube[1]] + cube[182:187] + [cube[7]] + cube[188:193] + [cube[13]] + cube[194:199] + [cube[19]] + cube[200:205] + [cube[25]] + cube[206:211] + [cube[31]] + cube[212:217]
-
-def rotate_666_Lw(cube):
-    return [cube[0],cube[180],cube[179]] + cube[3:7] + [cube[174],cube[173]] + cube[9:13] + [cube[168],cube[167]] + cube[15:19] + [cube[162],cube[161]] + cube[21:25] + [cube[156],cube[155]] + cube[27:31] + [cube[150],cube[149]] + cube[33:37] + [cube[67],cube[61],cube[55],cube[49],cube[43],cube[37],cube[68],cube[62],cube[56],cube[50],cube[44],cube[38],cube[69],cube[63],cube[57],cube[51],cube[45],cube[39],cube[70],cube[64],cube[58],cube[52],cube[46],cube[40],cube[71],cube[65],cube[59],cube[53],cube[47],cube[41],cube[72],cube[66],cube[60],cube[54],cube[48],cube[42]] + cube[1:3] + cube[75:79] + cube[7:9] + cube[81:85] + cube[13:15] + cube[87:91] + cube[19:21] + cube[93:97] + cube[25:27] + cube[99:103] + cube[31:33] + cube[105:149] + [cube[212],cube[211]] + cube[151:155] + [cube[206],cube[205]] + cube[157:161] + [cube[200],cube[199]] + cube[163:167] + [cube[194],cube[193]] + cube[169:173] + [cube[188],cube[187]] + cube[175:179] + [cube[182],cube[181]] + cube[73:75] + cube[183:187] + cube[79:81] + cube[189:193] + cube[85:87] + cube[195:199] + cube[91:93] + cube[201:205] + cube[97:99] + cube[207:211] + cube[103:105] + cube[213:217]
-
-def rotate_666_Lw_prime(cube):
-    return [cube[0]] + cube[73:75] + cube[3:7] + cube[79:81] + cube[9:13] + cube[85:87] + cube[15:19] + cube[91:93] + cube[21:25] + cube[97:99] + cube[27:31] + cube[103:105] + cube[33:37] + [cube[42],cube[48],cube[54],cube[60],cube[66],cube[72],cube[41],cube[47],cube[53],cube[59],cube[65],cube[71],cube[40],cube[46],cube[52],cube[58],cube[64],cube[70],cube[39],cube[45],cube[51],cube[57],cube[63],cube[69],cube[38],cube[44],cube[50],cube[56],cube[62],cube[68],cube[37],cube[43],cube[49],cube[55],cube[61],cube[67]] + cube[181:183] + cube[75:79] + cube[187:189] + cube[81:85] + cube[193:195] + cube[87:91] + cube[199:201] + cube[93:97] + cube[205:207] + cube[99:103] + cube[211:213] + cube[105:149] + [cube[32],cube[31]] + cube[151:155] + [cube[26],cube[25]] + cube[157:161] + [cube[20],cube[19]] + cube[163:167] + [cube[14],cube[13]] + cube[169:173] + [cube[8],cube[7]] + cube[175:179] + [cube[2],cube[1],cube[180],cube[179]] + cube[183:187] + [cube[174],cube[173]] + cube[189:193] + [cube[168],cube[167]] + cube[195:199] + [cube[162],cube[161]] + cube[201:205] + [cube[156],cube[155]] + cube[207:211] + [cube[150],cube[149]] + cube[213:217]
-
-def rotate_666_Lw2(cube):
-    return [cube[0]] + cube[181:183] + cube[3:7] + cube[187:189] + cube[9:13] + cube[193:195] + cube[15:19] + cube[199:201] + cube[21:25] + cube[205:207] + cube[27:31] + cube[211:213] + cube[33:37] + [cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65],cube[64],cube[63],cube[62],cube[61],cube[60],cube[59],cube[58],cube[57],cube[56],cube[55],cube[54],cube[53],cube[52],cube[51],cube[50],cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[180],cube[179]] + cube[75:79] + [cube[174],cube[173]] + cube[81:85] + [cube[168],cube[167]] + cube[87:91] + [cube[162],cube[161]] + cube[93:97] + [cube[156],cube[155]] + cube[99:103] + [cube[150],cube[149]] + cube[105:149] + [cube[104],cube[103]] + cube[151:155] + [cube[98],cube[97]] + cube[157:161] + [cube[92],cube[91]] + cube[163:167] + [cube[86],cube[85]] + cube[169:173] + [cube[80],cube[79]] + cube[175:179] + [cube[74],cube[73]] + cube[1:3] + cube[183:187] + cube[7:9] + cube[189:193] + cube[13:15] + cube[195:199] + cube[19:21] + cube[201:205] + cube[25:27] + cube[207:211] + cube[31:33] + cube[213:217]
-
-def rotate_666_3Lw(cube):
-    return [cube[0],cube[180],cube[179],cube[178]] + cube[4:7] + [cube[174],cube[173],cube[172]] + cube[10:13] + [cube[168],cube[167],cube[166]] + cube[16:19] + [cube[162],cube[161],cube[160]] + cube[22:25] + [cube[156],cube[155],cube[154]] + cube[28:31] + [cube[150],cube[149],cube[148]] + cube[34:37] + [cube[67],cube[61],cube[55],cube[49],cube[43],cube[37],cube[68],cube[62],cube[56],cube[50],cube[44],cube[38],cube[69],cube[63],cube[57],cube[51],cube[45],cube[39],cube[70],cube[64],cube[58],cube[52],cube[46],cube[40],cube[71],cube[65],cube[59],cube[53],cube[47],cube[41],cube[72],cube[66],cube[60],cube[54],cube[48],cube[42]] + cube[1:4] + cube[76:79] + cube[7:10] + cube[82:85] + cube[13:16] + cube[88:91] + cube[19:22] + cube[94:97] + cube[25:28] + cube[100:103] + cube[31:34] + cube[106:148] + [cube[213],cube[212],cube[211]] + cube[151:154] + [cube[207],cube[206],cube[205]] + cube[157:160] + [cube[201],cube[200],cube[199]] + cube[163:166] + [cube[195],cube[194],cube[193]] + cube[169:172] + [cube[189],cube[188],cube[187]] + cube[175:178] + [cube[183],cube[182],cube[181]] + cube[73:76] + cube[184:187] + cube[79:82] + cube[190:193] + cube[85:88] + cube[196:199] + cube[91:94] + cube[202:205] + cube[97:100] + cube[208:211] + cube[103:106] + cube[214:217]
-
-def rotate_666_3Lw_prime(cube):
-    return [cube[0]] + cube[73:76] + cube[4:7] + cube[79:82] + cube[10:13] + cube[85:88] + cube[16:19] + cube[91:94] + cube[22:25] + cube[97:100] + cube[28:31] + cube[103:106] + cube[34:37] + [cube[42],cube[48],cube[54],cube[60],cube[66],cube[72],cube[41],cube[47],cube[53],cube[59],cube[65],cube[71],cube[40],cube[46],cube[52],cube[58],cube[64],cube[70],cube[39],cube[45],cube[51],cube[57],cube[63],cube[69],cube[38],cube[44],cube[50],cube[56],cube[62],cube[68],cube[37],cube[43],cube[49],cube[55],cube[61],cube[67]] + cube[181:184] + cube[76:79] + cube[187:190] + cube[82:85] + cube[193:196] + cube[88:91] + cube[199:202] + cube[94:97] + cube[205:208] + cube[100:103] + cube[211:214] + cube[106:148] + [cube[33],cube[32],cube[31]] + cube[151:154] + [cube[27],cube[26],cube[25]] + cube[157:160] + [cube[21],cube[20],cube[19]] + cube[163:166] + [cube[15],cube[14],cube[13]] + cube[169:172] + [cube[9],cube[8],cube[7]] + cube[175:178] + [cube[3],cube[2],cube[1],cube[180],cube[179],cube[178]] + cube[184:187] + [cube[174],cube[173],cube[172]] + cube[190:193] + [cube[168],cube[167],cube[166]] + cube[196:199] + [cube[162],cube[161],cube[160]] + cube[202:205] + [cube[156],cube[155],cube[154]] + cube[208:211] + [cube[150],cube[149],cube[148]] + cube[214:217]
-
-def rotate_666_3Lw2(cube):
-    return [cube[0]] + cube[181:184] + cube[4:7] + cube[187:190] + cube[10:13] + cube[193:196] + cube[16:19] + cube[199:202] + cube[22:25] + cube[205:208] + cube[28:31] + cube[211:214] + cube[34:37] + [cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65],cube[64],cube[63],cube[62],cube[61],cube[60],cube[59],cube[58],cube[57],cube[56],cube[55],cube[54],cube[53],cube[52],cube[51],cube[50],cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[180],cube[179],cube[178]] + cube[76:79] + [cube[174],cube[173],cube[172]] + cube[82:85] + [cube[168],cube[167],cube[166]] + cube[88:91] + [cube[162],cube[161],cube[160]] + cube[94:97] + [cube[156],cube[155],cube[154]] + cube[100:103] + [cube[150],cube[149],cube[148]] + cube[106:148] + [cube[105],cube[104],cube[103]] + cube[151:154] + [cube[99],cube[98],cube[97]] + cube[157:160] + [cube[93],cube[92],cube[91]] + cube[163:166] + [cube[87],cube[86],cube[85]] + cube[169:172] + [cube[81],cube[80],cube[79]] + cube[175:178] + [cube[75],cube[74],cube[73]] + cube[1:4] + cube[184:187] + cube[7:10] + cube[190:193] + cube[13:16] + cube[196:199] + cube[19:22] + cube[202:205] + cube[25:28] + cube[208:211] + cube[31:34] + cube[214:217]
-
-def rotate_666_F(cube):
-    return cube[0:31] + [cube[72],cube[66],cube[60],cube[54],cube[48],cube[42]] + cube[37:42] + [cube[181]] + cube[43:48] + [cube[182]] + cube[49:54] + [cube[183]] + cube[55:60] + [cube[184]] + cube[61:66] + [cube[185]] + cube[67:72] + [cube[186],cube[103],cube[97],cube[91],cube[85],cube[79],cube[73],cube[104],cube[98],cube[92],cube[86],cube[80],cube[74],cube[105],cube[99],cube[93],cube[87],cube[81],cube[75],cube[106],cube[100],cube[94],cube[88],cube[82],cube[76],cube[107],cube[101],cube[95],cube[89],cube[83],cube[77],cube[108],cube[102],cube[96],cube[90],cube[84],cube[78],cube[31]] + cube[110:115] + [cube[32]] + cube[116:121] + [cube[33]] + cube[122:127] + [cube[34]] + cube[128:133] + [cube[35]] + cube[134:139] + [cube[36]] + cube[140:181] + [cube[139],cube[133],cube[127],cube[121],cube[115],cube[109]] + cube[187:217]
-
-def rotate_666_F_prime(cube):
-    return cube[0:31] + [cube[109],cube[115],cube[121],cube[127],cube[133],cube[139]] + cube[37:42] + [cube[36]] + cube[43:48] + [cube[35]] + cube[49:54] + [cube[34]] + cube[55:60] + [cube[33]] + cube[61:66] + [cube[32]] + cube[67:72] + [cube[31],cube[78],cube[84],cube[90],cube[96],cube[102],cube[108],cube[77],cube[83],cube[89],cube[95],cube[101],cube[107],cube[76],cube[82],cube[88],cube[94],cube[100],cube[106],cube[75],cube[81],cube[87],cube[93],cube[99],cube[105],cube[74],cube[80],cube[86],cube[92],cube[98],cube[104],cube[73],cube[79],cube[85],cube[91],cube[97],cube[103],cube[186]] + cube[110:115] + [cube[185]] + cube[116:121] + [cube[184]] + cube[122:127] + [cube[183]] + cube[128:133] + [cube[182]] + cube[134:139] + [cube[181]] + cube[140:181] + [cube[42],cube[48],cube[54],cube[60],cube[66],cube[72]] + cube[187:217]
-
-def rotate_666_F2(cube):
-    return cube[0:31] + [cube[186],cube[185],cube[184],cube[183],cube[182],cube[181]] + cube[37:42] + [cube[139]] + cube[43:48] + [cube[133]] + cube[49:54] + [cube[127]] + cube[55:60] + [cube[121]] + cube[61:66] + [cube[115]] + cube[67:72] + [cube[109],cube[108],cube[107],cube[106],cube[105],cube[104],cube[103],cube[102],cube[101],cube[100],cube[99],cube[98],cube[97],cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74],cube[73],cube[72]] + cube[110:115] + [cube[66]] + cube[116:121] + [cube[60]] + cube[122:127] + [cube[54]] + cube[128:133] + [cube[48]] + cube[134:139] + [cube[42]] + cube[140:181] + [cube[36],cube[35],cube[34],cube[33],cube[32],cube[31]] + cube[187:217]
-
-def rotate_666_Fw(cube):
-    return cube[0:25] + [cube[71],cube[65],cube[59],cube[53],cube[47],cube[41],cube[72],cube[66],cube[60],cube[54],cube[48],cube[42]] + cube[37:41] + [cube[187],cube[181]] + cube[43:47] + [cube[188],cube[182]] + cube[49:53] + [cube[189],cube[183]] + cube[55:59] + [cube[190],cube[184]] + cube[61:65] + [cube[191],cube[185]] + cube[67:71] + [cube[192],cube[186],cube[103],cube[97],cube[91],cube[85],cube[79],cube[73],cube[104],cube[98],cube[92],cube[86],cube[80],cube[74],cube[105],cube[99],cube[93],cube[87],cube[81],cube[75],cube[106],cube[100],cube[94],cube[88],cube[82],cube[76],cube[107],cube[101],cube[95],cube[89],cube[83],cube[77],cube[108],cube[102],cube[96],cube[90],cube[84],cube[78],cube[31],cube[25]] + cube[111:115] + [cube[32],cube[26]] + cube[117:121] + [cube[33],cube[27]] + cube[123:127] + [cube[34],cube[28]] + cube[129:133] + [cube[35],cube[29]] + cube[135:139] + [cube[36],cube[30]] + cube[141:181] + [cube[139],cube[133],cube[127],cube[121],cube[115],cube[109],cube[140],cube[134],cube[128],cube[122],cube[116],cube[110]] + cube[193:217]
-
-def rotate_666_Fw_prime(cube):
-    return cube[0:25] + [cube[110],cube[116],cube[122],cube[128],cube[134],cube[140],cube[109],cube[115],cube[121],cube[127],cube[133],cube[139]] + cube[37:41] + [cube[30],cube[36]] + cube[43:47] + [cube[29],cube[35]] + cube[49:53] + [cube[28],cube[34]] + cube[55:59] + [cube[27],cube[33]] + cube[61:65] + [cube[26],cube[32]] + cube[67:71] + [cube[25],cube[31],cube[78],cube[84],cube[90],cube[96],cube[102],cube[108],cube[77],cube[83],cube[89],cube[95],cube[101],cube[107],cube[76],cube[82],cube[88],cube[94],cube[100],cube[106],cube[75],cube[81],cube[87],cube[93],cube[99],cube[105],cube[74],cube[80],cube[86],cube[92],cube[98],cube[104],cube[73],cube[79],cube[85],cube[91],cube[97],cube[103],cube[186],cube[192]] + cube[111:115] + [cube[185],cube[191]] + cube[117:121] + [cube[184],cube[190]] + cube[123:127] + [cube[183],cube[189]] + cube[129:133] + [cube[182],cube[188]] + cube[135:139] + [cube[181],cube[187]] + cube[141:181] + [cube[42],cube[48],cube[54],cube[60],cube[66],cube[72],cube[41],cube[47],cube[53],cube[59],cube[65],cube[71]] + cube[193:217]
-
-def rotate_666_Fw2(cube):
-    return cube[0:25] + [cube[192],cube[191],cube[190],cube[189],cube[188],cube[187],cube[186],cube[185],cube[184],cube[183],cube[182],cube[181]] + cube[37:41] + [cube[140],cube[139]] + cube[43:47] + [cube[134],cube[133]] + cube[49:53] + [cube[128],cube[127]] + cube[55:59] + [cube[122],cube[121]] + cube[61:65] + [cube[116],cube[115]] + cube[67:71] + [cube[110],cube[109],cube[108],cube[107],cube[106],cube[105],cube[104],cube[103],cube[102],cube[101],cube[100],cube[99],cube[98],cube[97],cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74],cube[73],cube[72],cube[71]] + cube[111:115] + [cube[66],cube[65]] + cube[117:121] + [cube[60],cube[59]] + cube[123:127] + [cube[54],cube[53]] + cube[129:133] + [cube[48],cube[47]] + cube[135:139] + [cube[42],cube[41]] + cube[141:181] + [cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25]] + cube[193:217]
-
-def rotate_666_3Fw(cube):
-    return cube[0:19] + [cube[70],cube[64],cube[58],cube[52],cube[46],cube[40],cube[71],cube[65],cube[59],cube[53],cube[47],cube[41],cube[72],cube[66],cube[60],cube[54],cube[48],cube[42]] + cube[37:40] + [cube[193],cube[187],cube[181]] + cube[43:46] + [cube[194],cube[188],cube[182]] + cube[49:52] + [cube[195],cube[189],cube[183]] + cube[55:58] + [cube[196],cube[190],cube[184]] + cube[61:64] + [cube[197],cube[191],cube[185]] + cube[67:70] + [cube[198],cube[192],cube[186],cube[103],cube[97],cube[91],cube[85],cube[79],cube[73],cube[104],cube[98],cube[92],cube[86],cube[80],cube[74],cube[105],cube[99],cube[93],cube[87],cube[81],cube[75],cube[106],cube[100],cube[94],cube[88],cube[82],cube[76],cube[107],cube[101],cube[95],cube[89],cube[83],cube[77],cube[108],cube[102],cube[96],cube[90],cube[84],cube[78],cube[31],cube[25],cube[19]] + cube[112:115] + [cube[32],cube[26],cube[20]] + cube[118:121] + [cube[33],cube[27],cube[21]] + cube[124:127] + [cube[34],cube[28],cube[22]] + cube[130:133] + [cube[35],cube[29],cube[23]] + cube[136:139] + [cube[36],cube[30],cube[24]] + cube[142:181] + [cube[139],cube[133],cube[127],cube[121],cube[115],cube[109],cube[140],cube[134],cube[128],cube[122],cube[116],cube[110],cube[141],cube[135],cube[129],cube[123],cube[117],cube[111]] + cube[199:217]
-
-def rotate_666_3Fw_prime(cube):
-    return cube[0:19] + [cube[111],cube[117],cube[123],cube[129],cube[135],cube[141],cube[110],cube[116],cube[122],cube[128],cube[134],cube[140],cube[109],cube[115],cube[121],cube[127],cube[133],cube[139]] + cube[37:40] + [cube[24],cube[30],cube[36]] + cube[43:46] + [cube[23],cube[29],cube[35]] + cube[49:52] + [cube[22],cube[28],cube[34]] + cube[55:58] + [cube[21],cube[27],cube[33]] + cube[61:64] + [cube[20],cube[26],cube[32]] + cube[67:70] + [cube[19],cube[25],cube[31],cube[78],cube[84],cube[90],cube[96],cube[102],cube[108],cube[77],cube[83],cube[89],cube[95],cube[101],cube[107],cube[76],cube[82],cube[88],cube[94],cube[100],cube[106],cube[75],cube[81],cube[87],cube[93],cube[99],cube[105],cube[74],cube[80],cube[86],cube[92],cube[98],cube[104],cube[73],cube[79],cube[85],cube[91],cube[97],cube[103],cube[186],cube[192],cube[198]] + cube[112:115] + [cube[185],cube[191],cube[197]] + cube[118:121] + [cube[184],cube[190],cube[196]] + cube[124:127] + [cube[183],cube[189],cube[195]] + cube[130:133] + [cube[182],cube[188],cube[194]] + cube[136:139] + [cube[181],cube[187],cube[193]] + cube[142:181] + [cube[42],cube[48],cube[54],cube[60],cube[66],cube[72],cube[41],cube[47],cube[53],cube[59],cube[65],cube[71],cube[40],cube[46],cube[52],cube[58],cube[64],cube[70]] + cube[199:217]
-
-def rotate_666_3Fw2(cube):
-    return cube[0:19] + [cube[198],cube[197],cube[196],cube[195],cube[194],cube[193],cube[192],cube[191],cube[190],cube[189],cube[188],cube[187],cube[186],cube[185],cube[184],cube[183],cube[182],cube[181]] + cube[37:40] + [cube[141],cube[140],cube[139]] + cube[43:46] + [cube[135],cube[134],cube[133]] + cube[49:52] + [cube[129],cube[128],cube[127]] + cube[55:58] + [cube[123],cube[122],cube[121]] + cube[61:64] + [cube[117],cube[116],cube[115]] + cube[67:70] + [cube[111],cube[110],cube[109],cube[108],cube[107],cube[106],cube[105],cube[104],cube[103],cube[102],cube[101],cube[100],cube[99],cube[98],cube[97],cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74],cube[73],cube[72],cube[71],cube[70]] + cube[112:115] + [cube[66],cube[65],cube[64]] + cube[118:121] + [cube[60],cube[59],cube[58]] + cube[124:127] + [cube[54],cube[53],cube[52]] + cube[130:133] + [cube[48],cube[47],cube[46]] + cube[136:139] + [cube[42],cube[41],cube[40]] + cube[142:181] + [cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19]] + cube[199:217]
-
-def rotate_666_R(cube):
-    return cube[0:6] + [cube[78]] + cube[7:12] + [cube[84]] + cube[13:18] + [cube[90]] + cube[19:24] + [cube[96]] + cube[25:30] + [cube[102]] + cube[31:36] + [cube[108]] + cube[37:78] + [cube[186]] + cube[79:84] + [cube[192]] + cube[85:90] + [cube[198]] + cube[91:96] + [cube[204]] + cube[97:102] + [cube[210]] + cube[103:108] + [cube[216],cube[139],cube[133],cube[127],cube[121],cube[115],cube[109],cube[140],cube[134],cube[128],cube[122],cube[116],cube[110],cube[141],cube[135],cube[129],cube[123],cube[117],cube[111],cube[142],cube[136],cube[130],cube[124],cube[118],cube[112],cube[143],cube[137],cube[131],cube[125],cube[119],cube[113],cube[144],cube[138],cube[132],cube[126],cube[120],cube[114],cube[36]] + cube[146:151] + [cube[30]] + cube[152:157] + [cube[24]] + cube[158:163] + [cube[18]] + cube[164:169] + [cube[12]] + cube[170:175] + [cube[6]] + cube[176:186] + [cube[175]] + cube[187:192] + [cube[169]] + cube[193:198] + [cube[163]] + cube[199:204] + [cube[157]] + cube[205:210] + [cube[151]] + cube[211:216] + [cube[145]]
-
-def rotate_666_R_prime(cube):
-    return cube[0:6] + [cube[175]] + cube[7:12] + [cube[169]] + cube[13:18] + [cube[163]] + cube[19:24] + [cube[157]] + cube[25:30] + [cube[151]] + cube[31:36] + [cube[145]] + cube[37:78] + [cube[6]] + cube[79:84] + [cube[12]] + cube[85:90] + [cube[18]] + cube[91:96] + [cube[24]] + cube[97:102] + [cube[30]] + cube[103:108] + [cube[36],cube[114],cube[120],cube[126],cube[132],cube[138],cube[144],cube[113],cube[119],cube[125],cube[131],cube[137],cube[143],cube[112],cube[118],cube[124],cube[130],cube[136],cube[142],cube[111],cube[117],cube[123],cube[129],cube[135],cube[141],cube[110],cube[116],cube[122],cube[128],cube[134],cube[140],cube[109],cube[115],cube[121],cube[127],cube[133],cube[139],cube[216]] + cube[146:151] + [cube[210]] + cube[152:157] + [cube[204]] + cube[158:163] + [cube[198]] + cube[164:169] + [cube[192]] + cube[170:175] + [cube[186]] + cube[176:186] + [cube[78]] + cube[187:192] + [cube[84]] + cube[193:198] + [cube[90]] + cube[199:204] + [cube[96]] + cube[205:210] + [cube[102]] + cube[211:216] + [cube[108]]
-
-def rotate_666_R2(cube):
-    return cube[0:6] + [cube[186]] + cube[7:12] + [cube[192]] + cube[13:18] + [cube[198]] + cube[19:24] + [cube[204]] + cube[25:30] + [cube[210]] + cube[31:36] + [cube[216]] + cube[37:78] + [cube[175]] + cube[79:84] + [cube[169]] + cube[85:90] + [cube[163]] + cube[91:96] + [cube[157]] + cube[97:102] + [cube[151]] + cube[103:108] + [cube[145],cube[144],cube[143],cube[142],cube[141],cube[140],cube[139],cube[138],cube[137],cube[136],cube[135],cube[134],cube[133],cube[132],cube[131],cube[130],cube[129],cube[128],cube[127],cube[126],cube[125],cube[124],cube[123],cube[122],cube[121],cube[120],cube[119],cube[118],cube[117],cube[116],cube[115],cube[114],cube[113],cube[112],cube[111],cube[110],cube[109],cube[108]] + cube[146:151] + [cube[102]] + cube[152:157] + [cube[96]] + cube[158:163] + [cube[90]] + cube[164:169] + [cube[84]] + cube[170:175] + [cube[78]] + cube[176:186] + [cube[6]] + cube[187:192] + [cube[12]] + cube[193:198] + [cube[18]] + cube[199:204] + [cube[24]] + cube[205:210] + [cube[30]] + cube[211:216] + [cube[36]]
-
-def rotate_666_Rw(cube):
-    return cube[0:5] + cube[77:79] + cube[7:11] + cube[83:85] + cube[13:17] + cube[89:91] + cube[19:23] + cube[95:97] + cube[25:29] + cube[101:103] + cube[31:35] + cube[107:109] + cube[37:77] + cube[185:187] + cube[79:83] + cube[191:193] + cube[85:89] + cube[197:199] + cube[91:95] + cube[203:205] + cube[97:101] + cube[209:211] + cube[103:107] + cube[215:217] + [cube[139],cube[133],cube[127],cube[121],cube[115],cube[109],cube[140],cube[134],cube[128],cube[122],cube[116],cube[110],cube[141],cube[135],cube[129],cube[123],cube[117],cube[111],cube[142],cube[136],cube[130],cube[124],cube[118],cube[112],cube[143],cube[137],cube[131],cube[125],cube[119],cube[113],cube[144],cube[138],cube[132],cube[126],cube[120],cube[114],cube[36],cube[35]] + cube[147:151] + [cube[30],cube[29]] + cube[153:157] + [cube[24],cube[23]] + cube[159:163] + [cube[18],cube[17]] + cube[165:169] + [cube[12],cube[11]] + cube[171:175] + [cube[6],cube[5]] + cube[177:185] + [cube[176],cube[175]] + cube[187:191] + [cube[170],cube[169]] + cube[193:197] + [cube[164],cube[163]] + cube[199:203] + [cube[158],cube[157]] + cube[205:209] + [cube[152],cube[151]] + cube[211:215] + [cube[146],cube[145]]
-
-def rotate_666_Rw_prime(cube):
-    return cube[0:5] + [cube[176],cube[175]] + cube[7:11] + [cube[170],cube[169]] + cube[13:17] + [cube[164],cube[163]] + cube[19:23] + [cube[158],cube[157]] + cube[25:29] + [cube[152],cube[151]] + cube[31:35] + [cube[146],cube[145]] + cube[37:77] + cube[5:7] + cube[79:83] + cube[11:13] + cube[85:89] + cube[17:19] + cube[91:95] + cube[23:25] + cube[97:101] + cube[29:31] + cube[103:107] + cube[35:37] + [cube[114],cube[120],cube[126],cube[132],cube[138],cube[144],cube[113],cube[119],cube[125],cube[131],cube[137],cube[143],cube[112],cube[118],cube[124],cube[130],cube[136],cube[142],cube[111],cube[117],cube[123],cube[129],cube[135],cube[141],cube[110],cube[116],cube[122],cube[128],cube[134],cube[140],cube[109],cube[115],cube[121],cube[127],cube[133],cube[139],cube[216],cube[215]] + cube[147:151] + [cube[210],cube[209]] + cube[153:157] + [cube[204],cube[203]] + cube[159:163] + [cube[198],cube[197]] + cube[165:169] + [cube[192],cube[191]] + cube[171:175] + [cube[186],cube[185]] + cube[177:185] + cube[77:79] + cube[187:191] + cube[83:85] + cube[193:197] + cube[89:91] + cube[199:203] + cube[95:97] + cube[205:209] + cube[101:103] + cube[211:215] + cube[107:109]
-
-def rotate_666_Rw2(cube):
-    return cube[0:5] + cube[185:187] + cube[7:11] + cube[191:193] + cube[13:17] + cube[197:199] + cube[19:23] + cube[203:205] + cube[25:29] + cube[209:211] + cube[31:35] + cube[215:217] + cube[37:77] + [cube[176],cube[175]] + cube[79:83] + [cube[170],cube[169]] + cube[85:89] + [cube[164],cube[163]] + cube[91:95] + [cube[158],cube[157]] + cube[97:101] + [cube[152],cube[151]] + cube[103:107] + [cube[146],cube[145],cube[144],cube[143],cube[142],cube[141],cube[140],cube[139],cube[138],cube[137],cube[136],cube[135],cube[134],cube[133],cube[132],cube[131],cube[130],cube[129],cube[128],cube[127],cube[126],cube[125],cube[124],cube[123],cube[122],cube[121],cube[120],cube[119],cube[118],cube[117],cube[116],cube[115],cube[114],cube[113],cube[112],cube[111],cube[110],cube[109],cube[108],cube[107]] + cube[147:151] + [cube[102],cube[101]] + cube[153:157] + [cube[96],cube[95]] + cube[159:163] + [cube[90],cube[89]] + cube[165:169] + [cube[84],cube[83]] + cube[171:175] + [cube[78],cube[77]] + cube[177:185] + cube[5:7] + cube[187:191] + cube[11:13] + cube[193:197] + cube[17:19] + cube[199:203] + cube[23:25] + cube[205:209] + cube[29:31] + cube[211:215] + cube[35:37]
-
-def rotate_666_3Rw(cube):
-    return cube[0:4] + cube[76:79] + cube[7:10] + cube[82:85] + cube[13:16] + cube[88:91] + cube[19:22] + cube[94:97] + cube[25:28] + cube[100:103] + cube[31:34] + cube[106:109] + cube[37:76] + cube[184:187] + cube[79:82] + cube[190:193] + cube[85:88] + cube[196:199] + cube[91:94] + cube[202:205] + cube[97:100] + cube[208:211] + cube[103:106] + cube[214:217] + [cube[139],cube[133],cube[127],cube[121],cube[115],cube[109],cube[140],cube[134],cube[128],cube[122],cube[116],cube[110],cube[141],cube[135],cube[129],cube[123],cube[117],cube[111],cube[142],cube[136],cube[130],cube[124],cube[118],cube[112],cube[143],cube[137],cube[131],cube[125],cube[119],cube[113],cube[144],cube[138],cube[132],cube[126],cube[120],cube[114],cube[36],cube[35],cube[34]] + cube[148:151] + [cube[30],cube[29],cube[28]] + cube[154:157] + [cube[24],cube[23],cube[22]] + cube[160:163] + [cube[18],cube[17],cube[16]] + cube[166:169] + [cube[12],cube[11],cube[10]] + cube[172:175] + [cube[6],cube[5],cube[4]] + cube[178:184] + [cube[177],cube[176],cube[175]] + cube[187:190] + [cube[171],cube[170],cube[169]] + cube[193:196] + [cube[165],cube[164],cube[163]] + cube[199:202] + [cube[159],cube[158],cube[157]] + cube[205:208] + [cube[153],cube[152],cube[151]] + cube[211:214] + [cube[147],cube[146],cube[145]]
-
-def rotate_666_3Rw_prime(cube):
-    return cube[0:4] + [cube[177],cube[176],cube[175]] + cube[7:10] + [cube[171],cube[170],cube[169]] + cube[13:16] + [cube[165],cube[164],cube[163]] + cube[19:22] + [cube[159],cube[158],cube[157]] + cube[25:28] + [cube[153],cube[152],cube[151]] + cube[31:34] + [cube[147],cube[146],cube[145]] + cube[37:76] + cube[4:7] + cube[79:82] + cube[10:13] + cube[85:88] + cube[16:19] + cube[91:94] + cube[22:25] + cube[97:100] + cube[28:31] + cube[103:106] + cube[34:37] + [cube[114],cube[120],cube[126],cube[132],cube[138],cube[144],cube[113],cube[119],cube[125],cube[131],cube[137],cube[143],cube[112],cube[118],cube[124],cube[130],cube[136],cube[142],cube[111],cube[117],cube[123],cube[129],cube[135],cube[141],cube[110],cube[116],cube[122],cube[128],cube[134],cube[140],cube[109],cube[115],cube[121],cube[127],cube[133],cube[139],cube[216],cube[215],cube[214]] + cube[148:151] + [cube[210],cube[209],cube[208]] + cube[154:157] + [cube[204],cube[203],cube[202]] + cube[160:163] + [cube[198],cube[197],cube[196]] + cube[166:169] + [cube[192],cube[191],cube[190]] + cube[172:175] + [cube[186],cube[185],cube[184]] + cube[178:184] + cube[76:79] + cube[187:190] + cube[82:85] + cube[193:196] + cube[88:91] + cube[199:202] + cube[94:97] + cube[205:208] + cube[100:103] + cube[211:214] + cube[106:109]
-
-def rotate_666_3Rw2(cube):
-    return cube[0:4] + cube[184:187] + cube[7:10] + cube[190:193] + cube[13:16] + cube[196:199] + cube[19:22] + cube[202:205] + cube[25:28] + cube[208:211] + cube[31:34] + cube[214:217] + cube[37:76] + [cube[177],cube[176],cube[175]] + cube[79:82] + [cube[171],cube[170],cube[169]] + cube[85:88] + [cube[165],cube[164],cube[163]] + cube[91:94] + [cube[159],cube[158],cube[157]] + cube[97:100] + [cube[153],cube[152],cube[151]] + cube[103:106] + [cube[147],cube[146],cube[145],cube[144],cube[143],cube[142],cube[141],cube[140],cube[139],cube[138],cube[137],cube[136],cube[135],cube[134],cube[133],cube[132],cube[131],cube[130],cube[129],cube[128],cube[127],cube[126],cube[125],cube[124],cube[123],cube[122],cube[121],cube[120],cube[119],cube[118],cube[117],cube[116],cube[115],cube[114],cube[113],cube[112],cube[111],cube[110],cube[109],cube[108],cube[107],cube[106]] + cube[148:151] + [cube[102],cube[101],cube[100]] + cube[154:157] + [cube[96],cube[95],cube[94]] + cube[160:163] + [cube[90],cube[89],cube[88]] + cube[166:169] + [cube[84],cube[83],cube[82]] + cube[172:175] + [cube[78],cube[77],cube[76]] + cube[178:184] + cube[4:7] + cube[187:190] + cube[10:13] + cube[193:196] + cube[16:19] + cube[199:202] + cube[22:25] + cube[205:208] + cube[28:31] + cube[211:214] + cube[34:37]
-
-def rotate_666_B(cube):
-    return [cube[0],cube[114],cube[120],cube[126],cube[132],cube[138],cube[144]] + cube[7:37] + [cube[6]] + cube[38:43] + [cube[5]] + cube[44:49] + [cube[4]] + cube[50:55] + [cube[3]] + cube[56:61] + [cube[2]] + cube[62:67] + [cube[1]] + cube[68:114] + [cube[216]] + cube[115:120] + [cube[215]] + cube[121:126] + [cube[214]] + cube[127:132] + [cube[213]] + cube[133:138] + [cube[212]] + cube[139:144] + [cube[211],cube[175],cube[169],cube[163],cube[157],cube[151],cube[145],cube[176],cube[170],cube[164],cube[158],cube[152],cube[146],cube[177],cube[171],cube[165],cube[159],cube[153],cube[147],cube[178],cube[172],cube[166],cube[160],cube[154],cube[148],cube[179],cube[173],cube[167],cube[161],cube[155],cube[149],cube[180],cube[174],cube[168],cube[162],cube[156],cube[150]] + cube[181:211] + [cube[37],cube[43],cube[49],cube[55],cube[61],cube[67]]
-
-def rotate_666_B_prime(cube):
-    return [cube[0],cube[67],cube[61],cube[55],cube[49],cube[43],cube[37]] + cube[7:37] + [cube[211]] + cube[38:43] + [cube[212]] + cube[44:49] + [cube[213]] + cube[50:55] + [cube[214]] + cube[56:61] + [cube[215]] + cube[62:67] + [cube[216]] + cube[68:114] + [cube[1]] + cube[115:120] + [cube[2]] + cube[121:126] + [cube[3]] + cube[127:132] + [cube[4]] + cube[133:138] + [cube[5]] + cube[139:144] + [cube[6],cube[150],cube[156],cube[162],cube[168],cube[174],cube[180],cube[149],cube[155],cube[161],cube[167],cube[173],cube[179],cube[148],cube[154],cube[160],cube[166],cube[172],cube[178],cube[147],cube[153],cube[159],cube[165],cube[171],cube[177],cube[146],cube[152],cube[158],cube[164],cube[170],cube[176],cube[145],cube[151],cube[157],cube[163],cube[169],cube[175]] + cube[181:211] + [cube[144],cube[138],cube[132],cube[126],cube[120],cube[114]]
-
-def rotate_666_B2(cube):
-    return [cube[0],cube[216],cube[215],cube[214],cube[213],cube[212],cube[211]] + cube[7:37] + [cube[144]] + cube[38:43] + [cube[138]] + cube[44:49] + [cube[132]] + cube[50:55] + [cube[126]] + cube[56:61] + [cube[120]] + cube[62:67] + [cube[114]] + cube[68:114] + [cube[67]] + cube[115:120] + [cube[61]] + cube[121:126] + [cube[55]] + cube[127:132] + [cube[49]] + cube[133:138] + [cube[43]] + cube[139:144] + [cube[37],cube[180],cube[179],cube[178],cube[177],cube[176],cube[175],cube[174],cube[173],cube[172],cube[171],cube[170],cube[169],cube[168],cube[167],cube[166],cube[165],cube[164],cube[163],cube[162],cube[161],cube[160],cube[159],cube[158],cube[157],cube[156],cube[155],cube[154],cube[153],cube[152],cube[151],cube[150],cube[149],cube[148],cube[147],cube[146],cube[145]] + cube[181:211] + [cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]]
-
-def rotate_666_Bw(cube):
-    return [cube[0],cube[114],cube[120],cube[126],cube[132],cube[138],cube[144],cube[113],cube[119],cube[125],cube[131],cube[137],cube[143]] + cube[13:37] + [cube[6],cube[12]] + cube[39:43] + [cube[5],cube[11]] + cube[45:49] + [cube[4],cube[10]] + cube[51:55] + [cube[3],cube[9]] + cube[57:61] + [cube[2],cube[8]] + cube[63:67] + [cube[1],cube[7]] + cube[69:113] + [cube[210],cube[216]] + cube[115:119] + [cube[209],cube[215]] + cube[121:125] + [cube[208],cube[214]] + cube[127:131] + [cube[207],cube[213]] + cube[133:137] + [cube[206],cube[212]] + cube[139:143] + [cube[205],cube[211],cube[175],cube[169],cube[163],cube[157],cube[151],cube[145],cube[176],cube[170],cube[164],cube[158],cube[152],cube[146],cube[177],cube[171],cube[165],cube[159],cube[153],cube[147],cube[178],cube[172],cube[166],cube[160],cube[154],cube[148],cube[179],cube[173],cube[167],cube[161],cube[155],cube[149],cube[180],cube[174],cube[168],cube[162],cube[156],cube[150]] + cube[181:205] + [cube[38],cube[44],cube[50],cube[56],cube[62],cube[68],cube[37],cube[43],cube[49],cube[55],cube[61],cube[67]]
-
-def rotate_666_Bw_prime(cube):
-    return [cube[0],cube[67],cube[61],cube[55],cube[49],cube[43],cube[37],cube[68],cube[62],cube[56],cube[50],cube[44],cube[38]] + cube[13:37] + [cube[211],cube[205]] + cube[39:43] + [cube[212],cube[206]] + cube[45:49] + [cube[213],cube[207]] + cube[51:55] + [cube[214],cube[208]] + cube[57:61] + [cube[215],cube[209]] + cube[63:67] + [cube[216],cube[210]] + cube[69:113] + [cube[7],cube[1]] + cube[115:119] + [cube[8],cube[2]] + cube[121:125] + [cube[9],cube[3]] + cube[127:131] + [cube[10],cube[4]] + cube[133:137] + [cube[11],cube[5]] + cube[139:143] + [cube[12],cube[6],cube[150],cube[156],cube[162],cube[168],cube[174],cube[180],cube[149],cube[155],cube[161],cube[167],cube[173],cube[179],cube[148],cube[154],cube[160],cube[166],cube[172],cube[178],cube[147],cube[153],cube[159],cube[165],cube[171],cube[177],cube[146],cube[152],cube[158],cube[164],cube[170],cube[176],cube[145],cube[151],cube[157],cube[163],cube[169],cube[175]] + cube[181:205] + [cube[143],cube[137],cube[131],cube[125],cube[119],cube[113],cube[144],cube[138],cube[132],cube[126],cube[120],cube[114]]
-
-def rotate_666_Bw2(cube):
-    return [cube[0],cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205]] + cube[13:37] + [cube[144],cube[143]] + cube[39:43] + [cube[138],cube[137]] + cube[45:49] + [cube[132],cube[131]] + cube[51:55] + [cube[126],cube[125]] + cube[57:61] + [cube[120],cube[119]] + cube[63:67] + [cube[114],cube[113]] + cube[69:113] + [cube[68],cube[67]] + cube[115:119] + [cube[62],cube[61]] + cube[121:125] + [cube[56],cube[55]] + cube[127:131] + [cube[50],cube[49]] + cube[133:137] + [cube[44],cube[43]] + cube[139:143] + [cube[38],cube[37],cube[180],cube[179],cube[178],cube[177],cube[176],cube[175],cube[174],cube[173],cube[172],cube[171],cube[170],cube[169],cube[168],cube[167],cube[166],cube[165],cube[164],cube[163],cube[162],cube[161],cube[160],cube[159],cube[158],cube[157],cube[156],cube[155],cube[154],cube[153],cube[152],cube[151],cube[150],cube[149],cube[148],cube[147],cube[146],cube[145]] + cube[181:205] + [cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]]
-
-def rotate_666_3Bw(cube):
-    return [cube[0],cube[114],cube[120],cube[126],cube[132],cube[138],cube[144],cube[113],cube[119],cube[125],cube[131],cube[137],cube[143],cube[112],cube[118],cube[124],cube[130],cube[136],cube[142]] + cube[19:37] + [cube[6],cube[12],cube[18]] + cube[40:43] + [cube[5],cube[11],cube[17]] + cube[46:49] + [cube[4],cube[10],cube[16]] + cube[52:55] + [cube[3],cube[9],cube[15]] + cube[58:61] + [cube[2],cube[8],cube[14]] + cube[64:67] + [cube[1],cube[7],cube[13]] + cube[70:112] + [cube[204],cube[210],cube[216]] + cube[115:118] + [cube[203],cube[209],cube[215]] + cube[121:124] + [cube[202],cube[208],cube[214]] + cube[127:130] + [cube[201],cube[207],cube[213]] + cube[133:136] + [cube[200],cube[206],cube[212]] + cube[139:142] + [cube[199],cube[205],cube[211],cube[175],cube[169],cube[163],cube[157],cube[151],cube[145],cube[176],cube[170],cube[164],cube[158],cube[152],cube[146],cube[177],cube[171],cube[165],cube[159],cube[153],cube[147],cube[178],cube[172],cube[166],cube[160],cube[154],cube[148],cube[179],cube[173],cube[167],cube[161],cube[155],cube[149],cube[180],cube[174],cube[168],cube[162],cube[156],cube[150]] + cube[181:199] + [cube[39],cube[45],cube[51],cube[57],cube[63],cube[69],cube[38],cube[44],cube[50],cube[56],cube[62],cube[68],cube[37],cube[43],cube[49],cube[55],cube[61],cube[67]]
-
-def rotate_666_3Bw_prime(cube):
-    return [cube[0],cube[67],cube[61],cube[55],cube[49],cube[43],cube[37],cube[68],cube[62],cube[56],cube[50],cube[44],cube[38],cube[69],cube[63],cube[57],cube[51],cube[45],cube[39]] + cube[19:37] + [cube[211],cube[205],cube[199]] + cube[40:43] + [cube[212],cube[206],cube[200]] + cube[46:49] + [cube[213],cube[207],cube[201]] + cube[52:55] + [cube[214],cube[208],cube[202]] + cube[58:61] + [cube[215],cube[209],cube[203]] + cube[64:67] + [cube[216],cube[210],cube[204]] + cube[70:112] + [cube[13],cube[7],cube[1]] + cube[115:118] + [cube[14],cube[8],cube[2]] + cube[121:124] + [cube[15],cube[9],cube[3]] + cube[127:130] + [cube[16],cube[10],cube[4]] + cube[133:136] + [cube[17],cube[11],cube[5]] + cube[139:142] + [cube[18],cube[12],cube[6],cube[150],cube[156],cube[162],cube[168],cube[174],cube[180],cube[149],cube[155],cube[161],cube[167],cube[173],cube[179],cube[148],cube[154],cube[160],cube[166],cube[172],cube[178],cube[147],cube[153],cube[159],cube[165],cube[171],cube[177],cube[146],cube[152],cube[158],cube[164],cube[170],cube[176],cube[145],cube[151],cube[157],cube[163],cube[169],cube[175]] + cube[181:199] + [cube[142],cube[136],cube[130],cube[124],cube[118],cube[112],cube[143],cube[137],cube[131],cube[125],cube[119],cube[113],cube[144],cube[138],cube[132],cube[126],cube[120],cube[114]]
-
-def rotate_666_3Bw2(cube):
-    return [cube[0],cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205],cube[204],cube[203],cube[202],cube[201],cube[200],cube[199]] + cube[19:37] + [cube[144],cube[143],cube[142]] + cube[40:43] + [cube[138],cube[137],cube[136]] + cube[46:49] + [cube[132],cube[131],cube[130]] + cube[52:55] + [cube[126],cube[125],cube[124]] + cube[58:61] + [cube[120],cube[119],cube[118]] + cube[64:67] + [cube[114],cube[113],cube[112]] + cube[70:112] + [cube[69],cube[68],cube[67]] + cube[115:118] + [cube[63],cube[62],cube[61]] + cube[121:124] + [cube[57],cube[56],cube[55]] + cube[127:130] + [cube[51],cube[50],cube[49]] + cube[133:136] + [cube[45],cube[44],cube[43]] + cube[139:142] + [cube[39],cube[38],cube[37],cube[180],cube[179],cube[178],cube[177],cube[176],cube[175],cube[174],cube[173],cube[172],cube[171],cube[170],cube[169],cube[168],cube[167],cube[166],cube[165],cube[164],cube[163],cube[162],cube[161],cube[160],cube[159],cube[158],cube[157],cube[156],cube[155],cube[154],cube[153],cube[152],cube[151],cube[150],cube[149],cube[148],cube[147],cube[146],cube[145]] + cube[181:199] + [cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]]
-
-def rotate_666_D(cube):
-    return cube[0:67] + cube[175:181] + cube[73:103] + cube[67:73] + cube[109:139] + cube[103:109] + cube[145:175] + cube[139:145] + [cube[211],cube[205],cube[199],cube[193],cube[187],cube[181],cube[212],cube[206],cube[200],cube[194],cube[188],cube[182],cube[213],cube[207],cube[201],cube[195],cube[189],cube[183],cube[214],cube[208],cube[202],cube[196],cube[190],cube[184],cube[215],cube[209],cube[203],cube[197],cube[191],cube[185],cube[216],cube[210],cube[204],cube[198],cube[192],cube[186]]
-
-def rotate_666_D_prime(cube):
-    return cube[0:67] + cube[103:109] + cube[73:103] + cube[139:145] + cube[109:139] + cube[175:181] + cube[145:175] + cube[67:73] + [cube[186],cube[192],cube[198],cube[204],cube[210],cube[216],cube[185],cube[191],cube[197],cube[203],cube[209],cube[215],cube[184],cube[190],cube[196],cube[202],cube[208],cube[214],cube[183],cube[189],cube[195],cube[201],cube[207],cube[213],cube[182],cube[188],cube[194],cube[200],cube[206],cube[212],cube[181],cube[187],cube[193],cube[199],cube[205],cube[211]]
-
-def rotate_666_D2(cube):
-    return cube[0:67] + cube[139:145] + cube[73:103] + cube[175:181] + cube[109:139] + cube[67:73] + cube[145:175] + cube[103:109] + [cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205],cube[204],cube[203],cube[202],cube[201],cube[200],cube[199],cube[198],cube[197],cube[196],cube[195],cube[194],cube[193],cube[192],cube[191],cube[190],cube[189],cube[188],cube[187],cube[186],cube[185],cube[184],cube[183],cube[182],cube[181]]
-
-def rotate_666_Dw(cube):
-    return cube[0:61] + cube[169:181] + cube[73:97] + cube[61:73] + cube[109:133] + cube[97:109] + cube[145:169] + cube[133:145] + [cube[211],cube[205],cube[199],cube[193],cube[187],cube[181],cube[212],cube[206],cube[200],cube[194],cube[188],cube[182],cube[213],cube[207],cube[201],cube[195],cube[189],cube[183],cube[214],cube[208],cube[202],cube[196],cube[190],cube[184],cube[215],cube[209],cube[203],cube[197],cube[191],cube[185],cube[216],cube[210],cube[204],cube[198],cube[192],cube[186]]
-
-def rotate_666_Dw_prime(cube):
-    return cube[0:61] + cube[97:109] + cube[73:97] + cube[133:145] + cube[109:133] + cube[169:181] + cube[145:169] + cube[61:73] + [cube[186],cube[192],cube[198],cube[204],cube[210],cube[216],cube[185],cube[191],cube[197],cube[203],cube[209],cube[215],cube[184],cube[190],cube[196],cube[202],cube[208],cube[214],cube[183],cube[189],cube[195],cube[201],cube[207],cube[213],cube[182],cube[188],cube[194],cube[200],cube[206],cube[212],cube[181],cube[187],cube[193],cube[199],cube[205],cube[211]]
-
-def rotate_666_Dw2(cube):
-    return cube[0:61] + cube[133:145] + cube[73:97] + cube[169:181] + cube[109:133] + cube[61:73] + cube[145:169] + cube[97:109] + [cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205],cube[204],cube[203],cube[202],cube[201],cube[200],cube[199],cube[198],cube[197],cube[196],cube[195],cube[194],cube[193],cube[192],cube[191],cube[190],cube[189],cube[188],cube[187],cube[186],cube[185],cube[184],cube[183],cube[182],cube[181]]
-
-def rotate_666_3Dw(cube):
-    return cube[0:55] + cube[163:181] + cube[73:91] + cube[55:73] + cube[109:127] + cube[91:109] + cube[145:163] + cube[127:145] + [cube[211],cube[205],cube[199],cube[193],cube[187],cube[181],cube[212],cube[206],cube[200],cube[194],cube[188],cube[182],cube[213],cube[207],cube[201],cube[195],cube[189],cube[183],cube[214],cube[208],cube[202],cube[196],cube[190],cube[184],cube[215],cube[209],cube[203],cube[197],cube[191],cube[185],cube[216],cube[210],cube[204],cube[198],cube[192],cube[186]]
-
-def rotate_666_3Dw_prime(cube):
-    return cube[0:55] + cube[91:109] + cube[73:91] + cube[127:145] + cube[109:127] + cube[163:181] + cube[145:163] + cube[55:73] + [cube[186],cube[192],cube[198],cube[204],cube[210],cube[216],cube[185],cube[191],cube[197],cube[203],cube[209],cube[215],cube[184],cube[190],cube[196],cube[202],cube[208],cube[214],cube[183],cube[189],cube[195],cube[201],cube[207],cube[213],cube[182],cube[188],cube[194],cube[200],cube[206],cube[212],cube[181],cube[187],cube[193],cube[199],cube[205],cube[211]]
-
-def rotate_666_3Dw2(cube):
-    return cube[0:55] + cube[127:145] + cube[73:91] + cube[163:181] + cube[109:127] + cube[55:73] + cube[145:163] + cube[91:109] + [cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205],cube[204],cube[203],cube[202],cube[201],cube[200],cube[199],cube[198],cube[197],cube[196],cube[195],cube[194],cube[193],cube[192],cube[191],cube[190],cube[189],cube[188],cube[187],cube[186],cube[185],cube[184],cube[183],cube[182],cube[181]]
-
-def rotate_666_x(cube):
-    return [cube[0]] + cube[73:109] + [cube[42],cube[48],cube[54],cube[60],cube[66],cube[72],cube[41],cube[47],cube[53],cube[59],cube[65],cube[71],cube[40],cube[46],cube[52],cube[58],cube[64],cube[70],cube[39],cube[45],cube[51],cube[57],cube[63],cube[69],cube[38],cube[44],cube[50],cube[56],cube[62],cube[68],cube[37],cube[43],cube[49],cube[55],cube[61],cube[67]] + cube[181:217] + [cube[139],cube[133],cube[127],cube[121],cube[115],cube[109],cube[140],cube[134],cube[128],cube[122],cube[116],cube[110],cube[141],cube[135],cube[129],cube[123],cube[117],cube[111],cube[142],cube[136],cube[130],cube[124],cube[118],cube[112],cube[143],cube[137],cube[131],cube[125],cube[119],cube[113],cube[144],cube[138],cube[132],cube[126],cube[120],cube[114],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1],cube[180],cube[179],cube[178],cube[177],cube[176],cube[175],cube[174],cube[173],cube[172],cube[171],cube[170],cube[169],cube[168],cube[167],cube[166],cube[165],cube[164],cube[163],cube[162],cube[161],cube[160],cube[159],cube[158],cube[157],cube[156],cube[155],cube[154],cube[153],cube[152],cube[151],cube[150],cube[149],cube[148],cube[147],cube[146],cube[145]]
-
-def rotate_666_x_prime(cube):
-    return [cube[0],cube[180],cube[179],cube[178],cube[177],cube[176],cube[175],cube[174],cube[173],cube[172],cube[171],cube[170],cube[169],cube[168],cube[167],cube[166],cube[165],cube[164],cube[163],cube[162],cube[161],cube[160],cube[159],cube[158],cube[157],cube[156],cube[155],cube[154],cube[153],cube[152],cube[151],cube[150],cube[149],cube[148],cube[147],cube[146],cube[145],cube[67],cube[61],cube[55],cube[49],cube[43],cube[37],cube[68],cube[62],cube[56],cube[50],cube[44],cube[38],cube[69],cube[63],cube[57],cube[51],cube[45],cube[39],cube[70],cube[64],cube[58],cube[52],cube[46],cube[40],cube[71],cube[65],cube[59],cube[53],cube[47],cube[41],cube[72],cube[66],cube[60],cube[54],cube[48],cube[42]] + cube[1:37] + [cube[114],cube[120],cube[126],cube[132],cube[138],cube[144],cube[113],cube[119],cube[125],cube[131],cube[137],cube[143],cube[112],cube[118],cube[124],cube[130],cube[136],cube[142],cube[111],cube[117],cube[123],cube[129],cube[135],cube[141],cube[110],cube[116],cube[122],cube[128],cube[134],cube[140],cube[109],cube[115],cube[121],cube[127],cube[133],cube[139],cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205],cube[204],cube[203],cube[202],cube[201],cube[200],cube[199],cube[198],cube[197],cube[196],cube[195],cube[194],cube[193],cube[192],cube[191],cube[190],cube[189],cube[188],cube[187],cube[186],cube[185],cube[184],cube[183],cube[182],cube[181]] + cube[73:109]
-
-def rotate_666_y(cube):
-    return [cube[0],cube[31],cube[25],cube[19],cube[13],cube[7],cube[1],cube[32],cube[26],cube[20],cube[14],cube[8],cube[2],cube[33],cube[27],cube[21],cube[15],cube[9],cube[3],cube[34],cube[28],cube[22],cube[16],cube[10],cube[4],cube[35],cube[29],cube[23],cube[17],cube[11],cube[5],cube[36],cube[30],cube[24],cube[18],cube[12],cube[6]] + cube[73:181] + cube[37:73] + [cube[186],cube[192],cube[198],cube[204],cube[210],cube[216],cube[185],cube[191],cube[197],cube[203],cube[209],cube[215],cube[184],cube[190],cube[196],cube[202],cube[208],cube[214],cube[183],cube[189],cube[195],cube[201],cube[207],cube[213],cube[182],cube[188],cube[194],cube[200],cube[206],cube[212],cube[181],cube[187],cube[193],cube[199],cube[205],cube[211]]
-
-def rotate_666_y_prime(cube):
-    return [cube[0],cube[6],cube[12],cube[18],cube[24],cube[30],cube[36],cube[5],cube[11],cube[17],cube[23],cube[29],cube[35],cube[4],cube[10],cube[16],cube[22],cube[28],cube[34],cube[3],cube[9],cube[15],cube[21],cube[27],cube[33],cube[2],cube[8],cube[14],cube[20],cube[26],cube[32],cube[1],cube[7],cube[13],cube[19],cube[25],cube[31]] + cube[145:181] + cube[37:145] + [cube[211],cube[205],cube[199],cube[193],cube[187],cube[181],cube[212],cube[206],cube[200],cube[194],cube[188],cube[182],cube[213],cube[207],cube[201],cube[195],cube[189],cube[183],cube[214],cube[208],cube[202],cube[196],cube[190],cube[184],cube[215],cube[209],cube[203],cube[197],cube[191],cube[185],cube[216],cube[210],cube[204],cube[198],cube[192],cube[186]]
-
-def rotate_666_z(cube):
-    return [cube[0],cube[67],cube[61],cube[55],cube[49],cube[43],cube[37],cube[68],cube[62],cube[56],cube[50],cube[44],cube[38],cube[69],cube[63],cube[57],cube[51],cube[45],cube[39],cube[70],cube[64],cube[58],cube[52],cube[46],cube[40],cube[71],cube[65],cube[59],cube[53],cube[47],cube[41],cube[72],cube[66],cube[60],cube[54],cube[48],cube[42],cube[211],cube[205],cube[199],cube[193],cube[187],cube[181],cube[212],cube[206],cube[200],cube[194],cube[188],cube[182],cube[213],cube[207],cube[201],cube[195],cube[189],cube[183],cube[214],cube[208],cube[202],cube[196],cube[190],cube[184],cube[215],cube[209],cube[203],cube[197],cube[191],cube[185],cube[216],cube[210],cube[204],cube[198],cube[192],cube[186],cube[103],cube[97],cube[91],cube[85],cube[79],cube[73],cube[104],cube[98],cube[92],cube[86],cube[80],cube[74],cube[105],cube[99],cube[93],cube[87],cube[81],cube[75],cube[106],cube[100],cube[94],cube[88],cube[82],cube[76],cube[107],cube[101],cube[95],cube[89],cube[83],cube[77],cube[108],cube[102],cube[96],cube[90],cube[84],cube[78],cube[31],cube[25],cube[19],cube[13],cube[7],cube[1],cube[32],cube[26],cube[20],cube[14],cube[8],cube[2],cube[33],cube[27],cube[21],cube[15],cube[9],cube[3],cube[34],cube[28],cube[22],cube[16],cube[10],cube[4],cube[35],cube[29],cube[23],cube[17],cube[11],cube[5],cube[36],cube[30],cube[24],cube[18],cube[12],cube[6],cube[150],cube[156],cube[162],cube[168],cube[174],cube[180],cube[149],cube[155],cube[161],cube[167],cube[173],cube[179],cube[148],cube[154],cube[160],cube[166],cube[172],cube[178],cube[147],cube[153],cube[159],cube[165],cube[171],cube[177],cube[146],cube[152],cube[158],cube[164],cube[170],cube[176],cube[145],cube[151],cube[157],cube[163],cube[169],cube[175],cube[139],cube[133],cube[127],cube[121],cube[115],cube[109],cube[140],cube[134],cube[128],cube[122],cube[116],cube[110],cube[141],cube[135],cube[129],cube[123],cube[117],cube[111],cube[142],cube[136],cube[130],cube[124],cube[118],cube[112],cube[143],cube[137],cube[131],cube[125],cube[119],cube[113],cube[144],cube[138],cube[132],cube[126],cube[120],cube[114]]
-
-def rotate_666_z_prime(cube):
-    return [cube[0],cube[114],cube[120],cube[126],cube[132],cube[138],cube[144],cube[113],cube[119],cube[125],cube[131],cube[137],cube[143],cube[112],cube[118],cube[124],cube[130],cube[136],cube[142],cube[111],cube[117],cube[123],cube[129],cube[135],cube[141],cube[110],cube[116],cube[122],cube[128],cube[134],cube[140],cube[109],cube[115],cube[121],cube[127],cube[133],cube[139],cube[6],cube[12],cube[18],cube[24],cube[30],cube[36],cube[5],cube[11],cube[17],cube[23],cube[29],cube[35],cube[4],cube[10],cube[16],cube[22],cube[28],cube[34],cube[3],cube[9],cube[15],cube[21],cube[27],cube[33],cube[2],cube[8],cube[14],cube[20],cube[26],cube[32],cube[1],cube[7],cube[13],cube[19],cube[25],cube[31],cube[78],cube[84],cube[90],cube[96],cube[102],cube[108],cube[77],cube[83],cube[89],cube[95],cube[101],cube[107],cube[76],cube[82],cube[88],cube[94],cube[100],cube[106],cube[75],cube[81],cube[87],cube[93],cube[99],cube[105],cube[74],cube[80],cube[86],cube[92],cube[98],cube[104],cube[73],cube[79],cube[85],cube[91],cube[97],cube[103],cube[186],cube[192],cube[198],cube[204],cube[210],cube[216],cube[185],cube[191],cube[197],cube[203],cube[209],cube[215],cube[184],cube[190],cube[196],cube[202],cube[208],cube[214],cube[183],cube[189],cube[195],cube[201],cube[207],cube[213],cube[182],cube[188],cube[194],cube[200],cube[206],cube[212],cube[181],cube[187],cube[193],cube[199],cube[205],cube[211],cube[175],cube[169],cube[163],cube[157],cube[151],cube[145],cube[176],cube[170],cube[164],cube[158],cube[152],cube[146],cube[177],cube[171],cube[165],cube[159],cube[153],cube[147],cube[178],cube[172],cube[166],cube[160],cube[154],cube[148],cube[179],cube[173],cube[167],cube[161],cube[155],cube[149],cube[180],cube[174],cube[168],cube[162],cube[156],cube[150],cube[42],cube[48],cube[54],cube[60],cube[66],cube[72],cube[41],cube[47],cube[53],cube[59],cube[65],cube[71],cube[40],cube[46],cube[52],cube[58],cube[64],cube[70],cube[39],cube[45],cube[51],cube[57],cube[63],cube[69],cube[38],cube[44],cube[50],cube[56],cube[62],cube[68],cube[37],cube[43],cube[49],cube[55],cube[61],cube[67]]
-
-rotate_mapper_666 = {
-    "3Bw" : rotate_666_3Bw,
-    "3Bw'" : rotate_666_3Bw_prime,
-    "3Bw2" : rotate_666_3Bw2,
-    "3Dw" : rotate_666_3Dw,
-    "3Dw'" : rotate_666_3Dw_prime,
-    "3Dw2" : rotate_666_3Dw2,
-    "3Fw" : rotate_666_3Fw,
-    "3Fw'" : rotate_666_3Fw_prime,
-    "3Fw2" : rotate_666_3Fw2,
-    "3Lw" : rotate_666_3Lw,
-    "3Lw'" : rotate_666_3Lw_prime,
-    "3Lw2" : rotate_666_3Lw2,
-    "3Rw" : rotate_666_3Rw,
-    "3Rw'" : rotate_666_3Rw_prime,
-    "3Rw2" : rotate_666_3Rw2,
-    "3Uw" : rotate_666_3Uw,
-    "3Uw'" : rotate_666_3Uw_prime,
-    "3Uw2" : rotate_666_3Uw2,
-    "B" : rotate_666_B,
-    "B'" : rotate_666_B_prime,
-    "B2" : rotate_666_B2,
-    "Bw" : rotate_666_Bw,
-    "Bw'" : rotate_666_Bw_prime,
-    "Bw2" : rotate_666_Bw2,
-    "D" : rotate_666_D,
-    "D'" : rotate_666_D_prime,
-    "D2" : rotate_666_D2,
-    "Dw" : rotate_666_Dw,
-    "Dw'" : rotate_666_Dw_prime,
-    "Dw2" : rotate_666_Dw2,
-    "F" : rotate_666_F,
-    "F'" : rotate_666_F_prime,
-    "F2" : rotate_666_F2,
-    "Fw" : rotate_666_Fw,
-    "Fw'" : rotate_666_Fw_prime,
-    "Fw2" : rotate_666_Fw2,
-    "L" : rotate_666_L,
-    "L'" : rotate_666_L_prime,
-    "L2" : rotate_666_L2,
-    "Lw" : rotate_666_Lw,
-    "Lw'" : rotate_666_Lw_prime,
-    "Lw2" : rotate_666_Lw2,
-    "R" : rotate_666_R,
-    "R'" : rotate_666_R_prime,
-    "R2" : rotate_666_R2,
-    "Rw" : rotate_666_Rw,
-    "Rw'" : rotate_666_Rw_prime,
-    "Rw2" : rotate_666_Rw2,
-    "U" : rotate_666_U,
-    "U'" : rotate_666_U_prime,
-    "U2" : rotate_666_U2,
-    "Uw" : rotate_666_Uw,
-    "Uw'" : rotate_666_Uw_prime,
-    "Uw2" : rotate_666_Uw2,
-    "x" : rotate_666_x,
-    "x'" : rotate_666_x_prime,
-    "y" : rotate_666_y,
-    "y'" : rotate_666_y_prime,
-    "z" : rotate_666_z,
-    "z'" : rotate_666_z_prime,
+swaps_666 = {'3Bw': (0, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 112, 118, 124, 130, 136, 142, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 6, 12, 18, 40, 41, 42, 5, 11, 17, 46, 47, 48, 4, 10, 16, 52, 53, 54, 3, 9, 15, 58, 59, 60, 2, 8, 14, 64, 65, 66, 1, 7, 13, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 204, 210, 216, 115, 116, 117, 203, 209, 215, 121, 122, 123, 202, 208, 214, 127, 128, 129, 201, 207, 213, 133, 134, 135, 200, 206, 212, 139, 140, 141, 199, 205, 211, 175, 169, 163, 157, 151, 145, 176, 170, 164, 158, 152, 146, 177, 171, 165, 159, 153, 147, 178, 172, 166, 160, 154, 148, 179, 173, 167, 161, 155, 149, 180, 174, 168, 162, 156, 150, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 39, 45, 51, 57, 63, 69, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67),
+ "3Bw'": (0, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 69, 63, 57, 51, 45, 39, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 211, 205, 199, 40, 41, 42, 212, 206, 200, 46, 47, 48, 213, 207, 201, 52, 53, 54, 214, 208, 202, 58, 59, 60, 215, 209, 203, 64, 65, 66, 216, 210, 204, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 13, 7, 1, 115, 116, 117, 14, 8, 2, 121, 122, 123, 15, 9, 3, 127, 128, 129, 16, 10, 4, 133, 134, 135, 17, 11, 5, 139, 140, 141, 18, 12, 6, 150, 156, 162, 168, 174, 180, 149, 155, 161, 167, 173, 179, 148, 154, 160, 166, 172, 178, 147, 153, 159, 165, 171, 177, 146, 152, 158, 164, 170, 176, 145, 151, 157, 163, 169, 175, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 142, 136, 130, 124, 118, 112, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114),
+ '3Bw2': (0, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 144, 143, 142, 40, 41, 42, 138, 137, 136, 46, 47, 48, 132, 131, 130, 52, 53, 54, 126, 125, 124, 58, 59, 60, 120, 119, 118, 64, 65, 66, 114, 113, 112, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 69, 68, 67, 115, 116, 117, 63, 62, 61, 121, 122, 123, 57, 56, 55, 127, 128, 129, 51, 50, 49, 133, 134, 135, 45, 44, 43, 139, 140, 141, 39, 38, 37, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1),
+ '3Dw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 211, 205, 199, 193, 187, 181, 212, 206, 200, 194, 188, 182, 213, 207, 201, 195, 189, 183, 214, 208, 202, 196, 190, 184, 215, 209, 203, 197, 191, 185, 216, 210, 204, 198, 192, 186),
+ "3Dw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 186, 192, 198, 204, 210, 216, 185, 191, 197, 203, 209, 215, 184, 190, 196, 202, 208, 214, 183, 189, 195, 201, 207, 213, 182, 188, 194, 200, 206, 212, 181, 187, 193, 199, 205, 211),
+ '3Dw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181),
+ '3Fw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 70, 64, 58, 52, 46, 40, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42, 37, 38, 39, 193, 187, 181, 43, 44, 45, 194, 188, 182, 49, 50, 51, 195, 189, 183, 55, 56, 57, 196, 190, 184, 61, 62, 63, 197, 191, 185, 67, 68, 69, 198, 192, 186, 103, 97, 91, 85, 79, 73, 104, 98, 92, 86, 80, 74, 105, 99, 93, 87, 81, 75, 106, 100, 94, 88, 82, 76, 107, 101, 95, 89, 83, 77, 108, 102, 96, 90, 84, 78, 31, 25, 19, 112, 113, 114, 32, 26, 20, 118, 119, 120, 33, 27, 21, 124, 125, 126, 34, 28, 22, 130, 131, 132, 35, 29, 23, 136, 137, 138, 36, 30, 24, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 141, 135, 129, 123, 117, 111, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ "3Fw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 111, 117, 123, 129, 135, 141, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139, 37, 38, 39, 24, 30, 36, 43, 44, 45, 23, 29, 35, 49, 50, 51, 22, 28, 34, 55, 56, 57, 21, 27, 33, 61, 62, 63, 20, 26, 32, 67, 68, 69, 19, 25, 31, 78, 84, 90, 96, 102, 108, 77, 83, 89, 95, 101, 107, 76, 82, 88, 94, 100, 106, 75, 81, 87, 93, 99, 105, 74, 80, 86, 92, 98, 104, 73, 79, 85, 91, 97, 103, 186, 192, 198, 112, 113, 114, 185, 191, 197, 118, 119, 120, 184, 190, 196, 124, 125, 126, 183, 189, 195, 130, 131, 132, 182, 188, 194, 136, 137, 138, 181, 187, 193, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 40, 46, 52, 58, 64, 70, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ '3Fw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 37, 38, 39, 141, 140, 139, 43, 44, 45, 135, 134, 133, 49, 50, 51, 129, 128, 127, 55, 56, 57, 123, 122, 121, 61, 62, 63, 117, 116, 115, 67, 68, 69, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 112, 113, 114, 66, 65, 64, 118, 119, 120, 60, 59, 58, 124, 125, 126, 54, 53, 52, 130, 131, 132, 48, 47, 46, 136, 137, 138, 42, 41, 40, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ '3Lw': (0, 180, 179, 178, 4, 5, 6, 174, 173, 172, 10, 11, 12, 168, 167, 166, 16, 17, 18, 162, 161, 160, 22, 23, 24, 156, 155, 154, 28, 29, 30, 150, 149, 148, 34, 35, 36, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 69, 63, 57, 51, 45, 39, 70, 64, 58, 52, 46, 40, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42, 1, 2, 3, 76, 77, 78, 7, 8, 9, 82, 83, 84, 13, 14, 15, 88, 89, 90, 19, 20, 21, 94, 95, 96, 25, 26, 27, 100, 101, 102, 31, 32, 33, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 213, 212, 211, 151, 152, 153, 207, 206, 205, 157, 158, 159, 201, 200, 199, 163, 164, 165, 195, 194, 193, 169, 170, 171, 189, 188, 187, 175, 176, 177, 183, 182, 181, 73, 74, 75, 184, 185, 186, 79, 80, 81, 190, 191, 192, 85, 86, 87, 196, 197, 198, 91, 92, 93, 202, 203, 204, 97, 98, 99, 208, 209, 210, 103, 104, 105, 214, 215, 216),
+ "3Lw'": (0, 73, 74, 75, 4, 5, 6, 79, 80, 81, 10, 11, 12, 85, 86, 87, 16, 17, 18, 91, 92, 93, 22, 23, 24, 97, 98, 99, 28, 29, 30, 103, 104, 105, 34, 35, 36, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 40, 46, 52, 58, 64, 70, 39, 45, 51, 57, 63, 69, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67, 181, 182, 183, 76, 77, 78, 187, 188, 189, 82, 83, 84, 193, 194, 195, 88, 89, 90, 199, 200, 201, 94, 95, 96, 205, 206, 207, 100, 101, 102, 211, 212, 213, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 33, 32, 31, 151, 152, 153, 27, 26, 25, 157, 158, 159, 21, 20, 19, 163, 164, 165, 15, 14, 13, 169, 170, 171, 9, 8, 7, 175, 176, 177, 3, 2, 1, 180, 179, 178, 184, 185, 186, 174, 173, 172, 190, 191, 192, 168, 167, 166, 196, 197, 198, 162, 161, 160, 202, 203, 204, 156, 155, 154, 208, 209, 210, 150, 149, 148, 214, 215, 216),
+ '3Lw2': (0, 181, 182, 183, 4, 5, 6, 187, 188, 189, 10, 11, 12, 193, 194, 195, 16, 17, 18, 199, 200, 201, 22, 23, 24, 205, 206, 207, 28, 29, 30, 211, 212, 213, 34, 35, 36, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 180, 179, 178, 76, 77, 78, 174, 173, 172, 82, 83, 84, 168, 167, 166, 88, 89, 90, 162, 161, 160, 94, 95, 96, 156, 155, 154, 100, 101, 102, 150, 149, 148, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 105, 104, 103, 151, 152, 153, 99, 98, 97, 157, 158, 159, 93, 92, 91, 163, 164, 165, 87, 86, 85, 169, 170, 171, 81, 80, 79, 175, 176, 177, 75, 74, 73, 1, 2, 3, 184, 185, 186, 7, 8, 9, 190, 191, 192, 13, 14, 15, 196, 197, 198, 19, 20, 21, 202, 203, 204, 25, 26, 27, 208, 209, 210, 31, 32, 33, 214, 215, 216),
+ '3Rw': (0, 1, 2, 3, 76, 77, 78, 7, 8, 9, 82, 83, 84, 13, 14, 15, 88, 89, 90, 19, 20, 21, 94, 95, 96, 25, 26, 27, 100, 101, 102, 31, 32, 33, 106, 107, 108, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 184, 185, 186, 79, 80, 81, 190, 191, 192, 85, 86, 87, 196, 197, 198, 91, 92, 93, 202, 203, 204, 97, 98, 99, 208, 209, 210, 103, 104, 105, 214, 215, 216, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 141, 135, 129, 123, 117, 111, 142, 136, 130, 124, 118, 112, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114, 36, 35, 34, 148, 149, 150, 30, 29, 28, 154, 155, 156, 24, 23, 22, 160, 161, 162, 18, 17, 16, 166, 167, 168, 12, 11, 10, 172, 173, 174, 6, 5, 4, 178, 179, 180, 181, 182, 183, 177, 176, 175, 187, 188, 189, 171, 170, 169, 193, 194, 195, 165, 164, 163, 199, 200, 201, 159, 158, 157, 205, 206, 207, 153, 152, 151, 211, 212, 213, 147, 146, 145),
+ "3Rw'": (0, 1, 2, 3, 177, 176, 175, 7, 8, 9, 171, 170, 169, 13, 14, 15, 165, 164, 163, 19, 20, 21, 159, 158, 157, 25, 26, 27, 153, 152, 151, 31, 32, 33, 147, 146, 145, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 4, 5, 6, 79, 80, 81, 10, 11, 12, 85, 86, 87, 16, 17, 18, 91, 92, 93, 22, 23, 24, 97, 98, 99, 28, 29, 30, 103, 104, 105, 34, 35, 36, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 112, 118, 124, 130, 136, 142, 111, 117, 123, 129, 135, 141, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139, 216, 215, 214, 148, 149, 150, 210, 209, 208, 154, 155, 156, 204, 203, 202, 160, 161, 162, 198, 197, 196, 166, 167, 168, 192, 191, 190, 172, 173, 174, 186, 185, 184, 178, 179, 180, 181, 182, 183, 76, 77, 78, 187, 188, 189, 82, 83, 84, 193, 194, 195, 88, 89, 90, 199, 200, 201, 94, 95, 96, 205, 206, 207, 100, 101, 102, 211, 212, 213, 106, 107, 108),
+ '3Rw2': (0, 1, 2, 3, 184, 185, 186, 7, 8, 9, 190, 191, 192, 13, 14, 15, 196, 197, 198, 19, 20, 21, 202, 203, 204, 25, 26, 27, 208, 209, 210, 31, 32, 33, 214, 215, 216, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 177, 176, 175, 79, 80, 81, 171, 170, 169, 85, 86, 87, 165, 164, 163, 91, 92, 93, 159, 158, 157, 97, 98, 99, 153, 152, 151, 103, 104, 105, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 148, 149, 150, 102, 101, 100, 154, 155, 156, 96, 95, 94, 160, 161, 162, 90, 89, 88, 166, 167, 168, 84, 83, 82, 172, 173, 174, 78, 77, 76, 178, 179, 180, 181, 182, 183, 4, 5, 6, 187, 188, 189, 10, 11, 12, 193, 194, 195, 16, 17, 18, 199, 200, 201, 22, 23, 24, 205, 206, 207, 28, 29, 30, 211, 212, 213, 34, 35, 36),
+ '3Uw': (0, 31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, 33, 27, 21, 15, 9, 3, 34, 28, 22, 16, 10, 4, 35, 29, 23, 17, 11, 5, 36, 30, 24, 18, 12, 6, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ "3Uw'": (0, 6, 12, 18, 24, 30, 36, 5, 11, 17, 23, 29, 35, 4, 10, 16, 22, 28, 34, 3, 9, 15, 21, 27, 33, 2, 8, 14, 20, 26, 32, 1, 7, 13, 19, 25, 31, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ '3Uw2': (0, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ 'B': (0, 114, 120, 126, 132, 138, 144, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 6, 38, 39, 40, 41, 42, 5, 44, 45, 46, 47, 48, 4, 50, 51, 52, 53, 54, 3, 56, 57, 58, 59, 60, 2, 62, 63, 64, 65, 66, 1, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 216, 115, 116, 117, 118, 119, 215, 121, 122, 123, 124, 125, 214, 127, 128, 129, 130, 131, 213, 133, 134, 135, 136, 137, 212, 139, 140, 141, 142, 143, 211, 175, 169, 163, 157, 151, 145, 176, 170, 164, 158, 152, 146, 177, 171, 165, 159, 153, 147, 178, 172, 166, 160, 154, 148, 179, 173, 167, 161, 155, 149, 180, 174, 168, 162, 156, 150, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 37, 43, 49, 55, 61, 67),
+ "B'": (0, 67, 61, 55, 49, 43, 37, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 211, 38, 39, 40, 41, 42, 212, 44, 45, 46, 47, 48, 213, 50, 51, 52, 53, 54, 214, 56, 57, 58, 59, 60, 215, 62, 63, 64, 65, 66, 216, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 1, 115, 116, 117, 118, 119, 2, 121, 122, 123, 124, 125, 3, 127, 128, 129, 130, 131, 4, 133, 134, 135, 136, 137, 5, 139, 140, 141, 142, 143, 6, 150, 156, 162, 168, 174, 180, 149, 155, 161, 167, 173, 179, 148, 154, 160, 166, 172, 178, 147, 153, 159, 165, 171, 177, 146, 152, 158, 164, 170, 176, 145, 151, 157, 163, 169, 175, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 144, 138, 132, 126, 120, 114),
+ 'B2': (0, 216, 215, 214, 213, 212, 211, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 144, 38, 39, 40, 41, 42, 138, 44, 45, 46, 47, 48, 132, 50, 51, 52, 53, 54, 126, 56, 57, 58, 59, 60, 120, 62, 63, 64, 65, 66, 114, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 67, 115, 116, 117, 118, 119, 61, 121, 122, 123, 124, 125, 55, 127, 128, 129, 130, 131, 49, 133, 134, 135, 136, 137, 43, 139, 140, 141, 142, 143, 37, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 6, 5, 4, 3, 2, 1),
+ 'Bw': (0, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 6, 12, 39, 40, 41, 42, 5, 11, 45, 46, 47, 48, 4, 10, 51, 52, 53, 54, 3, 9, 57, 58, 59, 60, 2, 8, 63, 64, 65, 66, 1, 7, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 210, 216, 115, 116, 117, 118, 209, 215, 121, 122, 123, 124, 208, 214, 127, 128, 129, 130, 207, 213, 133, 134, 135, 136, 206, 212, 139, 140, 141, 142, 205, 211, 175, 169, 163, 157, 151, 145, 176, 170, 164, 158, 152, 146, 177, 171, 165, 159, 153, 147, 178, 172, 166, 160, 154, 148, 179, 173, 167, 161, 155, 149, 180, 174, 168, 162, 156, 150, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67),
+ "Bw'": (0, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 211, 205, 39, 40, 41, 42, 212, 206, 45, 46, 47, 48, 213, 207, 51, 52, 53, 54, 214, 208, 57, 58, 59, 60, 215, 209, 63, 64, 65, 66, 216, 210, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 7, 1, 115, 116, 117, 118, 8, 2, 121, 122, 123, 124, 9, 3, 127, 128, 129, 130, 10, 4, 133, 134, 135, 136, 11, 5, 139, 140, 141, 142, 12, 6, 150, 156, 162, 168, 174, 180, 149, 155, 161, 167, 173, 179, 148, 154, 160, 166, 172, 178, 147, 153, 159, 165, 171, 177, 146, 152, 158, 164, 170, 176, 145, 151, 157, 163, 169, 175, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114),
+ 'Bw2': (0, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 144, 143, 39, 40, 41, 42, 138, 137, 45, 46, 47, 48, 132, 131, 51, 52, 53, 54, 126, 125, 57, 58, 59, 60, 120, 119, 63, 64, 65, 66, 114, 113, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 68, 67, 115, 116, 117, 118, 62, 61, 121, 122, 123, 124, 56, 55, 127, 128, 129, 130, 50, 49, 133, 134, 135, 136, 44, 43, 139, 140, 141, 142, 38, 37, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1),
+ 'D': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 175, 176, 177, 178, 179, 180, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 67, 68, 69, 70, 71, 72, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 103, 104, 105, 106, 107, 108, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 139, 140, 141, 142, 143, 144, 211, 205, 199, 193, 187, 181, 212, 206, 200, 194, 188, 182, 213, 207, 201, 195, 189, 183, 214, 208, 202, 196, 190, 184, 215, 209, 203, 197, 191, 185, 216, 210, 204, 198, 192, 186),
+ "D'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 103, 104, 105, 106, 107, 108, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 139, 140, 141, 142, 143, 144, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 175, 176, 177, 178, 179, 180, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 67, 68, 69, 70, 71, 72, 186, 192, 198, 204, 210, 216, 185, 191, 197, 203, 209, 215, 184, 190, 196, 202, 208, 214, 183, 189, 195, 201, 207, 213, 182, 188, 194, 200, 206, 212, 181, 187, 193, 199, 205, 211),
+ 'D2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 139, 140, 141, 142, 143, 144, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 175, 176, 177, 178, 179, 180, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 67, 68, 69, 70, 71, 72, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 103, 104, 105, 106, 107, 108, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181),
+ 'Dw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 211, 205, 199, 193, 187, 181, 212, 206, 200, 194, 188, 182, 213, 207, 201, 195, 189, 183, 214, 208, 202, 196, 190, 184, 215, 209, 203, 197, 191, 185, 216, 210, 204, 198, 192, 186),
+ "Dw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 186, 192, 198, 204, 210, 216, 185, 191, 197, 203, 209, 215, 184, 190, 196, 202, 208, 214, 183, 189, 195, 201, 207, 213, 182, 188, 194, 200, 206, 212, 181, 187, 193, 199, 205, 211),
+ 'Dw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181),
+ 'F': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 72, 66, 60, 54, 48, 42, 37, 38, 39, 40, 41, 181, 43, 44, 45, 46, 47, 182, 49, 50, 51, 52, 53, 183, 55, 56, 57, 58, 59, 184, 61, 62, 63, 64, 65, 185, 67, 68, 69, 70, 71, 186, 103, 97, 91, 85, 79, 73, 104, 98, 92, 86, 80, 74, 105, 99, 93, 87, 81, 75, 106, 100, 94, 88, 82, 76, 107, 101, 95, 89, 83, 77, 108, 102, 96, 90, 84, 78, 31, 110, 111, 112, 113, 114, 32, 116, 117, 118, 119, 120, 33, 122, 123, 124, 125, 126, 34, 128, 129, 130, 131, 132, 35, 134, 135, 136, 137, 138, 36, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 139, 133, 127, 121, 115, 109, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ "F'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 109, 115, 121, 127, 133, 139, 37, 38, 39, 40, 41, 36, 43, 44, 45, 46, 47, 35, 49, 50, 51, 52, 53, 34, 55, 56, 57, 58, 59, 33, 61, 62, 63, 64, 65, 32, 67, 68, 69, 70, 71, 31, 78, 84, 90, 96, 102, 108, 77, 83, 89, 95, 101, 107, 76, 82, 88, 94, 100, 106, 75, 81, 87, 93, 99, 105, 74, 80, 86, 92, 98, 104, 73, 79, 85, 91, 97, 103, 186, 110, 111, 112, 113, 114, 185, 116, 117, 118, 119, 120, 184, 122, 123, 124, 125, 126, 183, 128, 129, 130, 131, 132, 182, 134, 135, 136, 137, 138, 181, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 42, 48, 54, 60, 66, 72, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ 'F2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 186, 185, 184, 183, 182, 181, 37, 38, 39, 40, 41, 139, 43, 44, 45, 46, 47, 133, 49, 50, 51, 52, 53, 127, 55, 56, 57, 58, 59, 121, 61, 62, 63, 64, 65, 115, 67, 68, 69, 70, 71, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 110, 111, 112, 113, 114, 66, 116, 117, 118, 119, 120, 60, 122, 123, 124, 125, 126, 54, 128, 129, 130, 131, 132, 48, 134, 135, 136, 137, 138, 42, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 36, 35, 34, 33, 32, 31, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ 'Fw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42, 37, 38, 39, 40, 187, 181, 43, 44, 45, 46, 188, 182, 49, 50, 51, 52, 189, 183, 55, 56, 57, 58, 190, 184, 61, 62, 63, 64, 191, 185, 67, 68, 69, 70, 192, 186, 103, 97, 91, 85, 79, 73, 104, 98, 92, 86, 80, 74, 105, 99, 93, 87, 81, 75, 106, 100, 94, 88, 82, 76, 107, 101, 95, 89, 83, 77, 108, 102, 96, 90, 84, 78, 31, 25, 111, 112, 113, 114, 32, 26, 117, 118, 119, 120, 33, 27, 123, 124, 125, 126, 34, 28, 129, 130, 131, 132, 35, 29, 135, 136, 137, 138, 36, 30, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ "Fw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139, 37, 38, 39, 40, 30, 36, 43, 44, 45, 46, 29, 35, 49, 50, 51, 52, 28, 34, 55, 56, 57, 58, 27, 33, 61, 62, 63, 64, 26, 32, 67, 68, 69, 70, 25, 31, 78, 84, 90, 96, 102, 108, 77, 83, 89, 95, 101, 107, 76, 82, 88, 94, 100, 106, 75, 81, 87, 93, 99, 105, 74, 80, 86, 92, 98, 104, 73, 79, 85, 91, 97, 103, 186, 192, 111, 112, 113, 114, 185, 191, 117, 118, 119, 120, 184, 190, 123, 124, 125, 126, 183, 189, 129, 130, 131, 132, 182, 188, 135, 136, 137, 138, 181, 187, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ 'Fw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 37, 38, 39, 40, 140, 139, 43, 44, 45, 46, 134, 133, 49, 50, 51, 52, 128, 127, 55, 56, 57, 58, 122, 121, 61, 62, 63, 64, 116, 115, 67, 68, 69, 70, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 111, 112, 113, 114, 66, 65, 117, 118, 119, 120, 60, 59, 123, 124, 125, 126, 54, 53, 129, 130, 131, 132, 48, 47, 135, 136, 137, 138, 42, 41, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ 'L': (0, 180, 2, 3, 4, 5, 6, 174, 8, 9, 10, 11, 12, 168, 14, 15, 16, 17, 18, 162, 20, 21, 22, 23, 24, 156, 26, 27, 28, 29, 30, 150, 32, 33, 34, 35, 36, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 69, 63, 57, 51, 45, 39, 70, 64, 58, 52, 46, 40, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42, 1, 74, 75, 76, 77, 78, 7, 80, 81, 82, 83, 84, 13, 86, 87, 88, 89, 90, 19, 92, 93, 94, 95, 96, 25, 98, 99, 100, 101, 102, 31, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 211, 151, 152, 153, 154, 155, 205, 157, 158, 159, 160, 161, 199, 163, 164, 165, 166, 167, 193, 169, 170, 171, 172, 173, 187, 175, 176, 177, 178, 179, 181, 73, 182, 183, 184, 185, 186, 79, 188, 189, 190, 191, 192, 85, 194, 195, 196, 197, 198, 91, 200, 201, 202, 203, 204, 97, 206, 207, 208, 209, 210, 103, 212, 213, 214, 215, 216),
+ "L'": (0, 73, 2, 3, 4, 5, 6, 79, 8, 9, 10, 11, 12, 85, 14, 15, 16, 17, 18, 91, 20, 21, 22, 23, 24, 97, 26, 27, 28, 29, 30, 103, 32, 33, 34, 35, 36, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 40, 46, 52, 58, 64, 70, 39, 45, 51, 57, 63, 69, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67, 181, 74, 75, 76, 77, 78, 187, 80, 81, 82, 83, 84, 193, 86, 87, 88, 89, 90, 199, 92, 93, 94, 95, 96, 205, 98, 99, 100, 101, 102, 211, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 31, 151, 152, 153, 154, 155, 25, 157, 158, 159, 160, 161, 19, 163, 164, 165, 166, 167, 13, 169, 170, 171, 172, 173, 7, 175, 176, 177, 178, 179, 1, 180, 182, 183, 184, 185, 186, 174, 188, 189, 190, 191, 192, 168, 194, 195, 196, 197, 198, 162, 200, 201, 202, 203, 204, 156, 206, 207, 208, 209, 210, 150, 212, 213, 214, 215, 216),
+ 'L2': (0, 181, 2, 3, 4, 5, 6, 187, 8, 9, 10, 11, 12, 193, 14, 15, 16, 17, 18, 199, 20, 21, 22, 23, 24, 205, 26, 27, 28, 29, 30, 211, 32, 33, 34, 35, 36, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 180, 74, 75, 76, 77, 78, 174, 80, 81, 82, 83, 84, 168, 86, 87, 88, 89, 90, 162, 92, 93, 94, 95, 96, 156, 98, 99, 100, 101, 102, 150, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 103, 151, 152, 153, 154, 155, 97, 157, 158, 159, 160, 161, 91, 163, 164, 165, 166, 167, 85, 169, 170, 171, 172, 173, 79, 175, 176, 177, 178, 179, 73, 1, 182, 183, 184, 185, 186, 7, 188, 189, 190, 191, 192, 13, 194, 195, 196, 197, 198, 19, 200, 201, 202, 203, 204, 25, 206, 207, 208, 209, 210, 31, 212, 213, 214, 215, 216),
+ 'Lw': (0, 180, 179, 3, 4, 5, 6, 174, 173, 9, 10, 11, 12, 168, 167, 15, 16, 17, 18, 162, 161, 21, 22, 23, 24, 156, 155, 27, 28, 29, 30, 150, 149, 33, 34, 35, 36, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 69, 63, 57, 51, 45, 39, 70, 64, 58, 52, 46, 40, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42, 1, 2, 75, 76, 77, 78, 7, 8, 81, 82, 83, 84, 13, 14, 87, 88, 89, 90, 19, 20, 93, 94, 95, 96, 25, 26, 99, 100, 101, 102, 31, 32, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 212, 211, 151, 152, 153, 154, 206, 205, 157, 158, 159, 160, 200, 199, 163, 164, 165, 166, 194, 193, 169, 170, 171, 172, 188, 187, 175, 176, 177, 178, 182, 181, 73, 74, 183, 184, 185, 186, 79, 80, 189, 190, 191, 192, 85, 86, 195, 196, 197, 198, 91, 92, 201, 202, 203, 204, 97, 98, 207, 208, 209, 210, 103, 104, 213, 214, 215, 216),
+ "Lw'": (0, 73, 74, 3, 4, 5, 6, 79, 80, 9, 10, 11, 12, 85, 86, 15, 16, 17, 18, 91, 92, 21, 22, 23, 24, 97, 98, 27, 28, 29, 30, 103, 104, 33, 34, 35, 36, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 40, 46, 52, 58, 64, 70, 39, 45, 51, 57, 63, 69, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67, 181, 182, 75, 76, 77, 78, 187, 188, 81, 82, 83, 84, 193, 194, 87, 88, 89, 90, 199, 200, 93, 94, 95, 96, 205, 206, 99, 100, 101, 102, 211, 212, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 32, 31, 151, 152, 153, 154, 26, 25, 157, 158, 159, 160, 20, 19, 163, 164, 165, 166, 14, 13, 169, 170, 171, 172, 8, 7, 175, 176, 177, 178, 2, 1, 180, 179, 183, 184, 185, 186, 174, 173, 189, 190, 191, 192, 168, 167, 195, 196, 197, 198, 162, 161, 201, 202, 203, 204, 156, 155, 207, 208, 209, 210, 150, 149, 213, 214, 215, 216),
+ 'Lw2': (0, 181, 182, 3, 4, 5, 6, 187, 188, 9, 10, 11, 12, 193, 194, 15, 16, 17, 18, 199, 200, 21, 22, 23, 24, 205, 206, 27, 28, 29, 30, 211, 212, 33, 34, 35, 36, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 180, 179, 75, 76, 77, 78, 174, 173, 81, 82, 83, 84, 168, 167, 87, 88, 89, 90, 162, 161, 93, 94, 95, 96, 156, 155, 99, 100, 101, 102, 150, 149, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 104, 103, 151, 152, 153, 154, 98, 97, 157, 158, 159, 160, 92, 91, 163, 164, 165, 166, 86, 85, 169, 170, 171, 172, 80, 79, 175, 176, 177, 178, 74, 73, 1, 2, 183, 184, 185, 186, 7, 8, 189, 190, 191, 192, 13, 14, 195, 196, 197, 198, 19, 20, 201, 202, 203, 204, 25, 26, 207, 208, 209, 210, 31, 32, 213, 214, 215, 216),
+ 'R': (0, 1, 2, 3, 4, 5, 78, 7, 8, 9, 10, 11, 84, 13, 14, 15, 16, 17, 90, 19, 20, 21, 22, 23, 96, 25, 26, 27, 28, 29, 102, 31, 32, 33, 34, 35, 108, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 186, 79, 80, 81, 82, 83, 192, 85, 86, 87, 88, 89, 198, 91, 92, 93, 94, 95, 204, 97, 98, 99, 100, 101, 210, 103, 104, 105, 106, 107, 216, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 141, 135, 129, 123, 117, 111, 142, 136, 130, 124, 118, 112, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114, 36, 146, 147, 148, 149, 150, 30, 152, 153, 154, 155, 156, 24, 158, 159, 160, 161, 162, 18, 164, 165, 166, 167, 168, 12, 170, 171, 172, 173, 174, 6, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 175, 187, 188, 189, 190, 191, 169, 193, 194, 195, 196, 197, 163, 199, 200, 201, 202, 203, 157, 205, 206, 207, 208, 209, 151, 211, 212, 213, 214, 215, 145),
+ "R'": (0, 1, 2, 3, 4, 5, 175, 7, 8, 9, 10, 11, 169, 13, 14, 15, 16, 17, 163, 19, 20, 21, 22, 23, 157, 25, 26, 27, 28, 29, 151, 31, 32, 33, 34, 35, 145, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 6, 79, 80, 81, 82, 83, 12, 85, 86, 87, 88, 89, 18, 91, 92, 93, 94, 95, 24, 97, 98, 99, 100, 101, 30, 103, 104, 105, 106, 107, 36, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 112, 118, 124, 130, 136, 142, 111, 117, 123, 129, 135, 141, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139, 216, 146, 147, 148, 149, 150, 210, 152, 153, 154, 155, 156, 204, 158, 159, 160, 161, 162, 198, 164, 165, 166, 167, 168, 192, 170, 171, 172, 173, 174, 186, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 78, 187, 188, 189, 190, 191, 84, 193, 194, 195, 196, 197, 90, 199, 200, 201, 202, 203, 96, 205, 206, 207, 208, 209, 102, 211, 212, 213, 214, 215, 108),
+ 'R2': (0, 1, 2, 3, 4, 5, 186, 7, 8, 9, 10, 11, 192, 13, 14, 15, 16, 17, 198, 19, 20, 21, 22, 23, 204, 25, 26, 27, 28, 29, 210, 31, 32, 33, 34, 35, 216, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 175, 79, 80, 81, 82, 83, 169, 85, 86, 87, 88, 89, 163, 91, 92, 93, 94, 95, 157, 97, 98, 99, 100, 101, 151, 103, 104, 105, 106, 107, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 146, 147, 148, 149, 150, 102, 152, 153, 154, 155, 156, 96, 158, 159, 160, 161, 162, 90, 164, 165, 166, 167, 168, 84, 170, 171, 172, 173, 174, 78, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 6, 187, 188, 189, 190, 191, 12, 193, 194, 195, 196, 197, 18, 199, 200, 201, 202, 203, 24, 205, 206, 207, 208, 209, 30, 211, 212, 213, 214, 215, 36),
+ 'Rw': (0, 1, 2, 3, 4, 77, 78, 7, 8, 9, 10, 83, 84, 13, 14, 15, 16, 89, 90, 19, 20, 21, 22, 95, 96, 25, 26, 27, 28, 101, 102, 31, 32, 33, 34, 107, 108, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 185, 186, 79, 80, 81, 82, 191, 192, 85, 86, 87, 88, 197, 198, 91, 92, 93, 94, 203, 204, 97, 98, 99, 100, 209, 210, 103, 104, 105, 106, 215, 216, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 141, 135, 129, 123, 117, 111, 142, 136, 130, 124, 118, 112, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114, 36, 35, 147, 148, 149, 150, 30, 29, 153, 154, 155, 156, 24, 23, 159, 160, 161, 162, 18, 17, 165, 166, 167, 168, 12, 11, 171, 172, 173, 174, 6, 5, 177, 178, 179, 180, 181, 182, 183, 184, 176, 175, 187, 188, 189, 190, 170, 169, 193, 194, 195, 196, 164, 163, 199, 200, 201, 202, 158, 157, 205, 206, 207, 208, 152, 151, 211, 212, 213, 214, 146, 145),
+ "Rw'": (0, 1, 2, 3, 4, 176, 175, 7, 8, 9, 10, 170, 169, 13, 14, 15, 16, 164, 163, 19, 20, 21, 22, 158, 157, 25, 26, 27, 28, 152, 151, 31, 32, 33, 34, 146, 145, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 5, 6, 79, 80, 81, 82, 11, 12, 85, 86, 87, 88, 17, 18, 91, 92, 93, 94, 23, 24, 97, 98, 99, 100, 29, 30, 103, 104, 105, 106, 35, 36, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 112, 118, 124, 130, 136, 142, 111, 117, 123, 129, 135, 141, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139, 216, 215, 147, 148, 149, 150, 210, 209, 153, 154, 155, 156, 204, 203, 159, 160, 161, 162, 198, 197, 165, 166, 167, 168, 192, 191, 171, 172, 173, 174, 186, 185, 177, 178, 179, 180, 181, 182, 183, 184, 77, 78, 187, 188, 189, 190, 83, 84, 193, 194, 195, 196, 89, 90, 199, 200, 201, 202, 95, 96, 205, 206, 207, 208, 101, 102, 211, 212, 213, 214, 107, 108),
+ 'Rw2': (0, 1, 2, 3, 4, 185, 186, 7, 8, 9, 10, 191, 192, 13, 14, 15, 16, 197, 198, 19, 20, 21, 22, 203, 204, 25, 26, 27, 28, 209, 210, 31, 32, 33, 34, 215, 216, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 176, 175, 79, 80, 81, 82, 170, 169, 85, 86, 87, 88, 164, 163, 91, 92, 93, 94, 158, 157, 97, 98, 99, 100, 152, 151, 103, 104, 105, 106, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 147, 148, 149, 150, 102, 101, 153, 154, 155, 156, 96, 95, 159, 160, 161, 162, 90, 89, 165, 166, 167, 168, 84, 83, 171, 172, 173, 174, 78, 77, 177, 178, 179, 180, 181, 182, 183, 184, 5, 6, 187, 188, 189, 190, 11, 12, 193, 194, 195, 196, 17, 18, 199, 200, 201, 202, 23, 24, 205, 206, 207, 208, 29, 30, 211, 212, 213, 214, 35, 36),
+ 'U': (0, 31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, 33, 27, 21, 15, 9, 3, 34, 28, 22, 16, 10, 4, 35, 29, 23, 17, 11, 5, 36, 30, 24, 18, 12, 6, 73, 74, 75, 76, 77, 78, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 109, 110, 111, 112, 113, 114, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 145, 146, 147, 148, 149, 150, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 37, 38, 39, 40, 41, 42, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ "U'": (0, 6, 12, 18, 24, 30, 36, 5, 11, 17, 23, 29, 35, 4, 10, 16, 22, 28, 34, 3, 9, 15, 21, 27, 33, 2, 8, 14, 20, 26, 32, 1, 7, 13, 19, 25, 31, 145, 146, 147, 148, 149, 150, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 37, 38, 39, 40, 41, 42, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 73, 74, 75, 76, 77, 78, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 109, 110, 111, 112, 113, 114, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ 'U2': (0, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 109, 110, 111, 112, 113, 114, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 145, 146, 147, 148, 149, 150, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 37, 38, 39, 40, 41, 42, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 73, 74, 75, 76, 77, 78, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ 'Uw': (0, 31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, 33, 27, 21, 15, 9, 3, 34, 28, 22, 16, 10, 4, 35, 29, 23, 17, 11, 5, 36, 30, 24, 18, 12, 6, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ "Uw'": (0, 6, 12, 18, 24, 30, 36, 5, 11, 17, 23, 29, 35, 4, 10, 16, 22, 28, 34, 3, 9, 15, 21, 27, 33, 2, 8, 14, 20, 26, 32, 1, 7, 13, 19, 25, 31, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ 'Uw2': (0, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216),
+ 'x': (0, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 40, 46, 52, 58, 64, 70, 39, 45, 51, 57, 63, 69, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 141, 135, 129, 123, 117, 111, 142, 136, 130, 124, 118, 112, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145),
+ "x'": (0, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 69, 63, 57, 51, 45, 39, 70, 64, 58, 52, 46, 40, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 112, 118, 124, 130, 136, 142, 111, 117, 123, 129, 135, 141, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108),
+ 'y': (0, 31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, 33, 27, 21, 15, 9, 3, 34, 28, 22, 16, 10, 4, 35, 29, 23, 17, 11, 5, 36, 30, 24, 18, 12, 6, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 186, 192, 198, 204, 210, 216, 185, 191, 197, 203, 209, 215, 184, 190, 196, 202, 208, 214, 183, 189, 195, 201, 207, 213, 182, 188, 194, 200, 206, 212, 181, 187, 193, 199, 205, 211),
+ "y'": (0, 6, 12, 18, 24, 30, 36, 5, 11, 17, 23, 29, 35, 4, 10, 16, 22, 28, 34, 3, 9, 15, 21, 27, 33, 2, 8, 14, 20, 26, 32, 1, 7, 13, 19, 25, 31, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 211, 205, 199, 193, 187, 181, 212, 206, 200, 194, 188, 182, 213, 207, 201, 195, 189, 183, 214, 208, 202, 196, 190, 184, 215, 209, 203, 197, 191, 185, 216, 210, 204, 198, 192, 186),
+ 'z': (0, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 69, 63, 57, 51, 45, 39, 70, 64, 58, 52, 46, 40, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42, 211, 205, 199, 193, 187, 181, 212, 206, 200, 194, 188, 182, 213, 207, 201, 195, 189, 183, 214, 208, 202, 196, 190, 184, 215, 209, 203, 197, 191, 185, 216, 210, 204, 198, 192, 186, 103, 97, 91, 85, 79, 73, 104, 98, 92, 86, 80, 74, 105, 99, 93, 87, 81, 75, 106, 100, 94, 88, 82, 76, 107, 101, 95, 89, 83, 77, 108, 102, 96, 90, 84, 78, 31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, 33, 27, 21, 15, 9, 3, 34, 28, 22, 16, 10, 4, 35, 29, 23, 17, 11, 5, 36, 30, 24, 18, 12, 6, 150, 156, 162, 168, 174, 180, 149, 155, 161, 167, 173, 179, 148, 154, 160, 166, 172, 178, 147, 153, 159, 165, 171, 177, 146, 152, 158, 164, 170, 176, 145, 151, 157, 163, 169, 175, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 141, 135, 129, 123, 117, 111, 142, 136, 130, 124, 118, 112, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114),
+ "z'": (0, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 112, 118, 124, 130, 136, 142, 111, 117, 123, 129, 135, 141, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139, 6, 12, 18, 24, 30, 36, 5, 11, 17, 23, 29, 35, 4, 10, 16, 22, 28, 34, 3, 9, 15, 21, 27, 33, 2, 8, 14, 20, 26, 32, 1, 7, 13, 19, 25, 31, 78, 84, 90, 96, 102, 108, 77, 83, 89, 95, 101, 107, 76, 82, 88, 94, 100, 106, 75, 81, 87, 93, 99, 105, 74, 80, 86, 92, 98, 104, 73, 79, 85, 91, 97, 103, 186, 192, 198, 204, 210, 216, 185, 191, 197, 203, 209, 215, 184, 190, 196, 202, 208, 214, 183, 189, 195, 201, 207, 213, 182, 188, 194, 200, 206, 212, 181, 187, 193, 199, 205, 211, 175, 169, 163, 157, 151, 145, 176, 170, 164, 158, 152, 146, 177, 171, 165, 159, 153, 147, 178, 172, 166, 160, 154, 148, 179, 173, 167, 161, 155, 149, 180, 174, 168, 162, 156, 150, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 40, 46, 52, 58, 64, 70, 39, 45, 51, 57, 63, 69, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67),
+    "x x" : (0, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36),
+    "y y" : (0, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181),
+    "z z" : (0, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1),
+    "x y" : (0, 103, 97, 91, 85, 79, 73, 104, 98, 92, 86, 80, 74, 105, 99, 93, 87, 81, 75, 106, 100, 94, 88, 82, 76, 107, 101, 95, 89, 83, 77, 108, 102, 96, 90, 84, 78, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 141, 135, 129, 123, 117, 111, 142, 136, 130, 124, 118, 112, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 40, 46, 52, 58, 64, 70, 39, 45, 51, 57, 63, 69, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67, 175, 169, 163, 157, 151, 145, 176, 170, 164, 158, 152, 146, 177, 171, 165, 159, 153, 147, 178, 172, 166, 160, 154, 148, 179, 173, 167, 161, 155, 149, 180, 174, 168, 162, 156, 150),
+    "x y'" : (0, 78, 84, 90, 96, 102, 108, 77, 83, 89, 95, 101, 107, 76, 82, 88, 94, 100, 106, 75, 81, 87, 93, 99, 105, 74, 80, 86, 92, 98, 104, 73, 79, 85, 91, 97, 103, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 40, 46, 52, 58, 64, 70, 39, 45, 51, 57, 63, 69, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 141, 135, 129, 123, 117, 111, 142, 136, 130, 124, 118, 112, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114, 150, 156, 162, 168, 174, 180, 149, 155, 161, 167, 173, 179, 148, 154, 160, 166, 172, 178, 147, 153, 159, 165, 171, 177, 146, 152, 158, 164, 170, 176, 145, 151, 157, 163, 169, 175),
+    "x z" : (0, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 150, 156, 162, 168, 174, 180, 149, 155, 161, 167, 173, 179, 148, 154, 160, 166, 172, 178, 147, 153, 159, 165, 171, 177, 146, 152, 158, 164, 170, 176, 145, 151, 157, 163, 169, 175, 211, 205, 199, 193, 187, 181, 212, 206, 200, 194, 188, 182, 213, 207, 201, 195, 189, 183, 214, 208, 202, 196, 190, 184, 215, 209, 203, 197, 191, 185, 216, 210, 204, 198, 192, 186, 103, 97, 91, 85, 79, 73, 104, 98, 92, 86, 80, 74, 105, 99, 93, 87, 81, 75, 106, 100, 94, 88, 82, 76, 107, 101, 95, 89, 83, 77, 108, 102, 96, 90, 84, 78, 31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, 33, 27, 21, 15, 9, 3, 34, 28, 22, 16, 10, 4, 35, 29, 23, 17, 11, 5, 36, 30, 24, 18, 12, 6, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109),
+    "x z'" : (0, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 78, 84, 90, 96, 102, 108, 77, 83, 89, 95, 101, 107, 76, 82, 88, 94, 100, 106, 75, 81, 87, 93, 99, 105, 74, 80, 86, 92, 98, 104, 73, 79, 85, 91, 97, 103, 186, 192, 198, 204, 210, 216, 185, 191, 197, 203, 209, 215, 184, 190, 196, 202, 208, 214, 183, 189, 195, 201, 207, 213, 182, 188, 194, 200, 206, 212, 181, 187, 193, 199, 205, 211, 175, 169, 163, 157, 151, 145, 176, 170, 164, 158, 152, 146, 177, 171, 165, 159, 153, 147, 178, 172, 166, 160, 154, 148, 179, 173, 167, 161, 155, 149, 180, 174, 168, 162, 156, 150, 6, 12, 18, 24, 30, 36, 5, 11, 17, 23, 29, 35, 4, 10, 16, 22, 28, 34, 3, 9, 15, 21, 27, 33, 2, 8, 14, 20, 26, 32, 1, 7, 13, 19, 25, 31, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37),
+    "x y y" : (0, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 141, 135, 129, 123, 117, 111, 142, 136, 130, 124, 118, 112, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 40, 46, 52, 58, 64, 70, 39, 45, 51, 57, 63, 69, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180),
+    "x z z" : (0, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 112, 118, 124, 130, 136, 142, 111, 117, 123, 129, 135, 141, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 69, 63, 57, 51, 45, 39, 70, 64, 58, 52, 46, 40, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73),
+    "x' y" : (0, 150, 156, 162, 168, 174, 180, 149, 155, 161, 167, 173, 179, 148, 154, 160, 166, 172, 178, 147, 153, 159, 165, 171, 177, 146, 152, 158, 164, 170, 176, 145, 151, 157, 163, 169, 175, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 112, 118, 124, 130, 136, 142, 111, 117, 123, 129, 135, 141, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 69, 63, 57, 51, 45, 39, 70, 64, 58, 52, 46, 40, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42, 78, 84, 90, 96, 102, 108, 77, 83, 89, 95, 101, 107, 76, 82, 88, 94, 100, 106, 75, 81, 87, 93, 99, 105, 74, 80, 86, 92, 98, 104, 73, 79, 85, 91, 97, 103),
+    "x' y'" : (0, 175, 169, 163, 157, 151, 145, 176, 170, 164, 158, 152, 146, 177, 171, 165, 159, 153, 147, 178, 172, 166, 160, 154, 148, 179, 173, 167, 161, 155, 149, 180, 174, 168, 162, 156, 150, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 69, 63, 57, 51, 45, 39, 70, 64, 58, 52, 46, 40, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 112, 118, 124, 130, 136, 142, 111, 117, 123, 129, 135, 141, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139, 103, 97, 91, 85, 79, 73, 104, 98, 92, 86, 80, 74, 105, 99, 93, 87, 81, 75, 106, 100, 94, 88, 82, 76, 107, 101, 95, 89, 83, 77, 108, 102, 96, 90, 84, 78),
+    "x' z" : (0, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 103, 97, 91, 85, 79, 73, 104, 98, 92, 86, 80, 74, 105, 99, 93, 87, 81, 75, 106, 100, 94, 88, 82, 76, 107, 101, 95, 89, 83, 77, 108, 102, 96, 90, 84, 78, 31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, 33, 27, 21, 15, 9, 3, 34, 28, 22, 16, 10, 4, 35, 29, 23, 17, 11, 5, 36, 30, 24, 18, 12, 6, 150, 156, 162, 168, 174, 180, 149, 155, 161, 167, 173, 179, 148, 154, 160, 166, 172, 178, 147, 153, 159, 165, 171, 177, 146, 152, 158, 164, 170, 176, 145, 151, 157, 163, 169, 175, 211, 205, 199, 193, 187, 181, 212, 206, 200, 194, 188, 182, 213, 207, 201, 195, 189, 183, 214, 208, 202, 196, 190, 184, 215, 209, 203, 197, 191, 185, 216, 210, 204, 198, 192, 186, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144),
+    "x' z'" : (0, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 175, 169, 163, 157, 151, 145, 176, 170, 164, 158, 152, 146, 177, 171, 165, 159, 153, 147, 178, 172, 166, 160, 154, 148, 179, 173, 167, 161, 155, 149, 180, 174, 168, 162, 156, 150, 6, 12, 18, 24, 30, 36, 5, 11, 17, 23, 29, 35, 4, 10, 16, 22, 28, 34, 3, 9, 15, 21, 27, 33, 2, 8, 14, 20, 26, 32, 1, 7, 13, 19, 25, 31, 78, 84, 90, 96, 102, 108, 77, 83, 89, 95, 101, 107, 76, 82, 88, 94, 100, 106, 75, 81, 87, 93, 99, 105, 74, 80, 86, 92, 98, 104, 73, 79, 85, 91, 97, 103, 186, 192, 198, 204, 210, 216, 185, 191, 197, 203, 209, 215, 184, 190, 196, 202, 208, 214, 183, 189, 195, 201, 207, 213, 182, 188, 194, 200, 206, 212, 181, 187, 193, 199, 205, 211, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72),
+    "y x x" : (0, 186, 192, 198, 204, 210, 216, 185, 191, 197, 203, 209, 215, 184, 190, 196, 202, 208, 214, 183, 189, 195, 201, 207, 213, 182, 188, 194, 200, 206, 212, 181, 187, 193, 199, 205, 211, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, 33, 27, 21, 15, 9, 3, 34, 28, 22, 16, 10, 4, 35, 29, 23, 17, 11, 5, 36, 30, 24, 18, 12, 6),
+    "y z z" : (0, 211, 205, 199, 193, 187, 181, 212, 206, 200, 194, 188, 182, 213, 207, 201, 195, 189, 183, 214, 208, 202, 196, 190, 184, 215, 209, 203, 197, 191, 185, 216, 210, 204, 198, 192, 186, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 6, 12, 18, 24, 30, 36, 5, 11, 17, 23, 29, 35, 4, 10, 16, 22, 28, 34, 3, 9, 15, 21, 27, 33, 2, 8, 14, 20, 26, 32, 1, 7, 13, 19, 25, 31),
+    "z x x" : (0, 139, 133, 127, 121, 115, 109, 140, 134, 128, 122, 116, 110, 141, 135, 129, 123, 117, 111, 142, 136, 130, 124, 118, 112, 143, 137, 131, 125, 119, 113, 144, 138, 132, 126, 120, 114, 186, 192, 198, 204, 210, 216, 185, 191, 197, 203, 209, 215, 184, 190, 196, 202, 208, 214, 183, 189, 195, 201, 207, 213, 182, 188, 194, 200, 206, 212, 181, 187, 193, 199, 205, 211, 175, 169, 163, 157, 151, 145, 176, 170, 164, 158, 152, 146, 177, 171, 165, 159, 153, 147, 178, 172, 166, 160, 154, 148, 179, 173, 167, 161, 155, 149, 180, 174, 168, 162, 156, 150, 6, 12, 18, 24, 30, 36, 5, 11, 17, 23, 29, 35, 4, 10, 16, 22, 28, 34, 3, 9, 15, 21, 27, 33, 2, 8, 14, 20, 26, 32, 1, 7, 13, 19, 25, 31, 78, 84, 90, 96, 102, 108, 77, 83, 89, 95, 101, 107, 76, 82, 88, 94, 100, 106, 75, 81, 87, 93, 99, 105, 74, 80, 86, 92, 98, 104, 73, 79, 85, 91, 97, 103, 67, 61, 55, 49, 43, 37, 68, 62, 56, 50, 44, 38, 69, 63, 57, 51, 45, 39, 70, 64, 58, 52, 46, 40, 71, 65, 59, 53, 47, 41, 72, 66, 60, 54, 48, 42),
+    "z y y" : (0, 42, 48, 54, 60, 66, 72, 41, 47, 53, 59, 65, 71, 40, 46, 52, 58, 64, 70, 39, 45, 51, 57, 63, 69, 38, 44, 50, 56, 62, 68, 37, 43, 49, 55, 61, 67, 31, 25, 19, 13, 7, 1, 32, 26, 20, 14, 8, 2, 33, 27, 21, 15, 9, 3, 34, 28, 22, 16, 10, 4, 35, 29, 23, 17, 11, 5, 36, 30, 24, 18, 12, 6, 150, 156, 162, 168, 174, 180, 149, 155, 161, 167, 173, 179, 148, 154, 160, 166, 172, 178, 147, 153, 159, 165, 171, 177, 146, 152, 158, 164, 170, 176, 145, 151, 157, 163, 169, 175, 211, 205, 199, 193, 187, 181, 212, 206, 200, 194, 188, 182, 213, 207, 201, 195, 189, 183, 214, 208, 202, 196, 190, 184, 215, 209, 203, 197, 191, 185, 216, 210, 204, 198, 192, 186, 103, 97, 91, 85, 79, 73, 104, 98, 92, 86, 80, 74, 105, 99, 93, 87, 81, 75, 106, 100, 94, 88, 82, 76, 107, 101, 95, 89, 83, 77, 108, 102, 96, 90, 84, 78, 114, 120, 126, 132, 138, 144, 113, 119, 125, 131, 137, 143, 112, 118, 124, 130, 136, 142, 111, 117, 123, 129, 135, 141, 110, 116, 122, 128, 134, 140, 109, 115, 121, 127, 133, 139),
+    "reflect-x" : (0, 211, 212, 213, 214, 215, 216, 205, 206, 207, 208, 209, 210, 199, 200, 201, 202, 203, 204, 193, 194, 195, 196, 197, 198, 187, 188, 189, 190, 191, 192, 181, 182, 183, 184, 185, 186, 67, 68, 69, 70, 71, 72, 61, 62, 63, 64, 65, 66, 55, 56, 57, 58, 59, 60, 49, 50, 51, 52, 53, 54, 43, 44, 45, 46, 47, 48, 37, 38, 39, 40, 41, 42, 103, 104, 105, 106, 107, 108, 97, 98, 99, 100, 101, 102, 91, 92, 93, 94, 95, 96, 85, 86, 87, 88, 89, 90, 79, 80, 81, 82, 83, 84, 73, 74, 75, 76, 77, 78, 139, 140, 141, 142, 143, 144, 133, 134, 135, 136, 137, 138, 127, 128, 129, 130, 131, 132, 121, 122, 123, 124, 125, 126, 115, 116, 117, 118, 119, 120, 109, 110, 111, 112, 113, 114, 175, 176, 177, 178, 179, 180, 169, 170, 171, 172, 173, 174, 163, 164, 165, 166, 167, 168, 157, 158, 159, 160, 161, 162, 151, 152, 153, 154, 155, 156, 145, 146, 147, 148, 149, 150, 31, 32, 33, 34, 35, 36, 25, 26, 27, 28, 29, 30, 19, 20, 21, 22, 23, 24, 13, 14, 15, 16, 17, 18, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6),
+    "reflect-x x" : (0, 103, 104, 105, 106, 107, 108, 97, 98, 99, 100, 101, 102, 91, 92, 93, 94, 95, 96, 85, 86, 87, 88, 89, 90, 79, 80, 81, 82, 83, 84, 73, 74, 75, 76, 77, 78, 72, 66, 60, 54, 48, 42, 71, 65, 59, 53, 47, 41, 70, 64, 58, 52, 46, 40, 69, 63, 57, 51, 45, 39, 68, 62, 56, 50, 44, 38, 67, 61, 55, 49, 43, 37, 31, 32, 33, 34, 35, 36, 25, 26, 27, 28, 29, 30, 19, 20, 21, 22, 23, 24, 13, 14, 15, 16, 17, 18, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 109, 115, 121, 127, 133, 139, 110, 116, 122, 128, 134, 140, 111, 117, 123, 129, 135, 141, 112, 118, 124, 130, 136, 142, 113, 119, 125, 131, 137, 143, 114, 120, 126, 132, 138, 144, 186, 185, 184, 183, 182, 181, 192, 191, 190, 189, 188, 187, 198, 197, 196, 195, 194, 193, 204, 203, 202, 201, 200, 199, 210, 209, 208, 207, 206, 205, 216, 215, 214, 213, 212, 211, 150, 149, 148, 147, 146, 145, 156, 155, 154, 153, 152, 151, 162, 161, 160, 159, 158, 157, 168, 167, 166, 165, 164, 163, 174, 173, 172, 171, 170, 169, 180, 179, 178, 177, 176, 175),
+    "reflect-x x'" : (0, 150, 149, 148, 147, 146, 145, 156, 155, 154, 153, 152, 151, 162, 161, 160, 159, 158, 157, 168, 167, 166, 165, 164, 163, 174, 173, 172, 171, 170, 169, 180, 179, 178, 177, 176, 175, 37, 43, 49, 55, 61, 67, 38, 44, 50, 56, 62, 68, 39, 45, 51, 57, 63, 69, 40, 46, 52, 58, 64, 70, 41, 47, 53, 59, 65, 71, 42, 48, 54, 60, 66, 72, 211, 212, 213, 214, 215, 216, 205, 206, 207, 208, 209, 210, 199, 200, 201, 202, 203, 204, 193, 194, 195, 196, 197, 198, 187, 188, 189, 190, 191, 192, 181, 182, 183, 184, 185, 186, 144, 138, 132, 126, 120, 114, 143, 137, 131, 125, 119, 113, 142, 136, 130, 124, 118, 112, 141, 135, 129, 123, 117, 111, 140, 134, 128, 122, 116, 110, 139, 133, 127, 121, 115, 109, 6, 5, 4, 3, 2, 1, 12, 11, 10, 9, 8, 7, 18, 17, 16, 15, 14, 13, 24, 23, 22, 21, 20, 19, 30, 29, 28, 27, 26, 25, 36, 35, 34, 33, 32, 31, 103, 104, 105, 106, 107, 108, 97, 98, 99, 100, 101, 102, 91, 92, 93, 94, 95, 96, 85, 86, 87, 88, 89, 90, 79, 80, 81, 82, 83, 84, 73, 74, 75, 76, 77, 78),
+    "reflect-x y" : (0, 181, 187, 193, 199, 205, 211, 182, 188, 194, 200, 206, 212, 183, 189, 195, 201, 207, 213, 184, 190, 196, 202, 208, 214, 185, 191, 197, 203, 209, 215, 186, 192, 198, 204, 210, 216, 103, 104, 105, 106, 107, 108, 97, 98, 99, 100, 101, 102, 91, 92, 93, 94, 95, 96, 85, 86, 87, 88, 89, 90, 79, 80, 81, 82, 83, 84, 73, 74, 75, 76, 77, 78, 139, 140, 141, 142, 143, 144, 133, 134, 135, 136, 137, 138, 127, 128, 129, 130, 131, 132, 121, 122, 123, 124, 125, 126, 115, 116, 117, 118, 119, 120, 109, 110, 111, 112, 113, 114, 175, 176, 177, 178, 179, 180, 169, 170, 171, 172, 173, 174, 163, 164, 165, 166, 167, 168, 157, 158, 159, 160, 161, 162, 151, 152, 153, 154, 155, 156, 145, 146, 147, 148, 149, 150, 67, 68, 69, 70, 71, 72, 61, 62, 63, 64, 65, 66, 55, 56, 57, 58, 59, 60, 49, 50, 51, 52, 53, 54, 43, 44, 45, 46, 47, 48, 37, 38, 39, 40, 41, 42, 36, 30, 24, 18, 12, 6, 35, 29, 23, 17, 11, 5, 34, 28, 22, 16, 10, 4, 33, 27, 21, 15, 9, 3, 32, 26, 20, 14, 8, 2, 31, 25, 19, 13, 7, 1),
+    "reflect-x y'" : (0, 216, 210, 204, 198, 192, 186, 215, 209, 203, 197, 191, 185, 214, 208, 202, 196, 190, 184, 213, 207, 201, 195, 189, 183, 212, 206, 200, 194, 188, 182, 211, 205, 199, 193, 187, 181, 175, 176, 177, 178, 179, 180, 169, 170, 171, 172, 173, 174, 163, 164, 165, 166, 167, 168, 157, 158, 159, 160, 161, 162, 151, 152, 153, 154, 155, 156, 145, 146, 147, 148, 149, 150, 67, 68, 69, 70, 71, 72, 61, 62, 63, 64, 65, 66, 55, 56, 57, 58, 59, 60, 49, 50, 51, 52, 53, 54, 43, 44, 45, 46, 47, 48, 37, 38, 39, 40, 41, 42, 103, 104, 105, 106, 107, 108, 97, 98, 99, 100, 101, 102, 91, 92, 93, 94, 95, 96, 85, 86, 87, 88, 89, 90, 79, 80, 81, 82, 83, 84, 73, 74, 75, 76, 77, 78, 139, 140, 141, 142, 143, 144, 133, 134, 135, 136, 137, 138, 127, 128, 129, 130, 131, 132, 121, 122, 123, 124, 125, 126, 115, 116, 117, 118, 119, 120, 109, 110, 111, 112, 113, 114, 1, 7, 13, 19, 25, 31, 2, 8, 14, 20, 26, 32, 3, 9, 15, 21, 27, 33, 4, 10, 16, 22, 28, 34, 5, 11, 17, 23, 29, 35, 6, 12, 18, 24, 30, 36),
+    "reflect-x z" : (0, 37, 43, 49, 55, 61, 67, 38, 44, 50, 56, 62, 68, 39, 45, 51, 57, 63, 69, 40, 46, 52, 58, 64, 70, 41, 47, 53, 59, 65, 71, 42, 48, 54, 60, 66, 72, 1, 7, 13, 19, 25, 31, 2, 8, 14, 20, 26, 32, 3, 9, 15, 21, 27, 33, 4, 10, 16, 22, 28, 34, 5, 11, 17, 23, 29, 35, 6, 12, 18, 24, 30, 36, 73, 79, 85, 91, 97, 103, 74, 80, 86, 92, 98, 104, 75, 81, 87, 93, 99, 105, 76, 82, 88, 94, 100, 106, 77, 83, 89, 95, 101, 107, 78, 84, 90, 96, 102, 108, 181, 187, 193, 199, 205, 211, 182, 188, 194, 200, 206, 212, 183, 189, 195, 201, 207, 213, 184, 190, 196, 202, 208, 214, 185, 191, 197, 203, 209, 215, 186, 192, 198, 204, 210, 216, 180, 174, 168, 162, 156, 150, 179, 173, 167, 161, 155, 149, 178, 172, 166, 160, 154, 148, 177, 171, 165, 159, 153, 147, 176, 170, 164, 158, 152, 146, 175, 169, 163, 157, 151, 145, 109, 115, 121, 127, 133, 139, 110, 116, 122, 128, 134, 140, 111, 117, 123, 129, 135, 141, 112, 118, 124, 130, 136, 142, 113, 119, 125, 131, 137, 143, 114, 120, 126, 132, 138, 144),
+    "reflect-x z'" : (0, 144, 138, 132, 126, 120, 114, 143, 137, 131, 125, 119, 113, 142, 136, 130, 124, 118, 112, 141, 135, 129, 123, 117, 111, 140, 134, 128, 122, 116, 110, 139, 133, 127, 121, 115, 109, 216, 210, 204, 198, 192, 186, 215, 209, 203, 197, 191, 185, 214, 208, 202, 196, 190, 184, 213, 207, 201, 195, 189, 183, 212, 206, 200, 194, 188, 182, 211, 205, 199, 193, 187, 181, 108, 102, 96, 90, 84, 78, 107, 101, 95, 89, 83, 77, 106, 100, 94, 88, 82, 76, 105, 99, 93, 87, 81, 75, 104, 98, 92, 86, 80, 74, 103, 97, 91, 85, 79, 73, 36, 30, 24, 18, 12, 6, 35, 29, 23, 17, 11, 5, 34, 28, 22, 16, 10, 4, 33, 27, 21, 15, 9, 3, 32, 26, 20, 14, 8, 2, 31, 25, 19, 13, 7, 1, 145, 151, 157, 163, 169, 175, 146, 152, 158, 164, 170, 176, 147, 153, 159, 165, 171, 177, 148, 154, 160, 166, 172, 178, 149, 155, 161, 167, 173, 179, 150, 156, 162, 168, 174, 180, 72, 66, 60, 54, 48, 42, 71, 65, 59, 53, 47, 41, 70, 64, 58, 52, 46, 40, 69, 63, 57, 51, 45, 39, 68, 62, 56, 50, 44, 38, 67, 61, 55, 49, 43, 37),
+    "reflect-x x x" : (0, 31, 32, 33, 34, 35, 36, 25, 26, 27, 28, 29, 30, 19, 20, 21, 22, 23, 24, 13, 14, 15, 16, 17, 18, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 42, 41, 40, 39, 38, 37, 48, 47, 46, 45, 44, 43, 54, 53, 52, 51, 50, 49, 60, 59, 58, 57, 56, 55, 66, 65, 64, 63, 62, 61, 72, 71, 70, 69, 68, 67, 150, 149, 148, 147, 146, 145, 156, 155, 154, 153, 152, 151, 162, 161, 160, 159, 158, 157, 168, 167, 166, 165, 164, 163, 174, 173, 172, 171, 170, 169, 180, 179, 178, 177, 176, 175, 114, 113, 112, 111, 110, 109, 120, 119, 118, 117, 116, 115, 126, 125, 124, 123, 122, 121, 132, 131, 130, 129, 128, 127, 138, 137, 136, 135, 134, 133, 144, 143, 142, 141, 140, 139, 78, 77, 76, 75, 74, 73, 84, 83, 82, 81, 80, 79, 90, 89, 88, 87, 86, 85, 96, 95, 94, 93, 92, 91, 102, 101, 100, 99, 98, 97, 108, 107, 106, 105, 104, 103, 211, 212, 213, 214, 215, 216, 205, 206, 207, 208, 209, 210, 199, 200, 201, 202, 203, 204, 193, 194, 195, 196, 197, 198, 187, 188, 189, 190, 191, 192, 181, 182, 183, 184, 185, 186),
+    "reflect-x y y" : (0, 186, 185, 184, 183, 182, 181, 192, 191, 190, 189, 188, 187, 198, 197, 196, 195, 194, 193, 204, 203, 202, 201, 200, 199, 210, 209, 208, 207, 206, 205, 216, 215, 214, 213, 212, 211, 139, 140, 141, 142, 143, 144, 133, 134, 135, 136, 137, 138, 127, 128, 129, 130, 131, 132, 121, 122, 123, 124, 125, 126, 115, 116, 117, 118, 119, 120, 109, 110, 111, 112, 113, 114, 175, 176, 177, 178, 179, 180, 169, 170, 171, 172, 173, 174, 163, 164, 165, 166, 167, 168, 157, 158, 159, 160, 161, 162, 151, 152, 153, 154, 155, 156, 145, 146, 147, 148, 149, 150, 67, 68, 69, 70, 71, 72, 61, 62, 63, 64, 65, 66, 55, 56, 57, 58, 59, 60, 49, 50, 51, 52, 53, 54, 43, 44, 45, 46, 47, 48, 37, 38, 39, 40, 41, 42, 103, 104, 105, 106, 107, 108, 97, 98, 99, 100, 101, 102, 91, 92, 93, 94, 95, 96, 85, 86, 87, 88, 89, 90, 79, 80, 81, 82, 83, 84, 73, 74, 75, 76, 77, 78, 6, 5, 4, 3, 2, 1, 12, 11, 10, 9, 8, 7, 18, 17, 16, 15, 14, 13, 24, 23, 22, 21, 20, 19, 30, 29, 28, 27, 26, 25, 36, 35, 34, 33, 32, 31),
+    "reflect-x z z" : (0, 6, 5, 4, 3, 2, 1, 12, 11, 10, 9, 8, 7, 18, 17, 16, 15, 14, 13, 24, 23, 22, 21, 20, 19, 30, 29, 28, 27, 26, 25, 36, 35, 34, 33, 32, 31, 114, 113, 112, 111, 110, 109, 120, 119, 118, 117, 116, 115, 126, 125, 124, 123, 122, 121, 132, 131, 130, 129, 128, 127, 138, 137, 136, 135, 134, 133, 144, 143, 142, 141, 140, 139, 78, 77, 76, 75, 74, 73, 84, 83, 82, 81, 80, 79, 90, 89, 88, 87, 86, 85, 96, 95, 94, 93, 92, 91, 102, 101, 100, 99, 98, 97, 108, 107, 106, 105, 104, 103, 42, 41, 40, 39, 38, 37, 48, 47, 46, 45, 44, 43, 54, 53, 52, 51, 50, 49, 60, 59, 58, 57, 56, 55, 66, 65, 64, 63, 62, 61, 72, 71, 70, 69, 68, 67, 150, 149, 148, 147, 146, 145, 156, 155, 154, 153, 152, 151, 162, 161, 160, 159, 158, 157, 168, 167, 166, 165, 164, 163, 174, 173, 172, 171, 170, 169, 180, 179, 178, 177, 176, 175, 186, 185, 184, 183, 182, 181, 192, 191, 190, 189, 188, 187, 198, 197, 196, 195, 194, 193, 204, 203, 202, 201, 200, 199, 210, 209, 208, 207, 206, 205, 216, 215, 214, 213, 212, 211),
+    "reflect-x x y" : (0, 73, 79, 85, 91, 97, 103, 74, 80, 86, 92, 98, 104, 75, 81, 87, 93, 99, 105, 76, 82, 88, 94, 100, 106, 77, 83, 89, 95, 101, 107, 78, 84, 90, 96, 102, 108, 31, 32, 33, 34, 35, 36, 25, 26, 27, 28, 29, 30, 19, 20, 21, 22, 23, 24, 13, 14, 15, 16, 17, 18, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 109, 115, 121, 127, 133, 139, 110, 116, 122, 128, 134, 140, 111, 117, 123, 129, 135, 141, 112, 118, 124, 130, 136, 142, 113, 119, 125, 131, 137, 143, 114, 120, 126, 132, 138, 144, 186, 185, 184, 183, 182, 181, 192, 191, 190, 189, 188, 187, 198, 197, 196, 195, 194, 193, 204, 203, 202, 201, 200, 199, 210, 209, 208, 207, 206, 205, 216, 215, 214, 213, 212, 211, 72, 66, 60, 54, 48, 42, 71, 65, 59, 53, 47, 41, 70, 64, 58, 52, 46, 40, 69, 63, 57, 51, 45, 39, 68, 62, 56, 50, 44, 38, 67, 61, 55, 49, 43, 37, 145, 151, 157, 163, 169, 175, 146, 152, 158, 164, 170, 176, 147, 153, 159, 165, 171, 177, 148, 154, 160, 166, 172, 178, 149, 155, 161, 167, 173, 179, 150, 156, 162, 168, 174, 180),
+    "reflect-x x y'" : (0, 108, 102, 96, 90, 84, 78, 107, 101, 95, 89, 83, 77, 106, 100, 94, 88, 82, 76, 105, 99, 93, 87, 81, 75, 104, 98, 92, 86, 80, 74, 103, 97, 91, 85, 79, 73, 186, 185, 184, 183, 182, 181, 192, 191, 190, 189, 188, 187, 198, 197, 196, 195, 194, 193, 204, 203, 202, 201, 200, 199, 210, 209, 208, 207, 206, 205, 216, 215, 214, 213, 212, 211, 72, 66, 60, 54, 48, 42, 71, 65, 59, 53, 47, 41, 70, 64, 58, 52, 46, 40, 69, 63, 57, 51, 45, 39, 68, 62, 56, 50, 44, 38, 67, 61, 55, 49, 43, 37, 31, 32, 33, 34, 35, 36, 25, 26, 27, 28, 29, 30, 19, 20, 21, 22, 23, 24, 13, 14, 15, 16, 17, 18, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 109, 115, 121, 127, 133, 139, 110, 116, 122, 128, 134, 140, 111, 117, 123, 129, 135, 141, 112, 118, 124, 130, 136, 142, 113, 119, 125, 131, 137, 143, 114, 120, 126, 132, 138, 144, 180, 174, 168, 162, 156, 150, 179, 173, 167, 161, 155, 149, 178, 172, 166, 160, 154, 148, 177, 171, 165, 159, 153, 147, 176, 170, 164, 158, 152, 146, 175, 169, 163, 157, 151, 145),
+    "reflect-x x z" : (0, 67, 68, 69, 70, 71, 72, 61, 62, 63, 64, 65, 66, 55, 56, 57, 58, 59, 60, 49, 50, 51, 52, 53, 54, 43, 44, 45, 46, 47, 48, 37, 38, 39, 40, 41, 42, 180, 174, 168, 162, 156, 150, 179, 173, 167, 161, 155, 149, 178, 172, 166, 160, 154, 148, 177, 171, 165, 159, 153, 147, 176, 170, 164, 158, 152, 146, 175, 169, 163, 157, 151, 145, 1, 7, 13, 19, 25, 31, 2, 8, 14, 20, 26, 32, 3, 9, 15, 21, 27, 33, 4, 10, 16, 22, 28, 34, 5, 11, 17, 23, 29, 35, 6, 12, 18, 24, 30, 36, 73, 79, 85, 91, 97, 103, 74, 80, 86, 92, 98, 104, 75, 81, 87, 93, 99, 105, 76, 82, 88, 94, 100, 106, 77, 83, 89, 95, 101, 107, 78, 84, 90, 96, 102, 108, 181, 187, 193, 199, 205, 211, 182, 188, 194, 200, 206, 212, 183, 189, 195, 201, 207, 213, 184, 190, 196, 202, 208, 214, 185, 191, 197, 203, 209, 215, 186, 192, 198, 204, 210, 216, 114, 113, 112, 111, 110, 109, 120, 119, 118, 117, 116, 115, 126, 125, 124, 123, 122, 121, 132, 131, 130, 129, 128, 127, 138, 137, 136, 135, 134, 133, 144, 143, 142, 141, 140, 139),
+    "reflect-x x z'" : (0, 139, 140, 141, 142, 143, 144, 133, 134, 135, 136, 137, 138, 127, 128, 129, 130, 131, 132, 121, 122, 123, 124, 125, 126, 115, 116, 117, 118, 119, 120, 109, 110, 111, 112, 113, 114, 108, 102, 96, 90, 84, 78, 107, 101, 95, 89, 83, 77, 106, 100, 94, 88, 82, 76, 105, 99, 93, 87, 81, 75, 104, 98, 92, 86, 80, 74, 103, 97, 91, 85, 79, 73, 36, 30, 24, 18, 12, 6, 35, 29, 23, 17, 11, 5, 34, 28, 22, 16, 10, 4, 33, 27, 21, 15, 9, 3, 32, 26, 20, 14, 8, 2, 31, 25, 19, 13, 7, 1, 145, 151, 157, 163, 169, 175, 146, 152, 158, 164, 170, 176, 147, 153, 159, 165, 171, 177, 148, 154, 160, 166, 172, 178, 149, 155, 161, 167, 173, 179, 150, 156, 162, 168, 174, 180, 216, 210, 204, 198, 192, 186, 215, 209, 203, 197, 191, 185, 214, 208, 202, 196, 190, 184, 213, 207, 201, 195, 189, 183, 212, 206, 200, 194, 188, 182, 211, 205, 199, 193, 187, 181, 42, 41, 40, 39, 38, 37, 48, 47, 46, 45, 44, 43, 54, 53, 52, 51, 50, 49, 60, 59, 58, 57, 56, 55, 66, 65, 64, 63, 62, 61, 72, 71, 70, 69, 68, 67),
+    "reflect-x x y y" : (0, 78, 77, 76, 75, 74, 73, 84, 83, 82, 81, 80, 79, 90, 89, 88, 87, 86, 85, 96, 95, 94, 93, 92, 91, 102, 101, 100, 99, 98, 97, 108, 107, 106, 105, 104, 103, 109, 115, 121, 127, 133, 139, 110, 116, 122, 128, 134, 140, 111, 117, 123, 129, 135, 141, 112, 118, 124, 130, 136, 142, 113, 119, 125, 131, 137, 143, 114, 120, 126, 132, 138, 144, 186, 185, 184, 183, 182, 181, 192, 191, 190, 189, 188, 187, 198, 197, 196, 195, 194, 193, 204, 203, 202, 201, 200, 199, 210, 209, 208, 207, 206, 205, 216, 215, 214, 213, 212, 211, 72, 66, 60, 54, 48, 42, 71, 65, 59, 53, 47, 41, 70, 64, 58, 52, 46, 40, 69, 63, 57, 51, 45, 39, 68, 62, 56, 50, 44, 38, 67, 61, 55, 49, 43, 37, 31, 32, 33, 34, 35, 36, 25, 26, 27, 28, 29, 30, 19, 20, 21, 22, 23, 24, 13, 14, 15, 16, 17, 18, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 175, 176, 177, 178, 179, 180, 169, 170, 171, 172, 173, 174, 163, 164, 165, 166, 167, 168, 157, 158, 159, 160, 161, 162, 151, 152, 153, 154, 155, 156, 145, 146, 147, 148, 149, 150),
+    "reflect-x x z z" : (0, 175, 176, 177, 178, 179, 180, 169, 170, 171, 172, 173, 174, 163, 164, 165, 166, 167, 168, 157, 158, 159, 160, 161, 162, 151, 152, 153, 154, 155, 156, 145, 146, 147, 148, 149, 150, 144, 138, 132, 126, 120, 114, 143, 137, 131, 125, 119, 113, 142, 136, 130, 124, 118, 112, 141, 135, 129, 123, 117, 111, 140, 134, 128, 122, 116, 110, 139, 133, 127, 121, 115, 109, 6, 5, 4, 3, 2, 1, 12, 11, 10, 9, 8, 7, 18, 17, 16, 15, 14, 13, 24, 23, 22, 21, 20, 19, 30, 29, 28, 27, 26, 25, 36, 35, 34, 33, 32, 31, 37, 43, 49, 55, 61, 67, 38, 44, 50, 56, 62, 68, 39, 45, 51, 57, 63, 69, 40, 46, 52, 58, 64, 70, 41, 47, 53, 59, 65, 71, 42, 48, 54, 60, 66, 72, 211, 212, 213, 214, 215, 216, 205, 206, 207, 208, 209, 210, 199, 200, 201, 202, 203, 204, 193, 194, 195, 196, 197, 198, 187, 188, 189, 190, 191, 192, 181, 182, 183, 184, 185, 186, 78, 77, 76, 75, 74, 73, 84, 83, 82, 81, 80, 79, 90, 89, 88, 87, 86, 85, 96, 95, 94, 93, 92, 91, 102, 101, 100, 99, 98, 97, 108, 107, 106, 105, 104, 103),
+    "reflect-x x' y" : (0, 180, 174, 168, 162, 156, 150, 179, 173, 167, 161, 155, 149, 178, 172, 166, 160, 154, 148, 177, 171, 165, 159, 153, 147, 176, 170, 164, 158, 152, 146, 175, 169, 163, 157, 151, 145, 211, 212, 213, 214, 215, 216, 205, 206, 207, 208, 209, 210, 199, 200, 201, 202, 203, 204, 193, 194, 195, 196, 197, 198, 187, 188, 189, 190, 191, 192, 181, 182, 183, 184, 185, 186, 144, 138, 132, 126, 120, 114, 143, 137, 131, 125, 119, 113, 142, 136, 130, 124, 118, 112, 141, 135, 129, 123, 117, 111, 140, 134, 128, 122, 116, 110, 139, 133, 127, 121, 115, 109, 6, 5, 4, 3, 2, 1, 12, 11, 10, 9, 8, 7, 18, 17, 16, 15, 14, 13, 24, 23, 22, 21, 20, 19, 30, 29, 28, 27, 26, 25, 36, 35, 34, 33, 32, 31, 37, 43, 49, 55, 61, 67, 38, 44, 50, 56, 62, 68, 39, 45, 51, 57, 63, 69, 40, 46, 52, 58, 64, 70, 41, 47, 53, 59, 65, 71, 42, 48, 54, 60, 66, 72, 108, 102, 96, 90, 84, 78, 107, 101, 95, 89, 83, 77, 106, 100, 94, 88, 82, 76, 105, 99, 93, 87, 81, 75, 104, 98, 92, 86, 80, 74, 103, 97, 91, 85, 79, 73),
+    "reflect-x x' y'" : (0, 145, 151, 157, 163, 169, 175, 146, 152, 158, 164, 170, 176, 147, 153, 159, 165, 171, 177, 148, 154, 160, 166, 172, 178, 149, 155, 161, 167, 173, 179, 150, 156, 162, 168, 174, 180, 6, 5, 4, 3, 2, 1, 12, 11, 10, 9, 8, 7, 18, 17, 16, 15, 14, 13, 24, 23, 22, 21, 20, 19, 30, 29, 28, 27, 26, 25, 36, 35, 34, 33, 32, 31, 37, 43, 49, 55, 61, 67, 38, 44, 50, 56, 62, 68, 39, 45, 51, 57, 63, 69, 40, 46, 52, 58, 64, 70, 41, 47, 53, 59, 65, 71, 42, 48, 54, 60, 66, 72, 211, 212, 213, 214, 215, 216, 205, 206, 207, 208, 209, 210, 199, 200, 201, 202, 203, 204, 193, 194, 195, 196, 197, 198, 187, 188, 189, 190, 191, 192, 181, 182, 183, 184, 185, 186, 144, 138, 132, 126, 120, 114, 143, 137, 131, 125, 119, 113, 142, 136, 130, 124, 118, 112, 141, 135, 129, 123, 117, 111, 140, 134, 128, 122, 116, 110, 139, 133, 127, 121, 115, 109, 73, 79, 85, 91, 97, 103, 74, 80, 86, 92, 98, 104, 75, 81, 87, 93, 99, 105, 76, 82, 88, 94, 100, 106, 77, 83, 89, 95, 101, 107, 78, 84, 90, 96, 102, 108),
+    "reflect-x x' z" : (0, 42, 41, 40, 39, 38, 37, 48, 47, 46, 45, 44, 43, 54, 53, 52, 51, 50, 49, 60, 59, 58, 57, 56, 55, 66, 65, 64, 63, 62, 61, 72, 71, 70, 69, 68, 67, 73, 79, 85, 91, 97, 103, 74, 80, 86, 92, 98, 104, 75, 81, 87, 93, 99, 105, 76, 82, 88, 94, 100, 106, 77, 83, 89, 95, 101, 107, 78, 84, 90, 96, 102, 108, 181, 187, 193, 199, 205, 211, 182, 188, 194, 200, 206, 212, 183, 189, 195, 201, 207, 213, 184, 190, 196, 202, 208, 214, 185, 191, 197, 203, 209, 215, 186, 192, 198, 204, 210, 216, 180, 174, 168, 162, 156, 150, 179, 173, 167, 161, 155, 149, 178, 172, 166, 160, 154, 148, 177, 171, 165, 159, 153, 147, 176, 170, 164, 158, 152, 146, 175, 169, 163, 157, 151, 145, 1, 7, 13, 19, 25, 31, 2, 8, 14, 20, 26, 32, 3, 9, 15, 21, 27, 33, 4, 10, 16, 22, 28, 34, 5, 11, 17, 23, 29, 35, 6, 12, 18, 24, 30, 36, 139, 140, 141, 142, 143, 144, 133, 134, 135, 136, 137, 138, 127, 128, 129, 130, 131, 132, 121, 122, 123, 124, 125, 126, 115, 116, 117, 118, 119, 120, 109, 110, 111, 112, 113, 114),
+    "reflect-x x' z'" : (0, 114, 113, 112, 111, 110, 109, 120, 119, 118, 117, 116, 115, 126, 125, 124, 123, 122, 121, 132, 131, 130, 129, 128, 127, 138, 137, 136, 135, 134, 133, 144, 143, 142, 141, 140, 139, 145, 151, 157, 163, 169, 175, 146, 152, 158, 164, 170, 176, 147, 153, 159, 165, 171, 177, 148, 154, 160, 166, 172, 178, 149, 155, 161, 167, 173, 179, 150, 156, 162, 168, 174, 180, 216, 210, 204, 198, 192, 186, 215, 209, 203, 197, 191, 185, 214, 208, 202, 196, 190, 184, 213, 207, 201, 195, 189, 183, 212, 206, 200, 194, 188, 182, 211, 205, 199, 193, 187, 181, 108, 102, 96, 90, 84, 78, 107, 101, 95, 89, 83, 77, 106, 100, 94, 88, 82, 76, 105, 99, 93, 87, 81, 75, 104, 98, 92, 86, 80, 74, 103, 97, 91, 85, 79, 73, 36, 30, 24, 18, 12, 6, 35, 29, 23, 17, 11, 5, 34, 28, 22, 16, 10, 4, 33, 27, 21, 15, 9, 3, 32, 26, 20, 14, 8, 2, 31, 25, 19, 13, 7, 1, 67, 68, 69, 70, 71, 72, 61, 62, 63, 64, 65, 66, 55, 56, 57, 58, 59, 60, 49, 50, 51, 52, 53, 54, 43, 44, 45, 46, 47, 48, 37, 38, 39, 40, 41, 42),
+    "reflect-x y x x" : (0, 36, 30, 24, 18, 12, 6, 35, 29, 23, 17, 11, 5, 34, 28, 22, 16, 10, 4, 33, 27, 21, 15, 9, 3, 32, 26, 20, 14, 8, 2, 31, 25, 19, 13, 7, 1, 78, 77, 76, 75, 74, 73, 84, 83, 82, 81, 80, 79, 90, 89, 88, 87, 86, 85, 96, 95, 94, 93, 92, 91, 102, 101, 100, 99, 98, 97, 108, 107, 106, 105, 104, 103, 42, 41, 40, 39, 38, 37, 48, 47, 46, 45, 44, 43, 54, 53, 52, 51, 50, 49, 60, 59, 58, 57, 56, 55, 66, 65, 64, 63, 62, 61, 72, 71, 70, 69, 68, 67, 150, 149, 148, 147, 146, 145, 156, 155, 154, 153, 152, 151, 162, 161, 160, 159, 158, 157, 168, 167, 166, 165, 164, 163, 174, 173, 172, 171, 170, 169, 180, 179, 178, 177, 176, 175, 114, 113, 112, 111, 110, 109, 120, 119, 118, 117, 116, 115, 126, 125, 124, 123, 122, 121, 132, 131, 130, 129, 128, 127, 138, 137, 136, 135, 134, 133, 144, 143, 142, 141, 140, 139, 181, 187, 193, 199, 205, 211, 182, 188, 194, 200, 206, 212, 183, 189, 195, 201, 207, 213, 184, 190, 196, 202, 208, 214, 185, 191, 197, 203, 209, 215, 186, 192, 198, 204, 210, 216),
+    "reflect-x y z z" : (0, 1, 7, 13, 19, 25, 31, 2, 8, 14, 20, 26, 32, 3, 9, 15, 21, 27, 33, 4, 10, 16, 22, 28, 34, 5, 11, 17, 23, 29, 35, 6, 12, 18, 24, 30, 36, 150, 149, 148, 147, 146, 145, 156, 155, 154, 153, 152, 151, 162, 161, 160, 159, 158, 157, 168, 167, 166, 165, 164, 163, 174, 173, 172, 171, 170, 169, 180, 179, 178, 177, 176, 175, 114, 113, 112, 111, 110, 109, 120, 119, 118, 117, 116, 115, 126, 125, 124, 123, 122, 121, 132, 131, 130, 129, 128, 127, 138, 137, 136, 135, 134, 133, 144, 143, 142, 141, 140, 139, 78, 77, 76, 75, 74, 73, 84, 83, 82, 81, 80, 79, 90, 89, 88, 87, 86, 85, 96, 95, 94, 93, 92, 91, 102, 101, 100, 99, 98, 97, 108, 107, 106, 105, 104, 103, 42, 41, 40, 39, 38, 37, 48, 47, 46, 45, 44, 43, 54, 53, 52, 51, 50, 49, 60, 59, 58, 57, 56, 55, 66, 65, 64, 63, 62, 61, 72, 71, 70, 69, 68, 67, 216, 210, 204, 198, 192, 186, 215, 209, 203, 197, 191, 185, 214, 208, 202, 196, 190, 184, 213, 207, 201, 195, 189, 183, 212, 206, 200, 194, 188, 182, 211, 205, 199, 193, 187, 181),
+    "reflect-x z x x" : (0, 109, 115, 121, 127, 133, 139, 110, 116, 122, 128, 134, 140, 111, 117, 123, 129, 135, 141, 112, 118, 124, 130, 136, 142, 113, 119, 125, 131, 137, 143, 114, 120, 126, 132, 138, 144, 36, 30, 24, 18, 12, 6, 35, 29, 23, 17, 11, 5, 34, 28, 22, 16, 10, 4, 33, 27, 21, 15, 9, 3, 32, 26, 20, 14, 8, 2, 31, 25, 19, 13, 7, 1, 145, 151, 157, 163, 169, 175, 146, 152, 158, 164, 170, 176, 147, 153, 159, 165, 171, 177, 148, 154, 160, 166, 172, 178, 149, 155, 161, 167, 173, 179, 150, 156, 162, 168, 174, 180, 216, 210, 204, 198, 192, 186, 215, 209, 203, 197, 191, 185, 214, 208, 202, 196, 190, 184, 213, 207, 201, 195, 189, 183, 212, 206, 200, 194, 188, 182, 211, 205, 199, 193, 187, 181, 108, 102, 96, 90, 84, 78, 107, 101, 95, 89, 83, 77, 106, 100, 94, 88, 82, 76, 105, 99, 93, 87, 81, 75, 104, 98, 92, 86, 80, 74, 103, 97, 91, 85, 79, 73, 37, 43, 49, 55, 61, 67, 38, 44, 50, 56, 62, 68, 39, 45, 51, 57, 63, 69, 40, 46, 52, 58, 64, 70, 41, 47, 53, 59, 65, 71, 42, 48, 54, 60, 66, 72),
+    "reflect-x z y y" : (0, 72, 66, 60, 54, 48, 42, 71, 65, 59, 53, 47, 41, 70, 64, 58, 52, 46, 40, 69, 63, 57, 51, 45, 39, 68, 62, 56, 50, 44, 38, 67, 61, 55, 49, 43, 37, 181, 187, 193, 199, 205, 211, 182, 188, 194, 200, 206, 212, 183, 189, 195, 201, 207, 213, 184, 190, 196, 202, 208, 214, 185, 191, 197, 203, 209, 215, 186, 192, 198, 204, 210, 216, 180, 174, 168, 162, 156, 150, 179, 173, 167, 161, 155, 149, 178, 172, 166, 160, 154, 148, 177, 171, 165, 159, 153, 147, 176, 170, 164, 158, 152, 146, 175, 169, 163, 157, 151, 145, 1, 7, 13, 19, 25, 31, 2, 8, 14, 20, 26, 32, 3, 9, 15, 21, 27, 33, 4, 10, 16, 22, 28, 34, 5, 11, 17, 23, 29, 35, 6, 12, 18, 24, 30, 36, 73, 79, 85, 91, 97, 103, 74, 80, 86, 92, 98, 104, 75, 81, 87, 93, 99, 105, 76, 82, 88, 94, 100, 106, 77, 83, 89, 95, 101, 107, 78, 84, 90, 96, 102, 108, 144, 138, 132, 126, 120, 114, 143, 137, 131, 125, 119, 113, 142, 136, 130, 124, 118, 112, 141, 135, 129, 123, 117, 111, 140, 134, 128, 122, 116, 110, 139, 133, 127, 121, 115, 109),
 }
 
 def rotate_666(cube, step):
-    return rotate_mapper_666[step](cube)
+    return [cube[x] for x in swaps_666[step]]

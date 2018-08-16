@@ -89,6 +89,7 @@ ENV/
 .ropeproject
 
 *.swp
+*.swo
 cache
 lookup*.hash
 lookup*.gz
@@ -98,3 +99,4 @@ pts_lbsearch
 perf.data
 *~
 *.bak
+tmp

@@ -2,23 +2,35 @@
 
 ## Overview
 This is a rubiks cube solver that can solve any size cube, I have tested
-up to 17x17x17.  Here are some stats to give you a rough idea of how many
-moves it will take to solve your cube.
+up to 17x17x17.  The following table shows the reduction in move counts
+as the solver has evolved. This table starts in July 2018, the earlier
+releases of the solver had drastically higher move counts, I think it was
+over 400 moves the first time I solved a 5x5x5.
 
-* 2x2x2 works
-* 3x3x3 average solution is 20 moves
-* 4x4x4 average solution is 59 moves
-* 5x5x5 average solution is 105 moves
-* 6x6x6 average solution is 192 moves
-* 7x7x7 average solution is 270 moves
-* 8x8x8 average solution is 408 moves
-* 9x9x9 average solution is 556 moves
-* 10x10x10 average solution is 768 moves
+| Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| 08/13/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD)  | **50** | 107 | 165 | 244 | 362 | 513 | 669 |
+| 08/13/2018 | [bdbbd46](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/bdbbd46c3f3bf4d150dd1a45466489709c4d2e45)  | 52 | 107 | **165** | **244** | **362** | **513** | **669** |
+| 07/16/2018 | [456ddd1](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/456ddd18f761590294b0b28ac1574a2494514917)  | **52** | 107 | **172** | 247 | **376** | 520 | **725** |
+| 07/12/2018 | [c9484d9](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/c9484d93cd55ae50bffb658165e2f843ac5c5fe1)  | 60 | 107 | **176** | 247 | 386 | 520 | 743 |
+| 07/12/2018 | [5cda2c8](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/5cda2c8e94deba9cecc6b9e87f265b401b3d97a4)  | 60 | 107 | 181 | **247** | **386** | **520** | 743 |
+| 07/08/2018 | [9c13b16](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/9c13b16dbea8abd0581dfaa0abeb4960c54010a4)  | 60 | 107 | 181 | **257** | **403** | **531** | **743** |
+| 07/07/2018 | [e876493](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/e87649306139adebdc86ba1880b1e0c0e9265c5a)  | 60 | 107 | **181** | **272** | 408 | 556 | 768 |
+| 07/04/2018 |   | 60 | 107 | 200 | 278 | 408 | 556 | 768 |
 
-All cubes 4x4x4 and larger follow the same basic approach:
-* Solve centers
-* Pair edges
-* Solve as 3x3x3
+Solving a 2x2x2 takes around 9 moves while solving a 3x3x3 takes around 20 moves but
+I am not working on those solvers so I did not include them in the table above.
+
+I am working on bringing this down but these are the memory requirements for running the solver
+
+| Size | Memory | --min-memory Memory |
+| ------ | ------ | ------ |
+| 4x4x4 | 500M | 300M |
+| 5x5x5 | 200M | 170M |
+| 6x6x6 | 3.0G | 1.1G |
+| 7x7x7 | 4.5G | 4.5G |
+| NxNxN | 4.5G | 4.5G |
+
 
 ## Install
 
@@ -35,9 +47,11 @@ $ sudo make install
 
 ### Install the rubikscubennnsolver python module
 ```
+$ sudo pip3 install pyhashxx
 $ cd
 $ git clone https://github.com/dwalton76/rubiks-cube-NxNxN-solver.git
 $ cd rubiks-cube-NxNxN-solver
+$ python3 setup.py build
 $ sudo python3 setup.py install
 ```
 
@@ -73,7 +87,7 @@ reset; ./usr/bin/rubiks-cube-solver.py --state RRBBUFBFBRLRRRFRDDURUBFBBRFLUDUDF
 
 4x4x4
 =====
-reset; ./usr/bin/rubiks-cube-solver.py --state DRFDFRUFDURDDLLUFLDLLBLULFBUUFRBLBFLLUDDUFRBURBBRBDLLDURFFBBRUFUFDRFURBUDLDBDUFFBUDRRLDRBLFBRRLB
+reset; ./usr/bin/rubiks-cube-solver.py --state FLDFDLBDFBLFFRRBDRFRRURBRDUBBDLURUDRRBFFBDLUBLUULUFRRFBLDDUULBDBDFLDBLUBFRFUFBDDUBFLLRFLURDULLRU
 
 
 5x5x5

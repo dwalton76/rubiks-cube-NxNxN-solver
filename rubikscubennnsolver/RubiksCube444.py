@@ -1,33 +1,61 @@
 #!/usr/bin/env python3
 
-from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver import RubiksCube, NotSolving
+from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
     steps_on_same_face_and_layer,
     LookupTable,
     LookupTableCostOnly,
     LookupTableIDA,
+    LookupTableHashCostOnly,
 )
+from rubikscubennnsolver.RubiksCube444Misc import (
+    high_edges_444,
+    low_edges_444,
+    highlow_edge_mapping_combinations,
+    highlow_edge_values,
+)
+from rubikscubennnsolver.cLibrary import ida_heuristic_states_step10_444
+from pprint import pformat
 import logging
 import sys
 
 log = logging.getLogger(__name__)
 
+moves_444 = (
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2",
+    "F" , "F'", "F2", "Fw", "Fw'", "Fw2",
+    "R" , "R'", "R2", "Rw", "Rw'", "Rw2",
+    "B" , "B'", "B2", "Bw", "Bw'", "Bw2",
+    "D" , "D'", "D2", "Dw", "Dw'", "Dw2"
+)
 
-moves_4x4x4 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2",
-               "L", "L'", "L2", "Lw", "Lw'", "Lw2",
-               "F" , "F'", "F2", "Fw", "Fw'", "Fw2",
-               "R" , "R'", "R2", "Rw", "Rw'", "Rw2",
-               "B" , "B'", "B2", "Bw", "Bw'", "Bw2",
-               "D" , "D'", "D2", "Dw", "Dw'", "Dw2")
+solved_444 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
 
-solved_4x4x4 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
+LR_centers_444 = (
+    22, 23, 26, 27,
+    54, 55, 58, 59
+)
 
-centers_444 = (6, 7, 10, 11, 22, 23, 26, 27, 38, 39, 42, 43, 54, 55, 58, 59, 70, 71, 74, 75, 86, 87, 90, 91)
+centers_444 = (
+    6, 7, 10, 11,
+    22, 23, 26, 27,
+    38, 39, 42, 43,
+    54, 55, 58, 59,
+    70, 71, 74, 75,
+    86, 87, 90, 91
+)
 
-UD_centers_444 = (6, 7, 10, 11, 86, 87, 90, 91)
-
-LR_centers_444 = (22, 23, 26, 27, 54, 55, 58, 59)
+corners_444 = (
+    1, 4, 13, 16,
+    17, 20, 29, 32,
+    33, 36, 45, 48,
+    49, 52, 61, 64,
+    65, 68, 77, 80,
+    81, 84, 93, 96
+)
 
 edges_444 = (
     2, 3, 5, 8, 9, 12, 14, 15,      # Upper
@@ -35,7 +63,8 @@ edges_444 = (
     34, 35, 37, 40, 41, 44, 46, 47, # Front
     50, 51, 53, 56, 57, 60, 62, 63, # Right
     66, 67, 69, 72, 73, 76, 78, 79, # Back
-    82, 83, 85, 88, 89, 92, 94, 95) # Down
+    82, 83, 85, 88, 89, 92, 94, 95  # Down
+)
 
 wings_444 = (
     2, 3,   # Upper
@@ -52,453 +81,83 @@ wings_444 = (
     94, 95
 )
 
-centers_solved_states_444 = set()
-centers_solved_states_444.add('UUUULLLLFFFFRRRRBBBBDDDD')
-centers_solved_states_444.add('UUUUFFFFRRRRBBBBLLLLDDDD')
-centers_solved_states_444.add('UUUURRRRBBBBLLLLFFFFDDDD')
-centers_solved_states_444.add('UUUUBBBBLLLLFFFFRRRRDDDD')
-centers_solved_states_444.add('DDDDLLLLBBBBRRRRFFFFUUUU')
-centers_solved_states_444.add('DDDDBBBBRRRRFFFFLLLLUUUU')
-centers_solved_states_444.add('DDDDRRRRFFFFLLLLBBBBUUUU')
-centers_solved_states_444.add('DDDDFFFFLLLLBBBBRRRRUUUU')
-centers_solved_states_444.add('LLLLUUUUBBBBDDDDFFFFRRRR')
-centers_solved_states_444.add('LLLLBBBBDDDDFFFFUUUURRRR')
-centers_solved_states_444.add('LLLLDDDDFFFFUUUUBBBBRRRR')
-centers_solved_states_444.add('LLLLFFFFUUUUBBBBDDDDRRRR')
-centers_solved_states_444.add('FFFFLLLLDDDDRRRRUUUUBBBB')
-centers_solved_states_444.add('FFFFDDDDRRRRUUUULLLLBBBB')
-centers_solved_states_444.add('FFFFRRRRUUUULLLLDDDDBBBB')
-centers_solved_states_444.add('FFFFUUUULLLLDDDDRRRRBBBB')
-centers_solved_states_444.add('RRRRDDDDBBBBUUUUFFFFLLLL')
-centers_solved_states_444.add('RRRRBBBBUUUUFFFFDDDDLLLL')
-centers_solved_states_444.add('RRRRUUUUFFFFDDDDBBBBLLLL')
-centers_solved_states_444.add('RRRRFFFFDDDDBBBBUUUULLLL')
-centers_solved_states_444.add('BBBBUUUURRRRDDDDLLLLFFFF')
-centers_solved_states_444.add('BBBBRRRRDDDDLLLLUUUUFFFF')
-centers_solved_states_444.add('BBBBDDDDLLLLUUUURRRRFFFF')
-centers_solved_states_444.add('BBBBLLLLUUUURRRRDDDDFFFF')
-
-def centers_solved_444(state):
-    if state[0:24] in centers_solved_states_444:
-        return True
-    return False
-
-
-
-def get_best_entry(foo):
-    # TODO this can only track wings since it is only used by 4x4x4
-    best_entry = None
-    best_paired_edges = None
-    best_paired_wings = None
-    best_steps_len = None
-
-    for (paired_edges, paired_wings, steps_len, state) in foo:
-        if (best_entry is None or
-            paired_edges > best_paired_edges or
-            (paired_edges == best_paired_edges and paired_wings > best_paired_wings) or
-            (paired_edges == best_paired_edges and paired_wings == best_paired_wings and steps_len < best_steps_len)):
-
-            best_entry = (paired_edges, paired_wings, steps_len, state)
-            best_paired_edges = paired_edges
-            best_paired_wings = paired_wings
-            best_steps_len = steps_len
-    return best_entry
-
-
-def get_edges_paired_binary_signature(state):
-    """
-    The facelets are numbered:
-
-                  - 02 03 -
-                 05  - -  08
-                 09  - -  12
-                  - 14 15 -
-
-     - 18 19 -    - 34 35 -    - 50 51 -    - 66 67 -
-    21  - -  24  37  - -  40  53  - -  56  69  - -  72
-    25  - -  28  41  - -  44  57  - -  60  73  - -  76
-     - 30 31 -    - 46 47 -    - 62 63 -    - 78 79 -
-
-                  - 82 83 -
-                 85  - -  88
-                 89  - -  92
-                  - 94 95 -
-
-
-    The wings are labeled 0123456789abcdefghijklmn
-
-                  -  0 1  -
-                  2  - -  3
-                  4  - -  5
-                  -  6 7 -
-
-     -  2 4  -    -  6 7  -    -  5 3  -    -  1 0  -
-     8  - -  9    9  - -  c    c  - -  d    d  - -  8
-     a  - -  b    b  - -  e    e  - -  f    f  - -  a
-     -  k i  -    -  g h  -    -  j l  -    -  n m  -
-
-                  -  g h  -
-                  i  - -  j
-                  k  - -  l
-                  -  m n  -
-
-    'state' goes wing by # wing and records the location of where the sibling wing is located.
-
-    state: 10425376a8b9ecfdhgkiljnm
-
-    index: 000000000011111111112222
-           012345678901234567890123
-
-    get_edges_paired_binary_signature('10425376a8b9ecfdhgkiljnm')
-    111111111111
-
-    get_edges_paired_binary_signature('7ad9nlg0j14cbm2i6kfh85e3')
-    000000000000
-    """
-    result = []
-
-    # Upper
-    if state[0] == '1':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[2] == '4':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[4] == '5':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[6] == '7':
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Left
-    if state[8] == 'a':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[10] == 'b':
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Right
-    if state[12] == 'e':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[14] == 'f':
-        result.append('1')
-    else:
-        result.append('0')
-
-    # Down
-    if state[16] == 'h':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[18] == 'k':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[20] == 'l':
-        result.append('1')
-    else:
-        result.append('0')
-
-    if state[22] == 'n':
-        result.append('1')
-    else:
-        result.append('0')
-
-    return ''.join(result)
-
-
-'''
-lookup-table-4x4x4-step11-UD-centers-stage.txt
-lookup-table-4x4x4-step12-LR-centers-stage.txt
-lookup-table-4x4x4-step13-FB-centers-stage.txt
-==============================================
-1 steps has 3 entries (0 percent, 0.00x previous step)
-2 steps has 36 entries (0 percent, 12.00x previous step)
-3 steps has 484 entries (0 percent, 13.44x previous step)
-4 steps has 5,408 entries (0 percent, 11.17x previous step)
-5 steps has 48,955 entries (6 percent, 9.05x previous step)
-6 steps has 242,011 entries (32 percent, 4.94x previous step)
-7 steps has 362,453 entries (49 percent, 1.50x previous step)
-8 steps has 75,955 entries (10 percent, 0.21x previous step)
-9 steps has 166 entries (0 percent, 0.00x previous step)
-
-Total: 735,471 entries
-'''
-class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
-
-    def __init__(self, parent):
-
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt',
-            'f0000f',
-            linecount=735471,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in centers_444])
-        return int(result, 2)
-
-
-class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
-
-    def __init__(self, parent):
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt',
-            '0f0f00',
-            linecount=735471,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in centers_444])
-        return int(result, 2)
-
-
-class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
-
-    def __init__(self, parent):
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt',
-            '00f0f0',
-            linecount=735471,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('F', 'B') else '0' for x in centers_444])
-        return int(result, 2)
-
-
-
-class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
-    """
-    lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
-    ==================================================
-    1 steps has 4 entries (0 percent, 0.00x previous step)
-    2 steps has 54 entries (0 percent, 13.50x previous step)
-    3 steps has 726 entries (0 percent, 13.44x previous step)
-    4 steps has 9,300 entries (0 percent, 12.81x previous step)
-    5 steps has 121,407 entries (7 percent, 13.05x previous step)
-    6 steps has 1,586,554 entries (92 percent, 13.07x previous step)
-
-    Total: 1,718,045 entries
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
-            'UUUULLLLFFFFLLLLFFFFUUUU',
-            moves_4x4x4,
-
-            # illegal_moves...ignoring these increases the average solution
-            # by less than 1 move but makes the IDA search about 20x faster
-            ("Lw", "Lw'", "Lw2",
-             "Bw", "Bw'", "Bw2",
-             "Dw", "Dw'", "Dw2"),
-
-            # prune tables
-            (parent.lt_UD_centers_stage,
-             parent.lt_LR_centers_stage,
-             parent.lt_FB_centers_stage),
-            linecount=1718045,
-            max_depth=6)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['L' if parent_state[x] in ('L', 'R') else 'F' if parent_state[x] in ('F', 'B') else 'U' for x in centers_444])
-        return result
-
-
-class LookupTable444ULFRBDCentersSolve(LookupTable):
-    """
-    lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt
-    ==================================================
-    1 steps has 96 entries (0 percent, 0.00x previous step)
-    2 steps has 1,008 entries (0 percent, 10.50x previous step)
-    3 steps has 8,208 entries (0 percent, 8.14x previous step)
-    4 steps has 41,712 entries (2 percent, 5.08x previous step)
-    5 steps has 145,560 entries (7 percent, 3.49x previous step)
-    6 steps has 321,576 entries (15 percent, 2.21x previous step)
-    7 steps has 514,896 entries (25 percent, 1.60x previous step)
-    8 steps has 496,560 entries (24 percent, 0.96x previous step)
-    9 steps has 324,096 entries (15 percent, 0.65x previous step)
-    10 steps has 177,408 entries (8 percent, 0.55x previous step)
-    11 steps has 26,880 entries (1 percent, 0.15x previous step)
-
-    Total: 2,058,000 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
-            'UUUULLLLFFFFRRRRBBBBDDDD',
-            linecount=2058000,
-            max_depth=11)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in centers_444])
-        return result
-
-
-class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
-    """
-    IDA search for a centers solution that also happens to pair two or more edges.
-    We do this to (drastically) speed up the edges table lookup later. If no
-    edges are paired the edges signature is 000000000000 and there are about
-    600k of those entries in lookup-table-4x4x4-step110-edges.txt that we will
-    have to evaluate.
-
-    If we can pair two though that drops us down to about 40k edge entries to deal with.
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
-            'TBD',
-            moves_4x4x4,
-            ("Rw", "Rw'", "Lw", "Lw'",
-             "Fw", "Fw'", "Bw", "Bw'",
-             "Uw", "Uw'", "Dw", "Dw'"),
-
-            # prune tables
-            (parent.lt_ULFRBD_centers_solve,),
-            linecount=0,
-            max_depth=99)
-
-    def state(self):
-        state = self.parent.state
-        edges = ''.join([state[square_index] for square_index in wings_444])
-        centers = ''.join([state[x] for x in centers_444])
-        return centers + edges
-
-    def search_complete(self, state, steps_to_here):
-        """
-        return True if centers are solved and at least 2 edges are paired
-        """
-
-        if centers_solved_444(state):
-            paired_edges_count = 12 - self.parent.get_non_paired_edges_count()
-
-            if paired_edges_count >= 2:
-
-                if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-                    log.info("%s: IDA found match but it leads to OLL" % self)
-                    return False
-
-                # rotate_xxx() is very fast but it does not append the
-                # steps to the solution so put the cube back in original state
-                # and execute the steps via a normal rotate() call
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-
-                for step in steps_to_here:
-                    self.parent.rotate(step)
-
-                return True
-
-        return False
-
-
-class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
-    """
-    Experiment to IDA search until we find a solution that happens to put
-    the edges in a state that are in our edge table
-
-    This is sloooow
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
-            'TBD',
-            moves_4x4x4,
-            ("Rw", "Rw'", "Lw", "Lw'",
-             "Fw", "Fw'", "Bw", "Bw'",
-             "Uw", "Uw'", "Dw", "Dw'"),
-
-            # prune tables
-            (parent.lt_ULFRBD_centers_solve,),
-            linecount=0)
-
-    def state(self):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-
-        edges = ''.join([state[square_index] for square_index in wings_444])
-        centers = ''.join([state[x] for x in centers_444])
-
-        return centers + edges
-
-    def search_complete(self, state, steps_to_here):
-
-        if centers_solved_444(state) and self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=False):
-
-            if self.parent.center_solution_leads_to_oll_parity():
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.info("%s: IDA found match but it leads to OLL" % self)
-                return False
-
-            tmp_state = self.parent.state[:]
-            tmp_solution = self.parent.solution[:]
-            self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=True)
-
-            if self.parent.edge_solution_leads_to_pll_parity():
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.info("%s: IDA found match but it leads to PLL" % self)
-                return False
-
-            self.parent.state = tmp_state
-            self.parent.solution = tmp_solution
-
-            # rotate_xxx() is very fast but it does not append the
-            # steps to the solution so put the cube back in original state
-            # and execute the steps via a normal rotate() call
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-
-            for step in steps_to_here:
-                self.parent.rotate(step)
-
-            return True
-
-        return False
-
+edges_partner_444 = {
+    2: 67,
+    3: 66,
+    5: 18,
+    8: 51,
+    9: 19,
+    12: 50,
+    14: 34,
+    15: 35,
+    18: 5,
+    19: 9,
+    21: 72,
+    24: 37,
+    25: 76,
+    28: 41,
+    30: 89,
+    31: 85,
+    34: 14,
+    35: 15,
+    37: 24,
+    40: 53,
+    41: 28,
+    44: 57,
+    46: 82,
+    47: 83,
+    50: 12,
+    51: 8,
+    53: 40,
+    56: 69,
+    57: 44,
+    60: 73,
+    62: 88,
+    63: 92,
+    66: 3,
+    67: 2,
+    69: 56,
+    72: 21,
+    73: 60,
+    76: 25,
+    78: 95,
+    79: 94,
+    82: 46,
+    83: 47,
+    85: 31,
+    88: 62,
+    89: 30,
+    92: 63,
+    94: 79,
+    95: 78
+}
+
+wing_str_sort_map = {
+    'UB' : 'UB',
+    'BU' : 'UB',
+    'UL' : 'UL',
+    'LU' : 'UL',
+    'UR' : 'UR',
+    'RU' : 'UR',
+    'UF' : 'UF',
+    'FU' : 'UF',
+    'LB' : 'LB',
+    'BL' : 'LB',
+    'LF' : 'LF',
+    'FL' : 'LF',
+    'RB' : 'RB',
+    'BR' : 'RB',
+    'RF' : 'RF',
+    'FR' : 'RF',
+    'DB' : 'DB',
+    'BD' : 'DB',
+    'DL' : 'DL',
+    'LD' : 'DL',
+    'DR' : 'DR',
+    'RD' : 'DR',
+    'DF' : 'DF',
+    'FD' : 'DF',
+}
 
 wings_for_edges_recolor_pattern_444 = (
     ('0', 2, 67),  # upper
@@ -527,7 +186,344 @@ wings_for_edges_recolor_pattern_444 = (
     ('k', 89, 30),
     ('l', 92, 63),
     ('m', 94, 79),
-    ('n', 95, 78))
+    ('n', 95, 78)
+)
+
+
+class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
+    """
+    lookup-table-4x4x4-step11-UD-centers-stage.txt
+    lookup-table-4x4x4-step12-LR-centers-stage.txt
+    lookup-table-4x4x4-step13-FB-centers-stage.txt
+    ==============================================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 108 entries (0 percent, 12.00x previous step)
+    3 steps has 1,434 entries (0 percent, 13.28x previous step)
+    4 steps has 15,210 entries (2 percent, 10.61x previous step)
+    5 steps has 126,306 entries (17 percent, 8.30x previous step)
+    6 steps has 420,312 entries (57 percent, 3.33x previous step)
+    7 steps has 171,204 entries (23 percent, 0.41x previous step)
+    8 steps has 888 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.02 moves
+    """
+
+    def __init__(self, parent):
+
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt',
+            (0x00f0f0, 0x0f0f00, 0xf0000f),
+            linecount=735471,
+            max_depth=8,
+            filesize=16711681,
+            md5='504553715ca5632e90a81c9ecd4aa749')
+
+
+class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt',
+            (0x00f0f0, 0x0f0f00, 0xf0000f),
+            linecount=735471,
+            max_depth=8,
+            filesize=16711681,
+            md5='504553715ca5632e90a81c9ecd4aa749')
+
+
+class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent):
+        LookupTableCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt',
+            (0x00f0f0, 0x0f0f00, 0xf0000f),
+            linecount=735471,
+            max_depth=8,
+            filesize=16711681,
+            md5='504553715ca5632e90a81c9ecd4aa749')
+
+
+class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
+    """
+    lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
+    ==================================================
+    1 steps has 24 entries (0 percent, 0.00x previous step)
+    2 steps has 324 entries (0 percent, 13.50x previous step)
+    3 steps has 4,302 entries (0 percent, 13.28x previous step)
+    4 steps has 53,730 entries (0 percent, 12.49x previous step)
+    5 steps has 697,806 entries (7 percent, 12.99x previous step)
+    6 steps has 9,036,684 entries (92 percent, 12.95x previous step)
+
+    Total: 9,792,870 entries
+    """
+
+    heuristic_stats = {
+        (0, 0, 0): 0,
+        (0, 1, 1): 1,
+        (0, 2, 2): 2,
+        (0, 3, 3): 3,
+        (0, 4, 4): 4,
+        (0, 5, 5): 5,
+        (1, 0, 1): 1,
+        (1, 1, 0): 1,
+        (1, 2, 2): 2,
+        (1, 3, 3): 3,
+        (1, 3, 4): 4,
+        (1, 4, 3): 4,
+        (1, 4, 4): 4,
+        (1, 5, 5): 5,
+        (1, 5, 6): 6,
+        (2, 0, 2): 2,
+        (2, 1, 2): 2,
+        (2, 2, 0): 2,
+        (2, 2, 1): 2,
+        (2, 2, 3): 5,
+        (2, 3, 2): 5,
+        (2, 3, 3): 3,
+        (2, 3, 4): 4,
+        (2, 3, 5): 5,
+        (2, 4, 3): 4,
+        (2, 4, 4): 4,
+        (2, 4, 5): 5,
+        (2, 5, 3): 5,
+        (2, 5, 4): 5,
+        (2, 5, 5): 5,
+        (2, 5, 6): 6,
+        (2, 6, 5): 7,
+        (2, 6, 6): 6,
+        (3, 0, 3): 3,
+        (3, 1, 3): 3,
+        (3, 1, 4): 4,
+        (3, 2, 3): 3,
+        (3, 2, 4): 4,
+        (3, 2, 5): 5,
+        (3, 3, 0): 3,
+        (3, 3, 1): 3,
+        (3, 3, 2): 3,
+        (3, 3, 3): 5,
+        (3, 3, 4): 4,
+        (3, 3, 5): 5,
+        (3, 4, 2): 4,
+        (3, 4, 3): 4,
+        (3, 4, 4): 4,
+        (3, 4, 5): 5,
+        (3, 4, 6): 7,
+        (3, 5, 3): 5,
+        (3, 5, 4): 5,
+        (3, 5, 5): 5,
+        (3, 5, 6): 7,
+        (3, 5, 7): 8,
+        (3, 6, 4): 6,
+        (3, 6, 5): 6,
+        (3, 6, 6): 6,
+        (3, 6, 7): 7,
+        (3, 7, 6): 8,
+        (4, 0, 4): 4,
+        (4, 1, 4): 4,
+        (4, 2, 3): 4,
+        (4, 2, 4): 4,
+        (4, 2, 5): 5,
+        (4, 2, 6): 7,
+        (4, 3, 2): 4,
+        (4, 3, 3): 4,
+        (4, 3, 4): 4,
+        (4, 3, 5): 5,
+        (4, 4, 0): 4,
+        (4, 4, 1): 4,
+        (4, 4, 2): 4,
+        (4, 4, 3): 4,
+        (4, 4, 4): 6,
+        (4, 4, 5): 5,
+        (4, 4, 6): 7,
+        (4, 4, 7): 9,
+        (4, 5, 2): 5,
+        (4, 5, 3): 5,
+        (4, 5, 4): 6,
+        (4, 5, 5): 6,
+        (4, 5, 6): 7,
+        (4, 5, 7): 7,
+        (4, 6, 2): 7,
+        (4, 6, 3): 8,
+        (4, 6, 4): 7,
+        (4, 6, 5): 7,
+        (4, 6, 6): 7,
+        (4, 6, 7): 7,
+        (4, 7, 5): 7,
+        (4, 7, 6): 8,
+        (5, 0, 5): 5,
+        (5, 1, 3): 5,
+        (5, 1, 5): 5,
+        (5, 2, 4): 5,
+        (5, 2, 5): 5,
+        (5, 2, 6): 6,
+        (5, 3, 3): 5,
+        (5, 3, 4): 6,
+        (5, 3, 5): 5,
+        (5, 3, 6): 7,
+        (5, 4, 2): 5,
+        (5, 4, 3): 5,
+        (5, 4, 4): 5,
+        (5, 4, 5): 6,
+        (5, 4, 6): 7,
+        (5, 4, 7): 8,
+        (5, 5, 0): 5,
+        (5, 5, 1): 5,
+        (5, 5, 2): 5,
+        (5, 5, 3): 5,
+        (5, 5, 4): 6,
+        (5, 5, 5): 6,
+        (5, 5, 6): 8,
+        (5, 5, 7): 9,
+        (5, 6, 2): 6,
+        (5, 6, 3): 7,
+        (5, 6, 4): 7,
+        (5, 6, 5): 7,
+        (5, 6, 6): 8,
+        (5, 6, 7): 9,
+        (5, 7, 3): 7,
+        (5, 7, 4): 8,
+        (5, 7, 5): 8,
+        (5, 7, 6): 9,
+        (5, 7, 7): 9,
+        (6, 1, 5): 6,
+        (6, 2, 6): 7,
+        (6, 3, 5): 7,
+        (6, 3, 6): 6,
+        (6, 3, 7): 8,
+        (6, 4, 4): 7,
+        (6, 4, 5): 7,
+        (6, 4, 6): 7,
+        (6, 4, 7): 10,
+        (6, 5, 4): 6,
+        (6, 5, 5): 8,
+        (6, 5, 6): 8,
+        (6, 5, 7): 9,
+        (6, 6, 1): 6,
+        (6, 6, 2): 6,
+        (6, 6, 3): 6,
+        (6, 6, 4): 7,
+        (6, 6, 5): 8,
+        (6, 6, 6): 9,
+        (6, 6, 7): 10,
+        (6, 7, 3): 7,
+        (6, 7, 4): 8,
+        (6, 7, 5): 9,
+        (6, 7, 6): 9,
+        (6, 7, 7): 9,
+        (7, 3, 6): 7,
+        (7, 4, 5): 7,
+        (7, 4, 6): 7,
+        (7, 5, 5): 8,
+        (7, 5, 6): 9,
+        (7, 5, 7): 9,
+        (7, 6, 3): 7,
+        (7, 6, 4): 8,
+        (7, 6, 5): 9,
+        (7, 6, 6): 9,
+        (7, 6, 7): 10,
+        (7, 7, 3): 8,
+        (7, 7, 4): 7,
+        (7, 7, 5): 9,
+        (7, 7, 6): 10,
+        (7, 7, 7): 10,
+        (8, 4, 6): 8,
+        (8, 5, 6): 9,
+    }
+
+    # The higher this number the less you honor the heuristic_stats
+    # -  0 uses the heuristic_stats exactly as reported
+    # -  1 subtracts 1 from the heuristic_stats value
+    # - 99 disables heuristic_stats
+    #
+    # You want to put this as high as you can but low enough
+    # to still speed up the slow IDA searches.
+    #
+    # For cube LURDRDURBLRLBDDBUFDFDLLDRFBRLFUFRLBLUBLFRFUUFDDFRBLUUURLBBFLRBURDULUFRBFDUDBDULDLBBBRRDRFDFFUFLB
+    # 99 : 10 moves in 14s
+    #  2 : 10 moves in 6s
+    #  1 : 10 moves in 800ms
+    #  0 : 10 moves in 1500ms
+    heuristic_stats_error = 1
+
+    def __init__(self, parent):
+
+        # 5-deep table, takes 34M
+        # 6-deep table, takes 498M...this search is fast, that
+        # is why I don't bother with a --min-memory option here
+        filename = "lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt"
+        linecount = 756186
+        max_depth = 5
+        filesize = 34028370
+        exit_asap = 11
+
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            filename,
+            ('FFFFLLLLUUUULLLLUUUUFFFF',
+             'FFFFUUUULLLLUUUULLLLFFFF',
+             'LLLLFFFFUUUUFFFFUUUULLLL',
+             'LLLLUUUUFFFFUUUUFFFFLLLL',
+             'UUUUFFFFLLLLFFFFLLLLUUUU',
+             'UUUULLLLFFFFLLLLFFFFUUUU'),
+            moves_444,
+
+            # illegal_moves...ignoring these increases the average solution
+            # by less than 1 move but makes the IDA search about 20x faster
+            ("Lw", "Lw'", "Lw2",
+             "Bw", "Bw'", "Bw2",
+             "Dw", "Dw'", "Dw2"),
+
+            # prune tables
+            (parent.lt_UD_centers_stage,
+             parent.lt_LR_centers_stage,
+             parent.lt_FB_centers_stage),
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize,
+            exit_asap=exit_asap
+        )
+
+        self.recolor_positions = centers_444
+        self.recolor_map = {
+            'D' : 'U',
+            'R' : 'L',
+            'B' : 'F',
+        }
+        self.nuke_corners = True
+
+    def ida_heuristic_tuple(self):
+        parent = self.parent
+        (lt_state, UD_state, LR_state, FB_state) = ida_heuristic_states_step10_444(parent.state, centers_444)
+
+        return (
+            parent.lt_UD_centers_stage.heuristic(UD_state),
+            parent.lt_LR_centers_stage.heuristic(LR_state),
+            parent.lt_FB_centers_stage.heuristic(FB_state),
+        )
+
+    def ida_heuristic(self, ida_threshold):
+        parent = self.parent
+        (lt_state, UD_state, LR_state, FB_state) = ida_heuristic_states_step10_444(parent.state, centers_444)
+
+        UD_cost = parent.lt_UD_centers_stage.heuristic(UD_state)
+        LR_cost = parent.lt_LR_centers_stage.heuristic(LR_state)
+        FB_cost = parent.lt_FB_centers_stage.heuristic(FB_state)
+
+        if ida_threshold >= self.exit_asap:
+            heuristic_stats_cost = self.heuristic_stats.get((UD_cost, LR_cost, FB_cost), 0)
+            cost_to_goal = max(UD_cost, LR_cost, FB_cost, heuristic_stats_cost - self.heuristic_stats_error)
+        else:
+            cost_to_goal = max(UD_cost, LR_cost, FB_cost)
+
+        return (lt_state, cost_to_goal)
 
 
 def edges_recolor_pattern_444(state):
@@ -570,38 +566,474 @@ def edges_recolor_pattern_444(state):
     return ''.join(state)
 
 
-class LookupTable444Edges(LookupTable):
+class LookupTable444HighLowEdgesEdges(LookupTable):
     """
-    lookup-table-4x4x4-step110-edges.txt (11-deep)
-    ==============================================
-    2 steps has 1 entries (0 percent, 0.00x previous step)
-    5 steps has 432 entries (0 percent, 432.00x previous step)
-    6 steps has 2,053 entries (0 percent, 4.75x previous step)
-    7 steps has 15,475 entries (0 percent, 7.54x previous step)
-    8 steps has 151,530 entries (0 percent, 9.79x previous step)
-    9 steps has 991,027 entries (1 percent, 6.54x previous step)
-    10 steps has 6,203,073 entries (9 percent, 6.26x previous step)
-    11 steps has 56,560,361 entries (88 percent, 9.12x previous step)
+    lookup-table-4x4x4-step21-highlow-edges-edges.txt
+    =================================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 29 entries (0 percent, 9.67x previous step)
+    3 steps has 278 entries (0 percent, 9.59x previous step)
+    4 steps has 1,934 entries (0 percent, 6.96x previous step)
+    5 steps has 15,640 entries (0 percent, 8.09x previous step)
+    6 steps has 124,249 entries (4 percent, 7.94x previous step)
+    7 steps has 609,241 entries (22 percent, 4.90x previous step)
+    8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
+    9 steps has 688,124 entries (25 percent, 0.56x previous step)
+    10 steps has 40,560 entries (1 percent, 0.06x previous step)
 
-    Total: 63,923,952 entries
-    Average: 10.863674 moves
+    Total: 2,704,156 entries
+    Average: 7.95 moves
     """
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step110-edges.txt',
-            '111111111111_10425376a8b9ecfdhgkiljnm',
-            linecount=7363591) # 10-deep
-            #linecount=63923952) # 11-deep
+            'lookup-table-4x4x4-step21-highlow-edges-edges.txt',
+            'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+            linecount=2704156,
+            max_depth=10,
+            filesize=227149104)
+
+
+class LookupTable444HighLowEdgesCenters(LookupTable):
+    """
+    lookup-table-4x4x4-step22-highlow-edges-centers.txt
+    ===================================================
+    1 steps has 22 entries (31 percent, 0.00x previous step)
+    2 steps has 16 entries (22 percent, 0.73x previous step)
+    3 steps has 16 entries (22 percent, 1.00x previous step)
+    4 steps has 16 entries (22 percent, 1.00x previous step)
+
+    Total: 70 entries
+    Average: 2.37 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step22-highlow-edges-centers.txt',
+            ('LLLLRRRR',
+             'LLRRLLRR',
+             'LLRRRRLL',
+             'LRLRLRLR',
+             'LRLRRLRL',
+             'LRRLRLLR',
+             'RLLRLRRL',
+             'RLRLLRLR',
+             'RLRLRLRL',
+             'RRLLLLRR',
+             'RRLLRRLL',
+             'RRRRLLLL'),
+            linecount=70,
+            max_depth=4,
+            filesize=1610)
+
+
+class LookupTableIDA444HighLowEdges(LookupTableIDA):
+    """
+    lookup-table-4x4x4-step20-highlow-edges.txt
+    ===========================================
+    1 steps has 36 entries (0 percent, 0.00x previous step)
+    2 steps has 348 entries (0 percent, 9.67x previous step)
+    3 steps has 3,416 entries (0 percent, 9.82x previous step)
+    4 steps has 26,260 entries (1 percent, 7.69x previous step)
+    5 steps has 226,852 entries (9 percent, 8.64x previous step)
+    6 steps has 2,048,086 entries (88 percent, 9.03x previous step)
+
+    Total: 2,304,998 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step20-highlow-edges.txt',
+            ('LLLLRRRRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'LLRRLLRRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'LLRRRRLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'LRLRLRLRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'LRLRRLRLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'LRRLRLLRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RLLRLRRLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RLRLLRLRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RLRLRLRLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RRLLLLRRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RRLLRRLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU',
+             'RRRRLLLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU'),
+            moves_444,
+
+            ("Uw", "Uw'",
+             "Dw", "Dw'",
+             "Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'"),
+
+            (parent.lt_highlow_edges_edges,
+             parent.lt_highlow_edges_centers),
+
+            linecount=2304998,
+            max_depth=6,
+            filesize=182094842)
+
+    def state(self):
+        parent_state = self.parent.state
+        LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
+        edges = self.parent.highlow_edges_state(self.parent.edge_mapping)
+        return LR_centers + edges
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
+        edges_state = self.parent.highlow_edges_state(self.parent.edge_mapping)
+        lt_state = LR_centers + edges_state
+
+        cost_to_goal = max(
+            self.parent.lt_highlow_edges_edges.heuristic(edges_state),
+            self.parent.lt_highlow_edges_centers.heuristic(LR_centers),
+        )
+
+        return (lt_state, cost_to_goal)
+
+
+def edges_recolor_pattern_444(state):
+
+    edge_map = {
+        'UB' : [],
+        'UL' : [],
+        'UR' : [],
+        'UF' : [],
+        'LB' : [],
+        'LF' : [],
+        'RB' : [],
+        'RF' : [],
+        'DB' : [],
+        'DL' : [],
+        'DR' : [],
+        'DF' : [],
+    }
+
+    # Record the two edge_indexes for each of the 12 edges
+    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = wing_str_sort_map[''.join((square_value, partner_value))]
+        edge_map[wing_str].append(edge_index)
+
+    # Where is the other wing_str like us?
+    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = wing_str_sort_map[''.join((square_value, partner_value))]
+
+        for tmp_index in edge_map[wing_str]:
+            if tmp_index != edge_index:
+                state[square_index] = tmp_index
+                state[partner_index] = tmp_index
+                break
+        else:
+            raise Exception("could not find tmp_index")
+
+    return ''.join(state)
+
+
+class LookupTable444Reduce333Edges(LookupTableHashCostOnly):
+    """
+    lookup-table-4x4x4-step31-reduce333-edges.txt
+    =============================================
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 20 entries (0 percent, 5.00x previous step)
+    3 steps has 140 entries (0 percent, 7.00x previous step)
+    4 steps has 1,141 entries (0 percent, 8.15x previous step)
+    5 steps has 8,059 entries (0 percent, 7.06x previous step)
+    6 steps has 62,188 entries (0 percent, 7.72x previous step)
+    7 steps has 442,293 entries (0 percent, 7.11x previous step)
+    8 steps has 2,958,583 entries (1 percent, 6.69x previous step)
+    9 steps has 17,286,512 entries (7 percent, 5.84x previous step)
+    10 steps has 69,004,356 entries (28 percent, 3.99x previous step)
+    11 steps has 122,416,936 entries (51 percent, 1.77x previous step)
+    12 steps has 27,298,296 entries (11 percent, 0.22x previous step)
+    13 steps has 22,272 entries (0 percent, 0.00x previous step)
+
+    Total: 239,500,800 entries
+    Average: 10.635709 moves
+    """
+
+    def __init__(self, parent):
+
+        # Provides an option for running the 444 solver on ~300M
+        if parent.min_memory:
+            filename = 'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt.half-buckets'
+            bucketcount = 119750417
+            filesize = 119750418
+        else:
+            filename = 'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt'
+            bucketcount = 239500847
+            filesize = 239500848
+
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            filename,
+            '10425376a8b9ecfdhgkiljnm',
+            linecount=239500800,
+            max_depth=13,
+            bucketcount=bucketcount,
+            filesize=filesize)
+
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step31-reduce333-edges.txt',
+            '10425376a8b9ecfdhgkiljnm',
+            linecount=239500800,
+            max_depth=13,
+            filesize=479001630)
+        '''
+
+
+class LookupTable444Reduce333CentersSolve(LookupTable):
+    """
+    lookup-table-4x4x4-step32-reduce333-centers.txt
+    ===============================================
+    1 steps has 16 entries (0 percent, 0.00x previous step)
+    2 steps has 136 entries (0 percent, 8.50x previous step)
+    3 steps has 952 entries (1 percent, 7.00x previous step)
+    4 steps has 4,048 entries (6 percent, 4.25x previous step)
+    5 steps has 10,588 entries (18 percent, 2.62x previous step)
+    6 steps has 16,620 entries (28 percent, 1.57x previous step)
+    7 steps has 16,392 entries (27 percent, 0.99x previous step)
+    8 steps has 8,768 entries (14 percent, 0.53x previous step)
+    9 steps has 1,280 entries (2 percent, 0.15x previous step)
+
+    Total: 58,800 entries
+    Average: 6.27 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step32-reduce333-centers.txt',
+            ('DDDDLLLLBBBBRRRRFFFFUUUU',
+             'DDDDRRRRFFFFLLLLBBBBUUUU',
+             'UUUULLLLFFFFRRRRBBBBDDDD',
+             'UUUURRRRBBBBLLLLFFFFDDDD'),
+            linecount=58800,
+            max_depth=9,
+            filesize=3351600)
+
+
+class LookupTableIDA444Reduce333(LookupTableIDA):
+    """
+    lookup-table-4x4x4-step30-reduce333.txt
+    =======================================
+    1 steps has 16 entries (0 percent, 0.00x previous step)
+    2 steps has 136 entries (0 percent, 8.50x previous step)
+    3 steps has 1,424 entries (0 percent, 10.47x previous step)
+    4 steps has 14,032 entries (0 percent, 9.85x previous step)
+    5 steps has 134,052 entries (9 percent, 9.55x previous step)
+    6 steps has 1,290,292 entries (89 percent, 9.63x previous step)
+
+    Total: 1,439,952 entries
+    """
+
+    heuristic_stats = {
+        (0, 0): 1,
+        (0, 2): 7,
+        (1, 1): 2,
+        (1, 2): 9,
+        (1, 3): 8,
+        (1, 4): 6,
+        (2, 1): 7,
+        (2, 2): 3,
+        (2, 3): 4,
+        (2, 4): 5,
+        (2, 5): 7,
+        (2, 6): 9,
+        (2, 10): 14,
+        (2, 11): 14,
+        (3, 1): 4,
+        (3, 2): 4,
+        (3, 3): 4,
+        (3, 4): 6,
+        (3, 5): 7,
+        (3, 6): 10,
+        (3, 7): 11,
+        (3, 8): 12,
+        (3, 9): 12,
+        (3, 10): 13,
+        (3, 11): 15,
+        (4, 1): 5,
+        (4, 2): 6,
+        (4, 3): 6,
+        (4, 4): 6,
+        (4, 5): 7,
+        (4, 6): 10,
+        (4, 7): 11,
+        (4, 8): 12,
+        (4, 9): 13,
+        (4, 10): 14,
+        (4, 11): 15,
+        (5, 2): 6,
+        (5, 3): 6,
+        (5, 4): 7,
+        (5, 5): 8,
+        (5, 6): 9,
+        (5, 7): 11,
+        (5, 8): 12,
+        (5, 9): 13,
+        (5, 10): 14,
+        (5, 11): 15,
+        (5, 12): 14,
+        (6, 3): 7,
+        (6, 4): 10,
+        (6, 5): 9,
+        (6, 6): 9,
+        (6, 7): 10,
+        (6, 8): 11,
+        (6, 9): 13,
+        (6, 10): 14,
+        (6, 11): 15,
+        (6, 12): 16,
+        (7, 5): 12,
+        (7, 6): 11,
+        (7, 7): 11,
+        (7, 8): 12,
+        (7, 9): 13,
+        (7, 10): 14,
+        (7, 11): 14,
+        (7, 12): 15,
+        (8, 6): 13,
+        (8, 7): 13,
+        (8, 8): 13,
+        (8, 9): 13,
+        (8, 10): 14,
+        (8, 11): 15,
+        (8, 12): 14,
+        (9, 8): 13,
+        (9, 9): 13,
+        (9, 10): 14,
+        (9, 11): 15,
+    }
+
+    # The higher this number the less you honor the heuristic_stats
+    # -  0 uses the heuristic_stats exactly as reported
+    # -  1 subtracts 1 from the heuristic_stats value
+    # - 99 disables heuristic_stats
+    #
+    # You want to put this as high as you can but low enough
+    # to still speed up the slow IDA searches.
+    #
+    # For cube DFRFUBDBUBRBRBLFLURRLRURDLRBRDLRULDURFRBLDUFLRFFBFLDFLLBUFFFFUDDBRFBBBLDBBUULLRUUUDLDDFDRDUUBLFD
+    # 99 : 14 moves, 10m 12s  or 15 moves 11s
+    #  3 : 15 moves, 1m 24s   or 15 moves 30s
+    #  2 : 19 moves, 9s       or 15 moves 34s
+    #  1 : 18 moves, 10s      or 17 moves 5s
+    #  0 : 18 moves, 15s      or 17 moves 6s
+    heuristic_stats_error = 2
+
+    def __init__(self, parent):
+
+        # 5-deep table, takes 10M
+        if parent.min_memory:
+            filename = "lookup-table-4x4x4-step30-reduce333.txt.5-deep"
+            linecount = 149660
+            max_depth = 5
+            filesize = 10176880
+            exit_asap = 13
+
+        # 6-deep table, takes 103M
+        else:
+            filename = "lookup-table-4x4x4-step30-reduce333.txt"
+            linecount = 1439952
+            max_depth = 6
+            filesize = 103676544
+            exit_asap = 15
+
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            filename,
+            ('DDDDLLLLBBBBRRRRFFFFUUUU10425376a8b9ecfdhgkiljnm',
+             'DDDDRRRRFFFFLLLLBBBBUUUU10425376a8b9ecfdhgkiljnm',
+             'UUUULLLLFFFFRRRRBBBBDDDD10425376a8b9ecfdhgkiljnm',
+             'UUUURRRRBBBBLLLLFFFFDDDD10425376a8b9ecfdhgkiljnm'),
+            moves_444,
+
+            # illegal moves
+            ("Fw", "Fw'",
+             "Uw", "Uw'",
+             "Rw", "Rw'",
+             "Lw", "Lw'", "Lw2",
+             "Bw", "Bw'", "Bw2",
+             "Dw", "Dw'", "Dw2",
+             "R", "R'",
+             "L", "L'"),
+
+            # prune tables
+            (parent.lt_reduce333_edges_solve,
+             parent.lt_reduce333_centers_solve),
+
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize,
+            exit_asap=exit_asap,
+        )
+
+    def ida_heuristic_tuple(self):
+        state = edges_recolor_pattern_444(self.parent.state[:])
+        centers_state = ''.join([state[square_index] for square_index in centers_444])
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+
+        return (
+            self.parent.lt_reduce333_centers_solve.heuristic(centers_state),
+            self.parent.lt_reduce333_edges_solve.heuristic(edges_state),
+        )
+
+    def ida_heuristic(self, ida_threshold):
+        state = edges_recolor_pattern_444(self.parent.state[:])
+        centers_state = ''.join([state[square_index] for square_index in centers_444])
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        lt_state = centers_state + edges_state
+
+        centers_cost = self.parent.lt_reduce333_centers_solve.heuristic(centers_state)
+        edges_cost = self.parent.lt_reduce333_edges_solve.heuristic(edges_state)
+
+        if ida_threshold >= self.exit_asap:
+            heuristic_stats_cost = self.heuristic_stats.get((centers_cost, edges_cost), 0)
+            cost_to_goal = max(centers_cost, edges_cost, heuristic_stats_cost - self.heuristic_stats_error)
+        else:
+            cost_to_goal = max(centers_cost, edges_cost)
+
+        return (lt_state, cost_to_goal)
 
 
 class RubiksCube444(RubiksCube):
 
+    instantiated = False
+
+    reduce333_orient_edges_tuples = (
+        (2, 67), (3, 66), (5, 18), (8, 51), (9, 19), (12, 50), (14, 34), (15, 35),
+        (18, 5), (19, 9), (21, 72), (24, 37), (25, 76), (28, 41), (30, 89), (31, 85),
+        (34, 14), (35, 15), (37, 24), (40, 53), (41, 28), (44, 57), (46, 82), (47, 83),
+        (50, 12), (51, 8), (53, 40), (56, 69), (57, 44), (60, 73), (62, 88), (63, 92),
+        (66, 3), (67, 2), (69, 56), (72, 21), (73, 60), (76, 25), (78, 95), (79, 94),
+        (82, 46), (83, 47), (85, 31), (88, 62), (89, 30), (92, 63), (94, 79), (95, 78)
+    )
+
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube.__init__(self, state, order, colormap, debug)
         self.avoid_pll = avoid_pll
+
+        if RubiksCube444.instantiated:
+            #raise Exception("Another 4x4x4 instance is being created")
+            log.warning("Another 4x4x4 instance is being created")
+        else:
+            RubiksCube444.instantiated = True
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -631,20 +1063,6 @@ class RubiksCube444(RubiksCube):
         return self._phase
 
     def sanity_check(self):
-        corners = (1, 4, 13, 16,
-                   17, 20, 29, 32,
-                   33, 36, 45, 48,
-                   49, 52, 61, 64,
-                   65, 68, 77, 80,
-                   81, 84, 93, 96)
-
-        centers = (6, 7, 10, 11,
-                   22, 23, 26, 27,
-                   38, 39, 42, 43,
-                   54, 55, 58, 59,
-                   70, 71, 74, 75,
-                   86, 87, 90, 91)
-
         edge_orbit_0 = (2, 3, 8, 12, 15, 14, 9, 5,
                         18, 19, 24, 28, 31, 30, 25, 21,
                         34, 35, 40, 44, 47, 46, 41, 37,
@@ -652,530 +1070,580 @@ class RubiksCube444(RubiksCube):
                         66, 67, 72, 76, 79, 78, 73, 69,
                         82, 83, 88, 92, 95, 94, 89, 85)
 
-        self._sanity_check('corners', corners, 4)
-        self._sanity_check('centers', centers, 4)
+        self._sanity_check('corners', corners_444, 4)
+        self._sanity_check('centers', centers_444, 4)
         self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
+
+    def high_low_state(self, x, y, state_x, state_y, wing_str):
+        """
+        Return U if this is a high edge, D if it is a low edge
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        # Nuke everything except the one wing we are interested in
+        self.nuke_corners()
+        self.nuke_centers()
+        self.nuke_edges()
+
+        self.state[x] = state_x
+        self.state[y] = state_y
+
+        # Now move that wing to its home edge
+        if wing_str.startswith('U'):
+
+            if wing_str == 'UB':
+                self.move_wing_to_U_north(x)
+                high_edge_index = 2
+                low_edge_index = 3
+
+            elif wing_str == 'UL':
+                self.move_wing_to_U_west(x)
+                high_edge_index = 9
+                low_edge_index = 5
+
+            elif wing_str == 'UR':
+                self.move_wing_to_U_east(x)
+                high_edge_index = 8
+                low_edge_index = 12
+
+            elif wing_str == 'UF':
+                self.move_wing_to_U_south(x)
+                high_edge_index = 15
+                low_edge_index = 14
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'U':
+                result = 'U'
+            elif self.state[low_edge_index] == 'U':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('L'):
+
+            if wing_str == 'LB':
+                self.move_wing_to_L_west(x)
+                high_edge_index = 25
+                low_edge_index = 21
+
+            elif wing_str == 'LF':
+                self.move_wing_to_L_east(x)
+                high_edge_index = 24
+                low_edge_index = 28
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'L':
+                result = 'U'
+            elif self.state[low_edge_index] == 'L':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('R'):
+
+            if wing_str == 'RB':
+                self.move_wing_to_R_east(x)
+                high_edge_index = 56
+                low_edge_index = 60
+
+            elif wing_str == 'RF':
+                self.move_wing_to_R_west(x)
+                high_edge_index = 57
+                low_edge_index = 53
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'R':
+                result = 'U'
+            elif self.state[low_edge_index] == 'R':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('D'):
+            if wing_str == 'DB':
+                self.move_wing_to_D_south(x)
+                high_edge_index = 95
+                low_edge_index = 94
+
+            elif wing_str == 'DL':
+                self.move_wing_to_D_west(x)
+                high_edge_index = 89
+                low_edge_index = 85
+
+            elif wing_str == 'DR':
+                self.move_wing_to_D_east(x)
+                high_edge_index = 88
+                low_edge_index = 92
+
+            elif wing_str == 'DF':
+                self.move_wing_to_D_north(x)
+                high_edge_index = 82
+                low_edge_index = 83
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'D':
+                result = 'U'
+            elif self.state[low_edge_index] == 'D':
+                result = 'D'
+            elif self.state[high_edge_index] == 'x':
+                result = 'U'
+            elif self.state[low_edge_index] == 'x':
+                result = 'D'
+            else:
+                self.print_cube()
+                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        else:
+            raise Exception("invalid wing_str %s" % wing_str)
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        assert result in ('U', 'D')
+        return result
+
+    def build_highlow_edge_values(self):
+        state = self.state
+        new_highlow_edge_values = {}
+
+        for x in range(1000000):
+
+            # make random moves
+            step = moves_444[randint(0, len(moves_444)-1)]
+            self.rotate(step)
+
+            for (x, y) in self.reduce333_orient_edges_tuples:
+                state_x = self.state[x]
+                state_y = self.state[y]
+                wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+                wing_tuple = (x, y, state_x, state_y)
+
+                if wing_tuple not in new_highlow_edge_values:
+                    new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
+
+        print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
+        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
+        sys.exit(0)
+
+    def highlow_edges_state(self, edges_to_flip):
+        state = self.state
+
+        if edges_to_flip:
+            result = []
+            for (x, y) in self.reduce333_orient_edges_tuples:
+                state_x = state[x]
+                state_y = state[y]
+                high_low = highlow_edge_values[(x, y, state_x, state_y)]
+                wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+
+                if wing_str in edges_to_flip:
+                    if high_low == 'U':
+                        high_low = 'D'
+                    else:
+                        high_low = 'U'
+
+                result.append(high_low)
+        else:
+            result = [highlow_edge_values[(x, y, state[x], state[y])] for (x, y) in self.reduce333_orient_edges_tuples]
+
+        result = ''.join(result)
+        return result
+
+    def highlow_edges_print(self):
+
+        # save cube state
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        self.nuke_corners()
+        self.nuke_centers()
+
+        orient_edge_state = list(self.highlow_edges_state(self.edge_mapping))
+        orient_edge_state_index = 0
+        for side in list(self.sides.values()):
+            for square_index in side.edge_pos:
+                self.state[square_index] = orient_edge_state[orient_edge_state_index]
+                orient_edge_state_index += 1
+        self.print_cube()
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+    def edges_possibly_oriented_into_high_low_groups(self, debug=False):
+        """
+        Return True if edges "might" be oriented into high/low groups
+        """
+        state = self.state
+        wing_strs_found = set()
+
+        for (low_edge_index, square_index, partner_index) in low_edges_444:
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = wing_str_sort_map[''.join((square_value, partner_value))]
+
+            if wing_str in wing_strs_found:
+                if debug:
+                    log.info("edges_possibly_oriented_into_high_low_groups: wing_str %s already in wing_strs_found %s" % (wing_str, pformat(wing_strs_found)))
+                    log.info("low_edges_444: %s" % pformat(low_edges_444))
+                return False
+            else:
+                wing_strs_found.add(wing_str)
+
+        return True
+
+    def edges_oriented_into_high_low_groups(self, debug=False):
+        """
+        Return True if edges are split into high/low groups
+        """
+        if not self.edges_possibly_oriented_into_high_low_groups(debug):
+            if debug:
+                log.info("edges_oriented_into_high_low_groups False: edges_possibly_oriented_into_high_low_groups returned False")
+            return False
+
+        DU_wing_strs = self.get_flipped_edges()
+        edges_state = self.highlow_edges_state(DU_wing_strs)
+
+        # edge swaps must be even...not technially true but if they are odd it would lead to PLL
+        if len(DU_wing_strs) % 2 == 0:
+
+            if edges_state == 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU' and self.edge_swaps_even(False, 0, False):
+                self.edge_mapping = DU_wing_strs
+                return True
+
+            if debug:
+                log.info("edges_oriented_into_high_low_groups False: DU_wing_strs %s" % pformat(DU_wing_strs))
+                log.info("edges_oriented_into_high_low_groups False: edges_state %s" % edges_state)
+                log.info("edges_oriented_into_high_low_groups False: edge_swaps_even %s" % self.edge_swaps_even(False, 0, False))
+
+        else:
+            if edges_state == 'UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU' and self.edge_swaps_odd(False, 0, False):
+                self.edge_mapping = DU_wing_strs
+                return True
+
+            if debug:
+                log.info("edges_oriented_into_high_low_groups False: DU_wing_strs %s" % pformat(DU_wing_strs))
+                log.info("edges_oriented_into_high_low_groups False: edges_state %s" % edges_state)
+                log.info("edges_oriented_into_high_low_groups False: edge_swaps_odd %s" % self.edge_swaps_odd(False, 0, False))
+
+        return False
+
+    def get_paired_wings_count(self):
+        return self.get_paired_edges_count()
+
+    def get_flipped_edges(self):
+        wing_str_high_low = {
+            'UB' : [],
+            'UL' : [],
+            'UR' : [],
+            'UF' : [],
+            'LB' : [],
+            'LF' : [],
+            'RB' : [],
+            'RF' : [],
+            'DB' : [],
+            'DL' : [],
+            'DR' : [],
+            'DF' : [],
+        }
+        state = self.state
+
+        for (_, x, y) in high_edges_444:
+            state_x = state[x]
+            state_y = state[y]
+            wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+            high_low = highlow_edge_values[(x, y, state_x, state_y)]
+            wing_str_high_low[wing_str].append(high_low)
+
+        for (_, x, y) in low_edges_444:
+            state_x = state[x]
+            state_y = state[y]
+            wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+            high_low = highlow_edge_values[(x, y, state_x, state_y)]
+            wing_str_high_low[wing_str].append(high_low)
+
+        DU_wing_strs = set()
+
+        for (wing_str, high_low) in wing_str_high_low.items():
+            if high_low == ['U', 'D']:
+                pass
+            elif high_low == ['D', 'U']:
+                DU_wing_strs.add(wing_str)
+            else:
+                return False
+
+        return DU_wing_strs
 
     def lt_init(self):
         if self.lt_init_called:
             return
         self.lt_init_called = True
 
-        # ==============
-        # Phase 1 tables
-        # ==============
-        # prune tables
-
-        # Solving 50 cubes where you binary search through the prune table files takes 57s
-        # Solving 50 cubes using the cost-only tables takes 30s!!
         self.lt_UD_centers_stage = LookupTable444UDCentersStageCostOnly(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStageCostOnly(self)
         self.lt_FB_centers_stage = LookupTable444FBCentersStageCostOnly(self)
-
-        # Stage all centers via IDA
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
-        self.lt_ULFRBD_centers_stage.avoid_oll = True
+        self.lt_ULFRBD_centers_stage.avoid_oll = 0 # avoid OLL on orbit 0
+        self.lt_ULFRBD_centers_stage.preload_cache_string()
 
-        # =============
-        # Phase2 tables
-        # =============
-        self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
-        self.lt_ULFRBD_centers_solve_pair_two_edges = LookupTable444ULFRBDCentersSolvePairTwoEdges(self)
-        #self.lt_ULFRBD_centers_solve_edges_stage = LookupTable444ULFRBDCentersSolveEdgesStage(self)
+        self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
+        self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
+        self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
 
-        # Edges table
-        self.lt_edges = LookupTable444Edges(self)
+        self.lt_reduce333_edges_solve = LookupTable444Reduce333Edges(self)
+        self.lt_reduce333_centers_solve = LookupTable444Reduce333CentersSolve(self)
+        self.lt_reduce333 = LookupTableIDA444Reduce333(self)
+        self.lt_reduce333_centers_solve.preload_cache_dict()
+        self.lt_reduce333.preload_cache_string()
 
     def group_centers_guts(self):
         self.lt_init()
 
-        # If the centers are already solved then return and let group_edges() pair the edges
-        if self.centers_solved():
-            return
+        # save cube state
+        self.original_state = self.state[:]
+        self.original_solution = self.solution[:]
 
-        # Stage all centers then solve all centers...averages 18.12 moves
-        log.info("%s: Start of Phase1" % self)
+        # FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU
+        # is a good test cube for ida_all_the_way
         #self.lt_ULFRBD_centers_stage.ida_all_the_way = True
+
+        log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_ULFRBD_centers_stage.solve()
-        self.rotate_for_best_centers_solving()
         self.print_cube()
+
+        if self.rotate_for_best_centers_staging():
+            self.print_cube()
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
 
-        # If the centers were already staged we may not be able to avoid OLL when solving the centers
-        if self.get_solution_len_minus_rotates(self.solution) == 0:
-            self.lt_ULFRBD_centers_solve_pair_two_edges.avoid_oll = False
-        else:
-            self.lt_ULFRBD_centers_solve_pair_two_edges.avoid_oll = True
+        # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
+        # We need the edge swaps to be even for our edges lookup table to work.
+        if self.edge_swaps_odd(False, 0, False):
+            log.warning("%s: edge swaps are odd, running prevent_OLL to correct" % self)
+            self.prevent_OLL()
+            self.print_cube()
+            log.info("%s: End of prevent_OLL, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #self.lt_ULFRBD_centers_solve.solve()
-        self.lt_ULFRBD_centers_solve_pair_two_edges.solve()
-
-        # This will IDA search for a centers solution that happens to put the
-        # edges in a state that are in our table.  It works and produces
-        # solutions in the 50-53 range but can take a few minutes.
-        #self.lt_ULFRBD_centers_solve_edges_stage.solve()
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-        self.print_cube()
-        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-
-    def solve_all_edges_444(self, use_bfs, apply_steps_if_found):
-
-        # Remember what things looked like
+        # Pick the best edge_mapping
+        # - an edge_mapping that gives us a hit in the phase2 table is ideal
+        #     - pick the best among those
+        # - if not pick the one that has the lowest edges_cost
+        # - build the phase2 table out to 7-deep to help here
         original_state = self.state[:]
         original_solution = self.solution[:]
-
-        outer_layer_moves = (
-            "U", "U'", "U2",
-            "L", "L'", "L2",
-            "F", "F'", "F2",
-            "R", "R'", "R2",
-            "B", "B'", "B2",
-            "D", "D'", "D2",
-        )
-        pre_steps_to_try = []
-        pre_steps_to_try.append([])
-
-        if use_bfs:
-            for step in outer_layer_moves:
-                pre_steps_to_try.append([step,])
-
-            for step1 in outer_layer_moves:
-                for step2 in outer_layer_moves:
-                    if not steps_on_same_face_and_layer(step1, step2):
-                        pre_steps_to_try.append([step1, step2])
-
-            for step1 in outer_layer_moves:
-                for step2 in outer_layer_moves:
-                    if not steps_on_same_face_and_layer(step1, step2):
-
-                        for step3 in outer_layer_moves:
-                            if not steps_on_same_face_and_layer(step2, step3):
-                                pre_steps_to_try.append([step1, step2, step3])
-
-            '''
-            for step1 in outer_layer_moves:
-                for step2 in outer_layer_moves:
-                    if not steps_on_same_face_and_layer(step1, step2):
-                        for step3 in outer_layer_moves:
-                            if not steps_on_same_face_and_layer(step2, step3):
-                                for step4 in outer_layer_moves:
-                                    if not steps_on_same_face_and_layer(step3, step4):
-                                        pre_steps_to_try.append([step1, step2, step3, step4])
-
-            '''
-            log.warning("%d pre_steps_to_try" % len(pre_steps_to_try))
+        log.info("%s: Start of find best edge_mapping" % self)
 
         for pre_steps in pre_steps_to_try:
-            #log.info("solve_all_edges_444 trying pre_steps %s" % ' '.join(pre_steps))
-
             self.state = original_state[:]
             self.solution = original_solution[:]
 
             for step in pre_steps:
                 self.rotate(step)
 
-            state = edges_recolor_pattern_444(self.state[:])
+            tmp_state = self.state[:]
+            tmp_solution = self.solution[:]
 
-            edges_state = ''.join([state[square_index] for square_index in wings_444])
-            signature = get_edges_paired_binary_signature(edges_state)
-            signature_width = len(signature) + 1
-            edges_state = signature + '_' + edges_state
+            # Build a list of all 2048 states we need to find in the step20-highlow-edges table.
+            # We do this so we can leverage binary_search_multiple() which runs about a million
+            # times faster than binary searching for all 2048 states one at a time. This allows
+            # us to NOT load this file into memory.
+            high_low_states_to_find = []
+            edge_mapping_for_phase2_state = {}
 
+            for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
+                for edge_mapping in edges_to_flip_sets:
+                    self.state[:] = tmp_state[:]
+                    self.solution[:] = tmp_solution[:]
 
-            # If our state is in lookup-table-4x4x4-step100-edges.txt then execute
-            # those steps and we are done
-            steps = self.lt_edges.steps(edges_state)
+                    self.edge_mapping = edge_mapping
+                    phase2_state = self.lt_highlow_edges.state()
+                    edge_mapping_for_phase2_state[phase2_state] = edge_mapping
+                    high_low_states_to_find.append(phase2_state)
 
-            if steps is not None:
+            high_low_states = self.lt_highlow_edges.binary_search_multiple(high_low_states_to_find)
+            min_edge_mapping = None
+            min_phase2_cost = None
 
-                if apply_steps_if_found:
-                    for step in steps:
-                        self.rotate(step)
-                else:
-                    self.state = original_state[:]
-                    self.solution = original_solution[:]
+            for (phase2_state, phase2_steps) in sorted(high_low_states.items()):
+                self.state = tmp_state[:]
+                self.solution = tmp_solution[:]
+                phase2_steps = phase2_steps.split()
+                phase2_cost = len(phase2_steps)
 
-                return True
+                if min_phase2_cost is None or phase2_cost < min_phase2_cost:
+                    min_phase2_cost = phase2_cost
+                    min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
+                    log.info("%s: using edge_mapping %s, phase2 cost %s" % (self, min_edge_mapping, phase2_cost))
+
+            # dwalton fix this so we do not check in the 7-deep lookup-table-4x4x4-step20-highlow-edges.txt table
+            # It is 180M zipped.  We can probably use pre_steps_to_try in this scenario
+            # This is the case for BLBBDBFULRBBBDRDBDRLLDRBUUULUBBFRRULFULDUFRBFUDLUBRFFRDRBFDRRDFLDFUURBLRUBUFFLDRULFRDFLFFDLLDULD
+            #if min_edge_mapping is None:
+            #    assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
+            if min_edge_mapping:
+                if pre_steps:
+                    log.warning("pre-steps %s required to find a hit" % ' '.join(pre_steps))
+                break
+        else:
+            assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
+        log.info("%s: End of find best edge_mapping" % self)
 
         self.state = original_state[:]
         self.solution = original_solution[:]
+        self.edge_mapping = min_edge_mapping
 
-        return False
+        # Test the prune tables
+        #self.lt_highlow_edges_centers.solve()
+        #self.lt_highlow_edges_edges.solve()
+        #self.print_cube()
+        #self.highlow_edges_print()
+        #sys.exit(0)
 
-    def solve_edges_six_then_six(self):
+        log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.lt_highlow_edges.next_phase = self.lt_reduce333
+        self.lt_highlow_edges.solve()
+        self.print_cube()
+        self.highlow_edges_print()
+        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        if self.edges_paired():
-            return True
+        # Testing the phase3 prune tables
+        #self.lt_reduce333_edges_solve.solve()
+        #self.lt_reduce333_centers_solve.solve()
+        #self.print_cube()
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
 
-        state = edges_recolor_pattern_444(self.state[:])
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
+        log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.lt_reduce333.avoid_pll = True
+        self.lt_reduce333.solve()
 
-        edges_state = ''.join([state[square_index] for square_index in wings_444])
-        signature = get_edges_paired_binary_signature(edges_state)
-        signature_width = len(signature) + 1
-        edges_state = signature + '_' + edges_state
+        if self.state[6] != 'U' or self.state[38] != 'F':
+            self.print_cube()
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
 
-        # If our state is in lookup-table-4x4x4-step100-edges.txt then execute
-        # those steps and we are done
-        steps = self.lt_edges.steps(edges_state)
-
-        if steps is not None:
-            for step in steps:
-                self.rotate(step)
-                return True
-
-        # If we are here then we need to look through lookup-table-4x4x4-step100-edges.txt
-        # to find the line whose state is the closest match to our own. This allows us to
-        # pair some of our unpaired edges and make some progress even though our current
-        # state isn't in the lookup table.
-        MAX_WING_PAIRS = 12
-        MAX_EDGES = 12
-
-        # It takes 12 steps to solve PLL
-        PLL_PENALTY = 12
-
-        STATE_TARGET = '111111111111_10425376a8b9ecfdhgkiljnm'
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        loop_count = 0
-
-        while not self.edges_paired():
-
-            # How many edges are paired?
-            pre_non_paired_edges_count = self.get_non_paired_edges_count()
-            pre_paired_edges_count = MAX_WING_PAIRS - pre_non_paired_edges_count
-
-            state = edges_recolor_pattern_444(self.state[:])
-
-            edges_state = ''.join([state[square_index] for square_index in wings_444])
-            signature = get_edges_paired_binary_signature(edges_state)
-            signature_width = len(signature) + 1
-            edges_state = signature + '_' + edges_state
-
-            log.info("%s: solve_edges_six_then_six loop %d: signature %s, edges_paired %d" % (self, loop_count, signature, pre_paired_edges_count))
-
-            # Find all of the 'loose' matching entries in our lookup table. 'loose' means the
-            # entry will not unpair any of our already paired wings.
-            loose_matching_entry = []
-            max_wing_pair_count = None
-
-            # This runs much faster (than find_edge_entries_with_loose_signature) because
-            # it is only looking over the signatures that are an exact match instead of a
-            # loose match. It produces slightly longer solutions but in about 1/6 the time.
-            log.info("%s: find_edge_entries_with_signature start" % self)
-            lines_to_examine = self.lt_edges.find_edge_entries_with_signature(signature)
-            log.info("%s: find_edge_entries_with_signature end (found %d)" % (self, len(lines_to_examine)))
-
-            for line in lines_to_examine:
-                (phase1_state, phase1_steps) = line.split(':')
-
-                common_count = get_characters_common_count(edges_state,
-                                                           phase1_state,
-                                                           signature_width)
-                wing_pair_count = int(common_count/2)
-
-                # Only bother with this entry if it will pair more wings than are currently paired
-                if wing_pair_count > pre_paired_edges_count:
-
-                    if max_wing_pair_count is None:
-                        loose_matching_entry.append((wing_pair_count, line))
-                        max_wing_pair_count = wing_pair_count
-
-                    elif wing_pair_count > max_wing_pair_count:
-                        #loose_matching_entry = []
-                        loose_matching_entry.append((wing_pair_count, line))
-                        max_wing_pair_count = wing_pair_count
-
-                    elif wing_pair_count == max_wing_pair_count:
-                        loose_matching_entry.append((wing_pair_count, line))
-
-            log.info("%s: loose_matching_entry %d" % (self, len(loose_matching_entry)))
-            #log.warning("loose_matching_entry(%d):\n%s\n" %
-            #    (len(loose_matching_entry), pformat(loose_matching_entry)))
-            best_score_states = []
-
-            # Now run through each state:steps in loose_matching_entry
-            for (wing_pair_count, line) in loose_matching_entry:
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                (phase1_edges_state_fake, phase1_steps) = line.split(':')
-                phase1_steps = phase1_steps.split()
-
-                # Apply the phase1 steps
-                for step in phase1_steps:
-                    self.rotate(step)
-
-                phase1_state = edges_recolor_pattern_444(self.state[:])
-                phase1_edges_state = ''.join([phase1_state[square_index] for square_index in wings_444])
-                phase1_signature = get_edges_paired_binary_signature(phase1_edges_state)
-                phase1_edges_state = phase1_signature + '_' + phase1_edges_state
-
-                # If that got us to our state_target then phase1 alone paired all
-                # of the edges...this is unlikely
-                if phase1_edges_state == STATE_TARGET:
-                    if self.edge_solution_leads_to_pll_parity():
-                        #best_score_states.append((MAX_EDGES, MAX_WING_PAIRS, len(phase1_steps) + PLL_PENALTY, phase1_steps[:]))
-                        pass
-                    else:
-                        best_score_states.append((MAX_EDGES, MAX_WING_PAIRS, len(phase1_steps), phase1_steps[:]))
-
-                else:
-                    # phase1_steps did not pair all edges so do another lookup and execute those steps
-                    phase2_steps = self.lt_edges.steps(phase1_edges_state)
-
-                    if phase2_steps is not None:
-                        for step in phase2_steps:
-                            self.rotate(step)
-
-                        phase2_state = edges_recolor_pattern_444(self.state[:])
-                        phase2_edges_state = ''.join([phase2_state[square_index] for square_index in wings_444])
-                        phase2_signature = get_edges_paired_binary_signature(phase2_edges_state)
-                        phase2_edges_state = phase2_signature + '_' + phase2_edges_state
-                        phase12_steps = phase1_steps + phase2_steps
-
-                        if phase2_edges_state == STATE_TARGET:
-
-                            if self.edge_solution_leads_to_pll_parity():
-                                #best_score_states.append((MAX_EDGES, MAX_WING_PAIRS, len(phase12_steps) + PLL_PENALTY, phase12_steps[:]))
-                                pass
-                            else:
-                                best_score_states.append((MAX_EDGES, MAX_WING_PAIRS, len(phase12_steps), phase12_steps[:]))
-                        else:
-                            post_non_paired_edges_count = self.get_non_paired_edges_count()
-                            paired_edges_count = MAX_WING_PAIRS - post_non_paired_edges_count
-
-                            best_score_states.append((paired_edges_count, paired_edges_count, len(phase12_steps), phase12_steps[:]))
-                    else:
-                        post_non_paired_edges_count = self.get_non_paired_edges_count()
-                        paired_edges_count = MAX_WING_PAIRS - post_non_paired_edges_count
-
-                        best_score_states.append((paired_edges_count, paired_edges_count, len(phase1_steps), phase1_steps[:]))
-
-                #log.info("HERE 10 %s: %s, %s, phase1_edges_state %s, phase2 steps %s" %
-                #    (self, wing_pair_count, line, phase1_edges_state, pformat(phase2_steps)))
-
-            #log.info("best_score_states:\n%s" % pformat(best_score_states))
-            best_entry = get_best_entry(best_score_states)
-            #log.info("best_entry: %s" % pformat(best_entry))
-
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in best_entry[3]:
-                self.rotate(step)
-
-            original_state = self.state[:]
-            original_solution = self.solution[:]
-
-            log.info("%s: solve_edges_six_then_six loop %d: went from %d edges to %d edges in %d moves" %
-                (self, loop_count, pre_paired_edges_count, best_entry[0], len(best_entry[3])))
-            loop_count += 1
+        self.print_cube()
+        log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
 
     def group_edges(self):
-
-        if self.edges_paired():
-            self.solution.append('EDGES_GROUPED')
-            return
-
-        self.lt_init()
-
-        # use_bfs needs more testing...I'm not sure it buys us much
-        if not self.solve_all_edges_444(use_bfs=False, apply_steps_if_found=True):
-            self.solve_edges_six_then_six()
-
+        self.group_centers_guts()
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.solution.append('EDGES_GROUPED')
 
 
-def rotate_444_U(cube):
-    return [cube[0],cube[13],cube[9],cube[5],cube[1],cube[14],cube[10],cube[6],cube[2],cube[15],cube[11],cube[7],cube[3],cube[16],cube[12],cube[8],cube[4]] + cube[33:37] + cube[21:33] + cube[49:53] + cube[37:49] + cube[65:69] + cube[53:65] + cube[17:21] + cube[69:97]
-
-def rotate_444_U_prime(cube):
-    return [cube[0],cube[4],cube[8],cube[12],cube[16],cube[3],cube[7],cube[11],cube[15],cube[2],cube[6],cube[10],cube[14],cube[1],cube[5],cube[9],cube[13]] + cube[65:69] + cube[21:33] + cube[17:21] + cube[37:49] + cube[33:37] + cube[53:65] + cube[49:53] + cube[69:97]
-
-def rotate_444_U2(cube):
-    return [cube[0],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]] + cube[49:53] + cube[21:33] + cube[65:69] + cube[37:49] + cube[17:21] + cube[53:65] + cube[33:37] + cube[69:97]
-
-def rotate_444_Uw(cube):
-    return [cube[0],cube[13],cube[9],cube[5],cube[1],cube[14],cube[10],cube[6],cube[2],cube[15],cube[11],cube[7],cube[3],cube[16],cube[12],cube[8],cube[4]] + cube[33:41] + cube[25:33] + cube[49:57] + cube[41:49] + cube[65:73] + cube[57:65] + cube[17:25] + cube[73:97]
-
-def rotate_444_Uw_prime(cube):
-    return [cube[0],cube[4],cube[8],cube[12],cube[16],cube[3],cube[7],cube[11],cube[15],cube[2],cube[6],cube[10],cube[14],cube[1],cube[5],cube[9],cube[13]] + cube[65:73] + cube[25:33] + cube[17:25] + cube[41:49] + cube[33:41] + cube[57:65] + cube[49:57] + cube[73:97]
-
-def rotate_444_Uw2(cube):
-    return [cube[0],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]] + cube[49:57] + cube[25:33] + cube[65:73] + cube[41:49] + cube[17:25] + cube[57:65] + cube[33:41] + cube[73:97]
-
-def rotate_444_L(cube):
-    return [cube[0],cube[80]] + cube[2:5] + [cube[76]] + cube[6:9] + [cube[72]] + cube[10:13] + [cube[68]] + cube[14:17] + [cube[29],cube[25],cube[21],cube[17],cube[30],cube[26],cube[22],cube[18],cube[31],cube[27],cube[23],cube[19],cube[32],cube[28],cube[24],cube[20],cube[1]] + cube[34:37] + [cube[5]] + cube[38:41] + [cube[9]] + cube[42:45] + [cube[13]] + cube[46:68] + [cube[93]] + cube[69:72] + [cube[89]] + cube[73:76] + [cube[85]] + cube[77:80] + [cube[81],cube[33]] + cube[82:85] + [cube[37]] + cube[86:89] + [cube[41]] + cube[90:93] + [cube[45]] + cube[94:97]
-
-def rotate_444_L_prime(cube):
-    return [cube[0],cube[33]] + cube[2:5] + [cube[37]] + cube[6:9] + [cube[41]] + cube[10:13] + [cube[45]] + cube[14:17] + [cube[20],cube[24],cube[28],cube[32],cube[19],cube[23],cube[27],cube[31],cube[18],cube[22],cube[26],cube[30],cube[17],cube[21],cube[25],cube[29],cube[81]] + cube[34:37] + [cube[85]] + cube[38:41] + [cube[89]] + cube[42:45] + [cube[93]] + cube[46:68] + [cube[13]] + cube[69:72] + [cube[9]] + cube[73:76] + [cube[5]] + cube[77:80] + [cube[1],cube[80]] + cube[82:85] + [cube[76]] + cube[86:89] + [cube[72]] + cube[90:93] + [cube[68]] + cube[94:97]
-
-def rotate_444_L2(cube):
-    return [cube[0],cube[81]] + cube[2:5] + [cube[85]] + cube[6:9] + [cube[89]] + cube[10:13] + [cube[93]] + cube[14:17] + [cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[80]] + cube[34:37] + [cube[76]] + cube[38:41] + [cube[72]] + cube[42:45] + [cube[68]] + cube[46:68] + [cube[45]] + cube[69:72] + [cube[41]] + cube[73:76] + [cube[37]] + cube[77:80] + [cube[33],cube[1]] + cube[82:85] + [cube[5]] + cube[86:89] + [cube[9]] + cube[90:93] + [cube[13]] + cube[94:97]
-
-def rotate_444_Lw(cube):
-    return [cube[0],cube[80],cube[79]] + cube[3:5] + [cube[76],cube[75]] + cube[7:9] + [cube[72],cube[71]] + cube[11:13] + [cube[68],cube[67]] + cube[15:17] + [cube[29],cube[25],cube[21],cube[17],cube[30],cube[26],cube[22],cube[18],cube[31],cube[27],cube[23],cube[19],cube[32],cube[28],cube[24],cube[20]] + cube[1:3] + cube[35:37] + cube[5:7] + cube[39:41] + cube[9:11] + cube[43:45] + cube[13:15] + cube[47:67] + [cube[94],cube[93]] + cube[69:71] + [cube[90],cube[89]] + cube[73:75] + [cube[86],cube[85]] + cube[77:79] + [cube[82],cube[81]] + cube[33:35] + cube[83:85] + cube[37:39] + cube[87:89] + cube[41:43] + cube[91:93] + cube[45:47] + cube[95:97]
-
-def rotate_444_Lw_prime(cube):
-    return [cube[0]] + cube[33:35] + cube[3:5] + cube[37:39] + cube[7:9] + cube[41:43] + cube[11:13] + cube[45:47] + cube[15:17] + [cube[20],cube[24],cube[28],cube[32],cube[19],cube[23],cube[27],cube[31],cube[18],cube[22],cube[26],cube[30],cube[17],cube[21],cube[25],cube[29]] + cube[81:83] + cube[35:37] + cube[85:87] + cube[39:41] + cube[89:91] + cube[43:45] + cube[93:95] + cube[47:67] + [cube[14],cube[13]] + cube[69:71] + [cube[10],cube[9]] + cube[73:75] + [cube[6],cube[5]] + cube[77:79] + [cube[2],cube[1],cube[80],cube[79]] + cube[83:85] + [cube[76],cube[75]] + cube[87:89] + [cube[72],cube[71]] + cube[91:93] + [cube[68],cube[67]] + cube[95:97]
-
-def rotate_444_Lw2(cube):
-    return [cube[0]] + cube[81:83] + cube[3:5] + cube[85:87] + cube[7:9] + cube[89:91] + cube[11:13] + cube[93:95] + cube[15:17] + [cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[80],cube[79]] + cube[35:37] + [cube[76],cube[75]] + cube[39:41] + [cube[72],cube[71]] + cube[43:45] + [cube[68],cube[67]] + cube[47:67] + [cube[46],cube[45]] + cube[69:71] + [cube[42],cube[41]] + cube[73:75] + [cube[38],cube[37]] + cube[77:79] + [cube[34],cube[33]] + cube[1:3] + cube[83:85] + cube[5:7] + cube[87:89] + cube[9:11] + cube[91:93] + cube[13:15] + cube[95:97]
-
-def rotate_444_F(cube):
-    return cube[0:13] + [cube[32],cube[28],cube[24],cube[20]] + cube[17:20] + [cube[81]] + cube[21:24] + [cube[82]] + cube[25:28] + [cube[83]] + cube[29:32] + [cube[84],cube[45],cube[41],cube[37],cube[33],cube[46],cube[42],cube[38],cube[34],cube[47],cube[43],cube[39],cube[35],cube[48],cube[44],cube[40],cube[36],cube[13]] + cube[50:53] + [cube[14]] + cube[54:57] + [cube[15]] + cube[58:61] + [cube[16]] + cube[62:81] + [cube[61],cube[57],cube[53],cube[49]] + cube[85:97]
-
-def rotate_444_F_prime(cube):
-    return cube[0:13] + [cube[49],cube[53],cube[57],cube[61]] + cube[17:20] + [cube[16]] + cube[21:24] + [cube[15]] + cube[25:28] + [cube[14]] + cube[29:32] + [cube[13],cube[36],cube[40],cube[44],cube[48],cube[35],cube[39],cube[43],cube[47],cube[34],cube[38],cube[42],cube[46],cube[33],cube[37],cube[41],cube[45],cube[84]] + cube[50:53] + [cube[83]] + cube[54:57] + [cube[82]] + cube[58:61] + [cube[81]] + cube[62:81] + [cube[20],cube[24],cube[28],cube[32]] + cube[85:97]
-
-def rotate_444_F2(cube):
-    return cube[0:13] + [cube[84],cube[83],cube[82],cube[81]] + cube[17:20] + [cube[61]] + cube[21:24] + [cube[57]] + cube[25:28] + [cube[53]] + cube[29:32] + [cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[36],cube[35],cube[34],cube[33],cube[32]] + cube[50:53] + [cube[28]] + cube[54:57] + [cube[24]] + cube[58:61] + [cube[20]] + cube[62:81] + [cube[16],cube[15],cube[14],cube[13]] + cube[85:97]
-
-def rotate_444_Fw(cube):
-    return cube[0:9] + [cube[31],cube[27],cube[23],cube[19],cube[32],cube[28],cube[24],cube[20]] + cube[17:19] + [cube[85],cube[81]] + cube[21:23] + [cube[86],cube[82]] + cube[25:27] + [cube[87],cube[83]] + cube[29:31] + [cube[88],cube[84],cube[45],cube[41],cube[37],cube[33],cube[46],cube[42],cube[38],cube[34],cube[47],cube[43],cube[39],cube[35],cube[48],cube[44],cube[40],cube[36],cube[13],cube[9]] + cube[51:53] + [cube[14],cube[10]] + cube[55:57] + [cube[15],cube[11]] + cube[59:61] + [cube[16],cube[12]] + cube[63:81] + [cube[61],cube[57],cube[53],cube[49],cube[62],cube[58],cube[54],cube[50]] + cube[89:97]
-
-def rotate_444_Fw_prime(cube):
-    return cube[0:9] + [cube[50],cube[54],cube[58],cube[62],cube[49],cube[53],cube[57],cube[61]] + cube[17:19] + [cube[12],cube[16]] + cube[21:23] + [cube[11],cube[15]] + cube[25:27] + [cube[10],cube[14]] + cube[29:31] + [cube[9],cube[13],cube[36],cube[40],cube[44],cube[48],cube[35],cube[39],cube[43],cube[47],cube[34],cube[38],cube[42],cube[46],cube[33],cube[37],cube[41],cube[45],cube[84],cube[88]] + cube[51:53] + [cube[83],cube[87]] + cube[55:57] + [cube[82],cube[86]] + cube[59:61] + [cube[81],cube[85]] + cube[63:81] + [cube[20],cube[24],cube[28],cube[32],cube[19],cube[23],cube[27],cube[31]] + cube[89:97]
-
-def rotate_444_Fw2(cube):
-    return cube[0:9] + [cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81]] + cube[17:19] + [cube[62],cube[61]] + cube[21:23] + [cube[58],cube[57]] + cube[25:27] + [cube[54],cube[53]] + cube[29:31] + [cube[50],cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31]] + cube[51:53] + [cube[28],cube[27]] + cube[55:57] + [cube[24],cube[23]] + cube[59:61] + [cube[20],cube[19]] + cube[63:81] + [cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9]] + cube[89:97]
-
-def rotate_444_R(cube):
-    return cube[0:4] + [cube[36]] + cube[5:8] + [cube[40]] + cube[9:12] + [cube[44]] + cube[13:16] + [cube[48]] + cube[17:36] + [cube[84]] + cube[37:40] + [cube[88]] + cube[41:44] + [cube[92]] + cube[45:48] + [cube[96],cube[61],cube[57],cube[53],cube[49],cube[62],cube[58],cube[54],cube[50],cube[63],cube[59],cube[55],cube[51],cube[64],cube[60],cube[56],cube[52],cube[16]] + cube[66:69] + [cube[12]] + cube[70:73] + [cube[8]] + cube[74:77] + [cube[4]] + cube[78:84] + [cube[77]] + cube[85:88] + [cube[73]] + cube[89:92] + [cube[69]] + cube[93:96] + [cube[65]]
-
-def rotate_444_R_prime(cube):
-    return cube[0:4] + [cube[77]] + cube[5:8] + [cube[73]] + cube[9:12] + [cube[69]] + cube[13:16] + [cube[65]] + cube[17:36] + [cube[4]] + cube[37:40] + [cube[8]] + cube[41:44] + [cube[12]] + cube[45:48] + [cube[16],cube[52],cube[56],cube[60],cube[64],cube[51],cube[55],cube[59],cube[63],cube[50],cube[54],cube[58],cube[62],cube[49],cube[53],cube[57],cube[61],cube[96]] + cube[66:69] + [cube[92]] + cube[70:73] + [cube[88]] + cube[74:77] + [cube[84]] + cube[78:84] + [cube[36]] + cube[85:88] + [cube[40]] + cube[89:92] + [cube[44]] + cube[93:96] + [cube[48]]
-
-def rotate_444_R2(cube):
-    return cube[0:4] + [cube[84]] + cube[5:8] + [cube[88]] + cube[9:12] + [cube[92]] + cube[13:16] + [cube[96]] + cube[17:36] + [cube[77]] + cube[37:40] + [cube[73]] + cube[41:44] + [cube[69]] + cube[45:48] + [cube[65],cube[64],cube[63],cube[62],cube[61],cube[60],cube[59],cube[58],cube[57],cube[56],cube[55],cube[54],cube[53],cube[52],cube[51],cube[50],cube[49],cube[48]] + cube[66:69] + [cube[44]] + cube[70:73] + [cube[40]] + cube[74:77] + [cube[36]] + cube[78:84] + [cube[4]] + cube[85:88] + [cube[8]] + cube[89:92] + [cube[12]] + cube[93:96] + [cube[16]]
-
-def rotate_444_Rw(cube):
-    return cube[0:3] + cube[35:37] + cube[5:7] + cube[39:41] + cube[9:11] + cube[43:45] + cube[13:15] + cube[47:49] + cube[17:35] + cube[83:85] + cube[37:39] + cube[87:89] + cube[41:43] + cube[91:93] + cube[45:47] + cube[95:97] + [cube[61],cube[57],cube[53],cube[49],cube[62],cube[58],cube[54],cube[50],cube[63],cube[59],cube[55],cube[51],cube[64],cube[60],cube[56],cube[52],cube[16],cube[15]] + cube[67:69] + [cube[12],cube[11]] + cube[71:73] + [cube[8],cube[7]] + cube[75:77] + [cube[4],cube[3]] + cube[79:83] + [cube[78],cube[77]] + cube[85:87] + [cube[74],cube[73]] + cube[89:91] + [cube[70],cube[69]] + cube[93:95] + [cube[66],cube[65]]
-
-def rotate_444_Rw_prime(cube):
-    return cube[0:3] + [cube[78],cube[77]] + cube[5:7] + [cube[74],cube[73]] + cube[9:11] + [cube[70],cube[69]] + cube[13:15] + [cube[66],cube[65]] + cube[17:35] + cube[3:5] + cube[37:39] + cube[7:9] + cube[41:43] + cube[11:13] + cube[45:47] + cube[15:17] + [cube[52],cube[56],cube[60],cube[64],cube[51],cube[55],cube[59],cube[63],cube[50],cube[54],cube[58],cube[62],cube[49],cube[53],cube[57],cube[61],cube[96],cube[95]] + cube[67:69] + [cube[92],cube[91]] + cube[71:73] + [cube[88],cube[87]] + cube[75:77] + [cube[84],cube[83]] + cube[79:83] + cube[35:37] + cube[85:87] + cube[39:41] + cube[89:91] + cube[43:45] + cube[93:95] + cube[47:49]
-
-def rotate_444_Rw2(cube):
-    return cube[0:3] + cube[83:85] + cube[5:7] + cube[87:89] + cube[9:11] + cube[91:93] + cube[13:15] + cube[95:97] + cube[17:35] + [cube[78],cube[77]] + cube[37:39] + [cube[74],cube[73]] + cube[41:43] + [cube[70],cube[69]] + cube[45:47] + [cube[66],cube[65],cube[64],cube[63],cube[62],cube[61],cube[60],cube[59],cube[58],cube[57],cube[56],cube[55],cube[54],cube[53],cube[52],cube[51],cube[50],cube[49],cube[48],cube[47]] + cube[67:69] + [cube[44],cube[43]] + cube[71:73] + [cube[40],cube[39]] + cube[75:77] + [cube[36],cube[35]] + cube[79:83] + cube[3:5] + cube[85:87] + cube[7:9] + cube[89:91] + cube[11:13] + cube[93:95] + cube[15:17]
-
-def rotate_444_B(cube):
-    return [cube[0],cube[52],cube[56],cube[60],cube[64]] + cube[5:17] + [cube[4]] + cube[18:21] + [cube[3]] + cube[22:25] + [cube[2]] + cube[26:29] + [cube[1]] + cube[30:52] + [cube[96]] + cube[53:56] + [cube[95]] + cube[57:60] + [cube[94]] + cube[61:64] + [cube[93],cube[77],cube[73],cube[69],cube[65],cube[78],cube[74],cube[70],cube[66],cube[79],cube[75],cube[71],cube[67],cube[80],cube[76],cube[72],cube[68]] + cube[81:93] + [cube[17],cube[21],cube[25],cube[29]]
-
-def rotate_444_B_prime(cube):
-    return [cube[0],cube[29],cube[25],cube[21],cube[17]] + cube[5:17] + [cube[93]] + cube[18:21] + [cube[94]] + cube[22:25] + [cube[95]] + cube[26:29] + [cube[96]] + cube[30:52] + [cube[1]] + cube[53:56] + [cube[2]] + cube[57:60] + [cube[3]] + cube[61:64] + [cube[4],cube[68],cube[72],cube[76],cube[80],cube[67],cube[71],cube[75],cube[79],cube[66],cube[70],cube[74],cube[78],cube[65],cube[69],cube[73],cube[77]] + cube[81:93] + [cube[64],cube[60],cube[56],cube[52]]
-
-def rotate_444_B2(cube):
-    return [cube[0],cube[96],cube[95],cube[94],cube[93]] + cube[5:17] + [cube[64]] + cube[18:21] + [cube[60]] + cube[22:25] + [cube[56]] + cube[26:29] + [cube[52]] + cube[30:52] + [cube[29]] + cube[53:56] + [cube[25]] + cube[57:60] + [cube[21]] + cube[61:64] + [cube[17],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74],cube[73],cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65]] + cube[81:93] + [cube[4],cube[3],cube[2],cube[1]]
-
-def rotate_444_Bw(cube):
-    return [cube[0],cube[52],cube[56],cube[60],cube[64],cube[51],cube[55],cube[59],cube[63]] + cube[9:17] + [cube[4],cube[8]] + cube[19:21] + [cube[3],cube[7]] + cube[23:25] + [cube[2],cube[6]] + cube[27:29] + [cube[1],cube[5]] + cube[31:51] + [cube[92],cube[96]] + cube[53:55] + [cube[91],cube[95]] + cube[57:59] + [cube[90],cube[94]] + cube[61:63] + [cube[89],cube[93],cube[77],cube[73],cube[69],cube[65],cube[78],cube[74],cube[70],cube[66],cube[79],cube[75],cube[71],cube[67],cube[80],cube[76],cube[72],cube[68]] + cube[81:89] + [cube[18],cube[22],cube[26],cube[30],cube[17],cube[21],cube[25],cube[29]]
-
-def rotate_444_Bw_prime(cube):
-    return [cube[0],cube[29],cube[25],cube[21],cube[17],cube[30],cube[26],cube[22],cube[18]] + cube[9:17] + [cube[93],cube[89]] + cube[19:21] + [cube[94],cube[90]] + cube[23:25] + [cube[95],cube[91]] + cube[27:29] + [cube[96],cube[92]] + cube[31:51] + [cube[5],cube[1]] + cube[53:55] + [cube[6],cube[2]] + cube[57:59] + [cube[7],cube[3]] + cube[61:63] + [cube[8],cube[4],cube[68],cube[72],cube[76],cube[80],cube[67],cube[71],cube[75],cube[79],cube[66],cube[70],cube[74],cube[78],cube[65],cube[69],cube[73],cube[77]] + cube[81:89] + [cube[63],cube[59],cube[55],cube[51],cube[64],cube[60],cube[56],cube[52]]
-
-def rotate_444_Bw2(cube):
-    return [cube[0],cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89]] + cube[9:17] + [cube[64],cube[63]] + cube[19:21] + [cube[60],cube[59]] + cube[23:25] + [cube[56],cube[55]] + cube[27:29] + [cube[52],cube[51]] + cube[31:51] + [cube[30],cube[29]] + cube[53:55] + [cube[26],cube[25]] + cube[57:59] + [cube[22],cube[21]] + cube[61:63] + [cube[18],cube[17],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74],cube[73],cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65]] + cube[81:89] + [cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]]
-
-def rotate_444_D(cube):
-    return cube[0:29] + cube[77:81] + cube[33:45] + cube[29:33] + cube[49:61] + cube[45:49] + cube[65:77] + cube[61:65] + [cube[93],cube[89],cube[85],cube[81],cube[94],cube[90],cube[86],cube[82],cube[95],cube[91],cube[87],cube[83],cube[96],cube[92],cube[88],cube[84]]
-
-def rotate_444_D_prime(cube):
-    return cube[0:29] + cube[45:49] + cube[33:45] + cube[61:65] + cube[49:61] + cube[77:81] + cube[65:77] + cube[29:33] + [cube[84],cube[88],cube[92],cube[96],cube[83],cube[87],cube[91],cube[95],cube[82],cube[86],cube[90],cube[94],cube[81],cube[85],cube[89],cube[93]]
-
-def rotate_444_D2(cube):
-    return cube[0:29] + cube[61:65] + cube[33:45] + cube[77:81] + cube[49:61] + cube[29:33] + cube[65:77] + cube[45:49] + [cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81]]
-
-def rotate_444_Dw(cube):
-    return cube[0:25] + cube[73:81] + cube[33:41] + cube[25:33] + cube[49:57] + cube[41:49] + cube[65:73] + cube[57:65] + [cube[93],cube[89],cube[85],cube[81],cube[94],cube[90],cube[86],cube[82],cube[95],cube[91],cube[87],cube[83],cube[96],cube[92],cube[88],cube[84]]
-
-def rotate_444_Dw_prime(cube):
-    return cube[0:25] + cube[41:49] + cube[33:41] + cube[57:65] + cube[49:57] + cube[73:81] + cube[65:73] + cube[25:33] + [cube[84],cube[88],cube[92],cube[96],cube[83],cube[87],cube[91],cube[95],cube[82],cube[86],cube[90],cube[94],cube[81],cube[85],cube[89],cube[93]]
-
-def rotate_444_Dw2(cube):
-    return cube[0:25] + cube[57:65] + cube[33:41] + cube[73:81] + cube[49:57] + cube[25:33] + cube[65:73] + cube[41:49] + [cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81]]
-
-def rotate_444_x(cube):
-    return [cube[0]] + cube[33:49] + [cube[20],cube[24],cube[28],cube[32],cube[19],cube[23],cube[27],cube[31],cube[18],cube[22],cube[26],cube[30],cube[17],cube[21],cube[25],cube[29]] + cube[81:97] + [cube[61],cube[57],cube[53],cube[49],cube[62],cube[58],cube[54],cube[50],cube[63],cube[59],cube[55],cube[51],cube[64],cube[60],cube[56],cube[52],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74],cube[73],cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65]]
-
-def rotate_444_x_prime(cube):
-    return [cube[0],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74],cube[73],cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65],cube[29],cube[25],cube[21],cube[17],cube[30],cube[26],cube[22],cube[18],cube[31],cube[27],cube[23],cube[19],cube[32],cube[28],cube[24],cube[20]] + cube[1:17] + [cube[52],cube[56],cube[60],cube[64],cube[51],cube[55],cube[59],cube[63],cube[50],cube[54],cube[58],cube[62],cube[49],cube[53],cube[57],cube[61],cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81]] + cube[33:49]
-
-def rotate_444_y(cube):
-    return [cube[0],cube[13],cube[9],cube[5],cube[1],cube[14],cube[10],cube[6],cube[2],cube[15],cube[11],cube[7],cube[3],cube[16],cube[12],cube[8],cube[4]] + cube[33:81] + cube[17:33] + [cube[84],cube[88],cube[92],cube[96],cube[83],cube[87],cube[91],cube[95],cube[82],cube[86],cube[90],cube[94],cube[81],cube[85],cube[89],cube[93]]
-
-def rotate_444_y_prime(cube):
-    return [cube[0],cube[4],cube[8],cube[12],cube[16],cube[3],cube[7],cube[11],cube[15],cube[2],cube[6],cube[10],cube[14],cube[1],cube[5],cube[9],cube[13]] + cube[65:81] + cube[17:65] + [cube[93],cube[89],cube[85],cube[81],cube[94],cube[90],cube[86],cube[82],cube[95],cube[91],cube[87],cube[83],cube[96],cube[92],cube[88],cube[84]]
-
-def rotate_444_z(cube):
-    return [cube[0],cube[29],cube[25],cube[21],cube[17],cube[30],cube[26],cube[22],cube[18],cube[31],cube[27],cube[23],cube[19],cube[32],cube[28],cube[24],cube[20],cube[93],cube[89],cube[85],cube[81],cube[94],cube[90],cube[86],cube[82],cube[95],cube[91],cube[87],cube[83],cube[96],cube[92],cube[88],cube[84],cube[45],cube[41],cube[37],cube[33],cube[46],cube[42],cube[38],cube[34],cube[47],cube[43],cube[39],cube[35],cube[48],cube[44],cube[40],cube[36],cube[13],cube[9],cube[5],cube[1],cube[14],cube[10],cube[6],cube[2],cube[15],cube[11],cube[7],cube[3],cube[16],cube[12],cube[8],cube[4],cube[68],cube[72],cube[76],cube[80],cube[67],cube[71],cube[75],cube[79],cube[66],cube[70],cube[74],cube[78],cube[65],cube[69],cube[73],cube[77],cube[61],cube[57],cube[53],cube[49],cube[62],cube[58],cube[54],cube[50],cube[63],cube[59],cube[55],cube[51],cube[64],cube[60],cube[56],cube[52]]
-
-def rotate_444_z_prime(cube):
-    return [cube[0],cube[52],cube[56],cube[60],cube[64],cube[51],cube[55],cube[59],cube[63],cube[50],cube[54],cube[58],cube[62],cube[49],cube[53],cube[57],cube[61],cube[4],cube[8],cube[12],cube[16],cube[3],cube[7],cube[11],cube[15],cube[2],cube[6],cube[10],cube[14],cube[1],cube[5],cube[9],cube[13],cube[36],cube[40],cube[44],cube[48],cube[35],cube[39],cube[43],cube[47],cube[34],cube[38],cube[42],cube[46],cube[33],cube[37],cube[41],cube[45],cube[84],cube[88],cube[92],cube[96],cube[83],cube[87],cube[91],cube[95],cube[82],cube[86],cube[90],cube[94],cube[81],cube[85],cube[89],cube[93],cube[77],cube[73],cube[69],cube[65],cube[78],cube[74],cube[70],cube[66],cube[79],cube[75],cube[71],cube[67],cube[80],cube[76],cube[72],cube[68],cube[20],cube[24],cube[28],cube[32],cube[19],cube[23],cube[27],cube[31],cube[18],cube[22],cube[26],cube[30],cube[17],cube[21],cube[25],cube[29]]
-
-rotate_mapper_444 = {
-    "B" : rotate_444_B,
-    "B'" : rotate_444_B_prime,
-    "B2" : rotate_444_B2,
-    "Bw" : rotate_444_Bw,
-    "Bw'" : rotate_444_Bw_prime,
-    "Bw2" : rotate_444_Bw2,
-    "D" : rotate_444_D,
-    "D'" : rotate_444_D_prime,
-    "D2" : rotate_444_D2,
-    "Dw" : rotate_444_Dw,
-    "Dw'" : rotate_444_Dw_prime,
-    "Dw2" : rotate_444_Dw2,
-    "F" : rotate_444_F,
-    "F'" : rotate_444_F_prime,
-    "F2" : rotate_444_F2,
-    "Fw" : rotate_444_Fw,
-    "Fw'" : rotate_444_Fw_prime,
-    "Fw2" : rotate_444_Fw2,
-    "L" : rotate_444_L,
-    "L'" : rotate_444_L_prime,
-    "L2" : rotate_444_L2,
-    "Lw" : rotate_444_Lw,
-    "Lw'" : rotate_444_Lw_prime,
-    "Lw2" : rotate_444_Lw2,
-    "R" : rotate_444_R,
-    "R'" : rotate_444_R_prime,
-    "R2" : rotate_444_R2,
-    "Rw" : rotate_444_Rw,
-    "Rw'" : rotate_444_Rw_prime,
-    "Rw2" : rotate_444_Rw2,
-    "U" : rotate_444_U,
-    "U'" : rotate_444_U_prime,
-    "U2" : rotate_444_U2,
-    "Uw" : rotate_444_Uw,
-    "Uw'" : rotate_444_Uw_prime,
-    "Uw2" : rotate_444_Uw2,
-    "x" : rotate_444_x,
-    "x'" : rotate_444_x_prime,
-    "y" : rotate_444_y,
-    "y'" : rotate_444_y_prime,
-    "z" : rotate_444_z,
-    "z'" : rotate_444_z_prime,
+swaps_444 = {'B': (0, 52, 56, 60, 64, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 4, 18, 19, 20, 3, 22, 23, 24, 2, 26, 27, 28, 1, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 96, 53, 54, 55, 95, 57, 58, 59, 94, 61, 62, 63, 93, 77, 73, 69, 65, 78, 74, 70, 66, 79, 75, 71, 67, 80, 76, 72, 68, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 17, 21, 25, 29),
+ "B'": (0, 29, 25, 21, 17, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 93, 18, 19, 20, 94, 22, 23, 24, 95, 26, 27, 28, 96, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 1, 53, 54, 55, 2, 57, 58, 59, 3, 61, 62, 63, 4, 68, 72, 76, 80, 67, 71, 75, 79, 66, 70, 74, 78, 65, 69, 73, 77, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 64, 60, 56, 52),
+ 'B2': (0, 96, 95, 94, 93, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 64, 18, 19, 20, 60, 22, 23, 24, 56, 26, 27, 28, 52, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 29, 53, 54, 55, 25, 57, 58, 59, 21, 61, 62, 63, 17, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 4, 3, 2, 1),
+ 'Bw': (0, 52, 56, 60, 64, 51, 55, 59, 63, 9, 10, 11, 12, 13, 14, 15, 16, 4, 8, 19, 20, 3, 7, 23, 24, 2, 6, 27, 28, 1, 5, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 92, 96, 53, 54, 91, 95, 57, 58, 90, 94, 61, 62, 89, 93, 77, 73, 69, 65, 78, 74, 70, 66, 79, 75, 71, 67, 80, 76, 72, 68, 81, 82, 83, 84, 85, 86, 87, 88, 18, 22, 26, 30, 17, 21, 25, 29),
+ "Bw'": (0, 29, 25, 21, 17, 30, 26, 22, 18, 9, 10, 11, 12, 13, 14, 15, 16, 93, 89, 19, 20, 94, 90, 23, 24, 95, 91, 27, 28, 96, 92, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 5, 1, 53, 54, 6, 2, 57, 58, 7, 3, 61, 62, 8, 4, 68, 72, 76, 80, 67, 71, 75, 79, 66, 70, 74, 78, 65, 69, 73, 77, 81, 82, 83, 84, 85, 86, 87, 88, 63, 59, 55, 51, 64, 60, 56, 52),
+ 'Bw2': (0, 96, 95, 94, 93, 92, 91, 90, 89, 9, 10, 11, 12, 13, 14, 15, 16, 64, 63, 19, 20, 60, 59, 23, 24, 56, 55, 27, 28, 52, 51, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 30, 29, 53, 54, 26, 25, 57, 58, 22, 21, 61, 62, 18, 17, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 81, 82, 83, 84, 85, 86, 87, 88, 8, 7, 6, 5, 4, 3, 2, 1),
+ 'D': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 77, 78, 79, 80, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 29, 30, 31, 32, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 45, 46, 47, 48, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 61, 62, 63, 64, 93, 89, 85, 81, 94, 90, 86, 82, 95, 91, 87, 83, 96, 92, 88, 84),
+ "D'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 45, 46, 47, 48, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 61, 62, 63, 64, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 77, 78, 79, 80, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 29, 30, 31, 32, 84, 88, 92, 96, 83, 87, 91, 95, 82, 86, 90, 94, 81, 85, 89, 93),
+ 'D2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 61, 62, 63, 64, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 77, 78, 79, 80, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 29, 30, 31, 32, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 45, 46, 47, 48, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81),
+ 'Dw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 73, 74, 75, 76, 77, 78, 79, 80, 33, 34, 35, 36, 37, 38, 39, 40, 25, 26, 27, 28, 29, 30, 31, 32, 49, 50, 51, 52, 53, 54, 55, 56, 41, 42, 43, 44, 45, 46, 47, 48, 65, 66, 67, 68, 69, 70, 71, 72, 57, 58, 59, 60, 61, 62, 63, 64, 93, 89, 85, 81, 94, 90, 86, 82, 95, 91, 87, 83, 96, 92, 88, 84),
+ "Dw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 41, 42, 43, 44, 45, 46, 47, 48, 33, 34, 35, 36, 37, 38, 39, 40, 57, 58, 59, 60, 61, 62, 63, 64, 49, 50, 51, 52, 53, 54, 55, 56, 73, 74, 75, 76, 77, 78, 79, 80, 65, 66, 67, 68, 69, 70, 71, 72, 25, 26, 27, 28, 29, 30, 31, 32, 84, 88, 92, 96, 83, 87, 91, 95, 82, 86, 90, 94, 81, 85, 89, 93),
+ 'Dw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 57, 58, 59, 60, 61, 62, 63, 64, 33, 34, 35, 36, 37, 38, 39, 40, 73, 74, 75, 76, 77, 78, 79, 80, 49, 50, 51, 52, 53, 54, 55, 56, 25, 26, 27, 28, 29, 30, 31, 32, 65, 66, 67, 68, 69, 70, 71, 72, 41, 42, 43, 44, 45, 46, 47, 48, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81),
+ 'F': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 32, 28, 24, 20, 17, 18, 19, 81, 21, 22, 23, 82, 25, 26, 27, 83, 29, 30, 31, 84, 45, 41, 37, 33, 46, 42, 38, 34, 47, 43, 39, 35, 48, 44, 40, 36, 13, 50, 51, 52, 14, 54, 55, 56, 15, 58, 59, 60, 16, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 61, 57, 53, 49, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96),
+ "F'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 49, 53, 57, 61, 17, 18, 19, 16, 21, 22, 23, 15, 25, 26, 27, 14, 29, 30, 31, 13, 36, 40, 44, 48, 35, 39, 43, 47, 34, 38, 42, 46, 33, 37, 41, 45, 84, 50, 51, 52, 83, 54, 55, 56, 82, 58, 59, 60, 81, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 20, 24, 28, 32, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96),
+ 'F2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 84, 83, 82, 81, 17, 18, 19, 61, 21, 22, 23, 57, 25, 26, 27, 53, 29, 30, 31, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 50, 51, 52, 28, 54, 55, 56, 24, 58, 59, 60, 20, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 16, 15, 14, 13, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96),
+ 'Fw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 31, 27, 23, 19, 32, 28, 24, 20, 17, 18, 85, 81, 21, 22, 86, 82, 25, 26, 87, 83, 29, 30, 88, 84, 45, 41, 37, 33, 46, 42, 38, 34, 47, 43, 39, 35, 48, 44, 40, 36, 13, 9, 51, 52, 14, 10, 55, 56, 15, 11, 59, 60, 16, 12, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 61, 57, 53, 49, 62, 58, 54, 50, 89, 90, 91, 92, 93, 94, 95, 96),
+ "Fw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 50, 54, 58, 62, 49, 53, 57, 61, 17, 18, 12, 16, 21, 22, 11, 15, 25, 26, 10, 14, 29, 30, 9, 13, 36, 40, 44, 48, 35, 39, 43, 47, 34, 38, 42, 46, 33, 37, 41, 45, 84, 88, 51, 52, 83, 87, 55, 56, 82, 86, 59, 60, 81, 85, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 20, 24, 28, 32, 19, 23, 27, 31, 89, 90, 91, 92, 93, 94, 95, 96),
+ 'Fw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 88, 87, 86, 85, 84, 83, 82, 81, 17, 18, 62, 61, 21, 22, 58, 57, 25, 26, 54, 53, 29, 30, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 51, 52, 28, 27, 55, 56, 24, 23, 59, 60, 20, 19, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 16, 15, 14, 13, 12, 11, 10, 9, 89, 90, 91, 92, 93, 94, 95, 96),
+ 'L': (0, 80, 2, 3, 4, 76, 6, 7, 8, 72, 10, 11, 12, 68, 14, 15, 16, 29, 25, 21, 17, 30, 26, 22, 18, 31, 27, 23, 19, 32, 28, 24, 20, 1, 34, 35, 36, 5, 38, 39, 40, 9, 42, 43, 44, 13, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 93, 69, 70, 71, 89, 73, 74, 75, 85, 77, 78, 79, 81, 33, 82, 83, 84, 37, 86, 87, 88, 41, 90, 91, 92, 45, 94, 95, 96),
+ "L'": (0, 33, 2, 3, 4, 37, 6, 7, 8, 41, 10, 11, 12, 45, 14, 15, 16, 20, 24, 28, 32, 19, 23, 27, 31, 18, 22, 26, 30, 17, 21, 25, 29, 81, 34, 35, 36, 85, 38, 39, 40, 89, 42, 43, 44, 93, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 13, 69, 70, 71, 9, 73, 74, 75, 5, 77, 78, 79, 1, 80, 82, 83, 84, 76, 86, 87, 88, 72, 90, 91, 92, 68, 94, 95, 96),
+ 'L2': (0, 81, 2, 3, 4, 85, 6, 7, 8, 89, 10, 11, 12, 93, 14, 15, 16, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 80, 34, 35, 36, 76, 38, 39, 40, 72, 42, 43, 44, 68, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 45, 69, 70, 71, 41, 73, 74, 75, 37, 77, 78, 79, 33, 1, 82, 83, 84, 5, 86, 87, 88, 9, 90, 91, 92, 13, 94, 95, 96),
+ 'Lw': (0, 80, 79, 3, 4, 76, 75, 7, 8, 72, 71, 11, 12, 68, 67, 15, 16, 29, 25, 21, 17, 30, 26, 22, 18, 31, 27, 23, 19, 32, 28, 24, 20, 1, 2, 35, 36, 5, 6, 39, 40, 9, 10, 43, 44, 13, 14, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 94, 93, 69, 70, 90, 89, 73, 74, 86, 85, 77, 78, 82, 81, 33, 34, 83, 84, 37, 38, 87, 88, 41, 42, 91, 92, 45, 46, 95, 96),
+ "Lw'": (0, 33, 34, 3, 4, 37, 38, 7, 8, 41, 42, 11, 12, 45, 46, 15, 16, 20, 24, 28, 32, 19, 23, 27, 31, 18, 22, 26, 30, 17, 21, 25, 29, 81, 82, 35, 36, 85, 86, 39, 40, 89, 90, 43, 44, 93, 94, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 14, 13, 69, 70, 10, 9, 73, 74, 6, 5, 77, 78, 2, 1, 80, 79, 83, 84, 76, 75, 87, 88, 72, 71, 91, 92, 68, 67, 95, 96),
+ 'Lw2': (0, 81, 82, 3, 4, 85, 86, 7, 8, 89, 90, 11, 12, 93, 94, 15, 16, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 80, 79, 35, 36, 76, 75, 39, 40, 72, 71, 43, 44, 68, 67, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 46, 45, 69, 70, 42, 41, 73, 74, 38, 37, 77, 78, 34, 33, 1, 2, 83, 84, 5, 6, 87, 88, 9, 10, 91, 92, 13, 14, 95, 96),
+ 'R': (0, 1, 2, 3, 36, 5, 6, 7, 40, 9, 10, 11, 44, 13, 14, 15, 48, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 84, 37, 38, 39, 88, 41, 42, 43, 92, 45, 46, 47, 96, 61, 57, 53, 49, 62, 58, 54, 50, 63, 59, 55, 51, 64, 60, 56, 52, 16, 66, 67, 68, 12, 70, 71, 72, 8, 74, 75, 76, 4, 78, 79, 80, 81, 82, 83, 77, 85, 86, 87, 73, 89, 90, 91, 69, 93, 94, 95, 65),
+ "R'": (0, 1, 2, 3, 77, 5, 6, 7, 73, 9, 10, 11, 69, 13, 14, 15, 65, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 4, 37, 38, 39, 8, 41, 42, 43, 12, 45, 46, 47, 16, 52, 56, 60, 64, 51, 55, 59, 63, 50, 54, 58, 62, 49, 53, 57, 61, 96, 66, 67, 68, 92, 70, 71, 72, 88, 74, 75, 76, 84, 78, 79, 80, 81, 82, 83, 36, 85, 86, 87, 40, 89, 90, 91, 44, 93, 94, 95, 48),
+ 'R2': (0, 1, 2, 3, 84, 5, 6, 7, 88, 9, 10, 11, 92, 13, 14, 15, 96, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 77, 37, 38, 39, 73, 41, 42, 43, 69, 45, 46, 47, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 66, 67, 68, 44, 70, 71, 72, 40, 74, 75, 76, 36, 78, 79, 80, 81, 82, 83, 4, 85, 86, 87, 8, 89, 90, 91, 12, 93, 94, 95, 16),
+ 'Rw': (0, 1, 2, 35, 36, 5, 6, 39, 40, 9, 10, 43, 44, 13, 14, 47, 48, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 83, 84, 37, 38, 87, 88, 41, 42, 91, 92, 45, 46, 95, 96, 61, 57, 53, 49, 62, 58, 54, 50, 63, 59, 55, 51, 64, 60, 56, 52, 16, 15, 67, 68, 12, 11, 71, 72, 8, 7, 75, 76, 4, 3, 79, 80, 81, 82, 78, 77, 85, 86, 74, 73, 89, 90, 70, 69, 93, 94, 66, 65),
+ "Rw'": (0, 1, 2, 78, 77, 5, 6, 74, 73, 9, 10, 70, 69, 13, 14, 66, 65, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 3, 4, 37, 38, 7, 8, 41, 42, 11, 12, 45, 46, 15, 16, 52, 56, 60, 64, 51, 55, 59, 63, 50, 54, 58, 62, 49, 53, 57, 61, 96, 95, 67, 68, 92, 91, 71, 72, 88, 87, 75, 76, 84, 83, 79, 80, 81, 82, 35, 36, 85, 86, 39, 40, 89, 90, 43, 44, 93, 94, 47, 48),
+ 'Rw2': (0, 1, 2, 83, 84, 5, 6, 87, 88, 9, 10, 91, 92, 13, 14, 95, 96, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 78, 77, 37, 38, 74, 73, 41, 42, 70, 69, 45, 46, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 67, 68, 44, 43, 71, 72, 40, 39, 75, 76, 36, 35, 79, 80, 81, 82, 3, 4, 85, 86, 7, 8, 89, 90, 11, 12, 93, 94, 15, 16),
+ 'U': (0, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3, 16, 12, 8, 4, 33, 34, 35, 36, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 49, 50, 51, 52, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 65, 66, 67, 68, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 17, 18, 19, 20, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96),
+ "U'": (0, 4, 8, 12, 16, 3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 65, 66, 67, 68, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 17, 18, 19, 20, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 33, 34, 35, 36, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 49, 50, 51, 52, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96),
+ 'U2': (0, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 49, 50, 51, 52, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 65, 66, 67, 68, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 17, 18, 19, 20, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 33, 34, 35, 36, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96),
+ 'Uw': (0, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3, 16, 12, 8, 4, 33, 34, 35, 36, 37, 38, 39, 40, 25, 26, 27, 28, 29, 30, 31, 32, 49, 50, 51, 52, 53, 54, 55, 56, 41, 42, 43, 44, 45, 46, 47, 48, 65, 66, 67, 68, 69, 70, 71, 72, 57, 58, 59, 60, 61, 62, 63, 64, 17, 18, 19, 20, 21, 22, 23, 24, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96),
+ "Uw'": (0, 4, 8, 12, 16, 3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 65, 66, 67, 68, 69, 70, 71, 72, 25, 26, 27, 28, 29, 30, 31, 32, 17, 18, 19, 20, 21, 22, 23, 24, 41, 42, 43, 44, 45, 46, 47, 48, 33, 34, 35, 36, 37, 38, 39, 40, 57, 58, 59, 60, 61, 62, 63, 64, 49, 50, 51, 52, 53, 54, 55, 56, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96),
+ 'Uw2': (0, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 49, 50, 51, 52, 53, 54, 55, 56, 25, 26, 27, 28, 29, 30, 31, 32, 65, 66, 67, 68, 69, 70, 71, 72, 41, 42, 43, 44, 45, 46, 47, 48, 17, 18, 19, 20, 21, 22, 23, 24, 57, 58, 59, 60, 61, 62, 63, 64, 33, 34, 35, 36, 37, 38, 39, 40, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96),
+ 'x': (0, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 20, 24, 28, 32, 19, 23, 27, 31, 18, 22, 26, 30, 17, 21, 25, 29, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 61, 57, 53, 49, 62, 58, 54, 50, 63, 59, 55, 51, 64, 60, 56, 52, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65),
+ "x'": (0, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 29, 25, 21, 17, 30, 26, 22, 18, 31, 27, 23, 19, 32, 28, 24, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 52, 56, 60, 64, 51, 55, 59, 63, 50, 54, 58, 62, 49, 53, 57, 61, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48),
+ 'y': (0, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3, 16, 12, 8, 4, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 84, 88, 92, 96, 83, 87, 91, 95, 82, 86, 90, 94, 81, 85, 89, 93),
+ "y'": (0, 4, 8, 12, 16, 3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 93, 89, 85, 81, 94, 90, 86, 82, 95, 91, 87, 83, 96, 92, 88, 84),
+ 'z': (0, 29, 25, 21, 17, 30, 26, 22, 18, 31, 27, 23, 19, 32, 28, 24, 20, 93, 89, 85, 81, 94, 90, 86, 82, 95, 91, 87, 83, 96, 92, 88, 84, 45, 41, 37, 33, 46, 42, 38, 34, 47, 43, 39, 35, 48, 44, 40, 36, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3, 16, 12, 8, 4, 68, 72, 76, 80, 67, 71, 75, 79, 66, 70, 74, 78, 65, 69, 73, 77, 61, 57, 53, 49, 62, 58, 54, 50, 63, 59, 55, 51, 64, 60, 56, 52),
+ "z'": (0, 52, 56, 60, 64, 51, 55, 59, 63, 50, 54, 58, 62, 49, 53, 57, 61, 4, 8, 12, 16, 3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 36, 40, 44, 48, 35, 39, 43, 47, 34, 38, 42, 46, 33, 37, 41, 45, 84, 88, 92, 96, 83, 87, 91, 95, 82, 86, 90, 94, 81, 85, 89, 93, 77, 73, 69, 65, 78, 74, 70, 66, 79, 75, 71, 67, 80, 76, 72, 68, 20, 24, 28, 32, 19, 23, 27, 31, 18, 22, 26, 30, 17, 21, 25, 29),
+    "x x" : (0, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16),
+    "y y" : (0, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81),
+    "z z" : (0, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1),
+    "x y" : (0, 45, 41, 37, 33, 46, 42, 38, 34, 47, 43, 39, 35, 48, 44, 40, 36, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 61, 57, 53, 49, 62, 58, 54, 50, 63, 59, 55, 51, 64, 60, 56, 52, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 20, 24, 28, 32, 19, 23, 27, 31, 18, 22, 26, 30, 17, 21, 25, 29, 77, 73, 69, 65, 78, 74, 70, 66, 79, 75, 71, 67, 80, 76, 72, 68),
+    "x y'" : (0, 36, 40, 44, 48, 35, 39, 43, 47, 34, 38, 42, 46, 33, 37, 41, 45, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 20, 24, 28, 32, 19, 23, 27, 31, 18, 22, 26, 30, 17, 21, 25, 29, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 61, 57, 53, 49, 62, 58, 54, 50, 63, 59, 55, 51, 64, 60, 56, 52, 68, 72, 76, 80, 67, 71, 75, 79, 66, 70, 74, 78, 65, 69, 73, 77),
+    "x z" : (0, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 68, 72, 76, 80, 67, 71, 75, 79, 66, 70, 74, 78, 65, 69, 73, 77, 93, 89, 85, 81, 94, 90, 86, 82, 95, 91, 87, 83, 96, 92, 88, 84, 45, 41, 37, 33, 46, 42, 38, 34, 47, 43, 39, 35, 48, 44, 40, 36, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3, 16, 12, 8, 4, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49),
+    "x z'" : (0, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 36, 40, 44, 48, 35, 39, 43, 47, 34, 38, 42, 46, 33, 37, 41, 45, 84, 88, 92, 96, 83, 87, 91, 95, 82, 86, 90, 94, 81, 85, 89, 93, 77, 73, 69, 65, 78, 74, 70, 66, 79, 75, 71, 67, 80, 76, 72, 68, 4, 8, 12, 16, 3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17),
+    "x y y" : (0, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 61, 57, 53, 49, 62, 58, 54, 50, 63, 59, 55, 51, 64, 60, 56, 52, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 20, 24, 28, 32, 19, 23, 27, 31, 18, 22, 26, 30, 17, 21, 25, 29, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80),
+    "x z z" : (0, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 52, 56, 60, 64, 51, 55, 59, 63, 50, 54, 58, 62, 49, 53, 57, 61, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 29, 25, 21, 17, 30, 26, 22, 18, 31, 27, 23, 19, 32, 28, 24, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33),
+    "x' y" : (0, 68, 72, 76, 80, 67, 71, 75, 79, 66, 70, 74, 78, 65, 69, 73, 77, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 52, 56, 60, 64, 51, 55, 59, 63, 50, 54, 58, 62, 49, 53, 57, 61, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 29, 25, 21, 17, 30, 26, 22, 18, 31, 27, 23, 19, 32, 28, 24, 20, 36, 40, 44, 48, 35, 39, 43, 47, 34, 38, 42, 46, 33, 37, 41, 45),
+    "x' y'" : (0, 77, 73, 69, 65, 78, 74, 70, 66, 79, 75, 71, 67, 80, 76, 72, 68, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 29, 25, 21, 17, 30, 26, 22, 18, 31, 27, 23, 19, 32, 28, 24, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 52, 56, 60, 64, 51, 55, 59, 63, 50, 54, 58, 62, 49, 53, 57, 61, 45, 41, 37, 33, 46, 42, 38, 34, 47, 43, 39, 35, 48, 44, 40, 36),
+    "x' z" : (0, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 45, 41, 37, 33, 46, 42, 38, 34, 47, 43, 39, 35, 48, 44, 40, 36, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3, 16, 12, 8, 4, 68, 72, 76, 80, 67, 71, 75, 79, 66, 70, 74, 78, 65, 69, 73, 77, 93, 89, 85, 81, 94, 90, 86, 82, 95, 91, 87, 83, 96, 92, 88, 84, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64),
+    "x' z'" : (0, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 77, 73, 69, 65, 78, 74, 70, 66, 79, 75, 71, 67, 80, 76, 72, 68, 4, 8, 12, 16, 3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 36, 40, 44, 48, 35, 39, 43, 47, 34, 38, 42, 46, 33, 37, 41, 45, 84, 88, 92, 96, 83, 87, 91, 95, 82, 86, 90, 94, 81, 85, 89, 93, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32),
+    "y x x" : (0, 84, 88, 92, 96, 83, 87, 91, 95, 82, 86, 90, 94, 81, 85, 89, 93, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3, 16, 12, 8, 4),
+    "y z z" : (0, 93, 89, 85, 81, 94, 90, 86, 82, 95, 91, 87, 83, 96, 92, 88, 84, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 4, 8, 12, 16, 3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13),
+    "z x x" : (0, 61, 57, 53, 49, 62, 58, 54, 50, 63, 59, 55, 51, 64, 60, 56, 52, 84, 88, 92, 96, 83, 87, 91, 95, 82, 86, 90, 94, 81, 85, 89, 93, 77, 73, 69, 65, 78, 74, 70, 66, 79, 75, 71, 67, 80, 76, 72, 68, 4, 8, 12, 16, 3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 36, 40, 44, 48, 35, 39, 43, 47, 34, 38, 42, 46, 33, 37, 41, 45, 29, 25, 21, 17, 30, 26, 22, 18, 31, 27, 23, 19, 32, 28, 24, 20),
+    "z y y" : (0, 20, 24, 28, 32, 19, 23, 27, 31, 18, 22, 26, 30, 17, 21, 25, 29, 13, 9, 5, 1, 14, 10, 6, 2, 15, 11, 7, 3, 16, 12, 8, 4, 68, 72, 76, 80, 67, 71, 75, 79, 66, 70, 74, 78, 65, 69, 73, 77, 93, 89, 85, 81, 94, 90, 86, 82, 95, 91, 87, 83, 96, 92, 88, 84, 45, 41, 37, 33, 46, 42, 38, 34, 47, 43, 39, 35, 48, 44, 40, 36, 52, 56, 60, 64, 51, 55, 59, 63, 50, 54, 58, 62, 49, 53, 57, 61),
+    "reflect-x" : (0, 93, 94, 95, 96, 89, 90, 91, 92, 85, 86, 87, 88, 81, 82, 83, 84, 29, 30, 31, 32, 25, 26, 27, 28, 21, 22, 23, 24, 17, 18, 19, 20, 45, 46, 47, 48, 41, 42, 43, 44, 37, 38, 39, 40, 33, 34, 35, 36, 61, 62, 63, 64, 57, 58, 59, 60, 53, 54, 55, 56, 49, 50, 51, 52, 77, 78, 79, 80, 73, 74, 75, 76, 69, 70, 71, 72, 65, 66, 67, 68, 13, 14, 15, 16, 9, 10, 11, 12, 5, 6, 7, 8, 1, 2, 3, 4),
+    "reflect-x x" : (0, 45, 46, 47, 48, 41, 42, 43, 44, 37, 38, 39, 40, 33, 34, 35, 36, 32, 28, 24, 20, 31, 27, 23, 19, 30, 26, 22, 18, 29, 25, 21, 17, 13, 14, 15, 16, 9, 10, 11, 12, 5, 6, 7, 8, 1, 2, 3, 4, 49, 53, 57, 61, 50, 54, 58, 62, 51, 55, 59, 63, 52, 56, 60, 64, 84, 83, 82, 81, 88, 87, 86, 85, 92, 91, 90, 89, 96, 95, 94, 93, 68, 67, 66, 65, 72, 71, 70, 69, 76, 75, 74, 73, 80, 79, 78, 77),
+    "reflect-x x'" : (0, 68, 67, 66, 65, 72, 71, 70, 69, 76, 75, 74, 73, 80, 79, 78, 77, 17, 21, 25, 29, 18, 22, 26, 30, 19, 23, 27, 31, 20, 24, 28, 32, 93, 94, 95, 96, 89, 90, 91, 92, 85, 86, 87, 88, 81, 82, 83, 84, 64, 60, 56, 52, 63, 59, 55, 51, 62, 58, 54, 50, 61, 57, 53, 49, 4, 3, 2, 1, 8, 7, 6, 5, 12, 11, 10, 9, 16, 15, 14, 13, 45, 46, 47, 48, 41, 42, 43, 44, 37, 38, 39, 40, 33, 34, 35, 36),
+    "reflect-x y" : (0, 81, 85, 89, 93, 82, 86, 90, 94, 83, 87, 91, 95, 84, 88, 92, 96, 45, 46, 47, 48, 41, 42, 43, 44, 37, 38, 39, 40, 33, 34, 35, 36, 61, 62, 63, 64, 57, 58, 59, 60, 53, 54, 55, 56, 49, 50, 51, 52, 77, 78, 79, 80, 73, 74, 75, 76, 69, 70, 71, 72, 65, 66, 67, 68, 29, 30, 31, 32, 25, 26, 27, 28, 21, 22, 23, 24, 17, 18, 19, 20, 16, 12, 8, 4, 15, 11, 7, 3, 14, 10, 6, 2, 13, 9, 5, 1),
+    "reflect-x y'" : (0, 96, 92, 88, 84, 95, 91, 87, 83, 94, 90, 86, 82, 93, 89, 85, 81, 77, 78, 79, 80, 73, 74, 75, 76, 69, 70, 71, 72, 65, 66, 67, 68, 29, 30, 31, 32, 25, 26, 27, 28, 21, 22, 23, 24, 17, 18, 19, 20, 45, 46, 47, 48, 41, 42, 43, 44, 37, 38, 39, 40, 33, 34, 35, 36, 61, 62, 63, 64, 57, 58, 59, 60, 53, 54, 55, 56, 49, 50, 51, 52, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16),
+    "reflect-x z" : (0, 17, 21, 25, 29, 18, 22, 26, 30, 19, 23, 27, 31, 20, 24, 28, 32, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16, 33, 37, 41, 45, 34, 38, 42, 46, 35, 39, 43, 47, 36, 40, 44, 48, 81, 85, 89, 93, 82, 86, 90, 94, 83, 87, 91, 95, 84, 88, 92, 96, 80, 76, 72, 68, 79, 75, 71, 67, 78, 74, 70, 66, 77, 73, 69, 65, 49, 53, 57, 61, 50, 54, 58, 62, 51, 55, 59, 63, 52, 56, 60, 64),
+    "reflect-x z'" : (0, 64, 60, 56, 52, 63, 59, 55, 51, 62, 58, 54, 50, 61, 57, 53, 49, 96, 92, 88, 84, 95, 91, 87, 83, 94, 90, 86, 82, 93, 89, 85, 81, 48, 44, 40, 36, 47, 43, 39, 35, 46, 42, 38, 34, 45, 41, 37, 33, 16, 12, 8, 4, 15, 11, 7, 3, 14, 10, 6, 2, 13, 9, 5, 1, 65, 69, 73, 77, 66, 70, 74, 78, 67, 71, 75, 79, 68, 72, 76, 80, 32, 28, 24, 20, 31, 27, 23, 19, 30, 26, 22, 18, 29, 25, 21, 17),
+    "reflect-x x x" : (0, 13, 14, 15, 16, 9, 10, 11, 12, 5, 6, 7, 8, 1, 2, 3, 4, 20, 19, 18, 17, 24, 23, 22, 21, 28, 27, 26, 25, 32, 31, 30, 29, 68, 67, 66, 65, 72, 71, 70, 69, 76, 75, 74, 73, 80, 79, 78, 77, 52, 51, 50, 49, 56, 55, 54, 53, 60, 59, 58, 57, 64, 63, 62, 61, 36, 35, 34, 33, 40, 39, 38, 37, 44, 43, 42, 41, 48, 47, 46, 45, 93, 94, 95, 96, 89, 90, 91, 92, 85, 86, 87, 88, 81, 82, 83, 84),
+    "reflect-x y y" : (0, 84, 83, 82, 81, 88, 87, 86, 85, 92, 91, 90, 89, 96, 95, 94, 93, 61, 62, 63, 64, 57, 58, 59, 60, 53, 54, 55, 56, 49, 50, 51, 52, 77, 78, 79, 80, 73, 74, 75, 76, 69, 70, 71, 72, 65, 66, 67, 68, 29, 30, 31, 32, 25, 26, 27, 28, 21, 22, 23, 24, 17, 18, 19, 20, 45, 46, 47, 48, 41, 42, 43, 44, 37, 38, 39, 40, 33, 34, 35, 36, 4, 3, 2, 1, 8, 7, 6, 5, 12, 11, 10, 9, 16, 15, 14, 13),
+    "reflect-x z z" : (0, 4, 3, 2, 1, 8, 7, 6, 5, 12, 11, 10, 9, 16, 15, 14, 13, 52, 51, 50, 49, 56, 55, 54, 53, 60, 59, 58, 57, 64, 63, 62, 61, 36, 35, 34, 33, 40, 39, 38, 37, 44, 43, 42, 41, 48, 47, 46, 45, 20, 19, 18, 17, 24, 23, 22, 21, 28, 27, 26, 25, 32, 31, 30, 29, 68, 67, 66, 65, 72, 71, 70, 69, 76, 75, 74, 73, 80, 79, 78, 77, 84, 83, 82, 81, 88, 87, 86, 85, 92, 91, 90, 89, 96, 95, 94, 93),
+    "reflect-x x y" : (0, 33, 37, 41, 45, 34, 38, 42, 46, 35, 39, 43, 47, 36, 40, 44, 48, 13, 14, 15, 16, 9, 10, 11, 12, 5, 6, 7, 8, 1, 2, 3, 4, 49, 53, 57, 61, 50, 54, 58, 62, 51, 55, 59, 63, 52, 56, 60, 64, 84, 83, 82, 81, 88, 87, 86, 85, 92, 91, 90, 89, 96, 95, 94, 93, 32, 28, 24, 20, 31, 27, 23, 19, 30, 26, 22, 18, 29, 25, 21, 17, 65, 69, 73, 77, 66, 70, 74, 78, 67, 71, 75, 79, 68, 72, 76, 80),
+    "reflect-x x y'" : (0, 48, 44, 40, 36, 47, 43, 39, 35, 46, 42, 38, 34, 45, 41, 37, 33, 84, 83, 82, 81, 88, 87, 86, 85, 92, 91, 90, 89, 96, 95, 94, 93, 32, 28, 24, 20, 31, 27, 23, 19, 30, 26, 22, 18, 29, 25, 21, 17, 13, 14, 15, 16, 9, 10, 11, 12, 5, 6, 7, 8, 1, 2, 3, 4, 49, 53, 57, 61, 50, 54, 58, 62, 51, 55, 59, 63, 52, 56, 60, 64, 80, 76, 72, 68, 79, 75, 71, 67, 78, 74, 70, 66, 77, 73, 69, 65),
+    "reflect-x x z" : (0, 29, 30, 31, 32, 25, 26, 27, 28, 21, 22, 23, 24, 17, 18, 19, 20, 80, 76, 72, 68, 79, 75, 71, 67, 78, 74, 70, 66, 77, 73, 69, 65, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16, 33, 37, 41, 45, 34, 38, 42, 46, 35, 39, 43, 47, 36, 40, 44, 48, 81, 85, 89, 93, 82, 86, 90, 94, 83, 87, 91, 95, 84, 88, 92, 96, 52, 51, 50, 49, 56, 55, 54, 53, 60, 59, 58, 57, 64, 63, 62, 61),
+    "reflect-x x z'" : (0, 61, 62, 63, 64, 57, 58, 59, 60, 53, 54, 55, 56, 49, 50, 51, 52, 48, 44, 40, 36, 47, 43, 39, 35, 46, 42, 38, 34, 45, 41, 37, 33, 16, 12, 8, 4, 15, 11, 7, 3, 14, 10, 6, 2, 13, 9, 5, 1, 65, 69, 73, 77, 66, 70, 74, 78, 67, 71, 75, 79, 68, 72, 76, 80, 96, 92, 88, 84, 95, 91, 87, 83, 94, 90, 86, 82, 93, 89, 85, 81, 20, 19, 18, 17, 24, 23, 22, 21, 28, 27, 26, 25, 32, 31, 30, 29),
+    "reflect-x x y y" : (0, 36, 35, 34, 33, 40, 39, 38, 37, 44, 43, 42, 41, 48, 47, 46, 45, 49, 53, 57, 61, 50, 54, 58, 62, 51, 55, 59, 63, 52, 56, 60, 64, 84, 83, 82, 81, 88, 87, 86, 85, 92, 91, 90, 89, 96, 95, 94, 93, 32, 28, 24, 20, 31, 27, 23, 19, 30, 26, 22, 18, 29, 25, 21, 17, 13, 14, 15, 16, 9, 10, 11, 12, 5, 6, 7, 8, 1, 2, 3, 4, 77, 78, 79, 80, 73, 74, 75, 76, 69, 70, 71, 72, 65, 66, 67, 68),
+    "reflect-x x z z" : (0, 77, 78, 79, 80, 73, 74, 75, 76, 69, 70, 71, 72, 65, 66, 67, 68, 64, 60, 56, 52, 63, 59, 55, 51, 62, 58, 54, 50, 61, 57, 53, 49, 4, 3, 2, 1, 8, 7, 6, 5, 12, 11, 10, 9, 16, 15, 14, 13, 17, 21, 25, 29, 18, 22, 26, 30, 19, 23, 27, 31, 20, 24, 28, 32, 93, 94, 95, 96, 89, 90, 91, 92, 85, 86, 87, 88, 81, 82, 83, 84, 36, 35, 34, 33, 40, 39, 38, 37, 44, 43, 42, 41, 48, 47, 46, 45),
+    "reflect-x x' y" : (0, 80, 76, 72, 68, 79, 75, 71, 67, 78, 74, 70, 66, 77, 73, 69, 65, 93, 94, 95, 96, 89, 90, 91, 92, 85, 86, 87, 88, 81, 82, 83, 84, 64, 60, 56, 52, 63, 59, 55, 51, 62, 58, 54, 50, 61, 57, 53, 49, 4, 3, 2, 1, 8, 7, 6, 5, 12, 11, 10, 9, 16, 15, 14, 13, 17, 21, 25, 29, 18, 22, 26, 30, 19, 23, 27, 31, 20, 24, 28, 32, 48, 44, 40, 36, 47, 43, 39, 35, 46, 42, 38, 34, 45, 41, 37, 33),
+    "reflect-x x' y'" : (0, 65, 69, 73, 77, 66, 70, 74, 78, 67, 71, 75, 79, 68, 72, 76, 80, 4, 3, 2, 1, 8, 7, 6, 5, 12, 11, 10, 9, 16, 15, 14, 13, 17, 21, 25, 29, 18, 22, 26, 30, 19, 23, 27, 31, 20, 24, 28, 32, 93, 94, 95, 96, 89, 90, 91, 92, 85, 86, 87, 88, 81, 82, 83, 84, 64, 60, 56, 52, 63, 59, 55, 51, 62, 58, 54, 50, 61, 57, 53, 49, 33, 37, 41, 45, 34, 38, 42, 46, 35, 39, 43, 47, 36, 40, 44, 48),
+    "reflect-x x' z" : (0, 20, 19, 18, 17, 24, 23, 22, 21, 28, 27, 26, 25, 32, 31, 30, 29, 33, 37, 41, 45, 34, 38, 42, 46, 35, 39, 43, 47, 36, 40, 44, 48, 81, 85, 89, 93, 82, 86, 90, 94, 83, 87, 91, 95, 84, 88, 92, 96, 80, 76, 72, 68, 79, 75, 71, 67, 78, 74, 70, 66, 77, 73, 69, 65, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16, 61, 62, 63, 64, 57, 58, 59, 60, 53, 54, 55, 56, 49, 50, 51, 52),
+    "reflect-x x' z'" : (0, 52, 51, 50, 49, 56, 55, 54, 53, 60, 59, 58, 57, 64, 63, 62, 61, 65, 69, 73, 77, 66, 70, 74, 78, 67, 71, 75, 79, 68, 72, 76, 80, 96, 92, 88, 84, 95, 91, 87, 83, 94, 90, 86, 82, 93, 89, 85, 81, 48, 44, 40, 36, 47, 43, 39, 35, 46, 42, 38, 34, 45, 41, 37, 33, 16, 12, 8, 4, 15, 11, 7, 3, 14, 10, 6, 2, 13, 9, 5, 1, 29, 30, 31, 32, 25, 26, 27, 28, 21, 22, 23, 24, 17, 18, 19, 20),
+    "reflect-x y x x" : (0, 16, 12, 8, 4, 15, 11, 7, 3, 14, 10, 6, 2, 13, 9, 5, 1, 36, 35, 34, 33, 40, 39, 38, 37, 44, 43, 42, 41, 48, 47, 46, 45, 20, 19, 18, 17, 24, 23, 22, 21, 28, 27, 26, 25, 32, 31, 30, 29, 68, 67, 66, 65, 72, 71, 70, 69, 76, 75, 74, 73, 80, 79, 78, 77, 52, 51, 50, 49, 56, 55, 54, 53, 60, 59, 58, 57, 64, 63, 62, 61, 81, 85, 89, 93, 82, 86, 90, 94, 83, 87, 91, 95, 84, 88, 92, 96),
+    "reflect-x y z z" : (0, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16, 68, 67, 66, 65, 72, 71, 70, 69, 76, 75, 74, 73, 80, 79, 78, 77, 52, 51, 50, 49, 56, 55, 54, 53, 60, 59, 58, 57, 64, 63, 62, 61, 36, 35, 34, 33, 40, 39, 38, 37, 44, 43, 42, 41, 48, 47, 46, 45, 20, 19, 18, 17, 24, 23, 22, 21, 28, 27, 26, 25, 32, 31, 30, 29, 96, 92, 88, 84, 95, 91, 87, 83, 94, 90, 86, 82, 93, 89, 85, 81),
+    "reflect-x z x x" : (0, 49, 53, 57, 61, 50, 54, 58, 62, 51, 55, 59, 63, 52, 56, 60, 64, 16, 12, 8, 4, 15, 11, 7, 3, 14, 10, 6, 2, 13, 9, 5, 1, 65, 69, 73, 77, 66, 70, 74, 78, 67, 71, 75, 79, 68, 72, 76, 80, 96, 92, 88, 84, 95, 91, 87, 83, 94, 90, 86, 82, 93, 89, 85, 81, 48, 44, 40, 36, 47, 43, 39, 35, 46, 42, 38, 34, 45, 41, 37, 33, 17, 21, 25, 29, 18, 22, 26, 30, 19, 23, 27, 31, 20, 24, 28, 32),
+    "reflect-x z y y" : (0, 32, 28, 24, 20, 31, 27, 23, 19, 30, 26, 22, 18, 29, 25, 21, 17, 81, 85, 89, 93, 82, 86, 90, 94, 83, 87, 91, 95, 84, 88, 92, 96, 80, 76, 72, 68, 79, 75, 71, 67, 78, 74, 70, 66, 77, 73, 69, 65, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16, 33, 37, 41, 45, 34, 38, 42, 46, 35, 39, 43, 47, 36, 40, 44, 48, 64, 60, 56, 52, 63, 59, 55, 51, 62, 58, 54, 50, 61, 57, 53, 49),
+    "reflect-y" : (0, 13, 14, 15, 16, 9, 10, 11, 12, 5, 6, 7, 8, 1, 2, 3, 4, 20, 19, 18, 17, 24, 23, 22, 21, 28, 27, 26, 25, 32, 31, 30, 29, 68, 67, 66, 65, 72, 71, 70, 69, 76, 75, 74, 73, 80, 79, 78, 77, 52, 51, 50, 49, 56, 55, 54, 53, 60, 59, 58, 57, 64, 63, 62, 61, 36, 35, 34, 33, 40, 39, 38, 37, 44, 43, 42, 41, 48, 47, 46, 45, 93, 94, 95, 96, 89, 90, 91, 92, 85, 86, 87, 88, 81, 82, 83, 84),
+    "reflect-z" : (0, 4, 3, 2, 1, 8, 7, 6, 5, 12, 11, 10, 9, 16, 15, 14, 13, 52, 51, 50, 49, 56, 55, 54, 53, 60, 59, 58, 57, 64, 63, 62, 61, 36, 35, 34, 33, 40, 39, 38, 37, 44, 43, 42, 41, 48, 47, 46, 45, 20, 19, 18, 17, 24, 23, 22, 21, 28, 27, 26, 25, 32, 31, 30, 29, 68, 67, 66, 65, 72, 71, 70, 69, 76, 75, 74, 73, 80, 79, 78, 77, 84, 83, 82, 81, 88, 87, 86, 85, 92, 91, 90, 89, 96, 95, 94, 93),
 }
 
 def rotate_444(cube, step):
-    return rotate_mapper_444[step](cube)
-
-
-if __name__ == '__main__':
-    import doctest
-
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s %(filename)16s %(levelname)8s: %(message)s')
-    log = logging.getLogger(__name__)
-
-    # Color the errors and warnings in red
-    logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
-    logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
-
-    doctest.testmod()
+    return [cube[x] for x in swaps_444[step]]

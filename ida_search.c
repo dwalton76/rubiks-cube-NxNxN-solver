@@ -750,25 +750,27 @@ ida_heuristic (char *cube, lookup_table_type type, int debug)
 
     switch (type)  {
     case UD_CENTERS_STAGE_555:
-        // dwalton
-
         UD_t_centers_state = get_555_t_centers(cube);
-        UD_t_centers_cost = hex_to_int(pt_t_centers_cost_only[UD_t_centers_state]);
+        UD_x_centers_state = get_555_x_centers(cube);
 
-        if (debug) {
-            LOG("ida_heuristic t-centers state %d or 0x%x, cost %d\n", UD_t_centers_state, UD_t_centers_state, UD_t_centers_cost);
+        // check for state-target
+        if (UD_t_centers_state == 0xf0000f) {
+            UD_t_centers_cost = 0;
+        } else {
+            UD_t_centers_cost = hex_to_int(pt_t_centers_cost_only[UD_t_centers_state]);
         }
 
-        UD_x_centers_state = get_555_x_centers(cube);
-        UD_x_centers_cost = hex_to_int(pt_x_centers_cost_only[UD_x_centers_state]);
-
-        if (debug) {
-            LOG("ida_heuristic x-centers state %d or 0x%x, cost %d\n", UD_x_centers_state, UD_x_centers_state, UD_x_centers_cost);
+        if (UD_x_centers_state == 0xf0000f) {
+            UD_x_centers_cost = 0;
+        } else {
+            UD_x_centers_cost = hex_to_int(pt_x_centers_cost_only[UD_x_centers_state]);
         }
 
         cost_to_goal = max(UD_t_centers_cost, UD_x_centers_cost);
 
         if (debug) {
+            LOG("ida_heuristic t-centers state %d or 0x%x, cost %d\n", UD_t_centers_state, UD_t_centers_state, UD_t_centers_cost);
+            LOG("ida_heuristic x-centers state %d or 0x%x, cost %d\n", UD_x_centers_state, UD_x_centers_state, UD_x_centers_cost);
             LOG("ida_heuristic t-centers %d, x-centers %d, cost_to_goal %d\n", UD_t_centers_cost, UD_x_centers_cost, cost_to_goal);
         }
         break;
@@ -1116,100 +1118,11 @@ ida_search (int cost_to_here,
 
     int debug = 0;
 
-    // U Fw2 Dw' Rw F' Uw L2 Bw R' Dw Rw
-    // 0   1   2  3 4   5  6  7 8   9 10
+    // Fw2 Dw' Rw B' Lw' F D' B' Lw' Dw Bw'
+    //   0   1  2 3   4  5 6  7   8   9 10
+    /*
     if (cost_to_here == 1) {
         if (moves_to_here[0] == U) {
-            debug = 1;
-        }
-
-    } else if (cost_to_here == 2) {
-        if (moves_to_here[0] == U &&
-            moves_to_here[1] == Fw2) {
-            debug = 1;
-        }
-
-    } else if (cost_to_here == 3) {
-        if (moves_to_here[0] == U &&
-            moves_to_here[1] == Fw2 &&
-            moves_to_here[2] == Dw_PRIME) {
-            debug = 1;
-        }
-
-    } else if (cost_to_here == 4) {
-        if (moves_to_here[0] == U &&
-            moves_to_here[1] == Fw2 &&
-            moves_to_here[2] == Dw_PRIME &&
-            moves_to_here[3] == Rw) {
-            debug = 1;
-        }
-
-    } else if (cost_to_here == 5) {
-        if (moves_to_here[0] == U &&
-            moves_to_here[1] == Fw2 &&
-            moves_to_here[2] == Dw_PRIME &&
-            moves_to_here[3] == Rw &&
-            moves_to_here[4] == F_PRIME) {
-            debug = 1;
-        }
-
-    } else if (cost_to_here == 6) {
-        if (moves_to_here[0] == U &&
-            moves_to_here[1] == Fw2 &&
-            moves_to_here[2] == Dw_PRIME &&
-            moves_to_here[3] == Rw &&
-            moves_to_here[4] == F_PRIME &&
-            moves_to_here[5] == Uw) {
-            debug = 1;
-        }
-
-    } else if (cost_to_here == 7) {
-        if (moves_to_here[0] == U &&
-            moves_to_here[1] == Fw2 &&
-            moves_to_here[2] == Dw_PRIME &&
-            moves_to_here[3] == Rw &&
-            moves_to_here[4] == F_PRIME &&
-            moves_to_here[5] == Uw &&
-            moves_to_here[6] == L2) {
-            debug = 1;
-        }
-
-    } else if (cost_to_here == 8) {
-        if (moves_to_here[0] == U &&
-            moves_to_here[1] == Fw2 &&
-            moves_to_here[2] == Dw_PRIME &&
-            moves_to_here[3] == Rw &&
-            moves_to_here[4] == F_PRIME &&
-            moves_to_here[5] == Uw &&
-            moves_to_here[6] == L2 &&
-            moves_to_here[7] == Bw) {
-            debug = 1;
-        }
-
-    } else if (cost_to_here == 9) {
-        if (moves_to_here[0] == U &&
-            moves_to_here[1] == Fw2 &&
-            moves_to_here[2] == Dw_PRIME &&
-            moves_to_here[3] == Rw &&
-            moves_to_here[4] == F_PRIME &&
-            moves_to_here[5] == Uw &&
-            moves_to_here[6] == L2 &&
-            moves_to_here[7] == Bw &&
-            moves_to_here[8] == R_PRIME) {
-            debug = 1;
-        }
-
-    } else if (cost_to_here == 10) {
-        if (moves_to_here[0] == U &&
-            moves_to_here[1] == Fw2 &&
-            moves_to_here[2] == Dw_PRIME &&
-            moves_to_here[3] == Rw &&
-            moves_to_here[4] == F_PRIME &&
-            moves_to_here[5] == Uw &&
-            moves_to_here[6] == L2 &&
-            moves_to_here[7] == Bw &&
-            moves_to_here[8] == R_PRIME &&
-            moves_to_here[9] == Dw) {
             debug = 1;
         }
 
@@ -1228,6 +1141,7 @@ ida_search (int cost_to_here,
             debug = 1;
         }
     }
+     */
 
     if (debug) {
         print_moves(moves_to_here, cost_to_here);
@@ -1329,7 +1243,7 @@ ida_solve (char *cube, lookup_table_type type)
             pt_x_centers_cost_only = NULL;
             return 1;
         } else {
-            LOG("IDA threshold %d, explored %d branches\n\n\n\n\n", threshold, ida_count);
+            LOG("IDA threshold %d, explored %d branches\n", threshold, ida_count);
         }
     }
 
@@ -1409,17 +1323,6 @@ main (int argc, char *argv[])
     ida_solve(cube, type);
     printf("%lu seek_calls", seek_calls);
 
-    /*
-static const move_type moves_555[MOVE_COUNT_555] = {
-    U, U_PRIME, U2, Uw, Uw_PRIME, Uw2,
-    L, L_PRIME, L2, Lw, Lw_PRIME, Lw2,
-    F, F_PRIME, F2, Fw, Fw_PRIME, Fw2,
-    R, R_PRIME, R2, Rw, Rw_PRIME, Rw2,
-    B, B_PRIME, B2, Bw, Bw_PRIME, Bw2,
-    D, D_PRIME, D2, Dw, Dw_PRIME, Dw2
-};
-    */
-
     // Fw2 Dw' Rw B' Lw' F D' B' Lw' Dw Bw'
     /*
     memcpy(cube_tmp, cube, sizeof(char) * array_size);
@@ -1428,41 +1331,6 @@ static const move_type moves_555[MOVE_COUNT_555] = {
     memcpy(cube_tmp, cube, sizeof(char) * array_size);
     rotate_555(cube, cube_tmp, array_size, Dw_PRIME);
 
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, Rw);
-
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, B_PRIME);
-
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, Lw_PRIME);
-
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, F);
-
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, D_PRIME);
-
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, B_PRIME);
-
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, Lw_PRIME);
-
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, Dw);
-
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, Bw_PRIME);
-
     print_cube(cube, cube_size);
-
-    ida_load_cube_state(cube, type);
-
-    if (ida_search_complete(cube, type)) { // 1,827,194 seek_calls
-        printf("ida_search_complete returned True\n");
-    } else {
-        printf("ida_search_complete returned False\n");
-    }
     */
 }

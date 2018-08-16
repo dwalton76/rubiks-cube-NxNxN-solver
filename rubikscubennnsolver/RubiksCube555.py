@@ -724,7 +724,7 @@ class LookupTable555UDTCenterStage(LookupTable):
             filesize=27947898,
         )
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.t_centers_555])
         return (self.hex_format % int(result, 2), 0)
@@ -807,20 +807,85 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
     set_x_centers_555 = set(x_centers_555)
     set_t_centers_555 = set(t_centers_555)
 
+    heuristic_stats = {
+        (1, 1): 1,
+        (1, 2): 5,
+        (1, 3): 4,
+        (1, 4): 6,
+        (2, 1): 6,
+        (2, 2): 3,
+        (2, 3): 5,
+        (2, 4): 5,
+        (2, 5): 8,
+        (2, 7): 9,
+        (3, 1): 4,
+        (3, 2): 4,
+        (3, 3): 4,
+        (3, 4): 6,
+        (3, 5): 8,
+        (3, 6): 9,
+        (3, 7): 10,
+        (4, 2): 5,
+        (4, 3): 5,
+        (4, 4): 6,
+        (4, 5): 7,
+        (4, 6): 9,
+        (4, 7): 10,
+        (5, 2): 6,
+        (5, 3): 6,
+        (5, 4): 7,
+        (5, 5): 7,
+        (5, 6): 9,
+        (5, 7): 10,
+        (5, 8): 11,
+        (6, 2): 9,
+        (6, 3): 9,
+        (6, 4): 9,
+        (6, 5): 9,
+        (6, 6): 9,
+        (6, 7): 10,
+        (6, 8): 10,
+        (7, 3): 10,
+        (7, 4): 10,
+        (7, 5): 9,
+        (7, 6): 10,
+        (7, 7): 10,
+        (7, 8): 11,
+    }
+
+    # The higher this number the less you honor the heuristic_stats
+    # -  0 uses the heuristic_stats exactly as reported
+    # -  1 subtracts 1 from the heuristic_stats value
+    # - 99 disables heuristic_stats
+    #
+    # You want to put this as high as you can but low enough
+    # to still speed up the slow IDA searches.
+    #
+    # For cube RLBFBDBLUDBRUBUFFRBRBBLDUFBRLURBDLBDFRLDBUURDRBFDFLRUFLUBULUBLFFFURDFUFFFLURRUFFDURDUBLDURFURRBLLLDLBRRUDDDBDRFBLFDLLBFLURLFDRUUBDLRDDBRFBULLLDFUDRDFB
+    # - 99: 11 moves in 1m 41s
+    # -  3: 11 moves in 1m 35s
+    # -  2: 11 moves in 11s
+    # -  1: 12 moves in 1200ms
+    # -  0: 12 moves in 800ms
+    heuristic_stats_error = 2
+
     def __init__(self, parent):
 
-        if parent.min_memory:
+        # 5-deep takes 29M
+        if True or parent.min_memory:
             filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt.5-deep'
-            linecount = 868185
+            linecount = 868185 
             max_depth = 5
-            filesize = 16495515
-            exit_asap = 1
+            filesize = 30386475
+            exit_asap = 10
+
+        # 6-deep takes 669M
         else:
             filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt'
             linecount = 17168476
             max_depth = 6
-            filesize = 326201044
-            exit_asap = 99
+            filesize = 669570564
+            exit_asap = 11
 
         LookupTableIDA.__init__(
             self,
@@ -838,7 +903,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             linecount=linecount,
             max_depth=max_depth,
             filesize=filesize,
-            exit_asap=exit_asap,
+            exit_asap=exit_asap
         )
 
         self.recolor_positions = centers_555
@@ -850,9 +915,9 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             'D' : 'U',
         }
         self.nuke_corners = True
-        self.nuke_edges = True
+        #self.nuke_edges = True
 
-    def ida_heuristic(self):
+    def ida_heuristic_tuple(self):
         parent = self.parent
 
         (lt_state, x_centers_state, t_centers_state) =\
@@ -863,14 +928,32 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
                 self.set_t_centers_555,
             )
 
-        cost_to_goal = max(
-            self.parent.lt_UD_X_centers_stage_co.heuristic(x_centers_state),
-            self.parent.lt_UD_T_centers_stage_co.heuristic(t_centers_state),
-        )
+        x_centers_cost = parent.lt_UD_X_centers_stage_co.heuristic(x_centers_state)
+        t_centers_cost = parent.lt_UD_T_centers_stage_co.heuristic(t_centers_state)
 
-        #log.info("%s: lt_state %s, x_centers_state %s, t_centers_state %s, cost_to_goal %d" %
-        #    (self, lt_state, x_centers_state, t_centers_state, cost_to_goal))
+        return (x_centers_cost, t_centers_cost)
+
+    def ida_heuristic(self, ida_threshold):
+        parent = self.parent
+
+        (lt_state, x_centers_state, t_centers_state) =\
+            ida_heuristic_states_step10_555(
+                parent.state,
+                centers_555,
+                self.set_x_centers_555,
+                self.set_t_centers_555,
+            )
+
         lt_state = self.hex_format % lt_state
+        x_centers_cost = parent.lt_UD_X_centers_stage_co.heuristic(x_centers_state)
+        t_centers_cost = parent.lt_UD_T_centers_stage_co.heuristic(t_centers_state)
+
+        if ida_threshold >= self.exit_asap:
+            heuristic_stats_cost = self.heuristic_stats.get((x_centers_cost, t_centers_cost), 0)
+            cost_to_goal = max(x_centers_cost, t_centers_cost, heuristic_stats_cost - self.heuristic_stats_error)
+        else:
+            cost_to_goal = max(x_centers_cost, t_centers_cost)
+
         return (lt_state, cost_to_goal)
 
 
@@ -909,7 +992,7 @@ class LookupTable555LRTCenterStage(LookupTable):
             max_depth=9,
             filesize=476190)
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_t_centers_555])
         return (self.hex_format % int(result, 2), 0)
@@ -945,15 +1028,25 @@ class LookupTable555LRXCenterStage(LookupTable):
 
 class LookupTableIDA555LRCenterStage(LookupTableIDA):
     """
-    lookup-table-5x5x5-step20-LR-centers-solve.txt
+    lookup-table-5x5x5-step20-LR-centers-stage.txt
     ==============================================
     1 steps has 3 entries (0 percent, 0.00x previous step)
     2 steps has 33 entries (0 percent, 11.00x previous step)
     3 steps has 374 entries (0 percent, 11.33x previous step)
-    4 steps has 3,838 entries (8 percent, 10.26x previous step)
-    5 steps has 39,254 entries (90 percent, 10.23x previous step)
+    4 steps has 3,838 entries (0 percent, 10.26x previous step)
+    5 steps has 39,254 entries (0 percent, 10.23x previous step)
+    6 steps has 387,357 entries (0 percent, 9.87x previous step)
+    7 steps has 3,374,380 entries (2 percent, 8.71x previous step)
+    8 steps has 20,851,334 entries (12 percent, 6.18x previous step)
+    9 steps has 65,556,972 entries (39 percent, 3.14x previous step)
+    10 steps has 66,986,957 entries (40 percent, 1.02x previous step)
+    11 steps has 8,423,610 entries (5 percent, 0.13x previous step)
+    12 steps has 12,788 entries (0 percent, 0.00x previous step)
 
-    Total: 43,502 entries
+    Total: 165,636,900 entries
+    Average: 9.33 moves
+
+    I only built this 6-deep
     """
 
     LFRB_t_centers_555 = (
@@ -975,11 +1068,6 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
 
     def __init__(self, parent):
 
-        if parent.min_memory:
-            exit_asap = 1
-        else:
-            exit_asap = 99
-
         LookupTableIDA.__init__(
             self,
             parent,
@@ -996,15 +1084,15 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
             # prune tables
             (parent.lt_LR_T_centers_stage,
              parent.lt_LR_X_centers_stage),
-            linecount=43502,
-            max_depth=5,
-            filesize=1305060,
-            exit_asap=exit_asap,
+            linecount=430859,
+            max_depth=6,
+            filesize=14649206,
         )
 
         self.nuke_corners = True
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
+        parent = self.parent
         parent_state = self.parent.state
         lt_state = 0
         x_centers_state = 0
@@ -1035,20 +1123,19 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
             lt_state = lt_state << 1
 
         x_centers_state = x_centers_state >> 1
+        x_centers_state = parent.lt_LR_X_centers_stage.hex_format % x_centers_state
         t_centers_state = t_centers_state >> 1
+        t_centers_state = parent.lt_LR_T_centers_stage.hex_format % t_centers_state
         lt_state = lt_state >> 1
-
-        t_centers_state = self.parent.lt_LR_T_centers_stage.hex_format % t_centers_state
-        x_centers_state = self.parent.lt_LR_X_centers_stage.hex_format % x_centers_state
+        lt_state = self.hex_format % lt_state
 
         cost_to_goal = max(
-            self.parent.lt_LR_T_centers_stage.heuristic(t_centers_state),
-            self.parent.lt_LR_X_centers_stage.heuristic(x_centers_state),
+            parent.lt_LR_T_centers_stage.heuristic(t_centers_state),
+            parent.lt_LR_X_centers_stage.heuristic(x_centers_state),
         )
 
-        result = self.hex_format % lt_state
         # log.info("%s: result %s, x_centers_state %s, t_centers_state %s, cost_to_goal %d" % (self, result, x_centers_state, t_centers_state, cost_to_goal))
-        return (result, cost_to_goal)
+        return (lt_state, cost_to_goal)
 
 
 class LookupTableULCentersSolve(LookupTableHashCostOnly):
@@ -1106,11 +1193,6 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
 
     def __init__(self, parent):
 
-        if parent.min_memory:
-            exit_asap = 1
-        else:
-            exit_asap = 99
-
         LookupTableIDA.__init__(
             self,
             parent,
@@ -1130,8 +1212,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             (parent.lt_UL_centers_solve,),
             linecount=142153,
             max_depth=5,
-            filesize=8387027,
-            exit_asap=exit_asap,
+            filesize=10661475,
         )
 
         self.recolor_positions = centers_555
@@ -1143,7 +1224,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
         self.nuke_corners = True
         self.nuke_edges = True
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
         lt_state = []
         UL_state = 0
@@ -1295,7 +1376,7 @@ class LookupTable555PairLastFourEdges(LookupTable):
             'sSSTTtuUUVVv',
             linecount=40319)
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state[:]
 
         # The lookup table was built using LB, LF, RF, and RB so we must re-color the
@@ -1385,7 +1466,7 @@ class LookupTable555TCenterSolve(LookupTable):
             filesize=19551000,
         )
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
         result = ''.join([parent_state[x] for x in self.t_centers_555])
         return (result, 0)
@@ -1635,33 +1716,14 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_T_centers_stage_co = LookupTable555UDTCenterStageCostOnly(self)
         self.lt_UD_X_centers_stage_co = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
-
-        # The nps and "took XYZms" numbers are for this cube:
-        # DFFURRULDLDLURLBDDRRBFRURFBFBFRBDLBBFRBLRFBRBBFLULDLBLULLFRUBUFLDFFLDULDDLUURRDRFBRLULUDRBDUUUBBRFFDBDFURDBBDDRULBUDRDLLLBDRFDLRDLLFDBBUFBRURFFUFFUUFU
-        #
-        # I tried several variations of table depth and loading into string vs set vs dict. In a nutshell
-        # loading into a set/dict just takes a lot of memory. Even though it runs at about half the nps
-        # of loading into a dict, a 6-deep table in a string provides a pretty good memory/speed tradeoff.
-        #
-        # Loading the 6-deep table into a string takes 250ms and 326M of memory, 32k nps, search took 389ms
-        # Loading the 6-deep table into a set takes 9s and 2.2G of memory, 60k nps, search took 225ms
-        # Loading the 6-deep table into a dict takes 18s and 2.2G of memory, 61k nps, search took 200ms
-        #
-        # Loading the 5-deep table into a string takes 8ms and 16M of memory, 60k nps, search took 4.7s
-        # Loading the 5-deep table into a dict takes 800ms and 172M of memory, 68k nps, search took 3.9s
-        #
-        # Loading the 4-deep table into a string takes 1ms and 800k of memory, 69k nps, search took 37s
-        # Loading the 4-deep table into a dict takes 30ms and 7M of memory, 71k nps, search took 37s
         self.lt_UD_centers_stage.preload_cache_string()
-        #self.lt_UD_centers_stage.preload_cache_set()
-        #self.lt_UD_centers_stage.preload_cache_dict()
 
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_X_centers_stage = LookupTable555LRXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
         self.lt_LR_T_centers_stage.preload_cache_dict()
         self.lt_LR_X_centers_stage.preload_cache_dict()
-        self.lt_LR_centers_stage.preload_cache_dict()
+        self.lt_LR_centers_stage.preload_cache_string()
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)

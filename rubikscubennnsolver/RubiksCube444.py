@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver import RubiksCube, NotSolving
+from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
     steps_on_same_face_and_layer,
@@ -214,10 +215,11 @@ class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
             self,
             parent,
             'lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt',
-            0xf0000f,
+            (0x00f0f0, 0x0f0f00, 0xf0000f),
             linecount=735471,
             max_depth=8,
-            filesize=16711681)
+            filesize=16711681,
+            md5='504553715ca5632e90a81c9ecd4aa749')
 
 
 class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
@@ -227,10 +229,11 @@ class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
             self,
             parent,
             'lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt',
-            0x0f0f00,
+            (0x00f0f0, 0x0f0f00, 0xf0000f),
             linecount=735471,
             max_depth=8,
-            filesize=16711681)
+            filesize=16711681,
+            md5='504553715ca5632e90a81c9ecd4aa749')
 
 
 class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
@@ -240,10 +243,11 @@ class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
             self,
             parent,
             'lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt',
-            0x00f0f0,
+            (0x00f0f0, 0x0f0f00, 0xf0000f),
             linecount=735471,
             max_depth=8,
-            filesize=16711681)
+            filesize=16711681,
+            md5='504553715ca5632e90a81c9ecd4aa749')
 
 
 class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
@@ -253,18 +257,216 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
     1 steps has 24 entries (0 percent, 0.00x previous step)
     2 steps has 324 entries (0 percent, 13.50x previous step)
     3 steps has 4,302 entries (0 percent, 13.28x previous step)
-    4 steps has 53,730 entries (7 percent, 12.49x previous step)
-    5 steps has 697,806 entries (92 percent, 12.99x previous step)
+    4 steps has 53,730 entries (0 percent, 12.49x previous step)
+    5 steps has 697,806 entries (7 percent, 12.99x previous step)
+    6 steps has 9,036,684 entries (92 percent, 12.95x previous step)
 
-    Total: 756,186 entries
-    Average: 4.92 moves
+    Total: 9,792,870 entries
     """
 
+    heuristic_stats = {
+        (0, 0, 0): 0,
+        (0, 1, 1): 1,
+        (0, 2, 2): 2,
+        (0, 3, 3): 3,
+        (0, 4, 4): 4,
+        (0, 5, 5): 5,
+        (1, 0, 1): 1,
+        (1, 1, 0): 1,
+        (1, 2, 2): 2,
+        (1, 3, 3): 3,
+        (1, 3, 4): 4,
+        (1, 4, 3): 4,
+        (1, 4, 4): 4,
+        (1, 5, 5): 5,
+        (1, 5, 6): 6,
+        (2, 0, 2): 2,
+        (2, 1, 2): 2,
+        (2, 2, 0): 2,
+        (2, 2, 1): 2,
+        (2, 2, 3): 5,
+        (2, 3, 2): 5,
+        (2, 3, 3): 3,
+        (2, 3, 4): 4,
+        (2, 3, 5): 5,
+        (2, 4, 3): 4,
+        (2, 4, 4): 4,
+        (2, 4, 5): 5,
+        (2, 5, 3): 5,
+        (2, 5, 4): 5,
+        (2, 5, 5): 5,
+        (2, 5, 6): 6,
+        (2, 6, 5): 7,
+        (2, 6, 6): 6,
+        (3, 0, 3): 3,
+        (3, 1, 3): 3,
+        (3, 1, 4): 4,
+        (3, 2, 3): 3,
+        (3, 2, 4): 4,
+        (3, 2, 5): 5,
+        (3, 3, 0): 3,
+        (3, 3, 1): 3,
+        (3, 3, 2): 3,
+        (3, 3, 3): 5,
+        (3, 3, 4): 4,
+        (3, 3, 5): 5,
+        (3, 4, 2): 4,
+        (3, 4, 3): 4,
+        (3, 4, 4): 4,
+        (3, 4, 5): 5,
+        (3, 4, 6): 7,
+        (3, 5, 3): 5,
+        (3, 5, 4): 5,
+        (3, 5, 5): 5,
+        (3, 5, 6): 7,
+        (3, 5, 7): 8,
+        (3, 6, 4): 6,
+        (3, 6, 5): 6,
+        (3, 6, 6): 6,
+        (3, 6, 7): 7,
+        (3, 7, 6): 8,
+        (4, 0, 4): 4,
+        (4, 1, 4): 4,
+        (4, 2, 3): 4,
+        (4, 2, 4): 4,
+        (4, 2, 5): 5,
+        (4, 2, 6): 7,
+        (4, 3, 2): 4,
+        (4, 3, 3): 4,
+        (4, 3, 4): 4,
+        (4, 3, 5): 5,
+        (4, 4, 0): 4,
+        (4, 4, 1): 4,
+        (4, 4, 2): 4,
+        (4, 4, 3): 4,
+        (4, 4, 4): 6,
+        (4, 4, 5): 5,
+        (4, 4, 6): 7,
+        (4, 4, 7): 9,
+        (4, 5, 2): 5,
+        (4, 5, 3): 5,
+        (4, 5, 4): 6,
+        (4, 5, 5): 6,
+        (4, 5, 6): 7,
+        (4, 5, 7): 7,
+        (4, 6, 2): 7,
+        (4, 6, 3): 8,
+        (4, 6, 4): 7,
+        (4, 6, 5): 7,
+        (4, 6, 6): 7,
+        (4, 6, 7): 7,
+        (4, 7, 5): 7,
+        (4, 7, 6): 8,
+        (5, 0, 5): 5,
+        (5, 1, 3): 5,
+        (5, 1, 5): 5,
+        (5, 2, 4): 5,
+        (5, 2, 5): 5,
+        (5, 2, 6): 6,
+        (5, 3, 3): 5,
+        (5, 3, 4): 6,
+        (5, 3, 5): 5,
+        (5, 3, 6): 7,
+        (5, 4, 2): 5,
+        (5, 4, 3): 5,
+        (5, 4, 4): 5,
+        (5, 4, 5): 6,
+        (5, 4, 6): 7,
+        (5, 4, 7): 8,
+        (5, 5, 0): 5,
+        (5, 5, 1): 5,
+        (5, 5, 2): 5,
+        (5, 5, 3): 5,
+        (5, 5, 4): 6,
+        (5, 5, 5): 6,
+        (5, 5, 6): 8,
+        (5, 5, 7): 9,
+        (5, 6, 2): 6,
+        (5, 6, 3): 7,
+        (5, 6, 4): 7,
+        (5, 6, 5): 7,
+        (5, 6, 6): 8,
+        (5, 6, 7): 9,
+        (5, 7, 3): 7,
+        (5, 7, 4): 8,
+        (5, 7, 5): 8,
+        (5, 7, 6): 9,
+        (5, 7, 7): 9,
+        (6, 1, 5): 6,
+        (6, 2, 6): 7,
+        (6, 3, 5): 7,
+        (6, 3, 6): 6,
+        (6, 3, 7): 8,
+        (6, 4, 4): 7,
+        (6, 4, 5): 7,
+        (6, 4, 6): 7,
+        (6, 4, 7): 10,
+        (6, 5, 4): 6,
+        (6, 5, 5): 8,
+        (6, 5, 6): 8,
+        (6, 5, 7): 9,
+        (6, 6, 1): 6,
+        (6, 6, 2): 6,
+        (6, 6, 3): 6,
+        (6, 6, 4): 7,
+        (6, 6, 5): 8,
+        (6, 6, 6): 9,
+        (6, 6, 7): 10,
+        (6, 7, 3): 7,
+        (6, 7, 4): 8,
+        (6, 7, 5): 9,
+        (6, 7, 6): 9,
+        (6, 7, 7): 9,
+        (7, 3, 6): 7,
+        (7, 4, 5): 7,
+        (7, 4, 6): 7,
+        (7, 5, 5): 8,
+        (7, 5, 6): 9,
+        (7, 5, 7): 9,
+        (7, 6, 3): 7,
+        (7, 6, 4): 8,
+        (7, 6, 5): 9,
+        (7, 6, 6): 9,
+        (7, 6, 7): 10,
+        (7, 7, 3): 8,
+        (7, 7, 4): 7,
+        (7, 7, 5): 9,
+        (7, 7, 6): 10,
+        (7, 7, 7): 10,
+        (8, 4, 6): 8,
+        (8, 5, 6): 9,
+    }
+
+    # The higher this number the less you honor the heuristic_stats
+    # -  0 uses the heuristic_stats exactly as reported
+    # -  1 subtracts 1 from the heuristic_stats value
+    # - 99 disables heuristic_stats
+    #
+    # You want to put this as high as you can but low enough
+    # to still speed up the slow IDA searches.
+    #
+    # For cube LURDRDURBLRLBDDBUFDFDLLDRFBRLFUFRLBLUBLFRFUUFDDFRBLUUURLBBFLRBURDULUFRBFDUDBDULDLBBBRRDRFDFFUFLB
+    # 99 : 10 moves in 14s
+    #  2 : 10 moves in 6s
+    #  1 : 10 moves in 800ms
+    #  0 : 10 moves in 1500ms
+    heuristic_stats_error = 1
+
     def __init__(self, parent):
+
+        # 5-deep table, takes 34M
+        # 6-deep table, takes 498M...this search is fast, that
+        # is why I don't bother with a --min-memory option here
+        filename = "lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt"
+        linecount = 756186
+        max_depth = 5
+        filesize = 34028370
+        exit_asap = 11
+
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
+            filename,
             ('FFFFLLLLUUUULLLLUUUUFFFF',
              'FFFFUUUULLLLUUUULLLLFFFF',
              'LLLLFFFFUUUUFFFFUUUULLLL',
@@ -283,9 +485,11 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             (parent.lt_UD_centers_stage,
              parent.lt_LR_centers_stage,
              parent.lt_FB_centers_stage),
-            linecount=756186,
-            max_depth=5,
-            filesize=21929394)
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize,
+            exit_asap=exit_asap
+        )
 
         self.recolor_positions = centers_444
         self.recolor_map = {
@@ -295,15 +499,29 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
         }
         self.nuke_corners = True
 
-    def ida_heuristic(self):
+    def ida_heuristic_tuple(self):
         parent = self.parent
         (lt_state, UD_state, LR_state, FB_state) = ida_heuristic_states_step10_444(parent.state, centers_444)
 
-        cost_to_goal = max(
+        return (
             parent.lt_UD_centers_stage.heuristic(UD_state),
             parent.lt_LR_centers_stage.heuristic(LR_state),
             parent.lt_FB_centers_stage.heuristic(FB_state),
         )
+
+    def ida_heuristic(self, ida_threshold):
+        parent = self.parent
+        (lt_state, UD_state, LR_state, FB_state) = ida_heuristic_states_step10_444(parent.state, centers_444)
+
+        UD_cost = parent.lt_UD_centers_stage.heuristic(UD_state)
+        LR_cost = parent.lt_LR_centers_stage.heuristic(LR_state)
+        FB_cost = parent.lt_FB_centers_stage.heuristic(FB_state)
+
+        if ida_threshold >= self.exit_asap:
+            heuristic_stats_cost = self.heuristic_stats.get((UD_cost, LR_cost, FB_cost), 0)
+            cost_to_goal = max(UD_cost, LR_cost, FB_cost, heuristic_stats_cost - self.heuristic_stats_error)
+        else:
+            cost_to_goal = max(UD_cost, LR_cost, FB_cost)
 
         return (lt_state, cost_to_goal)
 
@@ -420,9 +638,9 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
     1 steps has 36 entries (0 percent, 0.00x previous step)
     2 steps has 348 entries (0 percent, 9.67x previous step)
     3 steps has 3,416 entries (0 percent, 9.82x previous step)
-    4 steps has 26,260 entries (0 percent, 7.69x previous step)
-    5 steps has 226,852 entries (1 percent, 8.64x previous step)
-    6 steps has 2,048,086 entries (11 percent, 9.03x previous step)
+    4 steps has 26,260 entries (1 percent, 7.69x previous step)
+    5 steps has 226,852 entries (9 percent, 8.64x previous step)
+    6 steps has 2,048,086 entries (88 percent, 9.03x previous step)
 
     Total: 2,304,998 entries
     """
@@ -455,6 +673,7 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
 
             (parent.lt_highlow_edges_edges,
              parent.lt_highlow_edges_centers),
+
             linecount=2304998,
             max_depth=6,
             filesize=182094842)
@@ -465,7 +684,7 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
         edges = self.parent.highlow_edges_state(self.parent.edge_mapping)
         return LR_centers + edges
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
         LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
         edges_state = self.parent.highlow_edges_state(self.parent.edge_mapping)
@@ -580,18 +799,18 @@ class LookupTable444Reduce333CentersSolve(LookupTable):
     """
     lookup-table-4x4x4-step32-reduce333-centers.txt
     ===============================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 83 entries (0 percent, 11.86x previous step)
-    3 steps has 724 entries (1 percent, 8.72x previous step)
-    4 steps has 3,851 entries (6 percent, 5.32x previous step)
-    5 steps has 10,426 entries (17 percent, 2.71x previous step)
-    6 steps has 16,693 entries (28 percent, 1.60x previous step)
-    7 steps has 16,616 entries (28 percent, 1.00x previous step)
-    8 steps has 8,928 entries (15 percent, 0.54x previous step)
-    9 steps has 1,472 entries (2 percent, 0.16x previous step)
+    1 steps has 16 entries (0 percent, 0.00x previous step)
+    2 steps has 136 entries (0 percent, 8.50x previous step)
+    3 steps has 952 entries (1 percent, 7.00x previous step)
+    4 steps has 4,048 entries (6 percent, 4.25x previous step)
+    5 steps has 10,588 entries (18 percent, 2.62x previous step)
+    6 steps has 16,620 entries (28 percent, 1.57x previous step)
+    7 steps has 16,392 entries (27 percent, 0.99x previous step)
+    8 steps has 8,768 entries (14 percent, 0.53x previous step)
+    9 steps has 1,280 entries (2 percent, 0.15x previous step)
 
     Total: 58,800 entries
-    Average: 6.31 moves
+    Average: 6.27 moves
     """
 
     def __init__(self, parent):
@@ -599,7 +818,10 @@ class LookupTable444Reduce333CentersSolve(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step32-reduce333-centers.txt',
-            'UUUULLLLFFFFRRRRBBBBDDDD',
+            ('DDDDLLLLBBBBRRRRFFFFUUUU',
+             'DDDDRRRRFFFFLLLLBBBBUUUU',
+             'UUUULLLLFFFFRRRRBBBBDDDD',
+             'UUUURRRRBBBBLLLLFFFFDDDD'),
             linecount=58800,
             max_depth=9,
             filesize=3351600)
@@ -609,22 +831,137 @@ class LookupTableIDA444Reduce333(LookupTableIDA):
     """
     lookup-table-4x4x4-step30-reduce333.txt
     =======================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 83 entries (0 percent, 11.86x previous step)
-    3 steps has 960 entries (0 percent, 11.57x previous step)
-    4 steps has 10,303 entries (0 percent, 10.73x previous step)
-    5 steps has 107,490 entries (8 percent, 10.43x previous step)
-    6 steps has 1,124,449 entries (90 percent, 10.46x previous step)
+    1 steps has 16 entries (0 percent, 0.00x previous step)
+    2 steps has 136 entries (0 percent, 8.50x previous step)
+    3 steps has 1,424 entries (0 percent, 10.47x previous step)
+    4 steps has 14,032 entries (0 percent, 9.85x previous step)
+    5 steps has 134,052 entries (9 percent, 9.55x previous step)
+    6 steps has 1,290,292 entries (89 percent, 9.63x previous step)
 
-    Total: 1,243,292 entries
+    Total: 1,439,952 entries
     """
 
+    heuristic_stats = {
+        (0, 0): 1,
+        (0, 2): 7,
+        (1, 1): 2,
+        (1, 2): 9,
+        (1, 3): 8,
+        (1, 4): 6,
+        (2, 1): 7,
+        (2, 2): 3,
+        (2, 3): 4,
+        (2, 4): 5,
+        (2, 5): 7,
+        (2, 6): 9,
+        (2, 10): 14,
+        (2, 11): 14,
+        (3, 1): 4,
+        (3, 2): 4,
+        (3, 3): 4,
+        (3, 4): 6,
+        (3, 5): 7,
+        (3, 6): 10,
+        (3, 7): 11,
+        (3, 8): 12,
+        (3, 9): 12,
+        (3, 10): 13,
+        (3, 11): 15,
+        (4, 1): 5,
+        (4, 2): 6,
+        (4, 3): 6,
+        (4, 4): 6,
+        (4, 5): 7,
+        (4, 6): 10,
+        (4, 7): 11,
+        (4, 8): 12,
+        (4, 9): 13,
+        (4, 10): 14,
+        (4, 11): 15,
+        (5, 2): 6,
+        (5, 3): 6,
+        (5, 4): 7,
+        (5, 5): 8,
+        (5, 6): 9,
+        (5, 7): 11,
+        (5, 8): 12,
+        (5, 9): 13,
+        (5, 10): 14,
+        (5, 11): 15,
+        (5, 12): 14,
+        (6, 3): 7,
+        (6, 4): 10,
+        (6, 5): 9,
+        (6, 6): 9,
+        (6, 7): 10,
+        (6, 8): 11,
+        (6, 9): 13,
+        (6, 10): 14,
+        (6, 11): 15,
+        (6, 12): 16,
+        (7, 5): 12,
+        (7, 6): 11,
+        (7, 7): 11,
+        (7, 8): 12,
+        (7, 9): 13,
+        (7, 10): 14,
+        (7, 11): 14,
+        (7, 12): 15,
+        (8, 6): 13,
+        (8, 7): 13,
+        (8, 8): 13,
+        (8, 9): 13,
+        (8, 10): 14,
+        (8, 11): 15,
+        (8, 12): 14,
+        (9, 8): 13,
+        (9, 9): 13,
+        (9, 10): 14,
+        (9, 11): 15,
+    }
+
+    # The higher this number the less you honor the heuristic_stats
+    # -  0 uses the heuristic_stats exactly as reported
+    # -  1 subtracts 1 from the heuristic_stats value
+    # - 99 disables heuristic_stats
+    #
+    # You want to put this as high as you can but low enough
+    # to still speed up the slow IDA searches.
+    #
+    # For cube DFRFUBDBUBRBRBLFLURRLRURDLRBRDLRULDURFRBLDUFLRFFBFLDFLLBUFFFFUDDBRFBBBLDBBUULLRUUUDLDDFDRDUUBLFD
+    # 99 : 14 moves, 10m 12s  or 15 moves 11s
+    #  3 : 15 moves, 1m 24s   or 15 moves 30s
+    #  2 : 19 moves, 9s       or 15 moves 34s
+    #  1 : 18 moves, 10s      or 17 moves 5s
+    #  0 : 18 moves, 15s      or 17 moves 6s
+    heuristic_stats_error = 2
+
     def __init__(self, parent):
+
+        # 5-deep table, takes 10M
+        if parent.min_memory:
+            filename = "lookup-table-4x4x4-step30-reduce333.txt.5-deep"
+            linecount = 149660
+            max_depth = 5
+            filesize = 10176880
+            exit_asap = 13
+
+        # 6-deep table, takes 103M
+        else:
+            filename = "lookup-table-4x4x4-step30-reduce333.txt"
+            linecount = 1439952
+            max_depth = 6
+            filesize = 103676544
+            exit_asap = 15
+
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step30-reduce333.txt',
-            'UUUULLLLFFFFRRRRBBBBDDDD10425376a8b9ecfdhgkiljnm',
+            filename,
+            ('DDDDLLLLBBBBRRRRFFFFUUUU10425376a8b9ecfdhgkiljnm',
+             'DDDDRRRRFFFFLLLLBBBBUUUU10425376a8b9ecfdhgkiljnm',
+             'UUUULLLLFFFFRRRRBBBBDDDD10425376a8b9ecfdhgkiljnm',
+             'UUUURRRRBBBBLLLLFFFFDDDD10425376a8b9ecfdhgkiljnm'),
             moves_444,
 
             # illegal moves
@@ -641,20 +978,36 @@ class LookupTableIDA444Reduce333(LookupTableIDA):
             (parent.lt_reduce333_edges_solve,
              parent.lt_reduce333_centers_solve),
 
-            linecount=1243292,
-            max_depth=6,
-            filesize=65894476)
+            linecount=linecount,
+            max_depth=max_depth,
+            filesize=filesize,
+            exit_asap=exit_asap,
+        )
 
-    def ida_heuristic(self):
+    def ida_heuristic_tuple(self):
+        state = edges_recolor_pattern_444(self.parent.state[:])
+        centers_state = ''.join([state[square_index] for square_index in centers_444])
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+
+        return (
+            self.parent.lt_reduce333_centers_solve.heuristic(centers_state),
+            self.parent.lt_reduce333_edges_solve.heuristic(edges_state),
+        )
+
+    def ida_heuristic(self, ida_threshold):
         state = edges_recolor_pattern_444(self.parent.state[:])
         centers_state = ''.join([state[square_index] for square_index in centers_444])
         edges_state = ''.join([state[square_index] for square_index in wings_444])
         lt_state = centers_state + edges_state
 
-        cost_to_goal = max(
-            self.parent.lt_reduce333_centers_solve.heuristic(centers_state),
-            self.parent.lt_reduce333_edges_solve.heuristic(edges_state),
-        )
+        centers_cost = self.parent.lt_reduce333_centers_solve.heuristic(centers_state)
+        edges_cost = self.parent.lt_reduce333_edges_solve.heuristic(edges_state)
+
+        if ida_threshold >= self.exit_asap:
+            heuristic_stats_cost = self.heuristic_stats.get((centers_cost, edges_cost), 0)
+            cost_to_goal = max(centers_cost, edges_cost, heuristic_stats_cost - self.heuristic_stats_error)
+        else:
+            cost_to_goal = max(centers_cost, edges_cost)
 
         return (lt_state, cost_to_goal)
 
@@ -1057,7 +1410,7 @@ class RubiksCube444(RubiksCube):
         self.lt_LR_centers_stage = LookupTable444LRCentersStageCostOnly(self)
         self.lt_FB_centers_stage = LookupTable444FBCentersStageCostOnly(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
-        self.lt_ULFRBD_centers_stage.avoid_oll = True
+        self.lt_ULFRBD_centers_stage.avoid_oll = 0 # avoid OLL on orbit 0
         self.lt_ULFRBD_centers_stage.preload_cache_string()
 
         self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
@@ -1087,7 +1440,6 @@ class RubiksCube444(RubiksCube):
 
         if self.rotate_for_best_centers_staging():
             self.print_cube()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
@@ -1103,54 +1455,67 @@ class RubiksCube444(RubiksCube):
         #     - pick the best among those
         # - if not pick the one that has the lowest edges_cost
         # - build the phase2 table out to 7-deep to help here
-        # - this needs to consider the heuristic for phase3
-        min_phase23_cost = None
-        tmp_state = self.state[:]
-        tmp_solution = self.solution[:]
+        original_state = self.state[:]
+        original_solution = self.solution[:]
         log.info("%s: Start of find best edge_mapping" % self)
 
-        # Build a list of all 2048 states we need to find in the step20-highlow-edges table.
-        # We do this so we can leverage binary_search_multiple() which runs about a million
-        # times faster than binary searching for all 2048 states one at a time. This allows
-        # us to NOT load this file into memory.
-        high_low_states_to_find = []
-        edge_mapping_for_phase2_state = {}
+        for pre_steps in pre_steps_to_try:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
 
-        for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
-            for edge_mapping in edges_to_flip_sets:
-                self.state[:] = tmp_state[:]
-                self.solution[:] = tmp_solution[:]
-
-                self.edge_mapping = edge_mapping
-                phase2_state = self.lt_highlow_edges.state()
-                edge_mapping_for_phase2_state[phase2_state] = edge_mapping
-                high_low_states_to_find.append(phase2_state)
-
-        high_low_states = self.lt_highlow_edges.binary_search_multiple(high_low_states_to_find)
-
-        for (phase2_state, phase2_steps) in sorted(high_low_states.items()):
-            self.state = tmp_state[:]
-            self.solution = tmp_solution[:]
-            phase2_steps = phase2_steps.split()
-            phase2_cost = len(phase2_steps)
-
-            for step in phase2_steps:
+            for step in pre_steps:
                 self.rotate(step)
 
-            (_, phase3_cost) = self.lt_reduce333.ida_heuristic()
-            phase23_cost = phase2_cost + phase3_cost
+            tmp_state = self.state[:]
+            tmp_solution = self.solution[:]
 
-            if min_phase23_cost is None or phase23_cost < min_phase23_cost:
-                min_phase23_cost = phase23_cost
-                min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
-                log.info("%s: using edge_mapping %s, phase2+3 cost %s" % (self, min_edge_mapping, phase23_cost))
+            # Build a list of all 2048 states we need to find in the step20-highlow-edges table.
+            # We do this so we can leverage binary_search_multiple() which runs about a million
+            # times faster than binary searching for all 2048 states one at a time. This allows
+            # us to NOT load this file into memory.
+            high_low_states_to_find = []
+            edge_mapping_for_phase2_state = {}
 
-        if min_edge_mapping is None:
+            for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
+                for edge_mapping in edges_to_flip_sets:
+                    self.state[:] = tmp_state[:]
+                    self.solution[:] = tmp_solution[:]
+
+                    self.edge_mapping = edge_mapping
+                    phase2_state = self.lt_highlow_edges.state()
+                    edge_mapping_for_phase2_state[phase2_state] = edge_mapping
+                    high_low_states_to_find.append(phase2_state)
+
+            high_low_states = self.lt_highlow_edges.binary_search_multiple(high_low_states_to_find)
+            min_edge_mapping = None
+            min_phase2_cost = None
+
+            for (phase2_state, phase2_steps) in sorted(high_low_states.items()):
+                self.state = tmp_state[:]
+                self.solution = tmp_solution[:]
+                phase2_steps = phase2_steps.split()
+                phase2_cost = len(phase2_steps)
+
+                if min_phase2_cost is None or phase2_cost < min_phase2_cost:
+                    min_phase2_cost = phase2_cost
+                    min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
+                    log.info("%s: using edge_mapping %s, phase2 cost %s" % (self, min_edge_mapping, phase2_cost))
+
+            # dwalton fix this so we do not check in the 7-deep lookup-table-4x4x4-step20-highlow-edges.txt table
+            # It is 180M zipped.  We can probably use pre_steps_to_try in this scenario
+            # This is the case for BLBBDBFULRBBBDRDBDRLLDRBUUULUBBFRRULFULDUFRBFUDLUBRFFRDRBFDRRDFLDFUURBLRUBUFFLDRULFRDFLFFDLLDULD
+            #if min_edge_mapping is None:
+            #    assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
+            if min_edge_mapping:
+                if pre_steps:
+                    log.warning("pre-steps %s required to find a hit" % ' '.join(pre_steps))
+                break
+        else:
             assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
         log.info("%s: End of find best edge_mapping" % self)
 
-        self.state = tmp_state[:]
-        self.solution = tmp_solution[:]
+        self.state = original_state[:]
+        self.solution = original_solution[:]
         self.edge_mapping = min_edge_mapping
 
         # Test the prune tables
@@ -1174,6 +1539,7 @@ class RubiksCube444(RubiksCube):
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #sys.exit(0)
 
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_reduce333.avoid_pll = True
         self.lt_reduce333.solve()

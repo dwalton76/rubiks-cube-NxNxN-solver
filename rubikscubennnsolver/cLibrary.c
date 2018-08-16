@@ -73,21 +73,18 @@ ida_heuristic_states_step10_444(PyObject* self, PyObject* args)
 
         switch(*cubie_state) {
         case 'U':
-            UD_state = (UD_state | 0x1) << 1;
-            LR_state = LR_state << 1;
-            FB_state = FB_state << 1;
+            UD_state = UD_state | 0x1;
             break;
         case 'L':
-            UD_state = UD_state << 1;
-            LR_state = (LR_state | 0x1) << 1;
-            FB_state = FB_state << 1;
+            LR_state = LR_state | 0x1;
             break;
         default:
-            UD_state = UD_state << 1;
-            LR_state = LR_state << 1;
-            FB_state = (FB_state | 0x1) << 1;
+            FB_state = FB_state | 0x1;
             break;
         }
+        UD_state = UD_state << 1;
+        LR_state = LR_state << 1;
+        FB_state = FB_state << 1;
     }
 
     UD_state = UD_state >> 1;

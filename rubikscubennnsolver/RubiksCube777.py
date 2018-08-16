@@ -20,28 +20,6 @@ import sys
 
 log = logging.getLogger(__name__)
 
-'''
-baseline without heuristic_stats on step10, 40, 50, and 60
-----------------------------------------------------------
-7x7x7 avg centers solution 123.81818181818181 steps
-7x7x7 avg edges solution 104.0909090909091 steps
-7x7x7 avg solution 249.1818181818182 steps
-7x7x7 min solution 243 steps (DBRFBBRLRBULFDLBBURDLBRRUUFLUFDFUFRRBUBUFRRLUFLDULBFUDLUDBDFDDFDFLDUFFFUFRRLDBBFUDUFDLRLUBUDRRRDBFUFFUBFBURLDDFLURDUFFRDRDFDLDDBURULULDDBDDRFFFBLFBDULRURRDUDUURUBLLLDFUDDDDRBUBULLRBRRLDUBLLLBLRBLDBUBLFFBDURFRURBBBBRRRUFFLLLLULFBBBLLFLBLRBFBDRRBLFUDLFULDLRRFURDRBFFUUBRBBLDBDLRBLULFBFDRDFRURFFDU)
-7x7x7 max solution 257 steps (UURDDFBLDBBDRRUDDRUBDURLUFFFBFBRDLBDUBLFBBDRUUUDDFUDLFUUBDRBULUDRFRRUFURLRFRBURLLBFFFBRRLDDLBBUDLFRBBFLRRFLUFBLLFURDDBRDFBFDDRFBUURURLFLDDDRLULLBBUFBDDLLBUFLDRLRBLFUFRRBBUDBULLFBDLLRBRBULUDBDDRFLURDLBRBBLUFUBFDFDLUUUUBBDLBLRFUUBRDUUFFLLBFDDBRUFDRRBFUFFRBDDURFRFLRDDRDULBFFLLDBFFRDFRFLRULLULFLRL)
-
-
-real    7m59.150s
-user    6m4.337s
-sys     1m51.039s
-
-
-
-with heuristic_stats on step10, 40, 50, and 60
-----------------------------------------------
-I only solved 200 cubes when I built the stats, that isn't enough for the stats
-to be useful so I set the error to 99 for all of them for now.
-'''
-
 moves_777 = moves_666
 solved_777 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
@@ -212,98 +190,6 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
     )
 
     heuristic_stats = {
-        (0, 0, 0): 1,
-        (0, 3, 0): 5,
-        (0, 4, 0): 6,
-        (1, 1, 1): 2,
-        (1, 2, 1): 10,
-        (1, 3, 1): 4,
-        (1, 4, 1): 6,
-        (1, 5, 1): 9,
-        (1, 7, 1): 8,
-        (2, 1, 2): 11,
-        (2, 2, 2): 3,
-        (2, 2, 3): 4,
-        (2, 3, 2): 5,
-        (2, 3, 3): 4,
-        (2, 4, 2): 5,
-        (2, 4, 3): 7,
-        (2, 5, 2): 7,
-        (2, 6, 2): 7,
-        (2, 7, 2): 8,
-        (3, 1, 3): 10,
-        (3, 2, 2): 4,
-        (3, 2, 3): 10,
-        (3, 3, 3): 9,
-        (3, 3, 4): 9,
-        (3, 4, 3): 8,
-        (3, 4, 4): 7,
-        (3, 5, 3): 7,
-        (3, 5, 4): 9,
-        (3, 6, 3): 8,
-        (3, 7, 3): 8,
-        (3, 7, 4): 9,
-        (4, 1, 5): 4,
-        (4, 2, 4): 3,
-        (4, 2, 5): 4,
-        (4, 3, 4): 11,
-        (4, 3, 5): 8,
-        (4, 3, 6): 9,
-        (4, 4, 3): 7,
-        (4, 4, 4): 11,
-        (4, 4, 5): 6,
-        (4, 4, 6): 6,
-        (4, 5, 4): 11,
-        (4, 5, 5): 11,
-        (4, 6, 4): 13,
-        (4, 7, 4): 14,
-        (5, 2, 4): 6,
-        (5, 2, 5): 9,
-        (5, 2, 6): 9,
-        (5, 3, 5): 4,
-        (5, 3, 6): 8,
-        (5, 4, 4): 9,
-        (5, 4, 5): 11,
-        (5, 4, 6): 7,
-        (5, 5, 4): 8,
-        (5, 5, 5): 12,
-        (5, 5, 6): 8,
-        (5, 6, 4): 8,
-        (5, 6, 5): 13,
-        (5, 6, 6): 7,
-        (5, 7, 5): 15,
-        (5, 8, 5): 14,
-        (5, 8, 6): 15,
-        (6, 2, 5): 9,
-        (6, 2, 6): 8,
-        (6, 3, 5): 9,
-        (6, 3, 6): 14,
-        (6, 4, 4): 9,
-        (6, 4, 5): 7,
-        (6, 4, 6): 12,
-        (6, 4, 7): 6,
-        (6, 5, 5): 8,
-        (6, 5, 6): 13,
-        (6, 5, 7): 7,
-        (6, 6, 4): 7,
-        (6, 6, 5): 7,
-        (6, 6, 6): 14,
-        (6, 7, 6): 15,
-        (6, 7, 7): 14,
-        (6, 8, 6): 15,
-        (7, 3, 7): 9,
-        (7, 4, 6): 7,
-        (7, 4, 7): 15,
-        (7, 5, 4): 14,
-        (7, 5, 6): 8,
-        (7, 5, 7): 14,
-        (7, 6, 7): 15,
-        (7, 7, 7): 15,
-        (7, 8, 7): 16,
-        (7, 9, 7): 15,
-        (8, 6, 8): 14,
-        (8, 7, 8): 16,
-        (8, 8, 8): 14,
     }
 
     # 99 disables heuristic_stats
@@ -332,7 +218,10 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
             linecount=5961573,
             max_depth=6,
             filesize=399425391,
+            exit_asap=1,
         )
+
+        #self.exit_asap = 99
         #self.collect_stats = True
 
     def recolor(self):
@@ -398,7 +287,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
         right_cost = parent.lt_UD_oblique_edge_pairing_right_only.heuristic(right_state)
         return (str(self), left_cost, middle_cost, right_cost)
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent = self.parent
         parent_state = self.parent.state
         left_state = 0
@@ -571,88 +460,8 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
     set_LFRB_left_middle_oblique_edges_777 = set(LFRB_left_middle_oblique_edges_777)
 
     heuristic_stats = {
-        (0, 0): 1,
-        (0, 1): 3,
-        (0, 2): 3,
-        (0, 3): 4,
-        (0, 4): 5,
-        (0, 5): 7,
-        (0, 6): 8,
-        (1, 0): 2,
-        (1, 1): 2,
-        (1, 2): 4,
-        (1, 3): 4,
-        (1, 4): 5,
-        (1, 5): 7,
-        (1, 6): 9,
-        (1, 7): 10,
-        (2, 0): 3,
-        (2, 1): 3,
-        (2, 2): 3,
-        (2, 3): 4,
-        (2, 4): 5,
-        (2, 5): 8,
-        (2, 6): 9,
-        (2, 7): 9,
-        (2, 8): 12,
-        (3, 0): 4,
-        (3, 1): 4,
-        (3, 2): 4,
-        (3, 3): 4,
-        (3, 4): 5,
-        (3, 5): 8,
-        (3, 6): 9,
-        (3, 7): 9,
-        (3, 8): 11,
-        (4, 0): 5,
-        (4, 1): 5,
-        (4, 2): 5,
-        (4, 3): 5,
-        (4, 3): 6,
-        (4, 4): 5,
-        (4, 5): 8,
-        (4, 6): 9,
-        (4, 7): 10,
-        (4, 8): 10,
-        (4, 9): 13,
-        (5, 0): 7,
-        (5, 1): 8,
-        (5, 2): 6,
-        (5, 3): 7,
-        (5, 4): 8,
-        (5, 5): 7,
-        (5, 6): 9,
-        (5, 7): 9,
-        (5, 8): 10,
-        (5, 9): 10,
-        (6, 1): 9,
-        (6, 2): 8,
-        (6, 3): 9,
-        (6, 4): 9,
-        (6, 5): 9,
-        (6, 6): 8,
-        (6, 7): 10,
-        (6, 8): 11,
-        (6, 9): 12,
-        (7, 2): 10,
-        (7, 3): 9,
-        (7, 4): 10,
-        (7, 5): 10,
-        (7, 6): 9,
-        (7, 7): 9,
-        (7, 8): 9,
-        (8, 4): 11,
-        (8, 5): 11,
-        (8, 6): 10,
-        (8, 7): 13,
-        (8, 8): 12
     }
-
-    # The stats above are all median values from solving 5000 7x7x7 cubes. Experimenting
-    # shows that subtracting 1 from all of those speeds up some searches a good bit (from
-    # 2m down to 5s).
-    # 99 disables heuristic_stats
-    #heuristic_stats_error = 1
+    heuristic_stats_error = 99
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -675,7 +484,8 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
 
             linecount=9919742,
             max_depth=3,
-            filesize=178555356,
+            filesize=277752776,
+            exit_asap=9,
         )
 
     def recolor(self):
@@ -694,7 +504,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
                 self.parent.state[x] = '.'
         #self.parent.print_cube()
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
         left_middle_state = 0
         left_right_state = 0
@@ -917,42 +727,15 @@ class LookupTableIDA777Step40(LookupTableIDA):
     """
 
     state_targets = (
-        '0842109bdef7b',
-        '0a5294ab5ad6b',
-        '0a5294bad6b5a',
-        '0c6318d39ce73',
-        '0c6318d9ce739',
-        '0e739ce318c63',
-        '0e739ce94a529',
-        '0e739cf294a52',
-        '0e739cf8c6318',
-        '18c631939ce73',
-        '18c63199ce739',
-        '1ad6b5a318c63',
-        '1ad6b5a94a529',
-        '1ad6b5b294a52',
-        '1ad6b5b8c6318',
-        '1ce739d18c631',
-        '1ef7bde108421',
-        '1ef7bdf084210',
-        '294a528b5ad6b',
-        '294a529ad6b5a',
-        '2b5ad6aa5294a',
-        '2d6b5ac318c63',
-        '2d6b5ac94a529',
-        '2d6b5ad294a52',
-        '2d6b5ad8c6318',
-        '2f7bdee210842',
-        '2f7bdee842108',
-        '39ce738318c63',
-        '39ce73894a529',
-        '39ce739294a52',
-        '39ce7398c6318',
-        '3bdef7a210842',
-        '3bdef7a842108',
-        '3def7bc108421',
-        '3def7bd084210',
-        '3fffffe000000',
+        '0842109bdef7b', '0a5294ab5ad6b', '0a5294bad6b5a', '0c6318d39ce73',
+        '0c6318d9ce739', '0e739ce318c63', '0e739ce94a529', '0e739cf294a52',
+        '0e739cf8c6318', '18c631939ce73', '18c63199ce739', '1ad6b5a318c63',
+        '1ad6b5a94a529', '1ad6b5b294a52', '1ad6b5b8c6318', '1ce739d18c631',
+        '1ef7bde108421', '1ef7bdf084210', '294a528b5ad6b', '294a529ad6b5a',
+        '2b5ad6aa5294a', '2d6b5ac318c63', '2d6b5ac94a529', '2d6b5ad294a52',
+        '2d6b5ad8c6318', '2f7bdee210842', '2f7bdee842108', '39ce738318c63',
+        '39ce73894a529', '39ce739294a52', '39ce7398c6318', '3bdef7a210842',
+        '3bdef7a842108', '3def7bc108421', '3def7bd084210', '3fffffe000000',
     )
 
     centers_step40_777 = (
@@ -971,74 +754,7 @@ class LookupTableIDA777Step40(LookupTableIDA):
     )
 
     heuristic_stats = {
-        (0, 0): 1,
-        (0, 1): 2,
-        (0, 2): 3,
-        (0, 3): 4,
-        (0, 4): 5,
-        (1, 0): 7,
-        (1, 1): 2,
-        (1, 2): 3,
-        (1, 3): 4,
-        (1, 4): 5,
-        (1, 5): 6,
-        (2, 0): 8,
-        (2, 1): 4,
-        (2, 2): 3,
-        (2, 3): 4,
-        (2, 4): 5,
-        (2, 5): 6,
-        (2, 6): 7,
-        (3, 1): 8,
-        (3, 2): 5,
-        (3, 3): 4,
-        (3, 4): 5,
-        (3, 5): 6,
-        (3, 6): 7,
-        (4, 2): 6,
-        (4, 3): 6,
-        (4, 4): 6,
-        (4, 5): 6,
-        (4, 6): 7,
-        (4, 7): 12,
-        (5, 1): 6,
-        (5, 2): 8,
-        (5, 3): 8,
-        (5, 4): 8,
-        (5, 5): 8,
-        (5, 6): 9,
-        (5, 7): 11,
-        (5, 8): 12,
-        (5, 9): 12,
-        (6, 3): 9,
-        (6, 4): 10,
-        (6, 5): 10,
-        (6, 6): 9,
-        (6, 7): 12,
-        (6, 8): 12,
-        (7, 3): 10,
-        (7, 4): 10,
-        (7, 5): 11,
-        (7, 6): 11,
-        (7, 7): 11,
-        (7, 8): 13,
-        (7, 9): 13,
-        (8, 4): 12,
-        (8, 5): 12,
-        (8, 6): 12,
-        (8, 7): 13,
-        (8, 8): 13,
-        (8, 9): 13,
-        (9, 5): 12,
-        (9, 6): 13,
-        (9, 7): 13,
-        (9, 8): 13,
-        (9, 9): 13,
-        (10, 7): 14,
-        (10, 8): 16,
     }
-
-    # 99 disables heuristic_stats
     heuristic_stats_error = 99
 
     set_centers_step41_777 = set(centers_step41_777)
@@ -1065,7 +781,11 @@ class LookupTableIDA777Step40(LookupTableIDA):
              parent.lt_step42),
             linecount=7871759,
             max_depth=6,
-            filesize=149563421)
+            filesize=346357396,
+            exit_asap=99,
+        )
+
+        #self.exit_asap = 99
         #self.collect_stats = True
 
     def ida_heuristic_tuple(self):
@@ -1082,7 +802,7 @@ class LookupTableIDA777Step40(LookupTableIDA):
 
         return (str(self), step41_cost, step42_cost)
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent = self.parent
 
         (lt_state, step41_state, step42_state) = ida_heuristic_states_step40_777(
@@ -1281,42 +1001,15 @@ class LookupTableIDA777Step50(LookupTableIDA):
     """
 
     state_targets = (
-        '0842109bdef7b',
-        '0a5294ab5ad6b',
-        '0a5294bad6b5a',
-        '0c6318d39ce73',
-        '0c6318d9ce739',
-        '0e739ce318c63',
-        '0e739ce94a529',
-        '0e739cf294a52',
-        '0e739cf8c6318',
-        '18c631939ce73',
-        '18c63199ce739',
-        '1ad6b5a318c63',
-        '1ad6b5a94a529',
-        '1ad6b5b294a52',
-        '1ad6b5b8c6318',
-        '1ce739d18c631',
-        '1ef7bde108421',
-        '1ef7bdf084210',
-        '294a528b5ad6b',
-        '294a529ad6b5a',
-        '2b5ad6aa5294a',
-        '2d6b5ac318c63',
-        '2d6b5ac94a529',
-        '2d6b5ad294a52',
-        '2d6b5ad8c6318',
-        '2f7bdee210842',
-        '2f7bdee842108',
-        '39ce738318c63',
-        '39ce73894a529',
-        '39ce739294a52',
-        '39ce7398c6318',
-        '3bdef7a210842',
-        '3bdef7a842108',
-        '3def7bc108421',
-        '3def7bd084210',
-        '3fffffe000000',
+        '0842109bdef7b', '0a5294ab5ad6b', '0a5294bad6b5a', '0c6318d39ce73',
+        '0c6318d9ce739', '0e739ce318c63', '0e739ce94a529', '0e739cf294a52',
+        '0e739cf8c6318', '18c631939ce73', '18c63199ce739', '1ad6b5a318c63',
+        '1ad6b5a94a529', '1ad6b5b294a52', '1ad6b5b8c6318', '1ce739d18c631',
+        '1ef7bde108421', '1ef7bdf084210', '294a528b5ad6b', '294a529ad6b5a',
+        '2b5ad6aa5294a', '2d6b5ac318c63', '2d6b5ac94a529', '2d6b5ad294a52',
+        '2d6b5ad8c6318', '2f7bdee210842', '2f7bdee842108', '39ce738318c63',
+        '39ce73894a529', '39ce739294a52', '39ce7398c6318', '3bdef7a210842',
+        '3bdef7a842108', '3def7bc108421', '3def7bd084210', '3fffffe000000',
     )
 
     centers_step50_777 = (
@@ -1335,72 +1028,7 @@ class LookupTableIDA777Step50(LookupTableIDA):
     )
 
     heuristic_stats = {
-        (0, 0): 1,
-        (0, 1): 2,
-        (0, 2): 3,
-        (0, 3): 4,
-        (0, 4): 5,
-        (1, 0): 8,
-        (1, 1): 2,
-        (1, 2): 4,
-        (1, 3): 4,
-        (1, 4): 5,
-        (1, 5): 6,
-        (2, 0): 7,
-        (2, 1): 6,
-        (2, 2): 3,
-        (2, 3): 5,
-        (2, 4): 5,
-        (2, 5): 6,
-        (2, 6): 7,
-        (3, 0): 6,
-        (3, 1): 7,
-        (3, 2): 6,
-        (3, 3): 6,
-        (3, 4): 6,
-        (3, 5): 6,
-        (3, 6): 7,
-        (4, 1): 7,
-        (4, 2): 8,
-        (4, 3): 9,
-        (4, 4): 8,
-        (4, 5): 8,
-        (4, 6): 9,
-        (4, 7): 14,
-        (4, 8): 15,
-        (5, 3): 10,
-        (5, 4): 9,
-        (5, 5): 9,
-        (5, 6): 10,
-        (5, 7): 12,
-        (5, 8): 12,
-        (6, 3): 12,
-        (6, 4): 12,
-        (6, 5): 11,
-        (6, 6): 11,
-        (6, 7): 11,
-        (6, 8): 13,
-        (6, 9): 13,
-        (7, 4): 12,
-        (7, 5): 12,
-        (7, 6): 12,
-        (7, 7): 13,
-        (7, 8): 13,
-        (7, 9): 15,
-        (8, 3): 11,
-        (8, 5): 13,
-        (8, 6): 13,
-        (8, 7): 13,
-        (8, 8): 13,
-        (8, 9): 13,
-        (9, 5): 12,
-        (9, 6): 15,
-        (9, 7): 14,
-        (9, 8): 13,
-        (9, 9): 13,
     }
-
-    # 99 disables heuristic_stats
     heuristic_stats_error = 99
 
     set_centers_step51_777 = set(centers_step51_777)
@@ -1430,7 +1058,11 @@ class LookupTableIDA777Step50(LookupTableIDA):
              parent.lt_step52),
             linecount=7871759,
             max_depth=6,
-            filesize=149563421)
+            filesize=338485637,
+            exit_asap=99,
+        )
+
+        #self.exit_asap = 99
         #self.collect_stats = True
 
     def ida_heuristic_tuple(self):
@@ -1448,7 +1080,7 @@ class LookupTableIDA777Step50(LookupTableIDA):
 
         return (str(self), step51_cost, step52_cost)
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent = self.parent
 
         (lt_state, step51_state, step52_state) = ida_heuristic_states_step50_777(
@@ -1593,93 +1225,7 @@ class LookupTableIDA777Step60(LookupTableIDA):
     )
 
     heuristic_stats = {
-        (0, 0): 1,
-        (0, 1): 8,
-        (0, 2): 9,
-        (0, 3): 4,
-        (0, 4): 6,
-        (0, 5): 6,
-        (1, 0): 9,
-        (1, 1): 2,
-        (1, 2): 6,
-        (1, 3): 8,
-        (1, 4): 5,
-        (2, 0): 9,
-        (2, 1): 8,
-        (2, 2): 4,
-        (2, 3): 6,
-        (2, 4): 8,
-        (2, 5): 6,
-        (2, 6): 7,
-        (3, 1): 11,
-        (3, 2): 9,
-        (3, 3): 7,
-        (3, 4): 6,
-        (3, 5): 8,
-        (3, 6): 14,
-        (4, 2): 11,
-        (4, 3): 10,
-        (4, 4): 9,
-        (4, 5): 10,
-        (4, 6): 13,
-        (4, 7): 15,
-        (5, 3): 12,
-        (5, 4): 11,
-        (5, 5): 11,
-        (5, 6): 12,
-        (5, 7): 15,
-        (5, 8): 16,
-        (6, 4): 13,
-        (6, 5): 12,
-        (6, 6): 13,
-        (6, 7): 14,
-        (6, 8): 15,
-        (6, 9): 15,
-        (7, 4): 15,
-        (7, 5): 14,
-        (7, 6): 13,
-        (7, 7): 14,
-        (7, 8): 15,
-        (7, 9): 16,
-        (7, 10): 18,
-        (7, 11): 18,
-        (8, 5): 16,
-        (8, 6): 15,
-        (8, 7): 15,
-        (8, 8): 15,
-        (8, 9): 16,
-        (8, 10): 18,
-        (8, 11): 16,
-        (9, 5): 17,
-        (9, 6): 16,
-        (9, 7): 16,
-        (9, 8): 16,
-        (9, 9): 17,
-        (9, 10): 17,
-        (9, 11): 19,
-        (10, 6): 17,
-        (10, 7): 16,
-        (10, 8): 17,
-        (10, 9): 17,
-        (10, 10): 19,
-        (10, 11): 18,
-        (10, 12): 16,
-        (11, 7): 17,
-        (11, 8): 18,
-        (11, 9): 18,
-        (11, 10): 18,
-        (11, 11): 19,
-        (12, 9): 19,
-        (12, 10): 19,
-        (12, 11): 20,
     }
-
-    # 99 disables heuristic_stats
-    # error 99 is 15s, 21 steps
-    # error 4 is 3s, 26 steps
-    # error 3 is 7s, 26 steps
-    # error 2 is 17s, 26 steps
-    # error 1 is 35s, 26 steps
     heuristic_stats_error = 99
 
     set_state_indexes_step61 = set(state_indexes_step61)
@@ -1713,7 +1259,11 @@ class LookupTableIDA777Step60(LookupTableIDA):
              parent.lt_step62),
             linecount=15407555,
             max_depth=7,
-            filesize=677932420)
+            filesize=1124751515,
+            exit_asap=99,
+        )
+
+        #self.exit_asap = 99
         #self.collect_stats = True
 
     def ida_heuristic_tuple(self):
@@ -1731,7 +1281,7 @@ class LookupTableIDA777Step60(LookupTableIDA):
 
         return (str(self), step61_cost, step62_cost)
 
-    def ida_heuristic(self):
+    def ida_heuristic(self, ida_threshold):
         parent = self.parent
 
         (lt_state, step61_state, step62_state) = ida_heuristic_states_step60_777(
@@ -2119,6 +1669,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             self.create_fake_666_centers()
             self.fake_666.lt_UD_oblique_edge_stage.solve()
 
+            # Also move them to sides UD, we do this to speed up the 777 step10
+            self.fake_666.fake_555 = self.fake_666.get_fake_555()
+            self.fake_666.populate_fake_555_for_ULFRBD_solve()
+            self.fake_666.fake_555.group_centers_stage_UD()
+
+            for step in self.fake_666.fake_555.solution:
+                self.fake_666.rotate(step)
+
             for step in self.fake_666.solution:
                 if step.startswith('6'):
                     step = '7' + step[1:]
@@ -2181,7 +1739,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             #self.print_cube()
             #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-            log.info("kociemba: %s" % self.get_kociemba_string(True))
+            #log.info("kociemba: %s" % self.get_kociemba_string(True))
             self.lt_LR_oblique_edge_pairing.solve()
             self.print_cube()
             log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
@@ -2212,7 +1770,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         self.lt_step40.solve()
         self.print_cube()
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: LR centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Test the pruning tables
@@ -2225,7 +1783,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.rotate("L")
         self.rotate("R")
         self.print_cube()
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: LR centers horizontal bars, UD centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Test the pruning tables

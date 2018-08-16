@@ -1,11 +1,25 @@
 #!/usr/bin/env python3
 
+from pprint import pformat
+from rubikscubennnsolver.LookupTable import steps_on_same_face_and_layer
 from rubikscubennnsolver.misc import parse_ascii_777
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555, get_wings_edges_will_pair
+from rubikscubennnsolver.RubiksCube777 import RubiksCube666, moves_666
 import logging
 import sys
+
+def chop_trailing_outer_layer_steps(steps):
+    last_w_index = 0
+
+    for (index, step) in enumerate(steps):
+        if "w" in step:
+            last_w_index = index
+
+    #log.info("chop_trailing_outer_layer_steps stesp %s, last_w_index %d" % (pformat(steps), last_w_index))
+    return steps[0:last_w_index+1]
+
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)20s %(levelname)8s: %(message)s')
@@ -15,53 +29,70 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-get_wings_edges_will_pair(
-    "OOOyPXzqRQrPSSSTTTUUUVVVqWwxxWrYYpZZ",
-    "OOO---z-----SSSTTTUUUVVV-Ww---YYYWZZ"
-)
+#get_wings_edges_will_pair(
+#    "OOOyPXzqRQrPSSSTTTUUUVVVqWwxxWrYYpZZ",
+#    "OOO---z-----SSSTTTUUUVVV-Ww---YYYWZZ"
+#)
+illegal_moves_for_step20 = ("3Fw", "3Fw'", "3Bw", "3Bw'", "3Lw", "3Lw'", "3Rw", "3Rw'")
 
-sys.exit(0)
+moves_for_step20 = []
+for x in moves_666:
+    if x not in illegal_moves_for_step20:
+        moves_for_step20.append(x)
 
-cube = RubiksCube555(solved_555, 'URFDLB')
-cube.nuke_corners()
-#cube.nuke_centers()
-cube.print_cube()
-sys.exit(0)
+#print(" ".join(moves_666))
+#print(" ".join(moves_for_step20))
 
-'''
-cube = RubiksCube444(solved_444, 'URFDLB')
-original_state = cube.state[:]
-cube.print_cube()
-cube.bitfield_create()
-cube.bitfield_rotate("U2")
-cube.bitfield_save()
-cube.print_cube()
-sys.exit(0)
-'''
+sequences = []
 
-quarter_turns = ("U", "U'")
-half_turns = ("U2",)
-cube = RubiksCube444('FLDFDLBDFBLFFRRBDRFRRURBRDUBBDLURUDRRBFFBDLUBLUULUFRRFBLDDUULBDBDFLDBLUBFRFUFBDDUBFLLRFLURDULLRU', 'URFDLB')
-cube.print_cube()
-cube.bitfield_create()
-original_state = cube.state[:]
+#for step in moves_for_step20:
+#    sequences.append((step,))
 
-for step in quarter_turns:
-    cube.bitfield_rotate(step)
-    cube.bitfield_rotate(step)
-    cube.bitfield_rotate(step)
-    cube.bitfield_rotate(step)
-    cube.bitfield_save()
+for step1 in moves_for_step20:
+    sequences.append((step1,))
 
-    if cube.state != original_state:
-        cube.print_cube()
-        assert False, "%s failed" % step
+    for step2 in moves_for_step20:
 
-for step in half_turns:
-    cube.bitfield_rotate(step)
-    cube.bitfield_rotate(step)
-    cube.bitfield_save()
+        if not steps_on_same_face_and_layer(step1, step2):
+            sequences.append((step1, step2))
 
-    if cube.state != original_state:
-        cube.print_cube()
-        assert False, "%s failed" % step
+            for step3 in moves_for_step20:
+
+                if not steps_on_same_face_and_layer(step2, step3):
+                    sequences.append((step1, step2, step3))
+
+                    for step4 in moves_for_step20:
+
+                        if not steps_on_same_face_and_layer(step3, step4):
+                            sequences.append((step1, step2, step3, step4))
+
+                            '''
+                            for step5 in moves_for_step20:
+                                if not steps_on_same_face_and_layer(step4, step5):
+                                    sequences.append((step1, step2, step3, step4, step5))
+                            '''
+
+# Only keep the ones with a 3w turn
+final = []
+not_interested = 0
+for seq in sequences:
+    three_count = 0
+    len_seq = len(seq)
+
+    for step in seq:
+        if step.startswith("3"):
+            three_count += 1
+
+    if three_count >= 1:
+        final.append((len_seq, seq))
+    else:
+        not_interested += 1
+
+final = sorted(final)
+#print("\n".join(final))
+print("Found {:,}".format(len(final)))
+print("Pruned {:,}".format(not_interested))
+
+with open("pre_steps_step20_666.txt", "w") as fh:
+    for (_, seq) in final:
+        fh.write(" ".join(seq) + "\n")

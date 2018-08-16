@@ -1,14 +1,58 @@
 
 
+
+exit_asap removal
+=================
+- note how long it takes to run the test cubes for each size...we should see a big speed improvement
+- update the RAM requirements
+- stop loading IDA tables into memory, barf if this happens
+
+- DONE 444 step10 build 6-deep
+- DONE 444 step30 build 7-deep
+
+- 555 step10 build 7-deep
+    RLBFBDBLUDBRUBUFFRBRBBLDUFBRLURBDLBDFRLDBUURDRBFDFLRUFLUBULUBLFFFURDFUFFFLURRUFFDURDUBLDURFURRBLLLDLBRRUDDDBDRFBLFDLLBFLURLFDRUUBDLRDDBRFBULLLDFUDRDFB takes 2m 11s
+- 555 step20 use the 165 million entry table but store it via perfect hash. We can then pick
+  the step10 solution that leads to the shortest step20.
+- 555 step30 maybe bring back the UF table and when we are doing step10/20 find the combo that
+  leads to the lowest step30 heuristic? We could also do a LF table here...maybe then we could
+  do something with the edges as part of this stage.
+
+- 666 step20 is already 1G at 2-deep and growing by 13x so we cannot build this to 3-deep.
+  We may get a speed bump here just from no longer binary searching through the cache string.
+  This will bring our RAM requirement way down, we load this 1G table into memory today.
+  Can we delete the heuristic_stats?
+
+- 666 step30 build 4-deep (running on kids machine)
+- DONE 666 step60 build 5-deep
+
+- 777 step10 build 7-deep
+    - I did but it is 6.3G unzipped and 845M zipped
+    - This table does the weird thing where it "locks" the outside obliques so we
+      have to keep the full move sequence :( Maybe we could chop chop if we kept
+      the first two moves if one of them is a w move? Experiment with this.
+
+- 777 step30 build 4-deep
+- 777 step40 build 7-deep (building on laptop)
+- 777 step50 build 7-deep
+- 777 step60 build 8-deep
+
+
+
+
+
+misc
+===================
+- UFFDRUDBURBFUUBLFFFLUBRDRDULDUDRLUDUDRRBBLBRBLFUDRBLDRFRFDBFURFDLFLURUFRDRUDBBBBFBLBRLFDFFUUBFLBFFBDFRRURLULLULDLURBDRDRDBFLLFLRULFRRLFULBBDDDUBLBDDUL
 - DLDLLRDBLBRDUUBRUUBDURFLBLBUUDLLRRLUFRFFFRLDBLBRDRRFLDDRDDUBULFFFRLLBLDFLUFFUDBUUUBFLRUDFBURRRBBRDDBRDDDFFDDFBBULBLFFDLULLUFRFDBFBUFRBRRBBLLRURBDUFFUU
- fails due to 555 edges table not being deep enough
+ fail due to 555 edges table not being deep enough
 
 
 - when this reduces to 555 the step10 IDA takes forever, it needs to always exit_asap above a certain threshold
 LFFRUBRDBLFLRBFLFRLDBUULURBUUDUFUFUDFRBBDURFLBDFRUFRFDDFFDFFDLRRFDRLBBFLLDRLBRBFDDRDRURBLFRULRDFUBDULBRBBBBUBRUULFULFLUDFRDRRLUDUDRDLLUBDRLFDLBFFUDUFBUURLRLLRFDLUFBULFDBBLBBLBFLURDRFBULDDRLDBLBFBBDDRRLUBDBUFUDRUUFLRD
 
 
-URFLLFFDUDUBBUUUUBDDUDURFUUDUFBBLURLDUDURLLFLRFLFRFLBUULLBRBLFLFLLDBDBDFRLBRFBBBFFRUDBRRFRFRLLRLBBFRRDLBURBRURLUUFDDUDUDRDDDDLRUUDURFDDDDRBRBBBRLDDFRUDRRFBUFBRRBRFLBFLDLLFRLLRUBFFFDFDUUBFLLBFRFBFBBLLFBFLLDBLBRUUDDUUD
+666 URFLLFFDUDUBBUUUUBDDUDURFUUDUFBBLURLDUDURLLFLRFLFRFLBUULLBRBLFLFLLDBDBDFRLBRFBBBFFRUDBRRFRFRLLRLBBFRRDLBURBRURLUUFDDUDUDRDDDDLRUUDURFDDDDRBRBBBRLDDFRUDRRFBUFBRRBRFLBFLDLLFRLLRUBFFFDFDUUBFLLBFRFBFBBLLFBFLLDBLBRUUDDUUD
 - step30 takes 17 minutes!!
 
 - remove the 777 step00, 01, and 02 tables

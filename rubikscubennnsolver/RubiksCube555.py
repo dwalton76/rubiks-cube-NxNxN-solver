@@ -1860,7 +1860,6 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_centers_stage.solve()
         self.print_cube()
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info(" ".join(self.solution))
 
     def group_centers_stage_LR(self):
         """

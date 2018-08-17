@@ -1,0 +1,120 @@
+
+IDA search is the #1 bottleneck...write an IDA search in C
+- first test is 5x5x5 UD centers for cube RFUBLFUBRULLUDDRLRLLFFFLUBDBLBFFUFLFURBFFLDDLFFBBRLUUDRRDLLLRDFFLBBLFURUBULBRLBDRUURDRRDFURDBUUBBFBUDRUBURBRBDLFLBDFBDULLDBBDDDRRFURLDUDUBRDFRFFDFDRLU
+
+
+Misc
+====
+- use CostOnly model in C implementation
+- use skip_other_steps_this_face in C implementation
+
+
+python output (2.1s)
+- does use CostOnly model
+=========================
+2018-04-13 09:04:29,694   LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold range 7->99
+2018-04-13 09:04:29,694   LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 7, explored 1 nodes, took 0ms
+2018-04-13 09:04:29,767   LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 8, explored 666 nodes, took 72ms
+2018-04-13 09:04:31,235   LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 9, explored 13958 nodes, took 1467ms
+2018-04-13 09:04:31,868   LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: 583762 seek calls
+2018-04-13 09:04:31,868   LookupTable.py     INFO: 5x5x5-step11-UD-centers-stage-t-center-only.cost-only: 1 seek calls
+2018-04-13 09:04:31,868   LookupTable.py     INFO: 5x5x5-step12-UD-centers-stage-x-center-only.cost-only: 1 seek calls
+2018-04-13 09:04:31,868   LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA found match 6 steps in U Lw D' Fw' Uw Fw, lt_state 06c242411c4236, f_cost 11 (6 + 5)
+2018-04-13 09:04:31,868   LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 10, explored 5959 nodes, took 633ms (0:00:02.174543 total)
+2018-04-13 09:04:31,868   LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA explored 20584 nodes in 0:00:02.174543, 9465 nodes-per-sec
+2018-04-13 09:04:31,869 RubiksCube555.py     INFO: 5x5x5: UD centers staged, 13 steps in
+
+
+C output (1.8s)
+- does NOT use CostOnly model
+=============================
+robot@laptop:~/rubiks-cube-NxNxN-solver$ time ./ida_search --kociemba RFUBLFUBRULLUDDRLRLLFFFLUBDBLBFFUFLFURBFFLDDLFFBBRLUUDRRDLLLRDFFLBBLFURUBULBRLBDRUURDRRDFURDBUUBBFBUDRUBURBRBDLFLBDFBDULLDBBDDDRRFURLDUDUBRDFRFFDFDRLU --type 5x5x5-UD-centers-stage
+[2018-04-13T14:46:22.949] IDA threshold 7, explored 1 branches
+[2018-04-13T14:46:23.040] IDA threshold 8, explored 1225 branches
+[2018-04-13T14:46:24.619] IDA threshold 9, explored 23764 branches
+[2018-04-13T14:46:24.816] UD_CENTERS_STAGE_555 sp_cube_state 069682348c4070
+[2018-04-13T14:46:24.816] IDA count 2899, f_cost 11 vs threshold 10 (cost_to_here 6, cost_to_goal 5)
+[2018-04-13T14:46:24.816] VICTORY
+
+U Uw2 F' Lw' D' Uw'
+[2018-04-13T14:46:24.816] IDA threshold 10, explored 2899 branches, found solution
+1827194 seek_calls
+real    0m1.872s
+user    0m0.596s
+sys 0m1.262s
+robot@laptop:~/rubiks-cube-NxNxN-solver$
+
+
+C output (1.1s)
+- does use CostOnly model
+=========================
+robot@laptop:~/rubiks-cube-NxNxN-solver$ time ./ida_search --kociemba RFUBLFUBRULLUDDRLRLLFFFLUBDBLBFFUFLFURBFFLDDLFFBBRLUUDRRDLLLRDFFLBBLFURUBULBRLBDRUURDRRDFURDBUUBBFBUDRUBURBRBDLFLBDFBDULLDBBDDDRRFURLDUDUBRDFRFFDFDRLU --type 5x5x5-UD-centers-stage
+[2018-04-13T15:34:17.563] IDA threshold 7, explored 1 branches
+[2018-04-13T15:34:17.623] IDA threshold 8, explored 1225 branches
+[2018-04-13T15:34:18.553] IDA threshold 9, explored 23764 branches
+[2018-04-13T15:34:18.670] UD_CENTERS_STAGE_555 sp_cube_state 069682348c4070
+[2018-04-13T15:34:18.670] IDA count 2899, f_cost 11 vs threshold 10 (cost_to_here 6, cost_to_goal 5)
+[2018-04-13T15:34:18.670] VICTORY
+
+U Uw2 F' Lw' D' Uw'
+[2018-04-13T15:34:18.670] IDA threshold 10, explored 2899 branches, found solution
+790877 seek_calls
+real    0m1.110s
+user    0m0.283s
+sys 0m0.809s
+robot@laptop:~/rubiks-cube-NxNxN-solver$
+
+
+
+C IDA-all-the-way
+=================
+robot@laptop:~/rubiks-cube-NxNxN-solver$ time ./ida_search --kociemba RFUBLFUBRULLUDDRLRLLFFFLUBDBLBFFUFLFURBFFLDDLFFBBRLUUDRRDLLLRDFFLBBLFURUBULBRLBDRUURDRRDFURDBUUBBFBUDRUBURBRBDLFLBDFBDULLDBBDDDRRFURLDUDUBRDFRFFDFDRLU --type 5x5x5-UD-centers-stage
+[2018-04-13T17:57:46.350] ida_cost_only_preload: begin lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, 16711681 entries, ptr 0xab276010
+[2018-04-13T17:57:46.356] ida_cost_only_preload: end   lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, ptr 0xab276010
+[2018-04-13T17:57:46.362] ida_cost_only_preload: begin lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt, 16711681 entries, ptr 0xaa285010
+[2018-04-13T17:57:46.368] ida_cost_only_preload: end   lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt, ptr 0xaa285010
+[2018-04-13T17:57:46.368] IDA threshold 7, explored 1 branches
+[2018-04-13T17:57:46.372] IDA threshold 8, explored 1225 branches
+[2018-04-13T17:57:46.433] IDA threshold 9, explored 23764 branches
+[2018-04-13T17:57:47.818] IDA threshold 10, explored 556549 branches
+[2018-04-13T17:58:19.830] IDA threshold 11, explored 12439783 branches
+[2018-04-13T17:58:45.781] UD_CENTERS_STAGE_555 sp_cube_state 3fe000000001ff
+[2018-04-13T17:58:45.781] IDA count 10197094, f_cost 12 vs threshold 12 (cost_to_here 11, cost_to_goal 1)
+[2018-04-13T17:58:45.781] VICTORY
+
+U Fw2 Dw' Rw F' Uw L2 Bw R' Dw Rw
+[2018-04-13T17:58:45.781] IDA threshold 12, explored 10197094 branches, found solution
+0 seek_calls
+real    0m59.452s
+user    0m59.349s
+sys 0m0.088s
+robot@laptop:~/rubiks-cube-NxNxN-solver$
+
+
+C IDA-all-the-way
+=================
+I made some tweaks and got this down to 53s. It has to explore 23 million branches so it is
+cranking through 433k branches per second.  That isn't bad but isn't groundbreaking either.
+
+[2018-05-22T12:47:50.487] ida_cost_only_preload: begin lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, 16711681 entries, ptr 0x51b97010
+[2018-05-22T12:47:50.491] ida_cost_only_preload: end   lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, ptr 0x51b97010
+[2018-05-22T12:47:50.496] ida_cost_only_preload: begin lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt, 16711681 entries, ptr 0x50ba6010
+[2018-05-22T12:47:50.500] ida_cost_only_preload: end   lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt, ptr 0x50ba6010
+[2018-05-22T12:47:50.500] min_ida_threshold 7
+[2018-05-22T12:47:50.500] IDA threshold 7, explored 1 branches
+[2018-05-22T12:47:50.502] IDA threshold 8, explored 1225 branches
+[2018-05-22T12:47:50.558] IDA threshold 9, explored 23764 branches
+[2018-05-22T12:47:51.817] IDA threshold 10, explored 556549 branches
+[2018-05-22T12:48:20.518] IDA threshold 11, explored 12439783 branches
+[2018-05-22T12:48:43.748] UD_CENTERS_STAGE_555 sp_cube_state 3fe000000001ff
+[2018-05-22T12:48:43.748] IDA count 10197094, f_cost 12 vs threshold 12 (cost_to_here 11, cost_to_goal 1)
+[2018-05-22T12:48:43.748] VICTORY
+
+U Fw2 Dw' Rw F' Uw L2 Bw R' Dw Rw 
+[2018-05-22T12:48:43.749] IDA threshold 12, explored 10197094 branches, found solution
+0 seek_calls
+real    0m53.272s
+user    0m53.187s
+sys 0m0.084s
+
+

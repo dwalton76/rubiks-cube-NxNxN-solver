@@ -94,6 +94,9 @@ cache
 lookup*.hash
 lookup*.gz
 lookup*.txt
+ida_search
+pts_lbsearch
+perf.data
 *~
 *.bak
 tmp

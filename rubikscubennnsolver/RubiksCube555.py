@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube, NotSolving
-from rubikscubennnsolver.cLibrary import ida_heuristic_states_step10_555
 from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.RubiksCube444 import moves_444
@@ -11,11 +10,13 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableCostOnly,
     LookupTableHashCostOnly,
     LookupTableIDA,
+    NoIDASolution,
 )
 from pprint import pformat
+import os
 import itertools
 import logging
-import resource
+import subprocess
 import sys
 
 log = logging.getLogger(__name__)
@@ -741,6 +742,7 @@ class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
             linecount=735471,
             max_depth=8,
             filesize=16711681,
+            md5='95464b63ec32f831c0f844916f3bbee9',
         )
 
 
@@ -770,6 +772,7 @@ class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
             linecount=735471,
             max_depth=8,
             filesize=16711681,
+            md5='19679794a853d38a7d36be0f03fe1c3b',
         )
 
 
@@ -807,90 +810,12 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
     set_x_centers_555 = set(x_centers_555)
     set_t_centers_555 = set(t_centers_555)
 
-    heuristic_stats = {
-        (1, 1): 1,
-        (1, 2): 5,
-        (1, 3): 4,
-        (1, 4): 6,
-        (2, 1): 6,
-        (2, 2): 3,
-        (2, 3): 5,
-        (2, 4): 5,
-        (2, 5): 8,
-        (2, 7): 9,
-        (3, 1): 4,
-        (3, 2): 4,
-        (3, 3): 4,
-        (3, 4): 6,
-        (3, 5): 8,
-        (3, 6): 9,
-        (3, 7): 10,
-        (4, 2): 5,
-        (4, 3): 5,
-        (4, 4): 6,
-        (4, 5): 7,
-        (4, 6): 9,
-        (4, 7): 10,
-        (5, 2): 6,
-        (5, 3): 6,
-        (5, 4): 7,
-        (5, 5): 7,
-        (5, 6): 9,
-        (5, 7): 10,
-        (5, 8): 11,
-        (6, 2): 9,
-        (6, 3): 9,
-        (6, 4): 9,
-        (6, 5): 9,
-        (6, 6): 9,
-        (6, 7): 10,
-        (6, 8): 10,
-        (7, 3): 10,
-        (7, 4): 10,
-        (7, 5): 9,
-        (7, 6): 10,
-        (7, 7): 10,
-        (7, 8): 11,
-    }
-
-    # The higher this number the less you honor the heuristic_stats
-    # -  0 uses the heuristic_stats exactly as reported
-    # -  1 subtracts 1 from the heuristic_stats value
-    # - 99 disables heuristic_stats
-    #
-    # You want to put this as high as you can but low enough
-    # to still speed up the slow IDA searches.
-    #
-    # For cube RLBFBDBLUDBRUBUFFRBRBBLDUFBRLURBDLBDFRLDBUURDRBFDFLRUFLUBULUBLFFFURDFUFFFLURRUFFDURDUBLDURFURRBLLLDLBRRUDDDBDRFBLFDLLBFLURLFDRUUBDLRDDBRFBULLLDFUDRDFB
-    # - 99: 11 moves in 1m 41s
-    # -  3: 11 moves in 1m 35s
-    # -  2: 11 moves in 11s
-    # -  1: 12 moves in 1200ms
-    # -  0: 12 moves in 800ms
-    heuristic_stats_error = 2
-
     def __init__(self, parent):
-
-        # 5-deep takes 29M
-        if True or parent.min_memory:
-            filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt.5-deep'
-            linecount = 868185 
-            max_depth = 5
-            filesize = 30386475
-            exit_asap = 10
-
-        # 6-deep takes 669M
-        else:
-            filename = 'lookup-table-5x5x5-step10-UD-centers-stage.txt'
-            linecount = 17168476
-            max_depth = 6
-            filesize = 669570564
-            exit_asap = 11
 
         LookupTableIDA.__init__(
             self,
             parent,
-            filename,
+            'lookup-table-5x5x5-step10-UD-centers-stage.txt',
             '3fe000000001ff',
             moves_555,
             (), # illegal_moves
@@ -900,10 +825,10 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
              parent.lt_UD_T_centers_stage_co,
             ),
 
-            linecount=linecount,
-            max_depth=max_depth,
-            filesize=filesize,
-            exit_asap=exit_asap
+            linecount=868185,
+            max_depth=5,
+            filesize=30386475,
+            exit_asap=99,
         )
 
         self.recolor_positions = centers_555
@@ -915,46 +840,74 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             'D' : 'U',
         }
         self.nuke_corners = True
-        #self.nuke_edges = True
-
-    def ida_heuristic_tuple(self):
-        parent = self.parent
-
-        (lt_state, x_centers_state, t_centers_state) =\
-            ida_heuristic_states_step10_555(
-                parent.state,
-                centers_555,
-                self.set_x_centers_555,
-                self.set_t_centers_555,
-            )
-
-        x_centers_cost = parent.lt_UD_X_centers_stage_co.heuristic(x_centers_state)
-        t_centers_cost = parent.lt_UD_T_centers_stage_co.heuristic(t_centers_state)
-
-        return (x_centers_cost, t_centers_cost)
 
     def ida_heuristic(self, ida_threshold):
         parent = self.parent
+        parent_state = self.parent.state
 
-        (lt_state, x_centers_state, t_centers_state) =\
-            ida_heuristic_states_step10_555(
-                parent.state,
-                centers_555,
-                self.set_x_centers_555,
-                self.set_t_centers_555,
-            )
+        lt_state = 0
+        x_centers_state = 0
+        t_centers_state = 0
+        set_x_centers_555 = self.set_x_centers_555
+        set_t_centers_555 = self.set_t_centers_555
+
+        for x in centers_555:
+            cubie_state = parent_state[x]
+
+            if x in set_x_centers_555:
+
+                if cubie_state == 'U':
+                    x_centers_state = x_centers_state | 0x1
+                    lt_state = lt_state | 0x1
+                x_centers_state = x_centers_state << 1
+
+            elif x in set_t_centers_555:
+
+                if cubie_state == 'U':
+                    t_centers_state = t_centers_state | 0x1
+                    lt_state = lt_state | 0x1
+                t_centers_state = t_centers_state << 1
+
+            else:
+                if cubie_state == 'U':
+                    lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+
+        x_centers_state = x_centers_state >> 1
+        t_centers_state = t_centers_state >> 1
+        lt_state = lt_state >> 1
 
         lt_state = self.hex_format % lt_state
         x_centers_cost = parent.lt_UD_X_centers_stage_co.heuristic(x_centers_state)
         t_centers_cost = parent.lt_UD_T_centers_stage_co.heuristic(t_centers_state)
-
-        if ida_threshold >= self.exit_asap:
-            heuristic_stats_cost = self.heuristic_stats.get((x_centers_cost, t_centers_cost), 0)
-            cost_to_goal = max(x_centers_cost, t_centers_cost, heuristic_stats_cost - self.heuristic_stats_error)
-        else:
-            cost_to_goal = max(x_centers_cost, t_centers_cost)
+        cost_to_goal = max(x_centers_cost, t_centers_cost)
 
         return (lt_state, cost_to_goal)
+
+    def ida_solve_guts(self, min_ida_threshold, max_ida_threshold):
+
+        if not os.path.isfile("ida_search"):
+            log.info("ida_search is missing...compiling it now")
+            subprocess.check_output("gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_555.c -lm".split())
+
+        kociemba_string = self.parent.get_kociemba_string(True)
+        log.info("%s: solving via C ida_search" % self)
+        output = subprocess.check_output(["./ida_search", "--kociemba", kociemba_string, "--type", "5x5x5-UD-centers-stage"]).decode('ascii')
+        log.info("\n\n" + output + "\n\n")
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                steps = line.split(":")[1].strip().split()
+                break
+        else:
+            raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+
+        log.info("%s: ida_search found solution %s" % (self, ' '.join(steps)))
+        self.parent.state = self.pre_recolor_state[:]
+        self.parent.solution = self.pre_recolor_solution[:]
+
+        for step in steps:
+            self.parent.rotate(step)
+
 
 
 class LookupTable555LRTCenterStage(LookupTable):
@@ -1716,7 +1669,6 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_T_centers_stage_co = LookupTable555UDTCenterStageCostOnly(self)
         self.lt_UD_X_centers_stage_co = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
-        self.lt_UD_centers_stage.preload_cache_string()
 
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_X_centers_stage = LookupTable555LRXCenterStage(self)
@@ -1934,6 +1886,7 @@ class RubiksCube555(RubiksCube):
 
         # All centers are staged, solve them
         self.lt_ULFRB_centers_solve.solve()
+        self.print_cube()
         log.info("%s: ULFRBD centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
 
@@ -2141,7 +2094,7 @@ class RubiksCube555(RubiksCube):
 
             if min_solution_len is not None:
                 if pre_steps:
-                    log.warning("pre-steps %s required to find a hit" % ' '.join(pre_steps))
+                    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
 
                 self.state = original_state[:]
                 self.solution = original_solution[:]

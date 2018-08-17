@@ -103,6 +103,9 @@ def steps_on_same_face_and_layer(prev_step, step):
     >>> steps_on_same_face_and_layer("U", "Uw")
     False
 
+    >>> steps_on_same_face_and_layer("F2", "Fw'")
+    False
+
     >>> steps_on_same_face_and_layer("3Uw2", "3Uw")
     True
 
@@ -111,6 +114,13 @@ def steps_on_same_face_and_layer(prev_step, step):
     """
     if prev_step is None:
         return False
+
+    if prev_step[0] != step[0]:
+        return False
+
+    if prev_step[0].isdigit():
+        if prev_step[1] != step[1]:
+            return False
 
     # chop the trailing '
     if prev_step[-1] == "'":
@@ -1076,91 +1086,8 @@ class LookupTableIDA(LookupTable):
         else:
             return None
 
-    # uncomment to cProfile solve()
-    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
-        '''
-    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
-            profile.runctx('self.solve_guts()', globals(), locals())
-
-    def solve_guts(self, min_ida_threshold=None, max_ida_threshold=99):
-        '''
-        """
-        The goal is to find a sequence of moves that will put the cube in a state that is
-        in our lookup table
-        """
+    def ida_solve_guts(self, min_ida_threshold, max_ida_threshold):
         start_time0 = dt.datetime.now()
-
-        if self.parent.size == 2:
-            from rubikscubennnsolver.RubiksCube222 import rotate_222
-            self.rotate_xxx = rotate_222
-        elif self.parent.size == 4:
-            from rubikscubennnsolver.RubiksCube444 import rotate_444
-            self.rotate_xxx = rotate_444
-        elif self.parent.size == 5:
-            from rubikscubennnsolver.RubiksCube555 import rotate_555
-            self.rotate_xxx = rotate_555
-        elif self.parent.size == 6:
-            from rubikscubennnsolver.RubiksCube666 import rotate_666
-            self.rotate_xxx = rotate_666
-        elif self.parent.size == 7:
-            from rubikscubennnsolver.RubiksCube777 import rotate_777
-            self.rotate_xxx = rotate_777
-        else:
-            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
-
-        # If this is a lookup table that is staging a pair of colors (such as U and D)
-        # then recolor the cubies accordingly.
-        self.pre_recolor_state = self.parent.state[:]
-        self.pre_recolor_solution = self.parent.solution[:]
-        self.recolor()
-
-        # save cube state
-        self.original_state = self.parent.state[:]
-        self.original_solution = self.parent.solution[:]
-
-        # Get the intial cube state and cost_to_goal
-        (state, cost_to_goal) = self.ida_heuristic(0)
-
-        # The cube is already in the desired state, nothing to do
-        if state in self.state_target or cost_to_goal == 0:
-            self.parent.state = self.pre_recolor_state[:]
-            self.parent.solution = self.pre_recolor_solution[:]
-            log.info("%s: cube is already at the target state %s" % (self, state))
-            return True
-
-        if self.search_complete(state, []):
-            log.info("%s: cube is already in a state %s that is in our lookup table" % (self, state))
-            tmp_solution = self.parent.solution[:]
-            self.parent.state = self.pre_recolor_state[:]
-            self.parent.solution = self.pre_recolor_solution[:]
-
-            for step in tmp_solution[len(self.original_solution):]:
-                self.parent.rotate(step)
-
-            return True
-
-        # If we are here (odds are very high we will be) it means that the current
-        # cube state was not in the lookup table.  We must now perform an IDA search
-        # until we find a sequence of moves that takes us to a state that IS in the
-        # lookup table.
-        if min_ida_threshold is None:
-            min_ida_threshold = cost_to_goal
-
-        # If this is the case the range loop below isn't worth running
-        if min_ida_threshold >= max_ida_threshold+1:
-            raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
-
-        # Avoiding OLL is done by changing the edge parity from odd to even.
-        # The edge parity toggles from odd to even or even to odd with every
-        # quarter wide turn. Sanity check that avoiding OLL is possible for
-        # this table.
-        if self.avoid_oll:
-            for step in self.moves_all:
-                if "w" in step and not step.endswith("2"):
-                    break
-            else:
-                raise Exception("%s: has avoid_oll %s but there are no quarter wide turns among moves_all %s" % (self, self.avoid_oll, " ".join(self.moves_all)))
-
         log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold))
         total_ida_count = 0
 
@@ -1275,6 +1202,92 @@ class LookupTableIDA(LookupTable):
         self.parent.solution = self.original_solution[:]
 
         raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+
+    # uncomment to cProfile solve()
+    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
+        '''
+    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
+            profile.runctx('self.solve_with_cprofile()', globals(), locals())
+
+    def solve_with_cprofile(self, min_ida_threshold=None, max_ida_threshold=99):
+        '''
+        """
+        The goal is to find a sequence of moves that will put the cube in a state that is
+        in our lookup table
+        """
+
+        if self.parent.size == 2:
+            from rubikscubennnsolver.RubiksCube222 import rotate_222
+            self.rotate_xxx = rotate_222
+        elif self.parent.size == 4:
+            from rubikscubennnsolver.RubiksCube444 import rotate_444
+            self.rotate_xxx = rotate_444
+        elif self.parent.size == 5:
+            from rubikscubennnsolver.RubiksCube555 import rotate_555
+            self.rotate_xxx = rotate_555
+        elif self.parent.size == 6:
+            from rubikscubennnsolver.RubiksCube666 import rotate_666
+            self.rotate_xxx = rotate_666
+        elif self.parent.size == 7:
+            from rubikscubennnsolver.RubiksCube777 import rotate_777
+            self.rotate_xxx = rotate_777
+        else:
+            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+
+        # If this is a lookup table that is staging a pair of colors (such as U and D)
+        # then recolor the cubies accordingly.
+        self.pre_recolor_state = self.parent.state[:]
+        self.pre_recolor_solution = self.parent.solution[:]
+        self.recolor()
+
+        # save cube state
+        self.original_state = self.parent.state[:]
+        self.original_solution = self.parent.solution[:]
+
+        # Get the intial cube state and cost_to_goal
+        (state, cost_to_goal) = self.ida_heuristic(0)
+
+        # The cube is already in the desired state, nothing to do
+        if state in self.state_target or cost_to_goal == 0:
+            self.parent.state = self.pre_recolor_state[:]
+            self.parent.solution = self.pre_recolor_solution[:]
+            log.info("%s: cube is already at the target state %s" % (self, state))
+            return True
+
+        if self.search_complete(state, []):
+            log.info("%s: cube is already in a state %s that is in our lookup table" % (self, state))
+            tmp_solution = self.parent.solution[:]
+            self.parent.state = self.pre_recolor_state[:]
+            self.parent.solution = self.pre_recolor_solution[:]
+
+            for step in tmp_solution[len(self.original_solution):]:
+                self.parent.rotate(step)
+
+            return True
+
+        # Avoiding OLL is done by changing the edge parity from odd to even.
+        # The edge parity toggles from odd to even or even to odd with every
+        # quarter wide turn. Sanity check that avoiding OLL is possible for
+        # this table.
+        if self.avoid_oll:
+            for step in self.moves_all:
+                if "w" in step and not step.endswith("2"):
+                    break
+            else:
+                raise Exception("%s: has avoid_oll %s but there are no quarter wide turns among moves_all %s" % (self, self.avoid_oll, " ".join(self.moves_all)))
+
+        # If we are here (odds are very high we will be) it means that the current
+        # cube state was not in the lookup table.  We must now perform an IDA search
+        # until we find a sequence of moves that takes us to a state that IS in the
+        # lookup table.
+        if min_ida_threshold is None:
+            min_ida_threshold = cost_to_goal
+
+        # If this is the case the range loop below isn't worth running
+        if min_ida_threshold >= max_ida_threshold+1:
+            raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+
+        return self.ida_solve_guts(min_ida_threshold, max_ida_threshold)
 
 
 if __name__ == '__main__':

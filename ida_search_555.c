@@ -82,53 +82,31 @@ ida_heuristic_UD_centers_555(
     UD_t_centers_state >>= 1;
     UD_x_centers_state >>= 1;
 
-    // check for state-target
-    if (UD_t_centers_state == 0xf0000f) {
-        UD_t_centers_cost = 0;
-    } else {
-        UD_t_centers_cost = hex_to_int(pt_t_centers_cost_only[UD_t_centers_state]);
-    }
-
-    if (UD_x_centers_state == 0xf0000f) {
-        UD_x_centers_cost = 0;
-    } else {
-        UD_x_centers_cost = hex_to_int(pt_x_centers_cost_only[UD_x_centers_state]);
-    }
-
+    UD_t_centers_cost = hex_to_int(pt_t_centers_cost_only[UD_t_centers_state]);
+    UD_x_centers_cost = hex_to_int(pt_x_centers_cost_only[UD_x_centers_state]);
     cost_to_goal = max(UD_t_centers_cost, UD_x_centers_cost);
 
-    // we need to pass in the MAX_DEPTH
+    // The step10 table we loaded is 5-deep so if a state is not in that
+    // table we know it has a cost of at least 6...thus MAX_DEPTH of 6 here.
     int MAX_DEPTH = 6;
 
     if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
-        // dwalton stopped here...TODO
-        // - need a way to store the hash_key as an unsigned long...today we have to convert to a string
-        // - need a better way for handling state_targets
-        // - build the state_targets into the costonly tables so we do not have to
-        //   check if the prune table state is at the state_target everytime
         unsigned long lt_state = get_555_centers(cube);
+        char lt_state_str[24];
+        sprintf(lt_state_str, "%014lx", lt_state);
 
-        if (lt_state == 0x3fe000000001ff) {
-            cost_to_goal = 0;
+        struct key_value_pair *hash_entry = NULL;
+        hash_entry = hash_find(UD_centers_cost_555, lt_state_str);
+
+        if (hash_entry) {
+            //LOG("init cost_to_goal %d, hash_entry %s cost %d\n", cost_to_goal, lt_state_str, hash_entry->value);
+            cost_to_goal = max(cost_to_goal, hash_entry->value);
         } else {
-            char lt_state_str[24];
-            sprintf(lt_state_str, "%014lx", lt_state);
-
-            struct key_value_pair *hash_entry = NULL;
-            hash_entry = hash_find(UD_centers_cost_555, lt_state_str);
-
-            if (hash_entry) {
-                //LOG("init cost_to_goal %d, hash_entry %s cost %d\n", cost_to_goal, lt_state_str, hash_entry->value);
-                cost_to_goal = max(cost_to_goal, hash_entry->value);
-            } else {
-                // TODO fix hard code, 5 as in 5-deep because we built the table 4-deep
-                //LOG("init cost_to_goal %d, no hash_entry for %s\n", cost_to_goal, lt_state_str);
-                cost_to_goal = max(cost_to_goal, MAX_DEPTH);
-            }
+            // TODO fix hard code, 5 as in 5-deep because we built the table 4-deep
+            //LOG("init cost_to_goal %d, no hash_entry for %s\n", cost_to_goal, lt_state_str);
+            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
         }
     }
-
-    // dwalton
 
     if (debug) {
         LOG("ida_heuristic t-centers state %d or 0x%x, cost %d\n", UD_t_centers_state, UD_t_centers_state, UD_t_centers_cost);

@@ -1508,7 +1508,7 @@ class RubiksCube444(RubiksCube):
             #    assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
             if min_edge_mapping:
                 if pre_steps:
-                    log.warning("pre-steps %s required to find a hit" % ' '.join(pre_steps))
+                    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
                 break
         else:
             assert False, "write some code to find the best edge_mapping when there is no phase2 hit"

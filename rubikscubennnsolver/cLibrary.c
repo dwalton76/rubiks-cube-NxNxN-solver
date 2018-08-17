@@ -100,107 +100,6 @@ ida_heuristic_states_step10_444(PyObject* self, PyObject* args)
 
 // The original python was
 /*
-    lt_state = 0
-    x_centers_state = 0
-    t_centers_state = 0
-    set_x_centers_555 = self.set_x_centers_555
-    set_t_centers_555 = self.set_t_centers_555
-
-    for x in centers_555:
-        cubie_state = parent_state[x]
-
-        if x in set_x_centers_555:
-
-            if cubie_state == 'U':
-                x_centers_state = x_centers_state | 0x1
-                lt_state = lt_state | 0x1
-            x_centers_state = x_centers_state << 1
-
-        elif x in set_t_centers_555:
-
-            if cubie_state == 'U':
-                t_centers_state = t_centers_state | 0x1
-                lt_state = lt_state | 0x1
-            t_centers_state = t_centers_state << 1
-
-        else:
-            if cubie_state == 'U':
-                lt_state = lt_state | 0x1
-        lt_state = lt_state << 1
-
-    x_centers_state = x_centers_state >> 1
-    t_centers_state = t_centers_state >> 1
-    lt_state = lt_state >> 1
-*/
-static PyObject*
-ida_heuristic_states_step10_555(PyObject* self, PyObject* args)
-{
-    PyObject *cube;
-    PyObject *centers_555;
-    PyObject *set_x_centers_555;
-    PyObject *set_t_centers_555;
-    PyObject *cubie_index_object;
-    PyObject *cubie_state_object;
-    unsigned long cubie_index = 0;
-    char *cubie_state;
-
-    unsigned long lt_state = 0;
-    unsigned long x_centers_state = 0;
-    unsigned long t_centers_state = 0;
-    unsigned long centers_555_size = 0;
-
-    if (! PyArg_ParseTuple(args, "O!O!O!O!",
-                           &PyList_Type, &cube,
-                           &PyTuple_Type, &centers_555,
-                           &PySet_Type, &set_x_centers_555,
-                           &PySet_Type, &set_t_centers_555)) {
-        return NULL;
-    }
-
-    centers_555_size = PyTuple_Size(centers_555);
-
-    for (unsigned long i = 0; i < centers_555_size; i++) {
-        // PyTuple_GetItem does error checking, PyTuple_GET_ITEM does not
-        cubie_index_object = PyTuple_GET_ITEM(centers_555, i);
-        cubie_index = PyLong_AsUnsignedLong(cubie_index_object);
-        cubie_state_object = PyList_GET_ITEM(cube, cubie_index);
-        cubie_state = PyBytes_AS_STRING(PyUnicode_AsEncodedString(cubie_state_object, "utf-8", "Error ~"));
-
-        if (PySet_Contains(set_x_centers_555, cubie_index_object)) {
-
-            if (strcmp(cubie_state, "U") == 0) {
-                x_centers_state = x_centers_state | 0x1;
-                lt_state = lt_state | 0x1;
-            }
-            x_centers_state = x_centers_state << 1;
-
-        } else if (PySet_Contains(set_t_centers_555, cubie_index_object)) {
-
-            if (strcmp(cubie_state, "U") == 0) {
-                t_centers_state = t_centers_state | 0x1;
-                lt_state = lt_state | 0x1;
-            }
-            t_centers_state = t_centers_state << 1;
-
-        } else {
-            if (strcmp(cubie_state, "U") == 0) {
-                lt_state = lt_state | 0x1;
-            }
-        }
-
-        lt_state = lt_state << 1;
-    }
-
-    x_centers_state = x_centers_state >> 1;
-    t_centers_state = t_centers_state >> 1;
-    lt_state = lt_state >> 1;
-
-    return Py_BuildValue("(kkk)", lt_state, x_centers_state, t_centers_state);
-}
-
-
-// The original python was
-/*
     parent_state = self.parent.state
     lt_state = 0
     step41_state = []
@@ -470,7 +369,6 @@ ida_heuristic_states_step60_777(PyObject* self, PyObject* args)
 static PyMethodDef myMethods[] = {
     // { "bitfield_rotate_face_90", bitfield_rotate_face_90, METH_VARARGS, "Rotate a 4x4x4 bitfield 90 degrees" },
     { "ida_heuristic_states_step10_444", ida_heuristic_states_step10_444, METH_VARARGS, "Calc heurisitic states" },
-    { "ida_heuristic_states_step10_555", ida_heuristic_states_step10_555, METH_VARARGS, "Calc heurisitic states" },
     { "ida_heuristic_states_step40_777", ida_heuristic_states_step40_777, METH_VARARGS, "Calc heurisitic states" },
     { "ida_heuristic_states_step50_777", ida_heuristic_states_step50_777, METH_VARARGS, "Calc heurisitic states" },
     { "ida_heuristic_states_step60_777", ida_heuristic_states_step60_777, METH_VARARGS, "Calc heurisitic states" },

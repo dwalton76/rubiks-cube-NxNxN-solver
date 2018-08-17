@@ -45,7 +45,7 @@ def permutation_rank(word):
     return rank
 
 
-def convert_to_cost_only(filename, use_permutation_rank):
+def convert_to_cost_only(filename, use_permutation_rank, state_targets):
     filename_new = filename.replace('.txt', '.cost-only.txt')
     prev_state_int = None
     first_permutation_rank = None
@@ -79,10 +79,13 @@ def convert_to_cost_only(filename, use_permutation_rank):
                     fh_new.write(zeroes_between_prev_and_now)
 
                 # Write the steps_len
-                if steps[0].isdigit():
-                    steps_len = int(steps[0])
+                if state in state_targets:
+                    steps_len = 0
                 else:
-                    steps_len = len(steps)
+                    if steps[0].isdigit():
+                        steps_len = int(steps[0])
+                    else:
+                        steps_len = len(steps)
 
                 # We save the steps_len as a single hex character so cap it at 15
                 if steps_len > 15:
@@ -104,7 +107,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', type=str, help='lookup-table filename')
+    parser.add_argument('statetargets', type=str, help='comma sep list of state targets')
     parser.add_argument('--use-permutation-rank', default=False, action='store_true', help='calculate permutation_rank()')
     args = parser.parse_args()
 
-    convert_to_cost_only(args.filename, args.use_permutation_rank)
+    convert_to_cost_only(args.filename, args.use_permutation_rank, args.statetargets.split(","))

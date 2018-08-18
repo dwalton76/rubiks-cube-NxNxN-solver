@@ -1,44 +1,34 @@
 
+IDA via C
+=========
+- 444 step10 but it needs to avoid OLL. Would be cool if it searched until
+  it found a solution that satisfied phase2.
 
-
-exit_asap removal
-=================
-- note how long it takes to run the test cubes for each size...we should see a big speed improvement
-- update the RAM requirements
-- stop loading IDA tables into memory, barf if this happens
-
-- DONE 444 step10 build 6-deep
-- DONE 444 step30 build 7-deep
-
-- 555 step10 build 7-deep
-    RLBFBDBLUDBRUBUFFRBRBBLDUFBRLURBDLBDFRLDBUURDRBFDFLRUFLUBULUBLFFFURDFUFFFLURRUFFDURDUBLDURFURRBLLLDLBRRUDDDBDRFBLFDLLBFLURLFDRUUBDLRDDBRFBULLLDFUDRDFB takes 2m 11s
 - 555 step20 use the 165 million entry table but store it via perfect hash. We can then pick
-  the step10 solution that leads to the shortest step20.
-- 555 step30 maybe bring back the UF table and when we are doing step10/20 find the combo that
-  leads to the lowest step30 heuristic? We could also do a LF table here...maybe then we could
-  do something with the edges as part of this stage.
+  the step10 solution that leads to the shortest step20. We would need C IDA in step10 to
+  write a bunch of solutions to a file.
 
-- 666 step20 is already 1G at 2-deep and growing by 13x so we cannot build this to 3-deep.
-  We may get a speed bump here just from no longer binary searching through the cache string.
-  This will bring our RAM requirement way down, we load this 1G table into memory today.
-  Can we delete the heuristic_stats?
+- 555 step30 is slow for this one
+    RFFFUDUDURBFULULFDBLRLDUFDBLUBBBDDURLRDRFRUDDBFUFLFURRLDFRRRUBFUUDUFLLBLBBULDDRRUFUUUBUDFFDRFLRBBLRFDLLUUBBRFRFRLLBFRLBRRFRBDLLDDFBLRDLFBBBLBLBDUUFDDD
+    - could bring back the UF table
+    - could move it to C with the future option of staging a L4E as part of the search
 
-- 666 step30 build 4-deep (running on kids machine)
-- DONE 666 step60 build 5-deep
+- 666 step20 and step30 are in C but need to avoid OLL
+- 666 step60? Not sure if this one is ever slow
 
-- 777 step10 build 7-deep
-    - I did but it is 6.3G unzipped and 845M zipped
-    - This table does the weird thing where it "locks" the outside obliques so we
-      have to keep the full move sequence :( Maybe we could chop chop if we kept
-      the first two moves if one of them is a w move? Experiment with this.
+- 777 redo UD oblique edge pairing in C
+- 777 step40
+- 777 step50
+- 777 step60
 
-- 777 step30 build 4-deep
-- 777 step40 build 7-deep (building on laptop)
-- 777 step50 build 7-deep
-- 777 step60 build 8-deep
+- delete all exit_asap code
+- delete all heuristic_stats code
+- delete all collect_stats code
 
 
-
+666 URFLLFFDUDUBBUUUUBDDUDURFUUDUFBBLURLDUDURLLFLRFLFRFLBUULLBRBLFLFLLDBDBDFRLBRFBBBFFRUDBRRFRFRLLRLBBFRRDLBURBRURLUUFDDUDUDRDDDDLRUUDURFDDDDRBRBBBRLDDFRUDRRFBUFBRRBRFLBFLDLLFRLLRUBFFFDFDUUBFLLBFRFBFBBLLFBFLLDBLBRUUDDUUD
+- step30 takes 17 minutes!!
+- THIS ONE IS BARFING
 
 
 misc
@@ -47,29 +37,23 @@ misc
 - DLDLLRDBLBRDUUBRUUBDURFLBLBUUDLLRRLUFRFFFRLDBLBRDRRFLDDRDDUBULFFFRLLBLDFLUFFUDBUUUBFLRUDFBURRRBBRDDBRDDDFFDDFBBULBLFFDLULLUFRFDBFBUFRBRRBBLLRURBDUFFUU
  fail due to 555 edges table not being deep enough
 
-
-- when this reduces to 555 the step10 IDA takes forever, it needs to always exit_asap above a certain threshold
-LFFRUBRDBLFLRBFLFRLDBUULURBUUDUFUFUDFRBBDURFLBDFRUFRFDDFFDFFDLRRFDRLBBFLLDRLBRBFDDRDRURBLFRULRDFUBDULBRBBBBUBRUULFULFLUDFRDRRLUDUDRDLLUBDRLFDLBFFUDUFBUURLRLLRFDLUFBULFDBBLBBLBFLURDRFBULDDRLDBLBFBBDDRRLUBDBUFUDRUUFLRD
-
-
-666 URFLLFFDUDUBBUUUUBDDUDURFUUDUFBBLURLDUDURLLFLRFLFRFLBUULLBRBLFLFLLDBDBDFRLBRFBBBFFRUDBRRFRFRLLRLBBFRRDLBURBRURLUUFDDUDUDRDDDDLRUUDURFDDDDRBRBBBRLDDFRUDRRFBUFBRRBRFLBFLDLLFRLLRUBFFFDFDUUBFLLBFRFBFBBLLFBFLLDBLBRUUDDUUD
-- step30 takes 17 minutes!!
-
-- remove the 777 step00, 01, and 02 tables
-- 777 step10 ida_heuristic in C
-- 777 step30 ida_heuristic in C
-- 777 step10 today it pairs and stages to sides UD at the same time.  Could we stage them to any position?
-  This would be similar to 666 step10 which is difficult so I am guessing this will be more trouble
-  than it is worth.
-- 777 what tables do we need heuristic_stats for?
-    Heck just solve 10k cubes and collect stats for everything
-
 - 777step10 takes 31s on this one!!
 UURDDFBLDBBDRRUDDRUBDURLUFFFBFBRDLBDUBLFBBDRUUUDDFUDLFUUBDRBULUDRFRRUFURLRFRBURLLBFFFBRRLDDLBBUDLFRBBFLRRFLUFBLLFURDDBRDFBFDDRFBUURURLFLDDDRLULLBBUFBDDLLBUFLDRLRBLFUFRRBBUDBULLFBDLLRBRBULUDBDDRFLURDLBRBBLUFUBFDFDLUUUUBBDLBLRFUUBRDUUFFLLBFDDBRUFDRRBFUFFRBDDURFRFLRDDRDULBFFLLDBFFRDFRFLRULLULFLRL
 
 - 777step30 takes 64s on this one!!
 BFBDFLFRDUDUURLUUDUUFFDDUDDUFDUDDUDRUDUDDFRBRFDRBUUFLRDLBFLFBBLRLLLRBUFBRRRRDRBRRLRUBRLFRLLRRBDBBDFUUUFULFFLBRRDRBFBFRBBRBFFFRFFBBBBBFLLLRBRLBDLRBBURLFDDUUUUUDDDLDDUDDDBUUDUDLRUDUUUDLUDUDDLDRURULLDUUDUFUBLBLRLDLRRLLRDBFLLRBLLFLLRLLFBBLBRURDFRDBFDULRUDRUFLRFFLFFBFBFBBLBBFBULLFFFFBDRFRFBLBFBURFF
 
+- make these consistent
+    edge vs edges
+    center vs centers
+    step vs move
+    group vs stage
+    class names
+    method names
+
+- move all table building code from old way to new way...this is going to take a while
+  it may not be worth it.  Low priority at the very least.
+    - all that is left are the 777 UD oblique edges
 
 555 edges
 =========
@@ -95,226 +79,3 @@ BFBDFLFRDUDUURLUUDUUFFDDUDDUFDUDDUDRUDUDDFRBRFDRBUUFLRDLBFLFBBLRLLLRBUFBRRRRDRBR
 - place the second four paired edges in a plane
 
 - use the L4E table to pair the remaining edges
-
-
-
-rubikscubennnsolver/RubiksCubeNNNEven.py stop using fake_666
-
-
-444
----
-- some phase1 are taking 12 steps that seems high...are we really checking for all rotations?
-- step30 needs heuristic stats
-
-
-
-speed and memory
-----------------
-- probably the biggest thing to do is try storing cubes the way Ed does
-
-    http://cubesolvingprograms.freeforums.net/thread/13/fivesolver-notes-updates?page=3
-
-    Then we can start looking at places where we have huge tables to fight slow searches
-    and see if we can us smaller tables.
-    - 555 step10
-    - 666 step20
-    - 777 step30
-
-    Some numbers
-        1,000,000 rotates using python rotate_444() took 0:00:04.929585 at 202,856 nodes-per-sec
-        1,000,000 rotates using C      rotate_444() took 0:00:04.282415 at 233,513 nodes-per-sec
-        1,000,000 rotates using python bitfield_rotate_face_90() took 0:00:02.533878 at 394,651 nodes-per-sec
-        1,000,000 rotates using C      bitfield_rotate_face_90() took 177ms at 5,630,060 nodes-per-sec
-
-
-777
----
-DONE - update the 51/52 tables and cost only tables. These are building on LJs machine as 211/212.
-- pairing UD oblique edges takes a lot of moves
-- pairing LR oblique edges (step30) is slow
-    This is 12870^2/12870^3 or 0.000 077 this should be reasonably fast...something is wrong
-    This table is 9million at 2-deep, would be around 90million at 3-deep. We would need
-    some way to store this that is more memory friendly than dicts.
-
-    - chop all but the last step to reduce memory
-    - I tried symmetry but it didn't help a ton, it doesn't reduce the table size enough
-      for us to go 5-deep which is what I think it would need to be worth the CPU overhead.
-    - am going to try the heuristic_stats approach that I used on 666
-
-    This one takes 57s :(
-    RLFFLFBDDUDUUDRUDUDDRLDDUDDBBUUDDDDUUDUUUBLDDFRRFDRLUBBLLFRFLLBRRRLRRFDFLRLBDULLRLRRUBFLBLDRUDRDLRUFFLUFLLRBBLFDRFFBBFUBLBFFRRRBBFFBBBBRRLRFDBBRLUUBUDBURFFDUUDDFUDUUUDRLUUDUDFBDUDDULBUUUDDUFUFRLFBBLBBDLFRBBRFRFBLLRRLFLFLLRLDURLRRBFRBRRRFUDLLDBDLULUUUBDRLFBBRDLFFFBLLFFBBFLUDFFBBBFBFLBFLDURFUDRR
-
-
-666
----
-- solve centers using the same model as 777? I need to think
-- step60 needs heuristic_stats and/or re-write ida_heuristic in C, it can do about 22k nps today
-
-
-
-misc
-====
-- get_edge_swap_count needs some love
-- move to client/server model...or just add this as an option?
-    - what could we support on a rpi3 if we only did client/server?
-DONE - add history of table move reduction to the README
-- add RAM requirements to the README
-- make these consistent
-    edge vs edges
-    center vs centers
-    step vs move
-    group vs stage
-    class names
-    method names
-- move all table building code from old way to new way...this is going to take a while
-  it may not be worth it.  Low priority at the very least.
-
-
-5x5x5
-=====
-phase1
-- stage UD centers
-- 10 moves
-
-phase2
-- stage LR and FB centers
-- 9 moves
-
-phase3
-- reduce LR centers to one of 432 states that can be solved without L L' R R', the pruning table has 4900 entries
-- high/low the outer orbit of edges, the pruning table has 2,704,156 entries
-- orient the inside orbit of edges, the pruning table has 2048 entries
-- 2704156/(2048*4900*2704156) or 0.000 000 099 so IDA will be very slow
-- (2048*4900)/(2048*4900*2704156) is 0.000 000 369 (2048*4900 is 10,035,200)
-
-  2,704,156 * 2048 would be doable if there are symmetries??
-
-- LR centers prune table averages 2.73 moves and high/low table averages 7.95...TBD on orbit0.
-  guess ~11 moves here?
-
-phase4
-- reduce FB centers to one of 432 states, the pruning table has 4900 entries
-- stage the x-plane edges to one of 96 states that can be solved without F F' B B' 
-- The edges pruning table is 5,880,600
-- 5,880,600 / (4900 (FB) * 5,880,600) = 0.000 204 so IDA will be fast
-- FB centers prune table averages 2.73 moves and x-plane edges 8.14 moves
-  guess 10 moves here
-
-idea #1
--------
-phase5
-- reduce LR to one of 6 states that can be solved without Uw2 Dw2
-- reduce FB to one of 6 states that can be solved without Uw2 Dw2
-    - the centers will look like vertical bars
-- solve the edges in the x-plane
-- 432 (LR) * 432 (FB) * 96 = 17,915,904 so we do not need to IDA here
-- guess 6 moves here
-
-phase6
-- reduce to 333 from here
-- 6 (LR) * 6 (FB) * 4900 (UD) * ((8!^2)/2)  = 143,386,951,680,000
-
-- An edges pruning table of ((8!^2)/2) = 812,851,200
-- 812,851,200/143,386,951,680,000 = 0.000 005 so IDA is doable
-
-812 million is a large prune table though :(
-- no idea on move count...need to build that edges pruning table first
-
-
-idea #2
--------
-phase5
-- reduce UD to one of 432 states that can be solved without U U' D D'
-- stage other two planes of edges
-- 4900 * ((8!^2)/2) = 3,982,970,880,000
-
-- An edges pruning table of ((8!^2)/2) = 812,851,200
-
-- 812,851,200/3,982,970,880,000 = 0.000 204
-
-
-phase6
-- reduce to 333 from here
-- 432^3 * 96^3 = 71,328,803,586,048 total states
-
-- An edges prune table would have 96^3 = 884,736
-- (96^3) / (432^3 * 96^3) = 0.000 000 012 so IDA would be way too slow
-
-- A centers prune table would have 432^3 = 80,621,568 
-- (432^3) / (432^3 * 96^3) = 0.000 001 so IDA is doable
-
-- How long will this phase be given how restricted the moves are?
-
-
-6x6x6
-=====
-I am re-writing this to use EO. We need to avoid OLL at each of these steps.
-
-
-phase1
-- stage inner x-centers via 444
-
-phase2
-- move UD oblique edges and outer x-centers to UDFB
-
-phaes3
-- move UD oblique edges and outer x-centers from UDFB to UD
-- At this point UD centers are staged
-
-phase4
-- stage LR oblique edges and outer x-centers
-- At this point LR centers are staged
-- It is ~40 steps to this point
-
-phase5
-- put LR centers in one of 1726 states that can be solved without L L' R R'
-  We are only conconcered with the inner x-centers and oblique edges here
-  so this table will have 343000 entries.
-- EO the inner orbit of edges
-- This is going to be 2700000/(343000*2700000) or 0.000 002
-- guessing 56 steps to here (based on 444 experience)
-
-phase6
-- put FB centers in one of 1726 states that can be solved without F F' B B'
-- put one group of 4-edges (inner orbit) into the x-plane in one of 4 states that can be solved when F, F', B, B' are not allowed
-  This table has XXX entries
-
-phase7
-- reduce LR centers to 555
-- put FB centers in state that can be solved without Uw2 Bw2 (vertical bars)
-- pair x-plane edges (inner orbit)
-
-phase8
-- reduce UD and FB centers to 555
-- pair 8 remaining edges
-- should be 80,640 (edges) * 343000 (UD) * XXX (FB)
-
-
-
-explore pre-computing prune table graph
-=======================================
-Today if I have the first phase of solving a 4x4x4 ida_all_the_way I get the following performance
-
-    2018-06-18 09:02:36,905     RubiksCube444.py     INFO: 4x4x4: Start of Phase1
-    2018-06-18 09:02:36,913       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold range 7->99
-    2018-06-18 09:02:36,913       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 7, explored 1 nodes, took 0ms
-    2018-06-18 09:02:36,915       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 8, explored 66 nodes, took 2ms
-    2018-06-18 09:02:36,952       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 9, explored 1122 nodes, took 37ms
-    2018-06-18 09:02:37,634       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 10, explored 19155 nodes, took 681ms
-    2018-06-18 09:02:47,312       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 11, explored 289603 nodes, took 0:00:09.678252
-    2018-06-18 09:02:56,349       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: 20 seek calls
-    2018-06-18 09:02:56,349       LookupTable.py     INFO: 4x4x4-step11-UD-centers-stage.cost-only: 1 seek calls
-    2018-06-18 09:02:56,349       LookupTable.py     INFO: 4x4x4-step12-LR-centers-stage.cost-only: 1 seek calls
-    2018-06-18 09:02:56,349       LookupTable.py     INFO: 4x4x4-step13-FB-centers-stage.cost-only: 1 seek calls
-    2018-06-18 09:02:56,349       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA found match 11 steps in Uw L F Rw' F' B' Uw Fw' U' Uw2 Fw, lt_state UUUULLLLFFFFLLLLFFFFUUUU, f_cost 12 (11 + 1)
-    2018-06-18 09:02:56,349       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 12, explored 266369 nodes, took 0:00:09.037375 (0:00:19.444035 total)
-    2018-06-18 09:02:56,350       LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA explored 576316 nodes in 0:00:19.444035, 29639 nodes-per-sec
-    2018-06-18 09:02:56,350          __init__.py     INFO: 4x4x4: upper U, front F, stages 12 centers
-    2018-06-18 09:02:56,354     RubiksCube444.py     INFO: 4x4x4: End of Phase1, 11 steps in
-
-- This looks wrong, the f_cost is 12 but the solution is 11 steps. The cube is at the state_target the estimated cost should be 0.
-- Where are the 20 seek calls coming from? It isn't much but I think it would be 0 for this scenario.
-- Need to be able to take a pruning table, build a graph from it and save that graph off in json format. Each node will have
-    - cost to goal(s)
-    - a list with one entry for each possible move where the contents of an entry in the list are the node
-      in the graph to go to for that particular move.

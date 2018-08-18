@@ -739,7 +739,7 @@ class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
             self,
             parent,
             'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt',
-            'f0000f',
+            15728655,
             linecount=735471,
             max_depth=8,
             filesize=16711681,
@@ -769,7 +769,7 @@ class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
             self,
             parent,
             'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt',
-            'f0000f',
+            15728655,
             linecount=735471,
             max_depth=8,
             filesize=16711681,
@@ -833,13 +833,14 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
 
         self.recolor_positions = centers_555
         self.recolor_map = {
-            'L' : 'L',
+            'L' : 'x',
             'F' : 'x',
-            'R' : 'L',
+            'R' : 'x',
             'B' : 'x',
             'D' : 'U',
         }
         self.nuke_corners = True
+        self.nuke_edges = True
         self.C_ida_type = "5x5x5-UD-centers-stage"
 
     def ida_heuristic(self, ida_threshold):

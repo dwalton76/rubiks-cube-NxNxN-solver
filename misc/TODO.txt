@@ -13,6 +13,10 @@ IDA via C
     - could bring back the UF table
     - could move it to C with the future option of staging a L4E as part of the search
 
+- 666 step30 needs to use the step31 table to speed things up...I think that table
+  is 165 million entries though so maybe not worth it. The other option here is to
+  load in the 2-deep table.
+
 - 666 step20 and step30 are in C but need to avoid OLL
 - 666 step60? Not sure if this one is ever slow
 

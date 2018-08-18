@@ -1194,7 +1194,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
-        log.warning("kociemba: %s" % self.get_kociemba_string(True))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 

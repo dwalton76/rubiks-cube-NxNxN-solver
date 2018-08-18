@@ -11,12 +11,13 @@
 #include "rotate_xxx.h"
 #include "ida_search_core.h"
 #include "ida_search_555.h"
+#include "ida_search_666.h"
 
 
 // To compile:
-//  gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_555.c -lm
+//  gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_555.c ida_search_666.c -lm
 //
-//  gcc -ggdb -o ida_search ida_search.c rotate_xxx.c ida_search_core.c ida_search_555.c -lm
+//  Add -ggdb to build gdb symbols
 
 // scratchpads that we do not want to allocate over and over again
 char *sp_cube_state;
@@ -29,6 +30,7 @@ unsigned long seek_calls = 0;
 typedef enum {
     NONE,
     UD_CENTERS_STAGE_555,
+    UD_OBLIQUE_EDGES_STAGE_666,
 } lookup_table_type;
 
 
@@ -37,6 +39,15 @@ struct key_value_pair *UD_centers_555 = NULL;
 char *pt_t_centers_cost_only = NULL;
 char *pt_x_centers_cost_only = NULL;
 
+
+int
+strmatch (char *str1, char *str2)
+{
+    if (strcmp(str1, str2) == 0) {
+        return 1;
+    }
+    return 0;
+}
 
 /* Remove leading and trailing whitespaces */
 char *
@@ -308,10 +319,12 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
 
     switch (type)  {
     case UD_CENTERS_STAGE_555:
+    case UD_OBLIQUE_EDGES_STAGE_666:
         // Convert to 1s and 0s
         str_replace_for_binary(cube, ones_UD);
         print_cube(cube, size);
         break;
+
     default:
         printf("ERROR: init_cube() does not yet support this --type\n");
         exit(1);
@@ -431,7 +444,11 @@ ida_heuristic (char *cube, lookup_table_type type, int debug)
 {
     switch (type)  {
     case UD_CENTERS_STAGE_555:
-        return (ida_heuristic_UD_centers_555(cube, &UD_centers_555, pt_t_centers_cost_only, pt_x_centers_cost_only, debug));
+        return ida_heuristic_UD_centers_555(cube, &UD_centers_555, pt_t_centers_cost_only, pt_x_centers_cost_only, debug);
+
+    case UD_OBLIQUE_EDGES_STAGE_666:
+        return ida_heuristic_UD_oblique_edges_stage_666(cube);
+
     default:
         printf("ERROR: ida_heuristic() does not yet support this --type\n");
         exit(1);
@@ -444,8 +461,13 @@ unsigned long
 get_lt_state (char *cube, lookup_table_type type)
 {
     switch (type)  {
+
     case UD_CENTERS_STAGE_555:
-        return get_555_centers(cube);
+        return get_UD_centers_stage_555(cube);
+
+    case UD_OBLIQUE_EDGES_STAGE_666:
+        return get_UD_oblique_edges_stage_666(cube);
+
     default:
         printf("ERROR: get_lt_state() does not yet support type %d\n", type);
         exit(1);
@@ -462,14 +484,9 @@ ida_search_complete (char *cube, lookup_table_type type)
     switch (type)  {
     case UD_CENTERS_STAGE_555:
         return ida_search_complete_UD_centers_555(cube);
-        /*
-        // avoid the file IO all together...IDA all the way
-        if (file_binary_search("lookup-table-5x5x5-step10-UD-centers-stage.txt", sp_cube_state, 14, 328877780, 19)) {
-            LOG("UD_CENTERS_STAGE_555 sp_cube_state %s\n", sp_cube_state);
-            return 1;
-        }
-        */
-        break;
+
+    case UD_OBLIQUE_EDGES_STAGE_666:
+        return ida_search_complete_UD_oblique_edges_stage_666(cube);
 
     default:
         printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
@@ -544,6 +561,36 @@ moves_cancel_out (move_type move, move_type prev_move)
     }
 
     return 0;
+}
+
+int
+step_allowed_by_ida_search (lookup_table_type type, move_type move)
+{
+    // dwalton
+    switch (type)  {
+    case UD_CENTERS_STAGE_555:
+        return 1;
+
+    case UD_OBLIQUE_EDGES_STAGE_666:
+        switch (move) {
+        case threeFw:
+        case threeFw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+            return 0;
+        default:
+            return 1;
+        }
+
+    default:
+        printf("ERROR: step_allowed_by_ida_search add support for this type\n");
+        exit(1);
+    }
+
 }
 
 
@@ -708,24 +755,104 @@ steps_on_same_face_and_layer(move_type move, move_type prev_move)
         }
         break;
 
+    // dwalton
+    case threeUw:
+    case threeUw_PRIME:
+    case threeUw2:
+        switch (prev_move) {
+        case threeUw:
+        case threeUw_PRIME:
+        case threeUw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeLw:
+    case threeLw_PRIME:
+    case threeLw2:
+        switch (prev_move) {
+        case threeLw:
+        case threeLw_PRIME:
+        case threeLw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeFw:
+    case threeFw_PRIME:
+    case threeFw2:
+        switch (prev_move) {
+        case threeFw:
+        case threeFw_PRIME:
+        case threeFw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeRw:
+    case threeRw_PRIME:
+    case threeRw2:
+        switch (prev_move) {
+        case threeRw:
+        case threeRw_PRIME:
+        case threeRw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeBw:
+    case threeBw_PRIME:
+    case threeBw2:
+        switch (prev_move) {
+        case threeBw:
+        case threeBw_PRIME:
+        case threeBw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeDw:
+    case threeDw_PRIME:
+    case threeDw2:
+        switch (prev_move) {
+        case threeDw:
+        case threeDw_PRIME:
+        case threeDw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
     default:
-        printf("ERROR: steps_on_same_face_and_layeradd support for %d\n", move);
+        printf("ERROR: steps_on_same_face_and_layer add support for %d\n", move);
         exit(1);
     }
 
     return 0;
 }
 
-int
-ida_search (int cost_to_here,
+unsigned int
+ida_search (unsigned int cost_to_here,
             move_type *moves_to_here,
-            int threshold,
+            unsigned int threshold,
             move_type prev_move,
             char *cube,
+            unsigned int cube_size,
             lookup_table_type type)
 {
-    int cost_to_goal = 0;
-    int f_cost = 0;
+    unsigned int cost_to_goal = 0;
+    unsigned int f_cost = 0;
     move_type move;
     char cube_tmp[array_size];
 
@@ -770,21 +897,56 @@ ida_search (int cost_to_here,
 
     hash_add(&ida_explored, my_ida_explored_state, 0);
 
-    for (int i = 0; i < MOVE_COUNT_555; i++) {
-        move = moves_555[i];
+    if (cube_size == 5) {
 
-        if (steps_on_same_face_and_layer(move, prev_move)) {
-            continue;
+        for (int i = 0; i < MOVE_COUNT_555; i++) {
+            move = moves_555[i];
+
+            if (steps_on_same_face_and_layer(move, prev_move)) {
+                continue;
+            }
+
+            if (!step_allowed_by_ida_search(type, move)) {
+                continue;
+            }
+
+            char cube_copy[array_size];
+            memcpy(cube_copy, cube, sizeof(char) * array_size);
+            rotate_555(cube_copy, cube_tmp, array_size, move);
+            moves_to_here[cost_to_here] = move;
+
+            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type)) {
+                return 1;
+            }
         }
 
-        char cube_copy[array_size];
-        memcpy(cube_copy, cube, sizeof(char) * array_size);
-        rotate_555(cube_copy, cube_tmp, array_size, move);
-        moves_to_here[cost_to_here] = move;
+    } else if (cube_size == 6) {
 
-        if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, type)) {
-            return 1;
+        for (int i = 0; i < MOVE_COUNT_666; i++) {
+            move = moves_666[i];
+            // dwalton
+
+            if (steps_on_same_face_and_layer(move, prev_move)) {
+                continue;
+            }
+
+            if (!step_allowed_by_ida_search(type, move)) {
+                continue;
+            }
+
+            char cube_copy[array_size];
+            memcpy(cube_copy, cube, sizeof(char) * array_size);
+            rotate_666(cube_copy, cube_tmp, array_size, move);
+            moves_to_here[cost_to_here] = move;
+
+            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type)) {
+                return 1;
+            }
         }
+
+    } else {
+        printf("ERROR: ida_search() does not have rotate_xxx() for this cube size\n");
+        exit(1);
     }
 
     return 0;
@@ -792,15 +954,24 @@ ida_search (int cost_to_here,
 
 
 int
-ida_solve (char *cube, lookup_table_type type)
+ida_solve (char *cube, unsigned int cube_size, lookup_table_type type)
 {
     int MAX_SEARCH_DEPTH = 20;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
 
-    ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt.5-deep");
-    pt_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt", 16711681);
-    pt_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt", 16711681);
+    switch (type)  {
+    case UD_CENTERS_STAGE_555:
+        ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt.5-deep");
+        pt_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt", 16711681);
+        pt_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt", 16711681);
+        break;
+    case UD_OBLIQUE_EDGES_STAGE_666:
+        break;
+    default:
+        printf("ERROR: ida_solve() does not yet support this --type\n");
+        exit(1);
+    }
 
     // get_lt_state(cube, type);
     min_ida_threshold = ida_heuristic(cube, type, 0);
@@ -811,13 +982,21 @@ ida_solve (char *cube, lookup_table_type type)
         memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_SEARCH_DEPTH);
         hash_delete_all(&ida_explored);
 
-        if (ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, type)) {
+        if (ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size, type)) {
             ida_count_total += ida_count;
             LOG("IDA threshold %d, explored %d branches (%d total), found solution\n", threshold, ida_count, ida_count_total);
-            free(pt_t_centers_cost_only);
-            pt_t_centers_cost_only = NULL;
-            free(pt_x_centers_cost_only);
-            pt_x_centers_cost_only = NULL;
+
+            switch (type)  {
+            case UD_CENTERS_STAGE_555:
+                free(pt_t_centers_cost_only);
+                pt_t_centers_cost_only = NULL;
+                free(pt_x_centers_cost_only);
+                pt_x_centers_cost_only = NULL;
+                break;
+            default:
+                break;
+            }
+
             return 1;
         } else {
             ida_count_total += ida_count;
@@ -825,10 +1004,16 @@ ida_solve (char *cube, lookup_table_type type)
         }
     }
 
-    free(pt_t_centers_cost_only);
-    pt_t_centers_cost_only = NULL;
-    free(pt_x_centers_cost_only);
-    pt_x_centers_cost_only = NULL;
+    switch (type)  {
+    case UD_CENTERS_STAGE_555:
+        free(pt_t_centers_cost_only);
+        pt_t_centers_cost_only = NULL;
+        free(pt_x_centers_cost_only);
+        pt_x_centers_cost_only = NULL;
+        break;
+    default:
+        break;
+    }
 
     LOG("IDA failed with range %d->%d\n", min_ida_threshold, MAX_SEARCH_DEPTH);
     return 0;
@@ -839,8 +1024,8 @@ int
 main (int argc, char *argv[])
 {
     lookup_table_type type = NONE;
-    int cube_size_type = 0;
-    int cube_size_kociemba = 0;
+    unsigned int cube_size_type = 0;
+    unsigned int cube_size_kociemba = 0;
     char kociemba[300];
     memset(kociemba, 0, sizeof(char) * 300);
 
@@ -848,7 +1033,7 @@ main (int argc, char *argv[])
         if (strmatch(argv[i], "-k") || strmatch(argv[i], "--kociemba")) {
             i++;
             strcpy(kociemba, argv[i]);
-            cube_size_kociemba = (int) sqrt(strlen(kociemba) / 6);
+            cube_size_kociemba = (unsigned int) sqrt(strlen(kociemba) / 6);
 
         } else if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
             i++;
@@ -856,6 +1041,10 @@ main (int argc, char *argv[])
             if (strmatch(argv[i], "5x5x5-UD-centers-stage")) {
                 type = UD_CENTERS_STAGE_555;
                 cube_size_type = 5;
+
+            } else if (strmatch(argv[i], "6x6x6-UD-oblique-edges-stage")) {
+                type = UD_OBLIQUE_EDGES_STAGE_666;
+                cube_size_type = 6;
             } else {
                 printf("ERROR: %s is an invalid --type\n", argv[i]);
                 exit(1);
@@ -886,7 +1075,7 @@ main (int argc, char *argv[])
         exit(1);
     }
 
-    int cube_size = cube_size_kociemba;
+    unsigned int cube_size = cube_size_kociemba;
     array_size = (cube_size * cube_size * 6) + 2;
     char cube[array_size];
     char cube_tmp[array_size];
@@ -896,16 +1085,5 @@ main (int argc, char *argv[])
     init_cube(cube, cube_size, type, kociemba);
 
     // print_cube(cube, cube_size);
-    ida_solve(cube, type);
-
-    // Fw2 Dw' Rw B' Lw' F D' B' Lw' Dw Bw'
-    /*
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, Fw2);
-
-    memcpy(cube_tmp, cube, sizeof(char) * array_size);
-    rotate_555(cube, cube_tmp, array_size, Dw_PRIME);
-
-    print_cube(cube, cube_size);
-    */
+    ida_solve(cube, cube_size, type);
 }

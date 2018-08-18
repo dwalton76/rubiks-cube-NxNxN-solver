@@ -9,7 +9,7 @@ over 400 moves the first time I solved a 5x5x5.
 
 | Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| 08/13/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD)  | **50** | 107 | 165 | 244 | 362 | 513 | 669 |
+| 08/13/2018 | [b754e60](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/b754e60cd6b907d3208301807c1108492475ef44)  | **50** | 107 | 165 | 244 | 362 | 513 | 669 |
 | 08/13/2018 | [bdbbd46](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/bdbbd46c3f3bf4d150dd1a45466489709c4d2e45)  | 52 | 107 | **165** | **244** | **362** | **513** | **669** |
 | 07/16/2018 | [456ddd1](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/456ddd18f761590294b0b28ac1574a2494514917)  | **52** | 107 | **172** | 247 | **376** | 520 | **725** |
 | 07/12/2018 | [c9484d9](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/c9484d93cd55ae50bffb658165e2f843ac5c5fe1)  | 60 | 107 | **176** | 247 | 386 | 520 | 743 |
@@ -27,7 +27,7 @@ I am working on bringing this down but these are the memory requirements for run
 | ------ | ------ | ------ |
 | 4x4x4 | 500M | 300M |
 | 5x5x5 | 200M | 170M |
-| 6x6x6 | 3.0G | 1.1G |
+| 6x6x6 | 1.6G | 1.1G |
 | 7x7x7 | 4.5G | 4.5G |
 | NxNxN | 4.5G | 4.5G |
 

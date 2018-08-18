@@ -4,7 +4,6 @@ from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666Misc import (
-    state_targets_step20,
     state_targets_step30,
     state_targets_step31,
     state_targets_step60,
@@ -20,6 +19,8 @@ import json
 import logging
 import math
 import resource
+import os
+import subprocess
 import sys
 
 log = logging.getLogger(__name__)
@@ -242,12 +243,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
     All we care about is getting the UD oblique edges paired, we do
     not need them to be placed on sides UD at this point.
 
-    lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt
-    ====================================================
-    1 steps has 4,171,103 entries (7 percent, 0.00x previous step)
-    2 steps has 55,048,136 entries (92 percent, 13.20x previous step)
-
-    Total: 59,219,239 entries
+    This was a slow IDA search so we do this in C now
     """
     oblique_edges_666 = (
         9, 10, 14, 17, 20, 23, 27, 28,
@@ -269,25 +265,11 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
 
     def __init__(self, parent):
 
-        # uses 74M
-        if parent.min_memory:
-            filename = "lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt.1-deep"
-            linecount = 4171103
-            max_depth = 1
-            filesize = 75079854
-
-        # uses 1.3G
-        else:
-            filename = "lookup-table-6x6x6-step20-UD-oblique-edges-stage.txt"
-            linecount = 59219239
-            max_depth = 2
-            filesize = 1362042497
-
         LookupTableIDA.__init__(
             self,
             parent,
-            filename,
-            state_targets_step20,
+            'lookup-table-6x6x6-step20-dummy.txt',
+            'TBD',
             moves_666,
 
             # illegal_moves
@@ -298,10 +280,8 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
 
             # prune tables
             (),
-            linecount=linecount,
-            max_depth=max_depth,
-            filesize=filesize,
-            exit_asap=1,
+            linecount=0,
+            max_depth=99,
         )
 
     def recolor(self):
@@ -351,6 +331,31 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDA):
         cost_to_goal = self.get_UD_unpaired_obliques_count()
 
         return (lt_state, cost_to_goal)
+
+    def ida_solve_guts(self, min_ida_threshold, max_ida_threshold):
+
+        if not os.path.isfile("ida_search"):
+            log.info("ida_search is missing...compiling it now")
+            subprocess.check_output("gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_555.c -lm".split())
+
+        kociemba_string = self.parent.get_kociemba_string(True)
+        cmd = ["./ida_search", "--kociemba", kociemba_string, "--type", "6x6x6-UD-oblique-edges-stage"]
+        log.info("%s: solving via C ida_search '%s'" % (self, " ".join(cmd)))
+        output = subprocess.check_output(cmd).decode('ascii')
+        log.info("\n\n" + output + "\n\n")
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                steps = line.split(":")[1].strip().split()
+                break
+        else:
+            raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+
+        log.info("%s: ida_search found solution %s" % (self, ' '.join(steps)))
+        self.parent.state = self.pre_recolor_state[:]
+        self.parent.solution = self.pre_recolor_solution[:]
+
+        for step in steps:
+            self.parent.rotate(step)
 
 
 #class LookupTable666LRObliqueEdgesStage(LookupTable):
@@ -1243,7 +1248,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_inner_x_centers_stage.preload_cache_string()
 
         self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
-        self.lt_UD_oblique_edge_stage.preload_cache_string()
 
         # This is the case if a 777 is using 666 to pair its UD oblique edges
         if UD_oblique_edge_only:

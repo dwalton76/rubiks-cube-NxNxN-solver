@@ -6,7 +6,7 @@
 #define NUM_T_CENTERS_555 24
 #define NUM_X_CENTERS_555 24
 
-unsigned long get_555_centers(char *cube);
+unsigned long get_UD_centers_stage_555(char *cube);
 
 unsigned long ida_heuristic_UD_centers_555(
     char *cube,

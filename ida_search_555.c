@@ -32,7 +32,7 @@ unsigned int x_centers_555[NUM_T_CENTERS_555] = {
 };
 
 unsigned long
-get_555_centers(char *cube)
+get_UD_centers_stage_555(char *cube)
 {
     unsigned long centers = 0;
     int cube_index;
@@ -91,7 +91,7 @@ ida_heuristic_UD_centers_555(
     int MAX_DEPTH = 6;
 
     if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
-        unsigned long lt_state = get_555_centers(cube);
+        unsigned long lt_state = get_UD_centers_stage_555(cube);
         char lt_state_str[24];
         sprintf(lt_state_str, "%014lx", lt_state);
 

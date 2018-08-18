@@ -1245,15 +1245,17 @@ class RubiksCube(object):
         """
 
         if first_step:
-            print(("    if (strcmp(step, \"%s\") == 0) {" % case))
-        else:
-            print(("    } else if (strcmp(step, \"%s\") == 0) {" % case))
+            print("    switch (move) {")
+
+        case = case.replace("'", "_PRIME").replace("3", "three").replace("x", "X").replace("y", "Y").replace("z", "Z")
+        print("    case %s:" % case)
 
         for (key, value) in enumerate(self.state[1:]):
             key += 1
 
             if str(key) != str(value):
-                print(("        cube[%s] = cube_tmp[%s];" % (key, value)))
+                print("        cube[%s] = cube_tmp[%s];" % (key, value))
+        print("        break;")
         print("")
 
     def print_case_statement_python(self, function_name, case):

@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-build_rotate_xxx_c = False
+build_rotate_xxx_c = True
 
 
 if build_rotate_xxx_c:
@@ -34,14 +34,6 @@ if build_rotate_xxx_c:
 #include <string.h>
 #include "rotate_xxx.h"
 
-int
-strmatch (char *str1, char *str2)
-{
-    if (strcmp(str1, str2) == 0) {
-        return 1;
-    }
-    return 0;
-}
 """)
 
 for (size, solved_state) in (
@@ -88,10 +80,10 @@ for (size, solved_state) in (
 
     if build_rotate_xxx_c:
         print("void")
-        print("rotate_%d%d%d(int *cube, int *cube_tmp, int array_size, char *step)" % (size, size, size))
+        print("rotate_%d%d%d(char *cube, char *cube_tmp, int array_size, move_type move)" % (size, size, size))
         print("{")
-        print("    /* This was contructed using 'solver.py --rotate-printer' */")
-        print("    memcpy(cube_tmp, cube, sizeof(int) * array_size);")
+        print("    /* This was contructed using utils/rotate-printer.py */")
+        print("    memcpy(cube_tmp, cube, sizeof(char) * array_size);")
         print("")
         first_step = True
 
@@ -101,13 +93,13 @@ for (size, solved_state) in (
             cube.state = copy(original_state)
             first_step = False
 
-        print("""    } else if (strcmp(step, "noturn") == 0) {
-    } else {
-        printf("ERROR: invalid step %s\\n", step);
-        // exit(1);
+        print(r'''
+    default:
+        printf("ERROR: invalid move %d\n", move);
+        exit(1);
     }
 }
-""")
+''')
 
     else:
         rotate_mapper = {}

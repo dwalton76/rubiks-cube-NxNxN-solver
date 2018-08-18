@@ -10,6 +10,7 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableCostOnly,
     LookupTableHashCostOnly,
     LookupTableIDA,
+    LookupTableIDAViaC,
     NoIDASolution,
 )
 from pprint import pformat
@@ -776,18 +777,17 @@ class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
         )
 
 
-class LookupTableIDA555UDCentersStage(LookupTableIDA):
+class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
     """
     lookup-table-5x5x5-step10-UD-centers-stage.txt
     ==============================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
     2 steps has 98 entries (0 percent, 19.60x previous step)
     3 steps has 2,036 entries (0 percent, 20.78x previous step)
-    4 steps has 41,096 entries (0 percent, 20.18x previous step)
-    5 steps has 824,950 entries (4 percent, 20.07x previous step)
-    6 steps has 16,300,291 entries (94 percent, 19.76x previous step)
+    4 steps has 41,096 entries (4 percent, 20.18x previous step)
+    5 steps has 824,950 entries (95 percent, 20.07x previous step)
 
-    Total: 17,168,476 entries
+    Total: 868,185 entries
     """
     t_centers_555 = (
         8, 12, 14, 18,
@@ -840,6 +840,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             'D' : 'U',
         }
         self.nuke_corners = True
+        self.C_ida_type = "5x5x5-UD-centers-stage"
 
     def ida_heuristic(self, ida_threshold):
         parent = self.parent
@@ -883,31 +884,6 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
         cost_to_goal = max(x_centers_cost, t_centers_cost)
 
         return (lt_state, cost_to_goal)
-
-    def ida_solve_guts(self, min_ida_threshold, max_ida_threshold):
-
-        if not os.path.isfile("ida_search"):
-            log.info("ida_search is missing...compiling it now")
-            subprocess.check_output("gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_555.c -lm".split())
-
-        kociemba_string = self.parent.get_kociemba_string(True)
-        log.info("%s: solving via C ida_search" % self)
-        output = subprocess.check_output(["./ida_search", "--kociemba", kociemba_string, "--type", "5x5x5-UD-centers-stage"]).decode('ascii')
-        log.info("\n\n" + output + "\n\n")
-        for line in output.splitlines():
-            if line.startswith("SOLUTION"):
-                steps = line.split(":")[1].strip().split()
-                break
-        else:
-            raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
-
-        log.info("%s: ida_search found solution %s" % (self, ' '.join(steps)))
-        self.parent.state = self.pre_recolor_state[:]
-        self.parent.solution = self.pre_recolor_solution[:]
-
-        for step in steps:
-            self.parent.rotate(step)
-
 
 
 class LookupTable555LRTCenterStage(LookupTable):

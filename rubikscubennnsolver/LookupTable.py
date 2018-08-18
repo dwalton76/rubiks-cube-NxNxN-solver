@@ -10,8 +10,9 @@ import gc
 import hashlib
 import logging
 import os
-import sys
 import resource
+import subprocess
+import sys
 
 
 log = logging.getLogger(__name__)
@@ -1288,6 +1289,35 @@ class LookupTableIDA(LookupTable):
             raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
 
         return self.ida_solve_guts(min_ida_threshold, max_ida_threshold)
+
+
+class LookupTableIDAViaC(LookupTableIDA):
+
+    def ida_solve_guts(self, min_ida_threshold, max_ida_threshold):
+
+        if not os.path.isfile("ida_search"):
+            log.info("ida_search is missing...compiling it now")
+            subprocess.check_output("gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_555.c -lm".split())
+
+        kociemba_string = self.parent.get_kociemba_string(True)
+        cmd = ["./ida_search", "--kociemba", kociemba_string, "--type", self.C_ida_type]
+        log.info("%s: solving via C ida_search '%s'" % (self, " ".join(cmd)))
+        output = subprocess.check_output(cmd).decode('ascii')
+        log.info("\n\n" + output + "\n\n")
+
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                steps = line.split(":")[1].strip().split()
+                break
+        else:
+            raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+
+        log.info("%s: ida_search found solution %s" % (self, ' '.join(steps)))
+        self.parent.state = self.pre_recolor_state[:]
+        self.parent.solution = self.pre_recolor_solution[:]
+
+        for step in steps:
+            self.parent.rotate(step)
 
 
 if __name__ == '__main__':

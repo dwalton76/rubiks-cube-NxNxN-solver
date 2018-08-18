@@ -31,6 +31,7 @@ typedef enum {
     NONE,
     UD_CENTERS_STAGE_555,
     UD_OBLIQUE_EDGES_STAGE_666,
+    LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666,
 } lookup_table_type;
 
 
@@ -38,6 +39,7 @@ struct key_value_pair *ida_explored = NULL;
 struct key_value_pair *UD_centers_555 = NULL;
 char *pt_t_centers_cost_only = NULL;
 char *pt_x_centers_cost_only = NULL;
+char *LR_inner_x_centers_666 = NULL;
 
 
 int
@@ -288,6 +290,7 @@ str_replace_list_of_chars (char *str, char *old, char new)
 void
 init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
 {
+    char ones_UD[2] = {'U', 'D'};
     int squares_per_side = size * size;
     int square_count = squares_per_side * 6;
     int U_start = 1;
@@ -305,7 +308,7 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     int L_start_kociemba = D_start_kociemba + squares_per_side;
     int B_start_kociemba = L_start_kociemba + squares_per_side;
 
-    char ones_UD[2] = {'U', 'D'};
+    char ones_LR[2] = {'L', 'R'};
 
     memset(cube, 0, sizeof(char) * (square_count + 2));
     cube[0] = 'x'; // placeholder
@@ -322,6 +325,12 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     case UD_OBLIQUE_EDGES_STAGE_666:
         // Convert to 1s and 0s
         str_replace_for_binary(cube, ones_UD);
+        print_cube(cube, size);
+        break;
+
+    case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+        // Convert to 1s and 0s
+        str_replace_for_binary(cube, ones_LR);
         print_cube(cube, size);
         break;
 
@@ -449,6 +458,9 @@ ida_heuristic (char *cube, lookup_table_type type, int debug)
     case UD_OBLIQUE_EDGES_STAGE_666:
         return ida_heuristic_UD_oblique_edges_stage_666(cube);
 
+    case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+        return ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666(cube, LR_inner_x_centers_666);
+
     default:
         printf("ERROR: ida_heuristic() does not yet support this --type\n");
         exit(1);
@@ -456,7 +468,6 @@ ida_heuristic (char *cube, lookup_table_type type, int debug)
 }
 
 
-/* Load the cube state into the scratchpad sp_cube_state */
 unsigned long
 get_lt_state (char *cube, lookup_table_type type)
 {
@@ -467,6 +478,9 @@ get_lt_state (char *cube, lookup_table_type type)
 
     case UD_OBLIQUE_EDGES_STAGE_666:
         return get_UD_oblique_edges_stage_666(cube);
+
+    case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+        return get_LR_inner_x_centers_and_oblique_edges_stage(cube);
 
     default:
         printf("ERROR: get_lt_state() does not yet support type %d\n", type);
@@ -487,6 +501,9 @@ ida_search_complete (char *cube, lookup_table_type type)
 
     case UD_OBLIQUE_EDGES_STAGE_666:
         return ida_search_complete_UD_oblique_edges_stage_666(cube);
+
+    case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+        return ida_search_complete_LR_inner_x_centers_and_oblique_edges_stage(cube);
 
     default:
         printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
@@ -566,7 +583,6 @@ moves_cancel_out (move_type move, move_type prev_move)
 int
 step_allowed_by_ida_search (lookup_table_type type, move_type move)
 {
-    // dwalton
     switch (type)  {
     case UD_CENTERS_STAGE_555:
         return 1;
@@ -586,11 +602,33 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
             return 1;
         }
 
+    case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+        switch (move) {
+        case threeFw:
+        case threeFw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+            return 0;
+        default:
+            return 1;
+        }
+
     default:
         printf("ERROR: step_allowed_by_ida_search add support for this type\n");
         exit(1);
     }
-
 }
 
 
@@ -755,7 +793,6 @@ steps_on_same_face_and_layer(move_type move, move_type prev_move)
         }
         break;
 
-    // dwalton
     case threeUw:
     case threeUw_PRIME:
     case threeUw2:
@@ -924,7 +961,6 @@ ida_search (unsigned int cost_to_here,
 
         for (int i = 0; i < MOVE_COUNT_666; i++) {
             move = moves_666[i];
-            // dwalton
 
             if (steps_on_same_face_and_layer(move, prev_move)) {
                 continue;
@@ -962,12 +998,18 @@ ida_solve (char *cube, unsigned int cube_size, lookup_table_type type)
 
     switch (type)  {
     case UD_CENTERS_STAGE_555:
-        ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt.5-deep");
+        ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt");
         pt_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt", 16711681);
         pt_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt", 16711681);
         break;
+
     case UD_OBLIQUE_EDGES_STAGE_666:
         break;
+
+    case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+        LR_inner_x_centers_666 = ida_cost_only_preload("lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt", 65281);
+        break;
+
     default:
         printf("ERROR: ida_solve() does not yet support this --type\n");
         exit(1);
@@ -993,6 +1035,12 @@ ida_solve (char *cube, unsigned int cube_size, lookup_table_type type)
                 free(pt_x_centers_cost_only);
                 pt_x_centers_cost_only = NULL;
                 break;
+
+            case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+                free(LR_inner_x_centers_666);
+                LR_inner_x_centers_666 = NULL;
+                break;
+
             default:
                 break;
             }
@@ -1011,6 +1059,12 @@ ida_solve (char *cube, unsigned int cube_size, lookup_table_type type)
         free(pt_x_centers_cost_only);
         pt_x_centers_cost_only = NULL;
         break;
+
+    case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+        free(LR_inner_x_centers_666);
+        LR_inner_x_centers_666 = NULL;
+        break;
+
     default:
         break;
     }
@@ -1045,6 +1099,11 @@ main (int argc, char *argv[])
             } else if (strmatch(argv[i], "6x6x6-UD-oblique-edges-stage")) {
                 type = UD_OBLIQUE_EDGES_STAGE_666;
                 cube_size_type = 6;
+
+            } else if (strmatch(argv[i], "6x6x6-LR-inner-x-centers-oblique-edges-stage")) {
+                type = LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666,
+                cube_size_type = 6;
+
             } else {
                 printf("ERROR: %s is an invalid --type\n", argv[i]);
                 exit(1);

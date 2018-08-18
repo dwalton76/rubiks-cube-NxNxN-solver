@@ -81,6 +81,7 @@ def convert_to_cost_only(filename, use_permutation_rank, state_targets):
                 # Write the steps_len
                 if state in state_targets:
                     steps_len = 0
+                    log.info("found state_target %s" % state)
                 else:
                     if steps[0].isdigit():
                         steps_len = int(steps[0])

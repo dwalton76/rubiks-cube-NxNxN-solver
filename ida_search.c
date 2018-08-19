@@ -39,6 +39,8 @@ struct key_value_pair *ida_explored = NULL;
 struct key_value_pair *UD_centers_555 = NULL;
 char *pt_t_centers_cost_only = NULL;
 char *pt_x_centers_cost_only = NULL;
+
+struct key_value_pair *LR_inner_x_centers_and_oblique_edges_666 = NULL;
 char *LR_inner_x_centers_666 = NULL;
 
 
@@ -453,13 +455,21 @@ ida_heuristic (char *cube, lookup_table_type type, int debug)
 {
     switch (type)  {
     case UD_CENTERS_STAGE_555:
-        return ida_heuristic_UD_centers_555(cube, &UD_centers_555, pt_t_centers_cost_only, pt_x_centers_cost_only, debug);
+        return ida_heuristic_UD_centers_555(
+            cube,
+            &UD_centers_555,
+            pt_t_centers_cost_only,
+            pt_x_centers_cost_only,
+            debug);
 
     case UD_OBLIQUE_EDGES_STAGE_666:
         return ida_heuristic_UD_oblique_edges_stage_666(cube);
 
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
-        return ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666(cube, LR_inner_x_centers_666);
+        return ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666(
+            cube,
+            &LR_inner_x_centers_and_oblique_edges_666,
+            LR_inner_x_centers_666);
 
     default:
         printf("ERROR: ida_heuristic() does not yet support this --type\n");
@@ -1007,6 +1017,7 @@ ida_solve (char *cube, unsigned int cube_size, lookup_table_type type)
         break;
 
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+        ida_prune_table_preload(&LR_inner_x_centers_and_oblique_edges_666, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt");
         LR_inner_x_centers_666 = ida_cost_only_preload("lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt", 65281);
         break;
 

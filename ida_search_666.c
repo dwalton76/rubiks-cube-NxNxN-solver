@@ -168,11 +168,12 @@ get_LR_inner_x_centers_and_oblique_edges_stage (char *cube)
 unsigned long
 ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     char *cube,
-    char *LR_inner_x_centers_cost_666
-)
+    struct key_value_pair **LR_inner_x_centers_and_oblique_edges_666,
+    char *LR_inner_x_centers_cost_666)
 {
     unsigned long inner_x_centers_state = 0;
     unsigned long inner_x_centers_cost = 0;
+    unsigned long cost_to_goal = 0;
     int cube_index;
     int unpaired_count;
     int oblique_edges_cost;
@@ -186,15 +187,15 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     //oblique_edges_cost = (int) ceil(unpaired_count / 4);
 
     // inadmissable but faster
-    oblique_edges_cost = (int) ceil(unpaired_count / 2);
+    oblique_edges_cost = (int) ceil(unpaired_count / 3);
 
     // Test cube:
     // .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU.
-    // divide by 4 takes 46s, 9 moves
-    // divide by 3 takes 40s, 9 moves
-    // divide by 2.5 takes 23s, 9 moves
-    // divide by 2 takes 25s, 9 moves
-    // divide by 1 takes 51s, 9 moves
+    // divide by 4 takes 14s, 9 moves
+    // divide by 3 takes 12s, 9 moves
+    // divide by 2 takes 12s, 9 moves
+    // divide by 1.5 takes 2m 13s, 9 moves
+    // divide by 1 takes 39s, 9 moves
 
     // Now get the state for the inner x-centers on LFRB
     for (int i = 0; i < NUM_LFRB_INNER_X_CENTERS_666; i++) {
@@ -205,9 +206,28 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     }
     inner_x_centers_state >>= 1;
     inner_x_centers_cost = hex_to_int(LR_inner_x_centers_cost_666[inner_x_centers_state]);
+    cost_to_goal = max(oblique_edges_cost, inner_x_centers_cost);
 
-    //LOG("FOO inner_x_centers_cost %d, unpaired_count %d, oblique_edges_cost %d\n", inner_x_centers_cost, unpaired_count, oblique_edges_cost);
-    return max(oblique_edges_cost, inner_x_centers_cost);
+    // The step30 table we loaded is 2-deep so if a state is not in that
+    // table we know it has a cost of at least 3...thus MAX_DEPTH of 3 here.
+    int MAX_DEPTH = 3;
+
+    if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
+        unsigned long lt_state = get_LR_inner_x_centers_and_oblique_edges_stage(cube);
+        char lt_state_str[24];
+        sprintf(lt_state_str, "%012lx", lt_state);
+
+        struct key_value_pair *hash_entry = NULL;
+        hash_entry = hash_find(LR_inner_x_centers_and_oblique_edges_666, lt_state_str);
+
+        if (hash_entry) {
+            cost_to_goal = max(cost_to_goal, hash_entry->value);
+        } else {
+            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+        }
+    }
+
+    return cost_to_goal;
 }
 
 int

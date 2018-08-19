@@ -322,28 +322,32 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
     """
     lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt
     ====================================================================
-    1 steps has 140,504 entries (0 percent, 0.00x previous step)
-    2 steps has 1,525,128 entries (7 percent, 10.85x previous step)
-    3 steps has 18,193,324 entries (91 percent, 11.93x previous step)
+    1 steps has 140,504 entries (8 percent, 0.00x previous step)
+    2 steps has 1,525,128 entries (91 percent, 10.85x previous step)
 
-    Total: 19,858,956 entries
+    Total: 1,665,632 entries
     """
+
     LFRB_inner_x_centers_oblique_edges_666 = (
+        # Left
             45, 46,
         50, 51, 52, 53,
         56, 57, 58, 59,
             63, 64,
 
+        # Front
             81, 82,
         86, 87, 88, 89,
         92, 93, 94, 95,
             99, 100,
 
+        # Right
              117, 118,
         122, 123, 124, 125,
         128, 129, 130, 131,
              135, 136,
 
+        # Back
              153, 154,
         158, 159, 160, 161,
         164, 165, 166, 167,
@@ -355,7 +359,7 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
         LookupTableIDA.__init__(
             self,
             parent,
-            "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage-dummy.txt",
+            'lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt',
             'TBD',
             moves_666,
 
@@ -372,8 +376,9 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
             # prune tables
             (parent.lt_LR_inner_x_centers_stage,),
 
-            linecount=0,
-            max_depth=99,
+            linecount=1665632,
+            max_depth=2,
+            filesize=38309536,
         ),
 
         # This one was slow so we do it in C now

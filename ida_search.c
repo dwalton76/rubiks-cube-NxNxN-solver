@@ -450,8 +450,8 @@ ida_prune_table_cost (struct key_value_pair *hashtable, char *state_to_find)
 }
 
 
-unsigned long
-ida_heuristic (char *cube, lookup_table_type type, int debug)
+struct ida_heuristic_result
+ida_heuristic (char *cube, lookup_table_type type)
 {
     switch (type)  {
     case UD_CENTERS_STAGE_555:
@@ -459,8 +459,7 @@ ida_heuristic (char *cube, lookup_table_type type, int debug)
             cube,
             &UD_centers_555,
             pt_t_centers_cost_only,
-            pt_x_centers_cost_only,
-            debug);
+            pt_x_centers_cost_only);
 
     case UD_OBLIQUE_EDGES_STAGE_666:
         return ida_heuristic_UD_oblique_edges_stage_666(cube);
@@ -475,28 +474,6 @@ ida_heuristic (char *cube, lookup_table_type type, int debug)
         printf("ERROR: ida_heuristic() does not yet support this --type\n");
         exit(1);
     }
-}
-
-
-unsigned long
-get_lt_state (char *cube, lookup_table_type type)
-{
-    switch (type)  {
-
-    case UD_CENTERS_STAGE_555:
-        return get_UD_centers_stage_555(cube);
-
-    case UD_OBLIQUE_EDGES_STAGE_666:
-        return get_UD_oblique_edges_stage_666(cube);
-
-    case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
-        return get_LR_inner_x_centers_and_oblique_edges_stage(cube);
-
-    default:
-        printf("ERROR: get_lt_state() does not yet support type %d\n", type);
-        exit(1);
-    }
-    return 0;
 }
 
 
@@ -617,7 +594,6 @@ ida_search_complete (
             exit(1);
         }
     }
-
 
     switch (type)  {
     case UD_CENTERS_STAGE_555:
@@ -1017,25 +993,22 @@ ida_search (unsigned int cost_to_here,
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
     move_type move;
+    struct ida_heuristic_result result;
     char cube_tmp[array_size];
-
-    int debug = 0;
-
-    if (debug) {
-        print_moves(moves_to_here, cost_to_here);
-    }
+    char cost_to_here_str[3];
 
     ida_count++;
-    cost_to_goal = ida_heuristic(cube, type, debug);
+    result = ida_heuristic(cube, type);
+    cost_to_goal = result.cost_to_goal;
     f_cost = cost_to_here + cost_to_goal;
 
     // Abort Searching
     if (f_cost >= threshold) {
-        if (debug) {
-            LOG("IDA prune f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
-                f_cost, threshold, cost_to_here, cost_to_goal);
-            LOG("\n");
-        }
+        //if (debug) {
+        //    LOG("IDA prune f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
+        //        f_cost, threshold, cost_to_here, cost_to_goal);
+        //    LOG("\n");
+        //}
         return 0;
     }
 
@@ -1047,18 +1020,14 @@ ida_search (unsigned int cost_to_here,
         return 1;
     }
 
-    unsigned long lt_state = get_lt_state(cube, type);
-    char my_ida_explored_state[64];
-    char cost_to_here_str[3];
-    sprintf(my_ida_explored_state, "%lux", lt_state);
     sprintf(cost_to_here_str, "%d", cost_to_here);
-    strcat(my_ida_explored_state, cost_to_here_str);
+    strcat(result.lt_state, cost_to_here_str);
 
-    if (hash_find(&ida_explored, my_ida_explored_state)) {
+    if (hash_find(&ida_explored, result.lt_state)) {
         return 0;
     }
 
-    hash_add(&ida_explored, my_ida_explored_state, 0);
+    hash_add(&ida_explored, result.lt_state, 0);
 
     if (cube_size == 5) {
 
@@ -1128,6 +1097,7 @@ ida_solve (
     int MAX_SEARCH_DEPTH = 20;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
+    struct ida_heuristic_result result;
 
     switch (type)  {
     case UD_CENTERS_STAGE_555:
@@ -1149,8 +1119,8 @@ ida_solve (
         exit(1);
     }
 
-    // get_lt_state(cube, type);
-    min_ida_threshold = ida_heuristic(cube, type, 0);
+    result = ida_heuristic(cube, type);
+    min_ida_threshold = result.cost_to_goal;
     LOG("min_ida_threshold %d\n", min_ida_threshold);
 
     for (int threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {

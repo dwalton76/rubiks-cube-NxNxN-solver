@@ -31,39 +31,21 @@ unsigned int x_centers_555[NUM_T_CENTERS_555] = {
     132, 134, 142, 144
 };
 
-unsigned long
-get_UD_centers_stage_555(char *cube)
-{
-    unsigned long centers = 0;
-    int cube_index;
 
-    for (int i = 0; i < NUM_CENTERS_555; i++) {
-        cube_index = centers_555[i];
-
-        if (cube[cube_index] == '1') {
-            centers |= 0x1;
-        }
-        centers <<= 1;
-    }
-    centers >>= 1;
-
-    return centers;
-}
-
-unsigned long
+struct ida_heuristic_result
 ida_heuristic_UD_centers_555(
     char *cube,
     struct key_value_pair **UD_centers_cost_555,
     char *pt_t_centers_cost_only,
-    char *pt_x_centers_cost_only,
-    int debug)
+    char *pt_x_centers_cost_only)
 {
-    unsigned long cost_to_goal = 0;
+    unsigned int cost_to_goal = 0;
     unsigned long UD_t_centers_state = 0;
     unsigned long UD_x_centers_state = 0;
     unsigned long UD_t_centers_cost = 0;
     unsigned long UD_x_centers_cost = 0;
-    int cube_index;
+    unsigned long UD_centers_state = 0;
+    struct ida_heuristic_result result;
 
     for (int i = 0; i < NUM_T_CENTERS_555; i++) {
         if (cube[t_centers_555[i]] == '1') {
@@ -79,8 +61,17 @@ ida_heuristic_UD_centers_555(
         UD_x_centers_state <<= 1;
     }
 
+    for (int i = 0; i < NUM_CENTERS_555; i++) {
+        if (cube[centers_555[i]] == '1') {
+            UD_centers_state |= 0x1;
+        }
+        UD_centers_state <<= 1;
+    }
+
     UD_t_centers_state >>= 1;
     UD_x_centers_state >>= 1;
+    UD_centers_state >>= 1;
+    sprintf(result.lt_state, "%014lx", UD_centers_state);
 
     UD_t_centers_cost = hex_to_int(pt_t_centers_cost_only[UD_t_centers_state]);
     UD_x_centers_cost = hex_to_int(pt_x_centers_cost_only[UD_x_centers_state]);
@@ -91,30 +82,24 @@ ida_heuristic_UD_centers_555(
     int MAX_DEPTH = 6;
 
     if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
-        unsigned long lt_state = get_UD_centers_stage_555(cube);
-        char lt_state_str[24];
-        sprintf(lt_state_str, "%014lx", lt_state);
-
         struct key_value_pair *hash_entry = NULL;
-        hash_entry = hash_find(UD_centers_cost_555, lt_state_str);
+        hash_entry = hash_find(UD_centers_cost_555, result.lt_state);
 
         if (hash_entry) {
-            //LOG("init cost_to_goal %d, hash_entry %s cost %d\n", cost_to_goal, lt_state_str, hash_entry->value);
             cost_to_goal = max(cost_to_goal, hash_entry->value);
         } else {
-            // TODO fix hard code, 5 as in 5-deep because we built the table 4-deep
-            //LOG("init cost_to_goal %d, no hash_entry for %s\n", cost_to_goal, lt_state_str);
             cost_to_goal = max(cost_to_goal, MAX_DEPTH);
         }
     }
 
-    if (debug) {
-        LOG("ida_heuristic t-centers state %d or 0x%x, cost %d\n", UD_t_centers_state, UD_t_centers_state, UD_t_centers_cost);
-        LOG("ida_heuristic x-centers state %d or 0x%x, cost %d\n", UD_x_centers_state, UD_x_centers_state, UD_x_centers_cost);
-        LOG("ida_heuristic t-centers %d, x-centers %d, cost_to_goal %d\n", UD_t_centers_cost, UD_x_centers_cost, cost_to_goal);
-    }
+    //if (debug) {
+    //    LOG("ida_heuristic t-centers state %d or 0x%x, cost %d\n", UD_t_centers_state, UD_t_centers_state, UD_t_centers_cost);
+    //    LOG("ida_heuristic x-centers state %d or 0x%x, cost %d\n", UD_x_centers_state, UD_x_centers_state, UD_x_centers_cost);
+    //    LOG("ida_heuristic t-centers %d, x-centers %d, cost_to_goal %d\n", UD_t_centers_cost, UD_x_centers_cost, cost_to_goal);
+    //}
 
-    return cost_to_goal;
+    result.cost_to_goal = cost_to_goal;
+    return result;
 }
 
 int

@@ -89,29 +89,24 @@ get_unpaired_obliques_count_666 (char *cube)
 // ============================================================================
 // step20
 // ============================================================================
-unsigned long
-get_UD_oblique_edges_stage_666 (char *cube)
+struct ida_heuristic_result
+ida_heuristic_UD_oblique_edges_stage_666 (char *cube)
 {
+    int unpaired_count = get_unpaired_obliques_count_666(cube);
+    struct ida_heuristic_result result;
     unsigned long state = 0;
-    int cube_index;
 
+    // Get the state of the oblique edges
     for (int i = 0; i < NUM_OBLIQUE_EDGES_666; i++) {
-        cube_index = oblique_edges_666[i];
-
-        if (cube[cube_index] == '1') {
+        if (cube[oblique_edges_666[i]] == '1') {
             state |= 0x1;
         }
         state <<= 1;
     }
+
+    // 000000033fff is 12 chars
     state >>= 1;
-
-    return state;
-}
-
-unsigned long
-ida_heuristic_UD_oblique_edges_stage_666 (char *cube)
-{
-    int unpaired_count = get_unpaired_obliques_count_666(cube);
+    sprintf(result.lt_state, "%012lx", state);
 
     // The most oblique edges we can pair in single move is 4 so take
     // the number that are unpaired and divide by 4.
@@ -129,7 +124,9 @@ ida_heuristic_UD_oblique_edges_stage_666 (char *cube)
     // divide by 1.0 took 280ms, found solution 8 moves
 
     // inadmissable but a million times faster
-    return (int) ceil(unpaired_count / 1.6);
+    result.cost_to_goal = (int) ceil(unpaired_count / 1.6);
+
+    return result;
 }
 
 int
@@ -146,26 +143,7 @@ ida_search_complete_UD_oblique_edges_stage_666 (char *cube)
 // ============================================================================
 // step30
 // ============================================================================
-unsigned long
-get_LR_inner_x_centers_and_oblique_edges_stage (char *cube)
-{
-    unsigned long state = 0;
-    int cube_index;
-
-    for (int i = 0; i < NUM_LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_666; i++) {
-        cube_index = LFRB_inner_x_centers_and_oblique_edges_666[i];
-
-        if (cube[cube_index] == '1') {
-            state |= 0x1;
-        }
-        state <<= 1;
-    }
-    state >>= 1;
-
-    return state;
-}
-
-unsigned long
+struct ida_heuristic_result
 ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     char *cube,
     struct key_value_pair **LR_inner_x_centers_and_oblique_edges_666,
@@ -177,6 +155,20 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     int cube_index;
     int unpaired_count;
     int oblique_edges_cost;
+    struct ida_heuristic_result result;
+    unsigned long state = 0;
+
+    // get state of LFRB inner x-centers and oblique edges
+    for (int i = 0; i < NUM_LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_666; i++) {
+        if (cube[LFRB_inner_x_centers_and_oblique_edges_666[i]] == '1') {
+            state |= 0x1;
+        }
+        state <<= 1;
+    }
+
+    // 00019b267fff is 12 chars
+    state >>= 1;
+    sprintf(result.lt_state, "%012lx", state);
 
     unpaired_count = get_unpaired_obliques_count_666(cube);
 
@@ -213,12 +205,8 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     int MAX_DEPTH = 3;
 
     if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
-        unsigned long lt_state = get_LR_inner_x_centers_and_oblique_edges_stage(cube);
-        char lt_state_str[24];
-        sprintf(lt_state_str, "%012lx", lt_state);
-
         struct key_value_pair *hash_entry = NULL;
-        hash_entry = hash_find(LR_inner_x_centers_and_oblique_edges_666, lt_state_str);
+        hash_entry = hash_find(LR_inner_x_centers_and_oblique_edges_666, result.lt_state);
 
         if (hash_entry) {
             cost_to_goal = max(cost_to_goal, hash_entry->value);
@@ -227,7 +215,8 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
         }
     }
 
-    return cost_to_goal;
+    result.cost_to_goal = cost_to_goal;
+    return result;
 }
 
 int

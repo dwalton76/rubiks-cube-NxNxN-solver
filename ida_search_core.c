@@ -133,7 +133,7 @@ hash_print_all (struct key_value_pair **hashtable)
     struct key_value_pair *s;
 
     for(s = *hashtable; s != NULL; s= (struct key_value_pair*)(s->hh.next)) {
-        printf("key %s  value %lu\n", s->state, s->value);
+        printf("key %s  value %u\n", s->state, s->value);
     }
 }
 

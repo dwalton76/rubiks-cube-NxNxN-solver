@@ -830,8 +830,8 @@ class LookupTableCostOnly(LookupTable):
 
 class LookupTableHashCostOnly(LookupTableCostOnly):
 
-    def __init__(self, parent, filename, state_target, linecount, max_depth=None, bucketcount=None, filesize=None):
-        LookupTableCostOnly.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, bucketcount=None, filesize=None, md5=None):
+        LookupTableCostOnly.__init__(self, parent, filename, state_target, linecount, max_depth, filesize, md5)
         self.bucketcount = bucketcount
 
     def steps_cost(self, state_to_find):
@@ -1285,6 +1285,14 @@ class LookupTableIDA(LookupTable):
 
 class LookupTableIDAViaC(object):
 
+    def __init__(self):
+        self.C_ida_type = None
+        self.avoid_oll = None
+        self.nuke_corners = False
+        self.nuke_edges = False
+        self.nuke_centers = False
+        self.recolor_positions = []
+
     def __str__(self):
         return self.__class__.__name__
 
@@ -1327,6 +1335,31 @@ class LookupTableIDAViaC(object):
 
         kociemba_string = self.parent.get_kociemba_string(True)
         cmd = ["./ida_search", "--kociemba", kociemba_string, "--type", self.C_ida_type]
+
+        if self.avoid_oll is not None:
+            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
+
+            if self.avoid_oll == 0:
+                # Edge parity is currently odd so we need an odd number of w turns in orbit 0
+                if 0 in orbits_with_oll:
+                    cmd.append("--orbit0-need-odd-w")
+
+                # Edge parity is currently even so we need an even number of w turns in orbit 0
+                else:
+                    cmd.append("--orbit0-need-even-w")
+
+            elif self.avoid_oll == 1:
+                # Edge parity is currently odd so we need an odd number of w turns in orbit 1
+                if 1 in orbits_with_oll:
+                    cmd.append("--orbit1-need-odd-w")
+
+                # Edge parity is currently even so we need an even number of w turns in orbit 1
+                else:
+                    cmd.append("--orbit1-need-even-w")
+
+            else:
+                raise Exception("avoid_oll is only supported for orbits 0 or 1, not {}".format(avoid_oll))
+
         log.info("%s: solving via C ida_search\n\n%s" % (self, " ".join(cmd)))
         output = subprocess.check_output(cmd).decode('ascii')
         log.info("\n\n" + output + "\n\n")

@@ -500,10 +500,124 @@ get_lt_state (char *cube, lookup_table_type type)
 }
 
 
+unsigned int
+get_orbit0_wide_quarter_turn_count (move_type *moves)
+{
+    unsigned int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case Uw:
+        case Uw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+            count += 1;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
+unsigned int
+get_orbit1_wide_quarter_turn_count (move_type *moves)
+{
+    unsigned int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case threeUw:
+        case threeUw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeFw:
+        case threeFw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+            count += 1;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
 int
-ida_search_complete (char *cube, lookup_table_type type)
+ida_search_complete (
+    char *cube,
+    lookup_table_type type,
+    unsigned int orbit0_wide_quarter_turns,
+    unsigned int orbit1_wide_quarter_turns,
+    move_type *moves_to_here)
 {
     struct key_value_pair * pt_entry = NULL;
+    unsigned int orbit0_wide_quarter_turn_count = 0;
+    unsigned int orbit1_wide_quarter_turn_count = 0;
+
+    if (orbit0_wide_quarter_turns) {
+        orbit0_wide_quarter_turn_count = get_orbit0_wide_quarter_turn_count(moves_to_here);
+
+        // orbit0 must have an odd number of wide quarter
+        if (orbit0_wide_quarter_turns == 1) {
+            if (orbit0_wide_quarter_turn_count % 2 == 0) {
+                return 0;
+            }
+
+        // orbit0 must have an even number of wide quarter
+        } else if (orbit0_wide_quarter_turns == 2) {
+            if (orbit0_wide_quarter_turn_count % 2) {
+                return 0;
+            }
+
+        } else {
+            printf("ERROR: orbit0_wide_quarter_turns %d is not supported\n", orbit0_wide_quarter_turns);
+            exit(1);
+        }
+    }
+
+    if (orbit1_wide_quarter_turns) {
+        orbit1_wide_quarter_turn_count = get_orbit1_wide_quarter_turn_count(moves_to_here);
+
+        // orbit1 must have an odd number of wide quarter
+        if (orbit1_wide_quarter_turns == 1) {
+            if (orbit1_wide_quarter_turn_count % 2 == 0) {
+                return 0;
+            }
+
+        // orbit1 must have an even number of wide quarter
+        } else if (orbit1_wide_quarter_turns == 2) {
+            if (orbit1_wide_quarter_turn_count % 2) {
+                return 0;
+            }
+
+        } else {
+            printf("ERROR: orbit1_wide_quarter_turns %d is not supported\n", orbit1_wide_quarter_turns);
+            exit(1);
+        }
+    }
+
 
     switch (type)  {
     case UD_CENTERS_STAGE_555:
@@ -896,7 +1010,9 @@ ida_search (unsigned int cost_to_here,
             move_type prev_move,
             char *cube,
             unsigned int cube_size,
-            lookup_table_type type)
+            lookup_table_type type,
+            unsigned int orbit0_wide_quarter_turns,
+            unsigned int orbit1_wide_quarter_turns)
 {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
@@ -923,7 +1039,7 @@ ida_search (unsigned int cost_to_here,
         return 0;
     }
 
-    if (ida_search_complete(cube, type)) {
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, moves_to_here)) {
         // We are finished!!
         LOG("IDA count %d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
@@ -962,7 +1078,8 @@ ida_search (unsigned int cost_to_here,
             rotate_555(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type)) {
+            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
                 return 1;
             }
         }
@@ -985,7 +1102,8 @@ ida_search (unsigned int cost_to_here,
             rotate_666(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type)) {
+            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
                 return 1;
             }
         }
@@ -1000,7 +1118,12 @@ ida_search (unsigned int cost_to_here,
 
 
 int
-ida_solve (char *cube, unsigned int cube_size, lookup_table_type type)
+ida_solve (
+    char *cube,
+    unsigned int cube_size,
+    lookup_table_type type,
+    unsigned int orbit0_wide_quarter_turns,
+    unsigned int orbit1_wide_quarter_turns)
 {
     int MAX_SEARCH_DEPTH = 20;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
@@ -1035,7 +1158,8 @@ ida_solve (char *cube, unsigned int cube_size, lookup_table_type type)
         memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_SEARCH_DEPTH);
         hash_delete_all(&ida_explored);
 
-        if (ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size, type)) {
+        if (ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size,
+                       type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
             ida_count_total += ida_count;
             LOG("IDA threshold %d, explored %d branches (%d total), found solution\n", threshold, ida_count, ida_count_total);
 
@@ -1091,6 +1215,8 @@ main (int argc, char *argv[])
     lookup_table_type type = NONE;
     unsigned int cube_size_type = 0;
     unsigned int cube_size_kociemba = 0;
+    unsigned int orbit0_wide_quarter_turns = 0;
+    unsigned int orbit1_wide_quarter_turns = 0;
     char kociemba[300];
     memset(kociemba, 0, sizeof(char) * 300);
 
@@ -1119,6 +1245,18 @@ main (int argc, char *argv[])
                 printf("ERROR: %s is an invalid --type\n", argv[i]);
                 exit(1);
             }
+
+        } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
+            orbit0_wide_quarter_turns = 1;
+
+        } else if (strmatch(argv[i], "--orbit0-need-even-w")) {
+            orbit0_wide_quarter_turns = 2;
+
+        } else if (strmatch(argv[i], "--orbit1-need-odd-w")) {
+            orbit1_wide_quarter_turns = 1;
+
+        } else if (strmatch(argv[i], "--orbit1-need-even-w")) {
+            orbit1_wide_quarter_turns = 2;
 
         } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
             printf("\nida_search --kociemba KOCIEMBA_STRING --type 5x5x5-UD-centers-stage\n\n");
@@ -1150,10 +1288,15 @@ main (int argc, char *argv[])
     char cube[array_size];
     char cube_tmp[array_size];
 
+    if (orbit1_wide_quarter_turns && cube_size != 6) {
+        printf("ERROR cannot do avoid_oll on orbit1 for %dx%dx%d cubes", cube_size, cube_size, cube_size);
+        exit(1);
+    }
+
     sp_cube_state = malloc(sizeof(char) * array_size);
     memset(cube_tmp, 0, sizeof(char) * array_size);
     init_cube(cube, cube_size, type, kociemba);
 
     // print_cube(cube, cube_size);
-    ida_solve(cube, cube_size, type);
+    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns);
 }

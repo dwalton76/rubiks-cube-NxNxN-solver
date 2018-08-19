@@ -820,7 +820,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
             'D' : 'U',
         }
         self.nuke_corners = True
-        self.nuke_edges = True
+        #self.nuke_edges = True
         self.C_ida_type = "5x5x5-UD-centers-stage"
 
 
@@ -1036,11 +1036,48 @@ class LookupTableULCentersSolve(LookupTableHashCostOnly):
             self,
             parent,
             'lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt',
-            '3ffff000000000',
+            'ffffc0000',
             linecount=24010000,
             max_depth=13,
             bucketcount=24010031,
-            filesize=24010032)
+            filesize=24010032,
+            md5='a50f9b374d372f8bc78bc17ca206ee29'
+        )
+
+
+class LookupTableUFCentersSolve(LookupTableHashCostOnly):
+    """
+    lookup-table-5x5x5-step32-UL-centers-solve.txt
+    ==============================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 71 entries (0 percent, 10.14x previous step)
+    3 steps has 630 entries (0 percent, 8.87x previous step)
+    4 steps has 4,639 entries (0 percent, 7.36x previous step)
+    5 steps has 32,060 entries (0 percent, 6.91x previous step)
+    6 steps has 198,779 entries (0 percent, 6.20x previous step)
+    7 steps has 1,011,284 entries (4 percent, 5.09x previous step)
+    8 steps has 3,826,966 entries (15 percent, 3.78x previous step)
+    9 steps has 8,611,512 entries (35 percent, 2.25x previous step)
+    10 steps has 8,194,244 entries (34 percent, 0.95x previous step)
+    11 steps has 2,062,640 entries (8 percent, 0.25x previous step)
+    12 steps has 67,152 entries (0 percent, 0.03x previous step)
+    13 steps has 16 entries (0 percent, 0.00x previous step)
+
+    Total: 24,010,000 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step32-UF-centers-solve.hash-cost-only.txt',
+            'ffffc0000',
+            linecount=24010000,
+            max_depth=13,
+            bucketcount=24010031,
+            filesize=24010032,
+            md5='22eda3517120e836b784121e48e6e5aa'
+        )
 
 
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
@@ -1057,6 +1094,31 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
 
     Total: 142,153 entries
     """
+    centers_555 = (
+        7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
+        32, 33, 34, 37, 38, 39, 42, 43, 44, # Left
+        57, 58, 59, 62, 63, 64, 67, 68, 69, # Front
+        82, 83, 84, 87, 88, 89, 92, 93, 94, # Right
+        107, 108, 109, 112, 113, 114, 117, 118, 119, # Back
+        132, 133, 134, 137, 138, 139, 142, 143, 144 # Down
+    )
+
+    ULRD_centers_555 = (
+        7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
+        32, 33, 34, 37, 38, 39, 42, 43, 44, # Left
+        82, 83, 84, 87, 88, 89, 92, 93, 94, # Right
+        132, 133, 134, 137, 138, 139, 142, 143, 144 # Down
+    )
+
+    UFBD_centers_555 = (
+        7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
+        57, 58, 59, 62, 63, 64, 67, 68, 69, # Front
+        107, 108, 109, 112, 113, 114, 117, 118, 119, # Back
+        132, 133, 134, 137, 138, 139, 142, 143, 144 # Down
+    )
+
+    set_ULRD_centers_555 = set(ULRD_centers_555)
+    set_UFBD_centers_555 = set(UFBD_centers_555)
 
     def __init__(self, parent):
 
@@ -1076,7 +1138,9 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
              "Dw", "Dw'"),
 
             # prune tables
-            (parent.lt_UL_centers_solve,),
+            (parent.lt_UL_centers_solve,
+             parent.lt_UF_centers_solve),
+
             linecount=142153,
             max_depth=5,
             filesize=10661475,
@@ -1095,18 +1159,31 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
         parent_state = self.parent.state
         lt_state = []
         UL_state = 0
+        UF_state = 0
 
         for x in centers_555:
             cubie_state = parent_state[x]
             lt_state.append(cubie_state)
 
-            if cubie_state == 'U' or cubie_state == 'L':
-                UL_state = UL_state | 0x1
-            UL_state = UL_state << 1
+            if x in self.set_ULRD_centers_555:
+                if cubie_state == 'U' or cubie_state == 'L':
+                    UL_state = UL_state | 0x1
+                UL_state = UL_state << 1
+
+            if x in self.set_UFBD_centers_555:
+                if cubie_state == 'U' or cubie_state == 'F':
+                    UF_state = UF_state | 0x1
+                UF_state = UF_state << 1
 
         UL_state = UL_state >> 1
         UL_state = self.parent.lt_UL_centers_solve.hex_format % UL_state
-        cost_to_goal = self.parent.lt_UL_centers_solve.heuristic(UL_state)
+        UL_cost = self.parent.lt_UL_centers_solve.heuristic(UL_state)
+
+        UF_state = UF_state >> 1
+        UF_state = self.parent.lt_UF_centers_solve.hex_format % UF_state
+        UF_cost = self.parent.lt_UF_centers_solve.heuristic(UF_state)
+
+        cost_to_goal = max(UL_cost, UF_cost)
 
         return (''.join(lt_state), cost_to_goal)
 
@@ -1592,6 +1669,7 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_centers_stage.preload_cache_string()
 
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
+        self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
         self.lt_ULFRB_centers_solve.preload_cache_string()
 

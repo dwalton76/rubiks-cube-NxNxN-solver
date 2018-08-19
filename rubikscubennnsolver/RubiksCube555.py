@@ -789,26 +789,6 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
 
     Total: 868,185 entries
     """
-    t_centers_555 = (
-        8, 12, 14, 18,
-        33, 37, 39, 43,
-        58, 62, 64, 68,
-        83, 87, 89, 93,
-        108, 112, 114, 118,
-        133, 137, 139, 143
-    )
-
-    x_centers_555 = (
-        7, 9, 17, 19,
-        32, 34, 42, 44,
-        57, 59, 67, 69,
-        82, 84, 92, 94,
-        107, 109, 117, 119,
-        132, 134, 142, 144
-    )
-
-    set_x_centers_555 = set(x_centers_555)
-    set_t_centers_555 = set(t_centers_555)
 
     def __init__(self, parent):
 
@@ -842,49 +822,6 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
         self.nuke_corners = True
         self.nuke_edges = True
         self.C_ida_type = "5x5x5-UD-centers-stage"
-
-    def ida_heuristic(self, ida_threshold):
-        parent = self.parent
-        parent_state = self.parent.state
-
-        lt_state = 0
-        x_centers_state = 0
-        t_centers_state = 0
-        set_x_centers_555 = self.set_x_centers_555
-        set_t_centers_555 = self.set_t_centers_555
-
-        for x in centers_555:
-            cubie_state = parent_state[x]
-
-            if x in set_x_centers_555:
-
-                if cubie_state == 'U':
-                    x_centers_state = x_centers_state | 0x1
-                    lt_state = lt_state | 0x1
-                x_centers_state = x_centers_state << 1
-
-            elif x in set_t_centers_555:
-
-                if cubie_state == 'U':
-                    t_centers_state = t_centers_state | 0x1
-                    lt_state = lt_state | 0x1
-                t_centers_state = t_centers_state << 1
-
-            else:
-                if cubie_state == 'U':
-                    lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-
-        x_centers_state = x_centers_state >> 1
-        t_centers_state = t_centers_state >> 1
-        lt_state = lt_state >> 1
-
-        lt_state = self.hex_format % lt_state
-        x_centers_cost = parent.lt_UD_X_centers_stage_co.heuristic(x_centers_state)
-        t_centers_cost = parent.lt_UD_T_centers_stage_co.heuristic(t_centers_state)
-        cost_to_goal = max(x_centers_cost, t_centers_cost)
-
-        return (lt_state, cost_to_goal)
 
 
 class LookupTable555LRTCenterStage(LookupTable):

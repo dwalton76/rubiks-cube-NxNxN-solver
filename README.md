@@ -28,7 +28,7 @@ I am working on bringing this down but these are the memory requirements for run
 | 4x4x4 | 500M | 300M |
 | 5x5x5 | 200M | 170M |
 | 6x6x6 | 1.0G | 1.0G |
-| 7x7x7 | 4.5G | 4.5G |
+| 7x7x7 | 2.6G | 2.6G |
 | NxNxN | 4.5G | 4.5G |
 
 

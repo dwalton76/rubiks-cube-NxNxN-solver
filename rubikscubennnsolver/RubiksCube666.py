@@ -251,15 +251,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaC):
         189, 190, 194, 197, 200, 203, 207, 208
     )
 
-    oblique_edge_pairs_666 = (
-        (9, 10), (14, 20), (17, 23), (27, 28),
-        (45, 46), (50, 56), (53, 59), (63, 64),
-        (81, 82), (86, 92), (89, 95), (99, 100),
-        (117, 118), (122, 128), (125, 131), (135, 136),
-        (153, 154), (158, 164), (161, 167), (171, 172),
-        (189, 190), (194, 200), (197, 203), (207, 208)
-    )
-
     def __init__(self, parent):
 
         LookupTableIDA.__init__(
@@ -286,7 +277,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaC):
         log.info("%s: recolor (custom)" % self)
         #self.parent.print_cube()
         self.parent.nuke_corners()
-        #self.parent.nuke_edges()
 
         for x in centers_666:
             if x in self.oblique_edges_666:
@@ -298,37 +288,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaC):
                 self.parent.state[x] = '.'
 
         #self.parent.print_cube()
-
-    def get_UD_unpaired_obliques_count(self):
-        parent_state = self.parent.state
-        UD_paired_obliques = 0
-
-        for (x, y) in self.oblique_edge_pairs_666:
-            if parent_state[x] == 'U' and parent_state[y] == 'U':
-                UD_paired_obliques += 1
-
-        UD_unpaired_obliques = 8 - UD_paired_obliques
-        return UD_unpaired_obliques
-
-    def ida_heuristic(self, ida_threshold):
-        parent_state = self.parent.state
-        lt_state = 0
-
-        for x in self.oblique_edges_666:
-            if parent_state[x] == 'U':
-                lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-        lt_state = lt_state >> 1
-        lt_state = self.hex_format % lt_state
-
-        # admissable but slow
-        #cost_to_goal = int(self.get_UD_unpaired_obliques_count() / 4)
-
-        # not admissable but fast, assume that each
-        # unpaired UD oblique edge pair will take 1 move.
-        cost_to_goal = self.get_UD_unpaired_obliques_count()
-
-        return (lt_state, cost_to_goal)
 
 
 class LookupTable666LRInnerXCentersStage(LookupTableCostOnly):
@@ -391,24 +350,6 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
              171, 172,
     )
 
-    LFRB_inner_x_centers_666 = (
-        51, 52, 57, 58,
-        87, 88, 93, 94,
-        123, 124, 129, 130,
-        159, 160, 165, 166,
-    )
-
-    oblique_edge_pairs_666 = (
-        (9, 10), (14, 20), (17, 23), (27, 28),
-        (45, 46), (50, 56), (53, 59), (63, 64),
-        (81, 82), (86, 92), (89, 95), (99, 100),
-        (117, 118), (122, 128), (125, 131), (135, 136),
-        (153, 154), (158, 164), (161, 167), (171, 172),
-        (189, 190), (194, 200), (197, 203), (207, 208)
-    )
-
-    set_LFRB_inner_x_centers_666 = set(LFRB_inner_x_centers_666)
-
     def __init__(self, parent):
 
         LookupTableIDA.__init__(
@@ -453,51 +394,6 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
                 self.parent.state[x] = '.'
 
         #self.parent.print_cube()
-
-    def get_LR_unpaired_obliques_count(self):
-        parent_state = self.parent.state
-        LR_paired_obliques = 0
-
-        for (x, y) in self.oblique_edge_pairs_666:
-            if parent_state[x] == 'L' and parent_state[y] == 'L':
-                LR_paired_obliques += 1
-
-        LR_unpaired_obliques = 8 - LR_paired_obliques
-        return LR_unpaired_obliques
-
-    def ida_heuristic(self, ida_threshold):
-        parent = self.parent
-        parent_state = self.parent.state
-        centers_state = 0
-        lt_state = 0
-
-        set_LFRB_inner_x_centers_666 = self.set_LFRB_inner_x_centers_666
-
-        for x in self.LFRB_inner_x_centers_oblique_edges_666:
-            x_state = parent_state[x]
-
-            if x in set_LFRB_inner_x_centers_666:
-                if x_state == 'L':
-                    centers_state = centers_state | 0x1
-                    lt_state = lt_state | 0x1
-                centers_state = centers_state << 1
-
-            lt_state = lt_state << 1
-
-        centers_state = centers_state >> 1
-        lt_state = lt_state >> 1
-        lt_state = self.hex_format % lt_state
-
-        edges_cost = int(self.get_LR_unpaired_obliques_count() / 4)
-        centers_cost = parent.lt_LR_inner_x_centers_stage.heuristic(centers_state)
-
-        if ida_threshold >= self.exit_asap:
-            heuristic_stats_cost = self.heuristic_stats.get((edges_cost, centers_cost), 0)
-            cost_to_goal = max(edges_cost, centers_cost, heuristic_stats_cost - self.heuristic_stats_error)
-        else:
-            cost_to_goal = max(edges_cost, centers_cost)
-
-        return (lt_state, cost_to_goal)
 
 
 class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):

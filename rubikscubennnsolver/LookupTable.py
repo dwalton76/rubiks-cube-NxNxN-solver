@@ -1014,7 +1014,6 @@ class LookupTableIDA(LookupTable):
         self.parent.state = prev_state[:]
         return (f_cost, False)
 
-
     def recolor(self):
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
@@ -1087,7 +1086,90 @@ class LookupTableIDA(LookupTable):
         else:
             return None
 
-    def ida_solve_guts(self, min_ida_threshold, max_ida_threshold):
+    # uncomment to cProfile solve()
+    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
+        '''
+    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
+            profile.runctx('self.solve_with_cprofile()', globals(), locals())
+
+    def solve_with_cprofile(self, min_ida_threshold=None, max_ida_threshold=99):
+        '''
+        """
+        The goal is to find a sequence of moves that will put the cube in a state that is
+        in our lookup table
+        """
+
+        if self.parent.size == 2:
+            from rubikscubennnsolver.RubiksCube222 import rotate_222
+            self.rotate_xxx = rotate_222
+        elif self.parent.size == 4:
+            from rubikscubennnsolver.RubiksCube444 import rotate_444
+            self.rotate_xxx = rotate_444
+        elif self.parent.size == 5:
+            from rubikscubennnsolver.RubiksCube555 import rotate_555
+            self.rotate_xxx = rotate_555
+        elif self.parent.size == 6:
+            from rubikscubennnsolver.RubiksCube666 import rotate_666
+            self.rotate_xxx = rotate_666
+        elif self.parent.size == 7:
+            from rubikscubennnsolver.RubiksCube777 import rotate_777
+            self.rotate_xxx = rotate_777
+        else:
+            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+
+        # If this is a lookup table that is staging a pair of colors (such as U and D)
+        # then recolor the cubies accordingly.
+        self.pre_recolor_state = self.parent.state[:]
+        self.pre_recolor_solution = self.parent.solution[:]
+        self.recolor()
+
+        # save cube state
+        self.original_state = self.parent.state[:]
+        self.original_solution = self.parent.solution[:]
+
+        # Get the intial cube state and cost_to_goal
+        (state, cost_to_goal) = self.ida_heuristic(0)
+
+        # The cube is already in the desired state, nothing to do
+        if state in self.state_target or cost_to_goal == 0:
+            self.parent.state = self.pre_recolor_state[:]
+            self.parent.solution = self.pre_recolor_solution[:]
+            log.info("%s: cube is already at the target state %s" % (self, state))
+            return True
+
+        if self.search_complete(state, []):
+            log.info("%s: cube is already in a state %s that is in our lookup table" % (self, state))
+            tmp_solution = self.parent.solution[:]
+            self.parent.state = self.pre_recolor_state[:]
+            self.parent.solution = self.pre_recolor_solution[:]
+
+            for step in tmp_solution[len(self.original_solution):]:
+                self.parent.rotate(step)
+
+            return True
+
+        # Avoiding OLL is done by changing the edge parity from odd to even.
+        # The edge parity toggles from odd to even or even to odd with every
+        # quarter wide turn. Sanity check that avoiding OLL is possible for
+        # this table.
+        if self.avoid_oll:
+            for step in self.moves_all:
+                if "w" in step and not step.endswith("2"):
+                    break
+            else:
+                raise Exception("%s: has avoid_oll %s but there are no quarter wide turns among moves_all %s" % (self, self.avoid_oll, " ".join(self.moves_all)))
+
+        # If we are here (odds are very high we will be) it means that the current
+        # cube state was not in the lookup table.  We must now perform an IDA search
+        # until we find a sequence of moves that takes us to a state that IS in the
+        # lookup table.
+        if min_ida_threshold is None:
+            min_ida_threshold = cost_to_goal
+
+        # If this is the case the range loop below isn't worth running
+        if min_ida_threshold >= max_ida_threshold+1:
+            raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+
         start_time0 = dt.datetime.now()
         log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold))
         total_ida_count = 0
@@ -1194,46 +1276,44 @@ class LookupTableIDA(LookupTable):
                 log.info("%s: IDA threshold %d, explored %d nodes in %s, %d nodes-per-sec" %
                     (self, threshold, self.ida_count, pretty_time(delta), nodes_per_sec))
 
-        # The only time we will get here is when max_ida_threshold is a low number.  It will be up to the caller to:
-        # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
-        # - call ida_solve() again but with a near infinite max_ida_threshold...99 is close enough to infinity for IDA purposes
         log.info("%s: could not find a solution via IDA with max threshold of %d " % (self, max_ida_threshold))
-
         self.parent.state = self.original_state[:]
         self.parent.solution = self.original_solution[:]
-
         raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
 
-    # uncomment to cProfile solve()
-    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
-        '''
-    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
-            profile.runctx('self.solve_with_cprofile()', globals(), locals())
 
-    def solve_with_cprofile(self, min_ida_threshold=None, max_ida_threshold=99):
-        '''
-        """
-        The goal is to find a sequence of moves that will put the cube in a state that is
-        in our lookup table
-        """
 
-        if self.parent.size == 2:
-            from rubikscubennnsolver.RubiksCube222 import rotate_222
-            self.rotate_xxx = rotate_222
-        elif self.parent.size == 4:
-            from rubikscubennnsolver.RubiksCube444 import rotate_444
-            self.rotate_xxx = rotate_444
-        elif self.parent.size == 5:
-            from rubikscubennnsolver.RubiksCube555 import rotate_555
-            self.rotate_xxx = rotate_555
-        elif self.parent.size == 6:
-            from rubikscubennnsolver.RubiksCube666 import rotate_666
-            self.rotate_xxx = rotate_666
-        elif self.parent.size == 7:
-            from rubikscubennnsolver.RubiksCube777 import rotate_777
-            self.rotate_xxx = rotate_777
-        else:
-            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+class LookupTableIDAViaC(object):
+
+    def __str__(self):
+        return self.__class__.__name__
+
+    def recolor(self):
+
+        if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
+            log.info("%s: recolor" % self)
+            #self.parent.print_cube()
+
+            if self.nuke_corners:
+                self.parent.nuke_corners()
+
+            if self.nuke_edges:
+                self.parent.nuke_edges()
+
+            if self.nuke_centers:
+                self.parent.nuke_centers()
+
+            for x in self.recolor_positions:
+                x_color = self.parent.state[x]
+                x_new_color = self.recolor_map.get(x_color)
+
+                if x_new_color:
+                    self.parent.state[x] = x_new_color
+
+            #self.parent.print_cube()
+            #sys.exit(0)
+
+    def solve(self):
 
         # If this is a lookup table that is staging a pair of colors (such as U and D)
         # then recolor the cubies accordingly.
@@ -1241,67 +1321,13 @@ class LookupTableIDA(LookupTable):
         self.pre_recolor_solution = self.parent.solution[:]
         self.recolor()
 
-        # save cube state
-        self.original_state = self.parent.state[:]
-        self.original_solution = self.parent.solution[:]
-
-        # Get the intial cube state and cost_to_goal
-        (state, cost_to_goal) = self.ida_heuristic(0)
-
-        # The cube is already in the desired state, nothing to do
-        if state in self.state_target or cost_to_goal == 0:
-            self.parent.state = self.pre_recolor_state[:]
-            self.parent.solution = self.pre_recolor_solution[:]
-            log.info("%s: cube is already at the target state %s" % (self, state))
-            return True
-
-        if self.search_complete(state, []):
-            log.info("%s: cube is already in a state %s that is in our lookup table" % (self, state))
-            tmp_solution = self.parent.solution[:]
-            self.parent.state = self.pre_recolor_state[:]
-            self.parent.solution = self.pre_recolor_solution[:]
-
-            for step in tmp_solution[len(self.original_solution):]:
-                self.parent.rotate(step)
-
-            return True
-
-        # Avoiding OLL is done by changing the edge parity from odd to even.
-        # The edge parity toggles from odd to even or even to odd with every
-        # quarter wide turn. Sanity check that avoiding OLL is possible for
-        # this table.
-        if self.avoid_oll:
-            for step in self.moves_all:
-                if "w" in step and not step.endswith("2"):
-                    break
-            else:
-                raise Exception("%s: has avoid_oll %s but there are no quarter wide turns among moves_all %s" % (self, self.avoid_oll, " ".join(self.moves_all)))
-
-        # If we are here (odds are very high we will be) it means that the current
-        # cube state was not in the lookup table.  We must now perform an IDA search
-        # until we find a sequence of moves that takes us to a state that IS in the
-        # lookup table.
-        if min_ida_threshold is None:
-            min_ida_threshold = cost_to_goal
-
-        # If this is the case the range loop below isn't worth running
-        if min_ida_threshold >= max_ida_threshold+1:
-            raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
-
-        return self.ida_solve_guts(min_ida_threshold, max_ida_threshold)
-
-
-class LookupTableIDAViaC(LookupTableIDA):
-
-    def ida_solve_guts(self, min_ida_threshold, max_ida_threshold):
-
         if not os.path.isfile("ida_search"):
             log.info("ida_search is missing...compiling it now")
             subprocess.check_output("gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_555.c -lm".split())
 
         kociemba_string = self.parent.get_kociemba_string(True)
         cmd = ["./ida_search", "--kociemba", kociemba_string, "--type", self.C_ida_type]
-        log.info("%s: solving via C ida_search '%s'" % (self, " ".join(cmd)))
+        log.info("%s: solving via C ida_search\n\n%s" % (self, " ".join(cmd)))
         output = subprocess.check_output(cmd).decode('ascii')
         log.info("\n\n" + output + "\n\n")
 

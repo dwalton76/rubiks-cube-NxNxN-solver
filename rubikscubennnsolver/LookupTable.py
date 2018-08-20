@@ -226,6 +226,41 @@ def md5signature(filename):
     return hasher.hexdigest()
 
 
+def rm_file_if_mismatch(filename, filesize, md5target):
+    filename_gz = filename + ".gz"
+
+    # This only happens if a new copy of the lookup table has been checked in...we need to delete
+    # the one we have and download the new one.
+    if os.path.exists(filename):
+        if filesize is not None and os.path.getsize(filename) != filesize:
+            log.info("%s: filesize %s does not equal target filesize %s" % (filename, os.path.getsize(filename), filesize))
+            os.remove(filename)
+
+            if os.path.exists(filename_gz):
+                os.remove(filename_gz)
+
+        elif md5target is not None and md5signature(filename) != md5target:
+            log.info("%s: md5 signature %s is not %s" % (filename, md5signature(filename), md5target))
+            os.remove(filename)
+
+            if os.path.exists(filename_gz):
+                os.remove(filename_gz)
+
+
+def download_file_if_needed(filename, cube_size):
+
+    if not os.path.exists(filename):
+        filename_gz = filename + ".gz"
+
+        if not os.path.exists(filename_gz):
+            url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (cube_size, cube_size, cube_size, filename_gz)
+            log.info("Downloading table via 'wget %s'" % url)
+            call(['wget', url])
+
+        log.info("gunzip %s" % filename_gz)
+        call(['gunzip', filename_gz])
+
+
 class LookupTable(object):
     heuristic_stats = {}
 
@@ -265,31 +300,8 @@ class LookupTable(object):
             self.state_width = 0
         else:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
-
-            # This only happens if a new copy of the lookup table has been checked in...we need to delete
-            # the one we have and download the new one.
-            if os.path.exists(self.filename) and self.filesize is not None and os.path.getsize(self.filename) != self.filesize:
-                log.info("%s: filesize %s does not equal target filesize %s" % (self, os.path.getsize(self.filename), self.filesize))
-                os.remove(self.filename)
-
-                if os.path.exists(self.filename_gz):
-                    os.remove(self.filename_gz)
-
-            if os.path.exists(self.filename) and self.md5 is not None and md5signature(self.filename) != self.md5:
-                log.info("%s: md5 signature is incorrect" % self)
-                os.remove(self.filename)
-
-                if os.path.exists(self.filename_gz):
-                    os.remove(self.filename_gz)
-
-            if not os.path.exists(self.filename):
-                if not os.path.exists(self.filename_gz):
-                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
-                    log.info("Downloading table via 'wget %s'" % url)
-                    call(['wget', url])
-
-                log.info("gunzip %s" % self.filename_gz)
-                call(['gunzip', self.filename_gz])
+            rm_file_if_mismatch(self.filename, self.filesize, self.md5)
+            download_file_if_needed(self.filename, self.parent.size)
 
             # Find the state_width for the entries in our .txt file
             with open(self.filename, 'r') as fh:
@@ -749,31 +761,8 @@ class LookupTableCostOnly(LookupTable):
         if 'dummy' not in self.filename:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
 
-        # This only happens if a new copy of the lookup table has been checked in...we need to delete
-        # the one we have and download the new one.
-        if os.path.exists(self.filename) and self.filesize is not None and os.path.getsize(self.filename) != self.filesize:
-            log.info("%s: filesize %s does not equal target filesize %s" % (self, os.path.getsize(self.filename), self.filesize))
-            os.remove(self.filename)
-
-            if os.path.exists(self.filename_gz):
-                os.remove(self.filename_gz)
-
-        if os.path.exists(self.filename) and self.md5 is not None and md5signature(self.filename) != self.md5:
-            log.info("%s: md5 signature is incorrect" % self)
-            os.remove(self.filename)
-
-            if os.path.exists(self.filename_gz):
-                os.remove(self.filename_gz)
-
-        if not os.path.exists(self.filename):
-            if not os.path.exists(self.filename_gz):
-                url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
-                log.info("Downloading table via 'wget %s'" % url)
-                call(['wget', url])
-
-            log.info("gunzip %s" % self.filename_gz)
-            call(['gunzip', self.filename_gz])
-
+        rm_file_if_mismatch(self.filename, self.filesize, self.md5)
+        download_file_if_needed(self.filename, self.parent.size)
         self.filename_exists = True
 
         if isinstance(state_target, tuple):
@@ -1285,13 +1274,18 @@ class LookupTableIDA(LookupTable):
 
 class LookupTableIDAViaC(object):
 
-    def __init__(self):
-        self.C_ida_type = None
+    def __init__(self, parent, files, C_ida_type):
         self.avoid_oll = None
         self.nuke_corners = False
         self.nuke_edges = False
         self.nuke_centers = False
         self.recolor_positions = []
+        self.parent = parent
+        self.C_ida_type = C_ida_type
+
+        for (filename, md5target) in files:
+            rm_file_if_mismatch(filename, None, md5target)
+            download_file_if_needed(filename, self.parent.size)
 
     def __str__(self):
         return self.__class__.__name__

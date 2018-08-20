@@ -683,100 +683,6 @@ class NoEdgeSolution(Exception):
     pass
 
 
-class LookupTable555UDTCenterStage(LookupTable):
-    """
-    There are 4 T-centers and 4 X-centers so (24!/(8! * 16!))^2 is 540,917,591,841
-    We cannot build a table that large so we will build it 7 moves deep and use
-    IDA with T-centers and X-centers as our prune tables. Both the T-centers and
-    X-centers prune tables will have 735,471 entries, 735,471/540,917,591,841
-    is 0.000 001 3596729171 which is a decent percentage for IDA.
-
-    lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
-    ============================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
-    3 steps has 900 entries (0 percent, 13.64x previous step)
-    4 steps has 9,626 entries (1 percent, 10.70x previous step)
-    5 steps has 80,202 entries (10 percent, 8.33x previous step)
-    6 steps has 329,202 entries (44 percent, 4.10x previous step)
-    7 steps has 302,146 entries (41 percent, 0.92x previous step)
-    8 steps has 13,324 entries (1 percent, 0.04x previous step)
-
-    Total: 735,471 entries
-    Average: 6.31 moves
-    """
-
-    t_centers_555 = (
-        8, 12, 14, 18,
-        33, 37, 39, 43,
-        58, 62, 64, 68,
-        83, 87, 89, 93,
-        108, 112, 114, 118,
-        133, 137, 139, 143
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
-            'f0000f',
-            linecount=735471,
-            max_depth=8,
-            filesize=27947898,
-        )
-
-    def ida_heuristic(self, ida_threshold):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.t_centers_555])
-        return (self.hex_format % int(result, 2), 0)
-
-
-class LookupTable555UDTCenterStageCostOnly(LookupTableCostOnly):
-
-    def __init__(self, parent):
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt',
-            15728655,
-            linecount=735471,
-            max_depth=8,
-            filesize=16711681,
-            md5='95464b63ec32f831c0f844916f3bbee9',
-        )
-
-
-class LookupTable555UDXCenterStageCostOnly(LookupTableCostOnly):
-    """
-    lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
-    ============================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1,206 entries (0 percent, 14.71x previous step)
-    4 steps has 14,116 entries (1 percent, 11.70x previous step)
-    5 steps has 123,404 entries (16 percent, 8.74x previous step)
-    6 steps has 422,508 entries (57 percent, 3.42x previous step)
-    7 steps has 173,254 entries (23 percent, 0.41x previous step)
-    8 steps has 896 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    Average: 6.03 moves
-    """
-
-    def __init__(self, parent):
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt',
-            15728655,
-            linecount=735471,
-            max_depth=8,
-            filesize=16711681,
-            md5='19679794a853d38a7d36be0f03fe1c3b',
-        )
-
-
 class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
     """
     lookup-table-5x5x5-step10-UD-centers-stage.txt
@@ -792,23 +698,14 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
 
     def __init__(self, parent):
 
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step10-UD-centers-stage.txt',
-            '3fe000000001ff',
-            moves_555,
-            (), # illegal_moves
-
-            # prune tables
-            (parent.lt_UD_X_centers_stage_co,
-             parent.lt_UD_T_centers_stage_co,
-            ),
-
-            linecount=868185,
-            max_depth=5,
-            filesize=30386475,
-            exit_asap=99,
+            # Needed tables and their md5 signatures
+            (('lookup-table-5x5x5-step10-UD-centers-stage.txt', '14369c48b6b51dbf13e6697915ff61fa'),
+             ('lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt', '95464b63ec32f831c0f844916f3bbee9'),
+             ('lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt', '19679794a853d38a7d36be0f03fe1c3b')),
+            '5x5x5-UD-centers-stage' # C_ida_type
         )
 
         self.recolor_positions = centers_555
@@ -820,8 +717,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
             'D' : 'U',
         }
         self.nuke_corners = True
-        #self.nuke_edges = True
-        self.C_ida_type = "5x5x5-UD-centers-stage"
+        self.nuke_edges = True
 
 
 class LookupTable555LRTCenterStage(LookupTable):
@@ -1005,82 +901,7 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA):
         return (lt_state, cost_to_goal)
 
 
-class LookupTableULCentersSolve(LookupTableHashCostOnly):
-    """
-    This tables solves sides U and L which in turn also solve D and R.  When
-    the table was built the Ls were replaced with Us so that we were left with
-    only 'U' and 'x' squares so that we could save the states in hex which
-    makes the table take up much less disk space.
-
-    lookup-table-5x5x5-step31-UL-centers-solve.txt
-    ==============================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 71 entries (0 percent, 10.14x previous step)
-    3 steps has 630 entries (0 percent, 8.87x previous step)
-    4 steps has 4,639 entries (0 percent, 7.36x previous step)
-    5 steps has 32,060 entries (0 percent, 6.91x previous step)
-    6 steps has 198,779 entries (0 percent, 6.20x previous step)
-    7 steps has 1,011,284 entries (4 percent, 5.09x previous step)
-    8 steps has 3,826,966 entries (15 percent, 3.78x previous step)
-    9 steps has 8,611,512 entries (35 percent, 2.25x previous step)
-    10 steps has 8,194,244 entries (34 percent, 0.95x previous step)
-    11 steps has 2,062,640 entries (8 percent, 0.25x previous step)
-    12 steps has 67,152 entries (0 percent, 0.03x previous step)
-    13 steps has 16 entries (0 percent, 0.00x previous step)
-
-    Total: 24,010,000 entries
-    """
-
-    def __init__(self, parent):
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt',
-            'ffffc0000',
-            linecount=24010000,
-            max_depth=13,
-            bucketcount=24010031,
-            filesize=24010032,
-            md5='a50f9b374d372f8bc78bc17ca206ee29'
-        )
-
-
-class LookupTableUFCentersSolve(LookupTableHashCostOnly):
-    """
-    lookup-table-5x5x5-step32-UL-centers-solve.txt
-    ==============================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 71 entries (0 percent, 10.14x previous step)
-    3 steps has 630 entries (0 percent, 8.87x previous step)
-    4 steps has 4,639 entries (0 percent, 7.36x previous step)
-    5 steps has 32,060 entries (0 percent, 6.91x previous step)
-    6 steps has 198,779 entries (0 percent, 6.20x previous step)
-    7 steps has 1,011,284 entries (4 percent, 5.09x previous step)
-    8 steps has 3,826,966 entries (15 percent, 3.78x previous step)
-    9 steps has 8,611,512 entries (35 percent, 2.25x previous step)
-    10 steps has 8,194,244 entries (34 percent, 0.95x previous step)
-    11 steps has 2,062,640 entries (8 percent, 0.25x previous step)
-    12 steps has 67,152 entries (0 percent, 0.03x previous step)
-    13 steps has 16 entries (0 percent, 0.00x previous step)
-
-    Total: 24,010,000 entries
-    """
-
-    def __init__(self, parent):
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step32-UF-centers-solve.hash-cost-only.txt',
-            'ffffc0000',
-            linecount=24010000,
-            max_depth=13,
-            bucketcount=24010031,
-            filesize=24010032,
-            md5='22eda3517120e836b784121e48e6e5aa'
-        )
-
-
-class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
+class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
     """
     24,010,000/117,649,000,000 is 0.000 204 so this will be a fast IDA search
 
@@ -1089,61 +910,56 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     1 steps has 7 entries (0 percent, 0.00x previous step)
     2 steps has 99 entries (0 percent, 14.14x previous step)
     3 steps has 1,134 entries (0 percent, 11.45x previous step)
-    4 steps has 12,183 entries (8 percent, 10.74x previous step)
-    5 steps has 128,730 entries (90 percent, 10.57x previous step)
+    4 steps has 12,183 entries (0 percent, 10.74x previous step)
+    5 steps has 128,730 entries (8 percent, 10.57x previous step)
+    6 steps has 1,291,295 entries (90 percent, 10.03x previous step)
 
-    Total: 142,153 entries
+    Total: 1,433,448 entries
+
+
+    lookup-table-5x5x5-step31-ULFRBD-x-centers-solve.txt
+    ====================================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 99 entries (0 percent, 14.14x previous step)
+    3 steps has 996 entries (0 percent, 10.06x previous step)
+    4 steps has 6,477 entries (1 percent, 6.50x previous step)
+    5 steps has 23,540 entries (6 percent, 3.63x previous step)
+    6 steps has 53,537 entries (15 percent, 2.27x previous step)
+    7 steps has 86,464 entries (25 percent, 1.62x previous step)
+    8 steps has 83,240 entries (24 percent, 0.96x previous step)
+    9 steps has 54,592 entries (15 percent, 0.66x previous step)
+    10 steps has 29,568 entries (8 percent, 0.54x previous step)
+    11 steps has 4,480 entries (1 percent, 0.15x previous step)
+
+    Total: 343,000 entries
+    Average: 7.51 moves
+
+
+    lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt
+    ====================================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 99 entries (0 percent, 14.14x previous step)
+    3 steps has 1,038 entries (0 percent, 10.48x previous step)
+    4 steps has 8,463 entries (2 percent, 8.15x previous step)
+    5 steps has 47,986 entries (13 percent, 5.67x previous step)
+    6 steps has 146,658 entries (42 percent, 3.06x previous step)
+    7 steps has 128,914 entries (37 percent, 0.88x previous step)
+    8 steps has 9,835 entries (2 percent, 0.08x previous step)
+
+    Total: 343,000 entries
+    Average: 6.23 moves
     """
-    centers_555 = (
-        7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
-        32, 33, 34, 37, 38, 39, 42, 43, 44, # Left
-        57, 58, 59, 62, 63, 64, 67, 68, 69, # Front
-        82, 83, 84, 87, 88, 89, 92, 93, 94, # Right
-        107, 108, 109, 112, 113, 114, 117, 118, 119, # Back
-        132, 133, 134, 137, 138, 139, 142, 143, 144 # Down
-    )
-
-    ULRD_centers_555 = (
-        7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
-        32, 33, 34, 37, 38, 39, 42, 43, 44, # Left
-        82, 83, 84, 87, 88, 89, 92, 93, 94, # Right
-        132, 133, 134, 137, 138, 139, 142, 143, 144 # Down
-    )
-
-    UFBD_centers_555 = (
-        7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
-        57, 58, 59, 62, 63, 64, 67, 68, 69, # Front
-        107, 108, 109, 112, 113, 114, 117, 118, 119, # Back
-        132, 133, 134, 137, 138, 139, 142, 143, 144 # Down
-    )
-
-    set_ULRD_centers_555 = set(ULRD_centers_555)
-    set_UFBD_centers_555 = set(UFBD_centers_555)
 
     def __init__(self, parent):
 
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
-            'UUUUUUUUULLLLLLLLLFFFFFFFFFxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-            moves_555,
-
-            # These moves would destroy the staged centers
-            ("Rw", "Rw'",
-             "Lw", "Lw'",
-             "Fw", "Fw'",
-             "Bw", "Bw'",
-             "Uw", "Uw'",
-             "Dw", "Dw'"),
-
-            # prune tables
-            (parent.lt_UL_centers_solve,
-             parent.lt_UF_centers_solve),
-
-            linecount=142153,
-            max_depth=5,
-            filesize=10661475,
+            # Needed tables and their md5 signatures
+            (('lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt', '28150f2f5138073413098b4b67a4dd3d'),
+             ('lookup-table-5x5x5-step31-ULFRBD-x-centers-solve.cost-only.txt', '8509730bc801fa6fecfc8959086ec34a'),
+             ('lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.cost-only.txt', 'd08b44f5a60f2a585afcde6a9732da56')),
+            '5x5x5-centers-solve' # C_ida_type
         )
 
         self.recolor_positions = centers_555
@@ -1155,37 +971,51 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
         self.nuke_corners = True
         self.nuke_edges = True
 
+
+class LookupTable555TCenterSolve(LookupTable):
+    """
+    This is only used when a cube larger than 7x7x7 is being solved. This is a non-hex
+    build of the step32 table.
+
+    lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt
+    ====================================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 99 entries (0 percent, 14.14x previous step)
+    3 steps has 1,038 entries (0 percent, 10.48x previous step)
+    4 steps has 8,463 entries (2 percent, 8.15x previous step)
+    5 steps has 47,986 entries (13 percent, 5.67x previous step)
+    6 steps has 146,658 entries (42 percent, 3.06x previous step)
+    7 steps has 128,914 entries (37 percent, 0.88x previous step)
+    8 steps has 9,835 entries (2 percent, 0.08x previous step)
+
+    Total: 343,000 entries
+    Average: 6.23 moves
+    """
+
+    t_centers_555 = (
+        8, 12, 14, 18,
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118,
+        133, 137, 139, 143
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt',
+            'UUUULLLLFFFFRRRRBBBBDDDD',
+            linecount=343000,
+            filesize=19551000,
+        )
+
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
-        lt_state = []
-        UL_state = 0
-        UF_state = 0
+        result = ''.join([parent_state[x] for x in self.t_centers_555])
+        return (result, 0)
 
-        for x in centers_555:
-            cubie_state = parent_state[x]
-            lt_state.append(cubie_state)
-
-            if x in self.set_ULRD_centers_555:
-                if cubie_state == 'U' or cubie_state == 'L':
-                    UL_state = UL_state | 0x1
-                UL_state = UL_state << 1
-
-            if x in self.set_UFBD_centers_555:
-                if cubie_state == 'U' or cubie_state == 'F':
-                    UF_state = UF_state | 0x1
-                UF_state = UF_state << 1
-
-        UL_state = UL_state >> 1
-        UL_state = self.parent.lt_UL_centers_solve.hex_format % UL_state
-        UL_cost = self.parent.lt_UL_centers_solve.heuristic(UL_state)
-
-        UF_state = UF_state >> 1
-        UF_state = self.parent.lt_UF_centers_solve.hex_format % UF_state
-        UF_cost = self.parent.lt_UF_centers_solve.heuristic(UF_state)
-
-        cost_to_goal = max(UL_cost, UF_cost)
-
-        return (''.join(lt_state), cost_to_goal)
 
 
 class LookupTable555StageFirstFourEdges(LookupTable):
@@ -1370,50 +1200,6 @@ class LookupTable555PairLastFourEdges(LookupTable):
         result = ''.join(state[index] for index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95))
         cost_to_goal = None
         return (result, cost_to_goal)
-
-
-class LookupTable555TCenterSolve(LookupTable):
-    """
-    This is only used when a cube larger than 7x7x7 is being solved
-
-    lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt
-    ====================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 99 entries (0 percent, 14.14x previous step)
-    3 steps has 1,038 entries (0 percent, 10.48x previous step)
-    4 steps has 8,463 entries (2 percent, 8.15x previous step)
-    5 steps has 47,986 entries (13 percent, 5.67x previous step)
-    6 steps has 146,658 entries (42 percent, 3.06x previous step)
-    7 steps has 128,914 entries (37 percent, 0.88x previous step)
-    8 steps has 9,835 entries (2 percent, 0.08x previous step)
-
-    Total: 343,000 entries
-    Average: 6.23 moves
-    """
-
-    t_centers_555 = (
-        8, 12, 14, 18,
-        33, 37, 39, 43,
-        58, 62, 64, 68,
-        83, 87, 89, 93,
-        108, 112, 114, 118,
-        133, 137, 139, 143
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt',
-            'UUUULLLLFFFFRRRRBBBBDDDD',
-            linecount=343000,
-            filesize=19551000,
-        )
-
-    def ida_heuristic(self, ida_threshold):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in self.t_centers_555])
-        return (result, 0)
 
 
 class RubiksCube555(RubiksCube):
@@ -1656,9 +1442,6 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
-        self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
-        self.lt_UD_T_centers_stage_co = LookupTable555UDTCenterStageCostOnly(self)
-        self.lt_UD_X_centers_stage_co = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
 
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
@@ -1668,10 +1451,7 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_X_centers_stage.preload_cache_dict()
         self.lt_LR_centers_stage.preload_cache_string()
 
-        self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
-        self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
-        self.lt_ULFRB_centers_solve.preload_cache_string()
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)

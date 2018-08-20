@@ -1,61 +1,21 @@
 
+time ./ida_search --kociemba .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU. --type 6x6x6-LR-inner-x-centers-oblique-edges-stage --orbit1-need-even-w
+
+takes 2m 34s
+
+
 IDA via C
 =========
 - 444 step10 but it needs to avoid OLL. Would be cool if it searched until
   it found a solution that satisfied phase2.
 
+- clean up the downloading of files for IDAviaC code path
+- rename 555 step 33 to 31 and step34 to 32
+- remove/combine the old step32 file
 - 555 step10 and step30 are slow for this one
     - FLDDRDRFDRBUUURDLRBFBULLLUUFBFUURUULURBDRFBBFULFBLDBBBFLRDFFDLFBUURUUFLDUFRBFRRBUDDLBFBDRUDDFFRDRBRBUBUBRLFFLUDLLDFDBLRBFFLRUDLLURRLRUFRDBFBLBLDLDDRDL
-    - could move step30 to C with the future option of staging a L4E as part of the search
-    - step10 would be faster with a 6-deep table instead of 5-deep table.  We need to be
-      able to load these into a uthash much faster though.
+    - see if we can load the tables faster
 
-5-deep table...ida takes 10s
-----------------------------
-[2018-08-19T14:01:40.859] ida_prune_table_preload lookup-table-5x5x5-step10-UD-centers-stage.txt: start
-[2018-08-19T14:01:41.548] ida_prune_table_preload lookup-table-5x5x5-step10-UD-centers-stage.txt: end
-[2018-08-19T14:01:41.557] ida_cost_only_preload: begin lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, 16711681 entries, ptr 0xa1b9000
-[2018-08-19T14:01:41.560] ida_cost_only_preload: end   lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, ptr 0xa1b9000
-[2018-08-19T14:01:41.570] ida_cost_only_preload: begin lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt, 16711681 entries, ptr 0xb1aa000
-[2018-08-19T14:01:41.573] ida_cost_only_preload: end   lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt, ptr 0xb1aa000
-[2018-08-19T14:01:41.573] min_ida_threshold 7
-[2018-08-19T14:01:41.573] IDA threshold 7, explored 1 branches
-[2018-08-19T14:01:41.573] IDA threshold 8, explored 631 branches
-[2018-08-19T14:01:41.582] IDA threshold 9, explored 15085 branches
-[2018-08-19T14:01:41.762] IDA threshold 10, explored 347758 branches
-[2018-08-19T14:01:45.336] IDA threshold 11, explored 8006695 branches
-[2018-08-19T14:01:51.647] UD_CENTERS_STAGE_555 solved
-[2018-08-19T14:01:51.647] IDA count 13783317, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
-SOLUTION: U2 Uw Rw D Rw Fw Dw' Lw Uw Fw Bw
-[2018-08-19T14:01:51.647] IDA threshold 12, explored 13783317 branches (22153487 total), found solution
-
-
-6-deep table...ida takes 1800ms
--------------------------------
-[2018-08-19T14:05:04.346] ida_prune_table_preload lookup-table-5x5x5-step10-UD-centers-stage.txt: start
-[2018-08-19T14:05:22.037] ida_prune_table_preload lookup-table-5x5x5-step10-UD-centers-stage.txt: end
-[2018-08-19T14:05:22.040] ida_cost_only_preload: begin lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, 16711681 entries, ptr 0xe812000
-[2018-08-19T14:05:22.044] ida_cost_only_preload: end   lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, ptr 0xe812000
-[2018-08-19T14:05:22.054] ida_cost_only_preload: begin lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt, 16711681 entries, ptr 0x15830000
-[2018-08-19T14:05:22.056] ida_cost_only_preload: end   lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt, ptr 0x15830000
-[2018-08-19T14:05:22.056] min_ida_threshold 7
-[2018-08-19T14:05:22.056] IDA threshold 7, explored 1 branches
-[2018-08-19T14:05:22.057] IDA threshold 8, explored 37 branches
-[2018-08-19T14:05:22.058] IDA threshold 9, explored 1225 branches
-[2018-08-19T14:05:22.091] IDA threshold 10, explored 31090 branches
-[2018-08-19T14:05:22.704] IDA threshold 11, explored 738973 branches
-[2018-08-19T14:05:23.841] UD_CENTERS_STAGE_555 solved
-[2018-08-19T14:05:23.841] IDA count 1365780, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
-SOLUTION: U2 Uw Rw D Rw Fw Dw' Lw Uw Fw Bw
-[2018-08-19T14:05:23.841] IDA threshold 12, explored 1365780 branches (2137106 total), found solution
-
-
-
-- 666 step30 needs to use the step31 table to speed things up...I think that table
-  is 165 million entries though so maybe not worth it. The other option here is to
-  load in the 2-deep table.
-
-- 666 step20 and step30 are in C but need to avoid OLL
 - 666 step60? Not sure if this one is ever slow
 
 - 777 redo UD oblique edge pairing in C
@@ -66,6 +26,7 @@ SOLUTION: U2 Uw Rw D Rw Fw Dw' Lw Uw Fw Bw
 - delete all exit_asap code
 - delete all heuristic_stats code
 - delete all collect_stats code
+- delete all next_phase code
 
 
 666 URFLLFFDUDUBBUUUUBDDUDURFUUDUFBBLURLDUDURLLFLRFLFRFLBUULLBRBLFLFLLDBDBDFRLBRFBBBFFRUDBRRFRFRLLRLBBFRRDLBURBRURLUUFDDUDUDRDDDDLRUUDURFDDDDRBRBBBRLDDFRUDRRFBUFBRRBRFLBFLDLLFRLLRUBFFFDFDUUBFLLBFRFBFBBLLFBFLLDBLBRUUDDUUD

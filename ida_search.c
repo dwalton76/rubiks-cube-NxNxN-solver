@@ -29,9 +29,15 @@ unsigned long seek_calls = 0;
 // Supported IDA searches
 typedef enum {
     NONE,
+
+    // 5x5x5
     UD_CENTERS_STAGE_555,
+    CENTERS_SOLVE_555,
+
+    // 6x6x6
     UD_OBLIQUE_EDGES_STAGE_666,
     LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666,
+
 } lookup_table_type;
 
 
@@ -39,6 +45,10 @@ struct key_value_pair *ida_explored = NULL;
 struct key_value_pair *UD_centers_555 = NULL;
 char *pt_t_centers_cost_only = NULL;
 char *pt_x_centers_cost_only = NULL;
+
+struct key_value_pair *ULFRBD_centers_555 = NULL;
+char *ULFRBD_t_centers_cost_only = NULL;
+char *ULFRBD_x_centers_cost_only = NULL;
 
 struct key_value_pair *LR_inner_x_centers_and_oblique_edges_666 = NULL;
 char *LR_inner_x_centers_666 = NULL;
@@ -242,7 +252,7 @@ str_replace_for_binary(char *str, char *ones)
             j = 0;
             is_a_one = 0;
 
-            while (ones[j] != '\0') {
+            while (ones[j] != 0) {
 
                 /* If occurrence of character is found */
                 if (str[i] == ones[j]) {
@@ -292,7 +302,6 @@ str_replace_list_of_chars (char *str, char *old, char new)
 void
 init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
 {
-    char ones_UD[2] = {'U', 'D'};
     int squares_per_side = size * size;
     int square_count = squares_per_side * 6;
     int U_start = 1;
@@ -310,7 +319,9 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     int L_start_kociemba = D_start_kociemba + squares_per_side;
     int B_start_kociemba = L_start_kociemba + squares_per_side;
 
-    char ones_LR[2] = {'L', 'R'};
+    char ones_UD[3] = {'U', 'D', 0};
+    char ones_LR[3] = {'L', 'R', 0};
+    char ones_ULF[4] = {'U', 'L', 'F', 0};
 
     memset(cube, 0, sizeof(char) * (square_count + 2));
     cube[0] = 'x'; // placeholder
@@ -336,6 +347,11 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         print_cube(cube, size);
         break;
 
+    case CENTERS_SOLVE_555:
+        // Convert to 1s and 0s
+        str_replace_for_binary(cube, ones_ULF);
+        print_cube(cube, size);
+        break;
     default:
         printf("ERROR: init_cube() does not yet support this --type\n");
         exit(1);
@@ -451,22 +467,35 @@ ida_prune_table_cost (struct key_value_pair *hashtable, char *state_to_find)
 
 
 struct ida_heuristic_result
-ida_heuristic (char *cube, lookup_table_type type)
+ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal)
 {
     switch (type)  {
     case UD_CENTERS_STAGE_555:
         return ida_heuristic_UD_centers_555(
             cube,
+            max_cost_to_goal,
             &UD_centers_555,
             pt_t_centers_cost_only,
             pt_x_centers_cost_only);
 
+    case CENTERS_SOLVE_555:
+        return ida_heuristic_ULFRBD_centers_555(
+            cube,
+            max_cost_to_goal,
+            &ULFRBD_centers_555,
+            ULFRBD_t_centers_cost_only,
+            ULFRBD_x_centers_cost_only);
+
     case UD_OBLIQUE_EDGES_STAGE_666:
-        return ida_heuristic_UD_oblique_edges_stage_666(cube);
+        return ida_heuristic_UD_oblique_edges_stage_666(
+            cube,
+            max_cost_to_goal
+        );
 
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
         return ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666(
             cube,
+            max_cost_to_goal,
             &LR_inner_x_centers_and_oblique_edges_666,
             LR_inner_x_centers_666);
 
@@ -599,6 +628,9 @@ ida_search_complete (
     case UD_CENTERS_STAGE_555:
         return ida_search_complete_UD_centers_555(cube);
 
+    case CENTERS_SOLVE_555:
+        return ida_search_complete_ULFRBD_centers_555(cube);
+
     case UD_OBLIQUE_EDGES_STAGE_666:
         return ida_search_complete_UD_oblique_edges_stage_666(cube);
 
@@ -686,6 +718,25 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
     switch (type)  {
     case UD_CENTERS_STAGE_555:
         return 1;
+
+    case CENTERS_SOLVE_555:
+        switch (move) {
+        case Uw:
+        case Uw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+            return 0;
+        default:
+            return 1;
+        }
 
     case UD_OBLIQUE_EDGES_STAGE_666:
         switch (move) {
@@ -998,7 +1049,8 @@ ida_search (unsigned int cost_to_here,
     char cost_to_here_str[3];
 
     ida_count++;
-    result = ida_heuristic(cube, type);
+    unsigned int max_cost_to_goal = threshold - cost_to_here;
+    result = ida_heuristic(cube, type, max_cost_to_goal);
     cost_to_goal = result.cost_to_goal;
     f_cost = cost_to_here + cost_to_goal;
 
@@ -1106,6 +1158,12 @@ ida_solve (
         pt_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt", 16711681);
         break;
 
+    case CENTERS_SOLVE_555:
+        ida_prune_table_preload(&ULFRBD_centers_555, "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt");
+        ULFRBD_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step31-ULFRBD-x-centers-solve.cost-only.txt", 16773121);
+        ULFRBD_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.cost-only.txt", 16773121);
+        break;
+
     case UD_OBLIQUE_EDGES_STAGE_666:
         break;
 
@@ -1119,7 +1177,7 @@ ida_solve (
         exit(1);
     }
 
-    result = ida_heuristic(cube, type);
+    result = ida_heuristic(cube, type, 99);
     min_ida_threshold = result.cost_to_goal;
     LOG("min_ida_threshold %d\n", min_ida_threshold);
 
@@ -1132,46 +1190,11 @@ ida_solve (
                        type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
             ida_count_total += ida_count;
             LOG("IDA threshold %d, explored %d branches (%d total), found solution\n", threshold, ida_count, ida_count_total);
-
-            switch (type)  {
-            case UD_CENTERS_STAGE_555:
-                free(pt_t_centers_cost_only);
-                pt_t_centers_cost_only = NULL;
-                free(pt_x_centers_cost_only);
-                pt_x_centers_cost_only = NULL;
-                break;
-
-            case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
-                free(LR_inner_x_centers_666);
-                LR_inner_x_centers_666 = NULL;
-                break;
-
-            default:
-                break;
-            }
-
             return 1;
         } else {
             ida_count_total += ida_count;
             LOG("IDA threshold %d, explored %d branches\n", threshold, ida_count);
         }
-    }
-
-    switch (type)  {
-    case UD_CENTERS_STAGE_555:
-        free(pt_t_centers_cost_only);
-        pt_t_centers_cost_only = NULL;
-        free(pt_x_centers_cost_only);
-        pt_x_centers_cost_only = NULL;
-        break;
-
-    case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
-        free(LR_inner_x_centers_666);
-        LR_inner_x_centers_666 = NULL;
-        break;
-
-    default:
-        break;
     }
 
     LOG("IDA failed with range %d->%d\n", min_ida_threshold, MAX_SEARCH_DEPTH);
@@ -1201,6 +1224,10 @@ main (int argc, char *argv[])
 
             if (strmatch(argv[i], "5x5x5-UD-centers-stage")) {
                 type = UD_CENTERS_STAGE_555;
+                cube_size_type = 5;
+
+            } else if (strmatch(argv[i], "5x5x5-centers-solve")) {
+                type = CENTERS_SOLVE_555;
                 cube_size_type = 5;
 
             } else if (strmatch(argv[i], "6x6x6-UD-oblique-edges-stage")) {

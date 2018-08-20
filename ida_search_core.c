@@ -60,7 +60,7 @@ hex_to_int(char value)
     case 'f':
         return 15;
     default:
-        printf("ERROR: hex_to_int does not support %c", value);
+        printf("ERROR: hex_to_int does not support '%c'\n", value);
         exit(1);
     };
 }

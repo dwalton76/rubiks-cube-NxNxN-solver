@@ -90,7 +90,9 @@ get_unpaired_obliques_count_666 (char *cube)
 // step20
 // ============================================================================
 struct ida_heuristic_result
-ida_heuristic_UD_oblique_edges_stage_666 (char *cube)
+ida_heuristic_UD_oblique_edges_stage_666 (
+    char *cube,
+    unsigned int max_cost_to_goal)
 {
     int unpaired_count = get_unpaired_obliques_count_666(cube);
     struct ida_heuristic_result result;
@@ -146,6 +148,7 @@ ida_search_complete_UD_oblique_edges_stage_666 (char *cube)
 struct ida_heuristic_result
 ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     char *cube,
+    unsigned int max_cost_to_goal,
     struct key_value_pair **LR_inner_x_centers_and_oblique_edges_666,
     char *LR_inner_x_centers_cost_666)
 {
@@ -158,20 +161,7 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     struct ida_heuristic_result result;
     unsigned long state = 0;
 
-    // get state of LFRB inner x-centers and oblique edges
-    for (int i = 0; i < NUM_LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_666; i++) {
-        if (cube[LFRB_inner_x_centers_and_oblique_edges_666[i]] == '1') {
-            state |= 0x1;
-        }
-        state <<= 1;
-    }
-
-    // 00019b267fff is 12 chars
-    state >>= 1;
-    sprintf(result.lt_state, "%012lx", state);
-
     unpaired_count = get_unpaired_obliques_count_666(cube);
-
     // The most oblique edges we can pair in single move is 4 so take
     // the number that are unpaired and divide by 4.
     //
@@ -180,6 +170,12 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
 
     // inadmissable but faster
     oblique_edges_cost = (int) ceil(unpaired_count / 3);
+
+    if (oblique_edges_cost >= max_cost_to_goal) {
+        result.cost_to_goal = oblique_edges_cost;
+        return result;
+    }
+
 
     // Test cube:
     // .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU.
@@ -198,6 +194,27 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     }
     inner_x_centers_state >>= 1;
     inner_x_centers_cost = hex_to_int(LR_inner_x_centers_cost_666[inner_x_centers_state]);
+
+    if (inner_x_centers_cost >= max_cost_to_goal) {
+        result.cost_to_goal = inner_x_centers_cost;
+        return result;
+    }
+
+
+
+    // get state of LFRB inner x-centers and oblique edges
+    for (int i = 0; i < NUM_LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_666; i++) {
+        if (cube[LFRB_inner_x_centers_and_oblique_edges_666[i]] == '1') {
+            state |= 0x1;
+        }
+        state <<= 1;
+    }
+
+    // 00019b267fff is 12 chars
+    state >>= 1;
+    sprintf(result.lt_state, "%012lx", state);
+
+
     cost_to_goal = max(oblique_edges_cost, inner_x_centers_cost);
 
     // The step30 table we loaded is 2-deep so if a state is not in that

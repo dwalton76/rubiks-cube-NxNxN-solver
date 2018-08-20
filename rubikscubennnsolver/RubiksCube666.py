@@ -707,9 +707,6 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             exit_asap=exit_asap,
         )
 
-        #self.exit_asap = 99
-        #self.collect_stats = True
-
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
         #self.parent.print_cube()

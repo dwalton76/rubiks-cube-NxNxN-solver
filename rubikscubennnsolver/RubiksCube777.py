@@ -221,9 +221,6 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
             exit_asap=1,
         )
 
-        #self.exit_asap = 99
-        #self.collect_stats = True
-
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
         #self.parent.print_cube()
@@ -785,9 +782,6 @@ class LookupTableIDA777Step40(LookupTableIDA):
             exit_asap=99,
         )
 
-        #self.exit_asap = 99
-        #self.collect_stats = True
-
     def ida_heuristic_tuple(self):
         parent = self.parent
 
@@ -1062,9 +1056,6 @@ class LookupTableIDA777Step50(LookupTableIDA):
             exit_asap=99,
         )
 
-        #self.exit_asap = 99
-        #self.collect_stats = True
-
     def ida_heuristic_tuple(self):
         parent = self.parent
 
@@ -1262,9 +1253,6 @@ class LookupTableIDA777Step60(LookupTableIDA):
             filesize=1124751515,
             exit_asap=99,
         )
-
-        #self.exit_asap = 99
-        #self.collect_stats = True
 
     def ida_heuristic_tuple(self):
         parent = self.parent

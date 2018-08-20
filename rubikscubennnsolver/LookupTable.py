@@ -289,7 +289,6 @@ class LookupTable(object):
         self.cache_list = []
         self.filesize = filesize
         self.md5 = md5
-        self.collect_stats = False
         self.use_isdigit = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
@@ -846,9 +845,7 @@ class LookupTableIDA(LookupTable):
     def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None, exit_asap=99):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.prune_tables = prune_tables
-        self.ida_solutions = []
         self.ida_nodes = {}
-        self.next_phase = None
         self.recolor_positions = []
         self.recolor_map = {}
         self.nuke_corners = False
@@ -1066,15 +1063,6 @@ class LookupTableIDA(LookupTable):
         else:
             return None
 
-        if self.ida_solutions:
-            self.ida_solutions.sort()
-            log.info("%s: top ida_solutions\n\n"
-                "(this_solution_len, this_solution_len + next_phase_ida_heuristic, solution)\n\n"
-                "%s\n" % (self, pformat(self.ida_solutions[0:5], width=256)))
-            return self.ida_solutions[0][-1]
-        else:
-            return None
-
     # uncomment to cProfile solve()
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
         '''
@@ -1168,7 +1156,6 @@ class LookupTableIDA(LookupTable):
             start_time1 = dt.datetime.now()
             self.ida_count = 0
             self.explored = {}
-            self.ida_solutions = []
             self.ida_nodes = {}
 
             self.ida_search(steps_to_here, threshold, None, self.original_state[:])
@@ -1176,72 +1163,6 @@ class LookupTableIDA(LookupTable):
             best_solution = self.get_best_ida_solution()
 
             if best_solution:
-
-                if self.collect_stats:
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-                    steps_to_go = len(best_solution)
-
-                    heuristic_tuple = self.ida_heuristic_tuple()
-
-                    if heuristic_tuple not in self.parent.heuristic_stats:
-                        self.parent.heuristic_stats[heuristic_tuple] = []
-                    self.parent.heuristic_stats[heuristic_tuple].append(steps_to_go)
-                    hit_wtf = False
-                    prev_step = None
-                    max_index = len(best_solution) - 1
-
-                    for (index, step) in enumerate(best_solution):
-                        self.parent.rotate(step)
-                        steps_to_go -= 1
-
-                        if self.filename == "lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt":
-                            if index < max_index:
-                                next_step = best_solution[index+1]
-
-                                if step == "3Rw2" and next_step == "3Lw2":
-                                    continue
-                                elif step == "3Lw2" and next_step == "3Rw2":
-                                    continue
-
-                                elif step == "3Fw2" and next_step == "3Bw2":
-                                    continue
-                                elif step == "3Bw2" and next_step == "3Fw2":
-                                    continue
-
-                                elif step == "3Uw2" and next_step == "3Dw2":
-                                    continue
-                                elif step == "3Dw2" and next_step == "3Uw2":
-                                    continue
-
-                                elif step == "3Uw" and next_step == "3Dw'":
-                                    continue
-                                elif step == "3Dw'" and next_step == "3Uw":
-                                    continue
-
-                                elif step == "3Uw'" and next_step == "3Dw":
-                                    continue
-                                elif step == "3Dw" and next_step == "3Uw'":
-                                    continue
-
-                        heuristic_tuple = self.ida_heuristic_tuple()
-
-                        if heuristic_tuple not in self.parent.heuristic_stats:
-                            self.parent.heuristic_stats[heuristic_tuple] = []
-
-                        #if steps_to_go < max(heuristic_tuple):
-                        #    log.info("%s: index %d, steps_to_go %d, step %s, heuristic_tuple %s, best_solution %s, WTF??" %\
-                        #        (self, index, steps_to_go, step, pformat(heuristic_tuple), pformat(best_solution)))
-                        #    hit_wtf = True
-                        #else:
-                        #    log.info("%s: index %d, steps_to_go %d, step %s, heuristic_tuple %s, best_solution %s" % (self, index, steps_to_go, step, pformat(heuristic_tuple), pformat(best_solution)))
-
-                        #self.parent.print_cube()
-                        self.parent.heuristic_stats[heuristic_tuple].append(steps_to_go)
-
-                    if hit_wtf:
-                        sys.exit(0)
-
                 self.parent.state = self.pre_recolor_state[:]
                 self.parent.solution = self.pre_recolor_solution[:]
 
@@ -1249,11 +1170,10 @@ class LookupTableIDA(LookupTable):
                     self.parent.rotate(step)
 
                 end_time1 = dt.datetime.now()
-                log.info("%s: IDA threshold %d, explored %d nodes in %s (%s total), found %d solutions" %
+                log.info("%s: IDA threshold %d, explored %d nodes in %s (%s total)" %
                     (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
-                     pretty_time(end_time1 - start_time0),
-                     len(self.ida_solutions)))
+                     pretty_time(end_time1 - start_time0)))
                 delta = end_time1 - start_time0
                 nodes_per_sec = int(total_ida_count / delta.total_seconds())
                 log.info("%s: IDA explored %d nodes in %s, %d nodes-per-sec" % (self, total_ida_count, delta, nodes_per_sec))

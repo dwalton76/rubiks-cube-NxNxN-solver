@@ -1526,7 +1526,6 @@ class RubiksCube444(RubiksCube):
         #sys.exit(0)
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_highlow_edges.next_phase = self.lt_reduce333
         self.lt_highlow_edges.solve()
         self.print_cube()
         self.highlow_edges_print()

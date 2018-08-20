@@ -955,7 +955,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt', '28150f2f5138073413098b4b67a4dd3d'),
+            (('lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt', '5a0bad50c3e650dbd2677e29aba17eca'),
              ('lookup-table-5x5x5-step31-ULFRBD-x-centers-solve.cost-only.txt', '8509730bc801fa6fecfc8959086ec34a'),
              ('lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.cost-only.txt', 'd08b44f5a60f2a585afcde6a9732da56')),
             '5x5x5-centers-solve' # C_ida_type
@@ -1464,9 +1464,6 @@ class RubiksCube555(RubiksCube):
             self.lt_edges_pair_last_four.preload_cache_dict()
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
-
-        #self.lt_UD_centers_stage.next_phase = self.lt_LR_centers_stage
-        #self.lt_LR_centers_stage.next_phase = self.lt_ULFRB_centers_solve
 
     def high_low_state(self, x, y, state_x, state_y, wing_str):
         """

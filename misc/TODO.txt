@@ -1,20 +1,18 @@
 
-time ./ida_search --kociemba .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU. --type 6x6x6-LR-inner-x-centers-oblique-edges-stage --orbit1-need-even-w
-
-takes 2m 34s
-
 
 IDA via C
 =========
 - 444 step10 but it needs to avoid OLL. Would be cool if it searched until
   it found a solution that satisfied phase2.
 
-- clean up the downloading of files for IDAviaC code path
-- rename 555 step 33 to 31 and step34 to 32
-- remove/combine the old step32 file
 - 555 step10 and step30 are slow for this one
     - FLDDRDRFDRBUUURDLRBFBULLLUUFBFUURUULURBDRFBBFULFBLDBBBFLRDFFDLFBUURUUFLDUFRBFRRBUDDLBFBDRUDDFFRDRBRBUBUBRLFFLUDLLDFDBLRBFFLRUDLLURRLRUFRDBFBLBLDLDDRDL
-    - see if we can load the tables faster
+    - "slow" is ~5s so nothing bad. This would be a good test cube for bitfield cube state work
+
+- 666 step30 this is slooooow
+
+./ida_search --kociemba .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU. --type 6x6x6-LR-inner-x-centers-oblique-edges-stage --orbit1-need-even-w
+
 
 - 666 step60? Not sure if this one is ever slow
 

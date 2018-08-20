@@ -1894,6 +1894,7 @@ class RubiksCube555(RubiksCube):
         # Remember what things looked like
         original_state = self.state[:]
         original_solution = self.solution[:]
+        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
 
         wing_strs_for_second_four = []
 
@@ -1904,6 +1905,7 @@ class RubiksCube555(RubiksCube):
         min_solution_len = None
         min_solution_steps = None
 
+        '''
         for wing_strs in itertools.combinations(wing_strs_for_second_four, 4):
             state = self.lt_edges_stage_second_four.state(wing_strs)
             steps = self.lt_edges_stage_second_four.steps(state)
@@ -1928,6 +1930,63 @@ class RubiksCube555(RubiksCube):
         self.state = original_state[:]
         self.solution = original_solution[:]
 
+        # dwalton
+        if min_solution_len is None:
+            raise SolveError("Could not find 4-edges to stage")
+        else:
+            for step in min_solution_steps:
+                self.rotate(step)
+        '''
+
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        for pre_steps in pre_steps_to_try:
+
+            # do those steps
+            #for wing_strs in stage_first_four_edges_wing_str_combos:
+            for wing_strs in itertools.combinations(wing_strs_for_second_four, 4):
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in pre_steps:
+                    self.rotate(step)
+
+                state = self.lt_edges_stage_second_four.state(wing_strs)
+                steps = self.lt_edges_stage_second_four.steps(state)
+
+                if steps:
+
+                    for step in steps:
+                        self.rotate(step)
+
+                    self.solve_staged_edges_555(False)
+                    solution_len = self.get_solution_len_minus_rotates(self.solution)
+                    log.info("%s: second four %s can be staged in %d steps (edges pair in %d steps)" % (self, wing_strs, len(steps), solution_len))
+
+                    if min_solution_len is None or solution_len < min_solution_len:
+                        min_solution_len = solution_len
+                        min_solution_steps = self.solution[len(original_solution):]
+                        log.info("NEW MIN: %s steps" % solution_len)
+
+                    self.state = original_state[:]
+                    self.solution = original_solution[:]
+
+            if min_solution_len is not None:
+                if pre_steps:
+                    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
+
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in min_solution_steps:
+                    self.rotate(step)
+
+                break
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
 
         if min_solution_len is None:
             raise SolveError("Could not find 4-edges to stage")

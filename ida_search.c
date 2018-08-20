@@ -155,6 +155,7 @@ print_cube (char *cube, int size)
     int squares_per_side = size * size;
     int square_count = squares_per_side * 6;
     int rows = size * 3;
+    printf("\n");
 
     for (int row=1; row <= rows; row++) {
 
@@ -162,17 +163,34 @@ print_cube (char *cube, int size)
         if (row <= size) {
             int i = ((row-1) * size) + 1;
             int i_end = i + size - 1;
-            printf("\t");
+
+            for (int z = 0; z < size; z++) {
+                printf("  ");
+            }
+
             for ( ; i <= i_end; i++) {
                 printf("%c ", cube[i]);
             }
+
             printf("\n");
+
+            if (row == size) {
+                printf("\n");
+            }
 
         // D
         } else if (row > (size * 2)) {
             int i = (squares_per_side * 5) + 1 + ((row - (size*2) - 1) * size);
             int i_end = i + size - 1;
-            printf("\t");
+
+            if (row == ((size * 2) + 1)) {
+                printf("\n");
+            }
+
+            for (int z = 0; z < size; z++) {
+                printf("  ");
+            }
+
             for (; i <= i_end; i++) {
                 printf("%c ", cube[i]);
             }

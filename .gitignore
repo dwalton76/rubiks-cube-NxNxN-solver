@@ -100,3 +100,4 @@ perf.data
 *~
 *.bak
 tmp
+ida_search.dSYM

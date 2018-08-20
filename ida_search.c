@@ -12,6 +12,7 @@
 #include "ida_search_core.h"
 #include "ida_search_555.h"
 #include "ida_search_666.h"
+#include "ida_search_777.h"
 
 
 // To compile:
@@ -37,6 +38,9 @@ typedef enum {
     // 6x6x6
     UD_OBLIQUE_EDGES_STAGE_666,
     LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666,
+
+    // 7x7x7
+    UD_OBLIQUE_EDGES_STAGE_777,
 
 } lookup_table_type;
 
@@ -146,92 +150,6 @@ file_binary_search (char *filename, char *state_to_find, int statewidth, unsigne
 
     fclose(fh_read);
     return 0;
-}
-
-
-void
-print_cube (char *cube, int size)
-{
-    int squares_per_side = size * size;
-    int square_count = squares_per_side * 6;
-    int rows = size * 3;
-    printf("\n");
-
-    for (int row=1; row <= rows; row++) {
-
-        // U
-        if (row <= size) {
-            int i = ((row-1) * size) + 1;
-            int i_end = i + size - 1;
-
-            for (int z = 0; z < size; z++) {
-                printf("  ");
-            }
-
-            for ( ; i <= i_end; i++) {
-                printf("%c ", cube[i]);
-            }
-
-            printf("\n");
-
-            if (row == size) {
-                printf("\n");
-            }
-
-        // D
-        } else if (row > (size * 2)) {
-            int i = (squares_per_side * 5) + 1 + ((row - (size*2) - 1) * size);
-            int i_end = i + size - 1;
-
-            if (row == ((size * 2) + 1)) {
-                printf("\n");
-            }
-
-            for (int z = 0; z < size; z++) {
-                printf("  ");
-            }
-
-            for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
-            }
-            printf("\n");
-
-        // L, F, R, B
-        } else {
-
-            // L
-            int i_start = squares_per_side + 1 + ((row - 1 -size) * size);
-            int i_end = i_start + size - 1;
-            int i = i_start;
-            for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
-            }
-
-            // F
-            i = i_start + squares_per_side;
-            i_end = i + size - 1;
-            for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
-            }
-
-            // R
-            i = i_start + (squares_per_side * 2);
-            i_end = i + size - 1;
-            for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
-            }
-
-            // B
-            i = i_start + (squares_per_side * 3);
-            i_end = i + size - 1;
-            for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
-            }
-
-            printf("\n");
-        }
-    }
-    printf("\n");
 }
 
 
@@ -354,6 +272,7 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     switch (type)  {
     case UD_CENTERS_STAGE_555:
     case UD_OBLIQUE_EDGES_STAGE_666:
+    case UD_OBLIQUE_EDGES_STAGE_777:
         // Convert to 1s and 0s
         str_replace_for_binary(cube, ones_UD);
         print_cube(cube, size);
@@ -500,6 +419,8 @@ struct ida_heuristic_result
 ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal)
 {
     switch (type)  {
+
+    // 5x5x5
     case UD_CENTERS_STAGE_555:
         return ida_heuristic_UD_centers_555(
             cube,
@@ -516,6 +437,7 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             ULFRBD_t_centers_cost_only,
             ULFRBD_x_centers_cost_only);
 
+    // 6x6x6
     case UD_OBLIQUE_EDGES_STAGE_666:
         return ida_heuristic_UD_oblique_edges_stage_666(
             cube,
@@ -528,6 +450,13 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             max_cost_to_goal,
             &LR_inner_x_centers_and_oblique_edges_666,
             LR_inner_x_centers_666);
+
+    // 7x7x7
+    case UD_OBLIQUE_EDGES_STAGE_777:
+        return ida_heuristic_UD_oblique_edges_stage_777(
+            cube,
+            max_cost_to_goal
+        );
 
     default:
         printf("ERROR: ida_heuristic() does not yet support this --type\n");
@@ -655,17 +584,23 @@ ida_search_complete (
     }
 
     switch (type)  {
+    // 5x5x5
     case UD_CENTERS_STAGE_555:
         return ida_search_complete_UD_centers_555(cube);
 
     case CENTERS_SOLVE_555:
         return ida_search_complete_ULFRBD_centers_555(cube);
 
+    // 6x6x6
     case UD_OBLIQUE_EDGES_STAGE_666:
         return ida_search_complete_UD_oblique_edges_stage_666(cube);
 
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
         return ida_search_complete_LR_inner_x_centers_and_oblique_edges_stage(cube);
+
+    // 7x7x7
+    case UD_OBLIQUE_EDGES_STAGE_777:
+        return ida_search_complete_UD_oblique_edges_stage_777(cube);
 
     default:
         printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
@@ -746,6 +681,8 @@ int
 step_allowed_by_ida_search (lookup_table_type type, move_type move)
 {
     switch (type)  {
+
+    // 5x5x5
     case UD_CENTERS_STAGE_555:
         return 1;
 
@@ -768,6 +705,7 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
             return 1;
         }
 
+    // 6x6x6
     case UD_OBLIQUE_EDGES_STAGE_666:
         switch (move) {
         case threeFw:
@@ -801,6 +739,22 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         case Lw_PRIME:
         case Rw:
         case Rw_PRIME:
+            return 0;
+        default:
+            return 1;
+        }
+
+    // 7x7x7
+    case UD_OBLIQUE_EDGES_STAGE_777:
+        switch (move) {
+        case threeFw:
+        case threeFw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
             return 0;
         default:
             return 1;
@@ -1159,6 +1113,30 @@ ida_search (unsigned int cost_to_here,
             }
         }
 
+    } else if (cube_size == 7) {
+
+        for (int i = 0; i < MOVE_COUNT_777; i++) {
+            move = moves_777[i];
+
+            if (steps_on_same_face_and_layer(move, prev_move)) {
+                continue;
+            }
+
+            if (!step_allowed_by_ida_search(type, move)) {
+                continue;
+            }
+
+            char cube_copy[array_size];
+            memcpy(cube_copy, cube, sizeof(char) * array_size);
+            rotate_777(cube_copy, cube_tmp, array_size, move);
+            moves_to_here[cost_to_here] = move;
+
+            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
+                return 1;
+            }
+        }
+
     } else {
         printf("ERROR: ida_search() does not have rotate_xxx() for this cube size\n");
         exit(1);
@@ -1182,6 +1160,8 @@ ida_solve (
     struct ida_heuristic_result result;
 
     switch (type)  {
+
+    // 5x5x5
     case UD_CENTERS_STAGE_555:
         ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt");
         pt_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt", 16711681);
@@ -1194,12 +1174,17 @@ ida_solve (
         ULFRBD_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.cost-only.txt", 16773121);
         break;
 
+    // 6x6x6
     case UD_OBLIQUE_EDGES_STAGE_666:
         break;
 
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
         ida_prune_table_preload(&LR_inner_x_centers_and_oblique_edges_666, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt");
         LR_inner_x_centers_666 = ida_cost_only_preload("lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt", 65281);
+        break;
+
+    // 7x7x7
+    case UD_OBLIQUE_EDGES_STAGE_777:
         break;
 
     default:
@@ -1252,6 +1237,7 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
             i++;
 
+            // 5x5x5
             if (strmatch(argv[i], "5x5x5-UD-centers-stage")) {
                 type = UD_CENTERS_STAGE_555;
                 cube_size_type = 5;
@@ -1260,6 +1246,7 @@ main (int argc, char *argv[])
                 type = CENTERS_SOLVE_555;
                 cube_size_type = 5;
 
+            // 6x6x6
             } else if (strmatch(argv[i], "6x6x6-UD-oblique-edges-stage")) {
                 type = UD_OBLIQUE_EDGES_STAGE_666;
                 cube_size_type = 6;
@@ -1267,6 +1254,11 @@ main (int argc, char *argv[])
             } else if (strmatch(argv[i], "6x6x6-LR-inner-x-centers-oblique-edges-stage")) {
                 type = LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666,
                 cube_size_type = 6;
+
+            // 7x7x7
+            } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-stage")) {
+                type = UD_OBLIQUE_EDGES_STAGE_777;
+                cube_size_type = 7;
 
             } else {
                 printf("ERROR: %s is an invalid --type\n", argv[i]);

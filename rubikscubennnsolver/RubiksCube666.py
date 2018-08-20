@@ -932,7 +932,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_UD_inner_x_centers_stage_pt = LookupTable666UDInnerXCentersStage(self)
         self.lt_UD_inner_x_centers_stage = LookupTableIDA666UDInnerXCentersStage(self)
-        self.lt_UD_inner_x_centers_stage.avoid_oll = 1
         self.lt_UD_inner_x_centers_stage_pt.preload_cache_string()
         self.lt_UD_inner_x_centers_stage.preload_cache_string()
 
@@ -941,11 +940,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # This is the case if a 777 is using 666 to pair its UD oblique edges
         if UD_oblique_edge_only:
             return
-        self.lt_UD_oblique_edge_stage.avoid_oll = 1
 
         self.lt_LR_inner_x_centers_and_oblique_edges_stage = LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(self)
-        self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
-
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
 
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
@@ -1016,15 +1012,31 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
+
+        if oblique_edges_only:
+            self.lt_UD_inner_x_centers_stage.avoid_oll = None
+            self.lt_UD_oblique_edge_stage.avoid_oll = None
+            self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = None
+        else:
+            self.lt_UD_inner_x_centers_stage.avoid_oll = 1
+            self.lt_UD_oblique_edge_stage.avoid_oll = 1
+            self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
+
         self.lt_UD_inner_x_centers_stage.solve()
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
-        log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
+
+        if not oblique_edges_only:
+            log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
         log.info("%s: UD inner-x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
 
         self.lt_UD_oblique_edge_stage.solve()
         self.print_cube()
-        log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
+
+        if not oblique_edges_only:
+            log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
+
         log.info("%s: UD oblique edges paired (not staged), %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         #self.print_cube()
@@ -1047,7 +1059,9 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
-        log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
+
+        if not oblique_edges_only:
+            log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Test the prune tables
@@ -1059,8 +1073,11 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LR_inner_x_centers_and_oblique_edges_stage.solve()
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
-        log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
+
+        if not oblique_edges_only:
+            log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
+
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: LR oblique edges and inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Stage LR centers via 555

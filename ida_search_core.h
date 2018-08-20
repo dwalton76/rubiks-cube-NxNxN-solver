@@ -30,5 +30,6 @@ void hash_delete (struct key_value_pair **hashtable, struct key_value_pair *s);
 void hash_delete_all(struct key_value_pair **hashtable);
 unsigned long hash_count (struct key_value_pair **hashtable);
 void hash_print_all (struct key_value_pair **hashtable);
+void print_cube (char *cube, int size);
 
 #endif /* _IDA_SEARCH_CORE_H */

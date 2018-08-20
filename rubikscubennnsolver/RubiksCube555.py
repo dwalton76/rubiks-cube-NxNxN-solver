@@ -683,6 +683,48 @@ class NoEdgeSolution(Exception):
     pass
 
 
+class LookupTable555UDTCenterStage(LookupTable):
+    """
+    lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
+    ============================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 66 entries (0 percent, 13.20x previous step)
+    3 steps has 900 entries (0 percent, 13.64x previous step)
+    4 steps has 9,626 entries (1 percent, 10.70x previous step)
+    5 steps has 80,202 entries (10 percent, 8.33x previous step)
+    6 steps has 329,202 entries (44 percent, 4.10x previous step)
+    7 steps has 302,146 entries (41 percent, 0.92x previous step)
+    8 steps has 13,324 entries (1 percent, 0.04x previous step)
+
+    Total: 735,471 entries
+    Average: 6.31 moves
+    """
+
+    t_centers_555 = (
+        8, 12, 14, 18,
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118,
+        133, 137, 139, 143
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
+            'f0000f',
+            linecount=735471,
+            max_depth=8,
+            filesize=27947898)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.t_centers_555])
+        return (self.hex_format % int(result, 2), 0)
+
+
 class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
     """
     lookup-table-5x5x5-step10-UD-centers-stage.txt
@@ -1442,6 +1484,7 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
+        self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
 
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)

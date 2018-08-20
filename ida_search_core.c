@@ -137,4 +137,87 @@ hash_print_all (struct key_value_pair **hashtable)
     }
 }
 
+void
+print_cube (char *cube, int size)
+{
+    int squares_per_side = size * size;
+    int square_count = squares_per_side * 6;
+    int rows = size * 3;
+    printf("\n");
 
+    for (int row=1; row <= rows; row++) {
+
+        // U
+        if (row <= size) {
+            int i = ((row-1) * size) + 1;
+            int i_end = i + size - 1;
+
+            for (int z = 0; z < size; z++) {
+                printf("  ");
+            }
+
+            for ( ; i <= i_end; i++) {
+                printf("%c ", cube[i]);
+            }
+
+            printf("\n");
+
+            if (row == size) {
+                printf("\n");
+            }
+
+        // D
+        } else if (row > (size * 2)) {
+            int i = (squares_per_side * 5) + 1 + ((row - (size*2) - 1) * size);
+            int i_end = i + size - 1;
+
+            if (row == ((size * 2) + 1)) {
+                printf("\n");
+            }
+
+            for (int z = 0; z < size; z++) {
+                printf("  ");
+            }
+
+            for (; i <= i_end; i++) {
+                printf("%c ", cube[i]);
+            }
+            printf("\n");
+
+        // L, F, R, B
+        } else {
+
+            // L
+            int i_start = squares_per_side + 1 + ((row - 1 -size) * size);
+            int i_end = i_start + size - 1;
+            int i = i_start;
+            for (; i <= i_end; i++) {
+                printf("%c ", cube[i]);
+            }
+
+            // F
+            i = i_start + squares_per_side;
+            i_end = i + size - 1;
+            for (; i <= i_end; i++) {
+                printf("%c ", cube[i]);
+            }
+
+            // R
+            i = i_start + (squares_per_side * 2);
+            i_end = i + size - 1;
+            for (; i <= i_end; i++) {
+                printf("%c ", cube[i]);
+            }
+
+            // B
+            i = i_start + (squares_per_side * 3);
+            i_end = i + size - 1;
+            for (; i <= i_end; i++) {
+                printf("%c ", cube[i]);
+            }
+
+            printf("\n");
+        }
+    }
+    printf("\n");
+}

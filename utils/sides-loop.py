@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-foo = sorted([59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89])
+foo = [10, 30, 20, 40]
 offset = 0
 side_name = {
     0 : "Upper",
@@ -11,6 +11,6 @@ side_name = {
     5 : "Down",
 }
 
-for side_index in range(1,5):
+for side_index in range(6):
     print("        %s, # %s" % (', '.join([str(x + offset) for x in foo]), side_name[side_index]))
     offset += 49

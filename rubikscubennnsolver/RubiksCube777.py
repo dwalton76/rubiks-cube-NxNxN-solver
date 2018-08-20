@@ -13,7 +13,12 @@ from rubikscubennnsolver.cLibrary import (
     ida_heuristic_states_step50_777,
     ida_heuristic_states_step60_777,
 )
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, LookupTableHashCostOnly
+from rubikscubennnsolver.LookupTable import (
+    LookupTable,
+    LookupTableIDA,
+    LookupTableIDAViaC,
+    LookupTableHashCostOnly,
+)
 import logging
 import math
 import sys
@@ -33,125 +38,8 @@ centers_777 = (
 )
 
 
-class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
-    """
-    24!/(8!*16!) is 735,471
 
-    lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt
-    =================================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
-    3 steps has 850 entries (0 percent, 12.88x previous step)
-    4 steps has 8,753 entries (1 percent, 10.30x previous step)
-    5 steps has 67,758 entries (9 percent, 7.74x previous step)
-    6 steps has 243,959 entries (33 percent, 3.60x previous step)
-    7 steps has 257,410 entries (34 percent, 1.06x previous step)
-    8 steps has 135,684 entries (18 percent, 0.53x previous step)
-    9 steps has 20,177 entries (2 percent, 0.15x previous step)
-    10 steps has 801 entries (0 percent, 0.04x previous step)
-    11 steps has 8 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
-            '462000000000000462',
-            linecount=735471,
-            max_depth=11,
-            filesize=16180362,
-        )
-
-
-class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
-    """
-    24!/(8!*16!) is 735,471
-
-    lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt
-    ===============================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
-    3 steps has 850 entries (0 percent, 12.88x previous step)
-    4 steps has 8,753 entries (1 percent, 10.30x previous step)
-    5 steps has 67,758 entries (9 percent, 7.74x previous step)
-    6 steps has 243,959 entries (33 percent, 3.60x previous step)
-    7 steps has 257,410 entries (34 percent, 1.06x previous step)
-    8 steps has 135,684 entries (18 percent, 0.53x previous step)
-    9 steps has 20,177 entries (2 percent, 0.15x previous step)
-    10 steps has 801 entries (0 percent, 0.04x previous step)
-    11 steps has 8 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
-            '891000000000000891',
-            linecount=735471,
-            max_depth=11,
-            filesize=15444891,
-        )
-
-
-class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
-    """
-    24!/(8!*16!) is 735,471
-
-    lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt
-    ================================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
-    3 steps has 850 entries (0 percent, 12.88x previous step)
-    4 steps has 8,753 entries (1 percent, 10.30x previous step)
-    5 steps has 67,758 entries (9 percent, 7.74x previous step)
-    6 steps has 243,959 entries (33 percent, 3.60x previous step)
-    7 steps has 257,410 entries (34 percent, 1.06x previous step)
-    8 steps has 135,684 entries (18 percent, 0.53x previous step)
-    9 steps has 20,177 entries (2 percent, 0.15x previous step)
-    10 steps has 801 entries (0 percent, 0.04x previous step)
-    11 steps has 8 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
-            '30c00000000000030c',
-            linecount=735471,
-            max_depth=11,
-            filesize=15444891,
-        )
-
-
-class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
-    """
-    This is 6-deep...this table is odd because it "locks" the outside UD oblique
-    edges together which results in these weird move counts per level.
-
-    lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
-    =====================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
-    3 steps has 916 entries (0 percent, 13.88x previous step)
-    4 steps has 10,132 entries (0 percent, 11.06x previous step)
-    5 steps has 92,070 entries (1 percent, 9.09x previous step)
-    6 steps has 558,950 entries (9 percent, 6.07x previous step)
-    7 steps has 3,861,635 entries (64 percent, 6.91x previous step)
-    8 steps has 1,365,844 entries (22 percent, 0.35x previous step)
-    9 steps has 71,797 entries (1 percent, 0.05x previous step)
-    10 steps has 158 entries (0 percent, 0.00x previous step)
-
-    Total: 5,961,573 entries
-    """
+class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
 
     oblique_edges_777 = (
         10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40, # Upper
@@ -189,36 +77,18 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
         257, 261, 279, 283, # Down
     )
 
-    heuristic_stats = {
-    }
-
-    # 99 disables heuristic_stats
-    heuristic_stats_error = 99
-
     set_left_oblique_edge_777 = set(left_oblique_edge_777)
     set_middle_oblique_edge_777 = set(middle_oblique_edge_777)
     set_right_oblique_edge_777 = set(right_oblique_edge_777)
 
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
-            'fff000000000000fff',
-            moves_777,
-
-            # do not mess up UD 5x5x5 centers
-            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"),
-
-            # prune tables
-            (parent.lt_UD_oblique_edge_pairing_middle_only,
-             parent.lt_UD_oblique_edge_pairing_left_only,
-             parent.lt_UD_oblique_edge_pairing_right_only),
-
-            linecount=5961573,
-            max_depth=6,
-            filesize=399425391,
-            exit_asap=1,
+            # Needed tables and their md5 signatures
+            (),
+            '7x7x7-UD-oblique-edges-stage' # C_ida_type
         )
 
     def recolor(self):
@@ -236,107 +106,6 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
             else:
                 self.parent.state[x] = '.'
         #self.parent.print_cube()
-
-    def ida_heuristic_tuple(self):
-        parent = self.parent
-        parent_state = self.parent.state
-        left_state = 0
-        middle_state = 0
-        right_state = 0
-        lt_state = 0
-
-        set_left_oblique_edge_777 = self.set_left_oblique_edge_777
-        set_middle_oblique_edge_777 = self.set_middle_oblique_edge_777
-        set_right_oblique_edge_777 = self.set_right_oblique_edge_777
-
-        for x in self.oblique_edges_777:
-
-            if parent_state[x] == 'U':
-                if x in set_left_oblique_edge_777:
-                    left_state = left_state | 0x1
-
-                elif x in set_middle_oblique_edge_777:
-                    middle_state = middle_state | 0x1
-
-                elif x in set_right_oblique_edge_777:
-                    right_state = right_state | 0x1
-
-                lt_state = lt_state | 0x1
-
-            left_state = left_state << 1
-            middle_state = middle_state << 1
-            right_state = right_state << 1
-            lt_state = lt_state << 1
-
-        left_state = left_state >> 1
-        middle_state = middle_state >> 1
-        right_state = right_state >> 1
-        lt_state = lt_state >> 1
-
-        # convert to hex format
-        left_state = parent.lt_UD_oblique_edge_pairing_left_only.hex_format % left_state
-        middle_state = parent.lt_UD_oblique_edge_pairing_middle_only.hex_format % middle_state
-        right_state = parent.lt_UD_oblique_edge_pairing_right_only.hex_format % right_state
-        lt_state = self.hex_format % lt_state
-
-        left_cost = parent.lt_UD_oblique_edge_pairing_left_only.heuristic(left_state)
-        middle_cost = parent.lt_UD_oblique_edge_pairing_middle_only.heuristic(middle_state)
-        right_cost = parent.lt_UD_oblique_edge_pairing_right_only.heuristic(right_state)
-        return (str(self), left_cost, middle_cost, right_cost)
-
-    def ida_heuristic(self, ida_threshold):
-        parent = self.parent
-        parent_state = self.parent.state
-        left_state = 0
-        middle_state = 0
-        right_state = 0
-        lt_state = 0
-
-        set_left_oblique_edge_777 = self.set_left_oblique_edge_777
-        set_middle_oblique_edge_777 = self.set_middle_oblique_edge_777
-        set_right_oblique_edge_777 = self.set_right_oblique_edge_777
-
-        for x in self.oblique_edges_777:
-
-            if parent_state[x] == 'U':
-                if x in set_left_oblique_edge_777:
-                    left_state = left_state | 0x1
-
-                elif x in set_middle_oblique_edge_777:
-                    middle_state = middle_state | 0x1
-
-                elif x in set_right_oblique_edge_777:
-                    right_state = right_state | 0x1
-
-                lt_state = lt_state | 0x1
-
-            left_state = left_state << 1
-            middle_state = middle_state << 1
-            right_state = right_state << 1
-            lt_state = lt_state << 1
-
-        left_state = left_state >> 1
-        middle_state = middle_state >> 1
-        right_state = right_state >> 1
-        lt_state = lt_state >> 1
-
-        # convert to hex format
-        left_state = parent.lt_UD_oblique_edge_pairing_left_only.hex_format % left_state
-        middle_state = parent.lt_UD_oblique_edge_pairing_middle_only.hex_format % middle_state
-        right_state = parent.lt_UD_oblique_edge_pairing_right_only.hex_format % right_state
-        lt_state = self.hex_format % lt_state
-
-        left_cost = parent.lt_UD_oblique_edge_pairing_left_only.heuristic(left_state)
-        middle_cost = parent.lt_UD_oblique_edge_pairing_middle_only.heuristic(middle_state)
-        right_cost = parent.lt_UD_oblique_edge_pairing_right_only.heuristic(right_state)
-        cost_to_goal = self.heuristic_stats.get((left_cost, middle_cost, right_cost), 0)
-        #log.warning("%s: (%s, %s, %s) cost_to_goal %s" % (self, left_cost, middle_cost, right_cost, cost_to_goal))
-        cost_to_goal = max(left_cost, middle_cost, right_cost, cost_to_goal - self.heuristic_stats_error)
-        #log.info("%s: final cost_to_goal %s" % (self, cost_to_goal))
-
-        #log.info("%s: lt_state %s, left_state %s, middle_state %s, right_state %s, cost_to_goal %d" %
-        #    (self, lt_state, left_state, middle_state, right_state, cost_to_goal))
-        return (lt_state, cost_to_goal)
 
 
 class LookupTable777LRLeftRightObliqueEdgePairing(LookupTableHashCostOnly):
@@ -782,20 +551,6 @@ class LookupTableIDA777Step40(LookupTableIDA):
             exit_asap=99,
         )
 
-    def ida_heuristic_tuple(self):
-        parent = self.parent
-
-        (lt_state, step41_state, step42_state) = ida_heuristic_states_step40_777(
-            parent.state,
-            self.centers_step40_777,
-            self.set_centers_step41_777,
-            self.set_centers_step42_777
-        )
-        step41_cost = parent.lt_step41.heuristic(step41_state)
-        step42_cost = parent.lt_step42.heuristic(step42_state)
-
-        return (str(self), step41_cost, step42_cost)
-
     def ida_heuristic(self, ida_threshold):
         parent = self.parent
 
@@ -1056,21 +811,6 @@ class LookupTableIDA777Step50(LookupTableIDA):
             exit_asap=99,
         )
 
-    def ida_heuristic_tuple(self):
-        parent = self.parent
-
-        (lt_state, step51_state, step52_state) = ida_heuristic_states_step50_777(
-            parent.state,
-            self.centers_step50_777,
-            self.set_centers_step51_777,
-            self.set_centers_step52_777
-        )
-
-        step51_cost = parent.lt_step51.heuristic(step51_state)
-        step52_cost = parent.lt_step52.heuristic(step52_state)
-
-        return (str(self), step51_cost, step52_cost)
-
     def ida_heuristic(self, ida_threshold):
         parent = self.parent
 
@@ -1254,21 +994,6 @@ class LookupTableIDA777Step60(LookupTableIDA):
             exit_asap=99,
         )
 
-    def ida_heuristic_tuple(self):
-        parent = self.parent
-
-        (lt_state, step61_state, step62_state) = ida_heuristic_states_step60_777(
-            parent.state,
-            self.state_indexes_step60,
-            self.set_state_indexes_step61,
-            self.set_state_indexes_step62
-        )
-
-        step61_cost = parent.lt_step61.heuristic(step61_state)
-        step62_cost = parent.lt_step62.heuristic(step62_state)
-
-        return (str(self), step61_cost, step62_cost)
-
     def ida_heuristic(self, ida_threshold):
         parent = self.parent
 
@@ -1334,15 +1059,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             log.warning("Another 7x7x7 instance is being created")
         else:
             RubiksCube777.instantiated = True
-
-    def get_fake_666(self):
-        if self.fake_666 is None:
-            self.fake_666 = RubiksCube666(solved_666, 'URFDLB')
-            self.fake_666.lt_init(UD_oblique_edge_only=True)
-            self.fake_666.enable_print_cube = False
-        else:
-            self.fake_666.re_init()
-        return self.fake_666
 
     def phase(self):
         if self._phase is None:
@@ -1458,14 +1174,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
         self.lt_init_called = True
 
-        self.lt_UD_oblique_edge_pairing_middle_only = LookupTable777UDObliqueEdgePairingMiddleOnly(self)
-        self.lt_UD_oblique_edge_pairing_left_only = LookupTable777UDObliqueEdgePairingLeftOnly(self)
-        self.lt_UD_oblique_edge_pairing_right_only = LookupTable777UDObliqueEdgePairingRightOnly(self)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
-        self.lt_UD_oblique_edge_pairing_middle_only.preload_cache_dict()
-        self.lt_UD_oblique_edge_pairing_left_only.preload_cache_dict()
-        self.lt_UD_oblique_edge_pairing_right_only.preload_cache_dict()
-        self.lt_UD_oblique_edge_pairing.preload_cache_string()
 
         self.lt_LR_left_right_oblique_edge_pairing = LookupTable777LRLeftRightObliqueEdgePairing(self)
         self.lt_LR_left_middle_oblique_edge_pairing = LookupTable777LRLeftMiddleObliqueEdgePairing(self)
@@ -1608,38 +1317,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
             self.rotate(step)
 
-    def create_fake_666_centers(self):
-
-        # Create a fake 6x6x6 to stage the outside UD oblique edges
-        fake_666 = self.get_fake_666()
-        fake_666.nuke_corners()
-        fake_666.nuke_edges()
-        fake_666.nuke_centers()
-
-        for side_index in range(6):
-            offset_666 = side_index * 36
-            offset_777 = side_index * 49
-
-            fake_666.state[8 + offset_666] = self.state[9 + offset_777]
-            fake_666.state[9 + offset_666] = self.state[10 + offset_777]
-            fake_666.state[10 + offset_666] = self.state[12 + offset_777]
-            fake_666.state[11 + offset_666] = self.state[13 + offset_777]
-
-            fake_666.state[14 + offset_666] = self.state[16 + offset_777]
-            fake_666.state[15 + offset_666] = self.state[17 + offset_777]
-            fake_666.state[16 + offset_666] = self.state[19 + offset_777]
-            fake_666.state[17 + offset_666] = self.state[20 + offset_777]
-
-            fake_666.state[20 + offset_666] = self.state[30 + offset_777]
-            fake_666.state[21 + offset_666] = self.state[31 + offset_777]
-            fake_666.state[22 + offset_666] = self.state[33 + offset_777]
-            fake_666.state[23 + offset_666] = self.state[34 + offset_777]
-
-            fake_666.state[26 + offset_666] = self.state[37 + offset_777]
-            fake_666.state[27 + offset_666] = self.state[38 + offset_777]
-            fake_666.state[28 + offset_666] = self.state[40 + offset_777]
-            fake_666.state[29 + offset_666] = self.state[41 + offset_777]
-
     def group_centers_guts(self):
         self.lt_init()
 
@@ -1653,38 +1330,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             log.info("")
             log.info("")
 
-            # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
-            self.create_fake_666_centers()
-            self.fake_666.lt_UD_oblique_edge_stage.solve()
-
-            # Also move them to sides UD, we do this to speed up the 777 step10
-            self.fake_666.fake_555 = self.fake_666.get_fake_555()
-            self.fake_666.populate_fake_555_for_ULFRBD_solve()
-            self.fake_666.fake_555.group_centers_stage_UD()
-
-            for step in self.fake_666.fake_555.solution:
-                self.fake_666.rotate(step)
-
-            for step in self.fake_666.solution:
-                if step.startswith('6'):
-                    step = '7' + step[1:]
-                self.rotate(step)
-
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-            self.print_cube()
-            log.info("%s: UD outer oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-            log.info("")
-            log.info("")
-
-            # Test the prune tables
-            #self.lt_UD_oblique_edge_pairing_middle_only.solve()
-            #self.lt_UD_oblique_edge_pairing_left_only.solve()
-            #self.lt_UD_oblique_edge_pairing_right_only.solve()
-            #self.print_cube()
-
-            # Now pair the "inside" oblique UD edges with the already staged outside oblique UD edges
+            # Pair the oblique UD edges
             self.lt_UD_oblique_edge_pairing.solve()
             self.print_cube()
             log.info("%s: UD oblique edges paired/staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

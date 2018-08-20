@@ -17,22 +17,22 @@ unsigned int oblique_edges_666[NUM_OBLIQUE_EDGES_666] = {
 
 
 unsigned int left_oblique_edges_666[NUM_LEFT_OBLIQUE_EDGES_666] = {
-    9, 14, 17, 27,
-    45, 50, 53, 63,
-    81, 86, 89, 99,
-    117, 122, 125, 135,
-    153, 158, 161, 171,
-    189, 194, 197, 207
+    9, 20, 17, 28, // Upper
+    45, 56, 53, 64, // Left
+    81, 92, 89, 100, // Front
+    117, 128, 125, 136, // Right
+    153, 164, 161, 172, // Back
+    189, 200, 197, 208, // Down
 };
 
 
 unsigned int right_oblique_edges_666[NUM_RIGHT_OBLIQUE_EDGES_666] = {
-    10, 20, 23, 28,
-    46, 56, 59, 64,
-    82, 92, 95, 100,
-    118, 128, 131, 136,
-    154, 164, 167, 172,
-    190, 200, 203, 208
+    10, 14, 23, 27, // Upper
+    46, 50, 59, 63, // Left
+    82, 86, 95, 99, // Front
+    118, 122, 131, 135, // Right
+    154, 158, 167, 171, // Back
+    190, 194, 203, 207, // Down
 };
 
 unsigned int LFRB_inner_x_centers_666[NUM_LFRB_INNER_X_CENTERS_666] = {
@@ -78,6 +78,8 @@ get_unpaired_obliques_count_666 (char *cube)
 
         if (cube[left_cube_index] == '1' && cube[right_cube_index] == '1') {
             paired_obliques += 1;
+            //LOG("%d: left_cube_index %d, right_cube_index %d, cube[left_cube_index] %c, cube[right_cube_index] %c\n",
+            //    i, left_cube_index, right_cube_index, cube[left_cube_index], cube[right_cube_index]);
         }
     }
 
@@ -113,20 +115,24 @@ ida_heuristic_UD_oblique_edges_stage_666 (
     // The most oblique edges we can pair in single move is 4 so take
     // the number that are unpaired and divide by 4.
     //
-    // admissable but slow
-    // return (int) ceil(unpaired_count / 4);
+    // .ULBU.F.Ux.LRx..xBRx..xFF.xx.L.BRLF..BDLF.F.UU.FBx..xRFx..UDB.Ux.B.BDFD..UUFR.R.UU.RFx..UDFx..xUR.xx.D.FUBL..DLRB.D.xx.DRx..xBRx..ULR.Ux.L.RLDF..UFBU.U.Ux.DFx..xUBU..xDU.xx.D.UDDL..LUBL.D.xx.BUx..URLU..UUR.Ux.R.LLUB.
+    // divide by 4 (admissable) took 53s, 6 moves
+    // divide by 2 took 8s, 7 moves
+    // divide by 1.5 took 4.3s, 6 moves
 
-    // RFFRBDLBRFFFBLLBBRURFRUFLUBURRDDDRBLUDDBRLDFUDDBDLDDDLBFFUBLULLLDRBFFLRRLLLURFDBURRBFFBUBFBFBRRUBRBLFLRBRFDUFUDRFRLDBUULBFLDBRBLDRLBLLDUFFLFFRFDDFDRUFBULDDRLDLUDUDDFBRLRUURLUUBDUDUBRBUDFLBRUBDUFUFDUFFRLRLURBFLUBUDLUB
-    // admissable took 6m 24s, explored 1,946,110,533 total, found 6 move solution
-    // divide by 2 took 9s, found solution 6 moves
-    // divide by 1.7 took 2.2s, found solution 7 moves
-    // divide by 1.6 took 580ms, found solution 7 moves
-    // divide by 1.5 took 580ms, found solution 7 moves
-    // divide by 1.4 took 400ms, found solution 7 moves
-    // divide by 1.0 took 280ms, found solution 8 moves
+    // inadmissable heuristic but fast
+    result.cost_to_goal = (int) ceil((double) unpaired_count / 1.5);
 
-    // inadmissable but a million times faster
-    result.cost_to_goal = (int) ceil(unpaired_count / 1.6);
+    // inadmissable heuristic but fast...kudos to xyzzy for this formula
+    // xyzzy 4/2 took 2s, 7 moves
+    // xyzzy 6/3 took 0.8s, 7 moves
+    /*
+    if (unpaired_count > 4) {
+        result.cost_to_goal = 2 + (unpaired_count >> 1);
+    } else {
+        result.cost_to_goal = unpaired_count;
+    }
+     */
 
     return result;
 }
@@ -164,28 +170,23 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     // Test cube:
     // .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU.
 
-    // with 2-deep table
-    // divide by 4 takes 3m 32s, 10 moves
-    // divide by 3 takes 3m 7s, 10 moves
-    // divide by 2 takes 2m 55s, 10 moves
-    // divide by 1 takes 5+ min (killed it), ?? moves
-
-    // with 3-deep table (takes 14s to load and a lot of memory)
-    // divide by 4 takes 3m 29s, 10 moves
-    // divide by 3 takes 2m 57s, 10 moves
-    // divide by 2 takes 2m 51s, moves
-    // divide by 1 takes , moves
-    // so 3-deep table isn't worth it
     unpaired_count = get_unpaired_obliques_count_666(cube);
 
     // The most oblique edges we can pair in single move is 4 so take
     // the number that are unpaired and divide by 4.
     //
-    // admissable but slow
-    //oblique_edges_cost = (int) ceil(unpaired_count / 4);
+    // dwalton
+    // with 2-deep table
+    // divide by 4 (admissible) takes 2m 40s, 10 moves
+    // divide by 3 takes ,  moves
+    // divide by 2 takes 2m 46s, 10 moves
+    //oblique_edges_cost = (int) ceil((double) unpaired_count / 1.25);
 
-    // inadmissable but faster
-    oblique_edges_cost = (int) ceil(unpaired_count / 2);
+    if (unpaired_count > 6) {
+        oblique_edges_cost = 3 + (unpaired_count >> 1);
+    } else {
+        oblique_edges_cost = unpaired_count;
+    }
 
     if (oblique_edges_cost >= max_cost_to_goal) {
         result.cost_to_goal = oblique_edges_cost;

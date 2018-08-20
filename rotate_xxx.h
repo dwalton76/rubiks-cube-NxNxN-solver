@@ -6,28 +6,28 @@ typedef enum {
     MOVE_NONE,
 
     U, U_PRIME, U2,
-    Uw, Uw_PRIME, Uw2, 
-    threeUw, threeUw_PRIME, threeUw2, 
+    Uw, Uw_PRIME, Uw2,
+    threeUw, threeUw_PRIME, threeUw2,
 
     L, L_PRIME, L2,
     Lw, Lw_PRIME, Lw2,
-    threeLw, threeLw_PRIME, threeLw2, 
+    threeLw, threeLw_PRIME, threeLw2,
 
     F, F_PRIME, F2,
     Fw, Fw_PRIME, Fw2,
-    threeFw, threeFw_PRIME, threeFw2, 
+    threeFw, threeFw_PRIME, threeFw2,
 
     R, R_PRIME, R2,
     Rw, Rw_PRIME, Rw2,
-    threeRw, threeRw_PRIME, threeRw2, 
+    threeRw, threeRw_PRIME, threeRw2,
 
     B, B_PRIME, B2,
     Bw, Bw_PRIME, Bw2,
-    threeBw, threeBw_PRIME, threeBw2, 
+    threeBw, threeBw_PRIME, threeBw2,
 
     D, D_PRIME, D2,
     Dw, Dw_PRIME, Dw2,
-    threeDw, threeDw_PRIME, threeDw2, 
+    threeDw, threeDw_PRIME, threeDw2,
 
     X, X_PRIME,
     Y, Y_PRIME,
@@ -37,7 +37,7 @@ typedef enum {
 
 #define MAX_MOVE_STR_SIZE 5
 
-static const char move2str[MOVE_MAX][MAX_MOVE_STR_SIZE] = { 
+static const char move2str[MOVE_MAX][MAX_MOVE_STR_SIZE] = {
     "N/A",
     "U", "U'", "U2",
     "Uw", "Uw'", "Uw2",
@@ -66,18 +66,28 @@ static const char move2str[MOVE_MAX][MAX_MOVE_STR_SIZE] = {
 
 
 #define MOVE_COUNT_555 36
-static const move_type moves_555[MOVE_COUNT_555] = { 
+static const move_type moves_555[MOVE_COUNT_555] = {
     U, U_PRIME, U2, Uw, Uw_PRIME, Uw2,
     L, L_PRIME, L2, Lw, Lw_PRIME, Lw2,
     F, F_PRIME, F2, Fw, Fw_PRIME, Fw2,
     R, R_PRIME, R2, Rw, Rw_PRIME, Rw2,
     B, B_PRIME, B2, Bw, Bw_PRIME, Bw2,
-    D, D_PRIME, D2, Dw, Dw_PRIME, Dw2 
+    D, D_PRIME, D2, Dw, Dw_PRIME, Dw2
 };
 
 
 #define MOVE_COUNT_666 54
-static const move_type moves_666[MOVE_COUNT_666] = { 
+static const move_type moves_666[MOVE_COUNT_666] = {
+    U, U_PRIME, U2, Uw, Uw_PRIME, Uw2, threeUw, threeUw_PRIME, threeUw2,
+    L, L_PRIME, L2, Lw, Lw_PRIME, Lw2, threeLw, threeLw_PRIME, threeLw2,
+    F, F_PRIME, F2, Fw, Fw_PRIME, Fw2, threeFw, threeFw_PRIME, threeFw2,
+    R, R_PRIME, R2, Rw, Rw_PRIME, Rw2, threeRw, threeRw_PRIME, threeRw2,
+    B, B_PRIME, B2, Bw, Bw_PRIME, Bw2, threeBw, threeBw_PRIME, threeBw2,
+    D, D_PRIME, D2, Dw, Dw_PRIME, Dw2, threeDw, threeDw_PRIME, threeDw2
+};
+
+#define MOVE_COUNT_777 54
+static const move_type moves_777[MOVE_COUNT_777] = {
     U, U_PRIME, U2, Uw, Uw_PRIME, Uw2, threeUw, threeUw_PRIME, threeUw2,
     L, L_PRIME, L2, Lw, Lw_PRIME, Lw2, threeLw, threeLw_PRIME, threeLw2,
     F, F_PRIME, F2, Fw, Fw_PRIME, Fw2, threeFw, threeFw_PRIME, threeFw2,

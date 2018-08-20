@@ -163,11 +163,19 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
 
     // Test cube:
     // .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU.
-    // divide by 4 takes 14s, 9 moves
-    // divide by 3 takes 12s, 9 moves
-    // divide by 2 takes 12s, 9 moves
-    // divide by 1.5 takes 2m 13s, 9 moves
-    // divide by 1 takes 39s, 9 moves
+
+    // with 2-deep table
+    // divide by 4 takes 3m 32s, 10 moves
+    // divide by 3 takes 3m 7s, 10 moves
+    // divide by 2 takes 2m 55s, 10 moves
+    // divide by 1 takes 5+ min (killed it), ?? moves
+
+    // with 3-deep table (takes 14s to load and a lot of memory)
+    // divide by 4 takes 3m 29s, 10 moves
+    // divide by 3 takes 2m 57s, 10 moves
+    // divide by 2 takes 2m 51s, moves
+    // divide by 1 takes , moves
+    // so 3-deep table isn't worth it
     unpaired_count = get_unpaired_obliques_count_666(cube);
 
     // The most oblique edges we can pair in single move is 4 so take
@@ -177,7 +185,7 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     //oblique_edges_cost = (int) ceil(unpaired_count / 4);
 
     // inadmissable but faster
-    oblique_edges_cost = (int) ceil(unpaired_count / 3);
+    oblique_edges_cost = (int) ceil(unpaired_count / 2);
 
     if (oblique_edges_cost >= max_cost_to_goal) {
         result.cost_to_goal = oblique_edges_cost;

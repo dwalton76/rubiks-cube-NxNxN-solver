@@ -1027,14 +1027,15 @@ class LookupTable555StageFirstFourEdges(LookupTable):
     4 steps has 84 entries (0 percent, 0.25x previous step)
     5 steps has 1,152 entries (0 percent, 13.71x previous step)
     6 steps has 10,200 entries (0 percent, 8.85x previous step)
-    7 steps has 53,040 entries (3 percent, 5.20x previous step)
-    8 steps has 187,296 entries (11 percent, 3.53x previous step)
-    9 steps has 1,357,482 entries (84 percent, 7.25x previous step)
+    7 steps has 53,040 entries (0 percent, 5.20x previous step)
+    8 steps has 187,296 entries (2 percent, 3.53x previous step)
+    9 steps has 1,357,482 entries (18 percent, 7.25x previous step)
+    10 steps has 5,779,878 entries (78 percent, 4.26x previous step)
 
-    Total: 1,609,665 entries
+    Total: 7,389,543 entries
 
-    There is no need to build this any deeper...that and building it
-    to 10-deep takes about 2 days on a 12-core machine.
+    There is no need to build this any deeper...building it to 10-deep
+    takes about 2 days on a 12-core machine.
     """
     def __init__(self, parent):
         LookupTable.__init__(
@@ -1042,8 +1043,8 @@ class LookupTable555StageFirstFourEdges(LookupTable):
             parent,
             'lookup-table-5x5x5-step100-stage-first-four-edges.txt',
             'TBD',
-            linecount=1609665,
-            filesize=86921910,
+            linecount=7389543,
+            filesize=421203951,
         )
 
     def state(self, wing_strs_to_stage):

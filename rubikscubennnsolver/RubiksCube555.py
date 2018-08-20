@@ -702,7 +702,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-5x5x5-step10-UD-centers-stage.txt', '14369c48b6b51dbf13e6697915ff61fa'),
+            (('lookup-table-5x5x5-step10-UD-centers-stage.txt', '343288ec28eeaaa2a02dede2c1485c10'),
              ('lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt', '95464b63ec32f831c0f844916f3bbee9'),
              ('lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt', '19679794a853d38a7d36be0f03fe1c3b')),
             '5x5x5-UD-centers-stage' # C_ida_type
@@ -717,7 +717,6 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
             'D' : 'U',
         }
         self.nuke_corners = True
-        self.nuke_edges = True
 
 
 class LookupTable555LRTCenterStage(LookupTable):

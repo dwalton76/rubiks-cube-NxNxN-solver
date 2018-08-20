@@ -253,25 +253,13 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaC):
 
     def __init__(self, parent):
 
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step20-dummy.txt',
-            'TBD',
-            moves_666,
-
-            # illegal_moves
-            ("3Fw", "3Fw'",
-             "3Bw", "3Bw'",
-             "3Lw", "3Lw'",
-             "3Rw", "3Rw'"),
-
-            # prune tables
+            # Needed tables and their md5 signatures
             (),
-            linecount=0,
-            max_depth=99,
+            '6x6x6-UD-oblique-edges-stage' # C_ida_type
         )
-        self.C_ida_type = "6x6x6-UD-oblique-edges-stage"
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
@@ -290,8 +278,16 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaC):
         #self.parent.print_cube()
 
 
-class LookupTable666LRInnerXCentersStage(LookupTableCostOnly):
+class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
     """
+    lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt
+    ====================================================================
+    1 steps has 140,504 entries (8 percent, 0.00x previous step)
+    2 steps has 1,525,128 entries (91 percent, 10.85x previous step)
+
+    Total: 1,665,632 entries
+
+
     lookup-table-6x6x6-step32-LR-inner-x-center-stage.txt
     =====================================================
     1 steps has 3 entries (0 percent, 0.00x previous step)
@@ -304,28 +300,6 @@ class LookupTable666LRInnerXCentersStage(LookupTableCostOnly):
 
     Total: 12,870 entries
     Average: 5.45 moves
-    """
-
-    def __init__(self, parent):
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt',
-            'f0f0',
-            linecount=12870,
-            max_depth=7,
-            md5='a698248e3fafc4c1f288962f1d8a5f7c',
-        )
-
-
-class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
-    """
-    lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt
-    ====================================================================
-    1 steps has 140,504 entries (8 percent, 0.00x previous step)
-    2 steps has 1,525,128 entries (91 percent, 10.85x previous step)
-
-    Total: 1,665,632 entries
     """
 
     LFRB_inner_x_centers_oblique_edges_666 = (
@@ -356,33 +330,14 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
 
     def __init__(self, parent):
 
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt',
-            'TBD',
-            moves_666,
-
-            # illegal moves
-            ("3Fw", "3Fw'",
-             "3Bw", "3Bw'",
-             "3Lw", "3Lw'",
-             "3Rw", "3Rw'",
-             "Fw", "Fw'",
-             "Bw", "Bw'",
-             "Lw", "Lw'",
-             "Rw", "Rw'"),
-
-            # prune tables
-            (parent.lt_LR_inner_x_centers_stage,),
-
-            linecount=1665632,
-            max_depth=2,
-            filesize=38309536,
-        ),
-
-        # This one was slow so we do it in C now
-        self.C_ida_type = "6x6x6-LR-inner-x-centers-oblique-edges-stage"
+            # Needed tables and their md5 signatures
+            (('lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt', '2982d4bd6606cd4f51e85385f570c1b7'),
+             ('lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt', 'a698248e3fafc4c1f288962f1d8a5f7c')),
+            '6x6x6-LR-inner-x-centers-oblique-edges-stage' # C_ida_type
+        )
 
     def recolor(self):
         log.info("%s: recolor (custom)" % self)
@@ -991,7 +946,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             return
         self.lt_UD_oblique_edge_stage.avoid_oll = 1
 
-        self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCentersStage(self)
         self.lt_LR_inner_x_centers_and_oblique_edges_stage = LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(self)
         self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
 

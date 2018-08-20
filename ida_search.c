@@ -404,20 +404,32 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
 
     LOG("ida_prune_table_preload %s: start\n", filename);
 
-    while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
-        strstrip(buffer);
+    if (strmatch(filename, "lookup-table-5x5x5-step10-UD-centers-stage.txt") ||
+        strmatch(filename, "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt")) {
 
-        // strtok modifies the buffer so make a copy
-        strcpy(token_buffer, buffer);
-        token_ptr = strtok(token_buffer, ":");
-        strcpy(state, token_ptr);
+        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+            // 0..13 are the state
+            // 14 is the :
+            // 15 is the move count
+            buffer[14] = '\0';
+            cost = atoi(&buffer[15]);
+            hash_add(hashtable, buffer, cost);
+        }
 
-        token_ptr = strtok(NULL, ":");
-        strcpy(moves, token_ptr);
-        cost = moves_cost(moves);
+    } else if (strmatch(filename, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt")) {
 
-        // LOG("ida_prune_table_preload %s, state %s, moves %s, cost %d\n", filename, state, moves, cost);
-        hash_add(hashtable, state, cost);
+        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+            // 0..11 are the state
+            // 12 is the :
+            // 13 is the move count
+            buffer[12] = '\0';
+            cost = atoi(&buffer[13]);
+            hash_add(hashtable, buffer, cost);
+        }
+
+    } else {
+        printf("ERROR: ida_prune_table_preload add support for %s", filename);
+        exit(1);
     }
 
     fclose(fh_read);

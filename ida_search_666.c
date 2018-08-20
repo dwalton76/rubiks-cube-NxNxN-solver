@@ -161,7 +161,15 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     struct ida_heuristic_result result;
     unsigned long state = 0;
 
+    // Test cube:
+    // .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU.
+    // divide by 4 takes 14s, 9 moves
+    // divide by 3 takes 12s, 9 moves
+    // divide by 2 takes 12s, 9 moves
+    // divide by 1.5 takes 2m 13s, 9 moves
+    // divide by 1 takes 39s, 9 moves
     unpaired_count = get_unpaired_obliques_count_666(cube);
+
     // The most oblique edges we can pair in single move is 4 so take
     // the number that are unpaired and divide by 4.
     //
@@ -176,14 +184,6 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
         return result;
     }
 
-
-    // Test cube:
-    // .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU.
-    // divide by 4 takes 14s, 9 moves
-    // divide by 3 takes 12s, 9 moves
-    // divide by 2 takes 12s, 9 moves
-    // divide by 1.5 takes 2m 13s, 9 moves
-    // divide by 1 takes 39s, 9 moves
 
     // Now get the state for the inner x-centers on LFRB
     for (int i = 0; i < NUM_LFRB_INNER_X_CENTERS_666; i++) {

@@ -216,9 +216,9 @@ ida_heuristic_ULFRBD_centers_555 (
 
     cost_to_goal = max(t_centers_cost, x_centers_cost);
 
-    // The step30 table we loaded is 5-deep so if a state is not in that
-    // table we know it has a cost of at least 6...thus MAX_DEPTH of 6 here.
-    int MAX_DEPTH = 7; // dwalton
+    // The step30 table we loaded is 6-deep so if a state is not in that
+    // table we know it has a cost of at least 7...thus MAX_DEPTH of 7 here.
+    int MAX_DEPTH = 7;
 
     if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
         struct key_value_pair *hash_entry = NULL;

@@ -23,7 +23,14 @@ def find_next_prime(n):
     return find_prime_in_range(n, 2*n)
 
 
-def convert_to_cost_only(filename, bucketcount):
+def convert_to_cost_only(filename, bucketcount, filename_statetargets):
+
+    state_targets = set()
+    with open(filename_statetargets, 'r') as fh:
+        for line in fh:
+            line = line.replace("'", "").replace(",", "").strip()
+            state_targets.add(line)
+
     filename_new = filename.replace('.txt', '.hash-cost-only.txt')
     prev_state_int = None
     first_permutation_rank = None
@@ -40,10 +47,14 @@ def convert_to_cost_only(filename, bucketcount):
             hash_index = int(hash_raw % bucketcount)
 
             # Write the steps_len
-            if steps[0].isdigit():
-                steps_len = int(steps[0])
+            if state in state_targets:
+                #log.info("found state_target %s" % state)
+                steps_len = 0
             else:
-                steps_len = len(steps)
+                if steps[0].isdigit():
+                    steps_len = int(steps[0])
+                else:
+                    steps_len = len(steps)
 
             #log.info("state: %s, hash_index %s, steps_len %s" % (state, hash_index, steps_len))
 
@@ -93,6 +104,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', type=str, help='lookup-table filename')
     parser.add_argument('bucketcount', type=int, help='number of buckets to use')
+    parser.add_argument('statetargets', type=str, help='file with state_targets')
     args = parser.parse_args()
 
-    convert_to_cost_only(args.filename, args.bucketcount)
+    convert_to_cost_only(args.filename, args.bucketcount, args.statetargets)

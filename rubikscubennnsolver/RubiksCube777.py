@@ -225,10 +225,6 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
     set_LFRB_left_right_oblique_edges_777 = set(LFRB_left_right_oblique_edges_777)
     set_LFRB_left_middle_oblique_edges_777 = set(LFRB_left_middle_oblique_edges_777)
 
-    heuristic_stats = {
-    }
-    heuristic_stats_error = 99
-
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -307,8 +303,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
 
         left_right_cost = self.parent.lt_LR_left_right_oblique_edge_pairing.heuristic(left_right_state)
         left_middle_cost = self.parent.lt_LR_left_middle_oblique_edge_pairing.heuristic(left_middle_state)
-        cost_to_goal = self.heuristic_stats.get((left_right_cost, left_middle_cost), 0)
-        cost_to_goal = max(left_right_cost, left_middle_cost, cost_to_goal - self.heuristic_stats_error)
+        cost_to_goal = max(left_right_cost, left_middle_cost)
 
         return (lt_state, cost_to_goal)
 
@@ -519,10 +514,6 @@ class LookupTableIDA777Step40(LookupTableIDA):
         156, 158, 160, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 184, 186, 188, # Right
     )
 
-    heuristic_stats = {
-    }
-    heuristic_stats_error = 99
-
     set_centers_step41_777 = set(centers_step41_777)
     set_centers_step42_777 = set(centers_step42_777)
 
@@ -564,8 +555,7 @@ class LookupTableIDA777Step40(LookupTableIDA):
         lt_state = self.hex_format % lt_state
         step41_cost = parent.lt_step41.heuristic(step41_state)
         step42_cost = parent.lt_step42.heuristic(step42_state)
-        cost_to_goal = self.heuristic_stats.get((step41_cost, step42_cost), 0)
-        cost_to_goal = max(step41_cost, step42_cost, cost_to_goal - self.heuristic_stats_error)
+        cost_to_goal = max(step41_cost, step42_cost)
 
         return (lt_state, cost_to_goal)
 
@@ -776,10 +766,6 @@ class LookupTableIDA777Step50(LookupTableIDA):
         254, 256, 258, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 282, 284, 286, # Down
     )
 
-    heuristic_stats = {
-    }
-    heuristic_stats_error = 99
-
     set_centers_step51_777 = set(centers_step51_777)
     set_centers_step52_777 = set(centers_step52_777)
 
@@ -824,8 +810,7 @@ class LookupTableIDA777Step50(LookupTableIDA):
         lt_state = self.hex_format % lt_state
         step51_cost = parent.lt_step51.heuristic(step51_state)
         step52_cost = parent.lt_step52.heuristic(step52_state)
-        cost_to_goal = self.heuristic_stats.get((step51_cost, step52_cost), 0)
-        cost_to_goal = max(step51_cost, step52_cost, cost_to_goal - self.heuristic_stats_error)
+        cost_to_goal = max(step51_cost, step52_cost)
 
         return (lt_state, cost_to_goal)
 
@@ -955,10 +940,6 @@ class LookupTableIDA777Step60(LookupTableIDA):
         205, 207, 209, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 233, 235, 237, # Back
     )
 
-    heuristic_stats = {
-    }
-    heuristic_stats_error = 99
-
     set_state_indexes_step61 = set(state_indexes_step61)
     set_state_indexes_step62 = set(state_indexes_step62)
 
@@ -1008,8 +989,7 @@ class LookupTableIDA777Step60(LookupTableIDA):
 
         step61_cost = parent.lt_step61.heuristic(step61_state)
         step62_cost = parent.lt_step62.heuristic(step62_state)
-        cost_to_goal = self.heuristic_stats.get((step61_cost, step62_cost), 0)
-        cost_to_goal = max(step61_cost, step62_cost, cost_to_goal - self.heuristic_stats_error)
+        cost_to_goal = max(step61_cost, step62_cost)
 
         return (lt_state, cost_to_goal)
 

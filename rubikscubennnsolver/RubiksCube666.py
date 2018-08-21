@@ -288,6 +288,20 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
     Total: 1,665,632 entries
 
 
+    lookup-table-6x6x6-step31-LR-oblique-edges-stage.txt
+    ====================================================
+    1 steps has 70,110 entries (0 percent, 0.00x previous step)
+    2 steps has 612,996 entries (0 percent, 8.74x previous step)
+    3 steps has 5,513,448 entries (3 percent, 8.99x previous step)
+    4 steps has 35,146,680 entries (21 percent, 6.37x previous step)
+    5 steps has 93,485,152 entries (56 percent, 2.66x previous step)
+    6 steps has 30,737,090 entries (18 percent, 0.33x previous step)
+    7 steps has 71,424 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 4.89 moves
+
+
     lookup-table-6x6x6-step32-LR-inner-x-center-stage.txt
     =====================================================
     1 steps has 3 entries (0 percent, 0.00x previous step)
@@ -335,6 +349,7 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
             parent,
             # Needed tables and their md5 signatures
             (('lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt', '2982d4bd6606cd4f51e85385f570c1b7'),
+             ('lookup-table-6x6x6-step31-LR-oblique-edges-stage.hash-cost-only.txt', 'c48496a8c0f1186d0bbfaea25d334f9a'),
              ('lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt', 'a698248e3fafc4c1f288962f1d8a5f7c')),
             '6x6x6-LR-inner-x-centers-oblique-edges-stage' # C_ida_type
         )

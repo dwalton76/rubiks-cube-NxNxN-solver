@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "xxhash.h"
 #include "ida_search_core.h"
 #include "ida_search_666.h"
 
@@ -42,6 +43,28 @@ unsigned int LFRB_inner_x_centers_666[NUM_LFRB_INNER_X_CENTERS_666] = {
     159, 160, 165, 166
 };
 
+unsigned int LFRB_oblique_edges_666[NUM_LFRB_OBLIQUE_EDGES_666] = {
+        45, 46,
+    50,         53,
+    56,         59,
+        63, 64,
+
+        81, 82,
+    86,         89,
+    92,         95,
+        99, 100,
+
+         117, 118,
+    122,           125,
+    128,           131,
+         135, 136,
+
+         153, 154,
+    158,           161,
+    164,           167,
+         171, 172
+};
+
 unsigned int LFRB_inner_x_centers_and_oblique_edges_666[NUM_LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_666] = {
         45, 46,
     50, 51, 52, 53,
@@ -67,23 +90,14 @@ unsigned int LFRB_inner_x_centers_and_oblique_edges_666[NUM_LFRB_INNER_X_CENTERS
 unsigned int
 get_unpaired_obliques_count_666 (char *cube)
 {
-    int paired_obliques = 0;
     int unpaired_obliques = 8;
-    int left_cube_index = 0;
-    int right_cube_index = 0;
 
     for (int i = 0; i < NUM_LEFT_OBLIQUE_EDGES_666; i++) {
-        left_cube_index = left_oblique_edges_666[i];
-        right_cube_index = right_oblique_edges_666[i];
-
-        if (cube[left_cube_index] == '1' && cube[right_cube_index] == '1') {
-            paired_obliques += 1;
-            //LOG("%d: left_cube_index %d, right_cube_index %d, cube[left_cube_index] %c, cube[right_cube_index] %c\n",
-            //    i, left_cube_index, right_cube_index, cube[left_cube_index], cube[right_cube_index]);
+        if (cube[left_oblique_edges_666[i]] == '1' && cube[right_oblique_edges_666[i]] == '1') {
+            unpaired_obliques -= 1;
         }
     }
 
-    unpaired_obliques -= paired_obliques;
     return unpaired_obliques;
 }
 
@@ -156,45 +170,26 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     char *cube,
     unsigned int max_cost_to_goal,
     struct key_value_pair **LR_inner_x_centers_and_oblique_edges_666,
-    char *LR_inner_x_centers_cost_666)
+    char *LR_inner_x_centers_cost_666,
+    char *LR_oblique_edges_cost_666)
 {
     unsigned long inner_x_centers_state = 0;
     unsigned long inner_x_centers_cost = 0;
+    unsigned long oblique_edges_state = 0;
+    unsigned long oblique_edges_bucket = 0;
+    unsigned long oblique_edges_cost = 0;
     unsigned long cost_to_goal = 0;
+    char oblique_edges_str[16];
     int cube_index;
-    int unpaired_count;
-    int oblique_edges_cost;
     struct ida_heuristic_result result;
     unsigned long state = 0;
 
-    // Test cube:
-    // .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU.
-
-    unpaired_count = get_unpaired_obliques_count_666(cube);
-
-    // The most oblique edges we can pair in single move is 4 so take
-    // the number that are unpaired and divide by 4.
+    // good test cube...this took ~3m prior to using the step31 oblique edges pruning table :(
+    // Now it takes 20s
     //
-    // dwalton
-    // with 2-deep table
-    // divide by 4 (admissible) takes 2m 40s, 10 moves
-    // divide by 3 takes ,  moves
-    // divide by 2 takes 2m 46s, 10 moves
-    //oblique_edges_cost = (int) ceil((double) unpaired_count / 1.25);
+    // time ./ida_search --kociemba .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU. --type 6x6x6-LR-inner-x-centers-oblique-edges-stage --orbit1-need-even-w
 
-    if (unpaired_count > 6) {
-        oblique_edges_cost = 3 + (unpaired_count >> 1);
-    } else {
-        oblique_edges_cost = unpaired_count;
-    }
-
-    if (oblique_edges_cost >= max_cost_to_goal) {
-        result.cost_to_goal = oblique_edges_cost;
-        return result;
-    }
-
-
-    // Now get the state for the inner x-centers on LFRB
+    // Get the state for the inner x-centers on LFRB
     for (int i = 0; i < NUM_LFRB_INNER_X_CENTERS_666; i++) {
         if (cube[LFRB_inner_x_centers_666[i]] == '1') {
             inner_x_centers_state |= 0x1;
@@ -209,6 +204,23 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
         return result;
     }
 
+
+    // Get the state for the oblique edges on LFRB
+    for (int i = 0; i < NUM_LFRB_OBLIQUE_EDGES_666; i++) {
+        if (cube[LFRB_oblique_edges_666[i]] == '1') {
+            oblique_edges_state |= 0x1;
+        }
+        oblique_edges_state <<= 1;
+    }
+    oblique_edges_state >>= 1;
+    sprintf(oblique_edges_str, "%08lx", oblique_edges_state);
+    oblique_edges_bucket = XXH32(oblique_edges_str, 8, 0) % 165636907;
+    oblique_edges_cost = hex_to_int(LR_oblique_edges_cost_666[oblique_edges_bucket]);
+
+    if (oblique_edges_cost >= max_cost_to_goal) {
+        result.cost_to_goal = oblique_edges_cost;
+        return result;
+    }
 
 
     // get state of LFRB inner x-centers and oblique edges

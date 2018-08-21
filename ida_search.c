@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <sys/resource.h>
 #include <sys/time.h>
 #include "uthash.h"
 #include "rotate_xxx.h"
@@ -56,6 +57,7 @@ char *ULFRBD_x_centers_cost_only = NULL;
 
 struct key_value_pair *LR_inner_x_centers_and_oblique_edges_666 = NULL;
 char *LR_inner_x_centers_666 = NULL;
+char *LR_oblique_edges_666 = NULL;
 
 
 int
@@ -449,7 +451,8 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             cube,
             max_cost_to_goal,
             &LR_inner_x_centers_and_oblique_edges_666,
-            LR_inner_x_centers_666);
+            LR_inner_x_centers_666,
+            LR_oblique_edges_666);
 
     // 7x7x7
     case UD_OBLIQUE_EDGES_STAGE_777:
@@ -1180,6 +1183,7 @@ ida_solve (
 
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
         ida_prune_table_preload(&LR_inner_x_centers_and_oblique_edges_666, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt");
+        LR_oblique_edges_666 = ida_cost_only_preload("lookup-table-6x6x6-step31-LR-oblique-edges-stage.hash-cost-only.txt", 165636908);
         LR_inner_x_centers_666 = ida_cost_only_preload("lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt", 65281);
         break;
 
@@ -1318,4 +1322,9 @@ main (int argc, char *argv[])
 
     // print_cube(cube, cube_size);
     ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns);
+
+    // Print the maximum resident set size used (in MB).
+    struct rusage r_usage;
+    getrusage(RUSAGE_SELF, &r_usage);
+    printf("Memory usage: %lu MB\n", (unsigned long) r_usage.ru_maxrss / (1024 * 1024));
 }

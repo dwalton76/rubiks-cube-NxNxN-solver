@@ -76,12 +76,12 @@ def get_wings_edges_will_pair(stringA, stringB):
 
 
 centers_555 = (
-    7, 8, 9, 12, 13, 14, 17, 18, 19,
-    32, 33, 34, 37, 38, 39, 42, 43, 44,
-    57, 58, 59, 62, 63, 64, 67, 68, 69,
-    82, 83, 84, 87, 88, 89, 92, 93, 94,
-    107, 108, 109, 112, 113, 114, 117, 118, 119,
-    132, 133, 134, 137, 138, 139, 142, 143, 144
+    7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
+    32, 33, 34, 37, 38, 39, 42, 43, 44, # Left
+    57, 58, 59, 62, 63, 64, 67, 68, 69, # Front
+    82, 83, 84, 87, 88, 89, 92, 93, 94, # Right
+    107, 108, 109, 112, 113, 114, 117, 118, 119, # Back
+    132, 133, 134, 137, 138, 139, 142, 143, 144  # Down
 )
 
 LFRB_centers_555 = (
@@ -958,37 +958,27 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
     Total: 1,433,448 entries
 
 
-    lookup-table-5x5x5-step31-ULFRBD-x-centers-solve.txt
-    ====================================================
+    lookup-table-5x5x5-step31-UL-centers-solve.txt
+    lookup-table-5x5x5-step32-UF-centers-solve.txt
+    lookup-table-5x5x5-step33-LF-centers-solve.txt
+    ==============================================
     1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 99 entries (0 percent, 14.14x previous step)
-    3 steps has 996 entries (0 percent, 10.06x previous step)
-    4 steps has 6,477 entries (1 percent, 6.50x previous step)
-    5 steps has 23,540 entries (6 percent, 3.63x previous step)
-    6 steps has 53,537 entries (15 percent, 2.27x previous step)
-    7 steps has 86,464 entries (25 percent, 1.62x previous step)
-    8 steps has 83,240 entries (24 percent, 0.96x previous step)
-    9 steps has 54,592 entries (15 percent, 0.66x previous step)
-    10 steps has 29,568 entries (8 percent, 0.54x previous step)
-    11 steps has 4,480 entries (1 percent, 0.15x previous step)
+    2 steps has 71 entries (0 percent, 10.14x previous step)
+    3 steps has 630 entries (0 percent, 8.87x previous step)
+    4 steps has 4,639 entries (0 percent, 7.36x previous step)
+    5 steps has 32,060 entries (0 percent, 6.91x previous step)
+    6 steps has 198,779 entries (0 percent, 6.20x previous step)
+    7 steps has 1,011,284 entries (4 percent, 5.09x previous step)
+    8 steps has 3,826,966 entries (15 percent, 3.78x previous step)
+    9 steps has 8,611,512 entries (35 percent, 2.25x previous step)
+    10 steps has 8,194,244 entries (34 percent, 0.95x previous step)
+    11 steps has 2,062,640 entries (8 percent, 0.25x previous step)
+    12 steps has 67,152 entries (0 percent, 0.03x previous step)
+    13 steps has 16 entries (0 percent, 0.00x previous step)
 
-    Total: 343,000 entries
-    Average: 7.51 moves
+    Total: 24,010,000 entries
+    Average: 9.25 moves
 
-
-    lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.txt
-    ====================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 99 entries (0 percent, 14.14x previous step)
-    3 steps has 1,038 entries (0 percent, 10.48x previous step)
-    4 steps has 8,463 entries (2 percent, 8.15x previous step)
-    5 steps has 47,986 entries (13 percent, 5.67x previous step)
-    6 steps has 146,658 entries (42 percent, 3.06x previous step)
-    7 steps has 128,914 entries (37 percent, 0.88x previous step)
-    8 steps has 9,835 entries (2 percent, 0.08x previous step)
-
-    Total: 343,000 entries
-    Average: 6.23 moves
     """
 
     def __init__(self, parent):
@@ -998,8 +988,9 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
             parent,
             # Needed tables and their md5 signatures
             (('lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt', '5a0bad50c3e650dbd2677e29aba17eca'),
-             ('lookup-table-5x5x5-step31-ULFRBD-x-centers-solve.cost-only.txt', '8509730bc801fa6fecfc8959086ec34a'),
-             ('lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.cost-only.txt', 'd08b44f5a60f2a585afcde6a9732da56')),
+             ('lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt', 'b9e47314dbbb37690d4aed370b3b2245'),
+             ('lookup-table-5x5x5-step32-UF-centers-solve.hash-cost-only.txt', '966f865fffe4b5c2ce7301767c3f19f7'),
+             ('lookup-table-5x5x5-step33-LF-centers-solve.hash-cost-only.txt', '7ea2ddf0e97094cc8f5d9c11df0176fe')),
             '5x5x5-centers-solve' # C_ida_type
         )
 

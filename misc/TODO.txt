@@ -1,17 +1,31 @@
 
+today
+- use 555 UL and UF tables for step30
+- use odd/even tables for 666 step32
+- build odd/even tables for 666 step31 (building on LJs machine)
+
 
 IDA via C
 =========
 - 444 step10 but it needs to avoid OLL. Would be cool if it searched until
   it found a solution that satisfied phase2.
 
-- 555 step10 and step30 are "slow" (~4s) for this one
+- 555 step10 is "slow" (~4s) for this one
     - FLDDRDRFDRBUUURDLRBFBULLLUUFBFUURUULURBDRFBBFULFBLDBBBFLRDFFDLFBUURUUFLDUFRBFRRBUDDLBFBDRUDDFFRDRBRBUBUBRLFFLUDLLDFDBLRBFFLRUDLLURRLRUFRDBFBLBLDLDDRDL
     - This would be a good test cube for bitfield cube state work
 
-    - This one takes 50s :(
-    time ./ida_search --kociemba ......UUx..xUx..UUx............LxL..xxx..xLx............xFF..FFF..xxF............xUx..xxU..UxU............xLL..xLL..LLx............Fxx..xxx..xFF...... --type 5x5x5-centers-solve
-    - now that xxhash is in the code we could do UL, UF, and LF prune tables
+
+- 555 step20 moves this to C...this is low priority though
+
+
+- memleak somewhere...this takes 240M it should only take ~75M
+    ./ida_search --kociemba ......UUx..xUx..UUx............LxL..xxx..xLx............xFF..FFF..xxF............xUx..xxU..UxU............xLL..xLL..LLx............Fxx..xxx..xFF...... --type 5x5x5-centers-solve
+
+
+- loading main table is slow. It takes 700ms to load the step30 table in this solve. Instead of
+    using uthash what if we used the following Dictionary implementation but with xxhash?
+    http://www.cs.yale.edu/homes/aspnes/pinewiki/C(2f)HashTables.html?highlight=%28CategoryAlgorithmNotes%29
+    ./ida_search --kociemba ......UUx..xUx..UUx............LxL..xxx..xLx............xFF..FFF..xxF............xUx..xxU..UxU............xLL..xLL..LLx............Fxx..xxx..xFF...... --type 5x5x5-centers-solve
 
 
 - 666 step30 this is slooooow (20s)

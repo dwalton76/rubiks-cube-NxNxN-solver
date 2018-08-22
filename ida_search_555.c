@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "xxhash.h"
 #include "ida_search_core.h"
 #include "ida_search_555.h"
 
@@ -29,6 +30,28 @@ unsigned int x_centers_555[NUM_T_CENTERS_555] = {
     82, 84, 92, 94,
     107, 109, 117, 119,
     132, 134, 142, 144
+};
+
+
+unsigned int ULRD_centers_555[NUM_ULRD_CENTERS_555] = {
+    7, 8, 9, 12, 13, 14, 17, 18, 19, // Upper
+    32, 33, 34, 37, 38, 39, 42, 43, 44, // Left
+    82, 83, 84, 87, 88, 89, 92, 93, 94, // Right
+    132, 133, 134, 137, 138, 139, 142, 143, 144  // Down
+};
+
+unsigned int UFBD_centers_555[NUM_UFBD_CENTERS_555] = {
+    7, 8, 9, 12, 13, 14, 17, 18, 19, // Upper
+    57, 58, 59, 62, 63, 64, 67, 68, 69, // Front
+    107, 108, 109, 112, 113, 114, 117, 118, 119, // Back
+    132, 133, 134, 137, 138, 139, 142, 143, 144  // Down
+};
+
+unsigned int LFRB_centers_555[NUM_LFRB_CENTERS_555] = {
+    32, 33, 34, 37, 38, 39, 42, 43, 44, // Left
+    57, 58, 59, 62, 63, 64, 67, 68, 69, // Front
+    82, 83, 84, 87, 88, 89, 92, 93, 94, // Right
+    107, 108, 109, 112, 113, 114, 117, 118, 119 // Back
 };
 
 // ===========================================================================
@@ -158,48 +181,82 @@ ida_heuristic_ULFRBD_centers_555 (
     char *cube,
     unsigned int max_cost_to_goal,
     struct key_value_pair **ULFRBD_centers_cost_555,
-    char *pt_t_centers_cost_only,
-    char *pt_x_centers_cost_only)
+    char *UL_centers_cost_only_555,
+    char *UF_centers_cost_only_555,
+    char *LF_centers_cost_only_555)
 {
     unsigned int cost_to_goal = 0;
-    unsigned long t_centers_state = 0;
-    unsigned long x_centers_state = 0;
-    unsigned long t_centers_cost = 0;
-    unsigned long x_centers_cost = 0;
+    unsigned long UL_centers_state = 0;
+    unsigned long UL_centers_cost = 0;
+    unsigned long UL_centers_bucket = 0;
+
+    unsigned long UF_centers_state = 0;
+    unsigned long UF_centers_cost = 0;
+    unsigned long UF_centers_bucket = 0;
+
+    unsigned long LF_centers_state = 0;
+    unsigned long LF_centers_cost = 0;
+    unsigned long LF_centers_bucket = 0;
+
     unsigned long centers_state = 0;
     struct ida_heuristic_result result;
+    char UL_centers_state_str[16];
+    char UF_centers_state_str[16];
+    char LF_centers_state_str[16];
+    unsigned long BUCKETS = 24010031;
+    unsigned int STATE_LENGTH = 9;
+    unsigned int HASH_SEED = 0;
 
-    // x-centers
-    for (int i = 0; i < NUM_X_CENTERS_555; i++) {
-        if (cube[x_centers_555[i]] == '1') {
-            x_centers_state |= 0x1;
+    // UL centers
+    for (int i = 0; i < NUM_ULRD_CENTERS_555; i++) {
+        if (cube[ULRD_centers_555[i]] == '1') {
+            UL_centers_state |= 0x1;
         }
-        x_centers_state <<= 1;
+        UL_centers_state <<= 1;
     }
-    x_centers_state >>= 1;
-    x_centers_cost = hex_to_int(pt_x_centers_cost_only[x_centers_state]);
+    UL_centers_state >>= 1;
+    sprintf(UL_centers_state_str , "%09lx", UL_centers_state);
+    UL_centers_bucket = XXH32(UL_centers_state_str, STATE_LENGTH, HASH_SEED) % BUCKETS;
+    UL_centers_cost = hex_to_int(UL_centers_cost_only_555[UL_centers_bucket]);
 
-    if (x_centers_cost >= max_cost_to_goal) {
-        result.cost_to_goal = x_centers_cost;
+    if (UL_centers_cost >= max_cost_to_goal) {
+        result.cost_to_goal = UL_centers_cost;
         return result;
     }
 
-
-    // t-centers
-    for (int i = 0; i < NUM_T_CENTERS_555; i++) {
-        if (cube[t_centers_555[i]] == '1') {
-            t_centers_state |= 0x1;
+    // UF centers
+    for (int i = 0; i < NUM_UFBD_CENTERS_555; i++) {
+        if (cube[UFBD_centers_555[i]] == '1') {
+            UF_centers_state |= 0x1;
         }
-        t_centers_state <<= 1;
+        UF_centers_state <<= 1;
     }
-    t_centers_state >>= 1;
-    t_centers_cost = hex_to_int(pt_t_centers_cost_only[t_centers_state]);
+    UF_centers_state >>= 1;
+    sprintf(UF_centers_state_str , "%09lx", UF_centers_state);
+    UF_centers_bucket = XXH32(UF_centers_state_str, STATE_LENGTH, HASH_SEED) % BUCKETS;
+    UF_centers_cost = hex_to_int(UF_centers_cost_only_555[UF_centers_bucket]);
 
-    if (t_centers_cost >= max_cost_to_goal) {
-        result.cost_to_goal = t_centers_cost;
+    if (UF_centers_cost >= max_cost_to_goal) {
+        result.cost_to_goal = UF_centers_cost;
         return result;
     }
 
+    // LF centers
+    for (int i = 0; i < NUM_LFRB_CENTERS_555; i++) {
+        if (cube[LFRB_centers_555[i]] == '1') {
+            LF_centers_state |= 0x1;
+        }
+        LF_centers_state <<= 1;
+    }
+    LF_centers_state >>= 1;
+    sprintf(LF_centers_state_str , "%09lx", LF_centers_state);
+    LF_centers_bucket = XXH32(LF_centers_state_str, STATE_LENGTH, HASH_SEED) % BUCKETS;
+    LF_centers_cost = hex_to_int(LF_centers_cost_only_555[LF_centers_bucket]);
+
+    if (LF_centers_cost >= max_cost_to_goal) {
+        result.cost_to_goal = LF_centers_cost;
+        return result;
+    }
 
     // centers
     for (int i = 0; i < NUM_CENTERS_555; i++) {
@@ -214,7 +271,7 @@ ida_heuristic_ULFRBD_centers_555 (
     // 3ffffff8000000 is 14 chars
     sprintf(result.lt_state, "%014lx", centers_state);
 
-    cost_to_goal = max(t_centers_cost, x_centers_cost);
+    cost_to_goal = max(UL_centers_cost, UF_centers_cost);
 
     // The step30 table we loaded is 6-deep so if a state is not in that
     // table we know it has a cost of at least 7...thus MAX_DEPTH of 7 here.

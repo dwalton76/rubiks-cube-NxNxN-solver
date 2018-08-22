@@ -52,8 +52,9 @@ char *pt_t_centers_cost_only = NULL;
 char *pt_x_centers_cost_only = NULL;
 
 struct key_value_pair *ULFRBD_centers_555 = NULL;
-char *ULFRBD_t_centers_cost_only = NULL;
-char *ULFRBD_x_centers_cost_only = NULL;
+char *UL_centers_cost_only_555 = NULL;
+char *UF_centers_cost_only_555 = NULL;
+char *LF_centers_cost_only_555 = NULL;
 
 struct key_value_pair *LR_inner_x_centers_and_oblique_edges_666 = NULL;
 char *LR_inner_x_centers_666 = NULL;
@@ -436,8 +437,9 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             cube,
             max_cost_to_goal,
             &ULFRBD_centers_555,
-            ULFRBD_t_centers_cost_only,
-            ULFRBD_x_centers_cost_only);
+            UL_centers_cost_only_555,
+            UF_centers_cost_only_555,
+            LF_centers_cost_only_555);
 
     // 6x6x6
     case UD_OBLIQUE_EDGES_STAGE_666:
@@ -1173,8 +1175,9 @@ ida_solve (
 
     case CENTERS_SOLVE_555:
         ida_prune_table_preload(&ULFRBD_centers_555, "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt");
-        ULFRBD_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step31-ULFRBD-x-centers-solve.cost-only.txt", 16773121);
-        ULFRBD_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step32-ULFRBD-t-centers-solve.cost-only.txt", 16773121);
+        UL_centers_cost_only_555 = ida_cost_only_preload("lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt", 24010032);
+        UF_centers_cost_only_555 = ida_cost_only_preload("lookup-table-5x5x5-step32-UF-centers-solve.hash-cost-only.txt", 24010032);
+        LF_centers_cost_only_555 = ida_cost_only_preload("lookup-table-5x5x5-step33-LF-centers-solve.hash-cost-only.txt", 24010032);
         break;
 
     // 6x6x6

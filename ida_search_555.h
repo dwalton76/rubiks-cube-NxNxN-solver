@@ -5,6 +5,9 @@
 #define NUM_CENTERS_555 54
 #define NUM_T_CENTERS_555 24
 #define NUM_X_CENTERS_555 24
+#define NUM_ULRD_CENTERS_555 36
+#define NUM_UFBD_CENTERS_555 36
+#define NUM_LFRB_CENTERS_555 36
 
 struct ida_heuristic_result ida_heuristic_UD_centers_555(
     char *cube,
@@ -19,8 +22,9 @@ struct ida_heuristic_result ida_heuristic_ULFRBD_centers_555(
     char *cube,
     unsigned int max_cost_to_goal,
     struct key_value_pair **ULFRBD_centers_cost_555,
-    char *pt_t_centers_cost_only,
-    char *pt_x_centers_cost_only
+    char *UL_centers_cost_only_555,
+    char *UF_centers_cost_only_555,
+    char *LF_centers_cost_only_555
 );
 int ida_search_complete_ULFRBD_centers_555 (char *cube);
 

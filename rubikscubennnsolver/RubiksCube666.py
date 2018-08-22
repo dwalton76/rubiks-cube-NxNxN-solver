@@ -178,7 +178,7 @@ LFRB_right_oblique_edges_666 = (
 class LookupTable666UDInnerXCentersStage(LookupTable):
     """
     lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt
-    =========================================================
+    ======================================================
     1 steps has 9 entries (0 percent, 0.00x previous step)
     2 steps has 108 entries (0 percent, 12.00x previous step)
     3 steps has 1,434 entries (0 percent, 13.28x previous step)
@@ -200,38 +200,14 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
             ('f0000f', '0f0f00', '00f0f0'),
             linecount=735471,
             max_depth=8,
-            filesize=31625253,
-        )
-
-
-class LookupTableIDA666UDInnerXCentersStage(LookupTableIDA):
-    """
-    We use IDA here so we can avoid OLL on the inside orbit
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt',
-            ('f0000f', '0f0f00', '00f0f0'),
-            moves_666,
-
-            # illegal_moves
-            (),
-
-            # prune tables
-            (parent.lt_UD_inner_x_centers_stage_pt,),
-            linecount=735471,
-            max_depth=8,
-            filesize=31625253,
+            md5='2ffd36e53d075cc5042504cc8752b06e',
         )
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
         lt_state = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in inner_x_centers_666])
         lt_state = self.hex_format % int(lt_state, 2)
-        cost_to_goal = self.parent.lt_UD_inner_x_centers_stage_pt.heuristic(lt_state)
+        cost_to_goal = self.heuristic(lt_state)
         return (lt_state, cost_to_goal)
 
 
@@ -945,11 +921,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             return
         self.lt_init_called = True
 
-        self.lt_UD_inner_x_centers_stage_pt = LookupTable666UDInnerXCentersStage(self)
-        self.lt_UD_inner_x_centers_stage = LookupTableIDA666UDInnerXCentersStage(self)
-        self.lt_UD_inner_x_centers_stage_pt.preload_cache_string()
-        self.lt_UD_inner_x_centers_stage.preload_cache_string()
-
+        self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(self)
         self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
 
         # This is the case if a 777 is using 666 to pair its UD oblique edges
@@ -1029,33 +1001,18 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_init()
 
         if oblique_edges_only:
-            self.lt_UD_inner_x_centers_stage.avoid_oll = None
-            self.lt_UD_oblique_edge_stage.avoid_oll = None
             self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = None
         else:
-            self.lt_UD_inner_x_centers_stage.avoid_oll = 1
-            self.lt_UD_oblique_edge_stage.avoid_oll = 1
             self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
 
         self.lt_UD_inner_x_centers_stage.solve()
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
-
-        if not oblique_edges_only:
-            log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
         log.info("%s: UD inner-x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
 
         self.lt_UD_oblique_edge_stage.solve()
         self.print_cube()
-
-        if not oblique_edges_only:
-            log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
-
         log.info("%s: UD oblique edges paired (not staged), %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-        #self.print_cube()
-        #log.info("%s: UD oblique edges paired (not staged), %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Stage UD centers via 555
         fake_555 = self.get_fake_555()
@@ -1064,19 +1021,13 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         if oblique_edges_only:
             fake_555.lt_UD_T_centers_stage.solve()
         else:
-            fake_555.lt_UD_centers_stage.avoid_oll = 0
             fake_555.group_centers_stage_UD()
-            fake_555.lt_UD_centers_stage.avoid_oll = None
 
         for step in fake_555.solution:
             self.rotate(step)
 
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
-
-        if not oblique_edges_only:
-            log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Test the prune tables
@@ -1088,11 +1039,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LR_inner_x_centers_and_oblique_edges_stage.solve()
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
-
-        if not oblique_edges_only:
-            log.info("%s: oribits with oll %s" % (self, pformat(self.center_solution_leads_to_oll_parity())))
-
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: LR oblique edges and inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Stage LR centers via 555
@@ -1138,7 +1084,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.solve_reduced_555_centers()
             self.print_cube()
             log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
 
     def phase(self):
         if self._phase is None:

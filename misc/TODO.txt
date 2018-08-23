@@ -1,74 +1,57 @@
 
 today
-- use 555 UL and UF tables for step30
-- use odd/even tables for 666 step32
-- build odd/even tables for 666 step31 (building on LJs machine)
-
-
-IDA via C
-=========
-- 444 step10 but it needs to avoid OLL. Would be cool if it searched until
-  it found a solution that satisfied phase2.
-
-- 555 step10 is "slow" (~4s) for this one
-    - FLDDRDRFDRBUUURDLRBFBULLLUUFBFUURUULURBDRFBBFULFBLDBBBFLRDFFDLFBUURUUFLDUFRBFRRBUDDLBFBDRUDDFFRDRBRBUBUBRLFFLUDLLDFDBLRBFFLRUDLLURRLRUFRDBFBLBLDLDDRDL
-    - This would be a good test cube for bitfield cube state work
-
-
-- 555 step20 moves this to C...this is low priority though
-
-
-- memleak somewhere...this takes 240M it should only take ~75M
-    ./ida_search --kociemba ......UUx..xUx..UUx............LxL..xxx..xLx............xFF..FFF..xxF............xUx..xxU..UxU............xLL..xLL..LLx............Fxx..xxx..xFF...... --type 5x5x5-centers-solve
-
-
-- loading main table is slow. It takes 700ms to load the step30 table in this solve. Instead of
-    using uthash what if we used the following Dictionary implementation but with xxhash?
-    http://www.cs.yale.edu/homes/aspnes/pinewiki/C(2f)HashTables.html?highlight=%28CategoryAlgorithmNotes%29
-    ./ida_search --kociemba ......UUx..xUx..UUx............LxL..xxx..xLx............xFF..FFF..xxF............xUx..xxU..UxU............xLL..xLL..LLx............Fxx..xxx..xFF...... --type 5x5x5-centers-solve
-
-
-- 666 step30 this is slooooow (20s)
+=====
+- tommyhash this should help with speed and memory. Test against the following.
+    It takes 25s and 589M of memory today. It also takes 800ms to load the step30 table.
+    http://www.tommyds.it/doc/tommyhashtbl_8h
+    https://github.com/amadvance/tommyds/
 
     time ./ida_search --kociemba .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU. --type 6x6x6-LR-inner-x-centers-oblique-edges-stage --orbit1-need-even-w
 
-    The --orbit1-need-even-w makes a huge difference, it takes 2s without that. What if we built
-    two step32 tables, one with even-w moves and one with odd-w moves? You could do the same for
-    step31, that may get the move count up high enough to be a useful prune tablet.
 
+tomorrow
+========
+- 777 step30 to IDAViaC
+This one takes 21 minutes!! :(
+BFBDFLFRDUDUURLUUDUUFFDDUDDUFDUDDUDRUDUDDFRBRFDRBUUFLRDLBFLFBBLRLLLRBUFBRRRRDRBRRLRUBRLFRLLRRBDBBDFUUUFULFFLBRRDRBFBFRBBRBFFFRFFBBBBBFLLLRBRLBDLRBBURLFDDUUUUUDDDLDDUDDDBUUDUDLRUDUUUDLUDUDDLDRURULLDUUDUFUBLBLRLDLRRLLRDBFLLRBLLFLLRLLFBBLBRURDFRDBFDULRUDRUFLRFFLFFBFBFBBLBBFBULLFFFFBDRFRFBLBFBURFF
+
+    2018-08-20 10:05:02,516     RubiksCube777.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: recolor (custom)
+    2018-08-20 10:05:02,517       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold range 5->99
+    2018-08-20 10:05:02,517       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 5, explored 1 nodes in 0ms, 20408 nodes-per-sec
+    2018-08-20 10:05:02,526       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 6, explored 46 nodes in 8ms, 5301 nodes-per-sec
+    2018-08-20 10:05:02,552       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 7, explored 187 nodes in 26ms, 7040 nodes-per-sec
+    2018-08-20 10:05:02,716       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 8, explored 3124 nodes in 163ms, 19092 nodes-per-sec
+    2018-08-20 10:05:04,407       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 9, explored 46768 nodes in 1690ms, 27665 nodes-per-sec
+    2018-08-20 10:05:37,588       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 10, explored 925409 nodes in 0:00:33.181277, 27889 nodes-per-sec
+    2018-08-20 10:18:26,484       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 11, explored 16708710 nodes in 0:12:48.895819, 21730 nodes-per-sec
+    2018-08-20 10:24:56,646       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: exit_asap on first match
+    2018-08-20 10:26:38,831       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: found 1/455720 states in lookup-table
+    2018-08-20 10:26:38,832       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: 1/1 solution_len 13 (NEW MIN)
+    2018-08-20 10:26:38,840       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 12, explored 11093542 nodes in 0:08:12.355975 (0:21:36.323674 total)
+    2018-08-20 10:26:38,840       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA explored 28777787 nodes in 0:21:36.323674, 22199 nodes-per-sec
+
+    For some reason I never built the step33 table?? See if that helps
+    This is building now on kids machine
+
+- 777 step40 to IDAViaC
+- 777 step50 to IDAViaC
+- 777 step60 to IDAViaC
+
+- 444 step10 but it needs to avoid OLL. Would be cool if it searched until
+  it found a solution that satisfied phase2.
+
+- delete all exit_asap code
+
+- delete all heuristic_stats code
+
+- 555 step20 moves this to C...this is low priority though
 
 - 666 step60? Not sure if this one is ever slow
 
-- 777 step40
-- 777 step50
-- 777 step60
-
-- delete all exit_asap code
-- delete all heuristic_stats code
-
-
-
-misc
-===================
-- 777step30 takes 21 minutes :(
-BFBDFLFRDUDUURLUUDUUFFDDUDDUFDUDDUDRUDUDDFRBRFDRBUUFLRDLBFLFBBLRLLLRBUFBRRRRDRBRRLRUBRLFRLLRRBDBBDFUUUFULFFLBRRDRBFBFRBBRBFFFRFFBBBBBFLLLRBRLBDLRBBURLFDDUUUUUDDDLDDUDDDBUUDUDLRUDUUUDLUDUDDLDRURULLDUUDUFUBLBLRLDLRRLLRDBFLLRBLLFLLRLLFBBLBRURDFRDBFDULRUDRUFLRFFLFFBFBFBBLBBFBULLFFFFBDRFRFBLBFBURFF
-
-2018-08-20 10:05:02,516     RubiksCube777.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: recolor (custom)
-2018-08-20 10:05:02,517       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold range 5->99
-2018-08-20 10:05:02,517       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 5, explored 1 nodes in 0ms, 20408 nodes-per-sec
-2018-08-20 10:05:02,526       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 6, explored 46 nodes in 8ms, 5301 nodes-per-sec
-2018-08-20 10:05:02,552       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 7, explored 187 nodes in 26ms, 7040 nodes-per-sec
-2018-08-20 10:05:02,716       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 8, explored 3124 nodes in 163ms, 19092 nodes-per-sec
-2018-08-20 10:05:04,407       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 9, explored 46768 nodes in 1690ms, 27665 nodes-per-sec
-2018-08-20 10:05:37,588       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 10, explored 925409 nodes in 0:00:33.181277, 27889 nodes-per-sec
-2018-08-20 10:18:26,484       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 11, explored 16708710 nodes in 0:12:48.895819, 21730 nodes-per-sec
-2018-08-20 10:24:56,646       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: exit_asap on first match
-2018-08-20 10:26:38,831       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: found 1/455720 states in lookup-table
-2018-08-20 10:26:38,832       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: 1/1 solution_len 13 (NEW MIN)
-2018-08-20 10:26:38,840       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 12, explored 11093542 nodes in 0:08:12.355975 (0:21:36.323674 total)
-2018-08-20 10:26:38,840       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA explored 28777787 nodes in 0:21:36.323674, 22199 nodes-per-sec
-
-    For some reason I never build the step33 table?? See if that helps
+- cube state via bitfield
+    - gprof first to find out if the rotate() is the bottleneck
+    - 555 step10 is "slow" (~4s) for this one...test with it
+        - FLDDRDRFDRBUUURDLRBFBULLLUUFBFUURUULURBDRFBBFULFBLDBBBFLRDFFDLFBUURUUFLDUFRBFRRBUDDLBFBDRUDDFFRDRBRBUBUBRLFFLUDLLDFDBLRBFFLRUDLLURRLRUFRDBFBLBLDLDDRDL
 
 - make these consistent
     edge vs edges
@@ -79,8 +62,67 @@ BFBDFLFRDUDUURLUUDUUFFDDUDDUFDUDDUDRUDUDDFRBRFDRBUUFLRDLBFLFBBLRLLLRBUFBRRRRDRBR
     method names
 
 
-555 edges
-=========
+555 edges tables to build
+=========================
+
+555 edges (first 12)
+--------------------
+- build a table where we track all 12 edges up to 7-deep, maybe 8-deep, 9-deep would be huge
+- the odds of us getting a hit in this table are very low...this probably isn't worth it
+
+
+555 edges (first 8)
+-------------------
+- track 8 edges
+- build this to 8-deep, maybe 9-deep
+
+
+555 edges (first 4)
+-------------------
+- track 4 edges
+- build this to 9-deep, possibly 10-deep
+
+
+555 edges (first 2)
+-------------------
+- track 2 edges
+- not sure if we will need this so hold off
+
+*********************
+*********************
+
+555 edges (second 8)
+--------------------
+- build a table where we track 8 edges, do not break up the LB, LF, RF, RB edges.
+
+
+555 edges (second 4)
+--------------------
+- build a table where we track 4 edges, do not break up the LB, LF, RF, RB edges.
+- we should be able to build this 1 or 2 moves deeper than the "first 4" table
+  so build that one first before deciding how deep to go on this one.
+
+555 edges (second 2)
+--------------------
+- build a table where we track 4 edges, do not break up the LB, LF, RF, RB edges.
+- not sure if we will need this so hold off
+
+
+*********************
+*********************
+
+
+555 edges (third 4)
+-------------------
+- This is the L4E table so this is done
+
+
+
+
+
+
+555 edges (4, 4, 4)
+===================
 - pair the first four edges...maybe. There are 7920 starting points where 4-edges are paired.
   We will build this table out as deep as we can, 11-deep is probably the best to hope for.
 

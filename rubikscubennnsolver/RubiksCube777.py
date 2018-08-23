@@ -3,11 +3,6 @@ from rubikscubennnsolver import NotSolving
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666, moves_666
-from rubikscubennnsolver.RubiksCube777Misc import (
-    state_targets_step30,
-    state_targets_step31,
-    state_targets_step32,
-)
 from rubikscubennnsolver.cLibrary import (
     ida_heuristic_states_step40_777,
     ida_heuristic_states_step50_777,
@@ -38,7 +33,6 @@ centers_777 = (
 )
 
 
-
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
 
     oblique_edges_777 = (
@@ -49,37 +43,6 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
         206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, # Back
         255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285, # Down
     )
-
-    left_oblique_edge_777 = (
-        10, 20, 30, 40, # Upper
-        59, 69, 79, 89, # Left
-        108, 118, 128, 138, # Front
-        157, 167, 177, 187, # Right
-        206, 216, 226, 236, # Back
-        255, 265, 275, 285, # Down
-    )
-
-    middle_oblique_edge_777 = (
-        11, 23, 27, 39, # Upper
-        60, 72, 76, 88, # Left
-        109, 121, 125, 137, # Front
-        158, 170, 174, 186, # Right
-        207, 219, 223, 235, # Back
-        256, 268, 272, 284, # Down
-    )
-
-    right_oblique_edge_777 = (
-        12, 16, 34, 38, # Upper
-        61, 65, 83, 87, # Left
-        110, 114, 132, 136, # Front
-        159, 163, 181, 185, # Right
-        208, 212, 230, 234, # Back
-        257, 261, 279, 283, # Down
-    )
-
-    set_left_oblique_edge_777 = set(left_oblique_edge_777)
-    set_middle_oblique_edge_777 = set(middle_oblique_edge_777)
-    set_right_oblique_edge_777 = set(right_oblique_edge_777)
 
     def __init__(self, parent):
 
@@ -108,99 +71,8 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
         #self.parent.print_cube()
 
 
-class LookupTable777LRLeftRightObliqueEdgePairing(LookupTableHashCostOnly):
-    """
-    lookup-table-7x7x7-step31-stage-lr-oblique-edges.txt
-    ====================================================
-    1 steps has 45,158 entries (0 percent, 0.00x previous step)
-    2 steps has 293,056 entries (0 percent, 6.49x previous step)
-    3 steps has 2,056,784 entries (1 percent, 7.02x previous step)
-    4 steps has 11,562,716 entries (6 percent, 5.62x previous step)
-    5 steps has 43,269,568 entries (26 percent, 3.74x previous step)
-    6 steps has 75,723,092 entries (45 percent, 1.75x previous step)
-    7 steps has 31,697,280 entries (19 percent, 0.42x previous step)
-    8 steps has 983,238 entries (0 percent, 0.03x previous step)
-    9 steps has 5,992 entries (0 percent, 0.01x previous step)
-    10 steps has 16 entries (0 percent, 0.00x previous step)
+class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
 
-    Total: 165,636,900 entries
-    Average: 5.76 moves
-    """
-
-    def __init__(self, parent):
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step31-stage-lr-oblique-edges.hash-cost-only.txt',
-            state_targets_step31,
-            linecount=165636900,
-            max_depth=10,
-            bucketcount=165636907,
-            filesize=165636908)
-
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step31-stage-lr-oblique-edges.txt',
-            state_targets_step31,
-            linecount=165636900,
-            max_depth=10)
-        '''
-
-
-class LookupTable777LRLeftMiddleObliqueEdgePairing(LookupTableHashCostOnly):
-    """
-    lookup-table-7x7x7-step32-stage-lr-left-middle-oblique-edges.txt
-    ================================================================
-    1 steps has 60,390 entries (0 percent, 0.00x previous step)
-    2 steps has 504,512 entries (0 percent, 8.35x previous step)
-    3 steps has 3,164,712 entries (1 percent, 6.27x previous step)
-    4 steps has 14,547,152 entries (8 percent, 4.60x previous step)
-    5 steps has 39,862,724 entries (24 percent, 2.74x previous step)
-    6 steps has 59,903,328 entries (36 percent, 1.50x previous step)
-    7 steps has 38,877,292 entries (23 percent, 0.65x previous step)
-    8 steps has 8,224,240 entries (4 percent, 0.21x previous step)
-    9 steps has 486,440 entries (0 percent, 0.06x previous step)
-    10 steps has 6,102 entries (0 percent, 0.01x previous step)
-    11 steps has 8 entries (0 percent, 0.00x previous step)
-
-    Total: 165,636,900 entries
-    Average: 5.86 moves
-    """
-
-    def __init__(self, parent):
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step32-stage-lr-left-middle-oblique-edges.hash-cost-only.txt',
-            state_targets_step32,
-            linecount=165636900,
-            max_depth=11,
-            bucketcount=165636907,
-            filesize=165636908)
-
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step32-stage-lr-left-middle-oblique-edges.txt',
-            state_targets_step32,
-            linecount=165636900,
-            max_depth=11)
-        '''
-
-
-class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step30-stage-lr-oblique-edges.txt
-    ====================================================
-    1 steps has 77,446 entries (0 percent, 0.00x previous step)
-    2 steps has 831,520 entries (8 percent, 10.74x previous step)
-    3 steps has 9,010,776 entries (90 percent, 10.84x previous step)
-
-    Total: 9,919,742 entries
-    """
     LFRB_oblique_edges_777 = (
         59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89, # Left
         108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138, # Front
@@ -208,46 +80,14 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
         206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, # Back
     )
 
-    LFRB_left_middle_oblique_edges_777 = (
-        59, 60, 69, 72, 76, 79, 88, 89, # Left
-        108, 109, 118, 121, 125, 128, 137, 138, # Front
-        157, 158, 167, 170, 174, 177, 186, 187, # Right
-        206, 207, 216, 219, 223, 226, 235, 236, # Back
-    )
-
-    LFRB_left_right_oblique_edges_777 = (
-        59, 61, 65, 69, 79, 83, 87, 89, # Left
-        108, 110, 114, 118, 128, 132, 136, 138, # Front
-        157, 159, 163, 167, 177, 181, 185, 187, # Right
-        206, 208, 212, 216, 226, 230, 234, 236, # Back
-    )
-
-    set_LFRB_left_right_oblique_edges_777 = set(LFRB_left_right_oblique_edges_777)
-    set_LFRB_left_middle_oblique_edges_777 = set(LFRB_left_middle_oblique_edges_777)
-
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step30-stage-lr-oblique-edges.txt',
-            state_targets_step30,
-            moves_777,
-
-            ("3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged inner-x-centers
-             "3Lw", "3Lw'", "3Rw", "3Rw'",
-             "3Fw", "3Fw'", "3Bw", "3Bw'",
-             "Rw", "Rw'", "Lw", "Lw'",     # do not mess up staged UD oblique pairs
-             "Fw", "Fw'", "Bw", "Bw'"),
-
-            # prune tables
-            (parent.lt_LR_left_right_oblique_edge_pairing,
-             parent.lt_LR_left_middle_oblique_edge_pairing,
-            ),
-
-            linecount=9919742,
-            max_depth=3,
-            filesize=277752776,
-            exit_asap=9,
+            # Needed tables and their md5 signatures
+            (),
+            '7x7x7-LR-oblique-edges-stage' # C_ida_type
         )
 
     def recolor(self):
@@ -265,47 +105,6 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
             else:
                 self.parent.state[x] = '.'
         #self.parent.print_cube()
-
-    def ida_heuristic(self, ida_threshold):
-        parent_state = self.parent.state
-        left_middle_state = 0
-        left_right_state = 0
-        lt_state = 0
-
-        set_LFRB_left_right_oblique_edges_777 = self.set_LFRB_left_right_oblique_edges_777
-        set_LFRB_left_middle_oblique_edges_777 = self.set_LFRB_left_middle_oblique_edges_777
-
-        for x in self.LFRB_oblique_edges_777:
-            x_state = parent_state[x]
-
-            if x in set_LFRB_left_right_oblique_edges_777:
-                if x_state == 'L':
-                    left_right_state = left_right_state | 0x1
-                left_right_state = left_right_state << 1
-
-            if x in set_LFRB_left_middle_oblique_edges_777:
-                if x_state == 'L':
-                    left_middle_state = left_middle_state | 0x1
-                left_middle_state = left_middle_state << 1
-
-            if x_state == 'L':
-                lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-
-        left_middle_state = left_middle_state >> 1
-        left_right_state = left_right_state >> 1
-        lt_state = lt_state >> 1
-
-        # convert to hex format
-        left_right_state = self.parent.lt_LR_left_right_oblique_edge_pairing.hex_format % left_right_state
-        left_middle_state = self.parent.lt_LR_left_middle_oblique_edge_pairing.hex_format % left_middle_state
-        lt_state = self.hex_format % lt_state
-
-        left_right_cost = self.parent.lt_LR_left_right_oblique_edge_pairing.heuristic(left_right_state)
-        left_middle_cost = self.parent.lt_LR_left_middle_oblique_edge_pairing.heuristic(left_middle_state)
-        cost_to_goal = max(left_right_cost, left_middle_cost)
-
-        return (lt_state, cost_to_goal)
 
 
 #class LookupTable777Step41(LookupTable):
@@ -1155,11 +954,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_init_called = True
 
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
-
-        self.lt_LR_left_right_oblique_edge_pairing = LookupTable777LRLeftRightObliqueEdgePairing(self)
-        self.lt_LR_left_middle_oblique_edge_pairing = LookupTable777LRLeftMiddleObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
-        self.lt_LR_oblique_edge_pairing.preload_cache_string()
 
         self.lt_step41 = LookupTable777Step41(self)
         self.lt_step42 = LookupTable777Step42(self)

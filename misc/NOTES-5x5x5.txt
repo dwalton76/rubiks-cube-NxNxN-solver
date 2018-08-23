@@ -345,3 +345,11 @@ also fixed edge L4E staging tables
 real    9m6.864s
 user    6m45.792s
 sys     2m18.086s
+
+
+555 solve centers use UL, UF and LF prune tables
+================================================
+// same move counts as above but faster
+real    7m1.700s
+user    4m14.023s
+sys     2m42.223s

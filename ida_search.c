@@ -42,6 +42,7 @@ typedef enum {
 
     // 7x7x7
     UD_OBLIQUE_EDGES_STAGE_777,
+    LR_OBLIQUE_EDGES_STAGE_777, // LR oblique edges and inside centers
 
 } lookup_table_type;
 
@@ -282,6 +283,7 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         break;
 
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+    case LR_OBLIQUE_EDGES_STAGE_777:
         // Convert to 1s and 0s
         str_replace_for_binary(cube, ones_LR);
         print_cube(cube, size);
@@ -292,6 +294,7 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         str_replace_for_binary(cube, ones_ULF);
         print_cube(cube, size);
         break;
+
     default:
         printf("ERROR: init_cube() does not yet support this --type\n");
         exit(1);
@@ -458,10 +461,10 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
 
     // 7x7x7
     case UD_OBLIQUE_EDGES_STAGE_777:
-        return ida_heuristic_UD_oblique_edges_stage_777(
-            cube,
-            max_cost_to_goal
-        );
+        return ida_heuristic_UD_oblique_edges_stage_777(cube, max_cost_to_goal);
+
+    case LR_OBLIQUE_EDGES_STAGE_777:
+        return ida_heuristic_LR_oblique_edges_stage_777(cube, max_cost_to_goal);
 
     default:
         printf("ERROR: ida_heuristic() does not yet support this --type\n");
@@ -606,6 +609,9 @@ ida_search_complete (
     // 7x7x7
     case UD_OBLIQUE_EDGES_STAGE_777:
         return ida_search_complete_UD_oblique_edges_stage_777(cube);
+
+    case LR_OBLIQUE_EDGES_STAGE_777:
+        return ida_search_complete_LR_oblique_edges_stage_777(cube);
 
     default:
         printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
@@ -764,6 +770,34 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         default:
             return 1;
         }
+
+    case LR_OBLIQUE_EDGES_STAGE_777:
+        switch (move) {
+        case threeFw:
+        case threeFw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeUw:
+        case threeUw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+            return 0;
+        default:
+            return 1;
+        }
+
 
     default:
         printf("ERROR: step_allowed_by_ida_search add support for this type\n");
@@ -1192,6 +1226,7 @@ ida_solve (
 
     // 7x7x7
     case UD_OBLIQUE_EDGES_STAGE_777:
+    case LR_OBLIQUE_EDGES_STAGE_777:
         break;
 
     default:
@@ -1265,6 +1300,10 @@ main (int argc, char *argv[])
             // 7x7x7
             } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-stage")) {
                 type = UD_OBLIQUE_EDGES_STAGE_777;
+                cube_size_type = 7;
+
+            } else if (strmatch(argv[i], "7x7x7-LR-oblique-edges-stage")) {
+                type = LR_OBLIQUE_EDGES_STAGE_777;
                 cube_size_type = 7;
 
             } else {

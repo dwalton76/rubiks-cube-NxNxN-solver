@@ -1,41 +1,24 @@
 
 today
 =====
+- 777 step40 to IDAViaC
+- 777 step50 to IDAViaC
+- 777 step60 to IDAViaC
+
+
+tomorrow
+========
+- when building the 555 edges tables once you get to the halfway point, for each
+  state you just need to do all move sequences that allow the centers to be solved
+  within the move budget. This would eliminate a ton of sorting, finding new states
+  and building next workqs.
+
 - tommyhash this should help with speed and memory. Test against the following.
     It takes 25s and 589M of memory today. It also takes 800ms to load the step30 table.
     http://www.tommyds.it/doc/tommyhashtbl_8h
     https://github.com/amadvance/tommyds/
 
     time ./ida_search --kociemba .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU. --type 6x6x6-LR-inner-x-centers-oblique-edges-stage --orbit1-need-even-w
-
-
-tomorrow
-========
-- 777 step30 to IDAViaC
-This one takes 21 minutes!! :(
-BFBDFLFRDUDUURLUUDUUFFDDUDDUFDUDDUDRUDUDDFRBRFDRBUUFLRDLBFLFBBLRLLLRBUFBRRRRDRBRRLRUBRLFRLLRRBDBBDFUUUFULFFLBRRDRBFBFRBBRBFFFRFFBBBBBFLLLRBRLBDLRBBURLFDDUUUUUDDDLDDUDDDBUUDUDLRUDUUUDLUDUDDLDRURULLDUUDUFUBLBLRLDLRRLLRDBFLLRBLLFLLRLLFBBLBRURDFRDBFDULRUDRUFLRFFLFFBFBFBBLBBFBULLFFFFBDRFRFBLBFBURFF
-
-    2018-08-20 10:05:02,516     RubiksCube777.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: recolor (custom)
-    2018-08-20 10:05:02,517       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold range 5->99
-    2018-08-20 10:05:02,517       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 5, explored 1 nodes in 0ms, 20408 nodes-per-sec
-    2018-08-20 10:05:02,526       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 6, explored 46 nodes in 8ms, 5301 nodes-per-sec
-    2018-08-20 10:05:02,552       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 7, explored 187 nodes in 26ms, 7040 nodes-per-sec
-    2018-08-20 10:05:02,716       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 8, explored 3124 nodes in 163ms, 19092 nodes-per-sec
-    2018-08-20 10:05:04,407       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 9, explored 46768 nodes in 1690ms, 27665 nodes-per-sec
-    2018-08-20 10:05:37,588       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 10, explored 925409 nodes in 0:00:33.181277, 27889 nodes-per-sec
-    2018-08-20 10:18:26,484       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 11, explored 16708710 nodes in 0:12:48.895819, 21730 nodes-per-sec
-    2018-08-20 10:24:56,646       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: exit_asap on first match
-    2018-08-20 10:26:38,831       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: found 1/455720 states in lookup-table
-    2018-08-20 10:26:38,832       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: 1/1 solution_len 13 (NEW MIN)
-    2018-08-20 10:26:38,840       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA threshold 12, explored 11093542 nodes in 0:08:12.355975 (0:21:36.323674 total)
-    2018-08-20 10:26:38,840       LookupTable.py     INFO: 7x7x7-step30-stage-lr-oblique-edges: IDA explored 28777787 nodes in 0:21:36.323674, 22199 nodes-per-sec
-
-    For some reason I never built the step33 table?? See if that helps
-    This is building now on kids machine
-
-- 777 step40 to IDAViaC
-- 777 step50 to IDAViaC
-- 777 step60 to IDAViaC
 
 - 444 step10 but it needs to avoid OLL. Would be cool if it searched until
   it found a solution that satisfied phase2.
@@ -44,12 +27,14 @@ BFBDFLFRDUDUURLUUDUUFFDDUDDUFDUDDUDRUDUDDFRBRFDRBUUFLRDLBFLFBBLRLLLRBUFBRRRRDRBR
 
 - delete all heuristic_stats code
 
-- 555 step20 moves this to C...this is low priority though
+- 555 step20 IDAViaC
 
-- 666 step60? Not sure if this one is ever slow
+- 666 step60 IDAViaC
 
 - cube state via bitfield
-    - gprof first to find out if the rotate() is the bottleneck
+    - gprof first to find out if the rotate() is the bottleneck. I did, rotate() shows up on the
+      radar but the calculating of the pt state to get the heurisic is the bigger bottleneck.
+      bitfield would make that much faster though, you could get the pt_state via a bunch of bitshifts.
     - 555 step10 is "slow" (~4s) for this one...test with it
         - FLDDRDRFDRBUUURDLRBFBULLLUUFBFUURUULURBDRFBBFULFBLDBBBFLRDFFDLFBUURUUFLDUFRBFRRBUDDLBFBDRUDDFFRDRBRBUBUBRLFFLUDLLDFDBLRBFFLRUDLLURRLRUFRDBFBLBLDLDDRDL
 
@@ -60,6 +45,11 @@ BFBDFLFRDUDUURLUUDUUFFDDUDDUFDUDDUDRUDUDDFRBRFDRBUUFLRDLBFLFBBLRLLLRBUFBRRRRDRBR
     group vs stage
     class names
     method names
+
+- 666 centers...someday if we have bitfield rotate and if ida_search.c is EXTREMELY fast
+  look into putting LR in horizontal bars and UD in vertical bars in a single phase. This
+  would be 70^4/70^8 or 0.000 000 041 but we would have multiple targets and two 70^4 prune
+  tables so it might be doable.
 
 
 555 edges tables to build

@@ -3,11 +3,6 @@ from rubikscubennnsolver import NotSolving
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666, moves_666
-from rubikscubennnsolver.cLibrary import (
-    ida_heuristic_states_step40_777,
-    ida_heuristic_states_step50_777,
-    ida_heuristic_states_step60_777,
-)
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableIDA,
@@ -107,9 +102,19 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
         #self.parent.print_cube()
 
 
-#class LookupTable777Step41(LookupTable):
-class LookupTable777Step41(LookupTableHashCostOnly):
+class LookupTableIDA777Step40(LookupTableIDAViaC):
     """
+    lookup-table-7x7x7-step40.txt
+    =============================
+    1 steps has 250 entries (0 percent, 0.00x previous step)
+    2 steps has 1,981 entries (0 percent, 7.92x previous step)
+    3 steps has 15,782 entries (1 percent, 7.97x previous step)
+    4 steps has 123,053 entries (11 percent, 7.80x previous step)
+    5 steps has 931,072 entries (86 percent, 7.57x previous step)
+
+    Total: 1,072,138 entries
+
+
     lookup-table-7x7x7-step41.txt
     =============================
     1 steps has 226 entries (0 percent, 0.00x previous step)
@@ -127,72 +132,8 @@ class LookupTable777Step41(LookupTableHashCostOnly):
 
     Total: 24,010,000 entries
     Average: 8.01 moves
-    """
-
-    state_targets = (
-        'LLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRR',
-        'LLLLLLRLLLLLLLRLLRRLRRRRRRRLRRRRRR',
-        'LLLLLLRLLLLLLLRLLRRRRRRLRRRRRRRLRR',
-        'LLRLLLLLLLRLLLLLLRRLRRRRRRRLRRRRRR',
-        'LLRLLLLLLLRLLLLLLRRRRRRLRRRRRRRLRR',
-        'LLRLLLRLLLRLLLRLLRRLRRRLRRRLRRRLRR',
-        'LRLLLRLLLRLLLRLLRLRRLRRRLRRRLRRRLR',
-        'LRLLLRLLLRLLLRLLRRLRRRLRRRLRRRLRRL',
-        'LRLLLRRLLRLLLRRLRLRLLRRRLRRLLRRRLR',
-        'LRLLLRRLLRLLLRRLRLRRLRRLLRRRLRRLLR',
-        'LRLLLRRLLRLLLRRLRRLLRRLRRRLLRRLRRL',
-        'LRLLLRRLLRLLLRRLRRLRRRLLRRLRRRLLRL',
-        'LRRLLRLLLRRLLRLLRLRLLRRRLRRLLRRRLR',
-        'LRRLLRLLLRRLLRLLRLRRLRRLLRRRLRRLLR',
-        'LRRLLRLLLRRLLRLLRRLLRRLRRRLLRRLRRL',
-        'LRRLLRLLLRRLLRLLRRLRRRLLRRLRRRLLRL',
-        'LRRLLRRLLRRLLRRLRLRLLRRLLRRLLRRLLR',
-        'LRRLLRRLLRRLLRRLRRLLRRLLRRLLRRLLRL',
-        'RLLRLLLRLLLRLLLRLLRRLRRRLRRRLRRRLR',
-        'RLLRLLLRLLLRLLLRLRLRRRLRRRLRRRLRRL',
-        'RLLRLLRRLLLRLLRRLLRLLRRRLRRLLRRRLR',
-        'RLLRLLRRLLLRLLRRLLRRLRRLLRRRLRRLLR',
-        'RLLRLLRRLLLRLLRRLRLLRRLRRRLLRRLRRL',
-        'RLLRLLRRLLLRLLRRLRLRRRLLRRLRRRLLRL',
-        'RLRRLLLRLLRRLLLRLLRLLRRRLRRLLRRRLR',
-        'RLRRLLLRLLRRLLLRLLRRLRRLLRRRLRRLLR',
-        'RLRRLLLRLLRRLLLRLRLLRRLRRRLLRRLRRL',
-        'RLRRLLLRLLRRLLLRLRLRRRLLRRLRRRLLRL',
-        'RLRRLLRRLLRRLLRRLLRLLRRLLRRLLRRLLR',
-        'RLRRLLRRLLRRLLRRLRLLRRLLRRLLRRLLRL',
-        'RRLRLRLRLRLRLRLRRLLRLRLRLRLRLRLRLL',
-        'RRLRLRRRLRLRLRRRRLLLLRLRLRLLLRLRLL',
-        'RRLRLRRRLRLRLRRRRLLRLRLLLRLRLRLLLL',
-        'RRRRLRLRLRRRLRLRRLLLLRLRLRLLLRLRLL',
-        'RRRRLRLRLRRRLRLRRLLRLRLLLRLRLRLLLL',
-        'RRRRLRRRLRRRLRRRRLLLLRLLLRLLLRLLLL'
-    )
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step41.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=12,
-            filesize=2064860000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step41.hash-cost-only.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=12,
-            bucketcount=24010031,
-            filesize=24010032)
 
 
-#class LookupTable777Step42(LookupTable):
-class LookupTable777Step42(LookupTableHashCostOnly):
-    """
     lookup-table-7x7x7-step42.txt
     =============================
     1 steps has 250 entries (0 percent, 0.00x previous step)
@@ -209,81 +150,6 @@ class LookupTable777Step42(LookupTableHashCostOnly):
 
     Total: 24,010,000 entries
     Average: 7.62 moves
-    """
-
-    state_targets = (
-        'LLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRR',
-        'LLLLLRLLLRLLLRLLLRRRLRRRLRRRLRRRRR',
-        'LLLLLRLLLRLLLRLLLRRRRRLRRRLRRRLRRR',
-        'LLLRLLLRLLLRLLLLLRRRLRRRLRRRLRRRRR',
-        'LLLRLLLRLLLRLLLLLRRRRRLRRRLRRRLRRR',
-        'LLLRLRLRLRLRLRLLLRRRLRLRLRLRLRLRRR',
-        'LLRLLLLLLLRLLLLLRLRRRRRLRRRRRRRLRR',
-        'LLRLLLLLLLRLLLLLRRRLRRRRRRRLRRRRRL',
-        'LLRLLRLLLRRLLRLLRLRRLRRLLRRRLRRLRR',
-        'LLRLLRLLLRRLLRLLRLRRRRLLRRLRRRLLRR',
-        'LLRLLRLLLRRLLRLLRRRLLRRRLRRLLRRRRL',
-        'LLRLLRLLLRRLLRLLRRRLRRLRRRLLRRLRRL',
-        'LLRRLLLRLLRRLLLLRLRRLRRLLRRRLRRLRR',
-        'LLRRLLLRLLRRLLLLRLRRRRLLRRLRRRLLRR',
-        'LLRRLLLRLLRRLLLLRRRLLRRRLRRLLRRRRL',
-        'LLRRLLLRLLRRLLLLRRRLRRLRRRLLRRLRRL',
-        'LLRRLRLRLRRRLRLLRLRRLRLLLRLRLRLLRR',
-        'LLRRLRLRLRRRLRLLRRRLLRLRLRLLLRLRRL',
-        'RLLLLLRLLLLLLLRLLLRRRRRLRRRRRRRLRR',
-        'RLLLLLRLLLLLLLRLLRRLRRRRRRRLRRRRRL',
-        'RLLLLRRLLRLLLRRLLLRRLRRLLRRRLRRLRR',
-        'RLLLLRRLLRLLLRRLLLRRRRLLRRLRRRLLRR',
-        'RLLLLRRLLRLLLRRLLRRLLRRRLRRLLRRRRL',
-        'RLLLLRRLLRLLLRRLLRRLRRLRRRLLRRLRRL',
-        'RLLRLLRRLLLRLLRLLLRRLRRLLRRRLRRLRR',
-        'RLLRLLRRLLLRLLRLLLRRRRLLRRLRRRLLRR',
-        'RLLRLLRRLLLRLLRLLRRLLRRRLRRLLRRRRL',
-        'RLLRLLRRLLLRLLRLLRRLRRLRRRLLRRLRRL',
-        'RLLRLRRRLRLRLRRLLLRRLRLLLRLRLRLLRR',
-        'RLLRLRRRLRLRLRRLLRRLLRLRLRLLLRLRRL',
-        'RLRLLLRLLLRLLLRLRLRLRRRLRRRLRRRLRL',
-        'RLRLLRRLLRRLLRRLRLRLLRRLLRRLLRRLRL',
-        'RLRLLRRLLRRLLRRLRLRLRRLLRRLLRRLLRL',
-        'RLRRLLRRLLRRLLRLRLRLLRRLLRRLLRRLRL',
-        'RLRRLLRRLLRRLLRLRLRLRRLLRRLLRRLLRL',
-        'RLRRLRRRLRRRLRRLRLRLLRLLLRLLLRLLRL'
-    )
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step42.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=11,
-            filesize=2040850000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step42.hash-cost-only.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=11,
-            bucketcount=24010031,
-            filesize=24010032)
-
-
-class LookupTableIDA777Step40(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step40.txt
-    =============================
-    1 steps has 250 entries (0 percent, 0.00x previous step)
-    2 steps has 1,981 entries (0 percent, 7.92x previous step)
-    3 steps has 15,782 entries (0 percent, 7.97x previous step)
-    4 steps has 123,053 entries (1 percent, 7.80x previous step)
-    5 steps has 931,072 entries (11 percent, 7.57x previous step)
-    6 steps has 6,799,621 entries (86 percent, 7.30x previous step)
-
-    Total: 7,871,759 entries
     """
 
     state_targets = (
@@ -317,51 +183,30 @@ class LookupTableIDA777Step40(LookupTableIDA):
     set_centers_step42_777 = set(centers_step42_777)
 
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step40.txt',
-            self.state_targets,
-            moves_777,
-
-            # illegal moves
-            ("3Uw", "3Uw'", "3Uw2", "Uw", "Uw'", "Uw2",
-             "3Lw", "3Lw'", "3Lw2", "Lw", "Lw'", "Lw2",
-             "3Fw", "3Fw'", "Fw", "Fw'",
-             "3Rw", "3Rw'", "3Rw2", "Rw", "Rw'", "Rw2",
-             "3Bw", "3Bw'", "Bw", "Bw'",
-             "3Dw", "3Dw'", "3Dw2", "Dw", "Dw'", "Dw2"),
-
-            # prune tables
-            (parent.lt_step41,
-             parent.lt_step42),
-            linecount=7871759,
-            max_depth=6,
-            filesize=346357396,
-            exit_asap=99,
+            # Needed tables and their md5 signatures
+            (('lookup-table-7x7x7-step40.txt', '4862690bafc6dada8dd652047acafe3a'),
+             ('lookup-table-7x7x7-step41.hash-cost-only.txt', '63c848ac2fc2e7e78a2ea6312dd96249'),
+             ('lookup-table-7x7x7-step42.hash-cost-only.txt', '70d5bd7eab4360535a622fc0f7f973ec')),
+            '7x7x7-step40' # C_ida_type
         )
 
-    def ida_heuristic(self, ida_threshold):
-        parent = self.parent
 
-        (lt_state, step41_state, step42_state) = ida_heuristic_states_step40_777(
-            parent.state,
-            self.centers_step40_777,
-            self.set_centers_step41_777,
-            self.set_centers_step42_777
-        )
-
-        lt_state = self.hex_format % lt_state
-        step41_cost = parent.lt_step41.heuristic(step41_state)
-        step42_cost = parent.lt_step42.heuristic(step42_state)
-        cost_to_goal = max(step41_cost, step42_cost)
-
-        return (lt_state, cost_to_goal)
-
-
-#class LookupTable777Step51(LookupTable):
-class LookupTable777Step51(LookupTableHashCostOnly):
+class LookupTableIDA777Step50(LookupTableIDAViaC):
     """
+    lookup-table-7x7x7-step50.txt
+    =============================
+    1 steps has 250 entries (0 percent, 0.00x previous step)
+    2 steps has 1,981 entries (0 percent, 7.92x previous step)
+    3 steps has 15,782 entries (1 percent, 7.97x previous step)
+    4 steps has 123,053 entries (11 percent, 7.80x previous step)
+    5 steps has 931,072 entries (86 percent, 7.57x previous step)
+
+    Total: 1,072,138 entries
+
+
     lookup-table-7x7x7-step51.txt
     =============================
     1 steps has 226 entries (0 percent, 0.00x previous step)
@@ -379,72 +224,8 @@ class LookupTable777Step51(LookupTableHashCostOnly):
 
     Total: 24,010,000 entries
     Average: 8.01 moves
-    """
-
-    state_targets = (
-        'DDDDUDDDUDDDUDDDDUUUUDUUUDUUUDUUUU',
-        'DDDDUDUDUDDDUDUDDUUDUDUUUDUDUDUUUU',
-        'DDDDUDUDUDDDUDUDDUUUUDUDUDUUUDUDUU',
-        'DDUDUDDDUDUDUDDDDUUDUDUUUDUDUDUUUU',
-        'DDUDUDDDUDUDUDDDDUUUUDUDUDUUUDUDUU',
-        'DDUDUDUDUDUDUDUDDUUDUDUDUDUDUDUDUU',
-        'DUDDUUDDUUDDUUDDUDUUDDUUDDUUDDUUDU',
-        'DUDDUUDDUUDDUUDDUUDUUDDUUDDUUDDUUD',
-        'DUDDUUUDUUDDUUUDUDUDDDUUDDUDDDUUDU',
-        'DUDDUUUDUUDDUUUDUDUUDDUDDDUUDDUDDU',
-        'DUDDUUUDUUDDUUUDUUDDUDDUUDDDUDDUUD',
-        'DUDDUUUDUUDDUUUDUUDUUDDDUDDUUDDDUD',
-        'DUUDUUDDUUUDUUDDUDUDDDUUDDUDDDUUDU',
-        'DUUDUUDDUUUDUUDDUDUUDDUDDDUUDDUDDU',
-        'DUUDUUDDUUUDUUDDUUDDUDDUUDDDUDDUUD',
-        'DUUDUUDDUUUDUUDDUUDUUDDDUDDUUDDDUD',
-        'DUUDUUUDUUUDUUUDUDUDDDUDDDUDDDUDDU',
-        'DUUDUUUDUUUDUUUDUUDDUDDDUDDDUDDDUD',
-        'UDDUUDDUUDDUUDDUDDUUDDUUDDUUDDUUDU',
-        'UDDUUDDUUDDUUDDUDUDUUDDUUDDUUDDUUD',
-        'UDDUUDUUUDDUUDUUDDUDDDUUDDUDDDUUDU',
-        'UDDUUDUUUDDUUDUUDDUUDDUDDDUUDDUDDU',
-        'UDDUUDUUUDDUUDUUDUDDUDDUUDDDUDDUUD',
-        'UDDUUDUUUDDUUDUUDUDUUDDDUDDUUDDDUD',
-        'UDUUUDDUUDUUUDDUDDUDDDUUDDUDDDUUDU',
-        'UDUUUDDUUDUUUDDUDDUUDDUDDDUUDDUDDU',
-        'UDUUUDDUUDUUUDDUDUDDUDDUUDDDUDDUUD',
-        'UDUUUDDUUDUUUDDUDUDUUDDDUDDUUDDDUD',
-        'UDUUUDUUUDUUUDUUDDUDDDUDDDUDDDUDDU',
-        'UDUUUDUUUDUUUDUUDUDDUDDDUDDDUDDDUD',
-        'UUDUUUDUUUDUUUDUUDDUDDDUDDDUDDDUDD',
-        'UUDUUUUUUUDUUUUUUDDDDDDUDDDDDDDUDD',
-        'UUDUUUUUUUDUUUUUUDDUDDDDDDDUDDDDDD',
-        'UUUUUUDUUUUUUUDUUDDDDDDUDDDDDDDUDD',
-        'UUUUUUDUUUUUUUDUUDDUDDDDDDDUDDDDDD',
-        'UUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDD'
-    )
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step51.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=12,
-            filesize=2064860000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step51.hash-cost-only.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=12,
-            bucketcount=24010031,
-            filesize=24010032)
 
 
-#class LookupTable777Step52(LookupTable):
-class LookupTable777Step52(LookupTableHashCostOnly):
-    """
     lookup-table-7x7x7-step52.txt
     =============================
     1 steps has 250 entries (0 percent, 0.00x previous step)
@@ -461,81 +242,6 @@ class LookupTable777Step52(LookupTableHashCostOnly):
 
     Total: 24,010,000 entries
     Average: 7.62 moves
-    """
-
-    state_targets = (
-        'DUDDUDDDUDDDUDDUDUDUUDUUUDUUUDUUDU',
-        'DUDDUUDDUUDDUUDUDUDUDDUUDDUUDDUUDU',
-        'DUDDUUDDUUDDUUDUDUDUUDDUUDDUUDDUDU',
-        'DUDUUDDUUDDUUDDUDUDUDDUUDDUUDDUUDU',
-        'DUDUUDDUUDDUUDDUDUDUUDDUUDDUUDDUDU',
-        'DUDUUUDUUUDUUUDUDUDUDDDUDDDUDDDUDU',
-        'DUUDUDDDUDUDUDDUUDDUUDUDUDUUUDUDDU',
-        'DUUDUDDDUDUDUDDUUUDDUDUUUDUDUDUUDD',
-        'DUUDUUDDUUUDUUDUUDDUDDUDDDUUDDUDDU',
-        'DUUDUUDDUUUDUUDUUDDUUDDDUDDUUDDDDU',
-        'DUUDUUDDUUUDUUDUUUDDDDUUDDUDDDUUDD',
-        'DUUDUUDDUUUDUUDUUUDDUDDUUDDDUDDUDD',
-        'DUUUUDDUUDUUUDDUUDDUDDUDDDUUDDUDDU',
-        'DUUUUDDUUDUUUDDUUDDUUDDDUDDUUDDDDU',
-        'DUUUUDDUUDUUUDDUUUDDDDUUDDUDDDUUDD',
-        'DUUUUDDUUDUUUDDUUUDDUDDUUDDDUDDUDD',
-        'DUUUUUDUUUUUUUDUUDDUDDDDDDDUDDDDDU',
-        'DUUUUUDUUUUUUUDUUUDDDDDUDDDDDDDUDD',
-        'UUDDUDUDUDDDUDUUDDDUUDUDUDUUUDUDDU',
-        'UUDDUDUDUDDDUDUUDUDDUDUUUDUDUDUUDD',
-        'UUDDUUUDUUDDUUUUDDDUDDUDDDUUDDUDDU',
-        'UUDDUUUDUUDDUUUUDDDUUDDDUDDUUDDDDU',
-        'UUDDUUUDUUDDUUUUDUDDDDUUDDUDDDUUDD',
-        'UUDDUUUDUUDDUUUUDUDDUDDUUDDDUDDUDD',
-        'UUDUUDUUUDDUUDUUDDDUDDUDDDUUDDUDDU',
-        'UUDUUDUUUDDUUDUUDDDUUDDDUDDUUDDDDU',
-        'UUDUUDUUUDDUUDUUDUDDDDUUDDUDDDUUDD',
-        'UUDUUDUUUDDUUDUUDUDDUDDUUDDDUDDUDD',
-        'UUDUUUUUUUDUUUUUDDDUDDDDDDDUDDDDDU',
-        'UUDUUUUUUUDUUUUUDUDDDDDUDDDDDDDUDD',
-        'UUUDUDUDUDUDUDUUUDDDUDUDUDUDUDUDDD',
-        'UUUDUUUDUUUDUUUUUDDDDDUDDDUDDDUDDD',
-        'UUUDUUUDUUUDUUUUUDDDUDDDUDDDUDDDDD',
-        'UUUUUDUUUDUUUDUUUDDDDDUDDDUDDDUDDD',
-        'UUUUUDUUUDUUUDUUUDDDUDDDUDDDUDDDDD',
-        'UUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDD'
-    )
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step52.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=11,
-            filesize=1992830000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step52.hash-cost-only.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=11,
-            bucketcount=24010031,
-            filesize=24010032)
-
-
-class LookupTableIDA777Step50(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step50.txt
-    =============================
-    1 steps has 250 entries (0 percent, 0.00x previous step)
-    2 steps has 1,981 entries (0 percent, 7.92x previous step)
-    3 steps has 15,782 entries (0 percent, 7.97x previous step)
-    4 steps has 123,053 entries (1 percent, 7.80x previous step)
-    5 steps has 931,072 entries (11 percent, 7.57x previous step)
-    6 steps has 6,799,621 entries (86 percent, 7.30x previous step)
-
-    Total: 7,871,759 entries
     """
 
     state_targets = (
@@ -569,54 +275,31 @@ class LookupTableIDA777Step50(LookupTableIDA):
     set_centers_step52_777 = set(centers_step52_777)
 
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step50.txt',
-            self.state_targets,
-            moves_777,
-            # illegal moves
-            # keep all centers staged
-            ("3Uw", "3Uw'", "Uw", "Uw'",
-             "3Lw", "3Lw'", "Lw", "Lw'",
-             "3Fw", "3Fw'", "Fw", "Fw'",
-             "3Rw", "3Rw'", "Rw", "Rw'",
-             "3Bw", "3Bw'", "Bw", "Bw'",
-             "3Dw", "3Dw'", "Dw", "Dw'",
-
-            # keep LR in vertical bars
-            "L", "L'", "R", "R'", "3Uw2", "3Dw2", "Uw2", "Dw2"),
-
-            # prune tables
-            (parent.lt_step51,
-             parent.lt_step52),
-            linecount=7871759,
-            max_depth=6,
-            filesize=338485637,
-            exit_asap=99,
+            # Needed tables and their md5 signatures
+            (('lookup-table-7x7x7-step50.txt', 'de0c08d06995550c0654ccb3eec588f9'),
+             ('lookup-table-7x7x7-step51.hash-cost-only.txt', 'e9b548241f7fc6296cac2d32981efac5'),
+             ('lookup-table-7x7x7-step52.hash-cost-only.txt', '5b6b9c069943e6c87397843b4b888799')),
+            '7x7x7-step50' # C_ida_type
         )
 
-    def ida_heuristic(self, ida_threshold):
-        parent = self.parent
 
-        (lt_state, step51_state, step52_state) = ida_heuristic_states_step50_777(
-            parent.state,
-            self.centers_step50_777,
-            self.set_centers_step51_777,
-            self.set_centers_step52_777
-        )
-
-        lt_state = self.hex_format % lt_state
-        step51_cost = parent.lt_step51.heuristic(step51_state)
-        step52_cost = parent.lt_step52.heuristic(step52_state)
-        cost_to_goal = max(step51_cost, step52_cost)
-
-        return (lt_state, cost_to_goal)
-
-
-#class LookupTable777Step61(LookupTable):
-class LookupTable777Step61(LookupTableHashCostOnly):
+class LookupTableIDA777Step60(LookupTableIDAViaC):
     """
+    lookup-table-7x7x7-step60.txt
+    =============================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 108 entries (0 percent, 12.00x previous step)
+    3 steps has 1,192 entries (0 percent, 11.04x previous step)
+    4 steps has 12,762 entries (0 percent, 10.71x previous step)
+    5 steps has 133,624 entries (8 percent, 10.47x previous step)
+    6 steps has 1,382,900 entries (90 percent, 10.35x previous step)
+
+    Total: 1,530,595 entries
+
+
     lookup-table-7x7x7-step61.txt
     =============================
     1 steps has 9 entries (0 percent, 0.00x previous step)
@@ -636,33 +319,8 @@ class LookupTable777Step61(LookupTableHashCostOnly):
 
     Total: 24,010,000 entries
     Average: 10.11 moves
-    """
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step61.txt',
-            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
-            linecount=24010000,
-            max_depth=14,
-            filesize=2280950000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step61.hash-cost-only.txt',
-            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
-            linecount=24010000,
-            max_depth=14,
-            bucketcount=24010031,
-            filesize=24010032)
 
 
-#class LookupTable777Step62(LookupTable):
-class LookupTable777Step62(LookupTableHashCostOnly):
-    """
     lookup-table-7x7x7-step62.txt
     =============================
     1 steps has 9 entries (0 percent, 0.00x previous step)
@@ -681,43 +339,6 @@ class LookupTable777Step62(LookupTableHashCostOnly):
 
     Total: 24,010,000 entries
     Average: 9.58 moves
-    """
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step62.txt',
-            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
-            linecount=24010000,
-            max_depth=13,
-            filesize=)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step62.hash-cost-only.txt',
-            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
-            linecount=24010000,
-            max_depth=13,
-            bucketcount=24010031,
-            filesize=24010032)
-
-
-class LookupTableIDA777Step60(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step60.txt
-    =============================
-    1 steps has 9 entries (0 percent, 0.00x previous step)
-    2 steps has 108 entries (0 percent, 12.00x previous step)
-    3 steps has 1,192 entries (0 percent, 11.04x previous step)
-    4 steps has 12,762 entries (0 percent, 10.71x previous step)
-    5 steps has 133,624 entries (0 percent, 10.47x previous step)
-    6 steps has 1,382,900 entries (8 percent, 10.35x previous step)
-    7 steps has 13,876,960 entries (90 percent, 10.03x previous step)
-
-    Total: 15,407,555 entries
     """
 
     state_indexes_step60 = (
@@ -743,54 +364,15 @@ class LookupTableIDA777Step60(LookupTableIDA):
     set_state_indexes_step62 = set(state_indexes_step62)
 
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step60.txt',
-            '3ffffffffffffffffff8000000000000000000',
-            moves_777,
-
-            # illegal moves
-            # keep all centers staged
-            ("3Uw", "3Uw'", "Uw", "Uw'",
-             "3Lw", "3Lw'", "Lw", "Lw'",
-             "3Fw", "3Fw'", "Fw", "Fw'",
-             "3Rw", "3Rw'", "Rw", "Rw'",
-             "3Bw", "3Bw'", "Bw", "Bw'",
-             "3Dw", "3Dw'", "Dw", "Dw'",
-
-            # keep LR in horizontal bars
-            "L", "L'", "R", "R'", "3Fw2", "3Bw2", "Fw2", "Bw2",
-
-            # keep UD in vertical bars
-            "U", "U'", "D", "D'"),
-
-            # prune tables
-            (parent.lt_step61,
-             parent.lt_step62),
-            linecount=15407555,
-            max_depth=7,
-            filesize=1124751515,
-            exit_asap=99,
+            # Needed tables and their md5 signatures
+            (('lookup-table-7x7x7-step60.txt', 'a81708de4b0fca70b048989cc7b51b67'),
+             ('lookup-table-7x7x7-step61.hash-cost-only.txt', 'ba9b9e02f603459dac94fef5c637ac40'),
+             ('lookup-table-7x7x7-step62.hash-cost-only.txt', '2ebb594b99f8cf04a2a77a64c67ea0d4')),
+            '7x7x7-step60' # C_ida_type
         )
-
-    def ida_heuristic(self, ida_threshold):
-        parent = self.parent
-
-        (lt_state, step61_state, step62_state) = ida_heuristic_states_step60_777(
-            parent.state,
-            self.state_indexes_step60,
-            self.set_state_indexes_step61,
-            self.set_state_indexes_step62
-        )
-        lt_state = int(lt_state, 2)
-        lt_state = self.hex_format % lt_state
-
-        step61_cost = parent.lt_step61.heuristic(step61_state)
-        step62_cost = parent.lt_step62.heuristic(step62_state)
-        cost_to_goal = max(step61_cost, step62_cost)
-
-        return (lt_state, cost_to_goal)
 
 
 class RubiksCube777(RubiksCubeNNNOddEdges):
@@ -956,20 +538,9 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
 
-        self.lt_step41 = LookupTable777Step41(self)
-        self.lt_step42 = LookupTable777Step42(self)
         self.lt_step40 = LookupTableIDA777Step40(self)
-        self.lt_step40.preload_cache_string()
-
-        self.lt_step51 = LookupTable777Step51(self)
-        self.lt_step52 = LookupTable777Step52(self)
         self.lt_step50 = LookupTableIDA777Step50(self)
-        self.lt_step50.preload_cache_string()
-
-        self.lt_step61 = LookupTable777Step61(self)
-        self.lt_step62 = LookupTable777Step62(self)
         self.lt_step60 = LookupTableIDA777Step60(self)
-        self.lt_step60.preload_cache_string()
 
     def create_fake_555_from_inside_centers(self):
 

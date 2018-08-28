@@ -3,7 +3,6 @@
 from rubikscubennnsolver import RubiksCube, NotSolving
 from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e
 from rubikscubennnsolver.RubiksSide import SolveError
-from rubikscubennnsolver.RubiksCube444 import moves_444
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
@@ -22,7 +21,14 @@ import sys
 
 log = logging.getLogger(__name__)
 
-moves_555 = moves_444
+moves_555 = (
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2",
+    "F" , "F'", "F2", "Fw", "Fw'", "Fw2",
+    "R" , "R'", "R2", "Rw", "Rw'", "Rw2",
+    "B" , "B'", "B2", "Bw", "Bw'", "Bw2",
+    "D" , "D'", "D2", "Dw", "Dw'", "Dw2"
+)
 solved_555 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 
@@ -156,6 +162,24 @@ edges_555 = (
     147, 148, 149
 )
 
+wings_555= (
+    2, 3, 4, # Upper
+    6, 11, 16,
+    10, 15, 20,
+    22, 23, 24,
+
+    31, 36, 41, # Left
+    35, 40, 45,
+
+    81, 86, 91, # Right
+    85, 90, 95,
+
+    127, 128, 129, # Down
+    131, 136, 141,
+    135, 140, 145,
+    147, 148, 149
+)
+
 l4e_wings_555 = (
     2, 3, 4,       # Upper
     6, 11, 16,
@@ -202,18 +226,18 @@ wing_str_map = {
 
 
 wing_strs_all = (
-    'BD',
-    'BL',
-    'BR',
-    'BU',
-    'DF',
+    'UB',
+    'UL',
+    'UR',
+    'UF',
+    'LB',
+    'LF',
+    'RB',
+    'RF',
+    'DB',
     'DL',
     'DR',
-    'FL',
-    'FR',
-    'FU',
-    'LU',
-    'RU'
+    'DF',
 )
 
 
@@ -358,7 +382,7 @@ midges_recolor_tuples_555 = (
     ('z', 148, 123)
 )
 
-wings_555= (
+wings_for_recolor_555= (
     ('0', 2, 104),  # upper
     ('1', 4, 102),
     ('2', 6, 27),
@@ -404,7 +428,7 @@ def edges_recolor_without_midges_555(state, only_colors=[]):
         'RU': []
     }
 
-    for (edge_index, square_index, partner_index) in wings_555:
+    for (edge_index, square_index, partner_index) in wings_for_recolor_555:
         square_value = state[square_index]
         partner_value = state[partner_index]
         wing_str = ''.join(sorted([square_value, partner_value]))
@@ -413,12 +437,13 @@ def edges_recolor_without_midges_555(state, only_colors=[]):
             edge_map[wing_str].append(edge_index)
 
     # Where is the other wing_str like us?
-    for (edge_index, square_index, partner_index) in wings_555:
+    for (edge_index, square_index, partner_index) in wings_for_recolor_555:
         square_value = state[square_index]
         partner_value = state[partner_index]
         wing_str = ''.join(sorted([square_value, partner_value]))
+        wing_str_pretty = wing_str_map[square_value + partner_value]
 
-        if only_colors and wing_str not in only_colors:
+        if only_colors and wing_str_pretty not in only_colors:
             state[square_index] = 'x'
             state[partner_index] = 'x'
         elif 'x' in wing_str:
@@ -453,6 +478,7 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
         '--': None,
     }
 
+    '''
     paired_edges_indexes = []
 
     for (s1, s2, s3) in (
@@ -488,17 +514,23 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
             s1_value == s2_value and s2_value == s3_value and
             p1_value == p2_value and p2_value == p3_value):
             paired_edges_indexes.extend([s1, s2, s3, p1, p2, p3])
+    '''
 
     for (edge_index, square_index, partner_index) in midges_recolor_tuples_555:
         square_value = state[square_index]
         partner_value = state[partner_index]
         wing_str = ''.join(sorted([square_value, partner_value]))
+        wing_str_pretty = wing_str_map[square_value + partner_value]
         midges_map[wing_str] = edge_index
 
+        if only_colors and wing_str_pretty not in only_colors:
+            state[square_index] = '-'
+            state[partner_index] = '-'
+
         # If the edge is paired always use an uppercase letter to represent this edge
-        if square_index in paired_edges_indexes:
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
+        #elif square_index in paired_edges_indexes:
+        #    state[square_index] = edge_index.upper()
+        #    state[partner_index] = edge_index.upper()
 
         # If not, we need to indicate which way the midge is rotated.  If the square_index contains
         # U, D, L, or R use the uppercase of the edge_index, if not use the lowercase of the
@@ -551,15 +583,16 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
             pass
         else:
             wing_str = ''.join(sorted([square_value, partner_value]))
+            wing_str_pretty = wing_str_map[square_value + partner_value]
 
-            if only_colors and wing_str not in only_colors:
+            if only_colors and wing_str_pretty not in only_colors:
                 state[square_index] = '-'
                 state[partner_index] = '-'
 
             # If the edge is paired always use an uppercase letter to represent this edge
-            elif square_index in paired_edges_indexes:
-                state[square_index] = midges_map[wing_str].upper()
-                state[partner_index] = midges_map[wing_str].upper()
+            #elif square_index in paired_edges_indexes:
+            #    state[square_index] = midges_map[wing_str].upper()
+            #    state[partner_index] = midges_map[wing_str].upper()
 
             else:
                 high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
@@ -580,7 +613,7 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
     return ''.join(state)
 
 
-def edges_recolor_pattern_555(state):
+def edges_recolor_pattern_555(state, only_color=[]):
     (edge_index, square_index, partner_index) = midges_recolor_tuples_555[0]
     square_value = state[square_index]
 
@@ -592,7 +625,7 @@ def edges_recolor_pattern_555(state):
     # If the middle edges are not "." though then we return recolor each edge
     # as it relates to its midge.
     else:
-        return edges_recolor_with_midges_555(state)
+        return edges_recolor_with_midges_555(state, only_color)
 
 
 LR_edges_recolor_tuples_555 = (
@@ -1087,7 +1120,7 @@ class LookupTable555StageFirstFourEdges(LookupTable):
             partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
-            wing_str = ''.join(sorted([square_value, partner_value]))
+            wing_str = wing_str_map[square_value + partner_value]
 
             if wing_str in wing_strs_to_stage:
                 state[square_index] = '1'
@@ -1142,7 +1175,7 @@ class LookupTable555StageSecondFourEdges(LookupTable):
             partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
-            wing_str = ''.join(sorted([square_value, partner_value]))
+            wing_str = wing_str_map[square_value + partner_value]
 
             if wing_str in wing_strs_to_stage:
                 state[square_index] = '1'
@@ -1230,7 +1263,7 @@ class LookupTable555PairLastFourEdges(LookupTable):
 
         state = LR_edges_recolor_pattern_555(parent_state[:])
 
-        result = ''.join(state[index] for index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95))
+        result = ''.join([state[index] for index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95)])
         cost_to_goal = None
         return (result, cost_to_goal)
 
@@ -1295,7 +1328,7 @@ class RubiksCube555(RubiksCube):
             partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
-            wing_str = ''.join(sorted([square_value, partner_value]))
+            wing_str = wing_str_map[square_value + partner_value]
             edges_in_plane.add(wing_str)
         return edges_in_plane
 
@@ -1315,7 +1348,7 @@ class RubiksCube555(RubiksCube):
             partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
-            wing_str = ''.join(sorted([square_value, partner_value]))
+            wing_str = wing_str_map[square_value + partner_value]
             edges_in_plane.add(wing_str)
 
         #log.info("l4e_in_x_plane %s" % pformat(edges_in_plane))
@@ -1337,7 +1370,7 @@ class RubiksCube555(RubiksCube):
             partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
-            wing_str = ''.join(sorted([square_value, partner_value]))
+            wing_str = wing_str_map[square_value + partner_value]
             edges_in_plane.add(wing_str)
 
         #log.info("l4e_in_y_plane %s" % pformat(edges_in_plane))
@@ -1359,7 +1392,7 @@ class RubiksCube555(RubiksCube):
             partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
-            wing_str = ''.join(sorted([square_value, partner_value]))
+            wing_str = wing_str_map[square_value + partner_value]
             edges_in_plane.add(wing_str)
 
         #log.info("l4e_in_z_plane %s" % pformat(edges_in_plane))
@@ -1691,7 +1724,6 @@ class RubiksCube555(RubiksCube):
         self.lt_ULFRB_centers_solve.solve()
         self.print_cube()
         log.info("%s: ULFRBD centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
 
     def x_plane_has_LB_LF_RB_RF_edge(self):
         state = self.state
@@ -1738,45 +1770,6 @@ class RubiksCube555(RubiksCube):
 
         return False
 
-    def solve_last_four_edges_555(self):
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        # Traverse a table of moves that place L4E in one of three planes
-        for pre_steps in pre_steps_stage_l4e:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in pre_steps:
-                self.rotate(step)
-
-            if self.l4e_in_x_plane() and not self.l4e_in_x_plane_paired():
-                if pre_steps:
-                    log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
-                else:
-                    log.info("%s: L4E group in x-plane" % self)
-                break
-
-            elif self.l4e_in_y_plane() and not self.l4e_in_y_plane_paired():
-                if pre_steps:
-                    log.info("%s: %s puts L4E group in y-plane" % (self, "".join(pre_steps)))
-                else:
-                    log.info("%s: L4E group in y-plane" % self)
-                self.rotate("z")
-                break
-
-            elif self.l4e_in_z_plane() and not self.l4e_in_z_plane_paired():
-                if pre_steps:
-                    log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
-                else:
-                    log.info("%s: L4E group in z-plane" % self)
-                self.rotate("x")
-                break
-
-        self.lt_edges_pair_last_four.solve()
-        #self.print_cube()
-        #log.info("%s: %s L4E paired, %d steps in" % (self, edges_pattern_pretty, self.get_solution_len_minus_rotates(self.solution)))
-
     def stage_first_four_edges_555(self):
         """
         There are 495 different permutations of 4-edges out of 12-edges, use the one
@@ -1785,12 +1778,21 @@ class RubiksCube555(RubiksCube):
 
         # return if they are already staged
         if self.l4e_in_x_plane():
-            self.stage_first_four_wing_strs = self.get_x_plane_wing_strs()
+            log.info("%s: first L4E group in x-plane" % self)
+            return
+
+        if self.l4e_in_y_plane():
+            log.info("%s: first L4E group in y-plane, moving to x-plane" % self)
+            self.rotate("z")
+            return
+
+        if self.l4e_in_z_plane():
+            log.info("%s: first L4E group in z-plane, moving to x-plane" % self)
+            self.rotate("x")
             return
 
         min_solution_len = None
         min_solution_steps = None
-        min_solution_wing_strs = None
 
         # The table for staging the first 4-edges would have 364,058,145 if built to completion.
         # Building that table the entire way is difficult though because this is a table where
@@ -1804,7 +1806,7 @@ class RubiksCube555(RubiksCube):
         # looking for one that does have a hit.  Most of the time this is all that is needed and
         # we can find a hit.  On the off chance that we cannot though we need a way to find a solution
         # so what we do is try all outer layer moves up to 3 moves deep and see if any of those
-        # sequences put the cube in a state such that one of the 495 edge permurtations does find
+        # sequences put the cube in a state such that one of the 495 edge permutations does find
         # a hit. I have yet to find a cube that cannot be solved with this approach but if I did
         # the pre_steps_to_try could be expanded to 4-deep.
 
@@ -1856,7 +1858,7 @@ class RubiksCube555(RubiksCube):
         # Remember what things looked like
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
+        original_solution_len = len(self.solution)
 
         for pre_steps in pre_steps_to_try:
 
@@ -1883,29 +1885,32 @@ class RubiksCube555(RubiksCube):
                         self.rotate("z")
                     elif self.l4e_in_z_plane() and not self.l4e_in_z_plane_paired():
                         self.rotate("x")
+                    else:
+                        raise Exception("L4E group but where?")
 
-                    self.lt_edges_pair_last_four.solve()
+                    if not self.l4e_in_x_plane():
+                        self.print_cube()
+                        raise Exception("There should be an L4E group in x-plane but there is not")
+
                     solution_len = self.get_solution_len_minus_rotates(self.solution) - original_solution_len
-
-                    # self.print_cube()
                     log.info("%s: first four %s can be staged/paired in %d steps" % (self, wing_strs, solution_len))
 
                     if min_solution_len is None or solution_len < min_solution_len:
                         min_solution_len = solution_len
-                        min_solution_steps = self.solution[len(original_solution):]
-                        min_solution_wing_strs = wing_strs
+                        min_solution_steps = self.solution[original_solution_len:]
 
             if min_solution_len is not None:
-                if pre_steps:
-                    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
-
+                #if pre_steps:
+                #    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
                 self.state = original_state[:]
                 self.solution = original_solution[:]
-                self.stage_first_four_wing_strs = min_solution_wing_strs
 
                 for step in min_solution_steps:
                     self.rotate(step)
 
+                if not self.l4e_in_x_plane():
+                    self.print_cube()
+                    raise Exception("There should be an L4E group in x-plane but there is not")
                 break
         else:
             raise NoEdgeSolution("Could not find 4-edges to stage")
@@ -1917,31 +1922,30 @@ class RubiksCube555(RubiksCube):
 
         Since there are 8-edges there are 70 different combinations of edges we can
         choose to stage to UB, UF, DF, DB. Walk through all 70 combinations and see
-        which one leads to the shortest solution.  This accounts for the number of
-        steps that will be needed in solve_staged_edges_555().
+        which one leads to the shortest solution.
         """
 
         # return if they are already staged
         if self.l4e_in_y_plane() and self.l4e_in_z_plane():
             return
 
-        # Remember what things looked like
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = self.get_solution_len_minus_rotates(self.solution)
-
+        first_four_wing_strs = list(self.get_x_plane_wing_strs())
         wing_strs_for_second_four = []
+        log.info("first_four_wing_strs %s" % pformat(first_four_wing_strs))
 
         for wing_str in wing_strs_all:
-            if wing_str not in self.stage_first_four_wing_strs:
+            if wing_str not in first_four_wing_strs:
                 wing_strs_for_second_four.append(wing_str)
 
+        log.info("wing_strs_for_second_four %s" % pformat(wing_strs_for_second_four))
+        assert len(wing_strs_for_second_four) == 8
         min_solution_len = None
         min_solution_steps = None
 
         # Remember what things looked like
         original_state = self.state[:]
         original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
 
         for pre_steps in pre_steps_to_try:
 
@@ -1954,20 +1958,22 @@ class RubiksCube555(RubiksCube):
 
                 state = self.lt_edges_stage_second_four.state(wing_strs)
                 steps = self.lt_edges_stage_second_four.steps(state)
+                #log.info("%s: pre_steps %s, wing_strs %s, state %s, steps %s" % (
+                #    self, pformat(pre_steps), wing_strs, state, pformat(steps)))
 
                 if steps:
 
                     for step in steps:
                         self.rotate(step)
 
-                    self.solve_staged_edges_555(False)
-                    solution_len = self.get_solution_len_minus_rotates(self.solution)
-                    log.info("%s: second four %s can be staged in %d steps (edges pair in %d steps)" % (self, wing_strs, len(steps), solution_len))
+                    solution_len = len(self.solution) - original_solution_len
 
                     if min_solution_len is None or solution_len < min_solution_len:
                         min_solution_len = solution_len
-                        min_solution_steps = self.solution[len(original_solution):]
-                        log.info("NEW MIN: %s steps" % solution_len)
+                        min_solution_steps = self.solution[original_solution_len:]
+                        log.info("%s: second four %s can be staged in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
+                    else:
+                        log.info("%s: second four %s can be staged in %d steps" % (self, wing_strs, solution_len))
 
                     self.state = original_state[:]
                     self.solution = original_solution[:]
@@ -1993,87 +1999,142 @@ class RubiksCube555(RubiksCube):
             for step in min_solution_steps:
                 self.rotate(step)
 
-    def solve_staged_edges_555(self, log_msgs):
-        """
-        All edges are staged so that we can use the L4E table on each.  The order
-        that the edges are solved in can make a small difference in move count.
+    def place_first_four_paired_edges_in_x_plane(self):
 
-        We only need to rotate the cube around a few ways (opening rotation), solve
-        all three planes of edges and see which opening rotation results in the
-        lowest move count.
-        """
+        if self.l4e_in_x_plane_paired():
+            log.info("%s: 4 paired edges in x-plane" % (self))
+            return
 
-        # Remember what things looked like
+        if self.l4e_in_y_plane_paired():
+            log.info("%s: 4 paired edges in y-plane, moving to x-plane" % (self))
+            self.rotate("z")
+            return
+
+        if self.l4e_in_z_plane_paired():
+            log.info("%s: 4 paired edges in z-plane, moving to x-plane" % (self))
+            self.rotate("x")
+            return
+
         original_state = self.state[:]
         original_solution = self.solution[:]
 
-        min_solution_len = None
-        min_solution_steps = None
-
-        for steps in rotations_24:
-
-            for step in steps:
-                self.rotate(step)
-
-            self.lt_edges_pair_last_four.solve()
-
-            self.rotate("x")
-            self.lt_edges_pair_last_four.solve()
-
-            self.rotate("z'")
-            self.lt_edges_pair_last_four.solve()
-
-            solution_len = self.get_solution_len_minus_rotates(self.solution)
-
-            if min_solution_len is None or solution_len < min_solution_len:
-                min_solution_len = solution_len
-                min_solution_steps = steps[:]
-
+        # Traverse a table of moves that place L4E in one of three planes
+        for pre_steps in pre_steps_stage_l4e:
             self.state = original_state[:]
             self.solution = original_solution[:]
 
-        for step in min_solution_steps:
-            self.rotate(step)
+            for step in pre_steps:
+                self.rotate(step)
 
-        self.lt_edges_pair_last_four.solve()
+            if self.l4e_in_x_plane_paired():
+                log.info("%s: %s puts 4 paired edges in x-plane" % (self, "".join(pre_steps)))
+                return
 
-        if log_msgs:
-            #self.print_cube()
+            if self.l4e_in_y_plane_paired():
+                log.info("%s: %s puts 4 paired edges in y-plane" % (self, "".join(pre_steps)))
+                self.rotate("z")
+                return
+
+            if self.l4e_in_z_plane() and not self.l4e_in_z_plane_paired():
+                log.info("%s: %s puts 4 paired edges in z-plane" % (self, "".join(pre_steps)))
+                self.rotate("x")
+                return
+
+        raise Exception("We should not be here")
+
+    def pair_first_four_edges(self):
+        paired_edges_count = self.get_paired_edges_count()
+
+        # If there are already 4 paired edges all we need to do is put them in the x-plane
+        if paired_edges_count >= 4:
+            self.place_first_four_paired_edges_in_x_plane()
+            log.info("%s: first four edges already paired, moved to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # We do not have 4 paired edges, stage a L4E group to the x-plane and pair them via the L4E table
+        else:
+            self.stage_first_four_edges_555()
+            self.lt_edges_pair_last_four.solve()
+            self.print_cube()
+            log.info("kociemba: %s" % self.get_kociemba_string(True))
             log.info("%s: first four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+    def pair_second_four_edges(self):
+        paired_edges_count = self.get_paired_edges_count()
 
-        self.rotate("x")
-        self.lt_edges_pair_last_four.solve()
-
-        if log_msgs:
-            #self.print_cube()
+        if paired_edges_count >= 8:
+            log.info("%s: second four edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            return
+        else:
+            self.stage_second_four_edges_555()
+            self.rotate("x")
+            log.info("%s: second four edges L4E staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.lt_edges_pair_last_four.solve()
+            self.print_cube()
+            #log.info("kociemba: %s" % self.get_kociemba_string(True))
             log.info("%s: second four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+    def pair_third_four_edges(self):
+        paired_edges_count = self.get_paired_edges_count()
 
-        self.rotate("z'")
+        if paired_edges_count == 12:
+            log.info("%s: final four edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            return
+
+        if self.l4e_in_x_plane() and not self.l4e_in_x_plane_paired():
+            log.info("%s: final four unpaired edges already in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            pass
+        else:
+            log.info("%s: moving final four unpaired edges to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            original_state = self.state[:]
+            original_solution = self.solution[:]
+
+            # Traverse a table of moves that place L4E in one of three planes
+            # and then rotate that plane to the x-plane
+            for pre_steps in pre_steps_stage_l4e:
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in pre_steps:
+                    self.rotate(step)
+
+                if self.l4e_in_x_plane() and not self.l4e_in_x_plane_paired():
+                    if pre_steps:
+                        log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
+                    else:
+                        log.info("%s: L4E group in x-plane" % self)
+                    break
+
+                elif self.l4e_in_y_plane() and not self.l4e_in_y_plane_paired():
+                    if pre_steps:
+                        log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
+                    else:
+                        log.info("%s: L4E group in y-plane, moving to x-plane" % self)
+                    self.rotate("z")
+                    break
+
+                elif self.l4e_in_z_plane() and not self.l4e_in_z_plane_paired():
+                    if pre_steps:
+                        log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
+                    else:
+                        log.info("%s: L4E group in z-plane, moving to z-plane" % self)
+                    self.rotate("x")
+                    break
+
         self.lt_edges_pair_last_four.solve()
-
-        if log_msgs:
-            self.print_cube()
-            log.info("%s: all edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: final four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_edges(self):
+        paired_edges_count = self.get_paired_edges_count()
+
+        if paired_edges_count == 12:
+            return
+
         self.lt_init()
         self.print_cube()
-
-        self.stage_first_four_edges_555()
-        self.print_cube()
-        log.info("%s: first four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-        self.stage_second_four_edges_555()
-        self.print_cube()
-        log.info("%s: all edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-        self.solve_staged_edges_555(True)
-
-        # 9x9x9 test cube with old way took 83s and 164 moves to pair edges
-        # 9x9x9 test cube with new way took 23s and 153 moves to pair edges
-        log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.pair_first_four_edges()
+        self.pair_second_four_edges()
+        self.pair_third_four_edges()
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
 
 
 tsai_phase3_orient_edges_555 = {
@@ -3232,501 +3293,501 @@ tsai_phase3_orient_edges_555 = {
 }
 
 stage_first_four_edges_wing_str_combos = (
-    ('BD', 'BL', 'BR', 'BU'),
-    ('BD', 'BL', 'BR', 'DF'),
-    ('BD', 'BL', 'BR', 'DL'),
-    ('BD', 'BL', 'BR', 'DR'),
-    ('BD', 'BL', 'BR', 'FL'),
-    ('BD', 'BL', 'BR', 'FR'),
-    ('BD', 'BL', 'BR', 'FU'),
-    ('BD', 'BL', 'BR', 'LU'),
-    ('BD', 'BL', 'BR', 'RU'),
-    ('BD', 'BL', 'BU', 'DF'),
-    ('BD', 'BL', 'BU', 'DL'),
-    ('BD', 'BL', 'BU', 'DR'),
-    ('BD', 'BL', 'BU', 'FL'),
-    ('BD', 'BL', 'BU', 'FR'),
-    ('BD', 'BL', 'BU', 'FU'),
-    ('BD', 'BL', 'BU', 'LU'),
-    ('BD', 'BL', 'BU', 'RU'),
-    ('BD', 'BL', 'DF', 'DL'),
-    ('BD', 'BL', 'DF', 'DR'),
-    ('BD', 'BL', 'DF', 'FL'),
-    ('BD', 'BL', 'DF', 'FR'),
-    ('BD', 'BL', 'DF', 'FU'),
-    ('BD', 'BL', 'DF', 'LU'),
-    ('BD', 'BL', 'DF', 'RU'),
-    ('BD', 'BL', 'DL', 'DR'),
-    ('BD', 'BL', 'DL', 'FL'),
-    ('BD', 'BL', 'DL', 'FR'),
-    ('BD', 'BL', 'DL', 'FU'),
-    ('BD', 'BL', 'DL', 'LU'),
-    ('BD', 'BL', 'DL', 'RU'),
-    ('BD', 'BL', 'DR', 'FL'),
-    ('BD', 'BL', 'DR', 'FR'),
-    ('BD', 'BL', 'DR', 'FU'),
-    ('BD', 'BL', 'DR', 'LU'),
-    ('BD', 'BL', 'DR', 'RU'),
-    ('BD', 'BL', 'FL', 'FR'),
-    ('BD', 'BL', 'FL', 'FU'),
-    ('BD', 'BL', 'FL', 'LU'),
-    ('BD', 'BL', 'FL', 'RU'),
-    ('BD', 'BL', 'FR', 'FU'),
-    ('BD', 'BL', 'FR', 'LU'),
-    ('BD', 'BL', 'FR', 'RU'),
-    ('BD', 'BL', 'FU', 'LU'),
-    ('BD', 'BL', 'FU', 'RU'),
-    ('BD', 'BL', 'LU', 'RU'),
-    ('BD', 'BR', 'BU', 'DF'),
-    ('BD', 'BR', 'BU', 'DL'),
-    ('BD', 'BR', 'BU', 'DR'),
-    ('BD', 'BR', 'BU', 'FL'),
-    ('BD', 'BR', 'BU', 'FR'),
-    ('BD', 'BR', 'BU', 'FU'),
-    ('BD', 'BR', 'BU', 'LU'),
-    ('BD', 'BR', 'BU', 'RU'),
-    ('BD', 'BR', 'DF', 'DL'),
-    ('BD', 'BR', 'DF', 'DR'),
-    ('BD', 'BR', 'DF', 'FL'),
-    ('BD', 'BR', 'DF', 'FR'),
-    ('BD', 'BR', 'DF', 'FU'),
-    ('BD', 'BR', 'DF', 'LU'),
-    ('BD', 'BR', 'DF', 'RU'),
-    ('BD', 'BR', 'DL', 'DR'),
-    ('BD', 'BR', 'DL', 'FL'),
-    ('BD', 'BR', 'DL', 'FR'),
-    ('BD', 'BR', 'DL', 'FU'),
-    ('BD', 'BR', 'DL', 'LU'),
-    ('BD', 'BR', 'DL', 'RU'),
-    ('BD', 'BR', 'DR', 'FL'),
-    ('BD', 'BR', 'DR', 'FR'),
-    ('BD', 'BR', 'DR', 'FU'),
-    ('BD', 'BR', 'DR', 'LU'),
-    ('BD', 'BR', 'DR', 'RU'),
-    ('BD', 'BR', 'FL', 'FR'),
-    ('BD', 'BR', 'FL', 'FU'),
-    ('BD', 'BR', 'FL', 'LU'),
-    ('BD', 'BR', 'FL', 'RU'),
-    ('BD', 'BR', 'FR', 'FU'),
-    ('BD', 'BR', 'FR', 'LU'),
-    ('BD', 'BR', 'FR', 'RU'),
-    ('BD', 'BR', 'FU', 'LU'),
-    ('BD', 'BR', 'FU', 'RU'),
-    ('BD', 'BR', 'LU', 'RU'),
-    ('BD', 'BU', 'DF', 'DL'),
-    ('BD', 'BU', 'DF', 'DR'),
-    ('BD', 'BU', 'DF', 'FL'),
-    ('BD', 'BU', 'DF', 'FR'),
-    ('BD', 'BU', 'DF', 'FU'),
-    ('BD', 'BU', 'DF', 'LU'),
-    ('BD', 'BU', 'DF', 'RU'),
-    ('BD', 'BU', 'DL', 'DR'),
-    ('BD', 'BU', 'DL', 'FL'),
-    ('BD', 'BU', 'DL', 'FR'),
-    ('BD', 'BU', 'DL', 'FU'),
-    ('BD', 'BU', 'DL', 'LU'),
-    ('BD', 'BU', 'DL', 'RU'),
-    ('BD', 'BU', 'DR', 'FL'),
-    ('BD', 'BU', 'DR', 'FR'),
-    ('BD', 'BU', 'DR', 'FU'),
-    ('BD', 'BU', 'DR', 'LU'),
-    ('BD', 'BU', 'DR', 'RU'),
-    ('BD', 'BU', 'FL', 'FR'),
-    ('BD', 'BU', 'FL', 'FU'),
-    ('BD', 'BU', 'FL', 'LU'),
-    ('BD', 'BU', 'FL', 'RU'),
-    ('BD', 'BU', 'FR', 'FU'),
-    ('BD', 'BU', 'FR', 'LU'),
-    ('BD', 'BU', 'FR', 'RU'),
-    ('BD', 'BU', 'FU', 'LU'),
-    ('BD', 'BU', 'FU', 'RU'),
-    ('BD', 'BU', 'LU', 'RU'),
-    ('BD', 'DF', 'DL', 'DR'),
-    ('BD', 'DF', 'DL', 'FL'),
-    ('BD', 'DF', 'DL', 'FR'),
-    ('BD', 'DF', 'DL', 'FU'),
-    ('BD', 'DF', 'DL', 'LU'),
-    ('BD', 'DF', 'DL', 'RU'),
-    ('BD', 'DF', 'DR', 'FL'),
-    ('BD', 'DF', 'DR', 'FR'),
-    ('BD', 'DF', 'DR', 'FU'),
-    ('BD', 'DF', 'DR', 'LU'),
-    ('BD', 'DF', 'DR', 'RU'),
-    ('BD', 'DF', 'FL', 'FR'),
-    ('BD', 'DF', 'FL', 'FU'),
-    ('BD', 'DF', 'FL', 'LU'),
-    ('BD', 'DF', 'FL', 'RU'),
-    ('BD', 'DF', 'FR', 'FU'),
-    ('BD', 'DF', 'FR', 'LU'),
-    ('BD', 'DF', 'FR', 'RU'),
-    ('BD', 'DF', 'FU', 'LU'),
-    ('BD', 'DF', 'FU', 'RU'),
-    ('BD', 'DF', 'LU', 'RU'),
-    ('BD', 'DL', 'DR', 'FL'),
-    ('BD', 'DL', 'DR', 'FR'),
-    ('BD', 'DL', 'DR', 'FU'),
-    ('BD', 'DL', 'DR', 'LU'),
-    ('BD', 'DL', 'DR', 'RU'),
-    ('BD', 'DL', 'FL', 'FR'),
-    ('BD', 'DL', 'FL', 'FU'),
-    ('BD', 'DL', 'FL', 'LU'),
-    ('BD', 'DL', 'FL', 'RU'),
-    ('BD', 'DL', 'FR', 'FU'),
-    ('BD', 'DL', 'FR', 'LU'),
-    ('BD', 'DL', 'FR', 'RU'),
-    ('BD', 'DL', 'FU', 'LU'),
-    ('BD', 'DL', 'FU', 'RU'),
-    ('BD', 'DL', 'LU', 'RU'),
-    ('BD', 'DR', 'FL', 'FR'),
-    ('BD', 'DR', 'FL', 'FU'),
-    ('BD', 'DR', 'FL', 'LU'),
-    ('BD', 'DR', 'FL', 'RU'),
-    ('BD', 'DR', 'FR', 'FU'),
-    ('BD', 'DR', 'FR', 'LU'),
-    ('BD', 'DR', 'FR', 'RU'),
-    ('BD', 'DR', 'FU', 'LU'),
-    ('BD', 'DR', 'FU', 'RU'),
-    ('BD', 'DR', 'LU', 'RU'),
-    ('BD', 'FL', 'FR', 'FU'),
-    ('BD', 'FL', 'FR', 'LU'),
-    ('BD', 'FL', 'FR', 'RU'),
-    ('BD', 'FL', 'FU', 'LU'),
-    ('BD', 'FL', 'FU', 'RU'),
-    ('BD', 'FL', 'LU', 'RU'),
-    ('BD', 'FR', 'FU', 'LU'),
-    ('BD', 'FR', 'FU', 'RU'),
-    ('BD', 'FR', 'LU', 'RU'),
-    ('BD', 'FU', 'LU', 'RU'),
-    ('BL', 'BR', 'BU', 'DF'),
-    ('BL', 'BR', 'BU', 'DL'),
-    ('BL', 'BR', 'BU', 'DR'),
-    ('BL', 'BR', 'BU', 'FL'),
-    ('BL', 'BR', 'BU', 'FR'),
-    ('BL', 'BR', 'BU', 'FU'),
-    ('BL', 'BR', 'BU', 'LU'),
-    ('BL', 'BR', 'BU', 'RU'),
-    ('BL', 'BR', 'DF', 'DL'),
-    ('BL', 'BR', 'DF', 'DR'),
-    ('BL', 'BR', 'DF', 'FL'),
-    ('BL', 'BR', 'DF', 'FR'),
-    ('BL', 'BR', 'DF', 'FU'),
-    ('BL', 'BR', 'DF', 'LU'),
-    ('BL', 'BR', 'DF', 'RU'),
-    ('BL', 'BR', 'DL', 'DR'),
-    ('BL', 'BR', 'DL', 'FL'),
-    ('BL', 'BR', 'DL', 'FR'),
-    ('BL', 'BR', 'DL', 'FU'),
-    ('BL', 'BR', 'DL', 'LU'),
-    ('BL', 'BR', 'DL', 'RU'),
-    ('BL', 'BR', 'DR', 'FL'),
-    ('BL', 'BR', 'DR', 'FR'),
-    ('BL', 'BR', 'DR', 'FU'),
-    ('BL', 'BR', 'DR', 'LU'),
-    ('BL', 'BR', 'DR', 'RU'),
-    ('BL', 'BR', 'FL', 'FR'),
-    ('BL', 'BR', 'FL', 'FU'),
-    ('BL', 'BR', 'FL', 'LU'),
-    ('BL', 'BR', 'FL', 'RU'),
-    ('BL', 'BR', 'FR', 'FU'),
-    ('BL', 'BR', 'FR', 'LU'),
-    ('BL', 'BR', 'FR', 'RU'),
-    ('BL', 'BR', 'FU', 'LU'),
-    ('BL', 'BR', 'FU', 'RU'),
-    ('BL', 'BR', 'LU', 'RU'),
-    ('BL', 'BU', 'DF', 'DL'),
-    ('BL', 'BU', 'DF', 'DR'),
-    ('BL', 'BU', 'DF', 'FL'),
-    ('BL', 'BU', 'DF', 'FR'),
-    ('BL', 'BU', 'DF', 'FU'),
-    ('BL', 'BU', 'DF', 'LU'),
-    ('BL', 'BU', 'DF', 'RU'),
-    ('BL', 'BU', 'DL', 'DR'),
-    ('BL', 'BU', 'DL', 'FL'),
-    ('BL', 'BU', 'DL', 'FR'),
-    ('BL', 'BU', 'DL', 'FU'),
-    ('BL', 'BU', 'DL', 'LU'),
-    ('BL', 'BU', 'DL', 'RU'),
-    ('BL', 'BU', 'DR', 'FL'),
-    ('BL', 'BU', 'DR', 'FR'),
-    ('BL', 'BU', 'DR', 'FU'),
-    ('BL', 'BU', 'DR', 'LU'),
-    ('BL', 'BU', 'DR', 'RU'),
-    ('BL', 'BU', 'FL', 'FR'),
-    ('BL', 'BU', 'FL', 'FU'),
-    ('BL', 'BU', 'FL', 'LU'),
-    ('BL', 'BU', 'FL', 'RU'),
-    ('BL', 'BU', 'FR', 'FU'),
-    ('BL', 'BU', 'FR', 'LU'),
-    ('BL', 'BU', 'FR', 'RU'),
-    ('BL', 'BU', 'FU', 'LU'),
-    ('BL', 'BU', 'FU', 'RU'),
-    ('BL', 'BU', 'LU', 'RU'),
-    ('BL', 'DF', 'DL', 'DR'),
-    ('BL', 'DF', 'DL', 'FL'),
-    ('BL', 'DF', 'DL', 'FR'),
-    ('BL', 'DF', 'DL', 'FU'),
-    ('BL', 'DF', 'DL', 'LU'),
-    ('BL', 'DF', 'DL', 'RU'),
-    ('BL', 'DF', 'DR', 'FL'),
-    ('BL', 'DF', 'DR', 'FR'),
-    ('BL', 'DF', 'DR', 'FU'),
-    ('BL', 'DF', 'DR', 'LU'),
-    ('BL', 'DF', 'DR', 'RU'),
-    ('BL', 'DF', 'FL', 'FR'),
-    ('BL', 'DF', 'FL', 'FU'),
-    ('BL', 'DF', 'FL', 'LU'),
-    ('BL', 'DF', 'FL', 'RU'),
-    ('BL', 'DF', 'FR', 'FU'),
-    ('BL', 'DF', 'FR', 'LU'),
-    ('BL', 'DF', 'FR', 'RU'),
-    ('BL', 'DF', 'FU', 'LU'),
-    ('BL', 'DF', 'FU', 'RU'),
-    ('BL', 'DF', 'LU', 'RU'),
-    ('BL', 'DL', 'DR', 'FL'),
-    ('BL', 'DL', 'DR', 'FR'),
-    ('BL', 'DL', 'DR', 'FU'),
-    ('BL', 'DL', 'DR', 'LU'),
-    ('BL', 'DL', 'DR', 'RU'),
-    ('BL', 'DL', 'FL', 'FR'),
-    ('BL', 'DL', 'FL', 'FU'),
-    ('BL', 'DL', 'FL', 'LU'),
-    ('BL', 'DL', 'FL', 'RU'),
-    ('BL', 'DL', 'FR', 'FU'),
-    ('BL', 'DL', 'FR', 'LU'),
-    ('BL', 'DL', 'FR', 'RU'),
-    ('BL', 'DL', 'FU', 'LU'),
-    ('BL', 'DL', 'FU', 'RU'),
-    ('BL', 'DL', 'LU', 'RU'),
-    ('BL', 'DR', 'FL', 'FR'),
-    ('BL', 'DR', 'FL', 'FU'),
-    ('BL', 'DR', 'FL', 'LU'),
-    ('BL', 'DR', 'FL', 'RU'),
-    ('BL', 'DR', 'FR', 'FU'),
-    ('BL', 'DR', 'FR', 'LU'),
-    ('BL', 'DR', 'FR', 'RU'),
-    ('BL', 'DR', 'FU', 'LU'),
-    ('BL', 'DR', 'FU', 'RU'),
-    ('BL', 'DR', 'LU', 'RU'),
-    ('BL', 'FL', 'FR', 'FU'),
-    ('BL', 'FL', 'FR', 'LU'),
-    ('BL', 'FL', 'FR', 'RU'),
-    ('BL', 'FL', 'FU', 'LU'),
-    ('BL', 'FL', 'FU', 'RU'),
-    ('BL', 'FL', 'LU', 'RU'),
-    ('BL', 'FR', 'FU', 'LU'),
-    ('BL', 'FR', 'FU', 'RU'),
-    ('BL', 'FR', 'LU', 'RU'),
-    ('BL', 'FU', 'LU', 'RU'),
-    ('BR', 'BU', 'DF', 'DL'),
-    ('BR', 'BU', 'DF', 'DR'),
-    ('BR', 'BU', 'DF', 'FL'),
-    ('BR', 'BU', 'DF', 'FR'),
-    ('BR', 'BU', 'DF', 'FU'),
-    ('BR', 'BU', 'DF', 'LU'),
-    ('BR', 'BU', 'DF', 'RU'),
-    ('BR', 'BU', 'DL', 'DR'),
-    ('BR', 'BU', 'DL', 'FL'),
-    ('BR', 'BU', 'DL', 'FR'),
-    ('BR', 'BU', 'DL', 'FU'),
-    ('BR', 'BU', 'DL', 'LU'),
-    ('BR', 'BU', 'DL', 'RU'),
-    ('BR', 'BU', 'DR', 'FL'),
-    ('BR', 'BU', 'DR', 'FR'),
-    ('BR', 'BU', 'DR', 'FU'),
-    ('BR', 'BU', 'DR', 'LU'),
-    ('BR', 'BU', 'DR', 'RU'),
-    ('BR', 'BU', 'FL', 'FR'),
-    ('BR', 'BU', 'FL', 'FU'),
-    ('BR', 'BU', 'FL', 'LU'),
-    ('BR', 'BU', 'FL', 'RU'),
-    ('BR', 'BU', 'FR', 'FU'),
-    ('BR', 'BU', 'FR', 'LU'),
-    ('BR', 'BU', 'FR', 'RU'),
-    ('BR', 'BU', 'FU', 'LU'),
-    ('BR', 'BU', 'FU', 'RU'),
-    ('BR', 'BU', 'LU', 'RU'),
-    ('BR', 'DF', 'DL', 'DR'),
-    ('BR', 'DF', 'DL', 'FL'),
-    ('BR', 'DF', 'DL', 'FR'),
-    ('BR', 'DF', 'DL', 'FU'),
-    ('BR', 'DF', 'DL', 'LU'),
-    ('BR', 'DF', 'DL', 'RU'),
-    ('BR', 'DF', 'DR', 'FL'),
-    ('BR', 'DF', 'DR', 'FR'),
-    ('BR', 'DF', 'DR', 'FU'),
-    ('BR', 'DF', 'DR', 'LU'),
-    ('BR', 'DF', 'DR', 'RU'),
-    ('BR', 'DF', 'FL', 'FR'),
-    ('BR', 'DF', 'FL', 'FU'),
-    ('BR', 'DF', 'FL', 'LU'),
-    ('BR', 'DF', 'FL', 'RU'),
-    ('BR', 'DF', 'FR', 'FU'),
-    ('BR', 'DF', 'FR', 'LU'),
-    ('BR', 'DF', 'FR', 'RU'),
-    ('BR', 'DF', 'FU', 'LU'),
-    ('BR', 'DF', 'FU', 'RU'),
-    ('BR', 'DF', 'LU', 'RU'),
-    ('BR', 'DL', 'DR', 'FL'),
-    ('BR', 'DL', 'DR', 'FR'),
-    ('BR', 'DL', 'DR', 'FU'),
-    ('BR', 'DL', 'DR', 'LU'),
-    ('BR', 'DL', 'DR', 'RU'),
-    ('BR', 'DL', 'FL', 'FR'),
-    ('BR', 'DL', 'FL', 'FU'),
-    ('BR', 'DL', 'FL', 'LU'),
-    ('BR', 'DL', 'FL', 'RU'),
-    ('BR', 'DL', 'FR', 'FU'),
-    ('BR', 'DL', 'FR', 'LU'),
-    ('BR', 'DL', 'FR', 'RU'),
-    ('BR', 'DL', 'FU', 'LU'),
-    ('BR', 'DL', 'FU', 'RU'),
-    ('BR', 'DL', 'LU', 'RU'),
-    ('BR', 'DR', 'FL', 'FR'),
-    ('BR', 'DR', 'FL', 'FU'),
-    ('BR', 'DR', 'FL', 'LU'),
-    ('BR', 'DR', 'FL', 'RU'),
-    ('BR', 'DR', 'FR', 'FU'),
-    ('BR', 'DR', 'FR', 'LU'),
-    ('BR', 'DR', 'FR', 'RU'),
-    ('BR', 'DR', 'FU', 'LU'),
-    ('BR', 'DR', 'FU', 'RU'),
-    ('BR', 'DR', 'LU', 'RU'),
-    ('BR', 'FL', 'FR', 'FU'),
-    ('BR', 'FL', 'FR', 'LU'),
-    ('BR', 'FL', 'FR', 'RU'),
-    ('BR', 'FL', 'FU', 'LU'),
-    ('BR', 'FL', 'FU', 'RU'),
-    ('BR', 'FL', 'LU', 'RU'),
-    ('BR', 'FR', 'FU', 'LU'),
-    ('BR', 'FR', 'FU', 'RU'),
-    ('BR', 'FR', 'LU', 'RU'),
-    ('BR', 'FU', 'LU', 'RU'),
-    ('BU', 'DF', 'DL', 'DR'),
-    ('BU', 'DF', 'DL', 'FL'),
-    ('BU', 'DF', 'DL', 'FR'),
-    ('BU', 'DF', 'DL', 'FU'),
-    ('BU', 'DF', 'DL', 'LU'),
-    ('BU', 'DF', 'DL', 'RU'),
-    ('BU', 'DF', 'DR', 'FL'),
-    ('BU', 'DF', 'DR', 'FR'),
-    ('BU', 'DF', 'DR', 'FU'),
-    ('BU', 'DF', 'DR', 'LU'),
-    ('BU', 'DF', 'DR', 'RU'),
-    ('BU', 'DF', 'FL', 'FR'),
-    ('BU', 'DF', 'FL', 'FU'),
-    ('BU', 'DF', 'FL', 'LU'),
-    ('BU', 'DF', 'FL', 'RU'),
-    ('BU', 'DF', 'FR', 'FU'),
-    ('BU', 'DF', 'FR', 'LU'),
-    ('BU', 'DF', 'FR', 'RU'),
-    ('BU', 'DF', 'FU', 'LU'),
-    ('BU', 'DF', 'FU', 'RU'),
-    ('BU', 'DF', 'LU', 'RU'),
-    ('BU', 'DL', 'DR', 'FL'),
-    ('BU', 'DL', 'DR', 'FR'),
-    ('BU', 'DL', 'DR', 'FU'),
-    ('BU', 'DL', 'DR', 'LU'),
-    ('BU', 'DL', 'DR', 'RU'),
-    ('BU', 'DL', 'FL', 'FR'),
-    ('BU', 'DL', 'FL', 'FU'),
-    ('BU', 'DL', 'FL', 'LU'),
-    ('BU', 'DL', 'FL', 'RU'),
-    ('BU', 'DL', 'FR', 'FU'),
-    ('BU', 'DL', 'FR', 'LU'),
-    ('BU', 'DL', 'FR', 'RU'),
-    ('BU', 'DL', 'FU', 'LU'),
-    ('BU', 'DL', 'FU', 'RU'),
-    ('BU', 'DL', 'LU', 'RU'),
-    ('BU', 'DR', 'FL', 'FR'),
-    ('BU', 'DR', 'FL', 'FU'),
-    ('BU', 'DR', 'FL', 'LU'),
-    ('BU', 'DR', 'FL', 'RU'),
-    ('BU', 'DR', 'FR', 'FU'),
-    ('BU', 'DR', 'FR', 'LU'),
-    ('BU', 'DR', 'FR', 'RU'),
-    ('BU', 'DR', 'FU', 'LU'),
-    ('BU', 'DR', 'FU', 'RU'),
-    ('BU', 'DR', 'LU', 'RU'),
-    ('BU', 'FL', 'FR', 'FU'),
-    ('BU', 'FL', 'FR', 'LU'),
-    ('BU', 'FL', 'FR', 'RU'),
-    ('BU', 'FL', 'FU', 'LU'),
-    ('BU', 'FL', 'FU', 'RU'),
-    ('BU', 'FL', 'LU', 'RU'),
-    ('BU', 'FR', 'FU', 'LU'),
-    ('BU', 'FR', 'FU', 'RU'),
-    ('BU', 'FR', 'LU', 'RU'),
-    ('BU', 'FU', 'LU', 'RU'),
-    ('DF', 'DL', 'DR', 'FL'),
-    ('DF', 'DL', 'DR', 'FR'),
-    ('DF', 'DL', 'DR', 'FU'),
-    ('DF', 'DL', 'DR', 'LU'),
-    ('DF', 'DL', 'DR', 'RU'),
-    ('DF', 'DL', 'FL', 'FR'),
-    ('DF', 'DL', 'FL', 'FU'),
-    ('DF', 'DL', 'FL', 'LU'),
-    ('DF', 'DL', 'FL', 'RU'),
-    ('DF', 'DL', 'FR', 'FU'),
-    ('DF', 'DL', 'FR', 'LU'),
-    ('DF', 'DL', 'FR', 'RU'),
-    ('DF', 'DL', 'FU', 'LU'),
-    ('DF', 'DL', 'FU', 'RU'),
-    ('DF', 'DL', 'LU', 'RU'),
-    ('DF', 'DR', 'FL', 'FR'),
-    ('DF', 'DR', 'FL', 'FU'),
-    ('DF', 'DR', 'FL', 'LU'),
-    ('DF', 'DR', 'FL', 'RU'),
-    ('DF', 'DR', 'FR', 'FU'),
-    ('DF', 'DR', 'FR', 'LU'),
-    ('DF', 'DR', 'FR', 'RU'),
-    ('DF', 'DR', 'FU', 'LU'),
-    ('DF', 'DR', 'FU', 'RU'),
-    ('DF', 'DR', 'LU', 'RU'),
-    ('DF', 'FL', 'FR', 'FU'),
-    ('DF', 'FL', 'FR', 'LU'),
-    ('DF', 'FL', 'FR', 'RU'),
-    ('DF', 'FL', 'FU', 'LU'),
-    ('DF', 'FL', 'FU', 'RU'),
-    ('DF', 'FL', 'LU', 'RU'),
-    ('DF', 'FR', 'FU', 'LU'),
-    ('DF', 'FR', 'FU', 'RU'),
-    ('DF', 'FR', 'LU', 'RU'),
-    ('DF', 'FU', 'LU', 'RU'),
-    ('DL', 'DR', 'FL', 'FR'),
-    ('DL', 'DR', 'FL', 'FU'),
-    ('DL', 'DR', 'FL', 'LU'),
-    ('DL', 'DR', 'FL', 'RU'),
-    ('DL', 'DR', 'FR', 'FU'),
-    ('DL', 'DR', 'FR', 'LU'),
-    ('DL', 'DR', 'FR', 'RU'),
-    ('DL', 'DR', 'FU', 'LU'),
-    ('DL', 'DR', 'FU', 'RU'),
-    ('DL', 'DR', 'LU', 'RU'),
-    ('DL', 'FL', 'FR', 'FU'),
-    ('DL', 'FL', 'FR', 'LU'),
-    ('DL', 'FL', 'FR', 'RU'),
-    ('DL', 'FL', 'FU', 'LU'),
-    ('DL', 'FL', 'FU', 'RU'),
-    ('DL', 'FL', 'LU', 'RU'),
-    ('DL', 'FR', 'FU', 'LU'),
-    ('DL', 'FR', 'FU', 'RU'),
-    ('DL', 'FR', 'LU', 'RU'),
-    ('DL', 'FU', 'LU', 'RU'),
-    ('DR', 'FL', 'FR', 'FU'),
-    ('DR', 'FL', 'FR', 'LU'),
-    ('DR', 'FL', 'FR', 'RU'),
-    ('DR', 'FL', 'FU', 'LU'),
-    ('DR', 'FL', 'FU', 'RU'),
-    ('DR', 'FL', 'LU', 'RU'),
-    ('DR', 'FR', 'FU', 'LU'),
-    ('DR', 'FR', 'FU', 'RU'),
-    ('DR', 'FR', 'LU', 'RU'),
-    ('DR', 'FU', 'LU', 'RU'),
-    ('FL', 'FR', 'FU', 'LU'),
-    ('FL', 'FR', 'FU', 'RU'),
-    ('FL', 'FR', 'LU', 'RU'),
-    ('FL', 'FU', 'LU', 'RU'),
-    ('FR', 'FU', 'LU', 'RU'),
+    ('DB', 'LB', 'RB', 'UB'),
+    ('DB', 'LB', 'RB', 'DF'),
+    ('DB', 'LB', 'RB', 'DL'),
+    ('DB', 'LB', 'RB', 'DR'),
+    ('DB', 'LB', 'RB', 'LF'),
+    ('DB', 'LB', 'RB', 'RF'),
+    ('DB', 'LB', 'RB', 'UF'),
+    ('DB', 'LB', 'RB', 'UL'),
+    ('DB', 'LB', 'RB', 'UR'),
+    ('DB', 'LB', 'UB', 'DF'),
+    ('DB', 'LB', 'UB', 'DL'),
+    ('DB', 'LB', 'UB', 'DR'),
+    ('DB', 'LB', 'UB', 'LF'),
+    ('DB', 'LB', 'UB', 'RF'),
+    ('DB', 'LB', 'UB', 'UF'),
+    ('DB', 'LB', 'UB', 'UL'),
+    ('DB', 'LB', 'UB', 'UR'),
+    ('DB', 'LB', 'DF', 'DL'),
+    ('DB', 'LB', 'DF', 'DR'),
+    ('DB', 'LB', 'DF', 'LF'),
+    ('DB', 'LB', 'DF', 'RF'),
+    ('DB', 'LB', 'DF', 'UF'),
+    ('DB', 'LB', 'DF', 'UL'),
+    ('DB', 'LB', 'DF', 'UR'),
+    ('DB', 'LB', 'DL', 'DR'),
+    ('DB', 'LB', 'DL', 'LF'),
+    ('DB', 'LB', 'DL', 'RF'),
+    ('DB', 'LB', 'DL', 'UF'),
+    ('DB', 'LB', 'DL', 'UL'),
+    ('DB', 'LB', 'DL', 'UR'),
+    ('DB', 'LB', 'DR', 'LF'),
+    ('DB', 'LB', 'DR', 'RF'),
+    ('DB', 'LB', 'DR', 'UF'),
+    ('DB', 'LB', 'DR', 'UL'),
+    ('DB', 'LB', 'DR', 'UR'),
+    ('DB', 'LB', 'LF', 'RF'),
+    ('DB', 'LB', 'LF', 'UF'),
+    ('DB', 'LB', 'LF', 'UL'),
+    ('DB', 'LB', 'LF', 'UR'),
+    ('DB', 'LB', 'RF', 'UF'),
+    ('DB', 'LB', 'RF', 'UL'),
+    ('DB', 'LB', 'RF', 'UR'),
+    ('DB', 'LB', 'UF', 'UL'),
+    ('DB', 'LB', 'UF', 'UR'),
+    ('DB', 'LB', 'UL', 'UR'),
+    ('DB', 'RB', 'UB', 'DF'),
+    ('DB', 'RB', 'UB', 'DL'),
+    ('DB', 'RB', 'UB', 'DR'),
+    ('DB', 'RB', 'UB', 'LF'),
+    ('DB', 'RB', 'UB', 'RF'),
+    ('DB', 'RB', 'UB', 'UF'),
+    ('DB', 'RB', 'UB', 'UL'),
+    ('DB', 'RB', 'UB', 'UR'),
+    ('DB', 'RB', 'DF', 'DL'),
+    ('DB', 'RB', 'DF', 'DR'),
+    ('DB', 'RB', 'DF', 'LF'),
+    ('DB', 'RB', 'DF', 'RF'),
+    ('DB', 'RB', 'DF', 'UF'),
+    ('DB', 'RB', 'DF', 'UL'),
+    ('DB', 'RB', 'DF', 'UR'),
+    ('DB', 'RB', 'DL', 'DR'),
+    ('DB', 'RB', 'DL', 'LF'),
+    ('DB', 'RB', 'DL', 'RF'),
+    ('DB', 'RB', 'DL', 'UF'),
+    ('DB', 'RB', 'DL', 'UL'),
+    ('DB', 'RB', 'DL', 'UR'),
+    ('DB', 'RB', 'DR', 'LF'),
+    ('DB', 'RB', 'DR', 'RF'),
+    ('DB', 'RB', 'DR', 'UF'),
+    ('DB', 'RB', 'DR', 'UL'),
+    ('DB', 'RB', 'DR', 'UR'),
+    ('DB', 'RB', 'LF', 'RF'),
+    ('DB', 'RB', 'LF', 'UF'),
+    ('DB', 'RB', 'LF', 'UL'),
+    ('DB', 'RB', 'LF', 'UR'),
+    ('DB', 'RB', 'RF', 'UF'),
+    ('DB', 'RB', 'RF', 'UL'),
+    ('DB', 'RB', 'RF', 'UR'),
+    ('DB', 'RB', 'UF', 'UL'),
+    ('DB', 'RB', 'UF', 'UR'),
+    ('DB', 'RB', 'UL', 'UR'),
+    ('DB', 'UB', 'DF', 'DL'),
+    ('DB', 'UB', 'DF', 'DR'),
+    ('DB', 'UB', 'DF', 'LF'),
+    ('DB', 'UB', 'DF', 'RF'),
+    ('DB', 'UB', 'DF', 'UF'),
+    ('DB', 'UB', 'DF', 'UL'),
+    ('DB', 'UB', 'DF', 'UR'),
+    ('DB', 'UB', 'DL', 'DR'),
+    ('DB', 'UB', 'DL', 'LF'),
+    ('DB', 'UB', 'DL', 'RF'),
+    ('DB', 'UB', 'DL', 'UF'),
+    ('DB', 'UB', 'DL', 'UL'),
+    ('DB', 'UB', 'DL', 'UR'),
+    ('DB', 'UB', 'DR', 'LF'),
+    ('DB', 'UB', 'DR', 'RF'),
+    ('DB', 'UB', 'DR', 'UF'),
+    ('DB', 'UB', 'DR', 'UL'),
+    ('DB', 'UB', 'DR', 'UR'),
+    ('DB', 'UB', 'LF', 'RF'),
+    ('DB', 'UB', 'LF', 'UF'),
+    ('DB', 'UB', 'LF', 'UL'),
+    ('DB', 'UB', 'LF', 'UR'),
+    ('DB', 'UB', 'RF', 'UF'),
+    ('DB', 'UB', 'RF', 'UL'),
+    ('DB', 'UB', 'RF', 'UR'),
+    ('DB', 'UB', 'UF', 'UL'),
+    ('DB', 'UB', 'UF', 'UR'),
+    ('DB', 'UB', 'UL', 'UR'),
+    ('DB', 'DF', 'DL', 'DR'),
+    ('DB', 'DF', 'DL', 'LF'),
+    ('DB', 'DF', 'DL', 'RF'),
+    ('DB', 'DF', 'DL', 'UF'),
+    ('DB', 'DF', 'DL', 'UL'),
+    ('DB', 'DF', 'DL', 'UR'),
+    ('DB', 'DF', 'DR', 'LF'),
+    ('DB', 'DF', 'DR', 'RF'),
+    ('DB', 'DF', 'DR', 'UF'),
+    ('DB', 'DF', 'DR', 'UL'),
+    ('DB', 'DF', 'DR', 'UR'),
+    ('DB', 'DF', 'LF', 'RF'),
+    ('DB', 'DF', 'LF', 'UF'),
+    ('DB', 'DF', 'LF', 'UL'),
+    ('DB', 'DF', 'LF', 'UR'),
+    ('DB', 'DF', 'RF', 'UF'),
+    ('DB', 'DF', 'RF', 'UL'),
+    ('DB', 'DF', 'RF', 'UR'),
+    ('DB', 'DF', 'UF', 'UL'),
+    ('DB', 'DF', 'UF', 'UR'),
+    ('DB', 'DF', 'UL', 'UR'),
+    ('DB', 'DL', 'DR', 'LF'),
+    ('DB', 'DL', 'DR', 'RF'),
+    ('DB', 'DL', 'DR', 'UF'),
+    ('DB', 'DL', 'DR', 'UL'),
+    ('DB', 'DL', 'DR', 'UR'),
+    ('DB', 'DL', 'LF', 'RF'),
+    ('DB', 'DL', 'LF', 'UF'),
+    ('DB', 'DL', 'LF', 'UL'),
+    ('DB', 'DL', 'LF', 'UR'),
+    ('DB', 'DL', 'RF', 'UF'),
+    ('DB', 'DL', 'RF', 'UL'),
+    ('DB', 'DL', 'RF', 'UR'),
+    ('DB', 'DL', 'UF', 'UL'),
+    ('DB', 'DL', 'UF', 'UR'),
+    ('DB', 'DL', 'UL', 'UR'),
+    ('DB', 'DR', 'LF', 'RF'),
+    ('DB', 'DR', 'LF', 'UF'),
+    ('DB', 'DR', 'LF', 'UL'),
+    ('DB', 'DR', 'LF', 'UR'),
+    ('DB', 'DR', 'RF', 'UF'),
+    ('DB', 'DR', 'RF', 'UL'),
+    ('DB', 'DR', 'RF', 'UR'),
+    ('DB', 'DR', 'UF', 'UL'),
+    ('DB', 'DR', 'UF', 'UR'),
+    ('DB', 'DR', 'UL', 'UR'),
+    ('DB', 'LF', 'RF', 'UF'),
+    ('DB', 'LF', 'RF', 'UL'),
+    ('DB', 'LF', 'RF', 'UR'),
+    ('DB', 'LF', 'UF', 'UL'),
+    ('DB', 'LF', 'UF', 'UR'),
+    ('DB', 'LF', 'UL', 'UR'),
+    ('DB', 'RF', 'UF', 'UL'),
+    ('DB', 'RF', 'UF', 'UR'),
+    ('DB', 'RF', 'UL', 'UR'),
+    ('DB', 'UF', 'UL', 'UR'),
+    ('LB', 'RB', 'UB', 'DF'),
+    ('LB', 'RB', 'UB', 'DL'),
+    ('LB', 'RB', 'UB', 'DR'),
+    ('LB', 'RB', 'UB', 'LF'),
+    ('LB', 'RB', 'UB', 'RF'),
+    ('LB', 'RB', 'UB', 'UF'),
+    ('LB', 'RB', 'UB', 'UL'),
+    ('LB', 'RB', 'UB', 'UR'),
+    ('LB', 'RB', 'DF', 'DL'),
+    ('LB', 'RB', 'DF', 'DR'),
+    ('LB', 'RB', 'DF', 'LF'),
+    ('LB', 'RB', 'DF', 'RF'),
+    ('LB', 'RB', 'DF', 'UF'),
+    ('LB', 'RB', 'DF', 'UL'),
+    ('LB', 'RB', 'DF', 'UR'),
+    ('LB', 'RB', 'DL', 'DR'),
+    ('LB', 'RB', 'DL', 'LF'),
+    ('LB', 'RB', 'DL', 'RF'),
+    ('LB', 'RB', 'DL', 'UF'),
+    ('LB', 'RB', 'DL', 'UL'),
+    ('LB', 'RB', 'DL', 'UR'),
+    ('LB', 'RB', 'DR', 'LF'),
+    ('LB', 'RB', 'DR', 'RF'),
+    ('LB', 'RB', 'DR', 'UF'),
+    ('LB', 'RB', 'DR', 'UL'),
+    ('LB', 'RB', 'DR', 'UR'),
+    ('LB', 'RB', 'LF', 'RF'),
+    ('LB', 'RB', 'LF', 'UF'),
+    ('LB', 'RB', 'LF', 'UL'),
+    ('LB', 'RB', 'LF', 'UR'),
+    ('LB', 'RB', 'RF', 'UF'),
+    ('LB', 'RB', 'RF', 'UL'),
+    ('LB', 'RB', 'RF', 'UR'),
+    ('LB', 'RB', 'UF', 'UL'),
+    ('LB', 'RB', 'UF', 'UR'),
+    ('LB', 'RB', 'UL', 'UR'),
+    ('LB', 'UB', 'DF', 'DL'),
+    ('LB', 'UB', 'DF', 'DR'),
+    ('LB', 'UB', 'DF', 'LF'),
+    ('LB', 'UB', 'DF', 'RF'),
+    ('LB', 'UB', 'DF', 'UF'),
+    ('LB', 'UB', 'DF', 'UL'),
+    ('LB', 'UB', 'DF', 'UR'),
+    ('LB', 'UB', 'DL', 'DR'),
+    ('LB', 'UB', 'DL', 'LF'),
+    ('LB', 'UB', 'DL', 'RF'),
+    ('LB', 'UB', 'DL', 'UF'),
+    ('LB', 'UB', 'DL', 'UL'),
+    ('LB', 'UB', 'DL', 'UR'),
+    ('LB', 'UB', 'DR', 'LF'),
+    ('LB', 'UB', 'DR', 'RF'),
+    ('LB', 'UB', 'DR', 'UF'),
+    ('LB', 'UB', 'DR', 'UL'),
+    ('LB', 'UB', 'DR', 'UR'),
+    ('LB', 'UB', 'LF', 'RF'),
+    ('LB', 'UB', 'LF', 'UF'),
+    ('LB', 'UB', 'LF', 'UL'),
+    ('LB', 'UB', 'LF', 'UR'),
+    ('LB', 'UB', 'RF', 'UF'),
+    ('LB', 'UB', 'RF', 'UL'),
+    ('LB', 'UB', 'RF', 'UR'),
+    ('LB', 'UB', 'UF', 'UL'),
+    ('LB', 'UB', 'UF', 'UR'),
+    ('LB', 'UB', 'UL', 'UR'),
+    ('LB', 'DF', 'DL', 'DR'),
+    ('LB', 'DF', 'DL', 'LF'),
+    ('LB', 'DF', 'DL', 'RF'),
+    ('LB', 'DF', 'DL', 'UF'),
+    ('LB', 'DF', 'DL', 'UL'),
+    ('LB', 'DF', 'DL', 'UR'),
+    ('LB', 'DF', 'DR', 'LF'),
+    ('LB', 'DF', 'DR', 'RF'),
+    ('LB', 'DF', 'DR', 'UF'),
+    ('LB', 'DF', 'DR', 'UL'),
+    ('LB', 'DF', 'DR', 'UR'),
+    ('LB', 'DF', 'LF', 'RF'),
+    ('LB', 'DF', 'LF', 'UF'),
+    ('LB', 'DF', 'LF', 'UL'),
+    ('LB', 'DF', 'LF', 'UR'),
+    ('LB', 'DF', 'RF', 'UF'),
+    ('LB', 'DF', 'RF', 'UL'),
+    ('LB', 'DF', 'RF', 'UR'),
+    ('LB', 'DF', 'UF', 'UL'),
+    ('LB', 'DF', 'UF', 'UR'),
+    ('LB', 'DF', 'UL', 'UR'),
+    ('LB', 'DL', 'DR', 'LF'),
+    ('LB', 'DL', 'DR', 'RF'),
+    ('LB', 'DL', 'DR', 'UF'),
+    ('LB', 'DL', 'DR', 'UL'),
+    ('LB', 'DL', 'DR', 'UR'),
+    ('LB', 'DL', 'LF', 'RF'),
+    ('LB', 'DL', 'LF', 'UF'),
+    ('LB', 'DL', 'LF', 'UL'),
+    ('LB', 'DL', 'LF', 'UR'),
+    ('LB', 'DL', 'RF', 'UF'),
+    ('LB', 'DL', 'RF', 'UL'),
+    ('LB', 'DL', 'RF', 'UR'),
+    ('LB', 'DL', 'UF', 'UL'),
+    ('LB', 'DL', 'UF', 'UR'),
+    ('LB', 'DL', 'UL', 'UR'),
+    ('LB', 'DR', 'LF', 'RF'),
+    ('LB', 'DR', 'LF', 'UF'),
+    ('LB', 'DR', 'LF', 'UL'),
+    ('LB', 'DR', 'LF', 'UR'),
+    ('LB', 'DR', 'RF', 'UF'),
+    ('LB', 'DR', 'RF', 'UL'),
+    ('LB', 'DR', 'RF', 'UR'),
+    ('LB', 'DR', 'UF', 'UL'),
+    ('LB', 'DR', 'UF', 'UR'),
+    ('LB', 'DR', 'UL', 'UR'),
+    ('LB', 'LF', 'RF', 'UF'),
+    ('LB', 'LF', 'RF', 'UL'),
+    ('LB', 'LF', 'RF', 'UR'),
+    ('LB', 'LF', 'UF', 'UL'),
+    ('LB', 'LF', 'UF', 'UR'),
+    ('LB', 'LF', 'UL', 'UR'),
+    ('LB', 'RF', 'UF', 'UL'),
+    ('LB', 'RF', 'UF', 'UR'),
+    ('LB', 'RF', 'UL', 'UR'),
+    ('LB', 'UF', 'UL', 'UR'),
+    ('RB', 'UB', 'DF', 'DL'),
+    ('RB', 'UB', 'DF', 'DR'),
+    ('RB', 'UB', 'DF', 'LF'),
+    ('RB', 'UB', 'DF', 'RF'),
+    ('RB', 'UB', 'DF', 'UF'),
+    ('RB', 'UB', 'DF', 'UL'),
+    ('RB', 'UB', 'DF', 'UR'),
+    ('RB', 'UB', 'DL', 'DR'),
+    ('RB', 'UB', 'DL', 'LF'),
+    ('RB', 'UB', 'DL', 'RF'),
+    ('RB', 'UB', 'DL', 'UF'),
+    ('RB', 'UB', 'DL', 'UL'),
+    ('RB', 'UB', 'DL', 'UR'),
+    ('RB', 'UB', 'DR', 'LF'),
+    ('RB', 'UB', 'DR', 'RF'),
+    ('RB', 'UB', 'DR', 'UF'),
+    ('RB', 'UB', 'DR', 'UL'),
+    ('RB', 'UB', 'DR', 'UR'),
+    ('RB', 'UB', 'LF', 'RF'),
+    ('RB', 'UB', 'LF', 'UF'),
+    ('RB', 'UB', 'LF', 'UL'),
+    ('RB', 'UB', 'LF', 'UR'),
+    ('RB', 'UB', 'RF', 'UF'),
+    ('RB', 'UB', 'RF', 'UL'),
+    ('RB', 'UB', 'RF', 'UR'),
+    ('RB', 'UB', 'UF', 'UL'),
+    ('RB', 'UB', 'UF', 'UR'),
+    ('RB', 'UB', 'UL', 'UR'),
+    ('RB', 'DF', 'DL', 'DR'),
+    ('RB', 'DF', 'DL', 'LF'),
+    ('RB', 'DF', 'DL', 'RF'),
+    ('RB', 'DF', 'DL', 'UF'),
+    ('RB', 'DF', 'DL', 'UL'),
+    ('RB', 'DF', 'DL', 'UR'),
+    ('RB', 'DF', 'DR', 'LF'),
+    ('RB', 'DF', 'DR', 'RF'),
+    ('RB', 'DF', 'DR', 'UF'),
+    ('RB', 'DF', 'DR', 'UL'),
+    ('RB', 'DF', 'DR', 'UR'),
+    ('RB', 'DF', 'LF', 'RF'),
+    ('RB', 'DF', 'LF', 'UF'),
+    ('RB', 'DF', 'LF', 'UL'),
+    ('RB', 'DF', 'LF', 'UR'),
+    ('RB', 'DF', 'RF', 'UF'),
+    ('RB', 'DF', 'RF', 'UL'),
+    ('RB', 'DF', 'RF', 'UR'),
+    ('RB', 'DF', 'UF', 'UL'),
+    ('RB', 'DF', 'UF', 'UR'),
+    ('RB', 'DF', 'UL', 'UR'),
+    ('RB', 'DL', 'DR', 'LF'),
+    ('RB', 'DL', 'DR', 'RF'),
+    ('RB', 'DL', 'DR', 'UF'),
+    ('RB', 'DL', 'DR', 'UL'),
+    ('RB', 'DL', 'DR', 'UR'),
+    ('RB', 'DL', 'LF', 'RF'),
+    ('RB', 'DL', 'LF', 'UF'),
+    ('RB', 'DL', 'LF', 'UL'),
+    ('RB', 'DL', 'LF', 'UR'),
+    ('RB', 'DL', 'RF', 'UF'),
+    ('RB', 'DL', 'RF', 'UL'),
+    ('RB', 'DL', 'RF', 'UR'),
+    ('RB', 'DL', 'UF', 'UL'),
+    ('RB', 'DL', 'UF', 'UR'),
+    ('RB', 'DL', 'UL', 'UR'),
+    ('RB', 'DR', 'LF', 'RF'),
+    ('RB', 'DR', 'LF', 'UF'),
+    ('RB', 'DR', 'LF', 'UL'),
+    ('RB', 'DR', 'LF', 'UR'),
+    ('RB', 'DR', 'RF', 'UF'),
+    ('RB', 'DR', 'RF', 'UL'),
+    ('RB', 'DR', 'RF', 'UR'),
+    ('RB', 'DR', 'UF', 'UL'),
+    ('RB', 'DR', 'UF', 'UR'),
+    ('RB', 'DR', 'UL', 'UR'),
+    ('RB', 'LF', 'RF', 'UF'),
+    ('RB', 'LF', 'RF', 'UL'),
+    ('RB', 'LF', 'RF', 'UR'),
+    ('RB', 'LF', 'UF', 'UL'),
+    ('RB', 'LF', 'UF', 'UR'),
+    ('RB', 'LF', 'UL', 'UR'),
+    ('RB', 'RF', 'UF', 'UL'),
+    ('RB', 'RF', 'UF', 'UR'),
+    ('RB', 'RF', 'UL', 'UR'),
+    ('RB', 'UF', 'UL', 'UR'),
+    ('UB', 'DF', 'DL', 'DR'),
+    ('UB', 'DF', 'DL', 'LF'),
+    ('UB', 'DF', 'DL', 'RF'),
+    ('UB', 'DF', 'DL', 'UF'),
+    ('UB', 'DF', 'DL', 'UL'),
+    ('UB', 'DF', 'DL', 'UR'),
+    ('UB', 'DF', 'DR', 'LF'),
+    ('UB', 'DF', 'DR', 'RF'),
+    ('UB', 'DF', 'DR', 'UF'),
+    ('UB', 'DF', 'DR', 'UL'),
+    ('UB', 'DF', 'DR', 'UR'),
+    ('UB', 'DF', 'LF', 'RF'),
+    ('UB', 'DF', 'LF', 'UF'),
+    ('UB', 'DF', 'LF', 'UL'),
+    ('UB', 'DF', 'LF', 'UR'),
+    ('UB', 'DF', 'RF', 'UF'),
+    ('UB', 'DF', 'RF', 'UL'),
+    ('UB', 'DF', 'RF', 'UR'),
+    ('UB', 'DF', 'UF', 'UL'),
+    ('UB', 'DF', 'UF', 'UR'),
+    ('UB', 'DF', 'UL', 'UR'),
+    ('UB', 'DL', 'DR', 'LF'),
+    ('UB', 'DL', 'DR', 'RF'),
+    ('UB', 'DL', 'DR', 'UF'),
+    ('UB', 'DL', 'DR', 'UL'),
+    ('UB', 'DL', 'DR', 'UR'),
+    ('UB', 'DL', 'LF', 'RF'),
+    ('UB', 'DL', 'LF', 'UF'),
+    ('UB', 'DL', 'LF', 'UL'),
+    ('UB', 'DL', 'LF', 'UR'),
+    ('UB', 'DL', 'RF', 'UF'),
+    ('UB', 'DL', 'RF', 'UL'),
+    ('UB', 'DL', 'RF', 'UR'),
+    ('UB', 'DL', 'UF', 'UL'),
+    ('UB', 'DL', 'UF', 'UR'),
+    ('UB', 'DL', 'UL', 'UR'),
+    ('UB', 'DR', 'LF', 'RF'),
+    ('UB', 'DR', 'LF', 'UF'),
+    ('UB', 'DR', 'LF', 'UL'),
+    ('UB', 'DR', 'LF', 'UR'),
+    ('UB', 'DR', 'RF', 'UF'),
+    ('UB', 'DR', 'RF', 'UL'),
+    ('UB', 'DR', 'RF', 'UR'),
+    ('UB', 'DR', 'UF', 'UL'),
+    ('UB', 'DR', 'UF', 'UR'),
+    ('UB', 'DR', 'UL', 'UR'),
+    ('UB', 'LF', 'RF', 'UF'),
+    ('UB', 'LF', 'RF', 'UL'),
+    ('UB', 'LF', 'RF', 'UR'),
+    ('UB', 'LF', 'UF', 'UL'),
+    ('UB', 'LF', 'UF', 'UR'),
+    ('UB', 'LF', 'UL', 'UR'),
+    ('UB', 'RF', 'UF', 'UL'),
+    ('UB', 'RF', 'UF', 'UR'),
+    ('UB', 'RF', 'UL', 'UR'),
+    ('UB', 'UF', 'UL', 'UR'),
+    ('DF', 'DL', 'DR', 'LF'),
+    ('DF', 'DL', 'DR', 'RF'),
+    ('DF', 'DL', 'DR', 'UF'),
+    ('DF', 'DL', 'DR', 'UL'),
+    ('DF', 'DL', 'DR', 'UR'),
+    ('DF', 'DL', 'LF', 'RF'),
+    ('DF', 'DL', 'LF', 'UF'),
+    ('DF', 'DL', 'LF', 'UL'),
+    ('DF', 'DL', 'LF', 'UR'),
+    ('DF', 'DL', 'RF', 'UF'),
+    ('DF', 'DL', 'RF', 'UL'),
+    ('DF', 'DL', 'RF', 'UR'),
+    ('DF', 'DL', 'UF', 'UL'),
+    ('DF', 'DL', 'UF', 'UR'),
+    ('DF', 'DL', 'UL', 'UR'),
+    ('DF', 'DR', 'LF', 'RF'),
+    ('DF', 'DR', 'LF', 'UF'),
+    ('DF', 'DR', 'LF', 'UL'),
+    ('DF', 'DR', 'LF', 'UR'),
+    ('DF', 'DR', 'RF', 'UF'),
+    ('DF', 'DR', 'RF', 'UL'),
+    ('DF', 'DR', 'RF', 'UR'),
+    ('DF', 'DR', 'UF', 'UL'),
+    ('DF', 'DR', 'UF', 'UR'),
+    ('DF', 'DR', 'UL', 'UR'),
+    ('DF', 'LF', 'RF', 'UF'),
+    ('DF', 'LF', 'RF', 'UL'),
+    ('DF', 'LF', 'RF', 'UR'),
+    ('DF', 'LF', 'UF', 'UL'),
+    ('DF', 'LF', 'UF', 'UR'),
+    ('DF', 'LF', 'UL', 'UR'),
+    ('DF', 'RF', 'UF', 'UL'),
+    ('DF', 'RF', 'UF', 'UR'),
+    ('DF', 'RF', 'UL', 'UR'),
+    ('DF', 'UF', 'UL', 'UR'),
+    ('DL', 'DR', 'LF', 'RF'),
+    ('DL', 'DR', 'LF', 'UF'),
+    ('DL', 'DR', 'LF', 'UL'),
+    ('DL', 'DR', 'LF', 'UR'),
+    ('DL', 'DR', 'RF', 'UF'),
+    ('DL', 'DR', 'RF', 'UL'),
+    ('DL', 'DR', 'RF', 'UR'),
+    ('DL', 'DR', 'UF', 'UL'),
+    ('DL', 'DR', 'UF', 'UR'),
+    ('DL', 'DR', 'UL', 'UR'),
+    ('DL', 'LF', 'RF', 'UF'),
+    ('DL', 'LF', 'RF', 'UL'),
+    ('DL', 'LF', 'RF', 'UR'),
+    ('DL', 'LF', 'UF', 'UL'),
+    ('DL', 'LF', 'UF', 'UR'),
+    ('DL', 'LF', 'UL', 'UR'),
+    ('DL', 'RF', 'UF', 'UL'),
+    ('DL', 'RF', 'UF', 'UR'),
+    ('DL', 'RF', 'UL', 'UR'),
+    ('DL', 'UF', 'UL', 'UR'),
+    ('DR', 'LF', 'RF', 'UF'),
+    ('DR', 'LF', 'RF', 'UL'),
+    ('DR', 'LF', 'RF', 'UR'),
+    ('DR', 'LF', 'UF', 'UL'),
+    ('DR', 'LF', 'UF', 'UR'),
+    ('DR', 'LF', 'UL', 'UR'),
+    ('DR', 'RF', 'UF', 'UL'),
+    ('DR', 'RF', 'UF', 'UR'),
+    ('DR', 'RF', 'UL', 'UR'),
+    ('DR', 'UF', 'UL', 'UR'),
+    ('LF', 'RF', 'UF', 'UL'),
+    ('LF', 'RF', 'UF', 'UR'),
+    ('LF', 'RF', 'UL', 'UR'),
+    ('LF', 'UF', 'UL', 'UR'),
+    ('RF', 'UF', 'UL', 'UR'),
 )
 
 swaps_555 = {'B': (0, 80, 85, 90, 95, 100, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 5, 27, 28, 29, 30, 4, 32, 33, 34, 35, 3, 37, 38, 39, 40, 2, 42, 43, 44, 45, 1, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 150, 81, 82, 83, 84, 149, 86, 87, 88, 89, 148, 91, 92, 93, 94, 147, 96, 97, 98, 99, 146, 121, 116, 111, 106, 101, 122, 117, 112, 107, 102, 123, 118, 113, 108, 103, 124, 119, 114, 109, 104, 125, 120, 115, 110, 105, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 26, 31, 36, 41, 46),

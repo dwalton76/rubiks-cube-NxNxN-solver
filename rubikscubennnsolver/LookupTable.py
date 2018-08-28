@@ -615,7 +615,7 @@ class LookupTable(object):
             if result == 0:
                 #log.warning("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
                 self.parent.enable_print_cube = True
-                self.parent.print_cube()
+                #self.parent.print_cube()
                 raise SolveError("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
 
             return result

@@ -42,6 +42,10 @@ typedef enum {
 
     // 7x7x7
     UD_OBLIQUE_EDGES_STAGE_777,
+    LR_OBLIQUE_EDGES_STAGE_777,
+    STEP40_777,
+    STEP50_777,
+    STEP60_777,
 
 } lookup_table_type;
 
@@ -58,6 +62,19 @@ char *LF_centers_cost_only_555 = NULL;
 struct key_value_pair *LR_inner_x_centers_and_oblique_edges_666 = NULL;
 char *LR_inner_x_centers_666 = NULL;
 char *LR_oblique_edges_666 = NULL;
+
+struct key_value_pair *step40_777 = NULL;
+char *step41_777 = NULL;
+char *step42_777 = NULL;
+
+struct key_value_pair *step50_777 = NULL;
+char *step51_777 = NULL;
+char *step52_777 = NULL;
+
+struct key_value_pair *step60_777 = NULL;
+char *step61_777 = NULL;
+char *step62_777 = NULL;
+char *step63_777 = NULL;
 
 
 int
@@ -281,6 +298,7 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         break;
 
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
+    case LR_OBLIQUE_EDGES_STAGE_777:
         // Convert to 1s and 0s
         str_replace_for_binary(cube, ones_LR);
         print_cube(cube, size);
@@ -291,6 +309,12 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         str_replace_for_binary(cube, ones_ULF);
         print_cube(cube, size);
         break;
+
+    case STEP40_777:
+    case STEP50_777:
+    case STEP60_777:
+        break;
+
     default:
         printf("ERROR: init_cube() does not yet support this --type\n");
         exit(1);
@@ -363,6 +387,32 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
             // 13 is the move count
             buffer[12] = '\0';
             cost = atoi(&buffer[13]);
+            hash_add(hashtable, buffer, cost);
+        }
+
+    } else if (
+        strmatch(filename, "lookup-table-7x7x7-step40.txt") ||
+        strmatch(filename, "lookup-table-7x7x7-step50.txt")) {
+
+        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+            // 0002001ffefff:3
+            // 0..12 are the state
+            // 13 is the :
+            // 14 is the move count
+            buffer[13] = '\0';
+            cost = atoi(&buffer[14]);
+            hash_add(hashtable, buffer, cost);
+        }
+
+    } else if (strmatch(filename, "lookup-table-7x7x7-step60.txt")) {
+
+        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+            // 0842108007c000008007fe0fffffdfffbdef7b:6
+            // 0..37 are the state
+            // 38 is the :
+            // 39 is the move count
+            buffer[38] = '\0';
+            cost = atoi(&buffer[39]);
             hash_add(hashtable, buffer, cost);
         }
 
@@ -457,10 +507,35 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
 
     // 7x7x7
     case UD_OBLIQUE_EDGES_STAGE_777:
-        return ida_heuristic_UD_oblique_edges_stage_777(
+        return ida_heuristic_UD_oblique_edges_stage_777(cube, max_cost_to_goal);
+
+    case LR_OBLIQUE_EDGES_STAGE_777:
+        return ida_heuristic_LR_oblique_edges_stage_777(cube, max_cost_to_goal);
+
+    case STEP40_777:
+        return ida_heuristic_step40_777(
             cube,
-            max_cost_to_goal
-        );
+            max_cost_to_goal,
+            &step40_777,
+            step41_777,
+            step42_777);
+
+    case STEP50_777:
+        return ida_heuristic_step50_777(
+            cube,
+            max_cost_to_goal,
+            &step50_777,
+            step51_777,
+            step52_777);
+
+    case STEP60_777:
+        return ida_heuristic_step60_777(
+            cube,
+            max_cost_to_goal,
+            &step60_777,
+            step61_777,
+            step62_777,
+            step63_777);
 
     default:
         printf("ERROR: ida_heuristic() does not yet support this --type\n");
@@ -605,6 +680,18 @@ ida_search_complete (
     // 7x7x7
     case UD_OBLIQUE_EDGES_STAGE_777:
         return ida_search_complete_UD_oblique_edges_stage_777(cube);
+
+    case LR_OBLIQUE_EDGES_STAGE_777:
+        return ida_search_complete_LR_oblique_edges_stage_777(cube);
+
+    case STEP40_777:
+        return ida_search_complete_step40_777(cube);
+
+    case STEP50_777:
+        return ida_search_complete_step50_777(cube);
+
+    case STEP60_777:
+        return ida_search_complete_step60_777(cube);
 
     default:
         printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
@@ -759,6 +846,182 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         case threeLw_PRIME:
         case threeRw:
         case threeRw_PRIME:
+            return 0;
+        default:
+            return 1;
+        }
+
+    case LR_OBLIQUE_EDGES_STAGE_777:
+        switch (move) {
+        case threeFw:
+        case threeFw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeUw:
+        case threeUw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+            return 0;
+        default:
+            return 1;
+        }
+
+    /*
+      # keep all centers staged
+      ("3Uw", "3Uw'", "Uw", "Uw'",
+       "3Lw", "3Lw'", "Lw", "Lw'",
+       "3Fw", "3Fw'", "Fw", "Fw'",
+       "3Rw", "3Rw'", "Rw", "Rw'",
+       "3Bw", "3Bw'", "Bw", "Bw'",
+       "3Dw", "3Dw'", "Dw", "Dw'"),
+     */
+    case STEP40_777:
+        switch (move) {
+        case threeFw:
+        case threeFw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeUw:
+        case threeUw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Uw:
+        case Uw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+            return 0;
+        default:
+            return 1;
+        }
+
+    /*
+      # keep all centers staged
+      ("3Uw", "3Uw'", "Uw", "Uw'",
+       "3Lw", "3Lw'", "Lw", "Lw'",
+       "3Fw", "3Fw'", "Fw", "Fw'",
+       "3Rw", "3Rw'", "Rw", "Rw'",
+       "3Bw", "3Bw'", "Bw", "Bw'",
+       "3Dw", "3Dw'", "Dw", "Dw'",
+
+      # keep LR in vertical stripes
+      "L", "L'", "R", "R'", "3Uw2", "3Dw2", "Uw2", "Dw2"),
+    */
+    case STEP50_777:
+        switch (move) {
+        case threeFw:
+        case threeFw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeUw:
+        case threeUw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Uw:
+        case Uw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+        case L:
+        case L_PRIME:
+        case R:
+        case R_PRIME:
+        case threeUw2:
+        case threeDw2:
+        case Uw2:
+        case Dw2:
+            return 0;
+        default:
+            return 1;
+        }
+
+    /*
+      # keep all centers staged
+      ("3Uw", "3Uw'", "Uw", "Uw'",
+       "3Lw", "3Lw'", "Lw", "Lw'",
+       "3Fw", "3Fw'", "Fw", "Fw'",
+       "3Rw", "3Rw'", "Rw", "Rw'",
+       "3Bw", "3Bw'", "Bw", "Bw'",
+       "3Dw", "3Dw'", "Dw", "Dw'",
+
+      # keep LR in horizontal stripes
+      "L", "L'", "R", "R'", "3Fw2", "3Bw2", "Fw2", "Bw2",
+
+      # keep UD in vertical stripes
+      "U", "U'", "D", "D'"),
+     */
+    case STEP60_777:
+        switch (move) {
+        case threeFw:
+        case threeFw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeUw:
+        case threeUw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Uw:
+        case Uw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+        case L:
+        case L_PRIME:
+        case R:
+        case R_PRIME:
+        case threeFw2:
+        case threeBw2:
+        case Fw2:
+        case Bw2:
+        case U:
+        case U_PRIME:
+        case D:
+        case D_PRIME:
             return 0;
         default:
             return 1;
@@ -1253,6 +1516,26 @@ ida_solve (
 
     // 7x7x7
     case UD_OBLIQUE_EDGES_STAGE_777:
+    case LR_OBLIQUE_EDGES_STAGE_777:
+        break;
+
+    case STEP40_777:
+        ida_prune_table_preload(&step40_777, "lookup-table-7x7x7-step40.txt");
+        step41_777 = ida_cost_only_preload("lookup-table-7x7x7-step41.hash-cost-only.txt", 24010032);
+        step42_777 = ida_cost_only_preload("lookup-table-7x7x7-step42.hash-cost-only.txt", 24010032);
+        break;
+
+    case STEP50_777:
+        ida_prune_table_preload(&step50_777, "lookup-table-7x7x7-step50.txt");
+        step51_777 = ida_cost_only_preload("lookup-table-7x7x7-step51.hash-cost-only.txt", 24010032);
+        step52_777 = ida_cost_only_preload("lookup-table-7x7x7-step52.hash-cost-only.txt", 24010032);
+        break;
+
+    case STEP60_777:
+        ida_prune_table_preload(&step60_777, "lookup-table-7x7x7-step60.txt");
+        step61_777 = ida_cost_only_preload("lookup-table-7x7x7-step61.hash-cost-only.txt", 24010032);
+        step62_777 = ida_cost_only_preload("lookup-table-7x7x7-step62.hash-cost-only.txt", 24010032);
+        step63_777 = ida_cost_only_preload("lookup-table-7x7x7-step63.hash-cost-only.txt", 6350412);
         break;
 
     default:
@@ -1326,6 +1609,22 @@ main (int argc, char *argv[])
             // 7x7x7
             } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-stage")) {
                 type = UD_OBLIQUE_EDGES_STAGE_777;
+                cube_size_type = 7;
+
+            } else if (strmatch(argv[i], "7x7x7-LR-oblique-edges-stage")) {
+                type = LR_OBLIQUE_EDGES_STAGE_777;
+                cube_size_type = 7;
+
+            } else if (strmatch(argv[i], "7x7x7-step40")) {
+                type = STEP40_777;
+                cube_size_type = 7;
+
+            } else if (strmatch(argv[i], "7x7x7-step50")) {
+                type = STEP50_777;
+                cube_size_type = 7;
+
+            } else if (strmatch(argv[i], "7x7x7-step60")) {
+                type = STEP60_777;
                 cube_size_type = 7;
 
             } else {

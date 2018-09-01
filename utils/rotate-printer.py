@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-build_rotate_xxx_c = True
+build_rotate_xxx_c = False
 
 
 if build_rotate_xxx_c:
@@ -78,6 +78,9 @@ for (size, solved_state) in (
     steps = list(steps)
     steps.extend(["x", "x'", "y", "y'", "z", "z'"])
 
+    if size == 5:
+        steps.extend(["u", "u'", "u2", "d", "d'", "d2"])
+
     if build_rotate_xxx_c:
         print("void")
         print("rotate_%d%d%d(char *cube, char *cube_tmp, int array_size, move_type move)" % (size, size, size))
@@ -109,7 +112,33 @@ for (size, solved_state) in (
             function_name = "rotate_%d%d%d_%s" % (size, size, size, step_pretty)
             rotate_mapper[step] = function_name
 
-            cube.rotate(step)
+            if step == "u":
+                cube.rotate("Uw")
+                cube.rotate("U'")
+
+            elif step == "u'":
+                cube.rotate("Uw'")
+                cube.rotate("U")
+
+            elif step == "u2":
+                cube.rotate("Uw2")
+                cube.rotate("U2")
+
+            elif step == "d":
+                cube.rotate("Dw")
+                cube.rotate("D'")
+
+            elif step == "d'":
+                cube.rotate("Dw'")
+                cube.rotate("D")
+
+            elif step == "d2":
+                cube.rotate("Dw2")
+                cube.rotate("D2")
+
+            else:
+                cube.rotate(step)
+
             rotate_mapper[step] = cube.print_case_statement_python(function_name, step)
             cube.state = copy(original_state)
 

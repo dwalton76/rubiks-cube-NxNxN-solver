@@ -23,14 +23,12 @@ logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelNam
 #    "OOO---z-----SSSTTTUUUVVV-Ww---YYYWZZ"
 #)
 
-cube = RubiksCube666("FBDDDFFUDRFBBLFLLURLDLLUFBLRFDUFLBLLFBFLRRBBFDRRDUBUFRBUBRDLUBFDRLBBRLRUFLBRBDUDFFFDBLUDBBLRDFUUDLBBBRRDRUDLBLDFRUDLLFFUUBFBUUFDLRUDUDBRRBBUFFDRRRDBULRRURULFDBRRULDDRUUULBLLFDFRRFDURFFLDUUBRUFDRFUBLDFULFBFDDUDLBLLRBL", "URFDLB")
+cube = RubiksCube555(solved_555, "URFDLB")
+cube.rotate("Uw")
+cube.rotate("U'")
 cube.print_cube()
+cube.re_init()
+
+cube.rotate("Uw'")
 cube.rotate("U")
-cube.rotate("F2")
-cube.rotate("3Uw'")
-cube.rotate("3Fw")
-cube.rotate("3Uw'")
-cube.rotate("3Fw2")
-
 cube.print_cube()
-

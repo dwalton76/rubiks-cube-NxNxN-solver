@@ -16,6 +16,51 @@ import sys
 log = logging.getLogger(__name__)
 
 
+wing_str_map = {
+    'UB' : 'UB',
+    'BU' : 'UB',
+    'UL' : 'UL',
+    'LU' : 'UL',
+    'UR' : 'UR',
+    'RU' : 'UR',
+    'UF' : 'UF',
+    'FU' : 'UF',
+    'LB' : 'LB',
+    'BL' : 'LB',
+    'LF' : 'LF',
+    'FL' : 'LF',
+    'RB' : 'RB',
+    'BR' : 'RB',
+    'RF' : 'RF',
+    'FR' : 'RF',
+    'DB' : 'DB',
+    'BD' : 'DB',
+    'DL' : 'DL',
+    'LD' : 'DL',
+    'DR' : 'DR',
+    'RD' : 'DR',
+    'DF' : 'DF',
+    'FD' : 'DF',
+    '--' : '--',
+}
+
+
+wing_strs_all = (
+    'UB',
+    'UL',
+    'UR',
+    'UF',
+    'LB',
+    'LF',
+    'RB',
+    'RF',
+    'DB',
+    'DL',
+    'DR',
+    'DF',
+)
+
+
 symmetry_48 = (
     (),
     ('x',),
@@ -1395,7 +1440,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
-            for step in ("L", "B'"):
+            for step in ("L2", "U"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
@@ -1416,7 +1461,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            for step in ("R", "U'"):
+            for step in ("R2", "B"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
@@ -1437,7 +1482,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_west_pos:
-            for step in ("R", "U'"):
+            for step in ("R2", "B"):
                 self.rotate(step)
 
         # Back
@@ -1508,11 +1553,11 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
-            for step in ("L'", ):
+            for step in ("F", "U"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
-            for step in ("L", ):
+            for step in ("B'", "U'"):
                 self.rotate(step)
 
         # Front
@@ -1529,7 +1574,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            for step in ("L'", ):
+            for step in ("F", "U"):
                 self.rotate(step)
 
         # Right
@@ -1546,7 +1591,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_west_pos:
-            for step in ("R", "U2"):
+            for step in ("F'", "U"):
                 self.rotate(step)
 
         # Back
@@ -1559,7 +1604,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            for step in ("L", ):
+            for step in ("B'", "U'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
@@ -1623,7 +1668,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
-            for step in ("L", "U'"):
+            for step in ("B'", "U2"):
                 self.rotate(step)
 
         # Front
@@ -1652,11 +1697,11 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
-            for step in ("R'", "U"):
+            for step in ("R2", "F'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_west_pos:
-            for step in ("R", "U"):
+            for step in ("F'",):
                 self.rotate(step)
 
         # Back
@@ -1733,7 +1778,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
-            for step in ("L", "U2"):
+            for step in ("B'", "U"):
                 self.rotate(step)
 
         # Front
@@ -1742,11 +1787,11 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            for step in ("F'", "R"):
+            for step in ("F2", "U'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            for step in ("R", ):
+            for step in ("F'", "U'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
@@ -1762,11 +1807,11 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
-            for step in ("R'", ):
+            for step in ("B", "U"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_west_pos:
-            for step in ("R", ):
+            for step in ("F'", "U'"):
                 self.rotate(step)
 
         # Back
@@ -1775,7 +1820,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            for step in ("B", "R'"):
+            for step in ("B2", "U"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
@@ -1783,7 +1828,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            for step in ("R'", ):
+            for step in ("B", "U"):
                 self.rotate(step)
 
         # Down
@@ -1832,11 +1877,11 @@ class RubiksCube(object):
 
         # Left
         elif wing_pos1 in self.sideL.edge_north_pos:
-            for step in ("L'", ):
+            for step in ("U", "B"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
-            for step in ("L", ):
+            for step in ("D'", "B'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
@@ -1865,11 +1910,11 @@ class RubiksCube(object):
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
-            for step in ("R", "B2"):
+            for step in ("U'", "B"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
-            for step in ("R'", "B2"):
+            for step in ("R2", "U'", "B"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
@@ -1898,19 +1943,19 @@ class RubiksCube(object):
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
-            for step in ("D'", "L"):
+            for step in ("D2", "B'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_south_pos:
-            for step in ("D", "L"):
+            for step in ("B'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_east_pos:
-            for step in ("D2", "L"):
+            for step in ("D", "B'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_west_pos:
-            for step in ("L", ):
+            for step in ("D'", "B'"):
                 self.rotate(step)
 
         else:
@@ -1925,25 +1970,28 @@ class RubiksCube(object):
 
         # Upper
         if wing_pos1 in self.sideU.edge_north_pos:
-            for step in ("U'", "L"):
+            for step in ("U2", "F'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_south_pos:
             self.rotate("F'")
 
         elif wing_pos1 in self.sideU.edge_east_pos:
-            for step in ("U2", "L"):
+            for step in ("U", "F'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_west_pos:
-            self.rotate("L")
+            for step in ("U'", "F'"):
+                self.rotate(step)
 
         # Left
         elif wing_pos1 in self.sideL.edge_north_pos:
-            self.rotate("L")
+            for step in ("U'", "F'"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
-            self.rotate("L'")
+            for step in ("D", "F"):
+                self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
             pass
@@ -1966,11 +2014,11 @@ class RubiksCube(object):
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
-            for step in ("U2", "L"):
+            for step in ("U", "F'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
-            for step in ("D2", "L'"):
+            for step in ("D'", "F"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
@@ -1982,7 +2030,7 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            for step in ("U'", "L"):
+            for step in ("U2", "F'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
@@ -2001,15 +2049,16 @@ class RubiksCube(object):
             self.rotate("F")
 
         elif wing_pos1 in self.sideD.edge_south_pos:
-            for step in ("D", "L'"):
+            for step in ("D2", "F"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_east_pos:
-            for step in ("D2", "L'"):
+            for step in ("D'", "F"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_west_pos:
-            self.rotate("L'")
+            for step in ("D", "F"):
+                self.rotate(step)
 
         else:
             raise ImplementThis("implement wing %s to L east" % str(wing))
@@ -2023,28 +2072,28 @@ class RubiksCube(object):
 
         # Upper
         if wing_pos1 in self.sideU.edge_north_pos:
-            for step in ("U", "R'"):
+            for step in ("U2", "F"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_south_pos:
-            for step in ("U'", "R'"):
+            for step in ("F",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_east_pos:
-            for step in ("R'",):
+            for step in ("U", "F"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_west_pos:
-            for step in ("U2", "R'"):
+            for step in ("U'", "F"):
                 self.rotate(step)
 
         # Left
         elif wing_pos1 in self.sideL.edge_north_pos:
-            for step in ("U2", "R'"):
+            for step in ("U'", "F"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
-            for step in ("D2", "R"):
+            for step in ("D", "F'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
@@ -2061,7 +2110,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            for step in ("D", "R"):
+            for step in ("F'", ):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
@@ -2073,11 +2122,11 @@ class RubiksCube(object):
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
-            for step in ("R'", ):
+            for step in ("U", "F"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
-            for step in ("R", ):
+            for step in ("D'", "F'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
@@ -2089,11 +2138,11 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            for step in ("U", "R'"):
+            for step in ("U2", "F"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            for step in ("D'", "R"):
+            for step in ("D2", "F'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
@@ -2106,19 +2155,19 @@ class RubiksCube(object):
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
-            for step in ("D", "R"):
+            for step in ("F'", ):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_south_pos:
-            for step in ("D'", "R"):
+            for step in ("D2", "F'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_east_pos:
-            for step in ("R", ):
+            for step in ("D'", "F'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_west_pos:
-            for step in ("D2", "R"):
+            for step in ("D", "F'"):
                 self.rotate(step)
 
         else:
@@ -2137,24 +2186,24 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_south_pos:
-            for step in ("U'", "R"):
+            for step in ("U2", "B'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_east_pos:
-            for step in ("R", ):
+            for step in ("U'", "B'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_west_pos:
-            for step in ("U2", "R"):
+            for step in ("U", "B'"):
                 self.rotate(step)
 
         # Left
         elif wing_pos1 in self.sideL.edge_north_pos:
-           for step in ("L'", "B2"):
+            for step in ("U", "B'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
-           for step in ("L", "B2"):
+            for step in ("D'", "B"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
@@ -2167,7 +2216,7 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            for step in ("U'", "R"):
+            for step in ("U2", "B'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
@@ -2184,11 +2233,11 @@ class RubiksCube(object):
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
-            for step in ("R", ):
+            for step in ("U'", "B'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
-            for step in ("R'", ):
+            for step in ("D", "B"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
@@ -2216,19 +2265,19 @@ class RubiksCube(object):
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
-            for step in ("D", "R'"):
+            for step in ("D2", "B"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_south_pos:
-            for step in ("D'", "R'"):
+            for step in ("B", ):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_east_pos:
-            for step in ("R'", ):
+            for step in ("D", "B"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_west_pos:
-            for step in ("D2", "R'"):
+            for step in ("D'", "B"):
                 self.rotate(step)
 
         else:
@@ -2268,11 +2317,11 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
-            for step in ("L", "D"):
+            for step in ("F'", ):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
-            for step in ("L'", "D"):
+            for step in ("B", "D2"):
                 self.rotate(step)
 
         # Front
@@ -2301,11 +2350,11 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
-            for step in ("R", "D'"):
+            for step in ("R2", "F"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_west_pos:
-            for step in ("R'", "D'"):
+            for step in ("F",):
                 self.rotate(step)
 
         # Back
@@ -2322,7 +2371,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            for step in ("R", "D'"):
+            for step in ("R2", "F"):
                 self.rotate(step)
 
         # Down
@@ -2377,16 +2426,16 @@ class RubiksCube(object):
             pass
 
         elif wing_pos1 in self.sideL.edge_east_pos:
-            for step in ("L", ):
+            for step in ("F'", "D'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
-            for step in ("L'", ):
+            for step in ("B", "D"):
                 self.rotate(step)
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            for step in ("F'", "L"):
+            for step in ("F2", "D'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
@@ -2398,7 +2447,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            for step in ("L", ):
+            for step in ("F'", "D'"):
                 self.rotate(step)
 
         # Right
@@ -2411,16 +2460,16 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
-            for step in ("R", "D2"):
+            for step in ("B'", "D"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_west_pos:
-            for step in ("R'", "D2"):
+            for step in ("F", "D'"):
                 self.rotate(step)
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            for step in ("B", "L'"):
+            for step in ("B2", "D"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
@@ -2428,7 +2477,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            for step in ("L'", ):
+            for step in ("B", "D"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
@@ -2488,11 +2537,11 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
-            for step in ("L", "D'"):
+            for step in ("F'", "D2"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
-            for step in ("L'", "D'"):
+            for step in ("B", ):
                 self.rotate(step)
 
         # Front
@@ -2522,11 +2571,11 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
-            for step in ("R", "D"):
+            for step in ("B'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_west_pos:
-            for step in ("R'", "D"):
+            for step in ("R2", "B'"):
                 self.rotate(step)
 
         # Back
@@ -2598,16 +2647,16 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
-            for step in ("L", "D2"):
+            for step in ("F'", "D"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
-            for step in ("L'", "D2"):
+            for step in ("B", "D'"):
                 self.rotate(step)
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            for step in ("F", "R'"):
+            for step in ("F2", "D"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
@@ -2615,7 +2664,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            for step in ("R'", ):
+            for step in ("F", "D"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
@@ -2631,11 +2680,11 @@ class RubiksCube(object):
             pass
 
         elif wing_pos1 in self.sideR.edge_east_pos:
-            for step in ("R", ):
+            for step in ("B'", "D'"):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_west_pos:
-            for step in ("R'", ):
+            for step in ("F", "D"):
                 self.rotate(step)
 
         # Back
@@ -2652,7 +2701,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            for step in ("R", ):
+            for step in ("B'", "D'"):
                 self.rotate(step)
 
         # Down

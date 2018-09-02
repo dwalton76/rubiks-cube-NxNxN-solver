@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from rubikscubennnsolver import RubiksCube, NotSolving
+from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map, wing_strs_all
 from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.LookupTable import (
@@ -14,6 +14,7 @@ from rubikscubennnsolver.LookupTable import (
     NoPruneTableState,
 )
 from pprint import pformat
+from random import randint
 import os
 import itertools
 import logging
@@ -31,55 +32,6 @@ moves_555 = (
     "D" , "D'", "D2", "Dw", "Dw'", "Dw2"
 )
 solved_555 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
-
-
-# OOopPPQQqrRRsSSTTtuUUVVvWWwxXXYYyzZZ
-# 012345678911111111112222222222333333
-#           01234567890123456789012345
-midge_indexes = set((1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34))
-#midge_chars = ("o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
-
-def get_wings_edges_will_pair(stringA, stringB):
-    matches_per_midge_char = {
-        "o" : 0,
-        "p" : 0,
-        "q" : 0,
-        "r" : 0,
-        "s" : 0,
-        "t" : 0,
-        "u" : 0,
-        "v" : 0,
-        "w" : 0,
-        "x" : 0,
-        "y" : 0,
-        "z" : 0,
-    }
-    midges_that_match = set()
-    #log.info("stringA: %s" % stringA)
-    #log.info("stringB: %s" % stringB)
-
-    for (index, (charA, charB)) in enumerate(zip(stringA, stringB)):
-        if charA == charB:
-            matches_per_midge_char[charA.lower()] += 1
-
-            if index in midge_indexes:
-                midges_that_match.add(charA.lower())
-
-    #log.info("midges_that_match:\n%s\n\n" % pformat(midges_that_match))
-    #log.info("matches_per_midge_char:\n%s\n\n" % pformat(matches_per_midge_char))
-    wings = 0
-    edges = 0
-
-    for midge_char in midges_that_match:
-        matches = matches_per_midge_char[midge_char]
-        if matches == 3:
-            wings += 2
-            edges += 1
-        elif matches == 2:
-            wings += 1
-
-    #log.info("return (%d, %d)" % (wings, edges))
-    return (wings, edges)
 
 
 centers_555 = (
@@ -223,51 +175,6 @@ l4e_wings_555 = (
 )
 
 
-wing_str_map = {
-    'UB' : 'UB',
-    'BU' : 'UB',
-    'UL' : 'UL',
-    'LU' : 'UL',
-    'UR' : 'UR',
-    'RU' : 'UR',
-    'UF' : 'UF',
-    'FU' : 'UF',
-    'LB' : 'LB',
-    'BL' : 'LB',
-    'LF' : 'LF',
-    'FL' : 'LF',
-    'RB' : 'RB',
-    'BR' : 'RB',
-    'RF' : 'RF',
-    'FR' : 'RF',
-    'DB' : 'DB',
-    'BD' : 'DB',
-    'DL' : 'DL',
-    'LD' : 'DL',
-    'DR' : 'DR',
-    'RD' : 'DR',
-    'DF' : 'DF',
-    'FD' : 'DF',
-    '--' : '--',
-}
-
-
-wing_strs_all = (
-    'UB',
-    'UL',
-    'UR',
-    'UF',
-    'LB',
-    'LF',
-    'RB',
-    'RF',
-    'DB',
-    'DL',
-    'DR',
-    'DF',
-)
-
-
 wings_for_edges_pattern_555 = (
     2, 3, 4, # Upper
     6, 11, 16,
@@ -300,18 +207,54 @@ edges_partner_555 = {
     22: 52,
     23: 53,
     24: 54,
+    27: 6,
+    28: 11,
+    29: 16,
     31: 110,
     35: 56,
     36: 115,
     40: 61,
     41: 120,
     45: 66,
+    47: 141,
+    48: 136,
+    49: 131,
+    52: 22,
+    53: 23,
+    54: 24,
+    56: 35,
+    60: 81,
+    61: 40,
+    65: 86,
+    66: 45,
+    70: 91,
+    72: 127,
+    73: 128,
+    74: 129,
+    77: 20,
+    78: 15,
+    79: 10,
     81: 60,
     85: 106,
     86: 65,
     90: 111,
     91: 70,
     95: 116,
+    97: 135,
+    98: 140,
+    99: 145,
+    102: 4,
+    103: 3,
+    104: 2,
+    106: 85,
+    110: 31,
+    111: 90,
+    115: 36,
+    116: 95,
+    120: 41,
+    122: 149,
+    123: 148,
+    124: 147,
     127: 72,
     128: 73,
     129: 74,
@@ -409,6 +352,15 @@ midges_recolor_tuples_555 = (
     ('z', 148, 123)
 )
 
+midge_indexes = (
+    3, 11, 15, 23, # Upper
+    28, 36, 40, 48, # Left
+    53, 61, 65, 73, # Front
+    78, 86, 90, 98, # Right
+    103, 111, 115, 123, # Back
+    128, 136, 140, 148, # Down
+)
+
 wings_for_recolor_555= (
     ('0', 2, 104),  # upper
     ('1', 4, 102),
@@ -439,69 +391,21 @@ wings_for_recolor_555= (
     ('n', 149, 122)
 )
 
-def edges_recolor_without_midges_555(state, only_colors=[]):
-    edge_map = {
-        'BD': [],
-        'BL': [],
-        'BR': [],
-        'BU': [],
-        'DF': [],
-        'DL': [],
-        'DR': [],
-        'FL': [],
-        'FR': [],
-        'FU': [],
-        'LU': [],
-        'RU': []
-    }
 
-    for (edge_index, square_index, partner_index) in wings_for_recolor_555:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-
-        if 'x' not in wing_str:
-            edge_map[wing_str].append(edge_index)
-
-    # Where is the other wing_str like us?
-    for (edge_index, square_index, partner_index) in wings_for_recolor_555:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-        wing_str_pretty = wing_str_map[square_value + partner_value]
-
-        if only_colors and wing_str_pretty not in only_colors:
-            state[square_index] = 'x'
-            state[partner_index] = 'x'
-        elif 'x' in wing_str:
-            state[square_index] = 'x'
-            state[partner_index] = 'x'
-        else:
-            for tmp_index in edge_map[wing_str]:
-                if tmp_index != edge_index:
-                    state[square_index] = tmp_index
-                    state[partner_index] = tmp_index
-                    break
-            else:
-                raise Exception("could not find tmp_index")
-
-    return ''.join(state)
-
-
-def edges_recolor_with_midges_555(state, only_colors=[]):
+def edges_recolor_pattern_555(state, only_colors=[]):
     midges_map = {
-        'BD': None,
-        'BL': None,
-        'BR': None,
-        'BU': None,
-        'DF': None,
+        'UB': None,
+        'UL': None,
+        'UR': None,
+        'UF': None,
+        'LB': None,
+        'LF': None,
+        'RB': None,
+        'RF': None,
+        'DB': None,
         'DL': None,
         'DR': None,
-        'FL': None,
-        'FR': None,
-        'FU': None,
-        'LU': None,
-        'RU': None,
+        'DF': None,
         '--': None,
     }
 
@@ -546,60 +450,32 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
     for (edge_index, square_index, partner_index) in midges_recolor_tuples_555:
         square_value = state[square_index]
         partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-        wing_str_pretty = wing_str_map[square_value + partner_value]
-        midges_map[wing_str] = edge_index
 
-        if only_colors and wing_str_pretty not in only_colors:
-            state[square_index] = '-'
-            state[partner_index] = '-'
-
-        # If the edge is paired always use an uppercase letter to represent this edge
-        #elif square_index in paired_edges_indexes:
-        #    state[square_index] = edge_index.upper()
-        #    state[partner_index] = edge_index.upper()
-
-        # If not, we need to indicate which way the midge is rotated.  If the square_index contains
-        # U, D, L, or R use the uppercase of the edge_index, if not use the lowercase of the
-        # edge_index.
-        elif square_value == 'U':
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
-
-        elif partner_value == 'U':
-            state[square_index] = edge_index
-            state[partner_index] = edge_index
-
-        elif square_value == 'D':
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
-
-        elif partner_value == 'D':
-            state[square_index] = edge_index
-            state[partner_index] = edge_index
-
-        elif square_value == 'L':
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
-
-        elif partner_value == 'L':
-            state[square_index] = edge_index
-            state[partner_index] = edge_index
-
-        elif square_value == 'R':
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
-
-        elif partner_value == 'R':
-            state[square_index] = edge_index
-            state[partner_index] = edge_index
-
-        elif square_value == '-' or partner_value == '-':
-            state[square_index] = '-'
-            state[partner_index] = '-'
-
+        if square_value == '-' or partner_value == '-':
+            pass
         else:
-            raise Exception("We should not be here, state[%d] %s, partner state [%d] %s" % (square_index, state[square_index], partner_index, state[partner_index]))
+            wing_str = wing_str_map[square_value + partner_value]
+            midges_map[wing_str] = edge_index
+
+            if only_colors and wing_str not in only_colors:
+                state[square_index] = '-'
+                state[partner_index] = '-'
+
+            else:
+                high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
+
+                # If this is a high wing use the uppercase of the midge edge_index
+                if high_low == 'U':
+                    state[square_index] = midges_map[wing_str].upper()
+                    state[partner_index] = midges_map[wing_str].upper()
+
+                # If this is a low wing use the lowercase of the midge edge_index
+                elif high_low == 'D':
+                    state[square_index] = midges_map[wing_str]
+                    state[partner_index] = midges_map[wing_str]
+
+                else:
+                    raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
 
     # Where is the midge for each high/low wing?
     for (edge_index, square_index, partner_index) in edges_recolor_tuples_555:
@@ -609,10 +485,9 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
         if square_value == '-' or partner_value == '-':
             pass
         else:
-            wing_str = ''.join(sorted([square_value, partner_value]))
-            wing_str_pretty = wing_str_map[square_value + partner_value]
+            wing_str = wing_str_map[square_value + partner_value]
 
-            if only_colors and wing_str_pretty not in only_colors:
+            if only_colors and wing_str not in only_colors:
                 state[square_index] = '-'
                 state[partner_index] = '-'
 
@@ -638,105 +513,6 @@ def edges_recolor_with_midges_555(state, only_colors=[]):
                     raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
 
     return ''.join(state)
-
-
-def edges_recolor_pattern_555(state, only_color=[]):
-    (edge_index, square_index, partner_index) = midges_recolor_tuples_555[0]
-    square_value = state[square_index]
-
-    # If the middle edges pieces are all "." then we ignore them and recolor the
-    # edges in terms of one edge piece as it relates to its partner piece.
-    if square_value == '.':
-        return edges_recolor_without_midges_555(state)
-
-    # If the middle edges are not "." though then we return recolor each edge
-    # as it relates to its midge.
-    else:
-        return edges_recolor_with_midges_555(state, only_color)
-
-
-LR_edges_recolor_tuples_555 = (
-    ('8', 31, 110), # left
-    ('9', 35, 56),
-    ('a', 41, 120),
-    ('b', 45, 66),
-
-    ('c', 81, 60), # right
-    ('d', 85, 106),
-    ('e', 91, 70),
-    ('f', 95, 116),
-)
-
-LR_midges_recolor_tuples_555 = (
-    ('s', 36, 115), # left
-    ('t', 40, 61),
-    ('u', 86, 65),  # right
-    ('v', 90, 111),
-)
-
-def LR_edges_recolor_pattern_555(state):
-    midges_map = {
-        'BD': None,
-        'BL': None,
-        'BR': None,
-        'BU': None,
-        'DF': None,
-        'DL': None,
-        'DR': None,
-        'FL': None,
-        'FR': None,
-        'FU': None,
-        'LU': None,
-        'RU': None
-    }
-
-    for (edge_index, square_index, partner_index) in LR_midges_recolor_tuples_555:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-        midges_map[wing_str] = edge_index
-
-        # We need to indicate which way the midge is rotated.  If the square_index contains
-        # U, D, L, or R use the uppercase of the edge_index, if not use the lowercase of the
-        # edge_index.
-        if square_value == 'L':
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
-        elif partner_value == 'L':
-            state[square_index] = edge_index
-            state[partner_index] = edge_index
-        elif square_value == 'R':
-            state[square_index] = edge_index.upper()
-            state[partner_index] = edge_index.upper()
-        elif partner_value == 'R':
-            state[square_index] = edge_index
-            state[partner_index] = edge_index
-        else:
-            raise Exception("We should not be here")
-
-    # Where is the midge for each high/low wing?
-    for (edge_index, square_index, partner_index) in LR_edges_recolor_tuples_555:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-
-        high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-
-        # If this is a high wing use the uppercase of the midge edge_index
-        if high_low == 'U':
-            state[square_index] = midges_map[wing_str].upper()
-            state[partner_index] = midges_map[wing_str].upper()
-
-        # If this is a low wing use the lowercase of the midge edge_index
-        elif high_low == 'D':
-            state[square_index] = midges_map[wing_str]
-            state[partner_index] = midges_map[wing_str]
-
-        else:
-            raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
-
-    return ''.join(state)
-
 
 
 class NoEdgeSolution(Exception):
@@ -1246,51 +1022,37 @@ class LookupTable555PairLastFourEdges(LookupTable):
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state[:]
 
-        # The lookup table was built using LB, LF, RF, and RB so we must re-color the
-        # 4 colors currently on LB, LF, RF, and RB to really be LB, LF, RF, and RB
-        LR_remap = {}
-        LR_remap[(parent_state[36], parent_state[115])] = 'LB'
-        LR_remap[(parent_state[115], parent_state[36])] = 'BL'
-
-        LR_remap[(parent_state[40], parent_state[61])]  = 'LF'
-        LR_remap[(parent_state[61], parent_state[40])]  = 'FL'
-
-        LR_remap[(parent_state[86], parent_state[65])]  = 'RF'
-        LR_remap[(parent_state[65], parent_state[86])]  = 'FR'
-
-        LR_remap[(parent_state[90], parent_state[111])] = 'RB'
-        LR_remap[(parent_state[111], parent_state[90])] = 'BR'
-
-        #self.parent.print_cube()
-        #log.info("LR_remap\n%s\n" % pformat(LR_remap))
-
-        for (edge_index, square_index, partner_index) in LR_midges_recolor_tuples_555:
-            square_value = parent_state[square_index]
-            partner_value = parent_state[partner_index]
-
-            if (square_value, partner_value) in LR_remap:
-                parent_state[square_index] = LR_remap[(square_value, partner_value)][0]
-                parent_state[partner_index] = LR_remap[(square_value, partner_value)][1]
-
-            elif (partner_value, square_value) in LR_remap:
-                parent_state[square_index] = LR_remap[(partner_value, square_value)][0]
-                parent_state[partner_index] = LR_remap[(partner_value, square_value)][1]
-
-        for (edge_index, square_index, partner_index) in LR_edges_recolor_tuples_555:
-            square_value = parent_state[square_index]
-            partner_value = parent_state[partner_index]
-
-            if (square_value, partner_value) in LR_remap:
-                parent_state[square_index] = LR_remap[(square_value, partner_value)][0]
-                parent_state[partner_index] = LR_remap[(square_value, partner_value)][1]
-
-            elif (partner_value, square_value) in LR_remap:
-                parent_state[square_index] = LR_remap[(partner_value, square_value)][0]
-                parent_state[partner_index] = LR_remap[(partner_value, square_value)][1]
-
-        state = LR_edges_recolor_pattern_555(parent_state[:])
-
+        state = edges_recolor_pattern_555(parent_state[:])
         result = ''.join([state[index] for index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95)])
+
+        # 000000000011
+        # 012345678901
+        # sSSTTtuUUVVv
+        recolor_s = bool(result[1] == "s")
+        recolor_t = bool(result[4] == "t")
+        recolor_u = bool(result[7] == "u")
+        recolor_v = bool(result[10] == "v")
+
+        # The lookup table was built such that the midge orientation never flipped
+        # (so midge state will always be uppercase).  We may need to recolor some
+        # edges to match that orientation.
+        if recolor_s or recolor_t or recolor_u or recolor_v:
+            recolored_result = []
+
+            for char in result:
+                if ((char in ("s", "S") and recolor_s) or
+                    (char in ("t", "T") and recolor_t) or
+                    (char in ("u", "U") and recolor_u) or
+                    (char in ("v", "V") and recolor_v)) :
+                    if char == char.lower():
+                        recolored_result.append(char.upper())
+                    else:
+                        recolored_result.append(char.lower())
+                else:
+                    recolored_result.append(char)
+
+            result = ''.join(recolored_result)
+
         cost_to_goal = None
         return (result, cost_to_goal)
 
@@ -1305,6 +1067,15 @@ class RubiksCube555(RubiksCube):
     - solve as 3x3x3
     """
     instantiated = False
+
+    reduce333_orient_edges_tuples = (
+        (2, 104), (3, 103), (4, 102), (6, 27), (10, 79), (11, 28), (15, 78), (16, 29), (20, 77), (22, 52), (23, 53), (24, 54),
+        (27, 6), (28, 11), (29, 16), (31, 110), (35, 56), (36, 115), (40, 61), (41, 120), (45, 66), (47, 141), (48, 136), (49, 131),
+        (52, 22), (53, 23), (54, 24), (56, 35), (60, 81), (61, 40), (65, 86), (66, 45), (70, 91), (72, 127), (73, 128), (74, 129),
+        (77, 20), (78, 15), (79, 10), (81, 60), (85, 106), (86, 65), (90, 111), (91, 70), (95, 116), (97, 135), (98, 140), (99, 145),
+        (102, 4), (103, 3), (104, 2), (106, 85), (110, 31), (111, 90), (115, 36), (116, 95), (120, 41), (122, 149), (123, 148), (124, 147),
+        (127, 72), (128, 73), (129, 74), (131, 49), (135, 97), (136, 48), (140, 98), (141, 47), (145, 99), (147, 124), (148, 123), (149, 122)
+    )
 
     def __init__(self, state, order, colormap=None, debug=False):
         RubiksCube.__init__(self, state, order, colormap)
@@ -1599,137 +1370,250 @@ class RubiksCube555(RubiksCube):
         self.state[x] = state_x
         self.state[y] = state_y
 
+        if x in midge_indexes or y in midge_indexes:
+            is_midge = True
+        else:
+            is_midge = False
+
         # Now move that wing to its home edge
         if wing_str.startswith('U'):
 
             if wing_str == 'UB':
                 self.move_wing_to_U_north(x)
-                high_edge_index = 2
-                low_edge_index = 4
+
+                if is_midge:
+                    high_edge_index = 3
+                    low_edge_index = 103
+                else:
+                    high_edge_index = 2
+                    low_edge_index = 4
 
             elif wing_str == 'UL':
                 self.move_wing_to_U_west(x)
-                high_edge_index = 16
-                low_edge_index = 6
+
+                if is_midge:
+                    high_edge_index = 11
+                    low_edge_index = 28
+                else:
+                    high_edge_index = 16
+                    low_edge_index = 6
 
             elif wing_str == 'UR':
                 self.move_wing_to_U_east(x)
-                high_edge_index = 10
-                low_edge_index = 20
+
+                if is_midge:
+                    high_edge_index = 15
+                    low_edge_index = 78
+                else:
+                    high_edge_index = 10
+                    low_edge_index = 20
 
             elif wing_str == 'UF':
                 self.move_wing_to_U_south(x)
-                high_edge_index = 24
-                low_edge_index = 22
+
+                if is_midge:
+                    high_edge_index = 23
+                    low_edge_index = 53
+                else:
+                    high_edge_index = 24
+                    low_edge_index = 22
 
             else:
                 raise Exception("invalid wing_str %s" % wing_str)
 
-            if self.state[high_edge_index] == 'U':
-                result = 'U'
-            elif self.state[low_edge_index] == 'U':
-                result = 'D'
-            elif self.state[high_edge_index] == 'x':
-                result = 'U'
-            elif self.state[low_edge_index] == 'x':
-                result = 'D'
+            if is_midge:
+                if self.state[high_edge_index] == 'U':
+                    result = 'U'
+                elif self.state[low_edge_index] == 'U':
+                    result = 'D'
+                else:
+                    self.print_cube()
+                    self.print_cube_layout()
+                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
+                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
             else:
-                self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+                if self.state[high_edge_index] == 'U':
+                    result = 'U'
+                elif self.state[low_edge_index] == 'U':
+                    result = 'D'
+                elif self.state[high_edge_index] == '.':
+                    result = 'U'
+                elif self.state[low_edge_index] == '.':
+                    result = 'D'
+                else:
+                    self.print_cube()
+                    self.print_cube_layout()
+                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
+                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
 
         elif wing_str.startswith('L'):
 
             if wing_str == 'LB':
                 self.move_wing_to_L_west(x)
-                high_edge_index = 41
-                low_edge_index = 31
+
+                if is_midge:
+                    high_edge_index = 36
+                    low_edge_index = 115
+                else:
+                    high_edge_index = 41
+                    low_edge_index = 31
 
             elif wing_str == 'LF':
                 self.move_wing_to_L_east(x)
-                high_edge_index = 35
-                low_edge_index = 45
+
+                if is_midge:
+                    high_edge_index = 40
+                    low_edge_index = 61
+                else:
+                    high_edge_index = 35
+                    low_edge_index = 45
 
             else:
                 raise Exception("invalid wing_str %s" % wing_str)
 
-            if self.state[high_edge_index] == 'L':
-                result = 'U'
-            elif self.state[low_edge_index] == 'L':
-                result = 'D'
-            elif self.state[high_edge_index] == 'x':
-                result = 'U'
-            elif self.state[low_edge_index] == 'x':
-                result = 'D'
+            if is_midge:
+                if self.state[high_edge_index] == 'L':
+                    result = 'U'
+                elif self.state[low_edge_index] == 'L':
+                    result = 'D'
+                else:
+                    self.print_cube()
+                    self.print_cube_layout()
+                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
+                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
             else:
-                self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+                if self.state[high_edge_index] == 'L':
+                    result = 'U'
+                elif self.state[low_edge_index] == 'L':
+                    result = 'D'
+                elif self.state[high_edge_index] == '.':
+                    result = 'U'
+                elif self.state[low_edge_index] == '.':
+                    result = 'D'
+                else:
+                    self.print_cube()
+                    self.print_cube_layout()
+                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
 
         elif wing_str.startswith('R'):
 
             if wing_str == 'RB':
                 self.move_wing_to_R_east(x)
-                high_edge_index = 85
-                low_edge_index = 95
+
+                if is_midge:
+                    high_edge_index = 90
+                    low_edge_index = 111
+                else:
+                    high_edge_index = 85
+                    low_edge_index = 95
 
             elif wing_str == 'RF':
                 self.move_wing_to_R_west(x)
-                high_edge_index = 91
-                low_edge_index = 81
+
+                if is_midge:
+                    high_edge_index = 86
+                    low_edge_index = 65
+                else:
+                    high_edge_index = 91
+                    low_edge_index = 81
 
             else:
                 raise Exception("invalid wing_str %s" % wing_str)
 
-            if self.state[high_edge_index] == 'R':
-                result = 'U'
-            elif self.state[low_edge_index] == 'R':
-                result = 'D'
-            elif self.state[high_edge_index] == 'x':
-                result = 'U'
-            elif self.state[low_edge_index] == 'x':
-                result = 'D'
+            if is_midge:
+                if self.state[high_edge_index] == 'R':
+                    result = 'U'
+                elif self.state[low_edge_index] == 'R':
+                    result = 'D'
+                else:
+                    self.print_cube()
+                    self.print_cube_layout()
+                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
+                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
             else:
-                self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+                if self.state[high_edge_index] == 'R':
+                    result = 'U'
+                elif self.state[low_edge_index] == 'R':
+                    result = 'D'
+                elif self.state[high_edge_index] == '.':
+                    result = 'U'
+                elif self.state[low_edge_index] == '.':
+                    result = 'D'
+                else:
+                    self.print_cube()
+                    self.print_cube_layout()
+                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
 
         elif wing_str.startswith('D'):
             if wing_str == 'DB':
                 self.move_wing_to_D_south(x)
-                high_edge_index = 149
-                low_edge_index = 147
+
+                if is_midge:
+                    high_edge_index = 148
+                    low_edge_index = 123
+                else:
+                    high_edge_index = 149
+                    low_edge_index = 147
 
             elif wing_str == 'DL':
                 self.move_wing_to_D_west(x)
-                high_edge_index = 141
-                low_edge_index = 131
+
+                if is_midge:
+                    high_edge_index = 136
+                    low_edge_index = 48
+                else:
+                    high_edge_index = 141
+                    low_edge_index = 131
 
             elif wing_str == 'DR':
                 self.move_wing_to_D_east(x)
-                high_edge_index = 135
-                low_edge_index = 145
+
+                if is_midge:
+                    high_edge_index = 140
+                    low_edge_index = 98
+                else:
+                    high_edge_index = 135
+                    low_edge_index = 145
 
             elif wing_str == 'DF':
                 self.move_wing_to_D_north(x)
-                high_edge_index = 127
-                low_edge_index = 129
+
+                if is_midge:
+                    high_edge_index = 128
+                    low_edge_index = 73
+                else:
+                    high_edge_index = 127
+                    low_edge_index = 129
 
             else:
                 raise Exception("invalid wing_str %s" % wing_str)
 
-            if self.state[high_edge_index] == 'D':
-                result = 'U'
-            elif self.state[low_edge_index] == 'D':
-                result = 'D'
-            elif self.state[high_edge_index] == 'x':
-                result = 'U'
-            elif self.state[low_edge_index] == 'x':
-                result = 'D'
+            if is_midge:
+                if self.state[high_edge_index] == 'D':
+                    result = 'U'
+                elif self.state[low_edge_index] == 'D':
+                    result = 'D'
+                else:
+                    self.print_cube()
+                    self.print_cube_layout()
+                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
+                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
             else:
-                self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+                if self.state[high_edge_index] == 'D':
+                    result = 'U'
+                elif self.state[low_edge_index] == 'D':
+                    result = 'D'
+                elif self.state[high_edge_index] == '.':
+                    result = 'U'
+                elif self.state[low_edge_index] == '.':
+                    result = 'D'
+                else:
+                    self.print_cube()
+                    self.print_cube_layout()
+                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
 
         else:
             raise Exception("invalid wing_str %s" % wing_str)
@@ -1739,6 +1623,33 @@ class RubiksCube555(RubiksCube):
 
         assert result in ('U', 'D')
         return result
+
+    def build_highlow_edge_values(self):
+        state = self.state
+        new_highlow_edge_values = {}
+
+        for x in range(1000000):
+
+            # make random moves
+            step = moves_555[randint(0, len(moves_555)-1)]
+
+            if "w" in step:
+                continue
+
+            self.rotate(step)
+
+            for (x, y) in self.reduce333_orient_edges_tuples:
+                state_x = self.state[x]
+                state_y = self.state[y]
+                wing_str = wing_str_map[state_x + state_y]
+                wing_tuple = (x, y, state_x, state_y)
+
+                if wing_tuple not in new_highlow_edge_values:
+                    new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
+
+        print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
+        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
+        sys.exit(0)
 
     def group_centers_stage_UD(self):
         """
@@ -2213,6 +2124,30 @@ tsai_phase3_orient_edges_555 = {
     (2, 104, 'U', 'F'): 'U',
     (2, 104, 'U', 'L'): 'U',
     (2, 104, 'U', 'R'): 'U',
+    (3, 103, 'B', 'D'): 'D',
+    (3, 103, 'B', 'L'): 'D',
+    (3, 103, 'B', 'R'): 'D',
+    (3, 103, 'B', 'U'): 'D',
+    (3, 103, 'D', 'B'): 'U',
+    (3, 103, 'D', 'F'): 'U',
+    (3, 103, 'D', 'L'): 'U',
+    (3, 103, 'D', 'R'): 'U',
+    (3, 103, 'F', 'D'): 'D',
+    (3, 103, 'F', 'L'): 'D',
+    (3, 103, 'F', 'R'): 'D',
+    (3, 103, 'F', 'U'): 'D',
+    (3, 103, 'L', 'B'): 'U',
+    (3, 103, 'L', 'D'): 'D',
+    (3, 103, 'L', 'F'): 'U',
+    (3, 103, 'L', 'U'): 'D',
+    (3, 103, 'R', 'B'): 'U',
+    (3, 103, 'R', 'D'): 'D',
+    (3, 103, 'R', 'F'): 'U',
+    (3, 103, 'R', 'U'): 'D',
+    (3, 103, 'U', 'B'): 'U',
+    (3, 103, 'U', 'F'): 'U',
+    (3, 103, 'U', 'L'): 'U',
+    (3, 103, 'U', 'R'): 'U',
     (4, 102, 'B', 'D'): 'U',
     (4, 102, 'B', 'L'): 'U',
     (4, 102, 'B', 'R'): 'U',
@@ -2285,6 +2220,54 @@ tsai_phase3_orient_edges_555 = {
     (10, 79, 'U', 'F'): 'U',
     (10, 79, 'U', 'L'): 'U',
     (10, 79, 'U', 'R'): 'U',
+    (11, 28, 'B', 'D'): 'D',
+    (11, 28, 'B', 'L'): 'D',
+    (11, 28, 'B', 'R'): 'D',
+    (11, 28, 'B', 'U'): 'D',
+    (11, 28, 'D', 'B'): 'U',
+    (11, 28, 'D', 'F'): 'U',
+    (11, 28, 'D', 'L'): 'U',
+    (11, 28, 'D', 'R'): 'U',
+    (11, 28, 'F', 'D'): 'D',
+    (11, 28, 'F', 'L'): 'D',
+    (11, 28, 'F', 'R'): 'D',
+    (11, 28, 'F', 'U'): 'D',
+    (11, 28, 'L', 'B'): 'U',
+    (11, 28, 'L', 'D'): 'D',
+    (11, 28, 'L', 'F'): 'U',
+    (11, 28, 'L', 'U'): 'D',
+    (11, 28, 'R', 'B'): 'U',
+    (11, 28, 'R', 'D'): 'D',
+    (11, 28, 'R', 'F'): 'U',
+    (11, 28, 'R', 'U'): 'D',
+    (11, 28, 'U', 'B'): 'U',
+    (11, 28, 'U', 'F'): 'U',
+    (11, 28, 'U', 'L'): 'U',
+    (11, 28, 'U', 'R'): 'U',
+    (15, 78, 'B', 'D'): 'D',
+    (15, 78, 'B', 'L'): 'D',
+    (15, 78, 'B', 'R'): 'D',
+    (15, 78, 'B', 'U'): 'D',
+    (15, 78, 'D', 'B'): 'U',
+    (15, 78, 'D', 'F'): 'U',
+    (15, 78, 'D', 'L'): 'U',
+    (15, 78, 'D', 'R'): 'U',
+    (15, 78, 'F', 'D'): 'D',
+    (15, 78, 'F', 'L'): 'D',
+    (15, 78, 'F', 'R'): 'D',
+    (15, 78, 'F', 'U'): 'D',
+    (15, 78, 'L', 'B'): 'U',
+    (15, 78, 'L', 'D'): 'D',
+    (15, 78, 'L', 'F'): 'U',
+    (15, 78, 'L', 'U'): 'D',
+    (15, 78, 'R', 'B'): 'U',
+    (15, 78, 'R', 'D'): 'D',
+    (15, 78, 'R', 'F'): 'U',
+    (15, 78, 'R', 'U'): 'D',
+    (15, 78, 'U', 'B'): 'U',
+    (15, 78, 'U', 'F'): 'U',
+    (15, 78, 'U', 'L'): 'U',
+    (15, 78, 'U', 'R'): 'U',
     (16, 29, 'B', 'D'): 'D',
     (16, 29, 'B', 'L'): 'D',
     (16, 29, 'B', 'R'): 'D',
@@ -2357,6 +2340,30 @@ tsai_phase3_orient_edges_555 = {
     (22, 52, 'U', 'F'): 'D',
     (22, 52, 'U', 'L'): 'D',
     (22, 52, 'U', 'R'): 'D',
+    (23, 53, 'B', 'D'): 'D',
+    (23, 53, 'B', 'L'): 'D',
+    (23, 53, 'B', 'R'): 'D',
+    (23, 53, 'B', 'U'): 'D',
+    (23, 53, 'D', 'B'): 'U',
+    (23, 53, 'D', 'F'): 'U',
+    (23, 53, 'D', 'L'): 'U',
+    (23, 53, 'D', 'R'): 'U',
+    (23, 53, 'F', 'D'): 'D',
+    (23, 53, 'F', 'L'): 'D',
+    (23, 53, 'F', 'R'): 'D',
+    (23, 53, 'F', 'U'): 'D',
+    (23, 53, 'L', 'B'): 'U',
+    (23, 53, 'L', 'D'): 'D',
+    (23, 53, 'L', 'F'): 'U',
+    (23, 53, 'L', 'U'): 'D',
+    (23, 53, 'R', 'B'): 'U',
+    (23, 53, 'R', 'D'): 'D',
+    (23, 53, 'R', 'F'): 'U',
+    (23, 53, 'R', 'U'): 'D',
+    (23, 53, 'U', 'B'): 'U',
+    (23, 53, 'U', 'F'): 'U',
+    (23, 53, 'U', 'L'): 'U',
+    (23, 53, 'U', 'R'): 'U',
     (24, 54, 'B', 'D'): 'D',
     (24, 54, 'B', 'L'): 'D',
     (24, 54, 'B', 'R'): 'D',
@@ -2405,6 +2412,30 @@ tsai_phase3_orient_edges_555 = {
     (27, 6, 'U', 'F'): 'U',
     (27, 6, 'U', 'L'): 'U',
     (27, 6, 'U', 'R'): 'U',
+    (28, 11, 'B', 'D'): 'U',
+    (28, 11, 'B', 'L'): 'U',
+    (28, 11, 'B', 'R'): 'U',
+    (28, 11, 'B', 'U'): 'U',
+    (28, 11, 'D', 'B'): 'D',
+    (28, 11, 'D', 'F'): 'D',
+    (28, 11, 'D', 'L'): 'D',
+    (28, 11, 'D', 'R'): 'D',
+    (28, 11, 'F', 'D'): 'U',
+    (28, 11, 'F', 'L'): 'U',
+    (28, 11, 'F', 'R'): 'U',
+    (28, 11, 'F', 'U'): 'U',
+    (28, 11, 'L', 'B'): 'D',
+    (28, 11, 'L', 'D'): 'U',
+    (28, 11, 'L', 'F'): 'D',
+    (28, 11, 'L', 'U'): 'U',
+    (28, 11, 'R', 'B'): 'D',
+    (28, 11, 'R', 'D'): 'U',
+    (28, 11, 'R', 'F'): 'D',
+    (28, 11, 'R', 'U'): 'U',
+    (28, 11, 'U', 'B'): 'D',
+    (28, 11, 'U', 'F'): 'D',
+    (28, 11, 'U', 'L'): 'D',
+    (28, 11, 'U', 'R'): 'D',
     (29, 16, 'B', 'D'): 'U',
     (29, 16, 'B', 'L'): 'U',
     (29, 16, 'B', 'R'): 'U',
@@ -2477,6 +2508,54 @@ tsai_phase3_orient_edges_555 = {
     (35, 56, 'U', 'F'): 'U',
     (35, 56, 'U', 'L'): 'U',
     (35, 56, 'U', 'R'): 'U',
+    (36, 115, 'B', 'D'): 'D',
+    (36, 115, 'B', 'L'): 'D',
+    (36, 115, 'B', 'R'): 'D',
+    (36, 115, 'B', 'U'): 'D',
+    (36, 115, 'D', 'B'): 'U',
+    (36, 115, 'D', 'F'): 'U',
+    (36, 115, 'D', 'L'): 'U',
+    (36, 115, 'D', 'R'): 'U',
+    (36, 115, 'F', 'D'): 'D',
+    (36, 115, 'F', 'L'): 'D',
+    (36, 115, 'F', 'R'): 'D',
+    (36, 115, 'F', 'U'): 'D',
+    (36, 115, 'L', 'B'): 'U',
+    (36, 115, 'L', 'D'): 'D',
+    (36, 115, 'L', 'F'): 'U',
+    (36, 115, 'L', 'U'): 'D',
+    (36, 115, 'R', 'B'): 'U',
+    (36, 115, 'R', 'D'): 'D',
+    (36, 115, 'R', 'F'): 'U',
+    (36, 115, 'R', 'U'): 'D',
+    (36, 115, 'U', 'B'): 'U',
+    (36, 115, 'U', 'F'): 'U',
+    (36, 115, 'U', 'L'): 'U',
+    (36, 115, 'U', 'R'): 'U',
+    (40, 61, 'B', 'D'): 'D',
+    (40, 61, 'B', 'L'): 'D',
+    (40, 61, 'B', 'R'): 'D',
+    (40, 61, 'B', 'U'): 'D',
+    (40, 61, 'D', 'B'): 'U',
+    (40, 61, 'D', 'F'): 'U',
+    (40, 61, 'D', 'L'): 'U',
+    (40, 61, 'D', 'R'): 'U',
+    (40, 61, 'F', 'D'): 'D',
+    (40, 61, 'F', 'L'): 'D',
+    (40, 61, 'F', 'R'): 'D',
+    (40, 61, 'F', 'U'): 'D',
+    (40, 61, 'L', 'B'): 'U',
+    (40, 61, 'L', 'D'): 'D',
+    (40, 61, 'L', 'F'): 'U',
+    (40, 61, 'L', 'U'): 'D',
+    (40, 61, 'R', 'B'): 'U',
+    (40, 61, 'R', 'D'): 'D',
+    (40, 61, 'R', 'F'): 'U',
+    (40, 61, 'R', 'U'): 'D',
+    (40, 61, 'U', 'B'): 'U',
+    (40, 61, 'U', 'F'): 'U',
+    (40, 61, 'U', 'L'): 'U',
+    (40, 61, 'U', 'R'): 'U',
     (41, 120, 'B', 'D'): 'D',
     (41, 120, 'B', 'L'): 'D',
     (41, 120, 'B', 'R'): 'D',
@@ -2549,6 +2628,30 @@ tsai_phase3_orient_edges_555 = {
     (47, 141, 'U', 'F'): 'D',
     (47, 141, 'U', 'L'): 'D',
     (47, 141, 'U', 'R'): 'D',
+    (48, 136, 'B', 'D'): 'U',
+    (48, 136, 'B', 'L'): 'U',
+    (48, 136, 'B', 'R'): 'U',
+    (48, 136, 'B', 'U'): 'U',
+    (48, 136, 'D', 'B'): 'D',
+    (48, 136, 'D', 'F'): 'D',
+    (48, 136, 'D', 'L'): 'D',
+    (48, 136, 'D', 'R'): 'D',
+    (48, 136, 'F', 'D'): 'U',
+    (48, 136, 'F', 'L'): 'U',
+    (48, 136, 'F', 'R'): 'U',
+    (48, 136, 'F', 'U'): 'U',
+    (48, 136, 'L', 'B'): 'D',
+    (48, 136, 'L', 'D'): 'U',
+    (48, 136, 'L', 'F'): 'D',
+    (48, 136, 'L', 'U'): 'U',
+    (48, 136, 'R', 'B'): 'D',
+    (48, 136, 'R', 'D'): 'U',
+    (48, 136, 'R', 'F'): 'D',
+    (48, 136, 'R', 'U'): 'U',
+    (48, 136, 'U', 'B'): 'D',
+    (48, 136, 'U', 'F'): 'D',
+    (48, 136, 'U', 'L'): 'D',
+    (48, 136, 'U', 'R'): 'D',
     (49, 131, 'B', 'D'): 'D',
     (49, 131, 'B', 'L'): 'D',
     (49, 131, 'B', 'R'): 'D',
@@ -2597,6 +2700,30 @@ tsai_phase3_orient_edges_555 = {
     (52, 22, 'U', 'F'): 'U',
     (52, 22, 'U', 'L'): 'U',
     (52, 22, 'U', 'R'): 'U',
+    (53, 23, 'B', 'D'): 'U',
+    (53, 23, 'B', 'L'): 'U',
+    (53, 23, 'B', 'R'): 'U',
+    (53, 23, 'B', 'U'): 'U',
+    (53, 23, 'D', 'B'): 'D',
+    (53, 23, 'D', 'F'): 'D',
+    (53, 23, 'D', 'L'): 'D',
+    (53, 23, 'D', 'R'): 'D',
+    (53, 23, 'F', 'D'): 'U',
+    (53, 23, 'F', 'L'): 'U',
+    (53, 23, 'F', 'R'): 'U',
+    (53, 23, 'F', 'U'): 'U',
+    (53, 23, 'L', 'B'): 'D',
+    (53, 23, 'L', 'D'): 'U',
+    (53, 23, 'L', 'F'): 'D',
+    (53, 23, 'L', 'U'): 'U',
+    (53, 23, 'R', 'B'): 'D',
+    (53, 23, 'R', 'D'): 'U',
+    (53, 23, 'R', 'F'): 'D',
+    (53, 23, 'R', 'U'): 'U',
+    (53, 23, 'U', 'B'): 'D',
+    (53, 23, 'U', 'F'): 'D',
+    (53, 23, 'U', 'L'): 'D',
+    (53, 23, 'U', 'R'): 'D',
     (54, 24, 'B', 'D'): 'U',
     (54, 24, 'B', 'L'): 'U',
     (54, 24, 'B', 'R'): 'U',
@@ -2669,6 +2796,54 @@ tsai_phase3_orient_edges_555 = {
     (60, 81, 'U', 'F'): 'U',
     (60, 81, 'U', 'L'): 'U',
     (60, 81, 'U', 'R'): 'U',
+    (61, 40, 'B', 'D'): 'U',
+    (61, 40, 'B', 'L'): 'U',
+    (61, 40, 'B', 'R'): 'U',
+    (61, 40, 'B', 'U'): 'U',
+    (61, 40, 'D', 'B'): 'D',
+    (61, 40, 'D', 'F'): 'D',
+    (61, 40, 'D', 'L'): 'D',
+    (61, 40, 'D', 'R'): 'D',
+    (61, 40, 'F', 'D'): 'U',
+    (61, 40, 'F', 'L'): 'U',
+    (61, 40, 'F', 'R'): 'U',
+    (61, 40, 'F', 'U'): 'U',
+    (61, 40, 'L', 'B'): 'D',
+    (61, 40, 'L', 'D'): 'U',
+    (61, 40, 'L', 'F'): 'D',
+    (61, 40, 'L', 'U'): 'U',
+    (61, 40, 'R', 'B'): 'D',
+    (61, 40, 'R', 'D'): 'U',
+    (61, 40, 'R', 'F'): 'D',
+    (61, 40, 'R', 'U'): 'U',
+    (61, 40, 'U', 'B'): 'D',
+    (61, 40, 'U', 'F'): 'D',
+    (61, 40, 'U', 'L'): 'D',
+    (61, 40, 'U', 'R'): 'D',
+    (65, 86, 'B', 'D'): 'U',
+    (65, 86, 'B', 'L'): 'U',
+    (65, 86, 'B', 'R'): 'U',
+    (65, 86, 'B', 'U'): 'U',
+    (65, 86, 'D', 'B'): 'D',
+    (65, 86, 'D', 'F'): 'D',
+    (65, 86, 'D', 'L'): 'D',
+    (65, 86, 'D', 'R'): 'D',
+    (65, 86, 'F', 'D'): 'U',
+    (65, 86, 'F', 'L'): 'U',
+    (65, 86, 'F', 'R'): 'U',
+    (65, 86, 'F', 'U'): 'U',
+    (65, 86, 'L', 'B'): 'D',
+    (65, 86, 'L', 'D'): 'U',
+    (65, 86, 'L', 'F'): 'D',
+    (65, 86, 'L', 'U'): 'U',
+    (65, 86, 'R', 'B'): 'D',
+    (65, 86, 'R', 'D'): 'U',
+    (65, 86, 'R', 'F'): 'D',
+    (65, 86, 'R', 'U'): 'U',
+    (65, 86, 'U', 'B'): 'D',
+    (65, 86, 'U', 'F'): 'D',
+    (65, 86, 'U', 'L'): 'D',
+    (65, 86, 'U', 'R'): 'D',
     (66, 45, 'B', 'D'): 'D',
     (66, 45, 'B', 'L'): 'D',
     (66, 45, 'B', 'R'): 'D',
@@ -2741,6 +2916,30 @@ tsai_phase3_orient_edges_555 = {
     (72, 127, 'U', 'F'): 'D',
     (72, 127, 'U', 'L'): 'D',
     (72, 127, 'U', 'R'): 'D',
+    (73, 128, 'B', 'D'): 'U',
+    (73, 128, 'B', 'L'): 'U',
+    (73, 128, 'B', 'R'): 'U',
+    (73, 128, 'B', 'U'): 'U',
+    (73, 128, 'D', 'B'): 'D',
+    (73, 128, 'D', 'F'): 'D',
+    (73, 128, 'D', 'L'): 'D',
+    (73, 128, 'D', 'R'): 'D',
+    (73, 128, 'F', 'D'): 'U',
+    (73, 128, 'F', 'L'): 'U',
+    (73, 128, 'F', 'R'): 'U',
+    (73, 128, 'F', 'U'): 'U',
+    (73, 128, 'L', 'B'): 'D',
+    (73, 128, 'L', 'D'): 'U',
+    (73, 128, 'L', 'F'): 'D',
+    (73, 128, 'L', 'U'): 'U',
+    (73, 128, 'R', 'B'): 'D',
+    (73, 128, 'R', 'D'): 'U',
+    (73, 128, 'R', 'F'): 'D',
+    (73, 128, 'R', 'U'): 'U',
+    (73, 128, 'U', 'B'): 'D',
+    (73, 128, 'U', 'F'): 'D',
+    (73, 128, 'U', 'L'): 'D',
+    (73, 128, 'U', 'R'): 'D',
     (74, 129, 'B', 'D'): 'D',
     (74, 129, 'B', 'L'): 'D',
     (74, 129, 'B', 'R'): 'D',
@@ -2789,6 +2988,30 @@ tsai_phase3_orient_edges_555 = {
     (77, 20, 'U', 'F'): 'U',
     (77, 20, 'U', 'L'): 'U',
     (77, 20, 'U', 'R'): 'U',
+    (78, 15, 'B', 'D'): 'U',
+    (78, 15, 'B', 'L'): 'U',
+    (78, 15, 'B', 'R'): 'U',
+    (78, 15, 'B', 'U'): 'U',
+    (78, 15, 'D', 'B'): 'D',
+    (78, 15, 'D', 'F'): 'D',
+    (78, 15, 'D', 'L'): 'D',
+    (78, 15, 'D', 'R'): 'D',
+    (78, 15, 'F', 'D'): 'U',
+    (78, 15, 'F', 'L'): 'U',
+    (78, 15, 'F', 'R'): 'U',
+    (78, 15, 'F', 'U'): 'U',
+    (78, 15, 'L', 'B'): 'D',
+    (78, 15, 'L', 'D'): 'U',
+    (78, 15, 'L', 'F'): 'D',
+    (78, 15, 'L', 'U'): 'U',
+    (78, 15, 'R', 'B'): 'D',
+    (78, 15, 'R', 'D'): 'U',
+    (78, 15, 'R', 'F'): 'D',
+    (78, 15, 'R', 'U'): 'U',
+    (78, 15, 'U', 'B'): 'D',
+    (78, 15, 'U', 'F'): 'D',
+    (78, 15, 'U', 'L'): 'D',
+    (78, 15, 'U', 'R'): 'D',
     (79, 10, 'B', 'D'): 'U',
     (79, 10, 'B', 'L'): 'U',
     (79, 10, 'B', 'R'): 'U',
@@ -2861,6 +3084,54 @@ tsai_phase3_orient_edges_555 = {
     (85, 106, 'U', 'F'): 'U',
     (85, 106, 'U', 'L'): 'U',
     (85, 106, 'U', 'R'): 'U',
+    (86, 65, 'B', 'D'): 'D',
+    (86, 65, 'B', 'L'): 'D',
+    (86, 65, 'B', 'R'): 'D',
+    (86, 65, 'B', 'U'): 'D',
+    (86, 65, 'D', 'B'): 'U',
+    (86, 65, 'D', 'F'): 'U',
+    (86, 65, 'D', 'L'): 'U',
+    (86, 65, 'D', 'R'): 'U',
+    (86, 65, 'F', 'D'): 'D',
+    (86, 65, 'F', 'L'): 'D',
+    (86, 65, 'F', 'R'): 'D',
+    (86, 65, 'F', 'U'): 'D',
+    (86, 65, 'L', 'B'): 'U',
+    (86, 65, 'L', 'D'): 'D',
+    (86, 65, 'L', 'F'): 'U',
+    (86, 65, 'L', 'U'): 'D',
+    (86, 65, 'R', 'B'): 'U',
+    (86, 65, 'R', 'D'): 'D',
+    (86, 65, 'R', 'F'): 'U',
+    (86, 65, 'R', 'U'): 'D',
+    (86, 65, 'U', 'B'): 'U',
+    (86, 65, 'U', 'F'): 'U',
+    (86, 65, 'U', 'L'): 'U',
+    (86, 65, 'U', 'R'): 'U',
+    (90, 111, 'B', 'D'): 'D',
+    (90, 111, 'B', 'L'): 'D',
+    (90, 111, 'B', 'R'): 'D',
+    (90, 111, 'B', 'U'): 'D',
+    (90, 111, 'D', 'B'): 'U',
+    (90, 111, 'D', 'F'): 'U',
+    (90, 111, 'D', 'L'): 'U',
+    (90, 111, 'D', 'R'): 'U',
+    (90, 111, 'F', 'D'): 'D',
+    (90, 111, 'F', 'L'): 'D',
+    (90, 111, 'F', 'R'): 'D',
+    (90, 111, 'F', 'U'): 'D',
+    (90, 111, 'L', 'B'): 'U',
+    (90, 111, 'L', 'D'): 'D',
+    (90, 111, 'L', 'F'): 'U',
+    (90, 111, 'L', 'U'): 'D',
+    (90, 111, 'R', 'B'): 'U',
+    (90, 111, 'R', 'D'): 'D',
+    (90, 111, 'R', 'F'): 'U',
+    (90, 111, 'R', 'U'): 'D',
+    (90, 111, 'U', 'B'): 'U',
+    (90, 111, 'U', 'F'): 'U',
+    (90, 111, 'U', 'L'): 'U',
+    (90, 111, 'U', 'R'): 'U',
     (91, 70, 'B', 'D'): 'D',
     (91, 70, 'B', 'L'): 'D',
     (91, 70, 'B', 'R'): 'D',
@@ -2933,6 +3204,30 @@ tsai_phase3_orient_edges_555 = {
     (97, 135, 'U', 'F'): 'D',
     (97, 135, 'U', 'L'): 'D',
     (97, 135, 'U', 'R'): 'D',
+    (98, 140, 'B', 'D'): 'U',
+    (98, 140, 'B', 'L'): 'U',
+    (98, 140, 'B', 'R'): 'U',
+    (98, 140, 'B', 'U'): 'U',
+    (98, 140, 'D', 'B'): 'D',
+    (98, 140, 'D', 'F'): 'D',
+    (98, 140, 'D', 'L'): 'D',
+    (98, 140, 'D', 'R'): 'D',
+    (98, 140, 'F', 'D'): 'U',
+    (98, 140, 'F', 'L'): 'U',
+    (98, 140, 'F', 'R'): 'U',
+    (98, 140, 'F', 'U'): 'U',
+    (98, 140, 'L', 'B'): 'D',
+    (98, 140, 'L', 'D'): 'U',
+    (98, 140, 'L', 'F'): 'D',
+    (98, 140, 'L', 'U'): 'U',
+    (98, 140, 'R', 'B'): 'D',
+    (98, 140, 'R', 'D'): 'U',
+    (98, 140, 'R', 'F'): 'D',
+    (98, 140, 'R', 'U'): 'U',
+    (98, 140, 'U', 'B'): 'D',
+    (98, 140, 'U', 'F'): 'D',
+    (98, 140, 'U', 'L'): 'D',
+    (98, 140, 'U', 'R'): 'D',
     (99, 145, 'B', 'D'): 'D',
     (99, 145, 'B', 'L'): 'D',
     (99, 145, 'B', 'R'): 'D',
@@ -2981,6 +3276,30 @@ tsai_phase3_orient_edges_555 = {
     (102, 4, 'U', 'F'): 'U',
     (102, 4, 'U', 'L'): 'U',
     (102, 4, 'U', 'R'): 'U',
+    (103, 3, 'B', 'D'): 'U',
+    (103, 3, 'B', 'L'): 'U',
+    (103, 3, 'B', 'R'): 'U',
+    (103, 3, 'B', 'U'): 'U',
+    (103, 3, 'D', 'B'): 'D',
+    (103, 3, 'D', 'F'): 'D',
+    (103, 3, 'D', 'L'): 'D',
+    (103, 3, 'D', 'R'): 'D',
+    (103, 3, 'F', 'D'): 'U',
+    (103, 3, 'F', 'L'): 'U',
+    (103, 3, 'F', 'R'): 'U',
+    (103, 3, 'F', 'U'): 'U',
+    (103, 3, 'L', 'B'): 'D',
+    (103, 3, 'L', 'D'): 'U',
+    (103, 3, 'L', 'F'): 'D',
+    (103, 3, 'L', 'U'): 'U',
+    (103, 3, 'R', 'B'): 'D',
+    (103, 3, 'R', 'D'): 'U',
+    (103, 3, 'R', 'F'): 'D',
+    (103, 3, 'R', 'U'): 'U',
+    (103, 3, 'U', 'B'): 'D',
+    (103, 3, 'U', 'F'): 'D',
+    (103, 3, 'U', 'L'): 'D',
+    (103, 3, 'U', 'R'): 'D',
     (104, 2, 'B', 'D'): 'U',
     (104, 2, 'B', 'L'): 'U',
     (104, 2, 'B', 'R'): 'U',
@@ -3053,6 +3372,54 @@ tsai_phase3_orient_edges_555 = {
     (110, 31, 'U', 'F'): 'U',
     (110, 31, 'U', 'L'): 'U',
     (110, 31, 'U', 'R'): 'U',
+    (111, 90, 'B', 'D'): 'U',
+    (111, 90, 'B', 'L'): 'U',
+    (111, 90, 'B', 'R'): 'U',
+    (111, 90, 'B', 'U'): 'U',
+    (111, 90, 'D', 'B'): 'D',
+    (111, 90, 'D', 'F'): 'D',
+    (111, 90, 'D', 'L'): 'D',
+    (111, 90, 'D', 'R'): 'D',
+    (111, 90, 'F', 'D'): 'U',
+    (111, 90, 'F', 'L'): 'U',
+    (111, 90, 'F', 'R'): 'U',
+    (111, 90, 'F', 'U'): 'U',
+    (111, 90, 'L', 'B'): 'D',
+    (111, 90, 'L', 'D'): 'U',
+    (111, 90, 'L', 'F'): 'D',
+    (111, 90, 'L', 'U'): 'U',
+    (111, 90, 'R', 'B'): 'D',
+    (111, 90, 'R', 'D'): 'U',
+    (111, 90, 'R', 'F'): 'D',
+    (111, 90, 'R', 'U'): 'U',
+    (111, 90, 'U', 'B'): 'D',
+    (111, 90, 'U', 'F'): 'D',
+    (111, 90, 'U', 'L'): 'D',
+    (111, 90, 'U', 'R'): 'D',
+    (115, 36, 'B', 'D'): 'U',
+    (115, 36, 'B', 'L'): 'U',
+    (115, 36, 'B', 'R'): 'U',
+    (115, 36, 'B', 'U'): 'U',
+    (115, 36, 'D', 'B'): 'D',
+    (115, 36, 'D', 'F'): 'D',
+    (115, 36, 'D', 'L'): 'D',
+    (115, 36, 'D', 'R'): 'D',
+    (115, 36, 'F', 'D'): 'U',
+    (115, 36, 'F', 'L'): 'U',
+    (115, 36, 'F', 'R'): 'U',
+    (115, 36, 'F', 'U'): 'U',
+    (115, 36, 'L', 'B'): 'D',
+    (115, 36, 'L', 'D'): 'U',
+    (115, 36, 'L', 'F'): 'D',
+    (115, 36, 'L', 'U'): 'U',
+    (115, 36, 'R', 'B'): 'D',
+    (115, 36, 'R', 'D'): 'U',
+    (115, 36, 'R', 'F'): 'D',
+    (115, 36, 'R', 'U'): 'U',
+    (115, 36, 'U', 'B'): 'D',
+    (115, 36, 'U', 'F'): 'D',
+    (115, 36, 'U', 'L'): 'D',
+    (115, 36, 'U', 'R'): 'D',
     (116, 95, 'B', 'D'): 'D',
     (116, 95, 'B', 'L'): 'D',
     (116, 95, 'B', 'R'): 'D',
@@ -3125,6 +3492,30 @@ tsai_phase3_orient_edges_555 = {
     (122, 149, 'U', 'F'): 'D',
     (122, 149, 'U', 'L'): 'D',
     (122, 149, 'U', 'R'): 'D',
+    (123, 148, 'B', 'D'): 'U',
+    (123, 148, 'B', 'L'): 'U',
+    (123, 148, 'B', 'R'): 'U',
+    (123, 148, 'B', 'U'): 'U',
+    (123, 148, 'D', 'B'): 'D',
+    (123, 148, 'D', 'F'): 'D',
+    (123, 148, 'D', 'L'): 'D',
+    (123, 148, 'D', 'R'): 'D',
+    (123, 148, 'F', 'D'): 'U',
+    (123, 148, 'F', 'L'): 'U',
+    (123, 148, 'F', 'R'): 'U',
+    (123, 148, 'F', 'U'): 'U',
+    (123, 148, 'L', 'B'): 'D',
+    (123, 148, 'L', 'D'): 'U',
+    (123, 148, 'L', 'F'): 'D',
+    (123, 148, 'L', 'U'): 'U',
+    (123, 148, 'R', 'B'): 'D',
+    (123, 148, 'R', 'D'): 'U',
+    (123, 148, 'R', 'F'): 'D',
+    (123, 148, 'R', 'U'): 'U',
+    (123, 148, 'U', 'B'): 'D',
+    (123, 148, 'U', 'F'): 'D',
+    (123, 148, 'U', 'L'): 'D',
+    (123, 148, 'U', 'R'): 'D',
     (124, 147, 'B', 'D'): 'D',
     (124, 147, 'B', 'L'): 'D',
     (124, 147, 'B', 'R'): 'D',
@@ -3173,6 +3564,30 @@ tsai_phase3_orient_edges_555 = {
     (127, 72, 'U', 'F'): 'U',
     (127, 72, 'U', 'L'): 'U',
     (127, 72, 'U', 'R'): 'U',
+    (128, 73, 'B', 'D'): 'D',
+    (128, 73, 'B', 'L'): 'D',
+    (128, 73, 'B', 'R'): 'D',
+    (128, 73, 'B', 'U'): 'D',
+    (128, 73, 'D', 'B'): 'U',
+    (128, 73, 'D', 'F'): 'U',
+    (128, 73, 'D', 'L'): 'U',
+    (128, 73, 'D', 'R'): 'U',
+    (128, 73, 'F', 'D'): 'D',
+    (128, 73, 'F', 'L'): 'D',
+    (128, 73, 'F', 'R'): 'D',
+    (128, 73, 'F', 'U'): 'D',
+    (128, 73, 'L', 'B'): 'U',
+    (128, 73, 'L', 'D'): 'D',
+    (128, 73, 'L', 'F'): 'U',
+    (128, 73, 'L', 'U'): 'D',
+    (128, 73, 'R', 'B'): 'U',
+    (128, 73, 'R', 'D'): 'D',
+    (128, 73, 'R', 'F'): 'U',
+    (128, 73, 'R', 'U'): 'D',
+    (128, 73, 'U', 'B'): 'U',
+    (128, 73, 'U', 'F'): 'U',
+    (128, 73, 'U', 'L'): 'U',
+    (128, 73, 'U', 'R'): 'U',
     (129, 74, 'B', 'D'): 'U',
     (129, 74, 'B', 'L'): 'U',
     (129, 74, 'B', 'R'): 'U',
@@ -3245,6 +3660,54 @@ tsai_phase3_orient_edges_555 = {
     (135, 97, 'U', 'F'): 'U',
     (135, 97, 'U', 'L'): 'U',
     (135, 97, 'U', 'R'): 'U',
+    (136, 48, 'B', 'D'): 'D',
+    (136, 48, 'B', 'L'): 'D',
+    (136, 48, 'B', 'R'): 'D',
+    (136, 48, 'B', 'U'): 'D',
+    (136, 48, 'D', 'B'): 'U',
+    (136, 48, 'D', 'F'): 'U',
+    (136, 48, 'D', 'L'): 'U',
+    (136, 48, 'D', 'R'): 'U',
+    (136, 48, 'F', 'D'): 'D',
+    (136, 48, 'F', 'L'): 'D',
+    (136, 48, 'F', 'R'): 'D',
+    (136, 48, 'F', 'U'): 'D',
+    (136, 48, 'L', 'B'): 'U',
+    (136, 48, 'L', 'D'): 'D',
+    (136, 48, 'L', 'F'): 'U',
+    (136, 48, 'L', 'U'): 'D',
+    (136, 48, 'R', 'B'): 'U',
+    (136, 48, 'R', 'D'): 'D',
+    (136, 48, 'R', 'F'): 'U',
+    (136, 48, 'R', 'U'): 'D',
+    (136, 48, 'U', 'B'): 'U',
+    (136, 48, 'U', 'F'): 'U',
+    (136, 48, 'U', 'L'): 'U',
+    (136, 48, 'U', 'R'): 'U',
+    (140, 98, 'B', 'D'): 'D',
+    (140, 98, 'B', 'L'): 'D',
+    (140, 98, 'B', 'R'): 'D',
+    (140, 98, 'B', 'U'): 'D',
+    (140, 98, 'D', 'B'): 'U',
+    (140, 98, 'D', 'F'): 'U',
+    (140, 98, 'D', 'L'): 'U',
+    (140, 98, 'D', 'R'): 'U',
+    (140, 98, 'F', 'D'): 'D',
+    (140, 98, 'F', 'L'): 'D',
+    (140, 98, 'F', 'R'): 'D',
+    (140, 98, 'F', 'U'): 'D',
+    (140, 98, 'L', 'B'): 'U',
+    (140, 98, 'L', 'D'): 'D',
+    (140, 98, 'L', 'F'): 'U',
+    (140, 98, 'L', 'U'): 'D',
+    (140, 98, 'R', 'B'): 'U',
+    (140, 98, 'R', 'D'): 'D',
+    (140, 98, 'R', 'F'): 'U',
+    (140, 98, 'R', 'U'): 'D',
+    (140, 98, 'U', 'B'): 'U',
+    (140, 98, 'U', 'F'): 'U',
+    (140, 98, 'U', 'L'): 'U',
+    (140, 98, 'U', 'R'): 'U',
     (141, 47, 'B', 'D'): 'D',
     (141, 47, 'B', 'L'): 'D',
     (141, 47, 'B', 'R'): 'D',
@@ -3317,6 +3780,30 @@ tsai_phase3_orient_edges_555 = {
     (147, 124, 'U', 'F'): 'D',
     (147, 124, 'U', 'L'): 'D',
     (147, 124, 'U', 'R'): 'D',
+    (148, 123, 'B', 'D'): 'D',
+    (148, 123, 'B', 'L'): 'D',
+    (148, 123, 'B', 'R'): 'D',
+    (148, 123, 'B', 'U'): 'D',
+    (148, 123, 'D', 'B'): 'U',
+    (148, 123, 'D', 'F'): 'U',
+    (148, 123, 'D', 'L'): 'U',
+    (148, 123, 'D', 'R'): 'U',
+    (148, 123, 'F', 'D'): 'D',
+    (148, 123, 'F', 'L'): 'D',
+    (148, 123, 'F', 'R'): 'D',
+    (148, 123, 'F', 'U'): 'D',
+    (148, 123, 'L', 'B'): 'U',
+    (148, 123, 'L', 'D'): 'D',
+    (148, 123, 'L', 'F'): 'U',
+    (148, 123, 'L', 'U'): 'D',
+    (148, 123, 'R', 'B'): 'U',
+    (148, 123, 'R', 'D'): 'D',
+    (148, 123, 'R', 'F'): 'U',
+    (148, 123, 'R', 'U'): 'D',
+    (148, 123, 'U', 'B'): 'U',
+    (148, 123, 'U', 'F'): 'U',
+    (148, 123, 'U', 'L'): 'U',
+    (148, 123, 'U', 'R'): 'U',
     (149, 122, 'B', 'D'): 'D',
     (149, 122, 'B', 'L'): 'D',
     (149, 122, 'B', 'R'): 'D',
@@ -3340,7 +3827,7 @@ tsai_phase3_orient_edges_555 = {
     (149, 122, 'U', 'B'): 'U',
     (149, 122, 'U', 'F'): 'U',
     (149, 122, 'U', 'L'): 'U',
-    (149, 122, 'U', 'R'): 'U'
+    (149, 122, 'U', 'R'): 'U',
 }
 
 stage_first_four_edges_wing_str_combos = (

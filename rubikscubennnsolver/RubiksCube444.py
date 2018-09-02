@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from rubikscubennnsolver import RubiksCube, NotSolving
+from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map
 from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
@@ -130,33 +130,6 @@ edges_partner_444 = {
     92: 63,
     94: 79,
     95: 78
-}
-
-wing_str_sort_map = {
-    'UB' : 'UB',
-    'BU' : 'UB',
-    'UL' : 'UL',
-    'LU' : 'UL',
-    'UR' : 'UR',
-    'RU' : 'UR',
-    'UF' : 'UF',
-    'FU' : 'UF',
-    'LB' : 'LB',
-    'BL' : 'LB',
-    'LF' : 'LF',
-    'FL' : 'LF',
-    'RB' : 'RB',
-    'BR' : 'RB',
-    'RF' : 'RF',
-    'FR' : 'RF',
-    'DB' : 'DB',
-    'BD' : 'DB',
-    'DL' : 'DL',
-    'LD' : 'DL',
-    'DR' : 'DR',
-    'RD' : 'DR',
-    'DF' : 'DF',
-    'FD' : 'DF',
 }
 
 wings_for_edges_recolor_pattern_444 = (
@@ -719,14 +692,14 @@ def edges_recolor_pattern_444(state):
     for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
         square_value = state[square_index]
         partner_value = state[partner_index]
-        wing_str = wing_str_sort_map[''.join((square_value, partner_value))]
+        wing_str = wing_str_map[square_value + partner_value]
         edge_map[wing_str].append(edge_index)
 
     # Where is the other wing_str like us?
     for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
         square_value = state[square_index]
         partner_value = state[partner_index]
-        wing_str = wing_str_sort_map[''.join((square_value, partner_value))]
+        wing_str = wing_str_map[square_value + partner_value]
 
         for tmp_index in edge_map[wing_str]:
             if tmp_index != edge_index:
@@ -1243,7 +1216,7 @@ class RubiksCube444(RubiksCube):
             for (x, y) in self.reduce333_orient_edges_tuples:
                 state_x = self.state[x]
                 state_y = self.state[y]
-                wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+                wing_str = wing_str_map[state_x + state_y]
                 wing_tuple = (x, y, state_x, state_y)
 
                 if wing_tuple not in new_highlow_edge_values:
@@ -1262,7 +1235,7 @@ class RubiksCube444(RubiksCube):
                 state_x = state[x]
                 state_y = state[y]
                 high_low = highlow_edge_values[(x, y, state_x, state_y)]
-                wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+                wing_str = wing_str_map[state_x + state_y]
 
                 if wing_str in edges_to_flip:
                     if high_low == 'U':
@@ -1307,7 +1280,7 @@ class RubiksCube444(RubiksCube):
         for (low_edge_index, square_index, partner_index) in low_edges_444:
             square_value = state[square_index]
             partner_value = state[partner_index]
-            wing_str = wing_str_sort_map[''.join((square_value, partner_value))]
+            wing_str = wing_str_map[square_value + partner_value]
 
             if wing_str in wing_strs_found:
                 if debug:
@@ -1378,14 +1351,14 @@ class RubiksCube444(RubiksCube):
         for (_, x, y) in high_edges_444:
             state_x = state[x]
             state_y = state[y]
-            wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+            wing_str = wing_str_map[state_x + state_y]
             high_low = highlow_edge_values[(x, y, state_x, state_y)]
             wing_str_high_low[wing_str].append(high_low)
 
         for (_, x, y) in low_edges_444:
             state_x = state[x]
             state_y = state[y]
-            wing_str = wing_str_sort_map[''.join((state_x, state_y))]
+            wing_str = wing_str_map[state_x + state_y]
             high_low = highlow_edge_values[(x, y, state_x, state_y)]
             wing_str_high_low[wing_str].append(high_low)
 

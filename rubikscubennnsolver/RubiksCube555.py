@@ -11,6 +11,7 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableIDA,
     LookupTableIDAViaC,
     NoIDASolution,
+    NoPruneTableState,
 )
 from pprint import pformat
 import os
@@ -90,6 +91,30 @@ centers_555 = (
     132, 133, 134, 137, 138, 139, 142, 143, 144  # Down
 )
 
+LR_centers_555 = (
+    32, 33, 34, 37, 38, 39, 42, 43, 44, # Left
+    82, 83, 84, 87, 88, 89, 92, 93, 94  # Right
+)
+
+FB_centers_555 = (
+    57, 58, 59, 62, 63, 64, 67, 68, 69, # Front
+    107, 108, 109, 112, 113, 114, 117, 118, 119 # Back
+)
+
+UFBD_centers_555 = (
+    7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
+    57, 58, 59, 62, 63, 64, 67, 68, 69, # Front
+    107, 108, 109, 112, 113, 114, 117, 118, 119, # Back
+    132, 133, 134, 137, 138, 139, 142, 143, 144  # Down
+)
+
+ULRD_centers_555 = (
+    7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
+    32, 33, 34, 37, 38, 39, 42, 43, 44, # Left
+    82, 83, 84, 87, 88, 89, 92, 93, 94, # Right
+    132, 133, 134, 137, 138, 139, 142, 143, 144  # Down
+)
+
 LFRB_centers_555 = (
     32, 33, 34, 37, 38, 39, 42, 43, 44,
     57, 58, 59, 62, 63, 64, 67, 68, 69,
@@ -161,6 +186,8 @@ edges_555 = (
     141, 145,
     147, 148, 149
 )
+
+set_edges_555 = set(edges_555)
 
 wings_555= (
     2, 3, 4, # Upper
@@ -1401,6 +1428,30 @@ class RubiksCube555(RubiksCube):
     def get_paired_wings_count(self):
         return 24 - self.get_non_paired_wings_count()
 
+    def LR_centers_colors(self):
+        return set([self.state[x] for x in LR_centers_555])
+
+    def FB_centers_colors(self):
+        return set([self.state[x] for x in FB_centers_555])
+
+    def UFBD_centers_colors(self):
+        return set([self.state[x] for x in UFBD_centers_555])
+
+    def UFBD_centers_color_count(self):
+        return len(self.UFBD_centers_colors)
+
+    def ULRD_centers_colors(self):
+        return set([self.state[x] for x in ULRD_centers_555])
+
+    def ULRD_centers_color_count(self):
+        return len(self.ULRD_centers_colors)
+
+    def LFRB_centers_colors(self):
+        return set([self.state[x] for x in LFRB_centers_555])
+
+    def LFRB_centers_color_count(self):
+        return len(self.LFRB_centers_colors)
+
     def LFRB_centers_horizontal_bars(self):
         state = self.state
 
@@ -2132,9 +2183,9 @@ class RubiksCube555(RubiksCube):
         self.lt_init()
         self.print_cube()
         self.pair_first_four_edges()
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         self.pair_second_four_edges()
         self.pair_third_four_edges()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
 
 
 tsai_phase3_orient_edges_555 = {

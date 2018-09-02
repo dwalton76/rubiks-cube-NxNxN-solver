@@ -30,6 +30,10 @@ class NoIDASolution(Exception):
     pass
 
 
+class NoPruneTableState(Exception):
+    pass
+
+
 def get_characters_common_count(strA, strB, start_index):
     """
     This assumes strA and strB are the same length
@@ -616,7 +620,7 @@ class LookupTable(object):
                 #log.warning("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
                 self.parent.enable_print_cube = True
                 #self.parent.print_cube()
-                raise SolveError("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
+                raise NoPruneTableState("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
 
             return result
 

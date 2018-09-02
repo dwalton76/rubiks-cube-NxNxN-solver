@@ -9,7 +9,7 @@ This is a work in progress
 """
 
 from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop, NotSolving
-from rubikscubennnsolver.LookupTable import NoSteps
+from rubikscubennnsolver.LookupTable import NoSteps, NoPruneTableState
 from math import sqrt
 from pprint import pformat
 from statistics import median
@@ -437,7 +437,7 @@ try:
         raise SolveError("cube should be solved but is not, edge parity %d, corner parity %d, kociemba %s" %
             (edge_swap_count, corner_swap_count, kociemba_string))
 
-except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError):
+except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError, NoPruneTableState):
     cube.enable_print_cube = True
     cube.print_cube_layout()
     cube.print_cube()

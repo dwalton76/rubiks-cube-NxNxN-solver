@@ -1248,7 +1248,7 @@ class RubiksCube555(RubiksCube):
 
         return True
 
-    def UFDB_centers_vertical_bars(self):
+    def UFBD_centers_vertical_bars(self):
         state = self.state
 
         for (a, b, c) in (

@@ -15,6 +15,7 @@ from rubikscubennnsolver.RubiksCube555 import solved_555, moves_555
 from rubikscubennnsolver.RubiksCube666 import solved_666, moves_666
 from rubikscubennnsolver.RubiksCube777 import solved_777, moves_777
 import logging
+import sys
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)12s %(levelname)8s: %(message)s')
@@ -78,8 +79,10 @@ for (size, solved_state) in (
     steps = list(steps)
     steps.extend(["x", "x'", "y", "y'", "z", "z'"])
 
-    if size == 5:
+    if size in (4, 5, 6, 7):
         steps.extend(["u", "u'", "u2", "d", "d'", "d2"])
+        steps.extend(["l", "l'", "l2", "r", "r'", "r2"])
+        steps.extend(["f", "f'", "f2", "b", "b'", "b2"])
 
     if build_rotate_xxx_c:
         print("void")
@@ -115,26 +118,59 @@ for (size, solved_state) in (
             if step == "u":
                 cube.rotate("Uw")
                 cube.rotate("U'")
-
             elif step == "u'":
                 cube.rotate("Uw'")
                 cube.rotate("U")
-
             elif step == "u2":
                 cube.rotate("Uw2")
                 cube.rotate("U2")
-
             elif step == "d":
                 cube.rotate("Dw")
                 cube.rotate("D'")
-
             elif step == "d'":
                 cube.rotate("Dw'")
                 cube.rotate("D")
-
             elif step == "d2":
                 cube.rotate("Dw2")
                 cube.rotate("D2")
+
+            elif step == "l":
+                cube.rotate("Lw")
+                cube.rotate("L'")
+            elif step == "l'":
+                cube.rotate("Lw'")
+                cube.rotate("L")
+            elif step == "l2":
+                cube.rotate("Lw2")
+                cube.rotate("L2")
+            elif step == "r":
+                cube.rotate("Rw")
+                cube.rotate("R'")
+            elif step == "r'":
+                cube.rotate("Rw'")
+                cube.rotate("R")
+            elif step == "r2":
+                cube.rotate("Rw2")
+                cube.rotate("R2")
+
+            elif step == "f":
+                cube.rotate("Fw")
+                cube.rotate("F'")
+            elif step == "f'":
+                cube.rotate("Fw'")
+                cube.rotate("F")
+            elif step == "f2":
+                cube.rotate("Fw2")
+                cube.rotate("F2")
+            elif step == "b":
+                cube.rotate("Bw")
+                cube.rotate("B'")
+            elif step == "b'":
+                cube.rotate("Bw'")
+                cube.rotate("B")
+            elif step == "b2":
+                cube.rotate("Bw2")
+                cube.rotate("B2")
 
             else:
                 cube.rotate(step)

@@ -5,7 +5,7 @@ from rubikscubennnsolver.LookupTable import steps_on_same_face_and_layer
 from rubikscubennnsolver.misc import parse_ascii_777
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555, get_wings_edges_will_pair, edges_partner_555
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555, edges_partner_555
 from rubikscubennnsolver.RubiksCube777 import RubiksCube666, moves_666
 import logging
 import sys
@@ -19,6 +19,8 @@ logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelNam
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
 cube = RubiksCube555(solved_555, "URFDLB")
+cube.rotate("f")
+cube.print_cube()
 
 
 '''
@@ -36,5 +38,5 @@ for side in cube.sides.values():
         partner_index = edges_partner_555[square_index]
         foo.append((square_index, partner_index))
 pprint(foo)
-'''
 cube.build_highlow_edge_values()
+'''

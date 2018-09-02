@@ -49,7 +49,6 @@ typedef enum {
 
 } lookup_table_type;
 
-
 struct key_value_pair *ida_explored = NULL;
 struct key_value_pair *UD_centers_555 = NULL;
 char *pt_t_centers_cost_only = NULL;
@@ -1414,6 +1413,68 @@ ida_search (unsigned int cost_to_here,
 }
 
 
+void
+free_prune_tables()
+{
+    if (pt_t_centers_cost_only == NULL) {
+        free(pt_t_centers_cost_only);
+        pt_t_centers_cost_only = NULL;
+    }
+
+    if (pt_x_centers_cost_only == NULL) {
+        free(pt_x_centers_cost_only);
+        pt_x_centers_cost_only = NULL;
+    }
+
+    if (UL_centers_cost_only_555 == NULL) {
+        free(UL_centers_cost_only_555);
+        UL_centers_cost_only_555 = NULL;
+    }
+
+    if (UF_centers_cost_only_555 == NULL) {
+        free(UF_centers_cost_only_555);
+        UF_centers_cost_only_555 = NULL;
+    }
+
+    if (LF_centers_cost_only_555 == NULL) {
+        free(LF_centers_cost_only_555);
+        LF_centers_cost_only_555 = NULL;
+    }
+
+    if (LR_inner_x_centers_666 == NULL) {
+        free(LR_inner_x_centers_666);
+        LR_inner_x_centers_666 = NULL;
+    }
+
+    if (LR_oblique_edges_666 == NULL) {
+        free(LR_oblique_edges_666);
+        LR_oblique_edges_666 = NULL;
+    }
+
+
+    if (ida_explored == NULL) {
+        free(ida_explored);
+        ida_explored = NULL;
+    }
+
+
+    if (UD_centers_555 == NULL) {
+        free(UD_centers_555);
+        UD_centers_555 = NULL;
+    }
+
+    if (ULFRBD_centers_555 == NULL) {
+        free(ULFRBD_centers_555);
+        ULFRBD_centers_555 = NULL;
+    }
+
+    if (LR_inner_x_centers_and_oblique_edges_666 == NULL) {
+        free(LR_inner_x_centers_and_oblique_edges_666);
+        LR_inner_x_centers_and_oblique_edges_666 = NULL;
+    }
+}
+
+
 int
 ida_solve (
     char *cube,
@@ -1624,6 +1685,8 @@ main (int argc, char *argv[])
 
     // print_cube(cube, cube_size);
     ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns);
+
+    // free_prune_tables();
 
     // Print the maximum resident set size used (in MB).
     struct rusage r_usage;

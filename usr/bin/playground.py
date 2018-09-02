@@ -27,4 +27,3 @@ cube = RubiksCube555(solved_555, "URFDLB")
 cube.print_cube()
 cube.rotate("Bw")
 cube.print_cube()
-

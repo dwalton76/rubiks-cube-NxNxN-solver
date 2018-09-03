@@ -13,6 +13,5 @@ setup(
     license='GPLv3',
     scripts=['usr/bin/rubiks-cube-solver.py'],
     packages=['rubikscubennnsolver'],
-    ext_modules = [Extension('rubikscubennnsolver.cLibrary', ['rubikscubennnsolver/cLibrary.c'])]
 )
 

@@ -11,13 +11,14 @@
 #include "uthash.h"
 #include "rotate_xxx.h"
 #include "ida_search_core.h"
+#include "ida_search_444.h"
 #include "ida_search_555.h"
 #include "ida_search_666.h"
 #include "ida_search_777.h"
 
 
 // To compile:
-//  gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_555.c ida_search_666.c -lm
+//  gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_444.c ida_search_555.c ida_search_666.c ida_search_777.c -lm
 //
 //  Add -ggdb to build gdb symbols
 
@@ -31,6 +32,9 @@ unsigned long seek_calls = 0;
 // Supported IDA searches
 typedef enum {
     NONE,
+
+    // 4x4x4
+    CENTERS_STAGE_444,
 
     // 5x5x5
     UD_CENTERS_STAGE_555,
@@ -50,6 +54,15 @@ typedef enum {
 } lookup_table_type;
 
 struct key_value_pair *ida_explored = NULL;
+
+// 4x4x4
+struct key_value_pair *centers_cost_444 = NULL;
+char *UD_centers_cost_only_444 = NULL;
+char *LR_centers_cost_only_444 = NULL;
+char *FB_centers_cost_only_444 = NULL;
+
+
+// 5x5x5
 struct key_value_pair *UD_centers_555 = NULL;
 char *pt_t_centers_cost_only = NULL;
 char *pt_x_centers_cost_only = NULL;
@@ -59,10 +72,14 @@ char *UL_centers_cost_only_555 = NULL;
 char *UF_centers_cost_only_555 = NULL;
 char *LF_centers_cost_only_555 = NULL;
 
+
+// 6x6x6
 struct key_value_pair *LR_inner_x_centers_and_oblique_edges_666 = NULL;
 char *LR_inner_x_centers_666 = NULL;
 char *LR_oblique_edges_666 = NULL;
 
+
+// 7x7x7
 struct key_value_pair *step40_777 = NULL;
 char *step41_777 = NULL;
 char *step42_777 = NULL;
@@ -229,7 +246,7 @@ str_replace_for_binary(char *str, char *ones)
 }
 
 void
-str_replace_list_of_chars (char *str, char *old, char new)
+str_replace_list_of_chars (char *str, char *old, char *new)
 {
     int i = 0;
     int j;
@@ -243,7 +260,7 @@ str_replace_list_of_chars (char *str, char *old, char new)
 
             /* If occurrence of character is found */
             if (str[i] == old[j]) {
-                str[i] = new;
+                str[i] = new[0];
                 break;
             }
             j++;
@@ -278,6 +295,13 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     char ones_LR[3] = {'L', 'R', 0};
     char ones_ULF[4] = {'U', 'L', 'F', 0};
 
+    char U[2] = {'U', 0};
+    char L[2] = {'L', 0};
+    char F[2] = {'F', 0};
+    char R[2] = {'R', 0};
+    char B[2] = {'B', 0};
+    char D[2] = {'D', 0};
+
     memset(cube, 0, sizeof(char) * (square_count + 2));
     cube[0] = 'x'; // placeholder
     memcpy(&cube[U_start], &kociemba[U_start_kociemba], squares_per_side);
@@ -289,6 +313,13 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     // LOG("cube:\n%s\n\n", cube);
 
     switch (type)  {
+    case CENTERS_STAGE_444:
+        str_replace_list_of_chars(cube, D, U);
+        str_replace_list_of_chars(cube, R, L);
+        str_replace_list_of_chars(cube, B, F);
+        print_cube(cube, size);
+        break;
+
     case UD_CENTERS_STAGE_555:
     case UD_OBLIQUE_EDGES_STAGE_666:
     case UD_OBLIQUE_EDGES_STAGE_777:
@@ -367,8 +398,20 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
 
     LOG("ida_prune_table_preload %s: start\n", filename);
 
-    if (strmatch(filename, "lookup-table-5x5x5-step10-UD-centers-stage.txt") ||
-        strmatch(filename, "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt")) {
+    // 4x4x4
+    if (strmatch(filename, "lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt")) {
+
+        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+            // 0..23 are the state
+            // 24 is the :
+            // 25 is the move count
+            buffer[24] = '\0';
+            cost = atoi(&buffer[25]);
+            hash_add(hashtable, buffer, cost);
+        }
+
+    } else if (strmatch(filename, "lookup-table-5x5x5-step10-UD-centers-stage.txt") ||
+            strmatch(filename, "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt")) {
 
         while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
             // 0..13 are the state
@@ -417,7 +460,7 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
         }
 
     } else {
-        printf("ERROR: ida_prune_table_preload add support for %s", filename);
+        printf("ERROR: ida_prune_table_preload add support for %s\n", filename);
         exit(1);
     }
 
@@ -471,6 +514,16 @@ struct ida_heuristic_result
 ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal)
 {
     switch (type)  {
+
+    // 4x4x4
+    case CENTERS_STAGE_444:
+        return ida_heuristic_centers_444(
+            cube,
+            max_cost_to_goal,
+            &centers_cost_444,
+            UD_centers_cost_only_444,
+            LR_centers_cost_only_444,
+            FB_centers_cost_only_444);
 
     // 5x5x5
     case UD_CENTERS_STAGE_555:
@@ -663,6 +716,10 @@ ida_search_complete (
     }
 
     switch (type)  {
+    // 4x4x4
+    case CENTERS_STAGE_444:
+        return ida_search_complete_centers_444(cube);
+
     // 5x5x5
     case UD_CENTERS_STAGE_555:
         return ida_search_complete_UD_centers_555(cube);
@@ -772,6 +829,23 @@ int
 step_allowed_by_ida_search (lookup_table_type type, move_type move)
 {
     switch (type)  {
+
+    // 4x4x4
+    case CENTERS_STAGE_444:
+        switch (move) {
+        case Lw:
+        case Lw_PRIME:
+        case Lw2:
+        case Bw:
+        case Bw_PRIME:
+        case Bw2:
+        case Dw:
+        case Dw_PRIME:
+        case Dw2:
+            return 0;
+        default:
+            return 1;
+        }
 
     // 5x5x5
     case UD_CENTERS_STAGE_555:
@@ -1332,7 +1406,31 @@ ida_search (unsigned int cost_to_here,
 
     hash_add(&ida_explored, result.lt_state, 0);
 
-    if (cube_size == 5) {
+    if (cube_size == 4) {
+
+        for (int i = 0; i < MOVE_COUNT_444; i++) {
+            move = moves_444[i];
+
+            if (steps_on_same_face_and_layer(move, prev_move)) {
+                continue;
+            }
+
+            if (!step_allowed_by_ida_search(type, move)) {
+                continue;
+            }
+
+            char cube_copy[array_size];
+            memcpy(cube_copy, cube, sizeof(char) * array_size);
+            rotate_444(cube_copy, cube_tmp, array_size, move);
+            moves_to_here[cost_to_here] = move;
+
+            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
+                return 1;
+            }
+        }
+
+    } else if (cube_size == 5) {
 
         for (int i = 0; i < MOVE_COUNT_555; i++) {
             move = moves_555[i];
@@ -1490,6 +1588,14 @@ ida_solve (
 
     switch (type)  {
 
+    // 4x4x4
+    case CENTERS_STAGE_444:
+        ida_prune_table_preload(&centers_cost_444, "lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt");
+        UD_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt", 16711681);
+        LR_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt", 16711681);
+        FB_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt", 16711681);
+        break;
+
     // 5x5x5
     case UD_CENTERS_STAGE_555:
         ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt");
@@ -1588,8 +1694,13 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
             i++;
 
+            // 4x4x4
+            if (strmatch(argv[i], "4x4x4-centers-stage")) {
+                type = CENTERS_STAGE_444;
+                cube_size_type = 4;
+
             // 5x5x5
-            if (strmatch(argv[i], "5x5x5-UD-centers-stage")) {
+            } else if (strmatch(argv[i], "5x5x5-UD-centers-stage")) {
                 type = UD_CENTERS_STAGE_555;
                 cube_size_type = 5;
 

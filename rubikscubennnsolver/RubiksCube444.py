@@ -9,6 +9,7 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableCostOnly,
     LookupTableIDA,
     LookupTableHashCostOnly,
+    LookupTableIDAViaC,
 )
 from rubikscubennnsolver.RubiksCube444Misc import (
     high_edges_444,
@@ -16,7 +17,6 @@ from rubikscubennnsolver.RubiksCube444Misc import (
     highlow_edge_mapping_combinations,
     highlow_edge_values,
 )
-from rubikscubennnsolver.cLibrary import ida_heuristic_states_step10_444
 from pprint import pformat
 import logging
 import sys
@@ -163,7 +163,7 @@ wings_for_edges_recolor_pattern_444 = (
 )
 
 
-class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
+class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaC):
     """
     lookup-table-4x4x4-step11-UD-centers-stage.txt
     lookup-table-4x4x4-step12-LR-centers-stage.txt
@@ -180,288 +180,30 @@ class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
 
     Total: 735,471 entries
     Average: 6.02 moves
-    """
-
-    def __init__(self, parent):
-
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt',
-            (0x00f0f0, 0x0f0f00, 0xf0000f),
-            linecount=735471,
-            max_depth=8,
-            filesize=16711681,
-            md5='504553715ca5632e90a81c9ecd4aa749')
 
 
-class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
-
-    def __init__(self, parent):
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt',
-            (0x00f0f0, 0x0f0f00, 0xf0000f),
-            linecount=735471,
-            max_depth=8,
-            filesize=16711681,
-            md5='504553715ca5632e90a81c9ecd4aa749')
-
-
-class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
-
-    def __init__(self, parent):
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt',
-            (0x00f0f0, 0x0f0f00, 0xf0000f),
-            linecount=735471,
-            max_depth=8,
-            filesize=16711681,
-            md5='504553715ca5632e90a81c9ecd4aa749')
-
-
-class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
-    """
     lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
     ==================================================
     1 steps has 24 entries (0 percent, 0.00x previous step)
     2 steps has 324 entries (0 percent, 13.50x previous step)
     3 steps has 4,302 entries (0 percent, 13.28x previous step)
-    4 steps has 53,730 entries (0 percent, 12.49x previous step)
-    5 steps has 697,806 entries (7 percent, 12.99x previous step)
-    6 steps has 9,036,684 entries (92 percent, 12.95x previous step)
+    4 steps has 53,730 entries (7 percent, 12.49x previous step)
+    5 steps has 697,806 entries (92 percent, 12.99x previous step)
 
-    Total: 9,792,870 entries
+    Total: 756,186 entries
     """
-
-    heuristic_stats = {
-        (0, 0, 0): 0,
-        (0, 1, 1): 1,
-        (0, 2, 2): 2,
-        (0, 3, 3): 3,
-        (0, 4, 4): 4,
-        (0, 5, 5): 5,
-        (1, 0, 1): 1,
-        (1, 1, 0): 1,
-        (1, 2, 2): 2,
-        (1, 3, 3): 3,
-        (1, 3, 4): 4,
-        (1, 4, 3): 4,
-        (1, 4, 4): 4,
-        (1, 5, 5): 5,
-        (1, 5, 6): 6,
-        (2, 0, 2): 2,
-        (2, 1, 2): 2,
-        (2, 2, 0): 2,
-        (2, 2, 1): 2,
-        (2, 2, 3): 5,
-        (2, 3, 2): 5,
-        (2, 3, 3): 3,
-        (2, 3, 4): 4,
-        (2, 3, 5): 5,
-        (2, 4, 3): 4,
-        (2, 4, 4): 4,
-        (2, 4, 5): 5,
-        (2, 5, 3): 5,
-        (2, 5, 4): 5,
-        (2, 5, 5): 5,
-        (2, 5, 6): 6,
-        (2, 6, 5): 7,
-        (2, 6, 6): 6,
-        (3, 0, 3): 3,
-        (3, 1, 3): 3,
-        (3, 1, 4): 4,
-        (3, 2, 3): 3,
-        (3, 2, 4): 4,
-        (3, 2, 5): 5,
-        (3, 3, 0): 3,
-        (3, 3, 1): 3,
-        (3, 3, 2): 3,
-        (3, 3, 3): 5,
-        (3, 3, 4): 4,
-        (3, 3, 5): 5,
-        (3, 4, 2): 4,
-        (3, 4, 3): 4,
-        (3, 4, 4): 4,
-        (3, 4, 5): 5,
-        (3, 4, 6): 7,
-        (3, 5, 3): 5,
-        (3, 5, 4): 5,
-        (3, 5, 5): 5,
-        (3, 5, 6): 7,
-        (3, 5, 7): 8,
-        (3, 6, 4): 6,
-        (3, 6, 5): 6,
-        (3, 6, 6): 6,
-        (3, 6, 7): 7,
-        (3, 7, 6): 8,
-        (4, 0, 4): 4,
-        (4, 1, 4): 4,
-        (4, 2, 3): 4,
-        (4, 2, 4): 4,
-        (4, 2, 5): 5,
-        (4, 2, 6): 7,
-        (4, 3, 2): 4,
-        (4, 3, 3): 4,
-        (4, 3, 4): 4,
-        (4, 3, 5): 5,
-        (4, 4, 0): 4,
-        (4, 4, 1): 4,
-        (4, 4, 2): 4,
-        (4, 4, 3): 4,
-        (4, 4, 4): 6,
-        (4, 4, 5): 5,
-        (4, 4, 6): 7,
-        (4, 4, 7): 9,
-        (4, 5, 2): 5,
-        (4, 5, 3): 5,
-        (4, 5, 4): 6,
-        (4, 5, 5): 6,
-        (4, 5, 6): 7,
-        (4, 5, 7): 7,
-        (4, 6, 2): 7,
-        (4, 6, 3): 8,
-        (4, 6, 4): 7,
-        (4, 6, 5): 7,
-        (4, 6, 6): 7,
-        (4, 6, 7): 7,
-        (4, 7, 5): 7,
-        (4, 7, 6): 8,
-        (5, 0, 5): 5,
-        (5, 1, 3): 5,
-        (5, 1, 5): 5,
-        (5, 2, 4): 5,
-        (5, 2, 5): 5,
-        (5, 2, 6): 6,
-        (5, 3, 3): 5,
-        (5, 3, 4): 6,
-        (5, 3, 5): 5,
-        (5, 3, 6): 7,
-        (5, 4, 2): 5,
-        (5, 4, 3): 5,
-        (5, 4, 4): 5,
-        (5, 4, 5): 6,
-        (5, 4, 6): 7,
-        (5, 4, 7): 8,
-        (5, 5, 0): 5,
-        (5, 5, 1): 5,
-        (5, 5, 2): 5,
-        (5, 5, 3): 5,
-        (5, 5, 4): 6,
-        (5, 5, 5): 6,
-        (5, 5, 6): 8,
-        (5, 5, 7): 9,
-        (5, 6, 2): 6,
-        (5, 6, 3): 7,
-        (5, 6, 4): 7,
-        (5, 6, 5): 7,
-        (5, 6, 6): 8,
-        (5, 6, 7): 9,
-        (5, 7, 3): 7,
-        (5, 7, 4): 8,
-        (5, 7, 5): 8,
-        (5, 7, 6): 9,
-        (5, 7, 7): 9,
-        (6, 1, 5): 6,
-        (6, 2, 6): 7,
-        (6, 3, 5): 7,
-        (6, 3, 6): 6,
-        (6, 3, 7): 8,
-        (6, 4, 4): 7,
-        (6, 4, 5): 7,
-        (6, 4, 6): 7,
-        (6, 4, 7): 10,
-        (6, 5, 4): 6,
-        (6, 5, 5): 8,
-        (6, 5, 6): 8,
-        (6, 5, 7): 9,
-        (6, 6, 1): 6,
-        (6, 6, 2): 6,
-        (6, 6, 3): 6,
-        (6, 6, 4): 7,
-        (6, 6, 5): 8,
-        (6, 6, 6): 9,
-        (6, 6, 7): 10,
-        (6, 7, 3): 7,
-        (6, 7, 4): 8,
-        (6, 7, 5): 9,
-        (6, 7, 6): 9,
-        (6, 7, 7): 9,
-        (7, 3, 6): 7,
-        (7, 4, 5): 7,
-        (7, 4, 6): 7,
-        (7, 5, 5): 8,
-        (7, 5, 6): 9,
-        (7, 5, 7): 9,
-        (7, 6, 3): 7,
-        (7, 6, 4): 8,
-        (7, 6, 5): 9,
-        (7, 6, 6): 9,
-        (7, 6, 7): 10,
-        (7, 7, 3): 8,
-        (7, 7, 4): 7,
-        (7, 7, 5): 9,
-        (7, 7, 6): 10,
-        (7, 7, 7): 10,
-        (8, 4, 6): 8,
-        (8, 5, 6): 9,
-    }
-
-    # The higher this number the less you honor the heuristic_stats
-    # -  0 uses the heuristic_stats exactly as reported
-    # -  1 subtracts 1 from the heuristic_stats value
-    # - 99 disables heuristic_stats
-    #
-    # You want to put this as high as you can but low enough
-    # to still speed up the slow IDA searches.
-    #
-    # For cube LURDRDURBLRLBDDBUFDFDLLDRFBRLFUFRLBLUBLFRFUUFDDFRBLUUURLBBFLRBURDULUFRBFDUDBDULDLBBBRRDRFDFFUFLB
-    # 99 : 10 moves in 14s
-    #  2 : 10 moves in 6s
-    #  1 : 10 moves in 800ms
-    #  0 : 10 moves in 1500ms
-    heuristic_stats_error = 1
 
     def __init__(self, parent):
 
-        # 5-deep table, takes 34M
-        # 6-deep table, takes 498M...this search is fast, that
-        # is why I don't bother with a --min-memory option here
-        filename = "lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt"
-        linecount = 756186
-        max_depth = 5
-        filesize = 34028370
-        exit_asap = 11
-
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            filename,
-            ('FFFFLLLLUUUULLLLUUUUFFFF',
-             'FFFFUUUULLLLUUUULLLLFFFF',
-             'LLLLFFFFUUUUFFFFUUUULLLL',
-             'LLLLUUUUFFFFUUUUFFFFLLLL',
-             'UUUUFFFFLLLLFFFFLLLLUUUU',
-             'UUUULLLLFFFFLLLLFFFFUUUU'),
-            moves_444,
-
-            # illegal_moves...ignoring these increases the average solution
-            # by less than 1 move but makes the IDA search about 20x faster
-            ("Lw", "Lw'", "Lw2",
-             "Bw", "Bw'", "Bw2",
-             "Dw", "Dw'", "Dw2"),
-
-            # prune tables
-            (parent.lt_UD_centers_stage,
-             parent.lt_LR_centers_stage,
-             parent.lt_FB_centers_stage),
-            linecount=linecount,
-            max_depth=max_depth,
-            filesize=filesize,
-            exit_asap=exit_asap
+            # Needed tables and their md5 signatures
+            (('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', '5b4194829ec8ea8c3dda2e3629ab00b7'),
+             ('lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749'),
+             ('lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749'),
+             ('lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749')),
+            '4x4x4-centers-stage' # C_ida_type
         )
 
         self.recolor_positions = centers_444
@@ -471,32 +213,6 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             'B' : 'F',
         }
         self.nuke_corners = True
-
-    def ida_heuristic_tuple(self):
-        parent = self.parent
-        (lt_state, UD_state, LR_state, FB_state) = ida_heuristic_states_step10_444(parent.state, centers_444)
-
-        return (
-            parent.lt_UD_centers_stage.heuristic(UD_state),
-            parent.lt_LR_centers_stage.heuristic(LR_state),
-            parent.lt_FB_centers_stage.heuristic(FB_state),
-        )
-
-    def ida_heuristic(self, ida_threshold):
-        parent = self.parent
-        (lt_state, UD_state, LR_state, FB_state) = ida_heuristic_states_step10_444(parent.state, centers_444)
-
-        UD_cost = parent.lt_UD_centers_stage.heuristic(UD_state)
-        LR_cost = parent.lt_LR_centers_stage.heuristic(LR_state)
-        FB_cost = parent.lt_FB_centers_stage.heuristic(FB_state)
-
-        if ida_threshold >= self.exit_asap:
-            heuristic_stats_cost = self.heuristic_stats.get((UD_cost, LR_cost, FB_cost), 0)
-            cost_to_goal = max(UD_cost, LR_cost, FB_cost, heuristic_stats_cost - self.heuristic_stats_error)
-        else:
-            cost_to_goal = max(UD_cost, LR_cost, FB_cost)
-
-        return (lt_state, cost_to_goal)
 
 
 def edges_recolor_pattern_444(state):
@@ -1379,12 +1095,8 @@ class RubiksCube444(RubiksCube):
             return
         self.lt_init_called = True
 
-        self.lt_UD_centers_stage = LookupTable444UDCentersStageCostOnly(self)
-        self.lt_LR_centers_stage = LookupTable444LRCentersStageCostOnly(self)
-        self.lt_FB_centers_stage = LookupTable444FBCentersStageCostOnly(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0 # avoid OLL on orbit 0
-        self.lt_ULFRBD_centers_stage.preload_cache_string()
 
         self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
@@ -1402,10 +1114,6 @@ class RubiksCube444(RubiksCube):
         # save cube state
         self.original_state = self.state[:]
         self.original_solution = self.solution[:]
-
-        # FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU
-        # is a good test cube for ida_all_the_way
-        #self.lt_ULFRBD_centers_stage.ida_all_the_way = True
 
         log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_ULFRBD_centers_stage.solve()

@@ -353,18 +353,17 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
 
     lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
-    1 steps has 210 entries (0 percent, 0.00x previous step)
-    2 steps has 924 entries (0 percent, 4.40x previous step)
-    3 steps has 4,148 entries (1 percent, 4.49x previous step)
-    4 steps has 19,330 entries (5 percent, 4.66x previous step)
-    5 steps has 70,702 entries (20 percent, 3.66x previous step)
-    6 steps has 134,068 entries (39 percent, 1.90x previous step)
-    7 steps has 98,376 entries (28 percent, 0.73x previous step)
-    8 steps has 15,218 entries (4 percent, 0.15x previous step)
-    9 steps has 24 entries (0 percent, 0.00x previous step)
+    1 steps has 350 entries (0 percent, 0.00x previous step)
+    2 steps has 1,358 entries (0 percent, 3.88x previous step)
+    3 steps has 5,148 entries (1 percent, 3.79x previous step)
+    4 steps has 21,684 entries (6 percent, 4.21x previous step)
+    5 steps has 75,104 entries (21 percent, 3.46x previous step)
+    6 steps has 134,420 entries (39 percent, 1.79x previous step)
+    7 steps has 91,784 entries (26 percent, 0.68x previous step)
+    8 steps has 13,152 entries (3 percent, 0.14x previous step)
 
     Total: 343,000 entries
-    Average: 6.01 moves
+    Average: 5.93 moves
 
     We could chop all but the first step on this table but this is one that
     we do not load into memory and it is only 15M so we will keep all of the
@@ -400,8 +399,8 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
              'fb8223', 'fb8264', 'fb8c03', 'fb8c44', 'fb8e20', 'fbb003', 'fbb044', 'fbb220',
              'fbbc00', 'ffc003', 'ffc044', 'ffc220', 'ffcc00', 'fff000'),
             linecount=343000,
-            max_depth=9,
-            filesize=15435000,
+            max_depth=8,
+            filesize=15092000,
         )
 
     def ida_heuristic(self, ida_threshold):

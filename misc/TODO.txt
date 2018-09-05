@@ -1,17 +1,5 @@
 
-today
-=====
-- 777 step40 to IDAViaC
-- 777 step50 to IDAViaC
-- 777 step60 to IDAViaC
-
-
-tomorrow
-========
-- when building the 555 edges tables once you get to the halfway point, for each
-  state you just need to do all move sequences that allow the centers to be solved
-  within the move budget. This would eliminate a ton of sorting, finding new states
-  and building next workqs.
+- compress_solution should be aware of slices
 
 - tommyhash this should help with speed and memory. Test against the following.
     It takes 25s and 589M of memory today. It also takes 800ms to load the step30 table.
@@ -20,14 +8,13 @@ tomorrow
 
     time ./ida_search --kociemba .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU. --type 6x6x6-LR-inner-x-centers-oblique-edges-stage --orbit1-need-even-w
 
-- 444 step10 but it needs to avoid OLL. Would be cool if it searched until
-  it found a solution that satisfied phase2.
-
 - delete all exit_asap code
 
 - delete all heuristic_stats code
 
-- 555 step20 IDAViaC
+- 555 step10
+    - find a solution where the step10 + step20 cost is 18 or less
+    - stop using IDA for step20, use the full table
 
 - 666 step60 IDAViaC
 
@@ -50,88 +37,3 @@ tomorrow
   look into putting LR in horizontal bars and UD in vertical bars in a single phase. This
   would be 70^4/70^8 or 0.000 000 041 but we would have multiple targets and two 70^4 prune
   tables so it might be doable.
-
-
-555 edges tables to build
-=========================
-
-555 edges (first 12)
---------------------
-- build a table where we track all 12 edges up to 7-deep, maybe 8-deep, 9-deep would be huge
-- the odds of us getting a hit in this table are very low...this probably isn't worth it
-
-
-555 edges (first 8)
--------------------
-- track 8 edges
-- build this to 8-deep, maybe 9-deep
-
-
-555 edges (first 4)
--------------------
-- track 4 edges
-- build this to 9-deep, possibly 10-deep
-
-
-555 edges (first 2)
--------------------
-- track 2 edges
-- not sure if we will need this so hold off
-
-*********************
-*********************
-
-555 edges (second 8)
---------------------
-- build a table where we track 8 edges, do not break up the LB, LF, RF, RB edges.
-
-
-555 edges (second 4)
---------------------
-- build a table where we track 4 edges, do not break up the LB, LF, RF, RB edges.
-- we should be able to build this 1 or 2 moves deeper than the "first 4" table
-  so build that one first before deciding how deep to go on this one.
-
-555 edges (second 2)
---------------------
-- build a table where we track 4 edges, do not break up the LB, LF, RF, RB edges.
-- not sure if we will need this so hold off
-
-
-*********************
-*********************
-
-
-555 edges (third 4)
--------------------
-- This is the L4E table so this is done
-
-
-
-
-
-
-555 edges (4, 4, 4)
-===================
-- pair the first four edges...maybe. There are 7920 starting points where 4-edges are paired.
-  We will build this table out as deep as we can, 11-deep is probably the best to hope for.
-
-  Try all 12!/(4!*8!) or 495 combinations of 4-edges and see if any of them produce a hit. If not...
-    - for each of the 495 try all 289 outer layer 2-move sequences and see if any of those
-      put the cube in a state that has a hit. 289 * 495 is 143,055 if not ...
-
-    - for each of the 495 try all 4338 outer layer 3-move sequences and see if any of those
-      put the cube in a state that has a hit. 4338 * 495 is 2,147,310 if not ...
-
-    - pair the first two edges, 12!/(2!*10!) or 66 starting points., I know the math is overestimating but (24*22)^3 is 147,197,952
-    - move the two paired edges to the x-plane on side F
-    - pair the second two edges, again math is wrong but (18 * 16)^3 is 23,887,872
-
-- place the four paired edges in the x-plane
-
-- pair the second four edges without disturbing the four paired edges
-    Try all 8!/(4!*4!) or 70 combinations of 4-edges and see if any of them produce a hit.
-
-- place the second four paired edges in a plane
-
-- use the L4E table to pair the remaining edges

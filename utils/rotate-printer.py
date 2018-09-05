@@ -77,12 +77,17 @@ for (size, solved_state) in (
         raise Exception("Add support for size %s" % size)
 
     steps = list(steps)
-    steps.extend(["x", "x'", "y", "y'", "z", "z'"])
+    steps.extend(["x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"])
 
     if size in (4, 5, 6, 7):
-        steps.extend(["u", "u'", "u2", "d", "d'", "d2"])
-        steps.extend(["l", "l'", "l2", "r", "r'", "r2"])
-        steps.extend(["f", "f'", "f2", "b", "b'", "b2"])
+        steps.extend(["2U", "2U'", "2U2", "2D", "2D'", "2D2"])
+        steps.extend(["2L", "2L'", "2L2", "2R", "2R'", "2R2"])
+        steps.extend(["2F", "2F'", "2F2", "2B", "2B'", "2B2"])
+
+    if size in (6, 7):
+        steps.extend(["3U", "3U'", "3U2", "3D", "3D'", "3D2"])
+        steps.extend(["3L", "3L'", "3L2", "3R", "3R'", "3R2"])
+        steps.extend(["3F", "3F'", "3F2", "3B", "3B'", "3B2"])
 
     if build_rotate_xxx_c:
         print("void")
@@ -114,71 +119,14 @@ for (size, solved_state) in (
             step_pretty = step.replace("'", "_prime")
             function_name = "rotate_%d%d%d_%s" % (size, size, size, step_pretty)
             rotate_mapper[step] = function_name
-
-            if step == "u":
-                cube.rotate("Uw")
-                cube.rotate("U'")
-            elif step == "u'":
-                cube.rotate("Uw'")
-                cube.rotate("U")
-            elif step == "u2":
-                cube.rotate("Uw2")
-                cube.rotate("U2")
-            elif step == "d":
-                cube.rotate("Dw")
-                cube.rotate("D'")
-            elif step == "d'":
-                cube.rotate("Dw'")
-                cube.rotate("D")
-            elif step == "d2":
-                cube.rotate("Dw2")
-                cube.rotate("D2")
-
-            elif step == "l":
-                cube.rotate("Lw")
-                cube.rotate("L'")
-            elif step == "l'":
-                cube.rotate("Lw'")
-                cube.rotate("L")
-            elif step == "l2":
-                cube.rotate("Lw2")
-                cube.rotate("L2")
-            elif step == "r":
-                cube.rotate("Rw")
-                cube.rotate("R'")
-            elif step == "r'":
-                cube.rotate("Rw'")
-                cube.rotate("R")
-            elif step == "r2":
-                cube.rotate("Rw2")
-                cube.rotate("R2")
-
-            elif step == "f":
-                cube.rotate("Fw")
-                cube.rotate("F'")
-            elif step == "f'":
-                cube.rotate("Fw'")
-                cube.rotate("F")
-            elif step == "f2":
-                cube.rotate("Fw2")
-                cube.rotate("F2")
-            elif step == "b":
-                cube.rotate("Bw")
-                cube.rotate("B'")
-            elif step == "b'":
-                cube.rotate("Bw'")
-                cube.rotate("B")
-            elif step == "b2":
-                cube.rotate("Bw2")
-                cube.rotate("B2")
-
-            else:
-                cube.rotate(step)
+            cube.rotate(step)
 
             rotate_mapper[step] = cube.print_case_statement_python(function_name, step)
             cube.state = copy(original_state)
 
-        print("swaps_%d%d%d = %s" % (size, size, size, pformat(rotate_mapper, width=10024)))
-        print("\ndef rotate_%d%d%d(cube, step):" % (size, size, size))
-        print("    return [cube[x] for x in swaps_%d%d%d[step]]" % (size, size, size))
-        print("")
+        nnn_filename = "rubikscubennnsolver/RubiksCube%d%d%d.py" % (size, size, size)
+        with open(nnn_filename, 'a') as fh:
+            fh.write("swaps_%d%d%d = %s\n" % (size, size, size, pformat(rotate_mapper, width=2048)))
+            fh.write("\ndef rotate_%d%d%d(cube, step):\n" % (size, size, size))
+            fh.write("    return [cube[x] for x in swaps_%d%d%d[step]]\n" % (size, size, size))
+            fh.write("")

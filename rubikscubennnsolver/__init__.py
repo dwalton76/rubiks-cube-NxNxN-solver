@@ -702,7 +702,7 @@ class RubiksCube(object):
                 return False
         return True
 
-    def rotate(self, action):
+    def rotate_guts(self, action):
         """
         self.state is a dictionary where the key is the square_index and the
         value is that square side name (U, F, etc)
@@ -1202,6 +1202,133 @@ class RubiksCube(object):
 
         else:
             raise Exception("Unsupported action %s" % action)
+
+    def rotate(self, action):
+        if action == "x2":
+            self.rotate_guts("x")
+            self.rotate_guts("x")
+        elif action == "y2":
+            self.rotate_guts("y")
+            self.rotate_guts("y")
+        elif action == "z2":
+            self.rotate_guts("z")
+            self.rotate_guts("z")
+
+        elif action == "2U":
+            self.rotate_guts("Uw")
+            self.rotate_guts("U'")
+        elif action == "2U'":
+            self.rotate_guts("Uw'")
+            self.rotate_guts("U")
+        elif action == "2U2":
+            self.rotate_guts("Uw2")
+            self.rotate_guts("U2")
+        elif action == "2D":
+            self.rotate_guts("Dw")
+            self.rotate_guts("D'")
+        elif action == "2D'":
+            self.rotate_guts("Dw'")
+            self.rotate_guts("D")
+        elif action == "2D2":
+            self.rotate_guts("Dw2")
+            self.rotate_guts("D2")
+
+        elif action == "2L":
+            self.rotate_guts("Lw")
+            self.rotate_guts("L'")
+        elif action == "2L'":
+            self.rotate_guts("Lw'")
+            self.rotate_guts("L")
+        elif action == "2L2":
+            self.rotate_guts("Lw2")
+            self.rotate_guts("L2")
+        elif action == "2R":
+            self.rotate_guts("Rw")
+            self.rotate_guts("R'")
+        elif action == "2R'":
+            self.rotate_guts("Rw'")
+            self.rotate_guts("R")
+        elif action == "2R2":
+            self.rotate_guts("Rw2")
+            self.rotate_guts("R2")
+
+        elif action == "2F":
+            self.rotate_guts("Fw")
+            self.rotate_guts("F'")
+        elif action == "2F'":
+            self.rotate_guts("Fw'")
+            self.rotate_guts("F")
+        elif action == "2F2":
+            self.rotate_guts("Fw2")
+            self.rotate_guts("F2")
+        elif action == "2B":
+            self.rotate_guts("Bw")
+            self.rotate_guts("B'")
+        elif action == "2B'":
+            self.rotate_guts("Bw'")
+            self.rotate_guts("B")
+        elif action == "2B2":
+            self.rotate_guts("Bw2")
+            self.rotate_guts("B2")
+
+        elif action == "3U":
+            self.rotate_guts("3Uw")
+            self.rotate_guts("Uw'")
+        elif action == "3U'":
+            self.rotate_guts("3Uw'")
+            self.rotate_guts("Uw")
+        elif action == "3U2":
+            self.rotate_guts("3Uw2")
+            self.rotate_guts("Uw2")
+        elif action == "3D":
+            self.rotate_guts("3Dw")
+            self.rotate_guts("Dw'")
+        elif action == "3D'":
+            self.rotate_guts("3Dw'")
+            self.rotate_guts("Dw")
+        elif action == "3D2":
+            self.rotate_guts("3Dw2")
+            self.rotate_guts("Dw2")
+
+        elif action == "3L":
+            self.rotate_guts("3Lw")
+            self.rotate_guts("Lw'")
+        elif action == "3L'":
+            self.rotate_guts("3Lw'")
+            self.rotate_guts("Lw")
+        elif action == "3L2":
+            self.rotate_guts("3Lw2")
+            self.rotate_guts("Lw2")
+        elif action == "3R":
+            self.rotate_guts("3Rw")
+            self.rotate_guts("Rw'")
+        elif action == "3R'":
+            self.rotate_guts("3Rw'")
+            self.rotate_guts("Rw")
+        elif action == "3R2":
+            self.rotate_guts("3Rw2")
+            self.rotate_guts("Rw2")
+
+        elif action == "3F":
+            self.rotate_guts("3Fw")
+            self.rotate_guts("Fw'")
+        elif action == "3F'":
+            self.rotate_guts("3Fw'")
+            self.rotate_guts("Fw")
+        elif action == "3F2":
+            self.rotate_guts("3Fw2")
+            self.rotate_guts("Fw2")
+        elif action == "3B":
+            self.rotate_guts("3Bw")
+            self.rotate_guts("Bw'")
+        elif action == "3B'":
+            self.rotate_guts("3Bw'")
+            self.rotate_guts("Bw")
+        elif action == "3B2":
+            self.rotate_guts("3Bw2")
+            self.rotate_guts("Bw2")
+        else:
+            self.rotate_guts(action)
 
     def print_cube_layout(self):
         if not self.enable_print_cube:

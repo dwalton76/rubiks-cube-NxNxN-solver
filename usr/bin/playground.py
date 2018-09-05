@@ -6,7 +6,7 @@ from rubikscubennnsolver.misc import parse_ascii_777
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555, edges_partner_555
-from rubikscubennnsolver.RubiksCube777 import RubiksCube666, moves_666
+from rubikscubennnsolver.RubiksCube666 import RubiksCube666, moves_666, solved_666, rotate_666
 import logging
 import sys
 
@@ -18,8 +18,9 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-cube = RubiksCube555(solved_555, "URFDLB")
-cube.rotate("f")
+cube = RubiksCube666(solved_666, "URFDLB")
+#cube.state = rotate_666(cube.state[:], "3U")
+cube.rotate("3U")
 cube.print_cube()
 
 

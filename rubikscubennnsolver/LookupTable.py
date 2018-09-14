@@ -1026,10 +1026,6 @@ class LookupTableIDA(LookupTable):
                     if not self.parent.UD_centers_vertical_bars():
                         continue
 
-                elif step in ("2F", "2F'", "2F2", "2B", "2B'", "2B2"):
-                    if not self.parent.UD_centers_horizontal_bars():
-                        continue
-
             elif self.filename == "lookup-table-5x5x5-step100.txt" and step.startswith("2"):
                 self.parent.state = prev_state[:]
 

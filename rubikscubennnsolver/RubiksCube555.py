@@ -1278,29 +1278,31 @@ class LookupTable555Step60(LookupTable):
 
 class LookupTable555Step70(LookupTable):
     """
-    FB centers to vertical bars
+    FB centers to vertical bars or solved
+    LR center to solved
 
     lookup-table-5x5x5-step70.txt
     =============================
     1 steps has 28 entries (0 percent, 0.00x previous step)
-    2 steps has 110 entries (2 percent, 3.93x previous step)
-    3 steps has 396 entries (8 percent, 3.60x previous step)
-    4 steps has 1,196 entries (24 percent, 3.02x previous step)
-    5 steps has 2,102 entries (42 percent, 1.76x previous step)
-    6 steps has 1,016 entries (20 percent, 0.48x previous step)
-    7 steps has 52 entries (1 percent, 0.05x previous step)
+    2 steps has 167 entries (0 percent, 5.96x previous step)
+    3 steps has 924 entries (3 percent, 5.53x previous step)
+    4 steps has 3,772 entries (12 percent, 4.08x previous step)
+    5 steps has 11,295 entries (38 percent, 2.99x previous step)
+    6 steps has 11,530 entries (39 percent, 1.02x previous step)
+    7 steps has 1,676 entries (5 percent, 0.15x previous step)
+    8 steps has 8 entries (0 percent, 0.00x previous step)
 
-    Total: 4,900 entries
-    Average: 4.73 moves
+    Total: 29,400 entries
+    Average: 5.29 moves
     """
 
     state_targets = (
-        'BFBBFBBFBFBFFBFFBF',
-        'BFFBFFBFFBBFBBFBBF',
-        'BFFBFFBFFFBBFBBFBB',
-        'FFBFFBFFBBBFBBFBBF',
-        'FFBFFBFFBFBBFBBFBB',
-        'FFFFFFFFFBBBBBBBBB'
+        'LLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBF',
+        'LLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBF',
+        'LLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBB',
+        'LLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBF',
+        'LLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBB',
+        'LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB',
     )
 
     def __init__(self, parent):
@@ -1309,13 +1311,13 @@ class LookupTable555Step70(LookupTable):
             parent,
             'lookup-table-5x5x5-step70.txt',
             self.state_targets,
-            linecount=4900,
-            max_depth=7,
-            filesize=220500)
+            linecount=29400,
+            max_depth=8,
+            filesize=1911000)
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
-        state = ''.join([parent_state[x] for x in FB_centers_555])
+        state = ''.join([parent_state[x] for x in LFRB_centers_555])
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
 
@@ -1326,16 +1328,19 @@ class LookupTable555Step80(LookupTable):
 
     lookup-table-5x5x5-step80.txt
     =============================
-    1 steps has 41 entries (0 percent, 0.00x previous step)
-    2 steps has 121 entries (2 percent, 2.95x previous step)
-    3 steps has 421 entries (8 percent, 3.48x previous step)
-    4 steps has 1,197 entries (24 percent, 2.84x previous step)
-    5 steps has 2,076 entries (42 percent, 1.73x previous step)
-    6 steps has 992 entries (20 percent, 0.48x previous step)
-    7 steps has 52 entries (1 percent, 0.05x previous step)
+    1 steps has 31 entries (0 percent, 0.00x previous step)
+    2 steps has 67 entries (1 percent, 2.16x previous step)
+    3 steps has 178 entries (3 percent, 2.66x previous step)
+    4 steps has 518 entries (10 percent, 2.91x previous step)
+    5 steps has 1,083 entries (22 percent, 2.09x previous step)
+    6 steps has 1,695 entries (34 percent, 1.57x previous step)
+    7 steps has 1,096 entries (22 percent, 0.65x previous step)
+    8 steps has 224 entries (4 percent, 0.20x previous step)
+    9 steps has 4 entries (0 percent, 0.02x previous step)
+    10 steps has 4 entries (0 percent, 1.00x previous step)
 
     Total: 4,900 entries
-    Average: 4.70 moves
+    Average: 5.69 moves
     """
 
     state_targets = (
@@ -1364,8 +1369,8 @@ class LookupTable555Step80(LookupTable):
             'lookup-table-5x5x5-step80.txt',
             self.state_targets,
             linecount=4900,
-            max_depth=7,
-            filesize=220500)
+            max_depth=10,
+            filesize=254800)
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
@@ -1378,18 +1383,20 @@ class LookupTable555Step91(LookupTable):
     """
     lookup-table-5x5x5-step91.txt
     =============================
-    1 steps has 40 entries (0 percent, 0.00x previous step)
-    2 steps has 328 entries (0 percent, 8.20x previous step)
-    3 steps has 2,988 entries (0 percent, 9.11x previous step)
-    4 steps has 23,152 entries (0 percent, 7.75x previous step)
-    5 steps has 149,832 entries (3 percent, 6.47x previous step)
-    6 steps has 751,628 entries (15 percent, 5.02x previous step)
-    7 steps has 2,173,072 entries (44 percent, 2.89x previous step)
-    8 steps has 1,717,976 entries (35 percent, 0.79x previous step)
-    9 steps has 73,144 entries (1 percent, 0.04x previous step)
+    1 steps has 16 entries (0 percent, 0.00x previous step)
+    2 steps has 76 entries (0 percent, 4.75x previous step)
+    3 steps has 488 entries (0 percent, 6.42x previous step)
+    4 steps has 3,540 entries (0 percent, 7.25x previous step)
+    5 steps has 21,204 entries (0 percent, 5.99x previous step)
+    6 steps has 114,668 entries (2 percent, 5.41x previous step)
+    7 steps has 518,624 entries (10 percent, 4.52x previous step)
+    8 steps has 1,539,216 entries (31 percent, 2.97x previous step)
+    9 steps has 2,107,384 entries (43 percent, 1.37x previous step)
+    10 steps has 585,256 entries (11 percent, 0.28x previous step)
+    11 steps has 1,688 entries (0 percent, 0.00x previous step)
 
     Total: 4,892,160 entries
-    Average: 7.15 moves
+    Average: 8.50 moves
     """
 
     def __init__(self, parent):
@@ -1404,8 +1411,8 @@ class LookupTable555Step91(LookupTable):
              '---------------------------XxxYYy---'),
 
             linecount=4892160,
-            max_depth=9,
-            filesize=342451200)
+            max_depth=11,
+            filesize=366912000)
 
     def ida_heuristic(self, ida_threshold):
         assert self.only_colors and len(self.only_colors) == 2, "You must specify which 2-edges"
@@ -1419,71 +1426,24 @@ class LookupTable555Step92(LookupTable):
     """
     lookup-table-5x5x5-step92.txt
     =============================
-    1 steps has 538 entries (0 percent, 0.00x previous step)
-    2 steps has 3,680 entries (0 percent, 6.84x previous step)
-    3 steps has 10,882 entries (0 percent, 2.96x previous step)
-    4 steps has 17,118 entries (0 percent, 1.57x previous step)
-    5 steps has 40,550 entries (0 percent, 2.37x previous step)
-    6 steps has 127,392 entries (0 percent, 3.14x previous step)
-    7 steps has 459,252 entries (1 percent, 3.61x previous step)
-    8 steps has 1,326,344 entries (4 percent, 2.89x previous step)
-    9 steps has 2,873,096 entries (9 percent, 2.17x previous step)
-    10 steps has 4,816,516 entries (16 percent, 1.68x previous step)
-    11 steps has 7,298,280 entries (24 percent, 1.52x previous step)
-    12 steps has 8,525,624 entries (28 percent, 1.17x previous step)
-    13 steps has 3,694,800 entries (12 percent, 0.43x previous step)
-    14 steps has 306,080 entries (1 percent, 0.08x previous step)
-    15 steps has 544 entries (0 percent, 0.00x previous step)
+    1 steps has 30 entries (0 percent, 0.00x previous step)
+    2 steps has 216 entries (2 percent, 7.20x previous step)
+    3 steps has 950 entries (9 percent, 4.40x previous step)
+    4 steps has 2,748 entries (28 percent, 2.89x previous step)
+    5 steps has 3,782 entries (38 percent, 1.38x previous step)
+    6 steps has 1,704 entries (17 percent, 0.45x previous step)
+    7 steps has 288 entries (2 percent, 0.17x previous step)
+    8 steps has 8 entries (0 percent, 0.03x previous step)
 
-    Total: 29,500,696 entries
-    Average: 10.98 moves
+    Total: 9,726 entries
+    Average: 4.68 moves
     """
 
     state_targets = (
-        'DDDUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU',
-        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU',
-        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU',
-        'DDDUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU',
-        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU',
-        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD',
-        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU',
-        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD',
-        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU',
-        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD',
-        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU',
-        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD',
-        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU',
-        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD',
-        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD',
-        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
+        'UUUUUUUUUBFBBFBBFBFBFFBFFBFDDDDDDDDD',
+        'UUUUUUUUUBFFBFFBFFBBFBBFBBFDDDDDDDDD',
+        'UUUUUUUUUFFBFFBFFBFBBFBBFBBDDDDDDDDD',
+        'UUUUUUUUUFFFFFFFFFBBBBBBBBBDDDDDDDDD',
     )
 
     def __init__(self, parent):
@@ -1492,13 +1452,13 @@ class LookupTable555Step92(LookupTable):
             parent,
             'lookup-table-5x5x5-step92.txt',
             self.state_targets,
-            linecount=29500696,
-            max_depth=15,
-            filesize=1711040368)
+            linecount=9726,
+            max_depth=8,
+            filesize=622464)
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
-        state = ''.join([parent_state[x] for x in centers_555])
+        state = ''.join([parent_state[x] for x in UFBD_centers_555])
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
 
@@ -1507,281 +1467,41 @@ class LookupTableIDA555Step90(LookupTableIDA):
     """
     lookup-table-5x5x5-step90.txt
     =============================
-    1 steps has 3,648 entries (0 percent, 0.00x previous step)
-    2 steps has 27,120 entries (0 percent, 7.43x previous step)
-    3 steps has 142,296 entries (0 percent, 5.25x previous step)
-    4 steps has 767,688 entries (3 percent, 5.40x previous step)
-    5 steps has 3,812,616 entries (15 percent, 4.97x previous step)
-    6 steps has 19,659,456 entries (80 percent, 5.16x previous step)
+    1 steps has 240 entries (0 percent, 0.00x previous step)
+    2 steps has 1,968 entries (0 percent, 8.20x previous step)
+    3 steps has 12,528 entries (0 percent, 6.37x previous step)
+    4 steps has 68,760 entries (3 percent, 5.49x previous step)
+    5 steps has 314,952 entries (15 percent, 4.58x previous step)
+    6 steps has 1,613,016 entries (80 percent, 5.12x previous step)
 
-    Total: 24,412,824 entries
+    Total: 2,011,464 entries
     """
 
     state_targets = (
-        'DDDUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------XxxYYy---',
-        'DDDUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------XxxyyY---',
-        'DDDUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------xXXYYy---',
-        'DDDUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------xXXyyY---',
-        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxYYy---',
-        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxyyY---',
-        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXYYy---',
-        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXyyY---',
-        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxYYy---',
-        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxyyY---',
-        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXYYy---',
-        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXyyY---',
-        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxYYy---',
-        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxyyY---',
-        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXYYy---',
-        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXyyY---',
-        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxYYy---',
-        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxyyY---',
-        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXYYy---',
-        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXyyY---',
-        'DDDUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------XxxYYy---',
-        'DDDUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------XxxyyY---',
-        'DDDUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------xXXYYy---',
-        'DDDUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXyyY---',
-        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxYYy---',
-        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxyyY---',
-        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXYYy---',
-        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXyyY---',
-        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------XxxYYy---',
-        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------XxxyyY---',
-        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------xXXyyY---',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxYYy---',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxyyY---',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXyyY---',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxYYy---',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxyyY---',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXyyY---',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxYYy---',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxyyY---',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXyyY---',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxYYy---',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxyyY---',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXyyY---',
-        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------XxxYYy---',
-        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------XxxyyY---',
-        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXyyY---',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxYYy---',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxyyY---',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXyyY---',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxYYy---',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxyyY---',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXyyY---',
-        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxYYy---',
-        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxyyY---',
-        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXYYy---',
-        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXyyY---',
-        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD---------------------------XxxYYy---',
-        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD---------------------------XxxyyY---',
-        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD---------------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD---------------------------xXXyyY---',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------XxxYYy---',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------XxxyyY---',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------xXXyyY---',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------XxxYYy---',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------XxxyyY---',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------xXXyyY---',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------XxxYYy---',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------XxxyyY---',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------xXXyyY---',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------XxxYYy---',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------XxxyyY---',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------xXXyyY---',
-        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD---------------------------XxxYYy---',
-        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD---------------------------XxxyyY---',
-        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD---------------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUUBFBBFBBFBFBFFBFFBFDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUUBFBBFBBFBFBFFBFFBFDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUUBFBBFBBFBFBFFBFFBFDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUUBFBBFBBFBFBFFBFFBFDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUUBFFBFFBFFBBFBBFBBFDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUUBFFBFFBFFBBFBBFBBFDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUUBFFBFFBFFBBFBBFBBFDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUUBFFBFFBFFBBFBBFBBFDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUUBFFBFFBFFFBBFBBFBBDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUUBFFBFFBFFFBBFBBFBBDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUUBFFBFFBFFFBBFBBFBBDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUUBFFBFFBFFFBBFBBFBBDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUUFFBFFBFFBBBFBBFBBFDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUUFFBFFBFFBBBFBBFBBFDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUUFFBFFBFFBBBFBBFBBFDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUUFFBFFBFFBBBFBBFBBFDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUUFFBFFBFFBFBBFBBFBBDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUUFFBFFBFFBFBBFBBFBBDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUUFFBFFBFFBFBBFBBFBBDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUUFFBFFBFFBFBBFBBFBBDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUUFFFFFFFFFBBBBBBBBBDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUUFFFFFFFFFBBBBBBBBBDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUUFFFFFFFFFBBBBBBBBBDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUUFFFFFFFFFBBBBBBBBBDDDDDDDDD---------------------------xXXyyY---',
     )
 
     def __init__(self, parent):
@@ -1798,14 +1518,12 @@ class LookupTableIDA555Step90(LookupTableIDA):
             # prune tables
             (parent.lt_step91,
              parent.lt_step92),
-            linecount=24412824,
+            linecount=2011464,
             max_depth=6,
-            filesize=2783061936,
+            filesize=191089080,
             legal_moves=(
                 "2L", "2L'", "2L2",
                 "2R", "2R'", "2R2",
-                "2F", "2F'", "2F2",
-                "2B", "2B'", "2B2",
                 "L2", "R2",
                 "F2", "B2",
                 "U", "U'", "U2",
@@ -2456,7 +2174,7 @@ class RubiksCube555(RubiksCube):
         self.lt_step92 = LookupTable555Step92(self)
         self.lt_step90 = LookupTableIDA555Step90(self)
         self.lt_step91.preload_cache_string()
-        self.lt_step92.preload_cache_string()
+        self.lt_step92.preload_cache_dict()
 
         self.lt_step101 = LookupTable555Step101(self)
         self.lt_step102 = LookupTable555Step102(self)
@@ -3474,7 +3192,7 @@ class RubiksCube555(RubiksCube):
             self.rotate("L")
             self.rotate("R")
             self.print_cube()
-            log.info("%s: LFRB centers in vertical bar pattern, 4-edges paired in x-plane, %d steps in" % (self,
+            log.info("%s: LR centers solved, FB centers in vertical bar pattern, 4-edges paired in x-plane, %d steps in" % (self,
                 self.get_solution_len_minus_rotates(self.solution)))
 
         if not self.UD_centers_vertical_bars():

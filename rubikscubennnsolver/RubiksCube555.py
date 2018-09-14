@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map, wing_strs_all
-from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e
+from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e, wing_str_combos_two, wing_str_combos_four
+from rubikscubennnsolver.RubiksCube555Misc import (
+    state_targets_step40_555,
+    state_targets_step41_555,
+)
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
@@ -45,6 +49,11 @@ centers_555 = (
     57, 58, 59, 62, 63, 64, 67, 68, 69, # Front
     82, 83, 84, 87, 88, 89, 92, 93, 94, # Right
     107, 108, 109, 112, 113, 114, 117, 118, 119, # Back
+    132, 133, 134, 137, 138, 139, 142, 143, 144  # Down
+)
+
+UD_centers_555 = (
+    7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
     132, 133, 134, 137, 138, 139, 142, 143, 144  # Down
 )
 
@@ -397,7 +406,7 @@ wings_for_recolor_555= (
 )
 
 
-def edges_recolor_pattern_555(state, only_colors=[]):
+def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=False):
     midges_map = {
         'UB': None,
         'UL': None,
@@ -414,43 +423,42 @@ def edges_recolor_pattern_555(state, only_colors=[]):
         '--': None,
     }
 
-    '''
     paired_edges_indexes = []
 
-    for (s1, s2, s3) in (
-        (2, 3, 4), # Upper
-        (6, 11, 16),
-        (10, 15, 20),
-        (22, 23, 24),
+    if uppercase_paired_edges:
+        for (s1, s2, s3) in (
+            (2, 3, 4), # Upper
+            (6, 11, 16),
+            (10, 15, 20),
+            (22, 23, 24),
 
-        (31, 36, 41), # Left
-        (35, 40, 45),
+            (31, 36, 41), # Left
+            (35, 40, 45),
 
-        (81, 86, 91), # Right
-        (85, 90, 95),
+            (81, 86, 91), # Right
+            (85, 90, 95),
 
-        (127, 128, 129), # Down
-        (131, 136, 141),
-        (135, 140, 145),
-        (147, 148, 149)):
+            (127, 128, 129), # Down
+            (131, 136, 141),
+            (135, 140, 145),
+            (147, 148, 149)):
 
-        s1_value = state[s1]
-        s2_value = state[s2]
-        s3_value = state[s3]
+            s1_value = state[s1]
+            s2_value = state[s2]
+            s3_value = state[s3]
 
-        p1 = edges_partner_555[s1]
-        p2 = edges_partner_555[s2]
-        p3 = edges_partner_555[s3]
+            p1 = edges_partner_555[s1]
+            p2 = edges_partner_555[s2]
+            p3 = edges_partner_555[s3]
 
-        p1_value = state[p1]
-        p2_value = state[p2]
-        p3_value = state[p3]
+            p1_value = state[p1]
+            p2_value = state[p2]
+            p3_value = state[p3]
 
-        if (s1_value != "-" and
-            s1_value == s2_value and s2_value == s3_value and
-            p1_value == p2_value and p2_value == p3_value):
-            paired_edges_indexes.extend([s1, s2, s3, p1, p2, p3])
-    '''
+            if (s1_value != "-" and
+                s1_value == s2_value and s2_value == s3_value and
+                p1_value == p2_value and p2_value == p3_value):
+                paired_edges_indexes.extend([s1, s2, s3, p1, p2, p3])
 
     for (edge_index, square_index, partner_index) in midges_recolor_tuples_555:
         square_value = state[square_index]
@@ -469,8 +477,13 @@ def edges_recolor_pattern_555(state, only_colors=[]):
             else:
                 high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
 
+                # If the edge is paired always use an uppercase letter to represent this edge
+                if uppercase_paired_edges and square_index in paired_edges_indexes:
+                    state[square_index] = midges_map[wing_str].upper()
+                    state[partner_index] = midges_map[wing_str].upper()
+
                 # If this is a high wing use the uppercase of the midge edge_index
-                if high_low == 'U':
+                elif high_low == 'U':
                     state[square_index] = midges_map[wing_str].upper()
                     state[partner_index] = midges_map[wing_str].upper()
 
@@ -497,9 +510,9 @@ def edges_recolor_pattern_555(state, only_colors=[]):
                 state[partner_index] = '-'
 
             # If the edge is paired always use an uppercase letter to represent this edge
-            #elif square_index in paired_edges_indexes:
-            #    state[square_index] = midges_map[wing_str].upper()
-            #    state[partner_index] = midges_map[wing_str].upper()
+            elif uppercase_paired_edges and square_index in paired_edges_indexes:
+                state[square_index] = midges_map[wing_str].upper()
+                state[partner_index] = midges_map[wing_str].upper()
 
             else:
                 high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
@@ -892,7 +905,7 @@ class LookupTable555TCenterSolve(LookupTable):
 
 class LookupTable555StageFirstFourEdges(LookupTable):
     """
-    lookup-table-5x5x5-step100-stage-first-four-edges.txt
+    lookup-table-5x5x5-step200-stage-first-four-edges.txt
     =====================================================
     1 steps has 9 entries (0 percent, 0.00x previous step)
     2 steps has 72 entries (0 percent, 8.00x previous step)
@@ -914,7 +927,7 @@ class LookupTable555StageFirstFourEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step100-stage-first-four-edges.txt',
+            'lookup-table-5x5x5-step200-stage-first-four-edges.txt',
             'TBD',
             linecount=7389543,
             filesize=421203951,
@@ -944,7 +957,7 @@ class LookupTable555StageFirstFourEdges(LookupTable):
 
 class LookupTable555StageSecondFourEdges(LookupTable):
     """
-    lookup-table-5x5x5-step101-stage-second-four-edges.txt
+    lookup-table-5x5x5-step210-stage-second-four-edges.txt
     ======================================================
     1 steps has 4 entries (0 percent, 0.00x previous step)
     2 steps has 8 entries (0 percent, 2.00x previous step)
@@ -970,7 +983,7 @@ class LookupTable555StageSecondFourEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step101-stage-second-four-edges.txt',
+            'lookup-table-5x5x5-step210-stage-second-four-edges.txt',
             'TBD',
             linecount=154824,
             filesize=9289440)
@@ -999,8 +1012,8 @@ class LookupTable555StageSecondFourEdges(LookupTable):
 
 class LookupTable555PairLastFourEdges(LookupTable):
     """
-    lookup-table-5x5x5-step102-pair-last-four-edges.txt
-    ===================================================
+    lookup-table-5x5x5-step220-edges-last-four-x-plane.txt
+    ======================================================
     5 steps has 10 entries (0 percent, 0.00x previous step)
     6 steps has 45 entries (0 percent, 4.50x previous step)
     7 steps has 196 entries (0 percent, 4.36x previous step)
@@ -1019,7 +1032,7 @@ class LookupTable555PairLastFourEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step102-pair-last-four-edges.txt',
+            'lookup-table-5x5x5-step220-edges-last-four-x-plane.txt',
             'sSSTTtuUUVVv',
             linecount=40319)
 
@@ -1059,6 +1072,903 @@ class LookupTable555PairLastFourEdges(LookupTable):
 
         cost_to_goal = None
         return (result, cost_to_goal)
+
+
+class LookupTable555Step41(LookupTable):
+    """
+    Pair 2-edges anywhere
+
+    lookup-table-5x5x5-step41.txt
+    =============================
+    1 steps has 1,176 entries (0 percent, 0.00x previous step)
+    2 steps has 7,464 entries (0 percent, 6.35x previous step)
+    3 steps has 48,912 entries (0 percent, 6.55x previous step)
+    4 steps has 265,632 entries (0 percent, 5.43x previous step)
+    5 steps has 1,295,304 entries (1 percent, 4.88x previous step)
+    6 steps has 5,638,848 entries (8 percent, 4.35x previous step)
+    7 steps has 17,765,256 entries (26 percent, 3.15x previous step)
+    8 steps has 31,816,560 entries (47 percent, 1.79x previous step)
+    9 steps has 10,143,696 entries (15 percent, 0.32x previous step)
+    10 steps has 343,104 entries (0 percent, 0.03x previous step)
+    11 steps has 384 entries (0 percent, 0.00x previous step)
+
+    Total: 67,326,336 entries
+    Average: 7.65 moves
+    """
+    state_targets = state_targets_step41_555
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step41.txt',
+            self.state_targets,
+            linecount=67326336,
+            max_depth=11,
+            filesize=5184127872)
+
+    def ida_heuristic(self, ida_threshold):
+        assert self.only_colors and len(self.only_colors) == 2, "You must specify which 2-edges"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableHashCostOnly555Step41(LookupTableHashCostOnly):
+    """
+    Pair 2-edges anywhere
+    """
+    state_targets = state_targets_step41_555
+
+    def __init__(self, parent):
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step41.hash-cost-only.txt',
+            self.state_targets,
+            linecount=67326336,
+            max_depth=11,
+            bucketcount=67326361,
+            filesize=67326362)
+
+        self.only_colors = None
+
+    def ida_heuristic(self, ida_threshold):
+        assert self.only_colors and len(self.only_colors) == 2, "You must specify which 2-edges"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA555Step40(LookupTableIDA):
+    """
+    Pair 4-edges anywhere
+
+    lookup-table-5x5x5-step40.txt
+    =============================
+    1 steps has 48,720 entries (1 percent, 0.00x previous step)
+    2 steps has 401,904 entries (8 percent, 8.25x previous step)
+    3 steps has 4,078,368 entries (90 percent, 10.15x previous step)
+
+    Total: 4,528,992 entries
+    """
+    state_targets = state_targets_step40_555
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step40.txt',
+            self.state_targets,
+            moves_555,
+
+            # illegal moves
+            ("Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'",
+             "Uw", "Uw'",
+             "Dw", "Dw'"),
+
+            # prune tables
+            (parent.lt_step41_ht,),
+
+            linecount=4528992,
+            max_depth=3,
+            filesize=221920608)
+
+    def ida_heuristic(self, ida_threshold):
+        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        parent_state = self.parent.state
+        tmp_wing_str_cost_to_goal = []
+
+        for tmp_wing_str_combo in itertools.combinations(self.only_colors, 2):
+            self.parent.lt_step41_ht.only_colors = tmp_wing_str_combo
+            (_, tmp_cost_to_goal) = self.parent.lt_step41_ht.ida_heuristic(99)
+            tmp_wing_str_cost_to_goal.append(tmp_cost_to_goal)
+            #log.info("%s: wing_str %s cost %d" % (self, tmp_wing_str_combo, tmp_cost_to_goal))
+
+        edges_cost = max(tmp_wing_str_cost_to_goal)
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+
+        return (edges_state, edges_cost)
+
+
+class LookupTable555Step50(LookupTable):
+    """
+    Move 4-edges to y-plane
+
+    lookup-table-5x5x5-step50.txt
+    =============================
+    1 steps has 5 entries (1 percent, 0.00x previous step)
+    2 steps has 50 entries (10 percent, 10.00x previous step)
+    3 steps has 286 entries (57 percent, 5.72x previous step)
+    4 steps has 152 entries (30 percent, 0.53x previous step)
+    5 steps has 2 entries (0 percent, 0.01x previous step)
+
+    Total: 495 entries
+    Average: 3.19 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step50.txt',
+            'OOO------RRR------------WWW------ZZZ',
+            linecount=495,
+            max_depth=5,
+            filesize=25245)
+
+    def ida_heuristic(self, ida_threshold):
+        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors, uppercase_paired_edges=True)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555Step60(LookupTable):
+    """
+    LR centers to horizontal bars
+
+    lookup-table-5x5x5-step60.txt
+    =============================
+    1 steps has 28 entries (0 percent, 0.00x previous step)
+    2 steps has 110 entries (2 percent, 3.93x previous step)
+    3 steps has 396 entries (8 percent, 3.60x previous step)
+    4 steps has 1,196 entries (24 percent, 3.02x previous step)
+    5 steps has 2,102 entries (42 percent, 1.76x previous step)
+    6 steps has 1,016 entries (20 percent, 0.48x previous step)
+    7 steps has 52 entries (1 percent, 0.05x previous step)
+
+    Total: 4,900 entries
+    Average: 4.73 moves
+    """
+
+    state_targets = (
+        'LLLLLLLLLRRRRRRRRR',
+        'LLLLLLRRRLLLRRRRRR',
+        'LLLLLLRRRRRRRRRLLL',
+        'RRRLLLLLLLLLRRRRRR',
+        'RRRLLLLLLRRRRRRLLL',
+        'RRRLLLRRRLLLRRRLLL'
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step60.txt',
+            self.state_targets,
+            linecount=4900,
+            max_depth=7,
+            filesize=220500)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in LR_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555Step70(LookupTable):
+    """
+    FB centers to vertical bars
+
+    lookup-table-5x5x5-step70.txt
+    =============================
+    1 steps has 28 entries (0 percent, 0.00x previous step)
+    2 steps has 110 entries (2 percent, 3.93x previous step)
+    3 steps has 396 entries (8 percent, 3.60x previous step)
+    4 steps has 1,196 entries (24 percent, 3.02x previous step)
+    5 steps has 2,102 entries (42 percent, 1.76x previous step)
+    6 steps has 1,016 entries (20 percent, 0.48x previous step)
+    7 steps has 52 entries (1 percent, 0.05x previous step)
+
+    Total: 4,900 entries
+    Average: 4.73 moves
+    """
+
+    state_targets = (
+        'BFBBFBBFBFBFFBFFBF',
+        'BFFBFFBFFBBFBBFBBF',
+        'BFFBFFBFFFBBFBBFBB',
+        'FFBFFBFFBBBFBBFBBF',
+        'FFBFFBFFBFBBFBBFBB',
+        'FFFFFFFFFBBBBBBBBB'
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step70.txt',
+            self.state_targets,
+            linecount=4900,
+            max_depth=7,
+            filesize=220500)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in FB_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555Step80(LookupTable):
+    """
+    UD centers to vertical bars, horizontal bars or solved
+
+    lookup-table-5x5x5-step80.txt
+    =============================
+    1 steps has 41 entries (0 percent, 0.00x previous step)
+    2 steps has 121 entries (2 percent, 2.95x previous step)
+    3 steps has 421 entries (8 percent, 3.48x previous step)
+    4 steps has 1,197 entries (24 percent, 2.84x previous step)
+    5 steps has 2,076 entries (42 percent, 1.73x previous step)
+    6 steps has 992 entries (20 percent, 0.48x previous step)
+    7 steps has 52 entries (1 percent, 0.05x previous step)
+
+    Total: 4,900 entries
+    Average: 4.70 moves
+    """
+
+    state_targets = (
+        'DDDUUUDDDUUUDDDUUU',
+        'DDDUUUUUUDDDDDDUUU',
+        'DDDUUUUUUUUUDDDDDD',
+        'DUDDUDDUDUDUUDUUDU',
+        'DUDDUDDUDUUUDDDUUU',
+        'DUUDUUDUUDDDDDDUUU',
+        'DUUDUUDUUDDUDDUDDU',
+        'DUUDUUDUUUDDUDDUDD',
+        'DUUDUUDUUUUUDDDDDD',
+        'UUDUUDUUDDDDDDDUUU',
+        'UUDUUDUUDDDUDDUDDU',
+        'UUDUUDUUDUDDUDDUDD',
+        'UUDUUDUUDUUUDDDDDD',
+        'UUUUUUDDDDDDDDDUUU',
+        'UUUUUUDDDUUUDDDDDD',
+        'UUUUUUUUUDDDDDDDDD'
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step80.txt',
+            self.state_targets,
+            linecount=4900,
+            max_depth=7,
+            filesize=220500)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in UD_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555Step91(LookupTable):
+    """
+    lookup-table-5x5x5-step91.txt
+    =============================
+    1 steps has 40 entries (0 percent, 0.00x previous step)
+    2 steps has 328 entries (0 percent, 8.20x previous step)
+    3 steps has 2,988 entries (0 percent, 9.11x previous step)
+    4 steps has 23,152 entries (0 percent, 7.75x previous step)
+    5 steps has 149,832 entries (3 percent, 6.47x previous step)
+    6 steps has 751,628 entries (15 percent, 5.02x previous step)
+    7 steps has 2,173,072 entries (44 percent, 2.89x previous step)
+    8 steps has 1,717,976 entries (35 percent, 0.79x previous step)
+    9 steps has 73,144 entries (1 percent, 0.04x previous step)
+
+    Total: 4,892,160 entries
+    Average: 7.15 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step91.txt',
+
+            ('---------------------------xXXyyY---',
+             '---------------------------xXXYYy---',
+             '---------------------------XxxyyY---',
+             '---------------------------XxxYYy---'),
+
+            linecount=4892160,
+            max_depth=9,
+            filesize=342451200)
+
+    def ida_heuristic(self, ida_threshold):
+        assert self.only_colors and len(self.only_colors) == 2, "You must specify which 2-edges"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555Step92(LookupTable):
+    """
+    lookup-table-5x5x5-step92.txt
+    =============================
+    1 steps has 538 entries (0 percent, 0.00x previous step)
+    2 steps has 3,680 entries (0 percent, 6.84x previous step)
+    3 steps has 10,882 entries (0 percent, 2.96x previous step)
+    4 steps has 17,118 entries (0 percent, 1.57x previous step)
+    5 steps has 40,550 entries (0 percent, 2.37x previous step)
+    6 steps has 127,392 entries (0 percent, 3.14x previous step)
+    7 steps has 459,252 entries (1 percent, 3.61x previous step)
+    8 steps has 1,326,344 entries (4 percent, 2.89x previous step)
+    9 steps has 2,873,096 entries (9 percent, 2.17x previous step)
+    10 steps has 4,816,516 entries (16 percent, 1.68x previous step)
+    11 steps has 7,298,280 entries (24 percent, 1.52x previous step)
+    12 steps has 8,525,624 entries (28 percent, 1.17x previous step)
+    13 steps has 3,694,800 entries (12 percent, 0.43x previous step)
+    14 steps has 306,080 entries (1 percent, 0.08x previous step)
+    15 steps has 544 entries (0 percent, 0.00x previous step)
+
+    Total: 29,500,696 entries
+    Average: 10.98 moves
+    """
+
+    state_targets = (
+        'DDDUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU',
+        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU',
+        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU',
+        'DDDUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU',
+        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU',
+        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD',
+        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU',
+        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD',
+        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU',
+        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU',
+        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU',
+        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU',
+        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU',
+        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD',
+        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU',
+        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD',
+        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU',
+        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD',
+        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU',
+        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD',
+        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU',
+        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD',
+        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU',
+        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD',
+        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD',
+        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD',
+        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD',
+        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step92.txt',
+            self.state_targets,
+            linecount=29500696,
+            max_depth=15,
+            filesize=1711040368)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA555Step90(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step90.txt
+    =============================
+    1 steps has 3,648 entries (0 percent, 0.00x previous step)
+    2 steps has 27,120 entries (0 percent, 7.43x previous step)
+    3 steps has 142,296 entries (0 percent, 5.25x previous step)
+    4 steps has 767,688 entries (3 percent, 5.40x previous step)
+    5 steps has 3,812,616 entries (15 percent, 4.97x previous step)
+    6 steps has 19,659,456 entries (80 percent, 5.16x previous step)
+
+    Total: 24,412,824 entries
+    """
+
+    state_targets = (
+        'DDDUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------XxxYYy---',
+        'DDDUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------XxxyyY---',
+        'DDDUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------xXXYYy---',
+        'DDDUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------xXXyyY---',
+        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxYYy---',
+        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxyyY---',
+        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXYYy---',
+        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXyyY---',
+        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxYYy---',
+        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxyyY---',
+        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXYYy---',
+        'DDDUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXyyY---',
+        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxYYy---',
+        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxyyY---',
+        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXYYy---',
+        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXyyY---',
+        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxYYy---',
+        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxyyY---',
+        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXYYy---',
+        'DDDUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXyyY---',
+        'DDDUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------XxxYYy---',
+        'DDDUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------XxxyyY---',
+        'DDDUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------xXXYYy---',
+        'DDDUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXyyY---',
+        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxYYy---',
+        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxyyY---',
+        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXYYy---',
+        'DDDUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXyyY---',
+        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------XxxYYy---',
+        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------XxxyyY---',
+        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------xXXYYy---',
+        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---------------------------xXXyyY---',
+        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxYYy---',
+        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxyyY---',
+        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXYYy---',
+        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXyyY---',
+        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxYYy---',
+        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxyyY---',
+        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXYYy---',
+        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXyyY---',
+        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxYYy---',
+        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------XxxyyY---',
+        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXYYy---',
+        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---------------------------xXXyyY---',
+        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxYYy---',
+        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------XxxyyY---',
+        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXYYy---',
+        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---------------------------xXXyyY---',
+        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------XxxYYy---',
+        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------XxxyyY---',
+        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------xXXYYy---',
+        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXyyY---',
+        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxYYy---',
+        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxyyY---',
+        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXYYy---',
+        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXyyY---',
+        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxYYy---',
+        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxyyY---',
+        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXYYy---',
+        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---------------------------xXXyyY---',
+        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxYYy---',
+        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------XxxyyY---',
+        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXYYy---',
+        'UUUUUUDDDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---------------------------xXXyyY---',
+        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD---------------------------xXXyyY---',
+        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD---------------------------XxxYYy---',
+        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD---------------------------XxxyyY---',
+        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD---------------------------xXXYYy---',
+        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD---------------------------xXXyyY---',
+    )
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step90.txt',
+            self.state_targets,
+            moves_555,
+
+            # illegal moves
+            (),
+
+            # prune tables
+            (parent.lt_step91,
+             parent.lt_step92),
+            linecount=24412824,
+            max_depth=6,
+            filesize=2783061936,
+            legal_moves=(
+                "2L", "2L'", "2L2",
+                "2R", "2R'", "2R2",
+                "2F", "2F'", "2F2",
+                "2B", "2B'", "2B2",
+                "L2", "R2",
+                "F2", "B2",
+                "U", "U'", "U2",
+                "D", "D'", "D2",
+            )
+        )
+
+    def ida_heuristic(self, ida_threshold):
+        assert self.only_colors and len(self.only_colors) == 2, "You must specify which 2-edges"
+        (edges_state, edges_cost) = self.parent.lt_step91.ida_heuristic(ida_threshold)
+        (centers_state, centers_cost) = self.parent.lt_step92.ida_heuristic(ida_threshold)
+
+        lt_state = centers_state + edges_state
+        cost_to_goal = max(centers_cost, edges_cost)
+
+        return (lt_state, cost_to_goal)
+
+
+#class LookupTable555Step101(LookupTable):
+class LookupTable555Step101(LookupTableHashCostOnly):
+    """
+    Pair the last 6 edges
+
+    lookup-table-5x5x5-step101.txt
+    ==============================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 33 entries (0 percent, 4.71x previous step)
+    3 steps has 210 entries (0 percent, 6.36x previous step)
+    4 steps has 1,327 entries (0 percent, 6.32x previous step)
+    5 steps has 8,386 entries (0 percent, 6.32x previous step)
+    6 steps has 50,667 entries (0 percent, 6.04x previous step)
+    7 steps has 309,357 entries (0 percent, 6.11x previous step)
+    8 steps has 1,811,688 entries (0 percent, 5.86x previous step)
+    9 steps has 10,008,360 entries (2 percent, 5.52x previous step)
+    10 steps has 48,491,341 entries (10 percent, 4.85x previous step)
+    11 steps has 166,861,422 entries (34 percent, 3.44x previous step)
+    12 steps has 219,637,229 entries (45 percent, 1.32x previous step)
+    13 steps has 31,799,730 entries (6 percent, 0.14x previous step)
+    14 steps has 21,839 entries (0 percent, 0.00x previous step)
+    15 steps has 4 entries (0 percent, 0.00x previous step)
+
+    Total: 479,001,600 entries
+    Average: 11.43 moves
+    """
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step101.txt',
+            'OOopPPQQqrRR------------WWw------zZZ',
+            linecount=479001600,
+            max_depth=15,
+            filesize=42152140800)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step101.hash-cost-only.txt',
+            'OOopPPQQqrRR------------WWw------zZZ',
+            linecount=1,
+            max_depth=15,
+            bucketcount=479001629,
+            filesize=479001630)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_555(parent_state[:])
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+
+        # 000000000011111111112222222222333333
+        # 012345678901234567890123456789012345
+        # OOPQPRWQZoRp------------qWr------wZz
+        state = state[0:12] + "------------" + state[24:27] + "------" + state[33:36]
+
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555Step102(LookupTable):
+    """
+    lookup-table-5x5x5-step102-edges-last-six-centers.txt
+    =====================================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 45 entries (0 percent, 6.43x previous step)
+    3 steps has 213 entries (4 percent, 4.73x previous step)
+    4 steps has 758 entries (15 percent, 3.56x previous step)
+    5 steps has 1,905 entries (38 percent, 2.51x previous step)
+    6 steps has 1,672 entries (33 percent, 0.88x previous step)
+    7 steps has 350 entries (7 percent, 0.21x previous step)
+
+    Total: 4,950 entries
+    Average: 5.21 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step102.txt',
+            'UUUUUUUUUFFFFFFFFFBBBBBBBBBDDDDDDDDD',
+            linecount=4950,
+            max_depth=7,
+            filesize=301950)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in UFBD_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA555Step100(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step100.txt
+    ==============================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 45 entries (0 percent, 6.43x previous step)
+    3 steps has 308 entries (0 percent, 6.84x previous step)
+    4 steps has 2,023 entries (0 percent, 6.57x previous step)
+    5 steps has 13,093 entries (0 percent, 6.47x previous step)
+    6 steps has 80,518 entries (0 percent, 6.15x previous step)
+    7 steps has 484,292 entries (2 percent, 6.01x previous step)
+    8 steps has 2,766,920 entries (15 percent, 5.71x previous step)
+    9 steps has 14,768,127 entries (81 percent, 5.34x previous step)
+
+    Total: 18,115,333 entries
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step100.txt',
+            'UUUUUUUUUFFFFFFFFFBBBBBBBBBDDDDDDDDDOOopPPQQqrRR------------WWw------zZZ',
+            moves_555,
+
+            # illegal moves
+            (),
+
+            # prune tables
+            (parent.lt_step101,
+             parent.lt_step102),
+            linecount=18115333,
+            max_depth=9,
+            filesize=1920225298,
+            legal_moves=(
+                "D2", "F2", "B2", "U", "U'", "U2",
+                "2L", "2L'", "2L2",
+                "2R", "2R'", "2R2",
+            )
+        )
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        (edges_state, edges_cost) = self.parent.lt_step101.ida_heuristic(ida_threshold)
+        (centers_state, centers_cost) = self.parent.lt_step102.ida_heuristic(ida_threshold)
+
+        lt_state = centers_state + edges_state
+        cost_to_goal = max(centers_cost, edges_cost)
+
+        return (lt_state, cost_to_goal)
 
 
 class RubiksCube555(RubiksCube):
@@ -1252,6 +2162,74 @@ class RubiksCube555(RubiksCube):
 
         return True
 
+    def LFRB_centers_vertical_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (32, 37, 42),
+            (33, 38, 43),
+            (34, 39, 44),
+
+            (57, 62, 67),
+            (58, 63, 68),
+            (59, 64, 69),
+
+            (82, 87, 92),
+            (83, 88, 93),
+            (84, 89, 94),
+
+            (107, 112, 117),
+            (108, 113, 118),
+            (109, 114, 119)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def U_centers_vertical_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (7, 12, 17),
+            (8, 13, 18),
+            (9, 14, 19)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def D_centers_vertical_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (132, 137, 142),
+            (133, 138, 143),
+            (134, 139, 144)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def UD_centers_vertical_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (7, 12, 17),
+            (8, 13, 18),
+            (9, 14, 19),
+
+            (132, 137, 142),
+            (133, 138, 143),
+            (134, 139, 144)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
     def UFBD_centers_vertical_bars(self):
         state = self.state
 
@@ -1277,18 +2255,124 @@ class RubiksCube555(RubiksCube):
 
         return True
 
-    def LR_centers_vertical_bars(self):
+    def L_centers_vertical_bars(self):
         state = self.state
 
         for (a, b, c) in (
             (32, 37, 42),
             (33, 38, 43),
-            (34, 39, 44),
+            (34, 39, 44)):
 
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def R_centers_vertical_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
             (82, 87, 92),
             (83, 88, 93),
             (84, 89, 94)):
 
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def LR_centers_vertical_bars(self):
+        return self.L_centers_vertical_bars() and self.R_centers_vertical_bars()
+
+    def L_centers_horizontal_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (32, 33, 34),
+            (37, 38, 39),
+            (42, 43, 44)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def R_centers_horizontal_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (82, 83, 84),
+            (87, 88, 89),
+            (92, 93, 94)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def LR_centers_horizontal_bars(self):
+        return self.L_centers_horizontal_bars() and self.R_centers_horizontal_bars()
+
+    def L_centers_bars(self):
+        return self.L_centers_horizontal_bars() or self.L_centers_vertical_bars()
+
+    def R_centers_bars(self):
+        return self.R_centers_horizontal_bars() or self.R_centers_vertical_bars()
+
+    def FB_centers_horizontal_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (57, 58, 59),
+            (62, 63, 64),
+            (67, 68, 69),
+
+            (107, 108, 109),
+            (112, 113, 114),
+            (117, 118, 119)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def FB_centers_vertical_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (57, 62, 67),
+            (58, 63, 68),
+            (59, 64, 69),
+
+            (107, 112, 117),
+            (108, 113, 118),
+            (109, 114, 119)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def U_centers_horizontal_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (7, 8, 9),
+            (12, 13, 14),
+            (17, 18, 19)):
+
+            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
+                return False
+
+        return True
+
+    def D_centers_horizontal_bars(self):
+        state = self.state
+
+        for (a, b, c) in (
+            (132, 133, 134),
+            (137, 138, 139),
+            (142, 143, 144)):
             if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
                 return False
 
@@ -1358,6 +2442,26 @@ class RubiksCube555(RubiksCube):
             self.lt_edges_pair_last_four.preload_cache_dict()
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
+
+        self.lt_step41 = LookupTable555Step41(self)
+        self.lt_step41_ht = LookupTableHashCostOnly555Step41(self)
+        self.lt_step40 = LookupTableIDA555Step40(self)
+
+        self.lt_step50 = LookupTable555Step50(self)
+        self.lt_step60 = LookupTable555Step60(self)
+        self.lt_step70 = LookupTable555Step70(self)
+        self.lt_step80 = LookupTable555Step80(self)
+
+        self.lt_step91 = LookupTable555Step91(self)
+        self.lt_step92 = LookupTable555Step92(self)
+        self.lt_step90 = LookupTableIDA555Step90(self)
+        self.lt_step91.preload_cache_string()
+        self.lt_step92.preload_cache_string()
+
+        self.lt_step101 = LookupTable555Step101(self)
+        self.lt_step102 = LookupTable555Step102(self)
+        self.lt_step100 = LookupTableIDA555Step100(self)
+        self.lt_step102.preload_cache_dict()
 
     def high_low_state(self, x, y, state_x, state_y, wing_str):
         """
@@ -1682,7 +2786,6 @@ class RubiksCube555(RubiksCube):
 
     def group_centers_guts(self):
         self.lt_init()
-
         self.group_centers_stage_UD()
         self.group_centers_stage_LR()
 
@@ -1690,6 +2793,30 @@ class RubiksCube555(RubiksCube):
         self.lt_ULFRB_centers_solve.solve()
         self.print_cube()
         log.info("%s: ULFRBD centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+    def x_plane_has_paired_edge(self):
+        if (self.sideL.west_edge_paired() or
+            self.sideL.east_edge_paired() or
+            self.sideR.west_edge_paired() or
+            self.sideR.east_edge_paired()):
+            return True
+        return False
+
+    def y_plane_has_paired_edge(self):
+        if (self.sideF.north_edge_paired() or
+            self.sideF.south_edge_paired() or
+            self.sideB.north_edge_paired() or
+            self.sideB.south_edge_paired()):
+            return True
+        return False
+
+    def z_plane_has_paired_edge(self):
+        if (self.sideU.west_edge_paired() or
+            self.sideU.east_edge_paired() or
+            self.sideD.west_edge_paired() or
+            self.sideD.east_edge_paired()):
+            return True
+        return False
 
     def x_plane_has_LB_LF_RB_RF_edge(self):
         state = self.state
@@ -1717,6 +2844,21 @@ class RubiksCube555(RubiksCube):
             wing_str = wing_str_map[square_value + partner_value]
 
             if wing_str in LB_LF_RB_RF:
+                return True
+
+        return False
+
+    def y_plane_has_DL_DR_edge(self):
+        state = self.state
+        DL_DR = set(('DL', 'DR'))
+
+        for square_index in (3, 23, 128, 148):
+            partner_index = edges_partner_555[square_index]
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in DL_DR:
                 return True
 
         return False
@@ -2008,7 +3150,7 @@ class RubiksCube555(RubiksCube):
 
         raise Exception("We should not be here")
 
-    def pair_first_four_edges(self):
+    def pair_first_four_edges_via_l4e(self):
         paired_edges_count = self.get_paired_edges_count()
 
         # If there are already 4 paired edges all we need to do is put them in the x-plane
@@ -2089,7 +3231,7 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_pair_last_four.solve()
         log.info("%s: final four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def group_edges(self):
+    def group_edges_old(self):
         paired_edges_count = self.get_paired_edges_count()
 
         if paired_edges_count == 12:
@@ -2097,10 +3239,264 @@ class RubiksCube555(RubiksCube):
 
         self.lt_init()
         self.print_cube()
-        self.pair_first_four_edges()
+        self.pair_first_four_edges_via_l4e()
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         self.pair_second_four_edges()
         self.pair_third_four_edges()
+
+    def pair_first_two_edges(self):
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+        min_cost_to_goal = None
+        min_wing_str_combo = None
+
+        # TODO this should use find_multiple so we do not have to binary search the
+        # lookup table on disk so many times
+        for wing_str_combo in wing_str_combos_two:
+            self.lt_step41.only_colors = wing_str_combo
+            self.lt_step41.solve()
+            solution_len = len(self.solution)
+
+            cost_to_goal = solution_len - original_solution_len
+
+            if min_cost_to_goal is None or cost_to_goal < min_cost_to_goal:
+                log.info("%s: %s can pair in %d steps (NEW MIN)" % (self, pformat(wing_str_combo), cost_to_goal))
+                min_cost_to_goal = cost_to_goal
+                min_wing_str_combo = wing_str_combo
+            else:
+                log.debug("%s: %s can pair in %d steps" % (self, pformat(wing_str_combo), cost_to_goal))
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+        self.lt_step41_ht.only_colors = min_wing_str_combo
+        self.lt_step41.only_colors = min_wing_str_combo
+        self.lt_step41.solve()
+        self.print_cube()
+        paired_edges_count = self.get_paired_edges_count()
+        assert paired_edges_count >= 2, "2-edges should have paired but only %d are paired" % paired_edges_count
+        log.info("%s: 2-edges %s paired, %d steps in" %
+            (self, pformat(min_wing_str_combo), self.get_solution_len_minus_rotates(self.solution)))
+
+    def pair_first_four_edges(self):
+
+        # Test the prune tables
+        #self.lt_step52.solve()
+        #self.print_cube()
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
+
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+
+        min_cost_to_goal = None
+        min_steps_wing_str_combo = None
+        two_paired_wing_str = self.lt_step41.only_colors
+
+        for wing_str_combo in wing_str_combos_four:
+
+            # Only consider combos that include the 2-edges we've already paired
+            if (two_paired_wing_str[0] not in wing_str_combo or
+                two_paired_wing_str[1] not in wing_str_combo):
+                continue
+
+            tmp_wing_str_cost_to_goal = []
+
+            for tmp_wing_str_combo in itertools.combinations(wing_str_combo, 2):
+                self.lt_step41.only_colors = tmp_wing_str_combo
+                (_, tmp_cost_to_goal) = self.lt_step41.ida_heuristic(99)
+                tmp_wing_str_cost_to_goal.append(tmp_cost_to_goal)
+
+            cost_to_goal = max(tmp_wing_str_cost_to_goal)
+
+            if min_cost_to_goal is None or cost_to_goal < min_cost_to_goal:
+                log.info("%s: %s cost_to_goal is %d steps (NEW MIN)" % (self, pformat(wing_str_combo), cost_to_goal))
+                min_cost_to_goal = cost_to_goal
+                min_steps_wing_str_combo = wing_str_combo
+            else:
+                log.debug("%s: %s cost_to_goal is %d steps" % (self, pformat(wing_str_combo), cost_to_goal))
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+        self.lt_step40.only_colors = min_steps_wing_str_combo
+        self.lt_step50.only_colors = min_steps_wing_str_combo
+        self.lt_step40.solve()
+        self.print_cube()
+        paired_edges_count = self.get_paired_edges_count()
+        assert paired_edges_count >= 4, "4-edges should have paired but only %d are paired" % paired_edges_count
+        log.info("%s: 4-edges %s paired, %d steps in" %
+            (self, pformat(min_steps_wing_str_combo), self.get_solution_len_minus_rotates(self.solution)))
+
+    def pair_fifth_and_sixth_edges(self):
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+        min_cost_to_goal = None
+        min_wing_str_combo = None
+
+        eight_unpaired_wing_strs = []
+
+        # The 4 paired edges are in the x-plane so look at midges in the y-plane and z-plane
+        for square_index in (3, 11, 15, 23, 128, 136, 140, 148):
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+            eight_unpaired_wing_strs.append(wing_str)
+
+        log.info("%s: eight_unpaired_wing_strs %s" % (self, pformat(eight_unpaired_wing_strs)))
+
+        for wing_str_combo in itertools.combinations(eight_unpaired_wing_strs, 2):
+            self.lt_step91.only_colors = wing_str_combo
+            (foo, cost_to_goal) = self.lt_step91.ida_heuristic(99)
+
+            if min_cost_to_goal is None or cost_to_goal < min_cost_to_goal:
+                log.info("%s: %s (%s) can pair in %d steps (NEW MIN)" % (self, pformat(wing_str_combo), foo, cost_to_goal))
+                min_cost_to_goal = cost_to_goal
+                min_wing_str_combo = wing_str_combo
+            else:
+                log.debug("%s: %s can pair in %d steps" % (self, pformat(wing_str_combo), cost_to_goal))
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+        self.lt_step91.only_colors = min_wing_str_combo
+        self.lt_step90.only_colors = min_wing_str_combo
+
+        # Test prune tables
+        #self.lt_step91.solve()
+        #self.lt_step92.solve()
+        #self.print_cube()
+        #log.info("%s: %d steps in %s" % (self,
+        #    self.get_solution_len_minus_rotates(self.solution),
+        #    " ".join(self.solution)))
+        #sys.exit(0)
+
+        self.lt_step90.solve()
+        self.print_cube()
+        paired_edges_count = self.get_paired_edges_count()
+        assert paired_edges_count >= 6, "6-edges should have paired but only %d are paired" % paired_edges_count
+
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
+        log.info("%s: LR centers solved, %d edges paired, %d steps in" % (self, self.get_paired_edges_count(),
+            self.get_solution_len_minus_rotates(self.solution)))
+
+    def pair_last_six_edges(self):
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+
+        state = edges_recolor_pattern_555(self.state[:])
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        #log.info("edges_state pre: %s" % edges_state)
+        to_flip = []
+
+        # 000 000 000 011 111 111 112 222 222 222 333 333
+        # 012 345 678 901 234 567 890 123 456 789 012 345
+        # Roo rPz Qqw qrP Sss TTt Uuu VVv ZwW Xxx YYy pzO
+        #  ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^
+        #  UB  UL  UR  UD  LB  LF  RF  RB  DF  DL  DR  DB
+        for (edge_state_index, square_index, partner_index) in (
+                (1, 3, 103),     # UB
+                (4, 11, 28),     # UL
+                (7, 15, 78),     # UR
+                (10, 23, 53),    # UF
+                (25, 128, 73),   # DF
+                (34, 148, 123)): # DB
+
+            if edges_state[edge_state_index].islower():
+                square_value = self.state[square_index]
+                partner_value = self.state[partner_index]
+                wing_str = wing_str_map[square_value + partner_value]
+                to_flip.append(wing_str)
+
+        #log.info("to_flip: %s" % pformat(to_flip))
+
+        for square_index in wings_for_edges_pattern_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in to_flip:
+                self.state[square_index] = partner_value
+                self.state[partner_index] = square_value
+                
+        state = edges_recolor_pattern_555(self.state[:])
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        #log.info("edges_state pst: %s" % edges_state)
+
+        # Test the prune tables
+        #self.lt_step101.solve()
+        #self.lt_step102.solve()
+
+        self.lt_step100.solve()
+        six_edges_solution = self.solution[original_solution_len:]
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for step in six_edges_solution:
+            self.rotate(step)
+
+        self.print_cube()
+        paired_edges_count = self.get_paired_edges_count()
+        assert paired_edges_count == 12, "12-edges should have paired but only %d are paired" % paired_edges_count
+        log.info("%s: centers solved, edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+    def group_edges(self):
+        paired_edges_count = self.get_paired_edges_count()
+
+        if self.centers_solved() and paired_edges_count == 12:
+            return
+
+        self.lt_init()
+
+        if not self.LFRB_centers_vertical_bars() or not self.l4e_in_x_plane_paired():
+            self.pair_first_two_edges()
+            self.pair_first_four_edges()
+
+            self.lt_step50.solve()
+            self.print_cube()
+            log.info("%s: 4-edges paired in y-plane, %d steps in" % (self,
+                self.get_solution_len_minus_rotates(self.solution)))
+
+            self.lt_step60.solve()
+            self.rotate("U")
+            self.rotate("D")
+            self.print_cube()
+            log.info("%s: LR centers in horizontal bar pattern, 4-edges in z-plane, %d steps in" % (self,
+                self.get_solution_len_minus_rotates(self.solution)))
+
+            self.lt_step70.solve()
+            self.rotate("L")
+            self.rotate("R")
+            self.print_cube()
+            log.info("%s: LFRB centers in vertical bar pattern, 4-edges paired in x-plane, %d steps in" % (self,
+                self.get_solution_len_minus_rotates(self.solution)))
+
+        if not self.UD_centers_vertical_bars():
+            self.lt_step80.solve()
+            self.print_cube()
+            log.info("%s: UD centers in vertical bar pattern, %d edges paired, %d steps in" % (self, self.get_paired_edges_count(),
+                self.get_solution_len_minus_rotates(self.solution)))
+
+        if ((not self.UD_centers_vertical_bars() and not self.UD_centers_horizontal_bars()) or
+                not self.sideD.west_edge_paired() or
+                not self.sideD.east_edge_paired()):
+            self.pair_fifth_and_sixth_edges()
+
+        # Pair the last 6-edges and solve UD FB centers
+        self.pair_last_six_edges()
+
+    def reduce_333(self):
+        self.lt_init()
+        self.group_centers_stage_UD()
+        self.group_centers_stage_LR()
+        self.group_edges()
+        log.info("%s: all edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
 
 tsai_phase3_orient_edges_555 = {

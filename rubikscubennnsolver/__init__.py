@@ -4042,21 +4042,8 @@ class RubiksCube(object):
         self.steps_to_solve_3x3x3 = index
         self.solution = solution_minus_markers
 
-    def solve(self):
-        """
-        The RubiksCube222 and RubiksCube333 child classes will override
-        this since they don't need to group centers or edges
-        """
-        if self.solved():
-            return
-
-        if self.is_odd():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-
+    def reduce_333(self):
         if self.centers_solved():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
             log.info("centers are already solved")
         else:
             self.group_centers_guts()
@@ -4072,6 +4059,19 @@ class RubiksCube(object):
             self.group_edges()
         self.solution.append('EDGES_GROUPED')
 
+    def solve(self):
+        """
+        The RubiksCube222 and RubiksCube333 child classes will override
+        this since they don't need to group centers or edges
+        """
+        if self.solved():
+            return
+
+        if self.is_odd() or self.centers_solved():
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
+
+        self.reduce_333()
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.solve_333()

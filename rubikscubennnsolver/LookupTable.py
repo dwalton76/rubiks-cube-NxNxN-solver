@@ -617,10 +617,11 @@ class LookupTable(object):
             result = self.steps_cost(pt_state)
 
             if result == 0:
-                #log.warning("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
-                self.parent.enable_print_cube = True
-                #self.parent.print_cube()
-                raise NoPruneTableState("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
+                # This can happen when using HashCostOnly if a state-target and some other random state
+                # hash to the same bucket.
+                log.debug("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
+                #self.parent.enable_print_cube = True
+                #raise NoPruneTableState("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
 
             return result
 
@@ -829,24 +830,26 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
     def steps_cost(self, state_to_find):
 
         # compute the hash_index for state_to_find, look that many bytes into the
-        # file/self.conten and retrieve a single hex character. This hex character
+        # file/self.content and retrieve a single hex character. This hex character
         # is the number of steps required to solve the corresponding state.
         hash_raw = hashxx(state_to_find.encode('utf-8'))
         hash_index = int(hash_raw % self.bucketcount)
 
         result = int(chr(self.content[hash_index]), 16)
 
-        # This should never be zero
+        # This will be very rare but if a state_target and some other random state both hash
+        # to the same bucket the cost will be 0.
         if not result:
-            #log.warning("%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s" % (self, state_to_find, hash_raw, hash_index, result))
-            raise SolveError("%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s" % (self, state_to_find, hash_raw, hash_index, result))
+            log.debug("%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s" % (self, state_to_find, hash_raw, hash_index, result))
+            #raise SolveError("%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s" % (self, state_to_find, hash_raw, hash_index, result))
 
         return result
 
 
 class LookupTableIDA(LookupTable):
 
-    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None, exit_asap=99):
+    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables,
+            linecount, max_depth=None, filesize=None, exit_asap=99, legal_moves=[]):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.prune_tables = prune_tables
         self.ida_nodes = {}
@@ -856,15 +859,20 @@ class LookupTableIDA(LookupTable):
         self.nuke_edges = False
         self.nuke_centers = False
         self.exit_asap = exit_asap
+        self.min_edge_paired_count = 0
 
         for x in moves_illegal:
             if x not in moves_all:
                 raise Exception("illegal move %s is not in the list of legal moves" % x)
 
-        self.moves_all = []
-        for x in moves_all:
-            if x not in moves_illegal:
-                self.moves_all.append(x)
+        if legal_moves:
+            self.moves_all = list(legal_moves)
+        else:
+            self.moves_all = []
+
+            for x in moves_all:
+                if x not in moves_illegal:
+                    self.moves_all.append(x)
 
         # Cache the results of steps_on_same_face_and_layer() for all
         # combinations of moves we will see while searching.
@@ -939,6 +947,7 @@ class LookupTableIDA(LookupTable):
 
         # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
         cost_to_here = len(steps_to_here)
+        self.parent.state = prev_state[:]
         (lt_state, cost_to_goal) = self.ida_heuristic(threshold)
         f_cost = cost_to_here + cost_to_goal
 
@@ -990,6 +999,44 @@ class LookupTableIDA(LookupTable):
                 else:
                     skip_other_steps_this_face = None
 
+            if self.filename == "lookup-table-5x5x5-step50.txt" and "w" in step:
+                # Do not break up a paired edge
+                self.parent.state = prev_state[:]
+
+                if step in ("Uw2", "Dw2"):
+
+                    if self.parent.x_plane_has_paired_edge():
+                        continue
+
+                elif step in ("Lw2", "Rw2"):
+
+                    if self.parent.y_plane_has_paired_edge():
+                        continue
+
+                elif step in ("Fw2", "Bw2"):
+
+                    if self.parent.z_plane_has_paired_edge():
+                        continue
+
+            # Do not allow a slice move if it will break up the bars on UD
+            elif self.filename == "lookup-table-5x5x5-step90.txt" and step.startswith("2"):
+                self.parent.state = prev_state[:]
+
+                if step in ("2L", "2L'", "2L2", "2R", "2R'", "2R2"):
+                    if not self.parent.UD_centers_vertical_bars():
+                        continue
+
+                elif step in ("2F", "2F'", "2F2", "2B", "2B'", "2B2"):
+                    if not self.parent.UD_centers_horizontal_bars():
+                        continue
+
+            elif self.filename == "lookup-table-5x5x5-step100.txt" and step.startswith("2"):
+                self.parent.state = prev_state[:]
+
+                if step in ("2L", "2L'", "2L2", "2R", "2R'", "2R2"):
+                    if not self.parent.UD_centers_vertical_bars():
+                        continue
+
             self.parent.state = self.rotate_xxx(prev_state, step)
 
             (f_cost_tmp, found_solution) = self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:])
@@ -1032,8 +1079,8 @@ class LookupTableIDA(LookupTable):
     def get_best_ida_solution(self):
         states_to_find = sorted(self.ida_nodes.keys())
 
-        if states_to_find:
-            #log.info("%s: there are %d states to look for" % (self, len(states_to_find)))
+        if states_to_find and self.fh_txt is not None:
+            log.info("%s: there are %d states to look for" % (self, len(states_to_find)))
             results = self.binary_search_multiple(states_to_find)
 
             if results:

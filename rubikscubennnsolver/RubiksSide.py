@@ -280,10 +280,14 @@ class Side(object):
         non_paired_edges = self.non_paired_wings(True, False, False, False)
 
         for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
+            if (self.parent.state[pos1] == "-" and self.parent.state[pos2] == "-" and
+                self.parent.state[pos3] == "-" and self.parent.state[pos4] == "-"):
+                continue
             if pos1 in self.edge_north_pos:
                 return True
             if pos3 in self.edge_north_pos:
                 return True
+
         return False
 
     def north_edge_paired(self):
@@ -293,6 +297,9 @@ class Side(object):
         non_paired_edges = self.non_paired_wings(False, False, True, False)
 
         for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
+            if (self.parent.state[pos1] == "-" and self.parent.state[pos2] == "-" and
+                self.parent.state[pos3] == "-" and self.parent.state[pos4] == "-"):
+                continue
             if pos1 in self.edge_south_pos:
                 return True
             if pos3 in self.edge_south_pos:
@@ -306,6 +313,9 @@ class Side(object):
         non_paired_edges = self.non_paired_wings(False, False, False, True)
 
         for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
+            if (self.parent.state[pos1] == "-" and self.parent.state[pos2] == "-" and
+                self.parent.state[pos3] == "-" and self.parent.state[pos4] == "-"):
+                continue
             if pos1 in self.edge_east_pos:
                 return True
             if pos3 in self.edge_east_pos:
@@ -319,6 +329,9 @@ class Side(object):
         non_paired_edges = self.non_paired_wings(False, True, False, False)
 
         for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
+            if (self.parent.state[pos1] == "-" and self.parent.state[pos2] == "-" and
+                self.parent.state[pos3] == "-" and self.parent.state[pos4] == "-"):
+                continue
             if pos1 in self.edge_west_pos:
                 return True
             if pos3 in self.edge_west_pos:
@@ -357,6 +370,12 @@ class Side(object):
             prev_pos = pos
 
         return True
+
+    def centers_have_colors(self, colors):
+        for pos in self.center_pos:
+            if self.parent.state[pos] in colors:
+                return True
+        return False
 
     def edges_paired(self):
         if self.non_paired_edges(True, True, True, True):

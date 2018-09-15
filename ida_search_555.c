@@ -54,6 +54,22 @@ unsigned int LFRB_centers_555[NUM_LFRB_CENTERS_555] = {
     107, 108, 109, 112, 113, 114, 117, 118, 119 // Back
 };
 
+
+unsigned int LFRB_t_centers_555[NUM_LFRB_T_CENTERS_555] = {
+    33, 37, 39, 43,
+    58, 62, 64, 68,
+    83, 87, 89, 93,
+    108, 112, 114, 118
+};
+
+unsigned int LFRB_x_centers_555[NUM_LFRB_T_CENTERS_555] = {
+    32, 34, 42, 44,
+    57, 59, 67, 69,
+    82, 84, 92, 94,
+    107, 109, 117, 119
+};
+
+
 // ===========================================================================
 // step 10
 // ===========================================================================
@@ -62,8 +78,8 @@ ida_heuristic_UD_centers_555(
     char *cube,
     unsigned int max_cost_to_goal,
     struct key_value_pair **UD_centers_cost_555,
-    char *pt_t_centers_cost_only,
-    char *pt_x_centers_cost_only)
+    char *pt_UD_t_centers_cost_only,
+    char *pt_UD_x_centers_cost_only)
 {
     unsigned int cost_to_goal = 0;
     unsigned long UD_t_centers_state = 0;
@@ -81,7 +97,7 @@ ida_heuristic_UD_centers_555(
         UD_t_centers_state <<= 1;
     }
     UD_t_centers_state >>= 1;
-    UD_t_centers_cost = hex_to_int(pt_t_centers_cost_only[UD_t_centers_state]);
+    UD_t_centers_cost = hex_to_int(pt_UD_t_centers_cost_only[UD_t_centers_state]);
 
     if (UD_t_centers_cost >= max_cost_to_goal) {
         result.cost_to_goal = UD_t_centers_cost;
@@ -97,7 +113,7 @@ ida_heuristic_UD_centers_555(
         UD_x_centers_state <<= 1;
     }
     UD_x_centers_state >>= 1;
-    UD_x_centers_cost = hex_to_int(pt_x_centers_cost_only[UD_x_centers_state]);
+    UD_x_centers_cost = hex_to_int(pt_UD_x_centers_cost_only[UD_x_centers_state]);
 
     if (UD_x_centers_cost >= max_cost_to_goal) {
         result.cost_to_goal = UD_x_centers_cost;
@@ -166,6 +182,126 @@ ida_search_complete_UD_centers_555 (char *cube)
         cube[143] == '1' &&
         cube[144] == '1') {
         LOG("UD_CENTERS_STAGE_555 solved\n");
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+
+
+// ===========================================================================
+// step 20
+// ===========================================================================
+struct ida_heuristic_result
+ida_heuristic_LR_centers_555(
+    char *cube,
+    unsigned int max_cost_to_goal,
+    struct key_value_pair **LR_centers_cost_555,
+    char *pt_LR_t_centers_cost_only,
+    char *pt_LR_x_centers_cost_only)
+{
+    unsigned int cost_to_goal = 0;
+    unsigned long LR_t_centers_state = 0;
+    unsigned long LR_x_centers_state = 0;
+    unsigned long LR_t_centers_cost = 0;
+    unsigned long LR_x_centers_cost = 0;
+    unsigned long LR_centers_state = 0;
+    struct ida_heuristic_result result;
+
+    // t-centers
+    for (int i = 0; i < NUM_LFRB_T_CENTERS_555; i++) {
+        if (cube[LFRB_t_centers_555[i]] == '1') {
+            LR_t_centers_state |= 0x1;
+        }
+        LR_t_centers_state <<= 1;
+    }
+    LR_t_centers_state >>= 1;
+    LR_t_centers_cost = hex_to_int(pt_LR_t_centers_cost_only[LR_t_centers_state]);
+
+    if (LR_t_centers_cost >= max_cost_to_goal) {
+        result.cost_to_goal = LR_t_centers_cost;
+        return result;
+    }
+
+
+    // x-centers
+    for (int i = 0; i < NUM_LFRB_X_CENTERS_555; i++) {
+        if (cube[LFRB_x_centers_555[i]] == '1') {
+            LR_x_centers_state |= 0x1;
+        }
+        LR_x_centers_state <<= 1;
+    }
+    LR_x_centers_state >>= 1;
+    LR_x_centers_cost = hex_to_int(pt_LR_x_centers_cost_only[LR_x_centers_state]);
+
+    if (LR_x_centers_cost >= max_cost_to_goal) {
+        result.cost_to_goal = LR_x_centers_cost;
+        return result;
+    }
+
+
+    // centers
+    for (int i = 0; i < NUM_LFRB_CENTERS_555; i++) {
+        if (cube[LFRB_centers_555[i]] == '1') {
+            LR_centers_state |= 0x1;
+        }
+        LR_centers_state <<= 1;
+    }
+
+    LR_centers_state >>= 1;
+    sprintf(result.lt_state, "%09lx", LR_centers_state);
+
+    cost_to_goal = max(LR_t_centers_cost, LR_x_centers_cost);
+
+    // The step20 table we loaded is 6-deep so if a state is not in that
+    // table we know it has a cost of at least 7...thus MAX_DEPTH of 7 here.
+    int MAX_DEPTH = 7;
+
+    if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
+        struct key_value_pair *hash_entry = NULL;
+        hash_entry = hash_find(LR_centers_cost_555, result.lt_state);
+
+        if (hash_entry) {
+            cost_to_goal = max(cost_to_goal, hash_entry->value);
+        } else {
+            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+        }
+    }
+
+    //if (debug) {
+    //    LOG("ida_heuristic t-centers state %d or 0x%x, cost %d\n", LR_t_centers_state, LR_t_centers_state, LR_t_centers_cost);
+    //    LOG("ida_heuristic x-centers state %d or 0x%x, cost %d\n", LR_x_centers_state, LR_x_centers_state, LR_x_centers_cost);
+    //    LOG("ida_heuristic t-centers %d, x-centers %d, cost_to_goal %d\n", LR_t_centers_cost, LR_x_centers_cost, cost_to_goal);
+    //}
+
+    result.cost_to_goal = cost_to_goal;
+    return result;
+}
+
+int
+ida_search_complete_LR_centers_555 (char *cube)
+{
+    if (cube[32] == '1' &&
+        cube[33] == '1' &&
+        cube[34] == '1' &&
+        cube[37] == '1' &&
+        cube[38] == '1' &&
+        cube[39] == '1' &&
+        cube[42] == '1' &&
+        cube[43] == '1' &&
+        cube[44] == '1' &&
+
+        cube[82] == '1' &&
+        cube[83] == '1' &&
+        cube[84] == '1' &&
+        cube[87] == '1' &&
+        cube[88] == '1' &&
+        cube[89] == '1' &&
+        cube[92] == '1' &&
+        cube[93] == '1' &&
+        cube[94] == '1') {
+        LOG("LR_CENTERS_STAGE_555 solved\n");
         return 1;
     } else {
         return 0;

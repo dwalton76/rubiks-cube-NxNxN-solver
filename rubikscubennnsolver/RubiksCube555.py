@@ -1747,12 +1747,24 @@ class RubiksCube555(RubiksCube):
                         self.print_cube()
                         raise Exception("There should be an L4E group in x-plane but there is not")
 
+                    solution_steps = self.solution[original_solution_len:]
+
+                    # Solve all of the remaining edges so we pick the "stage 1st L4E group" solution
+                    # that leads to the shortest solution for solving edges.
+                    self.lt_edges_pair_last_four.solve()
+                    self.stage_second_four_edges_555(False)
+                    self.rotate("x")
+                    self.lt_edges_pair_last_four.solve()
+                    self.pair_third_four_edges(False)
+
                     solution_len = self.get_solution_len_minus_rotates(self.solution) - original_solution_len
-                    log.info("%s: first four %s can be staged/paired in %d steps" % (self, wing_strs, solution_len))
 
                     if min_solution_len is None or solution_len < min_solution_len:
+                        log.info("%s: first four %s can be staged/paired in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
                         min_solution_len = solution_len
-                        min_solution_steps = self.solution[original_solution_len:]
+                        min_solution_steps = solution_steps
+                    else:
+                        log.info("%s: first four %s can be staged/paired in %d steps" % (self, wing_strs, solution_len))
 
             if min_solution_len is not None:
                 #if pre_steps:
@@ -1770,7 +1782,7 @@ class RubiksCube555(RubiksCube):
         else:
             raise NoEdgeSolution("Could not find 4-edges to stage")
 
-    def stage_second_four_edges_555(self):
+    def stage_second_four_edges_555(self, debug):
         """
         The first four edges have been staged to LB, LF, RF, RB. Stage the next four
         edges to UB, UF, DF, DB (this in turn stages the final four edges).
@@ -1786,13 +1798,16 @@ class RubiksCube555(RubiksCube):
 
         first_four_wing_strs = list(self.get_x_plane_wing_strs())
         wing_strs_for_second_four = []
-        log.info("first_four_wing_strs %s" % pformat(first_four_wing_strs))
+
+        if debug:
+            log.info("first_four_wing_strs %s" % pformat(first_four_wing_strs))
 
         for wing_str in wing_strs_all:
             if wing_str not in first_four_wing_strs:
                 wing_strs_for_second_four.append(wing_str)
 
-        log.info("wing_strs_for_second_four %s" % pformat(wing_strs_for_second_four))
+        if debug:
+            log.info("wing_strs_for_second_four %s" % pformat(wing_strs_for_second_four))
         assert len(wing_strs_for_second_four) == 8
         min_solution_len = None
         min_solution_steps = None
@@ -1821,20 +1836,30 @@ class RubiksCube555(RubiksCube):
                     for step in steps:
                         self.rotate(step)
 
+                    solution_steps = self.solution[original_solution_len:]
+
+                    # Solve all of the remaining edges so we pick the "stage 2nd L4E group" solution
+                    # that leads to the shortest solution for solving edges.
+                    self.rotate("x")
+                    self.lt_edges_pair_last_four.solve()
+                    self.pair_third_four_edges(False)
+
                     solution_len = len(self.solution) - original_solution_len
 
                     if min_solution_len is None or solution_len < min_solution_len:
                         min_solution_len = solution_len
-                        min_solution_steps = self.solution[original_solution_len:]
-                        log.info("%s: second four %s can be staged in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
+                        min_solution_steps = solution_steps
+                        if debug:
+                            log.info("%s: second four %s can be staged in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
                     else:
-                        log.info("%s: second four %s can be staged in %d steps" % (self, wing_strs, solution_len))
+                        if debug:
+                            log.info("%s: second four %s can be staged in %d steps" % (self, wing_strs, solution_len))
 
                     self.state = original_state[:]
                     self.solution = original_solution[:]
 
             if min_solution_len is not None:
-                if pre_steps:
+                if pre_steps and debug:
                     log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
 
                 self.state = original_state[:]
@@ -1920,7 +1945,7 @@ class RubiksCube555(RubiksCube):
             log.info("%s: second four edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             return
         else:
-            self.stage_second_four_edges_555()
+            self.stage_second_four_edges_555(True)
             self.rotate("x")
             log.info("%s: second four edges L4E staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             self.lt_edges_pair_last_four.solve()
@@ -1928,18 +1953,21 @@ class RubiksCube555(RubiksCube):
             #log.info("kociemba: %s" % self.get_kociemba_string(True))
             log.info("%s: second four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def pair_third_four_edges(self):
+    def pair_third_four_edges(self, debug):
         paired_edges_count = self.get_paired_edges_count()
 
         if paired_edges_count == 12:
-            log.info("%s: final four edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            if debug:
+                log.info("%s: final four edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             return
 
         if self.l4e_in_x_plane() and not self.l4e_in_x_plane_paired():
-            log.info("%s: final four unpaired edges already in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            if debug:
+                log.info("%s: final four unpaired edges already in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             pass
         else:
-            log.info("%s: moving final four unpaired edges to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            if debug:
+                log.info("%s: moving final four unpaired edges to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             original_state = self.state[:]
             original_solution = self.solution[:]
 
@@ -1953,30 +1981,34 @@ class RubiksCube555(RubiksCube):
                     self.rotate(step)
 
                 if self.l4e_in_x_plane() and not self.l4e_in_x_plane_paired():
-                    if pre_steps:
-                        log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
-                    else:
-                        log.info("%s: L4E group in x-plane" % self)
+                    if debug:
+                        if pre_steps:
+                            log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
+                        else:
+                            log.info("%s: L4E group in x-plane" % self)
                     break
 
                 elif self.l4e_in_y_plane() and not self.l4e_in_y_plane_paired():
-                    if pre_steps:
-                        log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
-                    else:
-                        log.info("%s: L4E group in y-plane, moving to x-plane" % self)
+                    if debug:
+                        if pre_steps:
+                            log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
+                        else:
+                            log.info("%s: L4E group in y-plane, moving to x-plane" % self)
                     self.rotate("z")
                     break
 
                 elif self.l4e_in_z_plane() and not self.l4e_in_z_plane_paired():
-                    if pre_steps:
-                        log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
-                    else:
-                        log.info("%s: L4E group in z-plane, moving to z-plane" % self)
+                    if debug:
+                        if pre_steps:
+                            log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
+                        else:
+                            log.info("%s: L4E group in z-plane, moving to z-plane" % self)
                     self.rotate("x")
                     break
 
         self.lt_edges_pair_last_four.solve()
-        log.info("%s: final four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        if debug:
+            log.info("%s: final four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_edges(self):
         paired_edges_count = self.get_paired_edges_count()
@@ -1989,7 +2021,7 @@ class RubiksCube555(RubiksCube):
         self.pair_first_four_edges()
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         self.pair_second_four_edges()
-        self.pair_third_four_edges()
+        self.pair_third_four_edges(True)
 
 
 tsai_phase3_orient_edges_555 = {

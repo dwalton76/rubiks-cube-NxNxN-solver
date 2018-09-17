@@ -382,3 +382,18 @@ sys     2m32.155s
 real    5m59.761s
 user    3m9.235s
 sys     2m48.805s
+
+
+
+555 pick the L4E stage solutions that lead to shortest edge solution
+====================================================================
+5x5x5 avg centers solution 32.16 steps
+5x5x5 avg edges solution 50.02 steps
+5x5x5 avg solution 102.78 steps
+5x5x5 min solution 98 steps (LFDRLLFDRLUDUFDRLBRUBURUBUBFFDDFLBFLRRDUUDFLLDRLFUDRBFLBRBFBFBFUDDDUULFDRRRULFDFBFRLBFLDBUFDFULRRLDLDDBFRUBRURBULRUURUBFBDLLRFURUBRBFULRLBLDBDDLBFBBDU)
+5x5x5 max solution 108 steps (BLLRUFBBBFRRUBBDBUUBBLFLLFUUDRUUURUFBRLURLLFDULRLRDDRUDBDLRBFRFFLBUULFFUUFFLFFLRBFFBUDDDDUFLBUFDFDRFUUBRRDDURLBRLFDRRDLLLRBDUBBDDLRDFFBLRBLLRDDFUDBRDB)
+
+
+real    6m2.244s
+user    3m16.192s
+sys     2m42.489s

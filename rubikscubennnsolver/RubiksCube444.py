@@ -1120,6 +1120,7 @@ class RubiksCube444(RubiksCube):
         self.original_state = self.state[:]
         self.original_solution = self.solution[:]
 
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_ULFRBD_centers_stage.solve()
         self.print_cube()

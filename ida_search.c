@@ -883,6 +883,12 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
 
     case LR_CENTERS_STAGE_555:
         switch (move) {
+        case U:
+        case U_PRIME:
+        case U2:
+        case D:
+        case D_PRIME:
+        case D2:
         case Lw:
         case Lw_PRIME:
         case Fw:
@@ -1640,6 +1646,12 @@ ida_solve (
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
     struct ida_heuristic_result result;
+
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, moves_to_here)) {
+        LOG("cube already solved\n");
+        printf("SOLUTION:\n");
+        return 1;
+    }
 
     switch (type)  {
 

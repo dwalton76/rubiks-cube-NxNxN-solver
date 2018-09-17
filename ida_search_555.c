@@ -254,9 +254,9 @@ ida_heuristic_LR_centers_555(
 
     cost_to_goal = max(LR_t_centers_cost, LR_x_centers_cost);
 
-    // The step20 table we loaded is 6-deep so if a state is not in that
-    // table we know it has a cost of at least 7...thus MAX_DEPTH of 7 here.
-    int MAX_DEPTH = 7;
+    // The step20 table we loaded is 7-deep so if a state is not in that
+    // table we know it has a cost of at least 8...thus MAX_DEPTH of 8 here.
+    int MAX_DEPTH = 8;
 
     if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
         struct key_value_pair *hash_entry = NULL;

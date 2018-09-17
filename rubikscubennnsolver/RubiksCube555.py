@@ -602,6 +602,47 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
         self.nuke_corners = True
 
 
+class LookupTable555LRTCenterStage(LookupTable):
+    """
+    lookup-table-5x5x5-step21-LR-t-centers-stage.txt
+    ================================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 25 entries (0 percent, 8.33x previous step)
+    3 steps has 210 entries (1 percent, 8.40x previous step)
+    4 steps has 722 entries (5 percent, 3.44x previous step)
+    5 steps has 1,752 entries (13 percent, 2.43x previous step)
+    6 steps has 4,033 entries (31 percent, 2.30x previous step)
+    7 steps has 4,014 entries (31 percent, 1.00x previous step)
+    8 steps has 1,977 entries (15 percent, 0.49x previous step)
+    9 steps has 134 entries (1 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    Average: 6.34 moves
+    """
+
+    LFRB_t_centers_555 = (
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step21-LR-t-centers-stage.txt',
+            'f0f0',
+            linecount=12870,
+            max_depth=9,
+            filesize=476190)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_t_centers_555])
+        return (self.hex_format % int(result, 2), 0)
+
+
 class LookupTableIDA555LRCentersStage(LookupTableIDAViaC):
     """
     lookup-table-5x5x5-step20-LR-centers-stage.txt
@@ -660,9 +701,9 @@ class LookupTableIDA555LRCentersStage(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-5x5x5-step20-LR-centers-stage.txt', '314e8f8793dc502dfed77fdb7cee7943'),
-             ('lookup-table-5x5x5-step21-LR-t-centers-stage.txt', '432fc5ea03dc8affc4c8b2ea656a21aa'),
-             ('lookup-table-5x5x5-step22-LR-x-centers-stage.txt', '74fc3c81cee68f7a9394cdfc9e8b380c')),
+            (('lookup-table-5x5x5-step20-LR-centers-stage.txt', '9d982346d89494107f5a77323625c428'),
+             ('lookup-table-5x5x5-step21-LR-t-centers-stage.cost-only.txt', '8fa5217b28c7aeb9e04684ae3f5bebee'),
+             ('lookup-table-5x5x5-step22-LR-x-centers-stage.cost-only.txt', '4e4d8a8ec35d0c999ce7c51b6681bc4e')),
             '5x5x5-LR-centers-stage' # C_ida_type
         )
 
@@ -1232,6 +1273,7 @@ class RubiksCube555(RubiksCube):
 
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
+        self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
 

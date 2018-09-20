@@ -9,7 +9,8 @@ over 400 moves the first time I solved a 5x5x5.
 
 | Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| 08/22/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD)  | 50 | 103 | **161** | **224** | **346** | 469 | **617** |
+| 09/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD)  | 50 | 103 | **160** | **221** | 346 | **444** | **614** |
+| 08/24/2018 | [9dc52a7](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/9dc52a7afa7951aa3483818d72bfb47373a65131)  | 50 | 103 | **161** | **224** | **346** | 469 | **617** |
 | 08/20/2018 | [39bf371](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/39bf3718d0444317b20e07994321c053d54abcaf)  | 50 | 103 | **162** | **228** | **366** | **466** | **636** |
 | 08/19/2018 | [6b8993a](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/6b8993a7a2cc6bf000e8559b3e2006112621080d)  | 50 | **103** | 165 | 244 | 362 | 513 | 669 |
 | 08/13/2018 | [b754e60](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/b754e60cd6b907d3208301807c1108492475ef44)  | **50** | 107 | 165 | 244 | 362 | 513 | 669 |

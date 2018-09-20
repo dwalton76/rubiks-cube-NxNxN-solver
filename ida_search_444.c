@@ -93,6 +93,7 @@ ida_search_complete_centers_444 (char *cube)
 
             cube[38] == 'F' && cube[39] == 'F' && cube[42] == 'F' && cube[43] == 'F' &&
             cube[70] == 'F' && cube[71] == 'F' && cube[74] == 'F' && cube[75] == 'F') {
+            return 1;
 
         // UUUUFFFFLLLLFFFFLLLLUUUU
         } else if (
@@ -114,6 +115,7 @@ ida_search_complete_centers_444 (char *cube)
 
             cube[38] == 'U' && cube[39] == 'U' && cube[42] == 'U' && cube[43] == 'U' &&
             cube[70] == 'U' && cube[71] == 'U' && cube[74] == 'U' && cube[75] == 'U') {
+            return 1;
 
         // FFFFUUUULLLLUUUULLLLFFFF
         } else if (
@@ -135,6 +137,7 @@ ida_search_complete_centers_444 (char *cube)
 
             cube[38] == 'U' && cube[39] == 'U' && cube[42] == 'U' && cube[43] == 'U' &&
             cube[70] == 'U' && cube[71] == 'U' && cube[74] == 'U' && cube[75] == 'U') {
+            return 1;
 
         // LLLLUUUUFFFFUUUUFFFFLLLL
         } else if (

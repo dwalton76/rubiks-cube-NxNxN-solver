@@ -1300,7 +1300,7 @@ class LookupTableIDAViaC(object):
         if self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
 
-            if self.avoid_oll == 0:
+            if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
                 # Edge parity is currently odd so we need an odd number of w turns in orbit 0
                 if 0 in orbits_with_oll:
                     cmd.append("--orbit0-need-odd-w")
@@ -1309,7 +1309,7 @@ class LookupTableIDAViaC(object):
                 else:
                     cmd.append("--orbit0-need-even-w")
 
-            elif self.avoid_oll == 1:
+            if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
                 # Edge parity is currently odd so we need an odd number of w turns in orbit 1
                 if 1 in orbits_with_oll:
                     cmd.append("--orbit1-need-odd-w")
@@ -1318,8 +1318,8 @@ class LookupTableIDAViaC(object):
                 else:
                     cmd.append("--orbit1-need-even-w")
 
-            else:
-                raise Exception("avoid_oll is only supported for orbits 0 or 1, not {}".format(avoid_oll))
+            if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
+                raise Exception("avoid_oll is only supported for orbits 0 or 1, not {}".format(self.avoid_oll))
 
         log.info("%s: solving via C ida_search\n\n%s" % (self, " ".join(cmd)))
         output = subprocess.check_output(cmd).decode('ascii')
@@ -1330,7 +1330,7 @@ class LookupTableIDAViaC(object):
                 steps = line.split(":")[1].strip().split()
                 break
         else:
-            raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+            raise NoIDASolution("%s" % self)
 
         log.info("%s: ida_search found solution %s" % (self, ' '.join(steps)))
         self.parent.state = self.pre_recolor_state[:]

@@ -38,6 +38,7 @@ typedef enum {
 
     // 5x5x5
     UD_CENTERS_STAGE_555,
+    LR_CENTERS_STAGE_555,
     CENTERS_SOLVE_555,
 
     // 6x6x6
@@ -64,8 +65,12 @@ char *FB_centers_cost_only_444 = NULL;
 
 // 5x5x5
 struct key_value_pair *UD_centers_555 = NULL;
-char *pt_t_centers_cost_only = NULL;
-char *pt_x_centers_cost_only = NULL;
+char *pt_UD_t_centers_cost_only = NULL;
+char *pt_UD_x_centers_cost_only = NULL;
+
+struct key_value_pair *LR_centers_555 = NULL;
+char *pt_LR_t_centers_cost_only = NULL;
+char *pt_LR_x_centers_cost_only = NULL;
 
 struct key_value_pair *ULFRBD_centers_555 = NULL;
 char *UL_centers_cost_only_555 = NULL;
@@ -328,6 +333,7 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         print_cube(cube, size);
         break;
 
+    case LR_CENTERS_STAGE_555:
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
     case LR_OBLIQUE_EDGES_STAGE_777:
         // Convert to 1s and 0s
@@ -421,6 +427,18 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
             cost = atoi(&buffer[15]);
             hash_add(hashtable, buffer, cost);
         }
+
+    } else if (strmatch(filename, "lookup-table-5x5x5-step20-LR-centers-stage.txt")) {
+
+        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+            // 0..8 are the state
+            // 9 is the :
+            // 10 is the move count
+            buffer[9] = '\0';
+            cost = atoi(&buffer[10]);
+            hash_add(hashtable, buffer, cost);
+        }
+
 
     } else if (strmatch(filename, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt")) {
 
@@ -531,8 +549,17 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             cube,
             max_cost_to_goal,
             &UD_centers_555,
-            pt_t_centers_cost_only,
-            pt_x_centers_cost_only);
+            pt_UD_t_centers_cost_only,
+            pt_UD_x_centers_cost_only);
+
+    case LR_CENTERS_STAGE_555:
+        return ida_heuristic_LR_centers_555(
+            cube,
+            max_cost_to_goal,
+            &LR_centers_555,
+            pt_LR_t_centers_cost_only,
+            pt_LR_x_centers_cost_only);
+
 
     case CENTERS_SOLVE_555:
         return ida_heuristic_ULFRBD_centers_555(
@@ -724,6 +751,9 @@ ida_search_complete (
     case UD_CENTERS_STAGE_555:
         return ida_search_complete_UD_centers_555(cube);
 
+    case LR_CENTERS_STAGE_555:
+        return ida_search_complete_LR_centers_555(cube);
+
     case CENTERS_SOLVE_555:
         return ida_search_complete_ULFRBD_centers_555(cube);
 
@@ -850,6 +880,27 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
     // 5x5x5
     case UD_CENTERS_STAGE_555:
         return 1;
+
+    case LR_CENTERS_STAGE_555:
+        switch (move) {
+        case U:
+        case U_PRIME:
+        case U2:
+        case D:
+        case D_PRIME:
+        case D2:
+        case Lw:
+        case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+            return 0;
+        default:
+            return 1;
+        }
 
     case CENTERS_SOLVE_555:
         switch (move) {
@@ -1514,14 +1565,24 @@ ida_search (unsigned int cost_to_here,
 void
 free_prune_tables()
 {
-    if (pt_t_centers_cost_only == NULL) {
-        free(pt_t_centers_cost_only);
-        pt_t_centers_cost_only = NULL;
+    if (pt_UD_t_centers_cost_only == NULL) {
+        free(pt_UD_t_centers_cost_only);
+        pt_UD_t_centers_cost_only = NULL;
     }
 
-    if (pt_x_centers_cost_only == NULL) {
-        free(pt_x_centers_cost_only);
-        pt_x_centers_cost_only = NULL;
+    if (pt_UD_x_centers_cost_only == NULL) {
+        free(pt_UD_x_centers_cost_only);
+        pt_UD_x_centers_cost_only = NULL;
+    }
+
+    if (pt_LR_t_centers_cost_only == NULL) {
+        free(pt_LR_t_centers_cost_only);
+        pt_LR_t_centers_cost_only = NULL;
+    }
+
+    if (pt_LR_x_centers_cost_only == NULL) {
+        free(pt_LR_x_centers_cost_only);
+        pt_LR_x_centers_cost_only = NULL;
     }
 
     if (UL_centers_cost_only_555 == NULL) {
@@ -1586,6 +1647,12 @@ ida_solve (
     int min_ida_threshold = 0;
     struct ida_heuristic_result result;
 
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, moves_to_here)) {
+        LOG("cube already solved\n");
+        printf("SOLUTION:\n");
+        return 1;
+    }
+
     switch (type)  {
 
     // 4x4x4
@@ -1599,8 +1666,14 @@ ida_solve (
     // 5x5x5
     case UD_CENTERS_STAGE_555:
         ida_prune_table_preload(&UD_centers_555, "lookup-table-5x5x5-step10-UD-centers-stage.txt");
-        pt_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt", 16711681);
-        pt_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt", 16711681);
+        pt_UD_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt", 16711681);
+        pt_UD_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt", 16711681);
+        break;
+
+    case LR_CENTERS_STAGE_555:
+        ida_prune_table_preload(&LR_centers_555, "lookup-table-5x5x5-step20-LR-centers-stage.txt");
+        pt_LR_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step21-LR-t-centers-stage.cost-only.txt", 65281);
+        pt_LR_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step22-LR-x-centers-stage.cost-only.txt", 65281);
         break;
 
     case CENTERS_SOLVE_555:
@@ -1702,6 +1775,10 @@ main (int argc, char *argv[])
             // 5x5x5
             } else if (strmatch(argv[i], "5x5x5-UD-centers-stage")) {
                 type = UD_CENTERS_STAGE_555;
+                cube_size_type = 5;
+
+            } else if (strmatch(argv[i], "5x5x5-LR-centers-stage")) {
+                type = LR_CENTERS_STAGE_555;
                 cube_size_type = 5;
 
             } else if (strmatch(argv[i], "5x5x5-centers-solve")) {

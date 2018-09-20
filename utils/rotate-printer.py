@@ -89,6 +89,12 @@ for (size, solved_state) in (
         steps.extend(["3L", "3L'", "3L2", "3R", "3R'", "3R2"])
         steps.extend(["3F", "3F'", "3F2", "3B", "3B'", "3B2"])
 
+    # middle layer slices
+    #if size == 5:
+    #    steps.extend(["3U", "3U'", "3U2"])
+    #    steps.extend(["3L", "3L'", "3L2"])
+    #    steps.extend(["3F", "3F'", "3F2"])
+
     if build_rotate_xxx_c:
         print("void")
         print("rotate_%d%d%d(char *cube, char *cube_tmp, int array_size, move_type move)" % (size, size, size))
@@ -124,8 +130,19 @@ for (size, solved_state) in (
             rotate_mapper[step] = cube.print_case_statement_python(function_name, step)
             cube.state = copy(original_state)
 
+        lines_to_keep = []
+        swaps_xxx = "swaps_%d%d%d" % (size, size, size)
         nnn_filename = "rubikscubennnsolver/RubiksCube%d%d%d.py" % (size, size, size)
-        with open(nnn_filename, 'a') as fh:
+
+        with open(nnn_filename, 'r') as fh:
+            for line in fh:
+                if line.startswith(swaps_xxx):
+                    break
+
+                lines_to_keep.append(line)
+
+        with open(nnn_filename, 'w') as fh:
+            fh.write("".join(lines_to_keep))
             fh.write("swaps_%d%d%d = %s\n" % (size, size, size, pformat(rotate_mapper, width=2048)))
             fh.write("\ndef rotate_%d%d%d(cube, step):\n" % (size, size, size))
             fh.write("    return [cube[x] for x in swaps_%d%d%d[step]]\n" % (size, size, size))

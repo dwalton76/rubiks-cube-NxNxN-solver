@@ -21,9 +21,12 @@ logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelNam
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
 # Build wing_str_combos_two and wing_str_combos_four
-pprint(tuple(itertools.combinations(wing_strs_all, 2)))
+#pprint(tuple(itertools.combinations(wing_strs_all, 2)))
 #pprint(tuple(itertools.combinations(wing_strs_all, 4)))
 
+cube = RubiksCube555(solved_555, "URFDLB")
+cube.rotate("3U2")
+cube.print_cube()
 
 #cube = RubiksCube666(solved_666, "URFDLB")
 #cube.rotate("3U")

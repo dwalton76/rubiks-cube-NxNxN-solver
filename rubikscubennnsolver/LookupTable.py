@@ -294,6 +294,7 @@ class LookupTable(object):
         self.filesize = filesize
         self.md5 = md5
         self.use_isdigit = False
+        self.only_colors = ()
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         #assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -1158,7 +1159,12 @@ class LookupTableIDA(LookupTable):
         if state in self.state_target or cost_to_goal == 0:
             self.parent.state = self.pre_recolor_state[:]
             self.parent.solution = self.pre_recolor_solution[:]
-            log.info("%s: cube is already at the target state %s" % (self, state))
+
+            if state in self.state_target:
+                log.info("%s: cube is already at the target state %s" % (self, state))
+            else:
+                log.info("%s: cube with state %s cost_to_goal %d" % (self, state, cost_to_goal))
+
             return True
 
         if self.search_complete(state, []):

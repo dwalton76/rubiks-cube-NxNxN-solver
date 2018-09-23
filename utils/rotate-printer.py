@@ -90,10 +90,10 @@ for (size, solved_state) in (
         steps.extend(["3F", "3F'", "3F2", "3B", "3B'", "3B2"])
 
     # middle layer slices
-    #if size == 5:
-    #    steps.extend(["3U", "3U'", "3U2"])
-    #    steps.extend(["3L", "3L'", "3L2"])
-    #    steps.extend(["3F", "3F'", "3F2"])
+    if size == 5:
+        steps.extend(["3U", "3U'", "3U2"])
+        steps.extend(["3L", "3L'", "3L2"])
+        steps.extend(["3F", "3F'", "3F2"])
 
     if build_rotate_xxx_c:
         print("void")

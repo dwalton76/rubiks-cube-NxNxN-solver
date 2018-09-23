@@ -608,7 +608,8 @@ class LookupTable(object):
                 for step in steps:
                     self.parent.rotate(step)
             else:
-                self.parent.print_cube()
+                # dwalton
+                #self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
 
     def heuristic(self, pt_state):
@@ -1104,6 +1105,10 @@ class LookupTableIDA(LookupTable):
                             min_solution_len = this_solution_len
                             min_solution = this_solution[:]
                             min_solution_state = lt_state
+                        else:
+                            log.info("%s: %d/%d solution_len %s (search_complete False)" % (self, index+1, num_results, this_solution_len))
+                    #else:
+                    #    log.info("%s: %d/%d solution_len %s" % (self, index+1, num_results, this_solution_len))
 
                 return min_solution
             else:

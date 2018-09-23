@@ -991,7 +991,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     def solve_reduced_555_centers(self):
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
-        fake_555.lt_ULFRB_centers_solve.solve()
+        fake_555.lt_ULFRBD_centers_solve.solve()
 
         for step in fake_555.solution:
             self.rotate(step)

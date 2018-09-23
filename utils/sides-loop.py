@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-foo = [3, 11, 15, 23]
+foo = [33, 37, 38, 39, 43]
 offset = 0
 side_name = {
     0 : "Upper",
@@ -11,6 +11,6 @@ side_name = {
     5 : "Down",
 }
 
-for side_index in range(6):
+for side_index in range(1,5):
     print("        %s, # %s" % (', '.join([str(x + offset) for x in foo]), side_name[side_index]))
     offset += 25

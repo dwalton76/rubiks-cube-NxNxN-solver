@@ -1105,8 +1105,8 @@ class LookupTableIDA(LookupTable):
                             min_solution_len = this_solution_len
                             min_solution = this_solution[:]
                             min_solution_state = lt_state
-                        else:
-                            log.info("%s: %d/%d solution_len %s (search_complete False)" % (self, index+1, num_results, this_solution_len))
+                        #else:
+                        #    log.info("%s: %d/%d solution_len %s (search_complete False)" % (self, index+1, num_results, this_solution_len))
                     #else:
                     #    log.info("%s: %d/%d solution_len %s" % (self, index+1, num_results, this_solution_len))
 

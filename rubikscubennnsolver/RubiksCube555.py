@@ -166,7 +166,7 @@ edges_555 = (
 
 set_edges_555 = set(edges_555)
 
-wings_555= (
+wings_555 = (
     2, 3, 4, # Upper
     6, 11, 16,
     10, 15, 20,
@@ -216,6 +216,41 @@ wings_for_edges_pattern_555 = (
     131, 136, 141,
     135, 140, 145,
     147, 148, 149
+)
+
+high_edges_555 = (
+    (2, 104),
+    (10, 79),
+    (24, 54),
+    (16, 29),
+
+    (35, 56),
+    (41, 120),
+    (85, 106),
+    (91, 70),
+
+    (127, 72),
+    (135, 97),
+    (149, 122),
+    (141, 47),
+)
+
+low_edges_555 = (
+    (4, 102),
+    (20, 77),
+    (22, 52),
+    (6, 27),
+
+    (31, 110),
+    (45, 66),
+
+    (81, 60),
+    (95, 116),
+
+    (129, 74),
+    (145, 99),
+    (147, 124),
+    (131, 49),
 )
 
 
@@ -986,6 +1021,40 @@ class LookupTable555LRCenterStage432TCentersOnly(LookupTable):
         return (state, cost_to_goal)
 
 
+class LookupTable555LRCenterStage432PairOneEdge(LookupTable):
+    """
+    lookup-table-5x5x5-step43-LR-centers-stage-432-pair-one-edge.txt
+    ================================================================
+    1 steps has 18 entries (0 percent, 0.00x previous step)
+    2 steps has 84 entries (2 percent, 4.67x previous step)
+    3 steps has 344 entries (9 percent, 4.10x previous step)
+    4 steps has 938 entries (27 percent, 2.73x previous step)
+    5 steps has 1,572 entries (45 percent, 1.68x previous step)
+    6 steps has 500 entries (14 percent, 0.32x previous step)
+
+    Total: 3,456 entries
+    Average: 4.58 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step43-LR-centers-stage-432-pair-one-edge.txt',
+            ('---------Rrr------------------------',
+             '---------rRR------------------------'),
+            linecount=3456,
+            max_depth=6,
+            filesize=203904)
+
+    def ida_heuristic(self, ida_threshold):
+        assert self.only_colors and len(self.only_colors) == 1, "You must specify which 1-edge"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
 class LookupTableIDA555LRCenterStage432(LookupTableIDA):
     """
     lookup-table-5x5x5-step40-LR-centers-stage-432.txt
@@ -1167,6 +1236,19 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
             linecount=26142364,
             max_depth=5,
             filesize=1490114748)
+
+    def search_complete(self, state, steps_to_here):
+        if LookupTableIDA.search_complete(self, state, steps_to_here):
+            if len(self.parent.edges_pairable_via_tsai_phase2()) >= 4:
+                log.info("%s: found solution where at least 4-edges are split into high/low groups" % self)
+                return True
+            else:
+                #log.info("%s: found solution but edges are NOT split into high/low groups" % self)
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                return False
+        else:
+            return False
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
@@ -2101,10 +2183,12 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
         self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
 
+        self.lt_LR_432_pair_one_edge = LookupTable555LRCenterStage432PairOneEdge(self)
         self.lt_LR_centers_stage_pt = LookupTable555LRCenterStage(self)
         self.lt_LR_432_x_centers_only = LookupTable555LRCenterStage432XCentersOnly(self)
         self.lt_LR_432_t_centers_only = LookupTable555LRCenterStage432TCentersOnly(self)
         self.lt_LR_432_centers_stage = LookupTableIDA555LRCenterStage432(self)
+        self.lt_LR_432_pair_one_edge.preload_cache_dict()
         self.lt_LR_432_x_centers_only.preload_cache_string()
         self.lt_LR_432_t_centers_only.preload_cache_string()
 
@@ -2472,15 +2556,48 @@ class RubiksCube555(RubiksCube):
         self.print_cube()
         log.info("%s: LR centers staged to one of 432 states, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+    def edges_pairable_via_tsai_phase2(self):
+        """
+        Return the wing_strs that can be paired with L L' R R'
+        """
+        state = self.state
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        pairable = []
+
+        for wing_str in wing_strs_all:
+            self.lt_LR_432_pair_one_edge.only_colors = [wing_str,]
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            try:
+                self.lt_LR_432_pair_one_edge.solve()
+                log.info("%s: wing_str %s can be paired without L L' R R'" % (self, wing_str))
+                pairable.append(wing_str)
+            except NoSteps:
+                pass
+
+        self.lt_LR_432_pair_one_edge.only_colors = []
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        #self.print_cube()
+        #log.info("%s: low_wing_strs %s, high_wing_strs %s, high_low_split %s (%d of them)" % (
+        #    self, pformat(low_wing_strs), pformat(high_wing_strs), pformat(high_low_split), len(high_low_split)))
+        log.info("%s: pairable %s (%d of them)" % (
+            self, pformat(pairable), len(pairable)))
+        return pairable
+
     def group_centers_guts(self):
         self.lt_init()
         self.group_centers_stage_UD()
-        self.group_centers_stage_LR()
-        #self.group_centers_stage_LR_to_432()
+        #self.group_centers_stage_LR()
+        self.group_centers_stage_LR_to_432()
+        sys.exit(0)
 
         # All centers are staged, solve them
-        self.lt_ULFRBD_centers_solve.solve()
-        #self.lt_ULFRBD_centers_solve_432.solve()
+        #self.lt_ULFRBD_centers_solve.solve()
+        self.lt_ULFRBD_centers_solve_432.solve()
         self.print_cube()
         log.info("%s: ULFRBD centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
@@ -2851,9 +2968,9 @@ class RubiksCube555(RubiksCube):
                     if min_solution_len is None or solution_len < min_solution_len:
                         min_solution_len = solution_len
                         min_solution_steps = solution_steps
-                        log.info("%s: second four %s can be staged in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
+                        log.info("%s: second 4-edges %s can be staged in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
                     else:
-                        log.info("%s: second four %s can be staged in %d steps" % (self, wing_strs, solution_len))
+                        log.info("%s: second 4-edges %s can be staged in %d steps" % (self, wing_strs, solution_len))
 
                     self.state = original_state[:]
                     self.solution = original_solution[:]

@@ -1001,40 +1001,6 @@ class LookupTableIDA(LookupTable):
                 else:
                     skip_other_steps_this_face = None
 
-            if self.filename == "lookup-table-5x5x5-step50.txt" and "w" in step:
-                # Do not break up a paired edge
-                self.parent.state = prev_state[:]
-
-                if step in ("Uw2", "Dw2"):
-
-                    if self.parent.x_plane_has_paired_edge():
-                        continue
-
-                elif step in ("Lw2", "Rw2"):
-
-                    if self.parent.y_plane_has_paired_edge():
-                        continue
-
-                elif step in ("Fw2", "Bw2"):
-
-                    if self.parent.z_plane_has_paired_edge():
-                        continue
-
-            # Do not allow a slice move if it will break up the bars on UD
-            elif self.filename == "lookup-table-5x5x5-step90.txt" and step.startswith("2"):
-                self.parent.state = prev_state[:]
-
-                if step in ("2L", "2L'", "2L2", "2R", "2R'", "2R2"):
-                    if not self.parent.UD_centers_vertical_bars():
-                        continue
-
-            elif self.filename == "lookup-table-5x5x5-step100.txt" and step.startswith("2"):
-                self.parent.state = prev_state[:]
-
-                if step in ("2L", "2L'", "2L2", "2R", "2R'", "2R2"):
-                    if not self.parent.UD_centers_vertical_bars():
-                        continue
-
             self.parent.state = self.rotate_xxx(prev_state, step)
 
             (f_cost_tmp, found_solution) = self.ida_search(steps_to_here + [step,], threshold, step, self.parent.state[:])

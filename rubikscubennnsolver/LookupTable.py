@@ -1161,7 +1161,9 @@ class LookupTableIDA(LookupTable):
         (state, cost_to_goal) = self.ida_heuristic(0)
 
         # The cube is already in the desired state, nothing to do
-        if state in self.state_target or cost_to_goal == 0:
+        # dwalton
+        #if state in self.state_target or cost_to_goal == 0:
+        if self.search_complete(state, []):
             self.parent.state = self.pre_recolor_state[:]
             self.parent.solution = self.pre_recolor_solution[:]
 

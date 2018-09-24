@@ -162,7 +162,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         self.print_cube()
         fake_555.print_cube()
         fake_555.avoid_pll = False
-        fake_555.group_edges()
+        fake_555.reduce_333()
 
         wide_str = str(orbit + 2)
         for step in fake_555.solution:

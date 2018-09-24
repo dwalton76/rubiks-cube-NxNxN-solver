@@ -2112,30 +2112,6 @@ class RubiksCube555(RubiksCube):
     def get_paired_wings_count(self):
         return 24 - self.get_non_paired_wings_count()
 
-    def LR_centers_colors(self):
-        return set([self.state[x] for x in LR_centers_555])
-
-    def FB_centers_colors(self):
-        return set([self.state[x] for x in FB_centers_555])
-
-    def UFBD_centers_colors(self):
-        return set([self.state[x] for x in UFBD_centers_555])
-
-    def UFBD_centers_color_count(self):
-        return len(self.UFBD_centers_colors)
-
-    def ULRD_centers_colors(self):
-        return set([self.state[x] for x in ULRD_centers_555])
-
-    def ULRD_centers_color_count(self):
-        return len(self.ULRD_centers_colors)
-
-    def LFRB_centers_colors(self):
-        return set([self.state[x] for x in LFRB_centers_555])
-
-    def LFRB_centers_color_count(self):
-        return len(self.LFRB_centers_colors)
-
     def sanity_check(self):
         centers = (13, 38, 63, 88, 113, 138)
 
@@ -2145,15 +2121,6 @@ class RubiksCube555(RubiksCube):
         #self._sanity_check('x-centers', x_centers_555, 4)
         #self._sanity_check('t-centers', t_centers_555, 4)
         self._sanity_check('centers', centers, 1)
-
-    def rotate(self, step):
-        """
-        The 5x5x5 solver calls rotate() much more than other solvers, this is
-        due to the edge-pairing code.  In order to speed up edge-pairing use
-        the faster rotate_555() instead of RubiksCube.rotate()
-        """
-        self.state = rotate_555(self.state[:], step)
-        self.solution.append(step)
 
     def lt_init(self):
         if self.lt_init_called:
@@ -2175,12 +2142,6 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_432_x_centers_only.preload_cache_string()
         self.lt_LR_432_t_centers_only.preload_cache_string()
 
-        self.lt_step201 = LookupTable555EdgesYPlaneEdgesOnly(self)
-        self.lt_step201_ht = LookupTable555EdgesYPlaneEdgesOnlyHashCostOnly(self)
-        self.lt_step202 = LookupTable555EdgesYPlaneCentersOnly(self)
-        self.lt_step200 = LookupTableIDA555EdgesYPlane(self)
-        self.lt_step202.preload_cache_dict()
-
         self.lt_step51 = LookupTable555Step51(self)
         self.lt_step51_ht = LookupTable555Step51HashCostOnly(self)
         self.lt_step52 = LookupTable555Step52(self)
@@ -2189,6 +2150,12 @@ class RubiksCube555(RubiksCube):
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
+
+        self.lt_step201 = LookupTable555EdgesYPlaneEdgesOnly(self)
+        self.lt_step201_ht = LookupTable555EdgesYPlaneEdgesOnlyHashCostOnly(self)
+        self.lt_step202 = LookupTable555EdgesYPlaneCentersOnly(self)
+        self.lt_step200 = LookupTableIDA555EdgesYPlane(self)
+        self.lt_step202.preload_cache_dict()
 
         self.lt_edges_x_plane_edges_only = LookupTable555EdgesXPlaneEdgesOnly(self)
         self.lt_edges_x_plane_centers_only = LookupTable555EdgesXPlaneCentersOnly(self)

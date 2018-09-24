@@ -371,12 +371,6 @@ class Side(object):
 
         return True
 
-    def centers_have_colors(self, colors):
-        for pos in self.center_pos:
-            if self.parent.state[pos] in colors:
-                return True
-        return False
-
     def edges_paired(self):
         if self.non_paired_edges(True, True, True, True):
             return False

@@ -4574,3 +4574,27 @@ div#page_holder {
             self.transform_z_prime()
         else:
             raise Exception("Implement target %s" % target)
+
+    def x_plane_edges_paired(self):
+        if (self.sideL.west_edge_paired() and
+            self.sideL.east_edge_paired() and
+            self.sideR.west_edge_paired() and
+            self.sideR.east_edge_paired()):
+            return True
+        return False
+
+    def y_plane_edges_paired(self):
+        if (self.sideU.north_edge_paired() and
+            self.sideU.south_edge_paired() and
+            self.sideD.north_edge_paired() and
+            self.sideD.south_edge_paired()):
+            return True
+        return False
+
+    def z_plane_edges_paired(self):
+        if (self.sideU.west_edge_paired() and
+            self.sideU.east_edge_paired() and
+            self.sideD.west_edge_paired() and
+            self.sideD.east_edge_paired()):
+            return True
+        return False

@@ -63,7 +63,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             start_444 += 16
 
         fake_444.sanity_check()
-        fake_444.group_edges()
+        fake_444.reduce_333(fake_444=True)
         half_size_str = str(half_size)
 
         for step in fake_444.solution:
@@ -162,7 +162,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         self.print_cube()
         fake_555.print_cube()
         fake_555.avoid_pll = False
-        fake_555.reduce_333()
+        fake_555.reduce_333(fake_555=True)
 
         wide_str = str(orbit + 2)
         for step in fake_555.solution:

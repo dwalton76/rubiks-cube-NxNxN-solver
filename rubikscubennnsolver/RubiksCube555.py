@@ -1239,7 +1239,7 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
 
     def search_complete(self, state, steps_to_here):
         if LookupTableIDA.search_complete(self, state, steps_to_here):
-            if len(self.parent.edges_pairable_via_tsai_phase2()) >= 4:
+            if len(self.parent.edges_pairable_via_tsai_phase2()) >= 6:
                 log.info("%s: found solution where at least 4-edges are split into high/low groups" % self)
                 return True
             else:
@@ -1270,6 +1270,7 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
 
 class LookupTable555Step51(LookupTable):
     """
+    L4E to x-plane
     (12!/(8!*4!))^3 = 121,287,375
 
     lookup-table-5x5x5-step51.txt
@@ -1413,6 +1414,9 @@ class LookupTable555Step52(LookupTable):
 
 class LookupTableIDA555Step50(LookupTableIDA):
     """
+    LR and FB to vertical bars
+    L4E to x-plane
+
     lookup-table-5x5x5-step50.txt
     =============================
     1 steps has 180 entries (0 percent, 0.00x previous step)
@@ -1555,10 +1559,10 @@ class LookupTable555StageFirstFourEdges(LookupTable):
         return edges_state
 
 
-class LookupTable555EdgesSolveSecondFourEdgesOnly(LookupTable):
+class LookupTable555EdgesYPlaneEdgesOnly(LookupTable):
     """
-    lookup-table-5x5x5-step241-solve-second-four-edges-edges-only.txt
-    =================================================================
+    lookup-table-5x5x5-step201-edges-y-plane-edges-only.txt
+    =======================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
     2 steps has 30 entries (0 percent, 6.00x previous step)
     3 steps has 200 entries (0 percent, 6.67x previous step)
@@ -1582,7 +1586,7 @@ class LookupTable555EdgesSolveSecondFourEdgesOnly(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step241-solve-second-four-edges-edges-only.txt',
+            'lookup-table-5x5x5-step201-edges-y-plane-edges-only.txt',
             'OOo------rRR------------WWw------zZZ',
             linecount=197568000,
             max_depth=14,
@@ -1603,13 +1607,13 @@ class LookupTable555EdgesSolveSecondFourEdgesOnly(LookupTable):
         return edges_state
 
 
-class LookupTable555EdgesSolveSecondFourEdgesOnlyHashCostOnly(LookupTableHashCostOnly):
+class LookupTable555EdgesYPlaneEdgesOnlyHashCostOnly(LookupTableHashCostOnly):
 
     def __init__(self, parent):
         LookupTableHashCostOnly.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step241-solve-second-four-edges-edges-only.hash-cost-only.txt',
+            'lookup-table-5x5x5-step201-edges-y-plane-edges-only.hash-cost-only.txt',
             'OOo------rRR------------WWw------zZZ',
             linecount=1,
             max_depth=14,
@@ -1625,10 +1629,10 @@ class LookupTable555EdgesSolveSecondFourEdgesOnlyHashCostOnly(LookupTableHashCos
         return (state, cost_to_goal)
 
 
-class LookupTable555ULFRBDCenterSolveSecondFour(LookupTable):
+class LookupTable555EdgesYPlaneCentersOnly(LookupTable):
     """
-    lookup-table-5x5x5-step242-ULFRBD-centers-solve.txt
-    ===================================================
+    lookup-table-5x5x5-step202-edges-y-plane-centers-only.txt
+    =========================================================
     1 steps has 168 entries (0 percent, 0.00x previous step)
     2 steps has 1,002 entries (0 percent, 5.96x previous step)
     3 steps has 5,544 entries (3 percent, 5.53x previous step)
@@ -1685,7 +1689,7 @@ class LookupTable555ULFRBDCenterSolveSecondFour(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step242-ULFRBD-centers-solve.txt',
+            'lookup-table-5x5x5-step202-edges-y-plane-centers-only.txt',
             self.state_targets,
             linecount=176400,
             max_depth=8,
@@ -1698,10 +1702,10 @@ class LookupTable555ULFRBDCenterSolveSecondFour(LookupTable):
         return (state, cost_to_goal)
 
 
-class LookupTableIDA555EdgesSolveSecondFour(LookupTableIDA):
+class LookupTableIDA555EdgesYPlane(LookupTableIDA):
     """
-    lookup-table-5x5x5-step240-solve-second-four-edges.txt
-    ======================================================
+    lookup-table-5x5x5-step200-edges-y-plane.txt
+    ============================================
     1 steps has 180 entries (0 percent, 0.00x previous step)
     2 steps has 1,368 entries (0 percent, 7.60x previous step)
     3 steps has 11,436 entries (0 percent, 8.36x previous step)
@@ -1754,7 +1758,7 @@ class LookupTableIDA555EdgesSolveSecondFour(LookupTableIDA):
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step240-solve-second-four-edges.txt',
+            'lookup-table-5x5x5-step200-edges-y-plane.txt',
             self.state_targets,
             moves_555,
 
@@ -1762,8 +1766,8 @@ class LookupTableIDA555EdgesSolveSecondFour(LookupTableIDA):
             (),
 
             # prune tables
-            (parent.lt_step241_ht,
-             parent.lt_step242),
+            (parent.lt_step201_ht,
+             parent.lt_step202),
             linecount=7621092,
             max_depth=6,
             filesize=868804488,
@@ -1777,8 +1781,8 @@ class LookupTableIDA555EdgesSolveSecondFour(LookupTableIDA):
 
     def ida_heuristic(self, ida_threshold):
 
-        (edges_state, edges_cost) = self.parent.lt_step241_ht.ida_heuristic(ida_threshold)
-        (centers_state, centers_cost) = self.parent.lt_step242.ida_heuristic(ida_threshold)
+        (edges_state, edges_cost) = self.parent.lt_step201_ht.ida_heuristic(ida_threshold)
+        (centers_state, centers_cost) = self.parent.lt_step202.ida_heuristic(ida_threshold)
 
         lt_state = centers_state + edges_state
         cost_to_goal = max(edges_cost, centers_cost)
@@ -1790,7 +1794,7 @@ class LookupTableIDA555EdgesSolveSecondFour(LookupTableIDA):
 
 class LookupTable555StageSecondFourEdges(LookupTable):
     """
-    lookup-table-5x5x5-step102-stage-second-four-edges.txt
+    lookup-table-5x5x5-step120-stage-second-four-edges.txt
     ======================================================
     1 steps has 4 entries (0 percent, 0.00x previous step)
     2 steps has 8 entries (0 percent, 2.00x previous step)
@@ -1816,7 +1820,7 @@ class LookupTable555StageSecondFourEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step101-stage-second-four-edges.txt',
+            'lookup-table-5x5x5-step120-stage-second-four-edges.txt',
             'TBD',
             linecount=154824,
             filesize=9289440)
@@ -1843,10 +1847,10 @@ class LookupTable555StageSecondFourEdges(LookupTable):
         return edges_state
 
 
-class LookupTable555EdgesLastFourXPlaneEdgesOnly(LookupTable):
+class LookupTable555EdgesXPlaneEdgesOnly(LookupTable):
     """
-    lookup-table-5x5x5-step221-edges-last-four-x-plane-edges-only.txt
-    =================================================================
+    lookup-table-5x5x5-step301-edges-x-plane-edges-only.txt
+    =======================================================
     1 steps has 7 entries (0 percent, 0.00x previous step)
     2 steps has 21 entries (0 percent, 3.00x previous step)
     3 steps has 90 entries (0 percent, 4.29x previous step)
@@ -1869,7 +1873,7 @@ class LookupTable555EdgesLastFourXPlaneEdgesOnly(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step221-edges-last-four-x-plane-edges-only.txt',
+            'lookup-table-5x5x5-step301-edges-x-plane-edges-only.txt',
             '------------sSSTTtuUUVVv------------',
             linecount=40320,
             max_depth=13,
@@ -1884,10 +1888,10 @@ class LookupTable555EdgesLastFourXPlaneEdgesOnly(LookupTable):
         return (edges_state, cost_to_goal)
 
 
-class LookupTable555EdgesLastFourXPlaneCentersOnly(LookupTable):
+class LookupTable555EdgesXPlaneCentersOnly(LookupTable):
     """
-    lookup-table-5x5x5-step222-edges-last-four-x-plane-centers-only.txt
-    ===================================================================
+    lookup-table-5x5x5-step302-edges-x-plane-centers-only.txt
+    =========================================================
     1 steps has 7 entries (0 percent, 0.00x previous step)
     2 steps has 33 entries (1 percent, 4.71x previous step)
     3 steps has 162 entries (6 percent, 4.91x previous step)
@@ -1903,7 +1907,7 @@ class LookupTable555EdgesLastFourXPlaneCentersOnly(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step222-edges-last-four-x-plane-centers-only.txt',
+            'lookup-table-5x5x5-step302-edges-x-plane-centers-only.txt',
             'LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB',
             linecount=2520,
             max_depth=6,
@@ -1916,10 +1920,10 @@ class LookupTable555EdgesLastFourXPlaneCentersOnly(LookupTable):
         return (state, cost_to_goal)
 
 
-class LookupTableIDA555EdgesLastFourXPlane(LookupTableIDA):
+class LookupTableIDA555EdgesXPlane(LookupTableIDA):
     """
-    lookup-table-5x5x5-step220-edges-last-four-x-plane.txt
-    ======================================================
+    lookup-table-5x5x5-step300-edges-x-plane.txt
+    ============================================
     1 steps has 7 entries (0 percent, 0.00x previous step)
     2 steps has 33 entries (0 percent, 4.71x previous step)
     3 steps has 230 entries (0 percent, 6.97x previous step)
@@ -1937,15 +1941,15 @@ class LookupTableIDA555EdgesLastFourXPlane(LookupTableIDA):
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step220-edges-last-four-x-plane.txt',
+            'lookup-table-5x5x5-step300-edges-x-plane.txt',
             ('LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB------------sSSTTtuUUVVv------------', ),
             moves_555,
             # illegal moves
             (),
 
             # prune tables
-            (parent.lt_edges_pair_last_four_edges_only,
-             parent.lt_edges_pair_last_four_centers_only),
+            (parent.lt_edges_x_plane_edges_only,
+             parent.lt_edges_x_plane_centers_only),
             linecount=1752174,
             max_depth=8,
             filesize=180473922,
@@ -1958,8 +1962,8 @@ class LookupTableIDA555EdgesLastFourXPlane(LookupTableIDA):
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
-        (edges_state, edges_cost) = self.parent.lt_edges_pair_last_four_edges_only.ida_heuristic(ida_threshold)
-        (centers_state, centers_cost) = self.parent.lt_edges_pair_last_four_centers_only.ida_heuristic(ida_threshold)
+        (edges_state, edges_cost) = self.parent.lt_edges_x_plane_edges_only.ida_heuristic(ida_threshold)
+        (centers_state, centers_cost) = self.parent.lt_edges_x_plane_centers_only.ida_heuristic(ida_threshold)
         lt_state = centers_state + edges_state
         cost_to_goal = max(edges_cost, centers_cost)
         return (lt_state, cost_to_goal)
@@ -2428,11 +2432,11 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_432_x_centers_only.preload_cache_string()
         self.lt_LR_432_t_centers_only.preload_cache_string()
 
-        self.lt_step241 = LookupTable555EdgesSolveSecondFourEdgesOnly(self)
-        self.lt_step241_ht = LookupTable555EdgesSolveSecondFourEdgesOnlyHashCostOnly(self)
-        self.lt_step242 = LookupTable555ULFRBDCenterSolveSecondFour(self)
-        self.lt_step240 = LookupTableIDA555EdgesSolveSecondFour(self)
-        self.lt_step242.preload_cache_dict()
+        self.lt_step201 = LookupTable555EdgesYPlaneEdgesOnly(self)
+        self.lt_step201_ht = LookupTable555EdgesYPlaneEdgesOnlyHashCostOnly(self)
+        self.lt_step202 = LookupTable555EdgesYPlaneCentersOnly(self)
+        self.lt_step200 = LookupTableIDA555EdgesYPlane(self)
+        self.lt_step202.preload_cache_dict()
 
         self.lt_step51 = LookupTable555Step51(self)
         self.lt_step51_ht = LookupTable555Step51HashCostOnly(self)
@@ -2443,12 +2447,12 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
 
-        self.lt_edges_pair_last_four_edges_only = LookupTable555EdgesLastFourXPlaneEdgesOnly(self)
-        self.lt_edges_pair_last_four_centers_only = LookupTable555EdgesLastFourXPlaneCentersOnly(self)
-        self.lt_edges_pair_last_four = LookupTableIDA555EdgesLastFourXPlane(self)
-        self.lt_edges_pair_last_four_edges_only.preload_cache_dict()
-        self.lt_edges_pair_last_four_centers_only.preload_cache_dict()
-        self.lt_edges_pair_last_four.preload_cache_dict()
+        self.lt_edges_x_plane_edges_only = LookupTable555EdgesXPlaneEdgesOnly(self)
+        self.lt_edges_x_plane_centers_only = LookupTable555EdgesXPlaneCentersOnly(self)
+        self.lt_edges_x_plane = LookupTableIDA555EdgesXPlane(self)
+        self.lt_edges_x_plane_edges_only.preload_cache_dict()
+        self.lt_edges_x_plane_centers_only.preload_cache_dict()
+        self.lt_edges_x_plane.preload_cache_dict()
 
         '''
         self.lt_edges_solve_second_four = LookupTable555SolveSecondFourEdges(self)
@@ -2835,14 +2839,8 @@ class RubiksCube555(RubiksCube):
         self.group_centers_stage_LR_to_432()
 
         pairable = self.edges_pairable_via_tsai_phase2()
-        not_reserved = []
-
-        for wing_str in wing_strs_all:
-            if wing_str not in pairable:
-                not_reserved.append(wing_str)
-
+        pairable_len = len(pairable)
         log.info("%s: pairable %s" % (self, pformat(pairable)))
-        log.info("%s: not_reserved %s" % (self, pformat(not_reserved)))
 
         min_step51_steps_len = None
         min_step51_wing_str = None
@@ -2850,7 +2848,8 @@ class RubiksCube555(RubiksCube):
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
 
-        for wing_str_combo in itertools.combinations(not_reserved, 4):
+        for wing_str_combo in itertools.combinations(wing_strs_all, 4):
+            wing_str_combo = sorted(wing_str_combo)
             self.lt_step51.only_colors = wing_str_combo
             self.state = original_state[:]
             self.solution = original_solution[:]
@@ -2859,6 +2858,15 @@ class RubiksCube555(RubiksCube):
                 self.lt_step51.solve()
                 solution_steps = self.solution[original_solution_len:]
                 solution_len = len(solution_steps)
+                tmp_pairable_len = pairable_len
+
+                for wing_str in wing_str_combo:
+                    if wing_str in pairable:
+                        tmp_pairable_len -= 1
+
+                if tmp_pairable_len < 4:
+                    #log.info("%s: step51 %s in %d steps, would only leave %d pairable edges " % (self, pformat(wing_str_combo), solution_len, tmp_pairable_len))
+                    continue
 
                 if min_step51_steps_len is None or solution_len < min_step51_steps_len:
                     min_step51_steps_len = solution_len
@@ -3027,7 +3035,7 @@ class RubiksCube555(RubiksCube):
     def second_l4e_solveable_without_staging(self):
         """
         Return True if there is a wing_str_combo among the y-plane and z-plane
-        edges that can be solved via our step241 table
+        edges that can be solved via our step201 table
         """
         original_state = self.state[:]
         original_solution = self.solution[:]
@@ -3037,14 +3045,14 @@ class RubiksCube555(RubiksCube):
         states_to_find = []
 
         for wing_str_combo in itertools.combinations(eight_unpaired_wing_strs, 4):
-            self.lt_step241.only_colors = wing_str_combo
-            states_to_find.append(self.lt_step241.state())
+            self.lt_step201.only_colors = wing_str_combo
+            states_to_find.append(self.lt_step201.state())
 
-        results = self.lt_step241.binary_search_multiple(states_to_find)
+        results = self.lt_step201.binary_search_multiple(states_to_find)
         #log.info("%s: second_l4e_solveable_without_staging %d states_to_find, found %d matches" % (self, len(states_to_find), len(results)))
 
-        self.lt_step241.only_colors = ()
-        self.lt_step241_ht.only_colors = ()
+        self.lt_step201.only_colors = ()
+        self.lt_step201_ht.only_colors = ()
         self.state = original_state[:]
         self.solution = original_solution[:]
 
@@ -3145,8 +3153,6 @@ class RubiksCube555(RubiksCube):
 
         min_solution_len = None
         min_solution_steps = None
-        #log.info("FOO")
-        #self.print_cube()
 
         for pre_steps in pre_steps_to_try:
             self.state = original_state[:]
@@ -3383,13 +3389,13 @@ class RubiksCube555(RubiksCube):
 
             # Find a wing_str_combo that is solveable
             for wing_str_combo in itertools.combinations(eight_unpaired_wing_strs, 4):
-                self.lt_step241.only_colors = wing_str_combo
-                self.lt_step241_ht.only_colors = wing_str_combo
+                self.lt_step201.only_colors = wing_str_combo
+                self.lt_step201_ht.only_colors = wing_str_combo
                 self.state = post_edges_flip_state[:]
                 self.solution = original_solution[:]
 
                 try:
-                    self.lt_step241.solve()
+                    self.lt_step201.solve()
                     solution_steps = self.solution[original_solution_len:]
                     solution_len = len(solution_steps)
 
@@ -3411,12 +3417,12 @@ class RubiksCube555(RubiksCube):
 
             self.state = post_edges_flip_state[:]
             self.solution = original_solution[:]
-            self.lt_step241.only_colors = min_wing_str_combo
-            self.lt_step241_ht.only_colors = min_wing_str_combo
+            self.lt_step201.only_colors = min_wing_str_combo
+            self.lt_step201_ht.only_colors = min_wing_str_combo
 
-            self.lt_step240.solve()
-            self.lt_step241.only_colors = ()
-            self.lt_step241_ht.only_colors = ()
+            self.lt_step200.solve()
+            self.lt_step201.only_colors = ()
+            self.lt_step201_ht.only_colors = ()
 
             second_l4e_solution = self.solution[original_solution_len:]
             self.state = original_state[:]
@@ -3426,13 +3432,11 @@ class RubiksCube555(RubiksCube):
                 self.rotate(step)
 
             self.print_cube()
-            paired_edges_count = self.get_paired_edges_count()
-            delta_paired_edges_count = paired_edges_count - original_paired_edges_count
-            assert delta_paired_edges_count >= 4, "4-edges should have paired but only %d are paired" % delta_paired_edges_count
+            assert self.l4e_in_y_plane_paired(), "4-edges in y-plane should have paired"
             log.info("%s: UD horiztonal bars, LR vertical bars, y-plane edges %s paired, z-plane edges in L4E, %d steps in" % (
-                (self, pformat(self.lt_step241.only_colors), self.get_solution_len_minus_rotates(self.solution))))
-            self.lt_step241.only_colors = ()
-            self.lt_step241_ht.only_colors = ()
+                (self, pformat(self.lt_step201.only_colors), self.get_solution_len_minus_rotates(self.solution))))
+            self.lt_step201.only_colors = ()
+            self.lt_step201_ht.only_colors = ()
 
     def pair_second_four_edges(self):
         # TODO delele this?
@@ -3510,8 +3514,8 @@ class RubiksCube555(RubiksCube):
             partner_value = self.state[partner_index]
             wing_str = wing_str_map[square_value + partner_value]
             only_colors.append(wing_str)
-        self.lt_edges_pair_last_four_edges_only.only_colors = only_colors
-        self.lt_edges_pair_last_four.only_colors = only_colors
+        self.lt_edges_x_plane_edges_only.only_colors = only_colors
+        self.lt_edges_x_plane.only_colors = only_colors
 
         # Recolor the centers in the x-plane to LFRB since LFRB was used to build our tables
         centers_recolor = {
@@ -3532,7 +3536,7 @@ class RubiksCube555(RubiksCube):
         #log.info("%s: centers_recolor %s" % (self, pformat(centers_recolor)))
 
         # Now we can solve
-        self.lt_edges_pair_last_four.solve()
+        self.lt_edges_x_plane.solve()
 
         # Put the cube back the way it was (to undo all of the recoloring we did) and apply the solution
         l4e_solution = self.solution[original_solution_len:]
@@ -3546,7 +3550,7 @@ class RubiksCube555(RubiksCube):
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         #paired_edges_count = self.get_paired_edges_count()
         #delta_paired_edges_count = paired_edges_count - original_paired_edges_count
-        assert self.x_plane_has_paired_edge(), "4-edges in x-plane should have paired"
+        assert self.l4e_in_x_plane_paired(), "4-edges in x-plane should have paired"
         log.info("%s: x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_edges(self):

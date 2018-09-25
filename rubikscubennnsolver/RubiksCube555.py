@@ -819,6 +819,7 @@ class LookupTable555LRCenterStage(LookupTableHashCostOnly):
 
 
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
+    # dwalton with some work to 666 we should be able to delete the centers solving code
     """
     24,010,000/117,649,000,000 is 0.000 204 so this will be a fast IDA search
 
@@ -1239,7 +1240,7 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
 
     def search_complete(self, state, steps_to_here):
         if LookupTableIDA.search_complete(self, state, steps_to_here):
-            if len(self.parent.edges_pairable_via_tsai_phase2()) >= 6:
+            if len(self.parent.edges_pairable_via_tsai_phase2()) >= 4:
                 log.info("%s: found solution where at least 4-edges are split into high/low groups" % self)
                 return True
             else:
@@ -1265,7 +1266,6 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
         #    (self, lt_state, cost_to_goal,
         #     LR_stage_cost_to_goal, LR_432_x_centers_cost_to_goal, LR_432_t_centers_cost_to_goal))
         return (lt_state, cost_to_goal)
-
 
 
 class LookupTable555Step51(LookupTable):
@@ -1298,10 +1298,10 @@ class LookupTable555Step51(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step51.txt',
-            'xxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
+            '0001f81f81f81f8000',
             linecount=121287375,
             max_depth=13,
-            filesize=14433197625)
+            filesize=7883679375)
 
     def ida_heuristic(self, ida_threshold):
         assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
@@ -1315,11 +1315,12 @@ class LookupTable555Step51(LookupTable):
             wing_str = wing_str_map[square_value + partner_value]
 
             if wing_str in self.only_colors:
-                state.append("L")
+                state.append("1")
             else:
-                state.append("x")
+                state.append("0")
 
         state = ''.join(state)
+        state = self.hex_format % int(state, 2)
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
 
@@ -1331,7 +1332,7 @@ class LookupTable555Step51HashCostOnly(LookupTableHashCostOnly):
             self,
             parent,
             'lookup-table-5x5x5-step51.hash-cost-only.txt',
-            'xxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
+            '0001f81f81f81f8000',
             linecount=1,
             max_depth=13,
             bucketcount=121287377,
@@ -1349,11 +1350,12 @@ class LookupTable555Step51HashCostOnly(LookupTableHashCostOnly):
             wing_str = wing_str_map[square_value + partner_value]
 
             if wing_str in self.only_colors:
-                state.append("L")
+                state.append("1")
             else:
-                state.append("x")
+                state.append("0")
 
         state = ''.join(state)
+        state = self.hex_format % int(state, 2)
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
 
@@ -1381,18 +1383,14 @@ class LookupTable555Step52(LookupTable):
     """
 
     state_targets = (
-        'LLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBF', 'LLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBF', 'LLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBB',
-        'LLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBF', 'LLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBB', 'LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB',
-        'LLRLLRLLRBFBBFBBFBLRRLRRLRRFBFFBFFBF', 'LLRLLRLLRBFBBFBBFBRRLRRLRRLFBFFBFFBF', 'LLRLLRLLRBFFBFFBFFLRRLRRLRRBBFBBFBBF',
-        'LLRLLRLLRBFFBFFBFFLRRLRRLRRFBBFBBFBB', 'LLRLLRLLRBFFBFFBFFRRLRRLRRLBBFBBFBBF', 'LLRLLRLLRBFFBFFBFFRRLRRLRRLFBBFBBFBB',
-        'LLRLLRLLRFFBFFBFFBLRRLRRLRRBBFBBFBBF', 'LLRLLRLLRFFBFFBFFBLRRLRRLRRFBBFBBFBB', 'LLRLLRLLRFFBFFBFFBRRLRRLRRLBBFBBFBBF',
-        'LLRLLRLLRFFBFFBFFBRRLRRLRRLFBBFBBFBB', 'LLRLLRLLRFFFFFFFFFLRRLRRLRRBBBBBBBBB', 'LLRLLRLLRFFFFFFFFFRRLRRLRRLBBBBBBBBB',
-        'RLLRLLRLLBFBBFBBFBLRRLRRLRRFBFFBFFBF', 'RLLRLLRLLBFBBFBBFBRRLRRLRRLFBFFBFFBF', 'RLLRLLRLLBFFBFFBFFLRRLRRLRRBBFBBFBBF',
-        'RLLRLLRLLBFFBFFBFFLRRLRRLRRFBBFBBFBB', 'RLLRLLRLLBFFBFFBFFRRLRRLRRLBBFBBFBBF', 'RLLRLLRLLBFFBFFBFFRRLRRLRRLFBBFBBFBB',
-        'RLLRLLRLLFFBFFBFFBLRRLRRLRRBBFBBFBBF', 'RLLRLLRLLFFBFFBFFBLRRLRRLRRFBBFBBFBB', 'RLLRLLRLLFFBFFBFFBRRLRRLRRLBBFBBFBBF',
-        'RLLRLLRLLFFBFFBFFBRRLRRLRRLFBBFBBFBB', 'RLLRLLRLLFFFFFFFFFLRRLRRLRRBBBBBBBBB', 'RLLRLLRLLFFFFFFFFFRRLRRLRRLBBBBBBBBB',
-        'RLRRLRRLRBFBBFBBFBLRLLRLLRLFBFFBFFBF', 'RLRRLRRLRBFFBFFBFFLRLLRLLRLBBFBBFBBF', 'RLRRLRRLRBFFBFFBFFLRLLRLLRLFBBFBBFBB',
-        'RLRRLRRLRFFBFFBFFBLRLLRLLRLBBFBBFBBF', 'RLRRLRRLRFFBFFBFFBLRLLRLLRLFBBFBBFBB', 'RLRRLRRLRFFFFFFFFFLRLLRLLRLBBBBBBBBB'
+        '4924adb6d', '4936eda49', '4936edb24', '496dada49', '496dadb24',
+        '497feda00', '6da48936d', '6da4a496d', '6db6c9249', '6db6c9324',
+        '6db6e4849', '6db6e4924', '6ded89249', '6ded89324', '6deda4849',
+        '6deda4924', '6dffc9200', '6dffe4800', 'db248936d', 'db24a496d',
+        'db36c9249', 'db36c9324', 'db36e4849', 'db36e4924', 'db6d89249',
+        'db6d89324', 'db6da4849', 'db6da4924', 'db7fc9200', 'db7fe4800',
+        'ffa48016d', 'ffb6c0049', 'ffb6c0124', 'ffed80049', 'ffed80124',
+        'ffffc0000'
     )
 
     def __init__(self, parent):
@@ -1403,11 +1401,13 @@ class LookupTable555Step52(LookupTable):
             self.state_targets,
             linecount=2116800,
             max_depth=10,
-            filesize=158760000)
+            filesize=101606400)
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
-        state = ''.join([parent_state[x] for x in LFRB_centers_555])
+        state = ''.join(["1" if parent_state[x] in ("L", "F") else "0" for x in LFRB_centers_555])
+        state = self.hex_format % int(state, 2)
+
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
 
@@ -1427,46 +1427,45 @@ class LookupTableIDA555Step50(LookupTableIDA):
     6 steps has 25,697,688 entries (91 percent, 11.32x previous step)
 
     Total: 28,191,784 entries
-    Average: 5.90 moves
     """
 
     state_targets = (
-        'LLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRBFBBFBBFBLRRLRRLRRFBFFBFFBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRBFBBFBBFBRRLRRLRRLFBFFBFFBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRBFFBFFBFFLRRLRRLRRBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRBFFBFFBFFLRRLRRLRRFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRBFFBFFBFFRRLRRLRRLBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRBFFBFFBFFRRLRRLRRLFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRFFBFFBFFBLRRLRRLRRBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRFFBFFBFFBLRRLRRLRRFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRFFBFFBFFBRRLRRLRRLBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRFFBFFBFFBRRLRRLRRLFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRFFFFFFFFFLRRLRRLRRBBBBBBBBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'LLRLLRLLRFFFFFFFFFRRLRRLRRLBBBBBBBBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLBFBBFBBFBLRRLRRLRRFBFFBFFBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLBFBBFBBFBRRLRRLRRLFBFFBFFBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLBFFBFFBFFLRRLRRLRRBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLBFFBFFBFFLRRLRRLRRFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLBFFBFFBFFRRLRRLRRLBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLBFFBFFBFFRRLRRLRRLFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLFFBFFBFFBLRRLRRLRRBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLFFBFFBFFBLRRLRRLRRFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLFFBFFBFFBRRLRRLRRLBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLFFBFFBFFBRRLRRLRRLFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLFFFFFFFFFLRRLRRLRRBBBBBBBBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLLRLLRLLFFFFFFFFFRRLRRLRRLBBBBBBBBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLRRLRRLRBFBBFBBFBLRLLRLLRLFBFFBFFBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLRRLRRLRBFFBFFBFFLRLLRLLRLBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLRRLRRLRBFFBFFBFFLRLLRLLRLFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLRRLRRLRFFBFFBFFBLRLLRLLRLBBFBBFBBFxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLRRLRRLRFFBFFBFFBLRLLRLLRLFBBFBBFBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
-        'RLRRLRRLRFFFFFFFFFLRLLRLLRLBBBBBBBBBxxxxxxxxxxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxLLLLLLxxxxxxxxxxxxxxx',
+        '4924adb6d0001f81f81f81f8000',
+        '4936eda490001f81f81f81f8000',
+        '4936edb240001f81f81f81f8000',
+        '496dada490001f81f81f81f8000',
+        '496dadb240001f81f81f81f8000',
+        '497feda000001f81f81f81f8000',
+        '6da48936d0001f81f81f81f8000',
+        '6da4a496d0001f81f81f81f8000',
+        '6db6c92490001f81f81f81f8000',
+        '6db6c93240001f81f81f81f8000',
+        '6db6e48490001f81f81f81f8000',
+        '6db6e49240001f81f81f81f8000',
+        '6ded892490001f81f81f81f8000',
+        '6ded893240001f81f81f81f8000',
+        '6deda48490001f81f81f81f8000',
+        '6deda49240001f81f81f81f8000',
+        '6dffc92000001f81f81f81f8000',
+        '6dffe48000001f81f81f81f8000',
+        'db248936d0001f81f81f81f8000',
+        'db24a496d0001f81f81f81f8000',
+        'db36c92490001f81f81f81f8000',
+        'db36c93240001f81f81f81f8000',
+        'db36e48490001f81f81f81f8000',
+        'db36e49240001f81f81f81f8000',
+        'db6d892490001f81f81f81f8000',
+        'db6d893240001f81f81f81f8000',
+        'db6da48490001f81f81f81f8000',
+        'db6da49240001f81f81f81f8000',
+        'db7fc92000001f81f81f81f8000',
+        'db7fe48000001f81f81f81f8000',
+        'ffa48016d0001f81f81f81f8000',
+        'ffb6c00490001f81f81f81f8000',
+        'ffb6c01240001f81f81f81f8000',
+        'ffed800490001f81f81f81f8000',
+        'ffed801240001f81f81f81f8000',
+        'ffffc00000001f81f81f81f8000'
     )
 
     def __init__(self, parent):
@@ -1493,7 +1492,7 @@ class LookupTableIDA555Step50(LookupTableIDA):
              parent.lt_step52),
             linecount=28191784,
             max_depth=6,
-            filesize=3749507272)
+            filesize=1465972768)
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
@@ -1505,58 +1504,6 @@ class LookupTableIDA555Step50(LookupTableIDA):
         cost_to_goal = max(centers_cost, edges_cost)
 
         return (lt_state, cost_to_goal)
-
-
-class LookupTable555StageFirstFourEdges(LookupTable):
-    """
-    lookup-table-5x5x5-step100-stage-first-four-edges.txt
-    =====================================================
-    1 steps has 9 entries (0 percent, 0.00x previous step)
-    2 steps has 72 entries (0 percent, 8.00x previous step)
-    3 steps has 330 entries (0 percent, 4.58x previous step)
-    4 steps has 84 entries (0 percent, 0.25x previous step)
-    5 steps has 1,152 entries (0 percent, 13.71x previous step)
-    6 steps has 10,200 entries (0 percent, 8.85x previous step)
-    7 steps has 53,040 entries (0 percent, 5.20x previous step)
-    8 steps has 187,296 entries (2 percent, 3.53x previous step)
-    9 steps has 1,357,482 entries (18 percent, 7.25x previous step)
-    10 steps has 5,779,878 entries (78 percent, 4.26x previous step)
-
-    Total: 7,389,543 entries
-
-    There is no need to build this any deeper...building it to 10-deep
-    takes about 2 days on a 12-core machine.
-    """
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step100-stage-first-four-edges.txt',
-            'TBD',
-            linecount=7389543,
-            filesize=421203951,
-        )
-
-    def state(self, wing_strs_to_stage):
-        state = self.parent.state[:]
-
-        for square_index in l4e_wings_555:
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-
-            if wing_str in wing_strs_to_stage:
-                state[square_index] = '1'
-                state[partner_index] = '1'
-            else:
-                state[square_index] = '0'
-                state[partner_index] = '0'
-
-        edges_state = ''.join([state[square_index] for square_index in edges_555])
-        edges_state = int(edges_state, 2)
-        edges_state = self.hex_format % edges_state
-        return edges_state
 
 
 class LookupTable555EdgesYPlaneEdgesOnly(LookupTable):
@@ -1768,9 +1715,14 @@ class LookupTableIDA555EdgesYPlane(LookupTableIDA):
             # prune tables
             (parent.lt_step201_ht,
              parent.lt_step202),
+
             linecount=7621092,
             max_depth=6,
             filesize=868804488,
+            #linecount=62140656,
+            #max_depth=7,
+            #filesize=7332597408,
+
             legal_moves = (
                 "U", "U'", "U2",
                 "D", "D'", "D2",
@@ -1780,70 +1732,12 @@ class LookupTableIDA555EdgesYPlane(LookupTableIDA):
         )
 
     def ida_heuristic(self, ida_threshold):
-
         (edges_state, edges_cost) = self.parent.lt_step201_ht.ida_heuristic(ida_threshold)
         (centers_state, centers_cost) = self.parent.lt_step202.ida_heuristic(ida_threshold)
-
         lt_state = centers_state + edges_state
         cost_to_goal = max(edges_cost, centers_cost)
 
         return (lt_state, cost_to_goal)
-
-
-
-class LookupTable555StageSecondFourEdges(LookupTable):
-    """
-    lookup-table-5x5x5-step120-stage-second-four-edges.txt
-    ======================================================
-    1 steps has 4 entries (0 percent, 0.00x previous step)
-    2 steps has 8 entries (0 percent, 2.00x previous step)
-    3 steps has 30 entries (0 percent, 3.75x previous step)
-    4 steps has 28 entries (0 percent, 0.93x previous step)
-    5 steps has 64 entries (0 percent, 2.29x previous step)
-    6 steps has 400 entries (0 percent, 6.25x previous step)
-    7 steps has 1,224 entries (0 percent, 3.06x previous step)
-    8 steps has 3,864 entries (2 percent, 3.16x previous step)
-    9 steps has 13,630 entries (8 percent, 3.53x previous step)
-    10 steps has 45,090 entries (29 percent, 3.31x previous step)
-    11 steps has 90,482 entries (58 percent, 2.01x previous step)
-
-    Total: 154,824 entries
-
-    This should have (16!/(8!*8!)) * (8!/(4!*4!)) or 900,900 entries
-    if you built it out the entire way. We do not need to build it that deep
-    though, we can try enough edge color combinations to find a hit
-    in 11-deep.
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step120-stage-second-four-edges.txt',
-            'TBD',
-            linecount=154824,
-            filesize=9289440)
-
-    def state(self, wing_strs_to_stage):
-        state = self.parent.state[:]
-
-        for square_index in l4e_wings_555:
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-
-            if wing_str in wing_strs_to_stage:
-                state[square_index] = '1'
-                state[partner_index] = '1'
-            else:
-                state[square_index] = '0'
-                state[partner_index] = '0'
-
-        edges_state = ''.join([state[square_index] for square_index in edges_555])
-        edges_state = int(edges_state, 2)
-        edges_state = self.hex_format % edges_state
-        return edges_state
 
 
 class LookupTable555EdgesXPlaneEdgesOnly(LookupTable):
@@ -2030,49 +1924,11 @@ class RubiksCube555(RubiksCube):
 
         return self._phase
 
-    def get_x_plane_wing_strs(self):
-        state = self.state
-        edges_in_plane = set()
-
-        for square_index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            edges_in_plane.add(wing_str)
-        return edges_in_plane
-
     def x_plane_edges_are_l4e(self):
         state = self.state
         edges_in_plane = set()
 
         for square_index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            edges_in_plane.add(wing_str)
-
-        return len(edges_in_plane) == 4
-
-    def y_plane_edges_are_l4e(self):
-        state = self.state
-        edges_in_plane = set()
-
-        for square_index in (2, 3, 4, 22, 23, 24, 127, 128, 129, 147, 148, 149):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            edges_in_plane.add(wing_str)
-
-        return len(edges_in_plane) == 4
-
-    def z_plane_edges_are_l4e(self):
-        state = self.state
-        edges_in_plane = set()
-
-        for square_index in (6, 11, 16, 10, 15, 20, 131, 136, 141, 135, 140, 145):
             partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
@@ -2117,9 +1973,6 @@ class RubiksCube555(RubiksCube):
         self.lt_step50 = LookupTableIDA555Step50(self)
         self.lt_step52.preload_cache_string()
 
-        self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
-        self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
-
         self.lt_step201 = LookupTable555EdgesYPlaneEdgesOnly(self)
         self.lt_step201_ht = LookupTable555EdgesYPlaneEdgesOnlyHashCostOnly(self)
         self.lt_step202 = LookupTable555EdgesYPlaneCentersOnly(self)
@@ -2132,15 +1985,6 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_x_plane_edges_only.preload_cache_dict()
         self.lt_edges_x_plane_centers_only.preload_cache_dict()
         self.lt_edges_x_plane.preload_cache_dict()
-
-        '''
-        self.lt_edges_solve_second_four = LookupTable555SolveSecondFourEdges(self)
-
-        if self.min_memory:
-            self.lt_edges_stage_second_four.preload_cache_string()
-        else:
-            self.lt_edges_stage_second_four.preload_cache_dict()
-        '''
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
@@ -2468,8 +2312,8 @@ class RubiksCube555(RubiksCube):
 
     def group_centers_stage_LR_to_432(self):
         """
+        Stage LR centers to one of 432 states that can be solved with L L' R R'
         """
-        # Stage LR centers
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
@@ -2555,329 +2399,6 @@ class RubiksCube555(RubiksCube):
                 self.state[square_index] = partner_value
                 self.state[partner_index] = square_value
 
-    def second_l4e_solveable_without_staging(self):
-        """
-        Return True if there is a wing_str_combo among the y-plane and z-plane
-        edges that can be solved via our step201 table
-        """
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        self.edges_flip_to_original_orientation()
-        eight_unpaired_wing_strs = self.get_y_plane_z_plane_wing_strs()
-        states_to_find = []
-
-        for wing_str_combo in itertools.combinations(eight_unpaired_wing_strs, 4):
-            self.lt_step201.only_colors = wing_str_combo
-            states_to_find.append(self.lt_step201.state())
-
-        results = self.lt_step201.binary_search_multiple(states_to_find)
-        #log.info("%s: second_l4e_solveable_without_staging %d states_to_find, found %d matches" % (self, len(states_to_find), len(results)))
-
-        self.lt_step201.only_colors = ()
-        self.lt_step201_ht.only_colors = ()
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        if results:
-            return True
-        else:
-            return False
-
-    def stage_first_four_edges_555(self):
-        """
-        There are 495 different permutations of 4-edges out of 12-edges, use the one
-        that gives us the shortest solution for getting 4-edges staged to LB, LF, RF, RB
-        """
-
-        # return if they are already staged
-        if self.x_plane_edges_are_l4e():
-            log.info("%s: first L4E group in x-plane" % self)
-            return
-
-        if self.y_plane_edges_are_l4e():
-            log.info("%s: first L4E group in y-plane, moving to x-plane" % self)
-            self.rotate("z")
-            return
-
-        if self.z_plane_edges_are_l4e():
-            log.info("%s: first L4E group in z-plane, moving to x-plane" % self)
-            self.rotate("x")
-            return
-
-        min_solution_len = None
-        min_solution_steps = None
-
-        # The table for staging the first 4-edges would have 364,058,145 if built to completion.
-        # Building that table the entire way is difficult though because this is a table where
-        # the centers must be kept solved...so this involves building out a HUGE table and only
-        # keeping the entries where the centers are solved.  To build one deep enough to find
-        # all 364,058,145 entries needed that also have solved centers would probably take a
-        # few months and more drive space than I have access to.
-        #
-        # To avoid building such a massive table we only build the table out 10-deep which gives
-        # us a few million entries.  We then try all 495 permutations of 4-edges out of 12-edges
-        # looking for one that does have a hit.  Most of the time this is all that is needed and
-        # we can find a hit.  On the off chance that we cannot though we need a way to find a solution
-        # so what we do is try all outer layer moves up to 3 moves deep and see if any of those
-        # sequences put the cube in a state such that one of the 495 edge permutations does find
-        # a hit. I have yet to find a cube that cannot be solved with this approach but if I did
-        # the pre_steps_to_try could be expanded to 4-deep.
-
-        # Ran this once to generate pre_steps_to_try
-        '''
-        outer_layer_moves = (
-            "U", "U'", "U2",
-            "L", "L'", "L2",
-            "F", "F'", "F2",
-            "R", "R'", "R2",
-            "B", "B'", "B2",
-            "D", "D'", "D2",
-        )
-        pre_steps_to_try = []
-        pre_steps_to_try.append([])
-
-        for step in outer_layer_moves:
-            pre_steps_to_try.append((step,))
-
-        for step1 in outer_layer_moves:
-            for step2 in outer_layer_moves:
-                if not steps_on_same_face_and_layer(step1, step2):
-                    pre_steps_to_try.append((step1, step2))
-
-        for step1 in outer_layer_moves:
-            for step2 in outer_layer_moves:
-                if not steps_on_same_face_and_layer(step1, step2):
-
-                    for step3 in outer_layer_moves:
-                        if not steps_on_same_face_and_layer(step2, step3):
-                            pre_steps_to_try.append((step1, step2, step3))
-
-        from pprint import pformat
-        log.info("pre_steps_to_try: %d" % len(pre_steps_to_try))
-        log.info("pre_steps_to_try:\n%s\n" % pformat(pre_steps_to_try))
-
-        # uncomment this if we ever find a cube that raises the
-        # "Could not find 4-edges to stage" NoEdgeSolution exception below
-        for step1 in outer_layer_moves:
-            for step2 in outer_layer_moves:
-                if not steps_on_same_face_and_layer(step1, step2):
-                    for step3 in outer_layer_moves:
-                        if not steps_on_same_face_and_layer(step2, step3):
-                            for step4 in outer_layer_moves:
-                                if not steps_on_same_face_and_layer(step3, step4):
-                                    pre_steps_to_try.append([step1, step2, step3, step4])
-        '''
-
-        # Remember what things looked like
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = len(self.solution)
-
-        min_solution_len = None
-        min_solution_steps = None
-
-        for pre_steps in pre_steps_to_try:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            log.info("")
-            log.info("")
-            log.info("%s: pre_steps %s" % (self, " ".join(pre_steps)))
-            for step in pre_steps:
-                self.rotate(step)
-
-            post_pre_steps_state = self.state[:]
-            post_pre_steps_solution = self.solution[:]
-            states_to_find = []
-
-            for wing_strs in stage_first_four_edges_wing_str_combos:
-                states_to_find.append(self.lt_edges_stage_first_four.state(wing_strs))
-
-            results = self.lt_edges_stage_first_four.binary_search_multiple(states_to_find)
-            log.info("%s: %d states_to_find, found %d matches" % (self, len(states_to_find), len(results)))
-
-            for (_, steps) in results.items():
-                self.state = post_pre_steps_state[:]
-                self.solution = post_pre_steps_solution[:]
-
-                for step in steps.split():
-                    self.rotate(step)
-
-                if self.x_plane_edges_are_l4e() and not self.x_plane_edges_paired():
-                    solution_steps = self.solution[original_solution_len:]
-                    solution_len = self.get_solution_len_minus_rotates(solution_steps)
-
-                    if not self.second_l4e_solveable_without_staging():
-                        log.info("%s: first 4-edges can be staged in %d steps but 2nd 4-edges would not be solveable" % (self, solution_len))
-                        continue
-
-                    if min_solution_len is None or solution_len < min_solution_len:
-                        log.info("%s: first 4-edges can be staged in %d steps (NEW MIN)" % (self, solution_len))
-                        min_solution_len = solution_len
-                        min_solution_steps = solution_steps
-                    else:
-                        log.info("%s: first 4-edges can be staged in %d steps" % (self, solution_len))
-
-            if min_solution_len is not None:
-                #if pre_steps:
-                #    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                for step in min_solution_steps:
-                    self.rotate(step)
-
-                break
-
-        if not self.x_plane_edges_are_l4e():
-            raise SolveError("There should be an L4E group in x-plane but there is not")
-
-        log.info("%s: first 4-edges staged to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-    def stage_second_four_edges_555(self):
-        """
-        The first 4-edges have been staged to LB, LF, RF, RB. Stage the next four
-        edges to UB, UF, DF, DB (this in turn stages the final four edges).
-
-        Since there are 8-edges there are 70 different combinations of edges we can
-        choose to stage to UB, UF, DF, DB. Walk through all 70 combinations and see
-        which one leads to the shortest solution.
-        """
-
-        # return if they are already staged
-        if self.y_plane_edges_are_l4e() and self.z_plane_edges_are_l4e():
-            return
-
-        first_four_wing_strs = list(self.get_x_plane_wing_strs())
-        wing_strs_for_second_four = []
-
-        log.info("first_four_wing_strs %s" % pformat(first_four_wing_strs))
-
-        for wing_str in wing_strs_all:
-            if wing_str not in first_four_wing_strs:
-                wing_strs_for_second_four.append(wing_str)
-
-        log.info("wing_strs_for_second_four %s" % pformat(wing_strs_for_second_four))
-        assert len(wing_strs_for_second_four) == 8
-        min_solution_len = None
-        min_solution_steps = None
-
-        # Remember what things looked like
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = len(self.solution)
-
-        for pre_steps in pre_steps_to_try:
-
-            for wing_strs in itertools.combinations(wing_strs_for_second_four, 4):
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                for step in pre_steps:
-                    self.rotate(step)
-
-                state = self.lt_edges_stage_second_four.state(wing_strs)
-                steps = self.lt_edges_stage_second_four.steps(state)
-                #log.info("%s: pre_steps %s, wing_strs %s, state %s, steps %s" % (
-                #    self, pformat(pre_steps), wing_strs, state, pformat(steps)))
-
-                if steps:
-
-                    for step in steps:
-                        self.rotate(step)
-
-                    solution_steps = self.solution[original_solution_len:]
-                    solution_len = self.get_solution_len_minus_rotates(solution_steps)
-
-                    if min_solution_len is None or solution_len < min_solution_len:
-                        min_solution_len = solution_len
-                        min_solution_steps = solution_steps
-                        log.info("%s: y-plane edges %s can be staged in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
-                    else:
-                        log.info("%s: y-plane edges %s can be staged in %d steps" % (self, wing_strs, solution_len))
-
-                    self.state = original_state[:]
-                    self.solution = original_solution[:]
-
-            if min_solution_len is not None:
-                if pre_steps:
-                    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
-
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                for step in min_solution_steps:
-                    self.rotate(step)
-
-                break
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        if min_solution_len is None:
-            raise SolveError("Could not find 4-edges to stage")
-        else:
-            for step in min_solution_steps:
-                self.rotate(step)
-
-    def place_first_four_paired_edges_in_x_plane(self):
-
-        if self.x_plane_edges_paired():
-            log.info("%s: 4 paired edges in x-plane" % (self))
-            return
-
-        if self.y_plane_edges_paired():
-            log.info("%s: 4 paired edges in y-plane, moving to x-plane" % (self))
-            self.rotate("z")
-            return
-
-        if self.z_plane_edges_paired():
-            log.info("%s: 4 paired edges in z-plane, moving to x-plane" % (self))
-            self.rotate("x")
-            return
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        # Traverse a table of moves that place L4E in one of three planes
-        for pre_steps in pre_steps_stage_l4e:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in pre_steps:
-                self.rotate(step)
-
-            if self.x_plane_edges_paired():
-                log.info("%s: %s puts 4 paired edges in x-plane" % (self, "".join(pre_steps)))
-                return
-
-            if self.y_plane_edges_paired():
-                log.info("%s: %s puts 4 paired edges in y-plane" % (self, "".join(pre_steps)))
-                self.rotate("z")
-                return
-
-            if self.z_plane_edges_are_l4e() and not self.z_plane_edges_paired():
-                log.info("%s: %s puts 4 paired edges in z-plane" % (self, "".join(pre_steps)))
-                self.rotate("x")
-                return
-
-        raise Exception("We should not be here")
-
-    def pair_first_four_edges_via_l4e(self):
-        # TODO delete this
-        paired_edges_count = self.get_paired_edges_count()
-
-        # If there are already 4 paired edges all we need to do is put them in the x-plane
-        if paired_edges_count >= 4:
-            self.place_first_four_paired_edges_in_x_plane()
-            log.info("%s: first 4-edges already paired, moved to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-        # We do not have 4 paired edges, stage a L4E group to the x-plane and pair them via the L4E table
-        else:
-            self.stage_first_four_edges_555()
-            self.pair_x_plane_edges_in_l4e()
-
     def get_y_plane_z_plane_wing_strs(self):
         result = []
 
@@ -2897,8 +2418,6 @@ class RubiksCube555(RubiksCube):
         if paired_edges_count >= 8:
             log.info("%s: y-plane edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         else:
-            #self.rotate_U_to_U()
-            #self.rotate_F_to_F()
             original_state = self.state[:]
             original_solution = self.solution[:]
             original_solution_len = len(self.solution)
@@ -2919,6 +2438,7 @@ class RubiksCube555(RubiksCube):
                 self.solution = original_solution[:]
 
                 try:
+                    # dwalton use the PairOneEdge table x4 instead so we can avoid having the entire step201 table...it is huge
                     self.lt_step201.solve()
                     solution_steps = self.solution[original_solution_len:]
                     solution_len = len(solution_steps)
@@ -2962,65 +2482,14 @@ class RubiksCube555(RubiksCube):
             self.lt_step201.only_colors = ()
             self.lt_step201_ht.only_colors = ()
 
-    def pair_second_four_edges(self):
-        if paired_edges_count >= 8:
-            log.info("%s: y-plane edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            return
-        else:
-            self.stage_second_four_edges_555()
-            self.rotate("x")
-            log.info("%s: y-plane edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.pair_x_plane_edges_in_l4e()
-            self.print_cube()
-            #log.info("kociemba: %s" % self.get_kociemba_string(True))
-            log.info("%s: y-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-    def stage_final_four_edges_in_x_plane(self):
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        # Traverse a table of moves that place L4E in one of three planes
-        # and then rotate that plane to the x-plane
-        for pre_steps in pre_steps_stage_l4e:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in pre_steps:
-                self.rotate(step)
-
-            if self.x_plane_edges_are_l4e() and not self.x_plane_edges_paired():
-                if pre_steps:
-                    log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
-                else:
-                    log.info("%s: L4E group in x-plane" % self)
-                break
-
-            elif self.y_plane_edges_are_l4e() and not self.y_plane_edges_paired():
-                if pre_steps:
-                    log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
-                else:
-                    log.info("%s: L4E group in y-plane, moving to x-plane" % self)
-                self.rotate("z")
-                break
-
-            elif self.z_plane_edges_are_l4e() and not self.z_plane_edges_paired():
-                if pre_steps:
-                    log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
-                else:
-                    log.info("%s: L4E group in z-plane, moving to x-plane" % self)
-                self.rotate("x")
-                break
-
-        log.info("%s: final four edges placed in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-    def pair_x_plane_edges_in_l4e(self):
-
-        if not self.x_plane_edges_are_l4e():
-            raise SolveError("There must be a L4E group of edges in the x-plane")
+    def pair_x_plane_edges(self):
 
         if self.x_plane_edges_paired():
             log.info("%s: x-plane edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             return
+
+        if not self.x_plane_edges_are_l4e():
+            raise SolveError("There must be a L4E group of edges in the x-plane")
 
         original_state = self.state[:]
         original_solution = self.solution[:]
@@ -3053,9 +2522,6 @@ class RubiksCube555(RubiksCube):
         # We do this because our tables were built will all edges at their original orientation.
         self.edges_flip_to_original_orientation()
 
-        #log.info("%s: only_colors %s" % (self, pformat(only_colors)))
-        #log.info("%s: centers_recolor %s" % (self, pformat(centers_recolor)))
-
         # Now we can solve
         self.lt_edges_x_plane.solve()
 
@@ -3068,65 +2534,64 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
-        #paired_edges_count = self.get_paired_edges_count()
-        #delta_paired_edges_count = paired_edges_count - original_paired_edges_count
         assert self.x_plane_edges_paired(), "4-edges in x-plane should have paired"
         log.info("%s: x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def LR_FB_vertical_bars_with_L4E_in_x_plane(self):
+        self.group_centers_stage_UD()
+        self.group_centers_stage_LR_to_432()
 
-        if self.centers_solved():
-            self.stage_first_four_edges_555()
-        else:
-            self.group_centers_stage_UD()
-            self.group_centers_stage_LR_to_432()
+        pairable = self.edges_pairable_via_tsai_phase2()
+        pairable_len = len(pairable)
+        log.info("%s: pairable %s" % (self, pformat(pairable)))
 
-            pairable = self.edges_pairable_via_tsai_phase2()
-            pairable_len = len(pairable)
-            log.info("%s: pairable %s" % (self, pformat(pairable)))
+        min_step51_steps_len = None
+        min_step51_wing_str = None
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+        step51_wing_str_combos = []
 
-            min_step51_steps_len = None
-            min_step51_wing_str = None
-            original_state = self.state[:]
-            original_solution = self.solution[:]
-            original_solution_len = len(self.solution)
+        for wing_str_combo in itertools.combinations(wing_strs_all, 4):
+            wing_str_combo = sorted(wing_str_combo)
+            tmp_pairable_len = pairable_len
 
-            for wing_str_combo in itertools.combinations(wing_strs_all, 4):
-                wing_str_combo = sorted(wing_str_combo)
-                self.lt_step51.only_colors = wing_str_combo
-                self.state = original_state[:]
-                self.solution = original_solution[:]
+            for wing_str in wing_str_combo:
+                if wing_str in pairable:
+                    tmp_pairable_len -= 1
 
-                try:
-                    self.lt_step51.solve()
-                    solution_steps = self.solution[original_solution_len:]
-                    solution_len = len(solution_steps)
-                    tmp_pairable_len = pairable_len
+            if tmp_pairable_len >= 4:
+                step51_wing_str_combos.append(wing_str_combo)
 
-                    for wing_str in wing_str_combo:
-                        if wing_str in pairable:
-                            tmp_pairable_len -= 1
+        #log.info("%s: step51_wing_str_combos %s" % (self, pformat(step51_wing_str_combos)))
 
-                    if tmp_pairable_len < 4:
-                        #log.info("%s: step51 %s in %d steps, would only leave %d pairable edges " % (self, pformat(wing_str_combo), solution_len, tmp_pairable_len))
-                        continue
-
-                    if min_step51_steps_len is None or solution_len < min_step51_steps_len:
-                        min_step51_steps_len = solution_len
-                        min_step51_wing_str = wing_str_combo
-                        log.info("%s: step51 %s in %d steps (NEW MIN)" % (self, pformat(wing_str_combo), solution_len))
-                    #else:
-                    #    log.info("%s: step51 %s in %d steps" % (self, pformat(wing_str_combo), solution_len))
-                except NoSteps:
-                    #log.info("%s: step51 %s (NO STEPS)" % (self, pformat(wing_str_combo)))
-                    pass
-
+        for wing_str_combo in step51_wing_str_combos:
+            wing_str_combo = sorted(wing_str_combo)
+            self.lt_step51.only_colors = wing_str_combo
             self.state = original_state[:]
             self.solution = original_solution[:]
-            self.lt_step51.only_colors = min_step51_wing_str
-            self.lt_step51_ht.only_colors = min_step51_wing_str
-            self.lt_step50.solve()
+
+            try:
+                # dwalton find a way to avoid having the entire step51 table...it is huge
+                self.lt_step51.solve()
+                solution_steps = self.solution[original_solution_len:]
+                solution_len = len(solution_steps)
+
+                if min_step51_steps_len is None or solution_len < min_step51_steps_len:
+                    min_step51_steps_len = solution_len
+                    min_step51_wing_str = wing_str_combo
+                    log.info("%s: step51 %s in %d steps (NEW MIN)" % (self, pformat(wing_str_combo), solution_len))
+                #else:
+                #    log.info("%s: step51 %s in %d steps" % (self, pformat(wing_str_combo), solution_len))
+            except NoSteps:
+                #log.info("%s: step51 %s (NO STEPS)" % (self, pformat(wing_str_combo)))
+                pass
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        self.lt_step51.only_colors = min_step51_wing_str
+        self.lt_step51_ht.only_colors = min_step51_wing_str
+        self.lt_step50.solve()
 
         self.print_cube()
         log.info("%s: LR vertical bars, FB vertical bars, L4E in x-plane, 4-edges in y-plane/z-plane are pairable without L L' R R', %d steps in" %
@@ -3134,9 +2599,6 @@ class RubiksCube555(RubiksCube):
 
     def reduce_333(self, fake_555=False):
         self.lt_init()
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-
         self.LR_FB_vertical_bars_with_L4E_in_x_plane()
 
         # Pair the 1st group of 4-edges in the y-plane
@@ -3144,11 +2606,11 @@ class RubiksCube555(RubiksCube):
 
         # Pair the 2nd group of 4-edges in the z-plane
         self.rotate("x")
-        self.pair_x_plane_edges_in_l4e()
+        self.pair_x_plane_edges()
 
         # Pair the 3rd group of 4-edges in the x-plane
         self.rotate("x")
-        self.pair_x_plane_edges_in_l4e()
+        self.pair_x_plane_edges()
 
         if not fake_555:
             self.solution.append('CENTERS_SOLVED')
@@ -4885,504 +4347,6 @@ tsai_phase3_orient_edges_555 = {
     (149, 122, 'U', 'L'): 'U',
     (149, 122, 'U', 'R'): 'U',
 }
-
-stage_first_four_edges_wing_str_combos = (
-    ('DB', 'LB', 'RB', 'UB'),
-    ('DB', 'LB', 'RB', 'DF'),
-    ('DB', 'LB', 'RB', 'DL'),
-    ('DB', 'LB', 'RB', 'DR'),
-    ('DB', 'LB', 'RB', 'LF'),
-    ('DB', 'LB', 'RB', 'RF'),
-    ('DB', 'LB', 'RB', 'UF'),
-    ('DB', 'LB', 'RB', 'UL'),
-    ('DB', 'LB', 'RB', 'UR'),
-    ('DB', 'LB', 'UB', 'DF'),
-    ('DB', 'LB', 'UB', 'DL'),
-    ('DB', 'LB', 'UB', 'DR'),
-    ('DB', 'LB', 'UB', 'LF'),
-    ('DB', 'LB', 'UB', 'RF'),
-    ('DB', 'LB', 'UB', 'UF'),
-    ('DB', 'LB', 'UB', 'UL'),
-    ('DB', 'LB', 'UB', 'UR'),
-    ('DB', 'LB', 'DF', 'DL'),
-    ('DB', 'LB', 'DF', 'DR'),
-    ('DB', 'LB', 'DF', 'LF'),
-    ('DB', 'LB', 'DF', 'RF'),
-    ('DB', 'LB', 'DF', 'UF'),
-    ('DB', 'LB', 'DF', 'UL'),
-    ('DB', 'LB', 'DF', 'UR'),
-    ('DB', 'LB', 'DL', 'DR'),
-    ('DB', 'LB', 'DL', 'LF'),
-    ('DB', 'LB', 'DL', 'RF'),
-    ('DB', 'LB', 'DL', 'UF'),
-    ('DB', 'LB', 'DL', 'UL'),
-    ('DB', 'LB', 'DL', 'UR'),
-    ('DB', 'LB', 'DR', 'LF'),
-    ('DB', 'LB', 'DR', 'RF'),
-    ('DB', 'LB', 'DR', 'UF'),
-    ('DB', 'LB', 'DR', 'UL'),
-    ('DB', 'LB', 'DR', 'UR'),
-    ('DB', 'LB', 'LF', 'RF'),
-    ('DB', 'LB', 'LF', 'UF'),
-    ('DB', 'LB', 'LF', 'UL'),
-    ('DB', 'LB', 'LF', 'UR'),
-    ('DB', 'LB', 'RF', 'UF'),
-    ('DB', 'LB', 'RF', 'UL'),
-    ('DB', 'LB', 'RF', 'UR'),
-    ('DB', 'LB', 'UF', 'UL'),
-    ('DB', 'LB', 'UF', 'UR'),
-    ('DB', 'LB', 'UL', 'UR'),
-    ('DB', 'RB', 'UB', 'DF'),
-    ('DB', 'RB', 'UB', 'DL'),
-    ('DB', 'RB', 'UB', 'DR'),
-    ('DB', 'RB', 'UB', 'LF'),
-    ('DB', 'RB', 'UB', 'RF'),
-    ('DB', 'RB', 'UB', 'UF'),
-    ('DB', 'RB', 'UB', 'UL'),
-    ('DB', 'RB', 'UB', 'UR'),
-    ('DB', 'RB', 'DF', 'DL'),
-    ('DB', 'RB', 'DF', 'DR'),
-    ('DB', 'RB', 'DF', 'LF'),
-    ('DB', 'RB', 'DF', 'RF'),
-    ('DB', 'RB', 'DF', 'UF'),
-    ('DB', 'RB', 'DF', 'UL'),
-    ('DB', 'RB', 'DF', 'UR'),
-    ('DB', 'RB', 'DL', 'DR'),
-    ('DB', 'RB', 'DL', 'LF'),
-    ('DB', 'RB', 'DL', 'RF'),
-    ('DB', 'RB', 'DL', 'UF'),
-    ('DB', 'RB', 'DL', 'UL'),
-    ('DB', 'RB', 'DL', 'UR'),
-    ('DB', 'RB', 'DR', 'LF'),
-    ('DB', 'RB', 'DR', 'RF'),
-    ('DB', 'RB', 'DR', 'UF'),
-    ('DB', 'RB', 'DR', 'UL'),
-    ('DB', 'RB', 'DR', 'UR'),
-    ('DB', 'RB', 'LF', 'RF'),
-    ('DB', 'RB', 'LF', 'UF'),
-    ('DB', 'RB', 'LF', 'UL'),
-    ('DB', 'RB', 'LF', 'UR'),
-    ('DB', 'RB', 'RF', 'UF'),
-    ('DB', 'RB', 'RF', 'UL'),
-    ('DB', 'RB', 'RF', 'UR'),
-    ('DB', 'RB', 'UF', 'UL'),
-    ('DB', 'RB', 'UF', 'UR'),
-    ('DB', 'RB', 'UL', 'UR'),
-    ('DB', 'UB', 'DF', 'DL'),
-    ('DB', 'UB', 'DF', 'DR'),
-    ('DB', 'UB', 'DF', 'LF'),
-    ('DB', 'UB', 'DF', 'RF'),
-    ('DB', 'UB', 'DF', 'UF'),
-    ('DB', 'UB', 'DF', 'UL'),
-    ('DB', 'UB', 'DF', 'UR'),
-    ('DB', 'UB', 'DL', 'DR'),
-    ('DB', 'UB', 'DL', 'LF'),
-    ('DB', 'UB', 'DL', 'RF'),
-    ('DB', 'UB', 'DL', 'UF'),
-    ('DB', 'UB', 'DL', 'UL'),
-    ('DB', 'UB', 'DL', 'UR'),
-    ('DB', 'UB', 'DR', 'LF'),
-    ('DB', 'UB', 'DR', 'RF'),
-    ('DB', 'UB', 'DR', 'UF'),
-    ('DB', 'UB', 'DR', 'UL'),
-    ('DB', 'UB', 'DR', 'UR'),
-    ('DB', 'UB', 'LF', 'RF'),
-    ('DB', 'UB', 'LF', 'UF'),
-    ('DB', 'UB', 'LF', 'UL'),
-    ('DB', 'UB', 'LF', 'UR'),
-    ('DB', 'UB', 'RF', 'UF'),
-    ('DB', 'UB', 'RF', 'UL'),
-    ('DB', 'UB', 'RF', 'UR'),
-    ('DB', 'UB', 'UF', 'UL'),
-    ('DB', 'UB', 'UF', 'UR'),
-    ('DB', 'UB', 'UL', 'UR'),
-    ('DB', 'DF', 'DL', 'DR'),
-    ('DB', 'DF', 'DL', 'LF'),
-    ('DB', 'DF', 'DL', 'RF'),
-    ('DB', 'DF', 'DL', 'UF'),
-    ('DB', 'DF', 'DL', 'UL'),
-    ('DB', 'DF', 'DL', 'UR'),
-    ('DB', 'DF', 'DR', 'LF'),
-    ('DB', 'DF', 'DR', 'RF'),
-    ('DB', 'DF', 'DR', 'UF'),
-    ('DB', 'DF', 'DR', 'UL'),
-    ('DB', 'DF', 'DR', 'UR'),
-    ('DB', 'DF', 'LF', 'RF'),
-    ('DB', 'DF', 'LF', 'UF'),
-    ('DB', 'DF', 'LF', 'UL'),
-    ('DB', 'DF', 'LF', 'UR'),
-    ('DB', 'DF', 'RF', 'UF'),
-    ('DB', 'DF', 'RF', 'UL'),
-    ('DB', 'DF', 'RF', 'UR'),
-    ('DB', 'DF', 'UF', 'UL'),
-    ('DB', 'DF', 'UF', 'UR'),
-    ('DB', 'DF', 'UL', 'UR'),
-    ('DB', 'DL', 'DR', 'LF'),
-    ('DB', 'DL', 'DR', 'RF'),
-    ('DB', 'DL', 'DR', 'UF'),
-    ('DB', 'DL', 'DR', 'UL'),
-    ('DB', 'DL', 'DR', 'UR'),
-    ('DB', 'DL', 'LF', 'RF'),
-    ('DB', 'DL', 'LF', 'UF'),
-    ('DB', 'DL', 'LF', 'UL'),
-    ('DB', 'DL', 'LF', 'UR'),
-    ('DB', 'DL', 'RF', 'UF'),
-    ('DB', 'DL', 'RF', 'UL'),
-    ('DB', 'DL', 'RF', 'UR'),
-    ('DB', 'DL', 'UF', 'UL'),
-    ('DB', 'DL', 'UF', 'UR'),
-    ('DB', 'DL', 'UL', 'UR'),
-    ('DB', 'DR', 'LF', 'RF'),
-    ('DB', 'DR', 'LF', 'UF'),
-    ('DB', 'DR', 'LF', 'UL'),
-    ('DB', 'DR', 'LF', 'UR'),
-    ('DB', 'DR', 'RF', 'UF'),
-    ('DB', 'DR', 'RF', 'UL'),
-    ('DB', 'DR', 'RF', 'UR'),
-    ('DB', 'DR', 'UF', 'UL'),
-    ('DB', 'DR', 'UF', 'UR'),
-    ('DB', 'DR', 'UL', 'UR'),
-    ('DB', 'LF', 'RF', 'UF'),
-    ('DB', 'LF', 'RF', 'UL'),
-    ('DB', 'LF', 'RF', 'UR'),
-    ('DB', 'LF', 'UF', 'UL'),
-    ('DB', 'LF', 'UF', 'UR'),
-    ('DB', 'LF', 'UL', 'UR'),
-    ('DB', 'RF', 'UF', 'UL'),
-    ('DB', 'RF', 'UF', 'UR'),
-    ('DB', 'RF', 'UL', 'UR'),
-    ('DB', 'UF', 'UL', 'UR'),
-    ('LB', 'RB', 'UB', 'DF'),
-    ('LB', 'RB', 'UB', 'DL'),
-    ('LB', 'RB', 'UB', 'DR'),
-    ('LB', 'RB', 'UB', 'LF'),
-    ('LB', 'RB', 'UB', 'RF'),
-    ('LB', 'RB', 'UB', 'UF'),
-    ('LB', 'RB', 'UB', 'UL'),
-    ('LB', 'RB', 'UB', 'UR'),
-    ('LB', 'RB', 'DF', 'DL'),
-    ('LB', 'RB', 'DF', 'DR'),
-    ('LB', 'RB', 'DF', 'LF'),
-    ('LB', 'RB', 'DF', 'RF'),
-    ('LB', 'RB', 'DF', 'UF'),
-    ('LB', 'RB', 'DF', 'UL'),
-    ('LB', 'RB', 'DF', 'UR'),
-    ('LB', 'RB', 'DL', 'DR'),
-    ('LB', 'RB', 'DL', 'LF'),
-    ('LB', 'RB', 'DL', 'RF'),
-    ('LB', 'RB', 'DL', 'UF'),
-    ('LB', 'RB', 'DL', 'UL'),
-    ('LB', 'RB', 'DL', 'UR'),
-    ('LB', 'RB', 'DR', 'LF'),
-    ('LB', 'RB', 'DR', 'RF'),
-    ('LB', 'RB', 'DR', 'UF'),
-    ('LB', 'RB', 'DR', 'UL'),
-    ('LB', 'RB', 'DR', 'UR'),
-    ('LB', 'RB', 'LF', 'RF'),
-    ('LB', 'RB', 'LF', 'UF'),
-    ('LB', 'RB', 'LF', 'UL'),
-    ('LB', 'RB', 'LF', 'UR'),
-    ('LB', 'RB', 'RF', 'UF'),
-    ('LB', 'RB', 'RF', 'UL'),
-    ('LB', 'RB', 'RF', 'UR'),
-    ('LB', 'RB', 'UF', 'UL'),
-    ('LB', 'RB', 'UF', 'UR'),
-    ('LB', 'RB', 'UL', 'UR'),
-    ('LB', 'UB', 'DF', 'DL'),
-    ('LB', 'UB', 'DF', 'DR'),
-    ('LB', 'UB', 'DF', 'LF'),
-    ('LB', 'UB', 'DF', 'RF'),
-    ('LB', 'UB', 'DF', 'UF'),
-    ('LB', 'UB', 'DF', 'UL'),
-    ('LB', 'UB', 'DF', 'UR'),
-    ('LB', 'UB', 'DL', 'DR'),
-    ('LB', 'UB', 'DL', 'LF'),
-    ('LB', 'UB', 'DL', 'RF'),
-    ('LB', 'UB', 'DL', 'UF'),
-    ('LB', 'UB', 'DL', 'UL'),
-    ('LB', 'UB', 'DL', 'UR'),
-    ('LB', 'UB', 'DR', 'LF'),
-    ('LB', 'UB', 'DR', 'RF'),
-    ('LB', 'UB', 'DR', 'UF'),
-    ('LB', 'UB', 'DR', 'UL'),
-    ('LB', 'UB', 'DR', 'UR'),
-    ('LB', 'UB', 'LF', 'RF'),
-    ('LB', 'UB', 'LF', 'UF'),
-    ('LB', 'UB', 'LF', 'UL'),
-    ('LB', 'UB', 'LF', 'UR'),
-    ('LB', 'UB', 'RF', 'UF'),
-    ('LB', 'UB', 'RF', 'UL'),
-    ('LB', 'UB', 'RF', 'UR'),
-    ('LB', 'UB', 'UF', 'UL'),
-    ('LB', 'UB', 'UF', 'UR'),
-    ('LB', 'UB', 'UL', 'UR'),
-    ('LB', 'DF', 'DL', 'DR'),
-    ('LB', 'DF', 'DL', 'LF'),
-    ('LB', 'DF', 'DL', 'RF'),
-    ('LB', 'DF', 'DL', 'UF'),
-    ('LB', 'DF', 'DL', 'UL'),
-    ('LB', 'DF', 'DL', 'UR'),
-    ('LB', 'DF', 'DR', 'LF'),
-    ('LB', 'DF', 'DR', 'RF'),
-    ('LB', 'DF', 'DR', 'UF'),
-    ('LB', 'DF', 'DR', 'UL'),
-    ('LB', 'DF', 'DR', 'UR'),
-    ('LB', 'DF', 'LF', 'RF'),
-    ('LB', 'DF', 'LF', 'UF'),
-    ('LB', 'DF', 'LF', 'UL'),
-    ('LB', 'DF', 'LF', 'UR'),
-    ('LB', 'DF', 'RF', 'UF'),
-    ('LB', 'DF', 'RF', 'UL'),
-    ('LB', 'DF', 'RF', 'UR'),
-    ('LB', 'DF', 'UF', 'UL'),
-    ('LB', 'DF', 'UF', 'UR'),
-    ('LB', 'DF', 'UL', 'UR'),
-    ('LB', 'DL', 'DR', 'LF'),
-    ('LB', 'DL', 'DR', 'RF'),
-    ('LB', 'DL', 'DR', 'UF'),
-    ('LB', 'DL', 'DR', 'UL'),
-    ('LB', 'DL', 'DR', 'UR'),
-    ('LB', 'DL', 'LF', 'RF'),
-    ('LB', 'DL', 'LF', 'UF'),
-    ('LB', 'DL', 'LF', 'UL'),
-    ('LB', 'DL', 'LF', 'UR'),
-    ('LB', 'DL', 'RF', 'UF'),
-    ('LB', 'DL', 'RF', 'UL'),
-    ('LB', 'DL', 'RF', 'UR'),
-    ('LB', 'DL', 'UF', 'UL'),
-    ('LB', 'DL', 'UF', 'UR'),
-    ('LB', 'DL', 'UL', 'UR'),
-    ('LB', 'DR', 'LF', 'RF'),
-    ('LB', 'DR', 'LF', 'UF'),
-    ('LB', 'DR', 'LF', 'UL'),
-    ('LB', 'DR', 'LF', 'UR'),
-    ('LB', 'DR', 'RF', 'UF'),
-    ('LB', 'DR', 'RF', 'UL'),
-    ('LB', 'DR', 'RF', 'UR'),
-    ('LB', 'DR', 'UF', 'UL'),
-    ('LB', 'DR', 'UF', 'UR'),
-    ('LB', 'DR', 'UL', 'UR'),
-    ('LB', 'LF', 'RF', 'UF'),
-    ('LB', 'LF', 'RF', 'UL'),
-    ('LB', 'LF', 'RF', 'UR'),
-    ('LB', 'LF', 'UF', 'UL'),
-    ('LB', 'LF', 'UF', 'UR'),
-    ('LB', 'LF', 'UL', 'UR'),
-    ('LB', 'RF', 'UF', 'UL'),
-    ('LB', 'RF', 'UF', 'UR'),
-    ('LB', 'RF', 'UL', 'UR'),
-    ('LB', 'UF', 'UL', 'UR'),
-    ('RB', 'UB', 'DF', 'DL'),
-    ('RB', 'UB', 'DF', 'DR'),
-    ('RB', 'UB', 'DF', 'LF'),
-    ('RB', 'UB', 'DF', 'RF'),
-    ('RB', 'UB', 'DF', 'UF'),
-    ('RB', 'UB', 'DF', 'UL'),
-    ('RB', 'UB', 'DF', 'UR'),
-    ('RB', 'UB', 'DL', 'DR'),
-    ('RB', 'UB', 'DL', 'LF'),
-    ('RB', 'UB', 'DL', 'RF'),
-    ('RB', 'UB', 'DL', 'UF'),
-    ('RB', 'UB', 'DL', 'UL'),
-    ('RB', 'UB', 'DL', 'UR'),
-    ('RB', 'UB', 'DR', 'LF'),
-    ('RB', 'UB', 'DR', 'RF'),
-    ('RB', 'UB', 'DR', 'UF'),
-    ('RB', 'UB', 'DR', 'UL'),
-    ('RB', 'UB', 'DR', 'UR'),
-    ('RB', 'UB', 'LF', 'RF'),
-    ('RB', 'UB', 'LF', 'UF'),
-    ('RB', 'UB', 'LF', 'UL'),
-    ('RB', 'UB', 'LF', 'UR'),
-    ('RB', 'UB', 'RF', 'UF'),
-    ('RB', 'UB', 'RF', 'UL'),
-    ('RB', 'UB', 'RF', 'UR'),
-    ('RB', 'UB', 'UF', 'UL'),
-    ('RB', 'UB', 'UF', 'UR'),
-    ('RB', 'UB', 'UL', 'UR'),
-    ('RB', 'DF', 'DL', 'DR'),
-    ('RB', 'DF', 'DL', 'LF'),
-    ('RB', 'DF', 'DL', 'RF'),
-    ('RB', 'DF', 'DL', 'UF'),
-    ('RB', 'DF', 'DL', 'UL'),
-    ('RB', 'DF', 'DL', 'UR'),
-    ('RB', 'DF', 'DR', 'LF'),
-    ('RB', 'DF', 'DR', 'RF'),
-    ('RB', 'DF', 'DR', 'UF'),
-    ('RB', 'DF', 'DR', 'UL'),
-    ('RB', 'DF', 'DR', 'UR'),
-    ('RB', 'DF', 'LF', 'RF'),
-    ('RB', 'DF', 'LF', 'UF'),
-    ('RB', 'DF', 'LF', 'UL'),
-    ('RB', 'DF', 'LF', 'UR'),
-    ('RB', 'DF', 'RF', 'UF'),
-    ('RB', 'DF', 'RF', 'UL'),
-    ('RB', 'DF', 'RF', 'UR'),
-    ('RB', 'DF', 'UF', 'UL'),
-    ('RB', 'DF', 'UF', 'UR'),
-    ('RB', 'DF', 'UL', 'UR'),
-    ('RB', 'DL', 'DR', 'LF'),
-    ('RB', 'DL', 'DR', 'RF'),
-    ('RB', 'DL', 'DR', 'UF'),
-    ('RB', 'DL', 'DR', 'UL'),
-    ('RB', 'DL', 'DR', 'UR'),
-    ('RB', 'DL', 'LF', 'RF'),
-    ('RB', 'DL', 'LF', 'UF'),
-    ('RB', 'DL', 'LF', 'UL'),
-    ('RB', 'DL', 'LF', 'UR'),
-    ('RB', 'DL', 'RF', 'UF'),
-    ('RB', 'DL', 'RF', 'UL'),
-    ('RB', 'DL', 'RF', 'UR'),
-    ('RB', 'DL', 'UF', 'UL'),
-    ('RB', 'DL', 'UF', 'UR'),
-    ('RB', 'DL', 'UL', 'UR'),
-    ('RB', 'DR', 'LF', 'RF'),
-    ('RB', 'DR', 'LF', 'UF'),
-    ('RB', 'DR', 'LF', 'UL'),
-    ('RB', 'DR', 'LF', 'UR'),
-    ('RB', 'DR', 'RF', 'UF'),
-    ('RB', 'DR', 'RF', 'UL'),
-    ('RB', 'DR', 'RF', 'UR'),
-    ('RB', 'DR', 'UF', 'UL'),
-    ('RB', 'DR', 'UF', 'UR'),
-    ('RB', 'DR', 'UL', 'UR'),
-    ('RB', 'LF', 'RF', 'UF'),
-    ('RB', 'LF', 'RF', 'UL'),
-    ('RB', 'LF', 'RF', 'UR'),
-    ('RB', 'LF', 'UF', 'UL'),
-    ('RB', 'LF', 'UF', 'UR'),
-    ('RB', 'LF', 'UL', 'UR'),
-    ('RB', 'RF', 'UF', 'UL'),
-    ('RB', 'RF', 'UF', 'UR'),
-    ('RB', 'RF', 'UL', 'UR'),
-    ('RB', 'UF', 'UL', 'UR'),
-    ('UB', 'DF', 'DL', 'DR'),
-    ('UB', 'DF', 'DL', 'LF'),
-    ('UB', 'DF', 'DL', 'RF'),
-    ('UB', 'DF', 'DL', 'UF'),
-    ('UB', 'DF', 'DL', 'UL'),
-    ('UB', 'DF', 'DL', 'UR'),
-    ('UB', 'DF', 'DR', 'LF'),
-    ('UB', 'DF', 'DR', 'RF'),
-    ('UB', 'DF', 'DR', 'UF'),
-    ('UB', 'DF', 'DR', 'UL'),
-    ('UB', 'DF', 'DR', 'UR'),
-    ('UB', 'DF', 'LF', 'RF'),
-    ('UB', 'DF', 'LF', 'UF'),
-    ('UB', 'DF', 'LF', 'UL'),
-    ('UB', 'DF', 'LF', 'UR'),
-    ('UB', 'DF', 'RF', 'UF'),
-    ('UB', 'DF', 'RF', 'UL'),
-    ('UB', 'DF', 'RF', 'UR'),
-    ('UB', 'DF', 'UF', 'UL'),
-    ('UB', 'DF', 'UF', 'UR'),
-    ('UB', 'DF', 'UL', 'UR'),
-    ('UB', 'DL', 'DR', 'LF'),
-    ('UB', 'DL', 'DR', 'RF'),
-    ('UB', 'DL', 'DR', 'UF'),
-    ('UB', 'DL', 'DR', 'UL'),
-    ('UB', 'DL', 'DR', 'UR'),
-    ('UB', 'DL', 'LF', 'RF'),
-    ('UB', 'DL', 'LF', 'UF'),
-    ('UB', 'DL', 'LF', 'UL'),
-    ('UB', 'DL', 'LF', 'UR'),
-    ('UB', 'DL', 'RF', 'UF'),
-    ('UB', 'DL', 'RF', 'UL'),
-    ('UB', 'DL', 'RF', 'UR'),
-    ('UB', 'DL', 'UF', 'UL'),
-    ('UB', 'DL', 'UF', 'UR'),
-    ('UB', 'DL', 'UL', 'UR'),
-    ('UB', 'DR', 'LF', 'RF'),
-    ('UB', 'DR', 'LF', 'UF'),
-    ('UB', 'DR', 'LF', 'UL'),
-    ('UB', 'DR', 'LF', 'UR'),
-    ('UB', 'DR', 'RF', 'UF'),
-    ('UB', 'DR', 'RF', 'UL'),
-    ('UB', 'DR', 'RF', 'UR'),
-    ('UB', 'DR', 'UF', 'UL'),
-    ('UB', 'DR', 'UF', 'UR'),
-    ('UB', 'DR', 'UL', 'UR'),
-    ('UB', 'LF', 'RF', 'UF'),
-    ('UB', 'LF', 'RF', 'UL'),
-    ('UB', 'LF', 'RF', 'UR'),
-    ('UB', 'LF', 'UF', 'UL'),
-    ('UB', 'LF', 'UF', 'UR'),
-    ('UB', 'LF', 'UL', 'UR'),
-    ('UB', 'RF', 'UF', 'UL'),
-    ('UB', 'RF', 'UF', 'UR'),
-    ('UB', 'RF', 'UL', 'UR'),
-    ('UB', 'UF', 'UL', 'UR'),
-    ('DF', 'DL', 'DR', 'LF'),
-    ('DF', 'DL', 'DR', 'RF'),
-    ('DF', 'DL', 'DR', 'UF'),
-    ('DF', 'DL', 'DR', 'UL'),
-    ('DF', 'DL', 'DR', 'UR'),
-    ('DF', 'DL', 'LF', 'RF'),
-    ('DF', 'DL', 'LF', 'UF'),
-    ('DF', 'DL', 'LF', 'UL'),
-    ('DF', 'DL', 'LF', 'UR'),
-    ('DF', 'DL', 'RF', 'UF'),
-    ('DF', 'DL', 'RF', 'UL'),
-    ('DF', 'DL', 'RF', 'UR'),
-    ('DF', 'DL', 'UF', 'UL'),
-    ('DF', 'DL', 'UF', 'UR'),
-    ('DF', 'DL', 'UL', 'UR'),
-    ('DF', 'DR', 'LF', 'RF'),
-    ('DF', 'DR', 'LF', 'UF'),
-    ('DF', 'DR', 'LF', 'UL'),
-    ('DF', 'DR', 'LF', 'UR'),
-    ('DF', 'DR', 'RF', 'UF'),
-    ('DF', 'DR', 'RF', 'UL'),
-    ('DF', 'DR', 'RF', 'UR'),
-    ('DF', 'DR', 'UF', 'UL'),
-    ('DF', 'DR', 'UF', 'UR'),
-    ('DF', 'DR', 'UL', 'UR'),
-    ('DF', 'LF', 'RF', 'UF'),
-    ('DF', 'LF', 'RF', 'UL'),
-    ('DF', 'LF', 'RF', 'UR'),
-    ('DF', 'LF', 'UF', 'UL'),
-    ('DF', 'LF', 'UF', 'UR'),
-    ('DF', 'LF', 'UL', 'UR'),
-    ('DF', 'RF', 'UF', 'UL'),
-    ('DF', 'RF', 'UF', 'UR'),
-    ('DF', 'RF', 'UL', 'UR'),
-    ('DF', 'UF', 'UL', 'UR'),
-    ('DL', 'DR', 'LF', 'RF'),
-    ('DL', 'DR', 'LF', 'UF'),
-    ('DL', 'DR', 'LF', 'UL'),
-    ('DL', 'DR', 'LF', 'UR'),
-    ('DL', 'DR', 'RF', 'UF'),
-    ('DL', 'DR', 'RF', 'UL'),
-    ('DL', 'DR', 'RF', 'UR'),
-    ('DL', 'DR', 'UF', 'UL'),
-    ('DL', 'DR', 'UF', 'UR'),
-    ('DL', 'DR', 'UL', 'UR'),
-    ('DL', 'LF', 'RF', 'UF'),
-    ('DL', 'LF', 'RF', 'UL'),
-    ('DL', 'LF', 'RF', 'UR'),
-    ('DL', 'LF', 'UF', 'UL'),
-    ('DL', 'LF', 'UF', 'UR'),
-    ('DL', 'LF', 'UL', 'UR'),
-    ('DL', 'RF', 'UF', 'UL'),
-    ('DL', 'RF', 'UF', 'UR'),
-    ('DL', 'RF', 'UL', 'UR'),
-    ('DL', 'UF', 'UL', 'UR'),
-    ('DR', 'LF', 'RF', 'UF'),
-    ('DR', 'LF', 'RF', 'UL'),
-    ('DR', 'LF', 'RF', 'UR'),
-    ('DR', 'LF', 'UF', 'UL'),
-    ('DR', 'LF', 'UF', 'UR'),
-    ('DR', 'LF', 'UL', 'UR'),
-    ('DR', 'RF', 'UF', 'UL'),
-    ('DR', 'RF', 'UF', 'UR'),
-    ('DR', 'RF', 'UL', 'UR'),
-    ('DR', 'UF', 'UL', 'UR'),
-    ('LF', 'RF', 'UF', 'UL'),
-    ('LF', 'RF', 'UF', 'UR'),
-    ('LF', 'RF', 'UL', 'UR'),
-    ('LF', 'UF', 'UL', 'UR'),
-    ('RF', 'UF', 'UL', 'UR'),
-)
 
 
 swaps_555 = {'2B': (0, 1, 2, 3, 4, 5, 79, 84, 89, 94, 99, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 10, 28, 29, 30, 31, 9, 33, 34, 35, 36, 8, 38, 39, 40, 41, 7, 43, 44, 45, 46, 6, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 145, 80, 81, 82, 83, 144, 85, 86, 87, 88, 143, 90, 91, 92, 93, 142, 95, 96, 97, 98, 141, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 27, 32, 37, 42, 47, 146, 147, 148, 149, 150),

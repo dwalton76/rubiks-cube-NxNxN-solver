@@ -1201,6 +1201,9 @@ class LookupTableIDA(LookupTable):
                 delta = end_time1 - start_time0
                 nodes_per_sec = int(total_ida_count / delta.total_seconds())
                 log.info("%s: IDA explored %d nodes in %s, %d nodes-per-sec" % (self, total_ida_count, delta, nodes_per_sec))
+                self.explored = {}
+                self.ida_nodes = {}
+                gc.collect()
                 return True
             else:
                 end_time1 = dt.datetime.now()

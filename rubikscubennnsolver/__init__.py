@@ -411,29 +411,47 @@ def orbit_matches(edges_per_side, orbit, edge_index):
 
     # Even cube
     if edges_per_side % 2 == 0:
+
+        if edges_per_side == 2:
+            assert edge_index in (0, 1), "Invalid edge_index %d" % edge_index
+        elif edges_per_side == 4:
+            assert edge_index in (0, 1, 2, 3), "Invalid edge_index %d" % edge_index
+        else:
+            assert False, "Only 4x4x4 and 6x6x6 supported"
+
         if orbit == 0:
             if edge_index == 0 or edge_index == edges_per_side-1:
                 return True
             return False
 
-        if orbit == 1:
+        elif orbit == 1:
             if edge_index == 1 or edge_index == edges_per_side-2:
                 return True
             return False
 
-        if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
-            return True
+        else:
+            raise Exception("Invalid oribit %d" % orbit)
+
+        #if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
+        #    return True
 
     # Odd cube
     else:
+        assert edges_per_side == 3, "Only 5x5x5 supported here"
+        assert edge_index in (0, 1, 2), "Invalid edge_index %d" % edge_index
+
         if orbit == 0:
-            raise Exception("This should not be called for orbit 0 on an odd cube")
+            if edge_index == 0 or edge_index == 2:
+                return True
+            return False
 
-        center_edge_index = int(edges_per_side/2)
+        elif orbit == 1:
+            if edge_index == 1:
+                return True
+            return False
 
-        if edge_index == center_edge_index - orbit or edge_index == center_edge_index + orbit:
-            return True
-        return False
+        else:
+            raise Exception("Invalid oribit %d" % orbit)
 
     return False
 
@@ -2879,6 +2897,7 @@ class RubiksCube(object):
         for side in (self.sideU, self.sideD):
             for pos in side.center_pos:
                 if self.state[pos] not in ('U', 'D'):
+                    #log.info("%s: UD_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
                     return False
         return True
 
@@ -2886,8 +2905,22 @@ class RubiksCube(object):
         for side in (self.sideL, self.sideR):
             for pos in side.center_pos:
                 if self.state[pos] not in ('L', 'R'):
+                    #log.info("%s: LR_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
                     return False
         return True
+
+    def FB_centers_staged(self):
+        for side in (self.sideF, self.sideB):
+            for pos in side.center_pos:
+                if self.state[pos] not in ('F', 'B'):
+                    #log.info("%s: FB_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
+                    return False
+        return True
+
+    def centers_staged(self):
+        if self.UD_centers_staged() and self.LR_centers_staged() and self.FB_centers_staged():
+            return True
+        return False
 
     def rotate_side_X_to_Y(self, x, y):
         #assert x in ('U', 'L', 'F', 'R', 'B', 'D'), "Invalid side %s" % x
@@ -3387,6 +3420,7 @@ class RubiksCube(object):
                 needed_edges.append('UB')
                 break
             else:
+                # dwalton
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
                     needed_edges.append('UB%d' % edge_index)
@@ -3704,7 +3738,7 @@ class RubiksCube(object):
             if self.size == 3:
                 return []
 
-            orbit_start = 1
+            orbit_start = 0
             orbits = int((self.size - 2 - 1) / 2) + 1
 
         orbits_with_oll_parity = []

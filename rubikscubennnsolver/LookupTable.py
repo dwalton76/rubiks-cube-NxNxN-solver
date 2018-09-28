@@ -608,7 +608,6 @@ class LookupTable(object):
                 for step in steps:
                     self.parent.rotate(step)
             else:
-                # dwalton
                 #self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
 
@@ -1082,18 +1081,21 @@ class LookupTableIDA(LookupTable):
         else:
             return None
 
-    # uncomment to cProfile solve()
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
+        """
+        The goal is to find a sequence of moves that will put the cube in a state that is
+        in our lookup table
+        """
+
+    # uncomment to cProfile solve()
         '''
+        pass
+
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
             profile.runctx('self.solve_with_cprofile()', globals(), locals())
 
     def solve_with_cprofile(self, min_ida_threshold=None, max_ida_threshold=99):
         '''
-        """
-        The goal is to find a sequence of moves that will put the cube in a state that is
-        in our lookup table
-        """
 
         if self.parent.size == 2:
             from rubikscubennnsolver.RubiksCube222 import rotate_222

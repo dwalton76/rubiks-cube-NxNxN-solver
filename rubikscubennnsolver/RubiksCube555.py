@@ -3,6 +3,7 @@
 from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map, wing_strs_all
 from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e, wing_str_combos_two, wing_str_combos_four
 from rubikscubennnsolver.RubiksSide import SolveError
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
@@ -534,15 +535,13 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
                     state[partner_index] = midges_map[wing_str].upper()
 
                 # If this is a low wing use the lowercase of the midge edge_index
-                elif high_low == 'D':
+                # high_low will be 'D' here
+                else:
                     state[square_index] = midges_map[wing_str]
                     state[partner_index] = midges_map[wing_str]
 
-                else:
-                    raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
-
     # Where is the midge for each high/low wing?
-    for (edge_index, square_index, partner_index) in edges_recolor_tuples_555:
+    for (_, square_index, partner_index) in edges_recolor_tuples_555:
         square_value = state[square_index]
         partner_value = state[partner_index]
 
@@ -569,12 +568,10 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
                     state[partner_index] = midges_map[wing_str].upper()
 
                 # If this is a low wing use the lowercase of the midge edge_index
-                elif high_low == 'D':
+                # high_low will be 'D' here
+                else:
                     state[square_index] = midges_map[wing_str]
                     state[partner_index] = midges_map[wing_str]
-
-                else:
-                    raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
 
     return ''.join(state)
 
@@ -819,7 +816,6 @@ class LookupTable555LRCenterStage(LookupTableHashCostOnly):
 
 
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
-    # dwalton with some work to 666 we should be able to delete the centers solving code
     """
     24,010,000/117,649,000,000 is 0.000 204 so this will be a fast IDA search
 
@@ -1240,8 +1236,13 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
 
     def search_complete(self, state, steps_to_here):
         if LookupTableIDA.search_complete(self, state, steps_to_here):
-            if len(self.parent.edges_pairable_via_tsai_phase2()) >= 4:
-                log.info("%s: found solution where at least 4-edges are split into high/low groups" % self)
+            # Technically we only need 4-edges to be in high/low groups but that leaves us
+            # zero wiggle room for the next phase, we will HAVE to pair those 4-edges and
+            # if we hit some bad luck they could take a higher number of moves than is typical
+            # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
+            # of 4-edges to choose from..
+            if len(self.parent.edges_pairable_via_tsai_phase2()) >= 6:
+                log.info("%s: found solution where at least 6-edges are split into high/low groups" % self)
                 return True
             else:
                 #log.info("%s: found solution but edges are NOT split into high/low groups" % self)
@@ -1265,6 +1266,176 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
         #log.info("%s: lt_state %s, cost_to_goal %d, LR_stage_cost_to_goal %d, LR_432_x_centers_cost_to_goal %d, LR_432_t_centers_cost_to_goal %d" %
         #    (self, lt_state, cost_to_goal,
         #     LR_stage_cost_to_goal, LR_432_x_centers_cost_to_goal, LR_432_t_centers_cost_to_goal))
+        return (lt_state, cost_to_goal)
+
+
+#class LookupTable555EdgesZPlaneEdgesOnly(LookupTable):
+class LookupTable555EdgesZPlaneEdgesOnly(LookupTableHashCostOnly):
+    """
+    lookup-table-5x5x5-step341-edges-z-plane-edges-only.txt
+    =======================================================
+    1 steps has 8 entries (0 percent, 0.00x previous step)
+    2 steps has 57 entries (0 percent, 7.12x previous step)
+    3 steps has 465 entries (0 percent, 8.16x previous step)
+    4 steps has 4,353 entries (0 percent, 9.36x previous step)
+    5 steps has 37,446 entries (0 percent, 8.60x previous step)
+    6 steps has 298,557 entries (0 percent, 7.97x previous step)
+    7 steps has 2,142,656 entries (0 percent, 7.18x previous step)
+    8 steps has 13,032,706 entries (3 percent, 6.08x previous step)
+    9 steps has 60,364,543 entries (15 percent, 4.63x previous step)
+    10 steps has 162,774,838 entries (42 percent, 2.70x previous step)
+    11 steps has 137,246,021 entries (35 percent, 0.84x previous step)
+    12 steps has 7,426,338 entries (1 percent, 0.05x previous step)
+    13 steps has 12 entries (0 percent, 0.00x previous step)
+
+    Total: 383,328,000 entries
+    Average: 10.15 moves
+    """
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step341-edges-z-plane-edges-only.txt',
+            '---pPPQQq------------------xXX------',
+            linecount=383328000,
+            max_depth=13,
+            filesize=31432896000)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step341-edges-z-plane-edges-only.hash-cost-only.txt',
+            '---pPPQQq------------------xXX------',
+            linecount=1,
+            max_depth=13,
+            bucketcount=383328041,
+            filesize=383328042)
+
+    def ida_heuristic(self, ida_threshold):
+        assert self.only_colors and len(self.only_colors) == 3, "You must specify which 3-edges"
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_555(parent_state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555EdgesZPlaneCentersOnly(LookupTable):
+    """
+    lookup-table-5x5x5-step342-edges-z-plane-centers-only.txt
+    =========================================================
+    1 steps has 18 entries (4 percent, 0.00x previous step)
+    2 steps has 38 entries (8 percent, 2.11x previous step)
+    3 steps has 74 entries (17 percent, 1.95x previous step)
+    4 steps has 108 entries (25 percent, 1.46x previous step)
+    5 steps has 102 entries (23 percent, 0.94x previous step)
+    6 steps has 52 entries (12 percent, 0.51x previous step)
+    7 steps has 40 entries (9 percent, 0.77x previous step)
+
+    Total: 432 entries
+    Average: 4.28 moves
+    """
+
+    state_targets = (
+        'LLLLLLLLLRRRRRRRRR',
+        'LLLLLLRRRLLLRRRRRR',
+        'LLLLLLRRRRRRRRRLLL',
+        'RRRLLLLLLLLLRRRRRR',
+        'RRRLLLLLLRRRRRRLLL',
+        'RRRLLLRRRLLLRRRLLL'
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step342-edges-z-plane-centers-only.txt',
+            self.state_targets,
+            linecount=432,
+            max_depth=7,
+            filesize=19872)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in LR_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA555EdgesZPlane(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step340-edges-z-plane.txt
+    ============================================
+    1 steps has 30 entries (0 percent, 0.00x previous step)
+    2 steps has 264 entries (0 percent, 8.80x previous step)
+    3 steps has 2,764 entries (0 percent, 10.47x previous step)
+    4 steps has 29,276 entries (0 percent, 10.59x previous step)
+    5 steps has 319,486 entries (8 percent, 10.91x previous step)
+    6 steps has 3,457,886 entries (90 percent, 10.82x previous step)
+
+    Total: 3,809,706 entries
+    Average: 5.90 moves
+    """
+
+    state_targets = (
+        'LLLLLLLLLRRRRRRRRR---pPPQQq------------------xXXYYy---',
+        'LLLLLLRRRLLLRRRRRR---pPPQQq------------------xXXYYy---',
+        'LLLLLLRRRRRRRRRLLL---pPPQQq------------------xXXYYy---',
+        'RRRLLLLLLLLLRRRRRR---pPPQQq------------------xXXYYy---',
+        'RRRLLLLLLRRRRRRLLL---pPPQQq------------------xXXYYy---',
+        'RRRLLLRRRLLLRRRLLL---pPPQQq------------------xXXYYy---',
+    )
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step340-edges-z-plane.txt',
+            self.state_targets,
+            moves_555,
+
+            # illegal moves
+            ("Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'",
+             "Uw", "Uw'",
+             "Dw", "Dw'",
+             "L", "L'",
+             "R", "R'",
+            ),
+
+            # prune tables
+            (parent.lt_edges_z_plane_edges_only,
+             parent.lt_edges_z_plane_centers_only),
+
+            linecount=3809706,
+            max_depth=6,
+            filesize=297157068)
+
+    def ida_heuristic(self, ida_threshold):
+        # dwalton
+        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        (centers_state, centers_cost_to_goal) = self.parent.lt_edges_z_plane_centers_only.ida_heuristic(ida_threshold)
+        lt_state = centers_state + edges_state
+
+        three_wing_cost_to_goal = []
+
+        for three_wing_str_combo in itertools.combinations(self.only_colors, 3):
+            self.parent.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
+            (_, tmp_cost_to_goal) = self.parent.lt_edges_z_plane_edges_only.ida_heuristic(99)
+            three_wing_cost_to_goal.append(tmp_cost_to_goal)
+            break
+
+        edges_cost_to_goal = max(three_wing_cost_to_goal)
+        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+
+        #log.info("%s: lt_state %s, cost_to_goal %d, centers_cost_to_goal %d, edges_cost_to_goal %d, three_wing_cost_to_goal %s" % (
+        #    self, lt_state, cost_to_goal, centers_cost_to_goal, edges_cost_to_goal, pformat(three_wing_cost_to_goal)))
         return (lt_state, cost_to_goal)
 
 
@@ -1304,7 +1475,7 @@ class LookupTable555Step51(LookupTable):
             filesize=7883679375)
 
     def ida_heuristic(self, ida_threshold):
-        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        #assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         parent_state = self.parent.state
         state = []
 
@@ -1339,7 +1510,7 @@ class LookupTable555Step51HashCostOnly(LookupTableHashCostOnly):
             filesize=121287378)
 
     def ida_heuristic(self, ida_threshold):
-        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        #assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         parent_state = self.parent.state
         state = []
 
@@ -1503,6 +1674,9 @@ class LookupTableIDA555Step50(LookupTableIDA):
         lt_state = centers_state + edges_state
         cost_to_goal = max(centers_cost, edges_cost)
 
+        # No longer admissible but this speeds up the search a lot
+        cost_to_goal = int(cost_to_goal * 1.25)
+
         return (lt_state, cost_to_goal)
 
 
@@ -1540,7 +1714,7 @@ class LookupTable555EdgesYPlaneEdgesOnly(LookupTable):
             filesize=17188416000)
 
     def ida_heuristic(self, ida_threshold):
-        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        #assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         parent_state = self.parent.state
         state = edges_recolor_pattern_555(parent_state[:], self.only_colors)
         state = ''.join([state[index] for index in wings_for_edges_pattern_555])
@@ -1548,7 +1722,7 @@ class LookupTable555EdgesYPlaneEdgesOnly(LookupTable):
         return (state, cost_to_goal)
 
     def state(self):
-        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        #assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         edges_state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
         edges_state = ''.join([edges_state[index] for index in wings_for_edges_pattern_555])
         return edges_state
@@ -1568,7 +1742,7 @@ class LookupTable555EdgesYPlaneEdgesOnlyHashCostOnly(LookupTableHashCostOnly):
             filesize=197568012)
 
     def ida_heuristic(self, ida_threshold):
-        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        #assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         parent_state = self.parent.state
         state = edges_recolor_pattern_555(parent_state[:], self.only_colors)
         state = ''.join([state[index] for index in wings_for_edges_pattern_555])
@@ -1737,6 +1911,9 @@ class LookupTableIDA555EdgesYPlane(LookupTableIDA):
         lt_state = centers_state + edges_state
         cost_to_goal = max(edges_cost, centers_cost)
 
+        # No longer admissible but this speeds up the search a lot
+        cost_to_goal = int(cost_to_goal * 1.25)
+
         return (lt_state, cost_to_goal)
 
 
@@ -1773,7 +1950,7 @@ class LookupTable555EdgesXPlaneEdgesOnly(LookupTable):
             filesize=3346560)
 
     def ida_heuristic(self, ida_threshold):
-        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        #assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
         edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
 
@@ -1967,6 +2144,12 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_432_x_centers_only.preload_cache_string()
         self.lt_LR_432_t_centers_only.preload_cache_string()
 
+        # dwalton
+        self.lt_edges_z_plane_edges_only = LookupTable555EdgesZPlaneEdgesOnly(self)
+        self.lt_edges_z_plane_centers_only = LookupTable555EdgesZPlaneCentersOnly(self)
+        self.lt_edges_z_plane = LookupTableIDA555EdgesZPlane(self)
+        self.lt_edges_z_plane_centers_only.preload_cache_dict()
+
         self.lt_step51 = LookupTable555Step51(self)
         self.lt_step51_ht = LookupTable555Step51HashCostOnly(self)
         self.lt_step52 = LookupTable555Step52(self)
@@ -1984,7 +2167,6 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_x_plane = LookupTableIDA555EdgesXPlane(self)
         self.lt_edges_x_plane_edges_only.preload_cache_dict()
         self.lt_edges_x_plane_centers_only.preload_cache_dict()
-        self.lt_edges_x_plane.preload_cache_dict()
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
@@ -2337,7 +2519,7 @@ class RubiksCube555(RubiksCube):
         pairable = []
 
         for wing_str in wing_strs_all:
-            self.lt_LR_432_pair_one_edge.only_colors = [wing_str,]
+            self.lt_LR_432_pair_one_edge.only_colors = set([wing_str, ])
             self.state = original_state[:]
             self.solution = original_solution[:]
 
@@ -2348,7 +2530,7 @@ class RubiksCube555(RubiksCube):
             except NoSteps:
                 pass
 
-        self.lt_LR_432_pair_one_edge.only_colors = []
+        self.lt_LR_432_pair_one_edge.only_colors = set()
         self.state = original_state[:]
         self.solution = original_solution[:]
 
@@ -2386,8 +2568,6 @@ class RubiksCube555(RubiksCube):
                 partner_value = self.state[partner_index]
                 wing_str = wing_str_map[square_value + partner_value]
                 to_flip.append(wing_str)
-
-        #log.info("%s: edges_flip_to_original_orientation %s" % (self, pformat(to_flip)))
 
         for square_index in wings_for_edges_pattern_555:
             partner_index = edges_partner_555[square_index]
@@ -2432,13 +2612,13 @@ class RubiksCube555(RubiksCube):
 
             # Find a wing_str_combo that is solveable
             for wing_str_combo in itertools.combinations(eight_unpaired_wing_strs, 4):
-                self.lt_step201.only_colors = wing_str_combo
-                self.lt_step201_ht.only_colors = wing_str_combo
+                self.lt_step201.only_colors = set(wing_str_combo)
+                self.lt_step201_ht.only_colors = set(wing_str_combo)
                 self.state = post_edges_flip_state[:]
                 self.solution = original_solution[:]
 
                 try:
-                    # dwalton use the PairOneEdge table x4 instead so we can avoid having the entire step201 table...it is huge
+                    # TODO use the PairOneEdge table x4 instead so we can avoid having the entire step201 table...it is huge
                     self.lt_step201.solve()
                     solution_steps = self.solution[original_solution_len:]
                     solution_len = len(solution_steps)
@@ -2461,12 +2641,12 @@ class RubiksCube555(RubiksCube):
 
             self.state = post_edges_flip_state[:]
             self.solution = original_solution[:]
-            self.lt_step201.only_colors = min_wing_str_combo
-            self.lt_step201_ht.only_colors = min_wing_str_combo
+            self.lt_step201.only_colors = set(min_wing_str_combo)
+            self.lt_step201_ht.only_colors = set(min_wing_str_combo)
 
             self.lt_step200.solve()
-            self.lt_step201.only_colors = ()
-            self.lt_step201_ht.only_colors = ()
+            self.lt_step201.only_colors = []
+            self.lt_step201_ht.only_colors = []
 
             second_l4e_solution = self.solution[original_solution_len:]
             self.state = original_state[:]
@@ -2479,8 +2659,8 @@ class RubiksCube555(RubiksCube):
             assert self.y_plane_edges_paired(), "4-edges in y-plane should have paired"
             log.info("%s: UD horiztonal bars, LR vertical bars, y-plane edges %s paired, z-plane edges in L4E, %d steps in" % (
                 (self, pformat(self.lt_step201.only_colors), self.get_solution_len_minus_rotates(self.solution))))
-            self.lt_step201.only_colors = ()
-            self.lt_step201_ht.only_colors = ()
+            self.lt_step201.only_colors = []
+            self.lt_step201_ht.only_colors = []
 
     def pair_x_plane_edges(self):
 
@@ -2497,13 +2677,13 @@ class RubiksCube555(RubiksCube):
         original_paired_edges_count = self.get_paired_edges_count()
 
         # The 4 paired edges are in the x-plane
-        only_colors = []
+        only_colors = set()
         for square_index in (36, 40, 86, 90):
             partner_index = edges_partner_555[square_index]
             square_value = self.state[square_index]
             partner_value = self.state[partner_index]
             wing_str = wing_str_map[square_value + partner_value]
-            only_colors.append(wing_str)
+            only_colors.add(wing_str)
         self.lt_edges_x_plane_edges_only.only_colors = only_colors
         self.lt_edges_x_plane.only_colors = only_colors
 
@@ -2567,12 +2747,12 @@ class RubiksCube555(RubiksCube):
 
         for wing_str_combo in step51_wing_str_combos:
             wing_str_combo = sorted(wing_str_combo)
-            self.lt_step51.only_colors = wing_str_combo
+            self.lt_step51.only_colors = set(wing_str_combo)
             self.state = original_state[:]
             self.solution = original_solution[:]
 
             try:
-                # dwalton find a way to avoid having the entire step51 table...it is huge
+                # TODO find a way to avoid having the entire step51 table...it is huge
                 self.lt_step51.solve()
                 solution_steps = self.solution[original_solution_len:]
                 solution_len = len(solution_steps)
@@ -2589,17 +2769,94 @@ class RubiksCube555(RubiksCube):
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        self.lt_step51.only_colors = min_step51_wing_str
-        self.lt_step51_ht.only_colors = min_step51_wing_str
+        self.lt_step51.only_colors = set(min_step51_wing_str)
+        self.lt_step51_ht.only_colors = set(min_step51_wing_str)
         self.lt_step50.solve()
 
         self.print_cube()
         log.info("%s: LR vertical bars, FB vertical bars, L4E in x-plane, 4-edges in y-plane/z-plane are pairable without L L' R R', %d steps in" %
             (self, self.get_solution_len_minus_rotates(self.solution)))
 
+    def pair_edges_in_z_plane(self):
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(original_solution)
+
+        self.edges_flip_to_original_orientation()
+        pairable = self.edges_pairable_via_tsai_phase2()
+        log.info("%s: z-plane pairable edges %s" % (self, pformat(pairable)))
+
+        min_cost_to_goal = None
+        min_wing_str_combo = None
+
+        for wing_str_combo in itertools.combinations(pairable, 4):
+            wing_str_combo = sorted(wing_str_combo)
+            #log.info("wing_str_combo: %s" % pformat(wing_str_combo))
+            three_wing_cost_to_goal = []
+
+            for three_wing_str_combo in itertools.combinations(wing_str_combo, 3):
+                self.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
+                (_, tmp_cost_to_goal) = self.lt_edges_z_plane_edges_only.ida_heuristic(99)
+                #log.info("three_wing_str_combo: %s cost_to_goal %d" % (pformat(three_wing_str_combo), tmp_cost_to_goal))
+                three_wing_cost_to_goal.append(tmp_cost_to_goal)
+
+            cost_to_goal = max(three_wing_cost_to_goal)
+
+            if min_cost_to_goal is None or cost_to_goal < min_cost_to_goal:
+                min_cost_to_goal = cost_to_goal
+                min_wing_str_combo = wing_str_combo
+                log.info("z-plane wing_str_combo %s, cost_to_goal %d (NEW MIN)" % (pformat(wing_str_combo), cost_to_goal))
+            else:
+                log.info("z-plane wing_str_combo %s, cost_to_goal %d" % (pformat(wing_str_combo), cost_to_goal))
+
+        self.lt_edges_z_plane.only_colors = min_wing_str_combo
+        self.lt_edges_z_plane.solve()
+        z_plane_edges_solution = self.solution[original_solution_len:]
+
+        # dwalton
+        # Now put the cube back to the original state before we flipped all of
+        # the edges to their native orientation, then apply the solution we found.
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for step in z_plane_edges_solution:
+            self.rotate(step)
+
+        self.print_cube()
+        log.info("%s: LR centers in horizontal bars, z-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
     def reduce_333(self, fake_555=False):
         self.lt_init()
+
+        '''
+        if not self.centers_staged():
+            # TODO the IDA for this one is slow as dirt
+            # BDBULBULFRDLUFDBBBUBDLRFBRRRDFUBLBBLBRURRFUULDBUDLRFBUUFLBRBFRFFDLLUDURFBULFRLRBFRDBUDDDFRDFFULFDFFDUDFDBDRBLLURLDLBDULBDFBUUULURLRDRRLFDBRLUDLFLFRUFR
+            #self.lt_UD_centers_stage.avoid_oll = 0
+            #self.lt_LR_centers_stage.avoid_oll = 0
+            self.group_centers_stage_UD()
+            self.group_centers_stage_LR()
+
+        orbits_with_oll = self.center_solution_leads_to_oll_parity()
+        log.info("%s: orbits_with_oll %s" % (self, pformat(orbits_with_oll)))
+
+        if not self.centers_solved():
+            self.lt_ULFRBD_centers_solve.solve()
+            self.print_cube()
+            log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        orbits_with_oll = self.center_solution_leads_to_oll_parity()
+        log.info("%s: orbits_with_oll %s" % (self, pformat(orbits_with_oll)))
+
+        if not fake_555:
+            self.solution.append('CENTERS_SOLVED')
+        '''
+
+        '''
         self.LR_FB_vertical_bars_with_L4E_in_x_plane()
+
+        #kociemba = self.get_kociemba_string(True)
+        #log.info("%s: kociemba %s" % (self, kociemba))
 
         # Pair the 1st group of 4-edges in the y-plane
         self.pair_y_plane_edges()
@@ -2611,9 +2868,16 @@ class RubiksCube555(RubiksCube):
         # Pair the 3rd group of 4-edges in the x-plane
         self.rotate("x")
         self.pair_x_plane_edges()
+        '''
+
+        self.group_centers_stage_UD()
+        self.group_centers_stage_LR_to_432()
+        #kociemba = self.get_kociemba_string(True)
+        #log.info("%s: kociemba %s" % (self, kociemba))
+        self.pair_edges_in_z_plane()
+        sys.exit(0)
 
         if not fake_555:
-            self.solution.append('CENTERS_SOLVED')
             self.solution.append('EDGES_GROUPED')
 
 

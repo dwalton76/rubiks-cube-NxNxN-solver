@@ -1054,27 +1054,24 @@ class LookupTableIDA(LookupTable):
                 min_solution_len = None
                 min_solution = None
                 min_solution_state = None
+                original_solution_len = len(self.original_solution)
 
                 for (index, (lt_state, steps)) in enumerate(results.items()):
-                    step_count = len(steps.split())
                     steps_to_here = self.ida_nodes[lt_state]
-                    this_solution_len = len(steps_to_here) + step_count
-                    #log.info("%s: index %d, solution_len %d" % (self, index, this_solution_len))
 
-                    if (min_solution_len is None or this_solution_len < min_solution_len):
-                        if self.search_complete(lt_state, steps_to_here):
-                            this_solution = self.parent.solution[len(self.original_solution):]
-                            #log.info("%s: MIN lt_state %s, steps_to_here %s, step_count to target %s, solution_len %s" %
-                            #    (self, lt_state, " ".join(steps_to_here), step_count, this_solution_len))
+                    if self.search_complete(lt_state, steps_to_here):
+                        this_solution = self.parent.solution[original_solution_len:]
+                        this_solution_len = len(this_solution)
+
+                        if min_solution_len is None or this_solution_len < min_solution_len:
+                            #log.info("%s: MIN lt_state %s, this_solution %s, this_solution_len %s" %
+                            #    (self, lt_state, " ".join(this_solution), this_solution_len))
                             log.info("%s: %d/%d solution_len %s (NEW MIN)" % (self, index+1, num_results, this_solution_len))
                             min_solution_len = this_solution_len
                             min_solution = this_solution[:]
                             min_solution_state = lt_state
-                        #else:
-                        #    log.info("%s: %d/%d solution_len %s (search_complete False)" % (self, index+1, num_results, this_solution_len))
-                    #else:
-                    #    log.info("%s: %d/%d solution_len %s" % (self, index+1, num_results, this_solution_len))
 
+                #log.info("%s: returning min_solution %s" % (self, " ".join(min_solution)))
                 return min_solution
             else:
                 return None

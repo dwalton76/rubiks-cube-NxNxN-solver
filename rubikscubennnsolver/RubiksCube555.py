@@ -25,6 +25,8 @@ import sys
 
 log = logging.getLogger(__name__)
 
+MIN_EO_COUNT_FOR_STAGE_LR_432 = 5
+
 moves_555 = (
     "U", "U'", "U2", "Uw", "Uw'", "Uw2",
     "L", "L'", "L2", "Lw", "Lw'", "Lw2",
@@ -1241,8 +1243,8 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
             # if we hit some bad luck they could take a higher number of moves than is typical
             # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
             # of 4-edges to choose from..
-            if len(self.parent.edges_pairable_via_tsai_phase2()) >= 6:
-                log.info("%s: found solution where at least 6-edges are split into high/low groups" % self)
+            if len(self.parent.edges_pairable_via_tsai_phase2()) >= MIN_EO_COUNT_FOR_STAGE_LR_432:
+                log.info("%s: found solution where at least %d-edges are split into high/low groups" % (self, MIN_EO_COUNT_FOR_STAGE_LR_432))
                 return True
             else:
                 #log.info("%s: found solution but edges are NOT split into high/low groups" % self)
@@ -2089,8 +2091,8 @@ class RubiksCube555(RubiksCube):
 
         self.lt_LR_432_centers_stage.solve()
         self.print_cube()
-        log.info("%s: LR centers staged to one of 432 states, at least 6-edges are pairable without L L' R R', %d steps in" %
-            (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: LR centers staged to one of 432 states, at least %d-edges are pairable without L L' R R', %d steps in" %
+            (self, MIN_EO_COUNT_FOR_STAGE_LR_432, self.get_solution_len_minus_rotates(self.solution)))
 
     def edges_pairable_via_tsai_phase2(self):
         """
@@ -2178,19 +2180,51 @@ class RubiksCube555(RubiksCube):
     def pair_z_plane_edges(self):
         """
         When we staged the LR centers to one of 432 states we did so such that there
-        are at least 6 edges that can be paired without L L' R R'. Those will be
-        the "pairable" edges below. Find the combination of 4-edges that has the lowest
-        cost_to_goal, pair those edges and place them in the z-plane.  This phase
-        all puts the LR centers into horizontal bars.
+        are at least MIN_EO_COUNT_FOR_STAGE_LR_432 edges that can be paired without
+        L L' R R'. Those will be the "pairable" edges below. Find the combination of
+        4-edges that has the lowest cost_to_goal, pair those edges and place them in
+        the z-plane.  This phase also puts the LR centers into horizontal bars.
         """
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(original_solution)
 
         self.edges_flip_to_original_orientation()
+        poas_edges_flip_state = self.state[:]
         pairable = self.edges_pairable_via_tsai_phase2()
         log.info("%s: z-plane pairable edges %s" % (self, pformat(pairable)))
 
+        # This takes a good bit longer to run and doesn't make much diff on move count
+        '''
+        min_solution_len = None
+        min_wing_str_combo = None
+
+        # Which combination of 4-edges has the shortest solution?
+        for wing_str_combo in itertools.combinations(pairable, 4):
+            wing_str_combo = sorted(wing_str_combo)
+            self.state = poas_edges_flip_state[:]
+            self.solution = original_solution[:]
+
+            self.lt_edges_z_plane.only_colors = wing_str_combo
+            self.lt_edges_z_plane.solve()
+
+            this_solution = self.solution[original_solution_len:]
+            this_solution_len = len(this_solution)
+
+            if min_solution_len is None or this_solution_len < min_solution_len:
+                min_solution_len = this_solution_len
+                min_wing_str_combo = wing_str_combo
+                log.info("z-plane wing_str_combo %s, solution_len %d (NEW MIN)" % (pformat(wing_str_combo), this_solution_len))
+            else:
+                log.info("z-plane wing_str_combo %s, solution_len %d" % (pformat(wing_str_combo), this_solution_len))
+
+        self.state = poas_edges_flip_state[:]
+        self.solution = original_solution[:]
+        self.lt_edges_z_plane.only_colors = min_wing_str_combo
+        self.lt_edges_z_plane.solve()
+        z_plane_edges_solution = self.solution[original_solution_len:]
+
+        '''
         min_cost_to_goal = None
         min_wing_str_combo = None
 

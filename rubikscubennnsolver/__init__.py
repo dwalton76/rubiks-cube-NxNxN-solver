@@ -3677,7 +3677,7 @@ class RubiksCube(object):
                     target_side = self.sideD
 
                 else:
-                    raise SolveError("invalid wing %s" % wing_str)
+                    raise SolveError("invalid wing %s at (%d, %d)" % (wing_str, square_index, partner_index))
 
                 for (edge_index, wing_index) in enumerate(edge_to_check):
                     wing_value = self.state[wing_index]

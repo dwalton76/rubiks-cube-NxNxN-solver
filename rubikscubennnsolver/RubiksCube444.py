@@ -220,46 +220,6 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaC):
         self.nuke_corners = True
 
 
-def edges_recolor_pattern_444(state):
-    edge_map = {
-        'BD': [],
-        'BL': [],
-        'BR': [],
-        'BU': [],
-        'DF': [],
-        'DL': [],
-        'DR': [],
-        'FL': [],
-        'FR': [],
-        'FU': [],
-        'LU': [],
-        'RU': []
-    }
-
-    # Record the two edge_indexes for each of the 12 edges
-    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-        edge_map[wing_str].append(edge_index)
-
-    # Where is the other wing_str like us?
-    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-
-        for tmp_index in edge_map[wing_str]:
-            if tmp_index != edge_index:
-                state[square_index] = tmp_index
-                state[partner_index] = tmp_index
-                break
-        else:
-            raise Exception("could not find tmp_index")
-
-    return ''.join(state)
-
-
 class LookupTable444HighLowEdgesEdges(LookupTable):
     """
     lookup-table-4x4x4-step21-highlow-edges-edges.txt
@@ -407,6 +367,7 @@ def edges_recolor_pattern_444(state):
         'DL' : [],
         'DR' : [],
         'DF' : [],
+        '--' : [],
     }
 
     # Record the two edge_indexes for each of the 12 edges
@@ -422,13 +383,17 @@ def edges_recolor_pattern_444(state):
         partner_value = state[partner_index]
         wing_str = wing_str_map[square_value + partner_value]
 
-        for tmp_index in edge_map[wing_str]:
-            if tmp_index != edge_index:
-                state[square_index] = tmp_index
-                state[partner_index] = tmp_index
-                break
+        if wing_str == '--':
+            state[square_index] = '-'
+            state[partner_index] = '-'
         else:
-            raise Exception("could not find tmp_index")
+            for tmp_index in edge_map[wing_str]:
+                if tmp_index != edge_index:
+                    state[square_index] = tmp_index
+                    state[partner_index] = tmp_index
+                    break
+            else:
+                raise Exception("could not find tmp_index")
 
     return ''.join(state)
 
@@ -1120,7 +1085,6 @@ class RubiksCube444(RubiksCube):
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         if not self.centers_staged():
-            log.info("centers are NOT staged")
             self.print_cube()
             self.lt_ULFRBD_centers_stage.solve()
             self.print_cube()

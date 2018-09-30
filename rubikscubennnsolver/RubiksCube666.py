@@ -976,16 +976,20 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
             # Edges
             fake_555.state[2 + offset_555] = self.state[2 + offset_666]
-            fake_555.state[3 + offset_555] = self.state[3 + offset_666]
+            fake_555.state[3 + offset_555] = side_name
             fake_555.state[4 + offset_555] = self.state[5 + offset_666]
+
             fake_555.state[6 + offset_555] = self.state[7 + offset_666]
             fake_555.state[10 + offset_555] = self.state[12 + offset_666]
-            fake_555.state[11 + offset_555] = self.state[13 + offset_666]
-            fake_555.state[15 + offset_555] = self.state[18 + offset_666]
+
+            fake_555.state[11 + offset_555] = side_name
+            fake_555.state[15 + offset_555] = side_name
+
             fake_555.state[16 + offset_555] = self.state[25 + offset_666]
             fake_555.state[20 + offset_555] = self.state[30 + offset_666]
+
             fake_555.state[22 + offset_555] = self.state[32 + offset_666]
-            fake_555.state[23 + offset_555] = self.state[33 + offset_666]
+            fake_555.state[23 + offset_555] = side_name
             fake_555.state[24 + offset_555] = self.state[35 + offset_666]
 
     def solve_reduced_555_centers(self):
@@ -1055,9 +1059,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         if oblique_edges_only:
             fake_555.lt_LR_T_centers_stage.solve()
         else:
-            fake_555.lt_LR_centers_stage.avoid_oll = 0
-            fake_555.group_centers_stage_LR()
-            fake_555.lt_LR_centers_stage.avoid_oll = None
+            # We need to make solving LR t-centers use IDA so we can avoid OLL on orbit 0
+            #fake_555.lt_LR_T_centers_stage.avoid_oll = 0
+            fake_555.lt_LR_T_centers_stage.solve()
+            #fake_555.lt_LR_T_centers_stage.avoid_oll = None
 
         for step in fake_555.solution:
             self.rotate(step)
@@ -1083,14 +1088,11 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.print_cube()
         log.info("%s: LFRB inner x-center and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        if oblique_edges_only:
-            self.solve_reduced_555_t_centers()
-            self.print_cube()
-            log.info("%s: solved T-centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        else:
-            self.solve_reduced_555_centers()
-            self.print_cube()
-            log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # Solve the t-centers so that we can use the 444 solver to pair the
+        # inside orbit of edges
+        self.solve_reduced_555_t_centers()
+        self.print_cube()
+        log.info("%s: solved T-centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def phase(self):
         if self._phase is None:

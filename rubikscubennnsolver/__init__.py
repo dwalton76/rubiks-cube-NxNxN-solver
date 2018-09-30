@@ -3444,7 +3444,6 @@ class RubiksCube(object):
                 needed_edges.append('UB')
                 break
             else:
-                # dwalton
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
                     needed_edges.append('UB%d' % edge_index)
@@ -3599,6 +3598,7 @@ class RubiksCube(object):
                 raise Exception("Could not determine wing_str for (%s, %s)" % (square1, square2))
 
             if not edges_paired:
+
                 # - backup the current state
                 # - add an 'x' to the end of the square_index/partner_index
                 # - move square_index/partner_index to its final edge location
@@ -3689,21 +3689,6 @@ class RubiksCube(object):
                             max_edge_index = len(target_side.edge_east_pos) - 1
                             wing_str += str(max_edge_index - edge_index)
 
-                        # This is commented out because we used this once upon a time to generate the
-                        # orbit_index_444, etc dictionaries in https://github.com/d walton76/rubiks-color-resolver
-                        #
-                        # The workflow was:
-                        # - tweak code to call center_solution_leads_to_oll_parity() for odd cubes too
-                        # - solve 500 cubes via "./utils/test.py --test-cubes utils/test_cubes.json --size 7x7x7"
-                        # - sort /tmp/orbit_index.txt > /tmp/orbit_index_sorted.txt
-                        # - cat /tmp/orbit_index_sorted.txt | uniq > /tmp/orbit_index_sorted_uniq.txt
-                        #
-                        # The lines in /tmp/orbit_index_sorted_uniq.txt are used to create orbit_index_777
-                        '''
-                        with open('/tmp/orbit_index.txt', 'a') as fh:
-                            fh.write("    (%d, %d, '%s', '%s') : '%s',\n" % (square_index, partner_index, square1, square2, wing_str))
-                            fh.write("    (%d, %d, '%s', '%s') : '%s',\n" % (partner_index, square_index, square2, square1, wing_str))
-                        '''
                         break
                 else:
                     raise SolveError("Could not find wing %s (%d, %d) among %s" % (wing_str, square_index, partner_index, str(edge_to_check)))
@@ -3729,14 +3714,6 @@ class RubiksCube(object):
         return False
 
     def edge_solution_leads_to_pll_parity(self, debug=False):
-
-        # I don't know why but long ago when I wrote this I had it rotate U and F
-        # to their targets...it should not make any difference for calculating
-        # parity though. Will leave this here but commented out for a while just
-        # in case. 07/14/2018
-        #
-        #self.rotate_U_to_U()
-        #self.rotate_F_to_F()
 
         if self.edge_swaps_even(edges_paired=True, orbit=None, debug=debug) == self.corner_swaps_even(debug):
             if debug:

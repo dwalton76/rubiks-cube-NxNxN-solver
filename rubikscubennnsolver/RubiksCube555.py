@@ -1239,16 +1239,18 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
 
     def search_complete(self, state, steps_to_here):
         if LookupTableIDA.search_complete(self, state, steps_to_here):
+            pairable_count = len(self.parent.edges_pairable_via_tsai_phase2())
+
             # Technically we only need 4-edges to be in high/low groups but that leaves us
             # zero wiggle room for the next phase, we will HAVE to pair those 4-edges and
             # if we hit some bad luck they could take a higher number of moves than is typical
             # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
             # of 4-edges to choose from..
-            if len(self.parent.edges_pairable_via_tsai_phase2()) >= MIN_EO_COUNT_FOR_STAGE_LR_432:
+            if pairable_count >= MIN_EO_COUNT_FOR_STAGE_LR_432:
                 log.info("%s: found solution where at least %d-edges are split into high/low groups" % (self, MIN_EO_COUNT_FOR_STAGE_LR_432))
                 return True
             else:
-                #log.info("%s: found solution but edges are NOT split into high/low groups" % self)
+                #log.info("%s: found solution but only %d-edges are split into high/low groups" % (self, pairable_count))
                 self.parent.state = self.original_state[:]
                 self.parent.solution = self.original_solution[:]
                 return False
@@ -1720,7 +1722,6 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
     Total: 21,508,617 entries
     """
 
-    # dwalton here now
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -1759,6 +1760,10 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
 
         lt_state = centers_state + edges_state
         cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+
+        # Not admissible but faster
+        #cost_to_goal = int(cost_to_goal * 1.2)
+
         return (lt_state, cost_to_goal)
 
 
@@ -1923,8 +1928,10 @@ class RubiksCube555(RubiksCube):
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
-        self.lt_UD_centers_stage.solve()
-        self.print_cube()
+
+        if not self.UD_centers_staged():
+            self.lt_UD_centers_stage.solve()
+            self.print_cube()
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_stage_LR(self):
@@ -1934,13 +1941,17 @@ class RubiksCube555(RubiksCube):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
+        if not self.UD_centers_staged():
+            raise SolveError("UD centers must be staged to stage LR centers")
+
         # Test the prune tables
         #self.lt_LR_T_centers_stage.solve()
         #self.lt_LR_X_centers_stage.solve()
         #self.print_cube()
 
-        self.lt_LR_centers_stage.solve()
-        self.print_cube()
+        if not self.LR_centers_staged():
+            self.lt_LR_centers_stage.solve()
+            self.print_cube()
         log.info("%s: ULFRBD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_stage_LR_to_432(self):
@@ -1957,6 +1968,7 @@ class RubiksCube555(RubiksCube):
 
         self.lt_LR_432_centers_stage.solve()
         self.print_cube()
+
         log.info("%s: LR centers staged to one of 432 states, at least %d-edges are pairable without L L' R R', %d steps in" %
             (self, MIN_EO_COUNT_FOR_STAGE_LR_432, self.get_solution_len_minus_rotates(self.solution)))
 
@@ -2064,6 +2076,18 @@ class RubiksCube555(RubiksCube):
 
         return result
 
+    def get_z_plane_wing_strs(self):
+        result = []
+
+        for square_index in (11, 15, 136, 140):
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+            result.append(wing_str)
+
+        return result
+
     def get_y_plane_z_plane_wing_strs(self):
         result = []
 
@@ -2090,64 +2114,49 @@ class RubiksCube555(RubiksCube):
         original_solution_len = len(original_solution)
 
         self.edges_flip_to_original_orientation()
-        poas_edges_flip_state = self.state[:]
-        pairable = self.edges_pairable_via_tsai_phase2()
-        log.info("%s: z-plane pairable edges %s" % (self, pformat(pairable)))
 
-        # This takes a good bit longer to run and doesn't make much diff on move count
-        '''
-        min_solution_len = None
-        min_wing_str_combo = None
+        #paired_edges_count = self.get_paired_edges_count()
+        #log.info("%s: %d-edges are already paired" % (self, paired_edges_count))
 
-        # Which combination of 4-edges has the shortest solution?
-        for wing_str_combo in itertools.combinations(pairable, 4):
-            wing_str_combo = sorted(wing_str_combo)
-            self.state = poas_edges_flip_state[:]
-            self.solution = original_solution[:]
+        # Are the z-plane edges already paired?
+        if self.z_plane_edges_paired():
+            min_wing_str_combo = self.get_z_plane_wing_strs()
 
-            self.lt_edges_z_plane.only_colors = wing_str_combo
-            self.lt_edges_z_plane.solve()
+        # TODO what if there are 4-paired edges somewhere?  We should use those
+        else:
+            pairable = self.edges_pairable_via_tsai_phase2()
+            log.info("%s: z-plane pairable edges %s" % (self, pformat(pairable)))
 
-            this_solution = self.solution[original_solution_len:]
-            this_solution_len = len(this_solution)
+            min_cost_to_goal = None
+            min_wing_str_combo = None
 
-            if min_solution_len is None or this_solution_len < min_solution_len:
-                min_solution_len = this_solution_len
-                min_wing_str_combo = wing_str_combo
-                log.info("z-plane wing_str_combo %s, solution_len %d (NEW MIN)" % (pformat(wing_str_combo), this_solution_len))
-            else:
-                log.info("z-plane wing_str_combo %s, solution_len %d" % (pformat(wing_str_combo), this_solution_len))
+            # Which combination of 4-edges has the lowest cost_to_goal?
+            for wing_str_combo in itertools.combinations(pairable, 4):
+                wing_str_combo = sorted(wing_str_combo)
 
-        self.state = poas_edges_flip_state[:]
-        self.solution = original_solution[:]
-        self.lt_edges_z_plane.only_colors = min_wing_str_combo
-        self.lt_edges_z_plane.solve()
-        z_plane_edges_solution = self.solution[original_solution_len:]
+                #debug = bool(wing_str_combo == ['LF', 'RB', 'UB', 'UF'])
+                debug = False
 
-        '''
-        min_cost_to_goal = None
-        min_wing_str_combo = None
+                if debug:
+                    log.info("wing_str_combo: %s" % pformat(wing_str_combo))
+                three_wing_cost_to_goal = []
 
-        # Which combination of 4-edges has the lowest cost_to_goal?
-        for wing_str_combo in itertools.combinations(pairable, 4):
-            wing_str_combo = sorted(wing_str_combo)
-            #log.info("wing_str_combo: %s" % pformat(wing_str_combo))
-            three_wing_cost_to_goal = []
+                for three_wing_str_combo in itertools.combinations(wing_str_combo, 3):
+                    self.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
+                    (_, tmp_cost_to_goal) = self.lt_edges_z_plane_edges_only.ida_heuristic(99)
 
-            for three_wing_str_combo in itertools.combinations(wing_str_combo, 3):
-                self.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
-                (_, tmp_cost_to_goal) = self.lt_edges_z_plane_edges_only.ida_heuristic(99)
-                #log.info("three_wing_str_combo: %s cost_to_goal %d" % (pformat(three_wing_str_combo), tmp_cost_to_goal))
-                three_wing_cost_to_goal.append(tmp_cost_to_goal)
+                    if debug:
+                        log.info("three_wing_str_combo: %s cost_to_goal %d" % (pformat(three_wing_str_combo), tmp_cost_to_goal))
+                    three_wing_cost_to_goal.append(tmp_cost_to_goal)
 
-            cost_to_goal = max(three_wing_cost_to_goal)
+                cost_to_goal = max(three_wing_cost_to_goal)
 
-            if min_cost_to_goal is None or cost_to_goal < min_cost_to_goal:
-                min_cost_to_goal = cost_to_goal
-                min_wing_str_combo = wing_str_combo
-                log.info("z-plane wing_str_combo %s, cost_to_goal %d (NEW MIN)" % (pformat(wing_str_combo), cost_to_goal))
-            else:
-                log.info("z-plane wing_str_combo %s, cost_to_goal %d" % (pformat(wing_str_combo), cost_to_goal))
+                if min_cost_to_goal is None or cost_to_goal < min_cost_to_goal:
+                    min_cost_to_goal = cost_to_goal
+                    min_wing_str_combo = wing_str_combo
+                    log.info("z-plane wing_str_combo %s, cost_to_goal %d (NEW MIN)" % (pformat(wing_str_combo), cost_to_goal))
+                #else:
+                #    log.info("z-plane wing_str_combo %s, cost_to_goal %d" % (pformat(wing_str_combo), cost_to_goal))
 
         self.lt_edges_z_plane.only_colors = min_wing_str_combo
         self.lt_edges_z_plane.solve()
@@ -2191,7 +2200,6 @@ class RubiksCube555(RubiksCube):
         last_eight_edges_solution = self.solution[original_solution_len:]
         self.state = original_state[:]
         self.solution = original_solution[:]
-        # dwalton here now
 
         for step in last_eight_edges_solution:
             self.rotate(step)

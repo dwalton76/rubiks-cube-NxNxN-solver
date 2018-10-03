@@ -899,6 +899,9 @@ class LookupTableIDA(LookupTable):
             steps = []
 
         else:
+            if state in self.state_target:
+                return True
+
             steps = self.steps(state)
 
             if not steps:

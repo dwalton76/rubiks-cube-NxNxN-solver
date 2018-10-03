@@ -1603,8 +1603,8 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
         return (lt_state, cost_to_goal)
 
 
-#class LookupTable555PairLastEightEdgesEdgesOnly(LookupTableHashCostOnly):
-class LookupTable555PairLastEightEdgesEdgesOnly(LookupTable):
+#class LookupTable555PairLastEightEdgesEdgesOnly(LookupTable):
+class LookupTable555PairLastEightEdgesEdgesOnly(LookupTableHashCostOnly):
     """
     lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt
     ===============================================================
@@ -1629,6 +1629,7 @@ class LookupTable555PairLastEightEdgesEdgesOnly(LookupTable):
     """
 
     def __init__(self, parent):
+        '''
         LookupTable.__init__(
             self,
             parent,
@@ -1642,12 +1643,11 @@ class LookupTable555PairLastEightEdgesEdgesOnly(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.hash-cost-only.txt',
-            self.state_targets,
+            'OOopPPQQqrRR------------WWwxXXYYyzZZ',
             linecount=1,
             max_depth=15,
             bucketcount=812851219,
             filesize=812851220)
-        '''
 
     def ida_heuristic(self, ida_threshold):
         assert self.only_colors and len(self.only_colors) == 8, "You must specify which 8-edges"
@@ -1712,12 +1712,12 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
     2 steps has 42 entries (0 percent, 8.40x previous step)
     3 steps has 380 entries (0 percent, 9.05x previous step)
     4 steps has 3,425 entries (0 percent, 9.01x previous step)
-    5 steps has 29,807 entries (1 percent, 8.70x previous step)
-    6 steps has 259,083 entries (10 percent, 8.69x previous step)
-    7 steps has 2,235,143 entries (88 percent, 8.63x previous step)
+    5 steps has 29,807 entries (0 percent, 8.70x previous step)
+    6 steps has 259,083 entries (1 percent, 8.69x previous step)
+    7 steps has 2,235,143 entries (10 percent, 8.63x previous step)
+    8 steps has 18,980,732 entries (88 percent, 8.49x previous step)
 
-    Total: 2,527,885 entries
-    Average: 6.87 moves
+    Total: 21,508,617 entries
     """
 
     # dwalton here now
@@ -1744,9 +1744,13 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
             # prune tables
             (parent.lt_pair_last_eight_edges_edges_only,
              parent.lt_pair_last_eight_edges_centers_only),
-            linecount=2527885,
-            max_depth=7,
-            filesize=300818315)
+            linecount=21508617,
+            max_depth=8,
+            filesize=2624051274)
+
+            #linecount=2527885,
+            #max_depth=7,
+            #filesize=300818315)
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
@@ -2203,11 +2207,10 @@ class RubiksCube555(RubiksCube):
         self.pair_z_plane_edges()
         #kociemba = self.get_kociemba_string(True)
         #log.info("%s: kociemba %s" % (self, kociemba))
-        #self.orient_last_eight_edges()
         self.pair_last_eight_edges()
-        sys.exit(0)
 
         if not fake_555:
+            self.solution.append('CENTERS_SOLVED')
             self.solution.append('EDGES_GROUPED')
 
 

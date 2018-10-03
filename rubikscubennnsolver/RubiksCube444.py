@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map
-from rubikscubennnsolver.misc import pre_steps_to_try
+from rubikscubennnsolver.misc import pre_steps_to_try, get_swap_count
 from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
     steps_on_same_face_and_layer,
@@ -398,7 +398,8 @@ def edges_recolor_pattern_444(state):
     return ''.join(state)
 
 
-class LookupTable444Reduce333Edges(LookupTableHashCostOnly):
+
+class LookupTableIDA444Reduce333(LookupTableIDAViaC):
     """
     lookup-table-4x4x4-step31-reduce333-edges.txt
     =============================================
@@ -418,44 +419,8 @@ class LookupTable444Reduce333Edges(LookupTableHashCostOnly):
 
     Total: 239,500,800 entries
     Average: 10.635709 moves
-    """
-
-    def __init__(self, parent):
-
-        # Provides an option for running the 444 solver on ~300M
-        if parent.min_memory:
-            filename = 'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt.half-buckets'
-            bucketcount = 119750417
-            filesize = 119750418
-        else:
-            filename = 'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt'
-            bucketcount = 239500847
-            filesize = 239500848
-
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            filename,
-            '10425376a8b9ecfdhgkiljnm',
-            linecount=239500800,
-            max_depth=13,
-            bucketcount=bucketcount,
-            filesize=filesize)
-
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step31-reduce333-edges.txt',
-            '10425376a8b9ecfdhgkiljnm',
-            linecount=239500800,
-            max_depth=13,
-            filesize=479001630)
-        '''
 
 
-class LookupTable444Reduce333CentersSolve(LookupTable):
-    """
     lookup-table-4x4x4-step32-reduce333-centers.txt
     ===============================================
     1 steps has 16 entries (0 percent, 0.00x previous step)
@@ -470,24 +435,8 @@ class LookupTable444Reduce333CentersSolve(LookupTable):
 
     Total: 58,800 entries
     Average: 6.27 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step32-reduce333-centers.txt',
-            ('DDDDLLLLBBBBRRRRFFFFUUUU',
-             'DDDDRRRRFFFFLLLLBBBBUUUU',
-             'UUUULLLLFFFFRRRRBBBBDDDD',
-             'UUUURRRRBBBBLLLLFFFFDDDD'),
-            linecount=58800,
-            max_depth=9,
-            filesize=3351600)
 
 
-class LookupTableIDA444Reduce333(LookupTableIDA):
-    """
     lookup-table-4x4x4-step30-reduce333.txt
     =======================================
     1 steps has 16 entries (0 percent, 0.00x previous step)
@@ -500,175 +449,18 @@ class LookupTableIDA444Reduce333(LookupTableIDA):
     Total: 1,439,952 entries
     """
 
-    heuristic_stats = {
-        (0, 0): 1,
-        (0, 2): 7,
-        (1, 1): 2,
-        (1, 2): 9,
-        (1, 3): 8,
-        (1, 4): 6,
-        (2, 1): 7,
-        (2, 2): 3,
-        (2, 3): 4,
-        (2, 4): 5,
-        (2, 5): 7,
-        (2, 6): 9,
-        (2, 10): 14,
-        (2, 11): 14,
-        (3, 1): 4,
-        (3, 2): 4,
-        (3, 3): 4,
-        (3, 4): 6,
-        (3, 5): 7,
-        (3, 6): 10,
-        (3, 7): 11,
-        (3, 8): 12,
-        (3, 9): 12,
-        (3, 10): 13,
-        (3, 11): 15,
-        (4, 1): 5,
-        (4, 2): 6,
-        (4, 3): 6,
-        (4, 4): 6,
-        (4, 5): 7,
-        (4, 6): 10,
-        (4, 7): 11,
-        (4, 8): 12,
-        (4, 9): 13,
-        (4, 10): 14,
-        (4, 11): 15,
-        (5, 2): 6,
-        (5, 3): 6,
-        (5, 4): 7,
-        (5, 5): 8,
-        (5, 6): 9,
-        (5, 7): 11,
-        (5, 8): 12,
-        (5, 9): 13,
-        (5, 10): 14,
-        (5, 11): 15,
-        (5, 12): 14,
-        (6, 3): 7,
-        (6, 4): 10,
-        (6, 5): 9,
-        (6, 6): 9,
-        (6, 7): 10,
-        (6, 8): 11,
-        (6, 9): 13,
-        (6, 10): 14,
-        (6, 11): 15,
-        (6, 12): 16,
-        (7, 5): 12,
-        (7, 6): 11,
-        (7, 7): 11,
-        (7, 8): 12,
-        (7, 9): 13,
-        (7, 10): 14,
-        (7, 11): 14,
-        (7, 12): 15,
-        (8, 6): 13,
-        (8, 7): 13,
-        (8, 8): 13,
-        (8, 9): 13,
-        (8, 10): 14,
-        (8, 11): 15,
-        (8, 12): 14,
-        (9, 8): 13,
-        (9, 9): 13,
-        (9, 10): 14,
-        (9, 11): 15,
-    }
-
-    # The higher this number the less you honor the heuristic_stats
-    # -  0 uses the heuristic_stats exactly as reported
-    # -  1 subtracts 1 from the heuristic_stats value
-    # - 99 disables heuristic_stats
-    #
-    # You want to put this as high as you can but low enough
-    # to still speed up the slow IDA searches.
-    #
-    # For cube DFRFUBDBUBRBRBLFLURRLRURDLRBRDLRULDURFRBLDUFLRFFBFLDFLLBUFFFFUDDBRFBBBLDBBUULLRUUUDLDDFDRDUUBLFD
-    # 99 : 14 moves, 10m 12s  or 15 moves 11s
-    #  3 : 15 moves, 1m 24s   or 15 moves 30s
-    #  2 : 19 moves, 9s       or 15 moves 34s
-    #  1 : 18 moves, 10s      or 17 moves 5s
-    #  0 : 18 moves, 15s      or 17 moves 6s
-    heuristic_stats_error = 2
-
     def __init__(self, parent):
 
-        # 5-deep table, takes 10M
-        if parent.min_memory:
-            filename = "lookup-table-4x4x4-step30-reduce333.txt.5-deep"
-            linecount = 149660
-            max_depth = 5
-            filesize = 10176880
-            exit_asap = 13
-
-        # 6-deep table, takes 103M
-        else:
-            filename = "lookup-table-4x4x4-step30-reduce333.txt"
-            linecount = 1439952
-            max_depth = 6
-            filesize = 103676544
-            exit_asap = 15
-
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            filename,
-            ('DDDDLLLLBBBBRRRRFFFFUUUU10425376a8b9ecfdhgkiljnm',
-             'DDDDRRRRFFFFLLLLBBBBUUUU10425376a8b9ecfdhgkiljnm',
-             'UUUULLLLFFFFRRRRBBBBDDDD10425376a8b9ecfdhgkiljnm',
-             'UUUURRRRBBBBLLLLFFFFDDDD10425376a8b9ecfdhgkiljnm'),
-            moves_444,
-
-            # illegal moves
-            ("Fw", "Fw'",
-             "Uw", "Uw'",
-             "Rw", "Rw'",
-             "Lw", "Lw'", "Lw2",
-             "Bw", "Bw'", "Bw2",
-             "Dw", "Dw'", "Dw2",
-             "R", "R'",
-             "L", "L'"),
-
-            # prune tables
-            (parent.lt_reduce333_edges_solve,
-             parent.lt_reduce333_centers_solve),
-
-            linecount=linecount,
-            max_depth=max_depth,
-            filesize=filesize,
-            exit_asap=exit_asap,
+            # Needed tables and their md5 signatures
+            (('lookup-table-4x4x4-step30-reduce333.txt', '82fbc3414d07e53448d0746d96e25ebd'), # 6-deep
+            #(('lookup-table-4x4x4-step30-reduce333.txt', '5a825cf04fa42631c806ae98ba4322cd'), # 7-deep
+             ('lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt', '20ac2ed7ca369c3b5183f836f5d99262'),
+             ('lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt', '3f990fc1fb6bf506d81ba65f03ad74f6')),
+            '4x4x4-reduce-333' # C_ida_type
         )
-
-    def ida_heuristic_tuple(self):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-        centers_state = ''.join([state[square_index] for square_index in centers_444])
-        edges_state = ''.join([state[square_index] for square_index in wings_444])
-
-        return (
-            self.parent.lt_reduce333_centers_solve.heuristic(centers_state),
-            self.parent.lt_reduce333_edges_solve.heuristic(edges_state),
-        )
-
-    def ida_heuristic(self, ida_threshold):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-        centers_state = ''.join([state[square_index] for square_index in centers_444])
-        edges_state = ''.join([state[square_index] for square_index in wings_444])
-        lt_state = centers_state + edges_state
-
-        centers_cost = self.parent.lt_reduce333_centers_solve.heuristic(centers_state)
-        edges_cost = self.parent.lt_reduce333_edges_solve.heuristic(edges_state)
-
-        if ida_threshold >= self.exit_asap:
-            heuristic_stats_cost = self.heuristic_stats.get((centers_cost, edges_cost), 0)
-            cost_to_goal = max(centers_cost, edges_cost, heuristic_stats_cost - self.heuristic_stats_error)
-        else:
-            cost_to_goal = max(centers_cost, edges_cost)
-
-        return (lt_state, cost_to_goal)
 
 
 class RubiksCube444(RubiksCube):
@@ -878,6 +670,249 @@ class RubiksCube444(RubiksCube):
 
         return DU_wing_strs
 
+    def foobar_get_edge_swap_count(self):
+        needed_edges = []
+        to_check = []
+        edges_per_side = len(self.sideU.edge_north_pos)
+        debug = False
+
+        def is_high_edge_444(target_index):
+            for (_, square_index, partner_index) in high_edges_444:
+                if square_index == target_index or partner_index == target_index:
+                    return True
+
+            return False
+
+        # dwalton do something here with edge_mapping
+        # Upper
+        for (edge_index, square_index) in enumerate(self.sideU.edge_north_pos):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('UB%d' % edge_index)
+
+        for (edge_index, square_index) in enumerate(reversed(self.sideU.edge_west_pos)):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('UL%d' % edge_index)
+
+        for (edge_index, square_index) in enumerate(reversed(self.sideU.edge_south_pos)):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('UF%d' % edge_index)
+
+        for (edge_index, square_index) in enumerate(self.sideU.edge_east_pos):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('UR%d' % edge_index)
+
+        # Left
+        for (edge_index, square_index) in enumerate(reversed(self.sideL.edge_west_pos)):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('LB%d' % edge_index)
+
+        for (edge_index, square_index) in enumerate(self.sideL.edge_east_pos):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('LF%d' % edge_index)
+
+        # Right
+        for (edge_index, square_index) in enumerate(reversed(self.sideR.edge_west_pos)):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('RF%d' % edge_index)
+
+        for (edge_index, square_index) in enumerate(self.sideR.edge_east_pos):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('RB%d' % edge_index)
+
+        # Down
+        for (edge_index, square_index) in enumerate(self.sideD.edge_north_pos):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('DF%d' % edge_index)
+
+        for (edge_index, square_index) in enumerate(reversed(self.sideD.edge_west_pos)):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('DL%d' % edge_index)
+
+        for (edge_index, square_index) in enumerate(reversed(self.sideD.edge_south_pos)):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('DB%d' % edge_index)
+
+        for (edge_index, square_index) in enumerate(self.sideD.edge_east_pos):
+            if is_high_edge_444(square_index):
+                to_check.append(square_index)
+                needed_edges.append('DR%d' % edge_index)
+
+        if debug:
+            to_check_str = ''
+
+            for x in to_check:
+                to_check_str += "%4s" % x
+
+            log.info("foobar to_check     :%s" % to_check_str)
+
+        current_edges = []
+
+        for square_index in to_check:
+            side = self.index_to_side[square_index]
+            partner_index = side.get_wing_partner(square_index)
+            square1 = self.state[square_index]
+            square2 = self.state[partner_index]
+            #log.info("side %s, (%d, %d) is %s%s" % (side, square_index, partner_index, square1, square2))
+
+            if square1 == 'U' or square1 == 'D':
+                wing_str = square1 + square2
+            elif square2 == 'U' or square2 == 'D':
+                wing_str = square2 + square1
+            elif square1 == 'L' or square1 == 'R':
+                wing_str = square1 + square2
+            elif square2 == 'L' or square2 == 'R':
+                wing_str = square2 + square1
+            elif square1 == 'x' and square2 == 'x':
+                continue
+            else:
+                raise Exception("Could not determine wing_str for (%s, %s)" % (square1, square2))
+
+            # - backup the current state
+            # - add an 'x' to the end of the square_index/partner_index
+            # - move square_index/partner_index to its final edge location
+            # - look for the 'x' to determine if this is the '0' vs '1' wing
+            # - restore the original state
+            square1_with_x = square1 + 'x'
+            square2_with_x = square2 + 'x'
+
+            original_state = self.state[:]
+            original_solution = self.solution[:]
+            self.state[square_index] = square1_with_x
+            self.state[partner_index] = square2_with_x
+
+            # 'UB0', 'UB1', 'UL0', 'UL1', 'UF0', 'UF1', 'UR0', 'UR1',
+            # 'LB0', 'LB1', 'LF0', 'LF1', 'RF0', 'RF1', 'RB0', 'RB1',
+            # 'DF0', 'DF1', 'DL0', 'DL1', 'DB0', 'DB1', 'DR0', 'DR1
+            if wing_str == 'UB':
+                self.move_wing_to_U_north(square_index)
+                edge_to_check = self.sideU.edge_north_pos
+                target_side = self.sideU
+
+            elif wing_str == 'UL':
+                self.move_wing_to_U_west(square_index)
+                edge_to_check = reversed(self.sideU.edge_west_pos)
+                target_side = self.sideU
+
+            elif wing_str == 'UF':
+                self.move_wing_to_U_south(square_index)
+                edge_to_check = reversed(self.sideU.edge_south_pos)
+                target_side = self.sideU
+
+            elif wing_str == 'UR':
+                self.move_wing_to_U_east(square_index)
+                edge_to_check = self.sideU.edge_east_pos
+                target_side = self.sideU
+
+            elif wing_str == 'LB':
+                self.move_wing_to_L_west(square_index)
+                edge_to_check = reversed(self.sideL.edge_west_pos)
+                target_side = self.sideL
+
+            elif wing_str == 'LF':
+                self.move_wing_to_L_east(square_index)
+                edge_to_check = self.sideL.edge_east_pos
+                target_side = self.sideL
+
+            elif wing_str == 'RF':
+                self.move_wing_to_R_west(square_index)
+                edge_to_check = reversed(self.sideR.edge_west_pos)
+                target_side = self.sideR
+
+            elif wing_str == 'RB':
+                self.move_wing_to_R_east(square_index)
+                edge_to_check = self.sideR.edge_east_pos
+                target_side = self.sideR
+
+            elif wing_str == 'DF':
+                self.move_wing_to_D_north(square_index)
+                edge_to_check = self.sideD.edge_north_pos
+                target_side = self.sideD
+
+            elif wing_str == 'DL':
+                self.move_wing_to_D_west(square_index)
+                edge_to_check = reversed(self.sideD.edge_west_pos)
+                target_side = self.sideD
+
+            elif wing_str == 'DB':
+                self.move_wing_to_D_south(square_index)
+                edge_to_check = reversed(self.sideD.edge_south_pos)
+                target_side = self.sideD
+
+            elif wing_str == 'DR':
+                self.move_wing_to_D_east(square_index)
+                edge_to_check = self.sideD.edge_east_pos
+                target_side = self.sideD
+
+            else:
+                raise SolveError("invalid wing %s at (%d, %d)" % (wing_str, square_index, partner_index))
+
+            if wing_str in self.edge_mapping:
+                flip_wing_str = True
+            else:
+                flip_wing_str = False
+
+            for (edge_index, wing_index) in enumerate(edge_to_check):
+                wing_value = self.state[wing_index]
+
+                if wing_value.endswith('x'):
+                    if wing_value.startswith(target_side.name):
+                        wing_str += str(edge_index)
+                    else:
+                        max_edge_index = len(target_side.edge_east_pos) - 1
+                        wing_str += str(max_edge_index - edge_index)
+
+                    break
+            else:
+                raise SolveError("Could not find wing %s (%d, %d) among %s" % (wing_str, square_index, partner_index, str(edge_to_check)))
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            if flip_wing_str:
+                if wing_str.endswith('1'):
+                    wing_str = wing_str.replace('1', '0')
+                else:
+                    wing_str = wing_str.replace('0', '1')
+
+            current_edges.append(wing_str)
+
+        # dwalton
+        '''
+        needed_edges = ['UB0', 'UL0', 'UF0', 'UR0', 'LB0', 'LF0', 'RF0', 'RB0', 'DF0', 'DL0', 'DB0', 'DR0']
+        for x in ('UB0', 'UL0', 'UF0', 'UR0', 'LB0', 'LF0', 'RF0', 'RB0', 'DF0', 'DL0', 'DB0', 'DR0'):
+            if x in current_edges:
+                needed_edges.append(x)
+            else:
+                needed_edges.append(x.replace('0', '1'))
+        '''
+
+        if debug:
+            log.info("foobar needed edges : %s" % ' '.join(needed_edges))
+            log.info("current edges: %s" % ' '.join(current_edges))
+
+        return get_swap_count(needed_edges, current_edges, debug)
+
+    def foobar_edge_swaps_even(self):
+        if self.foobar_get_edge_swap_count() % 2 == 0:
+            return True
+        return False
+
+    def foobar_edge_swaps_odd(self):
+        if self.foobar_get_edge_swap_count() % 2 == 1:
+            return True
+        return False
+
     def lt_init(self):
         if self.lt_init_called:
             return
@@ -890,11 +925,7 @@ class RubiksCube444(RubiksCube):
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
         self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
 
-        self.lt_reduce333_edges_solve = LookupTable444Reduce333Edges(self)
-        self.lt_reduce333_centers_solve = LookupTable444Reduce333CentersSolve(self)
         self.lt_reduce333 = LookupTableIDA444Reduce333(self)
-        self.lt_reduce333_centers_solve.preload_cache_dict()
-        self.lt_reduce333.preload_cache_string()
 
     def reduce_333(self, fake_444=False):
         self.lt_init()
@@ -912,6 +943,21 @@ class RubiksCube444(RubiksCube):
 
         if self.rotate_for_best_centers_staging():
             self.print_cube()
+        #orbits_with_oll = self.center_solution_leads_to_oll_parity()
+        #log.info("%s: orbits_with_oll %s" % (self, pformat(orbits_with_oll)))
+
+        '''
+        if self.edge_swaps_even(False, 0, False):
+            log.info("%s: edge parity is EVEN" % self)
+        else:
+            log.info("%s: edge parity is ODD" % self)
+
+        if self.corner_swaps_even():
+            log.info("%s: corner parity is EVEN" % self)
+        else:
+            log.info("%s: corner parity is ODD" % self)
+        '''
+
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
@@ -973,17 +1019,13 @@ class RubiksCube444(RubiksCube):
                     min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
                     log.info("%s: using edge_mapping %s, phase2 cost %s" % (self, min_edge_mapping, phase2_cost))
 
-            # dwalton fix this so we do not check in the 7-deep lookup-table-4x4x4-step20-highlow-edges.txt table
-            # It is 180M zipped.  We can probably use pre_steps_to_try in this scenario
-            # This is the case for BLBBDBFULRBBBDRDBDRLLDRBUUULUBBFRRULFULDUFRBFUDLUBRFFRDRBFDRRDFLDFUURBLRUBUFFLDRULFRDFLFFDLLDULD
-            #if min_edge_mapping is None:
-            #    assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
             if min_edge_mapping:
                 if pre_steps:
                     log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
                 break
         else:
             assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
+
         log.info("%s: End of find best edge_mapping" % self)
 
         self.state = original_state[:]
@@ -1003,6 +1045,16 @@ class RubiksCube444(RubiksCube):
         self.highlow_edges_print()
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        if self.foobar_edge_swaps_even():
+            log.info("%s: high edges parity is EVEN" % self)
+        else:
+            log.info("%s: high edges parity is ODD" % self)
+
+        if self.corner_swaps_even():
+            log.info("%s: corner parity is EVEN" % self)
+        else:
+            log.info("%s: corner parity is ODD" % self)
+
         # Testing the phase3 prune tables
         #self.lt_reduce333_edges_solve.solve()
         #self.lt_reduce333_centers_solve.solve()
@@ -1012,6 +1064,15 @@ class RubiksCube444(RubiksCube):
 
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # dwalton
+        '''
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        '''
+
         self.lt_reduce333.avoid_pll = True
         self.lt_reduce333.solve()
 
@@ -1022,6 +1083,17 @@ class RubiksCube444(RubiksCube):
 
         self.print_cube()
         log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        if self.edge_swaps_even(True, None, False):
+            log.info("%s: edge parity is EVEN" % self)
+        else:
+            log.info("%s: edge parity is ODD" % self)
+
+        if self.corner_swaps_even():
+            log.info("%s: corner parity is EVEN" % self)
+        else:
+            log.info("%s: corner parity is ODD" % self)
+
         log.info("")
 
         if not fake_444:

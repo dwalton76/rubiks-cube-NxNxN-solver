@@ -94,6 +94,12 @@ parser.add_argument('--state', type=str, help='Cube state',
 
 args = parser.parse_args()
 
+if 'G' in args.state:
+    args.state = args.state.replace('G', 'F')
+    args.state = args.state.replace('Y', 'D')
+    args.state = args.state.replace('O', 'L')
+    args.state = args.state.replace('W', 'U')
+
 if args.debug:
     log.setLevel(logging.DEBUG)
 

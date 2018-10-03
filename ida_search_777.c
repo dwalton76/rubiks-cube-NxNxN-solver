@@ -402,6 +402,7 @@ struct ida_heuristic_result ida_heuristic_step50_777 (
     step52_cost = hex_to_int(step52_777[step52_state_bucket]);
 
     if (step52_cost >= max_cost_to_goal) {
+        // dwalton we never set result.lt_state here??
         result.cost_to_goal = step52_cost;
         return result;
     }

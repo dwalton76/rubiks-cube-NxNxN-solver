@@ -35,6 +35,7 @@ typedef enum {
 
     // 4x4x4
     CENTERS_STAGE_444,
+    REDUCE_333_444,
 
     // 5x5x5
     UD_CENTERS_STAGE_555,
@@ -62,6 +63,10 @@ char *UD_centers_cost_only_444 = NULL;
 char *LR_centers_cost_only_444 = NULL;
 char *FB_centers_cost_only_444 = NULL;
 
+struct key_value_pair *reduce_333_444 = NULL;
+char *reduce_333_edges_only = NULL;
+char *reduce_333_centers_only = NULL;
+struct wings_for_edges_recolor_pattern_444 *wings_for_recolor_444;
 
 // 5x5x5
 struct key_value_pair *UD_centers_555 = NULL;
@@ -99,15 +104,6 @@ char *step62_777 = NULL;
 char *step63_777 = NULL;
 
 
-int
-strmatch (char *str1, char *str2)
-{
-    if (strcmp(str1, str2) == 0) {
-        return 1;
-    }
-    return 0;
-}
-
 /* Remove leading and trailing whitespaces */
 char *
 strstrip (char *s)
@@ -132,6 +128,24 @@ strstrip (char *s)
     //    s++;
 
     return s;
+}
+
+
+void
+print_moves (move_type *moves, int max_i)
+{
+    int i = 0;
+    printf("SOLUTION: ");
+
+    while (moves[i] != MOVE_NONE) {
+        printf("%s ", move2str[moves[i]]);
+        i++;
+
+        if (i >= max_i) {
+            break;
+        }
+    }
+    printf("\n");
 }
 
 
@@ -325,6 +339,9 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         print_cube(cube, size);
         break;
 
+    case REDUCE_333_444:
+        break;
+
     case UD_CENTERS_STAGE_555:
     case UD_OBLIQUE_EDGES_STAGE_666:
     case UD_OBLIQUE_EDGES_STAGE_777:
@@ -413,6 +430,18 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
             // 25 is the move count
             buffer[24] = '\0';
             cost = atoi(&buffer[25]);
+            hash_add(hashtable, buffer, cost);
+        }
+
+    } else if (strmatch(filename, "lookup-table-4x4x4-step30-reduce333.txt")) {
+
+        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+            // DDDDLLLLBBBBRRRRFFFFUUUU10362745a8b9ecfdhgkiljnm:R2 Bw2 D' F2 D Bw2
+            // 0..47 are the state
+            // 48 is the :
+            // 49 is the move count
+            buffer[48] = '\0';
+            cost = atoi(&buffer[49]);
             hash_add(hashtable, buffer, cost);
         }
 
@@ -543,6 +572,15 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             LR_centers_cost_only_444,
             FB_centers_cost_only_444);
 
+    case REDUCE_333_444:
+        return ida_heuristic_reduce_333_444(
+            cube,
+            max_cost_to_goal,
+            &reduce_333_444,
+            reduce_333_edges_only,
+            reduce_333_centers_only,
+            wings_for_recolor_444);
+
     // 5x5x5
     case UD_CENTERS_STAGE_555:
         return ida_heuristic_UD_centers_555(
@@ -625,6 +663,33 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
 
 
 unsigned int
+get_orbit0_wide_half_turn_count (move_type *moves)
+{
+    unsigned int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case Uw2:
+        case Lw2:
+        case Fw2:
+        case Rw2:
+        case Bw2:
+        case Dw2:
+            count += 1;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
+
+unsigned int
 get_orbit0_wide_quarter_turn_count (move_type *moves)
 {
     unsigned int i = 0;
@@ -688,17 +753,67 @@ get_orbit1_wide_quarter_turn_count (move_type *moves)
     return count;
 }
 
+unsigned int
+get_outer_layer_quarter_turn_count(move_type *moves)
+{
+    unsigned int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case U:
+        case U_PRIME:
+        case L:
+        case L_PRIME:
+        case F:
+        case F_PRIME:
+        case R:
+        case R_PRIME:
+        case B:
+        case B_PRIME:
+        case D:
+        case D_PRIME:
+        case Uw:
+        case Uw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+            count += 1;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
+
 int
 ida_search_complete (
     char *cube,
     lookup_table_type type,
     unsigned int orbit0_wide_quarter_turns,
     unsigned int orbit1_wide_quarter_turns,
+    unsigned int corner_parity,
+    unsigned int edge_parity,
     move_type *moves_to_here)
 {
     struct key_value_pair * pt_entry = NULL;
+    unsigned int orbit0_wide_half_turn_count = 0;
     unsigned int orbit0_wide_quarter_turn_count = 0;
     unsigned int orbit1_wide_quarter_turn_count = 0;
+    unsigned int outer_layer_quarter_turn_count = 0;
+    int result = 0;
 
     if (orbit0_wide_quarter_turns) {
         orbit0_wide_quarter_turn_count = get_orbit0_wide_quarter_turn_count(moves_to_here);
@@ -747,6 +862,77 @@ ida_search_complete (
     case CENTERS_STAGE_444:
         return ida_search_complete_centers_444(cube);
 
+    case REDUCE_333_444:
+        result = ida_search_complete_reduce_333_444(cube);
+
+        if (result) {
+            // This will only be true when solving 4x4x4 phase3 where we must avoid PLL. To avoid
+            // PLL the edge parity and corner parity must match (both odd or both even).
+            if (corner_parity && edge_parity) {
+                orbit0_wide_half_turn_count = get_orbit0_wide_half_turn_count(moves_to_here);
+                outer_layer_quarter_turn_count = get_outer_layer_quarter_turn_count(moves_to_here);
+
+                unsigned int current_corner_parity = 0;
+                unsigned int current_edge_parity = 0;
+
+                // we started out with odd parity
+                if (corner_parity == 1) {
+                    if (outer_layer_quarter_turn_count % 2 == 0) {
+                        current_corner_parity = 1;
+                    } else {
+                        current_corner_parity = 2;
+                    }
+
+                // we started out with even parity
+                } else if (corner_parity == 2) {
+                    if (outer_layer_quarter_turn_count % 2 == 0) {
+                        current_corner_parity = 2;
+                    } else {
+                        current_corner_parity = 1;
+                    }
+
+                } else {
+                    printf("ERROR: corner_parity %d is not supported\n", corner_parity);
+                    exit(1);
+                }
+
+                // we started out with odd parity
+                if (edge_parity == 1) {
+                    if (orbit0_wide_half_turn_count % 2 == 0) {
+                        current_edge_parity = 1;
+                    } else {
+                        current_edge_parity = 2;
+                    }
+
+                // we started out with even parity
+                } else if (edge_parity == 2) {
+                    if (orbit0_wide_half_turn_count % 2 == 0) {
+                        current_edge_parity = 2;
+                    } else {
+                        current_edge_parity = 1;
+                    }
+
+                } else {
+                    printf("ERROR: edge_parity %d is not supported\n", edge_parity);
+                    exit(1);
+                }
+
+                if (current_corner_parity != current_edge_parity) {
+                    return 0;
+                }
+
+                // dwalton
+                print_moves(moves_to_here, 99);
+                LOG("corner_parity %d, outer_layer_quarter_turn_count %d, current_corner_parity %d\n", corner_parity, outer_layer_quarter_turn_count, current_corner_parity);
+                LOG("edge_parity %d, orbit0_wide_half_turn_count %d, current_edge_parity %d\n", edge_parity, orbit0_wide_half_turn_count, current_edge_parity); 
+            }
+            return 1;
+
+        } else {
+            return 0;
+        }
+
+
     // 5x5x5
     case UD_CENTERS_STAGE_555:
         return ida_search_complete_UD_centers_555(cube);
@@ -786,24 +972,6 @@ ida_search_complete (
     }
 
     return 0;
-}
-
-
-void
-print_moves (move_type *moves, int max_i)
-{
-    int i = 0;
-    printf("SOLUTION: ");
-
-    while (moves[i] != MOVE_NONE) {
-        printf("%s ", move2str[moves[i]]);
-        i++;
-
-        if (i >= max_i) {
-            break;
-        }
-    }
-    printf("\n");
 }
 
 
@@ -872,6 +1040,29 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         case Dw:
         case Dw_PRIME:
         case Dw2:
+            return 0;
+        default:
+            return 1;
+        }
+
+    case REDUCE_333_444:
+        switch (move) {
+        case Uw:
+        case Uw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+        case L:
+        case L_PRIME:
+        case R:
+        case R_PRIME:
             return 0;
         default:
             return 1;
@@ -1415,7 +1606,9 @@ ida_search (unsigned int cost_to_here,
             unsigned int cube_size,
             lookup_table_type type,
             unsigned int orbit0_wide_quarter_turns,
-            unsigned int orbit1_wide_quarter_turns)
+            unsigned int orbit1_wide_quarter_turns,
+            unsigned int corner_parity,
+            unsigned int edge_parity)
 {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
@@ -1440,7 +1633,7 @@ ida_search (unsigned int cost_to_here,
         return 0;
     }
 
-    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, moves_to_here)) {
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity, moves_to_here)) {
         // We are finished!!
         LOG("IDA count %d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
@@ -1476,8 +1669,10 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity)) {
                 return 1;
+            } else {
+                moves_to_here[cost_to_here] = MOVE_NONE;
             }
         }
 
@@ -1500,8 +1695,10 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity)) {
                 return 1;
+            } else {
+                moves_to_here[cost_to_here] = MOVE_NONE;
             }
         }
 
@@ -1524,8 +1721,10 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity)) {
                 return 1;
+            } else {
+                moves_to_here[cost_to_here] = MOVE_NONE;
             }
         }
 
@@ -1548,8 +1747,10 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity)) {
                 return 1;
+            } else {
+                moves_to_here[cost_to_here] = MOVE_NONE;
             }
         }
 
@@ -1640,14 +1841,18 @@ ida_solve (
     unsigned int cube_size,
     lookup_table_type type,
     unsigned int orbit0_wide_quarter_turns,
-    unsigned int orbit1_wide_quarter_turns)
+    unsigned int orbit1_wide_quarter_turns,
+    unsigned int corner_parity,
+    unsigned int edge_parity)
 {
     int MAX_SEARCH_DEPTH = 20;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
     struct ida_heuristic_result result;
 
-    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, moves_to_here)) {
+    memset(moves_to_here, MOVE_NONE, MAX_SEARCH_DEPTH);
+
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity, moves_to_here)) {
         LOG("cube already solved\n");
         printf("SOLUTION:\n");
         return 1;
@@ -1661,6 +1866,13 @@ ida_solve (
         UD_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt", 16711681);
         LR_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt", 16711681);
         FB_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt", 16711681);
+        break;
+
+    case REDUCE_333_444:
+        ida_prune_table_preload(&reduce_333_444, "lookup-table-4x4x4-step30-reduce333.txt");
+        reduce_333_edges_only = ida_cost_only_preload("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
+        reduce_333_centers_only = ida_cost_only_preload("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
+        wings_for_recolor_444 = init_wings_for_edges_recolor_pattern_444();
         break;
 
     // 5x5x5
@@ -1732,7 +1944,7 @@ ida_solve (
         hash_delete_all(&ida_explored);
 
         if (ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size,
-                       type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
+                       type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity)) {
             ida_count_total += ida_count;
             LOG("IDA threshold %d, explored %d branches (%d total), found solution\n", threshold, ida_count, ida_count_total);
             return 1;
@@ -1755,6 +1967,8 @@ main (int argc, char *argv[])
     unsigned int cube_size_kociemba = 0;
     unsigned int orbit0_wide_quarter_turns = 0;
     unsigned int orbit1_wide_quarter_turns = 0;
+    unsigned int corner_parity = 0;
+    unsigned int edge_parity = 0;
     char kociemba[300];
     memset(kociemba, 0, sizeof(char) * 300);
 
@@ -1770,6 +1984,10 @@ main (int argc, char *argv[])
             // 4x4x4
             if (strmatch(argv[i], "4x4x4-centers-stage")) {
                 type = CENTERS_STAGE_444;
+                cube_size_type = 4;
+
+            } else if (strmatch(argv[i], "4x4x4-reduce-333")) {
+                type = REDUCE_333_444;
                 cube_size_type = 4;
 
             // 5x5x5
@@ -1832,6 +2050,18 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--orbit1-need-even-w")) {
             orbit1_wide_quarter_turns = 2;
 
+        } else if (strmatch(argv[i], "--corner-swaps-odd")) {
+            corner_parity = 1;
+
+        } else if (strmatch(argv[i], "--corner-swaps-even")) {
+            corner_parity = 2;
+
+        } else if (strmatch(argv[i], "--edge-swaps-odd")) {
+            edge_parity = 1;
+
+        } else if (strmatch(argv[i], "--edge-swaps-even")) {
+            edge_parity = 2;
+
         } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
             printf("\nida_search --kociemba KOCIEMBA_STRING --type 5x5x5-UD-centers-stage\n\n");
             exit(0);
@@ -1872,7 +2102,7 @@ main (int argc, char *argv[])
     init_cube(cube, cube_size, type, kociemba);
 
     // print_cube(cube, cube_size);
-    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns);
+    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity);
 
     // free_prune_tables();
 

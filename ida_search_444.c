@@ -430,21 +430,7 @@ ida_heuristic_reduce_333_444 (
     centers_cost = hex_to_int(reduce_333_centers_only[centers_state_bucket]);
 
     cost_to_goal = max(edges_cost, centers_cost);
-
-    // dwalton here now
     sprintf(result.lt_state, "%s%s", centers_state, edges_state);
-
-    /*
-    if (edges_cost == 0) {
-        LOG("edges_state %s, edges_hash %lu, edges_bucket %d, edges_cost %d\n",
-            edges_state,
-            XXH32(edges_state, NUM_EDGES_444, 0),
-            edges_state_bucket, edges_cost);
-        print_cube(cube, 4);
-        exit(0);
-    }
-    */
-
     //LOG("edges_state %s, edges_cost %d\n", edges_state, edges_cost);
     //LOG("centers_state %s, centers_cost %d\n", centers_state, centers_cost);
     //LOG("lt_state %s\n", result.lt_state);

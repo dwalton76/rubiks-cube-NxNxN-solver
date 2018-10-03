@@ -35,7 +35,7 @@ def convert_to_cost_only(filename, bucketcount, filename_statetargets):
     prev_state_int = None
     first_permutation_rank = None
 
-    bucket = {}
+    bucket = bytearray(bucketcount)
     collisions = 0
 
     with open(filename, 'r') as fh:
@@ -50,21 +50,20 @@ def convert_to_cost_only(filename, bucketcount, filename_statetargets):
             if state in state_targets:
                 log.info("found state_target %s, hash_raw %s, hash_index %d" % (state, hash_raw, hash_index))
                 steps_len = 0
+                bucket[hash_index] = steps_len
             else:
                 if steps[0].isdigit():
                     steps_len = int(steps[0])
                 else:
                     steps_len = len(steps)
 
-            #log.info("state: %s, hash_index %s, steps_len %s" % (state, hash_index, steps_len))
-
-            if hash_index not in bucket:
-                bucket[hash_index] = steps_len
-            else:
-                collisions += 1
-
-                if bucket[hash_index] > steps_len:
+                if not bucket[hash_index]:
                     bucket[hash_index] = steps_len
+                else:
+                    collisions += 1
+
+                    if bucket[hash_index] > steps_len:
+                        bucket[hash_index] = steps_len
 
             if line_number % 1000000 == 0:
                 log.info(line_number)
@@ -78,8 +77,7 @@ def convert_to_cost_only(filename, bucketcount, filename_statetargets):
     with open(filename_new, 'w') as fh_new:
         to_write = []
 
-        for index in range(bucketcount):
-            x = bucket.get(index, 0)
+        for (index, x) in enumerate(bucket):
 
             if x > 15:
                 to_write.append('f')

@@ -804,8 +804,7 @@ ida_search_complete (
     lookup_table_type type,
     unsigned int orbit0_wide_quarter_turns,
     unsigned int orbit1_wide_quarter_turns,
-    unsigned int corner_parity,
-    unsigned int edge_parity,
+    unsigned int avoid_pll,
     move_type *moves_to_here)
 {
     struct key_value_pair * pt_entry = NULL;
@@ -866,65 +865,49 @@ ida_search_complete (
         result = ida_search_complete_reduce_333_444(cube);
 
         if (result) {
+
             // This will only be true when solving 4x4x4 phase3 where we must avoid PLL. To avoid
             // PLL the edge parity and corner parity must match (both odd or both even).
-            if (corner_parity && edge_parity) {
-                orbit0_wide_half_turn_count = get_orbit0_wide_half_turn_count(moves_to_here);
-                outer_layer_quarter_turn_count = get_outer_layer_quarter_turn_count(moves_to_here);
+            if (avoid_pll) {
+                FILE *fp;
+                char path[64];
+                char command[256];
 
-                unsigned int current_corner_parity = 0;
-                unsigned int current_edge_parity = 0;
+                memset(command, '\0', 256);
+                strcpy(command, "usr/bin/has_pll.py ");
+                unsigned int command_i = strlen(command);
 
-                // we started out with odd parity
-                if (corner_parity == 1) {
-                    if (outer_layer_quarter_turn_count % 2 == 0) {
-                        current_corner_parity = 1;
-                    } else {
-                        current_corner_parity = 2;
-                    }
+                for (unsigned int i = 1; i <= 96; i++) {
+                    command[command_i] = cube[i];
+                    command_i++;
+                }
 
-                // we started out with even parity
-                } else if (corner_parity == 2) {
-                    if (outer_layer_quarter_turn_count % 2 == 0) {
-                        current_corner_parity = 2;
-                    } else {
-                        current_corner_parity = 1;
-                    }
-
-                } else {
-                    printf("ERROR: corner_parity %d is not supported\n", corner_parity);
+                /* Open the command for reading. */
+                fp = popen(command, "r");
+                if (fp == NULL) {
+                    printf("Failed to run command\n" );
                     exit(1);
                 }
 
-                // we started out with odd parity
-                if (edge_parity == 1) {
-                    if (orbit0_wide_half_turn_count % 2 == 0) {
-                        current_edge_parity = 1;
+                /* Read the output a line at a time - output it. */
+                while (fgets(path, sizeof(path)-1, fp) != NULL) {
+                    if (strmatch(path, "True\n")) {
+                        printf("Found solution but it has PLL\n");
+                        result = 0;
+                        break;
+                    } else if (strmatch(path, "False\n")) {
+                        result = 1;
+                        break;
                     } else {
-                        current_edge_parity = 2;
+                        printf("ERROR: invalid has_pll.py output %s\n", path);
+                        exit(1);
                     }
-
-                // we started out with even parity
-                } else if (edge_parity == 2) {
-                    if (orbit0_wide_half_turn_count % 2 == 0) {
-                        current_edge_parity = 2;
-                    } else {
-                        current_edge_parity = 1;
-                    }
-
-                } else {
-                    printf("ERROR: edge_parity %d is not supported\n", edge_parity);
-                    exit(1);
                 }
 
-                if (current_corner_parity != current_edge_parity) {
-                    return 0;
-                }
+                /* close */
+                pclose(fp);
 
-                // dwalton
-                print_moves(moves_to_here, 99);
-                LOG("corner_parity %d, outer_layer_quarter_turn_count %d, current_corner_parity %d\n", corner_parity, outer_layer_quarter_turn_count, current_corner_parity);
-                LOG("edge_parity %d, orbit0_wide_half_turn_count %d, current_edge_parity %d\n", edge_parity, orbit0_wide_half_turn_count, current_edge_parity); 
+                return result;
             }
             return 1;
 
@@ -1607,8 +1590,7 @@ ida_search (unsigned int cost_to_here,
             lookup_table_type type,
             unsigned int orbit0_wide_quarter_turns,
             unsigned int orbit1_wide_quarter_turns,
-            unsigned int corner_parity,
-            unsigned int edge_parity)
+            unsigned int avoid_pll)
 {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
@@ -1633,7 +1615,7 @@ ida_search (unsigned int cost_to_here,
         return 0;
     }
 
-    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity, moves_to_here)) {
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, moves_to_here)) {
         // We are finished!!
         LOG("IDA count %d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
@@ -1669,7 +1651,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity)) {
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll)) {
                 return 1;
             } else {
                 moves_to_here[cost_to_here] = MOVE_NONE;
@@ -1695,7 +1677,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity)) {
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll)) {
                 return 1;
             } else {
                 moves_to_here[cost_to_here] = MOVE_NONE;
@@ -1721,7 +1703,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity)) {
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll)) {
                 return 1;
             } else {
                 moves_to_here[cost_to_here] = MOVE_NONE;
@@ -1747,7 +1729,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity)) {
+                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll)) {
                 return 1;
             } else {
                 moves_to_here[cost_to_here] = MOVE_NONE;
@@ -1842,8 +1824,7 @@ ida_solve (
     lookup_table_type type,
     unsigned int orbit0_wide_quarter_turns,
     unsigned int orbit1_wide_quarter_turns,
-    unsigned int corner_parity,
-    unsigned int edge_parity)
+    unsigned int avoid_pll)
 {
     int MAX_SEARCH_DEPTH = 20;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
@@ -1852,7 +1833,7 @@ ida_solve (
 
     memset(moves_to_here, MOVE_NONE, MAX_SEARCH_DEPTH);
 
-    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity, moves_to_here)) {
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, moves_to_here)) {
         LOG("cube already solved\n");
         printf("SOLUTION:\n");
         return 1;
@@ -1944,7 +1925,7 @@ ida_solve (
         hash_delete_all(&ida_explored);
 
         if (ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size,
-                       type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity)) {
+                       type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll)) {
             ida_count_total += ida_count;
             LOG("IDA threshold %d, explored %d branches (%d total), found solution\n", threshold, ida_count, ida_count_total);
             return 1;
@@ -1967,8 +1948,7 @@ main (int argc, char *argv[])
     unsigned int cube_size_kociemba = 0;
     unsigned int orbit0_wide_quarter_turns = 0;
     unsigned int orbit1_wide_quarter_turns = 0;
-    unsigned int corner_parity = 0;
-    unsigned int edge_parity = 0;
+    unsigned int avoid_pll = 0;
     char kociemba[300];
     memset(kociemba, 0, sizeof(char) * 300);
 
@@ -2050,17 +2030,8 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--orbit1-need-even-w")) {
             orbit1_wide_quarter_turns = 2;
 
-        } else if (strmatch(argv[i], "--corner-swaps-odd")) {
-            corner_parity = 1;
-
-        } else if (strmatch(argv[i], "--corner-swaps-even")) {
-            corner_parity = 2;
-
-        } else if (strmatch(argv[i], "--edge-swaps-odd")) {
-            edge_parity = 1;
-
-        } else if (strmatch(argv[i], "--edge-swaps-even")) {
-            edge_parity = 2;
+        } else if (strmatch(argv[i], "--avoid-pll")) {
+            avoid_pll = 1;
 
         } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
             printf("\nida_search --kociemba KOCIEMBA_STRING --type 5x5x5-UD-centers-stage\n\n");
@@ -2102,7 +2073,7 @@ main (int argc, char *argv[])
     init_cube(cube, cube_size, type, kociemba);
 
     // print_cube(cube, cube_size);
-    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, corner_parity, edge_parity);
+    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
 
     // free_prune_tables();
 

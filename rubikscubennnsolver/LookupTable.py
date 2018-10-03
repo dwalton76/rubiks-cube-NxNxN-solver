@@ -1306,18 +1306,7 @@ class LookupTableIDAViaC(object):
             # must both be odd or both be even. In order to avoid OLL though (which we
             # should have already done) the edge swaps must be even.
             assert self.parent.size == 4, "avoid_pll should only be True for 4x4x4 cubes"
-
-            # dwalton
-            #if self.parent.edge_swaps_even(False, 0, False):
-            if self.parent.foobar_edge_swaps_even():
-                cmd.append("--edge-swaps-even")
-            else:
-                cmd.append("--edge-swaps-odd")
-
-            if self.parent.corner_swaps_even():
-                cmd.append("--corner-swaps-even")
-            else:
-                cmd.append("--corner-swaps-odd")
+            cmd.append("--avoid-pll")
 
         log.info("%s: solving via C ida_search\n\n%s" % (self, " ".join(cmd)))
         output = subprocess.check_output(cmd).decode('ascii')

@@ -1581,7 +1581,12 @@ steps_on_same_face_and_layer(move_type move, move_type prev_move)
     return 0;
 }
 
-unsigned int
+struct ida_search_result {
+    unsigned int f_cost;
+    unsigned int found_solution;
+};
+
+struct ida_search_result
 ida_search (unsigned int cost_to_here,
             move_type *moves_to_here,
             unsigned int threshold,
@@ -1595,16 +1600,20 @@ ida_search (unsigned int cost_to_here,
 {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
-    move_type move;
-    struct ida_heuristic_result result;
+    move_type move, skip_other_steps_this_face;
+    struct ida_heuristic_result heuristic_result;
     char cube_tmp[array_size];
     char cost_to_here_str[3];
+    skip_other_steps_this_face = MOVE_NONE;
+    struct ida_search_result search_result, tmp_search_result;
 
     ida_count++;
     unsigned int max_cost_to_goal = threshold - cost_to_here;
-    result = ida_heuristic(cube, type, max_cost_to_goal);
-    cost_to_goal = result.cost_to_goal;
+    heuristic_result = ida_heuristic(cube, type, max_cost_to_goal);
+    cost_to_goal = heuristic_result.cost_to_goal;
     f_cost = cost_to_here + cost_to_goal;
+    search_result.f_cost = f_cost;
+    search_result.found_solution = 0;
 
     // Abort Searching
     if (f_cost >= threshold) {
@@ -1613,7 +1622,7 @@ ida_search (unsigned int cost_to_here,
         //        f_cost, threshold, cost_to_here, cost_to_goal);
         //    LOG("\n");
         //}
-        return 0;
+        return search_result;
     }
 
     if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, moves_to_here)) {
@@ -1621,17 +1630,18 @@ ida_search (unsigned int cost_to_here,
         LOG("IDA count %d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
-        return 1;
+        search_result.found_solution = 1;
+        return search_result;
     }
 
     sprintf(cost_to_here_str, "%d", cost_to_here);
-    strcat(result.lt_state, cost_to_here_str);
+    strcat(heuristic_result.lt_state, cost_to_here_str);
 
-    if (hash_find(&ida_explored, result.lt_state)) {
-        return 0;
+    if (hash_find(&ida_explored, heuristic_result.lt_state)) {
+        return search_result;
     }
 
-    hash_add(&ida_explored, result.lt_state, 0);
+    hash_add(&ida_explored, heuristic_result.lt_state, 0);
 
     if (cube_size == 4) {
 
@@ -1646,16 +1656,42 @@ ida_search (unsigned int cost_to_here,
                 continue;
             }
 
+            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            /*
+             * Well, it's a simple technique to reduce the number of nodes accessed.
+             * For example, we start at a position S whose pruning value is no more
+             * than maxl, otherwise, S will be pruned in previous searching.  After
+             * a move X, we obtain position S', whose pruning value is larger than
+             * maxl, which means that X makes S farther from the solved state.  In
+             * this case, we won't try X2 and X'.
+             * --cs0x7f
+             */
+            if (skip_other_steps_this_face != MOVE_NONE) {
+                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                    continue;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
+            }
+
             char cube_copy[array_size];
             memcpy(cube_copy, cube, sizeof(char) * array_size);
             rotate_444(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll)) {
-                return 1;
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+
+            if (tmp_search_result.found_solution) {
+                return tmp_search_result;
             } else {
                 moves_to_here[cost_to_here] = MOVE_NONE;
+
+                if (tmp_search_result.f_cost > threshold) {
+                    skip_other_steps_this_face = move;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
             }
         }
 
@@ -1672,16 +1708,42 @@ ida_search (unsigned int cost_to_here,
                 continue;
             }
 
+            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            /*
+             * Well, it's a simple technique to reduce the number of nodes accessed.
+             * For example, we start at a position S whose pruning value is no more
+             * than maxl, otherwise, S will be pruned in previous searching.  After
+             * a move X, we obtain position S', whose pruning value is larger than
+             * maxl, which means that X makes S farther from the solved state.  In
+             * this case, we won't try X2 and X'.
+             * --cs0x7f
+             */
+            if (skip_other_steps_this_face != MOVE_NONE) {
+                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                    continue;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
+            }
+
             char cube_copy[array_size];
             memcpy(cube_copy, cube, sizeof(char) * array_size);
             rotate_555(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll)) {
-                return 1;
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+
+            if (tmp_search_result.found_solution) {
+                return tmp_search_result;
             } else {
                 moves_to_here[cost_to_here] = MOVE_NONE;
+
+                if (tmp_search_result.f_cost > threshold) {
+                    skip_other_steps_this_face = move;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
             }
         }
 
@@ -1698,16 +1760,42 @@ ida_search (unsigned int cost_to_here,
                 continue;
             }
 
+            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            /*
+             * Well, it's a simple technique to reduce the number of nodes accessed.
+             * For example, we start at a position S whose pruning value is no more
+             * than maxl, otherwise, S will be pruned in previous searching.  After
+             * a move X, we obtain position S', whose pruning value is larger than
+             * maxl, which means that X makes S farther from the solved state.  In
+             * this case, we won't try X2 and X'.
+             * --cs0x7f
+             */
+            if (skip_other_steps_this_face != MOVE_NONE) {
+                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                    continue;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
+            }
+
             char cube_copy[array_size];
             memcpy(cube_copy, cube, sizeof(char) * array_size);
             rotate_666(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll)) {
-                return 1;
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+
+            if (tmp_search_result.found_solution) {
+                return tmp_search_result;
             } else {
                 moves_to_here[cost_to_here] = MOVE_NONE;
+
+                if (tmp_search_result.f_cost > threshold) {
+                    skip_other_steps_this_face = move;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
             }
         }
 
@@ -1724,16 +1812,42 @@ ida_search (unsigned int cost_to_here,
                 continue;
             }
 
+            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            /*
+             * Well, it's a simple technique to reduce the number of nodes accessed.
+             * For example, we start at a position S whose pruning value is no more
+             * than maxl, otherwise, S will be pruned in previous searching.  After
+             * a move X, we obtain position S', whose pruning value is larger than
+             * maxl, which means that X makes S farther from the solved state.  In
+             * this case, we won't try X2 and X'.
+             * --cs0x7f
+             */
+            if (skip_other_steps_this_face != MOVE_NONE) {
+                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                    continue;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
+            }
+
             char cube_copy[array_size];
             memcpy(cube_copy, cube, sizeof(char) * array_size);
             rotate_777(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll)) {
-                return 1;
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+
+            if (tmp_search_result.found_solution) {
+                return tmp_search_result;
             } else {
                 moves_to_here[cost_to_here] = MOVE_NONE;
+
+                if (tmp_search_result.f_cost > threshold) {
+                    skip_other_steps_this_face = move;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
             }
         }
 
@@ -1742,7 +1856,7 @@ ida_search (unsigned int cost_to_here,
         exit(1);
     }
 
-    return 0;
+    return search_result;
 }
 
 
@@ -1830,7 +1944,8 @@ ida_solve (
     int MAX_SEARCH_DEPTH = 20;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
-    struct ida_heuristic_result result;
+    struct ida_heuristic_result heuristic_result;
+    struct ida_search_result search_result;
 
     memset(moves_to_here, MOVE_NONE, MAX_SEARCH_DEPTH);
 
@@ -1916,8 +2031,8 @@ ida_solve (
         exit(1);
     }
 
-    result = ida_heuristic(cube, type, 99);
-    min_ida_threshold = result.cost_to_goal;
+    heuristic_result = ida_heuristic(cube, type, 99);
+    min_ida_threshold = heuristic_result.cost_to_goal;
     LOG("min_ida_threshold %d\n", min_ida_threshold);
 
     for (int threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {
@@ -1925,8 +2040,10 @@ ida_solve (
         memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_SEARCH_DEPTH);
         hash_delete_all(&ida_explored);
 
-        if (ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size,
-                       type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll)) {
+        search_result = ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size,
+                                   type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+
+        if (search_result.found_solution) {
             ida_count_total += ida_count;
             LOG("IDA threshold %d, explored %d branches (%d total), found solution\n", threshold, ida_count, ida_count_total);
             return 1;

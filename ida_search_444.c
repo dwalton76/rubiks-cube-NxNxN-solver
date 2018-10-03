@@ -451,7 +451,7 @@ ida_heuristic_reduce_333_444 (
 
     // The table we loaded is 6-deep so if a state is not in that
     // table we know it has a cost of at least 7...thus MAX_DEPTH of 7 here.
-    int MAX_DEPTH = 8;
+    int MAX_DEPTH = 7;
 
     if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
         struct key_value_pair *hash_entry = NULL;

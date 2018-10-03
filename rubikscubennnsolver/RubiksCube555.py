@@ -1457,15 +1457,18 @@ class LookupTable555LXPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
     lookup-table-5x5x5-step351-x-plane-y-plane-edges-orient-edges-only.txt
     ======================================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 40 entries (0 percent, 8.00x previous step)
-    3 steps has 258 entries (2 percent, 6.45x previous step)
-    4 steps has 1,325 entries (10 percent, 5.14x previous step)
-    5 steps has 5,114 entries (39 percent, 3.86x previous step)
-    6 steps has 5,524 entries (42 percent, 1.08x previous step)
-    7 steps has 604 entries (4 percent, 0.11x previous step)
+    2 steps has 44 entries (0 percent, 8.80x previous step)
+    3 steps has 380 entries (0 percent, 8.64x previous step)
+    4 steps has 3,072 entries (0 percent, 8.08x previous step)
+    5 steps has 21,936 entries (2 percent, 7.14x previous step)
+    6 steps has 124,785 entries (13 percent, 5.69x previous step)
+    7 steps has 401,708 entries (44 percent, 3.22x previous step)
+    8 steps has 327,530 entries (36 percent, 0.82x previous step)
+    9 steps has 21,432 entries (2 percent, 0.07x previous step)
+    10 steps has 8 entries (0 percent, 0.00x previous step)
 
-    Total: 12,870 entries
-    Average: 5.37 moves
+    Total: 900,900 entries
+    Average: 7.21 moves
     """
 
     def __init__(self, parent):
@@ -1473,13 +1476,13 @@ class LookupTable555LXPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
             self,
             parent,
             'lookup-table-5x5x5-step351-x-plane-y-plane-edges-orient-edges-only.txt',
-            'UDDUUDDUDUDUUDUDUDDUDUDUUDUDUDDU',
-            linecount=12870,
-            max_depth=7,
-            filesize=759330)
+            'UUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+            linecount=900900,
+            max_depth=10,
+            filesize=98198100)
 
     def ida_heuristic(self, ida_threshold):
-        state = self.parent.highlow_edges_state_x_plane_y_plane()
+        state = self.parent.highlow_edges_state()
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
 
@@ -1539,21 +1542,21 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
     ===========================================================
     1 steps has 42 entries (0 percent, 0.00x previous step)
     2 steps has 458 entries (0 percent, 10.90x previous step)
-    3 steps has 5,336 entries (0 percent, 11.65x previous step)
-    4 steps has 64,351 entries (0 percent, 12.06x previous step)
-    5 steps has 795,419 entries (7 percent, 12.36x previous step)
-    6 steps has 9,932,510 entries (91 percent, 12.49x previous step)
+    3 steps has 5,694 entries (0 percent, 12.43x previous step)
+    4 steps has 72,308 entries (0 percent, 12.70x previous step)
+    5 steps has 937,006 entries (7 percent, 12.96x previous step)
+    6 steps has 12,331,708 entries (92 percent, 13.16x previous step)
 
-    Total: 10,798,116 entries
+    Total: 13,347,216 entries
     """
 
     state_targets = (
-        'UUUUUUUUUBFBBFBBFBFBFFBFFBFUUUUUUUUUUDDUUDDUDUDUUDUDUDDUDUDUUDUDUDDU',
-        'UUUUUUUUUBFFBFFBFFBBFBBFBBFUUUUUUUUUUDDUUDDUDUDUUDUDUDDUDUDUUDUDUDDU',
-        'UUUUUUUUUBFFBFFBFFFBBFBBFBBUUUUUUUUUUDDUUDDUDUDUUDUDUDDUDUDUUDUDUDDU',
-        'UUUUUUUUUFFBFFBFFBBBFBBFBBFUUUUUUUUUUDDUUDDUDUDUUDUDUDDUDUDUUDUDUDDU',
-        'UUUUUUUUUFFBFFBFFBFBBFBBFBBUUUUUUUUUUDDUUDDUDUDUUDUDUDDUDUDUUDUDUDDU',
-        'UUUUUUUUUFFFFFFFFFBBBBBBBBBUUUUUUUUUUDDUUDDUDUDUUDUDUDDUDUDUUDUDUDDU',
+        'UUUUUUUUUBFBBFBBFBFBFFBFFBFUUUUUUUUUUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+        'UUUUUUUUUBFFBFFBFFBBFBBFBBFUUUUUUUUUUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+        'UUUUUUUUUBFFBFFBFFFBBFBBFBBUUUUUUUUUUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+        'UUUUUUUUUFFBFFBFFBBBFBBFBBFUUUUUUUUUUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+        'UUUUUUUUUFFBFFBFFBFBBFBBFBBUUUUUUUUUUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+        'UUUUUUUUUFFFFFFFFFBBBBBBBBBUUUUUUUUUUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
     )
 
     def __init__(self, parent):
@@ -1569,9 +1572,9 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
             # prune tables
             (parent.lt_x_plane_z_plane_orient_edges_edges_only,
              parent.lt_x_plane_z_plane_orient_edges_centers_only),
-            linecount=10798116,
+            linecount=13347216,
             max_depth=6,
-            filesize=1004224788,
+            filesize=1775179728,
 
             legal_moves=(
                 "F", "F'", "F2",
@@ -1598,6 +1601,60 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
         lt_state = centers_state + edges_state
         cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
         return (lt_state, cost_to_goal)
+
+
+#class LookupTable555PairLastEightEdgesEdgesOnly(LookupTableHashCostOnly):
+class LookupTable555PairLastEightEdgesEdgesOnly(LookupTable):
+    """
+    lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt
+    ===============================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 26 entries (0 percent, 5.20x previous step)
+    3 steps has 156 entries (0 percent, 6.00x previous step)
+    4 steps has 999 entries (0 percent, 6.40x previous step)
+    5 steps has 5,892 entries (0 percent, 5.90x previous step)
+    6 steps has 36,376 entries (0 percent, 6.17x previous step)
+    7 steps has 222,480 entries (0 percent, 6.12x previous step)
+    8 steps has 1,301,886 entries (0 percent, 5.85x previous step)
+    9 steps has 7,238,228 entries (0 percent, 5.56x previous step)
+    10 steps has 36,410,756 entries (4 percent, 5.03x previous step)
+    11 steps has 144,974,952 entries (17 percent, 3.98x previous step)
+    12 steps has 343,690,470 entries (42 percent, 2.37x previous step)
+    13 steps has 262,142,742 entries (32 percent, 0.76x previous step)
+    14 steps has 16,825,016 entries (2 percent, 0.06x previous step)
+    15 steps has 1,216 entries (0 percent, 0.00x previous step)
+
+    Total: 812,851,200 entries
+    Average: 12.06 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt',
+            'OOopPPQQqrRR------------WWwxXXYYyzZZ',
+            linecount=812851200,
+            max_depth=15,
+            filesize=73969459200)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.hash-cost-only.txt',
+            self.state_targets,
+            linecount=1,
+            max_depth=15,
+            bucketcount=812851219,
+            filesize=812851220)
+        '''
+
+    def ida_heuristic(self, ida_threshold):
+        assert self.only_colors and len(self.only_colors) == 8, "You must specify which 8-edges"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
 
 
 #class LookupTable555PairLastEightEdgesCentersOnly(LookupTableHashCostOnly):
@@ -1645,6 +1702,60 @@ class LookupTable555PairLastEightEdgesCentersOnly(LookupTable):
         state = ''.join([parent_state[x] for x in centers_555])
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
+
+
+class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step500-pair-last-eight-edges.txt
+    ====================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 42 entries (0 percent, 8.40x previous step)
+    3 steps has 380 entries (0 percent, 9.05x previous step)
+    4 steps has 3,425 entries (0 percent, 9.01x previous step)
+    5 steps has 29,807 entries (1 percent, 8.70x previous step)
+    6 steps has 259,083 entries (10 percent, 8.69x previous step)
+    7 steps has 2,235,143 entries (88 percent, 8.63x previous step)
+
+    Total: 2,527,885 entries
+    Average: 6.87 moves
+    """
+
+    # dwalton here now
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step500-pair-last-eight-edges.txt',
+            'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDDOOopPPQQqrRR------------WWwxXXYYyzZZ',
+            moves_555,
+            # illegal moves
+            ("Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'",
+             "Uw", "Uw'", "Uw2",
+             "Dw", "Dw'", "Dw2",
+             "L", "L'",
+             "R", "R'",
+             "F", "F'",
+             "B", "B'",
+            ),
+
+            # prune tables
+            (parent.lt_pair_last_eight_edges_edges_only,
+             parent.lt_pair_last_eight_edges_centers_only),
+            linecount=2527885,
+            max_depth=7,
+            filesize=300818315)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic(ida_threshold)
+        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic(ida_threshold)
+
+        lt_state = centers_state + edges_state
+        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+        return (lt_state, cost_to_goal)
 
 
 class RubiksCube555(RubiksCube):
@@ -1771,14 +1882,10 @@ class RubiksCube555(RubiksCube):
         self.lt_x_plane_z_plane_orient_edges = LookupTableIDA555LXPlaneYPlaneEdgesOrient(self)
         self.lt_x_plane_z_plane_orient_edges_edges_only.preload_cache_dict()
 
+        self.lt_pair_last_eight_edges_edges_only = LookupTable555PairLastEightEdgesEdgesOnly(self)
         self.lt_pair_last_eight_edges_centers_only = LookupTable555PairLastEightEdgesCentersOnly(self)
+        self.lt_pair_last_eight_edges = LookupTableIDA555PairLastEightEdges(self)
         self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
-
-    def highlow_edges_state_x_plane_y_plane(self):
-        state = self.state
-        result = [highlow_edge_values[(x, y, state[x], state[y])] for (x, y) in self.reduce333_orient_edges_x_plane_y_plane_tuples]
-        result = ''.join(result)
-        return result
 
     def highlow_edges_state(self):
         state = self.state
@@ -1878,7 +1985,7 @@ class RubiksCube555(RubiksCube):
         #    self, pformat(pairable), len(pairable)))
         return tuple(sorted(pairable))
 
-    def edges_flip_to_original_orientation(self):
+    def edges_flip_to_original_orientation(self, must_be_uppercase=[], must_be_lowercase=[]):
         state = edges_recolor_pattern_555(self.state[:])
         edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
 
@@ -1903,11 +2010,20 @@ class RubiksCube555(RubiksCube):
                 (31, 140, 98),   # DR
                 (34, 148, 123)): # DB
 
-            if edges_state[edge_state_index].islower():
-                square_value = self.state[square_index]
-                partner_value = self.state[partner_index]
-                wing_str = wing_str_map[square_value + partner_value]
-                to_flip.append(wing_str)
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if must_be_uppercase or must_be_lowercase:
+                #log.info("must_be_uppercase %s, must_be_lowercase %s" % (must_be_uppercase, must_be_lowercase))
+
+                if wing_str in must_be_uppercase and edges_state[edge_state_index].islower():
+                    to_flip.append(wing_str)
+                elif wing_str in must_be_lowercase and edges_state[edge_state_index].isupper():
+                    to_flip.append(wing_str)
+            else:
+                if edges_state[edge_state_index].islower():
+                    to_flip.append(wing_str)
 
         for square_index in wings_for_edges_pattern_555:
             partner_index = edges_partner_555[square_index]
@@ -1918,6 +2034,31 @@ class RubiksCube555(RubiksCube):
             if wing_str in to_flip:
                 self.state[square_index] = partner_value
                 self.state[partner_index] = square_value
+
+    def get_x_plane_z_plane_wing_strs(self):
+        result = []
+
+        # The 4 paired edges are in the x-plane so look at midges in the y-plane and z-plane
+        for square_index in (36, 40, 86, 90, 11, 15, 136, 140):
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+            result.append(wing_str)
+
+        return result
+
+    def get_y_plane_wing_strs(self):
+        result = []
+
+        for square_index in (3, 23, 128, 148):
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+            result.append(wing_str)
+
+        return result
 
     def get_y_plane_z_plane_wing_strs(self):
         result = []
@@ -2019,45 +2160,40 @@ class RubiksCube555(RubiksCube):
         self.print_cube()
         log.info("%s: LR centers in horizontal bars, z-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def orient_last_eight_edges(self):
+    def pair_last_eight_edges(self):
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(original_solution)
 
-        self.edges_flip_to_original_orientation()
+        self.edges_flip_to_original_orientation(self.get_y_plane_wing_strs(), self.get_x_plane_z_plane_wing_strs())
 
-        #self.highlow_edges_print()
         #self.lt_x_plane_z_plane_orient_edges_edges_only.solve()
         #self.lt_x_plane_z_plane_orient_edges_centers_only.solve()
         self.lt_x_plane_z_plane_orient_edges.solve()
 
         self.rotate("L")
         self.rotate("R'")
-        #self.print_cube()
+        self.print_cube()
         #self.highlow_edges_print()
-        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
+        log.info("%s: LR and FB vertical bars, x-plane paired, y-plane and z-plane oriented, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
+        #self.lt_pair_last_eight_edges_edges_only.solve()
+        #self.lt_pair_last_eight_edges_centers_only.solve()
+        self.lt_pair_last_eight_edges.solve()
 
         # Now put the cube back to the original state before we flipped all of
         # the edges to their native orientation, then apply the solution we found.
-        x_plane_y_plane_edges_solution = self.solution[original_solution_len:]
+        last_eight_edges_solution = self.solution[original_solution_len:]
         self.state = original_state[:]
         self.solution = original_solution[:]
+        # dwalton here now
 
-        for step in x_plane_y_plane_edges_solution:
+        for step in last_eight_edges_solution:
             self.rotate(step)
 
         self.print_cube()
-        log.info("%s: LR and FB vertical bars, x-plane paired, y-plane and z-plane oriented, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #log.info(" ".join(x_plane_y_plane_edges_solution))
-
-    def pair_last_eight_edges(self):
-        self.lt_pair_last_eight_edges_centers_only.solve()
-
-        self.print_cube()
         log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-        sys.exit(0)
 
     def reduce_333(self, fake_555=False):
         self.lt_init()
@@ -2067,7 +2203,7 @@ class RubiksCube555(RubiksCube):
         self.pair_z_plane_edges()
         #kociemba = self.get_kociemba_string(True)
         #log.info("%s: kociemba %s" % (self, kociemba))
-        self.orient_last_eight_edges()
+        #self.orient_last_eight_edges()
         self.pair_last_eight_edges()
         sys.exit(0)
 

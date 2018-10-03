@@ -235,13 +235,12 @@ ida_heuristic_centers_444 (
         hash_entry = hash_find(centers_cost_444, result.lt_state);
 
         if (hash_entry) {
-            cost_to_goal = max(cost_to_goal, hash_entry->value);
+            cost_to_goal = hash_entry->value;
         } else {
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+            cost_to_goal = MAX_DEPTH;
         }
     }
 
-    // LOG("lt_state %s, cost_to_goal %d\n", result.lt_state, cost_to_goal);
     result.cost_to_goal = cost_to_goal;
     return result;
 }
@@ -335,51 +334,56 @@ ida_heuristic_reduce_333_444 (
     char lt_state[NUM_EDGES_AND_CENTERS_444+2];
     char edges_state[NUM_EDGES_444+1];
     char centers_state[NUM_CENTERS_444+1];
-    char i_wing_str[3];
-    char j_wing_str[3];
+    char i_wing_str[2];
+    char j_wing_str[2];
+    char tmp_char;
     struct wings_for_edges_recolor_pattern_444 *i_wings_for_recolor = wings_for_recolor;
     struct wings_for_edges_recolor_pattern_444 *j_wings_for_recolor = wings_for_recolor;
     struct ida_heuristic_result result;
     memset(&result, 0, sizeof(struct ida_heuristic_result));
 
-    //memset(centers_state, '\0', NUM_CENTERS_444+1);
     centers_state[NUM_EDGES_444] = '\0';
     memset(edges_state, '\0', NUM_EDGES_444+1);
 
-    // dwalton this loop within a loop is expensive, find a better way to do this
+    unsigned int flip_wing_str = 0;
+
     // Record the two edge_indexes for each of the 12 edges
     for (int i = 0; i < NUM_EDGES_444; i++) {
-        j_wings_for_recolor = wings_for_recolor;
-        i_wing_str[0] = cube[i_wings_for_recolor->square_index];
-        i_wing_str[1] = cube[i_wings_for_recolor->partner_index];
-        i_wing_str[2] = '\0';
 
+        // If we already populated this one move on
         if (edges_state[i] != '\0') {
             i_wings_for_recolor++;
             continue;
         }
 
-        if (strmatch(i_wing_str, "BU") ||
-            strmatch(i_wing_str, "LU") ||
-            strmatch(i_wing_str, "RU") ||
-            strmatch(i_wing_str, "FU") ||
-            strmatch(i_wing_str, "BL") ||
-            strmatch(i_wing_str, "FL") ||
-            strmatch(i_wing_str, "BR") ||
-            strmatch(i_wing_str, "FR") ||
-            strmatch(i_wing_str, "BD") ||
-            strmatch(i_wing_str, "LD") ||
-            strmatch(i_wing_str, "RD") ||
-            strmatch(i_wing_str, "FD"))  {
+        //j_wings_for_recolor = wings_for_recolor;
+        i_wing_str[0] = cube[i_wings_for_recolor->square_index];
+        i_wing_str[1] = cube[i_wings_for_recolor->partner_index];
+        flip_wing_str = 0;
 
-            i_wing_str[2] = i_wing_str[0];
-            i_wing_str[0] = i_wing_str[1];
-            i_wing_str[1] = i_wing_str[2];
-            i_wing_str[2] = '\0';
+        // Flip BU around to UB, etc.  We do this so the two use the same wing_str.
+        // U, D, L, and F should always be the first charcter.
+        if (i_wing_str[1] == 'U' || i_wing_str[1] == 'D') {
+            if (i_wing_str[0] == 'B' || i_wing_str[0] == 'L' || i_wing_str[0] == 'R' || i_wing_str[0] == 'F') {
+                flip_wing_str = 1;
+            }
+        } else if (i_wing_str[1] == 'L' || i_wing_str[1] == 'R') {
+            if (i_wing_str[0] == 'B' || i_wing_str[0] == 'F') {
+                flip_wing_str = 1;
+            }
         }
 
-        for (int j = 0; j < NUM_EDGES_444; j++) {
+        if (flip_wing_str) {
+            tmp_char = i_wing_str[0];
+            i_wing_str[0] = i_wing_str[1];
+            i_wing_str[1] = tmp_char;
+        }
 
+        j_wings_for_recolor = i_wings_for_recolor;
+        j_wings_for_recolor++;
+        for (int j = i+1; j < NUM_EDGES_444; j++) {
+
+            // If we already populated this one move on
             if (i == j || edges_state[j] != '\0') {
                 j_wings_for_recolor++;
                 continue;
@@ -387,28 +391,27 @@ ida_heuristic_reduce_333_444 (
 
             j_wing_str[0] = cube[j_wings_for_recolor->square_index];
             j_wing_str[1] = cube[j_wings_for_recolor->partner_index];
-            j_wing_str[2] = '\0';
+            flip_wing_str = 0;
 
-            if (strmatch(j_wing_str, "BU") ||
-                strmatch(j_wing_str, "LU") ||
-                strmatch(j_wing_str, "RU") ||
-                strmatch(j_wing_str, "FU") ||
-                strmatch(j_wing_str, "BL") ||
-                strmatch(j_wing_str, "FL") ||
-                strmatch(j_wing_str, "BR") ||
-                strmatch(j_wing_str, "FR") ||
-                strmatch(j_wing_str, "BD") ||
-                strmatch(j_wing_str, "LD") ||
-                strmatch(j_wing_str, "RD") ||
-                strmatch(j_wing_str, "FD"))  {
-
-                j_wing_str[2] = j_wing_str[0];
-                j_wing_str[0] = j_wing_str[1];
-                j_wing_str[1] = j_wing_str[2];
-                j_wing_str[2] = '\0';
+            // Flip BU around to UB, etc.  We do this so the two use the same wing_str.
+            // U, D, L, and F should always be the first charcter.
+            if (j_wing_str[1] == 'U' || j_wing_str[1] == 'D') {
+                if (j_wing_str[0] == 'B' || j_wing_str[0] == 'L' || j_wing_str[0] == 'R' || j_wing_str[0] == 'F') {
+                    flip_wing_str = 1;
+                }
+            } else if (j_wing_str[1] == 'L' || j_wing_str[1] == 'R') {
+                if (j_wing_str[0] == 'B' || j_wing_str[0] == 'F') {
+                    flip_wing_str = 1;
+                }
             }
 
-            if (strmatch(i_wing_str, j_wing_str)) {
+            if (flip_wing_str) {
+                tmp_char = j_wing_str[0];
+                j_wing_str[0] = j_wing_str[1];
+                j_wing_str[1] = tmp_char;
+            }
+
+            if (i_wing_str[0] == j_wing_str[0] && i_wing_str[1] == j_wing_str[1]) {
                 edges_state[i] = j_wings_for_recolor->edge_index[0];
                 edges_state[j] = i_wings_for_recolor->edge_index[0];
                 //LOG("i %d, j %d, wing_str %s, i->edge_index %s, j->edge_index %s\n", i, j, i_wing_str, i_wings_for_recolor->edge_index, j_wings_for_recolor->edge_index);
@@ -444,9 +447,9 @@ ida_heuristic_reduce_333_444 (
         hash_entry = hash_find(reduce_333_444, result.lt_state);
 
         if (hash_entry) {
-            cost_to_goal = max(cost_to_goal, hash_entry->value);
+            cost_to_goal = hash_entry->value;
         } else {
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+            cost_to_goal = MAX_DEPTH;
         }
     }
 

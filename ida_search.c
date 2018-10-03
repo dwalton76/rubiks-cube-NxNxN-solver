@@ -892,10 +892,11 @@ ida_search_complete (
                 /* Read the output a line at a time - output it. */
                 while (fgets(path, sizeof(path)-1, fp) != NULL) {
                     if (strmatch(path, "True\n")) {
-                        printf("Found solution but it has PLL\n");
+                        LOG("Found solution but it has PLL\n");
                         result = 0;
                         break;
                     } else if (strmatch(path, "False\n")) {
+                        LOG("Found solution without PLL\n");
                         result = 1;
                         break;
                     } else {

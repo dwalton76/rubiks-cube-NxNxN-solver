@@ -286,7 +286,6 @@ class LookupTable(object):
         self.preloaded_cache_set = False
         self.preloaded_cache_string = False
         self.ida_all_the_way = False
-        self.use_lt_as_prune = False
         self.fh_txt_seek_calls = 0
         self.cache = {}
         self.cache_set = set()
@@ -295,6 +294,7 @@ class LookupTable(object):
         self.md5 = md5
         self.use_isdigit = False
         self.only_colors = ()
+        self.printed_disk_io_warning = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         #assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -353,8 +353,6 @@ class LookupTable(object):
         for state_to_find in states_to_find:
             b_state_to_find = bytearray(state_to_find, encoding='utf-8')
 
-            # TODO is the cache worth it (we have to sort it often) or would we be better
-            # off finding the first entry, then the last, then the first, etc?
             if cache:
                 (cache, first, last) = find_first_last(linecount, cache, b_state_to_find)
             else:
@@ -561,6 +559,9 @@ class LookupTable(object):
 
         # Binary search the file to get the value
         else:
+            if not self.printed_disk_io_warning:
+                log.info("%s: is binary searching the disk" % self)
+                self.printed_disk_io_warning = True
 
             line = self.binary_search(state_to_find)
             if line:
@@ -620,7 +621,13 @@ class LookupTable(object):
             if result == 0:
                 # This can happen when using HashCostOnly if a state-target and some other random state
                 # hash to the same bucket.
-                log.debug("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
+
+                # Make sure we know it if we are missing a ton of them for 5x5x5-step500-pair-last-eight-edges.
+                # Sometimes we get the edges in an unsolvable state.
+                if str(self) == '5x5x5-step500-pair-last-eight-edges':
+                    log.info("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
+                else:
+                    log.debug("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
                 #self.parent.enable_print_cube = True
                 #raise NoPruneTableState("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
 
@@ -756,7 +763,6 @@ class LookupTableCostOnly(LookupTable):
         self.preloaded_cache_dict = False
         self.preloaded_cache_set = False
         self.ida_all_the_way = False
-        self.use_lt_as_prune = False
         self.filesize = filesize
         self.md5 = md5
 
@@ -900,12 +906,12 @@ class LookupTableIDA(LookupTable):
 
         else:
             if state in self.state_target:
-                return True
+                steps = []
+            else:
+                steps = self.steps(state)
 
-            steps = self.steps(state)
-
-            if not steps:
-                return False
+                if not steps:
+                    return False
 
         # =============================================
         # If there are steps for a state that means our
@@ -958,19 +964,14 @@ class LookupTableIDA(LookupTable):
         # ================
         # Abort Searching?
         # ================
-        # I have gone back and forth many times over whether this should be done
-        # before or after the search_complete() call. If you put it after we will
-        # find a solution faster but it basically violates the rules of IDA and
-        # we will find a solution that is not the shortest...which kinda defeats
-        # the purpose of using IDA* in the first place. So leave it here and take
-        # the CPU hit on searching a little longer.
         if f_cost >= threshold:
             return (f_cost, False)
 
-        if threshold >= self.exit_asap and cost_to_goal <= self.max_depth and self.search_complete(lt_state, steps_to_here):
-            log.info("%s: exit_asap on first match" % self)
-            self.ida_nodes[lt_state] = steps_to_here
-            return (f_cost, True)
+        # Note that we do not check to see if we have found a state that is in our
+        # lookup table and return True here.  We do this so we can find all of
+        # the nodes that are reachable via our current threshold.  We will then
+        # search for all of those nodes/states in one go via get_best_ida_solution().
+        # This saves us a lot of disk IO.
 
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
@@ -1045,7 +1046,7 @@ class LookupTableIDA(LookupTable):
     def get_best_ida_solution(self):
         states_to_find = sorted(self.ida_nodes.keys())
 
-        if states_to_find and self.fh_txt is not None:
+        if states_to_find:
             log.info("%s: there are %d states to look for" % (self, len(states_to_find)))
             results = self.binary_search_multiple(states_to_find)
 
@@ -1125,23 +1126,26 @@ class LookupTableIDA(LookupTable):
         self.original_state = self.parent.state[:]
         self.original_solution = self.parent.solution[:]
 
+        # Avoiding OLL is done by changing the edge parity from odd to even.
+        # The edge parity toggles from odd to even or even to odd with every
+        # quarter wide turn. Sanity check that avoiding OLL is possible for
+        # this table.
+        if self.avoid_oll is not None:
+            #log.info("%s: verify we can avoid OLL via moves %s" % (self, " ".join(self.moves_all)))
+            for step in self.moves_all:
+                if "w" in step and not step.endswith("2"):
+                    log.info("%s: has avoid_oll %s" % (self, pformat(self.avoid_oll)))
+                    break
+            else:
+                raise Exception("%s: has avoid_oll %s but there are no quarter wide turns among moves_all %s" % (
+                    self, pformat(self.avoid_oll), " ".join(self.moves_all)))
+
         # Get the intial cube state and cost_to_goal
         (state, cost_to_goal) = self.ida_heuristic(0)
 
         # The cube is already in the desired state, nothing to do
-        if self.search_complete(state, []) and (state in self.state_target or cost_to_goal == 0):
-            self.parent.state = self.pre_recolor_state[:]
-            self.parent.solution = self.pre_recolor_solution[:]
-
-            if state in self.state_target:
-                log.info("%s: search_complete() True, cube is already at the target state %s" % (self, state))
-            else:
-                log.info("%s: search_complete() True, cube with state %s cost_to_goal %d" % (self, state, cost_to_goal))
-
-            return True
-
         if self.search_complete(state, []):
-            log.info("%s: cube is already in a state %s that is in our lookup table" % (self, state))
+            log.info("%s: cube state %s is in our lookup table" % (self, state))
             tmp_solution = self.parent.solution[:]
             self.parent.state = self.pre_recolor_state[:]
             self.parent.solution = self.pre_recolor_solution[:]
@@ -1150,17 +1154,6 @@ class LookupTableIDA(LookupTable):
                 self.parent.rotate(step)
 
             return True
-
-        # Avoiding OLL is done by changing the edge parity from odd to even.
-        # The edge parity toggles from odd to even or even to odd with every
-        # quarter wide turn. Sanity check that avoiding OLL is possible for
-        # this table.
-        if self.avoid_oll:
-            for step in self.moves_all:
-                if "w" in step and not step.endswith("2"):
-                    break
-            else:
-                raise Exception("%s: has avoid_oll %s but there are no quarter wide turns among moves_all %s" % (self, self.avoid_oll, " ".join(self.moves_all)))
 
         # If we are here (odds are very high we will be) it means that the current
         # cube state was not in the lookup table.  We must now perform an IDA search

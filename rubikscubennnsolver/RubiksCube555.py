@@ -1239,7 +1239,7 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
 
     def search_complete(self, state, steps_to_here):
         if LookupTableIDA.search_complete(self, state, steps_to_here):
-            pairable_count = len(self.parent.edges_pairable_via_tsai_phase2())
+            pairable_count = len(self.parent.edges_pairable_without_LR())
 
             # Technically we only need 4-edges to be in high/low groups but that leaves us
             # zero wiggle room for the next phase, we will HAVE to pair those 4-edges and
@@ -1247,10 +1247,10 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
             # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
             # of 4-edges to choose from..
             if pairable_count >= MIN_EO_COUNT_FOR_STAGE_LR_432:
-                log.info("%s: found solution where at least %d-edges are split into high/low groups" % (self, MIN_EO_COUNT_FOR_STAGE_LR_432))
+                log.info("%s: found solution where %d-edges (min %d-edges) are EOed" % (self, pairable_count, MIN_EO_COUNT_FOR_STAGE_LR_432))
                 return True
             else:
-                #log.info("%s: found solution but only %d-edges are split into high/low groups" % (self, pairable_count))
+                #log.info("%s: found solution but only %d-edges are EOed" % (self, pairable_count))
                 self.parent.state = self.original_state[:]
                 self.parent.solution = self.original_solution[:]
                 return False
@@ -1538,6 +1538,39 @@ class LookupTable555LXPlaneYPlaneEdgesOrientCentersOnly(LookupTableHashCostOnly)
         return (state, cost_to_goal)
 
 
+class LookupTable555LXPlaneYPlaneEdgesOrientPairOneEdge(LookupTable):
+    """
+    lookup-table-5x5x5-step353-x-plane-y-plane-edges-orient-pair-one-edge.txt
+    =========================================================================
+    1 steps has 7 entries (1 percent, 0.00x previous step)
+    2 steps has 28 entries (5 percent, 4.00x previous step)
+    3 steps has 90 entries (17 percent, 3.21x previous step)
+    4 steps has 195 entries (38 percent, 2.17x previous step)
+    5 steps has 184 entries (35 percent, 0.94x previous step)
+    6 steps has 8 entries (1 percent, 0.04x previous step)
+
+    Total: 512 entries
+    Average: 4.06 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step353-x-plane-y-plane-edges-orient-pair-one-edge.txt',
+            '---------rRR------------------------',
+            linecount=512,
+            max_depth=6,
+            filesize=29696)
+
+    def ida_heuristic(self, ida_threshold):
+        assert self.only_colors and len(self.only_colors) == 1, "You must specify which 1-edge"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
 class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
     """
     lookup-table-5x5x5-step350-x-plane-y-plane-edges-orient.txt
@@ -1591,6 +1624,29 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
                 "2R", "2R'", "2R2",
             )
         )
+
+    def search_complete(self, state, steps_to_here):
+        if LookupTableIDA.search_complete(self, state, steps_to_here):
+            self.parent.rotate("L")
+            self.parent.rotate("R'")
+            #self.parent.print_cube()
+            pairable_count = len(self.parent.edges_pairable_without_LRFB())
+
+            # Technically we only need 4-edges to be in high/low groups but that leaves us
+            # zero wiggle room for the next phase, we will HAVE to pair those 4-edges and
+            # if we hit some bad luck they could take a higher number of moves than is typical
+            # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
+            # of 4-edges to choose from..
+            if pairable_count == 8:
+                log.info("%s: found solution where all edges are EOed" % self)
+                return True
+            else:
+                log.info("%s: found solution but only %d-edges are EOed" % (self, pairable_count))
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                return False
+        else:
+            return False
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
@@ -1745,13 +1801,10 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
             # prune tables
             (parent.lt_pair_last_eight_edges_edges_only,
              parent.lt_pair_last_eight_edges_centers_only),
+
             linecount=21508617,
             max_depth=8,
             filesize=2624051274)
-
-            #linecount=2527885,
-            #max_depth=7,
-            #filesize=300818315)
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
@@ -1762,7 +1815,8 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
         cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
 
         # Not admissible but faster
-        #cost_to_goal = int(cost_to_goal * 1.2)
+        #if edges_cost_to_goal >= 12:
+        #    cost_to_goal = int(cost_to_goal * 1.3)
 
         return (lt_state, cost_to_goal)
 
@@ -1880,16 +1934,21 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_432_pair_one_edge.preload_cache_dict()
         self.lt_LR_432_x_centers_only.preload_cache_string()
         self.lt_LR_432_t_centers_only.preload_cache_string()
+        self.lt_LR_432_centers_stage.preload_cache_string()
 
         self.lt_edges_z_plane_edges_only = LookupTable555EdgesZPlaneEdgesOnly(self)
         self.lt_edges_z_plane_centers_only = LookupTable555EdgesZPlaneCentersOnly(self)
         self.lt_edges_z_plane = LookupTableIDA555EdgesZPlane(self)
         self.lt_edges_z_plane_centers_only.preload_cache_dict()
+        #self.lt_edges_z_plane.preload_cache_string()
 
         self.lt_x_plane_z_plane_orient_edges_edges_only = LookupTable555LXPlaneYPlaneEdgesOrientEdgesOnly(self)
         self.lt_x_plane_z_plane_orient_edges_centers_only = LookupTable555LXPlaneYPlaneEdgesOrientCentersOnly(self)
+        self.lt_x_plane_z_plane_orient_edges_pair_one_edge = LookupTable555LXPlaneYPlaneEdgesOrientPairOneEdge(self)
         self.lt_x_plane_z_plane_orient_edges = LookupTableIDA555LXPlaneYPlaneEdgesOrient(self)
         self.lt_x_plane_z_plane_orient_edges_edges_only.preload_cache_dict()
+        #self.lt_x_plane_z_plane_orient_edges.preload_cache_string()
+        self.lt_x_plane_z_plane_orient_edges_pair_one_edge.preload_cache_dict()
 
         self.lt_pair_last_eight_edges_edges_only = LookupTable555PairLastEightEdgesEdgesOnly(self)
         self.lt_pair_last_eight_edges_centers_only = LookupTable555PairLastEightEdgesCentersOnly(self)
@@ -1966,13 +2025,16 @@ class RubiksCube555(RubiksCube):
         #self.lt_LR_X_centers_stage.solve()
         #self.print_cube()
 
+        self.lt_LR_432_centers_stage.avoid_oll = 0
         self.lt_LR_432_centers_stage.solve()
         self.print_cube()
 
-        log.info("%s: LR centers staged to one of 432 states, at least %d-edges are pairable without L L' R R', %d steps in" %
-            (self, MIN_EO_COUNT_FOR_STAGE_LR_432, self.get_solution_len_minus_rotates(self.solution)))
+        pairable_count = len(self.edges_pairable_without_LR())
+        orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+        log.info("%s: LR centers staged to one of 432 states, %d-edges EOed (%d min), orbits with OLL %s, %d steps in" %
+            (self, pairable_count, MIN_EO_COUNT_FOR_STAGE_LR_432, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
 
-    def edges_pairable_via_tsai_phase2(self):
+    def edges_pairable_without_LR(self):
         """
         Return the wing_strs that can be paired without L L' R R'
         """
@@ -1994,6 +2056,36 @@ class RubiksCube555(RubiksCube):
                 pass
 
         self.lt_LR_432_pair_one_edge.only_colors = set()
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        #log.info("%s: pairable %s (%d of them)" % (
+        #    self, pformat(pairable), len(pairable)))
+        return tuple(sorted(pairable))
+
+    def edges_pairable_without_LRFB(self):
+        """
+        Return the wing_strs that can be paired without L L' R R' F F' B B'
+        """
+        state = self.state
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        pairable = []
+
+        for wing_str in self.get_y_plane_z_plane_wing_strs():
+            self.lt_x_plane_z_plane_orient_edges_pair_one_edge.only_colors = set([wing_str, ])
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            try:
+                self.lt_x_plane_z_plane_orient_edges_pair_one_edge.solve()
+                #log.info("%s: wing_str %s can be paired without L L' R R' F F' B B'" % (self, wing_str))
+                pairable.append(wing_str)
+            except NoSteps:
+                #log.info("%s: wing_str %s can NOT be paired without L L' R R' F F' B B'" % (self, wing_str))
+                pass
+
+        self.lt_x_plane_z_plane_orient_edges_pair_one_edge.only_colors = set()
         self.state = original_state[:]
         self.solution = original_solution[:]
 
@@ -2062,7 +2154,7 @@ class RubiksCube555(RubiksCube):
             wing_str = wing_str_map[square_value + partner_value]
             result.append(wing_str)
 
-        return result
+        return set(result)
 
     def get_y_plane_wing_strs(self):
         result = []
@@ -2074,7 +2166,7 @@ class RubiksCube555(RubiksCube):
             wing_str = wing_str_map[square_value + partner_value]
             result.append(wing_str)
 
-        return result
+        return set(result)
 
     def get_z_plane_wing_strs(self):
         result = []
@@ -2086,7 +2178,7 @@ class RubiksCube555(RubiksCube):
             wing_str = wing_str_map[square_value + partner_value]
             result.append(wing_str)
 
-        return result
+        return set(result)
 
     def get_y_plane_z_plane_wing_strs(self):
         result = []
@@ -2099,7 +2191,7 @@ class RubiksCube555(RubiksCube):
             wing_str = wing_str_map[square_value + partner_value]
             result.append(wing_str)
 
-        return result
+        return set(result)
 
     def pair_z_plane_edges(self):
         """
@@ -2124,7 +2216,7 @@ class RubiksCube555(RubiksCube):
 
         # TODO what if there are 4-paired edges somewhere?  We should use those
         else:
-            pairable = self.edges_pairable_via_tsai_phase2()
+            pairable = self.edges_pairable_without_LR()
             log.info("%s: z-plane pairable edges %s" % (self, pformat(pairable)))
 
             min_cost_to_goal = None
@@ -2171,7 +2263,10 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        log.info("%s: LR centers in horizontal bars, z-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        pairable_count = len(self.edges_pairable_without_LR())
+        orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+        log.info("%s: LR centers in horizontal bars, z-plane edges paired, %d-edges EOed, orbits with OLL %s, %d steps in" % (self,
+            pairable_count, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
 
     def pair_last_eight_edges(self):
         original_state = self.state[:]
@@ -2182,13 +2277,15 @@ class RubiksCube555(RubiksCube):
 
         #self.lt_x_plane_z_plane_orient_edges_edges_only.solve()
         #self.lt_x_plane_z_plane_orient_edges_centers_only.solve()
+        #self.lt_x_plane_z_plane_orient_edges.avoid_oll = 0
         self.lt_x_plane_z_plane_orient_edges.solve()
-
-        self.rotate("L")
-        self.rotate("R'")
         self.print_cube()
-        #self.highlow_edges_print()
-        log.info("%s: LR and FB vertical bars, x-plane paired, y-plane and z-plane oriented, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.highlow_edges_print()
+        pairable_count = len(self.edges_pairable_without_LRFB())
+        orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+        log.info("%s: LR and FB vertical bars, x-plane paired, %d-edges EOed, orbits with OLL %s, %d steps in" % (self,
+            pairable_count, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
+        assert pairable_count == 8
 
         self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
         #self.lt_pair_last_eight_edges_edges_only.solve()
@@ -2210,11 +2307,11 @@ class RubiksCube555(RubiksCube):
     def reduce_333(self, fake_555=False):
         self.lt_init()
 
+        kociemba = self.get_kociemba_string(True)
+        log.info("%s: kociemba %s" % (self, kociemba))
         self.group_centers_stage_UD()
         self.group_centers_stage_LR_to_432()
         self.pair_z_plane_edges()
-        #kociemba = self.get_kociemba_string(True)
-        #log.info("%s: kociemba %s" % (self, kociemba))
         self.pair_last_eight_edges()
 
         if not fake_555:

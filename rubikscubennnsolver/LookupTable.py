@@ -855,10 +855,9 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
 
 class LookupTableIDA(LookupTable):
 
-    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables,
+    def __init__(self, parent, filename, state_target, moves_all, moves_illegal,
             linecount, max_depth=None, filesize=None, exit_asap=99, legal_moves=[]):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
-        self.prune_tables = prune_tables
         self.ida_nodes = {}
         self.recolor_positions = []
         self.recolor_map = {}

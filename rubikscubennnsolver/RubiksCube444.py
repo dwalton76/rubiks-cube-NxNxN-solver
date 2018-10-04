@@ -325,9 +325,6 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
              "Lw", "Lw'",
              "Rw", "Rw'"),
 
-            (parent.lt_highlow_edges_edges,
-             parent.lt_highlow_edges_centers),
-
             linecount=2304998,
             max_depth=6,
             filesize=182094842)

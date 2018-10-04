@@ -694,11 +694,6 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
              "3Dw", "3Dw'", "3Dw2",
              "3Bw", "3Bw'", "3Bw2"),
 
-            # prune tables
-            (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
-             parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
-            ),
-
             linecount=linecount,
             max_depth=max_depth,
             filesize=filesize,
@@ -1059,7 +1054,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         if oblique_edges_only:
             fake_555.lt_LR_T_centers_stage.solve()
         else:
-            # We need to make solving LR t-centers use IDA so we can avoid OLL on orbit 0
+            # TODO We need to make solving LR t-centers use IDA so we can avoid OLL on orbit 0
             #fake_555.lt_LR_T_centers_stage.avoid_oll = 0
             fake_555.lt_LR_T_centers_stage.solve()
             #fake_555.lt_LR_T_centers_stage.avoid_oll = None

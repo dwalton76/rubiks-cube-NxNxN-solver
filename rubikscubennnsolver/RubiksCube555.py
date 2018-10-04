@@ -1229,10 +1229,6 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
              "Lw", "Lw'",
              "Rw", "Rw'"),
 
-            # prune tables
-            (parent.lt_LR_centers_stage_pt,
-             parent.lt_LR_432_x_centers_only,
-             parent.lt_LR_432_t_centers_only),
             linecount=26142364,
             max_depth=5,
             filesize=1490114748)
@@ -1411,10 +1407,6 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
              "L", "L'",
              "R", "R'",
             ),
-
-            # prune tables
-            (parent.lt_edges_z_plane_edges_only,
-             parent.lt_edges_z_plane_centers_only),
 
             # 7-deep
             linecount=40626240,
@@ -1604,9 +1596,6 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
             # illegal moves
             (),
 
-            # prune tables
-            (parent.lt_x_plane_z_plane_orient_edges_edges_only,
-             parent.lt_x_plane_z_plane_orient_edges_centers_only),
             linecount=13347216,
             max_depth=6,
             filesize=1775179728,
@@ -1798,10 +1787,6 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
              "B", "B'",
             ),
 
-            # prune tables
-            (parent.lt_pair_last_eight_edges_edges_only,
-             parent.lt_pair_last_eight_edges_centers_only),
-
             linecount=21508617,
             max_depth=8,
             filesize=2624051274)
@@ -1814,9 +1799,8 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
         lt_state = centers_state + edges_state
         cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
 
-        # Not admissible but faster
-        #if edges_cost_to_goal >= 12:
-        #    cost_to_goal = int(cost_to_goal * 1.3)
+        # Not admissible but faster....sometimes
+        #cost_to_goal = int(cost_to_goal * 1.1)
 
         return (lt_state, cost_to_goal)
 

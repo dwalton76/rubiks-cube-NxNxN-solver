@@ -395,6 +395,272 @@ def edges_recolor_pattern_444(state):
     return ''.join(state)
 
 
+#class LookupTable444Reduce333Edges(LookupTableHashCostOnly):
+#    """
+#    lookup-table-4x4x4-step31-reduce333-edges.txt
+#    =============================================
+#    1 steps has 4 entries (0 percent, 0.00x previous step)
+#    2 steps has 20 entries (0 percent, 5.00x previous step)
+#    3 steps has 140 entries (0 percent, 7.00x previous step)
+#    4 steps has 1,141 entries (0 percent, 8.15x previous step)
+#    5 steps has 8,059 entries (0 percent, 7.06x previous step)
+#    6 steps has 62,188 entries (0 percent, 7.72x previous step)
+#    7 steps has 442,293 entries (0 percent, 7.11x previous step)
+#    8 steps has 2,958,583 entries (1 percent, 6.69x previous step)
+#    9 steps has 17,286,512 entries (7 percent, 5.84x previous step)
+#    10 steps has 69,004,356 entries (28 percent, 3.99x previous step)
+#    11 steps has 122,416,936 entries (51 percent, 1.77x previous step)
+#    12 steps has 27,298,296 entries (11 percent, 0.22x previous step)
+#    13 steps has 22,272 entries (0 percent, 0.00x previous step)
+#
+#    Total: 239,500,800 entries
+#    Average: 10.635709 moves
+#    """
+#
+#    def __init__(self, parent):
+#
+#        # Provides an option for running the 444 solver on ~300M
+#        if parent.min_memory:
+#            filename = 'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt.half-buckets'
+#            bucketcount = 119750417
+#            filesize = 119750418
+#        else:
+#            filename = 'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt'
+#            bucketcount = 239500847
+#            filesize = 239500848
+#
+#        LookupTableHashCostOnly.__init__(
+#            self,
+#            parent,
+#            filename,
+#            '10425376a8b9ecfdhgkiljnm',
+#            linecount=239500800,
+#            max_depth=13,
+#            bucketcount=bucketcount,
+#            filesize=filesize)
+#
+#        '''
+#        LookupTable.__init__(
+#            self,
+#            parent,
+#            'lookup-table-4x4x4-step31-reduce333-edges.txt',
+#            '10425376a8b9ecfdhgkiljnm',
+#            linecount=239500800,
+#            max_depth=13,
+#            filesize=479001630)
+#        '''
+#
+#class LookupTable444Reduce333CentersSolve(LookupTable):
+#    """
+#    lookup-table-4x4x4-step32-reduce333-centers.txt
+#    ===============================================
+#    1 steps has 16 entries (0 percent, 0.00x previous step)
+#    2 steps has 136 entries (0 percent, 8.50x previous step)
+#    3 steps has 952 entries (1 percent, 7.00x previous step)
+#    4 steps has 4,048 entries (6 percent, 4.25x previous step)
+#    5 steps has 10,588 entries (18 percent, 2.62x previous step)
+#    6 steps has 16,620 entries (28 percent, 1.57x previous step)
+#    7 steps has 16,392 entries (27 percent, 0.99x previous step)
+#    8 steps has 8,768 entries (14 percent, 0.53x previous step)
+#    9 steps has 1,280 entries (2 percent, 0.15x previous step)
+#
+#    Total: 58,800 entries
+#    Average: 6.27 moves
+#    """
+#
+#    def __init__(self, parent):
+#        LookupTable.__init__(
+#            self,
+#            parent,
+#            'lookup-table-4x4x4-step32-reduce333-centers.txt',
+#            ('DDDDLLLLBBBBRRRRFFFFUUUU',
+#             'DDDDRRRRFFFFLLLLBBBBUUUU',
+#             'UUUULLLLFFFFRRRRBBBBDDDD',
+#             'UUUURRRRBBBBLLLLFFFFDDDD'),
+#            linecount=58800,
+#            max_depth=9,
+#            filesize=3351600)
+#
+#class LookupTableIDA444Reduce333(LookupTableIDA):
+#    """
+#    lookup-table-4x4x4-step30-reduce333.txt
+#    =======================================
+#    1 steps has 16 entries (0 percent, 0.00x previous step)
+#    2 steps has 136 entries (0 percent, 8.50x previous step)
+#    3 steps has 1,424 entries (0 percent, 10.47x previous step)
+#    4 steps has 14,032 entries (0 percent, 9.85x previous step)
+#    5 steps has 134,052 entries (9 percent, 9.55x previous step)
+#    6 steps has 1,290,292 entries (89 percent, 9.63x previous step)
+#
+#    Total: 1,439,952 entries
+#    """
+#
+#    heuristic_stats = {
+#        (0, 0): 1,
+#        (0, 2): 7,
+#        (1, 1): 2,
+#        (1, 2): 9,
+#        (1, 3): 8,
+#        (1, 4): 6,
+#        (2, 1): 7,
+#        (2, 2): 3,
+#        (2, 3): 4,
+#        (2, 4): 5,
+#        (2, 5): 7,
+#        (2, 6): 9,
+#        (2, 10): 14,
+#        (2, 11): 14,
+#        (3, 1): 4,
+#        (3, 2): 4,
+#        (3, 3): 4,
+#        (3, 4): 6,
+#        (3, 5): 7,
+#        (3, 6): 10,
+#        (3, 7): 11,
+#        (3, 8): 12,
+#        (3, 9): 12,
+#        (3, 10): 13,
+#        (3, 11): 15,
+#        (4, 1): 5,
+#        (4, 2): 6,
+#        (4, 3): 6,
+#        (4, 4): 6,
+#        (4, 5): 7,
+#        (4, 6): 10,
+#        (4, 7): 11,
+#        (4, 8): 12,
+#        (4, 9): 13,
+#        (4, 10): 14,
+#        (4, 11): 15,
+#        (5, 2): 6,
+#        (5, 3): 6,
+#        (5, 4): 7,
+#        (5, 5): 8,
+#        (5, 6): 9,
+#        (5, 7): 11,
+#        (5, 8): 12,
+#        (5, 9): 13,
+#        (5, 10): 14,
+#        (5, 11): 15,
+#        (5, 12): 14,
+#        (6, 3): 7,
+#        (6, 4): 10,
+#        (6, 5): 9,
+#        (6, 6): 9,
+#        (6, 7): 10,
+#        (6, 8): 11,
+#        (6, 9): 13,
+#        (6, 10): 14,
+#        (6, 11): 15,
+#        (6, 12): 16,
+#        (7, 5): 12,
+#        (7, 6): 11,
+#        (7, 7): 11,
+#        (7, 8): 12,
+#        (7, 9): 13,
+#        (7, 10): 14,
+#        (7, 11): 14,
+#        (7, 12): 15,
+#        (8, 6): 13,
+#        (8, 7): 13,
+#        (8, 8): 13,
+#        (8, 9): 13,
+#        (8, 10): 14,
+#        (8, 11): 15,
+#        (8, 12): 14,
+#        (9, 8): 13,
+#        (9, 9): 13,
+#        (9, 10): 14,
+#        (9, 11): 15,
+#    }
+#
+#    # The higher this number the less you honor the heuristic_stats
+#    # -  0 uses the heuristic_stats exactly as reported
+#    # -  1 subtracts 1 from the heuristic_stats value
+#    # - 99 disables heuristic_stats
+#    #
+#    # You want to put this as high as you can but low enough
+#    # to still speed up the slow IDA searches.
+#    #
+#    # For cube DFRFUBDBUBRBRBLFLURRLRURDLRBRDLRULDURFRBLDUFLRFFBFLDFLLBUFFFFUDDBRFBBBLDBBUULLRUUUDLDDFDRDUUBLFD
+#    # 99 : 14 moves, 10m 12s  or 15 moves 11s
+#    #  3 : 15 moves, 1m 24s   or 15 moves 30s
+#    #  2 : 19 moves, 9s       or 15 moves 34s
+#    #  1 : 18 moves, 10s      or 17 moves 5s
+#    #  0 : 18 moves, 15s      or 17 moves 6s
+#    heuristic_stats_error = 2
+#
+#    def __init__(self, parent):
+#
+#        # 5-deep table, takes 10M
+#        if parent.min_memory:
+#            filename = "lookup-table-4x4x4-step30-reduce333.txt.5-deep"
+#            linecount = 149660
+#            max_depth = 5
+#            filesize = 10176880
+#            exit_asap = 13
+#
+#        # 6-deep table, takes 103M
+#        else:
+#            filename = "lookup-table-4x4x4-step30-reduce333.txt"
+#            linecount = 1439952
+#            max_depth = 6
+#            filesize = 103676544
+#            exit_asap = 15
+#
+#        LookupTableIDA.__init__(
+#            self,
+#            parent,
+#            filename,
+#            ('DDDDLLLLBBBBRRRRFFFFUUUU10425376a8b9ecfdhgkiljnm',
+#             'DDDDRRRRFFFFLLLLBBBBUUUU10425376a8b9ecfdhgkiljnm',
+#             'UUUULLLLFFFFRRRRBBBBDDDD10425376a8b9ecfdhgkiljnm',
+#             'UUUURRRRBBBBLLLLFFFFDDDD10425376a8b9ecfdhgkiljnm'),
+#            moves_444,
+#
+#            # illegal moves
+#            ("Fw", "Fw'",
+#             "Uw", "Uw'",
+#             "Rw", "Rw'",
+#             "Lw", "Lw'", "Lw2",
+#             "Bw", "Bw'", "Bw2",
+#             "Dw", "Dw'", "Dw2",
+#             "R", "R'",
+#             "L", "L'"),
+#
+#            linecount=linecount,
+#            max_depth=max_depth,
+#            filesize=filesize,
+#            exit_asap=exit_asap,
+#        )
+#
+#    def ida_heuristic_tuple(self):
+#        state = edges_recolor_pattern_444(self.parent.state[:])
+#        centers_state = ''.join([state[square_index] for square_index in centers_444])
+#        edges_state = ''.join([state[square_index] for square_index in wings_444])
+#
+#        return (
+#            self.parent.lt_reduce333_centers_solve.heuristic(centers_state),
+#            self.parent.lt_reduce333_edges_solve.heuristic(edges_state),
+#        )
+#
+#    def ida_heuristic(self, ida_threshold):
+#        state = edges_recolor_pattern_444(self.parent.state[:])
+#        centers_state = ''.join([state[square_index] for square_index in centers_444])
+#        edges_state = ''.join([state[square_index] for square_index in wings_444])
+#        lt_state = centers_state + edges_state
+#
+#        centers_cost = self.parent.lt_reduce333_centers_solve.heuristic(centers_state)
+#        edges_cost = self.parent.lt_reduce333_edges_solve.heuristic(edges_state)
+#
+#        if ida_threshold >= self.exit_asap:
+#            heuristic_stats_cost = self.heuristic_stats.get((centers_cost, edges_cost), 0)
+#            cost_to_goal = max(centers_cost, edges_cost, heuristic_stats_cost - self.heuristic_stats_error)
+#        else:
+#            cost_to_goal = max(centers_cost, edges_cost)
+#
+#        return (lt_state, cost_to_goal)
+
 
 class LookupTableIDA444Reduce333(LookupTableIDAViaC):
     """
@@ -453,7 +719,6 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
             parent,
             # Needed tables and their md5 signatures
             (('lookup-table-4x4x4-step30-reduce333.txt', '82fbc3414d07e53448d0746d96e25ebd'), # 6-deep
-            #(('lookup-table-4x4x4-step30-reduce333.txt', '5a825cf04fa42631c806ae98ba4322cd'), # 7-deep
              ('lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt', '20ac2ed7ca369c3b5183f836f5d99262'),
              ('lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt', '3f990fc1fb6bf506d81ba65f03ad74f6')),
             '4x4x4-reduce-333' # C_ida_type
@@ -679,7 +944,11 @@ class RubiksCube444(RubiksCube):
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
         self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
 
+        #self.lt_reduce333_edges_solve = LookupTable444Reduce333Edges(self)
+        #self.lt_reduce333_centers_solve = LookupTable444Reduce333CentersSolve(self)
         self.lt_reduce333 = LookupTableIDA444Reduce333(self)
+        #self.lt_reduce333_centers_solve.preload_cache_dict()
+        #self.lt_reduce333.preload_cache_string()
 
     def reduce_333(self, fake_444=False):
         self.lt_init()

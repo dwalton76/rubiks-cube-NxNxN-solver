@@ -103,6 +103,42 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             start_nnn += self.size * self.size
             start_555 += 25
 
+        # Fill in the centers
+        start_555 = 0
+        start_nnn = 0
+
+        for x in range(6):
+            row1_col1 = start_nnn + self.size + 2
+            row1_col3 = row1_col1 + self.size - 3
+            row1_col2 = int((row1_col1 + row1_col3)/2)
+
+            row2_col1 = row1_col1 + self.size
+            row2_col2 = row1_col2 + self.size
+            row2_col3 = row1_col3 + self.size
+
+            row3_col3 = start_nnn + (self.size * self.size) - self.size - 1
+            row3_col1 = row3_col3 - self.size + 3
+            row3_col2 = int((row3_col1 + row3_col3)/2)
+
+            #log.info("row1_col1 %d, row1_col2 %d, row1_col3 %d" % (row1_col1, row1_col2, row1_col3))
+            #log.info("row2_col1 %d, row2_col2 %d, row2_col3 %d" % (row2_col1, row2_col2, row2_col3))
+            #log.info("row3_col1 %d, row3_col2 %d, row3_col3 %d" % (row3_col1, row3_col2, row3_col3))
+
+            fake_555.state[start_555+7] = self.state[row1_col1]
+            fake_555.state[start_555+8] = self.state[row1_col2]
+            fake_555.state[start_555+9] = self.state[row1_col3]
+
+            fake_555.state[start_555+12] = self.state[row2_col1]
+            fake_555.state[start_555+13] = self.state[row2_col2]
+            fake_555.state[start_555+14] = self.state[row2_col3]
+
+            fake_555.state[start_555+17] = self.state[row3_col1]
+            fake_555.state[start_555+18] = self.state[row3_col2]
+            fake_555.state[start_555+19] = self.state[row3_col3]
+
+            start_nnn += self.size * self.size
+            start_555 += 25
+
         # Fill in the edges
         start_555 = 0
         start_nnn = 0
@@ -160,9 +196,18 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
         fake_555.sanity_check()
         self.print_cube()
+        fake_555.enable_print_cube = True
         fake_555.print_cube()
         fake_555.avoid_pll = False
-        fake_555.reduce_333(fake_555=True)
+
+        if self.size == 6:
+            fake_555.reduce_333(fake_555=True)
+        else:
+            # For 8x8x8 and up the centers will already be solved so use the
+            # older but faster L4E edge pairing code.
+            fake_555.reduce_333_via_l4e(fake_555=True)
+
+        fake_555.print_cube()
 
         wide_str = str(orbit + 2)
         for step in fake_555.solution:
@@ -178,6 +223,14 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
                           "Bw", "Bw'", "Bw2",
                           "Dw", "Dw'", "Dw2"):
                 step = wide_str + step
+
+            elif step in ("2U", "2U'", "2U2",
+                          "2L", "2L'", "2L2",
+                          "2F", "2F'", "2F2",
+                          "2R", "2R'", "2R2",
+                          "2B", "2B'", "2B2",
+                          "2D", "2D'", "2D2"):
+                step = wide_str + step[1:]
 
             self.rotate(step)
 

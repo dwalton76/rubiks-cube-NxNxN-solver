@@ -767,7 +767,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         self.lt_step40.solve()
         self.print_cube()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: LR centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Test the pruning tables
@@ -791,6 +790,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         self.lt_step60.solve()
         self.print_cube()
+        log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
 

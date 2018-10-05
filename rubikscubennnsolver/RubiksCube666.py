@@ -1006,11 +1006,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
 
-        if oblique_edges_only:
-            self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = None
-        else:
-            self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
-
         self.lt_UD_inner_x_centers_stage.solve()
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
@@ -1042,28 +1037,45 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Stage the LR inner x-centers and oblique edges
+        if oblique_edges_only:
+            self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = None
+        else:
+            self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
+
         self.lt_LR_inner_x_centers_and_oblique_edges_stage.solve()
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
-        log.info("%s: LR oblique edges and inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        if oblique_edges_only:
+            orbits_with_oll_parity = []
+        else:
+            orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+
+        log.info("%s: LR oblique edges and inner x-centers staged, orbits with OLL %s, %d steps in" % (
+            self, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
 
         # Stage LR centers via 555
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
 
-        if oblique_edges_only:
-            fake_555.lt_LR_T_centers_stage.solve()
+        # correct/avoid oll on the outside orbit
+        if 0 in orbits_with_oll_parity:
+            fake_555.lt_LR_T_centers_stage_odd.solve()
         else:
-            # TODO We need to make solving LR t-centers use IDA so we can avoid OLL on orbit 0
-            #fake_555.lt_LR_T_centers_stage.avoid_oll = 0
-            fake_555.lt_LR_T_centers_stage.solve()
-            #fake_555.lt_LR_T_centers_stage.avoid_oll = None
+            fake_555.lt_LR_T_centers_stage_even.solve()
 
         for step in fake_555.solution:
             self.rotate(step)
 
         self.print_cube()
-        log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        if oblique_edges_only:
+            orbits_with_oll_parity = []
+        else:
+            orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+
+        log.info("%s: centers staged, orbits with OLL %s, %d steps in" % (
+            self, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges

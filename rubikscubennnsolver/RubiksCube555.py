@@ -2260,7 +2260,7 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_432_pair_one_edge.preload_cache_dict()
         self.lt_LR_432_x_centers_only.preload_cache_string()
         self.lt_LR_432_t_centers_only.preload_cache_string()
-        self.lt_LR_432_centers_stage.preload_cache_string()
+        #self.lt_LR_432_centers_stage.preload_cache_string()
 
         self.lt_edges_z_plane_edges_only = LookupTable555EdgesZPlaneEdgesOnly(self)
         self.lt_edges_z_plane_centers_only = LookupTable555EdgesZPlaneCentersOnly(self)
@@ -2745,14 +2745,15 @@ class RubiksCube555(RubiksCube):
 
         min_solution_len = None
         min_solution_steps = None
+        min_solution_pairable_count = None
 
         for pre_steps in pre_steps_to_try:
             self.state = original_state[:]
             self.solution = original_solution[:]
 
-            log.info("")
-            log.info("")
-            log.info("%s: pre_steps %s" % (self, " ".join(pre_steps)))
+            #log.info("")
+            #log.info("")
+            #log.info("%s: pre_steps %s" % (self, " ".join(pre_steps)))
             for step in pre_steps:
                 self.rotate(step)
 
@@ -2764,7 +2765,7 @@ class RubiksCube555(RubiksCube):
                 states_to_find.append(self.lt_edges_stage_first_four.state(wing_strs))
 
             results = self.lt_edges_stage_first_four.binary_search_multiple(states_to_find)
-            log.info("%s: %d states_to_find, found %d matches" % (self, len(states_to_find), len(results)))
+            #log.info("%s: %d states_to_find, found %d matches" % (self, len(states_to_find), len(results)))
 
             for (_, steps) in results.items():
                 self.state = post_pre_steps_state[:]
@@ -2773,16 +2774,19 @@ class RubiksCube555(RubiksCube):
                 for step in steps.split():
                     self.rotate(step)
 
-                if self.x_plane_edges_are_l4e() and not self.x_plane_edges_paired():
-                    solution_steps = self.solution[original_solution_len:]
-                    solution_len = self.get_solution_len_minus_rotates(solution_steps)
+                self.stage_final_four_edges_in_x_plane()
+                pairable_count = len(self.edges_pairable_without_LRFB())
+                solution_steps = self.solution[original_solution_len:]
+                solution_len = self.get_solution_len_minus_rotates(solution_steps)
 
-                    if min_solution_len is None or solution_len < min_solution_len:
-                        log.info("%s: first 4-edges can be staged in %d steps (NEW MIN)" % (self, solution_len))
-                        min_solution_len = solution_len
-                        min_solution_steps = solution_steps
-                    else:
-                        log.info("%s: first 4-edges can be staged in %d steps" % (self, solution_len))
+                # dwalton
+                if pairable_count >= 0 and (min_solution_len is None or solution_len < min_solution_len):
+                    log.info("%s: first 4-edges can be staged in %d, %d-edges EOed, steps %s (NEW MIN)" % (self, solution_len, pairable_count, ' '.join(solution_steps)))
+                    min_solution_len = solution_len
+                    min_solution_steps = solution_steps
+                    min_solution_pairable_count = pairable_count
+                else:
+                    log.info("%s: first 4-edges can be staged in %d steps, %d-edges EOed" % (self, solution_len, pairable_count))
 
             if min_solution_len is not None:
                 #if pre_steps:
@@ -2971,29 +2975,29 @@ class RubiksCube555(RubiksCube):
                 self.rotate(step)
 
             if self.x_plane_edges_are_l4e() and not self.x_plane_edges_paired():
-                if pre_steps:
-                    log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
-                else:
-                    log.info("%s: L4E group in x-plane" % self)
+                #if pre_steps:
+                #    log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
+                #else:
+                #    log.info("%s: L4E group in x-plane" % self)
                 break
 
             elif self.y_plane_edges_are_l4e() and not self.y_plane_edges_paired():
-                if pre_steps:
-                    log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
-                else:
-                    log.info("%s: L4E group in y-plane, moving to x-plane" % self)
+                #if pre_steps:
+                #    log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
+                #else:
+                #    log.info("%s: L4E group in y-plane, moving to x-plane" % self)
                 self.rotate("z")
                 break
 
             elif self.z_plane_edges_are_l4e() and not self.z_plane_edges_paired():
-                if pre_steps:
-                    log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
-                else:
-                    log.info("%s: L4E group in z-plane, moving to x-plane" % self)
+                #if pre_steps:
+                #    log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
+                #else:
+                #    log.info("%s: L4E group in z-plane, moving to x-plane" % self)
                 self.rotate("x")
                 break
 
-        log.info("%s: final four edges placed in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #log.info("%s: final four edges placed in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def pair_x_plane_edges_in_l4e(self):
 
@@ -3067,10 +3071,12 @@ class RubiksCube555(RubiksCube):
 
         if not self.centers_solved():
             self.lt_ULFRBD_centers_solve.solve()
+            self.print_cube()
+            log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.pair_first_four_edges_via_l4e()
         self.pair_second_four_edges_via_l4e()
-        self.rotate("z")
+        self.stage_final_four_edges_in_x_plane()
         self.pair_x_plane_edges_in_l4e()
 
     def reduce_333(self, fake_555=False):

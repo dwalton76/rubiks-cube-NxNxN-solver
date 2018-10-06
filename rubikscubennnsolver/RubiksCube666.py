@@ -987,22 +987,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             fake_555.state[23 + offset_555] = side_name
             fake_555.state[24 + offset_555] = self.state[35 + offset_666]
 
-    def solve_reduced_555_centers(self):
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_ULFRBD_solve()
-        fake_555.lt_ULFRBD_centers_solve.solve()
-
-        for step in fake_555.solution:
-            self.rotate(step)
-
-    def solve_reduced_555_t_centers(self):
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_ULFRBD_solve()
-        fake_555.lt_ULFRBD_t_centers_solve.solve()
-
-        for step in fake_555.solution:
-            self.rotate(step)
-
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
 
@@ -1097,7 +1081,13 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         # Solve the t-centers so that we can use the 444 solver to pair the
         # inside orbit of edges
-        self.solve_reduced_555_t_centers()
+        fake_555 = self.get_fake_555()
+        self.populate_fake_555_for_ULFRBD_solve()
+        fake_555.lt_ULFRBD_t_centers_solve.solve()
+
+        for step in fake_555.solution:
+            self.rotate(step)
+
         self.print_cube()
         log.info("%s: solved T-centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 

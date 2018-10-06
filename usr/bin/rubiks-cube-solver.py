@@ -38,6 +38,7 @@ parser.add_argument('--min-memory', default=False, action='store_true', help='Lo
 
 # CPU mode
 action = parser.add_mutually_exclusive_group(required=False)
+parser.add_argument('--openwith', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--colormap', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--order', type=str, default='URFDLB', help='order of sides in --state, default kociemba URFDLB')
 parser.add_argument('--state', type=str, help='Cube state',
@@ -130,6 +131,11 @@ try:
     else:
         from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
         cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
+
+    if args.openwith:
+        cube.print_cube()
+        for step in args.openwith.split():
+            cube.rotate(step)
 
     cube.min_memory = args.min_memory
     cube.sanity_check()

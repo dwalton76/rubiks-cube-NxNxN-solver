@@ -1941,7 +1941,7 @@ ida_solve (
     unsigned int orbit1_wide_quarter_turns,
     unsigned int avoid_pll)
 {
-    int MAX_SEARCH_DEPTH = 20;
+    int MAX_SEARCH_DEPTH = 30;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
     struct ida_heuristic_result heuristic_result;

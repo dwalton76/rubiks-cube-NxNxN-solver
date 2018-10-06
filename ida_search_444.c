@@ -326,7 +326,7 @@ ida_heuristic_reduce_333_444 (
     char *reduce_333_centers_only,
     struct wings_for_edges_recolor_pattern_444 *wings_for_recolor)
 {
-    unsigned long cost_to_goal = 0;
+    int cost_to_goal = 0;
     unsigned long edges_state_bucket = 0;
     unsigned long centers_state_bucket = 0;
     unsigned int edges_cost = 0;
@@ -452,7 +452,7 @@ ida_heuristic_reduce_333_444 (
     //  2 : 15 moves, 16s
 
     unsigned int heuristic_stats_error = 2;
-    unsigned int original_cost_to_goal = max(edges_cost, centers_cost);
+    int original_cost_to_goal = max(edges_cost, centers_cost);
     cost_to_goal = original_cost_to_goal + heuristic_stats_error;
 
     // These stats come from back when I was using python IDA here. These are not

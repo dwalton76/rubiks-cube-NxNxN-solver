@@ -3307,7 +3307,8 @@ class RubiksCube(object):
             raise SolveError("parity error made kociemba barf,  kociemba %s" % kociemba_string)
 
         log.debug("kociemba       : %s" % kociemba_string)
-        log.debug("kociemba steps : %s" % ', '.join(steps))
+        log.info("kociemba steps            : %s" % ' '.join(steps))
+        log.info("kociemba steps (reversed) : %s" % ' '.join(reverse_steps(steps)))
 
         for step in steps:
             step = str(step)
@@ -3943,11 +3944,14 @@ class RubiksCube(object):
 
             solution_string.append(step)
 
-        moves = set(solution_string)
+        moves = solution_string[:]
         solution_string = ' '.join(solution_string)
+        pass_num = 0
 
         while True:
             original_solution_string = solution_string[:]
+            prev_move = None
+            #log.info("pass %d:  init %s" % (pass_num, original_solution_string))
 
             for move in moves:
                 if move in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
@@ -3983,13 +3987,30 @@ class RubiksCube(object):
                         else:
                             solution_string = solution_string.replace(" %s %s " % (move, move), " %s2 " % move)
 
+                # Experimented with this for a bit but never found a case where it was useful.
+                # I am sure there are some they are just rare.
+                '''
+                if prev_move is not None and not prev_move.startswith(str(self.size)):
+                    if ('U' in move or 'D' in move) and ('U' in prev_move or 'D' in prev_move):
+                        log.warning("pass %d: %s -> %s can we compress this as a slice?" % (pass_num, prev_move, move))
+                    elif ('L' in move or 'R' in move) and ('L' in prev_move or 'R' in prev_move):
+                        log.warning("pass %d: %s -> %s can we compress this as a slice?" % (pass_num, prev_move, move))
+                    elif ('F' in move or 'B' in move) and ('F' in prev_move or 'B' in prev_move):
+                        log.warning("pass %d: %s -> %s can we compress this as a slice?" % (pass_num, prev_move, move))
+                '''
+
                 # "F F'" and "F' F" will cancel each other out, remove them
                 solution_string = solution_string.replace(" %s %s " % (move, reverse_move), " ")
                 solution_string = solution_string.replace(" %s %s " % (reverse_move, move), " ")
+                prev_move = move
 
+            #log.info("pass %d: final %s" % (pass_num, solution_string))
             if original_solution_string == solution_string:
                 break
+            else:
+                pass_num += 1
 
+        log.info("Compressed solution in %d passes" % pass_num)
         # Remove full cube rotations by changing all of the steps that follow the cube rotation
         steps = solution_string.strip().split()
         final_steps = []
@@ -4067,11 +4088,30 @@ class RubiksCube(object):
     def print_solution(self):
 
         # Print an alg.cubing.net URL for this setup/solution
-        url = "https://alg.cubing.net/?puzzle=%dx%dx%d&setup=" % (self.size, self.size, self.size)
-        url += '_'.join(reverse_steps(self.solution))
-        url += '&alg='
-        url += '_'.join(self.solution)
+        url = "https://alg.cubing.net/?puzzle=%dx%dx%d&alg=" % (self.size, self.size, self.size)
+
+        if self.steps_to_solve_centers:
+            # _ is  space
+            # %2F is a /
+            # %0A is a newline
+            url += '_'.join(self.solution[:self.steps_to_solve_centers])
+            url += r'''_%2F%2F''' +  "%d to solve centers" % self.steps_to_solve_centers + r'''%0A'''
+
+            if self.steps_to_group_edges:
+                url += '_'.join(self.solution[self.steps_to_solve_centers:self.steps_to_solve_centers+self.steps_to_group_edges])
+                url += r'''_%2F%2F''' +  "%d to pair edges" % self.steps_to_group_edges + r'''%0A'''
+
+            if self.steps_to_solve_3x3x3:
+                url += '_'.join(self.solution[self.steps_to_solve_centers+self.steps_to_group_edges:])
+                url += r'''_%2F%2F''' +  "%d to solve 333" % self.steps_to_solve_3x3x3 + r'''%0A'''
+
+        else:
+            url += '_'.join(self.solution)
+
+        url += "&type=alg"
+        url += "&title=dwalton76"
         url = url.replace("'", "-")
+        url = url.replace(" ", "_")
         log.info("\nURL     : %s" % url)
 
         log.info("\nSolution: %s" % ' '.join(self.solution))

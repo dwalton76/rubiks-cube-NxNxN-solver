@@ -310,8 +310,21 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     int L_start_kociemba = D_start_kociemba + squares_per_side;
     int B_start_kociemba = L_start_kociemba + squares_per_side;
 
+    char ones_UL[3] = {'U', 'L', 0};
+    char ones_UF[3] = {'U', 'F', 0};
+    char ones_UR[3] = {'U', 'R', 0};
+    char ones_UB[3] = {'U', 'B', 0};
     char ones_UD[3] = {'U', 'D', 0};
+    char ones_LF[3] = {'L', 'F', 0};
     char ones_LR[3] = {'L', 'R', 0};
+    char ones_LB[3] = {'L', 'B', 0};
+    char ones_LD[3] = {'L', 'D', 0};
+    char ones_FR[3] = {'F', 'R', 0};
+    char ones_FB[3] = {'F', 'B', 0};
+    char ones_FD[3] = {'F', 'D', 0};
+    char ones_RB[3] = {'R', 'B', 0};
+    char ones_RD[3] = {'R', 'D', 0};
+    char ones_BD[3] = {'B', 'D', 0};
     char ones_ULF[4] = {'U', 'L', 'F', 0};
 
     char U[2] = {'U', 0};

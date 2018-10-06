@@ -1725,8 +1725,8 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
 
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
-        (edges_state, edges_cost_to_goal) = self.parent.lt_x_plane_z_plane_orient_edges_edges_only.ida_heuristic(ida_threshold)
-        (_, centers_cost_to_goal) = self.parent.lt_x_plane_z_plane_orient_edges_centers_only.ida_heuristic(ida_threshold)
+        (edges_state, edges_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_edges_only.ida_heuristic(ida_threshold)
+        (_, centers_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_centers_only.ida_heuristic(ida_threshold)
 
         parent_state = self.parent.state
         centers_state = ''.join(['U' if parent_state[x] in ('U', 'D') else parent_state[x] for x in UFBD_centers_555])
@@ -1852,6 +1852,120 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
 
     Total: 21,508,617 entries
     """
+    heuristic_stats = {
+        (0, 0): 0,
+        (1, 1): 1,
+        (1, 2): 7,
+        (1, 3): 8,
+        (1, 4): 5,
+        (1, 5): 5,
+        (1, 6): 6,
+        (2, 1): 4,
+        (2, 2): 2,
+        (2, 3): 3,
+        (2, 4): 4,
+        (2, 5): 6,
+        (2, 6): 7,
+        (2, 7): 7,
+        (2, 9): 14,
+        (2, 12): 17,
+        (3, 0): 5,
+        (3, 1): 3,
+        (3, 2): 3,
+        (3, 3): 3,
+        (3, 4): 4,
+        (3, 5): 6,
+        (3, 6): 7,
+        (3, 7): 8,
+        (3, 8): 12,
+        (3, 9): 13,
+        (3, 10): 14,
+        (3, 11): 14,
+        (3, 13): 15,
+        (4, 0): 4,
+        (4, 1): 5,
+        (4, 2): 4,
+        (4, 3): 5,
+        (4, 4): 4,
+        (4, 5): 6,
+        (4, 6): 7,
+        (4, 7): 9,
+        (4, 8): 11,
+        (4, 9): 12,
+        (4, 10): 14,
+        (4, 11): 15,
+        (4, 12): 15,
+        (4, 13): 18,
+        (5, 1): 5,
+        (5, 2): 6,
+        (5, 3): 5,
+        (5, 4): 6,
+        (5, 5): 7,
+        (5, 6): 8,
+        (5, 7): 9,
+        (5, 8): 11,
+        (5, 9): 12,
+        (5, 10): 14,
+        (5, 11): 15,
+        (5, 12): 16,
+        (5, 13): 18,
+        (6, 2): 6,
+        (6, 3): 7,
+        (6, 4): 6,
+        (6, 5): 8,
+        (6, 6): 9,
+        (6, 7): 9,
+        (6, 8): 11,
+        (6, 9): 12,
+        (6, 10): 14,
+        (6, 11): 15,
+        (6, 12): 16,
+        (6, 13): 17,
+        (6, 14): 16,
+        (7, 3): 7,
+        (7, 4): 8,
+        (7, 5): 8,
+        (7, 6): 9,
+        (7, 7): 10,
+        (7, 8): 11,
+        (7, 9): 12,
+        (7, 10): 14,
+        (7, 11): 15,
+        (7, 12): 16,
+        (7, 13): 17,
+        (7, 14): 17,
+        (8, 6): 11,
+        (8, 7): 12,
+        (8, 8): 12,
+        (8, 9): 13,
+        (8, 10): 14,
+        (8, 11): 15,
+        (8, 12): 16,
+        (8, 13): 17,
+        (8, 14): 17,
+        (9, 7): 12,
+        (9, 8): 13,
+        (9, 9): 12,
+        (9, 10): 14,
+        (9, 11): 15,
+        (9, 12): 16,
+        (9, 13): 16
+    }
+
+    # The higher this number the less you honor the heuristic_stats
+    # -  0 uses the heuristic_stats exactly as reported
+    # -  1 subtracts 1 from the heuristic_stats value
+    # - 99 disables heuristic_stats
+    #
+    # You want to put this as high as you can but low enough
+    # to still speed up the slow IDA searches.
+    #
+    # For cube
+    # 99 : 18 moves in 28s
+    #  2 : 17 moves in 2m 41s
+    #  1 : 21 moves in 21s
+    # dwalton
+    heuristic_stats_error = 1
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -1877,16 +1991,24 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
             max_depth=8,
             filesize=2624051274)
 
+            #linecount=180853034,
+            #max_depth=9,
+            #filesize=22787482284)
+
+    def ida_heuristic_tuple(self):
+        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic(99)
+        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic(99)
+        return (centers_cost_to_goal, edges_cost_to_goal)
+
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
         (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic(ida_threshold)
         (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic(ida_threshold)
 
-        lt_state = centers_state + edges_state
-        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+        heuristic_stats_cost = self.heuristic_stats.get((centers_cost_to_goal, edges_cost_to_goal), 0)
+        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal, heuristic_stats_cost - self.heuristic_stats_error)
 
-        # Not admissible but faster...sometimes???
-        #cost_to_goal = int(cost_to_goal * 1.1)
+        lt_state = centers_state + edges_state
 
         return (lt_state, cost_to_goal)
 
@@ -2268,19 +2390,18 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_z_plane_centers_only.preload_cache_dict()
         #self.lt_edges_z_plane.preload_cache_string()
 
-        self.lt_x_plane_z_plane_orient_edges_edges_only = LookupTable555LXPlaneYPlaneEdgesOrientEdgesOnly(self)
-        self.lt_x_plane_z_plane_orient_edges_centers_only = LookupTable555LXPlaneYPlaneEdgesOrientCentersOnly(self)
-        self.lt_x_plane_z_plane_orient_edges_pair_one_edge = LookupTable555LXPlaneYPlaneEdgesOrientPairOneEdge(self)
-        self.lt_x_plane_z_plane_orient_edges = LookupTableIDA555LXPlaneYPlaneEdgesOrient(self)
-        self.lt_x_plane_z_plane_orient_edges_edges_only.preload_cache_dict()
-        #self.lt_x_plane_z_plane_orient_edges.preload_cache_string()
-        self.lt_x_plane_z_plane_orient_edges_pair_one_edge.preload_cache_dict()
+        self.lt_x_plane_y_plane_orient_edges_edges_only = LookupTable555LXPlaneYPlaneEdgesOrientEdgesOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_centers_only = LookupTable555LXPlaneYPlaneEdgesOrientCentersOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555LXPlaneYPlaneEdgesOrientPairOneEdge(self)
+        self.lt_x_plane_y_plane_orient_edges = LookupTableIDA555LXPlaneYPlaneEdgesOrient(self)
+        self.lt_x_plane_y_plane_orient_edges_edges_only.preload_cache_dict()
+        #self.lt_x_plane_y_plane_orient_edges.preload_cache_string()
+        self.lt_x_plane_y_plane_orient_edges_pair_one_edge.preload_cache_dict()
 
         self.lt_pair_last_eight_edges_edges_only = LookupTable555PairLastEightEdgesEdgesOnly(self)
         self.lt_pair_last_eight_edges_centers_only = LookupTable555PairLastEightEdgesCentersOnly(self)
         self.lt_pair_last_eight_edges = LookupTableIDA555PairLastEightEdges(self)
         self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
-
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
@@ -2290,7 +2411,6 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_x_plane_edges_only.preload_cache_dict()
         self.lt_edges_x_plane_centers_only.preload_cache_dict()
         self.lt_edges_x_plane.preload_cache_dict()
-
 
     def highlow_edges_state(self):
         state = self.state
@@ -2410,19 +2530,19 @@ class RubiksCube555(RubiksCube):
         pairable = []
 
         for wing_str in self.get_y_plane_z_plane_wing_strs():
-            self.lt_x_plane_z_plane_orient_edges_pair_one_edge.only_colors = set([wing_str, ])
+            self.lt_x_plane_y_plane_orient_edges_pair_one_edge.only_colors = set([wing_str, ])
             self.state = original_state[:]
             self.solution = original_solution[:]
 
             try:
-                self.lt_x_plane_z_plane_orient_edges_pair_one_edge.solve()
+                self.lt_x_plane_y_plane_orient_edges_pair_one_edge.solve()
                 #log.info("%s: wing_str %s can be paired without L L' R R' F F' B B'" % (self, wing_str))
                 pairable.append(wing_str)
             except NoSteps:
                 #log.info("%s: wing_str %s can NOT be paired without L L' R R' F F' B B'" % (self, wing_str))
                 pass
 
-        self.lt_x_plane_z_plane_orient_edges_pair_one_edge.only_colors = set()
+        self.lt_x_plane_y_plane_orient_edges_pair_one_edge.only_colors = set()
         self.state = original_state[:]
         self.solution = original_solution[:]
 
@@ -2624,10 +2744,11 @@ class RubiksCube555(RubiksCube):
 
         self.edges_flip_to_original_orientation(self.get_y_plane_wing_strs(), self.get_x_plane_z_plane_wing_strs())
 
-        #self.lt_x_plane_z_plane_orient_edges_edges_only.solve()
-        #self.lt_x_plane_z_plane_orient_edges_centers_only.solve()
-        #self.lt_x_plane_z_plane_orient_edges.avoid_oll = 0
-        self.lt_x_plane_z_plane_orient_edges.solve()
+        #self.lt_x_plane_y_plane_orient_edges_edges_only.solve()
+        #self.lt_x_plane_y_plane_orient_edges_centers_only.solve()
+        #self.lt_x_plane_y_plane_orient_edges.avoid_oll = 0
+
+        self.lt_x_plane_y_plane_orient_edges.solve()
         self.print_cube()
         self.highlow_edges_print()
         pairable_count = len(self.edges_pairable_without_LRFB())
@@ -3074,10 +3195,17 @@ class RubiksCube555(RubiksCube):
             self.print_cube()
             log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        self.pair_first_four_edges_via_l4e()
-        self.pair_second_four_edges_via_l4e()
-        self.stage_final_four_edges_in_x_plane()
-        self.pair_x_plane_edges_in_l4e()
+        if not fake_555:
+            self.solution.append('CENTERS_SOLVED')
+
+        if not self.edges_paired():
+            self.pair_first_four_edges_via_l4e()
+            self.pair_second_four_edges_via_l4e()
+            self.stage_final_four_edges_in_x_plane()
+            self.pair_x_plane_edges_in_l4e()
+
+        if not fake_555:
+            self.solution.append('EDGES_GROUPED')
 
     def reduce_333(self, fake_555=False):
         self.lt_init()
@@ -3085,11 +3213,14 @@ class RubiksCube555(RubiksCube):
         #self.reduce_333_via_l4e()
         #return
 
+        # dwalton
         #log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
-        self.group_centers_stage_UD()
-        self.group_centers_stage_LR_to_432()
-        self.pair_z_plane_edges()
-        self.pair_last_eight_edges()
+
+        if not self.centers_solved() or not self.edges_paired():
+            self.group_centers_stage_UD()
+            self.group_centers_stage_LR_to_432()
+            self.pair_z_plane_edges()
+            self.pair_last_eight_edges()
 
         if not fake_555:
             self.solution.append('CENTERS_SOLVED')

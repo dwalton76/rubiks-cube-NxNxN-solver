@@ -221,7 +221,7 @@ def find_first_last(linecount, cache, b_state_to_find):
     #log.info("find_first_last for %s, deleted %s, first %s, last %s, cache\n%s" % (b_state_to_find, to_delete, first, last, pformat(cache)))
     return (cache, first, last)
 
- 
+
 def md5signature(filename):
     hasher = hashlib.md5()
     with open(filename, 'rb') as fh:
@@ -292,6 +292,7 @@ class LookupTable(object):
         self.cache_list = []
         self.filesize = filesize
         self.md5 = md5
+        self.collect_stats = False
         self.use_isdigit = False
         self.only_colors = ()
         self.printed_disk_io_warning = False
@@ -1166,6 +1167,7 @@ class LookupTableIDA(LookupTable):
             raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
 
         start_time0 = dt.datetime.now()
+        #log.info("%s: using moves %s" % (self, pformat(self.moves_all)))
         log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold))
         total_ida_count = 0
 
@@ -1181,6 +1183,39 @@ class LookupTableIDA(LookupTable):
             best_solution = self.get_best_ida_solution()
 
             if best_solution:
+
+                if self.collect_stats:
+                    self.parent.state = self.original_state[:]
+                    self.parent.solution = self.original_solution[:]
+                    steps_to_go = len(best_solution)
+
+                    heuristic_tuple = self.ida_heuristic_tuple()
+
+                    if heuristic_tuple not in self.parent.heuristic_stats:
+                        self.parent.heuristic_stats[heuristic_tuple] = []
+                    self.parent.heuristic_stats[heuristic_tuple].append(steps_to_go)
+                    hit_wtf = False
+                    prev_step = None
+                    max_index = len(best_solution) - 1
+
+                    for (index, step) in enumerate(best_solution):
+                        self.parent.rotate(step)
+                        steps_to_go -= 1
+                        heuristic_tuple = self.ida_heuristic_tuple()
+
+                        if heuristic_tuple not in self.parent.heuristic_stats:
+                            self.parent.heuristic_stats[heuristic_tuple] = []
+
+                        #if steps_to_go < max(heuristic_tuple):
+                        #    log.info("%s: index %d, steps_to_go %d, step %s, heuristic_tuple %s, best_solution %s, WTF??" %\
+                        #        (self, index, steps_to_go, step, pformat(heuristic_tuple), pformat(best_solution)))
+                        #    hit_wtf = True
+                        #else:
+                        #    log.info("%s: index %d, steps_to_go %d, step %s, heuristic_tuple %s, best_solution %s" % (self, index, steps_to_go, step, pformat(heuristic_tuple), pformat(best_solution)))
+
+                        #self.parent.print_cube()
+                        self.parent.heuristic_stats[heuristic_tuple].append(steps_to_go)
+
                 self.parent.state = self.pre_recolor_state[:]
                 self.parent.solution = self.pre_recolor_solution[:]
 

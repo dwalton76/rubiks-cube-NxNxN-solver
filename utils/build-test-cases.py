@@ -41,8 +41,8 @@ test_cases["17x17x17"] = []
 cubes = OrderedDict()
 #cubes["2x2x2"] = RubiksCube(solved_222, 'URFDLB')
 #cubes["3x3x3"] = RubiksCube(solved_333, 'URFDLB')
-cubes["4x4x4"] = RubiksCube(solved_444, 'URFDLB')
-#cubes["5x5x5"] = RubiksCube(solved_555, 'URFDLB')
+#cubes["4x4x4"] = RubiksCube(solved_444, 'URFDLB')
+cubes["5x5x5"] = RubiksCube(solved_555, 'URFDLB')
 #cubes["6x6x6"] = RubiksCube(solved_666, 'URFDLB')
 #cubes["7x7x7"] = RubiksCube(solved_777, 'URFDLB')
 #cubes["8x8x8"] = RubiksCube(solved_888, 'URFDLB')
@@ -57,7 +57,7 @@ cubes["4x4x4"] = RubiksCube(solved_444, 'URFDLB')
 
 for (size, cube) in cubes.items():
     log.info("size %s has cube %s" % (size, cube))
-    for x in range(10):
+    for x in range(3000):
         cube.re_init()
         cube.randomize()
         ks = cube.get_kociemba_string(True)

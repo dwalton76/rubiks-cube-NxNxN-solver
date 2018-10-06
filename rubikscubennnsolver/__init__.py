@@ -1453,8 +1453,10 @@ class RubiksCube(object):
             quarter_turns = random.randint(1, 2)
             clockwise = random.randint(0, 1)
 
-            if rows > 1:
-                move = "%d%s" % (rows, side)
+            if rows == 2:
+                move = "%sw" % side
+            elif rows > 2:
+                move = "%d%sw" % (rows, side)
             else:
                 move = side
 
@@ -1463,6 +1465,10 @@ class RubiksCube(object):
 
             if not clockwise:
                 move += "'"
+
+            # I used this move restriction to build the 3k-555-cubes-step500.json test cubes
+            #if move not in ['U', "U'", 'U2', 'L2', 'Lw2', 'F2', 'Fw2', 'R2', 'Rw2', 'B2', 'Bw2', 'D', "D'", 'D2']:
+            #    continue
 
             self.rotate(move)
 

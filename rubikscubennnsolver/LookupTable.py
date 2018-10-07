@@ -961,6 +961,13 @@ class LookupTableIDA(LookupTable):
         (lt_state, cost_to_goal) = self.ida_heuristic(threshold)
         f_cost = cost_to_here + cost_to_goal
 
+        # If we have already explored the exact same scenario down another branch
+        # then we can stop looking down this branch
+        explored_cost_to_here = self.explored.get(lt_state, 99)
+        if explored_cost_to_here <= cost_to_here:
+            return (f_cost, False)
+        self.explored[lt_state] = cost_to_here
+
         # ================
         # Abort Searching?
         # ================
@@ -973,18 +980,8 @@ class LookupTableIDA(LookupTable):
         # search for all of those nodes/states in one go via get_best_ida_solution().
         # This saves us a lot of disk IO.
 
-        # If we have already explored the exact same scenario down another branch
-        # then we can stop looking down this branch
-        #explored_cost_to_here = self.explored.get(lt_state_for_explored)
-        explored_cost_to_here = self.explored.get(lt_state)
-        if explored_cost_to_here is not None and explored_cost_to_here <= cost_to_here:
-            return (f_cost, False)
-        #self.explored[lt_state_for_explored] = cost_to_here
-        self.explored[lt_state] = cost_to_here
-        skip_other_steps_this_face = None
-
-        # TODO this is a duplicate of explored more or less
         self.ida_nodes[lt_state] = steps_to_here
+        skip_other_steps_this_face = None
 
         for step in self.steps_not_on_same_face_and_layer[prev_step]:
 
@@ -1043,7 +1040,7 @@ class LookupTableIDA(LookupTable):
             #self.parent.print_cube()
             #sys.exit(0)
 
-    def get_best_ida_solution(self):
+    def get_best_ida_solution(self, threshold):
         states_to_find = sorted(self.ida_nodes.keys())
 
         if states_to_find:
@@ -1065,7 +1062,13 @@ class LookupTableIDA(LookupTable):
 
                     if self.search_complete(lt_state, steps_to_here):
                         this_solution = self.parent.solution[original_solution_len:]
-                        this_solution_len = len(this_solution)
+                        this_solution_len = self.parent.get_solution_len_minus_rotates(this_solution)
+
+                        # We need this so that we do not return a solution that is not the shortest
+                        # I am not 100% sure that statement is true...comment out for now
+                        #if this_solution_len > threshold:
+                        #    log.info("%s: %d/%d solution_len %s > %s" % (self, index+1, num_results, this_solution_len, threshold))
+                        #    continue
 
                         if min_solution_len is None or this_solution_len < min_solution_len:
                             #log.info("%s: MIN lt_state %s, this_solution %s, this_solution_len %s" %
@@ -1074,6 +1077,8 @@ class LookupTableIDA(LookupTable):
                             min_solution_len = this_solution_len
                             min_solution = this_solution[:]
                             min_solution_state = lt_state
+                        elif this_solution_len == min_solution_len:
+                            log.info("%s: %d/%d solution_len %s (TIE)" % (self, index+1, num_results, this_solution_len))
 
                 #log.info("%s: returning min_solution %s" % (self, " ".join(min_solution)))
                 return min_solution
@@ -1180,7 +1185,7 @@ class LookupTableIDA(LookupTable):
 
             self.ida_search(steps_to_here, threshold, None, self.original_state[:])
             total_ida_count += self.ida_count
-            best_solution = self.get_best_ida_solution()
+            best_solution = self.get_best_ida_solution(threshold)
 
             if best_solution:
 

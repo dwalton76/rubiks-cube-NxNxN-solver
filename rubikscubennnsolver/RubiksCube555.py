@@ -1361,22 +1361,21 @@ class LookupTable555EdgesZPlaneEdgesOnly(LookupTableHashCostOnly):
     """
     lookup-table-5x5x5-step341-edges-z-plane-edges-only.txt
     =======================================================
-    1 steps has 8 entries (0 percent, 0.00x previous step)
-    2 steps has 57 entries (0 percent, 7.12x previous step)
-    3 steps has 465 entries (0 percent, 8.16x previous step)
-    4 steps has 4,353 entries (0 percent, 9.36x previous step)
-    5 steps has 37,446 entries (0 percent, 8.60x previous step)
-    6 steps has 298,557 entries (0 percent, 7.97x previous step)
-    7 steps has 2,142,656 entries (0 percent, 7.18x previous step)
-    8 steps has 13,032,706 entries (3 percent, 6.08x previous step)
-    9 steps has 60,364,543 entries (15 percent, 4.63x previous step)
-    10 steps has 162,774,838 entries (42 percent, 2.70x previous step)
-    11 steps has 137,246,021 entries (35 percent, 0.84x previous step)
-    12 steps has 7,426,338 entries (1 percent, 0.05x previous step)
-    13 steps has 12 entries (0 percent, 0.00x previous step)
+    1 steps has 20 entries (0 percent, 0.00x previous step)
+    2 steps has 136 entries (0 percent, 6.80x previous step)
+    3 steps has 1,080 entries (0 percent, 7.94x previous step)
+    4 steps has 9,588 entries (0 percent, 8.88x previous step)
+    5 steps has 76,960 entries (0 percent, 8.03x previous step)
+    6 steps has 572,044 entries (0 percent, 7.43x previous step)
+    7 steps has 3,771,232 entries (0 percent, 6.59x previous step)
+    8 steps has 20,862,480 entries (5 percent, 5.53x previous step)
+    9 steps has 83,953,652 entries (21 percent, 4.02x previous step)
+    10 steps has 178,801,180 entries (46 percent, 2.13x previous step)
+    11 steps has 93,704,032 entries (24 percent, 0.52x previous step)
+    12 steps has 1,575,596 entries (0 percent, 0.02x previous step)
 
     Total: 383,328,000 entries
-    Average: 10.15 moves
+    Average: 9.89 moves
     """
 
     def __init__(self, parent):
@@ -1385,9 +1384,12 @@ class LookupTable555EdgesZPlaneEdgesOnly(LookupTableHashCostOnly):
             self,
             parent,
             'lookup-table-5x5x5-step341-edges-z-plane-edges-only.txt',
-            '---pPPQQq------------------xXX------',
+            ('---pPPQQq------------------xXX------',
+             '------QQq------------------xXXYYy---',
+             '---pPP---------------------xXXYYy---',
+             '---pPPQQq---------------------YYy---'),
             linecount=383328000,
-            max_depth=13,
+            max_depth=12,
             filesize=31432896000)
         '''
         LookupTableHashCostOnly.__init__(
@@ -1396,7 +1398,7 @@ class LookupTable555EdgesZPlaneEdgesOnly(LookupTableHashCostOnly):
             'lookup-table-5x5x5-step341-edges-z-plane-edges-only.hash-cost-only.txt',
             '---pPPQQq------------------xXX------',
             linecount=1,
-            max_depth=13,
+            max_depth=12,
             bucketcount=383328041,
             filesize=383328042)
 
@@ -1713,7 +1715,7 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
             # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
             # of 4-edges to choose from..
             if pairable_count == 8:
-                log.info("%s: found solution where all edges are EOed" % self)
+                #log.info("%s: found solution where all edges are EOed" % self)
                 return True
             else:
                 log.info("%s: found solution but only %d-edges are EOed" % (self, pairable_count))
@@ -1960,12 +1962,34 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
     # You want to put this as high as you can but low enough
     # to still speed up the slow IDA searches.
     #
-    # For cube
+    # LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
     # 99 : 18 moves in 28s
+    #  5 : 18 moves in 31s
+    #  4 : 18 moves in 29s
+    #  3 : 17 moves in 1m 20s
     #  2 : 17 moves in 2m 41s
     #  1 : 21 moves in 21s
-    # dwalton
-    heuristic_stats_error = 1
+    #  0 : 20 moves in 29s
+    #
+    #
+    # BDBULBULFRDLUFDBBBUBDLRFBRRRDFUBLBBLBRURRFUULDBUDLRFBUUFLBRBFRFFDLLUDURFBULFRLRBFRDBUDDDFRDFFULFDFFDUDFDBDRBLLURLDLBDULBDFBUUULURLRDRRLFDBRLUDLFLFRUFR
+    # 99 : 14 moves in 3s
+    #  4 : 14 moves in 3s
+    #  3 : 14 moves in 3s
+    #  2 : 14 moves in 1500ms
+    #  1 : 14 moves in 2300ms
+    #  0 : 14 moves in 2600ms
+    #
+    #
+    # FRFFBLUUFLFFUDLFLUDBRFBLLFUDBRRUULDUDRLBLFBDDUDRRLFDLFDUULUUFRFRLDRBLDDRUBRBFRDBLDBFFUBDDBDFFRFLUDFURBRUUUBDBLBRLLLBRUDBFLFULDUDBDRRRLRDFBLURBFBRBLRBU
+    # 99 : 18 moves in 7s
+    #  5 : 18 moves in 7s
+    #  4 : 18 moves in 7s
+    #  3 : 17 moves in 15s
+    #  2 : 17 moves in 25s
+    #  1 : 17 moves in 39s
+    #  0 : 17 moves in 1m 4s
+    heuristic_stats_error = 99
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -1986,6 +2010,10 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
              "F", "F'",
              "B", "B'",
             ),
+
+            #linecount=2527885,
+            #max_depth=7,
+            #filesize=300818315)
 
             linecount=21508617,
             max_depth=8,
@@ -2757,6 +2785,29 @@ class RubiksCube555(RubiksCube):
             pairable_count, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
         assert pairable_count == 8
 
+        # dwalton we need to get the edges_cost down to 9 so that the IDA search does not take forever
+        # I think I have to rebuild the hash-table to use the higher step count on collision instead of the shorter? 
+        '''
+        self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
+        (edges_state, edges_cost_to_goal) = self.lt_pair_last_eight_edges_edges_only.ida_heuristic(99)
+        log.info("%s: init edges_cost_to_goal %d" % (self, edges_cost_to_goal))
+
+        while edges_cost_to_goal > 9:
+            tmp_state = self.state[:]
+            tmp_solution = self.solution[:]
+
+            for move in self.lt_pair_last_eight_edges.moves_all:
+                self.state = tmp_state[:]
+                self.solution = tmp_solution[:]
+                self.rotate(move)
+                (edges_state, edges_cost_to_goal) = self.lt_pair_last_eight_edges_edges_only.ida_heuristic(99)
+                log.info("%s: edges_cost_to_goal %d via %s" % (self, edges_cost_to_goal, move))
+
+            self.state = tmp_state[:]
+            self.solution = tmp_solution[:]
+            sys.exit(0)
+        '''
+
         self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
         #self.lt_pair_last_eight_edges_edges_only.solve()
         #self.lt_pair_last_eight_edges_centers_only.solve()
@@ -2900,7 +2951,6 @@ class RubiksCube555(RubiksCube):
                 solution_steps = self.solution[original_solution_len:]
                 solution_len = self.get_solution_len_minus_rotates(solution_steps)
 
-                # dwalton
                 if pairable_count >= 0 and (min_solution_len is None or solution_len < min_solution_len):
                     log.info("%s: first 4-edges can be staged in %d, %d-edges EOed, steps %s (NEW MIN)" % (self, solution_len, pairable_count, ' '.join(solution_steps)))
                     min_solution_len = solution_len
@@ -3212,8 +3262,6 @@ class RubiksCube555(RubiksCube):
 
         #self.reduce_333_via_l4e()
         #return
-
-        # dwalton
         #log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
 
         if not self.centers_solved() or not self.edges_paired():

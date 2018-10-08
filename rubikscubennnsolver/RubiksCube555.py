@@ -4223,9 +4223,8 @@ class RubiksCube555(RubiksCube):
     def reduce_333(self, fake_555=False):
         self.lt_init()
 
-        #dwalton
-        self.reduce_333_via_l4e()
-        return
+        #self.reduce_333_via_l4e()
+        #return
         #log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
 
         if not self.centers_solved() or not self.edges_paired():

@@ -265,6 +265,28 @@ def download_file_if_needed(filename, cube_size):
         call(['gunzip', filename_gz])
 
 
+def binary_search_list(states, b_state_to_find):
+    first = 0
+    linecount = len(states)
+    last = linecount - 1
+
+    while first <= last:
+        midpoint = int((first + last)/2)
+        b_state = bytearray(states[midpoint], encoding='utf-8')
+
+        if b_state_to_find < b_state:
+            last = midpoint - 1
+
+        # If this is the line we are looking for, then read the entire line
+        elif b_state_to_find == b_state:
+            return (True, midpoint)
+
+        else:
+            first = midpoint + 1
+
+    return (False, first)
+
+
 class LookupTable(object):
     heuristic_stats = {}
 
@@ -351,8 +373,25 @@ class LookupTable(object):
         #log.info("\n\n\n\n\n\n")
         #log.info("binary_search_multiple called for %s" % pformat(states_to_find))
 
-        for state_to_find in states_to_find:
+        fh_txt.seek(0)
+        b_state_first = fh_txt.read(state_width)
+
+        fh_txt.seek((linecount - 1) * width)
+        b_state_last = fh_txt.read(state_width)
+
+        (_, starting_index) = binary_search_list(states_to_find, b_state_first)
+        #log.info("start at index %d" % starting_index)
+
+        for state_to_find in states_to_find[starting_index:]:
             b_state_to_find = bytearray(state_to_find, encoding='utf-8')
+
+            # This provides a pretty massive improvement when you are looking for 100k+ states
+            if b_state_to_find < b_state_first:
+                # This part is basically a no-op now that we binary_search states_to_find
+                # for b_state_first to find the starting_index
+                continue
+            elif b_state_to_find > b_state_last:
+                break
 
             if cache:
                 (cache, first, last) = find_first_last(linecount, cache, b_state_to_find)
@@ -1045,12 +1084,19 @@ class LookupTableIDA(LookupTable):
 
         if states_to_find:
             log.info("%s: there are %d states to look for" % (self, len(states_to_find)))
+
+            # Uncomment to write states_to_find to a file so we can perf test via utils/binary-search-lookup.py
+            #with open('states_to_find.txt', 'w') as fh:
+            #    for x in states_to_find:
+            #        fh.write(x + "\n")
+            #log.info("wrote to states_to_find.txt")
+
             results = self.binary_search_multiple(states_to_find)
 
             if results:
                 #log.info("%s: results\n%s" % (self, pformat(results)))
                 num_results = len(results.keys())
-                log.info("%s: found %d/%d states in lookup-table" % (self, num_results, len(states_to_find)))
+                log.info("%s: found %d states" % (self, num_results))
 
                 min_solution_len = None
                 min_solution = None
@@ -1083,6 +1129,7 @@ class LookupTableIDA(LookupTable):
                 #log.info("%s: returning min_solution %s" % (self, " ".join(min_solution)))
                 return min_solution
             else:
+                log.info("%s: found 0 states" % self)
                 return None
         else:
             return None

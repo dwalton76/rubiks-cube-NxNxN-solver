@@ -1000,12 +1000,17 @@ class LookupTableIDA(LookupTable):
         (lt_state, cost_to_goal) = self.ida_heuristic(threshold)
         f_cost = cost_to_here + cost_to_goal
 
+        if hasattr(self, 'get_explored_state'):
+            explored_state = self.get_explored_state()
+        else:
+            explored_state = lt_state
+
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
-        explored_cost_to_here = self.explored.get(lt_state, 99)
+        explored_cost_to_here = self.explored.get(explored_state, 99)
         if explored_cost_to_here <= cost_to_here:
             return (f_cost, False)
-        self.explored[lt_state] = cost_to_here
+        self.explored[explored_state] = cost_to_here
 
         # ================
         # Abort Searching?
@@ -1083,7 +1088,7 @@ class LookupTableIDA(LookupTable):
         states_to_find = sorted(self.ida_nodes.keys())
 
         if states_to_find:
-            log.info("%s: there are %d states to look for" % (self, len(states_to_find)))
+            log.info("%s: %d states to look for" % (self, len(states_to_find)))
 
             # Uncomment to write states_to_find to a file so we can perf test via utils/binary-search-lookup.py
             #with open('states_to_find.txt', 'w') as fh:
@@ -1096,7 +1101,7 @@ class LookupTableIDA(LookupTable):
             if results:
                 #log.info("%s: results\n%s" % (self, pformat(results)))
                 num_results = len(results.keys())
-                log.info("%s: found %d states" % (self, num_results))
+                log.info("%s: %d states found" % (self, num_results))
 
                 min_solution_len = None
                 min_solution = None

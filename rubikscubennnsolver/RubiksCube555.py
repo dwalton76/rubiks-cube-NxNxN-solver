@@ -53,6 +53,24 @@ centers_555 = (
     132, 133, 134, 137, 138, 139, 142, 143, 144  # Down
 )
 
+x_centers_555 = (
+    7, 9, 13, 17, 19, # Upper
+    32, 34, 38, 42, 44, # Left
+    57, 59, 63, 67, 69, # Front
+    82, 84, 88, 92, 94, # Right
+    107, 109, 113, 117, 119, # Back
+    132, 134, 138, 142, 144, # Down
+)
+
+t_centers_555 = (
+    8, 12, 13, 14, 18, # Upper
+    33, 37, 38, 39, 43, # Left
+    58, 62, 63, 64, 68, # Front
+    83, 87, 88, 89, 93, # Right
+    108, 112, 113, 114, 118, # Back
+    133, 137, 138, 139, 143, # Down
+)
+
 UD_centers_555 = (
     7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
     132, 133, 134, 137, 138, 139, 142, 143, 144  # Down
@@ -1534,7 +1552,7 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
         return (lt_state, cost_to_goal)
 
 
-class LookupTable555LXPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
+class LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
     """
     lookup-table-5x5x5-step351-x-plane-y-plane-edges-orient-edges-only.txt
     ======================================================================
@@ -1569,8 +1587,7 @@ class LookupTable555LXPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
         return (state, cost_to_goal)
 
 
-#class LookupTable555LXPlaneYPlaneEdgesOrientCentersOnly(LookupTable):
-class LookupTable555LXPlaneYPlaneEdgesOrientCentersOnly(LookupTableHashCostOnly):
+class LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(LookupTable):
     """
     lookup-table-5x5x5-step352-x-plane-y-plane-edges-orient-centers-only.txt
     ========================================================================
@@ -1589,9 +1606,7 @@ class LookupTable555LXPlaneYPlaneEdgesOrientCentersOnly(LookupTableHashCostOnly)
     Total: 6,370,650 entries
     Average: 8.60 moves
     """
-
     def __init__(self, parent):
-        '''
         LookupTable.__init__(
             self,
             parent,
@@ -1600,7 +1615,15 @@ class LookupTable555LXPlaneYPlaneEdgesOrientCentersOnly(LookupTableHashCostOnly)
             linecount=6370650,
             max_depth=11,
             filesize=509652000)
-        '''
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        state = ''.join(['U' if parent_state[x] in ('U', 'D') else 'F' for x in UFBD_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+class LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(LookupTableHashCostOnly):
+    def __init__(self, parent):
         LookupTableHashCostOnly.__init__(
             self,
             parent,
@@ -1618,7 +1641,7 @@ class LookupTable555LXPlaneYPlaneEdgesOrientCentersOnly(LookupTableHashCostOnly)
         return (state, cost_to_goal)
 
 
-class LookupTable555LXPlaneYPlaneEdgesOrientPairOneEdge(LookupTable):
+class LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(LookupTable):
     """
     lookup-table-5x5x5-step353-x-plane-y-plane-edges-orient-pair-one-edge.txt
     =========================================================================
@@ -1709,11 +1732,7 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
             #self.parent.print_cube()
             pairable_count = len(self.parent.edges_pairable_without_LRFB())
 
-            # Technically we only need 4-edges to be in high/low groups but that leaves us
-            # zero wiggle room for the next phase, we will HAVE to pair those 4-edges and
-            # if we hit some bad luck they could take a higher number of moves than is typical
-            # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
-            # of 4-edges to choose from..
+            # All 8-edges must be solveable without L L' R R' F F' B B'
             if pairable_count == 8:
                 #log.info("%s: found solution where all edges are EOed" % self)
                 return True
@@ -1728,7 +1747,7 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
     def ida_heuristic(self, ida_threshold):
         parent_state = self.parent.state
         (edges_state, edges_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_edges_only.ida_heuristic(ida_threshold)
-        (_, centers_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_centers_only.ida_heuristic(ida_threshold)
+        (_, centers_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_centers_only_ht.ida_heuristic(ida_threshold)
 
         parent_state = self.parent.state
         centers_state = ''.join(['U' if parent_state[x] in ('U', 'D') else parent_state[x] for x in UFBD_centers_555])
@@ -2489,10 +2508,660 @@ class LookupTableIDA555PairSecondFourEdges(LookupTableIDA):
             filesize=868804488)
 
     def ida_heuristic(self, ida_threshold):
-        (edges_state, edges_cost) = self.parent.lt_pair_send_four_edges_edges_only.ida_heuristic(ida_threshold)
-        (centers_state, centers_cost) = self.parent.lt_pair_send_four_edges_centers_only.ida_heuristic(ida_threshold)
+        (edges_state, edges_cost) = self.parent.lt_pair_second_four_edges_edges_only.ida_heuristic(ida_threshold)
+        (centers_state, centers_cost) = self.parent.lt_pair_second_four_edges_centers_only.ida_heuristic(ida_threshold)
         lt_state = centers_state + edges_state
         cost_to_goal = max(edges_cost, centers_cost)
+        return (lt_state, cost_to_goal)
+
+
+#class LookupTable555InitLRCenterStage432XCentersOnly(LookupTable):
+class LookupTable555InitLRCenterStage432XCentersOnly(LookupTableHashCostOnly):
+    """
+    lookup-table-5x5x5-step701-LR-centers-stage-432-x-centers-only.txt
+    ==================================================================
+    1 steps has 70 entries (0 percent, 0.00x previous step)
+    2 steps has 1,072 entries (0 percent, 15.31x previous step)
+    3 steps has 16,252 entries (0 percent, 15.16x previous step)
+    4 steps has 212,004 entries (0 percent, 13.04x previous step)
+    5 steps has 2,341,084 entries (4 percent, 11.04x previous step)
+    6 steps has 16,952,540 entries (32 percent, 7.24x previous step)
+    7 steps has 29,790,892 entries (57 percent, 1.76x previous step)
+    8 steps has 2,169,056 entries (4 percent, 0.07x previous step)
+
+    Total: 51,482,970 entries
+    Average: 6.61 moves
+    """
+
+    state_targets = (
+        'xxxxxLLLLLxxxxxRRRRRxxxxxxxxxx',
+        'xxxxxLLLRRxxxxxLLRRRxxxxxxxxxx',
+        'xxxxxLLLRRxxxxxRRRLLxxxxxxxxxx',
+        'xxxxxLRLLRxxxxxLRRLRxxxxxxxxxx',
+        'xxxxxLRLLRxxxxxRLRRLxxxxxxxxxx',
+        'xxxxxLRLRLxxxxxRLRLRxxxxxxxxxx',
+        'xxxxxRLLLRxxxxxLRRRLxxxxxxxxxx',
+        'xxxxxRLLRLxxxxxLRRLRxxxxxxxxxx',
+        'xxxxxRLLRLxxxxxRLRRLxxxxxxxxxx',
+        'xxxxxRRLLLxxxxxLLRRRxxxxxxxxxx',
+        'xxxxxRRLLLxxxxxRRRLLxxxxxxxxxx',
+        'xxxxxRRLRRxxxxxLLRLLxxxxxxxxxx'
+    )
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step701-LR-centers-stage-432-x-centers-only.txt',
+            self.state_targets,
+            linecount=51482970,
+            max_depth=8,
+            filesize=3191944140)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step701-LR-centers-stage-432-x-centers-only.hash-cost-only.txt',
+            self.state_targets,
+            linecount=1,
+            max_depth=8,
+            bucketcount=51482999,
+            filesize=51483000)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] if parent_state[x] in ('L', 'R') else 'x' for x in x_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+#class LookupTable555InitLRCenterStage432TCentersOnly(LookupTable):
+class LookupTable555InitLRCenterStage432TCentersOnly(LookupTableHashCostOnly):
+    """
+    lookup-table-5x5x5-step702-LR-centers-stage-432-t-centers-only.txt
+    ==================================================================
+    1 steps has 198 entries (0 percent, 0.00x previous step)
+    2 steps has 2,496 entries (0 percent, 12.61x previous step)
+    3 steps has 35,380 entries (0 percent, 14.17x previous step)
+    4 steps has 412,992 entries (0 percent, 11.67x previous step)
+    5 steps has 3,913,036 entries (7 percent, 9.47x previous step)
+    6 steps has 19,567,420 entries (38 percent, 5.00x previous step)
+    7 steps has 25,349,376 entries (49 percent, 1.30x previous step)
+    8 steps has 2,202,008 entries (4 percent, 0.09x previous step)
+    9 steps has 64 entries (0 percent, 0.00x previous step)
+
+    Total: 51,482,970 entries
+    Average: 6.48 moves
+    """
+
+    state_targets = (
+        'xxxxxLLLLLxxxxxRRRRRxxxxxxxxxx',
+        'xxxxxLLLLRxxxxxLRRRRxxxxxxxxxx',
+        'xxxxxLLLLRxxxxxRRRRLxxxxxxxxxx',
+        'xxxxxLLLRLxxxxxRLRRRxxxxxxxxxx',
+        'xxxxxLLLRLxxxxxRRRLRxxxxxxxxxx',
+        'xxxxxLLLRRxxxxxLLRRRxxxxxxxxxx',
+        'xxxxxLLLRRxxxxxLRRLRxxxxxxxxxx',
+        'xxxxxLLLRRxxxxxRLRRLxxxxxxxxxx',
+        'xxxxxLLLRRxxxxxRRRLLxxxxxxxxxx',
+        'xxxxxLRLLLxxxxxRLRRRxxxxxxxxxx',
+        'xxxxxLRLLLxxxxxRRRLRxxxxxxxxxx',
+        'xxxxxLRLLRxxxxxLLRRRxxxxxxxxxx',
+        'xxxxxLRLLRxxxxxLRRLRxxxxxxxxxx',
+        'xxxxxLRLLRxxxxxRLRRLxxxxxxxxxx',
+        'xxxxxLRLLRxxxxxRRRLLxxxxxxxxxx',
+        'xxxxxLRLRLxxxxxRLRLRxxxxxxxxxx',
+        'xxxxxLRLRRxxxxxLLRLRxxxxxxxxxx',
+        'xxxxxLRLRRxxxxxRLRLLxxxxxxxxxx',
+        'xxxxxRLLLLxxxxxLRRRRxxxxxxxxxx',
+        'xxxxxRLLLLxxxxxRRRRLxxxxxxxxxx',
+        'xxxxxRLLLRxxxxxLRRRLxxxxxxxxxx',
+        'xxxxxRLLRLxxxxxLLRRRxxxxxxxxxx',
+        'xxxxxRLLRLxxxxxLRRLRxxxxxxxxxx',
+        'xxxxxRLLRLxxxxxRLRRLxxxxxxxxxx',
+        'xxxxxRLLRLxxxxxRRRLLxxxxxxxxxx',
+        'xxxxxRLLRRxxxxxLLRRLxxxxxxxxxx',
+        'xxxxxRLLRRxxxxxLRRLLxxxxxxxxxx',
+        'xxxxxRRLLLxxxxxLLRRRxxxxxxxxxx',
+        'xxxxxRRLLLxxxxxLRRLRxxxxxxxxxx',
+        'xxxxxRRLLLxxxxxRLRRLxxxxxxxxxx',
+        'xxxxxRRLLLxxxxxRRRLLxxxxxxxxxx',
+        'xxxxxRRLLRxxxxxLLRRLxxxxxxxxxx',
+        'xxxxxRRLLRxxxxxLRRLLxxxxxxxxxx',
+        'xxxxxRRLRLxxxxxLLRLRxxxxxxxxxx',
+        'xxxxxRRLRLxxxxxRLRLLxxxxxxxxxx',
+        'xxxxxRRLRRxxxxxLLRLLxxxxxxxxxx'
+    )
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step702-LR-centers-stage-432-t-centers-only.txt',
+            self.state_targets,
+            linecount=51482970,
+            max_depth=9,
+            filesize=3346393050)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step702-LR-centers-stage-432-t-centers-only.hash-cost-only.txt',
+            self.state_targets,
+            linecount=1,
+            max_depth=9,
+            bucketcount=51482999,
+            filesize=51483000)
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] if parent_state[x] in ('L', 'R') else 'x' for x in t_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA555InitLRCenterStage432(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step700-LR-centers-stage-432.txt
+    ===================================================
+    1 steps has 1,692 entries (0 percent, 0.00x previous step)
+    2 steps has 16,832 entries (0 percent, 9.95x previous step)
+    3 steps has 194,000 entries (0 percent, 11.53x previous step)
+    4 steps has 2,138,044 entries (8 percent, 11.02x previous step)
+    5 steps has 23,791,796 entries (91 percent, 11.13x previous step)
+
+    Total: 26,142,364 entries
+    """
+
+    state_targets = (
+        'xxxxxxxxxLLLLLLLLLxxxxxxxxxRRRRRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLLLRLxxxxxxxxxRLRRRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLLLRLxxxxxxxxxRRRRRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLLRLRxxxxxxxxxLRLRRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLLRLRxxxxxxxxxRRRRRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLLRRRxxxxxxxxxLLLRRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLLRRRxxxxxxxxxLRLRRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLLRRRxxxxxxxxxRLRRRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLLRRRxxxxxxxxxRRRRRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRLLLxxxxxxxxxRRRLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRLLLxxxxxxxxxRRRRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRLRLxxxxxxxxxRLRLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRLRLxxxxxxxxxRLRRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRLRLxxxxxxxxxRRRLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRLRLxxxxxxxxxRRRRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRLRxxxxxxxxxLRLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRLRxxxxxxxxxLRLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRLRxxxxxxxxxRRRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRLRxxxxxxxxxRRRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRRRxxxxxxxxxLLLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRRRxxxxxxxxxLLLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRRRxxxxxxxxxLRLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRRRxxxxxxxxxLRLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRRRxxxxxxxxxRLRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRRRxxxxxxxxxRLRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRRRxxxxxxxxxRRRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLLLRRRRxxxxxxxxxRRRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLLLLxxxxxxxxxRRRLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLLLLxxxxxxxxxRRRRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLLRLxxxxxxxxxRLRLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLLRLxxxxxxxxxRLRRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLLRLxxxxxxxxxRRRLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLLRLxxxxxxxxxRRRRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRLRxxxxxxxxxLRLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRLRxxxxxxxxxLRLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRLRxxxxxxxxxRRRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRLRxxxxxxxxxRRRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRRRxxxxxxxxxLLLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRRRxxxxxxxxxLLLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRRRxxxxxxxxxLRLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRRRxxxxxxxxxLRLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRRRxxxxxxxxxRLRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRRRxxxxxxxxxRLRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRRRxxxxxxxxxRRRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLLRRRxxxxxxxxxRRRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLRLLLxxxxxxxxxRRRLRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLRLRLxxxxxxxxxRLRLRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLRLRLxxxxxxxxxRRRLRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLRRLRxxxxxxxxxLRLLRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLRRLRxxxxxxxxxRRRLRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLRRRRxxxxxxxxxLLLLRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLRRRRxxxxxxxxxLRLLRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLRRRRxxxxxxxxxRLRLRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLLRLRRRRxxxxxxxxxRRRLRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLLLLRxxxxxxxxxLRRRRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLLLLRxxxxxxxxxRRLRRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLLLRRxxxxxxxxxLLRRRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLLLRRxxxxxxxxxLRRRRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLLLRRxxxxxxxxxRLLRRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLLLRRxxxxxxxxxRRLRRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLLRLLxxxxxxxxxRRLRRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLLRRLxxxxxxxxxRLLRRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLLRRLxxxxxxxxxRRLRRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLLRxxxxxxxxxLRRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLLRxxxxxxxxxLRRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLLRxxxxxxxxxRRLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLLRxxxxxxxxxRRLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLRRxxxxxxxxxLLRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLRRxxxxxxxxxLLRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLRRxxxxxxxxxLRRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLRRxxxxxxxxxLRRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLRRxxxxxxxxxRLLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLRRxxxxxxxxxRLLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLRRxxxxxxxxxRRLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRLRRxxxxxxxxxRRLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRRLLxxxxxxxxxRRLLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRRLLxxxxxxxxxRRLRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRRRLxxxxxxxxxRLLLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRRRLxxxxxxxxxRLLRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRRRLxxxxxxxxxRRLLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRLLRRRLxxxxxxxxxRRLRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLLRxxxxxxxxxLRRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLLRxxxxxxxxxLRRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLLRxxxxxxxxxRRLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLLRxxxxxxxxxRRLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLRRxxxxxxxxxLLRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLRRxxxxxxxxxLLRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLRRxxxxxxxxxLRRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLRRxxxxxxxxxLRRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLRRxxxxxxxxxRLLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLRRxxxxxxxxxRLLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLRRxxxxxxxxxRRLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLLRRxxxxxxxxxRRLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLRLLxxxxxxxxxRRLLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLRLLxxxxxxxxxRRLRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLRRLxxxxxxxxxRLLLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLRRLxxxxxxxxxRLLRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLRRLxxxxxxxxxRRLLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLLRRLxxxxxxxxxRRLRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLRLLRxxxxxxxxxLRRLRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLRLLRxxxxxxxxxRRLLRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLRLRRxxxxxxxxxLLRLRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLRLRRxxxxxxxxxLRRLRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLRLRRxxxxxxxxxRLLLRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLRLRRxxxxxxxxxRRLLRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLRRLLxxxxxxxxxRRLLRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLRRRLxxxxxxxxxRLLLRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLLRRLRRRLxxxxxxxxxRRLLRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLLLLLxxxxxxxxxRLRRRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLLLLLxxxxxxxxxRRRRRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLLLRLxxxxxxxxxRLRRRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLLRLRxxxxxxxxxLLLRRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLLRLRxxxxxxxxxLRLRRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLLRLRxxxxxxxxxRLRRRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLLRLRxxxxxxxxxRRRRRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLLRRRxxxxxxxxxLLLRRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLLRRRxxxxxxxxxRLRRRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRLLLxxxxxxxxxRLRLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRLLLxxxxxxxxxRLRRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRLLLxxxxxxxxxRRRLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRLLLxxxxxxxxxRRRRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRLRLxxxxxxxxxRLRLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRLRLxxxxxxxxxRLRRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRLRxxxxxxxxxLLLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRLRxxxxxxxxxLLLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRLRxxxxxxxxxLRLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRLRxxxxxxxxxLRLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRLRxxxxxxxxxRLRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRLRxxxxxxxxxRLRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRLRxxxxxxxxxRRRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRLRxxxxxxxxxRRRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRRRxxxxxxxxxLLLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRRRxxxxxxxxxLLLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRRRxxxxxxxxxRLRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLLLRRRRxxxxxxxxxRLRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLLLLxxxxxxxxxRLRLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLLLLxxxxxxxxxRLRRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLLLLxxxxxxxxxRRRLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLLLLxxxxxxxxxRRRRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLLRLxxxxxxxxxRLRLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLLRLxxxxxxxxxRLRRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRLRxxxxxxxxxLLLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRLRxxxxxxxxxLLLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRLRxxxxxxxxxLRLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRLRxxxxxxxxxLRLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRLRxxxxxxxxxRLRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRLRxxxxxxxxxRLRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRLRxxxxxxxxxRRRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRLRxxxxxxxxxRRRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRRRxxxxxxxxxLLLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRRRxxxxxxxxxLLLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRRRxxxxxxxxxRLRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLLRRRxxxxxxxxxRLRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLRLLLxxxxxxxxxRLRLRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLRLLLxxxxxxxxxRRRLRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLRLRLxxxxxxxxxRLRLRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLRRLRxxxxxxxxxLLLLRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLRRLRxxxxxxxxxLRLLRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLRRLRxxxxxxxxxRLRLRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLRRLRxxxxxxxxxRRRLRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLRRRRxxxxxxxxxLLLLRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRLRLRRRRxxxxxxxxxRLRLRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLLLLRxxxxxxxxxLLRRRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLLLLRxxxxxxxxxLRRRRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLLLLRxxxxxxxxxRLLRRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLLLLRxxxxxxxxxRRLRRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLLLRRxxxxxxxxxLLRRRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLLLRRxxxxxxxxxRLLRRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLLRLLxxxxxxxxxRLLRRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLLRLLxxxxxxxxxRRLRRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLLRRLxxxxxxxxxRLLRRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLLRxxxxxxxxxLLRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLLRxxxxxxxxxLLRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLLRxxxxxxxxxLRRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLLRxxxxxxxxxLRRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLLRxxxxxxxxxRLLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLLRxxxxxxxxxRLLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLLRxxxxxxxxxRRLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLLRxxxxxxxxxRRLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLRRxxxxxxxxxLLRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLRRxxxxxxxxxLLRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLRRxxxxxxxxxRLLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRLRRxxxxxxxxxRLLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRRLLxxxxxxxxxRLLLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRRLLxxxxxxxxxRLLRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRRLLxxxxxxxxxRRLLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRRLLxxxxxxxxxRRLRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRRRLxxxxxxxxxRLLLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRLLRRRLxxxxxxxxxRLLRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLLRxxxxxxxxxLLRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLLRxxxxxxxxxLLRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLLRxxxxxxxxxLRRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLLRxxxxxxxxxLRRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLLRxxxxxxxxxRLLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLLRxxxxxxxxxRLLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLLRxxxxxxxxxRRLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLLRxxxxxxxxxRRLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLRRxxxxxxxxxLLRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLRRxxxxxxxxxLLRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLRRxxxxxxxxxRLLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLLRRxxxxxxxxxRLLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLRLLxxxxxxxxxRLLLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLRLLxxxxxxxxxRLLRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLRLLxxxxxxxxxRRLLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLRLLxxxxxxxxxRRLRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLRRLxxxxxxxxxRLLLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLLRRLxxxxxxxxxRLLRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLRLLRxxxxxxxxxLLRLRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLRLLRxxxxxxxxxLRRLRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLRLLRxxxxxxxxxRLLLRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLRLLRxxxxxxxxxRRLLRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLRLRRxxxxxxxxxLLRLRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLRLRRxxxxxxxxxRLLLRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLRRLLxxxxxxxxxRLLLRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLRRLLxxxxxxxxxRRLLRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxLRRRLRRRLxxxxxxxxxRLLLRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLLLLRxxxxxxxxxLRRRRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLLLRRxxxxxxxxxLLRRRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLLLRRxxxxxxxxxLRRRRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLLRLLxxxxxxxxxLRRRRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLLRLLxxxxxxxxxRRLRRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLLRRLxxxxxxxxxLLRRRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLLRRLxxxxxxxxxLRRRRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLLRRLxxxxxxxxxRLLRRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLLRRLxxxxxxxxxRRLRRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRLLRxxxxxxxxxLRRLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRLLRxxxxxxxxxLRRRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRLRRxxxxxxxxxLLRLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRLRRxxxxxxxxxLLRRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRLRRxxxxxxxxxLRRLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRLRRxxxxxxxxxLRRRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRLLxxxxxxxxxLRRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRLLxxxxxxxxxLRRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRLLxxxxxxxxxRRLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRLLxxxxxxxxxRRLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRRLxxxxxxxxxLLRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRRLxxxxxxxxxLLRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRRLxxxxxxxxxLRRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRRLxxxxxxxxxLRRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRRLxxxxxxxxxRLLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRRLxxxxxxxxxRLLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRRLxxxxxxxxxRRLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLLLRRRLxxxxxxxxxRRLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLLLRxxxxxxxxxLRRLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLLLRxxxxxxxxxLRRRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLLRRxxxxxxxxxLLRLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLLRRxxxxxxxxxLLRRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLLRRxxxxxxxxxLRRLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLLRRxxxxxxxxxLRRRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRLLxxxxxxxxxLRRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRLLxxxxxxxxxLRRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRLLxxxxxxxxxRRLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRLLxxxxxxxxxRRLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRRLxxxxxxxxxLLRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRRLxxxxxxxxxLLRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRRLxxxxxxxxxLRRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRRLxxxxxxxxxLRRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRRLxxxxxxxxxRLLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRRLxxxxxxxxxRLLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRRLxxxxxxxxxRRLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLLRRLxxxxxxxxxRRLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLRLLRxxxxxxxxxLRRLRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLRLRRxxxxxxxxxLLRLRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLRLRRxxxxxxxxxLRRLRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLRRLLxxxxxxxxxLRRLRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLRRLLxxxxxxxxxRRLLRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLRRRLxxxxxxxxxLLRLRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLRRRLxxxxxxxxxLRRLRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLRRRLxxxxxxxxxRLLLRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLLRLRRRLxxxxxxxxxRRLLRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLLLLLxxxxxxxxxLRLRRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLLLLLxxxxxxxxxRRRRRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLLLRLxxxxxxxxxLLLRRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLLLRLxxxxxxxxxLRLRRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLLLRLxxxxxxxxxRLRRRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLLLRLxxxxxxxxxRRRRRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLLRLRxxxxxxxxxLRLRRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLLRRRxxxxxxxxxLLLRRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLLRRRxxxxxxxxxLRLRRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLLLxxxxxxxxxLRLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLLLxxxxxxxxxLRLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLLLxxxxxxxxxRRRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLLLxxxxxxxxxRRRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLRLxxxxxxxxxLLLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLRLxxxxxxxxxLLLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLRLxxxxxxxxxLRLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLRLxxxxxxxxxLRLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLRLxxxxxxxxxRLRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLRLxxxxxxxxxRLRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLRLxxxxxxxxxRRRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRLRLxxxxxxxxxRRRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRRLRxxxxxxxxxLRLLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRRLRxxxxxxxxxLRLRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRRRRxxxxxxxxxLLLLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRRRRxxxxxxxxxLLLRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRRRRxxxxxxxxxLRLLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRLLRRRRxxxxxxxxxLRLRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLLLxxxxxxxxxLRLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLLLxxxxxxxxxLRLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLLLxxxxxxxxxRRRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLLLxxxxxxxxxRRRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLRLxxxxxxxxxLLLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLRLxxxxxxxxxLLLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLRLxxxxxxxxxLRLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLRLxxxxxxxxxLRLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLRLxxxxxxxxxRLRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLRLxxxxxxxxxRLRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLRLxxxxxxxxxRRRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLLRLxxxxxxxxxRRRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLRLRxxxxxxxxxLRLLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLRLRxxxxxxxxxLRLRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLRRRxxxxxxxxxLLLLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLRRRxxxxxxxxxLLLRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLRRRxxxxxxxxxLRLLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLLRRRxxxxxxxxxLRLRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLRLLLxxxxxxxxxLRLLRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLRLLLxxxxxxxxxRRRLRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLRLRLxxxxxxxxxLLLLRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLRLRLxxxxxxxxxLRLLRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLRLRLxxxxxxxxxRLRLRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLRLRLxxxxxxxxxRRRLRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLRRLRxxxxxxxxxLRLLRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLRRRRxxxxxxxxxLLLLRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRLRRLRRRRxxxxxxxxxLRLLRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLLLLRxxxxxxxxxLLRRRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLLLLRxxxxxxxxxLRRRRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLLLRRxxxxxxxxxLLRRRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLLRLLxxxxxxxxxLLRRRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLLRLLxxxxxxxxxLRRRRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLLRLLxxxxxxxxxRLLRRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLLRLLxxxxxxxxxRRLRRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLLRRLxxxxxxxxxLLRRRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLLRRLxxxxxxxxxRLLRRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRLLRxxxxxxxxxLLRLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRLLRxxxxxxxxxLLRRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRLLRxxxxxxxxxLRRLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRLLRxxxxxxxxxLRRRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRLRRxxxxxxxxxLLRLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRLRRxxxxxxxxxLLRRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRLLxxxxxxxxxLLRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRLLxxxxxxxxxLLRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRLLxxxxxxxxxLRRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRLLxxxxxxxxxLRRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRLLxxxxxxxxxRLLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRLLxxxxxxxxxRLLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRLLxxxxxxxxxRRLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRLLxxxxxxxxxRRLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRRLxxxxxxxxxLLRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRRLxxxxxxxxxLLRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRRLxxxxxxxxxRLLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLLLRRRLxxxxxxxxxRLLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLLLRxxxxxxxxxLLRLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLLLRxxxxxxxxxLLRRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLLLRxxxxxxxxxLRRLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLLLRxxxxxxxxxLRRRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLLRRxxxxxxxxxLLRLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLLRRxxxxxxxxxLLRRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRLLxxxxxxxxxLLRLRRLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRLLxxxxxxxxxLLRRRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRLLxxxxxxxxxLRRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRLLxxxxxxxxxLRRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRLLxxxxxxxxxRLLLRRRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRLLxxxxxxxxxRLLRRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRLLxxxxxxxxxRRLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRLLxxxxxxxxxRRLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRRLxxxxxxxxxLLRLRRLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRRLxxxxxxxxxLLRRRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRRLxxxxxxxxxRLLLRRRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLLRRLxxxxxxxxxRLLRRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLRLLRxxxxxxxxxLLRLRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLRLLRxxxxxxxxxLRRLRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLRLRRxxxxxxxxxLLRLRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLRRLLxxxxxxxxxLLRLRLLRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLRRLLxxxxxxxxxLRRLRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLRRLLxxxxxxxxxRLLLRLRRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLRRLLxxxxxxxxxRRLLRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLRRRLxxxxxxxxxLLRLRLLLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRLRLRRRLxxxxxxxxxRLLLRLRLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLLLLLxxxxxxxxxLLLRRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLLLLLxxxxxxxxxLRLRRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLLLLLxxxxxxxxxRLRRRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLLLLLxxxxxxxxxRRRRRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLLLRLxxxxxxxxxLLLRRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLLLRLxxxxxxxxxRLRRRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLLRLRxxxxxxxxxLLLRRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLLRLRxxxxxxxxxLRLRRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLLRRRxxxxxxxxxLLLRRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLLLxxxxxxxxxLLLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLLLxxxxxxxxxLLLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLLLxxxxxxxxxLRLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLLLxxxxxxxxxLRLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLLLxxxxxxxxxRLRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLLLxxxxxxxxxRLRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLLLxxxxxxxxxRRRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLLLxxxxxxxxxRRRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLRLxxxxxxxxxLLLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLRLxxxxxxxxxLLLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLRLxxxxxxxxxRLRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRLRLxxxxxxxxxRLRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRRLRxxxxxxxxxLLLLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRRLRxxxxxxxxxLLLRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRRLRxxxxxxxxxLRLLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRRLRxxxxxxxxxLRLRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRRRRxxxxxxxxxLLLLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRLLRRRRxxxxxxxxxLLLRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLLLxxxxxxxxxLLLLRRRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLLLxxxxxxxxxLLLRRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLLLxxxxxxxxxLRLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLLLxxxxxxxxxLRLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLLLxxxxxxxxxRLRLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLLLxxxxxxxxxRLRRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLLLxxxxxxxxxRRRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLLLxxxxxxxxxRRRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLRLxxxxxxxxxLLLLRRRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLRLxxxxxxxxxLLLRRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLRLxxxxxxxxxRLRLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLLRLxxxxxxxxxRLRRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLRLRxxxxxxxxxLLLLRRLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLRLRxxxxxxxxxLLLRRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLRLRxxxxxxxxxLRLLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLRLRxxxxxxxxxLRLRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLRRRxxxxxxxxxLLLLRRLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLLRRRxxxxxxxxxLLLRRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLRLLLxxxxxxxxxLLLLRLRRRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLRLLLxxxxxxxxxLRLLRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLRLLLxxxxxxxxxRLRLRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLRLLLxxxxxxxxxRRRLRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLRLRLxxxxxxxxxLLLLRLRLRxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLRLRLxxxxxxxxxRLRLRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLRRLRxxxxxxxxxLLLLRLLRLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLRRLRxxxxxxxxxLRLLRLLLLxxxxxxxxxxxxxxxxxx',
+        'xxxxxxxxxRRRRLRRRRxxxxxxxxxLLLLRLLLLxxxxxxxxxxxxxxxxxx'
+    )
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step700-LR-centers-stage-432.txt',
+            self.state_targets,
+            moves_555,
+            # illegal moves
+            (),
+
+            linecount=26142364,
+            max_depth=5,
+            filesize=1960677300)
+
+    def search_complete(self, state, steps_to_here):
+        if LookupTableIDA.search_complete(self, state, steps_to_here):
+            #self.parent.print_cube()
+
+            # dwalton here now
+            (UFDB_centers_state, UFDB_centers_cost) = self.parent.lt_x_plane_y_plane_orient_edges_centers_only.ida_heuristic(99)
+
+            if UFDB_centers_state != "UUUUUUUUUFFFFFFFFFFFFFFFFFFUUUUUUUUU" and UFDB_centers_cost == 0:
+                log.info("%s: FOO found solution but UFDB centers are not in neede state" % self)
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                return False
+
+            pairable_count = len(self.parent.edges_pairable_without_LR())
+
+            # Technically we only need 4-edges to be in high/low groups but that leaves us
+            # zero wiggle room for the next phase, we will HAVE to pair those 4-edges and
+            # if we hit some bad luck they could take a higher number of moves than is typical
+            # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
+            # of 4-edges to choose from..
+            if pairable_count >= MIN_EO_COUNT_FOR_STAGE_LR_432:
+                log.info("%s: FOO found solution where all edges are EOed" % self)
+                return True
+            else:
+                log.info("%s: FOO found solution but only %d-edges are EOed" % (self, pairable_count))
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                return False
+        else:
+            return False
+
+    def ida_heuristic(self, ida_threshold):
+        parent_state = self.parent.state
+        (_, x_centers_cost) = self.parent.lt_init_LR_432_x_centers_only.ida_heuristic(99)
+        (_, t_centers_cost) = self.parent.lt_init_LR_432_t_centers_only.ida_heuristic(99)
+        cost_to_goal = max(x_centers_cost, t_centers_cost)
+
+        lt_state = ''.join([parent_state[x] if parent_state[x] in ('L', 'R') else 'x' for x in centers_555])
         return (lt_state, cost_to_goal)
 
 
@@ -2647,9 +3316,10 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_z_plane_centers_only.preload_cache_dict()
         #self.lt_edges_z_plane.preload_cache_string()
 
-        self.lt_x_plane_y_plane_orient_edges_edges_only = LookupTable555LXPlaneYPlaneEdgesOrientEdgesOnly(self)
-        self.lt_x_plane_y_plane_orient_edges_centers_only = LookupTable555LXPlaneYPlaneEdgesOrientCentersOnly(self)
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555LXPlaneYPlaneEdgesOrientPairOneEdge(self)
+        self.lt_x_plane_y_plane_orient_edges_edges_only = LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_centers_only = LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_centers_only_ht = LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(self)
+        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(self)
         self.lt_x_plane_y_plane_orient_edges = LookupTableIDA555LXPlaneYPlaneEdgesOrient(self)
         self.lt_x_plane_y_plane_orient_edges_edges_only.preload_cache_dict()
         #self.lt_x_plane_y_plane_orient_edges.preload_cache_string()
@@ -2669,10 +3339,14 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_x_plane_centers_only.preload_cache_dict()
         self.lt_edges_x_plane.preload_cache_dict()
 
-        self.lt_pair_send_four_edges_edges_only = LookupTable555PairSecondFourEdgesEdgesOnly(self)
-        self.lt_pair_send_four_edges_centers_only = LookupTable555PairSecondFourEdgesCentersOnly(self)
-        self.lt_pair_send_four_edges = LookupTableIDA555PairSecondFourEdges(self)
-        self.lt_pair_send_four_edges_centers_only.preload_cache_dict()
+        self.lt_pair_second_four_edges_edges_only = LookupTable555PairSecondFourEdgesEdgesOnly(self)
+        self.lt_pair_second_four_edges_centers_only = LookupTable555PairSecondFourEdgesCentersOnly(self)
+        self.lt_pair_second_four_edges = LookupTableIDA555PairSecondFourEdges(self)
+        self.lt_pair_second_four_edges_centers_only.preload_cache_dict()
+
+        self.lt_init_LR_432_x_centers_only = LookupTable555InitLRCenterStage432XCentersOnly(self)
+        self.lt_init_LR_432_t_centers_only = LookupTable555InitLRCenterStage432TCentersOnly(self)
+        self.lt_init_LR_432 = LookupTableIDA555InitLRCenterStage432(self)
 
     def highlow_edges_state(self):
         state = self.state
@@ -3020,7 +3694,7 @@ class RubiksCube555(RubiksCube):
         assert pairable_count == 8
 
         # TODO we need to get the edges_cost down to 9 so that the IDA search does not take forever
-        # I think I have to rebuild the hash-table to use the higher step count on collision instead of the shorter? 
+        # I think I have to rebuild the hash-table to use the higher step count on collision instead of the shorter
         '''
         self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
         (edges_state, edges_cost_to_goal) = self.lt_pair_last_eight_edges_edges_only.ida_heuristic(99)
@@ -3178,16 +3852,6 @@ class RubiksCube555(RubiksCube):
                 self.solution = post_pre_steps_solution[:]
 
                 for step in steps.split():
-                    if self.x_plane_edges_are_l4e() and not self.x_plane_edges_paired():
-                        #log.info("%s: step %s is not needed, x-plane already L4Eed" % (self, step))
-                        break
-                    elif self.y_plane_edges_are_l4e() and not self.y_plane_edges_paired():
-                        #log.info("%s: step %s is not needed, y-plane already L4Eed" % (self, step))
-                        break
-                    elif self.z_plane_edges_are_l4e() and not self.z_plane_edges_paired():
-                        #log.info("%s: step %s is not needed, z-plane already L4Eed" % (self, step))
-                        break
-
                     self.rotate(step)
 
                 self.stage_final_four_edges_in_x_plane()
@@ -3386,8 +4050,24 @@ class RubiksCube555(RubiksCube):
             for x in centers_555:
                 self.state[x] = centers_recolor[self.state[x]]
 
-            self.lt_pair_send_four_edges_edges_only.only_colors = self.edges_pairable_without_LRFB()
-            self.lt_pair_send_four_edges.solve()
+            # There could be more than 4 edges that are pairable without LFRB, pick
+            # the 4 with the lowest heuristic.
+            only_colors = self.edges_pairable_without_LRFB()
+            min_four_wing_str_combo = None
+            min_cost = None
+            for four_wing_str_combo in itertools.combinations(only_colors, 4):
+                self.lt_pair_second_four_edges_edges_only.only_colors = four_wing_str_combo
+                (_, tmp_cost) = self.lt_pair_second_four_edges_edges_only.ida_heuristic(99)
+
+                if min_cost is None or tmp_cost < min_cost:
+                    log.info("%s: wing_str %s has cost %s (NEW MIN)" % (self, four_wing_str_combo, tmp_cost))
+                    min_cost = tmp_cost
+                    min_four_wing_str_combo = four_wing_str_combo
+                elif tmp_cost == min_cost:
+                    log.info("%s: wing_str %s has cost %s (TIE)" % (self, four_wing_str_combo, tmp_cost))
+
+            self.lt_pair_second_four_edges_edges_only.only_colors = min_four_wing_str_combo
+            self.lt_pair_second_four_edges.solve()
 
             # Put the centers back to their original color and apply the solution we found
             solution_steps = self.solution[tmp_solution_len:]
@@ -3517,6 +4197,7 @@ class RubiksCube555(RubiksCube):
         """
         This is used to pair the inside orbit of edges for 7x7x7
         """
+        #log.info("%s: reduce_333_via_l4e kociemba %s" % (self, self.get_kociemba_string(True)))
 
         if not self.centers_staged():
             self.group_centers_stage_UD()
@@ -3542,13 +4223,25 @@ class RubiksCube555(RubiksCube):
     def reduce_333(self, fake_555=False):
         self.lt_init()
 
-        #self.reduce_333_via_l4e()
-        #return
+        #dwalton
+        self.reduce_333_via_l4e()
+        return
         #log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
 
         if not self.centers_solved() or not self.edges_paired():
             self.group_centers_stage_UD()
             self.group_centers_stage_LR_to_432()
+
+            '''
+            # dwalton here now
+            #self.lt_init_LR_432_x_centers_only.solve()
+            #self.lt_init_LR_432_t_centers_only.solve()
+            self.lt_init_LR_432.solve()
+            self.print_cube()
+            log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            sys.exit(0)
+            '''
+
             self.pair_z_plane_edges()
             self.pair_last_eight_edges()
 

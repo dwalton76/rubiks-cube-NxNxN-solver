@@ -635,7 +635,7 @@ class LookupTable(object):
             tbd = False
 
         while True:
-            (state, _) = self.ida_heuristic(0)
+            (state, _) = self.ida_heuristic()
 
             if tbd:
                 log.info("%s: solve() state %s vs state_target %s" % (self, state, pformat(self.state_target)))
@@ -896,7 +896,7 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
 class LookupTableIDA(LookupTable):
 
     def __init__(self, parent, filename, state_target, moves_all, moves_illegal,
-            linecount, max_depth=None, filesize=None, exit_asap=99, legal_moves=[]):
+            linecount, max_depth=None, filesize=None, legal_moves=[]):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.ida_nodes = {}
         self.recolor_positions = []
@@ -904,7 +904,6 @@ class LookupTableIDA(LookupTable):
         self.nuke_corners = False
         self.nuke_edges = False
         self.nuke_centers = False
-        self.exit_asap = exit_asap
         self.min_edge_paired_count = 0
 
         for x in moves_illegal:
@@ -997,20 +996,8 @@ class LookupTableIDA(LookupTable):
         # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
         cost_to_here = len(steps_to_here)
         self.parent.state = prev_state[:]
-        (lt_state, cost_to_goal) = self.ida_heuristic(threshold)
+        (lt_state, cost_to_goal) = self.ida_heuristic()
         f_cost = cost_to_here + cost_to_goal
-
-        if hasattr(self, 'get_explored_state'):
-            explored_state = self.get_explored_state()
-        else:
-            explored_state = lt_state
-
-        # If we have already explored the exact same scenario down another branch
-        # then we can stop looking down this branch
-        explored_cost_to_here = self.explored.get(explored_state, 99)
-        if explored_cost_to_here <= cost_to_here:
-            return (f_cost, False)
-        self.explored[explored_state] = cost_to_here
 
         # ================
         # Abort Searching?
@@ -1018,13 +1005,20 @@ class LookupTableIDA(LookupTable):
         if f_cost >= threshold:
             return (f_cost, False)
 
-        # Note that we do not check to see if we have found a state that is in our
-        # lookup table and return True here.  We do this so we can find all of
-        # the nodes that are reachable via our current threshold.  We will then
-        # search for all of those nodes/states in one go via get_best_ida_solution().
         # This saves us a lot of disk IO.
+        # dwalton
+        if cost_to_goal <= self.max_depth and self.search_complete(lt_state, steps_to_here):
+            self.ida_nodes[lt_state] = steps_to_here
+            return (f_cost, True)
 
-        self.ida_nodes[lt_state] = steps_to_here
+        # If we have already explored the exact same scenario down another branch
+        # then we can stop looking down this branch
+        explored_cost_to_here = self.explored.get(lt_state, 99)
+        if explored_cost_to_here <= cost_to_here:
+            return (f_cost, False)
+        self.explored[lt_state] = cost_to_here
+
+        #self.ida_nodes[lt_state] = steps_to_here
         skip_other_steps_this_face = None
 
         for step in self.steps_not_on_same_face_and_layer[prev_step]:
@@ -1088,24 +1082,18 @@ class LookupTableIDA(LookupTable):
         states_to_find = sorted(self.ida_nodes.keys())
 
         if states_to_find:
-            log.info("%s: %d states to look for" % (self, len(states_to_find)))
 
             # Uncomment to write states_to_find to a file so we can perf test via utils/binary-search-lookup.py
             #with open('states_to_find.txt', 'w') as fh:
             #    for x in states_to_find:
             #        fh.write(x + "\n")
             #log.info("wrote to states_to_find.txt")
-
             results = self.binary_search_multiple(states_to_find)
 
             if results:
-                #log.info("%s: results\n%s" % (self, pformat(results)))
                 num_results = len(results.keys())
-                log.info("%s: %d states found" % (self, num_results))
-
-                min_solution_len = None
-                min_solution = None
-                min_solution_state = None
+                log.info("%s: %d/%d states found" % (self, num_results, len(states_to_find)))
+                #log.info("%s: results\n%s" % (self, pformat(results)))
                 original_solution_len = len(self.original_solution)
 
                 for (index, (lt_state, steps)) in enumerate(results.items()):
@@ -1114,27 +1102,12 @@ class LookupTableIDA(LookupTable):
                     if self.search_complete(lt_state, steps_to_here):
                         this_solution = self.parent.solution[original_solution_len:]
                         this_solution_len = self.parent.get_solution_len_minus_rotates(this_solution)
+                        log.info("%s: %d/%d solution_len %s" % (self, index+1, num_results, this_solution_len))
+                        return this_solution
 
-                        # We need this so that we do not return a solution that is not the shortest
-                        # I am not 100% sure that statement is true...comment out for now
-                        #if this_solution_len > threshold:
-                        #    log.info("%s: %d/%d solution_len %s > %s" % (self, index+1, num_results, this_solution_len, threshold))
-                        #    continue
-
-                        if min_solution_len is None or this_solution_len < min_solution_len:
-                            #log.info("%s: MIN lt_state %s, this_solution %s, this_solution_len %s" %
-                            #    (self, lt_state, " ".join(this_solution), this_solution_len))
-                            log.info("%s: %d/%d solution_len %s (NEW MIN)" % (self, index+1, num_results, this_solution_len))
-                            min_solution_len = this_solution_len
-                            min_solution = this_solution[:]
-                            min_solution_state = lt_state
-                        elif this_solution_len == min_solution_len:
-                            log.info("%s: %d/%d solution_len %s (TIE)" % (self, index+1, num_results, this_solution_len))
-
-                #log.info("%s: returning min_solution %s" % (self, " ".join(min_solution)))
-                return min_solution
+                return None
             else:
-                log.info("%s: found 0 states" % self)
+                log.info("%s: 0/%d states found" % (self, len(states_to_find)))
                 return None
         else:
             return None
@@ -1198,7 +1171,7 @@ class LookupTableIDA(LookupTable):
                     self, pformat(self.avoid_oll), " ".join(self.moves_all)))
 
         # Get the intial cube state and cost_to_goal
-        (state, cost_to_goal) = self.ida_heuristic(0)
+        (state, cost_to_goal) = self.ida_heuristic()
 
         # The cube is already in the desired state, nothing to do
         if self.search_complete(state, []):

@@ -637,7 +637,7 @@ class LookupTable555UDTCenterStage(LookupTable):
             max_depth=8,
             filesize=27947898)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.t_centers_555])
         return (self.hex_format % int(result, 2), 0)
@@ -714,7 +714,7 @@ class LookupTable555LRTCenterStage(LookupTable):
             max_depth=9,
             filesize=476190)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_t_centers_555])
         return (self.hex_format % int(result, 2), 0)
@@ -756,7 +756,7 @@ class LookupTable555LRTCenterStageOdd(LookupTable):
             max_depth=10,
             filesize=514800)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_t_centers_555])
         return (self.hex_format % int(result, 2), 0)
@@ -798,7 +798,7 @@ class LookupTable555LRTCenterStageEven(LookupTable):
             max_depth=10,
             filesize=501930)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_t_centers_555])
         return (self.hex_format % int(result, 2), 0)
@@ -914,7 +914,7 @@ class LookupTable555LRCenterStage(LookupTableHashCostOnly):
             bucketcount=165636907,
             filesize=165636908)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         state = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in LFRB_centers_555])
         state = self.hex_format % int(state, 2)
@@ -1022,7 +1022,7 @@ class LookupTable555TCenterSolve(LookupTable):
             filesize=19551000,
         )
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join([parent_state[x] for x in self.t_centers_555])
         return (result, 0)
@@ -1070,7 +1070,7 @@ class LookupTable555LRCenterStage432XCentersOnly(LookupTable):
             max_depth=8,
             filesize=45945900)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         state = ''.join(['F' if parent_state[x] == 'B' else parent_state[x] for x in LFRB_x_centers_555])
         cost_to_goal = self.heuristic(state)
@@ -1118,7 +1118,7 @@ class LookupTable555LRCenterStage432TCentersOnly(LookupTable):
             max_depth=10,
             filesize=48648600)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         state = ''.join(['F' if parent_state[x] == 'B' else parent_state[x] for x in LFRB_t_centers_555])
         cost_to_goal = self.heuristic(state)
@@ -1151,7 +1151,7 @@ class LookupTable555LRCenterStage432PairOneEdge(LookupTable):
             max_depth=6,
             filesize=203904)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         assert self.only_colors and len(self.only_colors) == 1, "You must specify which 1-edge"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
         state = ''.join([state[index] for index in wings_for_edges_pattern_555])
@@ -1333,9 +1333,13 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
              "Lw", "Lw'",
              "Rw", "Rw'"),
 
-            linecount=26142364,
-            max_depth=5,
-            filesize=1490114748)
+            linecount=2350568,
+            max_depth=4,
+            filesize=133982376)
+
+            #linecount=26142364,
+            #max_depth=5,
+            #filesize=1490114748)
 
     def search_complete(self, state, steps_to_here):
         if LookupTableIDA.search_complete(self, state, steps_to_here):
@@ -1347,7 +1351,7 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
             # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
             # of 4-edges to choose from..
             if pairable_count >= MIN_EO_COUNT_FOR_STAGE_LR_432:
-                log.info("%s: found solution where %d-edges (min %d-edges) are EOed" % (self, pairable_count, MIN_EO_COUNT_FOR_STAGE_LR_432))
+                #log.info("%s: found solution where %d-edges (min %d-edges) are EOed" % (self, pairable_count, MIN_EO_COUNT_FOR_STAGE_LR_432))
                 return True
             else:
                 #log.info("%s: found solution but only %d-edges are EOed" % (self, pairable_count))
@@ -1357,15 +1361,23 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
         else:
             return False
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         lt_state = ''.join(['F' if parent_state[x] == 'B' else parent_state[x] for x in LFRB_centers_555])
 
-        (_, LR_stage_cost_to_goal) = self.parent.lt_LR_centers_stage_pt.ida_heuristic(ida_threshold)
-        (_, LR_432_x_centers_cost_to_goal) = self.parent.lt_LR_432_x_centers_only.ida_heuristic(ida_threshold)
-        (_, LR_432_t_centers_cost_to_goal) = self.parent.lt_LR_432_t_centers_only.ida_heuristic(ida_threshold)
+        (_, LR_stage_cost_to_goal) = self.parent.lt_LR_centers_stage_pt.ida_heuristic()
+        (_, LR_432_x_centers_cost_to_goal) = self.parent.lt_LR_432_x_centers_only.ida_heuristic()
+        (_, LR_432_t_centers_cost_to_goal) = self.parent.lt_LR_432_t_centers_only.ida_heuristic()
 
         cost_to_goal = max(LR_stage_cost_to_goal, LR_432_x_centers_cost_to_goal, LR_432_t_centers_cost_to_goal)
+
+        if cost_to_goal > 0 and cost_to_goal < self.max_depth+1:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                cost_to_goal = self.max_depth + 1
 
         #self.parent.print_cube()
         #log.info("%s: lt_state %s, cost_to_goal %d, LR_stage_cost_to_goal %d, LR_432_x_centers_cost_to_goal %d, LR_432_t_centers_cost_to_goal %d" %
@@ -1420,7 +1432,7 @@ class LookupTable555EdgesZPlaneEdgesOnly(LookupTableHashCostOnly):
             bucketcount=383328041,
             filesize=383328042)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         assert self.only_colors and len(self.only_colors) == 3, "You must specify which 3-edges"
         parent_state = self.parent.state
         state = edges_recolor_pattern_555(parent_state[:], self.only_colors)
@@ -1464,7 +1476,7 @@ class LookupTable555EdgesZPlaneCentersOnly(LookupTable):
             max_depth=7,
             filesize=19872)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         state = ''.join([parent_state[x] for x in LR_centers_555])
         cost_to_goal = self.heuristic(state)
@@ -1495,6 +1507,86 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
         'RRRLLLRRRLLLRRRLLL---pPPQQq------------------xXXYYy---',
     )
 
+    heuristic_stats = {
+        (0, 1): 1,
+        (0, 2): 2,
+        (0, 3): 3,
+        (0, 4): 4,
+        (0, 5): 5,
+        (0, 6): 6,
+        (0, 7): 7,
+        (0, 8): 8,
+        (0, 9): 9,
+        (0, 10): 12,
+        (1, 1): 1,
+        (1, 2): 2,
+        (1, 3): 3,
+        (1, 4): 4,
+        (1, 5): 5,
+        (1, 6): 6,
+        (1, 7): 7,
+        (1, 8): 8,
+        (1, 9): 9,
+        (1, 10): 11,
+        (1, 11): 12,
+        (2, 1): 3,
+        (2, 2): 2,
+        (2, 3): 3,
+        (2, 4): 4,
+        (2, 5): 5,
+        (2, 6): 6,
+        (2, 7): 7,
+        (2, 8): 8,
+        (2, 9): 10,
+        (2, 10): 11,
+        (2, 11): 12,
+        (3, 2): 4,
+        (3, 3): 3,
+        (3, 4): 4,
+        (3, 5): 5,
+        (3, 6): 6,
+        (3, 7): 7,
+        (3, 8): 8,
+        (3, 9): 10,
+        (3, 10): 12,
+        (3, 11): 12,
+        (4, 3): 6,
+        (4, 4): 5,
+        (4, 5): 6,
+        (4, 6): 6,
+        (4, 7): 7,
+        (4, 8): 8,
+        (4, 9): 10,
+        (4, 10): 12,
+        (4, 11): 13,
+        (5, 4): 6,
+        (5, 5): 7,
+        (5, 6): 7,
+        (5, 7): 8,
+        (5, 8): 9,
+        (5, 9): 11,
+        (5, 10): 12,
+        (5, 11): 13,
+        (6, 5): 8,
+        (6, 6): 8,
+        (6, 7): 8,
+        (6, 8): 9,
+        (6, 9): 11,
+        (6, 10): 13,
+        (6, 11): 14,
+        (7, 7): 10,
+        (7, 8): 9,
+        (7, 9): 12,
+        (7, 10): 14,
+        (7, 11): 13
+    }
+
+    # For cube LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
+    # 2 : 14 moves in 1m 44s
+    # 1 : 14 moves in 13s
+    # 0 : 15 moves in 4s
+    heuristic_stats_error = 1
+
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
@@ -1514,38 +1606,61 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
              "R", "R'",
             ),
 
-            # 7-deep
-            linecount=40626240,
-            max_depth=7,
-            filesize=2396948160)
-
             # 6-deep
-            #linecount=3809706,
-            #max_depth=6,
-            #filesize=297157068)
+            linecount=3809706,
+            max_depth=6,
+            filesize=297157068)
 
-    def ida_heuristic(self, ida_threshold):
+            # 7-deep
+            #linecount=40626240,
+            #max_depth=7,
+            #filesize=2396948160)
+
+    def ida_heuristic_tuple(self):
         assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
         edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
-        (centers_state, centers_cost_to_goal) = self.parent.lt_edges_z_plane_centers_only.ida_heuristic(ida_threshold)
+        (centers_state, centers_cost_to_goal) = self.parent.lt_edges_z_plane_centers_only.ida_heuristic()
         lt_state = centers_state + edges_state
 
         three_wing_cost_to_goal = []
 
         for three_wing_str_combo in itertools.combinations(self.only_colors, 3):
             self.parent.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
-            (_, tmp_cost_to_goal) = self.parent.lt_edges_z_plane_edges_only.ida_heuristic(99)
+            (_, tmp_cost_to_goal) = self.parent.lt_edges_z_plane_edges_only.ida_heuristic()
             three_wing_cost_to_goal.append(tmp_cost_to_goal)
 
-            # When solving LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
-            # if I break here it finds a solution that is 13 steps, if I do not break it finds
-            # a solution that is 15 stesps.  That does not make any sense...I must have an
-            # IDA bug.
-            break
-
         edges_cost_to_goal = max(three_wing_cost_to_goal)
-        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+
+        return (centers_cost_to_goal, edges_cost_to_goal)
+
+    def ida_heuristic(self):
+        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        (centers_state, centers_cost_to_goal) = self.parent.lt_edges_z_plane_centers_only.ida_heuristic()
+
+        lt_state = centers_state + edges_state
+
+        if lt_state in self.state_targets:
+            cost_to_goal = 0
+        else:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                three_wing_cost_to_goal = []
+
+                for three_wing_str_combo in itertools.combinations(self.only_colors, 3):
+                    self.parent.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
+                    (_, tmp_cost_to_goal) = self.parent.lt_edges_z_plane_edges_only.ida_heuristic()
+                    three_wing_cost_to_goal.append(tmp_cost_to_goal)
+
+                edges_cost_to_goal = max(three_wing_cost_to_goal)
+                heuristic_stats_cost = self.heuristic_stats.get((centers_cost_to_goal, edges_cost_to_goal), 0)
+                cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal,
+                    self.max_depth + 1, heuristic_stats_cost - self.heuristic_stats_error)
 
         #log.info("%s: lt_state %s, cost_to_goal %d, centers_cost_to_goal %d, edges_cost_to_goal %d, three_wing_cost_to_goal %s" % (
         #    self, lt_state, cost_to_goal, centers_cost_to_goal, edges_cost_to_goal, pformat(three_wing_cost_to_goal)))
@@ -1581,7 +1696,7 @@ class LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
             max_depth=10,
             filesize=98198100)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         state = self.parent.highlow_edges_state()
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
@@ -1616,7 +1731,7 @@ class LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(LookupTable):
             max_depth=11,
             filesize=509652000)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         state = ''.join(['U' if parent_state[x] in ('U', 'D') else 'F' for x in UFBD_centers_555])
         cost_to_goal = self.heuristic(state)
@@ -1634,7 +1749,7 @@ class LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(LookupTableHashC
             bucketcount=6370667,
             filesize=6370668)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         state = ''.join(['U' if parent_state[x] in ('U', 'D') else 'F' for x in UFBD_centers_555])
         cost_to_goal = self.heuristic(state)
@@ -1666,7 +1781,7 @@ class LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(LookupTable):
             max_depth=6,
             filesize=29696)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         assert self.only_colors and len(self.only_colors) == 1, "You must specify which 1-edge"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
         state = ''.join([state[index] for index in wings_for_edges_pattern_555])
@@ -1707,6 +1822,10 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
             # illegal moves
             (),
 
+            #linecount=1015508,
+            #max_depth=5,
+            #filesize=135062564,
+
             linecount=13347216,
             max_depth=6,
             filesize=1775179728,
@@ -1744,16 +1863,26 @@ class LookupTableIDA555LXPlaneYPlaneEdgesOrient(LookupTableIDA):
         else:
             return False
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        (edges_state, edges_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_edges_only.ida_heuristic(ida_threshold)
-        (_, centers_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_centers_only_ht.ida_heuristic(ida_threshold)
+        (edges_state, edges_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_edges_only.ida_heuristic()
+        (_, centers_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_centers_only_ht.ida_heuristic()
 
         parent_state = self.parent.state
         centers_state = ''.join(['U' if parent_state[x] in ('U', 'D') else parent_state[x] for x in UFBD_centers_555])
 
         lt_state = centers_state + edges_state
         cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+
+        if cost_to_goal > 0 and cost_to_goal < self.max_depth+1:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                cost_to_goal = self.max_depth + 1
+
+        #log.info("%s: lt_state %s, cost_to_goal %d, centers_cost_to_goal %d, edges_cost_to_goal %d, three_wing_cost_to_goal %s" % (
         return (lt_state, cost_to_goal)
 
 
@@ -1803,7 +1932,7 @@ class LookupTable555PairLastEightEdgesEdgesOnly(LookupTableHashCostOnly):
             bucketcount=812851219,
             filesize=812851220)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         assert self.only_colors and len(self.only_colors) == 8, "You must specify which 8-edges"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
         state = ''.join([state[index] for index in wings_for_edges_pattern_555])
@@ -1851,7 +1980,7 @@ class LookupTable555PairLastEightEdgesCentersOnly(LookupTable):
             filesize=176402)
         '''
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         state = ''.join([parent_state[x] for x in centers_555])
         cost_to_goal = self.heuristic(state)
@@ -1982,33 +2111,24 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
     # to still speed up the slow IDA searches.
     #
     # LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
-    # 99 : 18 moves in 28s
-    #  5 : 18 moves in 31s
-    #  4 : 18 moves in 29s
-    #  3 : 17 moves in 1m 20s
-    #  2 : 17 moves in 2m 41s
-    #  1 : 21 moves in 21s
-    #  0 : 20 moves in 29s
-    #
+    # 99 : gave up after 5min
+    #  3 : 17 moves in 1m 21s
+    #  2 : 17 moves in 25s
+    #  1 : 17 moves in 4s
+    #  0 : 17 moves in 800ms
     #
     # BDBULBULFRDLUFDBBBUBDLRFBRRRDFUBLBBLBRURRFUULDBUDLRFBUUFLBRBFRFFDLLUDURFBULFRLRBFRDBUDDDFRDFFULFDFFDUDFDBDRBLLURLDLBDULBDFBUUULURLRDRRLFDBRLUDLFLFRUFR
-    # 99 : 14 moves in 3s
-    #  4 : 14 moves in 3s
-    #  3 : 14 moves in 3s
-    #  2 : 14 moves in 1500ms
-    #  1 : 14 moves in 2300ms
-    #  0 : 14 moves in 2600ms
-    #
+    #  3 : 17 moves in 2m 45s
+    #  2 : 17 moves in 25s
+    #  1 : 17 moves in 3.4s
+    #  0 : 18 moves in 5s
     #
     # FRFFBLUUFLFFUDLFLUDBRFBLLFUDBRRUULDUDRLBLFBDDUDRRLFDLFDUULUUFRFRLDRBLDDRUBRBFRDBLDBFFUBDDBDFFRFLUDFURBRUUUBDBLBRLLLBRUDBFLFULDUDBDRRRLRDFBLURBFBRBLRBU
-    # 99 : 18 moves in 7s
-    #  5 : 18 moves in 7s
-    #  4 : 18 moves in 7s
-    #  3 : 17 moves in 15s
-    #  2 : 17 moves in 25s
-    #  1 : 17 moves in 39s
-    #  0 : 17 moves in 1m 4s
-    heuristic_stats_error = 99
+    #  3 : 16 moves in 5s
+    #  2 : 16 moves in 600ms
+    #  1 : 17 moves in 900ms
+    #  0 : 18 moves in 1200ms
+    heuristic_stats_error = 1
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -2030,32 +2150,38 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
              "B", "B'",
             ),
 
-            #linecount=2527885,
-            #max_depth=7,
-            #filesize=300818315)
+            linecount=2527885,
+            max_depth=7,
+            filesize=300818315)
 
-            linecount=21508617,
-            max_depth=8,
-            filesize=2624051274)
+            #linecount=21508617,
+            #max_depth=8,
+            #filesize=2624051274)
 
             #linecount=180853034,
             #max_depth=9,
             #filesize=22787482284)
 
     def ida_heuristic_tuple(self):
-        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic(99)
-        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic(99)
+        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
         return (centers_cost_to_goal, edges_cost_to_goal)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic(ida_threshold)
-        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic(ida_threshold)
-
-        heuristic_stats_cost = self.heuristic_stats.get((centers_cost_to_goal, edges_cost_to_goal), 0)
-        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal, heuristic_stats_cost - self.heuristic_stats_error)
-
+        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
+        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
         lt_state = centers_state + edges_state
+
+        if cost_to_goal > 0 and cost_to_goal < self.max_depth+1:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                heuristic_stats_cost = self.heuristic_stats.get((centers_cost_to_goal, edges_cost_to_goal), 0)
+                cost_to_goal = max(self.max_depth + 1, heuristic_stats_cost - self.heuristic_stats_error)
 
         return (lt_state, cost_to_goal)
 
@@ -2199,7 +2325,7 @@ class LookupTable555EdgesXPlaneEdgesOnly(LookupTable):
             max_depth=13,
             filesize=3346560)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
         edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
@@ -2233,7 +2359,7 @@ class LookupTable555EdgesXPlaneCentersOnly(LookupTable):
             max_depth=6,
             filesize=146160)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         state = ''.join([parent_state[x] for x in LFRB_centers_555])
         cost_to_goal = self.heuristic(state)
@@ -2277,10 +2403,10 @@ class LookupTableIDA555EdgesXPlane(LookupTableIDA):
             )
         )
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        (edges_state, edges_cost) = self.parent.lt_edges_x_plane_edges_only.ida_heuristic(ida_threshold)
-        (centers_state, centers_cost) = self.parent.lt_edges_x_plane_centers_only.ida_heuristic(ida_threshold)
+        (edges_state, edges_cost) = self.parent.lt_edges_x_plane_edges_only.ida_heuristic()
+        (centers_state, centers_cost) = self.parent.lt_edges_x_plane_centers_only.ida_heuristic()
         lt_state = centers_state + edges_state
         cost_to_goal = max(edges_cost, centers_cost)
         return (lt_state, cost_to_goal)
@@ -2335,7 +2461,7 @@ class LookupTable555PairSecondFourEdgesEdgesOnly(LookupTableHashCostOnly):
             bucketcount=197568011,
             filesize=197568012)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
         state = ''.join([state[index] for index in wings_for_edges_pattern_555])
@@ -2421,7 +2547,7 @@ class LookupTable555PairSecondFourEdgesCentersOnly(LookupTable):
             filesize=176402)
         '''
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         state = ''.join([parent_state[x] for x in centers_555])
         cost_to_goal = self.heuristic(state)
@@ -2507,9 +2633,9 @@ class LookupTableIDA555PairSecondFourEdges(LookupTableIDA):
             max_depth=6,
             filesize=868804488)
 
-    def ida_heuristic(self, ida_threshold):
-        (edges_state, edges_cost) = self.parent.lt_pair_second_four_edges_edges_only.ida_heuristic(ida_threshold)
-        (centers_state, centers_cost) = self.parent.lt_pair_second_four_edges_centers_only.ida_heuristic(ida_threshold)
+    def ida_heuristic(self):
+        (edges_state, edges_cost) = self.parent.lt_pair_second_four_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost) = self.parent.lt_pair_second_four_edges_centers_only.ida_heuristic()
         lt_state = centers_state + edges_state
         cost_to_goal = max(edges_cost, centers_cost)
         return (lt_state, cost_to_goal)
@@ -2986,7 +3112,7 @@ class LookupTable555InitLRCenterStage432(LookupTable):
             filesize=1)
         '''
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         state = ''.join([parent_state[x] if parent_state[x] in ('L', 'R') else 'x' for x in centers_555])
         cost_to_goal = self.heuristic(state)
@@ -3464,8 +3590,7 @@ class LookupTableIDA555InitLRCenterStage432(LookupTableIDA):
         if LookupTableIDA.search_complete(self, state, steps_to_here):
             #self.parent.print_cube()
 
-            # dwalton here now
-            (UFDB_centers_state, UFDB_centers_cost) = self.parent.lt_x_plane_y_plane_orient_edges_centers_only.ida_heuristic(99)
+            (UFDB_centers_state, UFDB_centers_cost) = self.parent.lt_x_plane_y_plane_orient_edges_centers_only.ida_heuristic()
 
             if UFDB_centers_state != "UUUUUUUUUFFFFFFFFFFFFFFFFFFUUUUUUUUU" and UFDB_centers_cost == 0:
                 #log.info("%s: FOO found solution but UFDB centers %s are not in needed state" % (self, UFDB_centers_state))
@@ -3505,9 +3630,9 @@ class LookupTableIDA555InitLRCenterStage432(LookupTableIDA):
 
         return ''.join(lt_state)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
-        (lt_state, cost_to_goal) = self.parent.lt_init_LR_432_pt.ida_heuristic(99)
+        (lt_state, cost_to_goal) = self.parent.lt_init_LR_432_pt.ida_heuristic()
         #lt_state = ''.join([parent_state[x] if parent_state[x] in ('L', 'R') else 'x' for x in centers_555])
         return (lt_state, cost_to_goal)
 
@@ -3656,12 +3781,13 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_432_x_centers_only.preload_cache_string()
         self.lt_LR_432_t_centers_only.preload_cache_string()
         #self.lt_LR_432_centers_stage.preload_cache_string()
+        self.lt_LR_432_centers_stage.preload_cache_string()
 
         self.lt_edges_z_plane_edges_only = LookupTable555EdgesZPlaneEdgesOnly(self)
         self.lt_edges_z_plane_centers_only = LookupTable555EdgesZPlaneCentersOnly(self)
         self.lt_edges_z_plane = LookupTableIDA555EdgesZPlane(self)
         self.lt_edges_z_plane_centers_only.preload_cache_dict()
-        #self.lt_edges_z_plane.preload_cache_string()
+        self.lt_edges_z_plane.preload_cache_string()
 
         self.lt_x_plane_y_plane_orient_edges_edges_only = LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(self)
         self.lt_x_plane_y_plane_orient_edges_centers_only = LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(self)
@@ -3669,7 +3795,7 @@ class RubiksCube555(RubiksCube):
         self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(self)
         self.lt_x_plane_y_plane_orient_edges = LookupTableIDA555LXPlaneYPlaneEdgesOrient(self)
         self.lt_x_plane_y_plane_orient_edges_edges_only.preload_cache_dict()
-        #self.lt_x_plane_y_plane_orient_edges.preload_cache_string()
+        self.lt_x_plane_y_plane_orient_edges.preload_cache_string()
         self.lt_x_plane_y_plane_orient_edges_pair_one_edge.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges_centers_only.preload_cache_string()
 
@@ -3677,23 +3803,25 @@ class RubiksCube555(RubiksCube):
         self.lt_pair_last_eight_edges_centers_only = LookupTable555PairLastEightEdgesCentersOnly(self)
         self.lt_pair_last_eight_edges = LookupTableIDA555PairLastEightEdges(self)
         self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
+        self.lt_pair_last_eight_edges.preload_cache_string()
+        #self.lt_pair_last_eight_edges.preload_cache_dict()
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
         self.lt_edges_x_plane_edges_only = LookupTable555EdgesXPlaneEdgesOnly(self)
         self.lt_edges_x_plane_centers_only = LookupTable555EdgesXPlaneCentersOnly(self)
         self.lt_edges_x_plane = LookupTableIDA555EdgesXPlane(self)
-        self.lt_edges_x_plane_edges_only.preload_cache_dict()
-        self.lt_edges_x_plane_centers_only.preload_cache_dict()
-        self.lt_edges_x_plane.preload_cache_dict()
+        #self.lt_edges_x_plane_edges_only.preload_cache_dict()
+        #self.lt_edges_x_plane_centers_only.preload_cache_dict()
+        #self.lt_edges_x_plane.preload_cache_dict()
 
         self.lt_pair_second_four_edges_edges_only = LookupTable555PairSecondFourEdgesEdgesOnly(self)
         self.lt_pair_second_four_edges_centers_only = LookupTable555PairSecondFourEdgesCentersOnly(self)
         self.lt_pair_second_four_edges = LookupTableIDA555PairSecondFourEdges(self)
         self.lt_pair_second_four_edges_centers_only.preload_cache_dict()
 
-        self.lt_init_LR_432_pt = LookupTable555InitLRCenterStage432(self)
-        self.lt_init_LR_432 = LookupTableIDA555InitLRCenterStage432(self)
+        #self.lt_init_LR_432_pt = LookupTable555InitLRCenterStage432(self)
+        #self.lt_init_LR_432 = LookupTableIDA555InitLRCenterStage432(self)
         #self.lt_init_LR_432_pt.preload_cache_dict()
         #self.lt_init_LR_432.preload_cache_dict()
 
@@ -3989,7 +4117,7 @@ class RubiksCube555(RubiksCube):
 
                 for three_wing_str_combo in itertools.combinations(wing_str_combo, 3):
                     self.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
-                    (_, tmp_cost_to_goal) = self.lt_edges_z_plane_edges_only.ida_heuristic(99)
+                    (_, tmp_cost_to_goal) = self.lt_edges_z_plane_edges_only.ida_heuristic()
 
                     if debug:
                         log.info("three_wing_str_combo: %s cost_to_goal %d" % (pformat(three_wing_str_combo), tmp_cost_to_goal))
@@ -4017,10 +4145,8 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        pairable_count = len(self.edges_pairable_without_LR())
-        orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
-        log.info("%s: LR centers in horizontal bars, z-plane edges paired, %d-edges EOed, orbits with OLL %s, %d steps in" % (self,
-            pairable_count, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: LR centers in horizontal bars, z-plane edges paired, %d steps in" % (self,
+             self.get_solution_len_minus_rotates(self.solution)))
 
     def pair_last_eight_edges(self):
         original_state = self.state[:]
@@ -4046,7 +4172,7 @@ class RubiksCube555(RubiksCube):
         # I think I have to rebuild the hash-table to use the higher step count on collision instead of the shorter
         '''
         self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
-        (edges_state, edges_cost_to_goal) = self.lt_pair_last_eight_edges_edges_only.ida_heuristic(99)
+        (edges_state, edges_cost_to_goal) = self.lt_pair_last_eight_edges_edges_only.ida_heuristic()
         log.info("%s: init edges_cost_to_goal %d" % (self, edges_cost_to_goal))
 
         while edges_cost_to_goal > 9:
@@ -4057,7 +4183,7 @@ class RubiksCube555(RubiksCube):
                 self.state = tmp_state[:]
                 self.solution = tmp_solution[:]
                 self.rotate(move)
-                (edges_state, edges_cost_to_goal) = self.lt_pair_last_eight_edges_edges_only.ida_heuristic(99)
+                (edges_state, edges_cost_to_goal) = self.lt_pair_last_eight_edges_edges_only.ida_heuristic()
                 log.info("%s: edges_cost_to_goal %d via %s" % (self, edges_cost_to_goal, move))
 
             self.state = tmp_state[:]
@@ -4406,7 +4532,7 @@ class RubiksCube555(RubiksCube):
             min_cost = None
             for four_wing_str_combo in itertools.combinations(only_colors, 4):
                 self.lt_pair_second_four_edges_edges_only.only_colors = four_wing_str_combo
-                (_, tmp_cost) = self.lt_pair_second_four_edges_edges_only.ida_heuristic(99)
+                (_, tmp_cost) = self.lt_pair_second_four_edges_edges_only.ida_heuristic()
 
                 if min_cost is None or tmp_cost < min_cost:
                     log.info("%s: wing_str %s has cost %s (NEW MIN)" % (self, four_wing_str_combo, tmp_cost))
@@ -4611,17 +4737,16 @@ class RubiksCube555(RubiksCube):
 
         #self.reduce_333_via_l4e()
         #return
-        #log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
 
         if not self.centers_solved() or not self.edges_paired():
             self.group_centers_stage_UD()
             self.group_centers_stage_LR_to_432()
+            #log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
 
             # experiment...WIP
             #self.group_centers_stage_init_LR()
 
             self.pair_z_plane_edges()
-            sys.exit(0) # dwalton
             self.pair_last_eight_edges()
 
         if not fake_555:

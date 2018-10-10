@@ -99,12 +99,6 @@ ida_heuristic_UD_centers_555(
     UD_t_centers_state >>= 1;
     UD_t_centers_cost = hex_to_int(pt_UD_t_centers_cost_only[UD_t_centers_state]);
 
-    if (UD_t_centers_cost >= max_cost_to_goal) {
-        result.cost_to_goal = UD_t_centers_cost;
-        return result;
-    }
-
-
     // x-centers
     for (int i = 0; i < NUM_X_CENTERS_555; i++) {
         if (cube[x_centers_555[i]] == '1') {
@@ -115,12 +109,6 @@ ida_heuristic_UD_centers_555(
     UD_x_centers_state >>= 1;
     UD_x_centers_cost = hex_to_int(pt_UD_x_centers_cost_only[UD_x_centers_state]);
 
-    if (UD_x_centers_cost >= max_cost_to_goal) {
-        result.cost_to_goal = UD_x_centers_cost;
-        return result;
-    }
-
-
     // centers
     for (int i = 0; i < NUM_CENTERS_555; i++) {
         if (cube[centers_555[i]] == '1') {
@@ -130,22 +118,20 @@ ida_heuristic_UD_centers_555(
     }
 
     UD_centers_state >>= 1;
+    cost_to_goal = max(UD_t_centers_cost, UD_x_centers_cost);
     sprintf(result.lt_state, "%014lx", UD_centers_state);
 
-    cost_to_goal = max(UD_t_centers_cost, UD_x_centers_cost);
+    if (cost_to_goal > 0) {
+        // The step10 table we loaded is 5-deep
+        int MAX_DEPTH = 5;
 
-    // The step10 table we loaded is 5-deep so if a state is not in that
-    // table we know it has a cost of at least 6...thus MAX_DEPTH of 6 here.
-    int MAX_DEPTH = 6;
-
-    if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(UD_centers_cost_555, result.lt_state);
 
         if (hash_entry) {
-            cost_to_goal = max(cost_to_goal, hash_entry->value);
+            cost_to_goal = hash_entry->value;
         } else {
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+            cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
         }
     }
 
@@ -219,12 +205,6 @@ ida_heuristic_LR_centers_555(
     LR_t_centers_state >>= 1;
     LR_t_centers_cost = hex_to_int(pt_LR_t_centers_cost_only[LR_t_centers_state]);
 
-    if (LR_t_centers_cost >= max_cost_to_goal) {
-        result.cost_to_goal = LR_t_centers_cost;
-        return result;
-    }
-
-
     // x-centers
     for (int i = 0; i < NUM_LFRB_X_CENTERS_555; i++) {
         if (cube[LFRB_x_centers_555[i]] == '1') {
@@ -234,12 +214,6 @@ ida_heuristic_LR_centers_555(
     }
     LR_x_centers_state >>= 1;
     LR_x_centers_cost = hex_to_int(pt_LR_x_centers_cost_only[LR_x_centers_state]);
-
-    if (LR_x_centers_cost >= max_cost_to_goal) {
-        result.cost_to_goal = LR_x_centers_cost;
-        return result;
-    }
-
 
     // centers
     for (int i = 0; i < NUM_LFRB_CENTERS_555; i++) {
@@ -251,21 +225,19 @@ ida_heuristic_LR_centers_555(
 
     LR_centers_state >>= 1;
     sprintf(result.lt_state, "%09lx", LR_centers_state);
-
     cost_to_goal = max(LR_t_centers_cost, LR_x_centers_cost);
 
-    // The step20 table we loaded is 7-deep so if a state is not in that
-    // table we know it has a cost of at least 8...thus MAX_DEPTH of 8 here.
-    int MAX_DEPTH = 8;
+    if (cost_to_goal > 0) {
+        // The step20 table we loaded is 7-deep
+        int MAX_DEPTH = 7;
 
-    if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(LR_centers_cost_555, result.lt_state);
 
         if (hash_entry) {
-            cost_to_goal = max(cost_to_goal, hash_entry->value);
+            cost_to_goal = hash_entry->value;
         } else {
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+            cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
         }
     }
 
@@ -406,21 +378,19 @@ ida_heuristic_ULFRBD_centers_555 (
 
     // 3ffffff8000000 is 14 chars
     sprintf(result.lt_state, "%014lx", centers_state);
-
     cost_to_goal = max(UL_centers_cost, UF_centers_cost);
 
-    // The step30 table we loaded is 6-deep so if a state is not in that
-    // table we know it has a cost of at least 7...thus MAX_DEPTH of 7 here.
-    int MAX_DEPTH = 7;
+    if (cost_to_goal > 0) {
+        // The step30 table we loaded is 6-deep
+        int MAX_DEPTH = 6;
 
-    if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(ULFRBD_centers_cost_555, result.lt_state);
 
         if (hash_entry) {
-            cost_to_goal = max(cost_to_goal, hash_entry->value);
+            cost_to_goal = hash_entry->value;
         } else {
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+            cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
         }
     }
 

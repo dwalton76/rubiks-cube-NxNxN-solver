@@ -211,7 +211,7 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
             md5='2ffd36e53d075cc5042504cc8752b06e',
         )
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         lt_state = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in inner_x_centers_666])
         lt_state = self.hex_format % int(lt_state, 2)
@@ -411,7 +411,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
             filesize=15092000,
         )
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         lt_state = 0
 
@@ -570,6 +570,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     set_step61_centers_666 = set(step61_centers_666)
     set_step62_centers_666 = set(step62_centers_666)
 
+    # Not using these right now
     heuristic_stats = {
         (0, 0): 0,
         (0, 2): 3,
@@ -670,7 +671,6 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             linecount = 5320232
             max_depth = 4
             filesize = 164927192
-            exit_asap = 13
 
         # uses 1.3G
         else:
@@ -678,7 +678,6 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             linecount = 35805732
             max_depth = 5
             filesize = 1289006352
-            exit_asap = 13
 
         LookupTableIDA.__init__(
             self,
@@ -697,7 +696,6 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             linecount=linecount,
             max_depth=max_depth,
             filesize=filesize,
-            exit_asap=exit_asap,
         )
 
     def recolor(self):
@@ -763,7 +761,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
 
         return (str(self), step61_cost, step62_cost)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent = self.parent
         parent_state = self.parent.state
         set_step61_centers_666 = self.set_step61_centers_666
@@ -804,12 +802,15 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
 
         step61_cost = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.heuristic(step61_state)
         step62_cost = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.heuristic(step62_state)
+        cost_to_goal = max(step61_cost, step62_cost)
 
-        if ida_threshold >= self.exit_asap:
-            heuristic_stats_cost = self.heuristic_stats.get((step61_cost, step62_cost), 0)
-            cost_to_goal = max(step61_cost, step62_cost, heuristic_stats_cost - self.heuristic_stats_error)
-        else:
-            cost_to_goal = max(step61_cost, step62_cost)
+        if cost_to_goal > 0 and cost_to_goal < self.max_depth+1:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                cost_to_goal = self.max_depth + 1
 
         return (lt_state, cost_to_goal)
 

@@ -1,7 +1,6 @@
 
 from rubikscubennnsolver import NotSolving
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableIDA,

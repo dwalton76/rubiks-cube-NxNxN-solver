@@ -4115,7 +4115,7 @@ class RubiksCube(object):
         log.info("\nURL     : %s" % url)
 
         log.info("\nSolution: %s" % ' '.join(self.solution))
-        print(' '.join(self.solution))
+        #print(' '.join(self.solution))
 
         if self.steps_to_rotate_cube:
             log.info(("%d steps to rotate entire cube" % self.steps_to_rotate_cube))

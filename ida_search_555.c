@@ -131,6 +131,8 @@ ida_heuristic_UD_centers_555(
         if (hash_entry) {
             cost_to_goal = hash_entry->value;
         } else {
+            // Not admissible but much faster
+            //cost_to_goal = max((int) cost_to_goal * 1.2, MAX_DEPTH+1);
             cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
         }
     }

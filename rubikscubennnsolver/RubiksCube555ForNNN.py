@@ -118,7 +118,6 @@ class LookupTable555EdgesXPlaneEdgesOnly(LookupTable):
         assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
         edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
-
         cost_to_goal = self.heuristic(edges_state)
         return (edges_state, cost_to_goal)
 
@@ -163,13 +162,11 @@ class LookupTableIDA555EdgesXPlane(LookupTableIDA):
     2 steps has 33 entries (0 percent, 4.71x previous step)
     3 steps has 230 entries (0 percent, 6.97x previous step)
     4 steps has 1,414 entries (0 percent, 6.15x previous step)
-    5 steps has 8,768 entries (0 percent, 6.20x previous step)
-    6 steps has 50,346 entries (2 percent, 5.74x previous step)
-    7 steps has 280,506 entries (16 percent, 5.57x previous step)
-    8 steps has 1,410,870 entries (80 percent, 5.03x previous step)
+    5 steps has 8,768 entries (2 percent, 6.20x previous step)
+    6 steps has 50,346 entries (14 percent, 5.74x previous step)
+    7 steps has 280,506 entries (82 percent, 5.57x previous step)
 
-    Total: 1,752,174 entries
-    Average: 7.76 moves
+    Total: 341,304 entries
     """
 
     def __init__(self, parent):
@@ -182,9 +179,10 @@ class LookupTableIDA555EdgesXPlane(LookupTableIDA):
             # illegal moves
             (),
 
-            linecount=1752174,
-            max_depth=8,
-            filesize=180473922,
+            linecount=341304,
+            max_depth=7,
+            filesize=35154312,
+
             legal_moves = (
                 "L2", "F2", "R2", "B2",
                 "Uw", "Uw'", "Uw2",
@@ -196,8 +194,18 @@ class LookupTableIDA555EdgesXPlane(LookupTableIDA):
         parent_state = self.parent.state
         (edges_state, edges_cost) = self.parent.lt_edges_x_plane_edges_only.ida_heuristic()
         (centers_state, centers_cost) = self.parent.lt_edges_x_plane_centers_only.ida_heuristic()
+
         lt_state = centers_state + edges_state
         cost_to_goal = max(edges_cost, centers_cost)
+
+        if cost_to_goal > 0:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
+
         return (lt_state, cost_to_goal)
 
 
@@ -337,13 +345,11 @@ class LookupTableIDA555PairSecondFourEdges(LookupTableIDA):
     =====================================================
     1 steps has 180 entries (0 percent, 0.00x previous step)
     2 steps has 1,368 entries (0 percent, 7.60x previous step)
-    3 steps has 11,436 entries (0 percent, 8.36x previous step)
-    4 steps has 95,508 entries (1 percent, 8.35x previous step)
-    5 steps has 807,948 entries (10 percent, 8.46x previous step)
-    6 steps has 6,704,652 entries (87 percent, 8.30x previous step)
+    3 steps has 11,436 entries (1 percent, 8.36x previous step)
+    4 steps has 95,508 entries (10 percent, 8.35x previous step)
+    5 steps has 807,948 entries (88 percent, 8.46x previous step)
 
-    Total: 7,621,092 entries
-    Average: 5.86 moves
+    Total: 916,440 entries
     """
 
     state_targets = (
@@ -406,15 +412,30 @@ class LookupTableIDA555PairSecondFourEdges(LookupTableIDA):
              "B", "B'",
             ),
 
-            linecount=7621092,
-            max_depth=6,
-            filesize=868804488)
+            linecount=916440,
+            max_depth=5,
+            filesize=104474160,
+
+            #linecount=7621092,
+            #max_depth=6,
+            #filesize=868804488,
+        )
 
     def ida_heuristic(self):
         (edges_state, edges_cost) = self.parent.lt_pair_second_four_edges_edges_only.ida_heuristic()
         (centers_state, centers_cost) = self.parent.lt_pair_second_four_edges_centers_only.ida_heuristic()
+
         lt_state = centers_state + edges_state
         cost_to_goal = max(edges_cost, centers_cost)
+
+        if cost_to_goal > 0:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
+
         return (lt_state, cost_to_goal)
 
 
@@ -437,7 +458,9 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
         self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
 
+        # No need to preload this one, we use binary_seach_multiple
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
+
         self.lt_edges_x_plane_edges_only = LookupTable555EdgesXPlaneEdgesOnly(self)
         self.lt_edges_x_plane_centers_only = LookupTable555EdgesXPlaneCentersOnly(self)
         self.lt_edges_x_plane = LookupTableIDA555EdgesXPlane(self)
@@ -818,6 +841,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         """
         This is used to pair the inside orbit of edges for 7x7x7
         """
+        self.lt_init()
         #log.info("%s: reduce_333_via_l4e kociemba %s" % (self, self.get_kociemba_string(True)))
 
         if not self.centers_staged():

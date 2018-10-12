@@ -4,11 +4,7 @@ from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map, wing_strs_
 from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e, wing_str_combos_two, wing_str_combos_four
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-from rubikscubennnsolver.RubiksCube555Misc import (
-    highlow_edge_values,
-    starting_states_step351,
-    starting_states_step350,
-)
+from rubikscubennnsolver.RubiksCube555Misc import highlow_edge_values
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
@@ -1695,6 +1691,8 @@ class LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
     """
 
     def __init__(self, parent):
+        from rubikscubennnsolver.RubiksCube555Misc import starting_states_step351
+
         LookupTable.__init__(
             self,
             parent,
@@ -1809,6 +1807,8 @@ class LookupTableIDA555XPlaneYPlaneEdgesOrient(LookupTableIDA):
     """
 
     def __init__(self, parent):
+        from rubikscubennnsolver.RubiksCube555Misc import starting_states_step350
+
         LookupTableIDA.__init__(
             self,
             parent,

@@ -1,7 +1,8 @@
 
 from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+from rubikscubennnsolver.RubiksCube555 import solved_555
+from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
 from math import ceil
 import logging
 import sys
@@ -18,7 +19,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 self.fake_555.re_init()
                 self.fake_555.enable_print_cube = False
             else:
-                self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+                self.fake_555 = RubiksCube555ForNNN(solved_555, 'URFDLB')
                 self.fake_555.enable_print_cube = False
                 self.fake_555.lt_init()
         else:
@@ -107,11 +108,9 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         # takes much longer to run.  For now use the old L4E way it is only
         # about 1 move longer if the centers are solved but runs 3x faster.
         if orbit == 0:
-            #fake_555.reduce_333(fake_555=True)
-            fake_555.reduce_333_via_l4e(fake_555=True)
+            fake_555.reduce_333(fake_555=True)
         elif orbit == 1:
-            #fake_555.reduce_333(fake_555=True)
-            fake_555.reduce_333_via_l4e(fake_555=True)
+            fake_555.reduce_333(fake_555=True)
         else:
             assert False, "invalid orbit %d" % orbit
 

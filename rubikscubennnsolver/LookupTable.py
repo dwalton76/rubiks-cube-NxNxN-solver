@@ -600,7 +600,7 @@ class LookupTable(object):
         # Binary search the file to get the value
         else:
             if not self.printed_disk_io_warning:
-                log.info("%s: is binary searching the disk" % self)
+                log.warning("%s: is binary searching the disk" % self)
                 self.printed_disk_io_warning = True
 
             line = self.binary_search(state_to_find)

@@ -4,7 +4,10 @@ from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map, wing_strs_
 from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e, wing_str_combos_two, wing_str_combos_four
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+
+# This will consume about 200M when you import it
 from rubikscubennnsolver.RubiksCube555Misc import highlow_edge_values
+
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
@@ -1165,11 +1168,10 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
     ==================================================
     1 steps has 1,692 entries (0 percent, 0.00x previous step)
     2 steps has 16,832 entries (0 percent, 9.95x previous step)
-    3 steps has 194,000 entries (0 percent, 11.53x previous step)
-    4 steps has 2,138,044 entries (8 percent, 11.02x previous step)
-    5 steps has 23,791,796 entries (91 percent, 11.13x previous step)
+    3 steps has 194,000 entries (8 percent, 11.53x previous step)
+    4 steps has 2,138,044 entries (90 percent, 11.02x previous step)
 
-    Total: 26,142,364 entries
+    Total: 2,350,568 entries
     """
 
     state_targets = (
@@ -1335,11 +1337,8 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
 
             linecount=2350568,
             max_depth=4,
-            filesize=133982376)
-
-            #linecount=26142364,
-            #max_depth=5,
-            #filesize=1490114748)
+            filesize=133982376,
+        )
 
     def search_complete(self, state, steps_to_here):
         if LookupTableIDA.search_complete(self, state, steps_to_here):
@@ -1491,11 +1490,10 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
     2 steps has 264 entries (0 percent, 8.80x previous step)
     3 steps has 2,764 entries (0 percent, 10.47x previous step)
     4 steps has 29,276 entries (0 percent, 10.59x previous step)
-    5 steps has 319,486 entries (0 percent, 10.91x previous step)
-    6 steps has 3,457,886 entries (8 percent, 10.82x previous step)
-    7 steps has 36,816,534 entries (90 percent, 10.65x previous step)
+    5 steps has 319,486 entries (8 percent, 10.91x previous step)
+    6 steps has 3,457,886 entries (90 percent, 10.82x previous step)
 
-    Total: 40,626,240 entries
+    Total: 3,809,706 entries
     """
 
     state_targets = (
@@ -1611,15 +1609,10 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
              "R", "R'",
             ),
 
-            # 6-deep
             linecount=3809706,
             max_depth=6,
-            filesize=297157068)
-
-            # 7-deep
-            #linecount=40626240,
-            #max_depth=7,
-            #filesize=2396948160)
+            filesize=297157068,
+        )
 
     def ida_heuristic_tuple(self):
         assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
@@ -1940,13 +1933,11 @@ class LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(LookupTableIDA):
     1 steps has 30 entries (0 percent, 0.00x previous step)
     2 steps has 224 entries (0 percent, 7.47x previous step)
     3 steps has 2,018 entries (0 percent, 9.01x previous step)
-    4 steps has 17,690 entries (0 percent, 8.77x previous step)
-    5 steps has 147,648 entries (1 percent, 8.35x previous step)
-    6 steps has 1,179,038 entries (11 percent, 7.99x previous step)
-    7 steps has 8,732,132 entries (86 percent, 7.41x previous step)
+    4 steps has 17,690 entries (1 percent, 8.77x previous step)
+    5 steps has 147,648 entries (10 percent, 8.35x previous step)
+    6 steps has 1,179,038 entries (87 percent, 7.99x previous step)
 
-    Total: 10,078,780 entries
-    Average: 6.85 moves
+    Total: 1,346,648 entries
     """
 
     state_targets = (
@@ -1968,9 +1959,9 @@ class LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(LookupTableIDA):
             # illegal moves
             (),
 
-            linecount=10078780,
-            max_depth=7,
-            filesize=1189296040,
+            linecount=1346648,
+            max_depth=6,
+            filesize=158904464,
 
             legal_moves=(
                 "F", "F'", "F2",
@@ -2114,13 +2105,13 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
     2 steps has 42 entries (0 percent, 8.40x previous step)
     3 steps has 380 entries (0 percent, 9.05x previous step)
     4 steps has 3,425 entries (0 percent, 9.01x previous step)
-    5 steps has 29,807 entries (0 percent, 8.70x previous step)
-    6 steps has 259,083 entries (1 percent, 8.69x previous step)
-    7 steps has 2,235,143 entries (10 percent, 8.63x previous step)
-    8 steps has 18,980,732 entries (88 percent, 8.49x previous step)
+    5 steps has 29,807 entries (1 percent, 8.70x previous step)
+    6 steps has 259,083 entries (10 percent, 8.69x previous step)
+    7 steps has 2,235,143 entries (88 percent, 8.63x previous step)
 
-    Total: 21,508,617 entries
+    Total: 2,527,885 entries
     """
+
     heuristic_stats = {
         (0, 0): 0,
         (1, 1): 1,
@@ -2271,15 +2262,8 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
 
             linecount=2527885,
             max_depth=7,
-            filesize=300818315)
-
-            #linecount=21508617,
-            #max_depth=8,
-            #filesize=2624051274)
-
-            #linecount=180853034,
-            #max_depth=9,
-            #filesize=22787482284)
+            filesize=300818315,
+        )
 
     def ida_heuristic_tuple(self):
         (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
@@ -2449,7 +2433,6 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_432_pair_one_edge.preload_cache_dict()
         self.lt_LR_432_x_centers_only.preload_cache_string()
         self.lt_LR_432_t_centers_only.preload_cache_string()
-        #self.lt_LR_432_centers_stage.preload_cache_string()
         self.lt_LR_432_centers_stage.preload_cache_string()
 
         self.lt_edges_z_plane_edges_only = LookupTable555EdgesZPlaneEdgesOnly(self)

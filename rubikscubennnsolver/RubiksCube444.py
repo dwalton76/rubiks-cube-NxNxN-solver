@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map
-from rubikscubennnsolver.misc import pre_steps_to_try
+from rubikscubennnsolver.misc import pre_steps_to_try, get_swap_count
 from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
     steps_on_same_face_and_layer,
@@ -220,46 +220,6 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaC):
         self.nuke_corners = True
 
 
-def edges_recolor_pattern_444(state):
-    edge_map = {
-        'BD': [],
-        'BL': [],
-        'BR': [],
-        'BU': [],
-        'DF': [],
-        'DL': [],
-        'DR': [],
-        'FL': [],
-        'FR': [],
-        'FU': [],
-        'LU': [],
-        'RU': []
-    }
-
-    # Record the two edge_indexes for each of the 12 edges
-    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-        edge_map[wing_str].append(edge_index)
-
-    # Where is the other wing_str like us?
-    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = ''.join(sorted([square_value, partner_value]))
-
-        for tmp_index in edge_map[wing_str]:
-            if tmp_index != edge_index:
-                state[square_index] = tmp_index
-                state[partner_index] = tmp_index
-                break
-        else:
-            raise Exception("could not find tmp_index")
-
-    return ''.join(state)
-
-
 class LookupTable444HighLowEdgesEdges(LookupTable):
     """
     lookup-table-4x4x4-step21-highlow-edges-edges.txt
@@ -365,9 +325,6 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
              "Lw", "Lw'",
              "Rw", "Rw'"),
 
-            (parent.lt_highlow_edges_edges,
-             parent.lt_highlow_edges_centers),
-
             linecount=2304998,
             max_depth=6,
             filesize=182094842)
@@ -378,7 +335,7 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
         edges = self.parent.highlow_edges_state(self.parent.edge_mapping)
         return LR_centers + edges
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         LR_centers = ''.join([parent_state[x] for x in LR_centers_444])
         edges_state = self.parent.highlow_edges_state(self.parent.edge_mapping)
@@ -407,6 +364,7 @@ def edges_recolor_pattern_444(state):
         'DL' : [],
         'DR' : [],
         'DF' : [],
+        '--' : [],
     }
 
     # Record the two edge_indexes for each of the 12 edges
@@ -422,18 +380,22 @@ def edges_recolor_pattern_444(state):
         partner_value = state[partner_index]
         wing_str = wing_str_map[square_value + partner_value]
 
-        for tmp_index in edge_map[wing_str]:
-            if tmp_index != edge_index:
-                state[square_index] = tmp_index
-                state[partner_index] = tmp_index
-                break
+        if wing_str == '--':
+            state[square_index] = '-'
+            state[partner_index] = '-'
         else:
-            raise Exception("could not find tmp_index")
+            for tmp_index in edge_map[wing_str]:
+                if tmp_index != edge_index:
+                    state[square_index] = tmp_index
+                    state[partner_index] = tmp_index
+                    break
+            else:
+                raise Exception("could not find tmp_index")
 
     return ''.join(state)
 
 
-class LookupTable444Reduce333Edges(LookupTableHashCostOnly):
+class LookupTableIDA444Reduce333(LookupTableIDAViaC):
     """
     lookup-table-4x4x4-step31-reduce333-edges.txt
     =============================================
@@ -453,44 +415,8 @@ class LookupTable444Reduce333Edges(LookupTableHashCostOnly):
 
     Total: 239,500,800 entries
     Average: 10.635709 moves
-    """
-
-    def __init__(self, parent):
-
-        # Provides an option for running the 444 solver on ~300M
-        if parent.min_memory:
-            filename = 'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt.half-buckets'
-            bucketcount = 119750417
-            filesize = 119750418
-        else:
-            filename = 'lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt'
-            bucketcount = 239500847
-            filesize = 239500848
-
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            filename,
-            '10425376a8b9ecfdhgkiljnm',
-            linecount=239500800,
-            max_depth=13,
-            bucketcount=bucketcount,
-            filesize=filesize)
-
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step31-reduce333-edges.txt',
-            '10425376a8b9ecfdhgkiljnm',
-            linecount=239500800,
-            max_depth=13,
-            filesize=479001630)
-        '''
 
 
-class LookupTable444Reduce333CentersSolve(LookupTable):
-    """
     lookup-table-4x4x4-step32-reduce333-centers.txt
     ===============================================
     1 steps has 16 entries (0 percent, 0.00x previous step)
@@ -505,24 +431,8 @@ class LookupTable444Reduce333CentersSolve(LookupTable):
 
     Total: 58,800 entries
     Average: 6.27 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step32-reduce333-centers.txt',
-            ('DDDDLLLLBBBBRRRRFFFFUUUU',
-             'DDDDRRRRFFFFLLLLBBBBUUUU',
-             'UUUULLLLFFFFRRRRBBBBDDDD',
-             'UUUURRRRBBBBLLLLFFFFDDDD'),
-            linecount=58800,
-            max_depth=9,
-            filesize=3351600)
 
 
-class LookupTableIDA444Reduce333(LookupTableIDA):
-    """
     lookup-table-4x4x4-step30-reduce333.txt
     =======================================
     1 steps has 16 entries (0 percent, 0.00x previous step)
@@ -535,175 +445,17 @@ class LookupTableIDA444Reduce333(LookupTableIDA):
     Total: 1,439,952 entries
     """
 
-    heuristic_stats = {
-        (0, 0): 1,
-        (0, 2): 7,
-        (1, 1): 2,
-        (1, 2): 9,
-        (1, 3): 8,
-        (1, 4): 6,
-        (2, 1): 7,
-        (2, 2): 3,
-        (2, 3): 4,
-        (2, 4): 5,
-        (2, 5): 7,
-        (2, 6): 9,
-        (2, 10): 14,
-        (2, 11): 14,
-        (3, 1): 4,
-        (3, 2): 4,
-        (3, 3): 4,
-        (3, 4): 6,
-        (3, 5): 7,
-        (3, 6): 10,
-        (3, 7): 11,
-        (3, 8): 12,
-        (3, 9): 12,
-        (3, 10): 13,
-        (3, 11): 15,
-        (4, 1): 5,
-        (4, 2): 6,
-        (4, 3): 6,
-        (4, 4): 6,
-        (4, 5): 7,
-        (4, 6): 10,
-        (4, 7): 11,
-        (4, 8): 12,
-        (4, 9): 13,
-        (4, 10): 14,
-        (4, 11): 15,
-        (5, 2): 6,
-        (5, 3): 6,
-        (5, 4): 7,
-        (5, 5): 8,
-        (5, 6): 9,
-        (5, 7): 11,
-        (5, 8): 12,
-        (5, 9): 13,
-        (5, 10): 14,
-        (5, 11): 15,
-        (5, 12): 14,
-        (6, 3): 7,
-        (6, 4): 10,
-        (6, 5): 9,
-        (6, 6): 9,
-        (6, 7): 10,
-        (6, 8): 11,
-        (6, 9): 13,
-        (6, 10): 14,
-        (6, 11): 15,
-        (6, 12): 16,
-        (7, 5): 12,
-        (7, 6): 11,
-        (7, 7): 11,
-        (7, 8): 12,
-        (7, 9): 13,
-        (7, 10): 14,
-        (7, 11): 14,
-        (7, 12): 15,
-        (8, 6): 13,
-        (8, 7): 13,
-        (8, 8): 13,
-        (8, 9): 13,
-        (8, 10): 14,
-        (8, 11): 15,
-        (8, 12): 14,
-        (9, 8): 13,
-        (9, 9): 13,
-        (9, 10): 14,
-        (9, 11): 15,
-    }
-
-    # The higher this number the less you honor the heuristic_stats
-    # -  0 uses the heuristic_stats exactly as reported
-    # -  1 subtracts 1 from the heuristic_stats value
-    # - 99 disables heuristic_stats
-    #
-    # You want to put this as high as you can but low enough
-    # to still speed up the slow IDA searches.
-    #
-    # For cube DFRFUBDBUBRBRBLFLURRLRURDLRBRDLRULDURFRBLDUFLRFFBFLDFLLBUFFFFUDDBRFBBBLDBBUULLRUUUDLDDFDRDUUBLFD
-    # 99 : 14 moves, 10m 12s  or 15 moves 11s
-    #  3 : 15 moves, 1m 24s   or 15 moves 30s
-    #  2 : 19 moves, 9s       or 15 moves 34s
-    #  1 : 18 moves, 10s      or 17 moves 5s
-    #  0 : 18 moves, 15s      or 17 moves 6s
-    heuristic_stats_error = 2
-
     def __init__(self, parent):
 
-        # 5-deep table, takes 10M
-        if parent.min_memory:
-            filename = "lookup-table-4x4x4-step30-reduce333.txt.5-deep"
-            linecount = 149660
-            max_depth = 5
-            filesize = 10176880
-            exit_asap = 13
-
-        # 6-deep table, takes 103M
-        else:
-            filename = "lookup-table-4x4x4-step30-reduce333.txt"
-            linecount = 1439952
-            max_depth = 6
-            filesize = 103676544
-            exit_asap = 15
-
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            filename,
-            ('DDDDLLLLBBBBRRRRFFFFUUUU10425376a8b9ecfdhgkiljnm',
-             'DDDDRRRRFFFFLLLLBBBBUUUU10425376a8b9ecfdhgkiljnm',
-             'UUUULLLLFFFFRRRRBBBBDDDD10425376a8b9ecfdhgkiljnm',
-             'UUUURRRRBBBBLLLLFFFFDDDD10425376a8b9ecfdhgkiljnm'),
-            moves_444,
-
-            # illegal moves
-            ("Fw", "Fw'",
-             "Uw", "Uw'",
-             "Rw", "Rw'",
-             "Lw", "Lw'", "Lw2",
-             "Bw", "Bw'", "Bw2",
-             "Dw", "Dw'", "Dw2",
-             "R", "R'",
-             "L", "L'"),
-
-            # prune tables
-            (parent.lt_reduce333_edges_solve,
-             parent.lt_reduce333_centers_solve),
-
-            linecount=linecount,
-            max_depth=max_depth,
-            filesize=filesize,
-            exit_asap=exit_asap,
+            # Needed tables and their md5 signatures
+            (('lookup-table-4x4x4-step30-reduce333.txt', '82fbc3414d07e53448d0746d96e25ebd'), # 6-deep
+             ('lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt', '20ac2ed7ca369c3b5183f836f5d99262'),
+             ('lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt', '3f990fc1fb6bf506d81ba65f03ad74f6')),
+            '4x4x4-reduce-333' # C_ida_type
         )
-
-    def ida_heuristic_tuple(self):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-        centers_state = ''.join([state[square_index] for square_index in centers_444])
-        edges_state = ''.join([state[square_index] for square_index in wings_444])
-
-        return (
-            self.parent.lt_reduce333_centers_solve.heuristic(centers_state),
-            self.parent.lt_reduce333_edges_solve.heuristic(edges_state),
-        )
-
-    def ida_heuristic(self, ida_threshold):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-        centers_state = ''.join([state[square_index] for square_index in centers_444])
-        edges_state = ''.join([state[square_index] for square_index in wings_444])
-        lt_state = centers_state + edges_state
-
-        centers_cost = self.parent.lt_reduce333_centers_solve.heuristic(centers_state)
-        edges_cost = self.parent.lt_reduce333_edges_solve.heuristic(edges_state)
-
-        if ida_threshold >= self.exit_asap:
-            heuristic_stats_cost = self.heuristic_stats.get((centers_cost, edges_cost), 0)
-            cost_to_goal = max(centers_cost, edges_cost, heuristic_stats_cost - self.heuristic_stats_error)
-        else:
-            cost_to_goal = max(centers_cost, edges_cost)
-
-        return (lt_state, cost_to_goal)
 
 
 class RubiksCube444(RubiksCube):
@@ -767,185 +519,6 @@ class RubiksCube444(RubiksCube):
         self._sanity_check('corners', corners_444, 4)
         self._sanity_check('centers', centers_444, 4)
         self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
-
-    def high_low_state(self, x, y, state_x, state_y, wing_str):
-        """
-        Return U if this is a high edge, D if it is a low edge
-        """
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        # Nuke everything except the one wing we are interested in
-        self.nuke_corners()
-        self.nuke_centers()
-        self.nuke_edges()
-
-        self.state[x] = state_x
-        self.state[y] = state_y
-
-        # Now move that wing to its home edge
-        if wing_str.startswith('U'):
-
-            if wing_str == 'UB':
-                self.move_wing_to_U_north(x)
-                high_edge_index = 2
-                low_edge_index = 3
-
-            elif wing_str == 'UL':
-                self.move_wing_to_U_west(x)
-                high_edge_index = 9
-                low_edge_index = 5
-
-            elif wing_str == 'UR':
-                self.move_wing_to_U_east(x)
-                high_edge_index = 8
-                low_edge_index = 12
-
-            elif wing_str == 'UF':
-                self.move_wing_to_U_south(x)
-                high_edge_index = 15
-                low_edge_index = 14
-
-            else:
-                raise Exception("invalid wing_str %s" % wing_str)
-
-            if self.state[high_edge_index] == 'U':
-                result = 'U'
-            elif self.state[low_edge_index] == 'U':
-                result = 'D'
-            elif self.state[high_edge_index] == 'x':
-                result = 'U'
-            elif self.state[low_edge_index] == 'x':
-                result = 'D'
-            else:
-                self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
-
-        elif wing_str.startswith('L'):
-
-            if wing_str == 'LB':
-                self.move_wing_to_L_west(x)
-                high_edge_index = 25
-                low_edge_index = 21
-
-            elif wing_str == 'LF':
-                self.move_wing_to_L_east(x)
-                high_edge_index = 24
-                low_edge_index = 28
-
-            else:
-                raise Exception("invalid wing_str %s" % wing_str)
-
-            if self.state[high_edge_index] == 'L':
-                result = 'U'
-            elif self.state[low_edge_index] == 'L':
-                result = 'D'
-            elif self.state[high_edge_index] == 'x':
-                result = 'U'
-            elif self.state[low_edge_index] == 'x':
-                result = 'D'
-            else:
-                self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
-
-        elif wing_str.startswith('R'):
-
-            if wing_str == 'RB':
-                self.move_wing_to_R_east(x)
-                high_edge_index = 56
-                low_edge_index = 60
-
-            elif wing_str == 'RF':
-                self.move_wing_to_R_west(x)
-                high_edge_index = 57
-                low_edge_index = 53
-
-            else:
-                raise Exception("invalid wing_str %s" % wing_str)
-
-            if self.state[high_edge_index] == 'R':
-                result = 'U'
-            elif self.state[low_edge_index] == 'R':
-                result = 'D'
-            elif self.state[high_edge_index] == 'x':
-                result = 'U'
-            elif self.state[low_edge_index] == 'x':
-                result = 'D'
-            else:
-                self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
-
-        elif wing_str.startswith('D'):
-            if wing_str == 'DB':
-                self.move_wing_to_D_south(x)
-                high_edge_index = 95
-                low_edge_index = 94
-
-            elif wing_str == 'DL':
-                self.move_wing_to_D_west(x)
-                high_edge_index = 89
-                low_edge_index = 85
-
-            elif wing_str == 'DR':
-                self.move_wing_to_D_east(x)
-                high_edge_index = 88
-                low_edge_index = 92
-
-            elif wing_str == 'DF':
-                self.move_wing_to_D_north(x)
-                high_edge_index = 82
-                low_edge_index = 83
-
-            else:
-                raise Exception("invalid wing_str %s" % wing_str)
-
-            if self.state[high_edge_index] == 'D':
-                result = 'U'
-            elif self.state[low_edge_index] == 'D':
-                result = 'D'
-            elif self.state[high_edge_index] == 'x':
-                result = 'U'
-            elif self.state[low_edge_index] == 'x':
-                result = 'D'
-            else:
-                self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
-
-        else:
-            raise Exception("invalid wing_str %s" % wing_str)
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        assert result in ('U', 'D')
-        return result
-
-    def build_highlow_edge_values(self):
-        state = self.state
-        new_highlow_edge_values = {}
-
-        for x in range(1000000):
-
-            # make random moves
-            step = moves_444[randint(0, len(moves_444)-1)]
-            self.rotate(step)
-
-            for (x, y) in self.reduce333_orient_edges_tuples:
-                state_x = self.state[x]
-                state_y = self.state[y]
-                wing_str = wing_str_map[state_x + state_y]
-                wing_tuple = (x, y, state_x, state_y)
-
-                if wing_tuple not in new_highlow_edge_values:
-                    new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
-
-        print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
-        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
-        sys.exit(0)
 
     def highlow_edges_state(self, edges_to_flip):
         state = self.state
@@ -1049,9 +622,6 @@ class RubiksCube444(RubiksCube):
 
         return False
 
-    def get_paired_wings_count(self):
-        return self.get_paired_edges_count()
-
     def get_flipped_edges(self):
         wing_str_high_low = {
             'UB' : [],
@@ -1107,13 +677,13 @@ class RubiksCube444(RubiksCube):
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
         self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
 
-        self.lt_reduce333_edges_solve = LookupTable444Reduce333Edges(self)
-        self.lt_reduce333_centers_solve = LookupTable444Reduce333CentersSolve(self)
+        #self.lt_reduce333_edges_solve = LookupTable444Reduce333Edges(self)
+        #self.lt_reduce333_centers_solve = LookupTable444Reduce333CentersSolve(self)
         self.lt_reduce333 = LookupTableIDA444Reduce333(self)
-        self.lt_reduce333_centers_solve.preload_cache_dict()
-        self.lt_reduce333.preload_cache_string()
+        #self.lt_reduce333_centers_solve.preload_cache_dict()
+        #self.lt_reduce333.preload_cache_string()
 
-    def group_centers_guts(self):
+    def reduce_333(self, fake_444=False):
         self.lt_init()
 
         # save cube state
@@ -1122,11 +692,15 @@ class RubiksCube444(RubiksCube):
 
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: Start of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_ULFRBD_centers_stage.solve()
-        self.print_cube()
+        if not self.centers_staged():
+            self.print_cube()
+            self.lt_ULFRBD_centers_stage.solve()
+            self.print_cube()
 
         if self.rotate_for_best_centers_staging():
             self.print_cube()
+        #orbits_with_oll = self.center_solution_leads_to_oll_parity()
+        #log.info("%s: orbits_with_oll %s" % (self, pformat(orbits_with_oll)))
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
@@ -1188,17 +762,13 @@ class RubiksCube444(RubiksCube):
                     min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
                     log.info("%s: using edge_mapping %s, phase2 cost %s" % (self, min_edge_mapping, phase2_cost))
 
-            # dwalton fix this so we do not check in the 7-deep lookup-table-4x4x4-step20-highlow-edges.txt table
-            # It is 180M zipped.  We can probably use pre_steps_to_try in this scenario
-            # This is the case for BLBBDBFULRBBBDRDBDRLLDRBUUULUBBFRRULFULDUFRBFUDLUBRFFRDRBFDRRDFLDFUURBLRUBUFFLDRULFRDFLFFDLLDULD
-            #if min_edge_mapping is None:
-            #    assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
             if min_edge_mapping:
                 if pre_steps:
                     log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
                 break
         else:
             assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
+
         log.info("%s: End of find best edge_mapping" % self)
 
         self.state = original_state[:]
@@ -1231,7 +801,6 @@ class RubiksCube444(RubiksCube):
         self.lt_reduce333.solve()
 
         if self.state[6] != 'U' or self.state[38] != 'F':
-            self.print_cube()
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
@@ -1239,9 +808,9 @@ class RubiksCube444(RubiksCube):
         log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
 
-    def group_edges(self):
-        self.group_centers_guts()
-        log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        if not fake_444:
+            self.solution.append('CENTERS_SOLVED')
+            self.solution.append('EDGES_GROUPED')
 
 
 swaps_444 = {'2B': (0, 1, 2, 3, 4, 51, 55, 59, 63, 9, 10, 11, 12, 13, 14, 15, 16, 17, 8, 19, 20, 21, 7, 23, 24, 25, 6, 27, 28, 29, 5, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 92, 52, 53, 54, 91, 56, 57, 58, 90, 60, 61, 62, 89, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 18, 22, 26, 30, 93, 94, 95, 96),

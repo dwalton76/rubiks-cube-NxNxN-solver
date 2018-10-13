@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map, wing_strs_all
-from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e
+from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e, wing_str_combos_two, wing_str_combos_four
 from rubikscubennnsolver.RubiksSide import SolveError
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+
+# This will consume about 200M when you import it
+from rubikscubennnsolver.RubiksCube555Misc import highlow_edge_values
+
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
@@ -12,6 +17,7 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableIDAViaC,
     NoIDASolution,
     NoPruneTableState,
+    NoSteps,
 )
 from pprint import pformat
 from random import randint
@@ -22,6 +28,8 @@ import subprocess
 import sys
 
 log = logging.getLogger(__name__)
+
+MIN_EO_COUNT_FOR_STAGE_LR_432 = 5
 
 moves_555 = (
     "U", "U'", "U2", "Uw", "Uw'", "Uw2",
@@ -45,6 +53,29 @@ centers_555 = (
     57, 58, 59, 62, 63, 64, 67, 68, 69, # Front
     82, 83, 84, 87, 88, 89, 92, 93, 94, # Right
     107, 108, 109, 112, 113, 114, 117, 118, 119, # Back
+    132, 133, 134, 137, 138, 139, 142, 143, 144  # Down
+)
+
+x_centers_555 = (
+    7, 9, 13, 17, 19, # Upper
+    32, 34, 38, 42, 44, # Left
+    57, 59, 63, 67, 69, # Front
+    82, 84, 88, 92, 94, # Right
+    107, 109, 113, 117, 119, # Back
+    132, 134, 138, 142, 144, # Down
+)
+
+t_centers_555 = (
+    8, 12, 13, 14, 18, # Upper
+    33, 37, 38, 39, 43, # Left
+    58, 62, 63, 64, 68, # Front
+    83, 87, 88, 89, 93, # Right
+    108, 112, 113, 114, 118, # Back
+    133, 137, 138, 139, 143, # Down
+)
+
+UD_centers_555 = (
+    7, 8, 9, 12, 13, 14, 17, 18, 19, # Upper
     132, 133, 134, 137, 138, 139, 142, 143, 144  # Down
 )
 
@@ -73,10 +104,24 @@ ULRD_centers_555 = (
 )
 
 LFRB_centers_555 = (
-    32, 33, 34, 37, 38, 39, 42, 43, 44,
-    57, 58, 59, 62, 63, 64, 67, 68, 69,
-    82, 83, 84, 87, 88, 89, 92, 93, 94,
-    107, 108, 109, 112, 113, 114, 117, 118, 119
+    32, 33, 34, 37, 38, 39, 42, 43, 44, # Left
+    57, 58, 59, 62, 63, 64, 67, 68, 69, # Front
+    82, 83, 84, 87, 88, 89, 92, 93, 94, # Right
+    107, 108, 109, 112, 113, 114, 117, 118, 119 # Back
+)
+
+LFRB_x_centers_555 = (
+    32, 34, 38, 42, 44, # Left
+    57, 59, 63, 67, 69, # Front
+    82, 84, 88, 92, 94, # Right
+    107, 109, 113, 117, 119, # Back
+)
+
+LFRB_t_centers_555 = (
+    33, 37, 38, 39, 43, # Left
+    58, 62, 63, 64, 68, # Front
+    83, 87, 88, 89, 93, # Right
+    108, 112, 113, 114, 118, # Back
 )
 
 edge_orbit_0_555 = (
@@ -146,7 +191,7 @@ edges_555 = (
 
 set_edges_555 = set(edges_555)
 
-wings_555= (
+wings_555 = (
     2, 3, 4, # Upper
     6, 11, 16,
     10, 15, 20,
@@ -196,6 +241,41 @@ wings_for_edges_pattern_555 = (
     131, 136, 141,
     135, 140, 145,
     147, 148, 149
+)
+
+high_edges_555 = (
+    (2, 104),
+    (10, 79),
+    (24, 54),
+    (16, 29),
+
+    (35, 56),
+    (41, 120),
+    (85, 106),
+    (91, 70),
+
+    (127, 72),
+    (135, 97),
+    (149, 122),
+    (141, 47),
+)
+
+low_edges_555 = (
+    (4, 102),
+    (20, 77),
+    (22, 52),
+    (6, 27),
+
+    (31, 110),
+    (45, 66),
+
+    (81, 60),
+    (95, 116),
+
+    (129, 74),
+    (145, 99),
+    (147, 124),
+    (131, 49),
 )
 
 
@@ -397,7 +477,7 @@ wings_for_recolor_555= (
 )
 
 
-def edges_recolor_pattern_555(state, only_colors=[]):
+def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=False):
     midges_map = {
         'UB': None,
         'UL': None,
@@ -414,43 +494,42 @@ def edges_recolor_pattern_555(state, only_colors=[]):
         '--': None,
     }
 
-    '''
     paired_edges_indexes = []
 
-    for (s1, s2, s3) in (
-        (2, 3, 4), # Upper
-        (6, 11, 16),
-        (10, 15, 20),
-        (22, 23, 24),
+    if uppercase_paired_edges:
+        for (s1, s2, s3) in (
+            (2, 3, 4), # Upper
+            (6, 11, 16),
+            (10, 15, 20),
+            (22, 23, 24),
 
-        (31, 36, 41), # Left
-        (35, 40, 45),
+            (31, 36, 41), # Left
+            (35, 40, 45),
 
-        (81, 86, 91), # Right
-        (85, 90, 95),
+            (81, 86, 91), # Right
+            (85, 90, 95),
 
-        (127, 128, 129), # Down
-        (131, 136, 141),
-        (135, 140, 145),
-        (147, 148, 149)):
+            (127, 128, 129), # Down
+            (131, 136, 141),
+            (135, 140, 145),
+            (147, 148, 149)):
 
-        s1_value = state[s1]
-        s2_value = state[s2]
-        s3_value = state[s3]
+            s1_value = state[s1]
+            s2_value = state[s2]
+            s3_value = state[s3]
 
-        p1 = edges_partner_555[s1]
-        p2 = edges_partner_555[s2]
-        p3 = edges_partner_555[s3]
+            p1 = edges_partner_555[s1]
+            p2 = edges_partner_555[s2]
+            p3 = edges_partner_555[s3]
 
-        p1_value = state[p1]
-        p2_value = state[p2]
-        p3_value = state[p3]
+            p1_value = state[p1]
+            p2_value = state[p2]
+            p3_value = state[p3]
 
-        if (s1_value != "-" and
-            s1_value == s2_value and s2_value == s3_value and
-            p1_value == p2_value and p2_value == p3_value):
-            paired_edges_indexes.extend([s1, s2, s3, p1, p2, p3])
-    '''
+            if (s1_value != "-" and
+                s1_value == s2_value and s2_value == s3_value and
+                p1_value == p2_value and p2_value == p3_value):
+                paired_edges_indexes.extend([s1, s2, s3, p1, p2, p3])
 
     for (edge_index, square_index, partner_index) in midges_recolor_tuples_555:
         square_value = state[square_index]
@@ -467,23 +546,26 @@ def edges_recolor_pattern_555(state, only_colors=[]):
                 state[partner_index] = '-'
 
             else:
-                high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
+                high_low = highlow_edge_values[(square_index, partner_index, square_value, partner_value)]
+
+                # If the edge is paired always use an uppercase letter to represent this edge
+                if uppercase_paired_edges and square_index in paired_edges_indexes:
+                    state[square_index] = midges_map[wing_str].upper()
+                    state[partner_index] = midges_map[wing_str].upper()
 
                 # If this is a high wing use the uppercase of the midge edge_index
-                if high_low == 'U':
+                elif high_low == 'U':
                     state[square_index] = midges_map[wing_str].upper()
                     state[partner_index] = midges_map[wing_str].upper()
 
                 # If this is a low wing use the lowercase of the midge edge_index
-                elif high_low == 'D':
+                # high_low will be 'D' here
+                else:
                     state[square_index] = midges_map[wing_str]
                     state[partner_index] = midges_map[wing_str]
 
-                else:
-                    raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
-
     # Where is the midge for each high/low wing?
-    for (edge_index, square_index, partner_index) in edges_recolor_tuples_555:
+    for (_, square_index, partner_index) in edges_recolor_tuples_555:
         square_value = state[square_index]
         partner_value = state[partner_index]
 
@@ -497,12 +579,12 @@ def edges_recolor_pattern_555(state, only_colors=[]):
                 state[partner_index] = '-'
 
             # If the edge is paired always use an uppercase letter to represent this edge
-            #elif square_index in paired_edges_indexes:
-            #    state[square_index] = midges_map[wing_str].upper()
-            #    state[partner_index] = midges_map[wing_str].upper()
+            elif uppercase_paired_edges and square_index in paired_edges_indexes:
+                state[square_index] = midges_map[wing_str].upper()
+                state[partner_index] = midges_map[wing_str].upper()
 
             else:
-                high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
+                high_low = highlow_edge_values[(square_index, partner_index, square_value, partner_value)]
 
                 # If this is a high wing use the uppercase of the midge edge_index
                 if high_low == 'U':
@@ -510,12 +592,10 @@ def edges_recolor_pattern_555(state, only_colors=[]):
                     state[partner_index] = midges_map[wing_str].upper()
 
                 # If this is a low wing use the lowercase of the midge edge_index
-                elif high_low == 'D':
+                # high_low will be 'D' here
+                else:
                     state[square_index] = midges_map[wing_str]
                     state[partner_index] = midges_map[wing_str]
-
-                else:
-                    raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
 
     return ''.join(state)
 
@@ -560,7 +640,7 @@ class LookupTable555UDTCenterStage(LookupTable):
             max_depth=8,
             filesize=27947898)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in self.t_centers_555])
         return (self.hex_format % int(result, 2), 0)
@@ -637,10 +717,96 @@ class LookupTable555LRTCenterStage(LookupTable):
             max_depth=9,
             filesize=476190)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_t_centers_555])
         return (self.hex_format % int(result, 2), 0)
+
+
+class LookupTable555LRTCenterStageOdd(LookupTable):
+    """
+    lookup-table-5x5x5-step21-LR-t-centers-stage-odd.txt
+    ====================================================
+    1 steps has 2 entries (0 percent, 0.00x previous step)
+    2 steps has 24 entries (0 percent, 12.00x previous step)
+    3 steps has 142 entries (1 percent, 5.92x previous step)
+    4 steps has 412 entries (3 percent, 2.90x previous step)
+    5 steps has 946 entries (7 percent, 2.30x previous step)
+    6 steps has 3,412 entries (26 percent, 3.61x previous step)
+    7 steps has 4,957 entries (38 percent, 1.45x previous step)
+    8 steps has 2,692 entries (20 percent, 0.54x previous step)
+    9 steps has 275 entries (2 percent, 0.10x previous step)
+    10 steps has 8 entries (0 percent, 0.03x previous step)
+
+    Total: 12,870 entries
+    Average: 6.69 moves
+    """
+
+    LFRB_t_centers_555 = (
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step21-LR-t-centers-stage-odd.txt',
+            'f0f0',
+            linecount=12870,
+            max_depth=10,
+            filesize=514800)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_t_centers_555])
+        return (self.hex_format % int(result, 2), 0)
+
+
+class LookupTable555LRTCenterStageEven(LookupTable):
+    """
+    lookup-table-5x5x5-step21-LR-t-centers-stage-even.txt
+    =====================================================
+    1 steps has 1 entries (0 percent, 0.00x previous step)
+    2 steps has 1 entries (0 percent, 1.00x previous step)
+    3 steps has 68 entries (0 percent, 68.00x previous step)
+    4 steps has 512 entries (3 percent, 7.53x previous step)
+    5 steps has 1,968 entries (15 percent, 3.84x previous step)
+    6 steps has 3,771 entries (29 percent, 1.92x previous step)
+    7 steps has 3,396 entries (26 percent, 0.90x previous step)
+    8 steps has 2,619 entries (20 percent, 0.77x previous step)
+    9 steps has 532 entries (4 percent, 0.20x previous step)
+    10 steps has 2 entries (0 percent, 0.00x previous step)
+
+    Total: 12,870 entries
+    Average: 6.55 moves
+    """
+
+    LFRB_t_centers_555 = (
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step21-LR-t-centers-stage-even.txt',
+            'f0f0',
+            linecount=12870,
+            max_depth=10,
+            filesize=501930)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        result = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in self.LFRB_t_centers_555])
+        return (self.hex_format % int(result, 2), 0)
+
+
 
 
 class LookupTableIDA555LRCentersStage(LookupTableIDAViaC):
@@ -719,6 +885,46 @@ class LookupTableIDA555LRCentersStage(LookupTableIDAViaC):
         self.nuke_corners = True
 
 
+class LookupTable555LRCenterStage(LookupTableHashCostOnly):
+    """
+    lookup-table-5x5x5-step20-LR-centers-stage.txt
+    ==============================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 33 entries (0 percent, 11.00x previous step)
+    3 steps has 374 entries (0 percent, 11.33x previous step)
+    4 steps has 3,838 entries (0 percent, 10.26x previous step)
+    5 steps has 39,254 entries (0 percent, 10.23x previous step)
+    6 steps has 387,357 entries (0 percent, 9.87x previous step)
+    7 steps has 3,374,380 entries (2 percent, 8.71x previous step)
+    8 steps has 20,851,334 entries (12 percent, 6.18x previous step)
+    9 steps has 65,556,972 entries (39 percent, 3.14x previous step)
+    10 steps has 66,986,957 entries (40 percent, 1.02x previous step)
+    11 steps has 8,423,610 entries (5 percent, 0.13x previous step)
+    12 steps has 12,788 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.33 moves
+    """
+
+    def __init__(self, parent):
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step20-LR-centers-stage.hash-cost-only.txt',
+            'ff803fe00',
+            linecount=1,
+            max_depth=12,
+            bucketcount=165636907,
+            filesize=165636908)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join(['1' if parent_state[x] in ('L', 'R') else '0' for x in LFRB_centers_555])
+        state = self.hex_format % int(state, 2)
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
     """
     24,010,000/117,649,000,000 is 0.000 204 so this will be a fast IDA search
@@ -755,7 +961,6 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
 
     Total: 24,010,000 entries
     Average: 9.25 moves
-
     """
 
     def __init__(self, parent):
@@ -820,182 +1025,1273 @@ class LookupTable555TCenterSolve(LookupTable):
             filesize=19551000,
         )
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         result = ''.join([parent_state[x] for x in self.t_centers_555])
         return (result, 0)
 
 
-
-class LookupTable555StageFirstFourEdges(LookupTable):
+class LookupTable555LRCenterStage432XCentersOnly(LookupTable):
     """
-    lookup-table-5x5x5-step100-stage-first-four-edges.txt
-    =====================================================
-    1 steps has 9 entries (0 percent, 0.00x previous step)
-    2 steps has 72 entries (0 percent, 8.00x previous step)
-    3 steps has 330 entries (0 percent, 4.58x previous step)
-    4 steps has 84 entries (0 percent, 0.25x previous step)
-    5 steps has 1,152 entries (0 percent, 13.71x previous step)
-    6 steps has 10,200 entries (0 percent, 8.85x previous step)
-    7 steps has 53,040 entries (0 percent, 5.20x previous step)
-    8 steps has 187,296 entries (2 percent, 3.53x previous step)
-    9 steps has 1,357,482 entries (18 percent, 7.25x previous step)
-    10 steps has 5,779,878 entries (78 percent, 4.26x previous step)
+    lookup-table-5x5x5-step41-LR-centers-stage-432-x-centers-only.txt
+    =================================================================
+    1 steps has 46 entries (0 percent, 0.00x previous step)
+    2 steps has 400 entries (0 percent, 8.70x previous step)
+    3 steps has 3,490 entries (0 percent, 8.72x previous step)
+    4 steps has 22,972 entries (2 percent, 6.58x previous step)
+    5 steps has 119,852 entries (13 percent, 5.22x previous step)
+    6 steps has 403,964 entries (44 percent, 3.37x previous step)
+    7 steps has 345,232 entries (38 percent, 0.85x previous step)
+    8 steps has 4,944 entries (0 percent, 0.01x previous step)
 
-    Total: 7,389,543 entries
-
-    There is no need to build this any deeper...building it to 10-deep
-    takes about 2 days on a 12-core machine.
+    Total: 900,900 entries
+    Average: 6.20 moves
     """
+
+    state_targets = (
+        'LLLLLFFFFFRRRRRFFFFF',
+        'LLLRRFFFFFLLRRRFFFFF',
+        'LLLRRFFFFFRRRLLFFFFF',
+        'LRLLRFFFFFLRRLRFFFFF',
+        'LRLLRFFFFFRLRRLFFFFF',
+        'LRLRLFFFFFRLRLRFFFFF',
+        'RLLLRFFFFFLRRRLFFFFF',
+        'RLLRLFFFFFLRRLRFFFFF',
+        'RLLRLFFFFFRLRRLFFFFF',
+        'RRLLLFFFFFLLRRRFFFFF',
+        'RRLLLFFFFFRRRLLFFFFF',
+        'RRLRRFFFFFLLRLLFFFFF'
+    )
+
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step100-stage-first-four-edges.txt',
-            'TBD',
-            linecount=7389543,
-            filesize=421203951,
+            'lookup-table-5x5x5-step41-LR-centers-stage-432-x-centers-only.txt',
+            self.state_targets,
+            linecount=900900,
+            max_depth=8,
+            filesize=45945900)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join(['F' if parent_state[x] == 'B' else parent_state[x] for x in LFRB_x_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555LRCenterStage432TCentersOnly(LookupTable):
+    """
+    lookup-table-5x5x5-step42-LR-centers-stage-432-t-centers-only.txt
+    =================================================================
+    1 steps has 126 entries (0 percent, 0.00x previous step)
+    2 steps has 968 entries (0 percent, 7.68x previous step)
+    3 steps has 8,554 entries (0 percent, 8.84x previous step)
+    4 steps has 38,220 entries (4 percent, 4.47x previous step)
+    5 steps has 108,556 entries (12 percent, 2.84x previous step)
+    6 steps has 270,972 entries (30 percent, 2.50x previous step)
+    7 steps has 294,466 entries (32 percent, 1.09x previous step)
+    8 steps has 164,936 entries (18 percent, 0.56x previous step)
+    9 steps has 14,070 entries (1 percent, 0.09x previous step)
+    10 steps has 32 entries (0 percent, 0.00x previous step)
+
+    Total: 900,900 entries
+    Average: 6.50 moves
+    """
+
+    state_targets = (
+        'LLLLLFFFFFRRRRRFFFFF', 'LLLLRFFFFFLRRRRFFFFF', 'LLLLRFFFFFRRRRLFFFFF', 'LLLRLFFFFFRLRRRFFFFF',
+        'LLLRLFFFFFRRRLRFFFFF', 'LLLRRFFFFFLLRRRFFFFF', 'LLLRRFFFFFLRRLRFFFFF', 'LLLRRFFFFFRLRRLFFFFF',
+        'LLLRRFFFFFRRRLLFFFFF', 'LRLLLFFFFFRLRRRFFFFF', 'LRLLLFFFFFRRRLRFFFFF', 'LRLLRFFFFFLLRRRFFFFF',
+        'LRLLRFFFFFLRRLRFFFFF', 'LRLLRFFFFFRLRRLFFFFF', 'LRLLRFFFFFRRRLLFFFFF', 'LRLRLFFFFFRLRLRFFFFF',
+        'LRLRRFFFFFLLRLRFFFFF', 'LRLRRFFFFFRLRLLFFFFF', 'RLLLLFFFFFLRRRRFFFFF', 'RLLLLFFFFFRRRRLFFFFF',
+        'RLLLRFFFFFLRRRLFFFFF', 'RLLRLFFFFFLLRRRFFFFF', 'RLLRLFFFFFLRRLRFFFFF', 'RLLRLFFFFFRLRRLFFFFF',
+        'RLLRLFFFFFRRRLLFFFFF', 'RLLRRFFFFFLLRRLFFFFF', 'RLLRRFFFFFLRRLLFFFFF', 'RRLLLFFFFFLLRRRFFFFF',
+        'RRLLLFFFFFLRRLRFFFFF', 'RRLLLFFFFFRLRRLFFFFF', 'RRLLLFFFFFRRRLLFFFFF', 'RRLLRFFFFFLLRRLFFFFF',
+        'RRLLRFFFFFLRRLLFFFFF', 'RRLRLFFFFFLLRLRFFFFF', 'RRLRLFFFFFRLRLLFFFFF', 'RRLRRFFFFFLLRLLFFFFF'
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step42-LR-centers-stage-432-t-centers-only.txt',
+            self.state_targets,
+            linecount=900900,
+            max_depth=10,
+            filesize=48648600)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join(['F' if parent_state[x] == 'B' else parent_state[x] for x in LFRB_t_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555LRCenterStage432PairOneEdge(LookupTable):
+    """
+    lookup-table-5x5x5-step43-LR-centers-stage-432-pair-one-edge.txt
+    ================================================================
+    1 steps has 18 entries (0 percent, 0.00x previous step)
+    2 steps has 84 entries (2 percent, 4.67x previous step)
+    3 steps has 344 entries (9 percent, 4.10x previous step)
+    4 steps has 938 entries (27 percent, 2.73x previous step)
+    5 steps has 1,572 entries (45 percent, 1.68x previous step)
+    6 steps has 500 entries (14 percent, 0.32x previous step)
+
+    Total: 3,456 entries
+    Average: 4.58 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step43-LR-centers-stage-432-pair-one-edge.txt',
+            ('---------Rrr------------------------',
+             '---------rRR------------------------'),
+            linecount=3456,
+            max_depth=6,
+            filesize=203904)
+
+    def ida_heuristic(self):
+        assert self.only_colors and len(self.only_colors) == 1, "You must specify which 1-edge"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA555LRCenterStage432(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step40-LR-centers-stage-432.txt
+    ==================================================
+    1 steps has 1,692 entries (0 percent, 0.00x previous step)
+    2 steps has 16,832 entries (0 percent, 9.95x previous step)
+    3 steps has 194,000 entries (8 percent, 11.53x previous step)
+    4 steps has 2,138,044 entries (90 percent, 11.02x previous step)
+
+    Total: 2,350,568 entries
+    """
+
+    state_targets = (
+        'LLLLLLLLLFFFFFFFFFRRRRRRRRRFFFFFFFFF', 'LLLLLLLRLFFFFFFFFFRLRRRRRRRFFFFFFFFF', 'LLLLLLLRLFFFFFFFFFRRRRRRRLRFFFFFFFFF',
+        'LLLLLLRLRFFFFFFFFFLRLRRRRRRFFFFFFFFF', 'LLLLLLRLRFFFFFFFFFRRRRRRLRLFFFFFFFFF', 'LLLLLLRRRFFFFFFFFFLLLRRRRRRFFFFFFFFF',
+        'LLLLLLRRRFFFFFFFFFLRLRRRRLRFFFFFFFFF', 'LLLLLLRRRFFFFFFFFFRLRRRRLRLFFFFFFFFF', 'LLLLLLRRRFFFFFFFFFRRRRRRLLLFFFFFFFFF',
+        'LLLLLRLLLFFFFFFFFFRRRLRRRRRFFFFFFFFF', 'LLLLLRLLLFFFFFFFFFRRRRRLRRRFFFFFFFFF', 'LLLLLRLRLFFFFFFFFFRLRLRRRRRFFFFFFFFF',
+        'LLLLLRLRLFFFFFFFFFRLRRRLRRRFFFFFFFFF', 'LLLLLRLRLFFFFFFFFFRRRLRRRLRFFFFFFFFF', 'LLLLLRLRLFFFFFFFFFRRRRRLRLRFFFFFFFFF',
+        'LLLLLRRLRFFFFFFFFFLRLLRRRRRFFFFFFFFF', 'LLLLLRRLRFFFFFFFFFLRLRRLRRRFFFFFFFFF', 'LLLLLRRLRFFFFFFFFFRRRLRRLRLFFFFFFFFF',
+        'LLLLLRRLRFFFFFFFFFRRRRRLLRLFFFFFFFFF', 'LLLLLRRRRFFFFFFFFFLLLLRRRRRFFFFFFFFF', 'LLLLLRRRRFFFFFFFFFLLLRRLRRRFFFFFFFFF',
+        'LLLLLRRRRFFFFFFFFFLRLLRRRLRFFFFFFFFF', 'LLLLLRRRRFFFFFFFFFLRLRRLRLRFFFFFFFFF', 'LLLLLRRRRFFFFFFFFFRLRLRRLRLFFFFFFFFF',
+        'LLLLLRRRRFFFFFFFFFRLRRRLLRLFFFFFFFFF', 'LLLLLRRRRFFFFFFFFFRRRLRRLLLFFFFFFFFF', 'LLLLLRRRRFFFFFFFFFRRRRRLLLLFFFFFFFFF',
+        'LLLRLLLLLFFFFFFFFFRRRLRRRRRFFFFFFFFF', 'LLLRLLLLLFFFFFFFFFRRRRRLRRRFFFFFFFFF', 'LLLRLLLRLFFFFFFFFFRLRLRRRRRFFFFFFFFF',
+        'LLLRLLLRLFFFFFFFFFRLRRRLRRRFFFFFFFFF', 'LLLRLLLRLFFFFFFFFFRRRLRRRLRFFFFFFFFF', 'LLLRLLLRLFFFFFFFFFRRRRRLRLRFFFFFFFFF',
+        'LLLRLLRLRFFFFFFFFFLRLLRRRRRFFFFFFFFF', 'LLLRLLRLRFFFFFFFFFLRLRRLRRRFFFFFFFFF', 'LLLRLLRLRFFFFFFFFFRRRLRRLRLFFFFFFFFF',
+        'LLLRLLRLRFFFFFFFFFRRRRRLLRLFFFFFFFFF', 'LLLRLLRRRFFFFFFFFFLLLLRRRRRFFFFFFFFF', 'LLLRLLRRRFFFFFFFFFLLLRRLRRRFFFFFFFFF',
+        'LLLRLLRRRFFFFFFFFFLRLLRRRLRFFFFFFFFF', 'LLLRLLRRRFFFFFFFFFLRLRRLRLRFFFFFFFFF', 'LLLRLLRRRFFFFFFFFFRLRLRRLRLFFFFFFFFF',
+        'LLLRLLRRRFFFFFFFFFRLRRRLLRLFFFFFFFFF', 'LLLRLLRRRFFFFFFFFFRRRLRRLLLFFFFFFFFF', 'LLLRLLRRRFFFFFFFFFRRRRRLLLLFFFFFFFFF',
+        'LLLRLRLLLFFFFFFFFFRRRLRLRRRFFFFFFFFF', 'LLLRLRLRLFFFFFFFFFRLRLRLRRRFFFFFFFFF', 'LLLRLRLRLFFFFFFFFFRRRLRLRLRFFFFFFFFF',
+        'LLLRLRRLRFFFFFFFFFLRLLRLRRRFFFFFFFFF', 'LLLRLRRLRFFFFFFFFFRRRLRLLRLFFFFFFFFF', 'LLLRLRRRRFFFFFFFFFLLLLRLRRRFFFFFFFFF',
+        'LLLRLRRRRFFFFFFFFFLRLLRLRLRFFFFFFFFF', 'LLLRLRRRRFFFFFFFFFRLRLRLLRLFFFFFFFFF', 'LLLRLRRRRFFFFFFFFFRRRLRLLLLFFFFFFFFF',
+        'LLRLLLLLRFFFFFFFFFLRRRRRLRRFFFFFFFFF', 'LLRLLLLLRFFFFFFFFFRRLRRRRRLFFFFFFFFF', 'LLRLLLLRRFFFFFFFFFLLRRRRLRRFFFFFFFFF',
+        'LLRLLLLRRFFFFFFFFFLRRRRRLLRFFFFFFFFF', 'LLRLLLLRRFFFFFFFFFRLLRRRRRLFFFFFFFFF', 'LLRLLLLRRFFFFFFFFFRRLRRRRLLFFFFFFFFF',
+        'LLRLLLRLLFFFFFFFFFRRLRRRLRRFFFFFFFFF', 'LLRLLLRRLFFFFFFFFFRLLRRRLRRFFFFFFFFF', 'LLRLLLRRLFFFFFFFFFRRLRRRLLRFFFFFFFFF',
+        'LLRLLRLLRFFFFFFFFFLRRLRRLRRFFFFFFFFF', 'LLRLLRLLRFFFFFFFFFLRRRRLLRRFFFFFFFFF', 'LLRLLRLLRFFFFFFFFFRRLLRRRRLFFFFFFFFF',
+        'LLRLLRLLRFFFFFFFFFRRLRRLRRLFFFFFFFFF', 'LLRLLRLRRFFFFFFFFFLLRLRRLRRFFFFFFFFF', 'LLRLLRLRRFFFFFFFFFLLRRRLLRRFFFFFFFFF',
+        'LLRLLRLRRFFFFFFFFFLRRLRRLLRFFFFFFFFF', 'LLRLLRLRRFFFFFFFFFLRRRRLLLRFFFFFFFFF', 'LLRLLRLRRFFFFFFFFFRLLLRRRRLFFFFFFFFF',
+        'LLRLLRLRRFFFFFFFFFRLLRRLRRLFFFFFFFFF', 'LLRLLRLRRFFFFFFFFFRRLLRRRLLFFFFFFFFF', 'LLRLLRLRRFFFFFFFFFRRLRRLRLLFFFFFFFFF',
+        'LLRLLRRLLFFFFFFFFFRRLLRRLRRFFFFFFFFF', 'LLRLLRRLLFFFFFFFFFRRLRRLLRRFFFFFFFFF', 'LLRLLRRRLFFFFFFFFFRLLLRRLRRFFFFFFFFF',
+        'LLRLLRRRLFFFFFFFFFRLLRRLLRRFFFFFFFFF', 'LLRLLRRRLFFFFFFFFFRRLLRRLLRFFFFFFFFF', 'LLRLLRRRLFFFFFFFFFRRLRRLLLRFFFFFFFFF',
+        'LLRRLLLLRFFFFFFFFFLRRLRRLRRFFFFFFFFF', 'LLRRLLLLRFFFFFFFFFLRRRRLLRRFFFFFFFFF', 'LLRRLLLLRFFFFFFFFFRRLLRRRRLFFFFFFFFF',
+        'LLRRLLLLRFFFFFFFFFRRLRRLRRLFFFFFFFFF', 'LLRRLLLRRFFFFFFFFFLLRLRRLRRFFFFFFFFF', 'LLRRLLLRRFFFFFFFFFLLRRRLLRRFFFFFFFFF',
+        'LLRRLLLRRFFFFFFFFFLRRLRRLLRFFFFFFFFF', 'LLRRLLLRRFFFFFFFFFLRRRRLLLRFFFFFFFFF', 'LLRRLLLRRFFFFFFFFFRLLLRRRRLFFFFFFFFF',
+        'LLRRLLLRRFFFFFFFFFRLLRRLRRLFFFFFFFFF', 'LLRRLLLRRFFFFFFFFFRRLLRRRLLFFFFFFFFF', 'LLRRLLLRRFFFFFFFFFRRLRRLRLLFFFFFFFFF',
+        'LLRRLLRLLFFFFFFFFFRRLLRRLRRFFFFFFFFF', 'LLRRLLRLLFFFFFFFFFRRLRRLLRRFFFFFFFFF', 'LLRRLLRRLFFFFFFFFFRLLLRRLRRFFFFFFFFF',
+        'LLRRLLRRLFFFFFFFFFRLLRRLLRRFFFFFFFFF', 'LLRRLLRRLFFFFFFFFFRRLLRRLLRFFFFFFFFF', 'LLRRLLRRLFFFFFFFFFRRLRRLLLRFFFFFFFFF',
+        'LLRRLRLLRFFFFFFFFFLRRLRLLRRFFFFFFFFF', 'LLRRLRLLRFFFFFFFFFRRLLRLRRLFFFFFFFFF', 'LLRRLRLRRFFFFFFFFFLLRLRLLRRFFFFFFFFF',
+        'LLRRLRLRRFFFFFFFFFLRRLRLLLRFFFFFFFFF', 'LLRRLRLRRFFFFFFFFFRLLLRLRRLFFFFFFFFF', 'LLRRLRLRRFFFFFFFFFRRLLRLRLLFFFFFFFFF',
+        'LLRRLRRLLFFFFFFFFFRRLLRLLRRFFFFFFFFF', 'LLRRLRRRLFFFFFFFFFRLLLRLLRRFFFFFFFFF', 'LLRRLRRRLFFFFFFFFFRRLLRLLLRFFFFFFFFF',
+        'LRLLLLLLLFFFFFFFFFRLRRRRRRRFFFFFFFFF', 'LRLLLLLLLFFFFFFFFFRRRRRRRLRFFFFFFFFF', 'LRLLLLLRLFFFFFFFFFRLRRRRRLRFFFFFFFFF',
+        'LRLLLLRLRFFFFFFFFFLLLRRRRRRFFFFFFFFF', 'LRLLLLRLRFFFFFFFFFLRLRRRRLRFFFFFFFFF', 'LRLLLLRLRFFFFFFFFFRLRRRRLRLFFFFFFFFF',
+        'LRLLLLRLRFFFFFFFFFRRRRRRLLLFFFFFFFFF', 'LRLLLLRRRFFFFFFFFFLLLRRRRLRFFFFFFFFF', 'LRLLLLRRRFFFFFFFFFRLRRRRLLLFFFFFFFFF',
+        'LRLLLRLLLFFFFFFFFFRLRLRRRRRFFFFFFFFF', 'LRLLLRLLLFFFFFFFFFRLRRRLRRRFFFFFFFFF', 'LRLLLRLLLFFFFFFFFFRRRLRRRLRFFFFFFFFF',
+        'LRLLLRLLLFFFFFFFFFRRRRRLRLRFFFFFFFFF', 'LRLLLRLRLFFFFFFFFFRLRLRRRLRFFFFFFFFF', 'LRLLLRLRLFFFFFFFFFRLRRRLRLRFFFFFFFFF',
+        'LRLLLRRLRFFFFFFFFFLLLLRRRRRFFFFFFFFF', 'LRLLLRRLRFFFFFFFFFLLLRRLRRRFFFFFFFFF', 'LRLLLRRLRFFFFFFFFFLRLLRRRLRFFFFFFFFF',
+        'LRLLLRRLRFFFFFFFFFLRLRRLRLRFFFFFFFFF', 'LRLLLRRLRFFFFFFFFFRLRLRRLRLFFFFFFFFF', 'LRLLLRRLRFFFFFFFFFRLRRRLLRLFFFFFFFFF',
+        'LRLLLRRLRFFFFFFFFFRRRLRRLLLFFFFFFFFF', 'LRLLLRRLRFFFFFFFFFRRRRRLLLLFFFFFFFFF', 'LRLLLRRRRFFFFFFFFFLLLLRRRLRFFFFFFFFF',
+        'LRLLLRRRRFFFFFFFFFLLLRRLRLRFFFFFFFFF', 'LRLLLRRRRFFFFFFFFFRLRLRRLLLFFFFFFFFF', 'LRLLLRRRRFFFFFFFFFRLRRRLLLLFFFFFFFFF',
+        'LRLRLLLLLFFFFFFFFFRLRLRRRRRFFFFFFFFF', 'LRLRLLLLLFFFFFFFFFRLRRRLRRRFFFFFFFFF', 'LRLRLLLLLFFFFFFFFFRRRLRRRLRFFFFFFFFF',
+        'LRLRLLLLLFFFFFFFFFRRRRRLRLRFFFFFFFFF', 'LRLRLLLRLFFFFFFFFFRLRLRRRLRFFFFFFFFF', 'LRLRLLLRLFFFFFFFFFRLRRRLRLRFFFFFFFFF',
+        'LRLRLLRLRFFFFFFFFFLLLLRRRRRFFFFFFFFF', 'LRLRLLRLRFFFFFFFFFLLLRRLRRRFFFFFFFFF', 'LRLRLLRLRFFFFFFFFFLRLLRRRLRFFFFFFFFF',
+        'LRLRLLRLRFFFFFFFFFLRLRRLRLRFFFFFFFFF', 'LRLRLLRLRFFFFFFFFFRLRLRRLRLFFFFFFFFF', 'LRLRLLRLRFFFFFFFFFRLRRRLLRLFFFFFFFFF',
+        'LRLRLLRLRFFFFFFFFFRRRLRRLLLFFFFFFFFF', 'LRLRLLRLRFFFFFFFFFRRRRRLLLLFFFFFFFFF', 'LRLRLLRRRFFFFFFFFFLLLLRRRLRFFFFFFFFF',
+        'LRLRLLRRRFFFFFFFFFLLLRRLRLRFFFFFFFFF', 'LRLRLLRRRFFFFFFFFFRLRLRRLLLFFFFFFFFF', 'LRLRLLRRRFFFFFFFFFRLRRRLLLLFFFFFFFFF',
+        'LRLRLRLLLFFFFFFFFFRLRLRLRRRFFFFFFFFF', 'LRLRLRLLLFFFFFFFFFRRRLRLRLRFFFFFFFFF', 'LRLRLRLRLFFFFFFFFFRLRLRLRLRFFFFFFFFF',
+        'LRLRLRRLRFFFFFFFFFLLLLRLRRRFFFFFFFFF', 'LRLRLRRLRFFFFFFFFFLRLLRLRLRFFFFFFFFF', 'LRLRLRRLRFFFFFFFFFRLRLRLLRLFFFFFFFFF',
+        'LRLRLRRLRFFFFFFFFFRRRLRLLLLFFFFFFFFF', 'LRLRLRRRRFFFFFFFFFLLLLRLRLRFFFFFFFFF', 'LRLRLRRRRFFFFFFFFFRLRLRLLLLFFFFFFFFF',
+        'LRRLLLLLRFFFFFFFFFLLRRRRLRRFFFFFFFFF', 'LRRLLLLLRFFFFFFFFFLRRRRRLLRFFFFFFFFF', 'LRRLLLLLRFFFFFFFFFRLLRRRRRLFFFFFFFFF',
+        'LRRLLLLLRFFFFFFFFFRRLRRRRLLFFFFFFFFF', 'LRRLLLLRRFFFFFFFFFLLRRRRLLRFFFFFFFFF', 'LRRLLLLRRFFFFFFFFFRLLRRRRLLFFFFFFFFF',
+        'LRRLLLRLLFFFFFFFFFRLLRRRLRRFFFFFFFFF', 'LRRLLLRLLFFFFFFFFFRRLRRRLLRFFFFFFFFF', 'LRRLLLRRLFFFFFFFFFRLLRRRLLRFFFFFFFFF',
+        'LRRLLRLLRFFFFFFFFFLLRLRRLRRFFFFFFFFF', 'LRRLLRLLRFFFFFFFFFLLRRRLLRRFFFFFFFFF', 'LRRLLRLLRFFFFFFFFFLRRLRRLLRFFFFFFFFF',
+        'LRRLLRLLRFFFFFFFFFLRRRRLLLRFFFFFFFFF', 'LRRLLRLLRFFFFFFFFFRLLLRRRRLFFFFFFFFF', 'LRRLLRLLRFFFFFFFFFRLLRRLRRLFFFFFFFFF',
+        'LRRLLRLLRFFFFFFFFFRRLLRRRLLFFFFFFFFF', 'LRRLLRLLRFFFFFFFFFRRLRRLRLLFFFFFFFFF', 'LRRLLRLRRFFFFFFFFFLLRLRRLLRFFFFFFFFF',
+        'LRRLLRLRRFFFFFFFFFLLRRRLLLRFFFFFFFFF', 'LRRLLRLRRFFFFFFFFFRLLLRRRLLFFFFFFFFF', 'LRRLLRLRRFFFFFFFFFRLLRRLRLLFFFFFFFFF',
+        'LRRLLRRLLFFFFFFFFFRLLLRRLRRFFFFFFFFF', 'LRRLLRRLLFFFFFFFFFRLLRRLLRRFFFFFFFFF', 'LRRLLRRLLFFFFFFFFFRRLLRRLLRFFFFFFFFF',
+        'LRRLLRRLLFFFFFFFFFRRLRRLLLRFFFFFFFFF', 'LRRLLRRRLFFFFFFFFFRLLLRRLLRFFFFFFFFF', 'LRRLLRRRLFFFFFFFFFRLLRRLLLRFFFFFFFFF',
+        'LRRRLLLLRFFFFFFFFFLLRLRRLRRFFFFFFFFF', 'LRRRLLLLRFFFFFFFFFLLRRRLLRRFFFFFFFFF', 'LRRRLLLLRFFFFFFFFFLRRLRRLLRFFFFFFFFF',
+        'LRRRLLLLRFFFFFFFFFLRRRRLLLRFFFFFFFFF', 'LRRRLLLLRFFFFFFFFFRLLLRRRRLFFFFFFFFF', 'LRRRLLLLRFFFFFFFFFRLLRRLRRLFFFFFFFFF',
+        'LRRRLLLLRFFFFFFFFFRRLLRRRLLFFFFFFFFF', 'LRRRLLLLRFFFFFFFFFRRLRRLRLLFFFFFFFFF', 'LRRRLLLRRFFFFFFFFFLLRLRRLLRFFFFFFFFF',
+        'LRRRLLLRRFFFFFFFFFLLRRRLLLRFFFFFFFFF', 'LRRRLLLRRFFFFFFFFFRLLLRRRLLFFFFFFFFF', 'LRRRLLLRRFFFFFFFFFRLLRRLRLLFFFFFFFFF',
+        'LRRRLLRLLFFFFFFFFFRLLLRRLRRFFFFFFFFF', 'LRRRLLRLLFFFFFFFFFRLLRRLLRRFFFFFFFFF', 'LRRRLLRLLFFFFFFFFFRRLLRRLLRFFFFFFFFF',
+        'LRRRLLRLLFFFFFFFFFRRLRRLLLRFFFFFFFFF', 'LRRRLLRRLFFFFFFFFFRLLLRRLLRFFFFFFFFF', 'LRRRLLRRLFFFFFFFFFRLLRRLLLRFFFFFFFFF',
+        'LRRRLRLLRFFFFFFFFFLLRLRLLRRFFFFFFFFF', 'LRRRLRLLRFFFFFFFFFLRRLRLLLRFFFFFFFFF', 'LRRRLRLLRFFFFFFFFFRLLLRLRRLFFFFFFFFF',
+        'LRRRLRLLRFFFFFFFFFRRLLRLRLLFFFFFFFFF', 'LRRRLRLRRFFFFFFFFFLLRLRLLLRFFFFFFFFF', 'LRRRLRLRRFFFFFFFFFRLLLRLRLLFFFFFFFFF',
+        'LRRRLRRLLFFFFFFFFFRLLLRLLRRFFFFFFFFF', 'LRRRLRRLLFFFFFFFFFRRLLRLLLRFFFFFFFFF', 'LRRRLRRRLFFFFFFFFFRLLLRLLLRFFFFFFFFF',
+        'RLLLLLLLRFFFFFFFFFLRRRRRRRLFFFFFFFFF', 'RLLLLLLRRFFFFFFFFFLLRRRRRRLFFFFFFFFF', 'RLLLLLLRRFFFFFFFFFLRRRRRRLLFFFFFFFFF',
+        'RLLLLLRLLFFFFFFFFFLRRRRRLRRFFFFFFFFF', 'RLLLLLRLLFFFFFFFFFRRLRRRRRLFFFFFFFFF', 'RLLLLLRRLFFFFFFFFFLLRRRRLRRFFFFFFFFF',
+        'RLLLLLRRLFFFFFFFFFLRRRRRLLRFFFFFFFFF', 'RLLLLLRRLFFFFFFFFFRLLRRRRRLFFFFFFFFF', 'RLLLLLRRLFFFFFFFFFRRLRRRRLLFFFFFFFFF',
+        'RLLLLRLLRFFFFFFFFFLRRLRRRRLFFFFFFFFF', 'RLLLLRLLRFFFFFFFFFLRRRRLRRLFFFFFFFFF', 'RLLLLRLRRFFFFFFFFFLLRLRRRRLFFFFFFFFF',
+        'RLLLLRLRRFFFFFFFFFLLRRRLRRLFFFFFFFFF', 'RLLLLRLRRFFFFFFFFFLRRLRRRLLFFFFFFFFF', 'RLLLLRLRRFFFFFFFFFLRRRRLRLLFFFFFFFFF',
+        'RLLLLRRLLFFFFFFFFFLRRLRRLRRFFFFFFFFF', 'RLLLLRRLLFFFFFFFFFLRRRRLLRRFFFFFFFFF', 'RLLLLRRLLFFFFFFFFFRRLLRRRRLFFFFFFFFF',
+        'RLLLLRRLLFFFFFFFFFRRLRRLRRLFFFFFFFFF', 'RLLLLRRRLFFFFFFFFFLLRLRRLRRFFFFFFFFF', 'RLLLLRRRLFFFFFFFFFLLRRRLLRRFFFFFFFFF',
+        'RLLLLRRRLFFFFFFFFFLRRLRRLLRFFFFFFFFF', 'RLLLLRRRLFFFFFFFFFLRRRRLLLRFFFFFFFFF', 'RLLLLRRRLFFFFFFFFFRLLLRRRRLFFFFFFFFF',
+        'RLLLLRRRLFFFFFFFFFRLLRRLRRLFFFFFFFFF', 'RLLLLRRRLFFFFFFFFFRRLLRRRLLFFFFFFFFF', 'RLLLLRRRLFFFFFFFFFRRLRRLRLLFFFFFFFFF',
+        'RLLRLLLLRFFFFFFFFFLRRLRRRRLFFFFFFFFF', 'RLLRLLLLRFFFFFFFFFLRRRRLRRLFFFFFFFFF', 'RLLRLLLRRFFFFFFFFFLLRLRRRRLFFFFFFFFF',
+        'RLLRLLLRRFFFFFFFFFLLRRRLRRLFFFFFFFFF', 'RLLRLLLRRFFFFFFFFFLRRLRRRLLFFFFFFFFF', 'RLLRLLLRRFFFFFFFFFLRRRRLRLLFFFFFFFFF',
+        'RLLRLLRLLFFFFFFFFFLRRLRRLRRFFFFFFFFF', 'RLLRLLRLLFFFFFFFFFLRRRRLLRRFFFFFFFFF', 'RLLRLLRLLFFFFFFFFFRRLLRRRRLFFFFFFFFF',
+        'RLLRLLRLLFFFFFFFFFRRLRRLRRLFFFFFFFFF', 'RLLRLLRRLFFFFFFFFFLLRLRRLRRFFFFFFFFF', 'RLLRLLRRLFFFFFFFFFLLRRRLLRRFFFFFFFFF',
+        'RLLRLLRRLFFFFFFFFFLRRLRRLLRFFFFFFFFF', 'RLLRLLRRLFFFFFFFFFLRRRRLLLRFFFFFFFFF', 'RLLRLLRRLFFFFFFFFFRLLLRRRRLFFFFFFFFF',
+        'RLLRLLRRLFFFFFFFFFRLLRRLRRLFFFFFFFFF', 'RLLRLLRRLFFFFFFFFFRRLLRRRLLFFFFFFFFF', 'RLLRLLRRLFFFFFFFFFRRLRRLRLLFFFFFFFFF',
+        'RLLRLRLLRFFFFFFFFFLRRLRLRRLFFFFFFFFF', 'RLLRLRLRRFFFFFFFFFLLRLRLRRLFFFFFFFFF', 'RLLRLRLRRFFFFFFFFFLRRLRLRLLFFFFFFFFF',
+        'RLLRLRRLLFFFFFFFFFLRRLRLLRRFFFFFFFFF', 'RLLRLRRLLFFFFFFFFFRRLLRLRRLFFFFFFFFF', 'RLLRLRRRLFFFFFFFFFLLRLRLLRRFFFFFFFFF',
+        'RLLRLRRRLFFFFFFFFFLRRLRLLLRFFFFFFFFF', 'RLLRLRRRLFFFFFFFFFRLLLRLRRLFFFFFFFFF', 'RLLRLRRRLFFFFFFFFFRRLLRLRLLFFFFFFFFF',
+        'RLRLLLLLLFFFFFFFFFLRLRRRRRRFFFFFFFFF', 'RLRLLLLLLFFFFFFFFFRRRRRRLRLFFFFFFFFF', 'RLRLLLLRLFFFFFFFFFLLLRRRRRRFFFFFFFFF',
+        'RLRLLLLRLFFFFFFFFFLRLRRRRLRFFFFFFFFF', 'RLRLLLLRLFFFFFFFFFRLRRRRLRLFFFFFFFFF', 'RLRLLLLRLFFFFFFFFFRRRRRRLLLFFFFFFFFF',
+        'RLRLLLRLRFFFFFFFFFLRLRRRLRLFFFFFFFFF', 'RLRLLLRRRFFFFFFFFFLLLRRRLRLFFFFFFFFF', 'RLRLLLRRRFFFFFFFFFLRLRRRLLLFFFFFFFFF',
+        'RLRLLRLLLFFFFFFFFFLRLLRRRRRFFFFFFFFF', 'RLRLLRLLLFFFFFFFFFLRLRRLRRRFFFFFFFFF', 'RLRLLRLLLFFFFFFFFFRRRLRRLRLFFFFFFFFF',
+        'RLRLLRLLLFFFFFFFFFRRRRRLLRLFFFFFFFFF', 'RLRLLRLRLFFFFFFFFFLLLLRRRRRFFFFFFFFF', 'RLRLLRLRLFFFFFFFFFLLLRRLRRRFFFFFFFFF',
+        'RLRLLRLRLFFFFFFFFFLRLLRRRLRFFFFFFFFF', 'RLRLLRLRLFFFFFFFFFLRLRRLRLRFFFFFFFFF', 'RLRLLRLRLFFFFFFFFFRLRLRRLRLFFFFFFFFF',
+        'RLRLLRLRLFFFFFFFFFRLRRRLLRLFFFFFFFFF', 'RLRLLRLRLFFFFFFFFFRRRLRRLLLFFFFFFFFF', 'RLRLLRLRLFFFFFFFFFRRRRRLLLLFFFFFFFFF',
+        'RLRLLRRLRFFFFFFFFFLRLLRRLRLFFFFFFFFF', 'RLRLLRRLRFFFFFFFFFLRLRRLLRLFFFFFFFFF', 'RLRLLRRRRFFFFFFFFFLLLLRRLRLFFFFFFFFF',
+        'RLRLLRRRRFFFFFFFFFLLLRRLLRLFFFFFFFFF', 'RLRLLRRRRFFFFFFFFFLRLLRRLLLFFFFFFFFF', 'RLRLLRRRRFFFFFFFFFLRLRRLLLLFFFFFFFFF',
+        'RLRRLLLLLFFFFFFFFFLRLLRRRRRFFFFFFFFF', 'RLRRLLLLLFFFFFFFFFLRLRRLRRRFFFFFFFFF', 'RLRRLLLLLFFFFFFFFFRRRLRRLRLFFFFFFFFF',
+        'RLRRLLLLLFFFFFFFFFRRRRRLLRLFFFFFFFFF', 'RLRRLLLRLFFFFFFFFFLLLLRRRRRFFFFFFFFF', 'RLRRLLLRLFFFFFFFFFLLLRRLRRRFFFFFFFFF',
+        'RLRRLLLRLFFFFFFFFFLRLLRRRLRFFFFFFFFF', 'RLRRLLLRLFFFFFFFFFLRLRRLRLRFFFFFFFFF', 'RLRRLLLRLFFFFFFFFFRLRLRRLRLFFFFFFFFF',
+        'RLRRLLLRLFFFFFFFFFRLRRRLLRLFFFFFFFFF', 'RLRRLLLRLFFFFFFFFFRRRLRRLLLFFFFFFFFF', 'RLRRLLLRLFFFFFFFFFRRRRRLLLLFFFFFFFFF',
+        'RLRRLLRLRFFFFFFFFFLRLLRRLRLFFFFFFFFF', 'RLRRLLRLRFFFFFFFFFLRLRRLLRLFFFFFFFFF', 'RLRRLLRRRFFFFFFFFFLLLLRRLRLFFFFFFFFF',
+        'RLRRLLRRRFFFFFFFFFLLLRRLLRLFFFFFFFFF', 'RLRRLLRRRFFFFFFFFFLRLLRRLLLFFFFFFFFF', 'RLRRLLRRRFFFFFFFFFLRLRRLLLLFFFFFFFFF',
+        'RLRRLRLLLFFFFFFFFFLRLLRLRRRFFFFFFFFF', 'RLRRLRLLLFFFFFFFFFRRRLRLLRLFFFFFFFFF', 'RLRRLRLRLFFFFFFFFFLLLLRLRRRFFFFFFFFF',
+        'RLRRLRLRLFFFFFFFFFLRLLRLRLRFFFFFFFFF', 'RLRRLRLRLFFFFFFFFFRLRLRLLRLFFFFFFFFF', 'RLRRLRLRLFFFFFFFFFRRRLRLLLLFFFFFFFFF',
+        'RLRRLRRLRFFFFFFFFFLRLLRLLRLFFFFFFFFF', 'RLRRLRRRRFFFFFFFFFLLLLRLLRLFFFFFFFFF', 'RLRRLRRRRFFFFFFFFFLRLLRLLLLFFFFFFFFF',
+        'RRLLLLLLRFFFFFFFFFLLRRRRRRLFFFFFFFFF', 'RRLLLLLLRFFFFFFFFFLRRRRRRLLFFFFFFFFF', 'RRLLLLLRRFFFFFFFFFLLRRRRRLLFFFFFFFFF',
+        'RRLLLLRLLFFFFFFFFFLLRRRRLRRFFFFFFFFF', 'RRLLLLRLLFFFFFFFFFLRRRRRLLRFFFFFFFFF', 'RRLLLLRLLFFFFFFFFFRLLRRRRRLFFFFFFFFF',
+        'RRLLLLRLLFFFFFFFFFRRLRRRRLLFFFFFFFFF', 'RRLLLLRRLFFFFFFFFFLLRRRRLLRFFFFFFFFF', 'RRLLLLRRLFFFFFFFFFRLLRRRRLLFFFFFFFFF',
+        'RRLLLRLLRFFFFFFFFFLLRLRRRRLFFFFFFFFF', 'RRLLLRLLRFFFFFFFFFLLRRRLRRLFFFFFFFFF', 'RRLLLRLLRFFFFFFFFFLRRLRRRLLFFFFFFFFF',
+        'RRLLLRLLRFFFFFFFFFLRRRRLRLLFFFFFFFFF', 'RRLLLRLRRFFFFFFFFFLLRLRRRLLFFFFFFFFF', 'RRLLLRLRRFFFFFFFFFLLRRRLRLLFFFFFFFFF',
+        'RRLLLRRLLFFFFFFFFFLLRLRRLRRFFFFFFFFF', 'RRLLLRRLLFFFFFFFFFLLRRRLLRRFFFFFFFFF', 'RRLLLRRLLFFFFFFFFFLRRLRRLLRFFFFFFFFF',
+        'RRLLLRRLLFFFFFFFFFLRRRRLLLRFFFFFFFFF', 'RRLLLRRLLFFFFFFFFFRLLLRRRRLFFFFFFFFF', 'RRLLLRRLLFFFFFFFFFRLLRRLRRLFFFFFFFFF',
+        'RRLLLRRLLFFFFFFFFFRRLLRRRLLFFFFFFFFF', 'RRLLLRRLLFFFFFFFFFRRLRRLRLLFFFFFFFFF', 'RRLLLRRRLFFFFFFFFFLLRLRRLLRFFFFFFFFF',
+        'RRLLLRRRLFFFFFFFFFLLRRRLLLRFFFFFFFFF', 'RRLLLRRRLFFFFFFFFFRLLLRRRLLFFFFFFFFF', 'RRLLLRRRLFFFFFFFFFRLLRRLRLLFFFFFFFFF',
+        'RRLRLLLLRFFFFFFFFFLLRLRRRRLFFFFFFFFF', 'RRLRLLLLRFFFFFFFFFLLRRRLRRLFFFFFFFFF', 'RRLRLLLLRFFFFFFFFFLRRLRRRLLFFFFFFFFF',
+        'RRLRLLLLRFFFFFFFFFLRRRRLRLLFFFFFFFFF', 'RRLRLLLRRFFFFFFFFFLLRLRRRLLFFFFFFFFF', 'RRLRLLLRRFFFFFFFFFLLRRRLRLLFFFFFFFFF',
+        'RRLRLLRLLFFFFFFFFFLLRLRRLRRFFFFFFFFF', 'RRLRLLRLLFFFFFFFFFLLRRRLLRRFFFFFFFFF', 'RRLRLLRLLFFFFFFFFFLRRLRRLLRFFFFFFFFF',
+        'RRLRLLRLLFFFFFFFFFLRRRRLLLRFFFFFFFFF', 'RRLRLLRLLFFFFFFFFFRLLLRRRRLFFFFFFFFF', 'RRLRLLRLLFFFFFFFFFRLLRRLRRLFFFFFFFFF',
+        'RRLRLLRLLFFFFFFFFFRRLLRRRLLFFFFFFFFF', 'RRLRLLRLLFFFFFFFFFRRLRRLRLLFFFFFFFFF', 'RRLRLLRRLFFFFFFFFFLLRLRRLLRFFFFFFFFF',
+        'RRLRLLRRLFFFFFFFFFLLRRRLLLRFFFFFFFFF', 'RRLRLLRRLFFFFFFFFFRLLLRRRLLFFFFFFFFF', 'RRLRLLRRLFFFFFFFFFRLLRRLRLLFFFFFFFFF',
+        'RRLRLRLLRFFFFFFFFFLLRLRLRRLFFFFFFFFF', 'RRLRLRLLRFFFFFFFFFLRRLRLRLLFFFFFFFFF', 'RRLRLRLRRFFFFFFFFFLLRLRLRLLFFFFFFFFF',
+        'RRLRLRRLLFFFFFFFFFLLRLRLLRRFFFFFFFFF', 'RRLRLRRLLFFFFFFFFFLRRLRLLLRFFFFFFFFF', 'RRLRLRRLLFFFFFFFFFRLLLRLRRLFFFFFFFFF',
+        'RRLRLRRLLFFFFFFFFFRRLLRLRLLFFFFFFFFF', 'RRLRLRRRLFFFFFFFFFLLRLRLLLRFFFFFFFFF', 'RRLRLRRRLFFFFFFFFFRLLLRLRLLFFFFFFFFF',
+        'RRRLLLLLLFFFFFFFFFLLLRRRRRRFFFFFFFFF', 'RRRLLLLLLFFFFFFFFFLRLRRRRLRFFFFFFFFF', 'RRRLLLLLLFFFFFFFFFRLRRRRLRLFFFFFFFFF',
+        'RRRLLLLLLFFFFFFFFFRRRRRRLLLFFFFFFFFF', 'RRRLLLLRLFFFFFFFFFLLLRRRRLRFFFFFFFFF', 'RRRLLLLRLFFFFFFFFFRLRRRRLLLFFFFFFFFF',
+        'RRRLLLRLRFFFFFFFFFLLLRRRLRLFFFFFFFFF', 'RRRLLLRLRFFFFFFFFFLRLRRRLLLFFFFFFFFF', 'RRRLLLRRRFFFFFFFFFLLLRRRLLLFFFFFFFFF',
+        'RRRLLRLLLFFFFFFFFFLLLLRRRRRFFFFFFFFF', 'RRRLLRLLLFFFFFFFFFLLLRRLRRRFFFFFFFFF', 'RRRLLRLLLFFFFFFFFFLRLLRRRLRFFFFFFFFF',
+        'RRRLLRLLLFFFFFFFFFLRLRRLRLRFFFFFFFFF', 'RRRLLRLLLFFFFFFFFFRLRLRRLRLFFFFFFFFF', 'RRRLLRLLLFFFFFFFFFRLRRRLLRLFFFFFFFFF',
+        'RRRLLRLLLFFFFFFFFFRRRLRRLLLFFFFFFFFF', 'RRRLLRLLLFFFFFFFFFRRRRRLLLLFFFFFFFFF', 'RRRLLRLRLFFFFFFFFFLLLLRRRLRFFFFFFFFF',
+        'RRRLLRLRLFFFFFFFFFLLLRRLRLRFFFFFFFFF', 'RRRLLRLRLFFFFFFFFFRLRLRRLLLFFFFFFFFF', 'RRRLLRLRLFFFFFFFFFRLRRRLLLLFFFFFFFFF',
+        'RRRLLRRLRFFFFFFFFFLLLLRRLRLFFFFFFFFF', 'RRRLLRRLRFFFFFFFFFLLLRRLLRLFFFFFFFFF', 'RRRLLRRLRFFFFFFFFFLRLLRRLLLFFFFFFFFF',
+        'RRRLLRRLRFFFFFFFFFLRLRRLLLLFFFFFFFFF', 'RRRLLRRRRFFFFFFFFFLLLLRRLLLFFFFFFFFF', 'RRRLLRRRRFFFFFFFFFLLLRRLLLLFFFFFFFFF',
+        'RRRRLLLLLFFFFFFFFFLLLLRRRRRFFFFFFFFF', 'RRRRLLLLLFFFFFFFFFLLLRRLRRRFFFFFFFFF', 'RRRRLLLLLFFFFFFFFFLRLLRRRLRFFFFFFFFF',
+        'RRRRLLLLLFFFFFFFFFLRLRRLRLRFFFFFFFFF', 'RRRRLLLLLFFFFFFFFFRLRLRRLRLFFFFFFFFF', 'RRRRLLLLLFFFFFFFFFRLRRRLLRLFFFFFFFFF',
+        'RRRRLLLLLFFFFFFFFFRRRLRRLLLFFFFFFFFF', 'RRRRLLLLLFFFFFFFFFRRRRRLLLLFFFFFFFFF', 'RRRRLLLRLFFFFFFFFFLLLLRRRLRFFFFFFFFF',
+        'RRRRLLLRLFFFFFFFFFLLLRRLRLRFFFFFFFFF', 'RRRRLLLRLFFFFFFFFFRLRLRRLLLFFFFFFFFF', 'RRRRLLLRLFFFFFFFFFRLRRRLLLLFFFFFFFFF',
+        'RRRRLLRLRFFFFFFFFFLLLLRRLRLFFFFFFFFF', 'RRRRLLRLRFFFFFFFFFLLLRRLLRLFFFFFFFFF', 'RRRRLLRLRFFFFFFFFFLRLLRRLLLFFFFFFFFF',
+        'RRRRLLRLRFFFFFFFFFLRLRRLLLLFFFFFFFFF', 'RRRRLLRRRFFFFFFFFFLLLLRRLLLFFFFFFFFF', 'RRRRLLRRRFFFFFFFFFLLLRRLLLLFFFFFFFFF',
+        'RRRRLRLLLFFFFFFFFFLLLLRLRRRFFFFFFFFF', 'RRRRLRLLLFFFFFFFFFLRLLRLRLRFFFFFFFFF', 'RRRRLRLLLFFFFFFFFFRLRLRLLRLFFFFFFFFF',
+        'RRRRLRLLLFFFFFFFFFRRRLRLLLLFFFFFFFFF', 'RRRRLRLRLFFFFFFFFFLLLLRLRLRFFFFFFFFF', 'RRRRLRLRLFFFFFFFFFRLRLRLLLLFFFFFFFFF',
+        'RRRRLRRLRFFFFFFFFFLLLLRLLRLFFFFFFFFF', 'RRRRLRRLRFFFFFFFFFLRLLRLLLLFFFFFFFFF', 'RRRRLRRRRFFFFFFFFFLLLLRLLLLFFFFFFFFF',
+    )
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step40-LR-centers-stage-432.txt',
+            self.state_targets,
+            moves_555,
+
+            # illegal moves
+            ("Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'"),
+
+            linecount=2350568,
+            max_depth=4,
+            filesize=133982376,
         )
 
-    def state(self, wing_strs_to_stage):
-        state = self.parent.state[:]
+    def search_complete(self, state, steps_to_here):
+        if LookupTableIDA.search_complete(self, state, steps_to_here):
+            pairable_count = len(self.parent.edges_pairable_without_LR())
 
-        for square_index in l4e_wings_555:
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-
-            if wing_str in wing_strs_to_stage:
-                state[square_index] = '1'
-                state[partner_index] = '1'
+            # Technically we only need 4-edges to be in high/low groups but that leaves us
+            # zero wiggle room for the next phase, we will HAVE to pair those 4-edges and
+            # if we hit some bad luck they could take a higher number of moves than is typical
+            # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
+            # of 4-edges to choose from..
+            if pairable_count >= MIN_EO_COUNT_FOR_STAGE_LR_432:
+                #log.info("%s: found solution where %d-edges (min %d-edges) are EOed" % (self, pairable_count, MIN_EO_COUNT_FOR_STAGE_LR_432))
+                return True
             else:
-                state[square_index] = '0'
-                state[partner_index] = '0'
+                #log.info("%s: found solution but only %d-edges are EOed" % (self, pairable_count))
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                return False
+        else:
+            return False
 
-        edges_state = ''.join([state[square_index] for square_index in edges_555])
-        edges_state = int(edges_state, 2)
-        edges_state = self.hex_format % edges_state
-        return edges_state
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        lt_state = ''.join(['F' if parent_state[x] == 'B' else parent_state[x] for x in LFRB_centers_555])
+
+        (_, LR_stage_cost_to_goal) = self.parent.lt_LR_centers_stage_pt.ida_heuristic()
+        (_, LR_432_x_centers_cost_to_goal) = self.parent.lt_LR_432_x_centers_only.ida_heuristic()
+        (_, LR_432_t_centers_cost_to_goal) = self.parent.lt_LR_432_t_centers_only.ida_heuristic()
+
+        cost_to_goal = max(LR_stage_cost_to_goal, LR_432_x_centers_cost_to_goal, LR_432_t_centers_cost_to_goal)
+
+        if cost_to_goal > 0:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
+
+        #self.parent.print_cube()
+        #log.info("%s: lt_state %s, cost_to_goal %d, LR_stage_cost_to_goal %d, LR_432_x_centers_cost_to_goal %d, LR_432_t_centers_cost_to_goal %d" %
+        #    (self, lt_state, cost_to_goal,
+        #     LR_stage_cost_to_goal, LR_432_x_centers_cost_to_goal, LR_432_t_centers_cost_to_goal))
+        return (lt_state, cost_to_goal)
 
 
-class LookupTable555StageSecondFourEdges(LookupTable):
+#class LookupTable555EdgesZPlaneEdgesOnly(LookupTable):
+class LookupTable555EdgesZPlaneEdgesOnly(LookupTableHashCostOnly):
     """
-    lookup-table-5x5x5-step101-stage-second-four-edges.txt
-    ======================================================
-    1 steps has 4 entries (0 percent, 0.00x previous step)
-    2 steps has 8 entries (0 percent, 2.00x previous step)
-    3 steps has 30 entries (0 percent, 3.75x previous step)
-    4 steps has 28 entries (0 percent, 0.93x previous step)
-    5 steps has 64 entries (0 percent, 2.29x previous step)
-    6 steps has 400 entries (0 percent, 6.25x previous step)
-    7 steps has 1,224 entries (0 percent, 3.06x previous step)
-    8 steps has 3,864 entries (2 percent, 3.16x previous step)
-    9 steps has 13,630 entries (8 percent, 3.53x previous step)
-    10 steps has 45,090 entries (29 percent, 3.31x previous step)
-    11 steps has 90,482 entries (58 percent, 2.01x previous step)
+    lookup-table-5x5x5-step341-edges-z-plane-edges-only.txt
+    =======================================================
+    1 steps has 20 entries (0 percent, 0.00x previous step)
+    2 steps has 136 entries (0 percent, 6.80x previous step)
+    3 steps has 1,080 entries (0 percent, 7.94x previous step)
+    4 steps has 9,588 entries (0 percent, 8.88x previous step)
+    5 steps has 76,960 entries (0 percent, 8.03x previous step)
+    6 steps has 572,044 entries (0 percent, 7.43x previous step)
+    7 steps has 3,771,232 entries (0 percent, 6.59x previous step)
+    8 steps has 20,862,480 entries (5 percent, 5.53x previous step)
+    9 steps has 83,953,652 entries (21 percent, 4.02x previous step)
+    10 steps has 178,801,180 entries (46 percent, 2.13x previous step)
+    11 steps has 93,704,032 entries (24 percent, 0.52x previous step)
+    12 steps has 1,575,596 entries (0 percent, 0.02x previous step)
 
-    Total: 154,824 entries
+    Total: 383,328,000 entries
+    Average: 9.89 moves
+    """
 
-    This should have (16!/(8!*8!)) * (8!/(4!*4!)) or 900,900 entries
-    if you built it out the entire way. We do not need to build it that deep
-    though, we can try enough edge color combinations to find a hit
-    in 11-deep.
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step341-edges-z-plane-edges-only.txt',
+            ('---pPPQQq------------------xXX------',
+             '------QQq------------------xXXYYy---',
+             '---pPP---------------------xXXYYy---',
+             '---pPPQQq---------------------YYy---'),
+            linecount=383328000,
+            max_depth=12,
+            filesize=31432896000)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step341-edges-z-plane-edges-only.hash-cost-only.txt',
+            '---pPPQQq------------------xXX------',
+            linecount=1,
+            max_depth=12,
+            bucketcount=383328041,
+            filesize=383328042)
+
+    def ida_heuristic(self):
+        assert self.only_colors and len(self.only_colors) == 3, "You must specify which 3-edges"
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_555(parent_state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555EdgesZPlaneCentersOnly(LookupTable):
+    """
+    lookup-table-5x5x5-step342-edges-z-plane-centers-only.txt
+    =========================================================
+    1 steps has 18 entries (4 percent, 0.00x previous step)
+    2 steps has 38 entries (8 percent, 2.11x previous step)
+    3 steps has 74 entries (17 percent, 1.95x previous step)
+    4 steps has 108 entries (25 percent, 1.46x previous step)
+    5 steps has 102 entries (23 percent, 0.94x previous step)
+    6 steps has 52 entries (12 percent, 0.51x previous step)
+    7 steps has 40 entries (9 percent, 0.77x previous step)
+
+    Total: 432 entries
+    Average: 4.28 moves
+    """
+
+    state_targets = (
+        'LLLLLLLLLRRRRRRRRR',
+        'LLLLLLRRRLLLRRRRRR',
+        'LLLLLLRRRRRRRRRLLL',
+        'RRRLLLLLLLLLRRRRRR',
+        'RRRLLLLLLRRRRRRLLL',
+        'RRRLLLRRRLLLRRRLLL'
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step342-edges-z-plane-centers-only.txt',
+            self.state_targets,
+            linecount=432,
+            max_depth=7,
+            filesize=19872)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in LR_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA555EdgesZPlane(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step340-edges-z-plane.txt
+    ============================================
+    1 steps has 30 entries (0 percent, 0.00x previous step)
+    2 steps has 264 entries (0 percent, 8.80x previous step)
+    3 steps has 2,764 entries (0 percent, 10.47x previous step)
+    4 steps has 29,276 entries (0 percent, 10.59x previous step)
+    5 steps has 319,486 entries (8 percent, 10.91x previous step)
+    6 steps has 3,457,886 entries (90 percent, 10.82x previous step)
+
+    Total: 3,809,706 entries
+    """
+
+    state_targets = (
+        'LLLLLLLLLRRRRRRRRR---pPPQQq------------------xXXYYy---',
+        'LLLLLLRRRLLLRRRRRR---pPPQQq------------------xXXYYy---',
+        'LLLLLLRRRRRRRRRLLL---pPPQQq------------------xXXYYy---',
+        'RRRLLLLLLLLLRRRRRR---pPPQQq------------------xXXYYy---',
+        'RRRLLLLLLRRRRRRLLL---pPPQQq------------------xXXYYy---',
+        'RRRLLLRRRLLLRRRLLL---pPPQQq------------------xXXYYy---',
+    )
+
+    heuristic_stats = {
+        (0, 1): 1,
+        (0, 2): 2,
+        (0, 3): 3,
+        (0, 4): 4,
+        (0, 5): 5,
+        (0, 6): 6,
+        (0, 7): 7,
+        (0, 8): 8,
+        (0, 9): 9,
+        (0, 10): 12,
+        (1, 1): 1,
+        (1, 2): 2,
+        (1, 3): 3,
+        (1, 4): 4,
+        (1, 5): 5,
+        (1, 6): 6,
+        (1, 7): 7,
+        (1, 8): 8,
+        (1, 9): 9,
+        (1, 10): 11,
+        (1, 11): 12,
+        (2, 1): 3,
+        (2, 2): 2,
+        (2, 3): 3,
+        (2, 4): 4,
+        (2, 5): 5,
+        (2, 6): 6,
+        (2, 7): 7,
+        (2, 8): 8,
+        (2, 9): 10,
+        (2, 10): 11,
+        (2, 11): 12,
+        (3, 2): 4,
+        (3, 3): 3,
+        (3, 4): 4,
+        (3, 5): 5,
+        (3, 6): 6,
+        (3, 7): 7,
+        (3, 8): 8,
+        (3, 9): 10,
+        (3, 10): 12,
+        (3, 11): 12,
+        (4, 3): 6,
+        (4, 4): 5,
+        (4, 5): 6,
+        (4, 6): 6,
+        (4, 7): 7,
+        (4, 8): 8,
+        (4, 9): 10,
+        (4, 10): 12,
+        (4, 11): 13,
+        (5, 4): 6,
+        (5, 5): 7,
+        (5, 6): 7,
+        (5, 7): 8,
+        (5, 8): 9,
+        (5, 9): 11,
+        (5, 10): 12,
+        (5, 11): 13,
+        (6, 5): 8,
+        (6, 6): 8,
+        (6, 7): 8,
+        (6, 8): 9,
+        (6, 9): 11,
+        (6, 10): 13,
+        (6, 11): 14,
+        (7, 7): 10,
+        (7, 8): 9,
+        (7, 9): 12,
+        (7, 10): 14,
+        (7, 11): 13
+    }
+
+    # For cube LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
+    # 2 : 14 moves in 42s
+    # 1 : 14 moves in 8s
+    # 0 : 15 moves in 4s
+
+    # FRFFBLUUFLFFUDLFLUDBRFBLLFUDBRRUULDUDRLBLFBDDUDRRLFDLFDUULUUFRFRLDRBLDDRUBRBFRDBLDBFFUBDDBDFFRFLUDFURBRUUUBDBLBRLLLBRUDBFLFULDUDBDRRRLRDFBLURBFBRBLRBU
+    # 2 : 14 moves in 14s
+    # 1 : 14 moves in 8s
+    # 0 : 14 moves in 800ms
+    heuristic_stats_error = 1
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step340-edges-z-plane.txt',
+            self.state_targets,
+            moves_555,
+
+            # illegal moves
+            ("Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'",
+             "Uw", "Uw'",
+             "Dw", "Dw'",
+             "L", "L'",
+             "R", "R'",
+            ),
+
+            linecount=3809706,
+            max_depth=6,
+            filesize=297157068,
+        )
+
+    def ida_heuristic_tuple(self):
+        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        (centers_state, centers_cost_to_goal) = self.parent.lt_edges_z_plane_centers_only.ida_heuristic()
+        lt_state = centers_state + edges_state
+
+        three_wing_cost_to_goal = []
+
+        for three_wing_str_combo in itertools.combinations(self.only_colors, 3):
+            self.parent.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
+            (_, tmp_cost_to_goal) = self.parent.lt_edges_z_plane_edges_only.ida_heuristic()
+            three_wing_cost_to_goal.append(tmp_cost_to_goal)
+
+        edges_cost_to_goal = max(three_wing_cost_to_goal)
+
+        return (centers_cost_to_goal, edges_cost_to_goal)
+
+    def ida_heuristic(self):
+        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        (centers_state, centers_cost_to_goal) = self.parent.lt_edges_z_plane_centers_only.ida_heuristic()
+
+        three_wing_cost_to_goal = []
+
+        for three_wing_str_combo in itertools.combinations(self.only_colors, 3):
+            self.parent.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
+            (_, tmp_cost_to_goal) = self.parent.lt_edges_z_plane_edges_only.ida_heuristic()
+            three_wing_cost_to_goal.append(tmp_cost_to_goal)
+
+        edges_cost_to_goal = max(three_wing_cost_to_goal)
+        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+        lt_state = centers_state + edges_state
+
+        if cost_to_goal > 0:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                heuristic_stats_cost = self.heuristic_stats.get((centers_cost_to_goal, edges_cost_to_goal), 0)
+                cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal,
+                    self.max_depth + 1, heuristic_stats_cost - self.heuristic_stats_error)
+
+            if lt_state in self.state_targets:
+                cost_to_goal = 0
+
+        #log.info("%s: lt_state %s, cost_to_goal %d, centers_cost_to_goal %d, edges_cost_to_goal %d, three_wing_cost_to_goal %s" % (
+        #    self, lt_state, cost_to_goal, centers_cost_to_goal, edges_cost_to_goal, pformat(three_wing_cost_to_goal)))
+        return (lt_state, cost_to_goal)
+
+
+class LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
+    """
+    starting-states-lookup-table-5x5x5-step351-x-plane-y-plane-edges-orient-edges-only.txt
+    ======================================================================================
+    1 steps has 678,720 entries (75 percent, 0.00x previous step)
+    2 steps has 212,100 entries (23 percent, 0.31x previous step)
+    3 steps has 8,960 entries (0 percent, 0.04x previous step)
+    4 steps has 1,120 entries (0 percent, 0.12x previous step)
+
+    Total: 900,900 entries
+    Average: 1.26 moves
+
+    The average is actually 0.87 moves because 343,000 of the 678,720 in "1 step" are
+    state targets so those are "0 step".
+    """
+
+    def __init__(self, parent):
+        from rubikscubennnsolver.RubiksCube555Misc import starting_states_step351
+
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step351-x-plane-y-plane-edges-orient-edges-only.txt',
+            starting_states_step351,
+            linecount=900900,
+            max_depth=4,
+            filesize=79279200)
+
+    def ida_heuristic(self):
+        state = self.parent.highlow_edges_state()
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(LookupTable):
+    """
+    lookup-table-5x5x5-step352-x-plane-y-plane-edges-orient-centers-only.txt
+    ========================================================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 23 entries (0 percent, 7.67x previous step)
+    3 steps has 234 entries (0 percent, 10.17x previous step)
+    4 steps has 1,845 entries (0 percent, 7.88x previous step)
+    5 steps has 13,782 entries (0 percent, 7.47x previous step)
+    6 steps has 98,191 entries (1 percent, 7.12x previous step)
+    7 steps has 559,026 entries (8 percent, 5.69x previous step)
+    8 steps has 1,951,300 entries (30 percent, 3.49x previous step)
+    9 steps has 2,896,714 entries (45 percent, 1.48x previous step)
+    10 steps has 840,858 entries (13 percent, 0.29x previous step)
+    11 steps has 8,674 entries (0 percent, 0.01x previous step)
+
+    Total: 6,370,650 entries
+    Average: 8.60 moves
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step352-x-plane-y-plane-edges-orient-centers-only.txt',
+            'UUUUUUUUUFFFFFFFFFFFFFFFFFFUUUUUUUUU',
+            linecount=6370650,
+            max_depth=11,
+            filesize=509652000)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join(['U' if parent_state[x] in ('U', 'D') else 'F' for x in UFBD_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(LookupTableHashCostOnly):
+    def __init__(self, parent):
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step352-x-plane-y-plane-edges-orient-centers-only.hash-cost-only.txt',
+            'UUUUUUUUUFFFFFFFFFFFFFFFFFFUUUUUUUUU',
+            linecount=1,
+            max_depth=11,
+            bucketcount=6370667,
+            filesize=6370668)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join(['U' if parent_state[x] in ('U', 'D') else 'F' for x in UFBD_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(LookupTable):
+    """
+    lookup-table-5x5x5-step353-x-plane-y-plane-edges-orient-pair-one-edge.txt
+    =========================================================================
+    1 steps has 7 entries (1 percent, 0.00x previous step)
+    2 steps has 28 entries (5 percent, 4.00x previous step)
+    3 steps has 90 entries (17 percent, 3.21x previous step)
+    4 steps has 195 entries (38 percent, 2.17x previous step)
+    5 steps has 184 entries (35 percent, 0.94x previous step)
+    6 steps has 8 entries (1 percent, 0.04x previous step)
+
+    Total: 512 entries
+    Average: 4.06 moves
     """
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step101-stage-second-four-edges.txt',
-            'TBD',
-            linecount=154824,
-            filesize=9289440)
+            'lookup-table-5x5x5-step353-x-plane-y-plane-edges-orient-pair-one-edge.txt',
+            '---------rRR------------------------',
+            linecount=512,
+            max_depth=6,
+            filesize=29696)
 
-    def state(self, wing_strs_to_stage):
-        state = self.parent.state[:]
+    def ida_heuristic(self):
+        assert self.only_colors and len(self.only_colors) == 1, "You must specify which 1-edge"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
 
-        for square_index in l4e_wings_555:
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
 
-            if wing_str in wing_strs_to_stage:
-                state[square_index] = '1'
-                state[partner_index] = '1'
+class LookupTableIDA555XPlaneYPlaneEdgesOrient(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step350-x-plane-y-plane-edges-orient.txt
+    ===========================================================
+    1 steps has 1,029,000 entries (11 percent, 0.00x previous step)
+    2 steps has 7,889,000 entries (88 percent, 7.67x previous step)
+
+    Total: 8,918,000 entries
+    """
+
+    def __init__(self, parent):
+        from rubikscubennnsolver.RubiksCube555Misc import starting_states_step350
+
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step350-x-plane-y-plane-edges-orient.txt',
+            starting_states_step350,
+            moves_555,
+            # illegal moves
+            (),
+
+            #linecount=1029000,
+            #max_depth=1,
+            #filesize=120393000,
+
+            linecount=8918000,
+            max_depth=2,
+            filesize=1043406000,
+
+            legal_moves=(
+                "F", "F'", "F2",
+                "B", "B'", "B2",
+                "L2", "R2", "U2", "B2",
+
+                "Uw2", "Dw2",
+                "Lw2", "Rw2",
+
+                "2U2", "2D2",
+                "2L", "2L'", "2L2",
+                "2R", "2R'", "2R2",
+            )
+        )
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        (edges_state, edges_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_centers_only_ht.ida_heuristic()
+
+        lt_state = centers_state + edges_state
+        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+
+        if cost_to_goal > 0:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
             else:
-                state[square_index] = '0'
-                state[partner_index] = '0'
+                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
 
-        edges_state = ''.join([state[square_index] for square_index in edges_555])
-        edges_state = int(edges_state, 2)
-        edges_state = self.hex_format % edges_state
-        return edges_state
+        return (lt_state, cost_to_goal)
 
 
-class LookupTable555PairLastFourEdges(LookupTable):
+class LookupTable555XPlaneYPlaneEdgesOrientFBCentersEdgesOnly(LookupTable):
     """
-    lookup-table-5x5x5-step102-pair-last-four-edges.txt
-    ===================================================
-    5 steps has 10 entries (0 percent, 0.00x previous step)
-    6 steps has 45 entries (0 percent, 4.50x previous step)
-    7 steps has 196 entries (0 percent, 4.36x previous step)
-    8 steps has 452 entries (1 percent, 2.31x previous step)
-    9 steps has 1,556 entries (3 percent, 3.44x previous step)
-    10 steps has 3,740 entries (9 percent, 2.40x previous step)
-    11 steps has 10,188 entries (25 percent, 2.72x previous step)
-    12 steps has 16,778 entries (41 percent, 1.65x previous step)
-    13 steps has 6,866 entries (17 percent, 0.41x previous step)
-    14 steps has 488 entries (1 percent, 0.07x previous step)
+    lookup-table-5x5x5-step361-x-plane-y-plane-edges-orient-fb-centers-edges-only.txt
+    =================================================================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 23 entries (0 percent, 7.67x previous step)
+    3 steps has 152 entries (0 percent, 6.61x previous step)
+    4 steps has 926 entries (0 percent, 6.09x previous step)
+    5 steps has 5,136 entries (1 percent, 5.55x previous step)
+    6 steps has 26,100 entries (7 percent, 5.08x previous step)
+    7 steps has 88,624 entries (25 percent, 3.40x previous step)
+    8 steps has 154,516 entries (45 percent, 1.74x previous step)
+    9 steps has 64,216 entries (18 percent, 0.42x previous step)
+    10 steps has 3,256 entries (0 percent, 0.05x previous step)
+    11 steps has 48 entries (0 percent, 0.01x previous step)
 
-    Total: 40,319 entries
-    Average: 11.562936 moves
+    Total: 343,000 entries
+    Average: 7.74 moves
     """
+
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step102-pair-last-four-edges.txt',
-            'sSSTTtuUUVVv',
-            linecount=40319)
+            'lookup-table-5x5x5-step361-x-plane-y-plane-edges-orient-fb-centers-edges-only.txt',
+            'UUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+            linecount=343000,
+            max_depth=11,
+            filesize=38416000)
 
-    def ida_heuristic(self, ida_threshold):
-        parent_state = self.parent.state[:]
+    def ida_heuristic(self):
+        state = self.parent.highlow_edges_state()
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
 
-        state = edges_recolor_pattern_555(parent_state[:])
-        result = ''.join([state[index] for index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95)])
 
-        # 000000000011
-        # 012345678901
-        # sSSTTtuUUVVv
-        recolor_s = bool(result[1] == "s")
-        recolor_t = bool(result[4] == "t")
-        recolor_u = bool(result[7] == "u")
-        recolor_v = bool(result[10] == "v")
+class LookupTable555XPlaneYPlaneEdgesOrientFBCentersOnly(LookupTable):
+    """
+    lookup-table-5x5x5-step362-x-plane-y-plane-edges-orient-fb-centers-only.txt
+    ===========================================================================
+    1 steps has 28 entries (0 percent, 0.00x previous step)
+    2 steps has 110 entries (2 percent, 3.93x previous step)
+    3 steps has 396 entries (8 percent, 3.60x previous step)
+    4 steps has 1,196 entries (24 percent, 3.02x previous step)
+    5 steps has 2,102 entries (42 percent, 1.76x previous step)
+    6 steps has 1,016 entries (20 percent, 0.48x previous step)
+    7 steps has 52 entries (1 percent, 0.05x previous step)
 
-        # The lookup table was built such that the midge orientation never flipped
-        # (so midge state will always be uppercase).  We may need to recolor some
-        # edges to match that orientation.
-        if recolor_s or recolor_t or recolor_u or recolor_v:
-            recolored_result = []
+    Total: 4,900 entries
+    Average: 4.73 moves
+    """
 
-            for char in result:
-                if ((char in ("s", "S") and recolor_s) or
-                    (char in ("t", "T") and recolor_t) or
-                    (char in ("u", "U") and recolor_u) or
-                    (char in ("v", "V") and recolor_v)) :
-                    if char == char.lower():
-                        recolored_result.append(char.upper())
-                    else:
-                        recolored_result.append(char.lower())
-                else:
-                    recolored_result.append(char)
+    state_targets = (
+        'BFBBFBBFBFBFFBFFBF',
+        'BFFBFFBFFBBFBBFBBF',
+        'BFFBFFBFFFBBFBBFBB',
+        'FFBFFBFFBBBFBBFBBF',
+        'FFBFFBFFBFBBFBBFBB',
+        'FFFFFFFFFBBBBBBBBB'
+    )
 
-            result = ''.join(recolored_result)
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step362-x-plane-y-plane-edges-orient-fb-centers-only.txt',
+            self.state_targets,
+            linecount=4900,
+            max_depth=7,
+            filesize=220500)
 
-        cost_to_goal = None
-        return (result, cost_to_goal)
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in FB_centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step360-x-plane-y-plane-edges-orient-fb-centers.txt
+    ======================================================================
+    1 steps has 30 entries (0 percent, 0.00x previous step)
+    2 steps has 224 entries (0 percent, 7.47x previous step)
+    3 steps has 2,018 entries (0 percent, 9.01x previous step)
+    4 steps has 17,690 entries (1 percent, 8.77x previous step)
+    5 steps has 147,648 entries (10 percent, 8.35x previous step)
+    6 steps has 1,179,038 entries (87 percent, 7.99x previous step)
+
+    Total: 1,346,648 entries
+    """
+
+    state_targets = (
+        'BFBBFBBFBFBFFBFFBFUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+        'BFFBFFBFFBBFBBFBBFUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+        'BFFBFFBFFFBBFBBFBBUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+        'FFBFFBFFBBBFBBFBBFUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+        'FFBFFBFFBFBBFBBFBBUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU',
+        'FFFFFFFFFBBBBBBBBBUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU'
+    )
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step360-x-plane-y-plane-edges-orient-fb-centers.txt',
+            self.state_targets,
+            moves_555,
+            # illegal moves
+            (),
+
+            linecount=1346648,
+            max_depth=6,
+            filesize=158904464,
+
+            legal_moves=(
+                "F", "F'", "F2",
+                "B", "B'", "B2",
+                "L2", "R2", "U2", "B2",
+
+                "Uw2", "Dw2",
+                "Lw2", "Rw2",
+
+                "2U2", "2D2",
+                "2L2", "2R2",
+            )
+        )
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        (edges_state, edges_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal) = self.parent.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only.ida_heuristic()
+
+        lt_state = centers_state + edges_state
+        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+
+        if cost_to_goal > 0:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
+
+        return (lt_state, cost_to_goal)
+
+
+
+#class LookupTable555PairLastEightEdgesEdgesOnly(LookupTable):
+class LookupTable555PairLastEightEdgesEdgesOnly(LookupTableHashCostOnly):
+    """
+    lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt
+    ===============================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 26 entries (0 percent, 5.20x previous step)
+    3 steps has 156 entries (0 percent, 6.00x previous step)
+    4 steps has 999 entries (0 percent, 6.40x previous step)
+    5 steps has 5,892 entries (0 percent, 5.90x previous step)
+    6 steps has 36,376 entries (0 percent, 6.17x previous step)
+    7 steps has 222,480 entries (0 percent, 6.12x previous step)
+    8 steps has 1,301,886 entries (0 percent, 5.85x previous step)
+    9 steps has 7,238,228 entries (0 percent, 5.56x previous step)
+    10 steps has 36,410,756 entries (4 percent, 5.03x previous step)
+    11 steps has 144,974,952 entries (17 percent, 3.98x previous step)
+    12 steps has 343,690,470 entries (42 percent, 2.37x previous step)
+    13 steps has 262,142,742 entries (32 percent, 0.76x previous step)
+    14 steps has 16,825,016 entries (2 percent, 0.06x previous step)
+    15 steps has 1,216 entries (0 percent, 0.00x previous step)
+
+    Total: 812,851,200 entries
+    Average: 12.06 moves
+    """
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt',
+            'OOopPPQQqrRR------------WWwxXXYYyzZZ',
+            linecount=812851200,
+            max_depth=15,
+            filesize=73969459200)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.hash-cost-only.txt',
+            'OOopPPQQqrRR------------WWwxXXYYyzZZ',
+            linecount=1,
+            max_depth=15,
+            bucketcount=812851219,
+            filesize=812851220)
+
+    def ida_heuristic(self):
+        assert self.only_colors and len(self.only_colors) == 8, "You must specify which 8-edges"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+#class LookupTable555PairLastEightEdgesCentersOnly(LookupTableHashCostOnly):
+class LookupTable555PairLastEightEdgesCentersOnly(LookupTable):
+    """
+    lookup-table-5x5x5-step502-pair-last-eight-edges-centers-only.txt
+    =================================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 42 entries (0 percent, 8.40x previous step)
+    3 steps has 280 entries (0 percent, 6.67x previous step)
+    4 steps has 1,691 entries (0 percent, 6.04x previous step)
+    5 steps has 8,806 entries (4 percent, 5.21x previous step)
+    6 steps has 36,264 entries (20 percent, 4.12x previous step)
+    7 steps has 77,966 entries (44 percent, 2.15x previous step)
+    8 steps has 46,518 entries (26 percent, 0.60x previous step)
+    9 steps has 4,828 entries (2 percent, 0.10x previous step)
+
+    Total: 176,400 entries
+    Average: 6.98 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step502-pair-last-eight-edges-centers-only.txt',
+            'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
+            linecount=176400,
+            max_depth=9,
+            filesize=15699600)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step502-pair-last-eight-edges-centers-only.hash-cost-only.txt',
+            'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
+            linecount=1,
+            max_depth=9,
+            bucketcount=176401,
+            filesize=176402)
+        '''
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in centers_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
+    """
+    lookup-table-5x5x5-step500-pair-last-eight-edges.txt
+    ====================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 42 entries (0 percent, 8.40x previous step)
+    3 steps has 380 entries (0 percent, 9.05x previous step)
+    4 steps has 3,425 entries (0 percent, 9.01x previous step)
+    5 steps has 29,807 entries (1 percent, 8.70x previous step)
+    6 steps has 259,083 entries (10 percent, 8.69x previous step)
+    7 steps has 2,235,143 entries (88 percent, 8.63x previous step)
+
+    Total: 2,527,885 entries
+    """
+
+    heuristic_stats = {
+        (0, 0): 0,
+        (1, 1): 1,
+        (1, 2): 7,
+        (1, 3): 8,
+        (1, 4): 5,
+        (1, 5): 5,
+        (1, 6): 6,
+        (2, 1): 4,
+        (2, 2): 2,
+        (2, 3): 3,
+        (2, 4): 4,
+        (2, 5): 6,
+        (2, 6): 7,
+        (2, 7): 7,
+        (2, 9): 14,
+        (2, 12): 17,
+        (3, 0): 5,
+        (3, 1): 3,
+        (3, 2): 3,
+        (3, 3): 3,
+        (3, 4): 4,
+        (3, 5): 6,
+        (3, 6): 7,
+        (3, 7): 8,
+        (3, 8): 12,
+        (3, 9): 13,
+        (3, 10): 14,
+        (3, 11): 14,
+        (3, 13): 15,
+        (4, 0): 4,
+        (4, 1): 5,
+        (4, 2): 4,
+        (4, 3): 5,
+        (4, 4): 4,
+        (4, 5): 6,
+        (4, 6): 7,
+        (4, 7): 9,
+        (4, 8): 11,
+        (4, 9): 12,
+        (4, 10): 14,
+        (4, 11): 15,
+        (4, 12): 15,
+        (4, 13): 18,
+        (5, 1): 5,
+        (5, 2): 6,
+        (5, 3): 5,
+        (5, 4): 6,
+        (5, 5): 7,
+        (5, 6): 8,
+        (5, 7): 9,
+        (5, 8): 11,
+        (5, 9): 12,
+        (5, 10): 14,
+        (5, 11): 15,
+        (5, 12): 16,
+        (5, 13): 18,
+        (6, 2): 6,
+        (6, 3): 7,
+        (6, 4): 6,
+        (6, 5): 8,
+        (6, 6): 9,
+        (6, 7): 9,
+        (6, 8): 11,
+        (6, 9): 12,
+        (6, 10): 14,
+        (6, 11): 15,
+        (6, 12): 16,
+        (6, 13): 17,
+        (6, 14): 16,
+        (7, 3): 7,
+        (7, 4): 8,
+        (7, 5): 8,
+        (7, 6): 9,
+        (7, 7): 10,
+        (7, 8): 11,
+        (7, 9): 12,
+        (7, 10): 14,
+        (7, 11): 15,
+        (7, 12): 16,
+        (7, 13): 17,
+        (7, 14): 17,
+        (8, 6): 11,
+        (8, 7): 12,
+        (8, 8): 12,
+        (8, 9): 13,
+        (8, 10): 14,
+        (8, 11): 15,
+        (8, 12): 16,
+        (8, 13): 17,
+        (8, 14): 17,
+        (9, 7): 12,
+        (9, 8): 13,
+        (9, 9): 12,
+        (9, 10): 14,
+        (9, 11): 15,
+        (9, 12): 16,
+        (9, 13): 16
+    }
+
+    # The higher this number the less you honor the heuristic_stats
+    # -  0 uses the heuristic_stats exactly as reported
+    # -  1 subtracts 1 from the heuristic_stats value
+    # - 99 disables heuristic_stats
+    #
+    # You want to put this as high as you can but low enough
+    # to still speed up the slow IDA searches.
+    #
+    # LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
+    # 99 : gave up after 5min
+    #  3 : 17 moves in 1m 21s
+    #  2 : 17 moves in 25s
+    #  1 : 17 moves in 4s
+    #  0 : 17 moves in 800ms
+    #
+    # BDBULBULFRDLUFDBBBUBDLRFBRRRDFUBLBBLBRURRFUULDBUDLRFBUUFLBRBFRFFDLLUDURFBULFRLRBFRDBUDDDFRDFFULFDFFDUDFDBDRBLLURLDLBDULBDFBUUULURLRDRRLFDBRLUDLFLFRUFR
+    #  3 : 17 moves in 2m 45s
+    #  2 : 17 moves in 25s
+    #  1 : 17 moves in 3.4s
+    #  0 : 18 moves in 5s
+    #
+    # FRFFBLUUFLFFUDLFLUDBRFBLLFUDBRRUULDUDRLBLFBDDUDRRLFDLFDUULUUFRFRLDRBLDDRUBRBFRDBLDBFFUBDDBDFFRFLUDFURBRUUUBDBLBRLLLBRUDBFLFULDUDBDRRRLRDFBLURBFBRBLRBU
+    #  3 : 16 moves in 5s
+    #  2 : 16 moves in 600ms
+    #  1 : 17 moves in 900ms
+    #  0 : 18 moves in 1200ms
+    heuristic_stats_error = 0
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step500-pair-last-eight-edges.txt',
+            'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDDOOopPPQQqrRR------------WWwxXXYYyzZZ',
+            moves_555,
+            # illegal moves
+            ("Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'",
+             "Uw", "Uw'", "Uw2",
+             "Dw", "Dw'", "Dw2",
+             "L", "L'",
+             "R", "R'",
+             "F", "F'",
+             "B", "B'",
+            ),
+
+            linecount=2527885,
+            max_depth=7,
+            filesize=300818315,
+        )
+
+    def ida_heuristic_tuple(self):
+        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
+        return (centers_cost_to_goal, edges_cost_to_goal)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
+        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+        lt_state = centers_state + edges_state
+
+        if cost_to_goal > 0:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                heuristic_stats_cost = self.heuristic_stats.get((centers_cost_to_goal, edges_cost_to_goal), 0)
+                cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal,
+                    self.max_depth + 1, heuristic_stats_cost - self.heuristic_stats_error)
+
+        return (lt_state, cost_to_goal)
 
 
 class RubiksCube555(RubiksCube):
@@ -1010,12 +2306,21 @@ class RubiksCube555(RubiksCube):
     instantiated = False
 
     reduce333_orient_edges_tuples = (
-        (2, 104), (3, 103), (4, 102), (6, 27), (10, 79), (11, 28), (15, 78), (16, 29), (20, 77), (22, 52), (23, 53), (24, 54),
-        (27, 6), (28, 11), (29, 16), (31, 110), (35, 56), (36, 115), (40, 61), (41, 120), (45, 66), (47, 141), (48, 136), (49, 131),
-        (52, 22), (53, 23), (54, 24), (56, 35), (60, 81), (61, 40), (65, 86), (66, 45), (70, 91), (72, 127), (73, 128), (74, 129),
-        (77, 20), (78, 15), (79, 10), (81, 60), (85, 106), (86, 65), (90, 111), (91, 70), (95, 116), (97, 135), (98, 140), (99, 145),
-        (102, 4), (103, 3), (104, 2), (106, 85), (110, 31), (111, 90), (115, 36), (116, 95), (120, 41), (122, 149), (123, 148), (124, 147),
-        (127, 72), (128, 73), (129, 74), (131, 49), (135, 97), (136, 48), (140, 98), (141, 47), (145, 99), (147, 124), (148, 123), (149, 122)
+        (2, 104), (3, 103), (4, 102), (6, 27), (10, 79), (11, 28), (15, 78), (16, 29), (20, 77), (22, 52), (23, 53), (24, 54),                # Upper
+        (27, 6), (28, 11), (29, 16), (31, 110), (35, 56), (36, 115), (40, 61), (41, 120), (45, 66), (47, 141), (48, 136), (49, 131),          # Left
+        (52, 22), (53, 23), (54, 24), (56, 35), (60, 81), (61, 40), (65, 86), (66, 45), (70, 91), (72, 127), (73, 128), (74, 129),            # Front
+        (77, 20), (78, 15), (79, 10), (81, 60), (85, 106), (86, 65), (90, 111), (91, 70), (95, 116), (97, 135), (98, 140), (99, 145),         # Right
+        (102, 4), (103, 3), (104, 2), (106, 85), (110, 31), (111, 90), (115, 36), (116, 95), (120, 41), (122, 149), (123, 148), (124, 147),   # Back
+        (127, 72), (128, 73), (129, 74), (131, 49), (135, 97), (136, 48), (140, 98), (141, 47), (145, 99), (147, 124), (148, 123), (149, 122) # Down
+    )
+
+    reduce333_orient_edges_x_plane_y_plane_tuples = (
+        (2, 104), (4, 102), (22, 52), (24, 54),                                                  # Upper
+        (31, 110), (35, 56), (41, 120), (45, 66),                                                # Left
+        (52, 22), (54, 24), (56, 35), (60, 81), (66, 45), (70, 91), (72, 127), (74, 129),        # Front
+        (81, 60), (85, 106), (91, 70), (95, 116),                                                # Right
+        (102, 4), (104, 2), (106, 85), (110, 31), (116, 95), (120, 41), (122, 149), (124, 147),  # Back
+        (127, 72), (129, 74), (147, 124), (149, 122)                                             # Down
     )
 
     def __init__(self, state, order, colormap=None, debug=False):
@@ -1059,27 +2364,7 @@ class RubiksCube555(RubiksCube):
 
         return self._phase
 
-    def get_x_plane_wing_strs(self):
-        state = self.state
-        edges_in_plane = set()
-
-        for square_index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            edges_in_plane.add(wing_str)
-        return edges_in_plane
-
-    def l4e_in_x_plane_paired(self):
-        if (self.sideL.west_edge_paired() and
-            self.sideL.east_edge_paired() and
-            self.sideR.west_edge_paired() and
-            self.sideR.east_edge_paired()):
-            return True
-        return False
-
-    def l4e_in_x_plane(self):
+    def x_plane_edges_are_l4e(self):
         state = self.state
         edges_in_plane = set()
 
@@ -1090,18 +2375,9 @@ class RubiksCube555(RubiksCube):
             wing_str = wing_str_map[square_value + partner_value]
             edges_in_plane.add(wing_str)
 
-        #log.info("l4e_in_x_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
 
-    def l4e_in_y_plane_paired(self):
-        if (self.sideU.north_edge_paired() and
-            self.sideU.south_edge_paired() and
-            self.sideD.north_edge_paired() and
-            self.sideD.south_edge_paired()):
-            return True
-        return False
-
-    def l4e_in_y_plane(self):
+    def y_plane_edges_are_l4e(self):
         state = self.state
         edges_in_plane = set()
 
@@ -1112,18 +2388,9 @@ class RubiksCube555(RubiksCube):
             wing_str = wing_str_map[square_value + partner_value]
             edges_in_plane.add(wing_str)
 
-        #log.info("l4e_in_y_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
 
-    def l4e_in_z_plane_paired(self):
-        if (self.sideU.west_edge_paired() and
-            self.sideU.east_edge_paired() and
-            self.sideD.west_edge_paired() and
-            self.sideD.east_edge_paired()):
-            return True
-        return False
-
-    def l4e_in_z_plane(self):
+    def z_plane_edges_are_l4e(self):
         state = self.state
         edges_in_plane = set()
 
@@ -1134,118 +2401,7 @@ class RubiksCube555(RubiksCube):
             wing_str = wing_str_map[square_value + partner_value]
             edges_in_plane.add(wing_str)
 
-        #log.info("l4e_in_z_plane %s" % pformat(edges_in_plane))
         return len(edges_in_plane) == 4
-
-    def get_paired_wings_count(self):
-        return 24 - self.get_non_paired_wings_count()
-
-    def LR_centers_colors(self):
-        return set([self.state[x] for x in LR_centers_555])
-
-    def FB_centers_colors(self):
-        return set([self.state[x] for x in FB_centers_555])
-
-    def UFBD_centers_colors(self):
-        return set([self.state[x] for x in UFBD_centers_555])
-
-    def UFBD_centers_color_count(self):
-        return len(self.UFBD_centers_colors)
-
-    def ULRD_centers_colors(self):
-        return set([self.state[x] for x in ULRD_centers_555])
-
-    def ULRD_centers_color_count(self):
-        return len(self.ULRD_centers_colors)
-
-    def LFRB_centers_colors(self):
-        return set([self.state[x] for x in LFRB_centers_555])
-
-    def LFRB_centers_color_count(self):
-        return len(self.LFRB_centers_colors)
-
-    def LFRB_centers_horizontal_bars(self):
-        state = self.state
-
-        for (a, b, c) in (
-            (32, 33, 34),
-            (37, 38, 39),
-            (42, 43, 44),
-
-            (57, 58, 59),
-            (62, 63, 64),
-            (67, 68, 69),
-
-            (82, 83, 84),
-            (87, 88, 89),
-            (92, 93, 94),
-
-            (107, 108, 109),
-            (112, 113, 114),
-            (117, 118, 119)):
-
-            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
-                return False
-
-        return True
-
-    def UFBD_centers_vertical_bars(self):
-        state = self.state
-
-        for (a, b, c) in (
-            (7, 12, 17),
-            (8, 13, 18),
-            (9, 14, 19),
-
-            (57, 62, 67),
-            (58, 63, 68),
-            (59, 64, 69),
-
-            (132, 137, 142),
-            (133, 138, 143),
-            (134, 139, 144),
-
-            (107, 112, 117),
-            (108, 113, 118),
-            (109, 114, 119)):
-
-            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
-                return False
-
-        return True
-
-    def LR_centers_vertical_bars(self):
-        state = self.state
-
-        for (a, b, c) in (
-            (32, 37, 42),
-            (33, 38, 43),
-            (34, 39, 44),
-
-            (82, 87, 92),
-            (83, 88, 93),
-            (84, 89, 94)):
-
-            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
-                return False
-
-        return True
-
-    def UD_centers_horizontal_bars(self):
-        state = self.state
-
-        for (a, b, c) in (
-            (7, 8, 9),
-            (12, 13, 14),
-            (17, 18, 19),
-
-            (132, 133, 134),
-            (137, 138, 139),
-            (142, 143, 144)):
-            if state[a] != state[b] or state[b] != state[c] or state[a] != state[c]:
-                return False
-
-        return True
 
     def sanity_check(self):
         centers = (13, 38, 63, 88, 113, 138)
@@ -1257,15 +2413,6 @@ class RubiksCube555(RubiksCube):
         #self._sanity_check('t-centers', t_centers_555, 4)
         self._sanity_check('centers', centers, 1)
 
-    def rotate(self, step):
-        """
-        The 5x5x5 solver calls rotate() much more than other solvers, this is
-        due to the edge-pairing code.  In order to speed up edge-pairing use
-        the faster rotate_555() instead of RubiksCube.rotate()
-        """
-        self.state = rotate_555(self.state[:], step)
-        self.solution.append(step)
-
     def lt_init(self):
         if self.lt_init_called:
             return
@@ -1274,331 +2421,116 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
+        self.lt_LR_T_centers_stage_odd = LookupTable555LRTCenterStageOdd(self)
+        self.lt_LR_T_centers_stage_even = LookupTable555LRTCenterStageEven(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
-        self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
-
-        self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
-        self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
-        self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
-
-        if self.min_memory:
-            self.lt_edges_stage_second_four.preload_cache_string()
-            self.lt_edges_pair_last_four.preload_cache_string()
-        else:
-            self.lt_edges_stage_second_four.preload_cache_dict()
-            self.lt_edges_pair_last_four.preload_cache_dict()
-
+        self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
+        self.lt_LR_T_centers_stage_odd.preload_cache_string()
+        self.lt_LR_T_centers_stage_even.preload_cache_string()
 
-    def high_low_state(self, x, y, state_x, state_y, wing_str):
-        """
-        Return U if this is a high edge, D if it is a low edge
-        """
+        self.lt_LR_432_pair_one_edge = LookupTable555LRCenterStage432PairOneEdge(self)
+        self.lt_LR_centers_stage_pt = LookupTable555LRCenterStage(self)
+        self.lt_LR_432_x_centers_only = LookupTable555LRCenterStage432XCentersOnly(self)
+        self.lt_LR_432_t_centers_only = LookupTable555LRCenterStage432TCentersOnly(self)
+        self.lt_LR_432_centers_stage = LookupTableIDA555LRCenterStage432(self)
+        self.lt_LR_432_pair_one_edge.preload_cache_dict()
+        self.lt_LR_432_x_centers_only.preload_cache_string()
+        self.lt_LR_432_t_centers_only.preload_cache_string()
+        self.lt_LR_432_centers_stage.preload_cache_string()
+
+        self.lt_edges_z_plane_edges_only = LookupTable555EdgesZPlaneEdgesOnly(self)
+        self.lt_edges_z_plane_centers_only = LookupTable555EdgesZPlaneCentersOnly(self)
+        self.lt_edges_z_plane = LookupTableIDA555EdgesZPlane(self)
+        self.lt_edges_z_plane_centers_only.preload_cache_dict()
+        self.lt_edges_z_plane.preload_cache_string()
+
+        self.lt_x_plane_y_plane_orient_edges_edges_only = LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_centers_only = LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_centers_only_ht = LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(self)
+        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(self)
+        self.lt_x_plane_y_plane_orient_edges = LookupTableIDA555XPlaneYPlaneEdgesOrient(self)
+        self.lt_x_plane_y_plane_orient_edges_edges_only.preload_cache_dict()
+        self.lt_x_plane_y_plane_orient_edges.preload_cache_string()
+        self.lt_x_plane_y_plane_orient_edges_pair_one_edge.preload_cache_dict()
+        self.lt_x_plane_y_plane_orient_edges_centers_only.preload_cache_string()
+
+        self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersEdgesOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_fb_centers = LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(self)
+        self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.preload_cache_dict()
+        self.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only.preload_cache_dict()
+        self.lt_x_plane_y_plane_orient_edges_fb_centers.preload_cache_string()
+
+        self.lt_pair_last_eight_edges_edges_only = LookupTable555PairLastEightEdgesEdgesOnly(self)
+        self.lt_pair_last_eight_edges_centers_only = LookupTable555PairLastEightEdgesCentersOnly(self)
+        self.lt_pair_last_eight_edges = LookupTableIDA555PairLastEightEdges(self)
+        self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
+        self.lt_pair_last_eight_edges.preload_cache_string()
+        #self.lt_pair_last_eight_edges.preload_cache_dict()
+
+    def highlow_edges_state(self):
+        state = self.state
+        result = [highlow_edge_values[(x, y, state[x], state[y])] for (x, y) in self.reduce333_orient_edges_tuples]
+        result = ''.join(result)
+        return result
+
+    def highlow_edges_print(self):
+
+        # save cube state
         original_state = self.state[:]
         original_solution = self.solution[:]
 
-        # Nuke everything except the one wing we are interested in
         self.nuke_corners()
         self.nuke_centers()
-        self.nuke_edges()
 
-        self.state[x] = state_x
-        self.state[y] = state_y
-
-        if x in midge_indexes or y in midge_indexes:
-            is_midge = True
-        else:
-            is_midge = False
-
-        # Now move that wing to its home edge
-        if wing_str.startswith('U'):
-
-            if wing_str == 'UB':
-                self.move_wing_to_U_north(x)
-
-                if is_midge:
-                    high_edge_index = 3
-                    low_edge_index = 103
-                else:
-                    high_edge_index = 2
-                    low_edge_index = 4
-
-            elif wing_str == 'UL':
-                self.move_wing_to_U_west(x)
-
-                if is_midge:
-                    high_edge_index = 11
-                    low_edge_index = 28
-                else:
-                    high_edge_index = 16
-                    low_edge_index = 6
-
-            elif wing_str == 'UR':
-                self.move_wing_to_U_east(x)
-
-                if is_midge:
-                    high_edge_index = 15
-                    low_edge_index = 78
-                else:
-                    high_edge_index = 10
-                    low_edge_index = 20
-
-            elif wing_str == 'UF':
-                self.move_wing_to_U_south(x)
-
-                if is_midge:
-                    high_edge_index = 23
-                    low_edge_index = 53
-                else:
-                    high_edge_index = 24
-                    low_edge_index = 22
-
-            else:
-                raise Exception("invalid wing_str %s" % wing_str)
-
-            if is_midge:
-                if self.state[high_edge_index] == 'U':
-                    result = 'U'
-                elif self.state[low_edge_index] == 'U':
-                    result = 'D'
-                else:
-                    self.print_cube()
-                    self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
-                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
-            else:
-                if self.state[high_edge_index] == 'U':
-                    result = 'U'
-                elif self.state[low_edge_index] == 'U':
-                    result = 'D'
-                elif self.state[high_edge_index] == '.':
-                    result = 'U'
-                elif self.state[low_edge_index] == '.':
-                    result = 'D'
-                else:
-                    self.print_cube()
-                    self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
-                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
-
-        elif wing_str.startswith('L'):
-
-            if wing_str == 'LB':
-                self.move_wing_to_L_west(x)
-
-                if is_midge:
-                    high_edge_index = 36
-                    low_edge_index = 115
-                else:
-                    high_edge_index = 41
-                    low_edge_index = 31
-
-            elif wing_str == 'LF':
-                self.move_wing_to_L_east(x)
-
-                if is_midge:
-                    high_edge_index = 40
-                    low_edge_index = 61
-                else:
-                    high_edge_index = 35
-                    low_edge_index = 45
-
-            else:
-                raise Exception("invalid wing_str %s" % wing_str)
-
-            if is_midge:
-                if self.state[high_edge_index] == 'L':
-                    result = 'U'
-                elif self.state[low_edge_index] == 'L':
-                    result = 'D'
-                else:
-                    self.print_cube()
-                    self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
-                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
-            else:
-                if self.state[high_edge_index] == 'L':
-                    result = 'U'
-                elif self.state[low_edge_index] == 'L':
-                    result = 'D'
-                elif self.state[high_edge_index] == '.':
-                    result = 'U'
-                elif self.state[low_edge_index] == '.':
-                    result = 'D'
-                else:
-                    self.print_cube()
-                    self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
-
-        elif wing_str.startswith('R'):
-
-            if wing_str == 'RB':
-                self.move_wing_to_R_east(x)
-
-                if is_midge:
-                    high_edge_index = 90
-                    low_edge_index = 111
-                else:
-                    high_edge_index = 85
-                    low_edge_index = 95
-
-            elif wing_str == 'RF':
-                self.move_wing_to_R_west(x)
-
-                if is_midge:
-                    high_edge_index = 86
-                    low_edge_index = 65
-                else:
-                    high_edge_index = 91
-                    low_edge_index = 81
-
-            else:
-                raise Exception("invalid wing_str %s" % wing_str)
-
-            if is_midge:
-                if self.state[high_edge_index] == 'R':
-                    result = 'U'
-                elif self.state[low_edge_index] == 'R':
-                    result = 'D'
-                else:
-                    self.print_cube()
-                    self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
-                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
-            else:
-                if self.state[high_edge_index] == 'R':
-                    result = 'U'
-                elif self.state[low_edge_index] == 'R':
-                    result = 'D'
-                elif self.state[high_edge_index] == '.':
-                    result = 'U'
-                elif self.state[low_edge_index] == '.':
-                    result = 'D'
-                else:
-                    self.print_cube()
-                    self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
-
-        elif wing_str.startswith('D'):
-            if wing_str == 'DB':
-                self.move_wing_to_D_south(x)
-
-                if is_midge:
-                    high_edge_index = 148
-                    low_edge_index = 123
-                else:
-                    high_edge_index = 149
-                    low_edge_index = 147
-
-            elif wing_str == 'DL':
-                self.move_wing_to_D_west(x)
-
-                if is_midge:
-                    high_edge_index = 136
-                    low_edge_index = 48
-                else:
-                    high_edge_index = 141
-                    low_edge_index = 131
-
-            elif wing_str == 'DR':
-                self.move_wing_to_D_east(x)
-
-                if is_midge:
-                    high_edge_index = 140
-                    low_edge_index = 98
-                else:
-                    high_edge_index = 135
-                    low_edge_index = 145
-
-            elif wing_str == 'DF':
-                self.move_wing_to_D_north(x)
-
-                if is_midge:
-                    high_edge_index = 128
-                    low_edge_index = 73
-                else:
-                    high_edge_index = 127
-                    low_edge_index = 129
-
-            else:
-                raise Exception("invalid wing_str %s" % wing_str)
-
-            if is_midge:
-                if self.state[high_edge_index] == 'D':
-                    result = 'U'
-                elif self.state[low_edge_index] == 'D':
-                    result = 'D'
-                else:
-                    self.print_cube()
-                    self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
-                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
-            else:
-                if self.state[high_edge_index] == 'D':
-                    result = 'U'
-                elif self.state[low_edge_index] == 'D':
-                    result = 'D'
-                elif self.state[high_edge_index] == '.':
-                    result = 'U'
-                elif self.state[low_edge_index] == '.':
-                    result = 'D'
-                else:
-                    self.print_cube()
-                    self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
-                        (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
-
-        else:
-            raise Exception("invalid wing_str %s" % wing_str)
+        orient_edge_state = list(self.highlow_edges_state())
+        orient_edge_state_index = 0
+        for side in list(self.sides.values()):
+            for square_index in side.edge_pos:
+                self.state[square_index] = orient_edge_state[orient_edge_state_index]
+                orient_edge_state_index += 1
+        self.print_cube()
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-
-        assert result in ('U', 'D')
-        return result
-
-    def build_highlow_edge_values(self):
-        state = self.state
-        new_highlow_edge_values = {}
-
-        for x in range(1000000):
-
-            # make random moves
-            step = moves_555[randint(0, len(moves_555)-1)]
-
-            if "w" in step:
-                continue
-
-            self.rotate(step)
-
-            for (x, y) in self.reduce333_orient_edges_tuples:
-                state_x = self.state[x]
-                state_y = self.state[y]
-                wing_str = wing_str_map[state_x + state_y]
-                wing_tuple = (x, y, state_x, state_y)
-
-                if wing_tuple not in new_highlow_edge_values:
-                    new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
-
-        print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
-        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
-        sys.exit(0)
 
     def group_centers_stage_UD(self):
         """
         Stage UD centers.  The 7x7x7 uses this that is why it is in its own method.
         """
-        self.lt_UD_centers_stage.solve()
-        self.print_cube()
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+
+        if not self.UD_centers_staged():
+            self.lt_UD_centers_stage.solve()
+            self.print_cube()
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_stage_LR(self):
         """
         Stage LR centers.  The 6x6x6 uses this that is why it is in its own method.
         """
-        # Stage LR centers
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+
+        if not self.UD_centers_staged():
+            raise SolveError("UD centers must be staged to stage LR centers")
+
+        # Test the prune tables
+        #self.lt_LR_T_centers_stage.solve()
+        #self.lt_LR_X_centers_stage.solve()
+        #self.print_cube()
+
+        if not self.LR_centers_staged():
+            self.lt_LR_centers_stage.solve()
+            self.print_cube()
+        log.info("%s: ULFRBD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+    def group_centers_stage_LR_to_432(self):
+        """
+        Stage LR centers to one of 432 states that can be solved with L L' R R'
+        """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
@@ -1607,2693 +2539,360 @@ class RubiksCube555(RubiksCube):
         #self.lt_LR_X_centers_stage.solve()
         #self.print_cube()
 
-        self.lt_LR_centers_stage.solve()
+        self.lt_LR_432_centers_stage.avoid_oll = 0
+        self.lt_LR_432_centers_stage.solve()
         self.print_cube()
-        log.info("%s: ULFRBD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def group_centers_guts(self):
-        self.lt_init()
+        pairable_count = len(self.edges_pairable_without_LR())
+        orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+        log.info("%s: LR centers staged to one of 432 states, %d-edges EOed (%d min), orbits with OLL %s, %d steps in" %
+            (self, pairable_count, MIN_EO_COUNT_FOR_STAGE_LR_432, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
 
-        self.group_centers_stage_UD()
-        self.group_centers_stage_LR()
-
-        # All centers are staged, solve them
-        self.lt_ULFRB_centers_solve.solve()
-        self.print_cube()
-        log.info("%s: ULFRBD centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-    def x_plane_has_LB_LF_RB_RF_edge(self):
-        state = self.state
-        LB_LF_RB_RF = set(('LB', 'LF', 'RB', 'RF'))
-
-        for square_index in (36, 40, 86, 90):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-
-            if wing_str in LB_LF_RB_RF:
-                return True
-
-        return False
-
-    def y_plane_has_LB_LF_RB_RF_edge(self):
-        state = self.state
-        LB_LF_RB_RF = set(('LB', 'LF', 'RB', 'RF'))
-
-        for square_index in (3, 23, 128, 148):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-
-            if wing_str in LB_LF_RB_RF:
-                return True
-
-        return False
-
-    def z_plane_has_LB_LF_RB_RF_edge(self):
-        state = self.state
-        LB_LF_RB_RF = set(('LB', 'LF', 'RB', 'RF'))
-
-        for square_index in (11, 15, 136, 140):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-
-            if wing_str in LB_LF_RB_RF:
-                return True
-
-        return False
-
-    def stage_first_four_edges_555(self):
+    def edges_pairable_without_LR(self):
         """
-        There are 495 different permutations of 4-edges out of 12-edges, use the one
-        that gives us the shortest solution for getting 4-edges staged to LB, LF, RF, RB
+        Return the wing_strs that can be paired without L L' R R'
         """
-
-        # return if they are already staged
-        if self.l4e_in_x_plane():
-            log.info("%s: first L4E group in x-plane" % self)
-            return
-
-        if self.l4e_in_y_plane():
-            log.info("%s: first L4E group in y-plane, moving to x-plane" % self)
-            self.rotate("z")
-            return
-
-        if self.l4e_in_z_plane():
-            log.info("%s: first L4E group in z-plane, moving to x-plane" % self)
-            self.rotate("x")
-            return
-
-        min_solution_len = None
-        min_solution_steps = None
-
-        # The table for staging the first 4-edges would have 364,058,145 if built to completion.
-        # Building that table the entire way is difficult though because this is a table where
-        # the centers must be kept solved...so this involves building out a HUGE table and only
-        # keeping the entries where the centers are solved.  To build one deep enough to find
-        # all 364,058,145 entries needed that also have solved centers would probably take a
-        # few months and more drive space than I have access to.
-        #
-        # To avoid building such a massive table we only build the table out 10-deep which gives
-        # us a few million entries.  We then try all 495 permutations of 4-edges out of 12-edges
-        # looking for one that does have a hit.  Most of the time this is all that is needed and
-        # we can find a hit.  On the off chance that we cannot though we need a way to find a solution
-        # so what we do is try all outer layer moves up to 3 moves deep and see if any of those
-        # sequences put the cube in a state such that one of the 495 edge permutations does find
-        # a hit. I have yet to find a cube that cannot be solved with this approach but if I did
-        # the pre_steps_to_try could be expanded to 4-deep.
-
-        # Ran this once to generate pre_steps_to_try
-        '''
-        outer_layer_moves = (
-            "U", "U'", "U2",
-            "L", "L'", "L2",
-            "F", "F'", "F2",
-            "R", "R'", "R2",
-            "B", "B'", "B2",
-            "D", "D'", "D2",
-        )
-        pre_steps_to_try = []
-        pre_steps_to_try.append([])
-
-        for step in outer_layer_moves:
-            pre_steps_to_try.append((step,))
-
-        for step1 in outer_layer_moves:
-            for step2 in outer_layer_moves:
-                if not steps_on_same_face_and_layer(step1, step2):
-                    pre_steps_to_try.append((step1, step2))
-
-        for step1 in outer_layer_moves:
-            for step2 in outer_layer_moves:
-                if not steps_on_same_face_and_layer(step1, step2):
-
-                    for step3 in outer_layer_moves:
-                        if not steps_on_same_face_and_layer(step2, step3):
-                            pre_steps_to_try.append((step1, step2, step3))
-
-        from pprint import pformat
-        log.info("pre_steps_to_try: %d" % len(pre_steps_to_try))
-        log.info("pre_steps_to_try:\n%s\n" % pformat(pre_steps_to_try))
-
-        # uncomment this if we ever find a cube that raises the
-        # "Could not find 4-edges to stage" NoEdgeSolution exception below
-        for step1 in outer_layer_moves:
-            for step2 in outer_layer_moves:
-                if not steps_on_same_face_and_layer(step1, step2):
-                    for step3 in outer_layer_moves:
-                        if not steps_on_same_face_and_layer(step2, step3):
-                            for step4 in outer_layer_moves:
-                                if not steps_on_same_face_and_layer(step3, step4):
-                                    pre_steps_to_try.append([step1, step2, step3, step4])
-        '''
-
-        # Remember what things looked like
+        state = self.state
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = len(self.solution)
-
-        for pre_steps in pre_steps_to_try:
-
-            # do those steps
-            for wing_strs in stage_first_four_edges_wing_str_combos:
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                for step in pre_steps:
-                    self.rotate(step)
-
-                state = self.lt_edges_stage_first_four.state(wing_strs)
-                steps = self.lt_edges_stage_first_four.steps(state)
-
-                if steps:
-
-                    # Pair the 4-edges so we can pick the wing_strs whose solution will be the shortest
-                    for step in steps:
-                        self.rotate(step)
-
-                    if self.l4e_in_x_plane() and not self.l4e_in_x_plane_paired():
-                        pass
-                    elif self.l4e_in_y_plane() and not self.l4e_in_y_plane_paired():
-                        self.rotate("z")
-                    elif self.l4e_in_z_plane() and not self.l4e_in_z_plane_paired():
-                        self.rotate("x")
-                    else:
-                        raise Exception("L4E group but where?")
-
-                    if not self.l4e_in_x_plane():
-                        self.print_cube()
-                        raise Exception("There should be an L4E group in x-plane but there is not")
-
-                    solution_steps = self.solution[original_solution_len:]
-
-                    # Solve all of the remaining edges so we pick the "stage 1st L4E group" solution
-                    # that leads to the shortest solution for solving edges.
-                    self.lt_edges_pair_last_four.solve()
-                    self.stage_second_four_edges_555(False)
-                    self.rotate("x")
-                    self.lt_edges_pair_last_four.solve()
-                    self.pair_third_four_edges(False)
-
-                    solution_len = self.get_solution_len_minus_rotates(self.solution) - original_solution_len
-
-                    if min_solution_len is None or solution_len < min_solution_len:
-                        log.info("%s: first four %s can be staged/paired in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
-                        min_solution_len = solution_len
-                        min_solution_steps = solution_steps
-                    else:
-                        log.info("%s: first four %s can be staged/paired in %d steps" % (self, wing_strs, solution_len))
-
-            if min_solution_len is not None:
-                #if pre_steps:
-                #    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                for step in min_solution_steps:
-                    self.rotate(step)
-
-                if not self.l4e_in_x_plane():
-                    self.print_cube()
-                    raise Exception("There should be an L4E group in x-plane but there is not")
-                break
-        else:
-            raise NoEdgeSolution("Could not find 4-edges to stage")
-
-    def stage_second_four_edges_555(self, debug):
-        """
-        The first four edges have been staged to LB, LF, RF, RB. Stage the next four
-        edges to UB, UF, DF, DB (this in turn stages the final four edges).
-
-        Since there are 8-edges there are 70 different combinations of edges we can
-        choose to stage to UB, UF, DF, DB. Walk through all 70 combinations and see
-        which one leads to the shortest solution.
-        """
-
-        # return if they are already staged
-        if self.l4e_in_y_plane() and self.l4e_in_z_plane():
-            return
-
-        first_four_wing_strs = list(self.get_x_plane_wing_strs())
-        wing_strs_for_second_four = []
-
-        if debug:
-            log.info("first_four_wing_strs %s" % pformat(first_four_wing_strs))
+        pairable = []
 
         for wing_str in wing_strs_all:
-            if wing_str not in first_four_wing_strs:
-                wing_strs_for_second_four.append(wing_str)
-
-        if debug:
-            log.info("wing_strs_for_second_four %s" % pformat(wing_strs_for_second_four))
-        assert len(wing_strs_for_second_four) == 8
-        min_solution_len = None
-        min_solution_steps = None
-
-        # Remember what things looked like
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = len(self.solution)
-
-        for pre_steps in pre_steps_to_try:
-
-            for wing_strs in itertools.combinations(wing_strs_for_second_four, 4):
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                for step in pre_steps:
-                    self.rotate(step)
-
-                state = self.lt_edges_stage_second_four.state(wing_strs)
-                steps = self.lt_edges_stage_second_four.steps(state)
-                #log.info("%s: pre_steps %s, wing_strs %s, state %s, steps %s" % (
-                #    self, pformat(pre_steps), wing_strs, state, pformat(steps)))
-
-                if steps:
-
-                    for step in steps:
-                        self.rotate(step)
-
-                    solution_steps = self.solution[original_solution_len:]
-
-                    # Solve all of the remaining edges so we pick the "stage 2nd L4E group" solution
-                    # that leads to the shortest solution for solving edges.
-                    self.rotate("x")
-                    self.lt_edges_pair_last_four.solve()
-                    self.pair_third_four_edges(False)
-
-                    solution_len = len(self.solution) - original_solution_len
-
-                    if min_solution_len is None or solution_len < min_solution_len:
-                        min_solution_len = solution_len
-                        min_solution_steps = solution_steps
-                        if debug:
-                            log.info("%s: second four %s can be staged in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
-                    else:
-                        if debug:
-                            log.info("%s: second four %s can be staged in %d steps" % (self, wing_strs, solution_len))
-
-                    self.state = original_state[:]
-                    self.solution = original_solution[:]
-
-            if min_solution_len is not None:
-                if pre_steps and debug:
-                    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
-
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                for step in min_solution_steps:
-                    self.rotate(step)
-
-                break
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        if min_solution_len is None:
-            raise SolveError("Could not find 4-edges to stage")
-        else:
-            for step in min_solution_steps:
-                self.rotate(step)
-
-    def place_first_four_paired_edges_in_x_plane(self):
-
-        if self.l4e_in_x_plane_paired():
-            log.info("%s: 4 paired edges in x-plane" % (self))
-            return
-
-        if self.l4e_in_y_plane_paired():
-            log.info("%s: 4 paired edges in y-plane, moving to x-plane" % (self))
-            self.rotate("z")
-            return
-
-        if self.l4e_in_z_plane_paired():
-            log.info("%s: 4 paired edges in z-plane, moving to x-plane" % (self))
-            self.rotate("x")
-            return
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        # Traverse a table of moves that place L4E in one of three planes
-        for pre_steps in pre_steps_stage_l4e:
+            self.lt_LR_432_pair_one_edge.only_colors = set([wing_str, ])
             self.state = original_state[:]
             self.solution = original_solution[:]
 
-            for step in pre_steps:
-                self.rotate(step)
+            try:
+                self.lt_LR_432_pair_one_edge.solve()
+                #log.info("%s: wing_str %s can be paired without L L' R R'" % (self, wing_str))
+                pairable.append(wing_str)
+            except NoSteps:
+                pass
 
-            if self.l4e_in_x_plane_paired():
-                log.info("%s: %s puts 4 paired edges in x-plane" % (self, "".join(pre_steps)))
-                return
+        self.lt_LR_432_pair_one_edge.only_colors = set()
+        self.state = original_state[:]
+        self.solution = original_solution[:]
 
-            if self.l4e_in_y_plane_paired():
-                log.info("%s: %s puts 4 paired edges in y-plane" % (self, "".join(pre_steps)))
-                self.rotate("z")
-                return
+        #log.info("%s: pairable %s (%d of them)" % (
+        #    self, pformat(pairable), len(pairable)))
+        return tuple(sorted(pairable))
 
-            if self.l4e_in_z_plane() and not self.l4e_in_z_plane_paired():
-                log.info("%s: %s puts 4 paired edges in z-plane" % (self, "".join(pre_steps)))
-                self.rotate("x")
-                return
+    def edges_pairable_without_LRFB(self):
+        """
+        Return the wing_strs that can be paired without L L' R R' F F' B B'
+        """
+        state = self.state
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        pairable = []
 
-        raise Exception("We should not be here")
+        for wing_str in self.get_y_plane_z_plane_wing_strs():
+            self.lt_x_plane_y_plane_orient_edges_pair_one_edge.only_colors = set([wing_str, ])
+            self.state = original_state[:]
+            self.solution = original_solution[:]
 
-    def pair_first_four_edges(self):
-        paired_edges_count = self.get_paired_edges_count()
+            try:
+                self.lt_x_plane_y_plane_orient_edges_pair_one_edge.solve()
+                #log.info("%s: wing_str %s can be paired without L L' R R' F F' B B'" % (self, wing_str))
+                pairable.append(wing_str)
+            except NoSteps:
+                #log.info("%s: wing_str %s can NOT be paired without L L' R R' F F' B B'" % (self, wing_str))
+                pass
 
-        # If there are already 4 paired edges all we need to do is put them in the x-plane
-        if paired_edges_count >= 4:
-            self.place_first_four_paired_edges_in_x_plane()
-            log.info("%s: first four edges already paired, moved to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.lt_x_plane_y_plane_orient_edges_pair_one_edge.only_colors = set()
+        self.state = original_state[:]
+        self.solution = original_solution[:]
 
-        # We do not have 4 paired edges, stage a L4E group to the x-plane and pair them via the L4E table
+        #log.info("%s: pairable %s (%d of them)" % (
+        #    self, pformat(pairable), len(pairable)))
+        return tuple(sorted(pairable))
+
+    def edges_flip_to_original_orientation(self, must_be_uppercase=[], must_be_lowercase=[]):
+        state = edges_recolor_pattern_555(self.state[:])
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+
+        to_flip = []
+
+        # 000 000 000 011 111 111 112 222 222 222 333 333
+        # 012 345 678 901 234 567 890 123 456 789 012 345
+        # Roo rPz Qqw qrP Sss TTt Uuu VVv ZwW Xxx YYy pzO
+        #  ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^
+        #  UB  UL  UR  UD  LB  LF  RF  RB  DF  DL  DR  DB
+        for (edge_state_index, square_index, partner_index) in (
+                (1, 3, 103),     # UB
+                (4, 11, 28),     # UL
+                (7, 15, 78),     # UR
+                (10, 23, 53),    # UF
+                (13, 36, 115),   # LB
+                (16, 40, 61),    # LF
+                (19, 86, 65),    # RF
+                (22, 90, 111),   # RB
+                (25, 128, 73),   # DF
+                (28, 136, 48),   # DL
+                (31, 140, 98),   # DR
+                (34, 148, 123)): # DB
+
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if must_be_uppercase or must_be_lowercase:
+                #log.info("must_be_uppercase %s, must_be_lowercase %s" % (must_be_uppercase, must_be_lowercase))
+
+                if wing_str in must_be_uppercase and edges_state[edge_state_index].islower():
+                    to_flip.append(wing_str)
+                elif wing_str in must_be_lowercase and edges_state[edge_state_index].isupper():
+                    to_flip.append(wing_str)
+            else:
+                if edges_state[edge_state_index].islower():
+                    to_flip.append(wing_str)
+
+        for square_index in wings_for_edges_pattern_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in to_flip:
+                self.state[square_index] = partner_value
+                self.state[partner_index] = square_value
+
+    def get_x_plane_z_plane_wing_strs(self):
+        result = []
+
+        # The 4 paired edges are in the x-plane so look at midges in the y-plane and z-plane
+        for square_index in (36, 40, 86, 90, 11, 15, 136, 140):
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+            result.append(wing_str)
+
+        return set(result)
+
+    def get_x_plane_wing_strs(self):
+        result = []
+
+        for square_index in (36, 40, 86, 90):
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+            result.append(wing_str)
+
+        return set(result)
+
+    def get_y_plane_wing_strs(self):
+        result = []
+
+        for square_index in (3, 23, 128, 148):
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+            result.append(wing_str)
+
+        return set(result)
+
+    def get_z_plane_wing_strs(self):
+        result = []
+
+        for square_index in (11, 15, 136, 140):
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+            result.append(wing_str)
+
+        return set(result)
+
+    def get_y_plane_z_plane_wing_strs(self):
+        result = []
+
+        # The 4 paired edges are in the x-plane so look at midges in the y-plane and z-plane
+        for square_index in (3, 11, 15, 23, 128, 136, 140, 148):
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+            result.append(wing_str)
+
+        return set(result)
+
+    def pair_z_plane_edges(self):
+        """
+        When we staged the LR centers to one of 432 states we did so such that there
+        are at least MIN_EO_COUNT_FOR_STAGE_LR_432 edges that can be paired without
+        L L' R R'. Those will be the "pairable" edges below. Find the combination of
+        4-edges that has the lowest cost_to_goal, pair those edges and place them in
+        the z-plane.  This phase also puts the LR centers into horizontal bars.
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(original_solution)
+
+        self.edges_flip_to_original_orientation()
+
+        #paired_edges_count = self.get_paired_edges_count()
+        #log.info("%s: %d-edges are already paired" % (self, paired_edges_count))
+
+        # Are the z-plane edges already paired?
+        if self.z_plane_edges_paired():
+            min_wing_str_combo = self.get_z_plane_wing_strs()
+
+        # TODO what if there are 4-paired edges somewhere?  We should use those
         else:
-            self.stage_first_four_edges_555()
-            self.lt_edges_pair_last_four.solve()
-            self.print_cube()
-            log.info("kociemba: %s" % self.get_kociemba_string(True))
-            log.info("%s: first four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            pairable = self.edges_pairable_without_LR()
+            log.info("%s: z-plane pairable edges %s" % (self, pformat(pairable)))
 
-    def pair_second_four_edges(self):
-        paired_edges_count = self.get_paired_edges_count()
+            min_cost_to_goal = None
+            min_wing_str_combo = None
 
-        if paired_edges_count >= 8:
-            log.info("%s: second four edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            return
-        else:
-            self.stage_second_four_edges_555(True)
-            self.rotate("x")
-            log.info("%s: second four edges L4E staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.lt_edges_pair_last_four.solve()
-            self.print_cube()
-            #log.info("kociemba: %s" % self.get_kociemba_string(True))
-            log.info("%s: second four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            # Which combination of 4-edges has the lowest cost_to_goal?
+            for wing_str_combo in itertools.combinations(pairable, 4):
+                wing_str_combo = sorted(wing_str_combo)
 
-    def pair_third_four_edges(self, debug):
-        paired_edges_count = self.get_paired_edges_count()
+                #debug = bool(wing_str_combo == ['LF', 'RB', 'UB', 'UF'])
+                debug = False
 
-        if paired_edges_count == 12:
-            if debug:
-                log.info("%s: final four edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            return
+                if debug:
+                    log.info("wing_str_combo: %s" % pformat(wing_str_combo))
+                three_wing_cost_to_goal = []
 
-        if self.l4e_in_x_plane() and not self.l4e_in_x_plane_paired():
-            if debug:
-                log.info("%s: final four unpaired edges already in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            pass
-        else:
-            if debug:
-                log.info("%s: moving final four unpaired edges to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            original_state = self.state[:]
-            original_solution = self.solution[:]
+                for three_wing_str_combo in itertools.combinations(wing_str_combo, 3):
+                    self.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
+                    (_, tmp_cost_to_goal) = self.lt_edges_z_plane_edges_only.ida_heuristic()
 
-            # Traverse a table of moves that place L4E in one of three planes
-            # and then rotate that plane to the x-plane
-            for pre_steps in pre_steps_stage_l4e:
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                for step in pre_steps:
-                    self.rotate(step)
-
-                if self.l4e_in_x_plane() and not self.l4e_in_x_plane_paired():
                     if debug:
-                        if pre_steps:
-                            log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
-                        else:
-                            log.info("%s: L4E group in x-plane" % self)
-                    break
+                        log.info("three_wing_str_combo: %s cost_to_goal %d" % (pformat(three_wing_str_combo), tmp_cost_to_goal))
+                    three_wing_cost_to_goal.append(tmp_cost_to_goal)
 
-                elif self.l4e_in_y_plane() and not self.l4e_in_y_plane_paired():
-                    if debug:
-                        if pre_steps:
-                            log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
-                        else:
-                            log.info("%s: L4E group in y-plane, moving to x-plane" % self)
-                    self.rotate("z")
-                    break
+                cost_to_goal = max(three_wing_cost_to_goal)
 
-                elif self.l4e_in_z_plane() and not self.l4e_in_z_plane_paired():
-                    if debug:
-                        if pre_steps:
-                            log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
-                        else:
-                            log.info("%s: L4E group in z-plane, moving to z-plane" % self)
-                    self.rotate("x")
-                    break
+                if min_cost_to_goal is None or cost_to_goal < min_cost_to_goal:
+                    min_cost_to_goal = cost_to_goal
+                    min_wing_str_combo = wing_str_combo
+                    log.info("z-plane wing_str_combo %s, cost_to_goal %d (NEW MIN)" % (pformat(wing_str_combo), cost_to_goal))
+                #else:
+                #    log.info("z-plane wing_str_combo %s, cost_to_goal %d" % (pformat(wing_str_combo), cost_to_goal))
 
-        self.lt_edges_pair_last_four.solve()
-        if debug:
-            log.info("%s: final four edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.lt_edges_z_plane.only_colors = min_wing_str_combo
+        self.lt_edges_z_plane.solve()
+        z_plane_edges_solution = self.solution[original_solution_len:]
 
-    def group_edges(self):
-        paired_edges_count = self.get_paired_edges_count()
+        # Now put the cube back to the original state before we flipped all of
+        # the edges to their native orientation, then apply the solution we found.
+        self.state = original_state[:]
+        self.solution = original_solution[:]
 
-        if paired_edges_count == 12:
-            return
+        for step in z_plane_edges_solution:
+            self.rotate(step)
 
-        self.lt_init()
         self.print_cube()
-        self.pair_first_four_edges()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
-        self.pair_second_four_edges()
-        self.pair_third_four_edges(True)
+        log.info("%s: LR centers in horizontal bars, z-plane edges paired, %d steps in" % (self,
+             self.get_solution_len_minus_rotates(self.solution)))
 
+    def pair_last_eight_edges(self):
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(original_solution)
 
-tsai_phase3_orient_edges_555 = {
-    (2, 104, 'B', 'D'): 'D',
-    (2, 104, 'B', 'L'): 'D',
-    (2, 104, 'B', 'R'): 'D',
-    (2, 104, 'B', 'U'): 'D',
-    (2, 104, 'D', 'B'): 'U',
-    (2, 104, 'D', 'F'): 'U',
-    (2, 104, 'D', 'L'): 'U',
-    (2, 104, 'D', 'R'): 'U',
-    (2, 104, 'F', 'D'): 'D',
-    (2, 104, 'F', 'L'): 'D',
-    (2, 104, 'F', 'R'): 'D',
-    (2, 104, 'F', 'U'): 'D',
-    (2, 104, 'L', 'B'): 'U',
-    (2, 104, 'L', 'D'): 'D',
-    (2, 104, 'L', 'F'): 'U',
-    (2, 104, 'L', 'U'): 'D',
-    (2, 104, 'R', 'B'): 'U',
-    (2, 104, 'R', 'D'): 'D',
-    (2, 104, 'R', 'F'): 'U',
-    (2, 104, 'R', 'U'): 'D',
-    (2, 104, 'U', 'B'): 'U',
-    (2, 104, 'U', 'F'): 'U',
-    (2, 104, 'U', 'L'): 'U',
-    (2, 104, 'U', 'R'): 'U',
-    (3, 103, 'B', 'D'): 'D',
-    (3, 103, 'B', 'L'): 'D',
-    (3, 103, 'B', 'R'): 'D',
-    (3, 103, 'B', 'U'): 'D',
-    (3, 103, 'D', 'B'): 'U',
-    (3, 103, 'D', 'F'): 'U',
-    (3, 103, 'D', 'L'): 'U',
-    (3, 103, 'D', 'R'): 'U',
-    (3, 103, 'F', 'D'): 'D',
-    (3, 103, 'F', 'L'): 'D',
-    (3, 103, 'F', 'R'): 'D',
-    (3, 103, 'F', 'U'): 'D',
-    (3, 103, 'L', 'B'): 'U',
-    (3, 103, 'L', 'D'): 'D',
-    (3, 103, 'L', 'F'): 'U',
-    (3, 103, 'L', 'U'): 'D',
-    (3, 103, 'R', 'B'): 'U',
-    (3, 103, 'R', 'D'): 'D',
-    (3, 103, 'R', 'F'): 'U',
-    (3, 103, 'R', 'U'): 'D',
-    (3, 103, 'U', 'B'): 'U',
-    (3, 103, 'U', 'F'): 'U',
-    (3, 103, 'U', 'L'): 'U',
-    (3, 103, 'U', 'R'): 'U',
-    (4, 102, 'B', 'D'): 'U',
-    (4, 102, 'B', 'L'): 'U',
-    (4, 102, 'B', 'R'): 'U',
-    (4, 102, 'B', 'U'): 'U',
-    (4, 102, 'D', 'B'): 'D',
-    (4, 102, 'D', 'F'): 'D',
-    (4, 102, 'D', 'L'): 'D',
-    (4, 102, 'D', 'R'): 'D',
-    (4, 102, 'F', 'D'): 'U',
-    (4, 102, 'F', 'L'): 'U',
-    (4, 102, 'F', 'R'): 'U',
-    (4, 102, 'F', 'U'): 'U',
-    (4, 102, 'L', 'B'): 'D',
-    (4, 102, 'L', 'D'): 'U',
-    (4, 102, 'L', 'F'): 'D',
-    (4, 102, 'L', 'U'): 'U',
-    (4, 102, 'R', 'B'): 'D',
-    (4, 102, 'R', 'D'): 'U',
-    (4, 102, 'R', 'F'): 'D',
-    (4, 102, 'R', 'U'): 'U',
-    (4, 102, 'U', 'B'): 'D',
-    (4, 102, 'U', 'F'): 'D',
-    (4, 102, 'U', 'L'): 'D',
-    (4, 102, 'U', 'R'): 'D',
-    (6, 27, 'B', 'D'): 'U',
-    (6, 27, 'B', 'L'): 'U',
-    (6, 27, 'B', 'R'): 'U',
-    (6, 27, 'B', 'U'): 'U',
-    (6, 27, 'D', 'B'): 'D',
-    (6, 27, 'D', 'F'): 'D',
-    (6, 27, 'D', 'L'): 'D',
-    (6, 27, 'D', 'R'): 'D',
-    (6, 27, 'F', 'D'): 'U',
-    (6, 27, 'F', 'L'): 'U',
-    (6, 27, 'F', 'R'): 'U',
-    (6, 27, 'F', 'U'): 'U',
-    (6, 27, 'L', 'B'): 'D',
-    (6, 27, 'L', 'D'): 'U',
-    (6, 27, 'L', 'F'): 'D',
-    (6, 27, 'L', 'U'): 'U',
-    (6, 27, 'R', 'B'): 'D',
-    (6, 27, 'R', 'D'): 'U',
-    (6, 27, 'R', 'F'): 'D',
-    (6, 27, 'R', 'U'): 'U',
-    (6, 27, 'U', 'B'): 'D',
-    (6, 27, 'U', 'F'): 'D',
-    (6, 27, 'U', 'L'): 'D',
-    (6, 27, 'U', 'R'): 'D',
-    (10, 79, 'B', 'D'): 'D',
-    (10, 79, 'B', 'L'): 'D',
-    (10, 79, 'B', 'R'): 'D',
-    (10, 79, 'B', 'U'): 'D',
-    (10, 79, 'D', 'B'): 'U',
-    (10, 79, 'D', 'F'): 'U',
-    (10, 79, 'D', 'L'): 'U',
-    (10, 79, 'D', 'R'): 'U',
-    (10, 79, 'F', 'D'): 'D',
-    (10, 79, 'F', 'L'): 'D',
-    (10, 79, 'F', 'R'): 'D',
-    (10, 79, 'F', 'U'): 'D',
-    (10, 79, 'L', 'B'): 'U',
-    (10, 79, 'L', 'D'): 'D',
-    (10, 79, 'L', 'F'): 'U',
-    (10, 79, 'L', 'U'): 'D',
-    (10, 79, 'R', 'B'): 'U',
-    (10, 79, 'R', 'D'): 'D',
-    (10, 79, 'R', 'F'): 'U',
-    (10, 79, 'R', 'U'): 'D',
-    (10, 79, 'U', 'B'): 'U',
-    (10, 79, 'U', 'F'): 'U',
-    (10, 79, 'U', 'L'): 'U',
-    (10, 79, 'U', 'R'): 'U',
-    (11, 28, 'B', 'D'): 'D',
-    (11, 28, 'B', 'L'): 'D',
-    (11, 28, 'B', 'R'): 'D',
-    (11, 28, 'B', 'U'): 'D',
-    (11, 28, 'D', 'B'): 'U',
-    (11, 28, 'D', 'F'): 'U',
-    (11, 28, 'D', 'L'): 'U',
-    (11, 28, 'D', 'R'): 'U',
-    (11, 28, 'F', 'D'): 'D',
-    (11, 28, 'F', 'L'): 'D',
-    (11, 28, 'F', 'R'): 'D',
-    (11, 28, 'F', 'U'): 'D',
-    (11, 28, 'L', 'B'): 'U',
-    (11, 28, 'L', 'D'): 'D',
-    (11, 28, 'L', 'F'): 'U',
-    (11, 28, 'L', 'U'): 'D',
-    (11, 28, 'R', 'B'): 'U',
-    (11, 28, 'R', 'D'): 'D',
-    (11, 28, 'R', 'F'): 'U',
-    (11, 28, 'R', 'U'): 'D',
-    (11, 28, 'U', 'B'): 'U',
-    (11, 28, 'U', 'F'): 'U',
-    (11, 28, 'U', 'L'): 'U',
-    (11, 28, 'U', 'R'): 'U',
-    (15, 78, 'B', 'D'): 'D',
-    (15, 78, 'B', 'L'): 'D',
-    (15, 78, 'B', 'R'): 'D',
-    (15, 78, 'B', 'U'): 'D',
-    (15, 78, 'D', 'B'): 'U',
-    (15, 78, 'D', 'F'): 'U',
-    (15, 78, 'D', 'L'): 'U',
-    (15, 78, 'D', 'R'): 'U',
-    (15, 78, 'F', 'D'): 'D',
-    (15, 78, 'F', 'L'): 'D',
-    (15, 78, 'F', 'R'): 'D',
-    (15, 78, 'F', 'U'): 'D',
-    (15, 78, 'L', 'B'): 'U',
-    (15, 78, 'L', 'D'): 'D',
-    (15, 78, 'L', 'F'): 'U',
-    (15, 78, 'L', 'U'): 'D',
-    (15, 78, 'R', 'B'): 'U',
-    (15, 78, 'R', 'D'): 'D',
-    (15, 78, 'R', 'F'): 'U',
-    (15, 78, 'R', 'U'): 'D',
-    (15, 78, 'U', 'B'): 'U',
-    (15, 78, 'U', 'F'): 'U',
-    (15, 78, 'U', 'L'): 'U',
-    (15, 78, 'U', 'R'): 'U',
-    (16, 29, 'B', 'D'): 'D',
-    (16, 29, 'B', 'L'): 'D',
-    (16, 29, 'B', 'R'): 'D',
-    (16, 29, 'B', 'U'): 'D',
-    (16, 29, 'D', 'B'): 'U',
-    (16, 29, 'D', 'F'): 'U',
-    (16, 29, 'D', 'L'): 'U',
-    (16, 29, 'D', 'R'): 'U',
-    (16, 29, 'F', 'D'): 'D',
-    (16, 29, 'F', 'L'): 'D',
-    (16, 29, 'F', 'R'): 'D',
-    (16, 29, 'F', 'U'): 'D',
-    (16, 29, 'L', 'B'): 'U',
-    (16, 29, 'L', 'D'): 'D',
-    (16, 29, 'L', 'F'): 'U',
-    (16, 29, 'L', 'U'): 'D',
-    (16, 29, 'R', 'B'): 'U',
-    (16, 29, 'R', 'D'): 'D',
-    (16, 29, 'R', 'F'): 'U',
-    (16, 29, 'R', 'U'): 'D',
-    (16, 29, 'U', 'B'): 'U',
-    (16, 29, 'U', 'F'): 'U',
-    (16, 29, 'U', 'L'): 'U',
-    (16, 29, 'U', 'R'): 'U',
-    (20, 77, 'B', 'D'): 'U',
-    (20, 77, 'B', 'L'): 'U',
-    (20, 77, 'B', 'R'): 'U',
-    (20, 77, 'B', 'U'): 'U',
-    (20, 77, 'D', 'B'): 'D',
-    (20, 77, 'D', 'F'): 'D',
-    (20, 77, 'D', 'L'): 'D',
-    (20, 77, 'D', 'R'): 'D',
-    (20, 77, 'F', 'D'): 'U',
-    (20, 77, 'F', 'L'): 'U',
-    (20, 77, 'F', 'R'): 'U',
-    (20, 77, 'F', 'U'): 'U',
-    (20, 77, 'L', 'B'): 'D',
-    (20, 77, 'L', 'D'): 'U',
-    (20, 77, 'L', 'F'): 'D',
-    (20, 77, 'L', 'U'): 'U',
-    (20, 77, 'R', 'B'): 'D',
-    (20, 77, 'R', 'D'): 'U',
-    (20, 77, 'R', 'F'): 'D',
-    (20, 77, 'R', 'U'): 'U',
-    (20, 77, 'U', 'B'): 'D',
-    (20, 77, 'U', 'F'): 'D',
-    (20, 77, 'U', 'L'): 'D',
-    (20, 77, 'U', 'R'): 'D',
-    (22, 52, 'B', 'D'): 'U',
-    (22, 52, 'B', 'L'): 'U',
-    (22, 52, 'B', 'R'): 'U',
-    (22, 52, 'B', 'U'): 'U',
-    (22, 52, 'D', 'B'): 'D',
-    (22, 52, 'D', 'F'): 'D',
-    (22, 52, 'D', 'L'): 'D',
-    (22, 52, 'D', 'R'): 'D',
-    (22, 52, 'F', 'D'): 'U',
-    (22, 52, 'F', 'L'): 'U',
-    (22, 52, 'F', 'R'): 'U',
-    (22, 52, 'F', 'U'): 'U',
-    (22, 52, 'L', 'B'): 'D',
-    (22, 52, 'L', 'D'): 'U',
-    (22, 52, 'L', 'F'): 'D',
-    (22, 52, 'L', 'U'): 'U',
-    (22, 52, 'R', 'B'): 'D',
-    (22, 52, 'R', 'D'): 'U',
-    (22, 52, 'R', 'F'): 'D',
-    (22, 52, 'R', 'U'): 'U',
-    (22, 52, 'U', 'B'): 'D',
-    (22, 52, 'U', 'F'): 'D',
-    (22, 52, 'U', 'L'): 'D',
-    (22, 52, 'U', 'R'): 'D',
-    (23, 53, 'B', 'D'): 'D',
-    (23, 53, 'B', 'L'): 'D',
-    (23, 53, 'B', 'R'): 'D',
-    (23, 53, 'B', 'U'): 'D',
-    (23, 53, 'D', 'B'): 'U',
-    (23, 53, 'D', 'F'): 'U',
-    (23, 53, 'D', 'L'): 'U',
-    (23, 53, 'D', 'R'): 'U',
-    (23, 53, 'F', 'D'): 'D',
-    (23, 53, 'F', 'L'): 'D',
-    (23, 53, 'F', 'R'): 'D',
-    (23, 53, 'F', 'U'): 'D',
-    (23, 53, 'L', 'B'): 'U',
-    (23, 53, 'L', 'D'): 'D',
-    (23, 53, 'L', 'F'): 'U',
-    (23, 53, 'L', 'U'): 'D',
-    (23, 53, 'R', 'B'): 'U',
-    (23, 53, 'R', 'D'): 'D',
-    (23, 53, 'R', 'F'): 'U',
-    (23, 53, 'R', 'U'): 'D',
-    (23, 53, 'U', 'B'): 'U',
-    (23, 53, 'U', 'F'): 'U',
-    (23, 53, 'U', 'L'): 'U',
-    (23, 53, 'U', 'R'): 'U',
-    (24, 54, 'B', 'D'): 'D',
-    (24, 54, 'B', 'L'): 'D',
-    (24, 54, 'B', 'R'): 'D',
-    (24, 54, 'B', 'U'): 'D',
-    (24, 54, 'D', 'B'): 'U',
-    (24, 54, 'D', 'F'): 'U',
-    (24, 54, 'D', 'L'): 'U',
-    (24, 54, 'D', 'R'): 'U',
-    (24, 54, 'F', 'D'): 'D',
-    (24, 54, 'F', 'L'): 'D',
-    (24, 54, 'F', 'R'): 'D',
-    (24, 54, 'F', 'U'): 'D',
-    (24, 54, 'L', 'B'): 'U',
-    (24, 54, 'L', 'D'): 'D',
-    (24, 54, 'L', 'F'): 'U',
-    (24, 54, 'L', 'U'): 'D',
-    (24, 54, 'R', 'B'): 'U',
-    (24, 54, 'R', 'D'): 'D',
-    (24, 54, 'R', 'F'): 'U',
-    (24, 54, 'R', 'U'): 'D',
-    (24, 54, 'U', 'B'): 'U',
-    (24, 54, 'U', 'F'): 'U',
-    (24, 54, 'U', 'L'): 'U',
-    (24, 54, 'U', 'R'): 'U',
-    (27, 6, 'B', 'D'): 'D',
-    (27, 6, 'B', 'L'): 'D',
-    (27, 6, 'B', 'R'): 'D',
-    (27, 6, 'B', 'U'): 'D',
-    (27, 6, 'D', 'B'): 'U',
-    (27, 6, 'D', 'F'): 'U',
-    (27, 6, 'D', 'L'): 'U',
-    (27, 6, 'D', 'R'): 'U',
-    (27, 6, 'F', 'D'): 'D',
-    (27, 6, 'F', 'L'): 'D',
-    (27, 6, 'F', 'R'): 'D',
-    (27, 6, 'F', 'U'): 'D',
-    (27, 6, 'L', 'B'): 'U',
-    (27, 6, 'L', 'D'): 'D',
-    (27, 6, 'L', 'F'): 'U',
-    (27, 6, 'L', 'U'): 'D',
-    (27, 6, 'R', 'B'): 'U',
-    (27, 6, 'R', 'D'): 'D',
-    (27, 6, 'R', 'F'): 'U',
-    (27, 6, 'R', 'U'): 'D',
-    (27, 6, 'U', 'B'): 'U',
-    (27, 6, 'U', 'F'): 'U',
-    (27, 6, 'U', 'L'): 'U',
-    (27, 6, 'U', 'R'): 'U',
-    (28, 11, 'B', 'D'): 'U',
-    (28, 11, 'B', 'L'): 'U',
-    (28, 11, 'B', 'R'): 'U',
-    (28, 11, 'B', 'U'): 'U',
-    (28, 11, 'D', 'B'): 'D',
-    (28, 11, 'D', 'F'): 'D',
-    (28, 11, 'D', 'L'): 'D',
-    (28, 11, 'D', 'R'): 'D',
-    (28, 11, 'F', 'D'): 'U',
-    (28, 11, 'F', 'L'): 'U',
-    (28, 11, 'F', 'R'): 'U',
-    (28, 11, 'F', 'U'): 'U',
-    (28, 11, 'L', 'B'): 'D',
-    (28, 11, 'L', 'D'): 'U',
-    (28, 11, 'L', 'F'): 'D',
-    (28, 11, 'L', 'U'): 'U',
-    (28, 11, 'R', 'B'): 'D',
-    (28, 11, 'R', 'D'): 'U',
-    (28, 11, 'R', 'F'): 'D',
-    (28, 11, 'R', 'U'): 'U',
-    (28, 11, 'U', 'B'): 'D',
-    (28, 11, 'U', 'F'): 'D',
-    (28, 11, 'U', 'L'): 'D',
-    (28, 11, 'U', 'R'): 'D',
-    (29, 16, 'B', 'D'): 'U',
-    (29, 16, 'B', 'L'): 'U',
-    (29, 16, 'B', 'R'): 'U',
-    (29, 16, 'B', 'U'): 'U',
-    (29, 16, 'D', 'B'): 'D',
-    (29, 16, 'D', 'F'): 'D',
-    (29, 16, 'D', 'L'): 'D',
-    (29, 16, 'D', 'R'): 'D',
-    (29, 16, 'F', 'D'): 'U',
-    (29, 16, 'F', 'L'): 'U',
-    (29, 16, 'F', 'R'): 'U',
-    (29, 16, 'F', 'U'): 'U',
-    (29, 16, 'L', 'B'): 'D',
-    (29, 16, 'L', 'D'): 'U',
-    (29, 16, 'L', 'F'): 'D',
-    (29, 16, 'L', 'U'): 'U',
-    (29, 16, 'R', 'B'): 'D',
-    (29, 16, 'R', 'D'): 'U',
-    (29, 16, 'R', 'F'): 'D',
-    (29, 16, 'R', 'U'): 'U',
-    (29, 16, 'U', 'B'): 'D',
-    (29, 16, 'U', 'F'): 'D',
-    (29, 16, 'U', 'L'): 'D',
-    (29, 16, 'U', 'R'): 'D',
-    (31, 110, 'B', 'D'): 'U',
-    (31, 110, 'B', 'L'): 'U',
-    (31, 110, 'B', 'R'): 'U',
-    (31, 110, 'B', 'U'): 'U',
-    (31, 110, 'D', 'B'): 'D',
-    (31, 110, 'D', 'F'): 'D',
-    (31, 110, 'D', 'L'): 'D',
-    (31, 110, 'D', 'R'): 'D',
-    (31, 110, 'F', 'D'): 'U',
-    (31, 110, 'F', 'L'): 'U',
-    (31, 110, 'F', 'R'): 'U',
-    (31, 110, 'F', 'U'): 'U',
-    (31, 110, 'L', 'B'): 'D',
-    (31, 110, 'L', 'D'): 'U',
-    (31, 110, 'L', 'F'): 'D',
-    (31, 110, 'L', 'U'): 'U',
-    (31, 110, 'R', 'B'): 'D',
-    (31, 110, 'R', 'D'): 'U',
-    (31, 110, 'R', 'F'): 'D',
-    (31, 110, 'R', 'U'): 'U',
-    (31, 110, 'U', 'B'): 'D',
-    (31, 110, 'U', 'F'): 'D',
-    (31, 110, 'U', 'L'): 'D',
-    (31, 110, 'U', 'R'): 'D',
-    (35, 56, 'B', 'D'): 'D',
-    (35, 56, 'B', 'L'): 'D',
-    (35, 56, 'B', 'R'): 'D',
-    (35, 56, 'B', 'U'): 'D',
-    (35, 56, 'D', 'B'): 'U',
-    (35, 56, 'D', 'F'): 'U',
-    (35, 56, 'D', 'L'): 'U',
-    (35, 56, 'D', 'R'): 'U',
-    (35, 56, 'F', 'D'): 'D',
-    (35, 56, 'F', 'L'): 'D',
-    (35, 56, 'F', 'R'): 'D',
-    (35, 56, 'F', 'U'): 'D',
-    (35, 56, 'L', 'B'): 'U',
-    (35, 56, 'L', 'D'): 'D',
-    (35, 56, 'L', 'F'): 'U',
-    (35, 56, 'L', 'U'): 'D',
-    (35, 56, 'R', 'B'): 'U',
-    (35, 56, 'R', 'D'): 'D',
-    (35, 56, 'R', 'F'): 'U',
-    (35, 56, 'R', 'U'): 'D',
-    (35, 56, 'U', 'B'): 'U',
-    (35, 56, 'U', 'F'): 'U',
-    (35, 56, 'U', 'L'): 'U',
-    (35, 56, 'U', 'R'): 'U',
-    (36, 115, 'B', 'D'): 'D',
-    (36, 115, 'B', 'L'): 'D',
-    (36, 115, 'B', 'R'): 'D',
-    (36, 115, 'B', 'U'): 'D',
-    (36, 115, 'D', 'B'): 'U',
-    (36, 115, 'D', 'F'): 'U',
-    (36, 115, 'D', 'L'): 'U',
-    (36, 115, 'D', 'R'): 'U',
-    (36, 115, 'F', 'D'): 'D',
-    (36, 115, 'F', 'L'): 'D',
-    (36, 115, 'F', 'R'): 'D',
-    (36, 115, 'F', 'U'): 'D',
-    (36, 115, 'L', 'B'): 'U',
-    (36, 115, 'L', 'D'): 'D',
-    (36, 115, 'L', 'F'): 'U',
-    (36, 115, 'L', 'U'): 'D',
-    (36, 115, 'R', 'B'): 'U',
-    (36, 115, 'R', 'D'): 'D',
-    (36, 115, 'R', 'F'): 'U',
-    (36, 115, 'R', 'U'): 'D',
-    (36, 115, 'U', 'B'): 'U',
-    (36, 115, 'U', 'F'): 'U',
-    (36, 115, 'U', 'L'): 'U',
-    (36, 115, 'U', 'R'): 'U',
-    (40, 61, 'B', 'D'): 'D',
-    (40, 61, 'B', 'L'): 'D',
-    (40, 61, 'B', 'R'): 'D',
-    (40, 61, 'B', 'U'): 'D',
-    (40, 61, 'D', 'B'): 'U',
-    (40, 61, 'D', 'F'): 'U',
-    (40, 61, 'D', 'L'): 'U',
-    (40, 61, 'D', 'R'): 'U',
-    (40, 61, 'F', 'D'): 'D',
-    (40, 61, 'F', 'L'): 'D',
-    (40, 61, 'F', 'R'): 'D',
-    (40, 61, 'F', 'U'): 'D',
-    (40, 61, 'L', 'B'): 'U',
-    (40, 61, 'L', 'D'): 'D',
-    (40, 61, 'L', 'F'): 'U',
-    (40, 61, 'L', 'U'): 'D',
-    (40, 61, 'R', 'B'): 'U',
-    (40, 61, 'R', 'D'): 'D',
-    (40, 61, 'R', 'F'): 'U',
-    (40, 61, 'R', 'U'): 'D',
-    (40, 61, 'U', 'B'): 'U',
-    (40, 61, 'U', 'F'): 'U',
-    (40, 61, 'U', 'L'): 'U',
-    (40, 61, 'U', 'R'): 'U',
-    (41, 120, 'B', 'D'): 'D',
-    (41, 120, 'B', 'L'): 'D',
-    (41, 120, 'B', 'R'): 'D',
-    (41, 120, 'B', 'U'): 'D',
-    (41, 120, 'D', 'B'): 'U',
-    (41, 120, 'D', 'F'): 'U',
-    (41, 120, 'D', 'L'): 'U',
-    (41, 120, 'D', 'R'): 'U',
-    (41, 120, 'F', 'D'): 'D',
-    (41, 120, 'F', 'L'): 'D',
-    (41, 120, 'F', 'R'): 'D',
-    (41, 120, 'F', 'U'): 'D',
-    (41, 120, 'L', 'B'): 'U',
-    (41, 120, 'L', 'D'): 'D',
-    (41, 120, 'L', 'F'): 'U',
-    (41, 120, 'L', 'U'): 'D',
-    (41, 120, 'R', 'B'): 'U',
-    (41, 120, 'R', 'D'): 'D',
-    (41, 120, 'R', 'F'): 'U',
-    (41, 120, 'R', 'U'): 'D',
-    (41, 120, 'U', 'B'): 'U',
-    (41, 120, 'U', 'F'): 'U',
-    (41, 120, 'U', 'L'): 'U',
-    (41, 120, 'U', 'R'): 'U',
-    (45, 66, 'B', 'D'): 'U',
-    (45, 66, 'B', 'L'): 'U',
-    (45, 66, 'B', 'R'): 'U',
-    (45, 66, 'B', 'U'): 'U',
-    (45, 66, 'D', 'B'): 'D',
-    (45, 66, 'D', 'F'): 'D',
-    (45, 66, 'D', 'L'): 'D',
-    (45, 66, 'D', 'R'): 'D',
-    (45, 66, 'F', 'D'): 'U',
-    (45, 66, 'F', 'L'): 'U',
-    (45, 66, 'F', 'R'): 'U',
-    (45, 66, 'F', 'U'): 'U',
-    (45, 66, 'L', 'B'): 'D',
-    (45, 66, 'L', 'D'): 'U',
-    (45, 66, 'L', 'F'): 'D',
-    (45, 66, 'L', 'U'): 'U',
-    (45, 66, 'R', 'B'): 'D',
-    (45, 66, 'R', 'D'): 'U',
-    (45, 66, 'R', 'F'): 'D',
-    (45, 66, 'R', 'U'): 'U',
-    (45, 66, 'U', 'B'): 'D',
-    (45, 66, 'U', 'F'): 'D',
-    (45, 66, 'U', 'L'): 'D',
-    (45, 66, 'U', 'R'): 'D',
-    (47, 141, 'B', 'D'): 'U',
-    (47, 141, 'B', 'L'): 'U',
-    (47, 141, 'B', 'R'): 'U',
-    (47, 141, 'B', 'U'): 'U',
-    (47, 141, 'D', 'B'): 'D',
-    (47, 141, 'D', 'F'): 'D',
-    (47, 141, 'D', 'L'): 'D',
-    (47, 141, 'D', 'R'): 'D',
-    (47, 141, 'F', 'D'): 'U',
-    (47, 141, 'F', 'L'): 'U',
-    (47, 141, 'F', 'R'): 'U',
-    (47, 141, 'F', 'U'): 'U',
-    (47, 141, 'L', 'B'): 'D',
-    (47, 141, 'L', 'D'): 'U',
-    (47, 141, 'L', 'F'): 'D',
-    (47, 141, 'L', 'U'): 'U',
-    (47, 141, 'R', 'B'): 'D',
-    (47, 141, 'R', 'D'): 'U',
-    (47, 141, 'R', 'F'): 'D',
-    (47, 141, 'R', 'U'): 'U',
-    (47, 141, 'U', 'B'): 'D',
-    (47, 141, 'U', 'F'): 'D',
-    (47, 141, 'U', 'L'): 'D',
-    (47, 141, 'U', 'R'): 'D',
-    (48, 136, 'B', 'D'): 'U',
-    (48, 136, 'B', 'L'): 'U',
-    (48, 136, 'B', 'R'): 'U',
-    (48, 136, 'B', 'U'): 'U',
-    (48, 136, 'D', 'B'): 'D',
-    (48, 136, 'D', 'F'): 'D',
-    (48, 136, 'D', 'L'): 'D',
-    (48, 136, 'D', 'R'): 'D',
-    (48, 136, 'F', 'D'): 'U',
-    (48, 136, 'F', 'L'): 'U',
-    (48, 136, 'F', 'R'): 'U',
-    (48, 136, 'F', 'U'): 'U',
-    (48, 136, 'L', 'B'): 'D',
-    (48, 136, 'L', 'D'): 'U',
-    (48, 136, 'L', 'F'): 'D',
-    (48, 136, 'L', 'U'): 'U',
-    (48, 136, 'R', 'B'): 'D',
-    (48, 136, 'R', 'D'): 'U',
-    (48, 136, 'R', 'F'): 'D',
-    (48, 136, 'R', 'U'): 'U',
-    (48, 136, 'U', 'B'): 'D',
-    (48, 136, 'U', 'F'): 'D',
-    (48, 136, 'U', 'L'): 'D',
-    (48, 136, 'U', 'R'): 'D',
-    (49, 131, 'B', 'D'): 'D',
-    (49, 131, 'B', 'L'): 'D',
-    (49, 131, 'B', 'R'): 'D',
-    (49, 131, 'B', 'U'): 'D',
-    (49, 131, 'D', 'B'): 'U',
-    (49, 131, 'D', 'F'): 'U',
-    (49, 131, 'D', 'L'): 'U',
-    (49, 131, 'D', 'R'): 'U',
-    (49, 131, 'F', 'D'): 'D',
-    (49, 131, 'F', 'L'): 'D',
-    (49, 131, 'F', 'R'): 'D',
-    (49, 131, 'F', 'U'): 'D',
-    (49, 131, 'L', 'B'): 'U',
-    (49, 131, 'L', 'D'): 'D',
-    (49, 131, 'L', 'F'): 'U',
-    (49, 131, 'L', 'U'): 'D',
-    (49, 131, 'R', 'B'): 'U',
-    (49, 131, 'R', 'D'): 'D',
-    (49, 131, 'R', 'F'): 'U',
-    (49, 131, 'R', 'U'): 'D',
-    (49, 131, 'U', 'B'): 'U',
-    (49, 131, 'U', 'F'): 'U',
-    (49, 131, 'U', 'L'): 'U',
-    (49, 131, 'U', 'R'): 'U',
-    (52, 22, 'B', 'D'): 'D',
-    (52, 22, 'B', 'L'): 'D',
-    (52, 22, 'B', 'R'): 'D',
-    (52, 22, 'B', 'U'): 'D',
-    (52, 22, 'D', 'B'): 'U',
-    (52, 22, 'D', 'F'): 'U',
-    (52, 22, 'D', 'L'): 'U',
-    (52, 22, 'D', 'R'): 'U',
-    (52, 22, 'F', 'D'): 'D',
-    (52, 22, 'F', 'L'): 'D',
-    (52, 22, 'F', 'R'): 'D',
-    (52, 22, 'F', 'U'): 'D',
-    (52, 22, 'L', 'B'): 'U',
-    (52, 22, 'L', 'D'): 'D',
-    (52, 22, 'L', 'F'): 'U',
-    (52, 22, 'L', 'U'): 'D',
-    (52, 22, 'R', 'B'): 'U',
-    (52, 22, 'R', 'D'): 'D',
-    (52, 22, 'R', 'F'): 'U',
-    (52, 22, 'R', 'U'): 'D',
-    (52, 22, 'U', 'B'): 'U',
-    (52, 22, 'U', 'F'): 'U',
-    (52, 22, 'U', 'L'): 'U',
-    (52, 22, 'U', 'R'): 'U',
-    (53, 23, 'B', 'D'): 'U',
-    (53, 23, 'B', 'L'): 'U',
-    (53, 23, 'B', 'R'): 'U',
-    (53, 23, 'B', 'U'): 'U',
-    (53, 23, 'D', 'B'): 'D',
-    (53, 23, 'D', 'F'): 'D',
-    (53, 23, 'D', 'L'): 'D',
-    (53, 23, 'D', 'R'): 'D',
-    (53, 23, 'F', 'D'): 'U',
-    (53, 23, 'F', 'L'): 'U',
-    (53, 23, 'F', 'R'): 'U',
-    (53, 23, 'F', 'U'): 'U',
-    (53, 23, 'L', 'B'): 'D',
-    (53, 23, 'L', 'D'): 'U',
-    (53, 23, 'L', 'F'): 'D',
-    (53, 23, 'L', 'U'): 'U',
-    (53, 23, 'R', 'B'): 'D',
-    (53, 23, 'R', 'D'): 'U',
-    (53, 23, 'R', 'F'): 'D',
-    (53, 23, 'R', 'U'): 'U',
-    (53, 23, 'U', 'B'): 'D',
-    (53, 23, 'U', 'F'): 'D',
-    (53, 23, 'U', 'L'): 'D',
-    (53, 23, 'U', 'R'): 'D',
-    (54, 24, 'B', 'D'): 'U',
-    (54, 24, 'B', 'L'): 'U',
-    (54, 24, 'B', 'R'): 'U',
-    (54, 24, 'B', 'U'): 'U',
-    (54, 24, 'D', 'B'): 'D',
-    (54, 24, 'D', 'F'): 'D',
-    (54, 24, 'D', 'L'): 'D',
-    (54, 24, 'D', 'R'): 'D',
-    (54, 24, 'F', 'D'): 'U',
-    (54, 24, 'F', 'L'): 'U',
-    (54, 24, 'F', 'R'): 'U',
-    (54, 24, 'F', 'U'): 'U',
-    (54, 24, 'L', 'B'): 'D',
-    (54, 24, 'L', 'D'): 'U',
-    (54, 24, 'L', 'F'): 'D',
-    (54, 24, 'L', 'U'): 'U',
-    (54, 24, 'R', 'B'): 'D',
-    (54, 24, 'R', 'D'): 'U',
-    (54, 24, 'R', 'F'): 'D',
-    (54, 24, 'R', 'U'): 'U',
-    (54, 24, 'U', 'B'): 'D',
-    (54, 24, 'U', 'F'): 'D',
-    (54, 24, 'U', 'L'): 'D',
-    (54, 24, 'U', 'R'): 'D',
-    (56, 35, 'B', 'D'): 'U',
-    (56, 35, 'B', 'L'): 'U',
-    (56, 35, 'B', 'R'): 'U',
-    (56, 35, 'B', 'U'): 'U',
-    (56, 35, 'D', 'B'): 'D',
-    (56, 35, 'D', 'F'): 'D',
-    (56, 35, 'D', 'L'): 'D',
-    (56, 35, 'D', 'R'): 'D',
-    (56, 35, 'F', 'D'): 'U',
-    (56, 35, 'F', 'L'): 'U',
-    (56, 35, 'F', 'R'): 'U',
-    (56, 35, 'F', 'U'): 'U',
-    (56, 35, 'L', 'B'): 'D',
-    (56, 35, 'L', 'D'): 'U',
-    (56, 35, 'L', 'F'): 'D',
-    (56, 35, 'L', 'U'): 'U',
-    (56, 35, 'R', 'B'): 'D',
-    (56, 35, 'R', 'D'): 'U',
-    (56, 35, 'R', 'F'): 'D',
-    (56, 35, 'R', 'U'): 'U',
-    (56, 35, 'U', 'B'): 'D',
-    (56, 35, 'U', 'F'): 'D',
-    (56, 35, 'U', 'L'): 'D',
-    (56, 35, 'U', 'R'): 'D',
-    (60, 81, 'B', 'D'): 'D',
-    (60, 81, 'B', 'L'): 'D',
-    (60, 81, 'B', 'R'): 'D',
-    (60, 81, 'B', 'U'): 'D',
-    (60, 81, 'D', 'B'): 'U',
-    (60, 81, 'D', 'F'): 'U',
-    (60, 81, 'D', 'L'): 'U',
-    (60, 81, 'D', 'R'): 'U',
-    (60, 81, 'F', 'D'): 'D',
-    (60, 81, 'F', 'L'): 'D',
-    (60, 81, 'F', 'R'): 'D',
-    (60, 81, 'F', 'U'): 'D',
-    (60, 81, 'L', 'B'): 'U',
-    (60, 81, 'L', 'D'): 'D',
-    (60, 81, 'L', 'F'): 'U',
-    (60, 81, 'L', 'U'): 'D',
-    (60, 81, 'R', 'B'): 'U',
-    (60, 81, 'R', 'D'): 'D',
-    (60, 81, 'R', 'F'): 'U',
-    (60, 81, 'R', 'U'): 'D',
-    (60, 81, 'U', 'B'): 'U',
-    (60, 81, 'U', 'F'): 'U',
-    (60, 81, 'U', 'L'): 'U',
-    (60, 81, 'U', 'R'): 'U',
-    (61, 40, 'B', 'D'): 'U',
-    (61, 40, 'B', 'L'): 'U',
-    (61, 40, 'B', 'R'): 'U',
-    (61, 40, 'B', 'U'): 'U',
-    (61, 40, 'D', 'B'): 'D',
-    (61, 40, 'D', 'F'): 'D',
-    (61, 40, 'D', 'L'): 'D',
-    (61, 40, 'D', 'R'): 'D',
-    (61, 40, 'F', 'D'): 'U',
-    (61, 40, 'F', 'L'): 'U',
-    (61, 40, 'F', 'R'): 'U',
-    (61, 40, 'F', 'U'): 'U',
-    (61, 40, 'L', 'B'): 'D',
-    (61, 40, 'L', 'D'): 'U',
-    (61, 40, 'L', 'F'): 'D',
-    (61, 40, 'L', 'U'): 'U',
-    (61, 40, 'R', 'B'): 'D',
-    (61, 40, 'R', 'D'): 'U',
-    (61, 40, 'R', 'F'): 'D',
-    (61, 40, 'R', 'U'): 'U',
-    (61, 40, 'U', 'B'): 'D',
-    (61, 40, 'U', 'F'): 'D',
-    (61, 40, 'U', 'L'): 'D',
-    (61, 40, 'U', 'R'): 'D',
-    (65, 86, 'B', 'D'): 'U',
-    (65, 86, 'B', 'L'): 'U',
-    (65, 86, 'B', 'R'): 'U',
-    (65, 86, 'B', 'U'): 'U',
-    (65, 86, 'D', 'B'): 'D',
-    (65, 86, 'D', 'F'): 'D',
-    (65, 86, 'D', 'L'): 'D',
-    (65, 86, 'D', 'R'): 'D',
-    (65, 86, 'F', 'D'): 'U',
-    (65, 86, 'F', 'L'): 'U',
-    (65, 86, 'F', 'R'): 'U',
-    (65, 86, 'F', 'U'): 'U',
-    (65, 86, 'L', 'B'): 'D',
-    (65, 86, 'L', 'D'): 'U',
-    (65, 86, 'L', 'F'): 'D',
-    (65, 86, 'L', 'U'): 'U',
-    (65, 86, 'R', 'B'): 'D',
-    (65, 86, 'R', 'D'): 'U',
-    (65, 86, 'R', 'F'): 'D',
-    (65, 86, 'R', 'U'): 'U',
-    (65, 86, 'U', 'B'): 'D',
-    (65, 86, 'U', 'F'): 'D',
-    (65, 86, 'U', 'L'): 'D',
-    (65, 86, 'U', 'R'): 'D',
-    (66, 45, 'B', 'D'): 'D',
-    (66, 45, 'B', 'L'): 'D',
-    (66, 45, 'B', 'R'): 'D',
-    (66, 45, 'B', 'U'): 'D',
-    (66, 45, 'D', 'B'): 'U',
-    (66, 45, 'D', 'F'): 'U',
-    (66, 45, 'D', 'L'): 'U',
-    (66, 45, 'D', 'R'): 'U',
-    (66, 45, 'F', 'D'): 'D',
-    (66, 45, 'F', 'L'): 'D',
-    (66, 45, 'F', 'R'): 'D',
-    (66, 45, 'F', 'U'): 'D',
-    (66, 45, 'L', 'B'): 'U',
-    (66, 45, 'L', 'D'): 'D',
-    (66, 45, 'L', 'F'): 'U',
-    (66, 45, 'L', 'U'): 'D',
-    (66, 45, 'R', 'B'): 'U',
-    (66, 45, 'R', 'D'): 'D',
-    (66, 45, 'R', 'F'): 'U',
-    (66, 45, 'R', 'U'): 'D',
-    (66, 45, 'U', 'B'): 'U',
-    (66, 45, 'U', 'F'): 'U',
-    (66, 45, 'U', 'L'): 'U',
-    (66, 45, 'U', 'R'): 'U',
-    (70, 91, 'B', 'D'): 'U',
-    (70, 91, 'B', 'L'): 'U',
-    (70, 91, 'B', 'R'): 'U',
-    (70, 91, 'B', 'U'): 'U',
-    (70, 91, 'D', 'B'): 'D',
-    (70, 91, 'D', 'F'): 'D',
-    (70, 91, 'D', 'L'): 'D',
-    (70, 91, 'D', 'R'): 'D',
-    (70, 91, 'F', 'D'): 'U',
-    (70, 91, 'F', 'L'): 'U',
-    (70, 91, 'F', 'R'): 'U',
-    (70, 91, 'F', 'U'): 'U',
-    (70, 91, 'L', 'B'): 'D',
-    (70, 91, 'L', 'D'): 'U',
-    (70, 91, 'L', 'F'): 'D',
-    (70, 91, 'L', 'U'): 'U',
-    (70, 91, 'R', 'B'): 'D',
-    (70, 91, 'R', 'D'): 'U',
-    (70, 91, 'R', 'F'): 'D',
-    (70, 91, 'R', 'U'): 'U',
-    (70, 91, 'U', 'B'): 'D',
-    (70, 91, 'U', 'F'): 'D',
-    (70, 91, 'U', 'L'): 'D',
-    (70, 91, 'U', 'R'): 'D',
-    (72, 127, 'B', 'D'): 'U',
-    (72, 127, 'B', 'L'): 'U',
-    (72, 127, 'B', 'R'): 'U',
-    (72, 127, 'B', 'U'): 'U',
-    (72, 127, 'D', 'B'): 'D',
-    (72, 127, 'D', 'F'): 'D',
-    (72, 127, 'D', 'L'): 'D',
-    (72, 127, 'D', 'R'): 'D',
-    (72, 127, 'F', 'D'): 'U',
-    (72, 127, 'F', 'L'): 'U',
-    (72, 127, 'F', 'R'): 'U',
-    (72, 127, 'F', 'U'): 'U',
-    (72, 127, 'L', 'B'): 'D',
-    (72, 127, 'L', 'D'): 'U',
-    (72, 127, 'L', 'F'): 'D',
-    (72, 127, 'L', 'U'): 'U',
-    (72, 127, 'R', 'B'): 'D',
-    (72, 127, 'R', 'D'): 'U',
-    (72, 127, 'R', 'F'): 'D',
-    (72, 127, 'R', 'U'): 'U',
-    (72, 127, 'U', 'B'): 'D',
-    (72, 127, 'U', 'F'): 'D',
-    (72, 127, 'U', 'L'): 'D',
-    (72, 127, 'U', 'R'): 'D',
-    (73, 128, 'B', 'D'): 'U',
-    (73, 128, 'B', 'L'): 'U',
-    (73, 128, 'B', 'R'): 'U',
-    (73, 128, 'B', 'U'): 'U',
-    (73, 128, 'D', 'B'): 'D',
-    (73, 128, 'D', 'F'): 'D',
-    (73, 128, 'D', 'L'): 'D',
-    (73, 128, 'D', 'R'): 'D',
-    (73, 128, 'F', 'D'): 'U',
-    (73, 128, 'F', 'L'): 'U',
-    (73, 128, 'F', 'R'): 'U',
-    (73, 128, 'F', 'U'): 'U',
-    (73, 128, 'L', 'B'): 'D',
-    (73, 128, 'L', 'D'): 'U',
-    (73, 128, 'L', 'F'): 'D',
-    (73, 128, 'L', 'U'): 'U',
-    (73, 128, 'R', 'B'): 'D',
-    (73, 128, 'R', 'D'): 'U',
-    (73, 128, 'R', 'F'): 'D',
-    (73, 128, 'R', 'U'): 'U',
-    (73, 128, 'U', 'B'): 'D',
-    (73, 128, 'U', 'F'): 'D',
-    (73, 128, 'U', 'L'): 'D',
-    (73, 128, 'U', 'R'): 'D',
-    (74, 129, 'B', 'D'): 'D',
-    (74, 129, 'B', 'L'): 'D',
-    (74, 129, 'B', 'R'): 'D',
-    (74, 129, 'B', 'U'): 'D',
-    (74, 129, 'D', 'B'): 'U',
-    (74, 129, 'D', 'F'): 'U',
-    (74, 129, 'D', 'L'): 'U',
-    (74, 129, 'D', 'R'): 'U',
-    (74, 129, 'F', 'D'): 'D',
-    (74, 129, 'F', 'L'): 'D',
-    (74, 129, 'F', 'R'): 'D',
-    (74, 129, 'F', 'U'): 'D',
-    (74, 129, 'L', 'B'): 'U',
-    (74, 129, 'L', 'D'): 'D',
-    (74, 129, 'L', 'F'): 'U',
-    (74, 129, 'L', 'U'): 'D',
-    (74, 129, 'R', 'B'): 'U',
-    (74, 129, 'R', 'D'): 'D',
-    (74, 129, 'R', 'F'): 'U',
-    (74, 129, 'R', 'U'): 'D',
-    (74, 129, 'U', 'B'): 'U',
-    (74, 129, 'U', 'F'): 'U',
-    (74, 129, 'U', 'L'): 'U',
-    (74, 129, 'U', 'R'): 'U',
-    (77, 20, 'B', 'D'): 'D',
-    (77, 20, 'B', 'L'): 'D',
-    (77, 20, 'B', 'R'): 'D',
-    (77, 20, 'B', 'U'): 'D',
-    (77, 20, 'D', 'B'): 'U',
-    (77, 20, 'D', 'F'): 'U',
-    (77, 20, 'D', 'L'): 'U',
-    (77, 20, 'D', 'R'): 'U',
-    (77, 20, 'F', 'D'): 'D',
-    (77, 20, 'F', 'L'): 'D',
-    (77, 20, 'F', 'R'): 'D',
-    (77, 20, 'F', 'U'): 'D',
-    (77, 20, 'L', 'B'): 'U',
-    (77, 20, 'L', 'D'): 'D',
-    (77, 20, 'L', 'F'): 'U',
-    (77, 20, 'L', 'U'): 'D',
-    (77, 20, 'R', 'B'): 'U',
-    (77, 20, 'R', 'D'): 'D',
-    (77, 20, 'R', 'F'): 'U',
-    (77, 20, 'R', 'U'): 'D',
-    (77, 20, 'U', 'B'): 'U',
-    (77, 20, 'U', 'F'): 'U',
-    (77, 20, 'U', 'L'): 'U',
-    (77, 20, 'U', 'R'): 'U',
-    (78, 15, 'B', 'D'): 'U',
-    (78, 15, 'B', 'L'): 'U',
-    (78, 15, 'B', 'R'): 'U',
-    (78, 15, 'B', 'U'): 'U',
-    (78, 15, 'D', 'B'): 'D',
-    (78, 15, 'D', 'F'): 'D',
-    (78, 15, 'D', 'L'): 'D',
-    (78, 15, 'D', 'R'): 'D',
-    (78, 15, 'F', 'D'): 'U',
-    (78, 15, 'F', 'L'): 'U',
-    (78, 15, 'F', 'R'): 'U',
-    (78, 15, 'F', 'U'): 'U',
-    (78, 15, 'L', 'B'): 'D',
-    (78, 15, 'L', 'D'): 'U',
-    (78, 15, 'L', 'F'): 'D',
-    (78, 15, 'L', 'U'): 'U',
-    (78, 15, 'R', 'B'): 'D',
-    (78, 15, 'R', 'D'): 'U',
-    (78, 15, 'R', 'F'): 'D',
-    (78, 15, 'R', 'U'): 'U',
-    (78, 15, 'U', 'B'): 'D',
-    (78, 15, 'U', 'F'): 'D',
-    (78, 15, 'U', 'L'): 'D',
-    (78, 15, 'U', 'R'): 'D',
-    (79, 10, 'B', 'D'): 'U',
-    (79, 10, 'B', 'L'): 'U',
-    (79, 10, 'B', 'R'): 'U',
-    (79, 10, 'B', 'U'): 'U',
-    (79, 10, 'D', 'B'): 'D',
-    (79, 10, 'D', 'F'): 'D',
-    (79, 10, 'D', 'L'): 'D',
-    (79, 10, 'D', 'R'): 'D',
-    (79, 10, 'F', 'D'): 'U',
-    (79, 10, 'F', 'L'): 'U',
-    (79, 10, 'F', 'R'): 'U',
-    (79, 10, 'F', 'U'): 'U',
-    (79, 10, 'L', 'B'): 'D',
-    (79, 10, 'L', 'D'): 'U',
-    (79, 10, 'L', 'F'): 'D',
-    (79, 10, 'L', 'U'): 'U',
-    (79, 10, 'R', 'B'): 'D',
-    (79, 10, 'R', 'D'): 'U',
-    (79, 10, 'R', 'F'): 'D',
-    (79, 10, 'R', 'U'): 'U',
-    (79, 10, 'U', 'B'): 'D',
-    (79, 10, 'U', 'F'): 'D',
-    (79, 10, 'U', 'L'): 'D',
-    (79, 10, 'U', 'R'): 'D',
-    (81, 60, 'B', 'D'): 'U',
-    (81, 60, 'B', 'L'): 'U',
-    (81, 60, 'B', 'R'): 'U',
-    (81, 60, 'B', 'U'): 'U',
-    (81, 60, 'D', 'B'): 'D',
-    (81, 60, 'D', 'F'): 'D',
-    (81, 60, 'D', 'L'): 'D',
-    (81, 60, 'D', 'R'): 'D',
-    (81, 60, 'F', 'D'): 'U',
-    (81, 60, 'F', 'L'): 'U',
-    (81, 60, 'F', 'R'): 'U',
-    (81, 60, 'F', 'U'): 'U',
-    (81, 60, 'L', 'B'): 'D',
-    (81, 60, 'L', 'D'): 'U',
-    (81, 60, 'L', 'F'): 'D',
-    (81, 60, 'L', 'U'): 'U',
-    (81, 60, 'R', 'B'): 'D',
-    (81, 60, 'R', 'D'): 'U',
-    (81, 60, 'R', 'F'): 'D',
-    (81, 60, 'R', 'U'): 'U',
-    (81, 60, 'U', 'B'): 'D',
-    (81, 60, 'U', 'F'): 'D',
-    (81, 60, 'U', 'L'): 'D',
-    (81, 60, 'U', 'R'): 'D',
-    (85, 106, 'B', 'D'): 'D',
-    (85, 106, 'B', 'L'): 'D',
-    (85, 106, 'B', 'R'): 'D',
-    (85, 106, 'B', 'U'): 'D',
-    (85, 106, 'D', 'B'): 'U',
-    (85, 106, 'D', 'F'): 'U',
-    (85, 106, 'D', 'L'): 'U',
-    (85, 106, 'D', 'R'): 'U',
-    (85, 106, 'F', 'D'): 'D',
-    (85, 106, 'F', 'L'): 'D',
-    (85, 106, 'F', 'R'): 'D',
-    (85, 106, 'F', 'U'): 'D',
-    (85, 106, 'L', 'B'): 'U',
-    (85, 106, 'L', 'D'): 'D',
-    (85, 106, 'L', 'F'): 'U',
-    (85, 106, 'L', 'U'): 'D',
-    (85, 106, 'R', 'B'): 'U',
-    (85, 106, 'R', 'D'): 'D',
-    (85, 106, 'R', 'F'): 'U',
-    (85, 106, 'R', 'U'): 'D',
-    (85, 106, 'U', 'B'): 'U',
-    (85, 106, 'U', 'F'): 'U',
-    (85, 106, 'U', 'L'): 'U',
-    (85, 106, 'U', 'R'): 'U',
-    (86, 65, 'B', 'D'): 'D',
-    (86, 65, 'B', 'L'): 'D',
-    (86, 65, 'B', 'R'): 'D',
-    (86, 65, 'B', 'U'): 'D',
-    (86, 65, 'D', 'B'): 'U',
-    (86, 65, 'D', 'F'): 'U',
-    (86, 65, 'D', 'L'): 'U',
-    (86, 65, 'D', 'R'): 'U',
-    (86, 65, 'F', 'D'): 'D',
-    (86, 65, 'F', 'L'): 'D',
-    (86, 65, 'F', 'R'): 'D',
-    (86, 65, 'F', 'U'): 'D',
-    (86, 65, 'L', 'B'): 'U',
-    (86, 65, 'L', 'D'): 'D',
-    (86, 65, 'L', 'F'): 'U',
-    (86, 65, 'L', 'U'): 'D',
-    (86, 65, 'R', 'B'): 'U',
-    (86, 65, 'R', 'D'): 'D',
-    (86, 65, 'R', 'F'): 'U',
-    (86, 65, 'R', 'U'): 'D',
-    (86, 65, 'U', 'B'): 'U',
-    (86, 65, 'U', 'F'): 'U',
-    (86, 65, 'U', 'L'): 'U',
-    (86, 65, 'U', 'R'): 'U',
-    (90, 111, 'B', 'D'): 'D',
-    (90, 111, 'B', 'L'): 'D',
-    (90, 111, 'B', 'R'): 'D',
-    (90, 111, 'B', 'U'): 'D',
-    (90, 111, 'D', 'B'): 'U',
-    (90, 111, 'D', 'F'): 'U',
-    (90, 111, 'D', 'L'): 'U',
-    (90, 111, 'D', 'R'): 'U',
-    (90, 111, 'F', 'D'): 'D',
-    (90, 111, 'F', 'L'): 'D',
-    (90, 111, 'F', 'R'): 'D',
-    (90, 111, 'F', 'U'): 'D',
-    (90, 111, 'L', 'B'): 'U',
-    (90, 111, 'L', 'D'): 'D',
-    (90, 111, 'L', 'F'): 'U',
-    (90, 111, 'L', 'U'): 'D',
-    (90, 111, 'R', 'B'): 'U',
-    (90, 111, 'R', 'D'): 'D',
-    (90, 111, 'R', 'F'): 'U',
-    (90, 111, 'R', 'U'): 'D',
-    (90, 111, 'U', 'B'): 'U',
-    (90, 111, 'U', 'F'): 'U',
-    (90, 111, 'U', 'L'): 'U',
-    (90, 111, 'U', 'R'): 'U',
-    (91, 70, 'B', 'D'): 'D',
-    (91, 70, 'B', 'L'): 'D',
-    (91, 70, 'B', 'R'): 'D',
-    (91, 70, 'B', 'U'): 'D',
-    (91, 70, 'D', 'B'): 'U',
-    (91, 70, 'D', 'F'): 'U',
-    (91, 70, 'D', 'L'): 'U',
-    (91, 70, 'D', 'R'): 'U',
-    (91, 70, 'F', 'D'): 'D',
-    (91, 70, 'F', 'L'): 'D',
-    (91, 70, 'F', 'R'): 'D',
-    (91, 70, 'F', 'U'): 'D',
-    (91, 70, 'L', 'B'): 'U',
-    (91, 70, 'L', 'D'): 'D',
-    (91, 70, 'L', 'F'): 'U',
-    (91, 70, 'L', 'U'): 'D',
-    (91, 70, 'R', 'B'): 'U',
-    (91, 70, 'R', 'D'): 'D',
-    (91, 70, 'R', 'F'): 'U',
-    (91, 70, 'R', 'U'): 'D',
-    (91, 70, 'U', 'B'): 'U',
-    (91, 70, 'U', 'F'): 'U',
-    (91, 70, 'U', 'L'): 'U',
-    (91, 70, 'U', 'R'): 'U',
-    (95, 116, 'B', 'D'): 'U',
-    (95, 116, 'B', 'L'): 'U',
-    (95, 116, 'B', 'R'): 'U',
-    (95, 116, 'B', 'U'): 'U',
-    (95, 116, 'D', 'B'): 'D',
-    (95, 116, 'D', 'F'): 'D',
-    (95, 116, 'D', 'L'): 'D',
-    (95, 116, 'D', 'R'): 'D',
-    (95, 116, 'F', 'D'): 'U',
-    (95, 116, 'F', 'L'): 'U',
-    (95, 116, 'F', 'R'): 'U',
-    (95, 116, 'F', 'U'): 'U',
-    (95, 116, 'L', 'B'): 'D',
-    (95, 116, 'L', 'D'): 'U',
-    (95, 116, 'L', 'F'): 'D',
-    (95, 116, 'L', 'U'): 'U',
-    (95, 116, 'R', 'B'): 'D',
-    (95, 116, 'R', 'D'): 'U',
-    (95, 116, 'R', 'F'): 'D',
-    (95, 116, 'R', 'U'): 'U',
-    (95, 116, 'U', 'B'): 'D',
-    (95, 116, 'U', 'F'): 'D',
-    (95, 116, 'U', 'L'): 'D',
-    (95, 116, 'U', 'R'): 'D',
-    (97, 135, 'B', 'D'): 'U',
-    (97, 135, 'B', 'L'): 'U',
-    (97, 135, 'B', 'R'): 'U',
-    (97, 135, 'B', 'U'): 'U',
-    (97, 135, 'D', 'B'): 'D',
-    (97, 135, 'D', 'F'): 'D',
-    (97, 135, 'D', 'L'): 'D',
-    (97, 135, 'D', 'R'): 'D',
-    (97, 135, 'F', 'D'): 'U',
-    (97, 135, 'F', 'L'): 'U',
-    (97, 135, 'F', 'R'): 'U',
-    (97, 135, 'F', 'U'): 'U',
-    (97, 135, 'L', 'B'): 'D',
-    (97, 135, 'L', 'D'): 'U',
-    (97, 135, 'L', 'F'): 'D',
-    (97, 135, 'L', 'U'): 'U',
-    (97, 135, 'R', 'B'): 'D',
-    (97, 135, 'R', 'D'): 'U',
-    (97, 135, 'R', 'F'): 'D',
-    (97, 135, 'R', 'U'): 'U',
-    (97, 135, 'U', 'B'): 'D',
-    (97, 135, 'U', 'F'): 'D',
-    (97, 135, 'U', 'L'): 'D',
-    (97, 135, 'U', 'R'): 'D',
-    (98, 140, 'B', 'D'): 'U',
-    (98, 140, 'B', 'L'): 'U',
-    (98, 140, 'B', 'R'): 'U',
-    (98, 140, 'B', 'U'): 'U',
-    (98, 140, 'D', 'B'): 'D',
-    (98, 140, 'D', 'F'): 'D',
-    (98, 140, 'D', 'L'): 'D',
-    (98, 140, 'D', 'R'): 'D',
-    (98, 140, 'F', 'D'): 'U',
-    (98, 140, 'F', 'L'): 'U',
-    (98, 140, 'F', 'R'): 'U',
-    (98, 140, 'F', 'U'): 'U',
-    (98, 140, 'L', 'B'): 'D',
-    (98, 140, 'L', 'D'): 'U',
-    (98, 140, 'L', 'F'): 'D',
-    (98, 140, 'L', 'U'): 'U',
-    (98, 140, 'R', 'B'): 'D',
-    (98, 140, 'R', 'D'): 'U',
-    (98, 140, 'R', 'F'): 'D',
-    (98, 140, 'R', 'U'): 'U',
-    (98, 140, 'U', 'B'): 'D',
-    (98, 140, 'U', 'F'): 'D',
-    (98, 140, 'U', 'L'): 'D',
-    (98, 140, 'U', 'R'): 'D',
-    (99, 145, 'B', 'D'): 'D',
-    (99, 145, 'B', 'L'): 'D',
-    (99, 145, 'B', 'R'): 'D',
-    (99, 145, 'B', 'U'): 'D',
-    (99, 145, 'D', 'B'): 'U',
-    (99, 145, 'D', 'F'): 'U',
-    (99, 145, 'D', 'L'): 'U',
-    (99, 145, 'D', 'R'): 'U',
-    (99, 145, 'F', 'D'): 'D',
-    (99, 145, 'F', 'L'): 'D',
-    (99, 145, 'F', 'R'): 'D',
-    (99, 145, 'F', 'U'): 'D',
-    (99, 145, 'L', 'B'): 'U',
-    (99, 145, 'L', 'D'): 'D',
-    (99, 145, 'L', 'F'): 'U',
-    (99, 145, 'L', 'U'): 'D',
-    (99, 145, 'R', 'B'): 'U',
-    (99, 145, 'R', 'D'): 'D',
-    (99, 145, 'R', 'F'): 'U',
-    (99, 145, 'R', 'U'): 'D',
-    (99, 145, 'U', 'B'): 'U',
-    (99, 145, 'U', 'F'): 'U',
-    (99, 145, 'U', 'L'): 'U',
-    (99, 145, 'U', 'R'): 'U',
-    (102, 4, 'B', 'D'): 'D',
-    (102, 4, 'B', 'L'): 'D',
-    (102, 4, 'B', 'R'): 'D',
-    (102, 4, 'B', 'U'): 'D',
-    (102, 4, 'D', 'B'): 'U',
-    (102, 4, 'D', 'F'): 'U',
-    (102, 4, 'D', 'L'): 'U',
-    (102, 4, 'D', 'R'): 'U',
-    (102, 4, 'F', 'D'): 'D',
-    (102, 4, 'F', 'L'): 'D',
-    (102, 4, 'F', 'R'): 'D',
-    (102, 4, 'F', 'U'): 'D',
-    (102, 4, 'L', 'B'): 'U',
-    (102, 4, 'L', 'D'): 'D',
-    (102, 4, 'L', 'F'): 'U',
-    (102, 4, 'L', 'U'): 'D',
-    (102, 4, 'R', 'B'): 'U',
-    (102, 4, 'R', 'D'): 'D',
-    (102, 4, 'R', 'F'): 'U',
-    (102, 4, 'R', 'U'): 'D',
-    (102, 4, 'U', 'B'): 'U',
-    (102, 4, 'U', 'F'): 'U',
-    (102, 4, 'U', 'L'): 'U',
-    (102, 4, 'U', 'R'): 'U',
-    (103, 3, 'B', 'D'): 'U',
-    (103, 3, 'B', 'L'): 'U',
-    (103, 3, 'B', 'R'): 'U',
-    (103, 3, 'B', 'U'): 'U',
-    (103, 3, 'D', 'B'): 'D',
-    (103, 3, 'D', 'F'): 'D',
-    (103, 3, 'D', 'L'): 'D',
-    (103, 3, 'D', 'R'): 'D',
-    (103, 3, 'F', 'D'): 'U',
-    (103, 3, 'F', 'L'): 'U',
-    (103, 3, 'F', 'R'): 'U',
-    (103, 3, 'F', 'U'): 'U',
-    (103, 3, 'L', 'B'): 'D',
-    (103, 3, 'L', 'D'): 'U',
-    (103, 3, 'L', 'F'): 'D',
-    (103, 3, 'L', 'U'): 'U',
-    (103, 3, 'R', 'B'): 'D',
-    (103, 3, 'R', 'D'): 'U',
-    (103, 3, 'R', 'F'): 'D',
-    (103, 3, 'R', 'U'): 'U',
-    (103, 3, 'U', 'B'): 'D',
-    (103, 3, 'U', 'F'): 'D',
-    (103, 3, 'U', 'L'): 'D',
-    (103, 3, 'U', 'R'): 'D',
-    (104, 2, 'B', 'D'): 'U',
-    (104, 2, 'B', 'L'): 'U',
-    (104, 2, 'B', 'R'): 'U',
-    (104, 2, 'B', 'U'): 'U',
-    (104, 2, 'D', 'B'): 'D',
-    (104, 2, 'D', 'F'): 'D',
-    (104, 2, 'D', 'L'): 'D',
-    (104, 2, 'D', 'R'): 'D',
-    (104, 2, 'F', 'D'): 'U',
-    (104, 2, 'F', 'L'): 'U',
-    (104, 2, 'F', 'R'): 'U',
-    (104, 2, 'F', 'U'): 'U',
-    (104, 2, 'L', 'B'): 'D',
-    (104, 2, 'L', 'D'): 'U',
-    (104, 2, 'L', 'F'): 'D',
-    (104, 2, 'L', 'U'): 'U',
-    (104, 2, 'R', 'B'): 'D',
-    (104, 2, 'R', 'D'): 'U',
-    (104, 2, 'R', 'F'): 'D',
-    (104, 2, 'R', 'U'): 'U',
-    (104, 2, 'U', 'B'): 'D',
-    (104, 2, 'U', 'F'): 'D',
-    (104, 2, 'U', 'L'): 'D',
-    (104, 2, 'U', 'R'): 'D',
-    (106, 85, 'B', 'D'): 'U',
-    (106, 85, 'B', 'L'): 'U',
-    (106, 85, 'B', 'R'): 'U',
-    (106, 85, 'B', 'U'): 'U',
-    (106, 85, 'D', 'B'): 'D',
-    (106, 85, 'D', 'F'): 'D',
-    (106, 85, 'D', 'L'): 'D',
-    (106, 85, 'D', 'R'): 'D',
-    (106, 85, 'F', 'D'): 'U',
-    (106, 85, 'F', 'L'): 'U',
-    (106, 85, 'F', 'R'): 'U',
-    (106, 85, 'F', 'U'): 'U',
-    (106, 85, 'L', 'B'): 'D',
-    (106, 85, 'L', 'D'): 'U',
-    (106, 85, 'L', 'F'): 'D',
-    (106, 85, 'L', 'U'): 'U',
-    (106, 85, 'R', 'B'): 'D',
-    (106, 85, 'R', 'D'): 'U',
-    (106, 85, 'R', 'F'): 'D',
-    (106, 85, 'R', 'U'): 'U',
-    (106, 85, 'U', 'B'): 'D',
-    (106, 85, 'U', 'F'): 'D',
-    (106, 85, 'U', 'L'): 'D',
-    (106, 85, 'U', 'R'): 'D',
-    (110, 31, 'B', 'D'): 'D',
-    (110, 31, 'B', 'L'): 'D',
-    (110, 31, 'B', 'R'): 'D',
-    (110, 31, 'B', 'U'): 'D',
-    (110, 31, 'D', 'B'): 'U',
-    (110, 31, 'D', 'F'): 'U',
-    (110, 31, 'D', 'L'): 'U',
-    (110, 31, 'D', 'R'): 'U',
-    (110, 31, 'F', 'D'): 'D',
-    (110, 31, 'F', 'L'): 'D',
-    (110, 31, 'F', 'R'): 'D',
-    (110, 31, 'F', 'U'): 'D',
-    (110, 31, 'L', 'B'): 'U',
-    (110, 31, 'L', 'D'): 'D',
-    (110, 31, 'L', 'F'): 'U',
-    (110, 31, 'L', 'U'): 'D',
-    (110, 31, 'R', 'B'): 'U',
-    (110, 31, 'R', 'D'): 'D',
-    (110, 31, 'R', 'F'): 'U',
-    (110, 31, 'R', 'U'): 'D',
-    (110, 31, 'U', 'B'): 'U',
-    (110, 31, 'U', 'F'): 'U',
-    (110, 31, 'U', 'L'): 'U',
-    (110, 31, 'U', 'R'): 'U',
-    (111, 90, 'B', 'D'): 'U',
-    (111, 90, 'B', 'L'): 'U',
-    (111, 90, 'B', 'R'): 'U',
-    (111, 90, 'B', 'U'): 'U',
-    (111, 90, 'D', 'B'): 'D',
-    (111, 90, 'D', 'F'): 'D',
-    (111, 90, 'D', 'L'): 'D',
-    (111, 90, 'D', 'R'): 'D',
-    (111, 90, 'F', 'D'): 'U',
-    (111, 90, 'F', 'L'): 'U',
-    (111, 90, 'F', 'R'): 'U',
-    (111, 90, 'F', 'U'): 'U',
-    (111, 90, 'L', 'B'): 'D',
-    (111, 90, 'L', 'D'): 'U',
-    (111, 90, 'L', 'F'): 'D',
-    (111, 90, 'L', 'U'): 'U',
-    (111, 90, 'R', 'B'): 'D',
-    (111, 90, 'R', 'D'): 'U',
-    (111, 90, 'R', 'F'): 'D',
-    (111, 90, 'R', 'U'): 'U',
-    (111, 90, 'U', 'B'): 'D',
-    (111, 90, 'U', 'F'): 'D',
-    (111, 90, 'U', 'L'): 'D',
-    (111, 90, 'U', 'R'): 'D',
-    (115, 36, 'B', 'D'): 'U',
-    (115, 36, 'B', 'L'): 'U',
-    (115, 36, 'B', 'R'): 'U',
-    (115, 36, 'B', 'U'): 'U',
-    (115, 36, 'D', 'B'): 'D',
-    (115, 36, 'D', 'F'): 'D',
-    (115, 36, 'D', 'L'): 'D',
-    (115, 36, 'D', 'R'): 'D',
-    (115, 36, 'F', 'D'): 'U',
-    (115, 36, 'F', 'L'): 'U',
-    (115, 36, 'F', 'R'): 'U',
-    (115, 36, 'F', 'U'): 'U',
-    (115, 36, 'L', 'B'): 'D',
-    (115, 36, 'L', 'D'): 'U',
-    (115, 36, 'L', 'F'): 'D',
-    (115, 36, 'L', 'U'): 'U',
-    (115, 36, 'R', 'B'): 'D',
-    (115, 36, 'R', 'D'): 'U',
-    (115, 36, 'R', 'F'): 'D',
-    (115, 36, 'R', 'U'): 'U',
-    (115, 36, 'U', 'B'): 'D',
-    (115, 36, 'U', 'F'): 'D',
-    (115, 36, 'U', 'L'): 'D',
-    (115, 36, 'U', 'R'): 'D',
-    (116, 95, 'B', 'D'): 'D',
-    (116, 95, 'B', 'L'): 'D',
-    (116, 95, 'B', 'R'): 'D',
-    (116, 95, 'B', 'U'): 'D',
-    (116, 95, 'D', 'B'): 'U',
-    (116, 95, 'D', 'F'): 'U',
-    (116, 95, 'D', 'L'): 'U',
-    (116, 95, 'D', 'R'): 'U',
-    (116, 95, 'F', 'D'): 'D',
-    (116, 95, 'F', 'L'): 'D',
-    (116, 95, 'F', 'R'): 'D',
-    (116, 95, 'F', 'U'): 'D',
-    (116, 95, 'L', 'B'): 'U',
-    (116, 95, 'L', 'D'): 'D',
-    (116, 95, 'L', 'F'): 'U',
-    (116, 95, 'L', 'U'): 'D',
-    (116, 95, 'R', 'B'): 'U',
-    (116, 95, 'R', 'D'): 'D',
-    (116, 95, 'R', 'F'): 'U',
-    (116, 95, 'R', 'U'): 'D',
-    (116, 95, 'U', 'B'): 'U',
-    (116, 95, 'U', 'F'): 'U',
-    (116, 95, 'U', 'L'): 'U',
-    (116, 95, 'U', 'R'): 'U',
-    (120, 41, 'B', 'D'): 'U',
-    (120, 41, 'B', 'L'): 'U',
-    (120, 41, 'B', 'R'): 'U',
-    (120, 41, 'B', 'U'): 'U',
-    (120, 41, 'D', 'B'): 'D',
-    (120, 41, 'D', 'F'): 'D',
-    (120, 41, 'D', 'L'): 'D',
-    (120, 41, 'D', 'R'): 'D',
-    (120, 41, 'F', 'D'): 'U',
-    (120, 41, 'F', 'L'): 'U',
-    (120, 41, 'F', 'R'): 'U',
-    (120, 41, 'F', 'U'): 'U',
-    (120, 41, 'L', 'B'): 'D',
-    (120, 41, 'L', 'D'): 'U',
-    (120, 41, 'L', 'F'): 'D',
-    (120, 41, 'L', 'U'): 'U',
-    (120, 41, 'R', 'B'): 'D',
-    (120, 41, 'R', 'D'): 'U',
-    (120, 41, 'R', 'F'): 'D',
-    (120, 41, 'R', 'U'): 'U',
-    (120, 41, 'U', 'B'): 'D',
-    (120, 41, 'U', 'F'): 'D',
-    (120, 41, 'U', 'L'): 'D',
-    (120, 41, 'U', 'R'): 'D',
-    (122, 149, 'B', 'D'): 'U',
-    (122, 149, 'B', 'L'): 'U',
-    (122, 149, 'B', 'R'): 'U',
-    (122, 149, 'B', 'U'): 'U',
-    (122, 149, 'D', 'B'): 'D',
-    (122, 149, 'D', 'F'): 'D',
-    (122, 149, 'D', 'L'): 'D',
-    (122, 149, 'D', 'R'): 'D',
-    (122, 149, 'F', 'D'): 'U',
-    (122, 149, 'F', 'L'): 'U',
-    (122, 149, 'F', 'R'): 'U',
-    (122, 149, 'F', 'U'): 'U',
-    (122, 149, 'L', 'B'): 'D',
-    (122, 149, 'L', 'D'): 'U',
-    (122, 149, 'L', 'F'): 'D',
-    (122, 149, 'L', 'U'): 'U',
-    (122, 149, 'R', 'B'): 'D',
-    (122, 149, 'R', 'D'): 'U',
-    (122, 149, 'R', 'F'): 'D',
-    (122, 149, 'R', 'U'): 'U',
-    (122, 149, 'U', 'B'): 'D',
-    (122, 149, 'U', 'F'): 'D',
-    (122, 149, 'U', 'L'): 'D',
-    (122, 149, 'U', 'R'): 'D',
-    (123, 148, 'B', 'D'): 'U',
-    (123, 148, 'B', 'L'): 'U',
-    (123, 148, 'B', 'R'): 'U',
-    (123, 148, 'B', 'U'): 'U',
-    (123, 148, 'D', 'B'): 'D',
-    (123, 148, 'D', 'F'): 'D',
-    (123, 148, 'D', 'L'): 'D',
-    (123, 148, 'D', 'R'): 'D',
-    (123, 148, 'F', 'D'): 'U',
-    (123, 148, 'F', 'L'): 'U',
-    (123, 148, 'F', 'R'): 'U',
-    (123, 148, 'F', 'U'): 'U',
-    (123, 148, 'L', 'B'): 'D',
-    (123, 148, 'L', 'D'): 'U',
-    (123, 148, 'L', 'F'): 'D',
-    (123, 148, 'L', 'U'): 'U',
-    (123, 148, 'R', 'B'): 'D',
-    (123, 148, 'R', 'D'): 'U',
-    (123, 148, 'R', 'F'): 'D',
-    (123, 148, 'R', 'U'): 'U',
-    (123, 148, 'U', 'B'): 'D',
-    (123, 148, 'U', 'F'): 'D',
-    (123, 148, 'U', 'L'): 'D',
-    (123, 148, 'U', 'R'): 'D',
-    (124, 147, 'B', 'D'): 'D',
-    (124, 147, 'B', 'L'): 'D',
-    (124, 147, 'B', 'R'): 'D',
-    (124, 147, 'B', 'U'): 'D',
-    (124, 147, 'D', 'B'): 'U',
-    (124, 147, 'D', 'F'): 'U',
-    (124, 147, 'D', 'L'): 'U',
-    (124, 147, 'D', 'R'): 'U',
-    (124, 147, 'F', 'D'): 'D',
-    (124, 147, 'F', 'L'): 'D',
-    (124, 147, 'F', 'R'): 'D',
-    (124, 147, 'F', 'U'): 'D',
-    (124, 147, 'L', 'B'): 'U',
-    (124, 147, 'L', 'D'): 'D',
-    (124, 147, 'L', 'F'): 'U',
-    (124, 147, 'L', 'U'): 'D',
-    (124, 147, 'R', 'B'): 'U',
-    (124, 147, 'R', 'D'): 'D',
-    (124, 147, 'R', 'F'): 'U',
-    (124, 147, 'R', 'U'): 'D',
-    (124, 147, 'U', 'B'): 'U',
-    (124, 147, 'U', 'F'): 'U',
-    (124, 147, 'U', 'L'): 'U',
-    (124, 147, 'U', 'R'): 'U',
-    (127, 72, 'B', 'D'): 'D',
-    (127, 72, 'B', 'L'): 'D',
-    (127, 72, 'B', 'R'): 'D',
-    (127, 72, 'B', 'U'): 'D',
-    (127, 72, 'D', 'B'): 'U',
-    (127, 72, 'D', 'F'): 'U',
-    (127, 72, 'D', 'L'): 'U',
-    (127, 72, 'D', 'R'): 'U',
-    (127, 72, 'F', 'D'): 'D',
-    (127, 72, 'F', 'L'): 'D',
-    (127, 72, 'F', 'R'): 'D',
-    (127, 72, 'F', 'U'): 'D',
-    (127, 72, 'L', 'B'): 'U',
-    (127, 72, 'L', 'D'): 'D',
-    (127, 72, 'L', 'F'): 'U',
-    (127, 72, 'L', 'U'): 'D',
-    (127, 72, 'R', 'B'): 'U',
-    (127, 72, 'R', 'D'): 'D',
-    (127, 72, 'R', 'F'): 'U',
-    (127, 72, 'R', 'U'): 'D',
-    (127, 72, 'U', 'B'): 'U',
-    (127, 72, 'U', 'F'): 'U',
-    (127, 72, 'U', 'L'): 'U',
-    (127, 72, 'U', 'R'): 'U',
-    (128, 73, 'B', 'D'): 'D',
-    (128, 73, 'B', 'L'): 'D',
-    (128, 73, 'B', 'R'): 'D',
-    (128, 73, 'B', 'U'): 'D',
-    (128, 73, 'D', 'B'): 'U',
-    (128, 73, 'D', 'F'): 'U',
-    (128, 73, 'D', 'L'): 'U',
-    (128, 73, 'D', 'R'): 'U',
-    (128, 73, 'F', 'D'): 'D',
-    (128, 73, 'F', 'L'): 'D',
-    (128, 73, 'F', 'R'): 'D',
-    (128, 73, 'F', 'U'): 'D',
-    (128, 73, 'L', 'B'): 'U',
-    (128, 73, 'L', 'D'): 'D',
-    (128, 73, 'L', 'F'): 'U',
-    (128, 73, 'L', 'U'): 'D',
-    (128, 73, 'R', 'B'): 'U',
-    (128, 73, 'R', 'D'): 'D',
-    (128, 73, 'R', 'F'): 'U',
-    (128, 73, 'R', 'U'): 'D',
-    (128, 73, 'U', 'B'): 'U',
-    (128, 73, 'U', 'F'): 'U',
-    (128, 73, 'U', 'L'): 'U',
-    (128, 73, 'U', 'R'): 'U',
-    (129, 74, 'B', 'D'): 'U',
-    (129, 74, 'B', 'L'): 'U',
-    (129, 74, 'B', 'R'): 'U',
-    (129, 74, 'B', 'U'): 'U',
-    (129, 74, 'D', 'B'): 'D',
-    (129, 74, 'D', 'F'): 'D',
-    (129, 74, 'D', 'L'): 'D',
-    (129, 74, 'D', 'R'): 'D',
-    (129, 74, 'F', 'D'): 'U',
-    (129, 74, 'F', 'L'): 'U',
-    (129, 74, 'F', 'R'): 'U',
-    (129, 74, 'F', 'U'): 'U',
-    (129, 74, 'L', 'B'): 'D',
-    (129, 74, 'L', 'D'): 'U',
-    (129, 74, 'L', 'F'): 'D',
-    (129, 74, 'L', 'U'): 'U',
-    (129, 74, 'R', 'B'): 'D',
-    (129, 74, 'R', 'D'): 'U',
-    (129, 74, 'R', 'F'): 'D',
-    (129, 74, 'R', 'U'): 'U',
-    (129, 74, 'U', 'B'): 'D',
-    (129, 74, 'U', 'F'): 'D',
-    (129, 74, 'U', 'L'): 'D',
-    (129, 74, 'U', 'R'): 'D',
-    (131, 49, 'B', 'D'): 'U',
-    (131, 49, 'B', 'L'): 'U',
-    (131, 49, 'B', 'R'): 'U',
-    (131, 49, 'B', 'U'): 'U',
-    (131, 49, 'D', 'B'): 'D',
-    (131, 49, 'D', 'F'): 'D',
-    (131, 49, 'D', 'L'): 'D',
-    (131, 49, 'D', 'R'): 'D',
-    (131, 49, 'F', 'D'): 'U',
-    (131, 49, 'F', 'L'): 'U',
-    (131, 49, 'F', 'R'): 'U',
-    (131, 49, 'F', 'U'): 'U',
-    (131, 49, 'L', 'B'): 'D',
-    (131, 49, 'L', 'D'): 'U',
-    (131, 49, 'L', 'F'): 'D',
-    (131, 49, 'L', 'U'): 'U',
-    (131, 49, 'R', 'B'): 'D',
-    (131, 49, 'R', 'D'): 'U',
-    (131, 49, 'R', 'F'): 'D',
-    (131, 49, 'R', 'U'): 'U',
-    (131, 49, 'U', 'B'): 'D',
-    (131, 49, 'U', 'F'): 'D',
-    (131, 49, 'U', 'L'): 'D',
-    (131, 49, 'U', 'R'): 'D',
-    (135, 97, 'B', 'D'): 'D',
-    (135, 97, 'B', 'L'): 'D',
-    (135, 97, 'B', 'R'): 'D',
-    (135, 97, 'B', 'U'): 'D',
-    (135, 97, 'D', 'B'): 'U',
-    (135, 97, 'D', 'F'): 'U',
-    (135, 97, 'D', 'L'): 'U',
-    (135, 97, 'D', 'R'): 'U',
-    (135, 97, 'F', 'D'): 'D',
-    (135, 97, 'F', 'L'): 'D',
-    (135, 97, 'F', 'R'): 'D',
-    (135, 97, 'F', 'U'): 'D',
-    (135, 97, 'L', 'B'): 'U',
-    (135, 97, 'L', 'D'): 'D',
-    (135, 97, 'L', 'F'): 'U',
-    (135, 97, 'L', 'U'): 'D',
-    (135, 97, 'R', 'B'): 'U',
-    (135, 97, 'R', 'D'): 'D',
-    (135, 97, 'R', 'F'): 'U',
-    (135, 97, 'R', 'U'): 'D',
-    (135, 97, 'U', 'B'): 'U',
-    (135, 97, 'U', 'F'): 'U',
-    (135, 97, 'U', 'L'): 'U',
-    (135, 97, 'U', 'R'): 'U',
-    (136, 48, 'B', 'D'): 'D',
-    (136, 48, 'B', 'L'): 'D',
-    (136, 48, 'B', 'R'): 'D',
-    (136, 48, 'B', 'U'): 'D',
-    (136, 48, 'D', 'B'): 'U',
-    (136, 48, 'D', 'F'): 'U',
-    (136, 48, 'D', 'L'): 'U',
-    (136, 48, 'D', 'R'): 'U',
-    (136, 48, 'F', 'D'): 'D',
-    (136, 48, 'F', 'L'): 'D',
-    (136, 48, 'F', 'R'): 'D',
-    (136, 48, 'F', 'U'): 'D',
-    (136, 48, 'L', 'B'): 'U',
-    (136, 48, 'L', 'D'): 'D',
-    (136, 48, 'L', 'F'): 'U',
-    (136, 48, 'L', 'U'): 'D',
-    (136, 48, 'R', 'B'): 'U',
-    (136, 48, 'R', 'D'): 'D',
-    (136, 48, 'R', 'F'): 'U',
-    (136, 48, 'R', 'U'): 'D',
-    (136, 48, 'U', 'B'): 'U',
-    (136, 48, 'U', 'F'): 'U',
-    (136, 48, 'U', 'L'): 'U',
-    (136, 48, 'U', 'R'): 'U',
-    (140, 98, 'B', 'D'): 'D',
-    (140, 98, 'B', 'L'): 'D',
-    (140, 98, 'B', 'R'): 'D',
-    (140, 98, 'B', 'U'): 'D',
-    (140, 98, 'D', 'B'): 'U',
-    (140, 98, 'D', 'F'): 'U',
-    (140, 98, 'D', 'L'): 'U',
-    (140, 98, 'D', 'R'): 'U',
-    (140, 98, 'F', 'D'): 'D',
-    (140, 98, 'F', 'L'): 'D',
-    (140, 98, 'F', 'R'): 'D',
-    (140, 98, 'F', 'U'): 'D',
-    (140, 98, 'L', 'B'): 'U',
-    (140, 98, 'L', 'D'): 'D',
-    (140, 98, 'L', 'F'): 'U',
-    (140, 98, 'L', 'U'): 'D',
-    (140, 98, 'R', 'B'): 'U',
-    (140, 98, 'R', 'D'): 'D',
-    (140, 98, 'R', 'F'): 'U',
-    (140, 98, 'R', 'U'): 'D',
-    (140, 98, 'U', 'B'): 'U',
-    (140, 98, 'U', 'F'): 'U',
-    (140, 98, 'U', 'L'): 'U',
-    (140, 98, 'U', 'R'): 'U',
-    (141, 47, 'B', 'D'): 'D',
-    (141, 47, 'B', 'L'): 'D',
-    (141, 47, 'B', 'R'): 'D',
-    (141, 47, 'B', 'U'): 'D',
-    (141, 47, 'D', 'B'): 'U',
-    (141, 47, 'D', 'F'): 'U',
-    (141, 47, 'D', 'L'): 'U',
-    (141, 47, 'D', 'R'): 'U',
-    (141, 47, 'F', 'D'): 'D',
-    (141, 47, 'F', 'L'): 'D',
-    (141, 47, 'F', 'R'): 'D',
-    (141, 47, 'F', 'U'): 'D',
-    (141, 47, 'L', 'B'): 'U',
-    (141, 47, 'L', 'D'): 'D',
-    (141, 47, 'L', 'F'): 'U',
-    (141, 47, 'L', 'U'): 'D',
-    (141, 47, 'R', 'B'): 'U',
-    (141, 47, 'R', 'D'): 'D',
-    (141, 47, 'R', 'F'): 'U',
-    (141, 47, 'R', 'U'): 'D',
-    (141, 47, 'U', 'B'): 'U',
-    (141, 47, 'U', 'F'): 'U',
-    (141, 47, 'U', 'L'): 'U',
-    (141, 47, 'U', 'R'): 'U',
-    (145, 99, 'B', 'D'): 'U',
-    (145, 99, 'B', 'L'): 'U',
-    (145, 99, 'B', 'R'): 'U',
-    (145, 99, 'B', 'U'): 'U',
-    (145, 99, 'D', 'B'): 'D',
-    (145, 99, 'D', 'F'): 'D',
-    (145, 99, 'D', 'L'): 'D',
-    (145, 99, 'D', 'R'): 'D',
-    (145, 99, 'F', 'D'): 'U',
-    (145, 99, 'F', 'L'): 'U',
-    (145, 99, 'F', 'R'): 'U',
-    (145, 99, 'F', 'U'): 'U',
-    (145, 99, 'L', 'B'): 'D',
-    (145, 99, 'L', 'D'): 'U',
-    (145, 99, 'L', 'F'): 'D',
-    (145, 99, 'L', 'U'): 'U',
-    (145, 99, 'R', 'B'): 'D',
-    (145, 99, 'R', 'D'): 'U',
-    (145, 99, 'R', 'F'): 'D',
-    (145, 99, 'R', 'U'): 'U',
-    (145, 99, 'U', 'B'): 'D',
-    (145, 99, 'U', 'F'): 'D',
-    (145, 99, 'U', 'L'): 'D',
-    (145, 99, 'U', 'R'): 'D',
-    (147, 124, 'B', 'D'): 'U',
-    (147, 124, 'B', 'L'): 'U',
-    (147, 124, 'B', 'R'): 'U',
-    (147, 124, 'B', 'U'): 'U',
-    (147, 124, 'D', 'B'): 'D',
-    (147, 124, 'D', 'F'): 'D',
-    (147, 124, 'D', 'L'): 'D',
-    (147, 124, 'D', 'R'): 'D',
-    (147, 124, 'F', 'D'): 'U',
-    (147, 124, 'F', 'L'): 'U',
-    (147, 124, 'F', 'R'): 'U',
-    (147, 124, 'F', 'U'): 'U',
-    (147, 124, 'L', 'B'): 'D',
-    (147, 124, 'L', 'D'): 'U',
-    (147, 124, 'L', 'F'): 'D',
-    (147, 124, 'L', 'U'): 'U',
-    (147, 124, 'R', 'B'): 'D',
-    (147, 124, 'R', 'D'): 'U',
-    (147, 124, 'R', 'F'): 'D',
-    (147, 124, 'R', 'U'): 'U',
-    (147, 124, 'U', 'B'): 'D',
-    (147, 124, 'U', 'F'): 'D',
-    (147, 124, 'U', 'L'): 'D',
-    (147, 124, 'U', 'R'): 'D',
-    (148, 123, 'B', 'D'): 'D',
-    (148, 123, 'B', 'L'): 'D',
-    (148, 123, 'B', 'R'): 'D',
-    (148, 123, 'B', 'U'): 'D',
-    (148, 123, 'D', 'B'): 'U',
-    (148, 123, 'D', 'F'): 'U',
-    (148, 123, 'D', 'L'): 'U',
-    (148, 123, 'D', 'R'): 'U',
-    (148, 123, 'F', 'D'): 'D',
-    (148, 123, 'F', 'L'): 'D',
-    (148, 123, 'F', 'R'): 'D',
-    (148, 123, 'F', 'U'): 'D',
-    (148, 123, 'L', 'B'): 'U',
-    (148, 123, 'L', 'D'): 'D',
-    (148, 123, 'L', 'F'): 'U',
-    (148, 123, 'L', 'U'): 'D',
-    (148, 123, 'R', 'B'): 'U',
-    (148, 123, 'R', 'D'): 'D',
-    (148, 123, 'R', 'F'): 'U',
-    (148, 123, 'R', 'U'): 'D',
-    (148, 123, 'U', 'B'): 'U',
-    (148, 123, 'U', 'F'): 'U',
-    (148, 123, 'U', 'L'): 'U',
-    (148, 123, 'U', 'R'): 'U',
-    (149, 122, 'B', 'D'): 'D',
-    (149, 122, 'B', 'L'): 'D',
-    (149, 122, 'B', 'R'): 'D',
-    (149, 122, 'B', 'U'): 'D',
-    (149, 122, 'D', 'B'): 'U',
-    (149, 122, 'D', 'F'): 'U',
-    (149, 122, 'D', 'L'): 'U',
-    (149, 122, 'D', 'R'): 'U',
-    (149, 122, 'F', 'D'): 'D',
-    (149, 122, 'F', 'L'): 'D',
-    (149, 122, 'F', 'R'): 'D',
-    (149, 122, 'F', 'U'): 'D',
-    (149, 122, 'L', 'B'): 'U',
-    (149, 122, 'L', 'D'): 'D',
-    (149, 122, 'L', 'F'): 'U',
-    (149, 122, 'L', 'U'): 'D',
-    (149, 122, 'R', 'B'): 'U',
-    (149, 122, 'R', 'D'): 'D',
-    (149, 122, 'R', 'F'): 'U',
-    (149, 122, 'R', 'U'): 'D',
-    (149, 122, 'U', 'B'): 'U',
-    (149, 122, 'U', 'F'): 'U',
-    (149, 122, 'U', 'L'): 'U',
-    (149, 122, 'U', 'R'): 'U',
-}
+        self.edges_flip_to_original_orientation(self.get_y_plane_wing_strs(), self.get_x_plane_z_plane_wing_strs())
 
-stage_first_four_edges_wing_str_combos = (
-    ('DB', 'LB', 'RB', 'UB'),
-    ('DB', 'LB', 'RB', 'DF'),
-    ('DB', 'LB', 'RB', 'DL'),
-    ('DB', 'LB', 'RB', 'DR'),
-    ('DB', 'LB', 'RB', 'LF'),
-    ('DB', 'LB', 'RB', 'RF'),
-    ('DB', 'LB', 'RB', 'UF'),
-    ('DB', 'LB', 'RB', 'UL'),
-    ('DB', 'LB', 'RB', 'UR'),
-    ('DB', 'LB', 'UB', 'DF'),
-    ('DB', 'LB', 'UB', 'DL'),
-    ('DB', 'LB', 'UB', 'DR'),
-    ('DB', 'LB', 'UB', 'LF'),
-    ('DB', 'LB', 'UB', 'RF'),
-    ('DB', 'LB', 'UB', 'UF'),
-    ('DB', 'LB', 'UB', 'UL'),
-    ('DB', 'LB', 'UB', 'UR'),
-    ('DB', 'LB', 'DF', 'DL'),
-    ('DB', 'LB', 'DF', 'DR'),
-    ('DB', 'LB', 'DF', 'LF'),
-    ('DB', 'LB', 'DF', 'RF'),
-    ('DB', 'LB', 'DF', 'UF'),
-    ('DB', 'LB', 'DF', 'UL'),
-    ('DB', 'LB', 'DF', 'UR'),
-    ('DB', 'LB', 'DL', 'DR'),
-    ('DB', 'LB', 'DL', 'LF'),
-    ('DB', 'LB', 'DL', 'RF'),
-    ('DB', 'LB', 'DL', 'UF'),
-    ('DB', 'LB', 'DL', 'UL'),
-    ('DB', 'LB', 'DL', 'UR'),
-    ('DB', 'LB', 'DR', 'LF'),
-    ('DB', 'LB', 'DR', 'RF'),
-    ('DB', 'LB', 'DR', 'UF'),
-    ('DB', 'LB', 'DR', 'UL'),
-    ('DB', 'LB', 'DR', 'UR'),
-    ('DB', 'LB', 'LF', 'RF'),
-    ('DB', 'LB', 'LF', 'UF'),
-    ('DB', 'LB', 'LF', 'UL'),
-    ('DB', 'LB', 'LF', 'UR'),
-    ('DB', 'LB', 'RF', 'UF'),
-    ('DB', 'LB', 'RF', 'UL'),
-    ('DB', 'LB', 'RF', 'UR'),
-    ('DB', 'LB', 'UF', 'UL'),
-    ('DB', 'LB', 'UF', 'UR'),
-    ('DB', 'LB', 'UL', 'UR'),
-    ('DB', 'RB', 'UB', 'DF'),
-    ('DB', 'RB', 'UB', 'DL'),
-    ('DB', 'RB', 'UB', 'DR'),
-    ('DB', 'RB', 'UB', 'LF'),
-    ('DB', 'RB', 'UB', 'RF'),
-    ('DB', 'RB', 'UB', 'UF'),
-    ('DB', 'RB', 'UB', 'UL'),
-    ('DB', 'RB', 'UB', 'UR'),
-    ('DB', 'RB', 'DF', 'DL'),
-    ('DB', 'RB', 'DF', 'DR'),
-    ('DB', 'RB', 'DF', 'LF'),
-    ('DB', 'RB', 'DF', 'RF'),
-    ('DB', 'RB', 'DF', 'UF'),
-    ('DB', 'RB', 'DF', 'UL'),
-    ('DB', 'RB', 'DF', 'UR'),
-    ('DB', 'RB', 'DL', 'DR'),
-    ('DB', 'RB', 'DL', 'LF'),
-    ('DB', 'RB', 'DL', 'RF'),
-    ('DB', 'RB', 'DL', 'UF'),
-    ('DB', 'RB', 'DL', 'UL'),
-    ('DB', 'RB', 'DL', 'UR'),
-    ('DB', 'RB', 'DR', 'LF'),
-    ('DB', 'RB', 'DR', 'RF'),
-    ('DB', 'RB', 'DR', 'UF'),
-    ('DB', 'RB', 'DR', 'UL'),
-    ('DB', 'RB', 'DR', 'UR'),
-    ('DB', 'RB', 'LF', 'RF'),
-    ('DB', 'RB', 'LF', 'UF'),
-    ('DB', 'RB', 'LF', 'UL'),
-    ('DB', 'RB', 'LF', 'UR'),
-    ('DB', 'RB', 'RF', 'UF'),
-    ('DB', 'RB', 'RF', 'UL'),
-    ('DB', 'RB', 'RF', 'UR'),
-    ('DB', 'RB', 'UF', 'UL'),
-    ('DB', 'RB', 'UF', 'UR'),
-    ('DB', 'RB', 'UL', 'UR'),
-    ('DB', 'UB', 'DF', 'DL'),
-    ('DB', 'UB', 'DF', 'DR'),
-    ('DB', 'UB', 'DF', 'LF'),
-    ('DB', 'UB', 'DF', 'RF'),
-    ('DB', 'UB', 'DF', 'UF'),
-    ('DB', 'UB', 'DF', 'UL'),
-    ('DB', 'UB', 'DF', 'UR'),
-    ('DB', 'UB', 'DL', 'DR'),
-    ('DB', 'UB', 'DL', 'LF'),
-    ('DB', 'UB', 'DL', 'RF'),
-    ('DB', 'UB', 'DL', 'UF'),
-    ('DB', 'UB', 'DL', 'UL'),
-    ('DB', 'UB', 'DL', 'UR'),
-    ('DB', 'UB', 'DR', 'LF'),
-    ('DB', 'UB', 'DR', 'RF'),
-    ('DB', 'UB', 'DR', 'UF'),
-    ('DB', 'UB', 'DR', 'UL'),
-    ('DB', 'UB', 'DR', 'UR'),
-    ('DB', 'UB', 'LF', 'RF'),
-    ('DB', 'UB', 'LF', 'UF'),
-    ('DB', 'UB', 'LF', 'UL'),
-    ('DB', 'UB', 'LF', 'UR'),
-    ('DB', 'UB', 'RF', 'UF'),
-    ('DB', 'UB', 'RF', 'UL'),
-    ('DB', 'UB', 'RF', 'UR'),
-    ('DB', 'UB', 'UF', 'UL'),
-    ('DB', 'UB', 'UF', 'UR'),
-    ('DB', 'UB', 'UL', 'UR'),
-    ('DB', 'DF', 'DL', 'DR'),
-    ('DB', 'DF', 'DL', 'LF'),
-    ('DB', 'DF', 'DL', 'RF'),
-    ('DB', 'DF', 'DL', 'UF'),
-    ('DB', 'DF', 'DL', 'UL'),
-    ('DB', 'DF', 'DL', 'UR'),
-    ('DB', 'DF', 'DR', 'LF'),
-    ('DB', 'DF', 'DR', 'RF'),
-    ('DB', 'DF', 'DR', 'UF'),
-    ('DB', 'DF', 'DR', 'UL'),
-    ('DB', 'DF', 'DR', 'UR'),
-    ('DB', 'DF', 'LF', 'RF'),
-    ('DB', 'DF', 'LF', 'UF'),
-    ('DB', 'DF', 'LF', 'UL'),
-    ('DB', 'DF', 'LF', 'UR'),
-    ('DB', 'DF', 'RF', 'UF'),
-    ('DB', 'DF', 'RF', 'UL'),
-    ('DB', 'DF', 'RF', 'UR'),
-    ('DB', 'DF', 'UF', 'UL'),
-    ('DB', 'DF', 'UF', 'UR'),
-    ('DB', 'DF', 'UL', 'UR'),
-    ('DB', 'DL', 'DR', 'LF'),
-    ('DB', 'DL', 'DR', 'RF'),
-    ('DB', 'DL', 'DR', 'UF'),
-    ('DB', 'DL', 'DR', 'UL'),
-    ('DB', 'DL', 'DR', 'UR'),
-    ('DB', 'DL', 'LF', 'RF'),
-    ('DB', 'DL', 'LF', 'UF'),
-    ('DB', 'DL', 'LF', 'UL'),
-    ('DB', 'DL', 'LF', 'UR'),
-    ('DB', 'DL', 'RF', 'UF'),
-    ('DB', 'DL', 'RF', 'UL'),
-    ('DB', 'DL', 'RF', 'UR'),
-    ('DB', 'DL', 'UF', 'UL'),
-    ('DB', 'DL', 'UF', 'UR'),
-    ('DB', 'DL', 'UL', 'UR'),
-    ('DB', 'DR', 'LF', 'RF'),
-    ('DB', 'DR', 'LF', 'UF'),
-    ('DB', 'DR', 'LF', 'UL'),
-    ('DB', 'DR', 'LF', 'UR'),
-    ('DB', 'DR', 'RF', 'UF'),
-    ('DB', 'DR', 'RF', 'UL'),
-    ('DB', 'DR', 'RF', 'UR'),
-    ('DB', 'DR', 'UF', 'UL'),
-    ('DB', 'DR', 'UF', 'UR'),
-    ('DB', 'DR', 'UL', 'UR'),
-    ('DB', 'LF', 'RF', 'UF'),
-    ('DB', 'LF', 'RF', 'UL'),
-    ('DB', 'LF', 'RF', 'UR'),
-    ('DB', 'LF', 'UF', 'UL'),
-    ('DB', 'LF', 'UF', 'UR'),
-    ('DB', 'LF', 'UL', 'UR'),
-    ('DB', 'RF', 'UF', 'UL'),
-    ('DB', 'RF', 'UF', 'UR'),
-    ('DB', 'RF', 'UL', 'UR'),
-    ('DB', 'UF', 'UL', 'UR'),
-    ('LB', 'RB', 'UB', 'DF'),
-    ('LB', 'RB', 'UB', 'DL'),
-    ('LB', 'RB', 'UB', 'DR'),
-    ('LB', 'RB', 'UB', 'LF'),
-    ('LB', 'RB', 'UB', 'RF'),
-    ('LB', 'RB', 'UB', 'UF'),
-    ('LB', 'RB', 'UB', 'UL'),
-    ('LB', 'RB', 'UB', 'UR'),
-    ('LB', 'RB', 'DF', 'DL'),
-    ('LB', 'RB', 'DF', 'DR'),
-    ('LB', 'RB', 'DF', 'LF'),
-    ('LB', 'RB', 'DF', 'RF'),
-    ('LB', 'RB', 'DF', 'UF'),
-    ('LB', 'RB', 'DF', 'UL'),
-    ('LB', 'RB', 'DF', 'UR'),
-    ('LB', 'RB', 'DL', 'DR'),
-    ('LB', 'RB', 'DL', 'LF'),
-    ('LB', 'RB', 'DL', 'RF'),
-    ('LB', 'RB', 'DL', 'UF'),
-    ('LB', 'RB', 'DL', 'UL'),
-    ('LB', 'RB', 'DL', 'UR'),
-    ('LB', 'RB', 'DR', 'LF'),
-    ('LB', 'RB', 'DR', 'RF'),
-    ('LB', 'RB', 'DR', 'UF'),
-    ('LB', 'RB', 'DR', 'UL'),
-    ('LB', 'RB', 'DR', 'UR'),
-    ('LB', 'RB', 'LF', 'RF'),
-    ('LB', 'RB', 'LF', 'UF'),
-    ('LB', 'RB', 'LF', 'UL'),
-    ('LB', 'RB', 'LF', 'UR'),
-    ('LB', 'RB', 'RF', 'UF'),
-    ('LB', 'RB', 'RF', 'UL'),
-    ('LB', 'RB', 'RF', 'UR'),
-    ('LB', 'RB', 'UF', 'UL'),
-    ('LB', 'RB', 'UF', 'UR'),
-    ('LB', 'RB', 'UL', 'UR'),
-    ('LB', 'UB', 'DF', 'DL'),
-    ('LB', 'UB', 'DF', 'DR'),
-    ('LB', 'UB', 'DF', 'LF'),
-    ('LB', 'UB', 'DF', 'RF'),
-    ('LB', 'UB', 'DF', 'UF'),
-    ('LB', 'UB', 'DF', 'UL'),
-    ('LB', 'UB', 'DF', 'UR'),
-    ('LB', 'UB', 'DL', 'DR'),
-    ('LB', 'UB', 'DL', 'LF'),
-    ('LB', 'UB', 'DL', 'RF'),
-    ('LB', 'UB', 'DL', 'UF'),
-    ('LB', 'UB', 'DL', 'UL'),
-    ('LB', 'UB', 'DL', 'UR'),
-    ('LB', 'UB', 'DR', 'LF'),
-    ('LB', 'UB', 'DR', 'RF'),
-    ('LB', 'UB', 'DR', 'UF'),
-    ('LB', 'UB', 'DR', 'UL'),
-    ('LB', 'UB', 'DR', 'UR'),
-    ('LB', 'UB', 'LF', 'RF'),
-    ('LB', 'UB', 'LF', 'UF'),
-    ('LB', 'UB', 'LF', 'UL'),
-    ('LB', 'UB', 'LF', 'UR'),
-    ('LB', 'UB', 'RF', 'UF'),
-    ('LB', 'UB', 'RF', 'UL'),
-    ('LB', 'UB', 'RF', 'UR'),
-    ('LB', 'UB', 'UF', 'UL'),
-    ('LB', 'UB', 'UF', 'UR'),
-    ('LB', 'UB', 'UL', 'UR'),
-    ('LB', 'DF', 'DL', 'DR'),
-    ('LB', 'DF', 'DL', 'LF'),
-    ('LB', 'DF', 'DL', 'RF'),
-    ('LB', 'DF', 'DL', 'UF'),
-    ('LB', 'DF', 'DL', 'UL'),
-    ('LB', 'DF', 'DL', 'UR'),
-    ('LB', 'DF', 'DR', 'LF'),
-    ('LB', 'DF', 'DR', 'RF'),
-    ('LB', 'DF', 'DR', 'UF'),
-    ('LB', 'DF', 'DR', 'UL'),
-    ('LB', 'DF', 'DR', 'UR'),
-    ('LB', 'DF', 'LF', 'RF'),
-    ('LB', 'DF', 'LF', 'UF'),
-    ('LB', 'DF', 'LF', 'UL'),
-    ('LB', 'DF', 'LF', 'UR'),
-    ('LB', 'DF', 'RF', 'UF'),
-    ('LB', 'DF', 'RF', 'UL'),
-    ('LB', 'DF', 'RF', 'UR'),
-    ('LB', 'DF', 'UF', 'UL'),
-    ('LB', 'DF', 'UF', 'UR'),
-    ('LB', 'DF', 'UL', 'UR'),
-    ('LB', 'DL', 'DR', 'LF'),
-    ('LB', 'DL', 'DR', 'RF'),
-    ('LB', 'DL', 'DR', 'UF'),
-    ('LB', 'DL', 'DR', 'UL'),
-    ('LB', 'DL', 'DR', 'UR'),
-    ('LB', 'DL', 'LF', 'RF'),
-    ('LB', 'DL', 'LF', 'UF'),
-    ('LB', 'DL', 'LF', 'UL'),
-    ('LB', 'DL', 'LF', 'UR'),
-    ('LB', 'DL', 'RF', 'UF'),
-    ('LB', 'DL', 'RF', 'UL'),
-    ('LB', 'DL', 'RF', 'UR'),
-    ('LB', 'DL', 'UF', 'UL'),
-    ('LB', 'DL', 'UF', 'UR'),
-    ('LB', 'DL', 'UL', 'UR'),
-    ('LB', 'DR', 'LF', 'RF'),
-    ('LB', 'DR', 'LF', 'UF'),
-    ('LB', 'DR', 'LF', 'UL'),
-    ('LB', 'DR', 'LF', 'UR'),
-    ('LB', 'DR', 'RF', 'UF'),
-    ('LB', 'DR', 'RF', 'UL'),
-    ('LB', 'DR', 'RF', 'UR'),
-    ('LB', 'DR', 'UF', 'UL'),
-    ('LB', 'DR', 'UF', 'UR'),
-    ('LB', 'DR', 'UL', 'UR'),
-    ('LB', 'LF', 'RF', 'UF'),
-    ('LB', 'LF', 'RF', 'UL'),
-    ('LB', 'LF', 'RF', 'UR'),
-    ('LB', 'LF', 'UF', 'UL'),
-    ('LB', 'LF', 'UF', 'UR'),
-    ('LB', 'LF', 'UL', 'UR'),
-    ('LB', 'RF', 'UF', 'UL'),
-    ('LB', 'RF', 'UF', 'UR'),
-    ('LB', 'RF', 'UL', 'UR'),
-    ('LB', 'UF', 'UL', 'UR'),
-    ('RB', 'UB', 'DF', 'DL'),
-    ('RB', 'UB', 'DF', 'DR'),
-    ('RB', 'UB', 'DF', 'LF'),
-    ('RB', 'UB', 'DF', 'RF'),
-    ('RB', 'UB', 'DF', 'UF'),
-    ('RB', 'UB', 'DF', 'UL'),
-    ('RB', 'UB', 'DF', 'UR'),
-    ('RB', 'UB', 'DL', 'DR'),
-    ('RB', 'UB', 'DL', 'LF'),
-    ('RB', 'UB', 'DL', 'RF'),
-    ('RB', 'UB', 'DL', 'UF'),
-    ('RB', 'UB', 'DL', 'UL'),
-    ('RB', 'UB', 'DL', 'UR'),
-    ('RB', 'UB', 'DR', 'LF'),
-    ('RB', 'UB', 'DR', 'RF'),
-    ('RB', 'UB', 'DR', 'UF'),
-    ('RB', 'UB', 'DR', 'UL'),
-    ('RB', 'UB', 'DR', 'UR'),
-    ('RB', 'UB', 'LF', 'RF'),
-    ('RB', 'UB', 'LF', 'UF'),
-    ('RB', 'UB', 'LF', 'UL'),
-    ('RB', 'UB', 'LF', 'UR'),
-    ('RB', 'UB', 'RF', 'UF'),
-    ('RB', 'UB', 'RF', 'UL'),
-    ('RB', 'UB', 'RF', 'UR'),
-    ('RB', 'UB', 'UF', 'UL'),
-    ('RB', 'UB', 'UF', 'UR'),
-    ('RB', 'UB', 'UL', 'UR'),
-    ('RB', 'DF', 'DL', 'DR'),
-    ('RB', 'DF', 'DL', 'LF'),
-    ('RB', 'DF', 'DL', 'RF'),
-    ('RB', 'DF', 'DL', 'UF'),
-    ('RB', 'DF', 'DL', 'UL'),
-    ('RB', 'DF', 'DL', 'UR'),
-    ('RB', 'DF', 'DR', 'LF'),
-    ('RB', 'DF', 'DR', 'RF'),
-    ('RB', 'DF', 'DR', 'UF'),
-    ('RB', 'DF', 'DR', 'UL'),
-    ('RB', 'DF', 'DR', 'UR'),
-    ('RB', 'DF', 'LF', 'RF'),
-    ('RB', 'DF', 'LF', 'UF'),
-    ('RB', 'DF', 'LF', 'UL'),
-    ('RB', 'DF', 'LF', 'UR'),
-    ('RB', 'DF', 'RF', 'UF'),
-    ('RB', 'DF', 'RF', 'UL'),
-    ('RB', 'DF', 'RF', 'UR'),
-    ('RB', 'DF', 'UF', 'UL'),
-    ('RB', 'DF', 'UF', 'UR'),
-    ('RB', 'DF', 'UL', 'UR'),
-    ('RB', 'DL', 'DR', 'LF'),
-    ('RB', 'DL', 'DR', 'RF'),
-    ('RB', 'DL', 'DR', 'UF'),
-    ('RB', 'DL', 'DR', 'UL'),
-    ('RB', 'DL', 'DR', 'UR'),
-    ('RB', 'DL', 'LF', 'RF'),
-    ('RB', 'DL', 'LF', 'UF'),
-    ('RB', 'DL', 'LF', 'UL'),
-    ('RB', 'DL', 'LF', 'UR'),
-    ('RB', 'DL', 'RF', 'UF'),
-    ('RB', 'DL', 'RF', 'UL'),
-    ('RB', 'DL', 'RF', 'UR'),
-    ('RB', 'DL', 'UF', 'UL'),
-    ('RB', 'DL', 'UF', 'UR'),
-    ('RB', 'DL', 'UL', 'UR'),
-    ('RB', 'DR', 'LF', 'RF'),
-    ('RB', 'DR', 'LF', 'UF'),
-    ('RB', 'DR', 'LF', 'UL'),
-    ('RB', 'DR', 'LF', 'UR'),
-    ('RB', 'DR', 'RF', 'UF'),
-    ('RB', 'DR', 'RF', 'UL'),
-    ('RB', 'DR', 'RF', 'UR'),
-    ('RB', 'DR', 'UF', 'UL'),
-    ('RB', 'DR', 'UF', 'UR'),
-    ('RB', 'DR', 'UL', 'UR'),
-    ('RB', 'LF', 'RF', 'UF'),
-    ('RB', 'LF', 'RF', 'UL'),
-    ('RB', 'LF', 'RF', 'UR'),
-    ('RB', 'LF', 'UF', 'UL'),
-    ('RB', 'LF', 'UF', 'UR'),
-    ('RB', 'LF', 'UL', 'UR'),
-    ('RB', 'RF', 'UF', 'UL'),
-    ('RB', 'RF', 'UF', 'UR'),
-    ('RB', 'RF', 'UL', 'UR'),
-    ('RB', 'UF', 'UL', 'UR'),
-    ('UB', 'DF', 'DL', 'DR'),
-    ('UB', 'DF', 'DL', 'LF'),
-    ('UB', 'DF', 'DL', 'RF'),
-    ('UB', 'DF', 'DL', 'UF'),
-    ('UB', 'DF', 'DL', 'UL'),
-    ('UB', 'DF', 'DL', 'UR'),
-    ('UB', 'DF', 'DR', 'LF'),
-    ('UB', 'DF', 'DR', 'RF'),
-    ('UB', 'DF', 'DR', 'UF'),
-    ('UB', 'DF', 'DR', 'UL'),
-    ('UB', 'DF', 'DR', 'UR'),
-    ('UB', 'DF', 'LF', 'RF'),
-    ('UB', 'DF', 'LF', 'UF'),
-    ('UB', 'DF', 'LF', 'UL'),
-    ('UB', 'DF', 'LF', 'UR'),
-    ('UB', 'DF', 'RF', 'UF'),
-    ('UB', 'DF', 'RF', 'UL'),
-    ('UB', 'DF', 'RF', 'UR'),
-    ('UB', 'DF', 'UF', 'UL'),
-    ('UB', 'DF', 'UF', 'UR'),
-    ('UB', 'DF', 'UL', 'UR'),
-    ('UB', 'DL', 'DR', 'LF'),
-    ('UB', 'DL', 'DR', 'RF'),
-    ('UB', 'DL', 'DR', 'UF'),
-    ('UB', 'DL', 'DR', 'UL'),
-    ('UB', 'DL', 'DR', 'UR'),
-    ('UB', 'DL', 'LF', 'RF'),
-    ('UB', 'DL', 'LF', 'UF'),
-    ('UB', 'DL', 'LF', 'UL'),
-    ('UB', 'DL', 'LF', 'UR'),
-    ('UB', 'DL', 'RF', 'UF'),
-    ('UB', 'DL', 'RF', 'UL'),
-    ('UB', 'DL', 'RF', 'UR'),
-    ('UB', 'DL', 'UF', 'UL'),
-    ('UB', 'DL', 'UF', 'UR'),
-    ('UB', 'DL', 'UL', 'UR'),
-    ('UB', 'DR', 'LF', 'RF'),
-    ('UB', 'DR', 'LF', 'UF'),
-    ('UB', 'DR', 'LF', 'UL'),
-    ('UB', 'DR', 'LF', 'UR'),
-    ('UB', 'DR', 'RF', 'UF'),
-    ('UB', 'DR', 'RF', 'UL'),
-    ('UB', 'DR', 'RF', 'UR'),
-    ('UB', 'DR', 'UF', 'UL'),
-    ('UB', 'DR', 'UF', 'UR'),
-    ('UB', 'DR', 'UL', 'UR'),
-    ('UB', 'LF', 'RF', 'UF'),
-    ('UB', 'LF', 'RF', 'UL'),
-    ('UB', 'LF', 'RF', 'UR'),
-    ('UB', 'LF', 'UF', 'UL'),
-    ('UB', 'LF', 'UF', 'UR'),
-    ('UB', 'LF', 'UL', 'UR'),
-    ('UB', 'RF', 'UF', 'UL'),
-    ('UB', 'RF', 'UF', 'UR'),
-    ('UB', 'RF', 'UL', 'UR'),
-    ('UB', 'UF', 'UL', 'UR'),
-    ('DF', 'DL', 'DR', 'LF'),
-    ('DF', 'DL', 'DR', 'RF'),
-    ('DF', 'DL', 'DR', 'UF'),
-    ('DF', 'DL', 'DR', 'UL'),
-    ('DF', 'DL', 'DR', 'UR'),
-    ('DF', 'DL', 'LF', 'RF'),
-    ('DF', 'DL', 'LF', 'UF'),
-    ('DF', 'DL', 'LF', 'UL'),
-    ('DF', 'DL', 'LF', 'UR'),
-    ('DF', 'DL', 'RF', 'UF'),
-    ('DF', 'DL', 'RF', 'UL'),
-    ('DF', 'DL', 'RF', 'UR'),
-    ('DF', 'DL', 'UF', 'UL'),
-    ('DF', 'DL', 'UF', 'UR'),
-    ('DF', 'DL', 'UL', 'UR'),
-    ('DF', 'DR', 'LF', 'RF'),
-    ('DF', 'DR', 'LF', 'UF'),
-    ('DF', 'DR', 'LF', 'UL'),
-    ('DF', 'DR', 'LF', 'UR'),
-    ('DF', 'DR', 'RF', 'UF'),
-    ('DF', 'DR', 'RF', 'UL'),
-    ('DF', 'DR', 'RF', 'UR'),
-    ('DF', 'DR', 'UF', 'UL'),
-    ('DF', 'DR', 'UF', 'UR'),
-    ('DF', 'DR', 'UL', 'UR'),
-    ('DF', 'LF', 'RF', 'UF'),
-    ('DF', 'LF', 'RF', 'UL'),
-    ('DF', 'LF', 'RF', 'UR'),
-    ('DF', 'LF', 'UF', 'UL'),
-    ('DF', 'LF', 'UF', 'UR'),
-    ('DF', 'LF', 'UL', 'UR'),
-    ('DF', 'RF', 'UF', 'UL'),
-    ('DF', 'RF', 'UF', 'UR'),
-    ('DF', 'RF', 'UL', 'UR'),
-    ('DF', 'UF', 'UL', 'UR'),
-    ('DL', 'DR', 'LF', 'RF'),
-    ('DL', 'DR', 'LF', 'UF'),
-    ('DL', 'DR', 'LF', 'UL'),
-    ('DL', 'DR', 'LF', 'UR'),
-    ('DL', 'DR', 'RF', 'UF'),
-    ('DL', 'DR', 'RF', 'UL'),
-    ('DL', 'DR', 'RF', 'UR'),
-    ('DL', 'DR', 'UF', 'UL'),
-    ('DL', 'DR', 'UF', 'UR'),
-    ('DL', 'DR', 'UL', 'UR'),
-    ('DL', 'LF', 'RF', 'UF'),
-    ('DL', 'LF', 'RF', 'UL'),
-    ('DL', 'LF', 'RF', 'UR'),
-    ('DL', 'LF', 'UF', 'UL'),
-    ('DL', 'LF', 'UF', 'UR'),
-    ('DL', 'LF', 'UL', 'UR'),
-    ('DL', 'RF', 'UF', 'UL'),
-    ('DL', 'RF', 'UF', 'UR'),
-    ('DL', 'RF', 'UL', 'UR'),
-    ('DL', 'UF', 'UL', 'UR'),
-    ('DR', 'LF', 'RF', 'UF'),
-    ('DR', 'LF', 'RF', 'UL'),
-    ('DR', 'LF', 'RF', 'UR'),
-    ('DR', 'LF', 'UF', 'UL'),
-    ('DR', 'LF', 'UF', 'UR'),
-    ('DR', 'LF', 'UL', 'UR'),
-    ('DR', 'RF', 'UF', 'UL'),
-    ('DR', 'RF', 'UF', 'UR'),
-    ('DR', 'RF', 'UL', 'UR'),
-    ('DR', 'UF', 'UL', 'UR'),
-    ('LF', 'RF', 'UF', 'UL'),
-    ('LF', 'RF', 'UF', 'UR'),
-    ('LF', 'RF', 'UL', 'UR'),
-    ('LF', 'UF', 'UL', 'UR'),
-    ('RF', 'UF', 'UL', 'UR'),
-)
+        #self.lt_x_plane_y_plane_orient_edges_edges_only.solve()
+        #self.lt_x_plane_y_plane_orient_edges_centers_only.solve()
+        #self.lt_x_plane_y_plane_orient_edges.avoid_oll = 0
+
+        self.lt_x_plane_y_plane_orient_edges.solve()
+        #self.print_cube()
+        #self.highlow_edges_print()
+        #log.info("%s: 8-edges EOed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        (eo_state, eo_steps) = self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.ida_heuristic()
+        log.info("%s: EO state %s, EO steps %s" % (self, eo_state, pformat(eo_steps)))
+        log.info("%s: UD and FB centers staged, edges partially EOed, %d steps in" % (self,
+            self.get_solution_len_minus_rotates(self.solution)))
+
+        # our EOed edges are becoming un-EOed when we make the FB centers vertical bars :(
+        # This phase will need to use IDA to find a solution that allows them to remain EOed.
+        # This makes me wonder if the previous phase is needed at all?  Can we leave the UD/FB
+        # centers staged, make FB vertical bars and EO the 8-edges at the same time? That would
+        # be really cool if that were the case. To test this just comment out
+        # the self.lt_x_plane_y_plane_orient_edges.solve() call
+        #
+        # If this is true I think this kills the other brainstorm I was working on to
+        # stage LR centers first because the entire savings there was that you did not
+        # have to actually stage the other 4 centers...think about this some more if the
+        # theory above holds true.
+        self.lt_x_plane_y_plane_orient_edges_fb_centers.solve()
+
+        tmp_state = self.state[:]
+        tmp_solution = self.solution[:]
+        min_LR_cost = None
+        min_LR_moves = None
+
+        # Of  L,R  L,R'  L',R  L',R'  which sets up better for the next phase?
+        for (L_move, R_move) in (
+                ("L", "R"),
+                ("L", "R'"),
+                ("L'", "R"),
+                ("L'", "R'")):
+            self.rotate(L_move)
+            self.rotate(R_move)
+
+            self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
+            #(_, last_eight_edges_cost) = self.lt_pair_last_eight_edges_edges_only.ida_heuristic()
+            (_, last_eight_edges_cost) = self.lt_pair_last_eight_edges.ida_heuristic()
+
+            if min_LR_cost is None or last_eight_edges_cost < min_LR_cost:
+                log.info("%s: %s %s leads to last-eight-edges cost %d (NEW MIN)" % (self, L_move, R_move, last_eight_edges_cost))
+                min_LR_cost = last_eight_edges_cost
+                min_LR_moves = (L_move, R_move)
+            else:
+                log.info("%s: %s %s leads to last-eight-edges cost %d" % (self, L_move, R_move, last_eight_edges_cost))
+            self.state = tmp_state[:]
+            self.solution = tmp_solution[:]
+
+        for step in min_LR_moves:
+            self.rotate(step)
+
+        pairable_count = len(self.edges_pairable_without_LRFB())
+        self.print_cube()
+        self.highlow_edges_print()
+        log.info("%s: LR and FB vertical bars, x-plane paired, %d-edges EOed, %d steps in" % (self,
+            pairable_count, self.get_solution_len_minus_rotates(self.solution)))
+        assert pairable_count == 8
+
+        self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
+        #self.lt_pair_last_eight_edges_edges_only.solve()
+        #self.lt_pair_last_eight_edges_centers_only.solve()
+        self.lt_pair_last_eight_edges.solve()
+
+        # Now put the cube back to the original state before we flipped all of
+        # the edges to their native orientation, then apply the solution we found.
+        last_eight_edges_solution = self.solution[original_solution_len:]
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for step in last_eight_edges_solution:
+            self.rotate(step)
+
+        self.print_cube()
+        log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+    def reduce_333(self, fake_555=False):
+        self.lt_init()
+
+        if not self.centers_solved() or not self.edges_paired():
+            self.group_centers_stage_UD()
+            self.group_centers_stage_LR_to_432()
+            #log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
+
+            self.pair_z_plane_edges()
+            self.pair_last_eight_edges()
+
+        if not fake_555:
+            self.solution.append('CENTERS_SOLVED')
+            self.solution.append('EDGES_GROUPED')
 
 
 swaps_555 = {'2B': (0, 1, 2, 3, 4, 5, 79, 84, 89, 94, 99, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 10, 28, 29, 30, 31, 9, 33, 34, 35, 36, 8, 38, 39, 40, 41, 7, 43, 44, 45, 46, 6, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 145, 80, 81, 82, 83, 144, 85, 86, 87, 88, 143, 90, 91, 92, 93, 142, 95, 96, 97, 98, 141, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 27, 32, 37, 42, 47, 146, 147, 148, 149, 150),
@@ -4314,6 +2913,15 @@ swaps_555 = {'2B': (0, 1, 2, 3, 4, 5, 79, 84, 89, 94, 99, 11, 12, 13, 14, 15, 16
  '2U': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 56, 57, 58, 59, 60, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 81, 82, 83, 84, 85, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 106, 107, 108, 109, 110, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 31, 32, 33, 34, 35, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150),
  "2U'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 106, 107, 108, 109, 110, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 31, 32, 33, 34, 35, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 56, 57, 58, 59, 60, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 81, 82, 83, 84, 85, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150),
  '2U2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 81, 82, 83, 84, 85, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 106, 107, 108, 109, 110, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 31, 32, 33, 34, 35, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 56, 57, 58, 59, 60, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150),
+ '3F': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 48, 43, 38, 33, 28, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 136, 29, 30, 31, 32, 137, 34, 35, 36, 37, 138, 39, 40, 41, 42, 139, 44, 45, 46, 47, 140, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 11, 79, 80, 81, 82, 12, 84, 85, 86, 87, 13, 89, 90, 91, 92, 14, 94, 95, 96, 97, 15, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 98, 93, 88, 83, 78, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150),
+ "3F'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 78, 83, 88, 93, 98, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 15, 29, 30, 31, 32, 14, 34, 35, 36, 37, 13, 39, 40, 41, 42, 12, 44, 45, 46, 47, 11, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 140, 79, 80, 81, 82, 139, 84, 85, 86, 87, 138, 89, 90, 91, 92, 137, 94, 95, 96, 97, 136, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 28, 33, 38, 43, 48, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150),
+ '3F2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 140, 139, 138, 137, 136, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 98, 29, 30, 31, 32, 93, 34, 35, 36, 37, 88, 39, 40, 41, 42, 83, 44, 45, 46, 47, 78, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 48, 79, 80, 81, 82, 43, 84, 85, 86, 87, 38, 89, 90, 91, 92, 33, 94, 95, 96, 97, 28, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 15, 14, 13, 12, 11, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150),
+ '3L': (0, 1, 2, 123, 4, 5, 6, 7, 118, 9, 10, 11, 12, 113, 14, 15, 16, 17, 108, 19, 20, 21, 22, 103, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 3, 54, 55, 56, 57, 8, 59, 60, 61, 62, 13, 64, 65, 66, 67, 18, 69, 70, 71, 72, 23, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 148, 104, 105, 106, 107, 143, 109, 110, 111, 112, 138, 114, 115, 116, 117, 133, 119, 120, 121, 122, 128, 124, 125, 126, 127, 53, 129, 130, 131, 132, 58, 134, 135, 136, 137, 63, 139, 140, 141, 142, 68, 144, 145, 146, 147, 73, 149, 150),
+ "3L'": (0, 1, 2, 53, 4, 5, 6, 7, 58, 9, 10, 11, 12, 63, 14, 15, 16, 17, 68, 19, 20, 21, 22, 73, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 128, 54, 55, 56, 57, 133, 59, 60, 61, 62, 138, 64, 65, 66, 67, 143, 69, 70, 71, 72, 148, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 23, 104, 105, 106, 107, 18, 109, 110, 111, 112, 13, 114, 115, 116, 117, 8, 119, 120, 121, 122, 3, 124, 125, 126, 127, 123, 129, 130, 131, 132, 118, 134, 135, 136, 137, 113, 139, 140, 141, 142, 108, 144, 145, 146, 147, 103, 149, 150),
+ '3L2': (0, 1, 2, 128, 4, 5, 6, 7, 133, 9, 10, 11, 12, 138, 14, 15, 16, 17, 143, 19, 20, 21, 22, 148, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 123, 54, 55, 56, 57, 118, 59, 60, 61, 62, 113, 64, 65, 66, 67, 108, 69, 70, 71, 72, 103, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 73, 104, 105, 106, 107, 68, 109, 110, 111, 112, 63, 114, 115, 116, 117, 58, 119, 120, 121, 122, 53, 124, 125, 126, 127, 3, 129, 130, 131, 132, 8, 134, 135, 136, 137, 13, 139, 140, 141, 142, 18, 144, 145, 146, 147, 23, 149, 150),
+ '3U': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 61, 62, 63, 64, 65, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 86, 87, 88, 89, 90, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 111, 112, 113, 114, 115, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 36, 37, 38, 39, 40, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150),
+ "3U'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 111, 112, 113, 114, 115, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 36, 37, 38, 39, 40, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 61, 62, 63, 64, 65, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 86, 87, 88, 89, 90, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150),
+ '3U2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 86, 87, 88, 89, 90, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 111, 112, 113, 114, 115, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 36, 37, 38, 39, 40, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 61, 62, 63, 64, 65, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150),
  'B': (0, 80, 85, 90, 95, 100, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 5, 27, 28, 29, 30, 4, 32, 33, 34, 35, 3, 37, 38, 39, 40, 2, 42, 43, 44, 45, 1, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 150, 81, 82, 83, 84, 149, 86, 87, 88, 89, 148, 91, 92, 93, 94, 147, 96, 97, 98, 99, 146, 121, 116, 111, 106, 101, 122, 117, 112, 107, 102, 123, 118, 113, 108, 103, 124, 119, 114, 109, 104, 125, 120, 115, 110, 105, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 26, 31, 36, 41, 46),
  "B'": (0, 46, 41, 36, 31, 26, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 146, 27, 28, 29, 30, 147, 32, 33, 34, 35, 148, 37, 38, 39, 40, 149, 42, 43, 44, 45, 150, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 81, 82, 83, 84, 2, 86, 87, 88, 89, 3, 91, 92, 93, 94, 4, 96, 97, 98, 99, 5, 105, 110, 115, 120, 125, 104, 109, 114, 119, 124, 103, 108, 113, 118, 123, 102, 107, 112, 117, 122, 101, 106, 111, 116, 121, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 100, 95, 90, 85, 80),
  'B2': (0, 150, 149, 148, 147, 146, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 100, 27, 28, 29, 30, 95, 32, 33, 34, 35, 90, 37, 38, 39, 40, 85, 42, 43, 44, 45, 80, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 46, 81, 82, 83, 84, 41, 86, 87, 88, 89, 36, 91, 92, 93, 94, 31, 96, 97, 98, 99, 26, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 5, 4, 3, 2, 1),

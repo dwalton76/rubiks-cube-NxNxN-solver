@@ -38,6 +38,29 @@ def binary_search(fh, width, state_width, linecount, state_to_find):
     return None
 
 
+def binary_search_list(states, b_state_to_find):
+    first = 0
+    linecount = len(states)
+    last = linecount - 1
+    #b_state_to_find = bytearray(state_to_find, encoding='utf-8')
+
+    while first <= last:
+        midpoint = int((first + last)/2)
+        b_state = bytearray(states[midpoint], encoding='utf-8')
+
+        if b_state_to_find < b_state:
+            last = midpoint - 1
+
+        # If this is the line we are looking for, then read the entire line
+        elif b_state_to_find == b_state:
+            return (True, midpoint)
+
+        else:
+            first = midpoint + 1
+
+    return (False, first)
+
+
 def find_first_last(linecount, cache, b_state_to_find):
     cache.sort()
     first = 0
@@ -79,9 +102,30 @@ def binary_search_multiple(fh, width, state_width, linecount, states_to_find):
     results = []
     #log.info("\n\n\n\n\n\n")
     #log.info("binary_search_multiple called for %s" % pformat(states_to_find))
+    index = 0
+    skip_count = 0
+    looked_for_count = 0
 
-    for state_to_find in states_to_find:
+    fh.seek(0)
+    b_state_first = fh.read(state_width)
+
+    fh.seek((linecount - 1) * width)
+    b_state_last = fh.read(state_width)
+
+    (_, starting_index) = binary_search_list(states_to_find, b_state_first)
+    log.info("start at index %d" % starting_index)
+
+    for state_to_find in states_to_find[starting_index:]:
         b_state_to_find = bytearray(state_to_find, encoding='utf-8')
+
+        if b_state_to_find < b_state_first:
+            #log.info("SKIP %s < %s" % (b_state_to_find, b_state_first))
+            skip_count += 1
+            index += 1
+            continue
+        elif b_state_to_find > b_state_last:
+            log.info("DONE %s > %s" % (b_state_to_find, b_state_last))
+            break
 
         if cache:
             (cache, first, last) = find_first_last(linecount, cache, b_state_to_find)
@@ -89,7 +133,10 @@ def binary_search_multiple(fh, width, state_width, linecount, states_to_find):
             first = 0
             last = linecount - 1
 
-        #log.info("state_to_find %s, first %s, last %s, cache\n%s" % (state_to_find, first, last, pformat(cache)))
+        looked_for_count += 1
+        index += 1
+
+        #log.info("state_to_find %s, first %s, last %s, cache %d entries" % (state_to_find, first, last, len(cache)))
         while first <= last:
             midpoint = int((first + last)/2)
             fh.seek(midpoint * width)
@@ -117,6 +164,9 @@ def binary_search_multiple(fh, width, state_width, linecount, states_to_find):
         else:
             results.append(None)
 
+    log.info("%d keys were less than 1st entry" % skip_count)
+    log.info("%d keys were between 1st and last entry" % looked_for_count)
+    log.info("%d keys were after last entry" % (len(states_to_find) - index))
     return results
 
 
@@ -149,6 +199,18 @@ if __name__ == '__main__':
         print("ERROR: %s does not exist" % filename)
         sys.exit(1)
 
+    if os.path.isfile(key):
+        keys = []
+        with open(key, 'r') as fh:
+            for line in fh:
+                line = line.strip()
+                keys.append(line)
+    elif ',' in key:
+        keys = key.split(',')
+        key = None
+    else:
+        keys = None
+        
     # setup logging
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(filename)16s %(levelname)8s: %(message)s')
@@ -159,19 +221,20 @@ if __name__ == '__main__':
     with open(filename, 'rb') as fh:
         log.info("search start")
 
-        if ',' in key:
+        if keys:
+            log.info("finding %d keys" % len(keys))
             #for x in key.split(','):
             #    seek_count = 0
             #    value = binary_search(fh, width, state_width, linecount, x)
             #    print("key %s value is %s (took %d seeks)" % (x, value, seek_count))
 
-            keys = key.split(',')
             values = binary_search_multiple(fh, width, state_width, linecount, keys)
             #log.info("keys: %s" % pformat(keys))
             #log.info("values: %s" % pformat(values))
 
             for (key, value) in zip(keys, values):
-                print("key %s value is %s" % (key, value))
+                if value is not None:
+                    print("key %s value is %s" % (key, value))
             print("Took %d seeks" % seek_count)
 
         else:

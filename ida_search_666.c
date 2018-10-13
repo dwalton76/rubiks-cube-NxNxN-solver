@@ -199,12 +199,6 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     inner_x_centers_state >>= 1;
     inner_x_centers_cost = hex_to_int(LR_inner_x_centers_cost_666[inner_x_centers_state]);
 
-    if (inner_x_centers_cost >= max_cost_to_goal) {
-        result.cost_to_goal = inner_x_centers_cost;
-        return result;
-    }
-
-
     // Get the state for the oblique edges on LFRB
     for (int i = 0; i < NUM_LFRB_OBLIQUE_EDGES_666; i++) {
         if (cube[LFRB_oblique_edges_666[i]] == '1') {
@@ -217,12 +211,6 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     oblique_edges_bucket = XXH32(oblique_edges_str, 8, 0) % 165636907;
     oblique_edges_cost = hex_to_int(LR_oblique_edges_cost_666[oblique_edges_bucket]);
 
-    if (oblique_edges_cost >= max_cost_to_goal) {
-        result.cost_to_goal = oblique_edges_cost;
-        return result;
-    }
-
-
     // get state of LFRB inner x-centers and oblique edges
     for (int i = 0; i < NUM_LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_666; i++) {
         if (cube[LFRB_inner_x_centers_and_oblique_edges_666[i]] == '1') {
@@ -234,22 +222,20 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     // 00019b267fff is 12 chars
     state >>= 1;
     sprintf(result.lt_state, "%012lx", state);
-
-
     cost_to_goal = max(oblique_edges_cost, inner_x_centers_cost);
 
-    // The step30 table we loaded is 2-deep so if a state is not in that
-    // table we know it has a cost of at least 3...thus MAX_DEPTH of 3 here.
-    int MAX_DEPTH = 3;
+    if (cost_to_goal > 0) {
+        // The step30 table we loaded is 2-deep
+        int MAX_DEPTH = 2;
 
-    if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(LR_inner_x_centers_and_oblique_edges_666, result.lt_state);
 
         if (hash_entry) {
-            cost_to_goal = max(cost_to_goal, hash_entry->value);
+            cost_to_goal = hash_entry->value;
         } else {
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+            // Not admissible but much faster
+            cost_to_goal = max((int) cost_to_goal * 1.2, MAX_DEPTH+1);
         }
     }
 

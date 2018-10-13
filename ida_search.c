@@ -35,6 +35,7 @@ typedef enum {
 
     // 4x4x4
     CENTERS_STAGE_444,
+    REDUCE_333_444,
 
     // 5x5x5
     UD_CENTERS_STAGE_555,
@@ -62,6 +63,10 @@ char *UD_centers_cost_only_444 = NULL;
 char *LR_centers_cost_only_444 = NULL;
 char *FB_centers_cost_only_444 = NULL;
 
+struct key_value_pair *reduce_333_444 = NULL;
+char *reduce_333_edges_only = NULL;
+char *reduce_333_centers_only = NULL;
+struct wings_for_edges_recolor_pattern_444 *wings_for_recolor_444;
 
 // 5x5x5
 struct key_value_pair *UD_centers_555 = NULL;
@@ -99,15 +104,6 @@ char *step62_777 = NULL;
 char *step63_777 = NULL;
 
 
-int
-strmatch (char *str1, char *str2)
-{
-    if (strcmp(str1, str2) == 0) {
-        return 1;
-    }
-    return 0;
-}
-
 /* Remove leading and trailing whitespaces */
 char *
 strstrip (char *s)
@@ -132,6 +128,24 @@ strstrip (char *s)
     //    s++;
 
     return s;
+}
+
+
+void
+print_moves (move_type *moves, int max_i)
+{
+    int i = 0;
+    printf("SOLUTION: ");
+
+    while (moves[i] != MOVE_NONE) {
+        printf("%s ", move2str[moves[i]]);
+        i++;
+
+        if (i >= max_i) {
+            break;
+        }
+    }
+    printf("\n");
 }
 
 
@@ -296,8 +310,21 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     int L_start_kociemba = D_start_kociemba + squares_per_side;
     int B_start_kociemba = L_start_kociemba + squares_per_side;
 
+    char ones_UL[3] = {'U', 'L', 0};
+    char ones_UF[3] = {'U', 'F', 0};
+    char ones_UR[3] = {'U', 'R', 0};
+    char ones_UB[3] = {'U', 'B', 0};
     char ones_UD[3] = {'U', 'D', 0};
+    char ones_LF[3] = {'L', 'F', 0};
     char ones_LR[3] = {'L', 'R', 0};
+    char ones_LB[3] = {'L', 'B', 0};
+    char ones_LD[3] = {'L', 'D', 0};
+    char ones_FR[3] = {'F', 'R', 0};
+    char ones_FB[3] = {'F', 'B', 0};
+    char ones_FD[3] = {'F', 'D', 0};
+    char ones_RB[3] = {'R', 'B', 0};
+    char ones_RD[3] = {'R', 'D', 0};
+    char ones_BD[3] = {'B', 'D', 0};
     char ones_ULF[4] = {'U', 'L', 'F', 0};
 
     char U[2] = {'U', 0};
@@ -323,6 +350,9 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         str_replace_list_of_chars(cube, R, L);
         str_replace_list_of_chars(cube, B, F);
         print_cube(cube, size);
+        break;
+
+    case REDUCE_333_444:
         break;
 
     case UD_CENTERS_STAGE_555:
@@ -413,6 +443,18 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
             // 25 is the move count
             buffer[24] = '\0';
             cost = atoi(&buffer[25]);
+            hash_add(hashtable, buffer, cost);
+        }
+
+    } else if (strmatch(filename, "lookup-table-4x4x4-step30-reduce333.txt")) {
+
+        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+            // DDDDLLLLBBBBRRRRFFFFUUUU10362745a8b9ecfdhgkiljnm:R2 Bw2 D' F2 D Bw2
+            // 0..47 are the state
+            // 48 is the :
+            // 49 is the move count
+            buffer[48] = '\0';
+            cost = atoi(&buffer[49]);
             hash_add(hashtable, buffer, cost);
         }
 
@@ -543,6 +585,15 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             LR_centers_cost_only_444,
             FB_centers_cost_only_444);
 
+    case REDUCE_333_444:
+        return ida_heuristic_reduce_333_444(
+            cube,
+            max_cost_to_goal,
+            &reduce_333_444,
+            reduce_333_edges_only,
+            reduce_333_centers_only,
+            wings_for_recolor_444);
+
     // 5x5x5
     case UD_CENTERS_STAGE_555:
         return ida_heuristic_UD_centers_555(
@@ -625,6 +676,33 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
 
 
 unsigned int
+get_orbit0_wide_half_turn_count (move_type *moves)
+{
+    unsigned int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case Uw2:
+        case Lw2:
+        case Fw2:
+        case Rw2:
+        case Bw2:
+        case Dw2:
+            count += 1;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
+
+unsigned int
 get_orbit0_wide_quarter_turn_count (move_type *moves)
 {
     unsigned int i = 0;
@@ -688,17 +766,66 @@ get_orbit1_wide_quarter_turn_count (move_type *moves)
     return count;
 }
 
+unsigned int
+get_outer_layer_quarter_turn_count(move_type *moves)
+{
+    unsigned int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case U:
+        case U_PRIME:
+        case L:
+        case L_PRIME:
+        case F:
+        case F_PRIME:
+        case R:
+        case R_PRIME:
+        case B:
+        case B_PRIME:
+        case D:
+        case D_PRIME:
+        case Uw:
+        case Uw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+            count += 1;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
+
 int
 ida_search_complete (
     char *cube,
     lookup_table_type type,
     unsigned int orbit0_wide_quarter_turns,
     unsigned int orbit1_wide_quarter_turns,
+    unsigned int avoid_pll,
     move_type *moves_to_here)
 {
     struct key_value_pair * pt_entry = NULL;
+    unsigned int orbit0_wide_half_turn_count = 0;
     unsigned int orbit0_wide_quarter_turn_count = 0;
     unsigned int orbit1_wide_quarter_turn_count = 0;
+    unsigned int outer_layer_quarter_turn_count = 0;
+    int result = 0;
 
     if (orbit0_wide_quarter_turns) {
         orbit0_wide_quarter_turn_count = get_orbit0_wide_quarter_turn_count(moves_to_here);
@@ -747,6 +874,62 @@ ida_search_complete (
     case CENTERS_STAGE_444:
         return ida_search_complete_centers_444(cube);
 
+    case REDUCE_333_444:
+        result = ida_search_complete_reduce_333_444(cube);
+
+        if (result) {
+
+            // This will only be true when solving 4x4x4 phase3 where we must avoid PLL. To avoid
+            // PLL the edge parity and corner parity must match (both odd or both even).
+            if (avoid_pll) {
+                FILE *fp;
+                char path[64];
+                char command[256];
+
+                memset(command, '\0', 256);
+                strcpy(command, "usr/bin/has_pll.py ");
+                unsigned int command_i = strlen(command);
+
+                for (unsigned int i = 1; i <= 96; i++) {
+                    command[command_i] = cube[i];
+                    command_i++;
+                }
+
+                /* Open the command for reading. */
+                fp = popen(command, "r");
+                if (fp == NULL) {
+                    printf("Failed to run command\n" );
+                    exit(1);
+                }
+
+                /* Read the output a line at a time - output it. */
+                while (fgets(path, sizeof(path)-1, fp) != NULL) {
+                    if (strmatch(path, "True\n")) {
+                        //LOG("Found solution but it has PLL\n");
+                        result = 0;
+                        break;
+                    } else if (strmatch(path, "False\n")) {
+                        LOG("Found solution without PLL\n");
+                        result = 1;
+                        break;
+                    } else {
+                        printf("ERROR: invalid has_pll.py output %s\n", path);
+                        exit(1);
+                    }
+                }
+
+                /* close */
+                pclose(fp);
+
+                return result;
+            }
+            return 1;
+
+        } else {
+            return 0;
+        }
+
+
     // 5x5x5
     case UD_CENTERS_STAGE_555:
         return ida_search_complete_UD_centers_555(cube);
@@ -786,24 +969,6 @@ ida_search_complete (
     }
 
     return 0;
-}
-
-
-void
-print_moves (move_type *moves, int max_i)
-{
-    int i = 0;
-    printf("SOLUTION: ");
-
-    while (moves[i] != MOVE_NONE) {
-        printf("%s ", move2str[moves[i]]);
-        i++;
-
-        if (i >= max_i) {
-            break;
-        }
-    }
-    printf("\n");
 }
 
 
@@ -872,6 +1037,29 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         case Dw:
         case Dw_PRIME:
         case Dw2:
+            return 0;
+        default:
+            return 1;
+        }
+
+    case REDUCE_333_444:
+        switch (move) {
+        case Uw:
+        case Uw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+        case L:
+        case L_PRIME:
+        case R:
+        case R_PRIME:
             return 0;
         default:
             return 1;
@@ -1406,7 +1594,12 @@ steps_on_same_face_and_layer(move_type move, move_type prev_move)
     return 0;
 }
 
-unsigned int
+struct ida_search_result {
+    unsigned int f_cost;
+    unsigned int found_solution;
+};
+
+struct ida_search_result
 ida_search (unsigned int cost_to_here,
             move_type *moves_to_here,
             unsigned int threshold,
@@ -1415,20 +1608,25 @@ ida_search (unsigned int cost_to_here,
             unsigned int cube_size,
             lookup_table_type type,
             unsigned int orbit0_wide_quarter_turns,
-            unsigned int orbit1_wide_quarter_turns)
+            unsigned int orbit1_wide_quarter_turns,
+            unsigned int avoid_pll)
 {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
-    move_type move;
-    struct ida_heuristic_result result;
+    move_type move, skip_other_steps_this_face;
+    struct ida_heuristic_result heuristic_result;
     char cube_tmp[array_size];
     char cost_to_here_str[3];
+    skip_other_steps_this_face = MOVE_NONE;
+    struct ida_search_result search_result, tmp_search_result;
 
     ida_count++;
     unsigned int max_cost_to_goal = threshold - cost_to_here;
-    result = ida_heuristic(cube, type, max_cost_to_goal);
-    cost_to_goal = result.cost_to_goal;
+    heuristic_result = ida_heuristic(cube, type, max_cost_to_goal);
+    cost_to_goal = heuristic_result.cost_to_goal;
     f_cost = cost_to_here + cost_to_goal;
+    search_result.f_cost = f_cost;
+    search_result.found_solution = 0;
 
     // Abort Searching
     if (f_cost >= threshold) {
@@ -1437,25 +1635,26 @@ ida_search (unsigned int cost_to_here,
         //        f_cost, threshold, cost_to_here, cost_to_goal);
         //    LOG("\n");
         //}
-        return 0;
+        return search_result;
     }
 
-    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, moves_to_here)) {
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, moves_to_here)) {
         // We are finished!!
         LOG("IDA count %d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
-        return 1;
+        search_result.found_solution = 1;
+        return search_result;
     }
 
     sprintf(cost_to_here_str, "%d", cost_to_here);
-    strcat(result.lt_state, cost_to_here_str);
+    strcat(heuristic_result.lt_state, cost_to_here_str);
 
-    if (hash_find(&ida_explored, result.lt_state)) {
-        return 0;
+    if (hash_find(&ida_explored, heuristic_result.lt_state)) {
+        return search_result;
     }
 
-    hash_add(&ida_explored, result.lt_state, 0);
+    hash_add(&ida_explored, heuristic_result.lt_state, 0);
 
     if (cube_size == 4) {
 
@@ -1470,14 +1669,42 @@ ida_search (unsigned int cost_to_here,
                 continue;
             }
 
+            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            /*
+             * Well, it's a simple technique to reduce the number of nodes accessed.
+             * For example, we start at a position S whose pruning value is no more
+             * than maxl, otherwise, S will be pruned in previous searching.  After
+             * a move X, we obtain position S', whose pruning value is larger than
+             * maxl, which means that X makes S farther from the solved state.  In
+             * this case, we won't try X2 and X'.
+             * --cs0x7f
+             */
+            if (skip_other_steps_this_face != MOVE_NONE) {
+                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                    continue;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
+            }
+
             char cube_copy[array_size];
             memcpy(cube_copy, cube, sizeof(char) * array_size);
             rotate_444(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
-                return 1;
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+
+            if (tmp_search_result.found_solution) {
+                return tmp_search_result;
+            } else {
+                moves_to_here[cost_to_here] = MOVE_NONE;
+
+                if (tmp_search_result.f_cost > threshold) {
+                    skip_other_steps_this_face = move;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
             }
         }
 
@@ -1494,14 +1721,42 @@ ida_search (unsigned int cost_to_here,
                 continue;
             }
 
+            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            /*
+             * Well, it's a simple technique to reduce the number of nodes accessed.
+             * For example, we start at a position S whose pruning value is no more
+             * than maxl, otherwise, S will be pruned in previous searching.  After
+             * a move X, we obtain position S', whose pruning value is larger than
+             * maxl, which means that X makes S farther from the solved state.  In
+             * this case, we won't try X2 and X'.
+             * --cs0x7f
+             */
+            if (skip_other_steps_this_face != MOVE_NONE) {
+                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                    continue;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
+            }
+
             char cube_copy[array_size];
             memcpy(cube_copy, cube, sizeof(char) * array_size);
             rotate_555(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
-                return 1;
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+
+            if (tmp_search_result.found_solution) {
+                return tmp_search_result;
+            } else {
+                moves_to_here[cost_to_here] = MOVE_NONE;
+
+                if (tmp_search_result.f_cost > threshold) {
+                    skip_other_steps_this_face = move;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
             }
         }
 
@@ -1518,14 +1773,42 @@ ida_search (unsigned int cost_to_here,
                 continue;
             }
 
+            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            /*
+             * Well, it's a simple technique to reduce the number of nodes accessed.
+             * For example, we start at a position S whose pruning value is no more
+             * than maxl, otherwise, S will be pruned in previous searching.  After
+             * a move X, we obtain position S', whose pruning value is larger than
+             * maxl, which means that X makes S farther from the solved state.  In
+             * this case, we won't try X2 and X'.
+             * --cs0x7f
+             */
+            if (skip_other_steps_this_face != MOVE_NONE) {
+                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                    continue;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
+            }
+
             char cube_copy[array_size];
             memcpy(cube_copy, cube, sizeof(char) * array_size);
             rotate_666(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
-                return 1;
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+
+            if (tmp_search_result.found_solution) {
+                return tmp_search_result;
+            } else {
+                moves_to_here[cost_to_here] = MOVE_NONE;
+
+                if (tmp_search_result.f_cost > threshold) {
+                    skip_other_steps_this_face = move;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
             }
         }
 
@@ -1542,14 +1825,42 @@ ida_search (unsigned int cost_to_here,
                 continue;
             }
 
+            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            /*
+             * Well, it's a simple technique to reduce the number of nodes accessed.
+             * For example, we start at a position S whose pruning value is no more
+             * than maxl, otherwise, S will be pruned in previous searching.  After
+             * a move X, we obtain position S', whose pruning value is larger than
+             * maxl, which means that X makes S farther from the solved state.  In
+             * this case, we won't try X2 and X'.
+             * --cs0x7f
+             */
+            if (skip_other_steps_this_face != MOVE_NONE) {
+                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                    continue;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
+            }
+
             char cube_copy[array_size];
             memcpy(cube_copy, cube, sizeof(char) * array_size);
             rotate_777(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            if (ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
-                return 1;
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+
+            if (tmp_search_result.found_solution) {
+                return tmp_search_result;
+            } else {
+                moves_to_here[cost_to_here] = MOVE_NONE;
+
+                if (tmp_search_result.f_cost > threshold) {
+                    skip_other_steps_this_face = move;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
             }
         }
 
@@ -1558,7 +1869,7 @@ ida_search (unsigned int cost_to_here,
         exit(1);
     }
 
-    return 0;
+    return search_result;
 }
 
 
@@ -1640,14 +1951,18 @@ ida_solve (
     unsigned int cube_size,
     lookup_table_type type,
     unsigned int orbit0_wide_quarter_turns,
-    unsigned int orbit1_wide_quarter_turns)
+    unsigned int orbit1_wide_quarter_turns,
+    unsigned int avoid_pll)
 {
-    int MAX_SEARCH_DEPTH = 20;
+    int MAX_SEARCH_DEPTH = 30;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
-    struct ida_heuristic_result result;
+    struct ida_heuristic_result heuristic_result;
+    struct ida_search_result search_result;
 
-    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, moves_to_here)) {
+    memset(moves_to_here, MOVE_NONE, MAX_SEARCH_DEPTH);
+
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, moves_to_here)) {
         LOG("cube already solved\n");
         printf("SOLUTION:\n");
         return 1;
@@ -1661,6 +1976,13 @@ ida_solve (
         UD_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt", 16711681);
         LR_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt", 16711681);
         FB_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt", 16711681);
+        break;
+
+    case REDUCE_333_444:
+        ida_prune_table_preload(&reduce_333_444, "lookup-table-4x4x4-step30-reduce333.txt");
+        reduce_333_edges_only = ida_cost_only_preload("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
+        reduce_333_centers_only = ida_cost_only_preload("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
+        wings_for_recolor_444 = init_wings_for_edges_recolor_pattern_444();
         break;
 
     // 5x5x5
@@ -1722,8 +2044,8 @@ ida_solve (
         exit(1);
     }
 
-    result = ida_heuristic(cube, type, 99);
-    min_ida_threshold = result.cost_to_goal;
+    heuristic_result = ida_heuristic(cube, type, 99);
+    min_ida_threshold = heuristic_result.cost_to_goal;
     LOG("min_ida_threshold %d\n", min_ida_threshold);
 
     for (int threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {
@@ -1731,8 +2053,10 @@ ida_solve (
         memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_SEARCH_DEPTH);
         hash_delete_all(&ida_explored);
 
-        if (ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size,
-                       type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns)) {
+        search_result = ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size,
+                                   type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+
+        if (search_result.found_solution) {
             ida_count_total += ida_count;
             LOG("IDA threshold %d, explored %d branches (%d total), found solution\n", threshold, ida_count, ida_count_total);
             return 1;
@@ -1755,6 +2079,7 @@ main (int argc, char *argv[])
     unsigned int cube_size_kociemba = 0;
     unsigned int orbit0_wide_quarter_turns = 0;
     unsigned int orbit1_wide_quarter_turns = 0;
+    unsigned int avoid_pll = 0;
     char kociemba[300];
     memset(kociemba, 0, sizeof(char) * 300);
 
@@ -1770,6 +2095,10 @@ main (int argc, char *argv[])
             // 4x4x4
             if (strmatch(argv[i], "4x4x4-centers-stage")) {
                 type = CENTERS_STAGE_444;
+                cube_size_type = 4;
+
+            } else if (strmatch(argv[i], "4x4x4-reduce-333")) {
+                type = REDUCE_333_444;
                 cube_size_type = 4;
 
             // 5x5x5
@@ -1832,6 +2161,9 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--orbit1-need-even-w")) {
             orbit1_wide_quarter_turns = 2;
 
+        } else if (strmatch(argv[i], "--avoid-pll")) {
+            avoid_pll = 1;
+
         } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
             printf("\nida_search --kociemba KOCIEMBA_STRING --type 5x5x5-UD-centers-stage\n\n");
             exit(0);
@@ -1872,7 +2204,7 @@ main (int argc, char *argv[])
     init_cube(cube, cube_size, type, kociemba);
 
     // print_cube(cube, cube_size);
-    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns);
+    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
 
     // free_prune_tables();
 

@@ -3,6 +3,7 @@ from copy import copy
 from collections import OrderedDict
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis, NotSolving
+from rubikscubennnsolver.misc import get_swap_count
 import itertools
 import json
 import logging
@@ -237,61 +238,6 @@ def compress_2d_list(squares_list):
     return [col for row in squares_list for col in row]
 
 
-def find_index_for_value(list_foo, target, min_index):
-    for (index, value) in enumerate(list_foo):
-        if value == target and index >= min_index:
-            return index
-    raise SolveError("Did not find %s in list %s" % (target, pformat(list_foo)))
-
-
-def get_swap_count(listA, listB, debug):
-    """
-    How many swaps do we have to make in listB for it to match listA
-    Example:
-
-        A = [1, 2, 3, 0, 4]
-        B = [3, 4, 1, 0, 2]
-
-    would require 2 swaps
-    """
-    A_length = len(listA)
-    B_length = len(listB)
-    swaps = 0
-    index = 0
-
-    if A_length != B_length:
-        log.info("listA %s" % ' '.join(listA))
-        log.info("listB %s" % ' '.join(listB))
-        assert False, "listA (len %d) and listB (len %d) must be the same length" % (A_length, B_length)
-
-    if debug:
-        log.info("INIT")
-        log.info("listA: %s" % ' '.join(listA))
-        log.info("listB: %s" % ' '.join(listB))
-        log.info("")
-
-    while listA != listB:
-        if listA[index] != listB[index]:
-            listA_value = listA[index]
-            listB_index_with_A_value = find_index_for_value(listB, listA_value, index+1)
-            tmp = listB[index]
-            listB[index] = listB[listB_index_with_A_value]
-            listB[listB_index_with_A_value] = tmp
-            swaps += 1
-
-            if debug:
-                log.info("index %d, swaps %d" % (index, swaps))
-                log.info("listA: %s" % ' '.join(listA))
-                log.info("listB: %s" % ' '.join(listB))
-                log.info("")
-        index += 1
-
-    if debug:
-        log.info("swaps: %d" % swaps)
-        log.info("")
-    return swaps
-
-
 def apply_rotations(size, step, rotations):
     """
     Apply the "rotations" to step and return the step. This is used by
@@ -411,29 +357,47 @@ def orbit_matches(edges_per_side, orbit, edge_index):
 
     # Even cube
     if edges_per_side % 2 == 0:
+
+        if edges_per_side == 2:
+            assert edge_index in (0, 1), "Invalid edge_index %d" % edge_index
+        elif edges_per_side == 4:
+            assert edge_index in (0, 1, 2, 3), "Invalid edge_index %d" % edge_index
+        else:
+            assert False, "Only 4x4x4 and 6x6x6 supported"
+
         if orbit == 0:
             if edge_index == 0 or edge_index == edges_per_side-1:
                 return True
             return False
 
-        if orbit == 1:
+        elif orbit == 1:
             if edge_index == 1 or edge_index == edges_per_side-2:
                 return True
             return False
 
-        if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
-            return True
+        else:
+            raise Exception("Invalid oribit %d" % orbit)
+
+        #if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
+        #    return True
 
     # Odd cube
     else:
+        assert edges_per_side == 3, "Only 5x5x5 supported here"
+        assert edge_index in (0, 1, 2), "Invalid edge_index %d" % edge_index
+
         if orbit == 0:
-            raise Exception("This should not be called for orbit 0 on an odd cube")
+            if edge_index == 0 or edge_index == 2:
+                return True
+            return False
 
-        center_edge_index = int(edges_per_side/2)
+        elif orbit == 1:
+            if edge_index == 1:
+                return True
+            return False
 
-        if edge_index == center_edge_index - orbit or edge_index == center_edge_index + orbit:
-            return True
-        return False
+        else:
+            raise Exception("Invalid oribit %d" % orbit)
 
     return False
 
@@ -1204,129 +1168,153 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def rotate(self, action):
-        if action == "x2":
-            self.rotate_guts("x")
-            self.rotate_guts("x")
-        elif action == "y2":
-            self.rotate_guts("y")
-            self.rotate_guts("y")
-        elif action == "z2":
-            self.rotate_guts("z")
-            self.rotate_guts("z")
 
-        elif action == "2U":
-            self.rotate_guts("Uw")
-            self.rotate_guts("U'")
-        elif action == "2U'":
-            self.rotate_guts("Uw'")
-            self.rotate_guts("U")
-        elif action == "2U2":
-            self.rotate_guts("Uw2")
-            self.rotate_guts("U2")
-        elif action == "2D":
-            self.rotate_guts("Dw")
-            self.rotate_guts("D'")
-        elif action == "2D'":
-            self.rotate_guts("Dw'")
-            self.rotate_guts("D")
-        elif action == "2D2":
-            self.rotate_guts("Dw2")
-            self.rotate_guts("D2")
+        if action in (
+                "x2", "y2", "z2",
+                "2U", "2U'", "2U2",
+                "2L", "2L'", "2L2",
+                "2F", "2F'", "2F2",
+                "2R", "2R'", "2R2",
+                "2B", "2B'", "2B2",
+                "2D", "2D'", "2D2",
+                "3U", "3U'", "3U2",
+                "3L", "3L'", "3L2",
+                "3F", "3F'", "3F2",
+                "3R", "3R'", "3R2",
+                "3B", "3B'", "3B2",
+                "3D", "3D'", "3D2",
+            ):
 
-        elif action == "2L":
-            self.rotate_guts("Lw")
-            self.rotate_guts("L'")
-        elif action == "2L'":
-            self.rotate_guts("Lw'")
-            self.rotate_guts("L")
-        elif action == "2L2":
-            self.rotate_guts("Lw2")
-            self.rotate_guts("L2")
-        elif action == "2R":
-            self.rotate_guts("Rw")
-            self.rotate_guts("R'")
-        elif action == "2R'":
-            self.rotate_guts("Rw'")
-            self.rotate_guts("R")
-        elif action == "2R2":
-            self.rotate_guts("Rw2")
-            self.rotate_guts("R2")
+            if action == "x2":
+                self.rotate_guts("x")
+                self.rotate_guts("x")
+            elif action == "y2":
+                self.rotate_guts("y")
+                self.rotate_guts("y")
+            elif action == "z2":
+                self.rotate_guts("z")
+                self.rotate_guts("z")
 
-        elif action == "2F":
-            self.rotate_guts("Fw")
-            self.rotate_guts("F'")
-        elif action == "2F'":
-            self.rotate_guts("Fw'")
-            self.rotate_guts("F")
-        elif action == "2F2":
-            self.rotate_guts("Fw2")
-            self.rotate_guts("F2")
-        elif action == "2B":
-            self.rotate_guts("Bw")
-            self.rotate_guts("B'")
-        elif action == "2B'":
-            self.rotate_guts("Bw'")
-            self.rotate_guts("B")
-        elif action == "2B2":
-            self.rotate_guts("Bw2")
-            self.rotate_guts("B2")
+            elif action == "2U":
+                self.rotate_guts("Uw")
+                self.rotate_guts("U'")
+            elif action == "2U'":
+                self.rotate_guts("Uw'")
+                self.rotate_guts("U")
+            elif action == "2U2":
+                self.rotate_guts("Uw2")
+                self.rotate_guts("U2")
+            elif action == "2D":
+                self.rotate_guts("Dw")
+                self.rotate_guts("D'")
+            elif action == "2D'":
+                self.rotate_guts("Dw'")
+                self.rotate_guts("D")
+            elif action == "2D2":
+                self.rotate_guts("Dw2")
+                self.rotate_guts("D2")
 
-        elif action == "3U":
-            self.rotate_guts("3Uw")
-            self.rotate_guts("Uw'")
-        elif action == "3U'":
-            self.rotate_guts("3Uw'")
-            self.rotate_guts("Uw")
-        elif action == "3U2":
-            self.rotate_guts("3Uw2")
-            self.rotate_guts("Uw2")
-        elif action == "3D":
-            self.rotate_guts("3Dw")
-            self.rotate_guts("Dw'")
-        elif action == "3D'":
-            self.rotate_guts("3Dw'")
-            self.rotate_guts("Dw")
-        elif action == "3D2":
-            self.rotate_guts("3Dw2")
-            self.rotate_guts("Dw2")
+            elif action == "2L":
+                self.rotate_guts("Lw")
+                self.rotate_guts("L'")
+            elif action == "2L'":
+                self.rotate_guts("Lw'")
+                self.rotate_guts("L")
+            elif action == "2L2":
+                self.rotate_guts("Lw2")
+                self.rotate_guts("L2")
+            elif action == "2R":
+                self.rotate_guts("Rw")
+                self.rotate_guts("R'")
+            elif action == "2R'":
+                self.rotate_guts("Rw'")
+                self.rotate_guts("R")
+            elif action == "2R2":
+                self.rotate_guts("Rw2")
+                self.rotate_guts("R2")
 
-        elif action == "3L":
-            self.rotate_guts("3Lw")
-            self.rotate_guts("Lw'")
-        elif action == "3L'":
-            self.rotate_guts("3Lw'")
-            self.rotate_guts("Lw")
-        elif action == "3L2":
-            self.rotate_guts("3Lw2")
-            self.rotate_guts("Lw2")
-        elif action == "3R":
-            self.rotate_guts("3Rw")
-            self.rotate_guts("Rw'")
-        elif action == "3R'":
-            self.rotate_guts("3Rw'")
-            self.rotate_guts("Rw")
-        elif action == "3R2":
-            self.rotate_guts("3Rw2")
-            self.rotate_guts("Rw2")
+            elif action == "2F":
+                self.rotate_guts("Fw")
+                self.rotate_guts("F'")
+            elif action == "2F'":
+                self.rotate_guts("Fw'")
+                self.rotate_guts("F")
+            elif action == "2F2":
+                self.rotate_guts("Fw2")
+                self.rotate_guts("F2")
+            elif action == "2B":
+                self.rotate_guts("Bw")
+                self.rotate_guts("B'")
+            elif action == "2B'":
+                self.rotate_guts("Bw'")
+                self.rotate_guts("B")
+            elif action == "2B2":
+                self.rotate_guts("Bw2")
+                self.rotate_guts("B2")
 
-        elif action == "3F":
-            self.rotate_guts("3Fw")
-            self.rotate_guts("Fw'")
-        elif action == "3F'":
-            self.rotate_guts("3Fw'")
-            self.rotate_guts("Fw")
-        elif action == "3F2":
-            self.rotate_guts("3Fw2")
-            self.rotate_guts("Fw2")
-        elif action == "3B":
-            self.rotate_guts("3Bw")
-            self.rotate_guts("Bw'")
-        elif action == "3B'":
-            self.rotate_guts("3Bw'")
-            self.rotate_guts("Bw")
-        elif action == "3B2":
-            self.rotate_guts("3Bw2")
-            self.rotate_guts("Bw2")
+            elif action == "3U":
+                self.rotate_guts("3Uw")
+                self.rotate_guts("Uw'")
+            elif action == "3U'":
+                self.rotate_guts("3Uw'")
+                self.rotate_guts("Uw")
+            elif action == "3U2":
+                self.rotate_guts("3Uw2")
+                self.rotate_guts("Uw2")
+            elif action == "3D":
+                self.rotate_guts("3Dw")
+                self.rotate_guts("Dw'")
+            elif action == "3D'":
+                self.rotate_guts("3Dw'")
+                self.rotate_guts("Dw")
+            elif action == "3D2":
+                self.rotate_guts("3Dw2")
+                self.rotate_guts("Dw2")
+
+            elif action == "3L":
+                self.rotate_guts("3Lw")
+                self.rotate_guts("Lw'")
+            elif action == "3L'":
+                self.rotate_guts("3Lw'")
+                self.rotate_guts("Lw")
+            elif action == "3L2":
+                self.rotate_guts("3Lw2")
+                self.rotate_guts("Lw2")
+            elif action == "3R":
+                self.rotate_guts("3Rw")
+                self.rotate_guts("Rw'")
+            elif action == "3R'":
+                self.rotate_guts("3Rw'")
+                self.rotate_guts("Rw")
+            elif action == "3R2":
+                self.rotate_guts("3Rw2")
+                self.rotate_guts("Rw2")
+
+            elif action == "3F":
+                self.rotate_guts("3Fw")
+                self.rotate_guts("Fw'")
+            elif action == "3F'":
+                self.rotate_guts("3Fw'")
+                self.rotate_guts("Fw")
+            elif action == "3F2":
+                self.rotate_guts("3Fw2")
+                self.rotate_guts("Fw2")
+            elif action == "3B":
+                self.rotate_guts("3Bw")
+                self.rotate_guts("Bw'")
+            elif action == "3B'":
+                self.rotate_guts("3Bw'")
+                self.rotate_guts("Bw")
+            elif action == "3B2":
+                self.rotate_guts("3Bw2")
+                self.rotate_guts("Bw2")
+            else:
+                raise Exception("Unsupported action %s" % action)
+
+            self.solution.pop()
+            self.solution.pop()
+            self.solution.append(action)
+
         else:
             self.rotate_guts(action)
 
@@ -1453,7 +1441,7 @@ class RubiksCube(object):
             max_rows = int((self.size - 1)/2)
 
         sides = ['U', 'L', 'F', 'R', 'B', 'D']
-        count = ((self.size * self.size) * 6) * 3
+        count = ((self.size * self.size) * 6) * 10
 
         # uncomment to limit randomness of the scramble
         # count = 12
@@ -1465,8 +1453,10 @@ class RubiksCube(object):
             quarter_turns = random.randint(1, 2)
             clockwise = random.randint(0, 1)
 
-            if rows > 1:
-                move = "%d%s" % (rows, side)
+            if rows == 2:
+                move = "%sw" % side
+            elif rows > 2:
+                move = "%d%sw" % (rows, side)
             else:
                 move = side
 
@@ -1475,6 +1465,10 @@ class RubiksCube(object):
 
             if not clockwise:
                 move += "'"
+
+            # I used this move restriction to build the 3k-555-cubes-step500.json test cubes
+            #if move not in ['U', "U'", 'U2', 'L2', 'Lw2', 'F2', 'Fw2', 'R2', 'Rw2', 'B2', 'Bw2', 'D', "D'", 'D2']:
+            #    continue
 
             self.rotate(move)
 
@@ -2879,6 +2873,7 @@ class RubiksCube(object):
         for side in (self.sideU, self.sideD):
             for pos in side.center_pos:
                 if self.state[pos] not in ('U', 'D'):
+                    #log.info("%s: UD_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
                     return False
         return True
 
@@ -2886,8 +2881,22 @@ class RubiksCube(object):
         for side in (self.sideL, self.sideR):
             for pos in side.center_pos:
                 if self.state[pos] not in ('L', 'R'):
+                    #log.info("%s: LR_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
                     return False
         return True
+
+    def FB_centers_staged(self):
+        for side in (self.sideF, self.sideB):
+            for pos in side.center_pos:
+                if self.state[pos] not in ('F', 'B'):
+                    #log.info("%s: FB_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
+                    return False
+        return True
+
+    def centers_staged(self):
+        if self.UD_centers_staged() and self.LR_centers_staged() and self.FB_centers_staged():
+            return True
+        return False
 
     def rotate_side_X_to_Y(self, x, y):
         #assert x in ('U', 'L', 'F', 'R', 'B', 'D'), "Invalid side %s" % x
@@ -3298,7 +3307,8 @@ class RubiksCube(object):
             raise SolveError("parity error made kociemba barf,  kociemba %s" % kociemba_string)
 
         log.debug("kociemba       : %s" % kociemba_string)
-        log.debug("kociemba steps : %s" % ', '.join(steps))
+        log.info("kociemba steps            : %s" % ' '.join(steps))
+        log.info("kociemba steps (reversed) : %s" % ' '.join(reverse_steps(steps)))
 
         for step in steps:
             step = str(step)
@@ -3541,6 +3551,7 @@ class RubiksCube(object):
                 raise Exception("Could not determine wing_str for (%s, %s)" % (square1, square2))
 
             if not edges_paired:
+
                 # - backup the current state
                 # - add an 'x' to the end of the square_index/partner_index
                 # - move square_index/partner_index to its final edge location
@@ -3619,7 +3630,7 @@ class RubiksCube(object):
                     target_side = self.sideD
 
                 else:
-                    raise SolveError("invalid wing %s" % wing_str)
+                    raise SolveError("invalid wing %s at (%d, %d)" % (wing_str, square_index, partner_index))
 
                 for (edge_index, wing_index) in enumerate(edge_to_check):
                     wing_value = self.state[wing_index]
@@ -3631,21 +3642,6 @@ class RubiksCube(object):
                             max_edge_index = len(target_side.edge_east_pos) - 1
                             wing_str += str(max_edge_index - edge_index)
 
-                        # This is commented out because we used this once upon a time to generate the
-                        # orbit_index_444, etc dictionaries in https://github.com/d walton76/rubiks-color-resolver
-                        #
-                        # The workflow was:
-                        # - tweak code to call center_solution_leads_to_oll_parity() for odd cubes too
-                        # - solve 500 cubes via "./utils/test.py --test-cubes utils/test_cubes.json --size 7x7x7"
-                        # - sort /tmp/orbit_index.txt > /tmp/orbit_index_sorted.txt
-                        # - cat /tmp/orbit_index_sorted.txt | uniq > /tmp/orbit_index_sorted_uniq.txt
-                        #
-                        # The lines in /tmp/orbit_index_sorted_uniq.txt are used to create orbit_index_777
-                        '''
-                        with open('/tmp/orbit_index.txt', 'a') as fh:
-                            fh.write("    (%d, %d, '%s', '%s') : '%s',\n" % (square_index, partner_index, square1, square2, wing_str))
-                            fh.write("    (%d, %d, '%s', '%s') : '%s',\n" % (partner_index, square_index, square2, square1, wing_str))
-                        '''
                         break
                 else:
                     raise SolveError("Could not find wing %s (%d, %d) among %s" % (wing_str, square_index, partner_index, str(edge_to_check)))
@@ -3672,14 +3668,6 @@ class RubiksCube(object):
 
     def edge_solution_leads_to_pll_parity(self, debug=False):
 
-        # I don't know why but long ago when I wrote this I had it rotate U and F
-        # to their targets...it should not make any difference for calculating
-        # parity though. Will leave this here but commented out for a while just
-        # in case. 07/14/2018
-        #
-        #self.rotate_U_to_U()
-        #self.rotate_F_to_F()
-
         if self.edge_swaps_even(edges_paired=True, orbit=None, debug=debug) == self.corner_swaps_even(debug):
             if debug:
                 log.info("Predict we are free of PLL parity")
@@ -3704,7 +3692,7 @@ class RubiksCube(object):
             if self.size == 3:
                 return []
 
-            orbit_start = 1
+            orbit_start = 0
             orbits = int((self.size - 2 - 1) / 2) + 1
 
         orbits_with_oll_parity = []
@@ -3956,11 +3944,14 @@ class RubiksCube(object):
 
             solution_string.append(step)
 
-        moves = set(solution_string)
+        moves = solution_string[:]
         solution_string = ' '.join(solution_string)
+        pass_num = 0
 
         while True:
             original_solution_string = solution_string[:]
+            prev_move = None
+            #log.info("pass %d:  init %s" % (pass_num, original_solution_string))
 
             for move in moves:
                 if move in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
@@ -3996,13 +3987,30 @@ class RubiksCube(object):
                         else:
                             solution_string = solution_string.replace(" %s %s " % (move, move), " %s2 " % move)
 
+                # Experimented with this for a bit but never found a case where it was useful.
+                # I am sure there are some they are just rare.
+                '''
+                if prev_move is not None and not prev_move.startswith(str(self.size)):
+                    if ('U' in move or 'D' in move) and ('U' in prev_move or 'D' in prev_move):
+                        log.warning("pass %d: %s -> %s can we compress this as a slice?" % (pass_num, prev_move, move))
+                    elif ('L' in move or 'R' in move) and ('L' in prev_move or 'R' in prev_move):
+                        log.warning("pass %d: %s -> %s can we compress this as a slice?" % (pass_num, prev_move, move))
+                    elif ('F' in move or 'B' in move) and ('F' in prev_move or 'B' in prev_move):
+                        log.warning("pass %d: %s -> %s can we compress this as a slice?" % (pass_num, prev_move, move))
+                '''
+
                 # "F F'" and "F' F" will cancel each other out, remove them
                 solution_string = solution_string.replace(" %s %s " % (move, reverse_move), " ")
                 solution_string = solution_string.replace(" %s %s " % (reverse_move, move), " ")
+                prev_move = move
 
+            #log.info("pass %d: final %s" % (pass_num, solution_string))
             if original_solution_string == solution_string:
                 break
+            else:
+                pass_num += 1
 
+        log.info("Compressed solution in %d passes" % pass_num)
         # Remove full cube rotations by changing all of the steps that follow the cube rotation
         steps = solution_string.strip().split()
         final_steps = []
@@ -4042,21 +4050,8 @@ class RubiksCube(object):
         self.steps_to_solve_3x3x3 = index
         self.solution = solution_minus_markers
 
-    def solve(self):
-        """
-        The RubiksCube222 and RubiksCube333 child classes will override
-        this since they don't need to group centers or edges
-        """
-        if self.solved():
-            return
-
-        if self.is_odd():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-
+    def reduce_333(self):
         if self.centers_solved():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
             log.info("centers are already solved")
         else:
             self.group_centers_guts()
@@ -4072,6 +4067,19 @@ class RubiksCube(object):
             self.group_edges()
         self.solution.append('EDGES_GROUPED')
 
+    def solve(self):
+        """
+        The RubiksCube222 and RubiksCube333 child classes will override
+        this since they don't need to group centers or edges
+        """
+        if self.solved():
+            return
+
+        if self.is_odd() or self.centers_solved():
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
+
+        self.reduce_333()
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.solve_333()
@@ -4080,15 +4088,34 @@ class RubiksCube(object):
     def print_solution(self):
 
         # Print an alg.cubing.net URL for this setup/solution
-        url = "https://alg.cubing.net/?puzzle=%dx%dx%d&setup=" % (self.size, self.size, self.size)
-        url += '_'.join(reverse_steps(self.solution))
-        url += '&alg='
-        url += '_'.join(self.solution)
+        url = "https://alg.cubing.net/?puzzle=%dx%dx%d&alg=" % (self.size, self.size, self.size)
+
+        if self.steps_to_solve_centers:
+            # _ is  space
+            # %2F is a /
+            # %0A is a newline
+            url += '_'.join(self.solution[:self.steps_to_solve_centers])
+            url += r'''_%2F%2F''' +  "%d to solve centers" % self.steps_to_solve_centers + r'''%0A'''
+
+            if self.steps_to_group_edges:
+                url += '_'.join(self.solution[self.steps_to_solve_centers:self.steps_to_solve_centers+self.steps_to_group_edges])
+                url += r'''_%2F%2F''' +  "%d to pair edges" % self.steps_to_group_edges + r'''%0A'''
+
+            if self.steps_to_solve_3x3x3:
+                url += '_'.join(self.solution[self.steps_to_solve_centers+self.steps_to_group_edges:])
+                url += r'''_%2F%2F''' +  "%d to solve 333" % self.steps_to_solve_3x3x3 + r'''%0A'''
+
+        else:
+            url += '_'.join(self.solution)
+
+        url += "&type=alg"
+        url += "&title=dwalton76"
         url = url.replace("'", "-")
+        url = url.replace(" ", "_")
         log.info("\nURL     : %s" % url)
 
         log.info("\nSolution: %s" % ' '.join(self.solution))
-        print(' '.join(self.solution))
+        #print(' '.join(self.solution))
 
         if self.steps_to_rotate_cube:
             log.info(("%d steps to rotate entire cube" % self.steps_to_rotate_cube))
@@ -4574,3 +4601,27 @@ div#page_holder {
             self.transform_z_prime()
         else:
             raise Exception("Implement target %s" % target)
+
+    def x_plane_edges_paired(self):
+        if (self.sideL.west_edge_paired() and
+            self.sideL.east_edge_paired() and
+            self.sideR.west_edge_paired() and
+            self.sideR.east_edge_paired()):
+            return True
+        return False
+
+    def y_plane_edges_paired(self):
+        if (self.sideU.north_edge_paired() and
+            self.sideU.south_edge_paired() and
+            self.sideD.north_edge_paired() and
+            self.sideD.south_edge_paired()):
+            return True
+        return False
+
+    def z_plane_edges_paired(self):
+        if (self.sideU.west_edge_paired() and
+            self.sideU.east_edge_paired() and
+            self.sideD.west_edge_paired() and
+            self.sideD.east_edge_paired()):
+            return True
+        return False

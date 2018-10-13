@@ -211,7 +211,7 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
             md5='2ffd36e53d075cc5042504cc8752b06e',
         )
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         lt_state = ''.join(['1' if parent_state[x] in ('U', 'D') else '0' for x in inner_x_centers_666])
         lt_state = self.hex_format % int(lt_state, 2)
@@ -411,7 +411,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
             filesize=15092000,
         )
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent_state = self.parent.state
         lt_state = 0
 
@@ -570,6 +570,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     set_step61_centers_666 = set(step61_centers_666)
     set_step62_centers_666 = set(step62_centers_666)
 
+    # Not using these right now
     heuristic_stats = {
         (0, 0): 0,
         (0, 2): 3,
@@ -670,7 +671,6 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             linecount = 5320232
             max_depth = 4
             filesize = 164927192
-            exit_asap = 13
 
         # uses 1.3G
         else:
@@ -678,7 +678,6 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             linecount = 35805732
             max_depth = 5
             filesize = 1289006352
-            exit_asap = 13
 
         LookupTableIDA.__init__(
             self,
@@ -694,15 +693,9 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
              "3Dw", "3Dw'", "3Dw2",
              "3Bw", "3Bw'", "3Bw2"),
 
-            # prune tables
-            (parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
-             parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
-            ),
-
             linecount=linecount,
             max_depth=max_depth,
             filesize=filesize,
-            exit_asap=exit_asap,
         )
 
     def recolor(self):
@@ -768,7 +761,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
 
         return (str(self), step61_cost, step62_cost)
 
-    def ida_heuristic(self, ida_threshold):
+    def ida_heuristic(self):
         parent = self.parent
         parent_state = self.parent.state
         set_step61_centers_666 = self.set_step61_centers_666
@@ -809,12 +802,15 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
 
         step61_cost = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.heuristic(step61_state)
         step62_cost = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.heuristic(step62_state)
+        cost_to_goal = max(step61_cost, step62_cost)
 
-        if ida_threshold >= self.exit_asap:
-            heuristic_stats_cost = self.heuristic_stats.get((step61_cost, step62_cost), 0)
-            cost_to_goal = max(step61_cost, step62_cost, heuristic_stats_cost - self.heuristic_stats_error)
-        else:
-            cost_to_goal = max(step61_cost, step62_cost)
+        if cost_to_goal > 0 and cost_to_goal < self.max_depth+1:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                cost_to_goal = self.max_depth + 1
 
         return (lt_state, cost_to_goal)
 
@@ -976,41 +972,24 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
             # Edges
             fake_555.state[2 + offset_555] = self.state[2 + offset_666]
-            fake_555.state[3 + offset_555] = self.state[3 + offset_666]
+            fake_555.state[3 + offset_555] = side_name
             fake_555.state[4 + offset_555] = self.state[5 + offset_666]
+
             fake_555.state[6 + offset_555] = self.state[7 + offset_666]
             fake_555.state[10 + offset_555] = self.state[12 + offset_666]
-            fake_555.state[11 + offset_555] = self.state[13 + offset_666]
-            fake_555.state[15 + offset_555] = self.state[18 + offset_666]
+
+            fake_555.state[11 + offset_555] = side_name
+            fake_555.state[15 + offset_555] = side_name
+
             fake_555.state[16 + offset_555] = self.state[25 + offset_666]
             fake_555.state[20 + offset_555] = self.state[30 + offset_666]
+
             fake_555.state[22 + offset_555] = self.state[32 + offset_666]
-            fake_555.state[23 + offset_555] = self.state[33 + offset_666]
+            fake_555.state[23 + offset_555] = side_name
             fake_555.state[24 + offset_555] = self.state[35 + offset_666]
-
-    def solve_reduced_555_centers(self):
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_ULFRBD_solve()
-        fake_555.lt_ULFRB_centers_solve.solve()
-
-        for step in fake_555.solution:
-            self.rotate(step)
-
-    def solve_reduced_555_t_centers(self):
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_ULFRBD_solve()
-        fake_555.lt_ULFRBD_t_centers_solve.solve()
-
-        for step in fake_555.solution:
-            self.rotate(step)
 
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
-
-        if oblique_edges_only:
-            self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = None
-        else:
-            self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
 
         self.lt_UD_inner_x_centers_stage.solve()
         self.rotate_for_best_centers_staging(inner_x_centers_666)
@@ -1043,27 +1022,45 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Stage the LR inner x-centers and oblique edges
+        if oblique_edges_only:
+            self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = None
+        else:
+            self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
+
         self.lt_LR_inner_x_centers_and_oblique_edges_stage.solve()
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
-        log.info("%s: LR oblique edges and inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        if oblique_edges_only:
+            orbits_with_oll_parity = []
+        else:
+            orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+
+        log.info("%s: LR oblique edges and inner x-centers staged, orbits with OLL %s, %d steps in" % (
+            self, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
 
         # Stage LR centers via 555
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
 
-        if oblique_edges_only:
-            fake_555.lt_LR_T_centers_stage.solve()
+        # correct/avoid oll on the outside orbit
+        if 0 in orbits_with_oll_parity:
+            fake_555.lt_LR_T_centers_stage_odd.solve()
         else:
-            fake_555.lt_LR_centers_stage.avoid_oll = 0
-            fake_555.group_centers_stage_LR()
-            fake_555.lt_LR_centers_stage.avoid_oll = None
+            fake_555.lt_LR_T_centers_stage_even.solve()
 
         for step in fake_555.solution:
             self.rotate(step)
 
         self.print_cube()
-        log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        if oblique_edges_only:
+            orbits_with_oll_parity = []
+        else:
+            orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
+
+        log.info("%s: centers staged, orbits with OLL %s, %d steps in" % (
+            self, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges
@@ -1083,14 +1080,17 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.print_cube()
         log.info("%s: LFRB inner x-center and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        if oblique_edges_only:
-            self.solve_reduced_555_t_centers()
-            self.print_cube()
-            log.info("%s: solved T-centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        else:
-            self.solve_reduced_555_centers()
-            self.print_cube()
-            log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # Solve the t-centers so that we can use the 444 solver to pair the
+        # inside orbit of edges
+        fake_555 = self.get_fake_555()
+        self.populate_fake_555_for_ULFRBD_solve()
+        fake_555.lt_ULFRBD_t_centers_solve.solve()
+
+        for step in fake_555.solution:
+            self.rotate(step)
+
+        self.print_cube()
+        log.info("%s: solved T-centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def phase(self):
         if self._phase is None:

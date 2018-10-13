@@ -262,7 +262,7 @@ struct ida_heuristic_result ida_heuristic_step40_777 (
     char *step42_777)
 {
     unsigned long lt_state = 0;
-    unsigned long cost_to_goal = 0;
+    unsigned int cost_to_goal = 0;
     unsigned long step41_state_bucket = 0;
     unsigned long step42_state_bucket = 0;
     unsigned int step41_cost = 0;
@@ -278,22 +278,12 @@ struct ida_heuristic_result ida_heuristic_step40_777 (
     step41_state_bucket = XXH32(step41_state, NUM_CENTERS_STEP41_777, 0) % BUCKETSIZE_STEP41_777;
     step41_cost = hex_to_int(step41_777[step41_state_bucket]);
 
-    if (step41_cost >= max_cost_to_goal) {
-        result.cost_to_goal = step41_cost;
-        return result;
-    }
-
     // step42 cost
     for (int i = 0; i < NUM_CENTERS_STEP42_777; i++) {
         step42_state[i] = cube[centers_step42_777[i]];
     }
     step42_state_bucket = XXH32(step42_state, NUM_CENTERS_STEP42_777, 0) % BUCKETSIZE_STEP42_777;
     step42_cost = hex_to_int(step42_777[step42_state_bucket]);
-
-    if (step42_cost >= max_cost_to_goal) {
-        result.cost_to_goal = step42_cost;
-        return result;
-    }
 
     // lt_state
     for (int i = 0; i < NUM_CENTERS_STEP40_777; i++) {
@@ -308,18 +298,17 @@ struct ida_heuristic_result ida_heuristic_step40_777 (
     sprintf(result.lt_state, "%013lx", lt_state);
     cost_to_goal = max(step41_cost, step42_cost);
 
-    // The step40 table we loaded is 5-deep so if a state is not in that
-    // table we know it has a cost of at least 6...thus MAX_DEPTH of 6 here.
-    int MAX_DEPTH = 6;
+    if (cost_to_goal > 0) {
+        // The step40 table we loaded is 5-deep
+        int MAX_DEPTH = 5;
 
-    if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(step40_777, result.lt_state);
 
         if (hash_entry) {
-            cost_to_goal = max(cost_to_goal, hash_entry->value);
+            cost_to_goal = hash_entry->value;
         } else {
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+            cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
         }
     }
 
@@ -373,7 +362,7 @@ struct ida_heuristic_result ida_heuristic_step50_777 (
     char *step52_777)
 {
     unsigned long lt_state = 0;
-    unsigned long cost_to_goal = 0;
+    unsigned int cost_to_goal = 0;
     unsigned long step51_state_bucket = 0;
     unsigned long step52_state_bucket = 0;
     unsigned int step51_cost = 0;
@@ -389,22 +378,12 @@ struct ida_heuristic_result ida_heuristic_step50_777 (
     step51_state_bucket = XXH32(step51_state, NUM_CENTERS_STEP51_777, 0) % BUCKETSIZE_STEP51_777;
     step51_cost = hex_to_int(step51_777[step51_state_bucket]);
 
-    if (step51_cost >= max_cost_to_goal) {
-        result.cost_to_goal = step51_cost;
-        return result;
-    }
-
     // step52 cost
     for (int i = 0; i < NUM_CENTERS_STEP52_777; i++) {
         step52_state[i] = cube[centers_step52_777[i]];
     }
     step52_state_bucket = XXH32(step52_state, NUM_CENTERS_STEP52_777, 0) % BUCKETSIZE_STEP52_777;
     step52_cost = hex_to_int(step52_777[step52_state_bucket]);
-
-    if (step52_cost >= max_cost_to_goal) {
-        result.cost_to_goal = step52_cost;
-        return result;
-    }
 
     // lt_state
     for (int i = 0; i < NUM_CENTERS_STEP50_777; i++) {
@@ -419,18 +398,17 @@ struct ida_heuristic_result ida_heuristic_step50_777 (
     sprintf(result.lt_state, "%013lx", lt_state);
     cost_to_goal = max(step51_cost, step52_cost);
 
-    // The step50 table we loaded is 5-deep so if a state is not in that
-    // table we know it has a cost of at least 6...thus MAX_DEPTH of 6 here.
-    int MAX_DEPTH = 6;
+    if (cost_to_goal > 0) {
+        // The step50 table we loaded is 5-deep
+        int MAX_DEPTH = 5;
 
-    if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(step50_777, result.lt_state);
 
         if (hash_entry) {
-            cost_to_goal = max(cost_to_goal, hash_entry->value);
+            cost_to_goal = hash_entry->value;
         } else {
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+            cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
         }
     }
 
@@ -497,7 +475,7 @@ struct ida_heuristic_result ida_heuristic_step60_777 (
     char *step62_777,
     char *step63_777)
 {
-    unsigned long cost_to_goal = 0;
+    int cost_to_goal = 0;
     unsigned long step61_state_bucket = 0;
     unsigned long step62_state_bucket = 0;
     unsigned long step63_state_bucket = 0;
@@ -646,22 +624,365 @@ struct ida_heuristic_result ida_heuristic_step60_777 (
         }
     }
 
-    cost_to_goal = max(step61_cost, step62_cost);
-    cost_to_goal = max(cost_to_goal, step63_cost);
+    int original_cost_to_goal = max(max(step61_cost, step62_cost), step63_cost);
 
-    // The step60 table we loaded is 6-deep so if a state is not in that
-    // table we know it has a cost of at least 7...thus MAX_DEPTH of 7 here.
-    int MAX_DEPTH = 7;
-
-    if (cost_to_goal < MAX_DEPTH && cost_to_goal > 0) {
+    if (original_cost_to_goal > 0) {
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(step60_777, result.lt_state);
 
         if (hash_entry) {
-            cost_to_goal = max(cost_to_goal, hash_entry->value);
+            cost_to_goal = hash_entry->value;
         } else {
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH);
+            // For cube DLFBRRFUDUUDUFRDUUDUBLDUUDUBRDUUDURBDUUDUFRFFFLFRBDFLDLUDRRRRRRLLLLLLURRRRRRDRRRRRRBRLLLLLUFDBBLBLDURUUDDBFBBFBBBFFFBFDFFBFFBBLBBBFFDDFBBBBDLULRUDRBLBUFBULUDDUDLLUDDUDDDUDDUDDDUDDUDFFUDDUDURFUFBLBLRDUULFRLLLLLUURRRRRLFLLLLLDFLLLLLDDRRRRRLBRFRUUULUUULBFBFFBBBBBFFFBFFLFBBBFRRBBFFBDFFBFFBRDFRLBRU
+            // 99 : 16 moves in 39s
+            //  5 : 16 moves in 2.5s
+            //  4 : 17 moves in 3s
+            //  3 : 18 moves in 2s
+            //  2 : 19 moves in 3s
+            //  0 : 20 moves in 40s
+            unsigned int heuristic_stats_error = 5;
+            cost_to_goal = original_cost_to_goal + heuristic_stats_error;
+        
+            // These stats come from back when I was using python IDA here. These are not
+            // admissible but it DRASTICALLY speeds up this search. At the time that I
+            // collected these stats I was not using the step63 table.
+            switch (step61_cost) {
+            case 0:
+                switch (step62_cost) {
+                case 0:
+                    cost_to_goal = 1;
+                    break;
+                case 1:
+                    cost_to_goal = 8;
+                    break;
+                case 2:
+                    cost_to_goal = 9;
+                    break;
+                case 3:
+                    cost_to_goal = 4;
+                    break;
+                case 4:
+                    cost_to_goal = 6;
+                    break;
+                case 5:
+                    cost_to_goal = 6;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 1:
+                switch (step62_cost) {
+                case 0:
+                    cost_to_goal = 9;
+                    break;
+                case 1:
+                    cost_to_goal = 2;
+                    break;
+                case 2:
+                    cost_to_goal = 6;
+                    break;
+                case 3:
+                    cost_to_goal = 8;
+                    break;
+                case 4:
+                    cost_to_goal = 5;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 2:
+                switch (step62_cost) {
+                case 0:
+                    cost_to_goal = 9;
+                    break;
+                case 1:
+                    cost_to_goal = 8;
+                    break;
+                case 2:
+                    cost_to_goal = 4;
+                    break;
+                case 3:
+                    cost_to_goal = 6;
+                    break;
+                case 4:
+                    cost_to_goal = 8;
+                    break;
+                case 5:
+                    cost_to_goal = 6;
+                    break;
+                case 6:
+                    cost_to_goal = 7;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 3:
+                switch (step62_cost) {
+                case 1:
+                    cost_to_goal = 11;
+                    break;
+                case 2:
+                    cost_to_goal = 9;
+                    break;
+                case 3:
+                    cost_to_goal = 7;
+                    break;
+                case 4:
+                    cost_to_goal = 6;
+                    break;
+                case 5:
+                    cost_to_goal = 8;
+                    break;
+                case 6:
+                    cost_to_goal = 14;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 4:
+                switch (step62_cost) {
+                case 2:
+                    cost_to_goal = 11;
+                    break;
+                case 3:
+                    cost_to_goal = 10;
+                    break;
+                case 4:
+                    cost_to_goal = 9;
+                    break;
+                case 5:
+                    cost_to_goal = 10;
+                    break;
+                case 6:
+                    cost_to_goal = 13;
+                    break;
+                case 7:
+                    cost_to_goal = 15;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 5:
+                switch (step62_cost) {
+                case 3:
+                    cost_to_goal = 12;
+                    break;
+                case 4:
+                    cost_to_goal = 11;
+                    break;
+                case 5:
+                    cost_to_goal = 11;
+                    break;
+                case 6:
+                    cost_to_goal = 12;
+                    break;
+                case 7:
+                    cost_to_goal = 15;
+                    break;
+                case 8:
+                    cost_to_goal = 16;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 6:
+                switch (step62_cost) {
+                case 4:
+                    cost_to_goal = 13;
+                    break;
+                case 5:
+                    cost_to_goal = 12;
+                    break;
+                case 6:
+                    cost_to_goal = 13;
+                    break;
+                case 7:
+                    cost_to_goal = 14;
+                    break;
+                case 8:
+                    cost_to_goal = 15;
+                    break;
+                case 9:
+                    cost_to_goal = 15;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 7:
+                switch (step62_cost) {
+                case 4:
+                    cost_to_goal = 15;
+                    break;
+                case 5:
+                    cost_to_goal = 14;
+                    break;
+                case 6:
+                    cost_to_goal = 13;
+                    break;
+                case 7:
+                    cost_to_goal = 14;
+                    break;
+                case 8:
+                    cost_to_goal = 15;
+                    break;
+                case 9:
+                    cost_to_goal = 16;
+                    break;
+                case 10:
+                    cost_to_goal = 18;
+                    break;
+                case 11:
+                    cost_to_goal = 18;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 8:
+                switch (step62_cost) {
+                case 5:
+                    cost_to_goal = 16;
+                    break;
+                case 6:
+                    cost_to_goal = 15;
+                    break;
+                case 7:
+                    cost_to_goal = 15;
+                    break;
+                case 8:
+                    cost_to_goal = 15;
+                    break;
+                case 9:
+                    cost_to_goal = 16;
+                    break;
+                case 10:
+                    cost_to_goal = 18;
+                    break;
+                case 11:
+                    cost_to_goal = 16;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 9:
+                switch (step62_cost) {
+                case 5:
+                    cost_to_goal = 17;
+                    break;
+                case 6:
+                    cost_to_goal = 16;
+                    break;
+                case 7:
+                    cost_to_goal = 16;
+                    break;
+                case 8:
+                    cost_to_goal = 16;
+                    break;
+                case 9:
+                    cost_to_goal = 17;
+                    break;
+                case 10:
+                    cost_to_goal = 17;
+                    break;
+                case 11:
+                    cost_to_goal = 19;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 10:
+                switch (step62_cost) {
+                case 6:
+                    cost_to_goal = 17;
+                    break;
+                case 7:
+                    cost_to_goal = 16;
+                    break;
+                case 8:
+                    cost_to_goal = 17;
+                    break;
+                case 9:
+                    cost_to_goal = 17;
+                    break;
+                case 10:
+                    cost_to_goal = 19;
+                    break;
+                case 11:
+                    cost_to_goal = 18;
+                    break;
+                case 12:
+                    cost_to_goal = 16;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 11:
+                switch (step62_cost) {
+                case 7:
+                    cost_to_goal = 17;
+                    break;
+                case 8:
+                    cost_to_goal = 18;
+                    break;
+                case 9:
+                    cost_to_goal = 18;
+                    break;
+                case 10:
+                    cost_to_goal = 18;
+                    break;
+                case 11:
+                    cost_to_goal = 19;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case 12:
+                switch (step62_cost) {
+                case 9:
+                    cost_to_goal = 19;
+                    break;
+                case 10:
+                    cost_to_goal = 19;
+                    break;
+                case 11:
+                    cost_to_goal = 20;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            default:
+                break;
+            }
+        
+            cost_to_goal -= heuristic_stats_error;
+        
+            // If the heuristic_error is set to high and it gives us a cost_to_goal
+            // that is below both the centers_cost and edges_cost then we know we
+            // have subtracted too much in this scenario.  Go back to using the max
+            // among centers_cost and edges_cost.
+            if (cost_to_goal < original_cost_to_goal) {
+                cost_to_goal = original_cost_to_goal;
+            }
+
+            // The step60 table we loaded is 6-deep
+            int MAX_DEPTH = 6;
+            cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
         }
+
+    } else {
+        cost_to_goal = 0;
     }
 
     result.cost_to_goal = cost_to_goal;

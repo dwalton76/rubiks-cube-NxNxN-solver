@@ -25,8 +25,13 @@ logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelNam
 #pprint(tuple(itertools.combinations(wing_strs_all, 4)))
 
 cube = RubiksCube555(solved_555, "URFDLB")
-cube.rotate("3U2")
+#cube.rotate("3U2")
 cube.print_cube()
+cube.highlow_edges_print()
+cube.rotate("L'")
+cube.rotate("R")
+cube.print_cube()
+cube.highlow_edges_print()
 
 #cube = RubiksCube666(solved_666, "URFDLB")
 #cube.rotate("3U")

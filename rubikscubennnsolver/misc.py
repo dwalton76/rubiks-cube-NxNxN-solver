@@ -1,4 +1,68 @@
 
+from pprint import pformat
+import logging
+
+log = logging.getLogger(__name__)
+
+
+class SolveError(Exception):
+    pass
+
+
+def find_index_for_value(list_foo, target, min_index):
+    for (index, value) in enumerate(list_foo):
+        if value == target and index >= min_index:
+            return index
+    raise SolveError("Did not find %s in list %s" % (target, pformat(sorted(list_foo))))
+
+
+def get_swap_count(listA, listB, debug):
+    """
+    How many swaps do we have to make in listB for it to match listA
+    Example:
+
+        A = [1, 2, 3, 0, 4]
+        B = [3, 4, 1, 0, 2]
+
+    would require 2 swaps
+    """
+    A_length = len(listA)
+    B_length = len(listB)
+    swaps = 0
+    index = 0
+
+    if A_length != B_length:
+        log.info("listA %s" % ' '.join(listA))
+        log.info("listB %s" % ' '.join(listB))
+        assert False, "listA (len %d) and listB (len %d) must be the same length" % (A_length, B_length)
+
+    if debug:
+        log.info("INIT")
+        log.info("listA: %s" % ' '.join(listA))
+        log.info("listB: %s" % ' '.join(listB))
+        log.info("")
+
+    while listA != listB:
+        if listA[index] != listB[index]:
+            listA_value = listA[index]
+            listB_index_with_A_value = find_index_for_value(listB, listA_value, index+1)
+            tmp = listB[index]
+            listB[index] = listB[listB_index_with_A_value]
+            listB[listB_index_with_A_value] = tmp
+            swaps += 1
+
+            if debug:
+                log.info("index %d, swaps %d" % (index, swaps))
+                log.info("listA: %s" % ' '.join(listA))
+                log.info("listB: %s" % ' '.join(listB))
+                log.info("")
+        index += 1
+
+    if debug:
+        log.info("swaps: %d" % swaps)
+        log.info("")
+    return swaps
+
 
 def parse_ascii(state, size):
     U = []

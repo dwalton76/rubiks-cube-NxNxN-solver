@@ -366,3 +366,47 @@ step10 IDAViaC
 real	5m25.240s
 user	5m4.134s
 sys	0m19.856s
+
+
+step30 now using IDAViaC
+========================
+
+With heuristic_stat_error of 0
+==============================
+4x4x4 avg centers solution 30.84 steps
+4x4x4 avg edges solution 0.0 steps
+4x4x4 avg solution 51.54 steps
+4x4x4 min solution 48 steps (FBBDRDRFFULFFUBDBLLBFFBUFBLBFDBUDRDLRFBDRRDUFURRLBDULFULLRDLBBURRDDLBRUUFBLFLUDURDRDFLFURUDRBLLU)
+4x4x4 max solution 54 steps (BBLDBDFLFDLRRDBLBBUBFURUFLFUFFDDFLUURRRRUUDDLDDLUBFDBRBLFFBBBLRRRULUULBDRLDRDRLFRDLUFUFFRBUDFBUL)
+real    4m3.257s
+
+
+With heuristic_stat_error of 1
+==============================
+4x4x4 avg centers solution 30.06 steps
+4x4x4 avg edges solution 0.0 steps
+4x4x4 avg solution 50.6 steps
+4x4x4 min solution 48 steps (LBBDLUDURFBBDRLURUFLBFLRUUBRFLRBFDFFURBDBLBRRLLUUUBLFRRFBDFFBLLRFDURUFDLFUUDLUDBBRRDDLDFFLRDDDBU)
+4x4x4 max solution 54 steps (UBDBFRLRRDFFRRDLULFDULRURRBURUBRBFBFUBFFDLUDFBDFDLLDDUDBUURDBRFUBUBDRLBRBDFFLBFLLLRRLDFULBULFLDU)
+real    5m45.082s
+
+
+With heuristic_stat_error of 2
+==============================
+4x4x4 avg centers solution 29.56 steps
+4x4x4 avg edges solution 0.0 steps
+4x4x4 avg solution 50.28 steps
+4x4x4 min solution 45 steps (FFLRUUDBRRDBLUFRDDDDFRLUDBFDLFLRFBUFBBBDUDFRBLFBUURDRFLRLRUDULLBLRBDDFLLUUDFFFBLBBLUBRURFBLRUUDR)
+4x4x4 max solution 54 steps (UBDBFRLRRDFFRRDLULFDULRURRBURUBRBFBFUBFFDLUDFBDFDLLDDUDBUURDBRFUBUBDRLBRBDFFLBFLLLRRLDFULBULFLDU)
+real	6m33.902s
+
+
+With heuristic_stat_error of 3
+==============================
+4x4x4 avg centers solution 29.92 steps
+4x4x4 avg edges solution 0.0 steps
+4x4x4 avg solution 50.68 steps
+4x4x4 min solution 46 steps (FUULURFFRLRBDDDULUDFLFBBFUURRRUBLBLBDLUBDBULDDRDFLFBBRDBFDBLRBLDULUFFRLRDLDBBRLRUFFRUBFDUDFRLFRU)
+4x4x4 max solution 54 steps (RRRBBBLDDUDFRUDRBURULLURBDDDFLRUDLBDFRRUBFLRFDUUDLBLLLFFFFUDDRRBFLLFDBBLDFRULUBLRFUUBDUFBRBFLFUB)
+real    13m28.815s
+

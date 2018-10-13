@@ -9,6 +9,7 @@ over 400 moves the first time I solved a 5x5x5.
 
 | Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| 09/24/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD)  | 50 | **88** | **156** | **218** | **344** | 454 | 630 |
 | 09/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD)  | 50 | 103 | **160** | **221** | 346 | **444** | **614** |
 | 08/24/2018 | [9dc52a7](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/9dc52a7afa7951aa3483818d72bfb47373a65131)  | 50 | 103 | **161** | **224** | **346** | 469 | **617** |
 | 08/20/2018 | [39bf371](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/39bf3718d0444317b20e07994321c053d54abcaf)  | 50 | 103 | **162** | **228** | **366** | **466** | **636** |
@@ -29,11 +30,11 @@ I am working on bringing this down but these are the memory requirements for run
 
 | Size | Memory | --min-memory Memory |
 | ------ | ------ | ------ |
-| 4x4x4 | 500M | 300M |
-| 5x5x5 | 200M | 170M |
-| 6x6x6 | 1.0G | 1.0G |
-| 7x7x7 | 2.6G | 2.6G |
-| NxNxN | 4.5G | 4.5G |
+| 4x4x4 | 500M | 500M |
+| 5x5x5 | 2.1G | 650M |
+| 6x6x6 | 5.0G | N/A |
+| 7x7x7 | 5.0G | N/A |
+| NxNxN | 5.0G | N/A  |
 
 
 ## Install

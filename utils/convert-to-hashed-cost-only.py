@@ -48,27 +48,28 @@ def convert_to_cost_only(filename, bucketcount, filename_statetargets):
 
             # Write the steps_len
             if state in state_targets:
-                #log.info("found state_target %s" % state)
+                log.info("found state_target %s, hash_raw %s, hash_index %d" % (state, hash_raw, hash_index))
                 steps_len = 0
+                bucket[hash_index] = steps_len
             else:
                 if steps[0].isdigit():
                     steps_len = int(steps[0])
                 else:
                     steps_len = len(steps)
 
-            #log.info("state: %s, hash_index %s, steps_len %s" % (state, hash_index, steps_len))
-
-            if not bucket[hash_index]:
-                bucket[hash_index] = steps_len
-            else:
-                collisions += 1
-
-                if bucket[hash_index] > steps_len:
+                if not bucket[hash_index]:
                     bucket[hash_index] = steps_len
+                else:
+                    collisions += 1
+
+                    if bucket[hash_index] > steps_len:
+                        bucket[hash_index] = steps_len
 
             if line_number % 1000000 == 0:
                 log.info(line_number)
             #if line_number >= 1000:
+            #    break
+            #if state in state_targets:
             #    break
 
     log.info("%d collisions" % collisions)
@@ -77,6 +78,7 @@ def convert_to_cost_only(filename, bucketcount, filename_statetargets):
         to_write = []
 
         for (index, x) in enumerate(bucket):
+
             if x > 15:
                 to_write.append('f')
             else:
@@ -89,6 +91,7 @@ def convert_to_cost_only(filename, bucketcount, filename_statetargets):
 
         if to_write:
             fh_new.write(''.join(to_write))
+            to_write = []
 
         fh_new.write('\n')
     log.info("end writing %s" % filename_new)

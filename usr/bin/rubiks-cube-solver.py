@@ -38,6 +38,7 @@ parser.add_argument('--min-memory', default=False, action='store_true', help='Lo
 
 # CPU mode
 action = parser.add_mutually_exclusive_group(required=False)
+parser.add_argument('--openwith', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--colormap', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--order', type=str, default='URFDLB', help='order of sides in --state, default kociemba URFDLB')
 parser.add_argument('--state', type=str, help='Cube state',
@@ -94,6 +95,12 @@ parser.add_argument('--state', type=str, help='Cube state',
 
 args = parser.parse_args()
 
+if 'G' in args.state:
+    args.state = args.state.replace('G', 'F')
+    args.state = args.state.replace('Y', 'D')
+    args.state = args.state.replace('O', 'L')
+    args.state = args.state.replace('W', 'U')
+
 if args.debug:
     log.setLevel(logging.DEBUG)
 
@@ -110,8 +117,15 @@ try:
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
         cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
-        from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
-        cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
+
+        if args.min_memory:
+            from rubikscubennnsolver.RubiksCube555 import solved_555
+            from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
+            cube = RubiksCube555ForNNN(args.state, args.order, args.colormap, args.debug)
+        else:
+            from rubikscubennnsolver.RubiksCube555 import RubiksCube555
+            cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
+
     elif size == 6:
         from rubikscubennnsolver.RubiksCube666 import RubiksCube666
         cube = RubiksCube666(args.state, args.order, args.colormap, args.debug)
@@ -124,6 +138,11 @@ try:
     else:
         from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
         cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
+
+    if args.openwith:
+        cube.print_cube()
+        for step in args.openwith.split():
+            cube.rotate(step)
 
     cube.min_memory = args.min_memory
     cube.sanity_check()
@@ -185,11 +204,13 @@ try:
 
     if not cube.solved():
         kociemba_string = cube.get_kociemba_string(False)
-        edge_swap_count = cube.get_edge_swap_count(edges_paired=True, orbit=None, debug=True)
-        corner_swap_count = cube.get_corner_swap_count(debug=True)
+        #edge_swap_count = cube.get_edge_swap_count(edges_paired=True, orbit=None, debug=True)
+        #corner_swap_count = cube.get_corner_swap_count(debug=True)
 
-        raise SolveError("cube should be solved but is not, edge parity %d, corner parity %d, kociemba %s" %
-            (edge_swap_count, corner_swap_count, kociemba_string))
+        #raise SolveError("cube should be solved but is not, edge parity %d, corner parity %d, kociemba %s" %
+        #    (edge_swap_count, corner_swap_count, kociemba_string))
+        raise SolveError("cube should be solved but is not")
+
 
 except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError, NoPruneTableState):
     cube.enable_print_cube = True

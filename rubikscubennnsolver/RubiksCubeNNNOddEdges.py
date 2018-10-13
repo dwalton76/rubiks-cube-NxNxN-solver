@@ -1,7 +1,8 @@
 
 from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+from rubikscubennnsolver.RubiksCube555 import solved_555
+from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
 from math import ceil
 import logging
 import sys
@@ -18,7 +19,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 self.fake_555.re_init()
                 self.fake_555.enable_print_cube = False
             else:
-                self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+                self.fake_555 = RubiksCube555ForNNN(solved_555, 'URFDLB')
                 self.fake_555.enable_print_cube = False
                 self.fake_555.lt_init()
         else:
@@ -96,12 +97,22 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             start_nnn += self.size * self.size
             start_555 += 25
 
+        self.print_cube()
+        fake_555.enable_print_cube = True
+        fake_555.print_cube()
         fake_555.sanity_check()
         fake_555.avoid_pll = False
-        fake_555.group_edges()
+
+        # Because our centers are already solved we get very little benefit
+        # from using the more advanced 555 edge pairing code path...and it
+        # takes much longer to run.  For now use the old L4E way it is only
+        # about 1 move longer if the centers are solved but runs 3x faster.
+        fake_555.reduce_333(fake_555=True)
+
         wide_str = str(orbit + 2)
 
         for step in fake_555.solution:
+            orig_step = step
 
             # Rotate the entire cube
             if step.startswith('5'):
@@ -115,6 +126,16 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                           "Dw", "Dw'", "Dw2"):
                 step = wide_str + step
 
+            elif step in ("2U", "2U'", "2U2",
+                          "2L", "2L'", "2L2",
+                          "2F", "2F'", "2F2",
+                          "2R", "2R'", "2R2",
+                          "2B", "2B'", "2B2",
+                          "2D", "2D'", "2D2"):
+
+                step = wide_str + step[1:]
+
+            #log.info("wide_str %s, orig-step %s -> step %s" % (wide_str, orig_step, step))
             self.rotate(step)
 
     def group_edges(self):

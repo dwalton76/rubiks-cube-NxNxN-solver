@@ -9,7 +9,7 @@ unsigned long hex_to_int(char value);
 unsigned long max (unsigned long a, unsigned long b);
 
 struct ida_heuristic_result {
-    char lt_state[48];
+    char lt_state[64];
     unsigned int cost_to_goal;
 };
 
@@ -18,7 +18,7 @@ struct ida_heuristic_result {
 // https://cfsa-pmw.warwick.ac.uk/SDF/SDF_C/blob/3cf5bf49856ef9ee4080cf6722cf9058a1e28b01/src/uthash/tests/example.c
 //
 struct key_value_pair {
-    char state[48]; /* we'll use this field as the key */
+    char state[64]; /* we'll use this field as the key */
     unsigned int value;
     UT_hash_handle hh; /* makes this structure hashable */
 };
@@ -31,5 +31,6 @@ void hash_delete_all(struct key_value_pair **hashtable);
 unsigned long hash_count (struct key_value_pair **hashtable);
 void hash_print_all (struct key_value_pair **hashtable);
 void print_cube (char *cube, int size);
+int strmatch (char *str1, char *str2);
 
 #endif /* _IDA_SEARCH_CORE_H */

@@ -35,6 +35,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--print-steps', default=False, action='store_true', help='Display animated step-by-step solution')
 parser.add_argument('--debug', default=False, action='store_true', help='set loglevel to DEBUG')
 parser.add_argument('--min-memory', default=False, action='store_true', help='Load smaller tables to use less memory...takes longer to run')
+parser.add_argument('--fmc', default=False, action='store_true', help='Fewest Move Challenge')
 
 # CPU mode
 action = parser.add_mutually_exclusive_group(required=False)
@@ -144,6 +145,7 @@ try:
         for step in args.openwith.split():
             cube.rotate(step)
 
+    cube.fmc = args.fmc
     cube.min_memory = args.min_memory
     cube.sanity_check()
     cube.print_cube()

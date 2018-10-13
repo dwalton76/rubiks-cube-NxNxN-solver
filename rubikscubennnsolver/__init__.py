@@ -446,6 +446,10 @@ class RubiksCube(object):
         self.heuristic_stats = {}
         self.min_memory = False
         self.enable_print_cube = True
+        self.fmc = False
+        self.use_nuke_corners = False
+        self.use_nuke_edges = False
+        self.use_nuke_centers = False
 
         if colormap:
             colormap = json.loads(colormap)

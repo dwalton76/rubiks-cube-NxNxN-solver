@@ -2879,8 +2879,29 @@ class RubiksCube555(RubiksCube):
         self.print_cube()
         log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def reduce_333(self, fake_555=False):
-        self.lt_init()
+    def recolor(self):
+
+        if self.use_nuke_corners or self.use_nuke_edges or self.use_nuke_centers or self.recolor_positions:
+            log.info("%s: recolor" % self)
+            #self.print_cube()
+
+            if self.use_nuke_corners:
+                self.nuke_corners()
+
+            if self.use_nuke_edges:
+                self.nuke_edges()
+
+            if self.use_nuke_centers:
+                self.nuke_centers()
+
+            for x in self.recolor_positions:
+                x_color = self.state[x]
+                x_new_color = self.recolor_map.get(x_color)
+
+                if x_new_color:
+                    self.state[x] = x_new_color
+
+    def reduce_333_guts(self, fake_555=False):
 
         if not self.centers_solved() or not self.edges_paired():
             self.group_centers_stage_UD()
@@ -2893,6 +2914,69 @@ class RubiksCube555(RubiksCube):
         if not fake_555:
             self.solution.append('CENTERS_SOLVED')
             self.solution.append('EDGES_GROUPED')
+
+    def reduce_333(self, fake_555=False):
+        self.lt_init()
+
+        if self.fmc:
+            tmp_state = self.state[:]
+            tmp_solution = self.solution[:]
+            original_solution_len = len(self.solution)
+
+            min_solution_len = None
+            min_solution_state = None
+            min_solution = None
+
+            self.recolor_positions = centers_555
+
+            for (top, bottom) in (("U", "D"), ("L", "R"), ("F", "B")):
+
+                if (top, bottom) == ("U", "D"):
+                    pass
+
+                elif (top, bottom) == ("L", "R"):
+                    self.recolor_map = {
+                        'U' : 'R',
+                        'L' : 'U',
+                        'F' : 'F',
+                        'R' : 'D',
+                        'B' : 'B',
+                        'D' : 'L',
+                    }
+                    self.recolor()
+
+                elif (top, bottom) == ("F", "B "):
+                    self.recolor_map = {
+                        'U' : 'B',
+                        'L' : 'L',
+                        'F' : 'U',
+                        'R' : 'R',
+                        'B' : 'D',
+                        'D' : 'F',
+                    }
+                    self.recolor()
+
+                self.rotate_U_to_U()
+                self.rotate_F_to_F()
+                self.reduce_333_guts(fake_555)
+
+                solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+                if min_solution_len is None or solution_len <= min_solution_len:
+                    log.warning("%s: (%s, %s) solution_len %d (NEW MIN)\n\n\n\n\n\n\n" % (self, top, bottom, solution_len))
+                    min_solution_len = solution_len
+                    min_solution_state = self.state[:]
+                    min_solution = self.solution[:]
+                else:
+                    log.warning("%s: (%s, %s) solution_len %d\n\n\n\n\n\n\n" % (self, top, bottom, solution_len))
+
+                self.state = tmp_state[:]
+                self.solution = tmp_solution[:]
+
+            for step in min_solution[original_solution_len:]:
+                self.rotate(step)
+        else:
+            self.reduce_333_guts(fake_555)
 
 
 swaps_555 = {'2B': (0, 1, 2, 3, 4, 5, 79, 84, 89, 94, 99, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 10, 28, 29, 30, 31, 9, 33, 34, 35, 36, 8, 38, 39, 40, 41, 7, 43, 44, 45, 46, 6, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 145, 80, 81, 82, 83, 144, 85, 86, 87, 88, 143, 90, 91, 92, 93, 142, 95, 96, 97, 98, 141, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 27, 32, 37, 42, 47, 146, 147, 148, 149, 150),

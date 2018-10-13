@@ -107,12 +107,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         # from using the more advanced 555 edge pairing code path...and it
         # takes much longer to run.  For now use the old L4E way it is only
         # about 1 move longer if the centers are solved but runs 3x faster.
-        if orbit == 0:
-            fake_555.reduce_333(fake_555=True)
-        elif orbit == 1:
-            fake_555.reduce_333(fake_555=True)
-        else:
-            assert False, "invalid orbit %d" % orbit
+        fake_555.reduce_333(fake_555=True)
 
         wide_str = str(orbit + 2)
 

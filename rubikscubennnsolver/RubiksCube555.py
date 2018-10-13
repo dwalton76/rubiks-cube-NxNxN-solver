@@ -1811,6 +1811,10 @@ class LookupTableIDA555XPlaneYPlaneEdgesOrient(LookupTableIDA):
             # illegal moves
             (),
 
+            #linecount=1029000,
+            #max_depth=1,
+            #filesize=120393000,
+
             linecount=8918000,
             max_depth=2,
             filesize=1043406000,
@@ -2238,7 +2242,7 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
     #  2 : 16 moves in 600ms
     #  1 : 17 moves in 900ms
     #  0 : 18 moves in 1200ms
-    heuristic_stats_error = 1
+    heuristic_stats_error = 0
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -2853,7 +2857,7 @@ class RubiksCube555(RubiksCube):
 
         pairable_count = len(self.edges_pairable_without_LRFB())
         self.print_cube()
-        #self.highlow_edges_print()
+        self.highlow_edges_print()
         log.info("%s: LR and FB vertical bars, x-plane paired, %d-edges EOed, %d steps in" % (self,
             pairable_count, self.get_solution_len_minus_rotates(self.solution)))
         assert pairable_count == 8

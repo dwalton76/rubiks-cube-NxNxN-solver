@@ -64,7 +64,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             start_444 += 16
 
         fake_444.sanity_check()
-        fake_444.reduce_333(fake_444=True)
+        fake_444.reduce_333()
         half_size_str = str(half_size)
 
         for step in fake_444.solution:
@@ -200,14 +200,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         fake_555.enable_print_cube = True
         fake_555.print_cube()
         fake_555.avoid_pll = False
-
-        if self.size == 6:
-            fake_555.reduce_333(fake_555=True)
-        else:
-            # For 8x8x8 and up the centers will already be solved so use the
-            # older but faster L4E edge pairing code.
-            fake_555.reduce_333(fake_555=True)
-
+        fake_555.reduce_333()
         fake_555.print_cube()
 
         wide_str = str(orbit + 2)

@@ -463,8 +463,7 @@ ida_heuristic_reduce_333_444 (
             //  2 : 15 moves, 4.5s
             //  1 : 15 moves, 7.4s
             //  0 : 15 moves, 13s
-            // dwalton put this back to 2 after the FMC
-            unsigned int heuristic_stats_error = 99;
+            unsigned int heuristic_stats_error = 2;
             cost_to_goal = original_cost_to_goal + heuristic_stats_error;
 
             // These stats come from back when I was using python IDA here. These are not

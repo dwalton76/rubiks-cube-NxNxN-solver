@@ -19,6 +19,10 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 self.fake_555.re_init()
                 self.fake_555.enable_print_cube = False
             else:
+                # Because our centers are already solved we get very little benefit
+                # from using the more advanced 555 edge pairing code path...and it
+                # takes much longer to run.  For now use the old L4E way it is only
+                # about 1 move longer if the centers are solved but runs 3x faster.
                 self.fake_555 = RubiksCube555ForNNN(solved_555, 'URFDLB')
                 self.fake_555.enable_print_cube = False
                 self.fake_555.lt_init()
@@ -102,12 +106,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         fake_555.print_cube()
         fake_555.sanity_check()
         fake_555.avoid_pll = False
-
-        # Because our centers are already solved we get very little benefit
-        # from using the more advanced 555 edge pairing code path...and it
-        # takes much longer to run.  For now use the old L4E way it is only
-        # about 1 move longer if the centers are solved but runs 3x faster.
-        fake_555.reduce_333(fake_555=True)
+        fake_555.reduce_333()
 
         wide_str = str(orbit + 2)
 

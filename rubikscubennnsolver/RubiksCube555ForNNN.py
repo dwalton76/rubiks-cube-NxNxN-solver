@@ -837,7 +837,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         assert self.x_plane_edges_paired(), "4-edges in x-plane should have paired"
         log.info("%s: x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def reduce_333(self, fake_555=False):
+    def reduce_333(self):
         """
         This is used to pair the inside orbit of edges for 7x7x7
         """
@@ -853,8 +853,7 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.print_cube()
             log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        if not fake_555:
-            self.solution.append('CENTERS_SOLVED')
+        self.solution.append('CENTERS_SOLVED')
 
         if not self.edges_paired():
             self.pair_first_four_edges_via_l4e()
@@ -862,5 +861,4 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.stage_final_four_edges_in_x_plane()
             self.pair_x_plane_edges_in_l4e()
 
-        if not fake_555:
-            self.solution.append('EDGES_GROUPED')
+        self.solution.append('EDGES_GROUPED')

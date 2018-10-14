@@ -683,8 +683,7 @@ class RubiksCube444(RubiksCube):
         #self.lt_reduce333_centers_solve.preload_cache_dict()
         #self.lt_reduce333.preload_cache_string()
 
-    def reduce_333(self, fake_444=False):
-        self.lt_init()
+    def reduce_333(self):
 
         # save cube state
         self.original_state = self.state[:]
@@ -808,9 +807,8 @@ class RubiksCube444(RubiksCube):
         log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
 
-        if not fake_444:
-            self.solution.append('CENTERS_SOLVED')
-            self.solution.append('EDGES_GROUPED')
+        self.solution.append('CENTERS_SOLVED')
+        self.solution.append('EDGES_GROUPED')
 
 
 swaps_444 = {'2B': (0, 1, 2, 3, 4, 51, 55, 59, 63, 9, 10, 11, 12, 13, 14, 15, 16, 17, 8, 19, 20, 21, 7, 23, 24, 25, 6, 27, 28, 29, 5, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 92, 52, 53, 54, 91, 56, 57, 58, 90, 60, 61, 62, 89, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 18, 22, 26, 30, 93, 94, 95, 96),

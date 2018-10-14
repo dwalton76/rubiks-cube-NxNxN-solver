@@ -4054,6 +4054,28 @@ class RubiksCube(object):
         self.steps_to_solve_3x3x3 = index
         self.solution = solution_minus_markers
 
+    def recolor(self):
+
+        if self.use_nuke_corners or self.use_nuke_edges or self.use_nuke_centers or self.recolor_positions:
+            log.info("%s: recolor" % self)
+            #self.print_cube()
+
+            if self.use_nuke_corners:
+                self.nuke_corners()
+
+            if self.use_nuke_edges:
+                self.nuke_edges()
+
+            if self.use_nuke_centers:
+                self.nuke_centers()
+
+            for x in self.recolor_positions:
+                x_color = self.state[x]
+                x_new_color = self.recolor_map.get(x_color)
+
+                if x_new_color:
+                    self.state[x] = x_new_color
+
     def reduce_333(self):
         if self.centers_solved():
             log.info("centers are already solved")
@@ -4063,13 +4085,74 @@ class RubiksCube(object):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.solution.append('CENTERS_SOLVED')
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
 
         if self.edges_paired():
             log.info("edges are already paired")
         else:
             self.group_edges()
         self.solution.append('EDGES_GROUPED')
+
+    def reduce_333_fmc(self):
+        tmp_state = self.state[:]
+        tmp_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+
+        min_solution_len = None
+        min_solution_state = None
+        min_solution = None
+
+        self.recolor_positions = list(range((self.size * self.size * 6) + 1))
+
+        for (top, bottom) in (("U", "D"), ("L", "R"), ("F", "B")):
+
+            if (top, bottom) == ("U", "D"):
+                pass
+
+            elif (top, bottom) == ("L", "R"):
+                self.recolor_map = {
+                    'U' : 'R',
+                    'L' : 'U',
+                    'F' : 'F',
+                    'R' : 'D',
+                    'B' : 'B',
+                    'D' : 'L',
+                }
+                self.recolor()
+
+            elif (top, bottom) == ("F", "B"):
+                self.recolor_map = {
+                    'U' : 'B',
+                    'L' : 'L',
+                    'F' : 'U',
+                    'R' : 'R',
+                    'B' : 'D',
+                    'D' : 'F',
+                }
+                self.recolor()
+
+            else:
+                raise Exception("%s: invalid (top, bottom) (%s, %s)" % (self, top, bottom))
+
+            if self.is_odd() or self.centers_solved():
+                self.rotate_U_to_U()
+                self.rotate_F_to_F()
+            self.reduce_333()
+
+            solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+            if min_solution_len is None or solution_len <= min_solution_len:
+                log.warning("%s: (%s, %s) solution_len %d (NEW MIN)\n\n\n\n\n\n\n" % (self, top, bottom, solution_len))
+                min_solution_len = solution_len
+                min_solution_state = self.state[:]
+                min_solution = self.solution[:]
+            else:
+                log.warning("%s: (%s, %s) solution_len %d\n\n\n\n\n\n\n" % (self, top, bottom, solution_len))
+
+            self.state = tmp_state[:]
+            self.solution = tmp_solution[:]
+
+        for step in min_solution[original_solution_len:]:
+            self.rotate(step)
 
     def solve(self, solution333=None):
         """
@@ -4079,11 +4162,17 @@ class RubiksCube(object):
         if self.solved():
             return
 
+        self.lt_init()
+
         if self.is_odd() or self.centers_solved():
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
-        self.reduce_333()
+        if self.fmc:
+            self.reduce_333_fmc()
+        else:
+            self.reduce_333()
+
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 

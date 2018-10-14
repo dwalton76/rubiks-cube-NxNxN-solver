@@ -671,11 +671,10 @@ class LookupTable(object):
                 #self.parent.enable_print_cube = True
                 #raise NoPruneTableState("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
 
+                if not isinstance(self, LookupTableHashCostOnly):
+                    result = self.max_depth + 1
+
             return result
-
-        self.parent.print_cube()
-        raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (self, pt_state, self.state_width))
-
 
     def find_edge_entries_with_loose_signature(self, signature_to_find):
         """
@@ -1006,7 +1005,6 @@ class LookupTableIDA(LookupTable):
             return (f_cost, False)
 
         # This saves us a lot of disk IO.
-        # dwalton
         if cost_to_goal <= self.max_depth and self.search_complete(lt_state, steps_to_here):
             self.ida_nodes[lt_state] = steps_to_here
             return (f_cost, True)

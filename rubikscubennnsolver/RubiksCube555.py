@@ -1588,7 +1588,7 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
     # 2 : 14 moves in 14s
     # 1 : 14 moves in 8s
     # 0 : 14 moves in 800ms
-    heuristic_stats_error = 1
+    heuristic_stats_error = 0
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -1614,6 +1614,9 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
             filesize=297157068,
         )
 
+        if self.parent.fmc:
+            LookupTableIDA555EdgesZPlane.heuristic_stats_error = 1
+
     def ida_heuristic_tuple(self):
         assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
@@ -1631,6 +1634,37 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
         edges_cost_to_goal = max(three_wing_cost_to_goal)
 
         return (centers_cost_to_goal, edges_cost_to_goal)
+
+    def search_complete(self, state, steps_to_here):
+        if LookupTableIDA.search_complete(self, state, steps_to_here):
+
+            # If we are not finding a solution for a "fewest move challenge" then go ahead
+            # and return True here and do not worry about trying to find a solution that
+            # allows us to skip step350.
+            if not self.parent.fmc:
+                return True
+
+            # Are the edges in a state in the step351 table?  We must flip the edges around
+            # to their native orientation in order to check.
+            tmp_state = self.parent.state[:]
+            self.parent.edges_flip_to_original_orientation(self.parent.get_y_plane_wing_strs(), self.parent.get_x_plane_z_plane_wing_strs())
+            (eo_state, eo_steps) = self.parent.lt_x_plane_y_plane_orient_edges_edges_only.ida_heuristic()
+            #log.info("%s: step351 EO state %s, EO steps %s, state_target %s" %
+            #    (self, eo_state, pformat(eo_steps), bool(eo_state in self.lt_x_plane_y_plane_orient_edges_edges_only.state_target)))
+            self.parent.state = tmp_state[:]
+
+            # return True if the EO state for step351 is at one of its state targets. This allows us
+            # to avoid step350 completely.
+            if eo_state in self.parent.lt_x_plane_y_plane_orient_edges_edges_only.state_target:
+                log.info("%s: found solution where edges are EOed per step351" % self)
+                return True
+            else:
+                log.info("%s: found solution but edges are not EOed per step351" % self)
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                return False
+        else:
+            return False
 
     def ida_heuristic(self):
         assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
@@ -2269,6 +2303,9 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
             filesize=300818315,
         )
 
+        if self.parent.fmc:
+            LookupTableIDA555PairLastEightEdges.heuristic_stats_error = 2
+
     def ida_heuristic_tuple(self):
         (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
         (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
@@ -2494,6 +2531,20 @@ class RubiksCube555(RubiksCube):
 
         self.state = original_state[:]
         self.solution = original_solution[:]
+
+    def print_eo_state(self):
+        tmp_state = self.state[:]
+        self.edges_flip_to_original_orientation(self.get_y_plane_wing_strs(), self.get_x_plane_z_plane_wing_strs())
+
+        (eo_state, eo_steps) = self.lt_x_plane_y_plane_orient_edges_edges_only.ida_heuristic()
+        log.info("%s: step351 EO state %s, EO steps %s, state_target %s" %
+            (self, eo_state, pformat(eo_steps), bool(eo_state in self.lt_x_plane_y_plane_orient_edges_edges_only.state_target)))
+
+        (eo_state, eo_steps) = self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.ida_heuristic()
+        log.info("%s: step361 EO state %s, EO steps %s, state_target %s" %
+            (self, eo_state, pformat(eo_steps), bool(eo_state in self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.state_target)))
+
+        self.state = tmp_state[:]
 
     def group_centers_stage_UD(self):
         """
@@ -2789,6 +2840,7 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
+        self.print_eo_state()
         log.info("%s: LR centers in horizontal bars, z-plane edges paired, %d steps in" % (self,
              self.get_solution_len_minus_rotates(self.solution)))
 
@@ -2807,8 +2859,6 @@ class RubiksCube555(RubiksCube):
         #self.print_cube()
         #self.highlow_edges_print()
         #log.info("%s: 8-edges EOed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        (eo_state, eo_steps) = self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.ida_heuristic()
-        log.info("%s: EO state %s, EO steps %s" % (self, eo_state, pformat(eo_steps)))
         log.info("%s: UD and FB centers staged, edges partially EOed, %d steps in" % (self,
             self.get_solution_len_minus_rotates(self.solution)))
 
@@ -2945,7 +2995,7 @@ class RubiksCube555(RubiksCube):
                     }
                     self.recolor()
 
-                elif (top, bottom) == ("F", "B "):
+                elif (top, bottom) == ("F", "B"):
                     self.recolor_map = {
                         'U' : 'B',
                         'L' : 'L',
@@ -2955,6 +3005,9 @@ class RubiksCube555(RubiksCube):
                         'D' : 'F',
                     }
                     self.recolor()
+
+                else:
+                    raise Exception("%s: invalid (top, bottom) (%s, %s)" % (self, top, bottom))
 
                 self.rotate_U_to_U()
                 self.rotate_F_to_F()

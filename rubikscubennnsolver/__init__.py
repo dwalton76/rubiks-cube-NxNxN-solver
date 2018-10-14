@@ -4071,7 +4071,7 @@ class RubiksCube(object):
             self.group_edges()
         self.solution.append('EDGES_GROUPED')
 
-    def solve(self):
+    def solve(self, solution333=None):
         """
         The RubiksCube222 and RubiksCube333 child classes will override
         this since they don't need to group centers or edges
@@ -4086,7 +4086,13 @@ class RubiksCube(object):
         self.reduce_333()
         self.rotate_U_to_U()
         self.rotate_F_to_F()
-        self.solve_333()
+
+        if solution333:
+            assert isinstance(solution333, str)
+            for step in solution333.split():
+                self.rotate(step)
+        else:
+            self.solve_333()
         self.compress_solution()
 
     def print_solution(self):

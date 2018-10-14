@@ -42,6 +42,7 @@ action = parser.add_mutually_exclusive_group(required=False)
 parser.add_argument('--openwith', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--colormap', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--order', type=str, default='URFDLB', help='order of sides in --state, default kociemba URFDLB')
+parser.add_argument('--solution333', type=str, default=None, help='cube explorer optimal steps for solving 3x3x3')
 parser.add_argument('--state', type=str, help='Cube state',
 
 # no longer used
@@ -153,7 +154,7 @@ try:
     cube.www_write_cube("Initial Cube")
 
     try:
-        cube.solve()
+        cube.solve(args.solution333)
     except NotSolving:
         if cube.heuristic_stats:
             log.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))

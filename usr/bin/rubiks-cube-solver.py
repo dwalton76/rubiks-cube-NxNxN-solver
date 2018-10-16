@@ -8,7 +8,7 @@ Solve any size rubiks cube:
 This is a work in progress
 """
 
-from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop, NotSolving
+from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop, NotSolving, reverse_steps
 from rubikscubennnsolver.LookupTable import NoSteps, NoPruneTableState
 from math import sqrt
 from pprint import pformat
@@ -154,7 +154,11 @@ try:
     cube.www_write_cube("Initial Cube")
 
     try:
-        cube.solve(args.solution333)
+        if args.solution333:
+            solution333 = reverse_steps(args.solution333.split())
+        else:
+            solution333 = []
+        cube.solve(solution333)
     except NotSolving:
         if cube.heuristic_stats:
             log.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))

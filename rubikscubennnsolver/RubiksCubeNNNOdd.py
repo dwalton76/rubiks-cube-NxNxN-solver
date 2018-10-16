@@ -210,7 +210,9 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         fake_777.group_centers_guts()
 
         for step in fake_777.solution:
-            if step.startswith("3"):
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            elif step.startswith("3"):
                 self.rotate(half_size + step[1:])
             elif "w" in step:
                 self.rotate(wide_size + step)

@@ -695,11 +695,13 @@ class RubiksCube444(RubiksCube):
             self.print_cube()
             self.lt_ULFRBD_centers_stage.solve()
             self.print_cube()
+            self.solution.append("COMMENT_%d_steps_444_phase1" % self.get_solution_len_minus_rotates(self.solution))
 
         if self.rotate_for_best_centers_staging():
             self.print_cube()
         #orbits_with_oll = self.center_solution_leads_to_oll_parity()
         #log.info("%s: orbits_with_oll %s" % (self, pformat(orbits_with_oll)))
+        phase1_solution_len = len(self.solution)
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
@@ -783,8 +785,10 @@ class RubiksCube444(RubiksCube):
 
         log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_highlow_edges.solve()
+        self.solution.append("COMMENT_%d_steps_444_phase2" % self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:]))
         self.print_cube()
         self.highlow_edges_print()
+        phase2_solution_len = len(self.solution)
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Testing the phase3 prune tables
@@ -798,6 +802,7 @@ class RubiksCube444(RubiksCube):
         log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_reduce333.avoid_pll = True
         self.lt_reduce333.solve()
+        self.solution.append("COMMENT_%d_steps_444_phase3" % self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:]))
 
         if self.state[6] != 'U' or self.state[38] != 'F':
             self.rotate_U_to_U()

@@ -626,6 +626,7 @@ class RubiksCube555ForNNN(RubiksCube555):
             raise SolveError("There should be an L4E group in x-plane but there is not")
 
         self.print_cube()
+        self.solution.append("COMMENT_%d_steps_555_first_L4E_edges_staged" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
         log.info("%s: first 4-edges staged to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def place_first_four_paired_edges_in_x_plane(self):
@@ -736,6 +737,7 @@ class RubiksCube555ForNNN(RubiksCube555):
                 self.rotate(step)
 
             self.print_cube()
+            self.solution.append("COMMENT_%d_steps_555_second_four_edges_paired" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             log.info("%s: z-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def stage_final_four_edges_in_x_plane(self):
@@ -835,6 +837,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         #paired_edges_count = self.get_paired_edges_count()
         #delta_paired_edges_count = paired_edges_count - original_paired_edges_count
         assert self.x_plane_edges_paired(), "4-edges in x-plane should have paired"
+        self.solution.append("COMMENT_%d_steps_555_L4E_paired" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
         log.info("%s: x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def reduce_333(self):
@@ -849,9 +852,12 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.group_centers_stage_LR()
 
         if not self.centers_solved():
+            tmp_solution_len = len(self.solution)
             self.lt_ULFRBD_centers_solve.solve()
             self.print_cube()
+            self.solution.append("COMMENT_%d_steps_555_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            # dwalton
 
         self.solution.append('CENTERS_SOLVED')
 

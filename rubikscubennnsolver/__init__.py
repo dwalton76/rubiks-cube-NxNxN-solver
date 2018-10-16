@@ -248,6 +248,9 @@ def apply_rotations(size, step, rotations):
     if step in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
         return step
 
+    if step.startswith('COMMENT'):
+        return step
+
     for rotation in rotations:
         # remove the number at the start of the rotation...for a 4x4x4 cube
         # there might be a 4U rotation (to rotate about the y-axis) but we
@@ -3313,10 +3316,13 @@ class RubiksCube(object):
         log.debug("kociemba       : %s" % kociemba_string)
         log.info("kociemba steps            : %s" % ' '.join(steps))
         log.info("kociemba steps (reversed) : %s" % ' '.join(reverse_steps(steps)))
+        reduce_333_solution_len = len(self.solution)
 
         for step in steps:
             step = str(step)
             self.rotate(step)
+
+        self.solution.append("COMMENT_%d_steps_solve_333" % self.get_solution_len_minus_rotates(self.solution[reduce_333_solution_len:]))
 
         if not self.solved():
             self.solve_OLL()
@@ -3918,6 +3924,9 @@ class RubiksCube(object):
             if step in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
                 continue
 
+            if step.startswith('COMMENT'):
+                continue
+
             if step in ("x", "x'", "x2",
                         "y", "y'", "y2",
                         "z", "z'", "z2"):
@@ -3933,7 +3942,9 @@ class RubiksCube(object):
         solution_string = []
 
         for step in self.solution:
-            if step == "x":
+            if step.startswith("COMMENT"):
+                pass
+            elif step == "x":
                 step = "%dR" % self.size
             elif step == "x'":
                 step = "%dR'" % self.size
@@ -3951,6 +3962,14 @@ class RubiksCube(object):
         moves = solution_string[:]
         solution_string = ' '.join(solution_string)
         pass_num = 0
+
+        #log.info("solution_string: %s" % solution_string)
+        while solution_string.count(" CENTERS_SOLVED") > 1:
+            solution_string = solution_string.replace(" CENTERS_SOLVED", "", 1)
+
+        while solution_string.count(" EDGES_GROUPED") > 1:
+            solution_string = solution_string.replace(" EDGES_GROUPED", "", 1)
+        #log.info("solution_string: %s" % solution_string)
 
         while True:
             original_solution_string = solution_string[:]
@@ -4014,7 +4033,7 @@ class RubiksCube(object):
             else:
                 pass_num += 1
 
-        log.info("Compressed solution in %d passes" % pass_num)
+        #log.info("Compressed solution in %d passes" % pass_num)
         # Remove full cube rotations by changing all of the steps that follow the cube rotation
         steps = solution_string.strip().split()
         final_steps = []
@@ -4035,9 +4054,10 @@ class RubiksCube(object):
         self.steps_to_group_edges = 0
         self.steps_to_solve_3x3x3 = 0
         index = 0
+        self.solution_with_markers = solution_string.split()
 
         #log.info("pre compress; %s" % ' '.join(self.solution))
-        for step in solution_string.split():
+        for step in self.solution_with_markers:
             if step.startswith(str(self.size)):
                 self.steps_to_rotate_cube += 1
 
@@ -4047,6 +4067,8 @@ class RubiksCube(object):
             elif step == 'EDGES_GROUPED':
                 self.steps_to_group_edges = index
                 index = 0
+            elif step.startswith('COMMENT'):
+                pass
             else:
                 solution_minus_markers.append(step)
                 index += 1
@@ -4152,7 +4174,10 @@ class RubiksCube(object):
             self.solution = tmp_solution[:]
 
         for step in min_solution[original_solution_len:]:
-            self.rotate(step)
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            else:
+                self.rotate(step)
 
     def solve(self, solution333=None):
         """
@@ -4177,9 +4202,11 @@ class RubiksCube(object):
         self.rotate_F_to_F()
 
         if solution333:
-            assert isinstance(solution333, str)
-            for step in solution333.split():
+            assert isinstance(solution333, list)
+            reduce_333_solution_len = len(self.solution)
+            for step in solution333:
                 self.rotate(step)
+            self.solution.append("COMMENT_%d_steps_solve_333" % self.get_solution_len_minus_rotates(self.solution[reduce_333_solution_len:]))
         else:
             self.solve_333()
         self.compress_solution()
@@ -4189,23 +4216,13 @@ class RubiksCube(object):
         # Print an alg.cubing.net URL for this setup/solution
         url = "https://alg.cubing.net/?puzzle=%dx%dx%d&alg=" % (self.size, self.size, self.size)
 
-        if self.steps_to_solve_centers:
-            # _ is  space
-            # %2F is a /
-            # %0A is a newline
-            url += '_'.join(self.solution[:self.steps_to_solve_centers])
-            url += r'''_%2F%2F''' +  "%d to solve centers" % self.steps_to_solve_centers + r'''%0A'''
-
-            if self.steps_to_group_edges:
-                url += '_'.join(self.solution[self.steps_to_solve_centers:self.steps_to_solve_centers+self.steps_to_group_edges])
-                url += r'''_%2F%2F''' +  "%d to pair edges" % self.steps_to_group_edges + r'''%0A'''
-
-            if self.steps_to_solve_3x3x3:
-                url += '_'.join(self.solution[self.steps_to_solve_centers+self.steps_to_group_edges:])
-                url += r'''_%2F%2F''' +  "%d to solve 333" % self.steps_to_solve_3x3x3 + r'''%0A'''
-
-        else:
-            url += '_'.join(self.solution)
+        for x in self.solution_with_markers:
+            if x in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
+                continue
+            elif x.startswith('COMMENT'):
+                url += r'''%2F%2F''' + x.replace("COMMENT", "") + "%0A%0A"
+            else:
+                url += x + "_"
 
         url += "&type=alg"
         url += "&title=dwalton76"

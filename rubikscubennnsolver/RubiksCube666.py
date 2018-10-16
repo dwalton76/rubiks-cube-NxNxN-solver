@@ -857,6 +857,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
+            self.fake_555.fmc = self.fmc
         else:
             self.fake_555.re_init()
         return self.fake_555
@@ -991,18 +992,23 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
 
+        tmp_solution_len = len(self.solution)
         self.lt_UD_inner_x_centers_stage.solve()
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
+        self.solution.append("COMMENT_%d_steps_666_UD_inner_x_centers_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: UD inner-x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        tmp_solution_len = len(self.solution)
         self.lt_UD_oblique_edge_stage.solve()
         self.print_cube()
+        self.solution.append("COMMENT_%d_steps_666_UD_oblique_edges_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: UD oblique edges paired (not staged), %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Stage UD centers via 555
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
+        tmp_solution_len = len(self.solution)
 
         if oblique_edges_only:
             fake_555.lt_UD_T_centers_stage.solve()
@@ -1010,7 +1016,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             fake_555.group_centers_stage_UD()
 
         for step in fake_555.solution:
-            self.rotate(step)
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            else:
+                self.rotate(step)
 
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
@@ -1027,6 +1036,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         else:
             self.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = 1
 
+        tmp_solution_len = len(self.solution)
         self.lt_LR_inner_x_centers_and_oblique_edges_stage.solve()
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
@@ -1036,12 +1046,14 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         else:
             orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
 
+        self.solution.append("COMMENT_%d_steps_666_LR_inner_x_centers_and_oblique_edges_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: LR oblique edges and inner x-centers staged, orbits with OLL %s, %d steps in" % (
             self, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
 
         # Stage LR centers via 555
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
+        tmp_solution_len = len(self.solution)
 
         # correct/avoid oll on the outside orbit
         if 0 in orbits_with_oll_parity:
@@ -1050,7 +1062,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             fake_555.lt_LR_T_centers_stage_even.solve()
 
         for step in fake_555.solution:
-            self.rotate(step)
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            else:
+                self.rotate(step)
 
         self.print_cube()
 
@@ -1059,6 +1074,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         else:
             orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
 
+        self.solution.append("COMMENT_%d_steps_666_LR_centers_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: centers staged, orbits with OLL %s, %d steps in" % (
             self, pformat(orbits_with_oll_parity), self.get_solution_len_minus_rotates(self.solution)))
 
@@ -1066,8 +1082,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # - solve the UD inner x-centers and pair the UD oblique edges
         # - solve the LR inner x-centers and pair the LR oblique edges
         # - solve the FB inner x-centers and pair the FB oblique edges
+        tmp_solution_len = len(self.solution)
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
         self.print_cube()
+        self.solution.append("COMMENT_%d_steps_666_UD_reduced_to_555" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: UD inner x-center solved and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
 
@@ -1076,20 +1094,27 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         #self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
         #self.print_cube()
 
+        tmp_solution_len = len(self.solution)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()
         self.print_cube()
+        self.solution.append("COMMENT_%d_steps_666_LR_FB_reduced_to_555" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: LFRB inner x-center and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Solve the t-centers so that we can use the 444 solver to pair the
         # inside orbit of edges
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
+        tmp_solution_len = len(self.solution)
         fake_555.lt_ULFRBD_t_centers_solve.solve()
 
         for step in fake_555.solution:
-            self.rotate(step)
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            else:
+                self.rotate(step)
 
         self.print_cube()
+        self.solution.append("COMMENT_%d_steps_666_t_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: solved T-centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def phase(self):

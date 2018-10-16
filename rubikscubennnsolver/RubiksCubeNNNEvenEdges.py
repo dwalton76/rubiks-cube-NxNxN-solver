@@ -17,6 +17,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             self.fake_444 = RubiksCube444(solved_444, 'URFDLB')
             self.fake_444.lt_init()
             self.fake_444.enable_print_cube = False
+            self.fake_444.fmc = self.fmc
         else:
             self.fake_444.re_init()
         return self.fake_444
@@ -26,6 +27,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             self.fake_555 = RubiksCube555ForNNN(solved_555, 'URFDLB')
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
+            self.fake_555.fmc = self.fmc
         else:
             self.fake_555.re_init()
         return self.fake_555
@@ -69,19 +71,22 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
         for step in fake_444.solution:
 
-            # Rotate the entire cube
-            if step.startswith('4'):
-                step = str(self.size) + step[1:]
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            else:
+                # Rotate the entire cube
+                if step.startswith('4'):
+                    step = str(self.size) + step[1:]
 
-            elif step in ("Uw", "Uw'", "Uw2",
-                          "Lw", "Lw'", "Lw2",
-                          "Fw", "Fw'", "Fw2",
-                          "Rw", "Rw'", "Rw2",
-                          "Bw", "Bw'", "Bw2",
-                          "Dw", "Dw'", "Dw2"):
-                step = half_size_str + step
+                elif step in ("Uw", "Uw'", "Uw2",
+                              "Lw", "Lw'", "Lw2",
+                              "Fw", "Fw'", "Fw2",
+                              "Rw", "Rw'", "Rw2",
+                              "Bw", "Bw'", "Bw2",
+                              "Dw", "Dw'", "Dw2"):
+                    step = half_size_str + step
 
-            self.rotate(step)
+                self.rotate(step)
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -206,27 +211,31 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         wide_str = str(orbit + 2)
         for step in fake_555.solution:
 
-            # Rotate the entire cube
-            if step.startswith('5'):
-                step = str(self.size) + step[1:]
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
 
-            elif step in ("Uw", "Uw'", "Uw2",
-                          "Lw", "Lw'", "Lw2",
-                          "Fw", "Fw'", "Fw2",
-                          "Rw", "Rw'", "Rw2",
-                          "Bw", "Bw'", "Bw2",
-                          "Dw", "Dw'", "Dw2"):
-                step = wide_str + step
+            else:
+                # Rotate the entire cube
+                if step.startswith('5'):
+                    step = str(self.size) + step[1:]
 
-            elif step in ("2U", "2U'", "2U2",
-                          "2L", "2L'", "2L2",
-                          "2F", "2F'", "2F2",
-                          "2R", "2R'", "2R2",
-                          "2B", "2B'", "2B2",
-                          "2D", "2D'", "2D2"):
-                step = wide_str + step[1:]
+                elif step in ("Uw", "Uw'", "Uw2",
+                              "Lw", "Lw'", "Lw2",
+                              "Fw", "Fw'", "Fw2",
+                              "Rw", "Rw'", "Rw2",
+                              "Bw", "Bw'", "Bw2",
+                              "Dw", "Dw'", "Dw2"):
+                    step = wide_str + step
 
-            self.rotate(step)
+                elif step in ("2U", "2U'", "2U2",
+                              "2L", "2L'", "2L2",
+                              "2F", "2F'", "2F2",
+                              "2R", "2R'", "2R2",
+                              "2B", "2B'", "2B2",
+                              "2D", "2D'", "2D2"):
+                    step = wide_str + step[1:]
+
+                self.rotate(step)
 
     def group_edges(self):
         # Pair the inside edges via fake 4x4x4

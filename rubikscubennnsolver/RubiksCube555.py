@@ -1891,19 +1891,19 @@ class LookupTable555XPlaneYPlaneEdgesOrientFBCentersEdgesOnly(LookupTable):
     lookup-table-5x5x5-step361-x-plane-y-plane-edges-orient-fb-centers-edges-only.txt
     =================================================================================
     1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 23 entries (0 percent, 7.67x previous step)
-    3 steps has 152 entries (0 percent, 6.61x previous step)
-    4 steps has 926 entries (0 percent, 6.09x previous step)
-    5 steps has 5,136 entries (1 percent, 5.55x previous step)
-    6 steps has 26,100 entries (7 percent, 5.08x previous step)
-    7 steps has 88,624 entries (25 percent, 3.40x previous step)
-    8 steps has 154,516 entries (45 percent, 1.74x previous step)
-    9 steps has 64,216 entries (18 percent, 0.42x previous step)
-    10 steps has 3,256 entries (0 percent, 0.05x previous step)
-    11 steps has 48 entries (0 percent, 0.01x previous step)
+    2 steps has 15 entries (0 percent, 5.00x previous step)
+    3 steps has 78 entries (0 percent, 5.20x previous step)
+    4 steps has 414 entries (0 percent, 5.31x previous step)
+    5 steps has 2,206 entries (0 percent, 5.33x previous step)
+    6 steps has 10,506 entries (3 percent, 4.76x previous step)
+    7 steps has 39,298 entries (11 percent, 3.74x previous step)
+    8 steps has 100,432 entries (29 percent, 2.56x previous step)
+    9 steps has 137,320 entries (40 percent, 1.37x previous step)
+    10 steps has 49,592 entries (14 percent, 0.36x previous step)
+    11 steps has 3,136 entries (0 percent, 0.06x previous step)
 
     Total: 343,000 entries
-    Average: 7.74 moves
+    Average: 8.52 moves
     """
 
     def __init__(self, parent):
@@ -1969,13 +1969,14 @@ class LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(LookupTableIDA):
     lookup-table-5x5x5-step360-x-plane-y-plane-edges-orient-fb-centers.txt
     ======================================================================
     1 steps has 30 entries (0 percent, 0.00x previous step)
-    2 steps has 224 entries (0 percent, 7.47x previous step)
-    3 steps has 2,018 entries (0 percent, 9.01x previous step)
-    4 steps has 17,690 entries (1 percent, 8.77x previous step)
-    5 steps has 147,648 entries (10 percent, 8.35x previous step)
-    6 steps has 1,179,038 entries (87 percent, 7.99x previous step)
+    2 steps has 176 entries (0 percent, 5.87x previous step)
+    3 steps has 1,182 entries (0 percent, 6.72x previous step)
+    4 steps has 7,684 entries (0 percent, 6.50x previous step)
+    5 steps has 49,668 entries (2 percent, 6.46x previous step)
+    6 steps has 317,818 entries (13 percent, 6.40x previous step)
+    7 steps has 1,982,008 entries (84 percent, 6.24x previous step)
 
-    Total: 1,346,648 entries
+    Total: 2,358,566 entries
     """
 
     state_targets = (
@@ -1997,9 +1998,9 @@ class LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(LookupTableIDA):
             # illegal moves
             (),
 
-            linecount=1346648,
-            max_depth=6,
-            filesize=158904464,
+            linecount=2358566,
+            max_depth=7,
+            filesize=278310788,
 
             legal_moves=(
                 "F", "F'", "F2",
@@ -2008,9 +2009,6 @@ class LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(LookupTableIDA):
 
                 "Uw2", "Dw2",
                 "Lw2", "Rw2",
-
-                "2U2", "2D2",
-                "2L2", "2R2",
             )
         )
 
@@ -2548,19 +2546,22 @@ class RubiksCube555(RubiksCube):
 
     def group_centers_stage_UD(self):
         """
-        Stage UD centers.  The 7x7x7 uses this that is why it is in its own method.
+        Stage UD centers
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
         if not self.UD_centers_staged():
+            tmp_solution_len = len(self.solution)
             self.lt_UD_centers_stage.solve()
             self.print_cube()
+            self.solution.append("COMMENT_%d_steps_555_UD_centers_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
+
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_stage_LR(self):
         """
-        Stage LR centers.  The 6x6x6 uses this that is why it is in its own method.
+        Stage LR centers
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -2574,8 +2575,10 @@ class RubiksCube555(RubiksCube):
         #self.print_cube()
 
         if not self.LR_centers_staged():
+            tmp_solution_len = len(self.solution)
             self.lt_LR_centers_stage.solve()
             self.print_cube()
+            self.solution.append("COMMENT_%d_steps_555_LR_centers_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: ULFRBD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_stage_LR_to_432(self):
@@ -2590,9 +2593,11 @@ class RubiksCube555(RubiksCube):
         #self.lt_LR_X_centers_stage.solve()
         #self.print_cube()
 
+        tmp_solution_len = len(self.solution)
         self.lt_LR_432_centers_stage.avoid_oll = 0
         self.lt_LR_432_centers_stage.solve()
         self.print_cube()
+        self.solution.append("COMMENT_%d_steps_555_LR_centers_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
 
         pairable_count = len(self.edges_pairable_without_LR())
         orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
@@ -2835,12 +2840,14 @@ class RubiksCube555(RubiksCube):
         # the edges to their native orientation, then apply the solution we found.
         self.state = original_state[:]
         self.solution = original_solution[:]
+        tmp_solution_len = len(self.solution)
 
         for step in z_plane_edges_solution:
             self.rotate(step)
 
         self.print_cube()
         self.print_eo_state()
+        self.solution.append("COMMENT_%d_steps_555_LR_horizontal_bars_and_z_plane_edges_paired" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: LR centers in horizontal bars, z-plane edges paired, %d steps in" % (self,
              self.get_solution_len_minus_rotates(self.solution)))
 
@@ -2851,6 +2858,7 @@ class RubiksCube555(RubiksCube):
 
         self.edges_flip_to_original_orientation(self.get_y_plane_wing_strs(), self.get_x_plane_z_plane_wing_strs())
 
+        tmp_solution_len = len(self.solution)
         #self.lt_x_plane_y_plane_orient_edges_edges_only.solve()
         #self.lt_x_plane_y_plane_orient_edges_centers_only.solve()
         #self.lt_x_plane_y_plane_orient_edges.avoid_oll = 0
@@ -2859,20 +2867,13 @@ class RubiksCube555(RubiksCube):
         #self.print_cube()
         #self.highlow_edges_print()
         #log.info("%s: 8-edges EOed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        if len(self.solution) > tmp_solution_len:
+            self.solution.append("COMMENT_%d_steps_555_edges_partially_EOed" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
+
         log.info("%s: UD and FB centers staged, edges partially EOed, %d steps in" % (self,
             self.get_solution_len_minus_rotates(self.solution)))
 
-        # our EOed edges are becoming un-EOed when we make the FB centers vertical bars :(
-        # This phase will need to use IDA to find a solution that allows them to remain EOed.
-        # This makes me wonder if the previous phase is needed at all?  Can we leave the UD/FB
-        # centers staged, make FB vertical bars and EO the 8-edges at the same time? That would
-        # be really cool if that were the case. To test this just comment out
-        # the self.lt_x_plane_y_plane_orient_edges.solve() call
-        #
-        # If this is true I think this kills the other brainstorm I was working on to
-        # stage LR centers first because the entire savings there was that you did not
-        # have to actually stage the other 4 centers...think about this some more if the
-        # theory above holds true.
+        tmp_solution_len = len(self.solution)
         self.lt_x_plane_y_plane_orient_edges_fb_centers.solve()
 
         tmp_state = self.state[:]
@@ -2908,10 +2909,12 @@ class RubiksCube555(RubiksCube):
         pairable_count = len(self.edges_pairable_without_LRFB())
         self.print_cube()
         self.highlow_edges_print()
+        self.solution.append("COMMENT_%d_steps_555_FB_vertical_bars_and_edges_EOed" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: LR and FB vertical bars, x-plane paired, %d-edges EOed, %d steps in" % (self,
             pairable_count, self.get_solution_len_minus_rotates(self.solution)))
         assert pairable_count == 8
 
+        tmp_solution_len = len(self.solution)
         self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
         #self.lt_pair_last_eight_edges_edges_only.solve()
         #self.lt_pair_last_eight_edges_centers_only.solve()
@@ -2924,9 +2927,13 @@ class RubiksCube555(RubiksCube):
         self.solution = original_solution[:]
 
         for step in last_eight_edges_solution:
-            self.rotate(step)
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            else:
+                self.rotate(step)
 
         self.print_cube()
+        self.solution.append("COMMENT_%d_steps_555_last_eight_edges_paired" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def reduce_333(self):

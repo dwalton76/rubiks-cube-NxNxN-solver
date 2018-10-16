@@ -642,14 +642,17 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         for step in self.fake_555.solution:
 
-            if step.startswith('5'):
-                step = '7' + step[1:]
-            elif step.startswith('3'):
-                step = '4' + step[1:]
-            elif 'w' in step:
-                step = '3' + step
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            else:
+                if step.startswith('5'):
+                    step = '7' + step[1:]
+                elif step.startswith('3'):
+                    step = '4' + step[1:]
+                elif 'w' in step:
+                    step = '3' + step
 
-            self.rotate(step)
+                self.rotate(step)
 
     def LR_inside_centers_staged(self):
         state = self.state
@@ -666,18 +669,21 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
 
         self.create_fake_555_from_inside_centers()
-        self.fake_555.lt_LR_centers_stage.solve()
+        self.fake_555.group_centers_stage_LR()
 
         for step in self.fake_555.solution:
 
-            if step.startswith('5'):
-                step = '7' + step[1:]
-            elif step.startswith('3'):
-                raise Exception("5x5x5 solution has 3 wide turn")
-            elif 'w' in step:
-                step = '3' + step
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            else:
+                if step.startswith('5'):
+                    step = '7' + step[1:]
+                elif step.startswith('3'):
+                    raise Exception("5x5x5 solution has 3 wide turn")
+                elif 'w' in step:
+                    step = '3' + step
 
-            self.rotate(step)
+                self.rotate(step)
 
     def group_centers_guts(self):
         self.lt_init()
@@ -693,8 +699,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             log.info("")
 
             # Pair the oblique UD edges
+            tmp_solution_len = len(self.solution)
             self.lt_UD_oblique_edge_pairing.solve()
             self.print_cube()
+            self.solution.append("COMMENT_%d_steps_777_UD_oblique_edges_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             log.info("%s: UD oblique edges paired/staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
             log.info("")
@@ -706,11 +714,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             self.fake_555.group_centers_stage_UD()
 
             for step in self.fake_555.solution:
-                if step.startswith('5'):
-                    step = '7' + step[1:]
-                elif step.startswith('3'):
-                    raise Exception("5x5x5 solution has 3 wide turn")
-                self.rotate(step)
+                if step.startswith('COMMENT'):
+                    self.solution.append(step)
+                else:
+                    if step.startswith('5'):
+                        step = '7' + step[1:]
+                    elif step.startswith('3'):
+                        raise Exception("5x5x5 solution has 3 wide turn")
+                    self.rotate(step)
 
             self.print_cube()
             log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
@@ -736,8 +747,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
             #log.info("kociemba: %s" % self.get_kociemba_string(True))
+            tmp_solution_len = len(self.solution)
             self.lt_LR_oblique_edge_pairing.solve()
             self.print_cube()
+            self.solution.append("COMMENT_%d_steps_777_LR_oblique_edges_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
             # Stage the LR centers
@@ -745,11 +758,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             self.fake_555.group_centers_stage_LR()
 
             for step in self.fake_555.solution:
-                if step.startswith('5'):
-                    step = '7' + step[1:]
-                elif step.startswith('3'):
-                    raise Exception("5x5x5 solution has 3 wide turn")
-                self.rotate(step)
+                if step.startswith('COMMENT'):
+                    self.solution.append(step)
+                else:
+                    if step.startswith('5'):
+                        step = '7' + step[1:]
+                    elif step.startswith('3'):
+                        raise Exception("5x5x5 solution has 3 wide turn")
+                    self.rotate(step)
 
             self.print_cube()
             log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
@@ -764,8 +780,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        tmp_solution_len = len(self.solution)
         self.lt_step40.solve()
         self.print_cube()
+        self.solution.append("COMMENT_%d_steps_777_LR_centers_vertical_bars" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: LR centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Test the pruning tables
@@ -774,11 +792,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        tmp_solution_len = len(self.solution)
         self.lt_step50.solve()
         self.rotate("L")
         self.rotate("R")
         self.print_cube()
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
+        self.solution.append("COMMENT_%d_steps_777_UD_centers_vertical_bars" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: LR centers horizontal bars, UD centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Test the pruning tables
@@ -787,9 +807,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        tmp_solution_len = len(self.solution)
         self.lt_step60.solve()
         self.print_cube()
         log.info("kociemba: %s" % self.get_kociemba_string(True))
+        self.solution.append("COMMENT_%d_steps_777_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
 

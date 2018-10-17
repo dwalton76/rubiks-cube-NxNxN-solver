@@ -857,7 +857,6 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.print_cube()
             self.solution.append("COMMENT_%d_steps_555_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            # dwalton
 
         self.solution.append('CENTERS_SOLVED')
 

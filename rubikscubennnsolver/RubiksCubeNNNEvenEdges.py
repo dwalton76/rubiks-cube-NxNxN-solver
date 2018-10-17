@@ -12,6 +12,9 @@ log = logging.getLogger(__name__)
 
 class RubiksCubeNNNEvenEdges(RubiksCube):
 
+    def lt_init(self):
+        pass
+
     def get_fake_444(self):
         if self.fake_444 is None:
             self.fake_444 = RubiksCube444(solved_444, 'URFDLB')

@@ -12,6 +12,9 @@ log = logging.getLogger(__name__)
 
 class RubiksCubeNNNOddEdges(RubiksCube):
 
+    def lt_init(self):
+        pass
+
     def get_fake_555(self):
         if self.fake_555 is None:
             if self.fake_777 and self.fake_777.fake_555:

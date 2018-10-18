@@ -2399,6 +2399,46 @@ class RubiksCube555(RubiksCube):
 
         return self._phase
 
+    def orbit0_paired(self):
+        state = self.state
+
+        for (x, y) in (
+            (2, 4),
+            (6, 16),
+            (10, 20),
+            (22, 24),
+
+            (27, 29),
+            (31, 41),
+            (35, 45),
+            (47, 49),
+
+            (52, 54),
+            (56, 66),
+            (60, 70),
+            (72, 74),
+
+            (77, 79),
+            (81, 91),
+            (85, 95),
+            (97, 99),
+
+            (102, 104),
+            (106, 116),
+            (110, 120),
+            (122, 124),
+
+            (127, 129),
+            (131, 141),
+            (135, 145),
+            (147, 149)):
+
+            if state[x] != state[y]:
+                return False
+
+        return True
+
+
     def x_plane_edges_are_l4e(self):
         state = self.state
         edges_in_plane = set()
@@ -2939,6 +2979,9 @@ class RubiksCube555(RubiksCube):
     def reduce_333(self):
         self.lt_init()
         #log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
+
+        if self.orbit0_paired():
+            self.init_orbit0_paired = True
 
         if not self.centers_solved() or not self.edges_paired():
             self.group_centers_stage_UD()

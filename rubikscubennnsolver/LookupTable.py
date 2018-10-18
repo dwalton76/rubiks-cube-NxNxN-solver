@@ -287,6 +287,16 @@ def binary_search_list(states, b_state_to_find):
     return (False, first)
 
 
+def wide_count_turns(steps):
+    count = 0
+
+    for step in steps:
+        if 'w' in step:
+            count += 1
+
+    return count
+
+
 class LookupTable(object):
     heuristic_stats = {}
 
@@ -1004,10 +1014,20 @@ class LookupTableIDA(LookupTable):
         if f_cost >= threshold:
             return (f_cost, False)
 
-        # This saves us a lot of disk IO.
+        # Are we done?
         if cost_to_goal <= self.max_depth and self.search_complete(lt_state, steps_to_here):
-            self.ida_nodes[lt_state] = steps_to_here
-            return (f_cost, True)
+
+            if self.parent.init_orbit0_paired:
+                if self.parent.orbit0_paired():
+                    self.ida_nodes[lt_state] = steps_to_here
+                    return (f_cost, True)
+                else:
+                    self.parent.state = self.original_state[:]
+                    self.parent.solution = self.original_solution[:]
+
+            else:
+                self.ida_nodes[lt_state] = steps_to_here
+                return (f_cost, True)
 
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
@@ -1020,6 +1040,74 @@ class LookupTableIDA(LookupTable):
         skip_other_steps_this_face = None
 
         for step in self.steps_not_on_same_face_and_layer[prev_step]:
+
+            if self.parent.init_orbit0_paired:
+
+                # If there are an odd number of wide turns the only turn that is allowed
+                # is the opposite wide turn in order to keep the outer orbit of edges paired
+                if wide_count_turns(steps_to_here) % 2 == 1:
+                    if 'w' not in step:
+                        continue
+                    elif step == "Uw":
+                        if prev_step != "Dw'":
+                            continue
+                    elif step == "Uw'":
+                        if prev_step != "Dw":
+                            continue
+                    elif step == "Uw2":
+                        if prev_step != "Dw2":
+                            continue
+
+                    elif step == "Lw":
+                        if prev_step != "Rw'":
+                            continue
+                    elif step == "Lw'":
+                        if prev_step != "Rw":
+                            continue
+                    elif step == "Lw2":
+                        if prev_step != "Rw2":
+                            continue
+
+                    elif step == "Fw":
+                        if prev_step != "Bw'":
+                            continue
+                    elif step == "Fw'":
+                        if prev_step != "Bw":
+                            continue
+                    elif step == "Fw2":
+                        if prev_step != "Bw2":
+                            continue
+
+                    elif step == "Rw":
+                        if prev_step != "Lw'":
+                            continue
+                    elif step == "Rw'":
+                        if prev_step != "Lw":
+                            continue
+                    elif step == "Rw2":
+                        if prev_step != "Lw2":
+                            continue
+
+                    elif step == "Bw":
+                        if prev_step != "Fw'":
+                            continue
+                    elif step == "Bw'":
+                        if prev_step != "Fw":
+                            continue
+                    elif step == "Bw2":
+                        if prev_step != "Fw2":
+                            continue
+
+                    elif step == "Dw":
+                        if prev_step != "Uw'":
+                            continue
+                    elif step == "Dw'":
+                        if prev_step != "Uw":
+                            continue
+                    elif step == "Dw2":
+                        if prev_step != "Uw2":
+                            continue
+
 
             # https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
             '''
@@ -1258,6 +1346,7 @@ class LookupTableIDA(LookupTable):
                 delta = end_time1 - start_time0
                 nodes_per_sec = int(total_ida_count / delta.total_seconds())
                 log.info("%s: IDA explored %d nodes in %s, %d nodes-per-sec" % (self, total_ida_count, delta, nodes_per_sec))
+                log.info("%s: IDA found %d step solution %s" % (self, len(best_solution), " ".join(best_solution)))
                 self.explored = {}
                 self.ida_nodes = {}
                 gc.collect()
@@ -1358,6 +1447,10 @@ class LookupTableIDAViaC(object):
 
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
                 raise Exception("avoid_oll is only supported for orbits 0 or 1, not {}".format(self.avoid_oll))
+
+        # This is a special case for the 2018 Fewest Move Challenge
+        if self.parent.init_orbit0_paired and self.C_ida_type == "5x5x5-UD-centers-stage":
+            cmd.append("--orbit0-paired")
 
         if self.avoid_pll:
             # To avoid PLL the odd/even of edge swaps and corner swaps must agree...they

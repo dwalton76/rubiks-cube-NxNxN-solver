@@ -36,6 +36,7 @@ parser.add_argument('--print-steps', default=False, action='store_true', help='D
 parser.add_argument('--debug', default=False, action='store_true', help='set loglevel to DEBUG')
 parser.add_argument('--min-memory', default=False, action='store_true', help='Load smaller tables to use less memory...takes longer to run')
 parser.add_argument('--fmc', default=False, action='store_true', help='Fewest Move Challenge')
+parser.add_argument('--no-comments', default=False, action='store_true', help='No comments in alg.cubing.net url')
 
 # CPU mode
 action = parser.add_mutually_exclusive_group(required=False)
@@ -174,7 +175,7 @@ try:
     end_time = dt.datetime.now()
     log.info("Final Cube")
     cube.print_cube()
-    cube.print_solution()
+    cube.print_solution(not args.no_comments)
 
     log.info("***********************************************************")
     log.info("See /tmp/solution.html for more detailed solve instructions")

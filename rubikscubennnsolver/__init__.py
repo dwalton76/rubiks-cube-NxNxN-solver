@@ -4168,7 +4168,7 @@ class RubiksCube(object):
             self.solve_333()
         self.compress_solution()
 
-    def print_solution(self):
+    def print_solution(self, include_comments):
 
         # Print an alg.cubing.net URL for this setup/solution
         url = "https://alg.cubing.net/?puzzle=%dx%dx%d&alg=" % (self.size, self.size, self.size)
@@ -4177,7 +4177,8 @@ class RubiksCube(object):
             if x in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
                 continue
             elif x.startswith('COMMENT'):
-                url += r'''%2F%2F''' + x.replace("COMMENT", "") + "%0A%0A"
+                if include_comments:
+                    url += r'''%2F%2F''' + x.replace("COMMENT", "") + "%0A%0A"
             else:
                 url += x + "_"
 

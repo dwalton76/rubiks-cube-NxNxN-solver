@@ -453,6 +453,7 @@ class RubiksCube(object):
         self.use_nuke_corners = False
         self.use_nuke_edges = False
         self.use_nuke_centers = False
+        self.init_orbit0_paired = False
 
         if colormap:
             colormap = json.loads(colormap)
@@ -3932,35 +3933,16 @@ class RubiksCube(object):
                         "z", "z'", "z2"):
                 continue
 
-            if not step.startswith(size_str):
-                count += 1
+            if step.startswith(size_str):
+                continue
+
+            count += 1
 
         return count
 
     def compress_solution(self):
-
-        solution_string = []
-
-        for step in self.solution:
-            if step.startswith("COMMENT"):
-                pass
-            elif step == "x":
-                step = "%dR" % self.size
-            elif step == "x'":
-                step = "%dR'" % self.size
-            elif step == "y":
-                step = "%dU" % self.size
-            elif step == "y'":
-                step = "%dU'" % self.size
-            elif step == "z":
-                step = "%dF" % self.size
-            elif step == "z'":
-                step = "%dF'" % self.size
-
-            solution_string.append(step)
-
-        moves = solution_string[:]
-        solution_string = ' '.join(solution_string)
+        moves = set(self.solution)
+        solution_string = ' '.join(self.solution)
         pass_num = 0
 
         #log.info("solution_string: %s" % solution_string)
@@ -3980,8 +3962,8 @@ class RubiksCube(object):
                 if move in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
                     continue
 
-                if move in ('x', 'y', 'z'):
-                    raise Exception('compress_solution does not support move "%s"' % move)
+                if move.startswith('COMMENT'):
+                    continue
 
                 if move.endswith("2'"):
                     raise Exception('compress_solution does not support move "%s"' % move)
@@ -4010,18 +3992,6 @@ class RubiksCube(object):
                         else:
                             solution_string = solution_string.replace(" %s %s " % (move, move), " %s2 " % move)
 
-                # Experimented with this for a bit but never found a case where it was useful.
-                # I am sure there are some they are just rare.
-                '''
-                if prev_move is not None and not prev_move.startswith(str(self.size)):
-                    if ('U' in move or 'D' in move) and ('U' in prev_move or 'D' in prev_move):
-                        log.warning("pass %d: %s -> %s can we compress this as a slice?" % (pass_num, prev_move, move))
-                    elif ('L' in move or 'R' in move) and ('L' in prev_move or 'R' in prev_move):
-                        log.warning("pass %d: %s -> %s can we compress this as a slice?" % (pass_num, prev_move, move))
-                    elif ('F' in move or 'B' in move) and ('F' in prev_move or 'B' in prev_move):
-                        log.warning("pass %d: %s -> %s can we compress this as a slice?" % (pass_num, prev_move, move))
-                '''
-
                 # "F F'" and "F' F" will cancel each other out, remove them
                 solution_string = solution_string.replace(" %s %s " % (move, reverse_move), " ")
                 solution_string = solution_string.replace(" %s %s " % (reverse_move, move), " ")
@@ -4034,17 +4004,6 @@ class RubiksCube(object):
                 pass_num += 1
 
         #log.info("Compressed solution in %d passes" % pass_num)
-        # Remove full cube rotations by changing all of the steps that follow the cube rotation
-        steps = solution_string.strip().split()
-        final_steps = []
-        rotations = []
-
-        for (index, step) in enumerate(steps):
-            if step.startswith(str(self.size)):
-                rotations.append(apply_rotations(self.size, step, rotations))
-            else:
-                final_steps.append(apply_rotations(self.size, step, rotations))
-        solution_string = ' '.join(final_steps)
 
         # We put some markers in the solution to track how many steps
         # each stage took...remove those markers
@@ -4058,22 +4017,20 @@ class RubiksCube(object):
 
         #log.info("pre compress; %s" % ' '.join(self.solution))
         for step in self.solution_with_markers:
-            if step.startswith(str(self.size)):
+            if step.startswith(str(self.size)) or step in ("x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"):
                 self.steps_to_rotate_cube += 1
 
             if step == 'CENTERS_SOLVED':
-                self.steps_to_solve_centers = index
-                index = 0
+                self.steps_to_solve_centers = index - self.steps_to_rotate_cube
             elif step == 'EDGES_GROUPED':
-                self.steps_to_group_edges = index
-                index = 0
+                self.steps_to_group_edges = index - self.steps_to_rotate_cube - self.steps_to_solve_centers
             elif step.startswith('COMMENT'):
                 pass
             else:
                 solution_minus_markers.append(step)
                 index += 1
 
-        self.steps_to_solve_3x3x3 = index
+        self.steps_to_solve_3x3x3 = index - self.steps_to_rotate_cube - self.steps_to_solve_centers - self.steps_to_group_edges
         self.solution = solution_minus_markers
 
     def recolor(self):
@@ -4230,22 +4187,59 @@ class RubiksCube(object):
         url = url.replace(" ", "_")
         log.info("\nURL     : %s" % url)
 
-        log.info("\nSolution: %s" % ' '.join(self.solution))
-        #print(' '.join(self.solution))
+        # Remove full cube rotations by changing all of the steps that follow the cube rotation
+        # We do this so robots using the solver do not have to deal with full cube rotations as
+        # that would be kinda pointless.
+        final_steps = []
+        rotations = []
+        tmp_solution = []
 
-        if self.steps_to_rotate_cube:
-            log.info(("%d steps to rotate entire cube" % self.steps_to_rotate_cube))
+        for step in self.solution:
+            if step == "x":
+                tmp_solution.append("%dR" % self.size)
+            elif step == "x'":
+                tmp_solution.append("%dR'" % self.size)
+            elif step == "x2":
+                tmp_solution.append("%dR" % self.size)
+                tmp_solution.append("%dR" % self.size)
+
+            elif step == "y":
+                tmp_solution.append("%dU" % self.size)
+            elif step == "y'":
+                tmp_solution.append("%dU'" % self.size)
+            elif step == "y2":
+                tmp_solution.append("%dU" % self.size)
+                tmp_solution.append("%dU" % self.size)
+
+            elif step == "z":
+                tmp_solution.append("%dF" % self.size)
+            elif step == "z'":
+                tmp_solution.append("%dF'" % self.size)
+            elif step == "z2":
+                tmp_solution.append("%dF" % self.size)
+                tmp_solution.append("%dF" % self.size)
+
+            else:
+                tmp_solution.append(step)
+
+        for step in tmp_solution:
+            if step.startswith(str(self.size)):
+                rotations.append(apply_rotations(self.size, step, rotations))
+            else:
+                final_steps.append(apply_rotations(self.size, step, rotations))
+        log.info("\nSolution: %s" % ' '.join(final_steps))
+        log.info(len(final_steps))
 
         if self.steps_to_solve_centers:
-            log.info(("%d steps to solve centers" % self.steps_to_solve_centers))
+            log.info("%d steps to solve centers" % self.steps_to_solve_centers)
 
         if self.steps_to_group_edges:
-            log.info(("%d steps to group edges" % self.steps_to_group_edges))
+            log.info("%d steps to group edges" % self.steps_to_group_edges)
 
         if self.steps_to_solve_3x3x3:
-            log.info(("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3))
+            log.info("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3)
 
-        log.info(("%d steps total" % len(self.solution)))
+        log.info("%d steps total" % self.get_solution_len_minus_rotates(self.solution))
 
         with open('/tmp/solution.txt', 'w') as fh:
             fh.write(' '.join(self.solution) + "\n")

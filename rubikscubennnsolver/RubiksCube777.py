@@ -685,94 +685,92 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
                 self.rotate(step)
 
-    def group_centers_guts(self):
-        self.lt_init()
+    def stage_UD_centers(self):
+        self.group_inside_UD_centers()
+        self.print_cube()
+        log.info("%s: UD inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
-        # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for UD
-        if not self.UD_centers_staged():
-            self.group_inside_UD_centers()
-            self.print_cube()
-            log.info("%s: UD inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
+        # Pair the oblique UD edges
+        tmp_solution_len = len(self.solution)
+        self.lt_UD_oblique_edge_pairing.solve()
+        self.print_cube()
+        self.solution.append("COMMENT_%d_steps_777_UD_oblique_edges_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
+        log.info("%s: UD oblique edges paired/staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
-            # Pair the oblique UD edges
-            tmp_solution_len = len(self.solution)
-            self.lt_UD_oblique_edge_pairing.solve()
-            self.print_cube()
-            self.solution.append("COMMENT_%d_steps_777_UD_oblique_edges_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
-            log.info("%s: UD oblique edges paired/staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
+        # Stage the UD centers
+        self.create_fake_555_from_outside_centers()
+        self.fake_555.group_centers_stage_UD()
 
-            # Stage the UD centers
-            self.create_fake_555_from_outside_centers()
-            self.fake_555.group_centers_stage_UD()
+        for step in self.fake_555.solution:
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            else:
+                if step.startswith('5'):
+                    step = '7' + step[1:]
+                elif step.startswith('3'):
+                    raise Exception("5x5x5 solution has 3 wide turn")
+                self.rotate(step)
 
-            for step in self.fake_555.solution:
-                if step.startswith('COMMENT'):
-                    self.solution.append(step)
-                else:
-                    if step.startswith('5'):
-                        step = '7' + step[1:]
-                    elif step.startswith('3'):
-                        raise Exception("5x5x5 solution has 3 wide turn")
-                    self.rotate(step)
+        self.print_cube()
+        log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
-            self.print_cube()
-            log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
+    def stage_LR_centers(self):
+        # Uses 5x5x5 solver to stage the inner x-centers
+        self.group_inside_LR_centers()
+        self.print_cube()
+        log.info("%s: LR inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
-        if not self.LR_centers_staged():
-            # Uses 5x5x5 solver to stage the inner x-centers
-            self.group_inside_LR_centers()
-            self.print_cube()
-            log.info("%s: LR inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
+        # Test the pruning tables
+        #self.lt_LR_left_right_oblique_edge_pairing.solve()
+        #self.lt_LR_left_middle_oblique_edge_pairing.solve()
+        #self.print_cube()
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-            # Test the pruning tables
-            #self.lt_LR_left_right_oblique_edge_pairing.solve()
-            #self.lt_LR_left_middle_oblique_edge_pairing.solve()
-            #self.print_cube()
-            #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
+        tmp_solution_len = len(self.solution)
+        self.lt_LR_oblique_edge_pairing.solve()
+        self.print_cube()
+        self.solution.append("COMMENT_%d_steps_777_LR_oblique_edges_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
+        log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-            #log.info("kociemba: %s" % self.get_kociemba_string(True))
-            tmp_solution_len = len(self.solution)
-            self.lt_LR_oblique_edge_pairing.solve()
-            self.print_cube()
-            self.solution.append("COMMENT_%d_steps_777_LR_oblique_edges_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
-            log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # Stage the LR centers
+        self.create_fake_555_from_outside_centers()
+        self.fake_555.group_centers_stage_LR()
 
-            # Stage the LR centers
-            self.create_fake_555_from_outside_centers()
-            self.fake_555.group_centers_stage_LR()
+        for step in self.fake_555.solution:
+            if step.startswith('COMMENT'):
+                self.solution.append(step)
+            else:
+                if step.startswith('5'):
+                    step = '7' + step[1:]
+                elif step.startswith('3'):
+                    raise Exception("5x5x5 solution has 3 wide turn")
+                self.rotate(step)
 
-            for step in self.fake_555.solution:
-                if step.startswith('COMMENT'):
-                    self.solution.append(step)
-                else:
-                    if step.startswith('5'):
-                        step = '7' + step[1:]
-                    elif step.startswith('3'):
-                        raise Exception("5x5x5 solution has 3 wide turn")
-                    self.rotate(step)
+        self.print_cube()
+        log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
+        log.info("")
+        log.info("")
+        log.info("")
 
-            self.print_cube()
-            log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
+    def LR_centers_vertical_bars(self):
 
         # Test the pruning tables
         #self.lt_step41.solve()
@@ -786,6 +784,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.solution.append("COMMENT_%d_steps_777_LR_centers_vertical_bars" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: LR centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+    def UD_centers_vertical_bars(self):
+
         # Test the pruning tables
         #self.lt_step51.solve()
         #self.lt_step52.solve()
@@ -794,12 +794,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         tmp_solution_len = len(self.solution)
         self.lt_step50.solve()
-        self.rotate("L")
-        self.rotate("R")
         self.print_cube()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         self.solution.append("COMMENT_%d_steps_777_UD_centers_vertical_bars" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: LR centers horizontal bars, UD centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+    def FB_centers_solve(self):
 
         # Test the pruning tables
         #self.lt_step61.solve()
@@ -813,6 +812,22 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         log.info("kociemba: %s" % self.get_kociemba_string(True))
         self.solution.append("COMMENT_%d_steps_777_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+    def group_centers_guts(self):
+        self.lt_init()
+
+        if not self.UD_centers_staged():
+            self.stage_UD_centers()
+
+        if not self.LR_centers_staged():
+            self.stage_LR_centers()
+
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
+        self.LR_centers_vertical_bars()
+        self.UD_centers_vertical_bars()
+        self.rotate("L")
+        self.rotate("R")
+        self.FB_centers_solve()
 
 
 swaps_777 = {'2B': (0, 1, 2, 3, 4, 5, 6, 7, 153, 160, 167, 174, 181, 188, 195, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 14, 52, 53, 54, 55, 56, 57, 13, 59, 60, 61, 62, 63, 64, 12, 66, 67, 68, 69, 70, 71, 11, 73, 74, 75, 76, 77, 78, 10, 80, 81, 82, 83, 84, 85, 9, 87, 88, 89, 90, 91, 92, 8, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 287, 154, 155, 156, 157, 158, 159, 286, 161, 162, 163, 164, 165, 166, 285, 168, 169, 170, 171, 172, 173, 284, 175, 176, 177, 178, 179, 180, 283, 182, 183, 184, 185, 186, 187, 282, 189, 190, 191, 192, 193, 194, 281, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 51, 58, 65, 72, 79, 86, 93, 288, 289, 290, 291, 292, 293, 294),

@@ -34,11 +34,15 @@ logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelNam
 parser = argparse.ArgumentParser()
 parser.add_argument('--print-steps', default=False, action='store_true', help='Display animated step-by-step solution')
 parser.add_argument('--debug', default=False, action='store_true', help='set loglevel to DEBUG')
-parser.add_argument('--min-memory', default=False, action='store_true', help='Load smaller tables to use less memory...takes longer to run')
-parser.add_argument('--fmc', default=False, action='store_true', help='Fewest Move Challenge')
 parser.add_argument('--no-comments', default=False, action='store_true', help='No comments in alg.cubing.net url')
 
 # CPU mode
+parser.add_argument('--min-memory', default=False, action='store_true', help='Load smaller tables to use less memory...takes longer to run')
+parser.add_argument('--fast', default=True, action='store_true', help='Find a solution quickly')
+parser.add_argument('--normal', default=False, action='store_true', help='Find a shorter solution but takes longer')
+parser.add_argument('--slow', default=False, action='store_true', help='Find shortest solution we can, takes a while')
+
+
 action = parser.add_mutually_exclusive_group(required=False)
 parser.add_argument('--openwith', default=None, type=str, help='Colors for sides U, L, etc')
 parser.add_argument('--colormap', default=None, type=str, help='Colors for sides U, L, etc')
@@ -110,6 +114,15 @@ if args.debug:
 try:
     size = int(sqrt((len(args.state) / 6)))
 
+    if args.slow:
+        cpu_mode = "slow"
+    elif args.normal:
+        cpu_mode = "normal"
+    elif args.fast:
+        cpu_mode = "fast"
+    else:
+        raise Exception("What CPU mode to use?")
+
     if size == 2:
         from rubikscubennnsolver.RubiksCube222 import RubiksCube222
         cube = RubiksCube222(args.state, args.order, args.colormap, args.debug)
@@ -121,7 +134,7 @@ try:
         cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
 
-        if args.min_memory:
+        if cpu_mode == "fast":
             from rubikscubennnsolver.RubiksCube555 import solved_555
             from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
             cube = RubiksCube555ForNNN(args.state, args.order, args.colormap, args.debug)
@@ -147,8 +160,7 @@ try:
         for step in args.openwith.split():
             cube.rotate(step)
 
-    cube.fmc = args.fmc
-    cube.min_memory = args.min_memory
+    cube.cpu_mode = cpu_mode
     cube.sanity_check()
     cube.print_cube()
     cube.www_header()
@@ -206,6 +218,11 @@ try:
     if args.print_steps:
         cube.print_cube()
 
+    if args.min_memory:
+        print("\n\n****************************************")
+        print("--min-memory has been replaced by --fast")
+        print("****************************************\n\n")
+
     print("\nMemory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
     print("Time   : %s" % (end_time - start_time))
     print("")
@@ -224,6 +241,6 @@ except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError, NoPruneTable
     cube.enable_print_cube = True
     cube.print_cube_layout()
     cube.print_cube()
-    cube.print_solution()
+    cube.print_solution(False)
     print((cube.get_kociemba_string(True)))
     raise

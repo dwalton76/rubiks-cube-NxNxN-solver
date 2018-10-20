@@ -447,13 +447,13 @@ class RubiksCube(object):
         self.fake_666 = None
         self.fake_777 = None
         self.heuristic_stats = {}
-        self.min_memory = False
         self.enable_print_cube = True
-        self.fmc = False
         self.use_nuke_corners = False
         self.use_nuke_edges = False
         self.use_nuke_centers = False
         self.init_orbit0_paired = False
+        self.cpu_mode = "fast"
+        self.solution_with_markers = []
 
         if colormap:
             colormap = json.loads(colormap)
@@ -4071,7 +4071,7 @@ class RubiksCube(object):
             self.group_edges()
         self.solution.append('EDGES_GROUPED')
 
-    def reduce_333_fmc(self):
+    def reduce_333_slow(self):
         tmp_state = self.state[:]
         tmp_solution = self.solution[:]
         original_solution_len = len(self.solution)
@@ -4150,8 +4150,8 @@ class RubiksCube(object):
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
-        if self.fmc:
-            self.reduce_333_fmc()
+        if self.cpu_mode == "slow":
+            self.reduce_333_slow()
         else:
             self.reduce_333()
 
@@ -4229,7 +4229,7 @@ class RubiksCube(object):
             else:
                 final_steps.append(apply_rotations(self.size, step, rotations))
         log.info("\nSolution: %s" % ' '.join(final_steps))
-        log.info(len(final_steps))
+        #log.info(len(final_steps))
 
         if self.steps_to_solve_centers:
             log.info("%d steps to solve centers" % self.steps_to_solve_centers)

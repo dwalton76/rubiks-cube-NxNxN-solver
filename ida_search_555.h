@@ -18,7 +18,8 @@ struct ida_heuristic_result ida_heuristic_UD_centers_555(
     unsigned int max_cost_to_goal,
     struct key_value_pair **UD_centers_cost_555,
     char *pt_UD_t_centers_cost_only,
-    char *pt_UD_x_centers_cost_only
+    char *pt_UD_x_centers_cost_only,
+    cpu_mode_type cpu_mode
 );
 int ida_search_complete_UD_centers_555 (char *cube);
 

@@ -3,6 +3,7 @@ from rubikscubennnsolver import NotSolving
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
 from rubikscubennnsolver.RubiksCube666Misc import state_targets_step60
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
@@ -854,10 +855,15 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
     def get_fake_555(self):
         if self.fake_555 is None:
-            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+
+            if self.cpu_mode == "fast":
+                self.fake_555 = RubiksCube555ForNNN(solved_555, 'URFDLB')
+            else:
+                self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
-            self.fake_555.fmc = self.fmc
+            self.fake_555.cpu_mode = self.cpu_mode
         else:
             self.fake_555.re_init()
         return self.fake_555

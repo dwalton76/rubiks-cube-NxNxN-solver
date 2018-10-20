@@ -20,7 +20,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             self.fake_444 = RubiksCube444(solved_444, 'URFDLB')
             self.fake_444.lt_init()
             self.fake_444.enable_print_cube = False
-            self.fake_444.fmc = self.fmc
+            self.fake_444.cpu_mode = self.cpu_mode
         else:
             self.fake_444.re_init()
         return self.fake_444
@@ -30,7 +30,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             self.fake_555 = RubiksCube555ForNNN(solved_555, 'URFDLB')
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
-            self.fake_555.fmc = self.fmc
+            self.fake_555.cpu_mode = self.cpu_mode
         else:
             self.fake_555.re_init()
         return self.fake_555
@@ -74,7 +74,9 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
         for step in fake_444.solution:
 
-            if step.startswith('COMMENT'):
+            if step in ("CENTERS_SOLVED", "EDGES_GROUPED"):
+                continue
+            elif step.startswith('COMMENT'):
                 self.solution.append(step)
             else:
                 # Rotate the entire cube
@@ -214,9 +216,10 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         wide_str = str(orbit + 2)
         for step in fake_555.solution:
 
-            if step.startswith('COMMENT'):
+            if step in ("CENTERS_SOLVED", "EDGES_GROUPED"):
+                continue
+            elif step.startswith('COMMENT'):
                 self.solution.append(step)
-
             else:
                 # Rotate the entire cube
                 if step.startswith('5'):

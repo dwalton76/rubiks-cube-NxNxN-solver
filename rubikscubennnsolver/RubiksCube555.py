@@ -867,7 +867,8 @@ class LookupTableIDA555LRCentersStage(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-5x5x5-step20-LR-centers-stage.txt', '9d982346d89494107f5a77323625c428'),
+            #(('lookup-table-5x5x5-step20-LR-centers-stage.txt', '9d982346d89494107f5a77323625c428'),  # 7-deep
+            (('lookup-table-5x5x5-step20-LR-centers-stage.txt', '3d13c62d7a982023d0376f56ecdf2812'),  # 6-deep
              ('lookup-table-5x5x5-step21-LR-t-centers-stage.cost-only.txt', '8fa5217b28c7aeb9e04684ae3f5bebee'),
              ('lookup-table-5x5x5-step22-LR-x-centers-stage.cost-only.txt', '4e4d8a8ec35d0c999ce7c51b6681bc4e')),
             '5x5x5-LR-centers-stage' # C_ida_type
@@ -1614,8 +1615,10 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
             filesize=297157068,
         )
 
-        if self.parent.fmc:
+        if self.parent.cpu_mode == "normal" or self.parent.cpu_mode == "slow":
             LookupTableIDA555EdgesZPlane.heuristic_stats_error = 1
+        elif self.parent.cpu_mode == "fast":
+            LookupTableIDA555EdgesZPlane.heuristic_stats_error = 0
 
     def ida_heuristic_tuple(self):
         assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
@@ -1641,7 +1644,7 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
             # If we are not finding a solution for a "fewest move challenge" then go ahead
             # and return True here and do not worry about trying to find a solution that
             # allows us to skip step350.
-            if not self.parent.fmc:
+            if not self.parent.cpu_mode == "slow":
                 return True
 
             # Are the edges in a state in the step351 table?  We must flip the edges around
@@ -1659,7 +1662,7 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
                 log.info("%s: found solution where edges are EOed per step351" % self)
                 return True
             else:
-                log.info("%s: found solution but edges are not EOed per step351" % self)
+                #log.info("%s: found solution but edges are not EOed per step351" % self)
                 self.parent.state = self.original_state[:]
                 self.parent.solution = self.original_solution[:]
                 return False
@@ -2301,8 +2304,10 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
             filesize=300818315,
         )
 
-        if self.parent.fmc:
+        if self.parent.cpu_mode == "normal" or self.parent.cpu_mode == "slow":
             LookupTableIDA555PairLastEightEdges.heuristic_stats_error = 2
+        elif self.parent.cpu_mode == "fast":
+            LookupTableIDA555PairLastEightEdges.heuristic_stats_error = 0
 
     def ida_heuristic_tuple(self):
         (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()

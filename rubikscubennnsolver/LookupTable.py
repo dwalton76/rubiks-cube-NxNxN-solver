@@ -500,7 +500,7 @@ class LookupTable(object):
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
         if isinstance(self, LookupTableCostOnly):
-            raise Exception("%s is a CostOnly table, no need to call preload_cache()" % self)
+            raise Exception("%s is a CostOnly table, no need to call preload_cache_dict()" % self)
 
         if 'dummy' in self.filename:
             self.cache = {}
@@ -556,7 +556,7 @@ class LookupTable(object):
         state_len = 0
 
         if isinstance(self, LookupTableCostOnly):
-            raise Exception("%s is a CostOnly table, no need to call preload_cache_set()" % self)
+            raise Exception("%s is a CostOnly table, no need to call preload_cache_string()" % self)
 
         if 'dummy' in self.filename:
             pass
@@ -610,7 +610,7 @@ class LookupTable(object):
         # Binary search the file to get the value
         else:
             if not self.printed_disk_io_warning:
-                log.warning("%s: is binary searching the disk" % self)
+                log.info("%s: is binary searching the disk" % self)
                 self.printed_disk_io_warning = True
 
             line = self.binary_search(state_to_find)
@@ -1447,6 +1447,15 @@ class LookupTableIDAViaC(object):
 
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
                 raise Exception("avoid_oll is only supported for orbits 0 or 1, not {}".format(self.avoid_oll))
+
+        if self.parent.cpu_mode == "fast":
+            cmd.append("--fast")
+        elif self.parent.cpu_mode == "normal":
+            cmd.append("--normal")
+        elif self.parent.cpu_mode == "slow":
+            cmd.append("--slow")
+        else:
+            raise Exception("What CPU mode?")
 
         # This is a special case for the 2018 Fewest Move Challenge
         if self.parent.init_orbit0_paired and self.C_ida_type == "5x5x5-UD-centers-stage":

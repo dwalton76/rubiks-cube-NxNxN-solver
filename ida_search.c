@@ -29,6 +29,15 @@ unsigned long ida_count;
 unsigned long ida_count_total;
 unsigned long seek_calls = 0;
 
+/*
+typedef enum {
+    NONE,
+    CPU_FAST,
+    CPU_NORMAL,
+    CPU_SLOW,
+} cpu_mode_type;
+*/
+
 // Supported IDA searches
 typedef enum {
     NONE,
@@ -52,6 +61,7 @@ typedef enum {
     STEP40_777,
     STEP50_777,
     STEP60_777,
+    STEP70_777,
 
 } lookup_table_type;
 
@@ -102,6 +112,8 @@ struct key_value_pair *step60_777 = NULL;
 char *step61_777 = NULL;
 char *step62_777 = NULL;
 char *step63_777 = NULL;
+
+struct key_value_pair *step70_777 = NULL;
 
 
 /* Remove leading and trailing whitespaces */
@@ -417,6 +429,7 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     case STEP40_777:
     case STEP50_777:
     case STEP60_777:
+    case STEP70_777:
         break;
 
     default:
@@ -495,8 +508,55 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
             hash_add(hashtable, buffer, cost);
         }
 
-    } else if (strmatch(filename, "lookup-table-5x5x5-step10-UD-centers-stage.txt") ||
-            strmatch(filename, "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt")) {
+    } else if (strmatch(filename, "lookup-table-5x5x5-step10-UD-centers-stage.txt")) {
+
+        // The hash_add() here is the expensive part but disk IO is a factor.  If I
+        // comment out hash_add():
+        // - fread() the entire file takes 15ms and 14M of memory
+        // - fgets() line by line takes 55ms but 0M of memory
+        //
+        // With hash_add():
+        // - fread() takes 419ms
+        // - fgets() takes 470ms
+
+        /*
+        int size = 14759145;
+        char *ptr = malloc(sizeof(char) * size);
+        char *orig_ptr = ptr;
+        memset(ptr, 0, sizeof(char) * size);
+        int line_length = 17;
+        int line_count = 868185;
+
+        if (fread(ptr, size, 1, fh_read)) {
+            fclose(fh_read);
+
+            for (int i = 0; i < line_count; i++) {
+                ptr[14] = '\0';
+                cost = atoi(&ptr[15]);
+                hash_add(hashtable, ptr, cost);
+                ptr += line_length;
+            }
+            free(orig_ptr);
+            orig_ptr = NULL;
+
+            //LOG("ida_prune_table_preload %s: end\n", filename);
+            //exit(0);
+        } else {
+            printf("ERROR: ida_prune_table_preload read failed %s\n", filename);
+            exit(1);
+        }
+        */
+
+        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+            // 0..13 are the state
+            // 14 is the :
+            // 15 is the move count
+            buffer[14] = '\0';
+            cost = atoi(&buffer[15]);
+            hash_add(hashtable, buffer, cost);
+        }
+
+    } else if (strmatch(filename, "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt")) {
 
         while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
             // 0..13 are the state
@@ -556,6 +616,18 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
             hash_add(hashtable, buffer, cost);
         }
 
+    } else if (strmatch(filename, "lookup-table-7x7x7-step70.txt")) {
+
+        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+            // 0002001ffefff:4
+            // 0..12 are the state
+            // 13 is the :
+            // 14 is the move count
+            buffer[13] = '\0';
+            cost = atoi(&buffer[14]);
+            hash_add(hashtable, buffer, cost);
+        }
+
     } else {
         printf("ERROR: ida_prune_table_preload add support for %s\n", filename);
         exit(1);
@@ -608,7 +680,7 @@ ida_prune_table_cost (struct key_value_pair *hashtable, char *state_to_find)
 
 
 struct ida_heuristic_result
-ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal)
+ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal, cpu_mode_type cpu_mode)
 {
     switch (type)  {
 
@@ -620,7 +692,8 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             &centers_cost_444,
             UD_centers_cost_only_444,
             LR_centers_cost_only_444,
-            FB_centers_cost_only_444);
+            FB_centers_cost_only_444,
+            cpu_mode);
 
     case REDUCE_333_444:
         return ida_heuristic_reduce_333_444(
@@ -638,7 +711,8 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             max_cost_to_goal,
             &UD_centers_555,
             pt_UD_t_centers_cost_only,
-            pt_UD_x_centers_cost_only);
+            pt_UD_x_centers_cost_only,
+            cpu_mode);
 
     case LR_CENTERS_STAGE_555:
         return ida_heuristic_LR_centers_555(
@@ -705,6 +779,13 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             step62_777,
             step63_777);
 
+    case STEP70_777:
+        return ida_heuristic_step70_777(
+            cube,
+            max_cost_to_goal,
+            &step70_777,
+            step61_777,
+            step62_777);
     default:
         printf("ERROR: ida_heuristic() does not yet support this --type\n");
         exit(1);
@@ -999,6 +1080,9 @@ ida_search_complete (
 
     case STEP60_777:
         return ida_search_complete_step60_777(cube);
+
+    case STEP70_777:
+        return ida_search_complete_step70_777(cube);
 
     default:
         printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
@@ -1335,6 +1419,7 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
       "U", "U'", "D", "D'"),
      */
     case STEP60_777:
+    case STEP70_777:
         switch (move) {
         case threeFw:
         case threeFw_PRIME:
@@ -1647,7 +1732,8 @@ ida_search (unsigned int cost_to_here,
             unsigned int orbit0_wide_quarter_turns,
             unsigned int orbit1_wide_quarter_turns,
             unsigned int orbit0_paired,
-            unsigned int avoid_pll)
+            unsigned int avoid_pll,
+            cpu_mode_type cpu_mode)
 {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
@@ -1660,7 +1746,7 @@ ida_search (unsigned int cost_to_here,
 
     ida_count++;
     unsigned int max_cost_to_goal = threshold - cost_to_here;
-    heuristic_result = ida_heuristic(cube, type, max_cost_to_goal);
+    heuristic_result = ida_heuristic(cube, type, max_cost_to_goal, cpu_mode);
     cost_to_goal = heuristic_result.cost_to_goal;
     f_cost = cost_to_here + cost_to_goal;
     search_result.f_cost = f_cost;
@@ -1731,7 +1817,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll);
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -1880,7 +1966,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll);
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -1932,7 +2018,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll);
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -1984,7 +2070,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll);
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -2088,7 +2174,8 @@ ida_solve (
     unsigned int orbit0_wide_quarter_turns,
     unsigned int orbit1_wide_quarter_turns,
     unsigned int orbit0_paired,
-    unsigned int avoid_pll)
+    unsigned int avoid_pll,
+    cpu_mode_type cpu_mode)
 {
     int MAX_SEARCH_DEPTH = 30;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
@@ -2175,12 +2262,19 @@ ida_solve (
         step63_777 = ida_cost_only_preload("lookup-table-7x7x7-step63.hash-cost-only.txt", 6350412);
         break;
 
+    case STEP70_777:
+        ida_prune_table_preload(&step70_777, "lookup-table-7x7x7-step70.txt");
+        step61_777 = ida_cost_only_preload("lookup-table-7x7x7-step61.hash-cost-only.txt", 24010032);
+        step62_777 = ida_cost_only_preload("lookup-table-7x7x7-step62.hash-cost-only.txt", 24010032);
+        step63_777 = ida_cost_only_preload("lookup-table-7x7x7-step63.hash-cost-only.txt", 6350412);
+        break;
+
     default:
         printf("ERROR: ida_solve() does not yet support this --type\n");
         exit(1);
     }
 
-    heuristic_result = ida_heuristic(cube, type, 99);
+    heuristic_result = ida_heuristic(cube, type, 99, cpu_mode);
     min_ida_threshold = heuristic_result.cost_to_goal;
     LOG("min_ida_threshold %d\n", min_ida_threshold);
 
@@ -2191,7 +2285,7 @@ ida_solve (
 
         search_result = ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size,
                                    type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns,
-                                   orbit0_paired, avoid_pll);
+                                   orbit0_paired, avoid_pll, cpu_mode);
 
         if (search_result.found_solution) {
             ida_count_total += ida_count;
@@ -2220,6 +2314,7 @@ main (int argc, char *argv[])
     unsigned int orbit0_paired = 0;
     char kociemba[300];
     memset(kociemba, 0, sizeof(char) * 300);
+    cpu_mode_type cpu_mode = CPU_FAST;
 
     for (int i = 1; i < argc; i++) {
         if (strmatch(argv[i], "-k") || strmatch(argv[i], "--kociemba")) {
@@ -2282,6 +2377,10 @@ main (int argc, char *argv[])
                 type = STEP60_777;
                 cube_size_type = 7;
 
+            } else if (strmatch(argv[i], "7x7x7-step70")) {
+                type = STEP70_777;
+                cube_size_type = 7;
+
             } else {
                 printf("ERROR: %s is an invalid --type\n", argv[i]);
                 exit(1);
@@ -2305,12 +2404,24 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--orbit0-paired")) {
             orbit0_paired = 1;
 
+        } else if (strmatch(argv[i], "--fast")) {
+            cpu_mode = CPU_FAST;
+
+        } else if (strmatch(argv[i], "--normal")) {
+            cpu_mode = CPU_NORMAL;
+
+        } else if (strmatch(argv[i], "--slow")) {
+            cpu_mode = CPU_SLOW;
+
         } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
             printf("\nida_search --kociemba KOCIEMBA_STRING --type 5x5x5-UD-centers-stage\n\n");
             exit(0);
 
         } else {
-            printf("ERROR: %s is an invalid arg\n", argv[i]);
+            printf("ERROR: %s is an invalid arg\n\n", argv[i]);
+            printf("Try this and run it again\n");
+            printf("$ make clean\n");
+            printf("$ sudo make all\n\n");
             exit(1);
         }
     }
@@ -2345,7 +2456,7 @@ main (int argc, char *argv[])
     init_cube(cube, cube_size, type, kociemba);
 
     // print_cube(cube, cube_size);
-    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll);
+    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll, cpu_mode);
 
     // free_prune_tables();
 

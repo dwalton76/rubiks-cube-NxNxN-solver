@@ -79,7 +79,8 @@ ida_heuristic_UD_centers_555(
     unsigned int max_cost_to_goal,
     struct key_value_pair **UD_centers_cost_555,
     char *pt_UD_t_centers_cost_only,
-    char *pt_UD_x_centers_cost_only)
+    char *pt_UD_x_centers_cost_only,
+    cpu_mode_type cpu_mode)
 {
     unsigned int cost_to_goal = 0;
     unsigned long UD_t_centers_state = 0;
@@ -131,9 +132,16 @@ ida_heuristic_UD_centers_555(
         if (hash_entry) {
             cost_to_goal = hash_entry->value;
         } else {
-            // Not admissible but faster
-            //cost_to_goal = max((int) cost_to_goal * 1.2, MAX_DEPTH+1);
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
+
+            if (cpu_mode == CPU_FAST) {
+                // time ./ida_search --kociemba ......UUU..xUx..xxx............xUx..Uxx..UxU............UxU..xxx..xxU............xxx..xUx..xUx............xxx..Uxx..xUx............Uxx..Uxx..xUx...... --type 5x5x5-UD-centers-stage
+
+                // x1.0 takes 20s (baseline, admissible)
+                // x1.2 takes 1.5s
+                cost_to_goal = max((int) cost_to_goal * 1.2, MAX_DEPTH+1);
+            } else {
+                cost_to_goal = max((int) cost_to_goal, MAX_DEPTH+1);
+            }
         }
     }
 
@@ -230,8 +238,12 @@ ida_heuristic_LR_centers_555(
     cost_to_goal = max(LR_t_centers_cost, LR_x_centers_cost);
 
     if (cost_to_goal > 0) {
-        // The step20 table we loaded is 7-deep
-        int MAX_DEPTH = 7;
+
+        // 7-deep takes 2100ms and uses 540M
+        // 6-deep takes 230ms and uses 62M
+        int MAX_DEPTH = 6;
+
+        // time ./ida_search --kociemba ......xxx..xxx..xxx............LFF..LLL..FFL............FLL..FFL..LFL............xxx..xxx..xxx............FFF..LLL..LLL............LLF..FFF..FFF...... --type 5x5x5-LR-centers-stage
 
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(LR_centers_cost_555, result.lt_state);

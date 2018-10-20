@@ -42,6 +42,13 @@ centers_777 = (
     254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286, # Down
 )
 
+ULRD_centers_777 = (
+    9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, # Upper
+    58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90, # Left
+    156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188, # Right
+    254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286, # Down
+)
+
 
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
 
@@ -391,6 +398,72 @@ class LookupTableIDA777Step60(LookupTableIDAViaC):
         )
 
 
+class LookupTableIDA777Step70(LookupTableIDAViaC):
+    """
+    step60 will solve all centers, step 70/80 is a 2-phase alternative where
+    step70 will solve the FB centers and leave the LR and UD centers as bars
+
+    lookup-table-7x7x7-step70.txt
+    =============================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 68 entries (0 percent, 7.56x previous step)
+    3 steps has 492 entries (0 percent, 7.24x previous step)
+    4 steps has 3,570 entries (1 percent, 7.26x previous step)
+    5 steps has 25,966 entries (12 percent, 7.27x previous step)
+    6 steps has 182,944 entries (85 percent, 7.05x previous step)
+
+    Total: 213,049 entries
+    """
+    def __init__(self, parent):
+        LookupTableIDAViaC.__init__(
+            self,
+            parent,
+            # Needed tables and their md5 signatures
+            (('lookup-table-7x7x7-step70.txt', '8dba523084036088f1f6a14811e03625'),
+             ('lookup-table-7x7x7-step61.hash-cost-only.txt', 'ba9b9e02f603459dac94fef5c637ac40'),
+             ('lookup-table-7x7x7-step62.hash-cost-only.txt', '2ebb594b99f8cf04a2a77a64c67ea0d4')),
+            '7x7x7-step70' # C_ida_type
+        )
+
+
+class LookupTable777Step80(LookupTable):
+    """
+    LR centers are vertical bars
+    UD centers are horizontal bars
+    Solve LR and UD centers
+
+    lookup-table-7x7x7-step80.txt
+    =============================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 22 entries (1 percent, 4.40x previous step)
+    3 steps has 80 entries (6 percent, 3.64x previous step)
+    4 steps has 233 entries (17 percent, 2.91x previous step)
+    5 steps has 496 entries (38 percent, 2.13x previous step)
+    6 steps has 404 entries (31 percent, 0.81x previous step)
+    7 steps has 56 entries (4 percent, 0.14x previous step)
+
+    Total: 1,296 entries
+    Average: 5.03 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step80.txt',
+            'UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRRRRRRDDDDDDDDDDDDDDDDDDDDDDDDD',
+            linecount=1296,
+            max_depth=7,
+            filesize=168480)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in ULRD_centers_777])
+        cost_to_goal = self.heuristic(state)
+        #log.info("%s: state %s, cost_to_goal %d" % (self, state, cost_to_goal))
+        return (state, cost_to_goal)
+
+
 class RubiksCube777(RubiksCubeNNNOddEdges):
     """
     For 7x7x7 centers
@@ -556,7 +629,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         self.lt_step40 = LookupTableIDA777Step40(self)
         self.lt_step50 = LookupTableIDA777Step50(self)
-        self.lt_step60 = LookupTableIDA777Step60(self)
+
+        if self.cpu_mode == "fast":
+            self.lt_step70 = LookupTableIDA777Step70(self)
+            self.lt_step80 = LookupTable777Step80(self)
+
+        elif self.cpu_mode == "normal" or self.cpu_mode == "slow":
+            self.lt_step60 = LookupTableIDA777Step60(self)
 
     def create_fake_555_from_inside_centers(self):
 
@@ -794,23 +873,58 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         tmp_solution_len = len(self.solution)
         self.lt_step50.solve()
+        self.rotate("L")
+        self.rotate("R")
         self.print_cube()
         self.solution.append("COMMENT_%d_steps_777_UD_centers_vertical_bars" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: LR centers horizontal bars, UD centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def FB_centers_solve(self):
 
-        # Test the pruning tables
-        #self.lt_step61.solve()
-        #self.lt_step62.solve()
-        #self.print_cube()
-        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        if self.cpu_mode == "fast":
+            tmp_solution_len = len(self.solution)
+            self.lt_step70.solve()
+            self.print_cube()
+            log.info("%s: FB centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        tmp_solution_len = len(self.solution)
-        self.lt_step60.solve()
+            L_solved = self.sideL.centers_solved()
+            U_solved = self.sideU.centers_solved()
+
+            # not likely
+            if L_solved and U_solved:
+                self.solution.append("COMMENT_%d_steps_777_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
+
+            else:
+                self.solution.append("COMMENT_%d_steps_777_FB_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
+
+                tmp_solution_len = len(self.solution)
+
+                if not L_solved:
+                    self.rotate("L")
+                    self.rotate("R")
+
+                if not U_solved:
+                    self.rotate("U")
+                    self.rotate("D")
+
+                #self.print_cube()
+                self.lt_step80.solve()
+                self.solution.append("COMMENT_%d_steps_777_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
+
+        elif self.cpu_mode == "normal" or self.cpu_mode == "slow":
+
+            # Test the pruning tables
+            #self.lt_step61.solve()
+            #self.lt_step62.solve()
+            #self.print_cube()
+            #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+            tmp_solution_len = len(self.solution)
+            self.lt_step60.solve()
+            self.solution.append("COMMENT_%d_steps_777_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
+
         self.print_cube()
         log.info("kociemba: %s" % self.get_kociemba_string(True))
-        self.solution.append("COMMENT_%d_steps_777_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_guts(self):
@@ -825,8 +939,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         self.LR_centers_vertical_bars()
         self.UD_centers_vertical_bars()
-        self.rotate("L")
-        self.rotate("R")
         self.FB_centers_solve()
 
 

@@ -104,9 +104,21 @@ ida_heuristic_UD_oblique_edges_stage_777 (
     state >>= 1;
     sprintf(result.lt_state, "%018lx", state);
 
+    // time ./ida_search --kociemba .........Uxx...U...x..U...x..U...x...xUx..................Uxx...U...U..x...x..x...U...xxx..................xUU...x...U..x...x..x...U...xxx..................xUx...x...x..x...x..x...x...xUx..................Uxx...x...x..x...x..x...U...xUU..................UUx...U...x..U...x..x...U...xxx......... --type 7x7x7-UD-oblique-edges-stage
+
+    // 12 moves in 15s
+    //if (unpaired_count > 6) {
+    //    result.cost_to_goal = 3 + (unpaired_count >> 1);
+
     // inadmissable heuristic but fast...kudos to xyzzy for this formula
+    // 12 moves in 1s
     if (unpaired_count > 8) {
         result.cost_to_goal = 4 + (unpaired_count >> 1);
+
+    // 12 moves in 800ms
+    //if (unpaired_count > 10) {
+    //    result.cost_to_goal = 5 + (unpaired_count >> 1);
+
     } else {
         result.cost_to_goal = unpaired_count;
     }
@@ -633,14 +645,23 @@ struct ida_heuristic_result ida_heuristic_step60_777 (
         if (hash_entry) {
             cost_to_goal = hash_entry->value;
         } else {
-            // For cube DLFBRRFUDUUDUFRDUUDUBLDUUDUBRDUUDURBDUUDUFRFFFLFRBDFLDLUDRRRRRRLLLLLLURRRRRRDRRRRRRBRLLLLLUFDBBLBLDURUUDDBFBBFBBBFFFBFDFFBFFBBLBBBFFDDFBBBBDLULRUDRBLBUFBULUDDUDLLUDDUDDDUDDUDDDUDDUDFFUDDUDURFUFBLBLRDUULFRLLLLLUURRRRRLFLLLLLDFLLLLLDDRRRRRLBRFRUUULUUULBFBFFBBBBBFFFBFFLFBBBFRRBBFFBDFFBFFBRDFRLBRU
+            // ./ida_search --kociemba BLFBRRULDUUDULLDUUDUDDDUUDUDDDUUDUFFDUUDUURFFFLFBLBLBBDFULLLLLRBRRRRRRDRRRRRRULLLLLLRRRRRRDULDLFDBUURUUDDRFBBFBFDFFFBFRRFBFFBLFBBBFFBBFBBBBBFULRUDLDLBUFBFUUDDUDFRUDDUDBLUDDUDBRUDDUDRBUDDUDFRFUFBLRUUURFRBLRRRRRDDLLLLLFDLLLLLFLRRRRRUULLLLLRFLUUDRLRUUULBLDFFBBBDDFFFBFLBFBBBFFDBBFFBBBFBFFBBDFRLBRD --type 7x7x7-step60
             // 99 : 16 moves in 39s
             //  5 : 16 moves in 2.5s
-            //  4 : 17 moves in 3s
+            //  4 : 17 moves in 4s
             //  3 : 18 moves in 2s
             //  2 : 19 moves in 3s
             //  0 : 20 moves in 40s
-            unsigned int heuristic_stats_error = 5;
+
+            // ./ida_search --kociemba xxxxxxxxUUUUDxxUUUUDxxUUUUDxxUUUUDxxUUUUDxxxxxxxxxxxxxxxxLLLLLxxLLLLLxxRRRRRxxRRRRRxxLLLLLxxxxxxxxxxxxxxxxBFBBBxxBBFFFxxFBFFFxxBBFFBxxFBFBBxxxxxxxxxxxxxxxxDDDDUxxDDDDUxxDDDDUxxDDDDUxxDDDDUxxxxxxxxxxxxxxxxRRRRRxxRRRRRxxLLLLLxxLLLLLxxRRRRRxxxxxxxxxxxxxxxxFFFFFxxFBBFBxxBBBFBxxBBBFFxxFFBFBxxxxxxxx --type 7x7x7-step60
+
+            //  5 : 17 moves in 3m 0s
+            //  4 : 17 moves in 45s
+            //  3 : 18 moves in 54s
+            //  2 : 18 moves in 43s
+            //  1 : 18 moves in 23s
+            //  0 : 19 moves in 2m
+            unsigned int heuristic_stats_error = 4;
             cost_to_goal = original_cost_to_goal + heuristic_stats_error;
         
             // These stats come from back when I was using python IDA here. These are not
@@ -1009,6 +1030,102 @@ ida_search_complete_step60_777 (char *cube)
         cube[72] == 'L' && cube[73] == 'L' && cube[74] == 'L' && cube[75] == 'L' && cube[76] == 'L' &&
         cube[79] == 'L' && cube[80] == 'L' && cube[81] == 'L' && cube[82] == 'L' && cube[83] == 'L' &&
         cube[86] == 'L' && cube[87] == 'L' && cube[88] == 'L' && cube[89] == 'L' && cube[90] == 'L') {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+
+// ============================================================================
+// step70 - solve centers
+// ============================================================================
+unsigned int centers_step70_777[NUM_CENTERS_STEP70_777] = {
+    107, 108, 109, 110, 111, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 128, 129, 130, 131, 132, 135, 136, 137, 138, 139, // Front
+    205, 206, 207, 208, 209, 212, 213, 214, 215, 216, 219, 220, 221, 222, 223, 226, 227, 228, 229, 230, 233, 234, 235, 236, 237 // Back
+};
+
+struct ida_heuristic_result ida_heuristic_step70_777 (
+    char *cube,
+    unsigned int max_cost_to_goal,
+    struct key_value_pair **step70_777,
+    char *step61_777,
+    char *step62_777)
+{
+    int cost_to_goal = 0;
+    unsigned long step61_state_bucket = 0;
+    unsigned long step62_state_bucket = 0;
+    unsigned int step61_cost = 0;
+    unsigned int step62_cost = 0;
+    char lt_state[NUM_CENTERS_STEP60_777+2];
+    char step61_state[NUM_CENTERS_STEP61_777];
+    char step62_state[NUM_CENTERS_STEP62_777];
+    struct ida_heuristic_result result;
+    unsigned long centers_state = 0;
+
+    // step61 cost
+    for (int i = 0; i < NUM_CENTERS_STEP61_777; i++) {
+        step61_state[i] = cube[centers_step61_777[i]];
+    }
+    step61_state_bucket = XXH32(step61_state, NUM_CENTERS_STEP61_777, 0) % BUCKETSIZE_STEP61_777;
+    step61_cost = hex_to_int(step61_777[step61_state_bucket]);
+
+    if (step61_cost >= max_cost_to_goal) {
+        result.cost_to_goal = step61_cost;
+        return result;
+    }
+
+    // step62 cost
+    for (int i = 0; i < NUM_CENTERS_STEP62_777; i++) {
+        step62_state[i] = cube[centers_step62_777[i]];
+    }
+    step62_state_bucket = XXH32(step62_state, NUM_CENTERS_STEP62_777, 0) % BUCKETSIZE_STEP62_777;
+    step62_cost = hex_to_int(step62_777[step62_state_bucket]);
+
+    if (step62_cost >= max_cost_to_goal) {
+        result.cost_to_goal = step62_cost;
+        return result;
+    }
+
+    // centers
+    for (int i = 0; i < NUM_CENTERS_STEP70_777; i++) {
+        if (cube[centers_step70_777[i]] == 'F') {
+            centers_state |= 0x1;
+        }
+        centers_state <<= 1;
+    }
+    centers_state >>= 1;
+
+    // 0002009bfefff is 13 chars
+    sprintf(result.lt_state, "%013lx", centers_state);
+    cost_to_goal = max(step61_cost, step62_cost);
+
+    if (cost_to_goal > 0) {
+        // The step70 table we loaded is 6-deep
+        int MAX_DEPTH = 6;
+
+        struct key_value_pair *hash_entry = NULL;
+        hash_entry = hash_find(step70_777, result.lt_state);
+
+        if (hash_entry) {
+            cost_to_goal = hash_entry->value;
+        } else {
+            cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
+        }
+    }
+
+    result.cost_to_goal = cost_to_goal;
+    return result;
+}
+
+int
+ida_search_complete_step70_777 (char *cube)
+{
+    if (cube[107] == 'F' && cube[108] == 'F' && cube[109] == 'F' && cube[110] == 'F' && cube[111] == 'F' && // Front
+        cube[114] == 'F' && cube[115] == 'F' && cube[116] == 'F' && cube[117] == 'F' && cube[118] == 'F' &&
+        cube[121] == 'F' && cube[122] == 'F' && cube[123] == 'F' && cube[124] == 'F' && cube[125] == 'F' &&
+        cube[128] == 'F' && cube[129] == 'F' && cube[130] == 'F' && cube[131] == 'F' && cube[132] == 'F' &&
+        cube[135] == 'F' && cube[136] == 'F' && cube[137] == 'F' && cube[138] == 'F' && cube[139] == 'F') {
         return 1;
     } else {
         return 0;

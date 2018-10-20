@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map
+from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map, wing_strs_all
 from rubikscubennnsolver.misc import pre_steps_to_try, get_swap_count
 from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
@@ -18,6 +18,7 @@ from rubikscubennnsolver.RubiksCube444Misc import (
     highlow_edge_values,
 )
 from pprint import pformat
+import itertools
 import logging
 import sys
 
@@ -39,18 +40,25 @@ moves_444 = (
 
 solved_444 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
 
-LR_centers_444 = (
-    22, 23, 26, 27,
-    54, 55, 58, 59
+centers_444 = (
+    6, 7, 10, 11,   # Upper
+    22, 23, 26, 27, # Left
+    38, 39, 42, 43, # Front
+    54, 55, 58, 59, # Right
+    70, 71, 74, 75, # Back
+    86, 87, 90, 91  # Down
 )
 
-centers_444 = (
-    6, 7, 10, 11,
-    22, 23, 26, 27,
-    38, 39, 42, 43,
-    54, 55, 58, 59,
-    70, 71, 74, 75,
-    86, 87, 90, 91
+LFRB_centers_444 = (
+    22, 23, 26, 27, # Left
+    38, 39, 42, 43, # Front
+    54, 55, 58, 59, # Right
+    70, 71, 74, 75, # Back
+)
+
+LR_centers_444 = (
+    22, 23, 26, 27, # Left
+    54, 55, 58, 59  # Right
 )
 
 corners_444 = (
@@ -204,7 +212,8 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', '5b4194829ec8ea8c3dda2e3629ab00b7'),
+            #(('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', '5b4194829ec8ea8c3dda2e3629ab00b7'), # 5-deep
+            (('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', '4696649132d2d5895ccb294eea4e25f5'), # 4-deep
              ('lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749'),
              ('lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749'),
              ('lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749')),
@@ -349,7 +358,7 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
         return (lt_state, cost_to_goal)
 
 
-def edges_recolor_pattern_444(state):
+def edges_recolor_pattern_444(state, only_colors=[]):
 
     edge_map = {
         'UB' : [],
@@ -380,17 +389,21 @@ def edges_recolor_pattern_444(state):
         partner_value = state[partner_index]
         wing_str = wing_str_map[square_value + partner_value]
 
-        if wing_str == '--':
+        if only_colors and wing_str not in only_colors:
             state[square_index] = '-'
             state[partner_index] = '-'
         else:
-            for tmp_index in edge_map[wing_str]:
-                if tmp_index != edge_index:
-                    state[square_index] = tmp_index
-                    state[partner_index] = tmp_index
-                    break
+            if wing_str == '--':
+                state[square_index] = '-'
+                state[partner_index] = '-'
             else:
-                raise Exception("could not find tmp_index")
+                for tmp_index in edge_map[wing_str]:
+                    if tmp_index != edge_index:
+                        state[square_index] = tmp_index
+                        state[partner_index] = tmp_index
+                        break
+                else:
+                    raise Exception("could not find tmp_index")
 
     return ''.join(state)
 
@@ -456,6 +469,334 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
              ('lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt', '3f990fc1fb6bf506d81ba65f03ad74f6')),
             '4x4x4-reduce-333' # C_ida_type
         )
+
+
+#class LookupTable444FirstFourEdgesEdgesOnly(LookupTable):
+class LookupTable444FirstFourEdgesEdgesOnly(LookupTableHashCostOnly):
+    """
+    lookup-table-4x4x4-step41.txt
+    =============================
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 27 entries (0 percent, 6.75x previous step)
+    3 steps has 216 entries (0 percent, 8.00x previous step)
+    4 steps has 1,418 entries (0 percent, 6.56x previous step)
+    5 steps has 9,623 entries (0 percent, 6.79x previous step)
+    6 steps has 63,448 entries (1 percent, 6.59x previous step)
+    7 steps has 365,270 entries (6 percent, 5.76x previous step)
+    8 steps has 1,548,382 entries (26 percent, 4.24x previous step)
+    9 steps has 3,061,324 entries (52 percent, 1.98x previous step)
+    10 steps has 830,336 entries (14 percent, 0.27x previous step)
+    11 steps has 552 entries (0 percent, 0.00x previous step)
+
+    Total: 5,880,600 entries
+    Average: 8.71 moves
+    """
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step41.txt',
+            '--------a8b9ecfd--------',
+            linecount=5880600,
+            max_depth=11,
+            filesize=370477800)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step41.hash-cost-only.txt',
+            '--------a8b9ecfd--------',
+            linecount=1,
+            max_depth=11,
+            bucketcount=5880601,
+            filesize=5880602)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        state = edges_recolor_pattern_444(parent_state[:], self.only_colors)
+        edges_state = ''.join([state[index] for index in wings_444])
+        cost_to_goal = self.heuristic(edges_state)
+        #log.info("%s: %s cost_to_goal %s" % (self, edges_state, cost_to_goal))
+        return (edges_state, cost_to_goal)
+
+
+class LookupTable444FirstFourEdgesCentersOnly(LookupTable):
+    """
+    lookup-table-4x4x4-step42.txt
+    =============================
+    1 steps has 116 entries (13 percent, 0.00x previous step)
+    2 steps has 212 entries (25 percent, 1.83x previous step)
+    3 steps has 288 entries (34 percent, 1.36x previous step)
+    4 steps has 192 entries (22 percent, 0.67x previous step)
+    5 steps has 32 entries (3 percent, 0.17x previous step)
+
+    Total: 840 entries
+    Average: 2.78 moves
+    """
+
+    state_targets = (
+        'LLLLBBBBRRRRFFFF', 'LLLLBFBFRRRRBFBF', 'LLLLBFBFRRRRFBFB', 'LLLLFBFBRRRRBFBF',
+        'LLLLFBFBRRRRFBFB', 'LLLLFFFFRRRRBBBB', 'LRLRBBBBLRLRFFFF', 'LRLRBBBBRLRLFFFF',
+        'LRLRBFBFLRLRBFBF', 'LRLRBFBFLRLRFBFB', 'LRLRBFBFRLRLBFBF', 'LRLRBFBFRLRLFBFB',
+        'LRLRFBFBLRLRBFBF', 'LRLRFBFBLRLRFBFB', 'LRLRFBFBRLRLBFBF', 'LRLRFBFBRLRLFBFB',
+        'LRLRFFFFLRLRBBBB', 'LRLRFFFFRLRLBBBB', 'RLRLBBBBLRLRFFFF', 'RLRLBBBBRLRLFFFF',
+        'RLRLBFBFLRLRBFBF', 'RLRLBFBFLRLRFBFB', 'RLRLBFBFRLRLBFBF', 'RLRLBFBFRLRLFBFB',
+        'RLRLFBFBLRLRBFBF', 'RLRLFBFBLRLRFBFB', 'RLRLFBFBRLRLBFBF', 'RLRLFBFBRLRLFBFB',
+        'RLRLFFFFLRLRBBBB', 'RLRLFFFFRLRLBBBB', 'RRRRBBBBLLLLFFFF', 'RRRRBFBFLLLLBFBF',
+        'RRRRBFBFLLLLFBFB', 'RRRRFBFBLLLLBFBF', 'RRRRFBFBLLLLFBFB', 'RRRRFFFFLLLLBBBB'
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step42.txt',
+            self.state_targets,
+            linecount=840,
+            max_depth=5,
+            filesize=29400)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in LFRB_centers_444])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA444FirstFourEdges(LookupTableIDA):
+    """
+    lookup-table-4x4x4-step40.txt
+    =============================
+    1 steps has 144 entries (0 percent, 0.00x previous step)
+    2 steps has 1,020 entries (0 percent, 7.08x previous step)
+    3 steps has 8,448 entries (1 percent, 8.28x previous step)
+    4 steps has 64,172 entries (11 percent, 7.60x previous step)
+    5 steps has 494,692 entries (87 percent, 7.71x previous step)
+
+    Total: 568,476 entries
+    Average: 4.85 moves
+    """
+
+    state_targets = (
+        'LLLLBBBBRRRRFFFF--------a8b9ecfd--------',
+        'LLLLBFBFRRRRBFBF--------a8b9ecfd--------',
+        'LLLLBFBFRRRRFBFB--------a8b9ecfd--------',
+        'LLLLFBFBRRRRBFBF--------a8b9ecfd--------',
+        'LLLLFBFBRRRRFBFB--------a8b9ecfd--------',
+        'LLLLFFFFRRRRBBBB--------a8b9ecfd--------',
+        'LRLRBBBBLRLRFFFF--------a8b9ecfd--------',
+        'LRLRBBBBRLRLFFFF--------a8b9ecfd--------',
+        'LRLRBFBFLRLRBFBF--------a8b9ecfd--------',
+        'LRLRBFBFLRLRFBFB--------a8b9ecfd--------',
+        'LRLRBFBFRLRLBFBF--------a8b9ecfd--------',
+        'LRLRBFBFRLRLFBFB--------a8b9ecfd--------',
+        'LRLRFBFBLRLRBFBF--------a8b9ecfd--------',
+        'LRLRFBFBLRLRFBFB--------a8b9ecfd--------',
+        'LRLRFBFBRLRLBFBF--------a8b9ecfd--------',
+        'LRLRFBFBRLRLFBFB--------a8b9ecfd--------',
+        'LRLRFFFFLRLRBBBB--------a8b9ecfd--------',
+        'LRLRFFFFRLRLBBBB--------a8b9ecfd--------',
+        'RLRLBBBBLRLRFFFF--------a8b9ecfd--------',
+        'RLRLBBBBRLRLFFFF--------a8b9ecfd--------',
+        'RLRLBFBFLRLRBFBF--------a8b9ecfd--------',
+        'RLRLBFBFLRLRFBFB--------a8b9ecfd--------',
+        'RLRLBFBFRLRLBFBF--------a8b9ecfd--------',
+        'RLRLBFBFRLRLFBFB--------a8b9ecfd--------',
+        'RLRLFBFBLRLRBFBF--------a8b9ecfd--------',
+        'RLRLFBFBLRLRFBFB--------a8b9ecfd--------',
+        'RLRLFBFBRLRLBFBF--------a8b9ecfd--------',
+        'RLRLFBFBRLRLFBFB--------a8b9ecfd--------',
+        'RLRLFFFFLRLRBBBB--------a8b9ecfd--------',
+        'RLRLFFFFRLRLBBBB--------a8b9ecfd--------',
+        'RRRRBBBBLLLLFFFF--------a8b9ecfd--------',
+        'RRRRBFBFLLLLBFBF--------a8b9ecfd--------',
+        'RRRRBFBFLLLLFBFB--------a8b9ecfd--------',
+        'RRRRFBFBLLLLBFBF--------a8b9ecfd--------',
+        'RRRRFBFBLLLLFBFB--------a8b9ecfd--------',
+        'RRRRFFFFLLLLBBBB--------a8b9ecfd--------'
+    )
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step40.txt',
+            self.state_targets,
+            moves_444,
+
+            # illegal moves
+            ("Uw", "Uw'",
+             "Lw", "Lw'",
+             "Fw", "Fw'",
+             "Rw", "Rw'",
+             "Bw", "Bw'",
+             "Dw", "Dw'",
+             "L", "L'",
+             "R", "R'"),
+
+            linecount=568476,
+            max_depth=5,
+            filesize=34108560)
+
+    def ida_heuristic(self):
+        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_first_four_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_first_four_edges_centers_only.ida_heuristic()
+        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+        lt_state = centers_state + edges_state
+
+        if cost_to_goal > 0:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
+
+        return (lt_state, cost_to_goal)
+
+
+class LookupTable444LastEightEdgesEdgesOnly(LookupTable):
+    """
+    lookup-table-4x4x4-step51.txt
+    =============================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 10 entries (0 percent, 3.33x previous step)
+    3 steps has 36 entries (0 percent, 3.60x previous step)
+    4 steps has 165 entries (0 percent, 4.58x previous step)
+    5 steps has 606 entries (3 percent, 3.67x previous step)
+    6 steps has 1,937 entries (9 percent, 3.20x previous step)
+    7 steps has 5,172 entries (25 percent, 2.67x previous step)
+    8 steps has 7,719 entries (38 percent, 1.49x previous step)
+    9 steps has 4,344 entries (21 percent, 0.56x previous step)
+    10 steps has 168 entries (0 percent, 0.04x previous step)
+
+    Total: 20,160 entries
+    Average: 7.65 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step51.txt',
+            '10425376a8b9ecfdhgkiljnm',
+            linecount=20160,
+            max_depth=10,
+            filesize=1209600)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_444(parent_state[:])
+        state = ''.join([state[index] for index in wings_444])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable444LastEightEdgesCentersOnly(LookupTable):
+    """
+    lookup-table-4x4x4-step52.txt
+    =============================
+    1 steps has 12 entries (0 percent, 0.00x previous step)
+    2 steps has 72 entries (2 percent, 6.00x previous step)
+    3 steps has 348 entries (13 percent, 4.83x previous step)
+    4 steps has 820 entries (32 percent, 2.36x previous step)
+    5 steps has 804 entries (31 percent, 0.98x previous step)
+    6 steps has 464 entries (18 percent, 0.58x previous step)
+
+    Total: 2,520 entries
+    Average: 4.48 moves
+    """
+
+    state_targets = (
+        'DDDDLLLLBBBBRRRRFFFFUUUU',
+        'DDDDRRRRFFFFLLLLBBBBUUUU',
+        'UUUULLLLFFFFRRRRBBBBDDDD',
+        'UUUURRRRBBBBLLLLFFFFDDDD'
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step52.txt',
+            self.state_targets,
+            linecount=2520,
+            max_depth=6,
+            filesize=118440)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in centers_444])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTableIDA444LastEightEdges(LookupTableIDA):
+    """
+    lookup-table-4x4x4-step50.txt
+    =============================
+    1 steps has 12 entries (0 percent, 0.00x previous step)
+    2 steps has 72 entries (0 percent, 6.00x previous step)
+    3 steps has 492 entries (0 percent, 6.83x previous step)
+    4 steps has 3,012 entries (0 percent, 6.12x previous step)
+    5 steps has 17,300 entries (2 percent, 5.74x previous step)
+    6 steps has 92,360 entries (15 percent, 5.34x previous step)
+    7 steps has 488,720 entries (81 percent, 5.29x previous step)
+
+    Total: 601,968 entries
+    Average: 6.77 moves
+    """
+
+    state_targets = (
+        'DDDDLLLLBBBBRRRRFFFFUUUU10425376a8b9ecfdhgkiljnm',
+        'DDDDRRRRFFFFLLLLBBBBUUUU10425376a8b9ecfdhgkiljnm',
+        'UUUULLLLFFFFRRRRBBBBDDDD10425376a8b9ecfdhgkiljnm',
+        'UUUURRRRBBBBLLLLFFFFDDDD10425376a8b9ecfdhgkiljnm'
+    )
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step50.txt',
+            self.state_targets,
+            moves_444,
+
+            # illegal moves
+            ("Uw", "Uw'", "Uw2",
+             "Lw", "Lw'",
+             "Fw", "Fw'",
+             "Rw", "Rw'",
+             "Bw", "Bw'",
+             "Dw", "Dw'", "Dw2",
+             "L", "L'",
+             "R", "R'",
+             "F", "F'",
+             "B", "B'",
+            ),
+
+            linecount=601968,
+            max_depth=7,
+            filesize=45147600)
+
+    def ida_heuristic(self):
+        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
+        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+        lt_state = centers_state + edges_state
+
+        if cost_to_goal > 0:
+            steps = self.steps(lt_state)
+
+            if steps:
+                cost_to_goal = len(steps)
+            else:
+                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
+
+        return (lt_state, cost_to_goal)
 
 
 class RubiksCube444(RubiksCube):
@@ -677,11 +1018,24 @@ class RubiksCube444(RubiksCube):
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
         self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
 
-        #self.lt_reduce333_edges_solve = LookupTable444Reduce333Edges(self)
-        #self.lt_reduce333_centers_solve = LookupTable444Reduce333CentersSolve(self)
-        self.lt_reduce333 = LookupTableIDA444Reduce333(self)
-        #self.lt_reduce333_centers_solve.preload_cache_dict()
-        #self.lt_reduce333.preload_cache_string()
+        if self.cpu_mode == "normal" or self.cpu_mode == "slow":
+            self.lt_reduce333 = LookupTableIDA444Reduce333(self)
+        elif self.cpu_mode == "fast":
+            self.lt_pair_first_four_edges_edges_only = LookupTable444FirstFourEdgesEdgesOnly(self)
+            self.lt_pair_first_four_edges_centers_only = LookupTable444FirstFourEdgesCentersOnly(self)
+            self.lt_pair_first_four_edges = LookupTableIDA444FirstFourEdges(self)
+            self.lt_pair_first_four_edges_centers_only.preload_cache_dict()
+            self.lt_pair_first_four_edges.preload_cache_string()
+
+            self.lt_pair_last_eight_edges_edges_only = LookupTable444LastEightEdgesEdgesOnly(self)
+            self.lt_pair_last_eight_edges_centers_only = LookupTable444LastEightEdgesCentersOnly(self)
+            self.lt_pair_last_eight_edges = LookupTableIDA444LastEightEdges(self)
+            self.lt_pair_last_eight_edges_edges_only.preload_cache_dict()
+            self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
+            self.lt_pair_last_eight_edges.preload_cache_string()
+
+        else:
+            raise Exception("Invalid cpu_mode %s" % self.cpu_mode)
 
     def reduce_333(self):
 
@@ -791,26 +1145,75 @@ class RubiksCube444(RubiksCube):
         phase2_solution_len = len(self.solution)
         log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        # Testing the phase3 prune tables
-        #self.lt_reduce333_edges_solve.solve()
-        #self.lt_reduce333_centers_solve.solve()
-        #self.print_cube()
-        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
+        # Pair all 12 edges and solve the centers in one phase
+        if self.cpu_mode == "normal" or self.cpu_mode == "slow":
+            # Testing the phase3 prune tables
+            #self.lt_reduce333_edges_solve.solve()
+            #self.lt_reduce333_centers_solve.solve()
+            #self.print_cube()
+            #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            #sys.exit(0)
 
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
-        log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_reduce333.avoid_pll = True
-        self.lt_reduce333.solve()
-        self.solution.append("COMMENT_%d_steps_444_phase3" % self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:]))
+            #log.info("kociemba: %s" % self.get_kociemba_string(True))
+            log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.lt_reduce333.avoid_pll = True
+            self.lt_reduce333.solve()
+            self.solution.append("COMMENT_%d_steps_444_phase3" % self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:]))
 
-        if self.state[6] != 'U' or self.state[38] != 'F':
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
+            if self.state[6] != 'U' or self.state[38] != 'F':
+                self.rotate_U_to_U()
+                self.rotate_F_to_F()
 
-        self.print_cube()
-        log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
+            self.print_cube()
+            log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+
+        # Pair the first 4-edges in one phase and the last 8-edges in another phase
+        elif self.cpu_mode == "fast":
+
+            # Which 4-edges can we pair in the least number of moves?
+            min_cost = None
+            min_cost_four_wing_str_combo = None
+
+            for four_wing_str_combo in itertools.combinations(wing_strs_all, 4):
+                self.lt_pair_first_four_edges_edges_only.only_colors = four_wing_str_combo
+                (_, tmp_cost) = self.lt_pair_first_four_edges_edges_only.ida_heuristic()
+
+                if min_cost is None or tmp_cost < min_cost:
+                    log.info("%s: %s cost is %d (NEW MIN)" % (self, pformat(four_wing_str_combo), tmp_cost))
+                    min_cost = tmp_cost
+                    min_cost_four_wing_str_combo = four_wing_str_combo
+                #else:
+                #    log.info("%s: %s cost is %d" % (self, pformat(four_wing_str_combo), tmp_cost))
+
+            self.lt_pair_first_four_edges_edges_only.only_colors = min_cost_four_wing_str_combo
+
+            # Testing the prune tables
+            #self.lt_pair_first_four_edges_edges_only.solve()
+            #self.lt_pair_first_four_edges_centers_only.solve()
+            #self.print_cube()
+            #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            #sys.exit(0)
+
+            self.lt_pair_first_four_edges.solve()
+            self.print_cube()
+            log.info("%s: LR FB vertical bars, x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+            # Testing the prune tables
+            #self.lt_pair_last_eight_edges_edges_only.solve()
+            #self.lt_pair_last_eight_edges_centers_only.solve()
+            #self.print_cube()
+            #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            #sys.exit(0)
+
+            self.lt_pair_last_eight_edges.avoid_pll = True
+            self.lt_pair_last_eight_edges.solve()
+            self.print_cube()
+            log.info("%s: reduced to 3x3x3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        else:
+            raise Exception("Invalid cpu_mode %s" % self.cpu_mode)
+
 
         self.solution.append('CENTERS_SOLVED')
         self.solution.append('EDGES_GROUPED')

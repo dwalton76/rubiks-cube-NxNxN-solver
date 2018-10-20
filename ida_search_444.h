@@ -15,7 +15,8 @@ struct ida_heuristic_result ida_heuristic_centers_444 (
     struct key_value_pair **centers_cost_444,
     char *UD_centers_cost_only_444,
     char *LR_centers_cost_only_444,
-    char *FB_centers_cost_only_444
+    char *FB_centers_cost_only_444,
+    cpu_mode_type cpu_mode
 );
 int ida_search_complete_centers_444 (char *cube);
 

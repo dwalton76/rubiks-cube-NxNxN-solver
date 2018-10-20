@@ -4,6 +4,14 @@
 
 #include "uthash.h"
 
+typedef enum {
+    CPU_NONE,
+    CPU_FAST,
+    CPU_NORMAL,
+    CPU_SLOW,
+} cpu_mode_type;
+
+
 void LOG(const char *fmt, ...);
 unsigned long hex_to_int(char value);
 unsigned long max (unsigned long a, unsigned long b);

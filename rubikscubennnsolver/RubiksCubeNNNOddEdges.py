@@ -28,7 +28,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 # about 1 move longer if the centers are solved but runs 3x faster.
                 self.fake_555 = RubiksCube555ForNNN(solved_555, 'URFDLB')
                 self.fake_555.enable_print_cube = False
-                self.fake_555.fmc = self.fmc
+                self.fake_555.cpu_mode = self.cpu_mode
                 self.fake_555.lt_init()
         else:
             self.fake_555.re_init()
@@ -117,7 +117,9 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         for step in fake_555.solution:
             orig_step = step
 
-            if step.startswith('COMMENT'):
+            if step in ("CENTERS_SOLVED", "EDGES_GROUPED"):
+                continue
+            elif step.startswith('COMMENT'):
                 self.solution.append(step)
             else:
                 # Rotate the entire cube

@@ -189,7 +189,8 @@ ida_heuristic_centers_444 (
     struct key_value_pair **centers_cost_444,
     char *UD_centers_cost_only_444,
     char *LR_centers_cost_only_444,
-    char *FB_centers_cost_only_444)
+    char *FB_centers_cost_only_444,
+    cpu_mode_type cpu_mode)
 {
     unsigned int cost_to_goal = 0;
     unsigned long UD_centers_state = 0;
@@ -226,8 +227,11 @@ ida_heuristic_centers_444 (
     cost_to_goal = max(cost_to_goal, FB_centers_cost);
 
     if (cost_to_goal > 0) {
+        // 5-deep takes 330ms to load and uses 158M
+        // 4-deep takes 24ms to load and uses 58M
+
         // The step10 table we loaded is 5-deep
-        int MAX_DEPTH = 5;
+        int MAX_DEPTH = 4;
 
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(centers_cost_444, result.lt_state);
@@ -235,9 +239,12 @@ ida_heuristic_centers_444 (
         if (hash_entry) {
             cost_to_goal = hash_entry->value;
         } else {
-            // This makes it inadmissible but runs faster
-            //cost_to_goal = max(cost_to_goal * 1.2, MAX_DEPTH+1);
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
+            if (cpu_mode == CPU_FAST) {
+                // This makes it inadmissible but runs faster
+                cost_to_goal = max(cost_to_goal * 1.2, MAX_DEPTH+1);
+            } else {
+                cost_to_goal = max(cost_to_goal, MAX_DEPTH+1);
+            }
         }
     }
 

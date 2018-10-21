@@ -19,6 +19,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         if self.fake_555 is None:
             if self.fake_777 and self.fake_777.fake_555:
                 self.fake_555 = self.fake_777.fake_555
+                self.fake_555.cpu_mode = self.cpu_mode
                 self.fake_555.re_init()
                 self.fake_555.enable_print_cube = False
             else:

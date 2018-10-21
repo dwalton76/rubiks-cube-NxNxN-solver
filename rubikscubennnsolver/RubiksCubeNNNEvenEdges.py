@@ -18,9 +18,9 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
     def get_fake_444(self):
         if self.fake_444 is None:
             self.fake_444 = RubiksCube444(solved_444, 'URFDLB')
+            self.fake_444.cpu_mode = self.cpu_mode
             self.fake_444.lt_init()
             self.fake_444.enable_print_cube = False
-            self.fake_444.cpu_mode = self.cpu_mode
         else:
             self.fake_444.re_init()
         return self.fake_444
@@ -28,9 +28,9 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
     def get_fake_555(self):
         if self.fake_555 is None:
             self.fake_555 = RubiksCube555ForNNN(solved_555, 'URFDLB')
+            self.fake_555.cpu_mode = self.cpu_mode
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
-            self.fake_555.cpu_mode = self.cpu_mode
         else:
             self.fake_555.re_init()
         return self.fake_555

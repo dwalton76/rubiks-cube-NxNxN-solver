@@ -1455,7 +1455,7 @@ class LookupTableIDAViaC(object):
         elif self.parent.cpu_mode == "slow":
             cmd.append("--slow")
         else:
-            raise Exception("What CPU mode?")
+            raise Exception("%s: What CPU mode for %s?" % (self, self.parent))
 
         # This is a special case for the 2018 Fewest Move Challenge
         if self.parent.init_orbit0_paired and self.C_ida_type == "5x5x5-UD-centers-stage":

@@ -161,6 +161,7 @@ try:
             cube.rotate(step)
 
     cube.cpu_mode = cpu_mode
+    log.info("CPU mode %s" % cube.cpu_mode)
     cube.sanity_check()
     cube.print_cube()
     cube.www_header()

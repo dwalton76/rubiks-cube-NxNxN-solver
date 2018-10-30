@@ -421,7 +421,8 @@ class LookupTableIDA777Step70(LookupTableIDAViaC):
             # Needed tables and their md5 signatures
             (('lookup-table-7x7x7-step70.txt', '8dba523084036088f1f6a14811e03625'),
              ('lookup-table-7x7x7-step61.hash-cost-only.txt', 'ba9b9e02f603459dac94fef5c637ac40'),
-             ('lookup-table-7x7x7-step62.hash-cost-only.txt', '2ebb594b99f8cf04a2a77a64c67ea0d4')),
+             ('lookup-table-7x7x7-step62.hash-cost-only.txt', '2ebb594b99f8cf04a2a77a64c67ea0d4'),
+             ('lookup-table-7x7x7-step63.hash-cost-only.txt', '67ec50d946ec204c0dc8fe27b268c64d')),
             '7x7x7-step70' # C_ida_type
         )
 

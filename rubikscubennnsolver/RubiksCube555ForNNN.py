@@ -577,7 +577,7 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         min_solution_len = None
         min_solution_steps = None
-        min_solution_pairable_count = None
+        min_solution_pairable_count = 0
 
         for pre_steps in pre_steps_to_try:
             self.state = original_state[:]
@@ -611,13 +611,15 @@ class RubiksCube555ForNNN(RubiksCube555):
                 solution_steps = self.solution[original_solution_len:]
                 solution_len = self.get_solution_len_minus_rotates(solution_steps)
 
-                if pairable_count >= 4 and (min_solution_len is None or solution_len < min_solution_len):
-                    log.info("%s: first 4-edges can be staged in %d, %d-edges EOed, steps %s (NEW MIN)" % (self, solution_len, pairable_count, ' '.join(solution_steps)))
+                # Technically we only need 4 edges to be pairable for the next phase but 5 is nice because it gives
+                # the next phase some wiggle room...it can choose the best 4-edge tuple.
+                if pairable_count >= 5 and (min_solution_len is None or solution_len < min_solution_len or pairable_count > min_solution_pairable_count):
+                    log.info("%s: 1st 4-edges can be staged in %d, %d-edges EOed, steps %s (NEW MIN)" % (self, solution_len, pairable_count, ' '.join(solution_steps)))
                     min_solution_len = solution_len
                     min_solution_steps = solution_steps
                     min_solution_pairable_count = pairable_count
-                #else:
-                #    log.info("%s: first 4-edges can be staged in %d steps, %d-edges EOed" % (self, solution_len, pairable_count))
+                else:
+                    log.info("%s: 1st 4-edges can be staged in %d steps, %d-edges EOed" % (self, solution_len, pairable_count))
 
             if min_solution_len is not None:
                 #if pre_steps:
@@ -727,11 +729,11 @@ class RubiksCube555ForNNN(RubiksCube555):
                 (_, tmp_cost) = self.lt_pair_second_four_edges_edges_only.ida_heuristic()
 
                 if min_cost is None or tmp_cost < min_cost:
-                    log.info("%s: wing_str %s has cost %s (NEW MIN)" % (self, four_wing_str_combo, tmp_cost))
+                    log.info("%s: 2nd L4E wing_str %s has cost %s (NEW MIN)" % (self, four_wing_str_combo, tmp_cost))
                     min_cost = tmp_cost
                     min_four_wing_str_combo = four_wing_str_combo
                 elif tmp_cost == min_cost:
-                    log.info("%s: wing_str %s has cost %s (TIE)" % (self, four_wing_str_combo, tmp_cost))
+                    log.info("%s: 2nd L4E wing_str %s has cost %s (TIE)" % (self, four_wing_str_combo, tmp_cost))
 
             self.lt_pair_second_four_edges_edges_only.only_colors = min_four_wing_str_combo
             self.lt_pair_second_four_edges.solve()

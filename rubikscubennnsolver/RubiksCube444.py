@@ -16,6 +16,8 @@ from rubikscubennnsolver.RubiksCube444Misc import (
     low_edges_444,
     highlow_edge_mapping_combinations,
     highlow_edge_values,
+    step51_index,
+    step52_index,
 )
 from pprint import pformat
 import itertools
@@ -641,6 +643,23 @@ class LookupTableIDA444FirstFourEdges(LookupTableIDA):
             max_depth=5,
             filesize=34108560)
 
+    def search_complete(self, state, steps_to_here):
+        if LookupTableIDA.search_complete(self, state, steps_to_here):
+            tmp_state = self.parent.state[:]
+            tmp_solution = self.parent.solution[:]
+            self.parent.lt_pair_last_eight_edges.solve()
+
+            if self.parent.edge_solution_leads_to_pll_parity():
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                return False
+            else:
+                #self.parent.state = tmp_state[:]
+                #self.parent.solution = tmp_solution[:]
+                return True
+        else:
+            return False
+
     def ida_heuristic(self):
         (edges_state, edges_cost_to_goal) = self.parent.lt_pair_first_four_edges_edges_only.ida_heuristic()
         (centers_state, centers_cost_to_goal) = self.parent.lt_pair_first_four_edges_centers_only.ida_heuristic()
@@ -658,8 +677,32 @@ class LookupTableIDA444FirstFourEdges(LookupTableIDA):
         return (lt_state, cost_to_goal)
 
 
-class LookupTable444LastEightEdgesEdgesOnly(LookupTable):
+class LookupTable444LastEightEdges(LookupTable):
     """
+    Originally this phase used an IDA search where
+    - the step50 table was 7-deep
+    - step51 was the edges prune table
+    - step52 was the centers prune table
+
+    lookup-table-4x4x4-step50.txt
+    =============================
+    1 steps has 12 entries (0 percent, 0.00x previous step)
+    2 steps has 72 entries (0 percent, 6.00x previous step)
+    3 steps has 492 entries (0 percent, 6.83x previous step)
+    4 steps has 3,012 entries (0 percent, 6.12x previous step)
+    5 steps has 17,300 entries (0 percent, 5.74x previous step)
+    6 steps has 92,360 entries (0 percent, 5.34x previous step)
+    7 steps has 488,720 entries (0 percent, 5.29x previous step)
+    8 steps has 2,355,400 entries (4 percent, 4.82x previous step)
+    9 steps has 9,416,496 entries (18 percent, 4.00x previous step)
+    10 steps has 22,811,984 entries (44 percent, 2.42x previous step)
+    11 steps has 15,092,664 entries (29 percent, 0.66x previous step)
+    12 steps has 524,688 entries (1 percent, 0.03x previous step)
+
+    Total: 50,803,200 entries
+    Average: 10.00 moves
+
+
     lookup-table-4x4x4-step51.txt
     =============================
     1 steps has 3 entries (0 percent, 0.00x previous step)
@@ -675,28 +718,8 @@ class LookupTable444LastEightEdgesEdgesOnly(LookupTable):
 
     Total: 20,160 entries
     Average: 7.65 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step51.txt',
-            '10425376a8b9ecfdhgkiljnm',
-            linecount=20160,
-            max_depth=10,
-            filesize=1209600)
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = edges_recolor_pattern_444(parent_state[:])
-        state = ''.join([state[index] for index in wings_444])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
 
 
-class LookupTable444LastEightEdgesCentersOnly(LookupTable):
-    """
     lookup-table-4x4x4-step52.txt
     =============================
     1 steps has 12 entries (0 percent, 0.00x previous step)
@@ -708,46 +731,25 @@ class LookupTable444LastEightEdgesCentersOnly(LookupTable):
 
     Total: 2,520 entries
     Average: 4.48 moves
-    """
 
-    state_targets = (
-        'DDDDLLLLBBBBRRRRFFFFUUUU',
-        'DDDDRRRRFFFFLLLLBBBBUUUU',
-        'UUUULLLLFFFFRRRRBBBBDDDD',
-        'UUUURRRRBBBBLLLLFFFFDDDD'
-    )
+    In an effort to make this solver run faster on a raspberry pi I decided to move
+    away from IDA here and build out all 50 million entries...I did and the file
+    was 4.4G!! The step50 table entries were in the form
 
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step52.txt',
-            self.state_targets,
-            linecount=2520,
-            max_depth=6,
-            filesize=118440)
+        UUUURRRRBBBBLLLLFFFFDDDD10425376a8b9ecfdhgkiljnm
 
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = ''.join([parent_state[x] for x in centers_444])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
+    where there were 2,520 center states and 20,160 edges states.  This means we can
+    use the centers state and edges state as perfect hash via this formula:
 
+        centers_state = state_to_find[0:24]
+        edges_state = state_to_find[24:]
+        centers_index = step52_index[centers_state]
+        edges_index = step51_index[edges_state]
+        line_number = (centers_index * 20160) + edges_index
 
-class LookupTableIDA444LastEightEdges(LookupTableIDA):
-    """
-    lookup-table-4x4x4-step50.txt
-    =============================
-    1 steps has 12 entries (0 percent, 0.00x previous step)
-    2 steps has 72 entries (0 percent, 6.00x previous step)
-    3 steps has 492 entries (0 percent, 6.83x previous step)
-    4 steps has 3,012 entries (0 percent, 6.12x previous step)
-    5 steps has 17,300 entries (2 percent, 5.74x previous step)
-    6 steps has 92,360 entries (15 percent, 5.34x previous step)
-    7 steps has 488,720 entries (81 percent, 5.29x previous step)
-
-    Total: 601,968 entries
-    Average: 6.77 moves
+    so we took step50.txt, took the first move for each state, abbreviated that step
+    to a single character (moves_444 has 36 entries so 0-9 and a-z were used), and
+    wrote one character per state to lookup-table-4x4x4-step50-perfect-hash.txt.
     """
 
     state_targets = (
@@ -757,46 +759,83 @@ class LookupTableIDA444LastEightEdges(LookupTableIDA):
         'UUUURRRRBBBBLLLLFFFFDDDD10425376a8b9ecfdhgkiljnm'
     )
 
+    # See utils/444-convert-step50-to-perfect-hash.py for the reverse of this
+    # that was used to build lookup-table-4x4x4-step50-perfect-hash.txt
+    abbr_to_move_444 = {
+        "0" : "U",
+        "1" : "U'",
+        "2" : "U2",
+        "3" : "Uw",
+        "4" : "Uw'",
+        "5" : "Uw2",
+        "6" : "L",
+        "7" : "L'",
+        "8" : "L2",
+        "9" : "Lw",
+        "a" : "Lw'",
+        "b" : "Lw2",
+        "c" : "F",
+        "d" : "F'",
+        "e" : "F2",
+        "f" : "Fw",
+        "g" : "Fw'",
+        "h" : "Fw2",
+        "i" : "R",
+        "j" : "R'",
+        "k" : "R2",
+        "l" : "Rw",
+        "m" : "Rw'",
+        "n" : "Rw2",
+        "o" : "B",
+        "p" : "B'",
+        "q" : "B2",
+        "r" : "Bw",
+        "s" : "Bw'",
+        "t" : "Bw2",
+        "u" : "D",
+        "v" : "D'",
+        "w" : "D2",
+        "x" : "Dw",
+        "y" : "Dw'",
+        "z" : "Dw2",
+    }
+
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step50.txt',
+            'lookup-table-4x4x4-step50-perfect-hash.txt',
             self.state_targets,
-            moves_444,
-
-            # illegal moves
-            ("Uw", "Uw'", "Uw2",
-             "Lw", "Lw'",
-             "Fw", "Fw'",
-             "Rw", "Rw'",
-             "Bw", "Bw'",
-             "Dw", "Dw'", "Dw2",
-             "L", "L'",
-             "R", "R'",
-             "F", "F'",
-             "B", "B'",
-            ),
-
-            linecount=601968,
-            max_depth=7,
-            filesize=45147600)
+            linecount=50803200,
+            max_depth=12,
+            filesize=50803200)
 
     def ida_heuristic(self):
-        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
-        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
-        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_444(parent_state[:])
+        edges_state = ''.join([state[index] for index in wings_444])
+        centers_state = ''.join([parent_state[x] for x in centers_444])
         lt_state = centers_state + edges_state
 
-        if cost_to_goal > 0:
-            steps = self.steps(lt_state)
-
-            if steps:
-                cost_to_goal = len(steps)
-            else:
-                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
-
+        cost_to_goal = self.heuristic(lt_state)
         return (lt_state, cost_to_goal)
+
+    def steps(self, state_to_find):
+        """
+        This uses a perfect hash to jump straight to the entry we want
+        """
+        centers_state = state_to_find[0:24]
+        edges_state = state_to_find[24:]
+        centers_index = step52_index[centers_state]
+        edges_index = step51_index[edges_state]
+
+        # There are 20160 edge states
+        line_number = (centers_index * 20160) + edges_index
+
+        self.fh_txt.seek(line_number)
+        step_abbr = self.fh_txt.read(1).decode("ascii")
+        step = self.abbr_to_move_444[step_abbr]
+        return [step]
 
 
 class RubiksCube444(RubiksCube):
@@ -1027,12 +1066,7 @@ class RubiksCube444(RubiksCube):
             self.lt_pair_first_four_edges_centers_only.preload_cache_dict()
             self.lt_pair_first_four_edges.preload_cache_string()
 
-            self.lt_pair_last_eight_edges_edges_only = LookupTable444LastEightEdgesEdgesOnly(self)
-            self.lt_pair_last_eight_edges_centers_only = LookupTable444LastEightEdgesCentersOnly(self)
-            self.lt_pair_last_eight_edges = LookupTableIDA444LastEightEdges(self)
-            self.lt_pair_last_eight_edges_edges_only.preload_cache_dict()
-            self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
-            self.lt_pair_last_eight_edges.preload_cache_string()
+            self.lt_pair_last_eight_edges = LookupTable444LastEightEdges(self)
 
         else:
             raise Exception("Invalid cpu_mode %s" % self.cpu_mode)

@@ -332,7 +332,7 @@ class LookupTable(object):
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         #assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
 
-        if 'dummy' in self.filename or 'perfect-hash' in self.filename:
+        if 'dummy' in self.filename:
             self.width = 0
             self.state_width = 0
         else:
@@ -340,16 +340,20 @@ class LookupTable(object):
             rm_file_if_mismatch(self.filename, self.filesize, self.md5)
             download_file_if_needed(self.filename, self.parent.size)
 
-            # Find the state_width for the entries in our .txt file
-            with open(self.filename, 'r') as fh:
-                first_line = next(fh)
-                self.width = len(first_line)
-                (state, steps) = first_line.strip().split(':')
-                self.state_width = len(state)
+            if 'perfect-hash' in self.filename:
+                self.width = 0
+                self.state_width = 0
+            else:
+                # Find the state_width for the entries in our .txt file
+                with open(self.filename, 'r') as fh:
+                    first_line = next(fh)
+                    self.width = len(first_line)
+                    (state, steps) = first_line.strip().split(':')
+                    self.state_width = len(state)
 
-                if steps.isdigit():
-                    self.use_isdigit = True
-                    #log.info("%s: use_isdigit is True" % self)
+                    if steps.isdigit():
+                        self.use_isdigit = True
+                        #log.info("%s: use_isdigit is True" % self)
 
         self.hex_format = '%' + "0%dx" % self.state_width
         self.filename_exists = True

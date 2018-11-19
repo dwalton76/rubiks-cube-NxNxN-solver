@@ -90,7 +90,7 @@ ida_heuristic_UD_oblique_edges_stage_777 (
 {
     int unpaired_count = get_unpaired_obliques_count_777(cube);
     struct ida_heuristic_result result;
-    unsigned long state = 0;
+    unsigned long long state = 0;
 
     // Get the state of the oblique edges
     for (int i = 0; i < NUM_OBLIQUE_EDGES_777; i++) {
@@ -102,7 +102,7 @@ ida_heuristic_UD_oblique_edges_stage_777 (
 
     // state takes 18 chars in hex
     state >>= 1;
-    sprintf(result.lt_state, "%018lx", state);
+    sprintf(result.lt_state, "%018llx", state);
 
     // time ./ida_search --kociemba .........Uxx...U...x..U...x..U...x...xUx..................Uxx...U...U..x...x..x...U...xxx..................xUU...x...U..x...x..x...U...xxx..................xUx...x...x..x...x..x...x...xUx..................Uxx...x...x..x...x..x...U...xUU..................UUx...U...x..U...x..x...U...xxx......... --type 7x7x7-UD-oblique-edges-stage
 
@@ -212,7 +212,7 @@ ida_heuristic_LR_oblique_edges_stage_777 (
 {
     int unpaired_count = get_unpaired_obliques_count_777(cube);
     struct ida_heuristic_result result;
-    unsigned long state = 0;
+    unsigned long long state = 0;
 
     // Get the state of the oblique edges
     for (int i = 0; i < LFRB_NUM_OBLIQUE_EDGES_777; i++) {
@@ -224,7 +224,7 @@ ida_heuristic_LR_oblique_edges_stage_777 (
 
     // state takes 18 chars in hex
     state >>= 1;
-    sprintf(result.lt_state, "%012lx", state);
+    sprintf(result.lt_state, "%012llx", state);
 
     // inadmissable heuristic but fast...kudos to xyzzy for this formula
     if (unpaired_count > 8) {
@@ -273,7 +273,7 @@ struct ida_heuristic_result ida_heuristic_step40_777 (
     char *step41_777,
     char *step42_777)
 {
-    unsigned long lt_state = 0;
+    unsigned long long lt_state = 0;
     unsigned int cost_to_goal = 0;
     unsigned long step41_state_bucket = 0;
     unsigned long step42_state_bucket = 0;
@@ -307,7 +307,7 @@ struct ida_heuristic_result ida_heuristic_step40_777 (
     lt_state = lt_state >> 1;
 
     // 0002001ffefff 13 chars
-    sprintf(result.lt_state, "%013lx", lt_state);
+    sprintf(result.lt_state, "%013llx", lt_state);
     cost_to_goal = max(step41_cost, step42_cost);
 
     if (cost_to_goal > 0) {
@@ -373,7 +373,7 @@ struct ida_heuristic_result ida_heuristic_step50_777 (
     char *step51_777,
     char *step52_777)
 {
-    unsigned long lt_state = 0;
+    unsigned long long lt_state = 0;
     unsigned int cost_to_goal = 0;
     unsigned long step51_state_bucket = 0;
     unsigned long step52_state_bucket = 0;
@@ -407,7 +407,7 @@ struct ida_heuristic_result ida_heuristic_step50_777 (
     lt_state = lt_state >> 1;
 
     // 0002001ffefff 13 chars
-    sprintf(result.lt_state, "%013lx", lt_state);
+    sprintf(result.lt_state, "%013llx", lt_state);
     cost_to_goal = max(step51_cost, step52_cost);
 
     if (cost_to_goal > 0) {
@@ -498,7 +498,7 @@ struct ida_heuristic_result ida_heuristic_step60_777 (
     char step61_state[NUM_CENTERS_STEP61_777];
     char step62_state[NUM_CENTERS_STEP62_777];
     char step63_state_str[16];
-    unsigned long step63_state = 0;
+    unsigned long long step63_state = 0;
     struct ida_heuristic_result result;
 
     // step61 cost
@@ -540,7 +540,7 @@ struct ida_heuristic_result ida_heuristic_step60_777 (
     step63_state >>= 1;
 
     // 08408efd7b is 10 chars
-    sprintf(step63_state_str, "%010lx", step63_state);
+    sprintf(step63_state_str, "%010llx", step63_state);
     step63_state_bucket = XXH32(step63_state_str, 10, 0) % BUCKETSIZE_STEP63_777;
     step63_cost = hex_to_int(step63_777[step63_state_bucket]);
 
@@ -1061,7 +1061,7 @@ struct ida_heuristic_result ida_heuristic_step70_777 (
     char step61_state[NUM_CENTERS_STEP61_777];
     char step62_state[NUM_CENTERS_STEP62_777];
     struct ida_heuristic_result result;
-    unsigned long centers_state = 0;
+    unsigned long long centers_state = 0;
 
     // step61 cost
     for (int i = 0; i < NUM_CENTERS_STEP61_777; i++) {
@@ -1097,7 +1097,7 @@ struct ida_heuristic_result ida_heuristic_step70_777 (
     centers_state >>= 1;
 
     // 0002009bfefff is 13 chars
-    sprintf(result.lt_state, "%013lx", centers_state);
+    sprintf(result.lt_state, "%013llx", centers_state);
     cost_to_goal = max(step61_cost, step62_cost);
 
     if (cost_to_goal > 0) {

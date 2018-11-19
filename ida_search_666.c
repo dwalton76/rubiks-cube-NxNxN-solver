@@ -179,7 +179,7 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     unsigned long oblique_edges_bucket = 0;
     unsigned long oblique_edges_cost = 0;
     unsigned long cost_to_goal = 0;
-    char oblique_edges_str[16];
+    char oblique_edges_str[24];
     int cube_index;
     struct ida_heuristic_result result;
     unsigned long state = 0;

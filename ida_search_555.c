@@ -328,9 +328,9 @@ ida_heuristic_ULFRBD_centers_555 (
 
     unsigned long long centers_state = 0;
     struct ida_heuristic_result result;
-    char UL_centers_state_str[16];
-    char UF_centers_state_str[16];
-    char LF_centers_state_str[16];
+    char UL_centers_state_str[24];
+    char UF_centers_state_str[24];
+    char LF_centers_state_str[24];
     unsigned long BUCKETS = 24010031;
     unsigned int STATE_LENGTH = 9;
     unsigned int HASH_SEED = 0;

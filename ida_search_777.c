@@ -497,7 +497,7 @@ struct ida_heuristic_result ida_heuristic_step60_777 (
     char lt_state[NUM_CENTERS_STEP60_777+2];
     char step61_state[NUM_CENTERS_STEP61_777];
     char step62_state[NUM_CENTERS_STEP62_777];
-    char step63_state_str[16];
+    char step63_state_str[24];
     unsigned long long step63_state = 0;
     struct ida_heuristic_result result;
 

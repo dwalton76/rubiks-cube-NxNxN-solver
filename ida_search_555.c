@@ -83,11 +83,11 @@ ida_heuristic_UD_centers_555(
     cpu_mode_type cpu_mode)
 {
     unsigned int cost_to_goal = 0;
-    unsigned long UD_t_centers_state = 0;
-    unsigned long UD_x_centers_state = 0;
+    unsigned long long UD_t_centers_state = 0;
+    unsigned long long UD_x_centers_state = 0;
     unsigned long UD_t_centers_cost = 0;
     unsigned long UD_x_centers_cost = 0;
-    unsigned long UD_centers_state = 0;
+    unsigned long long UD_centers_state = 0;
     struct ida_heuristic_result result;
 
     // t-centers
@@ -120,7 +120,13 @@ ida_heuristic_UD_centers_555(
 
     UD_centers_state >>= 1;
     cost_to_goal = max(UD_t_centers_cost, UD_x_centers_cost);
-    sprintf(result.lt_state, "%014lx", UD_centers_state);
+    sprintf(result.lt_state, "%014llx", UD_centers_state);
+
+    /*
+    LOG("UD_t_centers_state %llu, UD_t_centers_cost %d\n", UD_t_centers_state, UD_t_centers_cost);
+    LOG("UD_x_centers_state %llu, UD_x_centers_cost %d\n", UD_x_centers_state, UD_x_centers_cost);
+    LOG("UD_centers_state %llu, cost_to_goal %d\n", UD_centers_state, cost_to_goal);
+     */
 
     if (cost_to_goal > 0) {
         // The step10 table we loaded is 5-deep
@@ -198,11 +204,11 @@ ida_heuristic_LR_centers_555(
     char *pt_LR_x_centers_cost_only)
 {
     unsigned int cost_to_goal = 0;
-    unsigned long LR_t_centers_state = 0;
-    unsigned long LR_x_centers_state = 0;
+    unsigned long long LR_t_centers_state = 0;
+    unsigned long long LR_x_centers_state = 0;
     unsigned long LR_t_centers_cost = 0;
     unsigned long LR_x_centers_cost = 0;
-    unsigned long LR_centers_state = 0;
+    unsigned long long LR_centers_state = 0;
     struct ida_heuristic_result result;
 
     // t-centers
@@ -234,7 +240,7 @@ ida_heuristic_LR_centers_555(
     }
 
     LR_centers_state >>= 1;
-    sprintf(result.lt_state, "%09lx", LR_centers_state);
+    sprintf(result.lt_state, "%09llx", LR_centers_state);
     cost_to_goal = max(LR_t_centers_cost, LR_x_centers_cost);
 
     if (cost_to_goal > 0) {
@@ -308,19 +314,19 @@ ida_heuristic_ULFRBD_centers_555 (
     char *LF_centers_cost_only_555)
 {
     unsigned int cost_to_goal = 0;
-    unsigned long UL_centers_state = 0;
+    unsigned long long UL_centers_state = 0;
     unsigned long UL_centers_cost = 0;
     unsigned long UL_centers_bucket = 0;
 
-    unsigned long UF_centers_state = 0;
+    unsigned long long UF_centers_state = 0;
     unsigned long UF_centers_cost = 0;
     unsigned long UF_centers_bucket = 0;
 
-    unsigned long LF_centers_state = 0;
+    unsigned long long LF_centers_state = 0;
     unsigned long LF_centers_cost = 0;
     unsigned long LF_centers_bucket = 0;
 
-    unsigned long centers_state = 0;
+    unsigned long long centers_state = 0;
     struct ida_heuristic_result result;
     char UL_centers_state_str[16];
     char UF_centers_state_str[16];
@@ -337,7 +343,7 @@ ida_heuristic_ULFRBD_centers_555 (
         UL_centers_state <<= 1;
     }
     UL_centers_state >>= 1;
-    sprintf(UL_centers_state_str , "%09lx", UL_centers_state);
+    sprintf(UL_centers_state_str , "%09llx", UL_centers_state);
     UL_centers_bucket = XXH32(UL_centers_state_str, STATE_LENGTH, HASH_SEED) % BUCKETS;
     UL_centers_cost = hex_to_int(UL_centers_cost_only_555[UL_centers_bucket]);
 
@@ -354,7 +360,7 @@ ida_heuristic_ULFRBD_centers_555 (
         UF_centers_state <<= 1;
     }
     UF_centers_state >>= 1;
-    sprintf(UF_centers_state_str , "%09lx", UF_centers_state);
+    sprintf(UF_centers_state_str , "%09llx", UF_centers_state);
     UF_centers_bucket = XXH32(UF_centers_state_str, STATE_LENGTH, HASH_SEED) % BUCKETS;
     UF_centers_cost = hex_to_int(UF_centers_cost_only_555[UF_centers_bucket]);
 
@@ -371,7 +377,7 @@ ida_heuristic_ULFRBD_centers_555 (
         LF_centers_state <<= 1;
     }
     LF_centers_state >>= 1;
-    sprintf(LF_centers_state_str , "%09lx", LF_centers_state);
+    sprintf(LF_centers_state_str , "%09llx", LF_centers_state);
     LF_centers_bucket = XXH32(LF_centers_state_str, STATE_LENGTH, HASH_SEED) % BUCKETS;
     LF_centers_cost = hex_to_int(LF_centers_cost_only_555[LF_centers_bucket]);
 
@@ -391,13 +397,25 @@ ida_heuristic_ULFRBD_centers_555 (
     centers_state >>= 1;
 
     // 3ffffff8000000 is 14 chars
-    sprintf(result.lt_state, "%014lx", centers_state);
+    sprintf(result.lt_state, "%014llx", centers_state);
     cost_to_goal = max(UL_centers_cost, UF_centers_cost);
+    cost_to_goal = max(cost_to_goal, LF_centers_cost);
+
+    /*
+    LOG("sizeof(unsigned long) %d\n", sizeof(unsigned long));
+    LOG("sizeof(unsigned long long) %d\n", sizeof(unsigned long long));
+    LOG("UL_centers_state %llu, UL_centers_state_str %s, UL_centers_bucket %d, UL_centers_cost %d\n",
+        UL_centers_state, UL_centers_state_str, UL_centers_bucket, UL_centers_cost);
+    LOG("UF_centers_state %llu, UF_centers_state_str %s, UF_centers_bucket %d, UF_centers_cost %d\n",
+        UF_centers_state, UF_centers_state_str, UF_centers_bucket, UF_centers_cost);
+    LOG("LF_centers_state %llu, LF_centers_state_str %s, LF_centers_bucket %d, LF_centers_cost %d\n",
+        LF_centers_state, LF_centers_state_str, LF_centers_bucket, LF_centers_cost);
+    LOG("centers_state %llu, lt_state %s, cost_to_goal %d\n", centers_state, result.lt_state, cost_to_goal);
+    */
 
     if (cost_to_goal > 0) {
         // The step30 table we loaded is 6-deep
         int MAX_DEPTH = 6;
-
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(ULFRBD_centers_cost_555, result.lt_state);
 

@@ -222,7 +222,7 @@ if __name__ == '__main__':
         log.info("search start")
 
         if keys:
-            log.info("finding %d keys" % len(keys))
+            log.info("finding {:,} keys".format(len(keys)))
             #for x in key.split(','):
             #    seek_count = 0
             #    value = binary_search(fh, width, state_width, linecount, x)
@@ -233,8 +233,9 @@ if __name__ == '__main__':
             #log.info("values: %s" % pformat(values))
 
             for (key, value) in zip(keys, values):
-                if value is not None:
-                    print("key %s value is %s" % (key, value))
+                #if value is not None:
+                #    print("key %s value is %s" % (key, value))
+                print("key %s value is %s" % (key, value))
             print("Took %d seeks" % seek_count)
 
         else:

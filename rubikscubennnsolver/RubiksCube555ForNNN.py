@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import wing_strs_all, wing_str_map
+from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e
 from rubikscubennnsolver.RubiksCube555 import (
     centers_555,
@@ -32,6 +33,45 @@ import logging
 import sys
 
 log = logging.getLogger(__name__)
+
+
+class LookupTable555CycleEdges(LookupTable):
+    """
+    lookup-table-555-step810-edges.txt
+    ==================================
+    3 steps has 1 entries (0 percent, 0.00x previous step)
+    5 steps has 894 entries (0 percent, 894.00x previous step)
+    6 steps has 2,295 entries (1 percent, 2.57x previous step)
+    7 steps has 17,562 entries (10 percent, 7.65x previous step)
+    8 steps has 145,519 entries (87 percent, 8.29x previous step)
+
+    Total: 166,271 entries
+    Average: 7.85 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-555-step810-edges.txt',
+            'TBD',
+
+            # 0-deep
+            linecount=166271,
+            filesize=11140157,
+        )
+
+    def state(self):
+        state = edges_recolor_pattern_555(self.parent.state[:], uppercase_paired_edges=False)
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        return state
+
+    def ida_heuristic(self):
+        state = edges_recolor_pattern_555(self.parent.state[:])
+        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
 
 
 class LookupTable555StageFirstFourEdges(LookupTable):
@@ -211,6 +251,44 @@ class LookupTableIDA555EdgesXPlane(LookupTableIDA):
                 cost_to_goal = max(cost_to_goal, self.max_depth + 1)
 
         return (lt_state, cost_to_goal)
+
+
+class LookupTable555EdgesXPlaneCentersSolved(LookupTable):
+    """
+    lookup-table-5x5x5-step310-edges-x-plane-with-solved-centers.txt
+    ================================================================
+    1 steps has 1 entries (0 percent, 0.00x previous step)
+    5 steps has 10 entries (0 percent, 10.00x previous step)
+    6 steps has 45 entries (0 percent, 4.50x previous step)
+    7 steps has 196 entries (0 percent, 4.36x previous step)
+    8 steps has 452 entries (1 percent, 2.31x previous step)
+    9 steps has 1,556 entries (3 percent, 3.44x previous step)
+    10 steps has 3,740 entries (9 percent, 2.40x previous step)
+    11 steps has 10,188 entries (25 percent, 2.72x previous step)
+    12 steps has 16,778 entries (41 percent, 1.65x previous step)
+    13 steps has 6,866 entries (17 percent, 0.41x previous step)
+    14 steps has 488 entries (1 percent, 0.07x previous step)
+
+    Total: 40,320 entries
+    Average: 11.56 moves
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step310-edges-x-plane-with-solved-centers.txt',
+            '------------sSSTTtuUUVVv------------',
+            linecount=40320,
+            max_depth=14,
+            filesize=3427200)
+
+    def ida_heuristic(self):
+        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        cost_to_goal = self.heuristic(edges_state)
+        return (edges_state, cost_to_goal)
+
 
 
 #class LookupTable555PairSecondFourEdgesEdgesOnly(LookupTable):
@@ -469,12 +547,14 @@ class RubiksCube555ForNNN(RubiksCube555):
         # No need to preload this one, we use binary_seach_multiple
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
 
-        self.lt_edges_x_plane_edges_only = LookupTable555EdgesXPlaneEdgesOnly(self)
-        self.lt_edges_x_plane_centers_only = LookupTable555EdgesXPlaneCentersOnly(self)
-        self.lt_edges_x_plane = LookupTableIDA555EdgesXPlane(self)
-        self.lt_edges_x_plane_edges_only.preload_cache_dict()
-        self.lt_edges_x_plane_centers_only.preload_cache_dict()
-        self.lt_edges_x_plane.preload_cache_string()
+        #self.lt_edges_x_plane_edges_only = LookupTable555EdgesXPlaneEdgesOnly(self)
+        #self.lt_edges_x_plane_centers_only = LookupTable555EdgesXPlaneCentersOnly(self)
+        #self.lt_edges_x_plane = LookupTableIDA555EdgesXPlane(self)
+        #self.lt_edges_x_plane_edges_only.preload_cache_dict()
+        #self.lt_edges_x_plane_centers_only.preload_cache_dict()
+        #self.lt_edges_x_plane.preload_cache_string()
+
+        self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(self)
 
         self.lt_pair_second_four_edges_edges_only = LookupTable555PairSecondFourEdgesEdgesOnly(self)
         self.lt_pair_second_four_edges_centers_only = LookupTable555PairSecondFourEdgesCentersOnly(self)
@@ -484,6 +564,8 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(self)
         self.lt_x_plane_y_plane_orient_edges_pair_one_edge.preload_cache_dict()
+
+        self.lt_cycle_edges = LookupTable555CycleEdges(self)
 
     def stage_first_four_edges_555(self):
         """
@@ -754,6 +836,9 @@ class RubiksCube555ForNNN(RubiksCube555):
         original_state = self.state[:]
         original_solution = self.solution[:]
 
+        edges_paired_count = self.get_paired_edges_count()
+        edges_unpaired_count = 12 - edges_paired_count
+
         # Traverse a table of moves that place L4E in one of three planes
         # and then rotate that plane to the x-plane
         for pre_steps in pre_steps_stage_l4e:
@@ -763,14 +848,14 @@ class RubiksCube555ForNNN(RubiksCube555):
             for step in pre_steps:
                 self.rotate(step)
 
-            if self.x_plane_edges_are_l4e() and not self.x_plane_edges_paired():
+            if self.x_plane_edges_unpaired_count() == edges_unpaired_count:
                 #if pre_steps:
                 #    log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
                 #else:
                 #    log.info("%s: L4E group in x-plane" % self)
                 break
 
-            elif self.y_plane_edges_are_l4e() and not self.y_plane_edges_paired():
+            elif self.y_plane_edges_unpaired_count() == edges_unpaired_count:
                 #if pre_steps:
                 #    log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
                 #else:
@@ -778,7 +863,7 @@ class RubiksCube555ForNNN(RubiksCube555):
                 self.rotate("z")
                 break
 
-            elif self.z_plane_edges_are_l4e() and not self.z_plane_edges_paired():
+            elif self.z_plane_edges_unpaired_count() == edges_unpaired_count:
                 #if pre_steps:
                 #    log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
                 #else:
@@ -810,6 +895,9 @@ class RubiksCube555ForNNN(RubiksCube555):
             partner_value = self.state[partner_index]
             wing_str = wing_str_map[square_value + partner_value]
             only_colors.append(wing_str)
+
+        # Old way where we would IDA
+        '''
         self.lt_edges_x_plane_edges_only.only_colors = only_colors
         self.lt_edges_x_plane.only_colors = only_colors
 
@@ -828,11 +916,17 @@ class RubiksCube555ForNNN(RubiksCube555):
         # We do this because our tables were built will all edges at their original orientation.
         self.edges_flip_to_original_orientation()
 
-        #log.info("%s: only_colors %s" % (self, pformat(only_colors)))
-        #log.info("%s: centers_recolor %s" % (self, pformat(centers_recolor)))
-
         # Now we can solve
         self.lt_edges_x_plane.solve()
+        '''
+
+        # Recolor the edges to they are all oriented using their original orientation.
+        # We do this because our tables were built will all edges at their original orientation.
+        self.edges_flip_to_original_orientation()
+
+        # Now we can solve
+        self.lt_edges_x_plane_centers_solved.only_colors = only_colors
+        self.lt_edges_x_plane_centers_solved.solve()
 
         # Put the cube back the way it was (to undo all of the recoloring we did) and apply the solution
         l4e_solution = self.solution[original_solution_len:]
@@ -843,9 +937,6 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.rotate(step)
 
         self.print_cube()
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
-        #paired_edges_count = self.get_paired_edges_count()
-        #delta_paired_edges_count = paired_edges_count - original_paired_edges_count
         assert self.x_plane_edges_paired(), "4-edges in x-plane should have paired"
         self.solution.append("COMMENT_%d_steps_555_L4E_paired" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
         log.info("%s: x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
@@ -868,7 +959,69 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.solution.append("COMMENT_%d_steps_555_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
         self.solution.append('CENTERS_SOLVED')
+
+        tmp_state = self.state[:]
+        tmp_solution = self.solution[:]
+
+        while not self.edges_paired():
+            self.edges_flip_to_original_orientation()
+            pre_wing_count = 24 - self.get_non_paired_wings_count()
+            pre_edges_count = self.get_paired_edges_count()
+
+            state = self.lt_cycle_edges.state()
+            steps = self.lt_cycle_edges.steps(state)
+
+            if steps:
+                log.warning("FOUND STEPS!!! %s" % " ".join(steps))
+                for step in steps:
+                    self.rotate(step)
+                break
+
+            elif pre_edges_count >= 8:
+                self.stage_final_four_edges_in_x_plane()
+                #log.info("L4E should be in x-plane now")
+                #self.print_cube()
+                self.pair_x_plane_edges_in_l4e()
+                break
+
+            else:
+                line = self.lt_cycle_edges.best_match(state, pre_wing_count)
+                (_state, steps) = line.strip().split(":")
+
+                for step in steps.split():
+                    self.rotate(step)
+                self.print_cube()
+                post_wing_count = 24 - self.get_non_paired_wings_count()
+                wing_delta = post_wing_count - pre_wing_count
+
+                if not wing_delta:
+                    raise SolveError("Could not pair any more wings")
+
+                post_edges_count = self.get_paired_edges_count()
+                edges_delta = post_edges_count - pre_edges_count
+                log.info("%s: %d steps in, %d wings paired (%d -> %d), %d edges paired (%d -> %d)" %
+                    (self, self.get_solution_len_minus_rotates(self.solution),
+                    wing_delta, pre_wing_count, post_wing_count,
+                    edges_delta, pre_edges_count, post_edges_count,
+                    ))
+
+        steps = self.solution[len(tmp_solution):]
+        self.state = tmp_state[:]
+        self.solution = tmp_solution[:]
+
+        for step in steps:
+            if step.startswith("COMMENT"):
+                self.solution.append(step)
+            else:
+                self.rotate(step)
+
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+        self.print_cube()
+        log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        sys.exit(0)
 
         if not self.edges_paired():
             self.pair_first_four_edges_via_l4e()

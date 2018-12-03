@@ -2,9 +2,9 @@
 
 """
 This
-- parses all of the edge patterns in lookup-table-4x4x4-step41.txt
+- parses all of the edge patterns in lookup-table-4x4x4-step141.txt
 - puts the centers back to solved
-- runs step40 IDA to find the solution for each edge pattern when the centers are solved
+- runs step140 IDA to find the solution for each edge pattern when the centers are solved
 
 This is used by --fast solves so they do not have to run IDA for step300
 """
@@ -29,7 +29,7 @@ cube.lt_init()
 only_colors = ("LB", "LF", "RB", "RF")
 
 with open("results.txt", "w") as fh_results:
-    with open("lookup-table-4x4x4-step41.txt", "r") as fh:
+    with open("lookup-table-4x4x4-step141.txt", "r") as fh:
         for (line_number, line) in enumerate(fh):
             cube.re_init()
             (state, steps_to_solve) = line.strip().split(":")

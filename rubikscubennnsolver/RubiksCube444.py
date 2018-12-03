@@ -17,8 +17,8 @@ from rubikscubennnsolver.RubiksCube444Misc import (
     low_edges_444,
     highlow_edge_mapping_combinations,
     highlow_edge_values,
-    step51_index,
-    step52_index,
+    step161_index,
+    step162_index,
 )
 from pprint import pformat
 import itertools
@@ -385,8 +385,8 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
 # =============
 class LookupTable444UDCentersStage(LookupTable):
     """
-    lookup-table-4x4x4-step11-UD-centers-stage.txt
-    ==============================================
+    lookup-table-4x4x4-step110-UD-centers-stage.txt
+    ===============================================
     1 steps has 9 entries (0 percent, 0.00x previous step)
     2 steps has 108 entries (0 percent, 12.00x previous step)
     3 steps has 1,434 entries (0 percent, 13.28x previous step)
@@ -410,7 +410,7 @@ class LookupTable444UDCentersStage(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step11-UD-centers-stage.txt',
+            'lookup-table-4x4x4-step110-UD-centers-stage.txt',
             self.state_targets,
             linecount=735471,
             max_depth=8,
@@ -425,7 +425,7 @@ class LookupTable444UDCentersStage(LookupTable):
 
 class LookupTable444LRFBCentersStageEven(LookupTable):
     """
-    lookup-table-4x4x4-step110-LRFB-centers-stage-even.txt
+    lookup-table-4x4x4-step120-LRFB-centers-stage-even.txt
     ======================================================
     1 steps has 1 entries (0 percent, 0.00x previous step)
     2 steps has 1 entries (0 percent, 1.00x previous step)
@@ -444,7 +444,7 @@ class LookupTable444LRFBCentersStageEven(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step110-LRFB-centers-stage-even.txt',
+            'lookup-table-4x4x4-step120-LRFB-centers-stage-even.txt',
             'LLLLxxxxLLLLxxxx',
             linecount=12870,
             max_depth=7,
@@ -459,7 +459,7 @@ class LookupTable444LRFBCentersStageEven(LookupTable):
 
 class LookupTable444LRFBCentersStageOdd(LookupTable):
     """
-    lookup-table-4x4x4-step110-LRFB-centers-stage-odd.txt
+    lookup-table-4x4x4-step120-LRFB-centers-stage-odd.txt
     =====================================================
     1 steps has 2 entries (0 percent, 0.00x previous step)
     2 steps has 28 entries (0 percent, 14.00x previous step)
@@ -478,7 +478,7 @@ class LookupTable444LRFBCentersStageOdd(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step110-LRFB-centers-stage-odd.txt',
+            'lookup-table-4x4x4-step120-LRFB-centers-stage-odd.txt',
             'LLLLxxxxLLLLxxxx',
             linecount=12870,
             max_depth=7,
@@ -494,7 +494,7 @@ class LookupTable444LRFBCentersStageOdd(LookupTable):
 
 class LookupTable444LRFBCentersSolve(LookupTable):
     """
-    lookup-table-4x4x4-step150-LRFB-centers-solve.txt
+    lookup-table-4x4x4-step130-LRFB-centers-solve.txt
     =================================================
     1 steps has 7 entries (0 percent, 0.00x previous step)
     2 steps has 63 entries (1 percent, 9.00x previous step)
@@ -513,7 +513,7 @@ class LookupTable444LRFBCentersSolve(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step150-LRFB-centers-solve.txt',
+            'lookup-table-4x4x4-step130-LRFB-centers-solve.txt',
             'LLLLFFFFRRRRBBBB',
             linecount=4900,
             max_depth=8,
@@ -526,9 +526,11 @@ class LookupTable444LRFBCentersSolve(LookupTable):
         return (state, cost_to_goal)
 
 
+# These step140 classes/tables were used by utils/build-444-edges-step150.py to
+# IDA all 5.8 million 4-edge cases to build the step150 table
 class LookupTable444FirstFourEdgesEdgesOnly(LookupTableHashCostOnly):
     """
-    lookup-table-4x4x4-step41.txt
+    lookup-table-4x4x4-step141.txt
     =============================
     1 steps has 4 entries (0 percent, 0.00x previous step)
     2 steps has 27 entries (0 percent, 6.75x previous step)
@@ -551,7 +553,7 @@ class LookupTable444FirstFourEdgesEdgesOnly(LookupTableHashCostOnly):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step41.txt',
+            'lookup-table-4x4x4-step141.txt',
             '--------a8b9ecfd--------',
             linecount=5880600,
             max_depth=11,
@@ -560,7 +562,7 @@ class LookupTable444FirstFourEdgesEdgesOnly(LookupTableHashCostOnly):
         LookupTableHashCostOnly.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step41.hash-cost-only.txt',
+            'lookup-table-4x4x4-step141.hash-cost-only.txt',
             '--------a8b9ecfd--------',
             linecount=1,
             max_depth=11,
@@ -579,8 +581,8 @@ class LookupTable444FirstFourEdgesEdgesOnly(LookupTableHashCostOnly):
 
 class LookupTable444FirstFourEdgesCentersOnly(LookupTable):
     """
-    lookup-table-4x4x4-step42.txt
-    =============================
+    lookup-table-4x4x4-step142.txt
+    ==============================
     1 steps has 116 entries (13 percent, 0.00x previous step)
     2 steps has 212 entries (25 percent, 1.83x previous step)
     3 steps has 288 entries (34 percent, 1.36x previous step)
@@ -607,7 +609,7 @@ class LookupTable444FirstFourEdgesCentersOnly(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step42.txt',
+            'lookup-table-4x4x4-step142.txt',
             self.state_targets,
             linecount=840,
             max_depth=5,
@@ -622,7 +624,7 @@ class LookupTable444FirstFourEdgesCentersOnly(LookupTable):
 
 class LookupTableIDA444FirstFourEdges(LookupTableIDA):
     """
-    lookup-table-4x4x4-step40.txt
+    lookup-table-4x4x4-step140.txt
     =============================
     1 steps has 144 entries (0 percent, 0.00x previous step)
     2 steps has 1,020 entries (0 percent, 7.08x previous step)
@@ -677,7 +679,7 @@ class LookupTableIDA444FirstFourEdges(LookupTableIDA):
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step40.txt',
+            'lookup-table-4x4x4-step140.txt',
             self.state_targets,
             moves_444,
 
@@ -720,8 +722,8 @@ class LookupTableIDA444FirstFourEdges(LookupTableIDA):
 
 class LookupTable444FirstFourEdges(LookupTable):
     """
-    lookup-table-4x4x4-step45.txt
-    =============================
+    lookup-table-4x4x4-step150.txt
+    ==============================
     1 steps has 2 entries (0 percent, 0.00x previous step)
     2 steps has 6 entries (0 percent, 3.00x previous step)
     3 steps has 37 entries (0 percent, 6.17x previous step)
@@ -742,7 +744,7 @@ class LookupTable444FirstFourEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step45.txt',
+            'lookup-table-4x4x4-step150.txt',
             '--------a8b9ecfd--------',
             linecount=547001,
             max_depth=12,
@@ -762,12 +764,12 @@ class LookupTable444FirstFourEdges(LookupTable):
 class LookupTable444LastEightEdges(LookupTable):
     """
     Originally this phase used an IDA search where
-    - the step50 table was 7-deep
-    - step51 was the edges prune table
-    - step52 was the centers prune table
+    - the step160 table was 7-deep
+    - step161 was the edges prune table
+    - step162 was the centers prune table
 
-    lookup-table-4x4x4-step50.txt
-    =============================
+    lookup-table-4x4x4-step160.txt
+    ==============================
     1 steps has 12 entries (0 percent, 0.00x previous step)
     2 steps has 72 entries (0 percent, 6.00x previous step)
     3 steps has 492 entries (0 percent, 6.83x previous step)
@@ -785,8 +787,8 @@ class LookupTable444LastEightEdges(LookupTable):
     Average: 10.00 moves
 
 
-    lookup-table-4x4x4-step51.txt
-    =============================
+    lookup-table-4x4x4-step161.txt
+    ==============================
     1 steps has 3 entries (0 percent, 0.00x previous step)
     2 steps has 10 entries (0 percent, 3.33x previous step)
     3 steps has 36 entries (0 percent, 3.60x previous step)
@@ -802,8 +804,8 @@ class LookupTable444LastEightEdges(LookupTable):
     Average: 7.65 moves
 
 
-    lookup-table-4x4x4-step52.txt
-    =============================
+    lookup-table-4x4x4-step162.txt
+    ==============================
     1 steps has 12 entries (0 percent, 0.00x previous step)
     2 steps has 72 entries (2 percent, 6.00x previous step)
     3 steps has 348 entries (13 percent, 4.83x previous step)
@@ -816,7 +818,7 @@ class LookupTable444LastEightEdges(LookupTable):
 
     In an effort to make this solver run faster on a raspberry pi I decided to move
     away from IDA here and build out all 50 million entries...I did and the file
-    was 4.4G!! The step50 table entries were in the form
+    was 4.4G!! The step160 table entries were in the form
 
         UUUURRRRBBBBLLLLFFFFDDDD10425376a8b9ecfdhgkiljnm
 
@@ -825,13 +827,13 @@ class LookupTable444LastEightEdges(LookupTable):
 
         centers_state = state_to_find[0:24]
         edges_state = state_to_find[24:]
-        centers_index = step52_index[centers_state]
-        edges_index = step51_index[edges_state]
-        line_number = (centers_index * 20160) + edges_index
+        centers_index = step162_index[centers_state]
+        edges_index = step161_index[edges_state]
+        index = (centers_index * 20160) + edges_index
 
-    so we took step50.txt, took the first move for each state, abbreviated that step
+    so we took step160.txt, took the first move for each state, abbreviated that step
     to a single character (moves_444 has 36 entries so 0-9 and a-z were used), and
-    wrote one character per state to lookup-table-4x4x4-step50-perfect-hash.txt.
+    wrote one character per state to lookup-table-4x4x4-step160-perfect-hash.txt.
     """
 
     state_targets = (
@@ -841,8 +843,8 @@ class LookupTable444LastEightEdges(LookupTable):
         'UUUURRRRBBBBLLLLFFFFDDDD10425376a8b9ecfdhgkiljnm'
     )
 
-    # See utils/444-convert-step50-to-perfect-hash.py for the reverse of this
-    # that was used to build lookup-table-4x4x4-step50-perfect-hash.txt
+    # See utils/444-convert-step160-to-perfect-hash.py for the reverse of this
+    # that was used to build lookup-table-4x4x4-step160-perfect-hash.txt
     abbr_to_move_444 = {
         "0" : "U",
         "1" : "U'",
@@ -886,7 +888,7 @@ class LookupTable444LastEightEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-4x4x4-step50-perfect-hash.txt',
+            'lookup-table-4x4x4-step160-perfect-hash.txt',
             self.state_targets,
             linecount=50803200,
             max_depth=12,
@@ -908,8 +910,8 @@ class LookupTable444LastEightEdges(LookupTable):
         """
         centers_state = state_to_find[0:24]
         edges_state = state_to_find[24:]
-        centers_index = step52_index[centers_state]
-        edges_index = step51_index[edges_state]
+        centers_index = step162_index[centers_state]
+        edges_index = step161_index[edges_state]
 
         # There are 20160 edge states
         index = (centers_index * 20160) + edges_index
@@ -1458,7 +1460,7 @@ class RubiksCube444(RubiksCube):
 
             self.lt_pair_first_four_edges_non_ida.only_colors = four_wing_str_combo
 
-            # dwalton remove this NoSteps once the step45 table has finished building
+            # dwalton remove this NoSteps once the step145 table has finished building
             try:
                 self.lt_pair_first_four_edges_non_ida.solve()
             except NoSteps:

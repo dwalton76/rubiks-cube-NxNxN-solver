@@ -427,9 +427,8 @@ class LookupTable444LRFBCentersStageEven(LookupTable):
     """
     lookup-table-4x4x4-step120-LRFB-centers-stage-even.txt
     ======================================================
-    1 steps has 1 entries (0 percent, 0.00x previous step)
-    2 steps has 1 entries (0 percent, 1.00x previous step)
-    3 steps has 56 entries (0 percent, 56.00x previous step)
+    1 steps has 2 entries (0 percent, 0.00x previous step)
+    3 steps has 56 entries (0 percent, 28.00x previous step)
     4 steps has 594 entries (4 percent, 10.61x previous step)
     5 steps has 3,878 entries (30 percent, 6.53x previous step)
     6 steps has 7,032 entries (54 percent, 1.81x previous step)
@@ -445,7 +444,8 @@ class LookupTable444LRFBCentersStageEven(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step120-LRFB-centers-stage-even.txt',
-            'LLLLxxxxLLLLxxxx',
+            ('LLLLxxxxLLLLxxxx',
+             'xxxxLLLLxxxxLLLL'),
             linecount=12870,
             max_depth=7,
             filesize=592020)
@@ -479,10 +479,11 @@ class LookupTable444LRFBCentersStageOdd(LookupTable):
             self,
             parent,
             'lookup-table-4x4x4-step120-LRFB-centers-stage-odd.txt',
-            'LLLLxxxxLLLLxxxx',
+            ('LLLLxxxxLLLLxxxx',
+             'xxxxLLLLxxxxLLLL'),
             linecount=12870,
             max_depth=7,
-            filesize=592020)
+            filesize=579150)
 
     def ida_heuristic(self):
         parent_state = self.parent.state
@@ -1434,6 +1435,7 @@ class RubiksCube444(RubiksCube):
         else:
             self.lt_LFRB_centers_stage_even.solve()
 
+        self.rotate_for_best_centers_solving()
         self.print_cube()
         log.info("%s: LR FB centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
@@ -1480,8 +1482,8 @@ class RubiksCube444(RubiksCube):
 
                 #if min_cost <= 17:
                 #    break
-            #else:
-            #    log.info("%s: %s cost is %d" % (self, pformat(four_wing_str_combo), tmp_cost))
+            else:
+                log.info("%s: %s cost is %d" % (self, pformat(four_wing_str_combo), tmp_cost))
 
         self.state = min_cost_state
         self.solution = min_cost_solution

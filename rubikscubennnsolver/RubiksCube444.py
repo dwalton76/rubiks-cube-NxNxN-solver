@@ -10,6 +10,7 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableIDA,
     LookupTableHashCostOnly,
     LookupTableIDAViaC,
+    NoSteps,
 )
 from rubikscubennnsolver.RubiksCube444Misc import (
     high_edges_444,
@@ -197,209 +198,59 @@ symmetry_rotations_tsai_phase3_444 = (\
 )
 
 
-class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaC):
-    """
-    lookup-table-4x4x4-step11-UD-centers-stage.txt
-    lookup-table-4x4x4-step12-LR-centers-stage.txt
-    lookup-table-4x4x4-step13-FB-centers-stage.txt
-    ==============================================
-    1 steps has 9 entries (0 percent, 0.00x previous step)
-    2 steps has 108 entries (0 percent, 12.00x previous step)
-    3 steps has 1,434 entries (0 percent, 13.28x previous step)
-    4 steps has 15,210 entries (2 percent, 10.61x previous step)
-    5 steps has 126,306 entries (17 percent, 8.30x previous step)
-    6 steps has 420,312 entries (57 percent, 3.33x previous step)
-    7 steps has 171,204 entries (23 percent, 0.41x previous step)
-    8 steps has 888 entries (0 percent, 0.01x previous step)
+def edges_recolor_pattern_444(state, only_colors=[]):
 
-    Total: 735,471 entries
-    Average: 6.02 moves
+    edge_map = {
+        'UB' : [],
+        'UL' : [],
+        'UR' : [],
+        'UF' : [],
+        'LB' : [],
+        'LF' : [],
+        'RB' : [],
+        'RF' : [],
+        'DB' : [],
+        'DL' : [],
+        'DR' : [],
+        'DF' : [],
+        '--' : [],
+    }
 
+    # Record the two edge_indexes for each of the 12 edges
+    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = wing_str_map[square_value + partner_value]
+        edge_map[wing_str].append(edge_index)
 
-    lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
-    ==================================================
-    1 steps has 24 entries (0 percent, 0.00x previous step)
-    2 steps has 324 entries (0 percent, 13.50x previous step)
-    3 steps has 4,302 entries (0 percent, 13.28x previous step)
-    4 steps has 53,730 entries (7 percent, 12.49x previous step)
-    5 steps has 697,806 entries (92 percent, 12.99x previous step)
+    # Where is the other wing_str like us?
+    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = wing_str_map[square_value + partner_value]
 
-    Total: 756,186 entries
-    """
+        if only_colors and wing_str not in only_colors:
+            state[square_index] = '-'
+            state[partner_index] = '-'
+        else:
+            if wing_str == '--':
+                state[square_index] = '-'
+                state[partner_index] = '-'
+            else:
+                for tmp_index in edge_map[wing_str]:
+                    if tmp_index != edge_index:
+                        state[square_index] = tmp_index
+                        state[partner_index] = tmp_index
+                        break
+                else:
+                    raise Exception("could not find tmp_index")
 
-    def __init__(self, parent):
-
-        LookupTableIDAViaC.__init__(
-            self,
-            parent,
-            # Needed tables and their md5 signatures
-            #(('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', '5b4194829ec8ea8c3dda2e3629ab00b7'), # 5-deep
-            (('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', '4696649132d2d5895ccb294eea4e25f5'), # 4-deep
-             ('lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749'),
-             ('lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749'),
-             ('lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749')),
-            '4x4x4-centers-stage' # C_ida_type
-        )
-
-        self.recolor_positions = centers_444
-        self.recolor_map = {
-            'D' : 'U',
-            'R' : 'L',
-            'B' : 'F',
-        }
-        self.nuke_corners = True
+    return ''.join(state)
 
 
-class LookupTable444UDCentersStage(LookupTable):
-    """
-    lookup-table-4x4x4-step11-UD-centers-stage.txt
-    ==============================================
-    1 steps has 9 entries (0 percent, 0.00x previous step)
-    2 steps has 108 entries (0 percent, 12.00x previous step)
-    3 steps has 1,434 entries (0 percent, 13.28x previous step)
-    4 steps has 15,210 entries (2 percent, 10.61x previous step)
-    5 steps has 126,306 entries (17 percent, 8.30x previous step)
-    6 steps has 420,312 entries (57 percent, 3.33x previous step)
-    7 steps has 171,204 entries (23 percent, 0.41x previous step)
-    8 steps has 888 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    Average: 6.02 moves
-    """
-
-    state_targets = (
-        'xxxxxxxxUUUUxxxxUUUUxxxx',
-        'xxxxUUUUxxxxUUUUxxxxxxxx',
-        'UUUUxxxxxxxxxxxxxxxxUUUU',
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step11-UD-centers-stage.txt',
-            self.state_targets,
-            linecount=735471,
-            max_depth=8,
-            filesize=39715434)
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = ''.join(['U' if parent_state[x] in ('U', 'D') else 'x' for x in centers_444])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable444LRFBCentersStageEven(LookupTable):
-    """
-    lookup-table-4x4x4-step110-LRFB-centers-stage-even.txt
-    ======================================================
-    1 steps has 1 entries (0 percent, 0.00x previous step)
-    2 steps has 1 entries (0 percent, 1.00x previous step)
-    3 steps has 56 entries (0 percent, 56.00x previous step)
-    4 steps has 594 entries (4 percent, 10.61x previous step)
-    5 steps has 3,878 entries (30 percent, 6.53x previous step)
-    6 steps has 7,032 entries (54 percent, 1.81x previous step)
-    7 steps has 1,212 entries (9 percent, 0.17x previous step)
-    8 steps has 96 entries (0 percent, 0.08x previous step)
-
-    Total: 12,870 entries
-    Average: 5.70 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step110-LRFB-centers-stage-even.txt',
-            'LLLLxxxxLLLLxxxx',
-            linecount=12870,
-            max_depth=7,
-            filesize=592020)
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = ''.join(['L' if parent_state[x] in ('L', 'R') else 'x' for x in LFRB_centers_444])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable444LRFBCentersStageOdd(LookupTable):
-    """
-    lookup-table-4x4x4-step110-LRFB-centers-stage-odd.txt
-    =====================================================
-    1 steps has 2 entries (0 percent, 0.00x previous step)
-    2 steps has 28 entries (0 percent, 14.00x previous step)
-    3 steps has 178 entries (1 percent, 6.36x previous step)
-    4 steps has 710 entries (5 percent, 3.99x previous step)
-    5 steps has 1,690 entries (13 percent, 2.38x previous step)
-    6 steps has 5,284 entries (41 percent, 3.13x previous step)
-    7 steps has 4,890 entries (37 percent, 0.93x previous step)
-    8 steps has 88 entries (0 percent, 0.02x previous step)
-
-    Total: 12,870 entries
-    Average: 6.10 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step110-LRFB-centers-stage-odd.txt',
-            'LLLLxxxxLLLLxxxx',
-            linecount=12870,
-            max_depth=7,
-            filesize=592020)
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = ''.join(['L' if parent_state[x] in ('L', 'R') else 'x' for x in LFRB_centers_444])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable444Reduce333Centers(LookupTable):
-    """
-    lookup-table-4x4x4-step32-reduce333-centers.txt
-    ===============================================
-    1 steps has 16 entries (0 percent, 0.00x previous step)
-    2 steps has 136 entries (0 percent, 8.50x previous step)
-    3 steps has 952 entries (1 percent, 7.00x previous step)
-    4 steps has 4,048 entries (6 percent, 4.25x previous step)
-    5 steps has 10,588 entries (18 percent, 2.62x previous step)
-    6 steps has 16,620 entries (28 percent, 1.57x previous step)
-    7 steps has 16,392 entries (27 percent, 0.99x previous step)
-    8 steps has 8,768 entries (14 percent, 0.53x previous step)
-    9 steps has 1,280 entries (2 percent, 0.15x previous step)
-
-    Total: 58,800 entries
-    Average: 6.27 moves
-    """
-
-    state_targets = (
-        'DDDDLLLLBBBBRRRRFFFFUUUU',
-        'DDDDRRRRFFFFLLLLBBBBUUUU',
-        'UUUULLLLFFFFRRRRBBBBDDDD',
-        'UUUURRRRBBBBLLLLFFFFDDDD'
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-4x4x4-step32-reduce333-centers.txt',
-            self.state_targets,
-            linecount=58800,
-            max_depth=9,
-            filesize=3351600)
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = ''.join([parent_state[x] for x in centers_444])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
+# ===============================
+# --fast, --normal, --slow tables
+# ===============================
 class LookupTable444HighLowEdgesEdges(LookupTable):
     """
     lookup-table-4x4x4-step21-highlow-edges-edges.txt
@@ -529,119 +380,152 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
         return (lt_state, cost_to_goal)
 
 
-def edges_recolor_pattern_444(state, only_colors=[]):
-
-    edge_map = {
-        'UB' : [],
-        'UL' : [],
-        'UR' : [],
-        'UF' : [],
-        'LB' : [],
-        'LF' : [],
-        'RB' : [],
-        'RF' : [],
-        'DB' : [],
-        'DL' : [],
-        'DR' : [],
-        'DF' : [],
-        '--' : [],
-    }
-
-    # Record the two edge_indexes for each of the 12 edges
-    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = wing_str_map[square_value + partner_value]
-        edge_map[wing_str].append(edge_index)
-
-    # Where is the other wing_str like us?
-    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
-        square_value = state[square_index]
-        partner_value = state[partner_index]
-        wing_str = wing_str_map[square_value + partner_value]
-
-        if only_colors and wing_str not in only_colors:
-            state[square_index] = '-'
-            state[partner_index] = '-'
-        else:
-            if wing_str == '--':
-                state[square_index] = '-'
-                state[partner_index] = '-'
-            else:
-                for tmp_index in edge_map[wing_str]:
-                    if tmp_index != edge_index:
-                        state[square_index] = tmp_index
-                        state[partner_index] = tmp_index
-                        break
-                else:
-                    raise Exception("could not find tmp_index")
-
-    return ''.join(state)
-
-
-class LookupTableIDA444Reduce333(LookupTableIDAViaC):
+# =============
+# --fast tables
+# =============
+class LookupTable444UDCentersStage(LookupTable):
     """
-    lookup-table-4x4x4-step31-reduce333-edges.txt
-    =============================================
-    1 steps has 4 entries (0 percent, 0.00x previous step)
-    2 steps has 20 entries (0 percent, 5.00x previous step)
-    3 steps has 140 entries (0 percent, 7.00x previous step)
-    4 steps has 1,141 entries (0 percent, 8.15x previous step)
-    5 steps has 8,059 entries (0 percent, 7.06x previous step)
-    6 steps has 62,188 entries (0 percent, 7.72x previous step)
-    7 steps has 442,293 entries (0 percent, 7.11x previous step)
-    8 steps has 2,958,583 entries (1 percent, 6.69x previous step)
-    9 steps has 17,286,512 entries (7 percent, 5.84x previous step)
-    10 steps has 69,004,356 entries (28 percent, 3.99x previous step)
-    11 steps has 122,416,936 entries (51 percent, 1.77x previous step)
-    12 steps has 27,298,296 entries (11 percent, 0.22x previous step)
-    13 steps has 22,272 entries (0 percent, 0.00x previous step)
+    lookup-table-4x4x4-step11-UD-centers-stage.txt
+    ==============================================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 108 entries (0 percent, 12.00x previous step)
+    3 steps has 1,434 entries (0 percent, 13.28x previous step)
+    4 steps has 15,210 entries (2 percent, 10.61x previous step)
+    5 steps has 126,306 entries (17 percent, 8.30x previous step)
+    6 steps has 420,312 entries (57 percent, 3.33x previous step)
+    7 steps has 171,204 entries (23 percent, 0.41x previous step)
+    8 steps has 888 entries (0 percent, 0.01x previous step)
 
-    Total: 239,500,800 entries
-    Average: 10.635709 moves
+    Total: 735,471 entries
+    Average: 6.02 moves
+    """
+
+    state_targets = (
+        'xxxxxxxxUUUUxxxxUUUUxxxx',
+        'xxxxUUUUxxxxUUUUxxxxxxxx',
+        'UUUUxxxxxxxxxxxxxxxxUUUU',
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step11-UD-centers-stage.txt',
+            self.state_targets,
+            linecount=735471,
+            max_depth=8,
+            filesize=39715434)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join(['U' if parent_state[x] in ('U', 'D') else 'x' for x in centers_444])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
 
 
-    lookup-table-4x4x4-step32-reduce333-centers.txt
-    ===============================================
-    1 steps has 16 entries (0 percent, 0.00x previous step)
-    2 steps has 136 entries (0 percent, 8.50x previous step)
-    3 steps has 952 entries (1 percent, 7.00x previous step)
-    4 steps has 4,048 entries (6 percent, 4.25x previous step)
-    5 steps has 10,588 entries (18 percent, 2.62x previous step)
-    6 steps has 16,620 entries (28 percent, 1.57x previous step)
-    7 steps has 16,392 entries (27 percent, 0.99x previous step)
-    8 steps has 8,768 entries (14 percent, 0.53x previous step)
-    9 steps has 1,280 entries (2 percent, 0.15x previous step)
+class LookupTable444LRFBCentersStageEven(LookupTable):
+    """
+    lookup-table-4x4x4-step110-LRFB-centers-stage-even.txt
+    ======================================================
+    1 steps has 1 entries (0 percent, 0.00x previous step)
+    2 steps has 1 entries (0 percent, 1.00x previous step)
+    3 steps has 56 entries (0 percent, 56.00x previous step)
+    4 steps has 594 entries (4 percent, 10.61x previous step)
+    5 steps has 3,878 entries (30 percent, 6.53x previous step)
+    6 steps has 7,032 entries (54 percent, 1.81x previous step)
+    7 steps has 1,212 entries (9 percent, 0.17x previous step)
+    8 steps has 96 entries (0 percent, 0.08x previous step)
 
-    Total: 58,800 entries
-    Average: 6.27 moves
-
-
-    lookup-table-4x4x4-step30-reduce333.txt
-    =======================================
-    1 steps has 16 entries (0 percent, 0.00x previous step)
-    2 steps has 136 entries (0 percent, 8.50x previous step)
-    3 steps has 1,424 entries (0 percent, 10.47x previous step)
-    4 steps has 14,032 entries (0 percent, 9.85x previous step)
-    5 steps has 134,052 entries (9 percent, 9.55x previous step)
-    6 steps has 1,290,292 entries (89 percent, 9.63x previous step)
-
-    Total: 1,439,952 entries
+    Total: 12,870 entries
+    Average: 5.70 moves
     """
 
     def __init__(self, parent):
-
-        LookupTableIDAViaC.__init__(
+        LookupTable.__init__(
             self,
             parent,
-            # Needed tables and their md5 signatures
-            (('lookup-table-4x4x4-step30-reduce333.txt', '82fbc3414d07e53448d0746d96e25ebd'), # 6-deep
-             ('lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt', '20ac2ed7ca369c3b5183f836f5d99262'),
-             ('lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt', '3f990fc1fb6bf506d81ba65f03ad74f6')),
-            '4x4x4-reduce-333' # C_ida_type
-        )
+            'lookup-table-4x4x4-step110-LRFB-centers-stage-even.txt',
+            'LLLLxxxxLLLLxxxx',
+            linecount=12870,
+            max_depth=7,
+            filesize=592020)
 
-#class LookupTable444FirstFourEdgesEdgesOnly(LookupTable):
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join(['L' if parent_state[x] in ('L', 'R') else 'x' for x in LFRB_centers_444])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+class LookupTable444LRFBCentersStageOdd(LookupTable):
+    """
+    lookup-table-4x4x4-step110-LRFB-centers-stage-odd.txt
+    =====================================================
+    1 steps has 2 entries (0 percent, 0.00x previous step)
+    2 steps has 28 entries (0 percent, 14.00x previous step)
+    3 steps has 178 entries (1 percent, 6.36x previous step)
+    4 steps has 710 entries (5 percent, 3.99x previous step)
+    5 steps has 1,690 entries (13 percent, 2.38x previous step)
+    6 steps has 5,284 entries (41 percent, 3.13x previous step)
+    7 steps has 4,890 entries (37 percent, 0.93x previous step)
+    8 steps has 88 entries (0 percent, 0.02x previous step)
+
+    Total: 12,870 entries
+    Average: 6.10 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step110-LRFB-centers-stage-odd.txt',
+            'LLLLxxxxLLLLxxxx',
+            linecount=12870,
+            max_depth=7,
+            filesize=592020)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join(['L' if parent_state[x] in ('L', 'R') else 'x' for x in LFRB_centers_444])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
+
+class LookupTable444LRFBCentersSolve(LookupTable):
+    """
+    lookup-table-4x4x4-step150-LRFB-centers-solve.txt
+    =================================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 63 entries (1 percent, 9.00x previous step)
+    3 steps has 310 entries (6 percent, 4.92x previous step)
+    4 steps has 820 entries (16 percent, 2.65x previous step)
+    5 steps has 1,168 entries (23 percent, 1.42x previous step)
+    6 steps has 1,316 entries (26 percent, 1.13x previous step)
+    7 steps has 992 entries (20 percent, 0.75x previous step)
+    8 steps has 224 entries (4 percent, 0.23x previous step)
+
+    Total: 4,900 entries
+    Average: 5.47 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step150-LRFB-centers-solve.txt',
+            'LLLLFFFFRRRRBBBB',
+            linecount=4900,
+            max_depth=8,
+            filesize=220500)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = ''.join([parent_state[x] for x in LFRB_centers_444])
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
+
 class LookupTable444FirstFourEdgesEdgesOnly(LookupTableHashCostOnly):
     """
     lookup-table-4x4x4-step41.txt
@@ -807,33 +691,15 @@ class LookupTableIDA444FirstFourEdges(LookupTableIDA):
              "L", "L'",
              "R", "R'"),
 
-            #linecount=568476,
-            #max_depth=5,
-            #filesize=34108560,
+            linecount=568476,
+            max_depth=5,
+            filesize=34108560,
 
-            linecount=4453748,
-            max_depth=6,
-            filesize=280586124,
+            #linecount=4453748,
+            #max_depth=6,
+            #filesize=280586124,
         )
 
-        '''
-    def search_complete(self, state, steps_to_here):
-        if LookupTableIDA.search_complete(self, state, steps_to_here):
-            tmp_state = self.parent.state[:]
-            tmp_solution = self.parent.solution[:]
-            self.parent.lt_pair_last_eight_edges.solve()
-
-            if self.parent.edge_solution_leads_to_pll_parity():
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                return False
-            else:
-                #self.parent.state = tmp_state[:]
-                #self.parent.solution = tmp_solution[:]
-                return True
-        else:
-            return False
-        '''
 
     def ida_heuristic(self):
         (edges_state, edges_cost_to_goal) = self.parent.lt_pair_first_four_edges_edges_only.ida_heuristic()
@@ -850,6 +716,47 @@ class LookupTableIDA444FirstFourEdges(LookupTableIDA):
                 cost_to_goal = max(cost_to_goal, self.max_depth + 1)
 
         return (lt_state, cost_to_goal)
+
+
+class LookupTable444FirstFourEdges(LookupTable):
+    """
+    lookup-table-4x4x4-step45.txt
+    =============================
+    1 steps has 2 entries (0 percent, 0.00x previous step)
+    2 steps has 6 entries (0 percent, 3.00x previous step)
+    3 steps has 37 entries (0 percent, 6.17x previous step)
+    4 steps has 81 entries (0 percent, 2.19x previous step)
+    5 steps has 244 entries (0 percent, 3.01x previous step)
+    6 steps has 1,357 entries (0 percent, 5.56x previous step)
+    7 steps has 5,429 entries (0 percent, 4.00x previous step)
+    8 steps has 22,284 entries (4 percent, 4.10x previous step)
+    9 steps has 91,055 entries (16 percent, 4.09x previous step)
+    10 steps has 277,010 entries (50 percent, 3.04x previous step)
+    11 steps has 148,948 entries (27 percent, 0.54x previous step)
+    12 steps has 548 entries (0 percent, 0.00x previous step)
+
+    Total: 547,001 entries
+    Average: 9.98 moves
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step45.txt',
+            '--------a8b9ecfd--------',
+            linecount=547001,
+            max_depth=12,
+            filesize=36102066)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        state = edges_recolor_pattern_444(parent_state[:], self.only_colors)
+        edges_state = ''.join([state[index] for index in wings_444])
+        cost_to_goal = self.heuristic(edges_state)
+        # log.info("%s: %s,  %s cost_to_goal %s" % (self, pformat(self.only_colors), edges_state, cost_to_goal))
+        return (edges_state, cost_to_goal)
+
 
 
 class LookupTable444LastEightEdges(LookupTable):
@@ -1005,12 +912,129 @@ class LookupTable444LastEightEdges(LookupTable):
         edges_index = step51_index[edges_state]
 
         # There are 20160 edge states
-        line_number = (centers_index * 20160) + edges_index
+        index = (centers_index * 20160) + edges_index
 
-        self.fh_txt.seek(line_number)
-        step_abbr = self.fh_txt.read(1).decode("ascii")
+        step_abbr = chr(self.cache_string[index])
         step = self.abbr_to_move_444[step_abbr]
         return [step]
+
+
+# ======================
+# --normal/--slow tables
+# ======================
+class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaC):
+    """
+    lookup-table-4x4x4-step11-UD-centers-stage.txt
+    lookup-table-4x4x4-step12-LR-centers-stage.txt
+    lookup-table-4x4x4-step13-FB-centers-stage.txt
+    ==============================================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 108 entries (0 percent, 12.00x previous step)
+    3 steps has 1,434 entries (0 percent, 13.28x previous step)
+    4 steps has 15,210 entries (2 percent, 10.61x previous step)
+    5 steps has 126,306 entries (17 percent, 8.30x previous step)
+    6 steps has 420,312 entries (57 percent, 3.33x previous step)
+    7 steps has 171,204 entries (23 percent, 0.41x previous step)
+    8 steps has 888 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.02 moves
+
+
+    lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
+    ==================================================
+    1 steps has 24 entries (0 percent, 0.00x previous step)
+    2 steps has 324 entries (0 percent, 13.50x previous step)
+    3 steps has 4,302 entries (0 percent, 13.28x previous step)
+    4 steps has 53,730 entries (7 percent, 12.49x previous step)
+    5 steps has 697,806 entries (92 percent, 12.99x previous step)
+
+    Total: 756,186 entries
+    """
+
+    def __init__(self, parent):
+
+        LookupTableIDAViaC.__init__(
+            self,
+            parent,
+            # Needed tables and their md5 signatures
+            (('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', '4696649132d2d5895ccb294eea4e25f5'), # 4-deep
+             ('lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749'),
+             ('lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749'),
+             ('lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749')),
+            '4x4x4-centers-stage' # C_ida_type
+        )
+
+        self.recolor_positions = centers_444
+        self.recolor_map = {
+            'D' : 'U',
+            'R' : 'L',
+            'B' : 'F',
+        }
+        self.nuke_corners = True
+
+
+class LookupTableIDA444Reduce333(LookupTableIDAViaC):
+    """
+    lookup-table-4x4x4-step31-reduce333-edges.txt
+    =============================================
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 20 entries (0 percent, 5.00x previous step)
+    3 steps has 140 entries (0 percent, 7.00x previous step)
+    4 steps has 1,141 entries (0 percent, 8.15x previous step)
+    5 steps has 8,059 entries (0 percent, 7.06x previous step)
+    6 steps has 62,188 entries (0 percent, 7.72x previous step)
+    7 steps has 442,293 entries (0 percent, 7.11x previous step)
+    8 steps has 2,958,583 entries (1 percent, 6.69x previous step)
+    9 steps has 17,286,512 entries (7 percent, 5.84x previous step)
+    10 steps has 69,004,356 entries (28 percent, 3.99x previous step)
+    11 steps has 122,416,936 entries (51 percent, 1.77x previous step)
+    12 steps has 27,298,296 entries (11 percent, 0.22x previous step)
+    13 steps has 22,272 entries (0 percent, 0.00x previous step)
+
+    Total: 239,500,800 entries
+    Average: 10.635709 moves
+
+
+    lookup-table-4x4x4-step32-reduce333-centers.txt
+    ===============================================
+    1 steps has 16 entries (0 percent, 0.00x previous step)
+    2 steps has 136 entries (0 percent, 8.50x previous step)
+    3 steps has 952 entries (1 percent, 7.00x previous step)
+    4 steps has 4,048 entries (6 percent, 4.25x previous step)
+    5 steps has 10,588 entries (18 percent, 2.62x previous step)
+    6 steps has 16,620 entries (28 percent, 1.57x previous step)
+    7 steps has 16,392 entries (27 percent, 0.99x previous step)
+    8 steps has 8,768 entries (14 percent, 0.53x previous step)
+    9 steps has 1,280 entries (2 percent, 0.15x previous step)
+
+    Total: 58,800 entries
+    Average: 6.27 moves
+
+
+    lookup-table-4x4x4-step30-reduce333.txt
+    =======================================
+    1 steps has 16 entries (0 percent, 0.00x previous step)
+    2 steps has 136 entries (0 percent, 8.50x previous step)
+    3 steps has 1,424 entries (0 percent, 10.47x previous step)
+    4 steps has 14,032 entries (0 percent, 9.85x previous step)
+    5 steps has 134,052 entries (9 percent, 9.55x previous step)
+    6 steps has 1,290,292 entries (89 percent, 9.63x previous step)
+
+    Total: 1,439,952 entries
+    """
+
+    def __init__(self, parent):
+
+        LookupTableIDAViaC.__init__(
+            self,
+            parent,
+            # Needed tables and their md5 signatures
+            (('lookup-table-4x4x4-step30-reduce333.txt', '82fbc3414d07e53448d0746d96e25ebd'), # 6-deep
+             ('lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt', '20ac2ed7ca369c3b5183f836f5d99262'),
+             ('lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt', '3f990fc1fb6bf506d81ba65f03ad74f6')),
+            '4x4x4-reduce-333' # C_ida_type
+        )
 
 
 class RubiksCube444(RubiksCube):
@@ -1244,17 +1268,11 @@ class RubiksCube444(RubiksCube):
             self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
             self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
 
-            self.lt_centers = LookupTable444Reduce333Centers(self)
-
-            # dwalton
-            self.lt_pair_first_four_edges_edges_only = LookupTable444FirstFourEdgesEdgesOnly(self)
-            self.lt_pair_first_four_edges_centers_only = LookupTable444FirstFourEdgesCentersOnly(self)
-            self.lt_pair_first_four_edges = LookupTableIDA444FirstFourEdges(self)
-            self.lt_pair_first_four_edges_centers_only.preload_cache_dict()
-            #self.lt_pair_first_four_edges.preload_cache_string()
-            self.lt_pair_first_four_edges.preload_cache_dict()
-
+            self.lt_lfrb_centers = LookupTable444LRFBCentersSolve(self)
+            self.lt_pair_first_four_edges_non_ida = LookupTable444FirstFourEdges(self)
+            self.lt_pair_first_four_edges_non_ida.preload_cache_string()
             self.lt_pair_last_eight_edges = LookupTable444LastEightEdges(self)
+            self.lt_pair_last_eight_edges.preload_cache_string()
 
         else:
             raise Exception("Invalid cpu_mode %s" % self.cpu_mode)
@@ -1402,7 +1420,6 @@ class RubiksCube444(RubiksCube):
         self.solution.append('EDGES_GROUPED')
 
     def reduce_333_fast(self):
-        # dwalton
         self.lt_UD_centers_stage.solve()
         self.rotate_for_best_centers_staging()
         self.print_cube()
@@ -1424,39 +1441,59 @@ class RubiksCube444(RubiksCube):
 
         self.tsai_phase2()
 
-        self.lt_centers.solve()
+        self.lt_lfrb_centers.solve()
         self.print_cube()
-        log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: LFRB centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
 
         # Which 4-edges can we pair in the least number of moves?
         min_cost = None
-        min_cost_four_wing_str_combo = None
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(original_solution)
 
         for four_wing_str_combo in itertools.combinations(wing_strs_all, 4):
-            self.lt_pair_first_four_edges_edges_only.only_colors = four_wing_str_combo
-            (_, tmp_cost) = self.lt_pair_first_four_edges_edges_only.ida_heuristic()
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            self.lt_pair_first_four_edges_non_ida.only_colors = four_wing_str_combo
+
+            # dwalton remove this NoSteps once the step45 table has finished building
+            try:
+                self.lt_pair_first_four_edges_non_ida.solve()
+            except NoSteps:
+                continue
+            self.lt_pair_last_eight_edges.solve()
+
+            if self.edge_solution_leads_to_pll_parity():
+                continue
+
+            tmp_cost = len(self.solution) - original_solution_len
 
             if min_cost is None or tmp_cost < min_cost:
                 log.info("%s: %s cost is %d (NEW MIN)" % (self, pformat(four_wing_str_combo), tmp_cost))
                 min_cost = tmp_cost
-                min_cost_four_wing_str_combo = four_wing_str_combo
+                min_cost_state = self.state[:]
+                min_cost_solution = self.solution[:]
+
+                #if min_cost <= 17:
+                #    break
             #else:
             #    log.info("%s: %s cost is %d" % (self, pformat(four_wing_str_combo), tmp_cost))
 
-        self.lt_pair_first_four_edges_edges_only.only_colors = min_cost_four_wing_str_combo
-        self.lt_pair_first_four_edges.solve()
+        self.state = min_cost_state
+        self.solution = min_cost_solution
+
         self.print_cube()
-        log.info("%s: x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: reduced to 3x3x3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
 
-        sys.exit(0)
-
-        '''
         if self.state[6] != 'U' or self.state[38] != 'F':
             self.rotate_U_to_U()
             self.rotate_F_to_F()
-        '''
+
+        self.solution.append('CENTERS_SOLVED')
+        self.solution.append('EDGES_GROUPED')
 
     def reduce_333(self):
 

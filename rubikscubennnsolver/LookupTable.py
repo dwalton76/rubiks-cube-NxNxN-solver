@@ -38,7 +38,7 @@ def get_wing_pair_count_555(strA, strB):
     wing_count = 0
     edge_count = 0
 
-    if strA == "sOyoPrZQTURuXSPwTOzUvtVRVWxSXQYYqpZW" and strB == "OOopPrQQqURRsSPTTtuUvVVSWWwxXXYYyzZZ":
+    if strA == "tOVrPPQQWTRRsSSqTvuUUOVXpWwxXoYYyzZZ" and strB == "OOorPPQQWTRRsSSqTtuUUVVvpWwxXXYYyzZZ":
         debug = True
     else:
         debug = False
@@ -62,8 +62,7 @@ def get_wing_pair_count_555(strA, strB):
         log.info(' '.join(strB[i:i+3] for i in range(0, len(strB), 3)))
         #log.info(matching_midges)
 
-    pre_matches = []
-    post_matches = []
+    matches = []
 
     for edge_index in range(12):
         wing_pre = edge_index * 3
@@ -79,28 +78,33 @@ def get_wing_pair_count_555(strA, strB):
 
         if wing_pre_A == wing_pre_B:
             wing_count += 1
-            pre_matches.append(wing_pre_A.lower())
 
             if debug:
                 log.info("wing_pre_A %s matches" % wing_pre_A)
 
+            if wing_pre_A.lower() in matches:
+                if debug:
+                    log.info("edge %s will pair\n" % wing_pre_A)
+                edge_count += 1
+            else:
+                matches.append(wing_pre_A.lower())
+
         if wing_post_A == wing_post_B:
             wing_count += 1
-            post_matches.append(wing_post_A.lower())
 
             if debug:
                 log.info("wing_post_A %s matches" % wing_post_A)
 
-        # dwalton this needs work
-        #if wing_pre_A == wing_pre_B and wing_post_A == wing_post_B and midge_A == midge_B:
-        #    edge_count += 1
-
-    for x in post_matches:
-        if x in pre_matches:
-            edge_count += 1
+            if wing_post_A.lower() in matches:
+                if debug:
+                    log.info("edge %s will pair\n" % wing_post_A)
+                edge_count += 1
+            else:
+                matches.append(wing_post_A.lower())
 
     if debug:
         log.info("wing_count: %d" % wing_count)
+        log.info("matches: %s" % pformat(matches))
         log.info("edge_count: %d" % edge_count)
 
     return (wing_count, edge_count)
@@ -876,7 +880,6 @@ class LookupTable(object):
         max_edges_pair_count = 0
 
         log.info("%s: %s is init state, %d wings paired" % (self, state_to_find, init_wing_count))
-        # dwalton
         with open(self.filename, "r") as fh:
             for line in fh:
                 line = line.rstrip()
@@ -886,6 +889,7 @@ class LookupTable(object):
                 (wing_pair_count, edges_pair_count) = get_wing_pair_count_555(state_to_find, state)
                 wing_pair_count -= init_wing_count
 
+                # dwalton
                 if (wing_pair_count > max_wing_pair_count or
                         (wing_pair_count == max_wing_pair_count and len_steps < max_steps_len) or
                         (wing_pair_count == max_wing_pair_count and len_steps == max_steps_len and edges_pair_count > max_edges_pair_count)):

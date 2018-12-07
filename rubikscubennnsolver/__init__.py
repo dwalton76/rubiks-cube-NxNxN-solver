@@ -1177,7 +1177,10 @@ class RubiksCube(object):
 
     def rotate(self, action):
 
-        if action in (
+        if action.startswith("COMMENT"):
+            self.solution.append(action)
+
+        elif action in (
                 "x2", "y2", "z2",
                 "2U", "2U'", "2U2",
                 "2L", "2L'", "2L2",

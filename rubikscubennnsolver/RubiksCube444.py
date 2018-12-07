@@ -725,31 +725,33 @@ class LookupTable444FirstFourEdges(LookupTable):
     """
     lookup-table-4x4x4-step150.txt
     ==============================
-    1 steps has 2 entries (0 percent, 0.00x previous step)
-    2 steps has 6 entries (0 percent, 3.00x previous step)
-    3 steps has 37 entries (0 percent, 6.17x previous step)
-    4 steps has 81 entries (0 percent, 2.19x previous step)
-    5 steps has 244 entries (0 percent, 3.01x previous step)
-    6 steps has 1,357 entries (0 percent, 5.56x previous step)
-    7 steps has 5,429 entries (0 percent, 4.00x previous step)
-    8 steps has 22,284 entries (4 percent, 4.10x previous step)
-    9 steps has 91,055 entries (16 percent, 4.09x previous step)
-    10 steps has 277,010 entries (50 percent, 3.04x previous step)
-    11 steps has 148,948 entries (27 percent, 0.54x previous step)
-    12 steps has 548 entries (0 percent, 0.00x previous step)
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 17 entries (0 percent, 5.67x previous step)
+    3 steps has 112 entries (0 percent, 6.59x previous step)
+    4 steps has 380 entries (0 percent, 3.39x previous step)
+    5 steps has 1,493 entries (0 percent, 3.93x previous step)
+    6 steps has 7,833 entries (0 percent, 5.25x previous step)
+    7 steps has 37,972 entries (0 percent, 4.85x previous step)
+    8 steps has 188,240 entries (3 percent, 4.96x previous step)
+    9 steps has 892,232 entries (15 percent, 4.74x previous step)
+    10 steps has 2,971,620 entries (50 percent, 3.33x previous step)
+    11 steps has 1,775,802 entries (30 percent, 0.60x previous step)
+    12 steps has 4,896 entries (0 percent, 0.00x previous step)
 
-    Total: 547,001 entries
-    Average: 9.98 moves
+    Total: 5,880,600 entries
+    Average: 10.06 moves
     """
+    # dwalton
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
             'lookup-table-4x4x4-step150.txt',
             '--------a8b9ecfd--------',
-            linecount=547001,
+            linecount=5880600,
             max_depth=12,
-            filesize=36102066)
+            filesize=388119600,
+        )
 
     def ida_heuristic(self):
         parent_state = self.parent.state
@@ -1273,7 +1275,7 @@ class RubiksCube444(RubiksCube):
 
             self.lt_lfrb_centers = LookupTable444LRFBCentersSolve(self)
             self.lt_pair_first_four_edges_non_ida = LookupTable444FirstFourEdges(self)
-            self.lt_pair_first_four_edges_non_ida.preload_cache_string()
+            #self.lt_pair_first_four_edges_non_ida.preload_cache_string()
             self.lt_pair_last_eight_edges = LookupTable444LastEightEdges(self)
             self.lt_pair_last_eight_edges.preload_cache_string()
 
@@ -1461,12 +1463,7 @@ class RubiksCube444(RubiksCube):
             self.solution = original_solution[:]
 
             self.lt_pair_first_four_edges_non_ida.only_colors = four_wing_str_combo
-
-            # dwalton remove this NoSteps once the step145 table has finished building
-            try:
-                self.lt_pair_first_four_edges_non_ida.solve()
-            except NoSteps:
-                continue
+            self.lt_pair_first_four_edges_non_ida.solve()
             self.lt_pair_last_eight_edges.solve()
 
             if self.edge_solution_leads_to_pll_parity():
@@ -1480,8 +1477,12 @@ class RubiksCube444(RubiksCube):
                 min_cost_state = self.state[:]
                 min_cost_solution = self.solution[:]
 
-                #if min_cost <= 17:
+                # It isn't going to get much better than this so go ahead and break out of the loop
+                # if min_cost <= 17:
                 #    break
+
+                # For --fast the goal is to return "a" solution ASAP so go ahead and break out of the loop
+                break
             else:
                 log.info("%s: %s cost is %d" % (self, pformat(four_wing_str_combo), tmp_cost))
 

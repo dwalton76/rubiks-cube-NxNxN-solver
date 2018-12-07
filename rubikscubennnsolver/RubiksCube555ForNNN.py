@@ -74,12 +74,12 @@ class LookupTable555CycleEdges(LookupTable):
             'TBD',
 
             # 0-deep
-            linecount=1130703,
-            filesize=81410616,
+            #linecount=1130703,
+            #filesize=81410616,
 
             # 1-deep
-            #linecount=11180194,
-            #filesize=838514550,
+            linecount=11180194,
+            filesize=838514550,
         )
 
     def state(self):

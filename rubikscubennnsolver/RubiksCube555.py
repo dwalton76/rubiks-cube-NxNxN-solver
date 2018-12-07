@@ -984,7 +984,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
             'B' : 'x',
         }
         self.nuke_corners = True
-        self.nuke_edges = True
+        #self.nuke_edges = True
 
 
 class LookupTable555TCenterSolve(LookupTable):

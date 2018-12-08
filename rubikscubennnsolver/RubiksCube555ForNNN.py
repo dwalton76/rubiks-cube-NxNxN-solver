@@ -2,7 +2,7 @@
 
 from rubikscubennnsolver import wing_strs_all, wing_str_map
 from rubikscubennnsolver.RubiksSide import SolveError
-from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e
+from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.RubiksCube555 import (
     centers_555,
     edges_555,
@@ -22,7 +22,6 @@ from rubikscubennnsolver.RubiksCube555 import (
     LookupTable555TCenterSolve,
     LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge,
     LookupTable555LRCenterStage432PairOneEdge,
-    LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge,
 )
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
@@ -589,22 +588,9 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         self.lt_cycle_edges = LookupTable555CycleEdges(self)
 
-        # dwalton are these needed?
         self.lt_LR_432_pair_one_edge = LookupTable555LRCenterStage432PairOneEdge(self)
-        '''
-        self.lt_LR_centers_stage_pt = LookupTable555LRCenterStage(self)
-        self.lt_LR_432_x_centers_only = LookupTable555LRCenterStage432XCentersOnly(self)
-        self.lt_LR_432_t_centers_only = LookupTable555LRCenterStage432TCentersOnly(self)
-        self.lt_LR_432_centers_stage = LookupTableIDA555LRCenterStage432(self)
-        self.lt_LR_432_pair_one_edge.preload_cache_dict()
-        self.lt_LR_432_x_centers_only.preload_cache_string()
-        self.lt_LR_432_t_centers_only.preload_cache_string()
-        self.lt_LR_432_centers_stage.preload_cache_string()
-        '''
-
         self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(self)
         self.lt_x_plane_y_plane_orient_edges_pair_one_edge.preload_cache_dict()
-
 
     def stage_first_four_edges_555(self):
         """
@@ -880,7 +866,7 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         # Traverse a table of moves that place L4E in one of three planes
         # and then rotate that plane to the x-plane
-        for pre_steps in pre_steps_stage_l4e:
+        for pre_steps in pre_steps_to_try:
             self.state = original_state[:]
             self.solution = original_solution[:]
             steps = None
@@ -1024,7 +1010,6 @@ class RubiksCube555ForNNN(RubiksCube555):
         This is used to pair the inside orbit of edges for 7x7x7
         """
         self.lt_init()
-        #log.info("%s: reduce_333_via_l4e kociemba %s" % (self, self.get_kociemba_string(True)))
 
         if not self.centers_staged():
             self.group_centers_stage_UD()
@@ -1037,17 +1022,13 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.solution.append("COMMENT_%d_steps_555_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
+        # log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
         self.solution.append('CENTERS_SOLVED')
 
-        LFRB_pairable = self.edges_pairable_without_LRFB()
+        '''
         LR_pairable = self.edges_pairable_without_LR()
-
-        log.info("%s: %d pairable without LFRB (%s), %d pairable without LR (%s)" %
-            (self,
-            len(LFRB_pairable), " ".join(LFRB_pairable),
-            len(LR_pairable), " ".join(LR_pairable),
-            ))
+        log.info("%s: %d pairable without LR (%s)" %
+            (self, len(LR_pairable), " ".join(LR_pairable)))
 
         tmp_state = self.state[:]
         tmp_solution = self.solution[:]
@@ -1056,19 +1037,17 @@ class RubiksCube555ForNNN(RubiksCube555):
             pre_wing_count = 24 - self.get_non_paired_wings_count()
             pre_edges_count = self.get_paired_edges_count()
 
+            if pre_edges_count >= 8:
+                self.stage_final_four_edges_in_x_plane()
+                self.pair_x_plane_edges_in_l4e()
+                break
+
             steps = self.get_final_edges_steps()
 
             if steps:
                 log.warning("FOUND STEPS!!! %s" % " ".join(steps))
                 for step in steps:
                     self.rotate(step)
-                break
-
-            elif pre_edges_count >= 8:
-                self.stage_final_four_edges_in_x_plane()
-                #log.info("L4E should be in x-plane now")
-                #self.print_cube()
-                self.pair_x_plane_edges_in_l4e()
                 break
 
             else:
@@ -1094,14 +1073,10 @@ class RubiksCube555ForNNN(RubiksCube555):
                     edges_delta, pre_edges_count, post_edges_count,
                     ))
 
-                LFRB_pairable = self.edges_pairable_without_LRFB()
                 LR_pairable = self.edges_pairable_without_LR()
 
-                log.info("%s: %d pairable without LFRB (%s), %d pairable without LR (%s)" %
-                    (self,
-                    len(LFRB_pairable), " ".join(LFRB_pairable),
-                    len(LR_pairable), " ".join(LR_pairable),
-                    ))
+                log.info("%s: %d pairable without LR (%s)" %
+                    (self, len(LR_pairable), " ".join(LR_pairable)))
                 log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
                 log.info("\n\n\n")
 
@@ -1119,14 +1094,14 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.rotate_F_to_F()
         self.print_cube()
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        sys.exit(0)
-
+        self.print_solution(True)
+        #sys.exit(0)
         '''
+
         if not self.edges_paired():
             self.pair_first_four_edges_via_l4e()
             self.pair_second_four_edges_via_eo()
             self.stage_final_four_edges_in_x_plane()
             self.pair_x_plane_edges_in_l4e()
-        '''
 
         self.solution.append('EDGES_GROUPED')

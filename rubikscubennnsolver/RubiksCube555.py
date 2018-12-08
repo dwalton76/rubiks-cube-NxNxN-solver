@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map, wing_strs_all
-from rubikscubennnsolver.misc import pre_steps_to_try, pre_steps_stage_l4e, wing_str_combos_two, wing_str_combos_four
+from rubikscubennnsolver.misc import pre_steps_to_try, wing_str_combos_two, wing_str_combos_four
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 

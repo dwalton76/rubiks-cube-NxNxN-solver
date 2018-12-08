@@ -124,7 +124,7 @@ class RubiksCube222(RubiksCube):
 
         raise SolveError("Could not find a solution")
 
-    def solve(self):
+    def solve(self, solution333=None):
         self.solve_non_table()
         self.compress_solution()
 

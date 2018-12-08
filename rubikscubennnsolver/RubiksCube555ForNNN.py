@@ -146,6 +146,58 @@ class LookupTable555StageFirstFourEdges(LookupTable):
         return edges_state
 
 
+class LookupTable555StageSecondFourEdges(LookupTable):
+    """
+    lookup-table-5x5x5-step101-stage-second-four-edges.txt
+    ======================================================
+    5 steps has 32 entries (0 percent, 0.00x previous step)
+    6 steps has 304 entries (0 percent, 9.50x previous step)
+    7 steps has 1,208 entries (0 percent, 3.97x previous step)
+    8 steps has 3,612 entries (1 percent, 2.99x previous step)
+    9 steps has 12,856 entries (3 percent, 3.56x previous step)
+    10 steps has 42,688 entries (12 percent, 3.32x previous step)
+    11 steps has 89,194 entries (26 percent, 2.09x previous step)
+    12 steps has 113,508 entries (33 percent, 1.27x previous step)
+    13 steps has 74,720 entries (22 percent, 0.66x previous step)
+
+    Total: 338,122 entries
+
+    This should have (16!/(8!*8!)) * (8!/(4!*4!)) or 900,900 entries
+    if you built it out the entire way. We do not need to build it that deep
+    though, we can try enough edge color combinations to find a hit
+    in 13-deep.
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step101-stage-second-four-edges.txt',
+            'TBD',
+            linecount=338122,
+            filesize=28740370)
+
+    def state(self, wing_strs_to_stage):
+        state = self.parent.state[:]
+
+        for square_index in l4e_wings_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in wing_strs_to_stage:
+                state[square_index] = 'U'
+                state[partner_index] = 'U'
+            else:
+                state[square_index] = 'x'
+                state[partner_index] = 'x'
+
+        edges_state = ''.join([state[square_index] for square_index in l4e_wings_555])
+        #log.info("FOO: %s" % edges_state)
+        return edges_state
+
+
 class LookupTable555EdgesXPlaneEdgesOnly(LookupTable):
     """
     lookup-table-5x5x5-step301-edges-x-plane-edges-only.txt
@@ -312,236 +364,6 @@ class LookupTable555EdgesXPlaneCentersSolved(LookupTable):
 
 
 
-#class LookupTable555PairSecondFourEdgesEdgesOnly(LookupTable):
-class LookupTable555PairSecondFourEdgesEdgesOnly(LookupTableHashCostOnly):
-    """
-    (8!/4!)^2 or 2,822,400 edge patterns
-    8!/(4!*4!) or 70 ways they can be arranged
-    2,822,400 * 70 = 197,568,000
-
-    lookup-table-5x5x5-step601-pair-second-four-edges-edges-only.txt
-    ================================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 30 entries (0 percent, 6.00x previous step)
-    3 steps has 200 entries (0 percent, 6.67x previous step)
-    4 steps has 1,296 entries (0 percent, 6.48x previous step)
-    5 steps has 8,187 entries (0 percent, 6.32x previous step)
-    6 steps has 49,334 entries (0 percent, 6.03x previous step)
-    7 steps has 283,026 entries (0 percent, 5.74x previous step)
-    8 steps has 1,528,102 entries (0 percent, 5.40x previous step)
-    9 steps has 7,504,518 entries (3 percent, 4.91x previous step)
-    10 steps has 30,068,326 entries (15 percent, 4.01x previous step)
-    11 steps has 76,791,716 entries (38 percent, 2.55x previous step)
-    12 steps has 72,115,012 entries (36 percent, 0.94x previous step)
-    13 steps has 9,182,472 entries (4 percent, 0.13x previous step)
-    14 steps has 35,776 entries (0 percent, 0.00x previous step)
-
-    Total: 197,568,000 entries
-    Average: 11.20 moves
-    """
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step601-pair-second-four-edges-edges-only.txt',
-            '---pPPQQq------------------xXXYYy---',
-            linecount=197568000,
-            max_depth=14,
-            filesize=17385984000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step601-pair-second-four-edges-edges-only.hash-cost-only.txt',
-            '---pPPQQq------------------xXXYYy---',
-            linecount=1,
-            max_depth=14,
-            bucketcount=197568011,
-            filesize=197568012)
-
-    def ida_heuristic(self):
-        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
-        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
-        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable555PairSecondFourEdgesCentersOnly(LookupTable):
-    """
-    lookup-table-5x5x5-step602-pair-second-four-edges-centers-only.txt
-    ==================================================================
-    1 steps has 168 entries (0 percent, 0.00x previous step)
-    2 steps has 1,002 entries (0 percent, 5.96x previous step)
-    3 steps has 5,544 entries (3 percent, 5.53x previous step)
-    4 steps has 22,632 entries (12 percent, 4.08x previous step)
-    5 steps has 67,770 entries (38 percent, 2.99x previous step)
-    6 steps has 69,180 entries (39 percent, 1.02x previous step)
-    7 steps has 10,056 entries (5 percent, 0.15x previous step)
-    8 steps has 48 entries (0 percent, 0.00x previous step)
-
-    Total: 176,400 entries
-    Average: 5.29 moves
-    """
-
-    state_targets = (
-        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU',
-        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD',
-        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDDDDDDDD',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDDDDDDDD',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD',
-        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD'
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step602-pair-second-four-edges-centers-only.txt',
-            self.state_targets,
-            linecount=176400,
-            max_depth=8,
-            filesize=14817600)
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = ''.join([parent_state[x] for x in centers_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTableIDA555PairSecondFourEdges(LookupTableIDA):
-    """
-    lookup-table-5x5x5-step600-pair-second-four-edges.txt
-    =====================================================
-    1 steps has 180 entries (0 percent, 0.00x previous step)
-    2 steps has 1,368 entries (0 percent, 7.60x previous step)
-    3 steps has 11,436 entries (1 percent, 8.36x previous step)
-    4 steps has 95,508 entries (10 percent, 8.35x previous step)
-    5 steps has 807,948 entries (88 percent, 8.46x previous step)
-
-    Total: 916,440 entries
-    """
-
-    state_targets = (
-        'DUDDUDDUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDUUDUUDU---pPPQQq------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDUUDUUDU---pPPQQq------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDUUDUUDU---pPPQQq------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDUUDUUDU---pPPQQq------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDUUDUUDU---pPPQQq------------------xXXYYy---',
-        'DUDDUDDUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDUUDUUDU---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'DUUDUUDUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDUDDUDDU---pPPQQq------------------xXXYYy---',
-        'UUDUUDUUDLLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBUDDUDDUDD---pPPQQq------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBFDDDDDDDDD---pPPQQq------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBFDDDDDDDDD---pPPQQq------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBBDDDDDDDDD---pPPQQq------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBFDDDDDDDDD---pPPQQq------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBBDDDDDDDDD---pPPQQq------------------xXXYYy---',
-        'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD---pPPQQq------------------xXXYYy---',
-    )
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step600-pair-second-four-edges.txt',
-            self.state_targets,
-            moves_555,
-
-            # illegal moves
-            ("Fw", "Fw'",
-             "Bw", "Bw'",
-             "Lw", "Lw'",
-             "Rw", "Rw'",
-             "Uw", "Uw'", "Uw2",
-             "Dw", "Dw'", "Dw2",
-             "L", "L'",
-             "R", "R'",
-             "F", "F'",
-             "B", "B'",
-            ),
-
-            linecount=916440,
-            max_depth=5,
-            filesize=104474160,
-
-            #linecount=7621092,
-            #max_depth=6,
-            #filesize=868804488,
-        )
-
-    def ida_heuristic(self):
-        (edges_state, edges_cost) = self.parent.lt_pair_second_four_edges_edges_only.ida_heuristic()
-        (centers_state, centers_cost) = self.parent.lt_pair_second_four_edges_centers_only.ida_heuristic()
-
-        lt_state = centers_state + edges_state
-        cost_to_goal = max(edges_cost, centers_cost)
-
-        if cost_to_goal > 0:
-            steps = self.steps(lt_state)
-
-            if steps:
-                cost_to_goal = len(steps)
-            else:
-                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
-
-        return (lt_state, cost_to_goal)
-
-
 class RubiksCube555ForNNN(RubiksCube555):
     """
     5x5x5 strategy
@@ -567,30 +389,12 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         # No need to preload this one, we use binary_seach_multiple
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
-
-        #self.lt_edges_x_plane_edges_only = LookupTable555EdgesXPlaneEdgesOnly(self)
-        #self.lt_edges_x_plane_centers_only = LookupTable555EdgesXPlaneCentersOnly(self)
-        #self.lt_edges_x_plane = LookupTableIDA555EdgesXPlane(self)
-        #self.lt_edges_x_plane_edges_only.preload_cache_dict()
-        #self.lt_edges_x_plane_centers_only.preload_cache_dict()
-        #self.lt_edges_x_plane.preload_cache_string()
+        self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
+        self.lt_edges_stage_second_four.preload_cache_string()
 
         self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(self)
-
-        self.lt_pair_second_four_edges_edges_only = LookupTable555PairSecondFourEdgesEdgesOnly(self)
-        self.lt_pair_second_four_edges_centers_only = LookupTable555PairSecondFourEdgesCentersOnly(self)
-        self.lt_pair_second_four_edges = LookupTableIDA555PairSecondFourEdges(self)
-        self.lt_pair_second_four_edges_centers_only.preload_cache_dict()
-        self.lt_pair_second_four_edges.preload_cache_string()
-
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(self)
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge.preload_cache_dict()
-
         self.lt_cycle_edges = LookupTable555CycleEdges(self)
-
         self.lt_LR_432_pair_one_edge = LookupTable555LRCenterStage432PairOneEdge(self)
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(self)
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge.preload_cache_dict()
 
     def stage_first_four_edges_555(self):
         """
@@ -684,7 +488,6 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         min_solution_len = None
         min_solution_steps = None
-        min_solution_pairable_count = 0
 
         for pre_steps in pre_steps_to_try:
             self.state = original_state[:]
@@ -714,19 +517,19 @@ class RubiksCube555ForNNN(RubiksCube555):
                     self.rotate(step)
 
                 self.stage_final_four_edges_in_x_plane()
-                pairable_count = len(self.edges_pairable_without_LRFB())
                 solution_steps = self.solution[original_solution_len:]
                 solution_len = self.get_solution_len_minus_rotates(solution_steps)
 
                 # Technically we only need 4 edges to be pairable for the next phase but 5 is nice because it gives
                 # the next phase some wiggle room...it can choose the best 4-edge tuple.
-                if pairable_count >= 5 and (min_solution_len is None or solution_len < min_solution_len or pairable_count > min_solution_pairable_count):
-                    log.info("%s: 1st 4-edges can be staged in %d, %d-edges EOed, steps %s (NEW MIN)" % (self, solution_len, pairable_count, ' '.join(solution_steps)))
+                if min_solution_len is None or solution_len < min_solution_len:
+                    log.info("%s: 1st 4-edges can be staged in %d steps %s (NEW MIN)" % (self, solution_len, ' '.join(solution_steps)))
                     min_solution_len = solution_len
                     min_solution_steps = solution_steps
-                    min_solution_pairable_count = pairable_count
+
+                    break
                 else:
-                    log.info("%s: 1st 4-edges can be staged in %d steps, %d-edges EOed" % (self, solution_len, pairable_count))
+                    log.info("%s: 1st 4-edges can be staged in %d steps" % (self, solution_len))
 
             if min_solution_len is not None:
                 #if pre_steps:
@@ -738,6 +541,8 @@ class RubiksCube555ForNNN(RubiksCube555):
                     self.rotate(step)
 
                 break
+
+        self.place_first_four_paired_edges_in_x_plane()
 
         if not self.x_plane_edges_are_l4e():
             raise SolveError("There should be an L4E group in x-plane but there is not")
@@ -766,7 +571,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         original_solution = self.solution[:]
 
         # Traverse a table of moves that place L4E in one of three planes
-        for pre_steps in pre_steps_stage_l4e:
+        for pre_steps in pre_steps_to_try:
             self.state = original_state[:]
             self.solution = original_solution[:]
 
@@ -802,60 +607,100 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.stage_first_four_edges_555()
             self.pair_x_plane_edges_in_l4e()
 
-    def pair_second_four_edges_via_eo(self):
-        paired_edges_count = self.get_paired_edges_count()
+    def stage_second_four_edges_555(self):
+        """
+        The first 4-edges have been staged to LB, LF, RF, RB. Stage the next four
+        edges to UB, UF, DF, DB (this in turn stages the final four edges).
 
-        if paired_edges_count >= 8:
-            log.info("%s: 8-edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        Since there are 8-edges there are 70 different combinations of edges we can
+        choose to stage to UB, UF, DF, DB. Walk through all 70 combinations and see
+        which one leads to the shortest solution.
+        """
+
+        # return if they are already staged
+        if self.y_plane_edges_are_l4e() and self.z_plane_edges_are_l4e():
+            return
+
+        first_four_wing_strs = list(self.get_x_plane_wing_strs())
+        wing_strs_for_second_four = []
+
+        log.info("first_four_wing_strs %s" % pformat(first_four_wing_strs))
+
+        for wing_str in wing_strs_all:
+            if wing_str not in first_four_wing_strs:
+                wing_strs_for_second_four.append(wing_str)
+
+        log.info("wing_strs_for_second_four %s" % pformat(wing_strs_for_second_four))
+        assert len(wing_strs_for_second_four) == 8
+        min_solution_len = None
+        min_solution_steps = None
+
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+
+        for pre_steps in pre_steps_to_try:
+
+            for wing_strs in itertools.combinations(wing_strs_for_second_four, 4):
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in pre_steps:
+                    self.rotate(step)
+
+                state = self.lt_edges_stage_second_four.state(wing_strs)
+                steps = self.lt_edges_stage_second_four.steps(state)
+                #log.info("%s: pre_steps %s, wing_strs %s, state %s, steps %s" % (
+                #    self, pformat(pre_steps), wing_strs, state, pformat(steps)))
+
+                if steps:
+
+                    for step in steps:
+                        self.rotate(step)
+
+                    solution_steps = self.solution[original_solution_len:]
+                    solution_len = self.get_solution_len_minus_rotates(solution_steps)
+
+                    if min_solution_len is None or solution_len < min_solution_len:
+                        min_solution_len = solution_len
+                        min_solution_steps = solution_steps
+                        log.info("%s: y-plane edges %s can be staged in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
+                    else:
+                        log.info("%s: y-plane edges %s can be staged in %d steps" % (self, wing_strs, solution_len))
+
+                    self.state = original_state[:]
+                    self.solution = original_solution[:]
+
+            if min_solution_len is not None:
+                if pre_steps:
+                    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
+
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in min_solution_steps:
+                    self.rotate(step)
+
+                break
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        if min_solution_len is None:
+            raise SolveError("Could not find 4-edges to stage")
         else:
-            tmp_state = self.state[:]
-            tmp_solution = self.solution[:]
-            tmp_solution_len = len(tmp_solution)
-
-            # Recolor the centers to ULFRBD, that is the pattern that was used to build the
-            # centers prune table for this phase.
-            centers_recolor = {
-                self.state[13] : "U",
-                self.state[38] : "L",
-                self.state[63] : "F",
-                self.state[88] : "R",
-                self.state[113] : "B",
-                self.state[138] : "D",
-            }
-
-            for x in centers_555:
-                self.state[x] = centers_recolor[self.state[x]]
-
-            # There could be more than 4 edges that are pairable without LFRB, pick
-            # the 4 with the lowest heuristic.
-            only_colors = self.edges_pairable_without_LRFB()
-            min_four_wing_str_combo = None
-            min_cost = None
-            for four_wing_str_combo in itertools.combinations(only_colors, 4):
-                self.lt_pair_second_four_edges_edges_only.only_colors = four_wing_str_combo
-                (_, tmp_cost) = self.lt_pair_second_four_edges_edges_only.ida_heuristic()
-
-                if min_cost is None or tmp_cost < min_cost:
-                    log.info("%s: 2nd L4E wing_str %s has cost %s (NEW MIN)" % (self, four_wing_str_combo, tmp_cost))
-                    min_cost = tmp_cost
-                    min_four_wing_str_combo = four_wing_str_combo
-                elif tmp_cost == min_cost:
-                    log.info("%s: 2nd L4E wing_str %s has cost %s (TIE)" % (self, four_wing_str_combo, tmp_cost))
-
-            self.lt_pair_second_four_edges_edges_only.only_colors = min_four_wing_str_combo
-            self.lt_pair_second_four_edges.solve()
-
-            # Put the centers back to their original color and apply the solution we found
-            solution_steps = self.solution[tmp_solution_len:]
-            self.state = tmp_state[:]
-            self.solution = tmp_solution[:]
-
-            for step in solution_steps:
+            for step in min_solution_steps:
                 self.rotate(step)
 
-            self.print_cube()
-            self.solution.append("COMMENT_%d_steps_555_second_four_edges_paired" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
-            log.info("%s: z-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+    def pair_second_four_edges_via_l4e(self):
+        self.stage_second_four_edges_555()
+        self.rotate("x")
+        log.info("%s: 2nd 4-edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.pair_x_plane_edges_in_l4e()
+        self.print_cube()
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
+        log.info("%s: 2nd 4-edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def stage_final_four_edges_in_x_plane(self):
         original_state = self.state[:]
@@ -1022,9 +867,10 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.solution.append("COMMENT_%d_steps_555_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        # log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
+        log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
         self.solution.append('CENTERS_SOLVED')
 
+        # algorithms table approach is WIP
         '''
         LR_pairable = self.edges_pairable_without_LR()
         log.info("%s: %d pairable without LR (%s)" %
@@ -1094,13 +940,11 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.rotate_F_to_F()
         self.print_cube()
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.print_solution(True)
-        #sys.exit(0)
         '''
 
         if not self.edges_paired():
             self.pair_first_four_edges_via_l4e()
-            self.pair_second_four_edges_via_eo()
+            self.pair_second_four_edges_via_l4e()
             self.stage_final_four_edges_in_x_plane()
             self.pair_x_plane_edges_in_l4e()
 

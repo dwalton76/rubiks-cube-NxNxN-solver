@@ -2,7 +2,7 @@
 from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksCube555 import solved_555
-#from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
+from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 from math import ceil
 import logging
@@ -28,8 +28,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 # from using the more advanced 555 edge pairing code path...and it
                 # takes much longer to run.  For now use the old L4E way it is only
                 # about 1 move longer if the centers are solved but runs 3x faster.
-                #self.fake_555 = RubiksCube555ForNNN(solved_555, 'URFDLB')
-                self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+                self.fake_555 = RubiksCube555ForNNN(solved_555, 'URFDLB')
                 self.fake_555.enable_print_cube = False
                 self.fake_555.cpu_mode = self.cpu_mode
                 self.fake_555.lt_init()

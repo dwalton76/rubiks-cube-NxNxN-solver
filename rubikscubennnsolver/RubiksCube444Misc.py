@@ -3248,7 +3248,7 @@ highlow_edge_mapping_combinations = {
 }
 
 
-step52_index = {
+step162_index = {
     "DDDDLLLLBBBBRRRRFFFFUUUU" : 0,
     "DDDDLLLLBFBFRRRRBFBFUUUU" : 1,
     "DDDDLLLLBFBFRRRRFBFBUUUU" : 2,
@@ -5771,7 +5771,7 @@ step52_index = {
     "UUUURRRRFFFFLLLLBBBBDDDD" : 2519,
 }
 
-step51_index = {
+step161_index = {
     "10352476a8b9ecfdhgjliknm" : 0,
     "10352476a8b9ecfdhgkimnjl" : 1,
     "10352476a8b9ecfdhgnmljki" : 2,

@@ -133,9 +133,9 @@ try:
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
         cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
+        from rubikscubennnsolver.RubiksCube555 import solved_555
 
         if cpu_mode == "fast":
-            from rubikscubennnsolver.RubiksCube555 import solved_555
             from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
             cube = RubiksCube555ForNNN(args.state, args.order, args.colormap, args.debug)
         else:

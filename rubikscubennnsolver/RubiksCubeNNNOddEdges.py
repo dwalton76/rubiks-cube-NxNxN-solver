@@ -3,6 +3,7 @@ from pprint import pformat
 from rubikscubennnsolver import RubiksCube, ImplementThis
 from rubikscubennnsolver.RubiksCube555 import solved_555
 from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 from math import ceil
 import logging
 import sys

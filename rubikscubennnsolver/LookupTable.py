@@ -34,12 +34,86 @@ class NoPruneTableState(Exception):
     pass
 
 
+def get_wing_pair_count_555(strA, strB):
+    wing_count = 0
+    edge_count = 0
+
+    if strA == "tOVrPPQQWTRRsSSqTvuUUOVXpWwxXoYYyzZZ" and strB == "OOorPPQQWTRRsSSqTtuUUVVvpWwxXXYYyzZZ":
+        debug = True
+    else:
+        debug = False
+
+    # 000 000 000 011 111 111 112 222 222 222 333 333
+    # 012 345 678 901 234 567 890 123 456 789 012 345
+
+    # OOO PPP SqQ RrU xss TTT Yuu VVV WWW Xxq yyr ZZZ (14)
+    # OOO PPP QQQ RRR SSS TTT UUU VVV WWW XXX YYY ZZZ (4)
+    # SOY opR zqT urU xsp wTO Zuv tVr VWX sxq yyQ PzW
+    '''
+    matching_midges = []
+
+    for midge in (1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34):
+        if strA[midge] == strB[midge]:
+            matching_midges.append(strA[midge].lower())
+    '''
+
+    if debug:
+        log.info(' '.join(strA[i:i+3] for i in range(0, len(strA), 3)))
+        log.info(' '.join(strB[i:i+3] for i in range(0, len(strB), 3)))
+        #log.info(matching_midges)
+
+    matches = []
+
+    for edge_index in range(12):
+        wing_pre = edge_index * 3
+        midge = wing_pre + 1
+        wing_post = wing_pre + 2
+
+        wing_pre_A = strA[wing_pre]
+        wing_pre_B = strB[wing_pre]
+        midge_A = strA[midge]
+        midge_B = strB[midge]
+        wing_post_A = strA[wing_post]
+        wing_post_B = strB[wing_post]
+
+        if wing_pre_A == wing_pre_B:
+            wing_count += 1
+
+            if debug:
+                log.info("wing_pre_A %s matches" % wing_pre_A)
+
+            if wing_pre_A.lower() in matches:
+                if debug:
+                    log.info("edge %s will pair\n" % wing_pre_A)
+                edge_count += 1
+            else:
+                matches.append(wing_pre_A.lower())
+
+        if wing_post_A == wing_post_B:
+            wing_count += 1
+
+            if debug:
+                log.info("wing_post_A %s matches" % wing_post_A)
+
+            if wing_post_A.lower() in matches:
+                if debug:
+                    log.info("edge %s will pair\n" % wing_post_A)
+                edge_count += 1
+            else:
+                matches.append(wing_post_A.lower())
+
+    if debug:
+        log.info("wing_count: %d" % wing_count)
+        log.info("matches: %s" % pformat(matches))
+        log.info("edge_count: %d" % edge_count)
+
+    return (wing_count, edge_count)
+
+
 def get_characters_common_count(strA, strB, start_index):
     """
     This assumes strA and strB are the same length
     """
-    result = 0
-
     for (charA, charB) in zip(strA[start_index:], strB[start_index:]):
         if charA == charB:
             result += 1
@@ -798,6 +872,40 @@ class LookupTable(object):
 
     def state(self):
         raise Exception("child class must implement state()")
+
+    def best_match(self, state_to_find, init_wing_count):
+        max_wing_pair_count = 0
+        max_line = None
+        max_steps_len = 9999
+        max_edges_pair_count = 0
+
+        log.info("%s: %s is init state, %d wings paired" % (self, state_to_find, init_wing_count))
+        with open(self.filename, "r") as fh:
+            for line in fh:
+                line = line.rstrip()
+                (state, steps) = line.split(":")
+                steps = steps.split()
+                len_steps = len(steps)
+                (wing_pair_count, edges_pair_count) = get_wing_pair_count_555(state_to_find, state)
+                wing_pair_count -= init_wing_count
+
+                # dwalton
+                if (wing_pair_count > max_wing_pair_count or
+                        (wing_pair_count == max_wing_pair_count and len_steps < max_steps_len) or
+                        (wing_pair_count == max_wing_pair_count and len_steps == max_steps_len and edges_pair_count > max_edges_pair_count)):
+                #if (edges_pair_count > max_edges_pair_count or
+                #        (edges_pair_count == max_edges_pair_count and wing_pair_count > max_wing_pair_count) or
+                #        (edges_pair_count == max_edges_pair_count and wing_pair_count > max_wing_pair_count and len_steps < max_steps_len)):
+
+                    max_wing_pair_count = wing_pair_count
+                    max_line = line.strip()
+                    max_steps_len = len_steps
+                    max_edges_pair_count = edges_pair_count
+                    #log.info("%s: %s vs %s will pair %d wings in %d moves" % (self, state_to_find, state, max_wing_pair_count, max_steps_len))
+                    log.info("%s: %s will pair %d wings and %d edges in %d moves %s" %
+                        (self, state, max_wing_pair_count, max_edges_pair_count, max_steps_len, " ".join(steps)))
+
+        return max_line
 
 
 class LookupTableCostOnly(LookupTable):

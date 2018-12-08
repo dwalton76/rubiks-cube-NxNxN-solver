@@ -1177,7 +1177,10 @@ class RubiksCube(object):
 
     def rotate(self, action):
 
-        if action in (
+        if action.startswith("COMMENT"):
+            self.solution.append(action)
+
+        elif action in (
                 "x2", "y2", "z2",
                 "2U", "2U'", "2U2",
                 "2L", "2L'", "2L2",
@@ -4721,6 +4724,23 @@ div#page_holder {
             return True
         return False
 
+    def x_plane_edges_unpaired_count(self):
+        result = 0
+
+        if not self.sideL.west_edge_paired():
+            result += 1
+
+        if not self.sideL.east_edge_paired():
+            result += 1
+
+        if not self.sideR.west_edge_paired():
+            result += 1
+
+        if not self.sideR.east_edge_paired():
+            result += 1
+
+        return result
+
     def y_plane_edges_paired(self):
         if (self.sideU.north_edge_paired() and
             self.sideU.south_edge_paired() and
@@ -4729,6 +4749,23 @@ div#page_holder {
             return True
         return False
 
+    def y_plane_edges_unpaired_count(self):
+        result = 0
+
+        if not self.sideU.north_edge_paired():
+            result += 1
+
+        if not self.sideU.south_edge_paired():
+            result += 1
+
+        if not self.sideD.north_edge_paired():
+            result += 1
+
+        if not self.sideD.south_edge_paired():
+            result += 1
+
+        return result
+
     def z_plane_edges_paired(self):
         if (self.sideU.west_edge_paired() and
             self.sideU.east_edge_paired() and
@@ -4736,3 +4773,21 @@ div#page_holder {
             self.sideD.east_edge_paired()):
             return True
         return False
+
+    def z_plane_edges_unpaired_count(self):
+        result = 0
+
+        if not self.sideU.west_edge_paired():
+            result += 1
+
+        if not self.sideU.east_edge_paired():
+            result += 1
+
+        if not self.sideD.west_edge_paired():
+            result += 1
+
+        if not self.sideD.east_edge_paired():
+            result += 1
+
+        return result
+

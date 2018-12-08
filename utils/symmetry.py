@@ -457,7 +457,7 @@ if __name__ == '__main__':
 
     #print_reflect_x(2)
     #print_reflect_x(3)
-    #print_reflect_x(4)
+    print_reflect_x(4)
     #print_reflect_x(5)
     #print_reflect_x(6)
     #print_reflect_x(7)
@@ -469,9 +469,11 @@ if __name__ == '__main__':
     #print_symmetry_swaps(6)
     #print_symmetry_swaps(7)
 
+    '''
     if len(sys.argv) < 2:
         print("symmetry.py FILENAME")
         sys.exit(1)
 
     filename = sys.argv[1]
     print_cubes(filename)
+    '''

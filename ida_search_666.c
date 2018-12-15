@@ -112,7 +112,7 @@ ida_heuristic_UD_oblique_edges_stage_666 (
 {
     int unpaired_count = get_unpaired_obliques_count_666(cube);
     struct ida_heuristic_result result;
-    unsigned long state = 0;
+    unsigned long long state = 0;
 
     // Get the state of the oblique edges
     for (int i = 0; i < NUM_OBLIQUE_EDGES_666; i++) {
@@ -124,7 +124,7 @@ ida_heuristic_UD_oblique_edges_stage_666 (
 
     // 000000033fff is 12 chars
     state >>= 1;
-    sprintf(result.lt_state, "%012lx", state);
+    sprintf(result.lt_state, "%012llx", state);
 
     // The most oblique edges we can pair in single move is 4 so take
     // the number that are unpaired and divide by 4.
@@ -173,16 +173,16 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     char *LR_inner_x_centers_cost_666,
     char *LR_oblique_edges_cost_666)
 {
-    unsigned long inner_x_centers_state = 0;
-    unsigned long inner_x_centers_cost = 0;
-    unsigned long oblique_edges_state = 0;
-    unsigned long oblique_edges_bucket = 0;
-    unsigned long oblique_edges_cost = 0;
-    unsigned long cost_to_goal = 0;
+    unsigned long long inner_x_centers_state = 0;
+    unsigned long long inner_x_centers_cost = 0;
+    unsigned long long oblique_edges_state = 0;
+    unsigned long long oblique_edges_bucket = 0;
+    unsigned long long oblique_edges_cost = 0;
+    unsigned long long cost_to_goal = 0;
     char oblique_edges_str[24];
     int cube_index;
     struct ida_heuristic_result result;
-    unsigned long state = 0;
+    unsigned long long state = 0;
 
     // good test cube...this took ~3m prior to using the step31 oblique edges pruning table :(
     // Now it takes 20s
@@ -207,7 +207,7 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
         oblique_edges_state <<= 1;
     }
     oblique_edges_state >>= 1;
-    sprintf(oblique_edges_str, "%08lx", oblique_edges_state);
+    sprintf(oblique_edges_str, "%08llx", oblique_edges_state);
     oblique_edges_bucket = XXH32(oblique_edges_str, 8, 0) % 165636907;
     oblique_edges_cost = hex_to_int(LR_oblique_edges_cost_666[oblique_edges_bucket]);
 
@@ -221,7 +221,7 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
 
     // 00019b267fff is 12 chars
     state >>= 1;
-    sprintf(result.lt_state, "%012lx", state);
+    sprintf(result.lt_state, "%012llx", state);
     cost_to_goal = max(oblique_edges_cost, inner_x_centers_cost);
 
     if (cost_to_goal > 0) {

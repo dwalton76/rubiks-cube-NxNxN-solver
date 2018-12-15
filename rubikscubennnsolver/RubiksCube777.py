@@ -209,9 +209,9 @@ class LookupTableIDA777Step40(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-7x7x7-step40.txt', '4862690bafc6dada8dd652047acafe3a'),
-             ('lookup-table-7x7x7-step41.hash-cost-only.txt', '63c848ac2fc2e7e78a2ea6312dd96249'),
-             ('lookup-table-7x7x7-step42.hash-cost-only.txt', '70d5bd7eab4360535a622fc0f7f973ec')),
+            (('lookup-table-7x7x7-step40.txt', None, '4862690bafc6dada8dd652047acafe3a'),
+             ('lookup-table-7x7x7-step41.hash-cost-only.txt', None, '63c848ac2fc2e7e78a2ea6312dd96249'),
+             ('lookup-table-7x7x7-step42.hash-cost-only.txt', None, '70d5bd7eab4360535a622fc0f7f973ec')),
             '7x7x7-step40' # C_ida_type
         )
 
@@ -301,9 +301,9 @@ class LookupTableIDA777Step50(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-7x7x7-step50.txt', 'de0c08d06995550c0654ccb3eec588f9'),
-             ('lookup-table-7x7x7-step51.hash-cost-only.txt', 'e9b548241f7fc6296cac2d32981efac5'),
-             ('lookup-table-7x7x7-step52.hash-cost-only.txt', '5b6b9c069943e6c87397843b4b888799')),
+            (('lookup-table-7x7x7-step50.txt', None, 'de0c08d06995550c0654ccb3eec588f9'),
+             ('lookup-table-7x7x7-step51.hash-cost-only.txt', None, 'e9b548241f7fc6296cac2d32981efac5'),
+             ('lookup-table-7x7x7-step52.hash-cost-only.txt', None, '5b6b9c069943e6c87397843b4b888799')),
             '7x7x7-step50' # C_ida_type
         )
 
@@ -390,10 +390,10 @@ class LookupTableIDA777Step60(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-7x7x7-step60.txt', 'a81708de4b0fca70b048989cc7b51b67'),
-             ('lookup-table-7x7x7-step61.hash-cost-only.txt', 'ba9b9e02f603459dac94fef5c637ac40'),
-             ('lookup-table-7x7x7-step62.hash-cost-only.txt', '2ebb594b99f8cf04a2a77a64c67ea0d4'),
-             ('lookup-table-7x7x7-step63.hash-cost-only.txt', '67ec50d946ec204c0dc8fe27b268c64d')),
+            (('lookup-table-7x7x7-step60.txt', None, 'a81708de4b0fca70b048989cc7b51b67'),
+             ('lookup-table-7x7x7-step61.hash-cost-only.txt', None, 'ba9b9e02f603459dac94fef5c637ac40'),
+             ('lookup-table-7x7x7-step62.hash-cost-only.txt', None, '2ebb594b99f8cf04a2a77a64c67ea0d4'),
+             ('lookup-table-7x7x7-step63.hash-cost-only.txt', None, '67ec50d946ec204c0dc8fe27b268c64d')),
             '7x7x7-step60' # C_ida_type
         )
 
@@ -419,10 +419,10 @@ class LookupTableIDA777Step70(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-7x7x7-step70.txt', '8dba523084036088f1f6a14811e03625'),
-             ('lookup-table-7x7x7-step61.hash-cost-only.txt', 'ba9b9e02f603459dac94fef5c637ac40'),
-             ('lookup-table-7x7x7-step62.hash-cost-only.txt', '2ebb594b99f8cf04a2a77a64c67ea0d4'),
-             ('lookup-table-7x7x7-step63.hash-cost-only.txt', '67ec50d946ec204c0dc8fe27b268c64d')),
+            (('lookup-table-7x7x7-step70.txt', None, '8dba523084036088f1f6a14811e03625'),
+             ('lookup-table-7x7x7-step61.hash-cost-only.txt', None, 'ba9b9e02f603459dac94fef5c637ac40'),
+             ('lookup-table-7x7x7-step62.hash-cost-only.txt', None, '2ebb594b99f8cf04a2a77a64c67ea0d4'),
+             ('lookup-table-7x7x7-step63.hash-cost-only.txt', None, '67ec50d946ec204c0dc8fe27b268c64d')),
             '7x7x7-step70' # C_ida_type
         )
 

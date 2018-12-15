@@ -387,10 +387,9 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.lt_LR_T_centers_stage_even = LookupTable555LRTCenterStageEven(self)
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
-        # No need to preload this one, we use binary_seach_multiple
+        # No need to preload these, they use binary_seach_multiple
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
-        self.lt_edges_stage_second_four.preload_cache_string()
 
         self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(self)
         #self.lt_cycle_edges = LookupTable555CycleEdges(self)
@@ -506,11 +505,15 @@ class RubiksCube555ForNNN(RubiksCube555):
             for wing_strs in itertools.combinations(wing_strs_all, 4):
                 states_to_find.append(self.lt_edges_stage_first_four.state(wing_strs))
 
+            log.info("%s: %d states_to_find" % (self, len(states_to_find)))
             results = self.lt_edges_stage_first_four.binary_search_multiple(states_to_find)
             len_results = len(results)
-            log.info("%s: %d states_to_find, found %d matches" % (self, len(states_to_find), len(results)))
+            log.info("%s: %d states found" % (self, len(results)))
 
-            for (line_number, (_, steps)) in enumerate(results.items()):
+            # We sort the keys of the dict so that the order is the same everytime, this isn't
+            # required but makes troubleshooting easier.
+            for (line_number, key) in enumerate(sorted(results.keys())):
+                steps = results[key]
                 self.state = post_pre_steps_state[:]
                 self.solution = post_pre_steps_solution[:]
 
@@ -525,28 +528,25 @@ class RubiksCube555ForNNN(RubiksCube555):
                 # the next phase some wiggle room...it can choose the best 4-edge tuple.
                 if min_solution_len is None or solution_len < min_solution_len:
                     log.info("%s: %d/%d 1st 4-edges can be staged in %d steps %s (NEW MIN)" % (
-                        self, line_number, len_results, solution_len, ' '.join(solution_steps)))
+                        self, line_number+1, len_results, solution_len, ' '.join(solution_steps)))
                     min_solution_len = solution_len
                     min_solution_steps = solution_steps
                 else:
                     log.info("%s: %d/%d 1st 4-edges can be staged in %d steps" % (
-                        self, line_number, len_results, solution_len))
+                        self, line_number+1, len_results, solution_len))
 
             if min_solution_len is not None:
-                #if pre_steps:
-                #    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
                 self.state = original_state[:]
                 self.solution = original_solution[:]
 
                 for step in min_solution_steps:
                     self.rotate(step)
-
                 break
 
         if not self.x_plane_edges_are_l4e():
             raise SolveError("There should be an L4E group in x-plane but there is not")
 
-        self.print_cube()
+        #self.print_cube()
         self.solution.append("COMMENT_%d_steps_555_first_L4E_edges_staged" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
         log.info("%s: 1st 4-edges staged to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
@@ -631,56 +631,63 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         log.info("wing_strs_for_second_four %s" % pformat(wing_strs_for_second_four))
         assert len(wing_strs_for_second_four) == 8
-        min_solution_len = None
-        min_solution_steps = None
 
         # Remember what things looked like
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
 
+        min_solution_len = None
+        min_solution_steps = None
+
         for pre_steps in pre_steps_to_try:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in pre_steps:
+                self.rotate(step)
+
+            post_pre_steps_state = self.state[:]
+            post_pre_steps_solution = self.solution[:]
+            states_to_find = []
 
             for wing_strs in itertools.combinations(wing_strs_for_second_four, 4):
-                self.state = original_state[:]
-                self.solution = original_solution[:]
+                states_to_find.append(self.lt_edges_stage_second_four.state(wing_strs))
 
-                for step in pre_steps:
+            log.info("%s: %d states_to_find" % (self, len(states_to_find)))
+            results = self.lt_edges_stage_second_four.binary_search_multiple(states_to_find)
+            len_results = len(results)
+            #log.info(results)
+            log.info("%s: %d states found" % (self, len(results)))
+
+            # We sort the keys of the dict so that the order is the same everytime, this isn't
+            # required but makes troubleshooting easier.
+            for (line_number, key) in enumerate(sorted(results.keys())):
+                steps = results[key]
+                self.state = post_pre_steps_state[:]
+                self.solution = post_pre_steps_solution[:]
+
+                for step in steps.split():
                     self.rotate(step)
 
-                state = self.lt_edges_stage_second_four.state(wing_strs)
-                steps = self.lt_edges_stage_second_four.steps(state)
-                #log.info("%s: pre_steps %s, wing_strs %s, state %s, steps %s" % (
-                #    self, pformat(pre_steps), wing_strs, state, pformat(steps)))
+                solution_steps = self.solution[original_solution_len:]
+                solution_len = len(solution_steps)
 
-                if steps:
-
-                    for step in steps:
-                        self.rotate(step)
-
-                    solution_steps = self.solution[original_solution_len:]
-                    solution_len = self.get_solution_len_minus_rotates(solution_steps)
-
-                    if min_solution_len is None or solution_len < min_solution_len:
-                        min_solution_len = solution_len
-                        min_solution_steps = solution_steps
-                        log.info("%s: y-plane edges %s can be staged in %d steps (NEW MIN)" % (self, wing_strs, solution_len))
-                    else:
-                        log.info("%s: y-plane edges %s can be staged in %d steps" % (self, wing_strs, solution_len))
-
-                    self.state = original_state[:]
-                    self.solution = original_solution[:]
+                if min_solution_len is None or solution_len < min_solution_len:
+                    log.info("%s: %d/%d 2nd 4-edges can be staged in %d steps %s (NEW MIN)" % (
+                        self, line_number+1, len_results, solution_len, ' '.join(solution_steps)))
+                    min_solution_len = solution_len
+                    min_solution_steps = solution_steps
+                else:
+                    log.info("%s: %d/%d 2nd 4-edges can be staged in %d steps" % (
+                        self, line_number+1, len_results, solution_len))
 
             if min_solution_len is not None:
-                if pre_steps:
-                    log.info("pre-steps %s required to find a hit" % ' '.join(pre_steps))
-
                 self.state = original_state[:]
                 self.solution = original_solution[:]
 
                 for step in min_solution_steps:
                     self.rotate(step)
-
                 break
 
         self.state = original_state[:]
@@ -697,7 +704,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.rotate("x")
         log.info("%s: 2nd 4-edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.pair_x_plane_edges_in_l4e()
-        self.print_cube()
+        #self.print_cube()
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: 2nd 4-edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
@@ -839,7 +846,6 @@ class RubiksCube555ForNNN(RubiksCube555):
         for (state, steps) in results.items():
             steps = list(pre_steps_for_state[state]) + steps.split()
 
-            # dwalton here now
             if min_steps is None or len(steps) < len(min_steps):
                 min_steps = steps
                 log.info("%s: get_final_edges_steps %s (NEW MIN %d)" % (self, " ".join(steps), len(steps)))

@@ -8,6 +8,17 @@ Solve any size rubiks cube:
 This is a work in progress
 """
 
+import logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(filename)20s %(levelname)8s: %(message)s')
+log = logging.getLogger(__name__)
+
+# Color the errors and warnings in red
+logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
+logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
+log.info("rubiks-cube-solver.py begin")
+
+
 from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop, NotSolving, reverse_steps
 from rubikscubennnsolver.LookupTable import NoSteps, NoPruneTableState
 from math import sqrt
@@ -21,14 +32,6 @@ import resource
 import sys
 
 start_time = dt.datetime.now()
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(filename)20s %(levelname)8s: %(message)s')
-log = logging.getLogger(__name__)
-
-# Color the errors and warnings in red
-logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
-logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
 
 parser = argparse.ArgumentParser()
@@ -224,6 +227,7 @@ try:
         print("--min-memory has been replaced by --fast")
         print("****************************************\n\n")
 
+    log.info("rubiks-cube-solver.py end")
     print("\nMemory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
     print("Time   : %s" % (end_time - start_time))
     print("")
@@ -244,4 +248,5 @@ except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError, NoPruneTable
     cube.print_cube()
     cube.print_solution(False)
     print((cube.get_kociemba_string(True)))
+    log.info("rubiks-cube-solver.py end")
     raise

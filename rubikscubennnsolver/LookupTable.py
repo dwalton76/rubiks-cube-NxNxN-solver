@@ -310,19 +310,21 @@ def rm_file_if_mismatch(filename, filesize, md5target):
     # This only happens if a new copy of the lookup table has been checked in...we need to delete
     # the one we have and download the new one.
     if os.path.exists(filename):
-        if filesize is not None and os.path.getsize(filename) != filesize:
-            log.info("%s: filesize %s does not equal target filesize %s" % (filename, os.path.getsize(filename), filesize))
-            os.remove(filename)
+        if filesize is not None:
+            if os.path.getsize(filename) != filesize:
+                log.mnfo("%s: filesize %s does not equal target filesize %s" % (filename, os.path.getsize(filename), filesize))
+                os.remove(filename)
 
-            if os.path.exists(filename_gz):
-                os.remove(filename_gz)
+                if os.path.exists(filename_gz):
+                    os.remove(filename_gz)
 
-        elif md5target is not None and md5signature(filename) != md5target:
-            log.info("%s: md5 signature %s is not %s" % (filename, md5signature(filename), md5target))
-            os.remove(filename)
+        elif md5target is not None:
+            if md5signature(filename) != md5target:
+                log.info("%s: md5 signature %s is not %s" % (filename, md5signature(filename), md5target))
+                os.remove(filename)
 
-            if os.path.exists(filename_gz):
-                os.remove(filename_gz)
+                if os.path.exists(filename_gz):
+                    os.remove(filename_gz)
 
 
 def download_file_if_needed(filename, cube_size):
@@ -1489,9 +1491,13 @@ class LookupTableIDAViaC(object):
         self.parent = parent
         self.C_ida_type = C_ida_type
 
-        for (filename, md5target) in files:
-            rm_file_if_mismatch(filename, None, md5target)
+        for (filename, filesize, md5target) in files:
+            #log.info("%s: rm_file_if_mismatch %s begin" % (self, filename))
+            rm_file_if_mismatch(filename, filesize, md5target)
+            #log.info("%s: rm_file_if_mismatch %s end" % (self, filename))
+            #log.info("%s: download_file_if_needed %s begin" % (self, filename))
             download_file_if_needed(filename, self.parent.size)
+            #log.info("%s: download_file_if_needed %s end\n" % (self, filename))
 
     def __str__(self):
         return self.__class__.__name__

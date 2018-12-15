@@ -6,7 +6,7 @@ from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 
 # This will consume about 200M when you import it
-from rubikscubennnsolver.RubiksCube555Misc import highlow_edge_values
+from rubikscubennnsolver.RubiksCube555HighLowEdges import highlow_edge_values
 
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
@@ -665,9 +665,9 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-5x5x5-step10-UD-centers-stage.txt', '343288ec28eeaaa2a02dede2c1485c10'),
-             ('lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt', '95464b63ec32f831c0f844916f3bbee9'),
-             ('lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt', '19679794a853d38a7d36be0f03fe1c3b')),
+            (('lookup-table-5x5x5-step10-UD-centers-stage.txt', 14759145, '343288ec28eeaaa2a02dede2c1485c10'),
+             ('lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt', 16711681, '95464b63ec32f831c0f844916f3bbee9'),
+             ('lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt', 16711681, '19679794a853d38a7d36be0f03fe1c3b')),
             '5x5x5-UD-centers-stage' # C_ida_type
         )
 
@@ -867,10 +867,9 @@ class LookupTableIDA555LRCentersStage(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            #(('lookup-table-5x5x5-step20-LR-centers-stage.txt', '9d982346d89494107f5a77323625c428'),  # 7-deep
-            (('lookup-table-5x5x5-step20-LR-centers-stage.txt', '3d13c62d7a982023d0376f56ecdf2812'),  # 6-deep
-             ('lookup-table-5x5x5-step21-LR-t-centers-stage.cost-only.txt', '8fa5217b28c7aeb9e04684ae3f5bebee'),
-             ('lookup-table-5x5x5-step22-LR-x-centers-stage.cost-only.txt', '4e4d8a8ec35d0c999ce7c51b6681bc4e')),
+            (('lookup-table-5x5x5-step20-LR-centers-stage.txt', 5170308, '3d13c62d7a982023d0376f56ecdf2812'),  # 6-deep
+             ('lookup-table-5x5x5-step21-LR-t-centers-stage.cost-only.txt', None, '8fa5217b28c7aeb9e04684ae3f5bebee'),
+             ('lookup-table-5x5x5-step22-LR-x-centers-stage.cost-only.txt', None, '4e4d8a8ec35d0c999ce7c51b6681bc4e')),
             '5x5x5-LR-centers-stage' # C_ida_type
         )
 
@@ -970,10 +969,10 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt', '5a0bad50c3e650dbd2677e29aba17eca'),
-             ('lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt', 'b9e47314dbbb37690d4aed370b3b2245'),
-             ('lookup-table-5x5x5-step32-UF-centers-solve.hash-cost-only.txt', '966f865fffe4b5c2ce7301767c3f19f7'),
-             ('lookup-table-5x5x5-step33-LF-centers-solve.hash-cost-only.txt', '7ea2ddf0e97094cc8f5d9c11df0176fe')),
+            (('lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt', 24368616, '5a0bad50c3e650dbd2677e29aba17eca'),
+             ('lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt', 24010032, 'b9e47314dbbb37690d4aed370b3b2245'),
+             ('lookup-table-5x5x5-step32-UF-centers-solve.hash-cost-only.txt', 24010032, '966f865fffe4b5c2ce7301767c3f19f7'),
+             ('lookup-table-5x5x5-step33-LF-centers-solve.hash-cost-only.txt', 24010032, '7ea2ddf0e97094cc8f5d9c11df0176fe')),
             '5x5x5-centers-solve' # C_ida_type
         )
 
@@ -1721,7 +1720,7 @@ class LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
     """
 
     def __init__(self, parent):
-        from rubikscubennnsolver.RubiksCube555Misc import starting_states_step351
+        from rubikscubennnsolver.RubiksCube555StartingStates import starting_states_step351
 
         LookupTable.__init__(
             self,
@@ -1837,7 +1836,7 @@ class LookupTableIDA555XPlaneYPlaneEdgesOrient(LookupTableIDA):
     """
 
     def __init__(self, parent):
-        from rubikscubennnsolver.RubiksCube555Misc import starting_states_step350
+        from rubikscubennnsolver.RubiksCube555StartingStates import starting_states_step350
 
         LookupTableIDA.__init__(
             self,

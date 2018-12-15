@@ -333,9 +333,9 @@ class LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt', '2982d4bd6606cd4f51e85385f570c1b7'),
-             ('lookup-table-6x6x6-step31-LR-oblique-edges-stage.hash-cost-only.txt', 'c48496a8c0f1186d0bbfaea25d334f9a'),
-             ('lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt', 'a698248e3fafc4c1f288962f1d8a5f7c')),
+            (('lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt', None, '2982d4bd6606cd4f51e85385f570c1b7'),
+             ('lookup-table-6x6x6-step31-LR-oblique-edges-stage.hash-cost-only.txt', None, 'c48496a8c0f1186d0bbfaea25d334f9a'),
+             ('lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt', None, 'a698248e3fafc4c1f288962f1d8a5f7c')),
             '6x6x6-LR-inner-x-centers-oblique-edges-stage' # C_ida_type
         )
 

@@ -963,10 +963,10 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', '4696649132d2d5895ccb294eea4e25f5'), # 4-deep
-             ('lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749'),
-             ('lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749'),
-             ('lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt', '504553715ca5632e90a81c9ecd4aa749')),
+            (('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', None, '4696649132d2d5895ccb294eea4e25f5'), # 4-deep
+             ('lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt', None, '504553715ca5632e90a81c9ecd4aa749'),
+             ('lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt', None, '504553715ca5632e90a81c9ecd4aa749'),
+             ('lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt', None, '504553715ca5632e90a81c9ecd4aa749')),
             '4x4x4-centers-stage' # C_ida_type
         )
 
@@ -1035,9 +1035,9 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-4x4x4-step30-reduce333.txt', '82fbc3414d07e53448d0746d96e25ebd'), # 6-deep
-             ('lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt', '20ac2ed7ca369c3b5183f836f5d99262'),
-             ('lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt', '3f990fc1fb6bf506d81ba65f03ad74f6')),
+            (('lookup-table-4x4x4-step30-reduce333.txt', None, '82fbc3414d07e53448d0746d96e25ebd'), # 6-deep
+             ('lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt', None, '20ac2ed7ca369c3b5183f836f5d99262'),
+             ('lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt', None, '3f990fc1fb6bf506d81ba65f03ad74f6')),
             '4x4x4-reduce-333' # C_ida_type
         )
 

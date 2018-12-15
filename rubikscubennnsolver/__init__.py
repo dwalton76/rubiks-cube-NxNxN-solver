@@ -4147,7 +4147,9 @@ class RubiksCube(object):
         if self.solved():
             return
 
+        log.info("lt_init begin")
         self.lt_init()
+        log.info("lt_init end")
 
         if self.is_odd() or self.centers_solved():
             self.rotate_U_to_U()
@@ -4156,7 +4158,9 @@ class RubiksCube(object):
         if self.cpu_mode == "slow":
             self.reduce_333_slow()
         else:
+            log.info("reduce_333 begin")
             self.reduce_333()
+            log.info("reduce_333 end")
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -4168,7 +4172,9 @@ class RubiksCube(object):
                 self.rotate(step)
             self.solution.append("COMMENT_%d_steps_solve_333" % self.get_solution_len_minus_rotates(self.solution[reduce_333_solution_len:]))
         else:
+            log.info("solve_333 begin")
             self.solve_333()
+            log.info("solve_333 end")
         self.compress_solution()
 
     def print_solution(self, include_comments):

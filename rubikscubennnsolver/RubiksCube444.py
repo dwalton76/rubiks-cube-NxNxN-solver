@@ -741,7 +741,6 @@ class LookupTable444FirstFourEdges(LookupTable):
     Total: 5,880,600 entries
     Average: 10.06 moves
     """
-    # dwalton
     def __init__(self, parent):
         LookupTable.__init__(
             self,
@@ -963,10 +962,10 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', None, '4696649132d2d5895ccb294eea4e25f5'), # 4-deep
-             ('lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt', None, '504553715ca5632e90a81c9ecd4aa749'),
-             ('lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt', None, '504553715ca5632e90a81c9ecd4aa749'),
-             ('lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt', None, '504553715ca5632e90a81c9ecd4aa749')),
+            (('lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt', 1576260, '4696649132d2d5895ccb294eea4e25f5'), # 4-deep
+             ('lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt', 16711681, '504553715ca5632e90a81c9ecd4aa749'),
+             ('lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt', 16711681, '504553715ca5632e90a81c9ecd4aa749'),
+             ('lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt', 16711681, '504553715ca5632e90a81c9ecd4aa749')),
             '4x4x4-centers-stage' # C_ida_type
         )
 
@@ -1035,8 +1034,8 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-4x4x4-step30-reduce333.txt', None, '82fbc3414d07e53448d0746d96e25ebd'), # 6-deep
-             ('lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt', None, '20ac2ed7ca369c3b5183f836f5d99262'),
+            (('lookup-table-4x4x4-step30-reduce333.txt', 73437552, '82fbc3414d07e53448d0746d96e25ebd'), # 6-deep
+             ('lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt', 239500848, '20ac2ed7ca369c3b5183f836f5d99262'),
              ('lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt', None, '3f990fc1fb6bf506d81ba65f03ad74f6')),
             '4x4x4-reduce-333' # C_ida_type
         )
@@ -1309,6 +1308,7 @@ class RubiksCube444(RubiksCube):
             # us to NOT load this file into memory.
             high_low_states_to_find = []
             edge_mapping_for_phase2_state = {}
+            count = 0
 
             for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
                 for edge_mapping in edges_to_flip_sets:
@@ -1319,10 +1319,17 @@ class RubiksCube444(RubiksCube):
                     phase2_state = self.lt_highlow_edges.state()
                     edge_mapping_for_phase2_state[phase2_state] = edge_mapping
                     high_low_states_to_find.append(phase2_state)
+                    count += 1
 
-            log.info("%s: edge_mapping binary_search_multiple begin" % self)
+                    # If we evaluate all 2048 of them on a pi3 it takes about 1500ms which ends
+                    # up being a huge chunk of the total solve time.  Checking the first 25% will
+                    # get us a reasonably short solution.
+                    if self.cpu_mode == "fast" and count >= 512:
+                        break
+
+            log.info("%s: edge_mapping binary_search_multiple %d high_low_states_to_find begin" % (self, len(high_low_states_to_find)))
             high_low_states = self.lt_highlow_edges.binary_search_multiple(high_low_states_to_find)
-            log.info("%s: edge_mapping binary_search_multiple end" % self)
+            log.info("%s: edge_mapping binary_search_multiple %d high_low_states_to_find end" % (self, len(high_low_states_to_find)))
             min_edge_mapping = None
             min_phase2_cost = None
             min_phase2_steps = None

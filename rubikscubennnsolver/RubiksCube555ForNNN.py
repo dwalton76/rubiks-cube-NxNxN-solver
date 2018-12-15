@@ -393,8 +393,8 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.lt_edges_stage_second_four.preload_cache_string()
 
         self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(self)
-        self.lt_cycle_edges = LookupTable555CycleEdges(self)
-        self.lt_LR_432_pair_one_edge = LookupTable555LRCenterStage432PairOneEdge(self)
+        #self.lt_cycle_edges = LookupTable555CycleEdges(self)
+        #self.lt_LR_432_pair_one_edge = LookupTable555LRCenterStage432PairOneEdge(self)
 
     def stage_first_four_edges_555(self):
         """
@@ -420,7 +420,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         min_solution_len = None
         min_solution_steps = None
 
-        # The table for staging the first 4-edges would have 364,058,145 if built to completion.
+        # The table for staging the 1st 4-edges would have 364,058,145 if built to completion.
         # Building that table the entire way is difficult though because this is a table where
         # the centers must be kept solved...so this involves building out a HUGE table and only
         # keeping the entries where the centers are solved.  To build one deep enough to find
@@ -507,9 +507,10 @@ class RubiksCube555ForNNN(RubiksCube555):
                 states_to_find.append(self.lt_edges_stage_first_four.state(wing_strs))
 
             results = self.lt_edges_stage_first_four.binary_search_multiple(states_to_find)
-            #log.info("%s: %d states_to_find, found %d matches" % (self, len(states_to_find), len(results)))
+            len_results = len(results)
+            log.info("%s: %d states_to_find, found %d matches" % (self, len(states_to_find), len(results)))
 
-            for (_, steps) in results.items():
+            for (line_number, (_, steps)) in enumerate(results.items()):
                 self.state = post_pre_steps_state[:]
                 self.solution = post_pre_steps_solution[:]
 
@@ -523,13 +524,13 @@ class RubiksCube555ForNNN(RubiksCube555):
                 # Technically we only need 4 edges to be pairable for the next phase but 5 is nice because it gives
                 # the next phase some wiggle room...it can choose the best 4-edge tuple.
                 if min_solution_len is None or solution_len < min_solution_len:
-                    log.info("%s: 1st 4-edges can be staged in %d steps %s (NEW MIN)" % (self, solution_len, ' '.join(solution_steps)))
+                    log.info("%s: %d/%d 1st 4-edges can be staged in %d steps %s (NEW MIN)" % (
+                        self, line_number, len_results, solution_len, ' '.join(solution_steps)))
                     min_solution_len = solution_len
                     min_solution_steps = solution_steps
-
-                    break
                 else:
-                    log.info("%s: 1st 4-edges can be staged in %d steps" % (self, solution_len))
+                    log.info("%s: %d/%d 1st 4-edges can be staged in %d steps" % (
+                        self, line_number, len_results, solution_len))
 
             if min_solution_len is not None:
                 #if pre_steps:
@@ -542,14 +543,12 @@ class RubiksCube555ForNNN(RubiksCube555):
 
                 break
 
-        self.place_first_four_paired_edges_in_x_plane()
-
         if not self.x_plane_edges_are_l4e():
             raise SolveError("There should be an L4E group in x-plane but there is not")
 
         self.print_cube()
         self.solution.append("COMMENT_%d_steps_555_first_L4E_edges_staged" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
-        log.info("%s: first 4-edges staged to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: 1st 4-edges staged to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def place_first_four_paired_edges_in_x_plane(self):
 
@@ -580,19 +579,19 @@ class RubiksCube555ForNNN(RubiksCube555):
 
             if self.x_plane_edges_paired():
                 log.info("%s: %s puts 4 paired edges in x-plane" % (self, "".join(pre_steps)))
-                return
+                break
 
-            if self.y_plane_edges_paired():
+            elif self.y_plane_edges_paired():
                 log.info("%s: %s puts 4 paired edges in y-plane" % (self, "".join(pre_steps)))
                 self.rotate("z")
-                return
+                break
 
-            if self.z_plane_edges_are_l4e() and not self.z_plane_edges_paired():
+            elif self.z_plane_edges_paired():
                 log.info("%s: %s puts 4 paired edges in z-plane" % (self, "".join(pre_steps)))
                 self.rotate("x")
-                return
-
-        raise Exception("We should not be here")
+                break
+        else:
+            raise SolveError("Could not place 4 paired edges in x-plane")
 
     def pair_first_four_edges_via_l4e(self):
         paired_edges_count = self.get_paired_edges_count()
@@ -600,7 +599,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         # If there are already 4 paired edges all we need to do is put them in the x-plane
         if paired_edges_count >= 4:
             self.place_first_four_paired_edges_in_x_plane()
-            log.info("%s: first 4-edges already paired, moved to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("%s: 1st 4-edges already paired, moved to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # We do not have 4 paired edges, stage a L4E group to the x-plane and pair them via the L4E table
         else:
@@ -609,7 +608,7 @@ class RubiksCube555ForNNN(RubiksCube555):
 
     def stage_second_four_edges_555(self):
         """
-        The first 4-edges have been staged to LB, LF, RF, RB. Stage the next four
+        The 1st 4-edges have been staged to LB, LF, RF, RB. Stage the next four
         edges to UB, UF, DF, DB (this in turn stages the final four edges).
 
         Since there are 8-edges there are 70 different combinations of edges we can
@@ -706,9 +705,6 @@ class RubiksCube555ForNNN(RubiksCube555):
         original_state = self.state[:]
         original_solution = self.solution[:]
 
-        edges_paired_count = self.get_paired_edges_count()
-        edges_unpaired_count = 12 - edges_paired_count
-
         # Traverse a table of moves that place L4E in one of three planes
         # and then rotate that plane to the x-plane
         for pre_steps in pre_steps_to_try:
@@ -719,14 +715,14 @@ class RubiksCube555ForNNN(RubiksCube555):
             for step in pre_steps:
                 self.rotate(step)
 
-            if self.x_plane_edges_unpaired_count() == edges_unpaired_count:
+            if self.x_plane_edges_are_l4e() and self.x_plane_edges_unpaired_count() > 0:
                 #if pre_steps:
                 #    log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
                 #else:
                 #    log.info("%s: L4E group in x-plane" % self)
                 break
 
-            elif self.y_plane_edges_unpaired_count() == edges_unpaired_count:
+            elif self.y_plane_edges_are_l4e() and self.y_plane_edges_unpaired_count() > 0:
                 #if pre_steps:
                 #    log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
                 #else:
@@ -734,15 +730,17 @@ class RubiksCube555ForNNN(RubiksCube555):
                 self.rotate("z")
                 break
 
-            elif self.z_plane_edges_unpaired_count() == edges_unpaired_count:
+            elif self.z_plane_edges_are_l4e() and self.z_plane_edges_unpaired_count() > 0:
                 #if pre_steps:
                 #    log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
                 #else:
                 #    log.info("%s: L4E group in z-plane, moving to x-plane" % self)
                 self.rotate("x")
                 break
+        else:
+            raise SolveError("Could not stage L4E in x-plane")
 
-        log.info("%s: final four edges placed in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #log.info("%s: final four edges placed in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def pair_x_plane_edges_in_l4e(self):
 
@@ -812,6 +810,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.solution.append("COMMENT_%d_steps_555_L4E_paired" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
         log.info("%s: x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        '''
     def get_final_edges_steps(self):
         log.info("%s: get_final_edges_steps begin (%d pre_steps_to_try)" % (self, len(pre_steps_to_try)))
         tmp_state = self.state[:]
@@ -849,6 +848,7 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         log.info("%s: get_final_edges_steps end" % self)
         return min_steps
+        '''
 
     def reduce_333(self):
         """

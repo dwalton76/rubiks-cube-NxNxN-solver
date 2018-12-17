@@ -867,7 +867,8 @@ class LookupTableIDA555LRCentersStage(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-5x5x5-step20-LR-centers-stage.txt', 5170308, '3d13c62d7a982023d0376f56ecdf2812'),  # 6-deep
+            #(('lookup-table-5x5x5-step20-LR-centers-stage.txt', 5170308, '3d13c62d7a982023d0376f56ecdf2812'),  # 6-deep
+            (('lookup-table-5x5x5-step20-LR-centers-stage.txt', 522024, 'ae9ec50e8857e89f475f7d85b34a77b3'),  # 5-deep
              ('lookup-table-5x5x5-step21-LR-t-centers-stage.cost-only.txt', None, '8fa5217b28c7aeb9e04684ae3f5bebee'),
              ('lookup-table-5x5x5-step22-LR-x-centers-stage.cost-only.txt', None, '4e4d8a8ec35d0c999ce7c51b6681bc4e')),
             '5x5x5-LR-centers-stage' # C_ida_type

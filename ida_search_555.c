@@ -247,7 +247,7 @@ ida_heuristic_LR_centers_555(
 
         // 7-deep takes 2100ms and uses 540M
         // 6-deep takes 230ms and uses 62M
-        int MAX_DEPTH = 6;
+        int MAX_DEPTH = 5;
 
         // time ./ida_search --kociemba ......xxx..xxx..xxx............LFF..LLL..FFL............FLL..FFL..LFL............xxx..xxx..xxx............FFF..LLL..LLL............LLF..FFF..FFF...... --type 5x5x5-LR-centers-stage
 

@@ -77,7 +77,14 @@ try:
             cube = RubiksCube444(solved_444, order)
 
         elif size == '5x5x5':
-            cube = RubiksCube555(solved_555, order)
+            from rubikscubennnsolver.RubiksCube555 import solved_555
+
+            if cpu_mode == "fast":
+                from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
+                cube = RubiksCube555ForNNN(solved_555, order)
+            else:
+                from rubikscubennnsolver.RubiksCube555 import RubiksCube555
+                cube = RubiksCube555(solved_555, order)
 
         elif size == '6x6x6':
             cube = RubiksCube666(solved_666, order)

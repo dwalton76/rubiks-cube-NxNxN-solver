@@ -969,7 +969,8 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
-            (('lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt', 24368616, '5a0bad50c3e650dbd2677e29aba17eca'),
+            #(('lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt', 24368616, '5a0bad50c3e650dbd2677e29aba17eca'), # 6-deep
+            (('lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt', 2416601, 'ac39d8406d55e7ddf9f0967a35fddd00'), # 5-deep
              ('lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt', 24010032, 'b9e47314dbbb37690d4aed370b3b2245'),
              ('lookup-table-5x5x5-step32-UF-centers-solve.hash-cost-only.txt', 24010032, '966f865fffe4b5c2ce7301767c3f19f7'),
              ('lookup-table-5x5x5-step33-LF-centers-solve.hash-cost-only.txt', 24010032, '7ea2ddf0e97094cc8f5d9c11df0176fe')),

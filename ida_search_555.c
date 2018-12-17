@@ -415,7 +415,7 @@ ida_heuristic_ULFRBD_centers_555 (
 
     if (cost_to_goal > 0) {
         // The step30 table we loaded is 6-deep
-        int MAX_DEPTH = 6;
+        int MAX_DEPTH = 5;
         struct key_value_pair *hash_entry = NULL;
         hash_entry = hash_find(ULFRBD_centers_cost_555, result.lt_state);
 

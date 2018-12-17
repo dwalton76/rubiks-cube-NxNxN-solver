@@ -312,7 +312,7 @@ def rm_file_if_mismatch(filename, filesize, md5target):
     if os.path.exists(filename):
         if filesize is not None:
             if os.path.getsize(filename) != filesize:
-                log.mnfo("%s: filesize %s does not equal target filesize %s" % (filename, os.path.getsize(filename), filesize))
+                log.info("%s: filesize %s does not equal target filesize %s" % (filename, os.path.getsize(filename), filesize))
                 os.remove(filename)
 
                 if os.path.exists(filename_gz):

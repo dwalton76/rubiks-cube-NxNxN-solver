@@ -107,7 +107,7 @@ class RubiksCube333(RubiksCube):
     def phase(self):
         return 'Solve 3x3x3'
 
-    def solve(self):
+    def solve(self, solution333=None):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 

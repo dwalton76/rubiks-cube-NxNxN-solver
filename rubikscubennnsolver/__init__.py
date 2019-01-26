@@ -16,6 +16,8 @@ import sys
 
 log = logging.getLogger(__name__)
 
+HTML_DIRECTORY = '/tmp/rubiks-cube-NxNxN-solver/'
+HTML_FILENAME = os.path.join(HTML_DIRECTORY, 'index.html')
 
 wing_str_map = {
     'UB' : 'UB',
@@ -454,6 +456,10 @@ class RubiksCube(object):
         self.init_orbit0_paired = False
         self.cpu_mode = None
         self.solution_with_markers = []
+
+        if not os.path.exists(HTML_DIRECTORY):
+            os.makedirs(HTML_DIRECTORY)
+            os.chmod(HTML_DIRECTORY, 0o777)
 
         if colormap:
             colormap = json.loads(colormap)
@@ -4251,8 +4257,10 @@ class RubiksCube(object):
 
         log.info("%d steps total" % self.get_solution_len_minus_rotates(self.solution))
 
-        with open('/tmp/solution.txt', 'w') as fh:
+        solution_txt_filename = os.path.join(HTML_DIRECTORY, 'solution.txt')
+        with open(solution_txt_filename, 'w') as fh:
             fh.write(' '.join(self.solution) + "\n")
+        os.chmod(solution_txt_filename, 0o777)
 
     def nuke_corners(self):
         for side in list(self.sides.values()):
@@ -4279,17 +4287,16 @@ class RubiksCube(object):
 
         for filename in ('solution.js', 'Arrow-Next.png', 'Arrow-Prev.png'):
             www_filename = os.path.join('www', filename)
-            tmp_filename = os.path.join('/tmp', filename)
+            tmp_filename = os.path.join(HTML_DIRECTORY, filename)
 
             if not os.path.exists(tmp_filename):
-                shutil.copy(www_filename, '/tmp/')
+                shutil.copy(www_filename, HTML_DIRECTORY)
                 os.chmod(tmp_filename, 0o777)
 
-        solution_filename = '/tmp/solution.html'
-        if os.path.exists(solution_filename):
-            os.unlink(solution_filename)
+        if os.path.exists(HTML_FILENAME):
+            os.unlink(HTML_FILENAME)
 
-        with open(solution_filename, 'w') as fh:
+        with open(HTML_FILENAME, 'w') as fh:
             fh.write("""<!DOCTYPE html>
 <html>
 <head>
@@ -4386,7 +4393,7 @@ div#page_holder {
 <div id="page_holder">
 """ % (square_size, square_size, square_size, square_size, square_size, square_size,
        (square_size * size * 4) + square_size + (4 * side_margin)))
-        os.chmod(solution_filename, 0o777)
+        os.chmod(HTML_FILENAME, 0o777)
 
     def www_write_cube(self, desc):
         """
@@ -4404,7 +4411,7 @@ div#page_holder {
         side_index = -1
         (first_squares, last_squares, last_UBD_squares) = get_important_square_indexes(self.size)
 
-        with open('/tmp/solution.html', 'a') as fh:
+        with open(HTML_FILENAME, 'a') as fh:
             fh.write("<div class='page' style='display: none;'>\n")
             fh.write("<h1>%s</h1>\n" % desc)
             for index in range(1, max_square + 1):
@@ -4432,7 +4439,7 @@ div#page_holder {
             fh.write("</div>\n")
 
     def www_footer(self):
-        with open('/tmp/solution.html', 'a') as fh:
+        with open(HTML_FILENAME, 'a') as fh:
             fh.write("""
 <div id="sets-browse-controls">
 <a class="prev_page" style="display: block;"><img src="Arrow-Prev.png" class="clickable" width="128"></a>

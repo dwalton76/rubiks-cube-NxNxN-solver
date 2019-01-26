@@ -193,9 +193,9 @@ try:
     cube.print_cube()
     cube.print_solution(not args.no_comments)
 
-    log.info("***********************************************************")
-    log.info("See /tmp/solution.html for more detailed solve instructions")
-    log.info("***********************************************************\n")
+    log.info("*********************************************************************************")
+    log.info("See /tmp/rubiks-cube-NxNxN-solver/index.html for more detailed solve instructions")
+    log.info("*********************************************************************************\n")
 
     # Now put the cube back in its initial state and verify the solution solves it
     solution = cube.solution

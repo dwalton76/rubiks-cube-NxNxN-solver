@@ -228,9 +228,9 @@ try:
         print("****************************************\n\n")
 
     log.info("rubiks-cube-solver.py end")
-    print("\nMemory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
-    print("Time   : %s" % (end_time - start_time))
-    print("")
+    log.info("Memory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    log.info("Time   : %s" % (end_time - start_time))
+    log.info("")
 
     if not cube.solved():
         kociemba_string = cube.get_kociemba_string(False)

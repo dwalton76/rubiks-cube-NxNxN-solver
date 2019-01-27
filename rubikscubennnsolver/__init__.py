@@ -4243,7 +4243,7 @@ class RubiksCube(object):
                 rotations.append(apply_rotations(self.size, step, rotations))
             else:
                 final_steps.append(apply_rotations(self.size, step, rotations))
-        log.info("\nSolution: %s" % ' '.join(final_steps))
+        print("Solution: %s" % ' '.join(final_steps))
         #log.info(len(final_steps))
 
         if self.steps_to_solve_centers:

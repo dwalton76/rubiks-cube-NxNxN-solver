@@ -1343,7 +1343,7 @@ class RubiksCube444(RubiksCube):
                 if min_phase2_cost is None or phase2_cost < min_phase2_cost:
                     min_phase2_cost = phase2_cost
                     min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
-                    min_phase2_steps = phase2_steps[:]
+                    min_phase2_steps = list(pre_steps) + phase2_steps[:]
                     log.info("%s: using edge_mapping %s, phase2 cost %s" % (self, min_edge_mapping, phase2_cost))
 
             if min_edge_mapping:

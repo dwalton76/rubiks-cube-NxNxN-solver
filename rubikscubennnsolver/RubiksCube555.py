@@ -1616,8 +1616,10 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
             filesize=297157068,
         )
 
-        if self.parent.cpu_mode == "normal" or self.parent.cpu_mode == "slow":
+        if self.parent.cpu_mode == "slow":
             LookupTableIDA555EdgesZPlane.heuristic_stats_error = 1
+        elif self.parent.cpu_mode == "normal":
+            LookupTableIDA555EdgesZPlane.heuristic_stats_error = 0
         elif self.parent.cpu_mode == "fast":
             LookupTableIDA555EdgesZPlane.heuristic_stats_error = 0
 
@@ -2305,8 +2307,10 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
             filesize=300818315,
         )
 
-        if self.parent.cpu_mode == "normal" or self.parent.cpu_mode == "slow":
+        if self.parent.cpu_mode == "slow":
             LookupTableIDA555PairLastEightEdges.heuristic_stats_error = 2
+        elif self.parent.cpu_mode == "normal":
+            LookupTableIDA555PairLastEightEdges.heuristic_stats_error = 1
         elif self.parent.cpu_mode == "fast":
             LookupTableIDA555PairLastEightEdges.heuristic_stats_error = 0
 

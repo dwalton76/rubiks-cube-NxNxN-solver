@@ -4259,7 +4259,7 @@ class RubiksCube(object):
 
         solution_txt_filename = os.path.join(HTML_DIRECTORY, 'solution.txt')
         with open(solution_txt_filename, 'w') as fh:
-            fh.write(' '.join(self.solution) + "\n")
+            fh.write(' '.join(final_steps) + "\n")
         os.chmod(solution_txt_filename, 0o777)
 
     def nuke_corners(self):

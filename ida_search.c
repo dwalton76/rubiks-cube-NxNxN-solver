@@ -54,6 +54,7 @@ typedef enum {
     // 6x6x6
     UD_OBLIQUE_EDGES_STAGE_666,
     LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666,
+    LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666,
 
     // 7x7x7
     UD_OBLIQUE_EDGES_STAGE_777,
@@ -94,9 +95,13 @@ char *LF_centers_cost_only_555 = NULL;
 
 
 // 6x6x6
-struct key_value_pair *LR_inner_x_centers_and_oblique_edges_666 = NULL;
+struct key_value_pair *LR_inner_x_centers_and_oblique_edges_stage_666 = NULL;
 char *LR_inner_x_centers_666 = NULL;
 char *LR_oblique_edges_666 = NULL;
+
+struct key_value_pair *LFRB_inner_x_centers_and_oblique_edges_solve_666 = NULL;
+char *LR_inner_x_centers_and_oblique_edges_solve_666 = NULL;
+char *FB_inner_x_centers_and_oblique_edges_solve_666 = NULL;
 
 
 // 7x7x7
@@ -421,6 +426,12 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         print_cube(cube, size);
         break;
 
+    case LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666:
+        // Convert to 1s and 0s
+        str_replace_for_binary(cube, ones_LF);
+        print_cube(cube, size);
+        break;
+
     case CENTERS_SOLVE_555:
         // Remember what the cube looked like so we can restore the edges
         memcpy(cube_copy, cube, sizeof(char) * array_size);
@@ -605,7 +616,8 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
         }
 
 
-    } else if (strmatch(filename, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt")) {
+    } else if (strmatch(filename, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt") ||
+        strmatch(filename, "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.3-deep")) {
 
         while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
             // 0..11 are the state
@@ -769,9 +781,17 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
         return ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666(
             cube,
             max_cost_to_goal,
-            &LR_inner_x_centers_and_oblique_edges_666,
+            &LR_inner_x_centers_and_oblique_edges_stage_666,
             LR_inner_x_centers_666,
             LR_oblique_edges_666);
+
+    case LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666:
+        return ida_heuristic_LFRB_inner_x_centers_and_oblique_edges_solve_666(
+            cube,
+            max_cost_to_goal,
+            &LFRB_inner_x_centers_and_oblique_edges_solve_666,
+            LR_inner_x_centers_and_oblique_edges_solve_666,
+            FB_inner_x_centers_and_oblique_edges_solve_666);
 
     // 7x7x7
     case UD_OBLIQUE_EDGES_STAGE_777:
@@ -1091,6 +1111,9 @@ ida_search_complete (
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
         return ida_search_complete_LR_inner_x_centers_and_oblique_edges_stage(cube);
 
+    case LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666:
+        return ida_search_complete_LFRB_inner_x_centers_and_oblique_edges_solve(cube);
+
     // 7x7x7
     case UD_OBLIQUE_EDGES_STAGE_777:
         return ida_search_complete_UD_oblique_edges_stage_777(cube);
@@ -1290,6 +1313,53 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         case Lw_PRIME:
         case Rw:
         case Rw_PRIME:
+            return 0;
+        default:
+            return 1;
+        }
+
+    case LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666:
+        switch (move) {
+        // do not mess up staged centers
+        case threeUw:
+        case threeUw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeFw:
+        case threeFw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeRw2:
+        case threeLw2:
+        case threeFw2:
+        case threeBw2:
+        case Uw:
+        case Uw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+
+        // can skip these for 6x6x6 cubes
+        //case threeLw:
+        //case threeLw_PRIME:
+        //case threeLw2:
+        //case threeDw:
+        //case threeDw_PRIME:
+        case threeDw2:
+        //case threeBw:
+        //case threeBw_PRIME:
+        //case threeBw2:
             return 0;
         default:
             return 1;
@@ -2185,9 +2255,14 @@ free_prune_tables()
         ULFRBD_centers_555 = NULL;
     }
 
-    if (LR_inner_x_centers_and_oblique_edges_666 == NULL) {
-        free(LR_inner_x_centers_and_oblique_edges_666);
-        LR_inner_x_centers_and_oblique_edges_666 = NULL;
+    if (LR_inner_x_centers_and_oblique_edges_stage_666 == NULL) {
+        free(LR_inner_x_centers_and_oblique_edges_stage_666);
+        LR_inner_x_centers_and_oblique_edges_stage_666 = NULL;
+    }
+
+    if (LFRB_inner_x_centers_and_oblique_edges_solve_666 == NULL) {
+        free(LFRB_inner_x_centers_and_oblique_edges_solve_666);
+        LFRB_inner_x_centers_and_oblique_edges_solve_666 = NULL;
     }
 }
 
@@ -2259,10 +2334,15 @@ ida_solve (
         break;
 
     case LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666:
-        ida_prune_table_preload(&LR_inner_x_centers_and_oblique_edges_666, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt");
+        ida_prune_table_preload(&LR_inner_x_centers_and_oblique_edges_stage_666, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt");
         LR_oblique_edges_666 = ida_cost_only_preload("lookup-table-6x6x6-step31-LR-oblique-edges-stage.hash-cost-only.txt", 165636908);
         LR_inner_x_centers_666 = ida_cost_only_preload("lookup-table-6x6x6-step32-LR-inner-x-center-stage.cost-only.txt", 65281);
         break;
+
+    case LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666:
+        ida_prune_table_preload(&LFRB_inner_x_centers_and_oblique_edges_solve_666, "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.3-deep");
+        LR_inner_x_centers_and_oblique_edges_solve_666 = ida_cost_only_preload("lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.cost-only.txt", 16773121);
+        FB_inner_x_centers_and_oblique_edges_solve_666 = ida_cost_only_preload("lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.cost-only.txt", 16773121);
 
     // 7x7x7
     case UD_OBLIQUE_EDGES_STAGE_777:
@@ -2380,6 +2460,10 @@ main (int argc, char *argv[])
 
             } else if (strmatch(argv[i], "6x6x6-LR-inner-x-centers-oblique-edges-stage")) {
                 type = LR_INNER_X_CENTERS_AND_OBLIQUE_EDGES_STAGE_666,
+                cube_size_type = 6;
+
+            } else if (strmatch(argv[i], "6x6x6-LFRB-solve-inner-x-center-and-oblique-edges")) {
+                type = LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666,
                 cube_size_type = 6;
 
             // 7x7x7

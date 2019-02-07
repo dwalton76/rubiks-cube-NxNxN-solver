@@ -426,83 +426,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
         return (lt_state, 0)
 
 
-class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
-    """
-    lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
-    ========================================================================
-    1 steps has 140 entries (0 percent, 0.00x previous step)
-    2 steps has 476 entries (0 percent, 3.40x previous step)
-    3 steps has 2,166 entries (0 percent, 4.55x previous step)
-    4 steps has 10,430 entries (3 percent, 4.82x previous step)
-    5 steps has 37,224 entries (10 percent, 3.57x previous step)
-    6 steps has 89,900 entries (26 percent, 2.42x previous step)
-    7 steps has 124,884 entries (36 percent, 1.39x previous step)
-    8 steps has 70,084 entries (20 percent, 0.56x previous step)
-    9 steps has 7,688 entries (2 percent, 0.11x previous step)
-    10 steps has 8 entries (0 percent, 0.00x previous step)
-
-    Total: 343,000 entries
-    Average: 6.64 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt',
-            ('198e67', '19b267', '19bc47', '19be23', '19be64', '1dc267', '1dcc47', '1dce23',
-             '1dce64', '1df047', '1df223', '1df264', '1dfc03', '1dfc44', '1dfe20', '3b8267',
-             '3b8c47', '3b8e23', '3b8e64', '3bb047', '3bb223', '3bb264', '3bbc03', '3bbc44',
-             '3bbe20', '3fc047', '3fc223', '3fc264', '3fcc03', '3fcc44', '3fce20', '3ff003',
-             '3ff044', '3ff220', '3ffc00', 'd98267', 'd98c47', 'd98e23', 'd98e64', 'd9b047',
-             'd9b223', 'd9b264', 'd9bc03', 'd9bc44', 'd9be20', 'ddc047', 'ddc223', 'ddc264',
-             'ddcc03', 'ddcc44', 'ddce20', 'ddf003', 'ddf044', 'ddf220', 'ddfc00', 'fb8047',
-             'fb8223', 'fb8264', 'fb8c03', 'fb8c44', 'fb8e20', 'fbb003', 'fbb044', 'fbb220',
-             'fbbc00', 'ffc003', 'ffc044', 'ffc220', 'ffcc00', 'fff000'),
-            linecount=343000,
-            max_depth=10,
-            filesize=3430000)
-
-
-class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable666LRInnerXCenterAndObliqueEdges):
-    """
-    lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
-    =======================================================================
-    1 steps has 140 entries (0 percent, 0.00x previous step)
-    2 steps has 476 entries (0 percent, 3.40x previous step)
-    3 steps has 2,166 entries (0 percent, 4.55x previous step)
-    4 steps has 10,430 entries (3 percent, 4.82x previous step)
-    5 steps has 37,224 entries (10 percent, 3.57x previous step)
-    6 steps has 89,900 entries (26 percent, 2.42x previous step)
-    7 steps has 124,884 entries (36 percent, 1.39x previous step)
-    8 steps has 70,084 entries (20 percent, 0.56x previous step)
-    9 steps has 7,688 entries (2 percent, 0.11x previous step)
-    10 steps has 8 entries (0 percent, 0.00x previous step)
-
-    Total: 343,000 entries
-    Average: 6.64 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt',
-            ('198e67', '19b267', '19bc47', '19be23', '19be64', '1dc267', '1dcc47', '1dce23',
-             '1dce64', '1df047', '1df223', '1df264', '1dfc03', '1dfc44', '1dfe20', '3b8267',
-             '3b8c47', '3b8e23', '3b8e64', '3bb047', '3bb223', '3bb264', '3bbc03', '3bbc44',
-             '3bbe20', '3fc047', '3fc223', '3fc264', '3fcc03', '3fcc44', '3fce20', '3ff003',
-             '3ff044', '3ff220', '3ffc00', 'd98267', 'd98c47', 'd98e23', 'd98e64', 'd9b047',
-             'd9b223', 'd9b264', 'd9bc03', 'd9bc44', 'd9be20', 'ddc047', 'ddc223', 'ddc264',
-             'ddcc03', 'ddcc44', 'ddce20', 'ddf003', 'ddf044', 'ddf220', 'ddfc00', 'fb8047',
-             'fb8223', 'fb8264', 'fb8c03', 'fb8c44', 'fb8e20', 'fbb003', 'fbb044', 'fbb220',
-             'fbbc00', 'ffc003', 'ffc044', 'ffc220', 'ffcc00', 'fff000'),
-            linecount=343000,
-            max_depth=10,
-            filesize=3430000)
-
-
-class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
+class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDAViaC):
     """
     lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt
     =========================================================================
@@ -514,31 +438,6 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
 
     Total: 35,805,732 entries
     """
-    step60_centers_666 = (
-        # Left
-            45, 46,
-        50, 51, 52, 53,
-        56, 57, 58, 59,
-            63, 64,
-
-        # Front
-            81, 82,
-        86, 87, 88, 89,
-        92, 93, 94, 95,
-            99, 100,
-
-        # Right
-             117, 118,
-        122, 123, 124, 125,
-        128, 129, 130, 131,
-             135, 136,
-
-        # Back
-             153, 154,
-        158, 159, 160, 161,
-        164, 165, 166, 167,
-             171, 172,
-    )
 
     step61_centers_666 = (
         # Left
@@ -571,132 +470,15 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
     set_step61_centers_666 = set(step61_centers_666)
     set_step62_centers_666 = set(step62_centers_666)
 
-    # Not using these right now
-    heuristic_stats = {
-        (0, 0): 0,
-        (0, 2): 3,
-        (0, 3): 3,
-        (0, 4): 4,
-        (0, 5): 5,
-        (0, 6): 6,
-        (1, 1): 1,
-        (1, 2): 2,
-        (1, 3): 3,
-        (1, 4): 5,
-        (1, 5): 6,
-        (1, 6): 6,
-        (1, 7): 7,
-        (2, 0): 3,
-        (2, 1): 2,
-        (2, 2): 3,
-        (2, 3): 4,
-        (2, 4): 5,
-        (2, 5): 6,
-        (2, 6): 7,
-        (2, 7): 8,
-        (2, 8): 8,
-        (3, 0): 4,
-        (3, 1): 3,
-        (3, 2): 4,
-        (3, 3): 4,
-        (3, 4): 5,
-        (3, 5): 6,
-        (3, 6): 7,
-        (3, 7): 8,
-        (3, 8): 9,
-        (4, 1): 5,
-        (4, 2): 5,
-        (4, 3): 5,
-        (4, 4): 5,
-        (4, 5): 6,
-        (4, 6): 8,
-        (4, 7): 9,
-        (4, 8): 10,
-        (5, 1): 6,
-        (5, 2): 6,
-        (5, 3): 6,
-        (5, 4): 6,
-        (5, 5): 7,
-        (5, 6): 8,
-        (5, 7): 9,
-        (5, 8): 10,
-        (5, 9): 11,
-        (6, 2): 7,
-        (6, 3): 7,
-        (6, 4): 7,
-        (6, 5): 8,
-        (6, 6): 9,
-        (6, 7): 10,
-        (6, 8): 11,
-        (6, 9): 11,
-        (7, 2): 8,
-        (7, 3): 8,
-        (7, 4): 9,
-        (7, 5): 9,
-        (7, 6): 9,
-        (7, 7): 10,
-        (7, 8): 11,
-        (7, 9): 12,
-        (8, 2): 9,
-        (8, 3): 9,
-        (8, 4): 10,
-        (8, 5): 10,
-        (8, 6): 11,
-        (8, 7): 11,
-        (8, 8): 12,
-        (8, 9): 12,
-        (9, 5): 10,
-        (9, 6): 11,
-        (9, 7): 11,
-        (9, 8): 12
-    }
-
-    # The higher this number the less you honor the heuristic_stats
-    # -  0 uses the heuristic_stats exactly as reported
-    # -  1 subtracts 1 from the heuristic_stats value
-    # - 99 disables heuristic_stats
-    #
-    # You want to put this as high as you can but low enough
-    # to still speed up the slow IDA searches.
-    # 99 : 13 moves in 9s
-    #  2 : 13 moves in 1500ms
-    #  1 : 13 moves in 100ms
-    #  0 : 13 moves in 100ms
-    heuristic_stats_error = 1
-
     def __init__(self, parent):
 
-        # uses 165M
-        if True or parent.min_memory:
-            filename = "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.4-deep"
-            linecount = 5320232
-            max_depth = 4
-            filesize = 164927192
-
-        # uses 1.3G
-        else:
-            filename = "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt"
-            linecount = 35805732
-            max_depth = 5
-            filesize = 1289006352
-
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            filename,
-            state_targets_step60,
-            moves_666,
-
-            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-             "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-             "3Rw2", "3Lw2", "3Fw2", "3Bw2",                                                           # do not mess up solved UD
-             "3Lw", "3Lw'", "3Lw2",        # can skip these for 6x6x6 cubes
-             "3Dw", "3Dw'", "3Dw2",
-             "3Bw", "3Bw'", "3Bw2"),
-
-            linecount=linecount,
-            max_depth=max_depth,
-            filesize=filesize,
+            (('lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt', 10953600, None),
+             ('lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.cost-only.txt', 16773121, None),
+             ('lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.cost-only.txt', 16773121, None)),
+            '6x6x6-LFRB-solve-inner-x-center-and-oblique-edges' # C_ida_type
         )
 
     def recolor(self):
@@ -716,104 +498,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDA):
             else:
                 self.parent.state[x] = '.'
 
-        #self.parent.print_cube()
-
-    def ida_heuristic_tuple(self):
-        parent_state = self.parent.state
-        parent = self.parent
-        parent_state = self.parent.state
-        set_step61_centers_666 = self.set_step61_centers_666
-        set_step62_centers_666 = self.set_step62_centers_666
-
-        lt_state = 0
-        step61_state = 0
-        step62_state = 0
-
-        for x in self.step60_centers_666:
-            x_state = parent_state[x]
-
-            if x in set_step61_centers_666:
-
-                if x_state == 'L':
-                    step61_state = step61_state | 0x1
-                    lt_state = lt_state | 0x1
-
-                step61_state = step61_state << 1
-
-            elif x in set_step62_centers_666:
-
-                if x_state == 'F':
-                    step62_state = step62_state | 0x1
-                    lt_state = lt_state | 0x1
-
-                step62_state = step62_state << 1
-
-            lt_state = lt_state << 1
-
-        lt_state = lt_state >> 1
-        step61_state = step61_state >> 1
-        step62_state = step62_state >> 1
-
-        step61_state = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.hex_format % step61_state
-        step62_state = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.hex_format % step62_state
-
-        step61_cost = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.heuristic(step61_state)
-        step62_cost = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.heuristic(step62_state)
-
-        return (str(self), step61_cost, step62_cost)
-
-    def ida_heuristic(self):
-        parent = self.parent
-        parent_state = self.parent.state
-        set_step61_centers_666 = self.set_step61_centers_666
-        set_step62_centers_666 = self.set_step62_centers_666
-
-        lt_state = 0
-        step61_state = 0
-        step62_state = 0
-
-        for x in self.step60_centers_666:
-            x_state = parent_state[x]
-
-            if x in set_step61_centers_666:
-
-                if x_state == 'L':
-                    step61_state = step61_state | 0x1
-                    lt_state = lt_state | 0x1
-
-                step61_state = step61_state << 1
-
-            elif x in set_step62_centers_666:
-
-                if x_state == 'F':
-                    step62_state = step62_state | 0x1
-                    lt_state = lt_state | 0x1
-
-                step62_state = step62_state << 1
-
-            lt_state = lt_state << 1
-
-        lt_state = lt_state >> 1
-        step61_state = step61_state >> 1
-        step62_state = step62_state >> 1
-
-        step61_state = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.hex_format % step61_state
-        step62_state = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.hex_format % step62_state
-        lt_state = self.hex_format % lt_state
-
-        step61_cost = parent.lt_LR_solve_inner_x_centers_and_oblique_edges.heuristic(step61_state)
-        step62_cost = parent.lt_FB_solve_inner_x_centers_and_oblique_edges.heuristic(step62_state)
-        cost_to_goal = max(step61_cost, step62_cost)
-
-        if cost_to_goal > 0 and cost_to_goal < self.max_depth+1:
-            steps = self.steps(lt_state)
-
-            if steps:
-                cost_to_goal = len(steps)
-            else:
-                cost_to_goal = self.max_depth + 1
-
-        return (lt_state, cost_to_goal)
+        self.parent.print_cube()
 
 
 class RubiksCube666(RubiksCubeNNNEvenEdges):
@@ -941,13 +626,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_LR_inner_x_centers_and_oblique_edges_stage = LookupTableIDA666LRInnerXCenterAndObliqueEdgesStage(self)
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
-
-        self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
-        self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
-        self.lt_LR_solve_inner_x_centers_and_oblique_edges.preload_cache_dict()
-        self.lt_FB_solve_inner_x_centers_and_oblique_edges.preload_cache_dict()
-        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.preload_cache_string()
 
     def populate_fake_555_for_ULFRBD_solve(self):
         fake_555 = self.get_fake_555()
@@ -1095,11 +774,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.solution.append("COMMENT_%d_steps_666_UD_reduced_to_555" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
         log.info("%s: UD inner x-center solved and oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
-
-        # Test the prune tables
-        #self.lt_LR_solve_inner_x_centers_and_oblique_edges.solve()
-        #self.lt_FB_solve_inner_x_centers_and_oblique_edges.solve()
-        #self.print_cube()
 
         tmp_solution_len = len(self.solution)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve()

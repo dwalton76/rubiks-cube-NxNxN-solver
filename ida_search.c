@@ -617,7 +617,7 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
 
 
     } else if (strmatch(filename, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt") ||
-        strmatch(filename, "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.3-deep")) {
+        strmatch(filename, "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt")) {
 
         while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
             // 0..11 are the state
@@ -2340,7 +2340,7 @@ ida_solve (
         break;
 
     case LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666:
-        ida_prune_table_preload(&LFRB_inner_x_centers_and_oblique_edges_solve_666, "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt.3-deep");
+        ida_prune_table_preload(&LFRB_inner_x_centers_and_oblique_edges_solve_666, "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt");
         LR_inner_x_centers_and_oblique_edges_solve_666 = ida_cost_only_preload("lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.cost-only.txt", 16773121);
         FB_inner_x_centers_and_oblique_edges_solve_666 = ida_cost_only_preload("lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.cost-only.txt", 16773121);
 

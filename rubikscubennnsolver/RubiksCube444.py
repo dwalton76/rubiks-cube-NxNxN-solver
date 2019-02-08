@@ -20,6 +20,7 @@ from rubikscubennnsolver.RubiksCube444Misc import (
     step161_index,
     step162_index,
 )
+from rubikscubennnsolver.RubiksSide import SolveError
 from pprint import pformat
 import itertools
 import logging
@@ -1449,8 +1450,13 @@ class RubiksCube444(RubiksCube):
         log.info("%s: LR FB centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
 
+        # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
+        # We need the edge swaps to be even for our edges lookup table to work.
         if self.edge_swaps_odd(False, 0, False):
-            raise SolveError("%s: edge swaps are odd" % self)
+            log.warning("%s: edge swaps are odd, running prevent_OLL to correct" % self)
+            self.prevent_OLL()
+            self.print_cube()
+            log.info("%s: End of prevent_OLL, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.tsai_phase2()
 

@@ -2,27 +2,34 @@
 
 ## Overview
 This is a rubiks cube solver that can solve any size cube, I have tested
-up to 17x17x17.  The following table shows the reduction in move counts
+up to 17x17x17. The following table shows the reduction in move counts
 as the solver has evolved. This table starts in July 2018, the earlier
 releases of the solver had drastically higher move counts, I think it was
 over 400 moves the first time I solved a 5x5x5.
 
+
+### --fast mode
 | Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| 10/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD)  | 50 | 88 | 156 | 218 | 344 | **430** | **601** |
-| 09/24/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD)  | 50 | **88** | **156** | **218** | **344** | 454 | 630 |
-| 09/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD)  | 50 | 103 | **160** | **221** | 346 | **444** | **614** |
-| 08/24/2018 | [9dc52a7](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/9dc52a7afa7951aa3483818d72bfb47373a65131)  | 50 | 103 | **161** | **224** | **346** | 469 | **617** |
-| 08/20/2018 | [39bf371](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/39bf3718d0444317b20e07994321c053d54abcaf)  | 50 | 103 | **162** | **228** | **366** | **466** | **636** |
-| 08/19/2018 | [6b8993a](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/6b8993a7a2cc6bf000e8559b3e2006112621080d)  | 50 | **103** | 165 | 244 | 362 | 513 | 669 |
-| 08/13/2018 | [b754e60](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/b754e60cd6b907d3208301807c1108492475ef44)  | **50** | 107 | 165 | 244 | 362 | 513 | 669 |
-| 08/13/2018 | [bdbbd46](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/bdbbd46c3f3bf4d150dd1a45466489709c4d2e45)  | 52 | 107 | **165** | **244** | **362** | **513** | **669** |
-| 07/16/2018 | [456ddd1](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/456ddd18f761590294b0b28ac1574a2494514917)  | **52** | 107 | **172** | 247 | **376** | 520 | **725** |
-| 07/12/2018 | [c9484d9](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/c9484d93cd55ae50bffb658165e2f843ac5c5fe1)  | 60 | 107 | **176** | 247 | 386 | 520 | 743 |
-| 07/12/2018 | [5cda2c8](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/5cda2c8e94deba9cecc6b9e87f265b401b3d97a4)  | 60 | 107 | 181 | **247** | **386** | **520** | 743 |
-| 07/08/2018 | [9c13b16](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/9c13b16dbea8abd0581dfaa0abeb4960c54010a4)  | 60 | 107 | 181 | **257** | **403** | **531** | **743** |
-| 07/07/2018 | [e876493](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/e87649306139adebdc86ba1880b1e0c0e9265c5a)  | 60 | 107 | **181** | **272** | 408 | 556 | 768 |
-| 07/04/2018 |   | 60 | 107 | 200 | 278 | 408 | 556 | 768 |
+| 2/07/2018 | baseline | 63 | 106 | 180 | 235 | 357 | 468 | 637 |
+
+### --normal mode
+| Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| 10/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | 88 | 156 | 218 | 344 | **430** | **601** |
+| 09/24/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | **88** | **156** | **218** | **344** | 454 | 630 |
+| 09/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | 103 | **160** | **221** | 346 | **444** | **614** |
+| 08/24/2018 | [9dc52a7](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/9dc52a7afa7951aa3483818d72bfb47373a65131) | 50 | 103 | **161** | **224** | **346** | 469 | **617** |
+| 08/20/2018 | [39bf371](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/39bf3718d0444317b20e07994321c053d54abcaf) | 50 | 103 | **162** | **228** | **366** | **466** | **636** |
+| 08/19/2018 | [6b8993a](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/6b8993a7a2cc6bf000e8559b3e2006112621080d) | 50 | **103** | 165 | 244 | 362 | 513 | 669 |
+| 08/13/2018 | [b754e60](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/b754e60cd6b907d3208301807c1108492475ef44) | **50** | 107 | 165 | 244 | 362 | 513 | 669 |
+| 08/13/2018 | [bdbbd46](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/bdbbd46c3f3bf4d150dd1a45466489709c4d2e45) | 52 | 107 | **165** | **244** | **362** | **513** | **669** |
+| 07/16/2018 | [456ddd1](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/456ddd18f761590294b0b28ac1574a2494514917) | **52** | 107 | **172** | 247 | **376** | 520 | **725** |
+| 07/12/2018 | [c9484d9](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/c9484d93cd55ae50bffb658165e2f843ac5c5fe1) | 60 | 107 | **176** | 247 | 386 | 520 | 743 |
+| 07/12/2018 | [5cda2c8](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/5cda2c8e94deba9cecc6b9e87f265b401b3d97a4) | 60 | 107 | 181 | **247** | **386** | **520** | 743 |
+| 07/08/2018 | [9c13b16](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/9c13b16dbea8abd0581dfaa0abeb4960c54010a4) | 60 | 107 | 181 | **257** | **403** | **531** | **743** |
+| 07/07/2018 | [e876493](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/e87649306139adebdc86ba1880b1e0c0e9265c5a) | 60 | 107 | **181** | **272** | 408 | 556 | 768 |
+| 07/04/2018 | | 60 | 107 | 200 | 278 | 408 | 556 | 768 |
 
 Solving a 2x2x2 takes around 9 moves while solving a 3x3x3 takes around 20 moves but
 I am not working on those solvers so I did not include them in the table above.
@@ -35,7 +42,7 @@ I am working on bringing this down but these are the memory requirements for run
 | 5x5x5 | 2.1G | 650M |
 | 6x6x6 | 5.0G | N/A |
 | 7x7x7 | 5.0G | N/A |
-| NxNxN | 5.0G | N/A  |
+| NxNxN | 5.0G | N/A |
 
 
 ## Install
@@ -72,7 +79,7 @@ $ ./usr/bin/rubiks-cube-solver.py --state LFBDUFLDBUBBFDFBLDLFRDFRRURFDFDLULUDLB
 ```
 
 ## History
-One of my hobbies is building Lego Mindstorms robots that can solve rubiks cubes. I was able to find solvers for 2x2x2, 3x3x3, 4x4x4 and 5x5x5 but I couldn't find a solver for anything larger than that :(  The solvers that I did find for 4x4x4 and 5x5x5 took quite a bit of RAM (several gigs) but I wanted to be able to run the solver on a Lego Mindstorms EV3 which is 300Mhz and 64M of RAM. So I decided to write my own solver and here we are :)
+One of my hobbies is building Lego Mindstorms robots that can solve rubiks cubes. I was able to find solvers for 2x2x2, 3x3x3, 4x4x4 and 5x5x5 but I couldn't find a solver for anything larger than that :( The solvers that I did find for 4x4x4 and 5x5x5 took quite a bit of RAM (several gigs) but I wanted to be able to run the solver on a Lego Mindstorms EV3 which is 300Mhz and 64M of RAM. So I decided to write my own solver and here we are :)
 
 Here is the thread on speedsolving.com where I first posted looking for solvers. I ended up posting updates to this thread as my solver evolved:
 https://www.speedsolving.com/forum/threads/5x5x5-6x6x6-7x7x7-or-nxnxn-solvers.63592/

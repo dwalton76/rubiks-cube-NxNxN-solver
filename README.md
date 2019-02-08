@@ -2,18 +2,38 @@
 
 ## Overview
 This is a rubiks cube solver that can solve any size cube, I have tested
-up to 17x17x17. The following table shows the reduction in move counts
-as the solver has evolved. This table starts in July 2018, the earlier
+up to 17x17x17. The following tables show the reduction in move counts
+as the solver has evolved. The --normal table starts in July 2018, the earlier
 releases of the solver had drastically higher move counts, I think it was
 over 400 moves the first time I solved a 5x5x5.
 
+Solving a 2x2x2 takes around 9 moves while solving a 3x3x3 takes around 20 moves
+but I am not working on those solvers so I did not include them in the tables
+below.
 
 ### --fast mode
+
+#### Move Counts
+
 | Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
 | 2/07/2018 | baseline | 63 | 106 | 180 | 235 | 357 | 468 | 637 |
 
+#### Memory Requirements
+
+| Size | Memory |
+| ------ | ------ |
+| 4x4x4 | 75M |
+| 5x5x5 | 175M |
+| 6x6x6 | 400M |
+| 7x7x7 | 400M |
+| NxNxN | 400M |
+
+
 ### --normal mode
+
+#### Move Counts
+
 | Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
 | 10/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | 88 | 156 | 218 | 344 | **430** | **601** |
@@ -31,18 +51,15 @@ over 400 moves the first time I solved a 5x5x5.
 | 07/07/2018 | [e876493](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/e87649306139adebdc86ba1880b1e0c0e9265c5a) | 60 | 107 | **181** | **272** | 408 | 556 | 768 |
 | 07/04/2018 | | 60 | 107 | 200 | 278 | 408 | 556 | 768 |
 
-Solving a 2x2x2 takes around 9 moves while solving a 3x3x3 takes around 20 moves but
-I am not working on those solvers so I did not include them in the table above.
+#### Memory Requirements
 
-I am working on bringing this down but these are the memory requirements for running the solver
-
-| Size | Memory | --min-memory Memory |
-| ------ | ------ | ------ |
-| 4x4x4 | 500M | 500M |
-| 5x5x5 | 2.1G | 650M |
-| 6x6x6 | 5.0G | N/A |
-| 7x7x7 | 5.0G | N/A |
-| NxNxN | 5.0G | N/A |
+| Size | Memory |
+| ------ | ------ |
+| 4x4x4 | 500M |
+| 5x5x5 | 4.0G |
+| 6x6x6 | 4.0G |
+| 7x7x7 | 4.0G |
+| NxNxN | 4.0G |
 
 
 ## Install

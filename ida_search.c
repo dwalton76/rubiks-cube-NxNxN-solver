@@ -1274,6 +1274,12 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         case Bw_PRIME:
         case Dw:
         case Dw_PRIME:
+
+        // Uncomment if LR are staged to one of 432 states
+        // case L:
+        // case L_PRIME:
+        // case R:
+        // case R_PRIME:
             return 0;
         default:
             return 1;

@@ -3925,7 +3925,7 @@ class RubiksCube(object):
     def group_centers_guts(self):
         raise ImplementThis("Child class must implement group_centers_guts")
 
-    def get_solution_len_minus_rotates(self, solution):
+    def get_solution_len_minus_rotates(self, solution, debug=False):
         count = 0
         size_str = str(self.size)
 
@@ -3946,11 +3946,14 @@ class RubiksCube(object):
 
             count += 1
 
+            if debug:
+                log.warning("solution %s, step %s, count %d" % (" ".join(solution), step, count))
+
         return count
 
     def compress_solution(self):
         moves = set(self.solution)
-        solution_string = ' '.join(self.solution)
+        solution_string = " " + " ".join(self.solution) + " "
         pass_num = 0
 
         #log.info("solution_string: %s" % solution_string)
@@ -4057,6 +4060,7 @@ class RubiksCube(object):
                 pass_num += 1
 
         #log.info("Compressed solution in %d passes" % pass_num)
+        solution_string = solution_string.strip()
 
         # We put some markers in the solution to track how many steps
         # each stage took...remove those markers

@@ -209,7 +209,7 @@ ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
     unsigned long long state = 0;
 
     // good test cube...this took ~3m prior to using the step31 oblique edges pruning table :(
-    // Now it takes 20s
+    // Now it takes ~10s
     //
     // time ./ida_search --kociemba .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU. --type 6x6x6-LR-inner-x-centers-oblique-edges-stage --orbit1-need-even-w
 

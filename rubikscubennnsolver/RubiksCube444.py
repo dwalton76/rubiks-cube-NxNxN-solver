@@ -1522,6 +1522,7 @@ class RubiksCube444(RubiksCube):
         if self.state[6] != 'U' or self.state[38] != 'F':
             self.rotate_U_to_U()
             self.rotate_F_to_F()
+            self.print_cube()
 
         self.solution.append('CENTERS_SOLVED')
         self.solution.append('EDGES_GROUPED')

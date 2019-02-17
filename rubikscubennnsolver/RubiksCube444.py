@@ -1382,13 +1382,16 @@ class RubiksCube444(RubiksCube):
         if not self.centers_staged():
             self.print_cube()
             self.lt_ULFRBD_centers_stage.solve()
+            self.rotate_for_best_centers_staging()
             self.print_cube()
-            self.solution.append("COMMENT_%d_steps_444_phase1" % self.get_solution_len_minus_rotates(self.solution))
 
         if self.rotate_for_best_centers_staging():
             self.print_cube()
+
         #orbits_with_oll = self.center_solution_leads_to_oll_parity()
         #log.info("%s: orbits_with_oll %s" % (self, pformat(orbits_with_oll)))
+        phase1_solution_len = len(self.solution)
+        self.solution.append("COMMENT_%d_steps_444_phase1" % self.get_solution_len_minus_rotates(self.solution))
         log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
@@ -1397,36 +1400,33 @@ class RubiksCube444(RubiksCube):
             log.warning("%s: edge swaps are odd, running prevent_OLL to correct" % self)
             self.prevent_OLL()
             self.print_cube()
+            self.solution.append("COMMENT_%d_steps_prevent_OLL" % self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:]))
             log.info("%s: End of prevent_OLL, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.tsai_phase2()
         phase2_solution_len = len(self.solution)
 
         # Pair all 12 edges and solve the centers in one phase
-        if self.cpu_mode == "normal" or self.cpu_mode == "slow":
-            # Testing the phase3 prune tables
-            #self.lt_reduce333_edges_solve.solve()
-            #self.lt_reduce333_centers_solve.solve()
-            #self.print_cube()
-            #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            #sys.exit(0)
+        # Testing the phase3 prune tables
+        #self.lt_reduce333_edges_solve.solve()
+        #self.lt_reduce333_centers_solve.solve()
+        #self.print_cube()
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
 
-            #log.info("kociemba: %s" % self.get_kociemba_string(True))
-            log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.lt_reduce333.avoid_pll = True
-            self.lt_reduce333.solve()
-            self.solution.append("COMMENT_%d_steps_444_phase3" % self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:]))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
+        log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.lt_reduce333.avoid_pll = True
+        self.lt_reduce333.solve()
 
-            if self.state[6] != 'U' or self.state[38] != 'F':
-                self.rotate_U_to_U()
-                self.rotate_F_to_F()
+        if self.state[6] != 'U' or self.state[38] != 'F':
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
 
-            self.print_cube()
-            log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-
-        else:
-            raise Exception("Invalid cpu_mode %s" % self.cpu_mode)
+        self.print_cube()
+        self.solution.append("COMMENT_%d_steps_444_phase3" % self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:]))
+        log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("")
 
         #log.info("kociemba: %s" % self.get_kociemba_string(True))
         self.solution.append('CENTERS_SOLVED')
@@ -1436,6 +1436,8 @@ class RubiksCube444(RubiksCube):
         self.lt_UD_centers_stage.solve()
         self.rotate_for_best_centers_staging()
         self.print_cube()
+        UD_stage_solution_len = len(self.solution)
+        self.solution.append("COMMENT_%d_steps_UD_staged" % self.get_solution_len_minus_rotates(self.solution))
         log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
 
@@ -1447,6 +1449,8 @@ class RubiksCube444(RubiksCube):
 
         self.rotate_for_best_centers_solving()
         self.print_cube()
+        LRFB_stage_solution_len = len(self.solution)
+        self.solution.append("COMMENT_%d_steps_LRFB_staged" % self.get_solution_len_minus_rotates(self.solution[UD_stage_solution_len:]))
         log.info("%s: LR FB centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
 
@@ -1456,12 +1460,16 @@ class RubiksCube444(RubiksCube):
             log.warning("%s: edge swaps are odd, running prevent_OLL to correct" % self)
             self.prevent_OLL()
             self.print_cube()
+            self.solution.append("COMMENT_%d_steps_prevent_OLL" % self.get_solution_len_minus_rotates(self.solution[LFRB_stage_solution_len:]))
             log.info("%s: End of prevent_OLL, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.tsai_phase2()
+        phase2_solution_len = len(self.solution)
 
         self.lt_lfrb_centers.solve()
         self.print_cube()
+        LFRB_solve_solution_len = len(self.solution)
+        self.solution.append("COMMENT_%d_steps_LFRB_solve" % self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:]))
         log.info("%s: LFRB centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         log.info("")
 
@@ -1477,7 +1485,12 @@ class RubiksCube444(RubiksCube):
 
             self.lt_pair_first_four_edges_non_ida.only_colors = four_wing_str_combo
             self.lt_pair_first_four_edges_non_ida.solve()
+            first_four_edges_solution_len = len(self.solution)
+            self.solution.append("COMMENT_%d_steps_4_edges_paired" % self.get_solution_len_minus_rotates(self.solution[LFRB_solve_solution_len:]))
+
             self.lt_pair_last_eight_edges.solve()
+            last_eight_edges_solution_len = len(self.solution)
+            self.solution.append("COMMENT_%d_steps_8_edges_paired" % self.get_solution_len_minus_rotates(self.solution[first_four_edges_solution_len:]))
 
             if self.edge_solution_leads_to_pll_parity():
                 continue

@@ -1,6 +1,18 @@
 
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+import logging
+import random
+import sys
+from rubikscubennnsolver import wing_str_map
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_444
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, moves_555
+from rubikscubennnsolver.RubiksCube666 import RubiksCube666, moves_666
+from rubikscubennnsolver.RubiksCube666 import edge_orbit_0 as edge_orbit_0_666
+from rubikscubennnsolver.RubiksCube666 import edge_orbit_1 as edge_orbit_1_666
+from pprint import pformat
+
+
+log = logging.getLogger(__name__)
+random.seed(1234)
 
 
 class RubiksCubeHighLow444(RubiksCube444):
@@ -50,13 +62,14 @@ class RubiksCubeHighLow444(RubiksCube444):
                 result = 'U'
             elif self.state[low_edge_index] == 'U':
                 result = 'D'
-            elif self.state[high_edge_index] == 'x':
+            elif self.state[high_edge_index] == '.':
                 result = 'U'
-            elif self.state[low_edge_index] == 'x':
+            elif self.state[low_edge_index] == '.':
                 result = 'D'
             else:
                 self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                self.print_cube_layout()
+                raise Exception("U something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
                     (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
 
         elif wing_str.startswith('L'):
@@ -78,13 +91,14 @@ class RubiksCubeHighLow444(RubiksCube444):
                 result = 'U'
             elif self.state[low_edge_index] == 'L':
                 result = 'D'
-            elif self.state[high_edge_index] == 'x':
+            elif self.state[high_edge_index] == '.':
                 result = 'U'
-            elif self.state[low_edge_index] == 'x':
+            elif self.state[low_edge_index] == '.':
                 result = 'D'
             else:
                 self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                self.print_cube_layout()
+                raise Exception("L something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
                     (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
 
         elif wing_str.startswith('R'):
@@ -106,13 +120,14 @@ class RubiksCubeHighLow444(RubiksCube444):
                 result = 'U'
             elif self.state[low_edge_index] == 'R':
                 result = 'D'
-            elif self.state[high_edge_index] == 'x':
+            elif self.state[high_edge_index] == '.':
                 result = 'U'
-            elif self.state[low_edge_index] == 'x':
+            elif self.state[low_edge_index] == '.':
                 result = 'D'
             else:
                 self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                self.print_cube_layout()
+                raise Exception("R something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
                     (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
 
         elif wing_str.startswith('D'):
@@ -143,13 +158,14 @@ class RubiksCubeHighLow444(RubiksCube444):
                 result = 'U'
             elif self.state[low_edge_index] == 'D':
                 result = 'D'
-            elif self.state[high_edge_index] == 'x':
+            elif self.state[high_edge_index] == '.':
                 result = 'U'
-            elif self.state[low_edge_index] == 'x':
+            elif self.state[low_edge_index] == '.':
                 result = 'D'
             else:
                 self.print_cube()
-                raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                self.print_cube_layout()
+                raise Exception("D something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
                     (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
 
         else:
@@ -167,10 +183,10 @@ class RubiksCubeHighLow444(RubiksCube444):
         state = self.state
         new_highlow_edge_values = {}
 
-        for x in range(1000000):
+        for x in range(100000):
 
             # make random moves
-            step = moves_444[randint(0, len(moves_444)-1)]
+            step = moves_444[random.randint(0, len(moves_444)-1)]
             self.rotate(step)
 
             for (x, y) in self.reduce333_orient_edges_tuples:
@@ -263,7 +279,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                 else:
                     self.print_cube()
                     self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
+                    raise Exception("U midge something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
                         (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
             else:
                 if self.state[high_edge_index] == 'U':
@@ -277,7 +293,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                 else:
                     self.print_cube()
                     self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
+                    raise Exception("U something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
                         (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
 
         elif wing_str.startswith('L'):
@@ -313,7 +329,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                 else:
                     self.print_cube()
                     self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
+                    raise Exception("L midge something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
                         (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
             else:
                 if self.state[high_edge_index] == 'L':
@@ -327,7 +343,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                 else:
                     self.print_cube()
                     self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    raise Exception("L something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
                         (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
 
         elif wing_str.startswith('R'):
@@ -363,7 +379,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                 else:
                     self.print_cube()
                     self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
+                    raise Exception("R midge something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
                         (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
             else:
                 if self.state[high_edge_index] == 'R':
@@ -377,7 +393,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                 else:
                     self.print_cube()
                     self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    raise Exception("R something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
                         (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
 
         elif wing_str.startswith('D'):
@@ -432,7 +448,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                 else:
                     self.print_cube()
                     self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
+                    raise Exception("D midge something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s, is_midge %s" %
                         (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index], is_midge))
             else:
                 if self.state[high_edge_index] == 'D':
@@ -446,7 +462,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                 else:
                     self.print_cube()
                     self.print_cube_layout()
-                    raise Exception("something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    raise Exception("D something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
                         (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
 
         else:
@@ -465,7 +481,7 @@ class RubiksCubeHighLow555(RubiksCube555):
         for x in range(1000000):
 
             # make random moves
-            step = moves_555[randint(0, len(moves_555)-1)]
+            step = moves_555[random.randint(0, len(moves_555)-1)]
 
             if "w" in step:
                 continue

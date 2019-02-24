@@ -4003,6 +4003,51 @@ class RubiksCube(object):
                 # "F F'" and "F' F" will cancel each other out, remove them
                 solution_string = solution_string.replace(" %s %s " % (move, reverse_move), " ")
                 solution_string = solution_string.replace(" %s %s " % (reverse_move, move), " ")
+
+                # Uw U Uw' -> U
+                # Uw U2 Uw' -> U2
+                solution_string = solution_string.replace(" Uw U Uw' ", " U ")
+                solution_string = solution_string.replace(" Uw U' Uw' ", " U' ")
+                solution_string = solution_string.replace(" Uw U2 Uw' ", " U2 ")
+                solution_string = solution_string.replace(" Uw' U Uw ", " U ")
+                solution_string = solution_string.replace(" Uw' U' Uw ", " U' ")
+                solution_string = solution_string.replace(" Uw' U2 Uw ", " U2 ")
+
+                solution_string = solution_string.replace(" Lw L Lw' ", " L ")
+                solution_string = solution_string.replace(" Lw L' Lw' ", " L' ")
+                solution_string = solution_string.replace(" Lw L2 Lw' ", " L2 ")
+                solution_string = solution_string.replace(" Lw' L Lw ", " L ")
+                solution_string = solution_string.replace(" Lw' L' Lw ", " L' ")
+                solution_string = solution_string.replace(" Lw' L2 Lw ", " L2 ")
+
+                solution_string = solution_string.replace(" Fw F Fw' ", " F ")
+                solution_string = solution_string.replace(" Fw F' Fw' ", " F' ")
+                solution_string = solution_string.replace(" Fw F2 Fw' ", " F2 ")
+                solution_string = solution_string.replace(" Fw' F Fw ", " F ")
+                solution_string = solution_string.replace(" Fw' F' Fw ", " F' ")
+                solution_string = solution_string.replace(" Fw' F2 Fw ", " F2 ")
+
+                solution_string = solution_string.replace(" Rw R Rw' ", " R ")
+                solution_string = solution_string.replace(" Rw R' Rw' ", " R' ")
+                solution_string = solution_string.replace(" Rw R2 Rw' ", " R2 ")
+                solution_string = solution_string.replace(" Rw' R Rw ", " R ")
+                solution_string = solution_string.replace(" Rw' R' Rw ", " R' ")
+                solution_string = solution_string.replace(" Rw' R2 Rw ", " R2 ")
+
+                solution_string = solution_string.replace(" Bw B Bw' ", " B ")
+                solution_string = solution_string.replace(" Bw B' Bw' ", " B' ")
+                solution_string = solution_string.replace(" Bw B2 Bw' ", " B2 ")
+                solution_string = solution_string.replace(" Bw' B Bw ", " B ")
+                solution_string = solution_string.replace(" Bw' B' Bw ", " B' ")
+                solution_string = solution_string.replace(" Bw' B2 Bw ", " B2 ")
+
+                solution_string = solution_string.replace(" Dw D Dw' ", " D ")
+                solution_string = solution_string.replace(" Dw D' Dw' ", " D' ")
+                solution_string = solution_string.replace(" Dw D2 Dw' ", " D2 ")
+                solution_string = solution_string.replace(" Dw' D Dw ", " D ")
+                solution_string = solution_string.replace(" Dw' D' Dw ", " D' ")
+                solution_string = solution_string.replace(" Dw' D2 Dw ", " D2 ")
+
                 prev_move = move
 
             #log.info("pass %d: final %s" % (pass_num, solution_string))

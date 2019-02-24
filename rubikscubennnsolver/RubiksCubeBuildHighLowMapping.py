@@ -485,3 +485,263 @@ class RubiksCubeHighLow555(RubiksCube555):
         log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
         sys.exit(0)
 
+
+class RubiksCubeHighLow666(RubiksCube666):
+
+    def high_low_state(self, x, y, state_x, state_y, wing_str, orbit):
+        """
+        Return U if this is a high edge, D if it is a low edge
+        """
+        assert orbit in (0, 1), f"invalid orbit {orbit}"
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        # Nuke everything except the one wing we are interested in
+        self.nuke_corners()
+        self.nuke_centers()
+        self.nuke_edges()
+
+        self.state[x] = state_x
+        self.state[y] = state_y
+
+        # Now move that wing to its home edge
+        if wing_str.startswith('U'):
+
+            if wing_str == 'UB':
+                self.move_wing_to_U_north(x)
+
+                if orbit == 0:
+                    high_edge_index = 2
+                    low_edge_index = 5
+                elif orbit == 1:
+                    high_edge_index = 3
+                    low_edge_index = 4
+
+            elif wing_str == 'UL':
+                self.move_wing_to_U_west(x)
+
+                if orbit == 0:
+                    high_edge_index = 25
+                    low_edge_index = 7
+                elif orbit == 1:
+                    high_edge_index = 19
+                    low_edge_index = 13
+
+            elif wing_str == 'UR':
+                self.move_wing_to_U_east(x)
+
+                if orbit == 0:
+                    high_edge_index = 12
+                    low_edge_index = 30
+                elif orbit == 1:
+                    high_edge_index = 18
+                    low_edge_index = 24
+
+            elif wing_str == 'UF':
+                self.move_wing_to_U_south(x)
+
+                if orbit == 0:
+                    high_edge_index = 35
+                    low_edge_index = 32
+                elif orbit == 1:
+                    high_edge_index = 34
+                    low_edge_index = 33
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'U':
+                result = 'U'
+            elif self.state[low_edge_index] == 'U':
+                result = 'D'
+            elif self.state[high_edge_index] == '.':
+                result = 'U'
+            elif self.state[low_edge_index] == '.':
+                result = 'D'
+            else:
+                self.print_cube()
+                self.print_cube_layout()
+                raise Exception("U something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('L'):
+
+            if wing_str == 'LB':
+                self.move_wing_to_L_west(x)
+
+                if orbit == 0:
+                    high_edge_index = 61
+                    low_edge_index = 43
+                elif orbit == 1:
+                    high_edge_index = 55
+                    low_edge_index = 49
+
+            elif wing_str == 'LF':
+                self.move_wing_to_L_east(x)
+
+                if orbit == 0:
+                    high_edge_index = 48
+                    low_edge_index = 66
+                elif orbit == 1:
+                    high_edge_index = 54
+                    low_edge_index = 60
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'L':
+                result = 'U'
+            elif self.state[low_edge_index] == 'L':
+                result = 'D'
+            elif self.state[high_edge_index] == '.':
+                result = 'U'
+            elif self.state[low_edge_index] == '.':
+                result = 'D'
+            else:
+                self.print_cube()
+                self.print_cube_layout()
+                raise Exception("L something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('R'):
+
+            if wing_str == 'RB':
+                self.move_wing_to_R_east(x)
+
+                if orbit == 0:
+                    high_edge_index = 120
+                    low_edge_index = 138
+                elif orbit == 1:
+                    high_edge_index = 126
+                    low_edge_index = 132
+
+            elif wing_str == 'RF':
+                self.move_wing_to_R_west(x)
+
+                if orbit == 0:
+                    high_edge_index = 133
+                    low_edge_index = 115
+                elif orbit == 1:
+                    high_edge_index = 127
+                    low_edge_index = 121
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'R':
+                result = 'U'
+            elif self.state[low_edge_index] == 'R':
+                result = 'D'
+            elif self.state[high_edge_index] == '.':
+                result = 'U'
+            elif self.state[low_edge_index] == '.':
+                result = 'D'
+            else:
+                self.print_cube()
+                self.print_cube_layout()
+                raise Exception("R something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        elif wing_str.startswith('D'):
+            if wing_str == 'DB':
+                self.move_wing_to_D_south(x)
+
+                if orbit == 0:
+                    high_edge_index = 215
+                    low_edge_index = 212
+                elif orbit == 1:
+                    high_edge_index = 214
+                    low_edge_index = 213
+
+            elif wing_str == 'DL':
+                self.move_wing_to_D_west(x)
+
+                if orbit == 0:
+                    high_edge_index = 205
+                    low_edge_index = 187
+                elif orbit == 1:
+                    high_edge_index = 199
+                    low_edge_index = 193
+
+            elif wing_str == 'DR':
+                self.move_wing_to_D_east(x)
+
+                if orbit == 0:
+                    high_edge_index = 192
+                    low_edge_index = 210
+                elif orbit == 1:
+                    high_edge_index = 198
+                    low_edge_index = 204
+
+            elif wing_str == 'DF':
+                self.move_wing_to_D_north(x)
+
+                if orbit == 0:
+                    high_edge_index = 182
+                    low_edge_index = 185
+                elif orbit == 1:
+                    high_edge_index = 183
+                    low_edge_index = 184
+
+            else:
+                raise Exception("invalid wing_str %s" % wing_str)
+
+            if self.state[high_edge_index] == 'D':
+                result = 'U'
+            elif self.state[low_edge_index] == 'D':
+                result = 'D'
+            elif self.state[high_edge_index] == '.':
+                result = 'U'
+            elif self.state[low_edge_index] == '.':
+                result = 'D'
+            else:
+                self.print_cube()
+                self.print_cube_layout()
+                raise Exception("D something went wrong, (%s, %s) was originally (%s, %s), moved to %s, high_index state[%s] is %s, low_index state[%s] is %s" %
+                    (x, y, state_x, state_y, wing_str, high_edge_index, self.state[high_edge_index], low_edge_index, self.state[low_edge_index]))
+
+        else:
+            raise Exception("invalid wing_str %s" % wing_str)
+
+
+        if orbit == 0:
+            assert high_edge_index in edge_orbit_0_666, f"{high_edge_index} is not in edge_orbit_0_666"
+            assert low_edge_index in edge_orbit_0_666, f"{low_edge_index} is not in edge_orbit_0_666"
+        elif orbit == 1:
+            assert high_edge_index in edge_orbit_1_666, f"{high_edge_index} is not in edge_orbit_1_666"
+            assert low_edge_index in edge_orbit_1_666, f"{low_edge_index} is not in edge_orbit_1_666"
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        assert result in ('U', 'D')
+        return result
+
+    def build_highlow_edge_values(self):
+        state = self.state
+        new_highlow_edge_values = {}
+
+        for x in range(100000):
+
+            # make random moves
+            step = moves_666[random.randint(0, len(moves_666)-1)]
+            self.rotate(step)
+
+            for (x, y) in self.reduce333_orient_edges_tuples:
+                state_x = self.state[x]
+                state_y = self.state[y]
+                wing_str = wing_str_map[state_x + state_y]
+                wing_tuple = (x, y, state_x, state_y)
+
+                if x in edge_orbit_0_666 and y in edge_orbit_0_666:
+                    orbit = 0
+                elif x in edge_orbit_1_666 and y in edge_orbit_1_666:
+                    orbit = 1
+                else:
+                    raise Exception(f"What orbit for ({x}, {y})?")
+
+                if wing_tuple not in new_highlow_edge_values:
+                    new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str, orbit)
+
+        print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
+        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))

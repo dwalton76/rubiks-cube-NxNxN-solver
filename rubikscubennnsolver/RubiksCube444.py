@@ -1460,7 +1460,7 @@ class RubiksCube444(RubiksCube):
             log.warning("%s: edge swaps are odd, running prevent_OLL to correct" % self)
             self.prevent_OLL()
             self.print_cube()
-            self.solution.append("COMMENT_%d_steps_prevent_OLL" % self.get_solution_len_minus_rotates(self.solution[LFRB_stage_solution_len:]))
+            self.solution.append("COMMENT_%d_steps_prevent_OLL" % self.get_solution_len_minus_rotates(self.solution[LRFB_stage_solution_len:]))
             log.info("%s: End of prevent_OLL, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.tsai_phase2()

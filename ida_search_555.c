@@ -436,7 +436,6 @@ ida_heuristic_ULFRBD_centers_555 (
     return result;
 }
 
-
 unsigned int
 get_wings_paired_count(char *cube)
 {
@@ -531,6 +530,65 @@ get_wings_paired_count(char *cube)
     return count;
 }
 
+
+unsigned int
+get_outer_wings_paired_count(char *cube)
+{
+    unsigned int count = 0;
+
+    // There are 12 wings to check
+
+    // UB
+    if (cube[2] == cube[4] && cube[102] == cube[104])
+        count++;
+
+    // UL
+    if (cube[6] == cube[16] && cube[27] == cube[29])
+        count++;
+
+    // UR
+    if (cube[10] == cube[20] && cube[77] == cube[79])
+        count++;
+
+    // UF
+    if (cube[22] == cube[24] && cube[52] == cube[54])
+        count++;
+
+    // LB
+    if (cube[31] == cube[41] && cube[110] == cube[120])
+        count++;
+
+    // LF
+    if (cube[35] == cube[45] && cube[56] == cube[66])
+        count++;
+
+    // RF
+    if (cube[60] == cube[70] && cube[81] == cube[91])
+        count++;
+
+    // RB
+    if (cube[85] == cube[95] && cube[106] == cube[116])
+        count++;
+
+    // DF
+    if (cube[72] == cube[74] && cube[127] == cube[129])
+        count++;
+
+    // DL
+    if (cube[131] == cube[141] && cube[47] == cube[49])
+        count++;
+
+    // DR
+    if (cube[135] == cube[145] && cube[97] == cube[99])
+        count++;
+
+    // DB
+    if (cube[147] == cube[149] && cube[122] == cube[124])
+        count++;
+
+    return count;
+}
+
 int
 ida_search_complete_ULFRBD_centers_555 (char *cube)
 {
@@ -567,16 +625,18 @@ ida_search_complete_ULFRBD_centers_555 (char *cube)
         return 1;
 
         /*
-        unsigned int wings_paired_count = 0;
-        wings_paired_count = get_wings_paired_count(cube);
-        LOG("CENTERS SOLVED!! %d wings paired\n", wings_paired_count);
+        //unsigned int wings_paired_count = 0;
+        //wings_paired_count = get_wings_paired_count(cube);
+        unsigned int outer_wings_paired_count = 0;
+        outer_wings_paired_count = get_outer_wings_paired_count(cube);
+        LOG("CENTERS SOLVED!! %d outer wings paired\n", outer_wings_paired_count);
 
-        if (wings_paired_count >= 2) {
+        if (outer_wings_paired_count >= 4) {
             return 1;
         } else {
             return 0;
         }
-         */
+        */
     } else {
         return 0;
     }

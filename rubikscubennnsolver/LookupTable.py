@@ -1130,18 +1130,8 @@ class LookupTableIDA(LookupTable):
 
         # Are we done?
         if cost_to_goal <= self.max_depth and self.search_complete(lt_state, steps_to_here):
-
-            if self.parent.init_orbit0_paired:
-                if self.parent.orbit0_paired():
-                    self.ida_nodes[lt_state] = steps_to_here
-                    return (f_cost, True)
-                else:
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-
-            else:
-                self.ida_nodes[lt_state] = steps_to_here
-                return (f_cost, True)
+            self.ida_nodes[lt_state] = steps_to_here
+            return (f_cost, True)
 
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
@@ -1154,74 +1144,6 @@ class LookupTableIDA(LookupTable):
         skip_other_steps_this_face = None
 
         for step in self.steps_not_on_same_face_and_layer[prev_step]:
-
-            if self.parent.init_orbit0_paired:
-
-                # If there are an odd number of wide turns the only turn that is allowed
-                # is the opposite wide turn in order to keep the outer orbit of edges paired
-                if wide_count_turns(steps_to_here) % 2 == 1:
-                    if 'w' not in step:
-                        continue
-                    elif step == "Uw":
-                        if prev_step != "Dw'":
-                            continue
-                    elif step == "Uw'":
-                        if prev_step != "Dw":
-                            continue
-                    elif step == "Uw2":
-                        if prev_step != "Dw2":
-                            continue
-
-                    elif step == "Lw":
-                        if prev_step != "Rw'":
-                            continue
-                    elif step == "Lw'":
-                        if prev_step != "Rw":
-                            continue
-                    elif step == "Lw2":
-                        if prev_step != "Rw2":
-                            continue
-
-                    elif step == "Fw":
-                        if prev_step != "Bw'":
-                            continue
-                    elif step == "Fw'":
-                        if prev_step != "Bw":
-                            continue
-                    elif step == "Fw2":
-                        if prev_step != "Bw2":
-                            continue
-
-                    elif step == "Rw":
-                        if prev_step != "Lw'":
-                            continue
-                    elif step == "Rw'":
-                        if prev_step != "Lw":
-                            continue
-                    elif step == "Rw2":
-                        if prev_step != "Lw2":
-                            continue
-
-                    elif step == "Bw":
-                        if prev_step != "Fw'":
-                            continue
-                    elif step == "Bw'":
-                        if prev_step != "Fw":
-                            continue
-                    elif step == "Bw2":
-                        if prev_step != "Fw2":
-                            continue
-
-                    elif step == "Dw":
-                        if prev_step != "Uw'":
-                            continue
-                    elif step == "Dw'":
-                        if prev_step != "Uw":
-                            continue
-                    elif step == "Dw2":
-                        if prev_step != "Uw2":
-                            continue
-
 
             # https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
             '''
@@ -1574,10 +1496,6 @@ class LookupTableIDAViaC(object):
             cmd.append("--slow")
         else:
             raise Exception("%s: What CPU mode for %s?" % (self, self.parent))
-
-        # This is a special case for the 2018 Fewest Move Challenge
-        if self.parent.init_orbit0_paired and self.C_ida_type == "5x5x5-UD-centers-stage":
-            cmd.append("--orbit0-paired")
 
         if self.avoid_pll:
             # To avoid PLL the odd/even of edge swaps and corner swaps must agree...they

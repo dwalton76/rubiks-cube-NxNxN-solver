@@ -453,7 +453,6 @@ class RubiksCube(object):
         self.use_nuke_corners = False
         self.use_nuke_edges = False
         self.use_nuke_centers = False
-        self.init_orbit0_paired = False
         self.cpu_mode = None
         self.solution_with_markers = []
 

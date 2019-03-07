@@ -1827,7 +1827,6 @@ ida_search (unsigned int cost_to_here,
             lookup_table_type type,
             unsigned int orbit0_wide_quarter_turns,
             unsigned int orbit1_wide_quarter_turns,
-            unsigned int orbit0_paired,
             unsigned int avoid_pll,
             cpu_mode_type cpu_mode)
 {
@@ -1913,7 +1912,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll, cpu_mode);
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -1941,103 +1940,6 @@ ida_search (unsigned int cost_to_here,
                 continue;
             }
 
-            if (orbit0_paired && wide_turn_count(moves_to_here) % 2 == 1) {
-                switch (move) {
-                case Uw:
-                    if (prev_move != Dw_PRIME) {
-                        continue;
-                    }
-                    break;
-                case Uw_PRIME:
-                    if (prev_move != Dw) {
-                        continue;
-                    }
-                    break;
-                case Uw2:
-                    if (prev_move != Dw2) {
-                        continue;
-                    }
-                    break;
-                case Lw:
-                    if (prev_move != Rw_PRIME) {
-                        continue;
-                    }
-                    break;
-                case Lw_PRIME:
-                    if (prev_move != Rw) {
-                        continue;
-                    }
-                    break;
-                case Lw2:
-                    if (prev_move != Rw2) {
-                        continue;
-                    }
-                    break;
-                case Fw:
-                    if (prev_move != Bw_PRIME) {
-                        continue;
-                    }
-                    break;
-                case Fw_PRIME:
-                    if (prev_move != Bw) {
-                        continue;
-                    }
-                    break;
-                case Fw2:
-                    if (prev_move != Bw2) {
-                        continue;
-                    }
-                    break;
-                case Rw:
-                    if (prev_move != Lw_PRIME) {
-                        continue;
-                    }
-                    break;
-                case Rw_PRIME:
-                    if (prev_move != Lw) {
-                        continue;
-                    }
-                    break;
-                case Rw2:
-                    if (prev_move != Lw2) {
-                        continue;
-                    }
-                    break;
-                case Bw:
-                    if (prev_move != Fw_PRIME) {
-                        continue;
-                    }
-                    break;
-                case Bw_PRIME:
-                    if (prev_move != Fw) {
-                        continue;
-                    }
-                    break;
-                case Bw2:
-                    if (prev_move != Fw2) {
-                        continue;
-                    }
-                    break;
-                case Dw:
-                    if (prev_move != Uw_PRIME) {
-                        continue;
-                    }
-                    break;
-                case Dw_PRIME:
-                    if (prev_move != Uw) {
-                        continue;
-                    }
-                    break;
-                case Dw2:
-                    if (prev_move != Uw2) {
-                        continue;
-                    }
-                    break;
-                default:
-                    continue;
-                }
-            }
-
             // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
             /*
              * Well, it's a simple technique to reduce the number of nodes accessed.
@@ -2062,7 +1964,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll, cpu_mode);
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -2114,7 +2016,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll, cpu_mode);
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -2166,7 +2068,7 @@ ida_search (unsigned int cost_to_here,
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll, cpu_mode);
+                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -2274,7 +2176,6 @@ ida_solve (
     lookup_table_type type,
     unsigned int orbit0_wide_quarter_turns,
     unsigned int orbit1_wide_quarter_turns,
-    unsigned int orbit0_paired,
     unsigned int avoid_pll,
     cpu_mode_type cpu_mode)
 {
@@ -2391,7 +2292,7 @@ ida_solve (
 
         search_result = ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size,
                                    type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns,
-                                   orbit0_paired, avoid_pll, cpu_mode);
+                                   avoid_pll, cpu_mode);
 
         if (search_result.found_solution) {
             ida_count_total += ida_count;
@@ -2417,7 +2318,6 @@ main (int argc, char *argv[])
     unsigned int orbit0_wide_quarter_turns = 0;
     unsigned int orbit1_wide_quarter_turns = 0;
     unsigned int avoid_pll = 0;
-    unsigned int orbit0_paired = 0;
     char kociemba[300];
     memset(kociemba, 0, sizeof(char) * 300);
     cpu_mode_type cpu_mode = CPU_FAST;
@@ -2511,9 +2411,6 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--avoid-pll")) {
             avoid_pll = 1;
 
-        } else if (strmatch(argv[i], "--orbit0-paired")) {
-            orbit0_paired = 1;
-
         } else if (strmatch(argv[i], "--fast")) {
             cpu_mode = CPU_FAST;
 
@@ -2566,7 +2463,7 @@ main (int argc, char *argv[])
     init_cube(cube, cube_size, type, kociemba);
 
     // print_cube(cube, cube_size);
-    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, orbit0_paired, avoid_pll, cpu_mode);
+    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
 
     // free_prune_tables();
 

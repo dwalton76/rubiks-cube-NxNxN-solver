@@ -10,7 +10,7 @@ This is a work in progress
 
 import logging
 logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(filename)20s %(levelname)8s: %(message)s')
+                    format='%(asctime)s %(filename)22s %(levelname)8s: %(message)s')
 log = logging.getLogger(__name__)
 
 # Color the errors and warnings in red

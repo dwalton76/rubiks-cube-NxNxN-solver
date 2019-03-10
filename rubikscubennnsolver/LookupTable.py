@@ -190,6 +190,21 @@ def steps_on_same_face_and_layer(prev_step, step):
 
     >>> steps_on_same_face_and_layer("Uw2", "3Uw")
     False
+
+    >>> steps_on_same_face_and_layer("2-3Lw", "2-3Lw'")
+    True
+
+    >>> steps_on_same_face_and_layer("2-3Lw", "2-3Lw2")
+    True
+
+    >>> steps_on_same_face_and_layer("2-3Lw", "2-3Rw")
+    False
+
+    >>> steps_on_same_face_and_layer("2-3Lw", "Lw")
+    False
+
+    >>> steps_on_same_face_and_layer("2-3Lw", "3Lw")
+    False
     """
     if prev_step is None:
         return False

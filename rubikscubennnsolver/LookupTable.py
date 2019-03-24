@@ -1459,7 +1459,7 @@ class LookupTableIDAViaC(object):
 
         if not os.path.isfile("ida_search"):
             log.info("ida_search is missing...compiling it now")
-            subprocess.check_output("gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_555.c -lm".split())
+            subprocess.check_output("gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_444.c ida_search_555.c ida_search_666.c ida_search_777.c xxhash.c -lm".split())
 
         kociemba_string = self.parent.get_kociemba_string(True)
         cmd = ["./ida_search", "--kociemba", kociemba_string, "--type", self.C_ida_type]

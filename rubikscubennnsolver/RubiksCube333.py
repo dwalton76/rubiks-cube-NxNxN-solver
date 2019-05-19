@@ -104,6 +104,13 @@ class LookupTable333Phase2Corners(LookupTable):
 
 class RubiksCube333(RubiksCube):
 
+    reduce333_orient_edges_tuples = (
+        (2, 38), (4, 11), (6, 29), (8, 20),
+        (13, 42), (15, 22),
+        (24, 31), (33, 40),
+        (47, 26), (49, 17), (51, 35), (53, 44),
+    )
+
     def phase(self):
         return 'Solve 3x3x3'
 

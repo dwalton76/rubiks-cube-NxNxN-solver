@@ -19,6 +19,9 @@ import shutil
 import subprocess
 import sys
 
+if sys.version_info < (3, 4):
+    raise SystemError("Must be using Python 3.4 or higher")
+
 log = logging.getLogger(__name__)
 
 HTML_DIRECTORY = "/tmp/rubiks-cube-NxNxN-solver/"

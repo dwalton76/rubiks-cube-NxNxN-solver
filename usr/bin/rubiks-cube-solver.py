@@ -8,6 +8,11 @@ Solve any size rubiks cube:
 This is a work in progress
 """
 
+import sys
+
+if sys.version_info < (3, 4):
+    raise SystemError("Must be using Python 3.4 or higher")
+
 import logging
 
 logging.basicConfig(
@@ -41,7 +46,6 @@ import datetime as dt
 import logging
 import os
 import resource
-import sys
 
 start_time = dt.datetime.now()
 

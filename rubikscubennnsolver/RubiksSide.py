@@ -1,4 +1,3 @@
-
 from pprint import pformat
 import logging
 import math
@@ -44,7 +43,6 @@ class ImplementThis(Exception):
 
 
 class Side(object):
-
     def __init__(self, parent, name):
         self.parent = parent
         self.name = name
@@ -52,17 +50,17 @@ class Side(object):
         self.size = int(math.sqrt(self.squares_per_side))
         self.wing_partner = {}
 
-        if self.name == 'U':
+        if self.name == "U":
             index = 0
-        elif self.name == 'L':
+        elif self.name == "L":
             index = 1
-        elif self.name == 'F':
+        elif self.name == "F":
             index = 2
-        elif self.name == 'R':
+        elif self.name == "R":
             index = 3
-        elif self.name == 'B':
+        elif self.name == "B":
             index = 4
-        elif self.name == 'D':
+        elif self.name == "D":
             index = 5
 
         self.min_pos = (index * self.squares_per_side) + 1
@@ -74,12 +72,13 @@ class Side(object):
         else:
             self.mid_pos = int((self.min_pos + self.max_pos) / 2)
 
-
         # Corners
-        self.corner_pos = (self.min_pos,
-                           self.min_pos + self.size - 1,
-                           self.max_pos - self.size + 1,
-                           self.max_pos)
+        self.corner_pos = (
+            self.min_pos,
+            self.min_pos + self.size - 1,
+            self.max_pos - self.size + 1,
+            self.max_pos,
+        )
 
         # Edges
         self.edge_pos = []
@@ -119,35 +118,50 @@ class Side(object):
                 for x in range(west_edge + 1, east_edge):
                     self.center_pos.append(x)
 
-        self.center_corner_pos = [self.min_pos + self.size + 1,
-                               self.min_pos + (self.size * 2) - 2,
-                               self.max_pos - (self.size * 2) + 2,
-                               self.max_pos - self.size - 1]
+        self.center_corner_pos = [
+            self.min_pos + self.size + 1,
+            self.min_pos + (self.size * 2) - 2,
+            self.max_pos - (self.size * 2) + 2,
+            self.max_pos - self.size - 1,
+        ]
 
         if self.size >= 5:
-            self.center_edge_pos = [self.center_corner_pos[0] + 1,
-                                    self.center_corner_pos[0] + self.size,
-                                    self.center_corner_pos[1] + self.size,
-                                    self.center_corner_pos[2] + 1]
+            self.center_edge_pos = [
+                self.center_corner_pos[0] + 1,
+                self.center_corner_pos[0] + self.size,
+                self.center_corner_pos[1] + self.size,
+                self.center_corner_pos[2] + 1,
+            ]
         else:
             self.center_edge_pos = []
 
-        log.debug("\nSide %s\n\tmin/max %d/%d\n\tedges %s\n\tcorners %s\n\tcenters %s\n\tcenter corners %s\n\tcenter edges %s\n" %
-            (self.name, self.min_pos, self.max_pos,
-             pformat(self.edge_pos),
-             pformat(self.corner_pos),
-             pformat(self.center_pos),
-             pformat(self.center_corner_pos),
-             pformat(self.center_edge_pos)))
+        log.debug(
+            "\nSide %s\n\tmin/max %d/%d\n\tedges %s\n\tcorners %s\n\tcenters %s\n\tcenter corners %s\n\tcenter edges %s\n"
+            % (
+                self.name,
+                self.min_pos,
+                self.max_pos,
+                pformat(self.edge_pos),
+                pformat(self.corner_pos),
+                pformat(self.center_pos),
+                pformat(self.center_corner_pos),
+                pformat(self.center_edge_pos),
+            )
+        )
 
     def __str__(self):
-        return 'side %s' % self.name
+        return "side %s" % self.name
 
     def get_face_as_2d_list(self):
         """
         Used by RubiksCube rotate()
         """
-        return build_2d_list([self.parent.state[square_index] for square_index in range(self.min_pos, self.max_pos + 1)])
+        return build_2d_list(
+            [
+                self.parent.state[square_index]
+                for square_index in range(self.min_pos, self.max_pos + 1)
+            ]
+        )
 
     def get_wing_partner(self, wing_index):
         try:
@@ -167,7 +181,10 @@ class Side(object):
             for pos1 in self.edge_north_pos:
                 pos2 = self.get_wing_partner(pos1)
                 if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] != self.parent.state[pos1] or self.parent.state[prev_pos2] != self.parent.state[pos2]:
+                    if (
+                        self.parent.state[prev_pos1] != self.parent.state[pos1]
+                        or self.parent.state[prev_pos2] != self.parent.state[pos2]
+                    ):
                         non_paired_wings.append(((pos1, pos2), (prev_pos1, prev_pos2)))
                 prev_pos1 = pos1
                 prev_pos2 = pos2
@@ -180,7 +197,10 @@ class Side(object):
             for pos1 in self.edge_west_pos:
                 pos2 = self.get_wing_partner(pos1)
                 if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] != self.parent.state[pos1] or self.parent.state[prev_pos2] != self.parent.state[pos2]:
+                    if (
+                        self.parent.state[prev_pos1] != self.parent.state[pos1]
+                        or self.parent.state[prev_pos2] != self.parent.state[pos2]
+                    ):
                         non_paired_wings.append(((pos1, pos2), (prev_pos1, prev_pos2)))
                 prev_pos1 = pos1
                 prev_pos2 = pos2
@@ -193,7 +213,10 @@ class Side(object):
             for pos1 in self.edge_south_pos:
                 pos2 = self.get_wing_partner(pos1)
                 if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] != self.parent.state[pos1] or self.parent.state[prev_pos2] != self.parent.state[pos2]:
+                    if (
+                        self.parent.state[prev_pos1] != self.parent.state[pos1]
+                        or self.parent.state[prev_pos2] != self.parent.state[pos2]
+                    ):
                         non_paired_wings.append(((pos1, pos2), (prev_pos1, prev_pos2)))
                 prev_pos1 = pos1
                 prev_pos2 = pos2
@@ -206,7 +229,10 @@ class Side(object):
             for pos1 in self.edge_east_pos:
                 pos2 = self.get_wing_partner(pos1)
                 if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] != self.parent.state[pos1] or self.parent.state[prev_pos2] != self.parent.state[pos2]:
+                    if (
+                        self.parent.state[prev_pos1] != self.parent.state[pos1]
+                        or self.parent.state[prev_pos2] != self.parent.state[pos2]
+                    ):
                         non_paired_wings.append(((pos1, pos2), (prev_pos1, prev_pos2)))
                 prev_pos1 = pos1
                 prev_pos2 = pos2
@@ -224,7 +250,10 @@ class Side(object):
             for pos1 in self.edge_north_pos:
                 pos2 = self.get_wing_partner(pos1)
                 if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] != self.parent.state[pos1] or self.parent.state[prev_pos2] != self.parent.state[pos2]:
+                    if (
+                        self.parent.state[prev_pos1] != self.parent.state[pos1]
+                        or self.parent.state[prev_pos2] != self.parent.state[pos2]
+                    ):
                         non_paired_edges.append(((pos1, pos2), (prev_pos1, prev_pos2)))
                         break
                 prev_pos1 = pos1
@@ -238,7 +267,10 @@ class Side(object):
             for pos1 in self.edge_west_pos:
                 pos2 = self.get_wing_partner(pos1)
                 if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] != self.parent.state[pos1] or self.parent.state[prev_pos2] != self.parent.state[pos2]:
+                    if (
+                        self.parent.state[prev_pos1] != self.parent.state[pos1]
+                        or self.parent.state[prev_pos2] != self.parent.state[pos2]
+                    ):
                         non_paired_edges.append(((pos1, pos2), (prev_pos1, prev_pos2)))
                         break
                 prev_pos1 = pos1
@@ -252,7 +284,10 @@ class Side(object):
             for pos1 in self.edge_south_pos:
                 pos2 = self.get_wing_partner(pos1)
                 if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] != self.parent.state[pos1] or self.parent.state[prev_pos2] != self.parent.state[pos2]:
+                    if (
+                        self.parent.state[prev_pos1] != self.parent.state[pos1]
+                        or self.parent.state[prev_pos2] != self.parent.state[pos2]
+                    ):
                         non_paired_edges.append(((pos1, pos2), (prev_pos1, prev_pos2)))
                         break
                 prev_pos1 = pos1
@@ -266,13 +301,16 @@ class Side(object):
             for pos1 in self.edge_east_pos:
                 pos2 = self.get_wing_partner(pos1)
                 if prev_pos1 is not None:
-                    if self.parent.state[prev_pos1] != self.parent.state[pos1] or self.parent.state[prev_pos2] != self.parent.state[pos2]:
+                    if (
+                        self.parent.state[prev_pos1] != self.parent.state[pos1]
+                        or self.parent.state[prev_pos2] != self.parent.state[pos2]
+                    ):
                         non_paired_edges.append(((pos1, pos2), (prev_pos1, prev_pos2)))
                         break
                 prev_pos1 = pos1
                 prev_pos2 = pos2
 
-        #log.info("%s; non_paired_edges %s for check_north %s, check_west %s, check_south %s, check_east %s" %
+        # log.info("%s; non_paired_edges %s for check_north %s, check_west %s, check_south %s, check_east %s" %
         #    (self, check_north, check_west, check_south, check_east, non_paired_edges))
         return non_paired_edges
 
@@ -280,8 +318,12 @@ class Side(object):
         non_paired_edges = self.non_paired_wings(True, False, False, False)
 
         for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
-            if (self.parent.state[pos1] == "-" and self.parent.state[pos2] == "-" and
-                self.parent.state[pos3] == "-" and self.parent.state[pos4] == "-"):
+            if (
+                self.parent.state[pos1] == "-"
+                and self.parent.state[pos2] == "-"
+                and self.parent.state[pos3] == "-"
+                and self.parent.state[pos4] == "-"
+            ):
                 continue
             if pos1 in self.edge_north_pos:
                 return True
@@ -297,8 +339,12 @@ class Side(object):
         non_paired_edges = self.non_paired_wings(False, False, True, False)
 
         for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
-            if (self.parent.state[pos1] == "-" and self.parent.state[pos2] == "-" and
-                self.parent.state[pos3] == "-" and self.parent.state[pos4] == "-"):
+            if (
+                self.parent.state[pos1] == "-"
+                and self.parent.state[pos2] == "-"
+                and self.parent.state[pos3] == "-"
+                and self.parent.state[pos4] == "-"
+            ):
                 continue
             if pos1 in self.edge_south_pos:
                 return True
@@ -313,8 +359,12 @@ class Side(object):
         non_paired_edges = self.non_paired_wings(False, False, False, True)
 
         for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
-            if (self.parent.state[pos1] == "-" and self.parent.state[pos2] == "-" and
-                self.parent.state[pos3] == "-" and self.parent.state[pos4] == "-"):
+            if (
+                self.parent.state[pos1] == "-"
+                and self.parent.state[pos2] == "-"
+                and self.parent.state[pos3] == "-"
+                and self.parent.state[pos4] == "-"
+            ):
                 continue
             if pos1 in self.edge_east_pos:
                 return True
@@ -329,8 +379,12 @@ class Side(object):
         non_paired_edges = self.non_paired_wings(False, True, False, False)
 
         for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
-            if (self.parent.state[pos1] == "-" and self.parent.state[pos2] == "-" and
-                self.parent.state[pos3] == "-" and self.parent.state[pos4] == "-"):
+            if (
+                self.parent.state[pos1] == "-"
+                and self.parent.state[pos2] == "-"
+                and self.parent.state[pos3] == "-"
+                and self.parent.state[pos4] == "-"
+            ):
                 continue
             if pos1 in self.edge_west_pos:
                 return True
@@ -347,7 +401,7 @@ class Side(object):
         """
         prev = None
 
-        for pos in range(self.min_pos, self.max_pos+1):
+        for pos in range(self.min_pos, self.max_pos + 1):
             current = self.parent.state[pos]
             if prev is not None and current != prev:
                 return False

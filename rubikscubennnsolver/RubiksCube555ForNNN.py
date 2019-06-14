@@ -55,12 +55,13 @@ class LookupTable555StageFirstFourEdges(LookupTable):
     There is no need to build this any deeper...building it to 10-deep
     takes about 2 days on a 12-core machine.
     """
+
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step100-stage-first-four-edges.txt',
-            'TBD',
+            "lookup-table-5x5x5-step100-stage-first-four-edges.txt",
+            "TBD",
             linecount=7389543,
             filesize=421203951,
         )
@@ -75,13 +76,13 @@ class LookupTable555StageFirstFourEdges(LookupTable):
             wing_str = wing_str_map[square_value + partner_value]
 
             if wing_str in wing_strs_to_stage:
-                state[square_index] = '1'
-                state[partner_index] = '1'
+                state[square_index] = "1"
+                state[partner_index] = "1"
             else:
-                state[square_index] = '0'
-                state[partner_index] = '0'
+                state[square_index] = "0"
+                state[partner_index] = "0"
 
-        edges_state = ''.join([state[square_index] for square_index in edges_555])
+        edges_state = "".join([state[square_index] for square_index in edges_555])
         edges_state = int(edges_state, 2)
         edges_state = self.hex_format % edges_state
         return edges_state
@@ -113,10 +114,11 @@ class LookupTable555StageSecondFourEdges(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step101-stage-second-four-edges.txt',
-            'TBD',
+            "lookup-table-5x5x5-step101-stage-second-four-edges.txt",
+            "TBD",
             linecount=338122,
-            filesize=28740370)
+            filesize=28740370,
+        )
 
     def state(self, wing_strs_to_stage):
         state = self.parent.state[:]
@@ -128,14 +130,14 @@ class LookupTable555StageSecondFourEdges(LookupTable):
             wing_str = wing_str_map[square_value + partner_value]
 
             if wing_str in wing_strs_to_stage:
-                state[square_index] = 'U'
-                state[partner_index] = 'U'
+                state[square_index] = "U"
+                state[partner_index] = "U"
             else:
-                state[square_index] = 'x'
-                state[partner_index] = 'x'
+                state[square_index] = "x"
+                state[partner_index] = "x"
 
-        edges_state = ''.join([state[square_index] for square_index in l4e_wings_555])
-        #log.info("FOO: %s" % edges_state)
+        edges_state = "".join([state[square_index] for square_index in l4e_wings_555])
+        # log.info("FOO: %s" % edges_state)
         return edges_state
 
 
@@ -165,16 +167,19 @@ class LookupTable555EdgesXPlaneEdgesOnly(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step301-edges-x-plane-edges-only.txt',
-            '------------sSSTTtuUUVVv------------',
+            "lookup-table-5x5x5-step301-edges-x-plane-edges-only.txt",
+            "------------sSSTTtuUUVVv------------",
             linecount=40320,
             max_depth=13,
-            filesize=3346560)
+            filesize=3346560,
+        )
 
     def ida_heuristic(self):
-        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        assert (
+            self.only_colors and len(self.only_colors) == 4
+        ), "You must specify which 4-edges"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
-        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        edges_state = "".join([state[index] for index in wings_for_edges_pattern_555])
         cost_to_goal = self.heuristic(edges_state)
         return (edges_state, cost_to_goal)
 
@@ -198,15 +203,16 @@ class LookupTable555EdgesXPlaneCentersOnly(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step302-edges-x-plane-centers-only.txt',
-            'LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB',
+            "lookup-table-5x5x5-step302-edges-x-plane-centers-only.txt",
+            "LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB",
             linecount=2520,
             max_depth=6,
-            filesize=146160)
+            filesize=146160,
+        )
 
     def ida_heuristic(self):
         parent_state = self.parent.state
-        state = ''.join([parent_state[x] for x in LFRB_centers_555])
+        state = "".join([parent_state[x] for x in LFRB_centers_555])
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
 
@@ -230,27 +236,40 @@ class LookupTableIDA555EdgesXPlane(LookupTableIDA):
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step300-edges-x-plane.txt',
-            ('LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB------------sSSTTtuUUVVv------------', ),
+            "lookup-table-5x5x5-step300-edges-x-plane.txt",
+            (
+                "LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB------------sSSTTtuUUVVv------------",
+            ),
             moves_555,
             # illegal moves
             (),
-
             linecount=341304,
             max_depth=7,
             filesize=35154312,
-
-            legal_moves = (
-                "L2", "F2", "R2", "B2",
-                "Uw", "Uw'", "Uw2",
-                "Dw", "Dw'", "Dw2",
-            )
+            legal_moves=(
+                "L2",
+                "F2",
+                "R2",
+                "B2",
+                "Uw",
+                "Uw'",
+                "Uw2",
+                "Dw",
+                "Dw'",
+                "Dw2",
+            ),
         )
 
     def ida_heuristic(self):
         parent_state = self.parent.state
-        (edges_state, edges_cost) = self.parent.lt_edges_x_plane_edges_only.ida_heuristic()
-        (centers_state, centers_cost) = self.parent.lt_edges_x_plane_centers_only.ida_heuristic()
+        (
+            edges_state,
+            edges_cost,
+        ) = self.parent.lt_edges_x_plane_edges_only.ida_heuristic()
+        (
+            centers_state,
+            centers_cost,
+        ) = self.parent.lt_edges_x_plane_centers_only.ida_heuristic()
 
         lt_state = centers_state + edges_state
         cost_to_goal = max(edges_cost, centers_cost)
@@ -285,24 +304,27 @@ class LookupTable555EdgesXPlaneCentersSolved(LookupTable):
     Total: 40,320 entries
     Average: 11.56 moves
     """
+
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step310-edges-x-plane-with-solved-centers.txt',
-            '------------sSSTTtuUUVVv------------',
+            "lookup-table-5x5x5-step310-edges-x-plane-with-solved-centers.txt",
+            "------------sSSTTtuUUVVv------------",
             linecount=40320,
             max_depth=14,
-            filesize=3427200)
+            filesize=3427200,
+        )
 
     def ida_heuristic(self):
-        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        assert (
+            self.only_colors and len(self.only_colors) == 4
+        ), "You must specify which 4-edges"
         state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
-        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        edges_state = "".join([state[index] for index in wings_for_edges_pattern_555])
         cost_to_goal = self.heuristic(edges_state)
-        #log.info("%s: edges_state %s" % (self, edges_state))
+        # log.info("%s: edges_state %s" % (self, edges_state))
         return (edges_state, cost_to_goal)
-
 
 
 class RubiksCube555ForNNN(RubiksCube555):
@@ -332,7 +354,9 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
 
-        self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(self)
+        self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(
+            self
+        )
 
     def stage_first_four_edges_555(self):
         """
@@ -386,9 +410,9 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.state = original_state[:]
             self.solution = original_solution[:]
 
-            #log.info("")
-            #log.info("")
-            #log.info("%s: pre_steps %s" % (self, " ".join(pre_steps)))
+            # log.info("")
+            # log.info("")
+            # log.info("%s: pre_steps %s" % (self, " ".join(pre_steps)))
             for step in pre_steps:
                 self.rotate(step)
 
@@ -400,7 +424,9 @@ class RubiksCube555ForNNN(RubiksCube555):
                 states_to_find.append(self.lt_edges_stage_first_four.state(wing_strs))
 
             log.info("%s: %d states_to_find" % (self, len(states_to_find)))
-            results = self.lt_edges_stage_first_four.binary_search_multiple(states_to_find)
+            results = self.lt_edges_stage_first_four.binary_search_multiple(
+                states_to_find
+            )
             len_results = len(results)
             log.info("%s: %d states found" % (self, len(results)))
 
@@ -421,13 +447,23 @@ class RubiksCube555ForNNN(RubiksCube555):
                 # Technically we only need 4 edges to be pairable for the next phase but 5 is nice because it gives
                 # the next phase some wiggle room...it can choose the best 4-edge tuple.
                 if min_solution_len is None or solution_len < min_solution_len:
-                    log.info("%s: %d/%d 1st 4-edges can be staged in %d steps %s (NEW MIN)" % (
-                        self, line_number+1, len_results, solution_len, ' '.join(solution_steps)))
+                    log.info(
+                        "%s: %d/%d 1st 4-edges can be staged in %d steps %s (NEW MIN)"
+                        % (
+                            self,
+                            line_number + 1,
+                            len_results,
+                            solution_len,
+                            " ".join(solution_steps),
+                        )
+                    )
                     min_solution_len = solution_len
                     min_solution_steps = solution_steps
                 else:
-                    log.info("%s: %d/%d 1st 4-edges can be staged in %d steps" % (
-                        self, line_number+1, len_results, solution_len))
+                    log.info(
+                        "%s: %d/%d 1st 4-edges can be staged in %d steps"
+                        % (self, line_number + 1, len_results, solution_len)
+                    )
 
             if min_solution_len is not None:
                 self.state = original_state[:]
@@ -440,9 +476,15 @@ class RubiksCube555ForNNN(RubiksCube555):
         if not self.x_plane_edges_are_l4e():
             raise SolveError("There should be an L4E group in x-plane but there is not")
 
-        #self.print_cube()
-        self.solution.append("COMMENT_%d_steps_555_first_L4E_edges_staged" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
-        log.info("%s: 1st 4-edges staged to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # self.print_cube()
+        self.solution.append(
+            "COMMENT_%d_steps_555_first_L4E_edges_staged"
+            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
+        )
+        log.info(
+            "%s: 1st 4-edges staged to x-plane, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
     def stage_second_four_edges_555(self):
         """
@@ -493,9 +535,11 @@ class RubiksCube555ForNNN(RubiksCube555):
                 states_to_find.append(self.lt_edges_stage_second_four.state(wing_strs))
 
             log.info("%s: %d states_to_find" % (self, len(states_to_find)))
-            results = self.lt_edges_stage_second_four.binary_search_multiple(states_to_find)
+            results = self.lt_edges_stage_second_four.binary_search_multiple(
+                states_to_find
+            )
             len_results = len(results)
-            #log.info(results)
+            # log.info(results)
             log.info("%s: %d states found" % (self, len(results)))
 
             # We sort the keys of the dict so that the order is the same everytime, this isn't
@@ -512,13 +556,23 @@ class RubiksCube555ForNNN(RubiksCube555):
                 solution_len = len(solution_steps)
 
                 if min_solution_len is None or solution_len < min_solution_len:
-                    log.info("%s: %d/%d 2nd 4-edges can be staged in %d steps %s (NEW MIN)" % (
-                        self, line_number+1, len_results, solution_len, ' '.join(solution_steps)))
+                    log.info(
+                        "%s: %d/%d 2nd 4-edges can be staged in %d steps %s (NEW MIN)"
+                        % (
+                            self,
+                            line_number + 1,
+                            len_results,
+                            solution_len,
+                            " ".join(solution_steps),
+                        )
+                    )
                     min_solution_len = solution_len
                     min_solution_steps = solution_steps
                 else:
-                    log.info("%s: %d/%d 2nd 4-edges can be staged in %d steps" % (
-                        self, line_number+1, len_results, solution_len))
+                    log.info(
+                        "%s: %d/%d 2nd 4-edges can be staged in %d steps"
+                        % (self, line_number + 1, len_results, solution_len)
+                    )
 
             if min_solution_len is not None:
                 self.state = original_state[:]
@@ -537,8 +591,14 @@ class RubiksCube555ForNNN(RubiksCube555):
             for step in min_solution_steps:
                 self.rotate(step)
 
-        self.solution.append("COMMENT_%d_steps_555_second_L4E_edges_staged" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
-        log.info("%s: 2nd 4-edges staged to x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.solution.append(
+            "COMMENT_%d_steps_555_second_L4E_edges_staged"
+            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
+        )
+        log.info(
+            "%s: 2nd 4-edges staged to x-plane, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
     def stage_final_four_edges_in_x_plane(self):
         original_state = self.state[:]
@@ -555,31 +615,35 @@ class RubiksCube555ForNNN(RubiksCube555):
                 self.rotate(step)
 
             if self.x_plane_edges_are_l4e() and self.x_plane_edges_unpaired_count() > 0:
-                #if pre_steps:
+                # if pre_steps:
                 #    log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
-                #else:
+                # else:
                 #    log.info("%s: L4E group in x-plane" % self)
                 break
 
-            elif self.y_plane_edges_are_l4e() and self.y_plane_edges_unpaired_count() > 0:
-                #if pre_steps:
+            elif (
+                self.y_plane_edges_are_l4e() and self.y_plane_edges_unpaired_count() > 0
+            ):
+                # if pre_steps:
                 #    log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
-                #else:
+                # else:
                 #    log.info("%s: L4E group in y-plane, moving to x-plane" % self)
                 self.rotate("z")
                 break
 
-            elif self.z_plane_edges_are_l4e() and self.z_plane_edges_unpaired_count() > 0:
-                #if pre_steps:
+            elif (
+                self.z_plane_edges_are_l4e() and self.z_plane_edges_unpaired_count() > 0
+            ):
+                # if pre_steps:
                 #    log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
-                #else:
+                # else:
                 #    log.info("%s: L4E group in z-plane, moving to x-plane" % self)
                 self.rotate("x")
                 break
         else:
             raise SolveError("Could not stage L4E in x-plane")
 
-        #log.info("%s: final four edges placed in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # log.info("%s: final four edges placed in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def pair_x_plane_edges_in_l4e(self):
 
@@ -587,7 +651,10 @@ class RubiksCube555ForNNN(RubiksCube555):
             raise SolveError("There must be a L4E group of edges in the x-plane")
 
         if self.x_plane_edges_paired():
-            log.info("%s: x-plane edges already paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info(
+                "%s: x-plane edges already paired, %d steps in"
+                % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
             return
 
         original_state = self.state[:]
@@ -605,7 +672,7 @@ class RubiksCube555ForNNN(RubiksCube555):
             only_colors.append(wing_str)
 
         # Old way where we would IDA
-        '''
+        """
         self.lt_edges_x_plane_edges_only.only_colors = only_colors
         self.lt_edges_x_plane.only_colors = only_colors
 
@@ -626,7 +693,7 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         # Now we can solve
         self.lt_edges_x_plane.solve()
-        '''
+        """
 
         # Recolor the edges to they are all oriented using their original orientation.
         # We do this because our tables were built will all edges at their original orientation.
@@ -644,10 +711,20 @@ class RubiksCube555ForNNN(RubiksCube555):
         for step in l4e_solution:
             self.rotate(step)
 
-        #self.print_cube()
+        # self.print_cube()
         assert self.x_plane_edges_paired(), "4-edges in x-plane should have paired"
-        self.solution.append("COMMENT_%d_steps_555_L4E_paired" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
-        log.info("%s: x-plane edges paired in %d steps, %d steps in" % (self, len(l4e_solution), self.get_solution_len_minus_rotates(self.solution)))
+        self.solution.append(
+            "COMMENT_%d_steps_555_L4E_paired"
+            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
+        )
+        log.info(
+            "%s: x-plane edges paired in %d steps, %d steps in"
+            % (
+                self,
+                len(l4e_solution),
+                self.get_solution_len_minus_rotates(self.solution),
+            )
+        )
 
     def pair_all_three_l4e(self):
 
@@ -660,14 +737,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         min_solution_steps = None
 
         # The three edges can be paired in one of 6 orders:
-        for opening_rotations in (
-            "x y z",
-            "x z y",
-            "y x z",
-            "y z x",
-            "z x y",
-            "z y x",
-            ):
+        for opening_rotations in ("x y z", "x z y", "y x z", "y z x", "z x y", "z y x"):
 
             if opening_rotations == "x y z":
                 self.pair_x_plane_edges_in_l4e()
@@ -718,15 +788,25 @@ class RubiksCube555ForNNN(RubiksCube555):
             else:
                 raise Exception("Add support for {}".format(opening_rotations))
 
-            solution_len = self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
+            solution_len = self.get_solution_len_minus_rotates(
+                self.solution[original_solution_len:]
+            )
 
             if min_solution_len is None or solution_len < min_solution_len:
                 min_state = self.state[:]
                 min_solution = self.solution[:]
                 min_solution_len = solution_len
-                log.info("{}: opening_rotations {}, solution len {} (NEW MIN)\n".format(self, opening_rotations, min_solution_len))
+                log.info(
+                    "{}: opening_rotations {}, solution len {} (NEW MIN)\n".format(
+                        self, opening_rotations, min_solution_len
+                    )
+                )
             else:
-                log.info("{}: opening_rotations {}, solution len {}\n".format(self, opening_rotations, solution_len))
+                log.info(
+                    "{}: opening_rotations {}, solution len {}\n".format(
+                        self, opening_rotations, solution_len
+                    )
+                )
 
             self.state = original_state[:]
             self.solution = original_solution[:]
@@ -749,11 +829,17 @@ class RubiksCube555ForNNN(RubiksCube555):
             tmp_solution_len = len(self.solution)
             self.lt_ULFRBD_centers_solve.solve()
             self.print_cube()
-            self.solution.append("COMMENT_%d_steps_555_centers_solved" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
-            log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.solution.append(
+                "COMMENT_%d_steps_555_centers_solved"
+                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+            )
+            log.info(
+                "%s: centers solved, %d steps in"
+                % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
 
         log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
-        self.solution.append('CENTERS_SOLVED')
+        self.solution.append("CENTERS_SOLVED")
 
         if not self.edges_paired():
             self.stage_first_four_edges_555()
@@ -761,4 +847,4 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.pair_all_three_l4e()
             self.print_cube()
 
-        self.solution.append('EDGES_GROUPED')
+        self.solution.append("EDGES_GROUPED")

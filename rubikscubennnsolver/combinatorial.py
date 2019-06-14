@@ -33,7 +33,7 @@ def choose(a, b):
     >>> choose(7, -1)
     0
     """
-    #log.info("a %s, b %s" % (a, b))
+    # log.info("a %s, b %s" % (a, b))
     if b < 0:
         return 0
     elif b == a:
@@ -41,7 +41,7 @@ def choose(a, b):
     elif b > a:
         return 0
 
-    return int(math.factorial(a) / (math.factorial(b) * math.factorial(a-b)))
+    return int(math.factorial(a) / (math.factorial(b) * math.factorial(a - b)))
 
 
 def encode(perm):
@@ -59,7 +59,7 @@ def encode(perm):
 
     while i < perm_len:
         result = choose(perm[i], k)
-        #log.info("choose(%d, %d) returned %d" % (perm[i], k, result))
+        # log.info("choose(%d, %d) returned %d" % (perm[i], k, result))
         total += result
         k -= 1
         i += 1
@@ -79,16 +79,16 @@ def decode(n, k, start):
 
     for c in reversed(range(start)):
         result_choose = choose(c, k)
-        #log.info("choose(%d, %d) returned %d (n is %d)" % (c, k, result_choose, n))
+        # log.info("choose(%d, %d) returned %d (n is %d)" % (c, k, result_choose, n))
 
         if result_choose <= n:
             n -= result_choose
             k -= 1
             result.append(c)
-            #log.info("update: n %d, k %d, c %d, result %s" % (n, k, c, ' '.join(map(str, result))))
+            # log.info("update: n %d, k %d, c %d, result %s" % (n, k, c, ' '.join(map(str, result))))
 
-        #log.info("")
-        #log.info("")
+        # log.info("")
+        # log.info("")
     return result
 
 
@@ -109,7 +109,7 @@ def state_to_list(state):
     result = []
 
     for (index, char) in enumerate(state):
-        if char != 'x':
+        if char != "x":
             result.append(index)
 
     result = list(reversed(sorted(result)))
@@ -135,15 +135,22 @@ def state_to_rank(state):
     return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s %(filename)20s %(levelname)8s: %(message)s')
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(filename)20s %(levelname)8s: %(message)s",
+    )
     log = logging.getLogger(__name__)
 
     # Color the errors and warnings in red
-    logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
-    logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
+    logging.addLevelName(
+        logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR)
+    )
+    logging.addLevelName(
+        logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING)
+    )
 
     import doctest
+
     doctest.testmod()

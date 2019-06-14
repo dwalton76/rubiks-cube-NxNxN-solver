@@ -1,8 +1,13 @@
-
 from copy import copy
 from collections import OrderedDict
 from pprint import pformat
-from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis, NotSolving
+from rubikscubennnsolver.RubiksSide import (
+    Side,
+    SolveError,
+    StuckInALoop,
+    ImplementThis,
+    NotSolving,
+)
 from rubikscubennnsolver.misc import get_swap_count
 import itertools
 import json
@@ -16,104 +21,92 @@ import sys
 
 log = logging.getLogger(__name__)
 
-HTML_DIRECTORY = '/tmp/rubiks-cube-NxNxN-solver/'
-HTML_FILENAME = os.path.join(HTML_DIRECTORY, 'index.html')
+HTML_DIRECTORY = "/tmp/rubiks-cube-NxNxN-solver/"
+HTML_FILENAME = os.path.join(HTML_DIRECTORY, "index.html")
 
 wing_str_map = {
-    'UB' : 'UB',
-    'BU' : 'UB',
-    'UL' : 'UL',
-    'LU' : 'UL',
-    'UR' : 'UR',
-    'RU' : 'UR',
-    'UF' : 'UF',
-    'FU' : 'UF',
-    'LB' : 'LB',
-    'BL' : 'LB',
-    'LF' : 'LF',
-    'FL' : 'LF',
-    'RB' : 'RB',
-    'BR' : 'RB',
-    'RF' : 'RF',
-    'FR' : 'RF',
-    'DB' : 'DB',
-    'BD' : 'DB',
-    'DL' : 'DL',
-    'LD' : 'DL',
-    'DR' : 'DR',
-    'RD' : 'DR',
-    'DF' : 'DF',
-    'FD' : 'DF',
-    '--' : '--',
+    "UB": "UB",
+    "BU": "UB",
+    "UL": "UL",
+    "LU": "UL",
+    "UR": "UR",
+    "RU": "UR",
+    "UF": "UF",
+    "FU": "UF",
+    "LB": "LB",
+    "BL": "LB",
+    "LF": "LF",
+    "FL": "LF",
+    "RB": "RB",
+    "BR": "RB",
+    "RF": "RF",
+    "FR": "RF",
+    "DB": "DB",
+    "BD": "DB",
+    "DL": "DL",
+    "LD": "DL",
+    "DR": "DR",
+    "RD": "DR",
+    "DF": "DF",
+    "FD": "DF",
+    "--": "--",
 }
 
 
-wing_strs_all = (
-    'UB',
-    'UL',
-    'UR',
-    'UF',
-    'LB',
-    'LF',
-    'RB',
-    'RF',
-    'DB',
-    'DL',
-    'DR',
-    'DF',
-)
+wing_strs_all = ("UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF")
 
 
 symmetry_48 = (
     (),
-    ('x',),
+    ("x",),
     ("x'",),
-    ('y',),
+    ("y",),
     ("y'",),
-    ('z',),
+    ("z",),
     ("z'",),
-    ('x', 'x'),
-    ('y', 'y'),
-    ('z', 'z'),
-    ('x', 'y'),
-    ('x', "y'"),
-    ('x', 'z'),
-    ('x', "z'"),
-    ('x', 'y', 'y'),
-    ('x', 'z', 'z'),
-    ("x'", 'y'),
+    ("x", "x"),
+    ("y", "y"),
+    ("z", "z"),
+    ("x", "y"),
+    ("x", "y'"),
+    ("x", "z"),
+    ("x", "z'"),
+    ("x", "y", "y"),
+    ("x", "z", "z"),
+    ("x'", "y"),
     ("x'", "y'"),
-    ("x'", 'z'),
+    ("x'", "z"),
     ("x'", "z'"),
-    ('y', 'x', 'x'),
-    ('y', 'z', 'z'),
-    ('z', 'x', 'x'),
-    ('z', 'y', 'y'),
-    ('reflect-x',),
-    ('reflect-x', 'x'),
-    ('reflect-x', "x'"),
-    ('reflect-x', 'y'),
-    ('reflect-x', "y'"),
-    ('reflect-x', 'z'),
-    ('reflect-x', "z'"),
-    ('reflect-x', 'x', 'x'),
-    ('reflect-x', 'y', 'y'),
-    ('reflect-x', 'z', 'z'),
-    ('reflect-x', 'x', 'y'),
-    ('reflect-x', 'x', "y'"),
-    ('reflect-x', 'x', 'z'),
-    ('reflect-x', 'x', "z'"),
-    ('reflect-x', 'x', 'y', 'y'),
-    ('reflect-x', 'x', 'z', 'z'),
-    ('reflect-x', "x'", 'y'),
-    ('reflect-x', "x'", "y'"),
-    ('reflect-x', "x'", 'z'),
-    ('reflect-x', "x'", "z'"),
-    ('reflect-x', 'y', 'x', 'x'),
-    ('reflect-x', 'y', 'z', 'z'),
-    ('reflect-x', 'z', 'x', 'x'),
-    ('reflect-x', 'z', 'y', 'y')
+    ("y", "x", "x"),
+    ("y", "z", "z"),
+    ("z", "x", "x"),
+    ("z", "y", "y"),
+    ("reflect-x",),
+    ("reflect-x", "x"),
+    ("reflect-x", "x'"),
+    ("reflect-x", "y"),
+    ("reflect-x", "y'"),
+    ("reflect-x", "z"),
+    ("reflect-x", "z'"),
+    ("reflect-x", "x", "x"),
+    ("reflect-x", "y", "y"),
+    ("reflect-x", "z", "z"),
+    ("reflect-x", "x", "y"),
+    ("reflect-x", "x", "y'"),
+    ("reflect-x", "x", "z"),
+    ("reflect-x", "x", "z'"),
+    ("reflect-x", "x", "y", "y"),
+    ("reflect-x", "x", "z", "z"),
+    ("reflect-x", "x'", "y"),
+    ("reflect-x", "x'", "y'"),
+    ("reflect-x", "x'", "z"),
+    ("reflect-x", "x'", "z'"),
+    ("reflect-x", "y", "x", "x"),
+    ("reflect-x", "y", "z", "z"),
+    ("reflect-x", "z", "x", "x"),
+    ("reflect-x", "z", "y", "y"),
 )
+
 
 class InvalidCubeReduction(Exception):
     pass
@@ -173,7 +166,7 @@ def get_cube_layout(size):
         digits_size = 2
         digits_format = "%02d "
 
-    indent = ((digits_size * size) + size + 1) * ' '
+    indent = ((digits_size * size) + size + 1) * " "
     rows = size * 3
 
     for row in range(1, rows + 1):
@@ -201,18 +194,18 @@ def get_cube_layout(size):
                     square_index += 1
                 elif col % size == 0:
                     square_index += (size * size) - size + 1
-                    line.append(' ')
+                    line.append(" ")
                 else:
                     square_index += 1
 
             if row % size:
                 square_index = init_square_index + size
 
-        result.append(''.join(line))
+        result.append("".join(line))
 
         if row == size or row == rows - size:
-            result.append('')
-    return '\n'.join(result)
+            result.append("")
+    return "\n".join(result)
 
 
 def rotate_2d_list(squares_list):
@@ -247,10 +240,10 @@ def apply_rotations(size, step, rotations):
     the solution.
     """
 
-    if step in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
+    if step in ("CENTERS_SOLVED", "EDGES_GROUPED"):
         return step
 
-    if step.startswith('COMMENT'):
+    if step.startswith("COMMENT"):
         return step
 
     for rotation in rotations:
@@ -263,7 +256,7 @@ def apply_rotations(size, step, rotations):
         elif size <= 99:
             rotation = rotation[2:]
         else:
-            rotation = rotation[3:] # For a 100x or larger cube!!
+            rotation = rotation[3:]  # For a 100x or larger cube!!
 
         if rotation == "U" or rotation == "D'":
             if "U" in step:
@@ -371,19 +364,19 @@ def orbit_matches(edges_per_side, orbit, edge_index):
             assert False, "Only 4x4x4 and 6x6x6 supported"
 
         if orbit == 0:
-            if edge_index == 0 or edge_index == edges_per_side-1:
+            if edge_index == 0 or edge_index == edges_per_side - 1:
                 return True
             return False
 
         elif orbit == 1:
-            if edge_index == 1 or edge_index == edges_per_side-2:
+            if edge_index == 1 or edge_index == edges_per_side - 2:
                 return True
             return False
 
         else:
             raise Exception("Invalid oribit %d" % orbit)
 
-        #if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
+        # if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
         #    return True
 
     # Odd cube
@@ -427,13 +420,14 @@ def get_important_square_indexes(size):
 
 
 class RubiksCube(object):
-
     def __init__(self, state_string, order, colormap=None, debug=False):
-        init_state = ['dummy', ]
+        init_state = ["dummy"]
         init_state.extend(list(state_string))
-        self.squares_per_side = int((len(init_state) - 1)/6)
+        self.squares_per_side = int((len(init_state) - 1) / 6)
         self.size = math.sqrt(self.squares_per_side)
-        assert str(self.size).endswith('.0'), "Cube has %d squares per side which is not possible" % self.squares_per_side
+        assert str(self.size).endswith(".0"), (
+            "Cube has %d squares per side which is not possible" % self.squares_per_side
+        )
         self.size = int(self.size)
         self.solution = []
         self.steps_to_rotate_cube = 0
@@ -468,51 +462,51 @@ class RubiksCube(object):
             for (side_name, color) in list(colormap.items()):
                 side_name = str(side_name)
 
-                if color == 'Wh':
+                if color == "Wh":
                     self.color_map[side_name] = 97
                     self.color_map_html[side_name] = (235, 254, 250)
 
-                elif color == 'Gr':
+                elif color == "Gr":
                     self.color_map[side_name] = 92
                     self.color_map_html[side_name] = (20, 105, 74)
 
-                elif color == 'Rd':
+                elif color == "Rd":
                     self.color_map[side_name] = 91
                     self.color_map_html[side_name] = (104, 4, 2)
 
-                elif color == 'Bu':
+                elif color == "Bu":
                     self.color_map[side_name] = 94
                     self.color_map_html[side_name] = (22, 57, 103)
 
-                elif color == 'OR':
+                elif color == "OR":
                     self.color_map[side_name] = 90
                     self.color_map_html[side_name] = (148, 53, 9)
 
-                elif color == 'Ye':
+                elif color == "Ye":
                     self.color_map[side_name] = 93
                     self.color_map_html[side_name] = (210, 208, 2)
 
-            #log.warning("color_map:\n%s\n" % pformat(self.color_map))
+            # log.warning("color_map:\n%s\n" % pformat(self.color_map))
 
         else:
             # Match the colors on alg.cubing.net to make life easier
             self.color_map = {
-                'U': 97, # Wh
-                'L': 90, # Or
-                'F': 92, # Gr
-                'R': 91, # Rd
-                'B': 94, # Bu
-                'D': 93, # Ye
+                "U": 97,  # Wh
+                "L": 90,  # Or
+                "F": 92,  # Gr
+                "R": 91,  # Rd
+                "B": 94,  # Bu
+                "D": 93,  # Ye
             }
 
             self.color_map_html = {
-                'U': (235, 254, 250), # Wh
-                'L': (148, 53, 9),    # Or
-                'F': (20, 105, 74),   # Gr
-                'R': (104, 4, 2),     # Rd
-                'B': (22, 57, 103),   # Bu
-                'D': (210, 208, 2),   # Ye
-                'x': (0, 0, 0),       # black
+                "U": (235, 254, 250),  # Wh
+                "L": (148, 53, 9),  # Or
+                "F": (20, 105, 74),  # Gr
+                "R": (104, 4, 2),  # Rd
+                "B": (22, 57, 103),  # Bu
+                "D": (210, 208, 2),  # Ye
+                "x": (0, 0, 0),  # black
             }
 
         if debug:
@@ -522,22 +516,24 @@ class RubiksCube(object):
         self.state_backup = self.state[:]
 
         self.sides = OrderedDict()
-        self.sides['U'] = Side(self, 'U')
-        self.sides['L'] = Side(self, 'L')
-        self.sides['F'] = Side(self, 'F')
-        self.sides['R'] = Side(self, 'R')
-        self.sides['B'] = Side(self, 'B')
-        self.sides['D'] = Side(self, 'D')
-        self.sideU = self.sides['U']
-        self.sideL = self.sides['L']
-        self.sideF = self.sides['F']
-        self.sideR = self.sides['R']
-        self.sideB = self.sides['B']
-        self.sideD = self.sides['D']
+        self.sides["U"] = Side(self, "U")
+        self.sides["L"] = Side(self, "L")
+        self.sides["F"] = Side(self, "F")
+        self.sides["R"] = Side(self, "R")
+        self.sides["B"] = Side(self, "B")
+        self.sides["D"] = Side(self, "D")
+        self.sideU = self.sides["U"]
+        self.sideL = self.sides["L"]
+        self.sideF = self.sides["F"]
+        self.sideR = self.sides["R"]
+        self.sideB = self.sides["B"]
+        self.sideD = self.sides["D"]
         self.all_edge_positions = []
 
         # U and B
-        for (pos1, pos2) in zip(self.sideU.edge_north_pos, reversed(self.sideB.edge_north_pos)):
+        for (pos1, pos2) in zip(
+            self.sideU.edge_north_pos, reversed(self.sideB.edge_north_pos)
+        ):
             self.all_edge_positions.append((pos1, pos2))
 
         # U and L
@@ -549,7 +545,9 @@ class RubiksCube(object):
             self.all_edge_positions.append((pos1, pos2))
 
         # U and R
-        for (pos1, pos2) in zip(self.sideU.edge_east_pos, reversed(self.sideR.edge_north_pos)):
+        for (pos1, pos2) in zip(
+            self.sideU.edge_east_pos, reversed(self.sideR.edge_north_pos)
+        ):
             self.all_edge_positions.append((pos1, pos2))
 
         # F and L
@@ -569,7 +567,9 @@ class RubiksCube(object):
             self.all_edge_positions.append((pos1, pos2))
 
         # L and D
-        for (pos1, pos2) in zip(self.sideL.edge_south_pos, reversed(self.sideD.edge_west_pos)):
+        for (pos1, pos2) in zip(
+            self.sideL.edge_south_pos, reversed(self.sideD.edge_west_pos)
+        ):
             self.all_edge_positions.append((pos1, pos2))
 
         # R and D
@@ -581,7 +581,9 @@ class RubiksCube(object):
             self.all_edge_positions.append((pos1, pos2))
 
         # B and D
-        for (pos1, pos2) in zip(reversed(self.sideB.edge_south_pos), self.sideD.edge_south_pos):
+        for (pos1, pos2) in zip(
+            reversed(self.sideB.edge_south_pos), self.sideD.edge_south_pos
+        ):
             self.all_edge_positions.append((pos1, pos2))
 
         self.index_to_side = {}
@@ -589,34 +591,28 @@ class RubiksCube(object):
         for side in list(self.sides.values()):
             side.calculate_wing_partners()
 
-            for x in range(side.min_pos, side.max_pos+1):
+            for x in range(side.min_pos, side.max_pos + 1):
                 self.index_to_side[x] = side
 
     def __str__(self):
         return "%dx%dx%d" % (self.size, self.size, self.size)
 
-
     def _sanity_check(self, desc, indexes, expected_count):
-        count = {
-            'U' : 0,
-            'L' : 0,
-            'F' : 0,
-            'R' : 0,
-            'B' : 0,
-            'D' : 0,
-            'x' : 0,
-        }
+        count = {"U": 0, "L": 0, "F": 0, "R": 0, "B": 0, "D": 0, "x": 0}
 
         for x in indexes:
             count[self.state[x]] += 1
 
         for (side, value) in count.items():
-            if side == 'x' or value == 0:
+            if side == "x" or value == 0:
                 continue
 
             if value != expected_count:
                 self.print_cube()
-                raise InvalidCubeReduction("side %s %s count is %d (should be %d)" % (desc, side, value, expected_count))
+                raise InvalidCubeReduction(
+                    "side %s %s count is %d (should be %d)"
+                    % (desc, side, value, expected_count)
+                )
 
     def re_init(self):
         self.state = self.state_backup[:]
@@ -636,27 +632,67 @@ class RubiksCube(object):
         # kociemba_string is in URFDLB order so split this apart and re-arrange it to
         # be ULFRBD so that is is sequential with the normal square numbering scheme
         foo = []
-        init_state = ['dummy', ]
+        init_state = ["dummy"]
         init_state.extend(list(state_string))
 
-        if order == 'URFDLB':
-            foo.extend(init_state[1:self.squares_per_side + 1])                                       # U
-            foo.extend(init_state[(self.squares_per_side * 4) + 1 : (self.squares_per_side * 5) + 1]) # L
-            foo.extend(init_state[(self.squares_per_side * 2) + 1 : (self.squares_per_side * 3) + 1]) # F
-            foo.extend(init_state[(self.squares_per_side * 1) + 1 : (self.squares_per_side * 2) + 1]) # R
-            foo.extend(init_state[(self.squares_per_side * 5) + 1 : (self.squares_per_side * 6) + 1]) # B
-            foo.extend(init_state[(self.squares_per_side * 3) + 1 : (self.squares_per_side * 4) + 1]) # D
-        elif order == 'ULFRBD':
-            foo.extend(init_state[1:self.squares_per_side + 1])                                       # U
-            foo.extend(init_state[(self.squares_per_side * 1) + 1 : (self.squares_per_side * 2) + 1]) # L
-            foo.extend(init_state[(self.squares_per_side * 2) + 1 : (self.squares_per_side * 3) + 1]) # F
-            foo.extend(init_state[(self.squares_per_side * 3) + 1 : (self.squares_per_side * 4) + 1]) # R
-            foo.extend(init_state[(self.squares_per_side * 4) + 1 : (self.squares_per_side * 5) + 1]) # B
-            foo.extend(init_state[(self.squares_per_side * 5) + 1 : (self.squares_per_side * 6) + 1]) # D
+        if order == "URFDLB":
+            foo.extend(init_state[1 : self.squares_per_side + 1])  # U
+            foo.extend(
+                init_state[
+                    (self.squares_per_side * 4) + 1 : (self.squares_per_side * 5) + 1
+                ]
+            )  # L
+            foo.extend(
+                init_state[
+                    (self.squares_per_side * 2) + 1 : (self.squares_per_side * 3) + 1
+                ]
+            )  # F
+            foo.extend(
+                init_state[
+                    (self.squares_per_side * 1) + 1 : (self.squares_per_side * 2) + 1
+                ]
+            )  # R
+            foo.extend(
+                init_state[
+                    (self.squares_per_side * 5) + 1 : (self.squares_per_side * 6) + 1
+                ]
+            )  # B
+            foo.extend(
+                init_state[
+                    (self.squares_per_side * 3) + 1 : (self.squares_per_side * 4) + 1
+                ]
+            )  # D
+        elif order == "ULFRBD":
+            foo.extend(init_state[1 : self.squares_per_side + 1])  # U
+            foo.extend(
+                init_state[
+                    (self.squares_per_side * 1) + 1 : (self.squares_per_side * 2) + 1
+                ]
+            )  # L
+            foo.extend(
+                init_state[
+                    (self.squares_per_side * 2) + 1 : (self.squares_per_side * 3) + 1
+                ]
+            )  # F
+            foo.extend(
+                init_state[
+                    (self.squares_per_side * 3) + 1 : (self.squares_per_side * 4) + 1
+                ]
+            )  # R
+            foo.extend(
+                init_state[
+                    (self.squares_per_side * 4) + 1 : (self.squares_per_side * 5) + 1
+                ]
+            )  # B
+            foo.extend(
+                init_state[
+                    (self.squares_per_side * 5) + 1 : (self.squares_per_side * 6) + 1
+                ]
+            )  # D
         else:
             raise Exception("Add support for order %s" % order)
 
-        self.state = ['x', ]
+        self.state = ["x"]
         for (square_index, side_name) in enumerate(foo):
             self.state.append(side_name)
 
@@ -704,14 +740,14 @@ class RubiksCube(object):
             action = action[1:]
         else:
             # Uw also means rotate the top 2 U rows
-            if 'w' in action:
+            if "w" in action:
                 rows_to_rotate = 2
             else:
                 rows_to_rotate = 1
 
         # We've accounted for this so remove it
-        if 'w' in action:
-            action = action.replace('w', '')
+        if "w" in action:
+            action = action.replace("w", "")
 
         # The digit at the end indicates how many quarter turns to do
         if action[-1].isdigit():
@@ -722,17 +758,17 @@ class RubiksCube(object):
 
         side_name = action
 
-        if side_name == 'x':
-            side_name = 'R'
+        if side_name == "x":
+            side_name = "R"
             rows_to_rotate = self.size
-        elif side_name == 'y':
-            side_name = 'U'
+        elif side_name == "y":
+            side_name = "U"
             rows_to_rotate = self.size
-        elif side_name == 'z':
-            side_name = 'F'
+        elif side_name == "z":
+            side_name = "F"
             rows_to_rotate = self.size
 
-        if side_name in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
+        if side_name in ("CENTERS_SOLVED", "EDGES_GROUPED"):
             return
 
         side = self.sides[side_name]
@@ -758,18 +794,18 @@ class RubiksCube(object):
         # If we are rotating the entire self.state we must rotate the opposite face as well
         if rows_to_rotate == self.size:
 
-            if side_name == 'U':
-                opp_side_name = 'D'
-            elif side_name == 'D':
-                opp_side_name = 'U'
-            elif side_name == 'L':
-                opp_side_name = 'R'
-            elif side_name == 'R':
-                opp_side_name = 'L'
-            elif side_name == 'B':
-                opp_side_name = 'F'
-            elif side_name == 'F':
-                opp_side_name = 'B'
+            if side_name == "U":
+                opp_side_name = "D"
+            elif side_name == "D":
+                opp_side_name = "U"
+            elif side_name == "L":
+                opp_side_name = "R"
+            elif side_name == "R":
+                opp_side_name = "L"
+            elif side_name == "B":
+                opp_side_name = "F"
+            elif side_name == "F":
+                opp_side_name = "B"
             else:
                 raise SolveError("")
 
@@ -799,45 +835,83 @@ class RubiksCube(object):
                     left_first_square = self.squares_per_side + 1 + (row * self.size)
                     left_last_square = left_first_square + self.size - 1
 
-                    front_first_square = (self.squares_per_side * 2) + 1 + (row * self.size)
+                    front_first_square = (
+                        (self.squares_per_side * 2) + 1 + (row * self.size)
+                    )
                     front_last_square = front_first_square + self.size - 1
 
-                    right_first_square = (self.squares_per_side * 3) + 1 + (row * self.size)
+                    right_first_square = (
+                        (self.squares_per_side * 3) + 1 + (row * self.size)
+                    )
                     right_last_square = right_first_square + self.size - 1
 
-                    back_first_square = (self.squares_per_side * 4) + 1 + (row * self.size)
+                    back_first_square = (
+                        (self.squares_per_side * 4) + 1 + (row * self.size)
+                    )
                     back_last_square = back_first_square + self.size - 1
 
-                    #log.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    #log.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    #log.info("right first %d, last %d" % (right_first_square, right_last_square))
-                    #log.info("back first %d, last %d" % (back_first_square, back_last_square))
+                    # log.info("left first %d, last %d" % (left_first_square, left_last_square))
+                    # log.info("front first %d, last %d" % (front_first_square, front_last_square))
+                    # log.info("right first %d, last %d" % (right_first_square, right_last_square))
+                    # log.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     if reverse:
-                        for square_index in range(left_first_square, left_last_square + 1):
-                            result[square_index] = self.state[square_index + (3 * self.squares_per_side)]
+                        for square_index in range(
+                            left_first_square, left_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index + (3 * self.squares_per_side)
+                            ]
 
-                        for square_index in range(front_first_square, front_last_square + 1):
-                            result[square_index] = self.state[square_index - self.squares_per_side]
+                        for square_index in range(
+                            front_first_square, front_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index - self.squares_per_side
+                            ]
 
-                        for square_index in range(right_first_square, right_last_square + 1):
-                            result[square_index] = self.state[square_index - self.squares_per_side]
+                        for square_index in range(
+                            right_first_square, right_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index - self.squares_per_side
+                            ]
 
-                        for square_index in range(back_first_square, back_last_square + 1):
-                            result[square_index] = self.state[square_index - self.squares_per_side]
+                        for square_index in range(
+                            back_first_square, back_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index - self.squares_per_side
+                            ]
 
                     else:
-                        for square_index in range(left_first_square, left_last_square + 1):
-                            result[square_index] = self.state[square_index + self.squares_per_side]
+                        for square_index in range(
+                            left_first_square, left_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index + self.squares_per_side
+                            ]
 
-                        for square_index in range(front_first_square, front_last_square + 1):
-                            result[square_index] = self.state[square_index + self.squares_per_side]
+                        for square_index in range(
+                            front_first_square, front_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index + self.squares_per_side
+                            ]
 
-                        for square_index in range(right_first_square, right_last_square + 1):
-                            result[square_index] = self.state[square_index + self.squares_per_side]
+                        for square_index in range(
+                            right_first_square, right_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index + self.squares_per_side
+                            ]
 
-                        for square_index in range(back_first_square, back_last_square + 1):
-                            result[square_index] = self.state[square_index - (3 * self.squares_per_side)]
+                        for square_index in range(
+                            back_first_square, back_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index - (3 * self.squares_per_side)
+                            ]
 
                 self.state = result[:]
 
@@ -852,7 +926,9 @@ class RubiksCube(object):
                     top_last_square = top_first_square + ((self.size - 1) * self.size)
 
                     front_first_square = (self.squares_per_side * 2) + 1 + row
-                    front_last_square = front_first_square + ((self.size - 1) * self.size)
+                    front_last_square = front_first_square + (
+                        (self.size - 1) * self.size
+                    )
 
                     down_first_square = (self.squares_per_side * 5) + 1 + row
                     down_last_square = down_first_square + ((self.size - 1) * self.size)
@@ -860,54 +936,78 @@ class RubiksCube(object):
                     back_first_square = (self.squares_per_side * 4) + self.size - row
                     back_last_square = back_first_square + ((self.size - 1) * self.size)
 
-                    #log.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    #log.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    #log.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    #log.info("back first %d, last %d" % (back_first_square, back_last_square))
+                    # log.info("top first %d, last %d" % (top_first_square, top_last_square))
+                    # log.info("front first %d, last %d" % (front_first_square, front_last_square))
+                    # log.info("down first %d, last %d" % (down_first_square, down_last_square))
+                    # log.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     top_squares = []
-                    for square_index in range(top_first_square, top_last_square + 1, self.size):
+                    for square_index in range(
+                        top_first_square, top_last_square + 1, self.size
+                    ):
                         top_squares.append(self.state[square_index])
 
                     front_squares = []
-                    for square_index in range(front_first_square, front_last_square + 1, self.size):
+                    for square_index in range(
+                        front_first_square, front_last_square + 1, self.size
+                    ):
                         front_squares.append(self.state[square_index])
 
                     down_squares = []
-                    for square_index in range(down_first_square, down_last_square + 1, self.size):
+                    for square_index in range(
+                        down_first_square, down_last_square + 1, self.size
+                    ):
                         down_squares.append(self.state[square_index])
 
                     back_squares = []
-                    for square_index in range(back_first_square, back_last_square + 1, self.size):
+                    for square_index in range(
+                        back_first_square, back_last_square + 1, self.size
+                    ):
                         back_squares.append(self.state[square_index])
 
                     if reverse:
-                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(top_first_square, top_last_square + 1, self.size)
+                        ):
                             result[square_index] = front_squares[index]
 
-                        for (index, square_index) in enumerate(range(front_first_square, front_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(front_first_square, front_last_square + 1, self.size)
+                        ):
                             result[square_index] = down_squares[index]
 
                         back_squares = list(reversed(back_squares))
-                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(down_first_square, down_last_square + 1, self.size)
+                        ):
                             result[square_index] = back_squares[index]
 
                         top_squares = list(reversed(top_squares))
-                        for (index, square_index) in enumerate(range(back_first_square, back_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(back_first_square, back_last_square + 1, self.size)
+                        ):
                             result[square_index] = top_squares[index]
                     else:
                         back_squares = list(reversed(back_squares))
-                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(top_first_square, top_last_square + 1, self.size)
+                        ):
                             result[square_index] = back_squares[index]
 
-                        for (index, square_index) in enumerate(range(front_first_square, front_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(front_first_square, front_last_square + 1, self.size)
+                        ):
                             result[square_index] = top_squares[index]
 
-                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(down_first_square, down_last_square + 1, self.size)
+                        ):
                             result[square_index] = front_squares[index]
 
                         down_squares = list(reversed(down_squares))
-                        for (index, square_index) in enumerate(range(back_first_square, back_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(back_first_square, back_last_square + 1, self.size)
+                        ):
                             result[square_index] = down_squares[index]
 
                 self.state = result[:]
@@ -918,29 +1018,37 @@ class RubiksCube(object):
 
                 # rotate the connecting row(s) of the surrounding sides
                 for row in range(rows_to_rotate):
-                    top_first_square = (self.squares_per_side - self.size) + 1 - (row * self.size)
+                    top_first_square = (
+                        (self.squares_per_side - self.size) + 1 - (row * self.size)
+                    )
                     top_last_square = top_first_square + self.size - 1
 
                     left_first_square = self.squares_per_side + self.size - row
                     left_last_square = left_first_square + ((self.size - 1) * self.size)
 
-                    down_first_square = (self.squares_per_side * 5) + 1 + (row * self.size)
+                    down_first_square = (
+                        (self.squares_per_side * 5) + 1 + (row * self.size)
+                    )
                     down_last_square = down_first_square + self.size - 1
 
                     right_first_square = (self.squares_per_side * 3) + 1 + row
-                    right_last_square = right_first_square + ((self.size - 1) * self.size)
+                    right_last_square = right_first_square + (
+                        (self.size - 1) * self.size
+                    )
 
-                    #log.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    #log.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    #log.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    #log.info("right first %d, last %d" % (right_first_square, right_last_square))
+                    # log.info("top first %d, last %d" % (top_first_square, top_last_square))
+                    # log.info("left first %d, last %d" % (left_first_square, left_last_square))
+                    # log.info("down first %d, last %d" % (down_first_square, down_last_square))
+                    # log.info("right first %d, last %d" % (right_first_square, right_last_square))
 
                     top_squares = []
                     for square_index in range(top_first_square, top_last_square + 1):
                         top_squares.append(self.state[square_index])
 
                     left_squares = []
-                    for square_index in range(left_first_square, left_last_square + 1, self.size):
+                    for square_index in range(
+                        left_first_square, left_last_square + 1, self.size
+                    ):
                         left_squares.append(self.state[square_index])
 
                     down_squares = []
@@ -948,37 +1056,55 @@ class RubiksCube(object):
                         down_squares.append(self.state[square_index])
 
                     right_squares = []
-                    for square_index in range(right_first_square, right_last_square + 1, self.size):
+                    for square_index in range(
+                        right_first_square, right_last_square + 1, self.size
+                    ):
                         right_squares.append(self.state[square_index])
 
                     if reverse:
-                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1)):
+                        for (index, square_index) in enumerate(
+                            range(top_first_square, top_last_square + 1)
+                        ):
                             result[square_index] = right_squares[index]
 
                         top_squares = list(reversed(top_squares))
-                        for (index, square_index) in enumerate(range(left_first_square, left_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(left_first_square, left_last_square + 1, self.size)
+                        ):
                             result[square_index] = top_squares[index]
 
-                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1)):
+                        for (index, square_index) in enumerate(
+                            range(down_first_square, down_last_square + 1)
+                        ):
                             result[square_index] = left_squares[index]
 
                         down_squares = list(reversed(down_squares))
-                        for (index, square_index) in enumerate(range(right_first_square, right_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(right_first_square, right_last_square + 1, self.size)
+                        ):
                             result[square_index] = down_squares[index]
 
                     else:
                         left_squares = list(reversed(left_squares))
-                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1)):
+                        for (index, square_index) in enumerate(
+                            range(top_first_square, top_last_square + 1)
+                        ):
                             result[square_index] = left_squares[index]
 
-                        for (index, square_index) in enumerate(range(left_first_square, left_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(left_first_square, left_last_square + 1, self.size)
+                        ):
                             result[square_index] = down_squares[index]
 
                         right_squares = list(reversed(right_squares))
-                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1)):
+                        for (index, square_index) in enumerate(
+                            range(down_first_square, down_last_square + 1)
+                        ):
                             result[square_index] = right_squares[index]
 
-                        for (index, square_index) in enumerate(range(right_first_square, right_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(right_first_square, right_last_square + 1, self.size)
+                        ):
                             result[square_index] = top_squares[index]
 
                 self.state = result[:]
@@ -994,7 +1120,9 @@ class RubiksCube(object):
                     top_last_square = self.squares_per_side
 
                     front_first_square = (self.squares_per_side * 2) + self.size - row
-                    front_last_square = front_first_square + ((self.size - 1) * self.size)
+                    front_last_square = front_first_square + (
+                        (self.size - 1) * self.size
+                    )
 
                     down_first_square = (self.squares_per_side * 5) + self.size - row
                     down_last_square = down_first_square + ((self.size - 1) * self.size)
@@ -1002,55 +1130,79 @@ class RubiksCube(object):
                     back_first_square = (self.squares_per_side * 4) + 1 + row
                     back_last_square = back_first_square + ((self.size - 1) * self.size)
 
-                    #log.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    #log.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    #log.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    #log.info("back first %d, last %d" % (back_first_square, back_last_square))
+                    # log.info("top first %d, last %d" % (top_first_square, top_last_square))
+                    # log.info("front first %d, last %d" % (front_first_square, front_last_square))
+                    # log.info("down first %d, last %d" % (down_first_square, down_last_square))
+                    # log.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     top_squares = []
-                    for square_index in range(top_first_square, top_last_square + 1, self.size):
+                    for square_index in range(
+                        top_first_square, top_last_square + 1, self.size
+                    ):
                         top_squares.append(self.state[square_index])
 
                     front_squares = []
-                    for square_index in range(front_first_square, front_last_square + 1, self.size):
+                    for square_index in range(
+                        front_first_square, front_last_square + 1, self.size
+                    ):
                         front_squares.append(self.state[square_index])
 
                     down_squares = []
-                    for square_index in range(down_first_square, down_last_square + 1, self.size):
+                    for square_index in range(
+                        down_first_square, down_last_square + 1, self.size
+                    ):
                         down_squares.append(self.state[square_index])
 
                     back_squares = []
-                    for square_index in range(back_first_square, back_last_square + 1, self.size):
+                    for square_index in range(
+                        back_first_square, back_last_square + 1, self.size
+                    ):
                         back_squares.append(self.state[square_index])
 
                     if reverse:
                         back_squares = list(reversed(back_squares))
-                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(top_first_square, top_last_square + 1, self.size)
+                        ):
                             result[square_index] = back_squares[index]
 
-                        for (index, square_index) in enumerate(range(front_first_square, front_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(front_first_square, front_last_square + 1, self.size)
+                        ):
                             result[square_index] = top_squares[index]
 
-                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(down_first_square, down_last_square + 1, self.size)
+                        ):
                             result[square_index] = front_squares[index]
 
                         down_squares = list(reversed(down_squares))
-                        for (index, square_index) in enumerate(range(back_first_square, back_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(back_first_square, back_last_square + 1, self.size)
+                        ):
                             result[square_index] = down_squares[index]
 
                     else:
-                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(top_first_square, top_last_square + 1, self.size)
+                        ):
                             result[square_index] = front_squares[index]
 
-                        for (index, square_index) in enumerate(range(front_first_square, front_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(front_first_square, front_last_square + 1, self.size)
+                        ):
                             result[square_index] = down_squares[index]
 
                         back_squares = list(reversed(back_squares))
-                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(down_first_square, down_last_square + 1, self.size)
+                        ):
                             result[square_index] = back_squares[index]
 
                         top_squares = list(reversed(top_squares))
-                        for (index, square_index) in enumerate(range(back_first_square, back_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(back_first_square, back_last_square + 1, self.size)
+                        ):
                             result[square_index] = top_squares[index]
 
                 self.state = result[:]
@@ -1067,23 +1219,29 @@ class RubiksCube(object):
                     left_first_square = self.squares_per_side + 1 + row
                     left_last_square = left_first_square + ((self.size - 1) * self.size)
 
-                    down_first_square = (self.squares_per_side * 6)  - self.size + 1 - (row * self.size)
+                    down_first_square = (
+                        (self.squares_per_side * 6) - self.size + 1 - (row * self.size)
+                    )
                     down_last_square = down_first_square + self.size - 1
 
                     right_first_square = (self.squares_per_side * 3) + self.size - row
-                    right_last_square = right_first_square + ((self.size - 1) * self.size)
+                    right_last_square = right_first_square + (
+                        (self.size - 1) * self.size
+                    )
 
-                    #log.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    #log.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    #log.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    #log.info("right first %d, last %d" % (right_first_square, right_last_square))
+                    # log.info("top first %d, last %d" % (top_first_square, top_last_square))
+                    # log.info("left first %d, last %d" % (left_first_square, left_last_square))
+                    # log.info("down first %d, last %d" % (down_first_square, down_last_square))
+                    # log.info("right first %d, last %d" % (right_first_square, right_last_square))
 
                     top_squares = []
                     for square_index in range(top_first_square, top_last_square + 1):
                         top_squares.append(self.state[square_index])
 
                     left_squares = []
-                    for square_index in range(left_first_square, left_last_square + 1, self.size):
+                    for square_index in range(
+                        left_first_square, left_last_square + 1, self.size
+                    ):
                         left_squares.append(self.state[square_index])
 
                     down_squares = []
@@ -1091,37 +1249,55 @@ class RubiksCube(object):
                         down_squares.append(self.state[square_index])
 
                     right_squares = []
-                    for square_index in range(right_first_square, right_last_square + 1, self.size):
+                    for square_index in range(
+                        right_first_square, right_last_square + 1, self.size
+                    ):
                         right_squares.append(self.state[square_index])
 
                     if reverse:
                         left_squares = list(reversed(left_squares))
-                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1)):
+                        for (index, square_index) in enumerate(
+                            range(top_first_square, top_last_square + 1)
+                        ):
                             result[square_index] = left_squares[index]
 
-                        for (index, square_index) in enumerate(range(left_first_square, left_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(left_first_square, left_last_square + 1, self.size)
+                        ):
                             result[square_index] = down_squares[index]
 
                         right_squares = list(reversed(right_squares))
-                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1)):
+                        for (index, square_index) in enumerate(
+                            range(down_first_square, down_last_square + 1)
+                        ):
                             result[square_index] = right_squares[index]
 
-                        for (index, square_index) in enumerate(range(right_first_square, right_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(right_first_square, right_last_square + 1, self.size)
+                        ):
                             result[square_index] = top_squares[index]
 
                     else:
-                        for (index, square_index) in enumerate(range(top_first_square, top_last_square + 1)):
+                        for (index, square_index) in enumerate(
+                            range(top_first_square, top_last_square + 1)
+                        ):
                             result[square_index] = right_squares[index]
 
                         top_squares = list(reversed(top_squares))
-                        for (index, square_index) in enumerate(range(left_first_square, left_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(left_first_square, left_last_square + 1, self.size)
+                        ):
                             result[square_index] = top_squares[index]
 
-                        for (index, square_index) in enumerate(range(down_first_square, down_last_square + 1)):
+                        for (index, square_index) in enumerate(
+                            range(down_first_square, down_last_square + 1)
+                        ):
                             result[square_index] = left_squares[index]
 
                         down_squares = list(reversed(down_squares))
-                        for (index, square_index) in enumerate(range(right_first_square, right_last_square + 1, self.size)):
+                        for (index, square_index) in enumerate(
+                            range(right_first_square, right_last_square + 1, self.size)
+                        ):
                             result[square_index] = down_squares[index]
 
                 self.state = result[:]
@@ -1132,48 +1308,88 @@ class RubiksCube(object):
 
                 # rotate the connecting row(s) of the surrounding sides
                 for row in range(rows_to_rotate):
-                    left_first_square = (self.squares_per_side * 2) - self.size + 1 - (row * self.size)
+                    left_first_square = (
+                        (self.squares_per_side * 2) - self.size + 1 - (row * self.size)
+                    )
                     left_last_square = left_first_square + self.size - 1
 
-                    front_first_square = (self.squares_per_side * 3) - self.size + 1 - (row * self.size)
+                    front_first_square = (
+                        (self.squares_per_side * 3) - self.size + 1 - (row * self.size)
+                    )
                     front_last_square = front_first_square + self.size - 1
 
-                    right_first_square = (self.squares_per_side * 4) - self.size + 1 - (row * self.size)
+                    right_first_square = (
+                        (self.squares_per_side * 4) - self.size + 1 - (row * self.size)
+                    )
                     right_last_square = right_first_square + self.size - 1
 
-                    back_first_square = (self.squares_per_side * 5) - self.size + 1 - (row * self.size)
+                    back_first_square = (
+                        (self.squares_per_side * 5) - self.size + 1 - (row * self.size)
+                    )
                     back_last_square = back_first_square + self.size - 1
 
-                    #log.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    #log.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    #log.info("right first %d, last %d" % (right_first_square, right_last_square))
-                    #log.info("back first %d, last %d" % (back_first_square, back_last_square))
+                    # log.info("left first %d, last %d" % (left_first_square, left_last_square))
+                    # log.info("front first %d, last %d" % (front_first_square, front_last_square))
+                    # log.info("right first %d, last %d" % (right_first_square, right_last_square))
+                    # log.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     if reverse:
-                        for square_index in range(left_first_square, left_last_square + 1):
-                            result[square_index] = self.state[square_index + self.squares_per_side]
+                        for square_index in range(
+                            left_first_square, left_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index + self.squares_per_side
+                            ]
 
-                        for square_index in range(front_first_square, front_last_square + 1):
-                            result[square_index] = self.state[square_index + self.squares_per_side]
+                        for square_index in range(
+                            front_first_square, front_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index + self.squares_per_side
+                            ]
 
-                        for square_index in range(right_first_square, right_last_square + 1):
-                            result[square_index] = self.state[square_index + self.squares_per_side]
+                        for square_index in range(
+                            right_first_square, right_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index + self.squares_per_side
+                            ]
 
-                        for square_index in range(back_first_square, back_last_square + 1):
-                            result[square_index] = self.state[square_index - (3 * self.squares_per_side)]
+                        for square_index in range(
+                            back_first_square, back_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index - (3 * self.squares_per_side)
+                            ]
 
                     else:
-                        for square_index in range(left_first_square, left_last_square + 1):
-                            result[square_index] = self.state[square_index + (3 * self.squares_per_side)]
+                        for square_index in range(
+                            left_first_square, left_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index + (3 * self.squares_per_side)
+                            ]
 
-                        for square_index in range(front_first_square, front_last_square + 1):
-                            result[square_index] = self.state[square_index - self.squares_per_side]
+                        for square_index in range(
+                            front_first_square, front_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index - self.squares_per_side
+                            ]
 
-                        for square_index in range(right_first_square, right_last_square + 1):
-                            result[square_index] = self.state[square_index - self.squares_per_side]
+                        for square_index in range(
+                            right_first_square, right_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index - self.squares_per_side
+                            ]
 
-                        for square_index in range(back_first_square, back_last_square + 1):
-                            result[square_index] = self.state[square_index - self.squares_per_side]
+                        for square_index in range(
+                            back_first_square, back_last_square + 1
+                        ):
+                            result[square_index] = self.state[
+                                square_index - self.squares_per_side
+                            ]
 
                 self.state = result[:]
 
@@ -1186,20 +1402,46 @@ class RubiksCube(object):
             self.solution.append(action)
 
         elif action in (
-                "x2", "y2", "z2",
-                "2U", "2U'", "2U2",
-                "2L", "2L'", "2L2",
-                "2F", "2F'", "2F2",
-                "2R", "2R'", "2R2",
-                "2B", "2B'", "2B2",
-                "2D", "2D'", "2D2",
-                "3U", "3U'", "3U2",
-                "3L", "3L'", "3L2",
-                "3F", "3F'", "3F2",
-                "3R", "3R'", "3R2",
-                "3B", "3B'", "3B2",
-                "3D", "3D'", "3D2",
-            ):
+            "x2",
+            "y2",
+            "z2",
+            "2U",
+            "2U'",
+            "2U2",
+            "2L",
+            "2L'",
+            "2L2",
+            "2F",
+            "2F'",
+            "2F2",
+            "2R",
+            "2R'",
+            "2R2",
+            "2B",
+            "2B'",
+            "2B2",
+            "2D",
+            "2D'",
+            "2D2",
+            "3U",
+            "3U'",
+            "3U2",
+            "3L",
+            "3L'",
+            "3L2",
+            "3F",
+            "3F'",
+            "3F2",
+            "3R",
+            "3R'",
+            "3R2",
+            "3B",
+            "3B'",
+            "3B2",
+            "3D",
+            "3D'",
+            "3D2",
+        ):
 
             if action == "x2":
                 self.rotate_guts("x")
@@ -1337,12 +1579,12 @@ class RubiksCube(object):
     def print_cube_layout(self):
         if not self.enable_print_cube:
             return
-        log.info('\n' + get_cube_layout(self.size) + '\n')
+        log.info("\n" + get_cube_layout(self.size) + "\n")
 
     def print_cube(self, print_positions=False):
         if not self.enable_print_cube:
             return
-        side_names = ('U', 'L', 'F', 'R', 'B', 'D')
+        side_names = ("U", "L", "F", "R", "B", "D")
         side_name_index = 0
         rows = []
         row_index = 0
@@ -1368,15 +1610,33 @@ class RubiksCube(object):
             if color:
                 # end of the row
                 if square_index % self.size == 0:
-                    rows[row_index].append("\033[%dm%s\033[0m%s " % (color, square_state, " (%4d) " % square_index if print_positions else ""))
+                    rows[row_index].append(
+                        "\033[%dm%s\033[0m%s "
+                        % (
+                            color,
+                            square_state,
+                            " (%4d) " % square_index if print_positions else "",
+                        )
+                    )
                     row_index += 1
                 else:
-                    rows[row_index].append("\033[%dm%s\033[0m%s" % (color, square_state, " (%4d) " % square_index if print_positions else ""))
+                    rows[row_index].append(
+                        "\033[%dm%s\033[0m%s"
+                        % (
+                            color,
+                            square_state,
+                            " (%4d) " % square_index if print_positions else "",
+                        )
+                    )
             else:
 
                 # end of the row
                 if square_index % self.size == 0:
-                    if square_state.endswith('x') or square_state.endswith('.') or square_state.endswith('-'):
+                    if (
+                        square_state.endswith("x")
+                        or square_state.endswith(".")
+                        or square_state.endswith("-")
+                    ):
                         rows[row_index].append("%s " % square_state)
                     else:
                         if all_digits:
@@ -1386,7 +1646,11 @@ class RubiksCube(object):
 
                     row_index += 1
                 else:
-                    if square_state.endswith('x') or square_state.endswith('.') or square_state.endswith('-'):
+                    if (
+                        square_state.endswith("x")
+                        or square_state.endswith(".")
+                        or square_state.endswith("-")
+                    ):
                         rows[row_index].append("%s" % square_state)
                     else:
                         if all_digits:
@@ -1396,23 +1660,23 @@ class RubiksCube(object):
 
             # end of the side
             if square_index % self.squares_per_side == 0:
-                if side_name in ('L', 'F', 'R'):
+                if side_name in ("L", "F", "R"):
                     row_index = self.size
                 side_name_index += 1
 
         for (row_index, row) in enumerate(rows):
             if row_index < self.size or row_index >= (self.size * 2):
                 if all_digits:
-                    log.info(' ' * (self.size * 3) + ' '.join(row))
+                    log.info(" " * (self.size * 3) + " ".join(row))
                 else:
-                    log.info(' ' * (self.size + self.size + 1) + ' '.join(row))
+                    log.info(" " * (self.size + self.size + 1) + " ".join(row))
             else:
-                log.info((' '.join(row)))
+                log.info((" ".join(row)))
 
-            if ((row_index+1) % self.size) == 0:
-                log.info('')
+            if ((row_index + 1) % self.size) == 0:
+                log.info("")
 
-        log.info('')
+        log.info("")
 
     def print_case_statement_C(self, case, first_step):
         """
@@ -1423,7 +1687,13 @@ class RubiksCube(object):
         if first_step:
             print("    switch (move) {")
 
-        case = case.replace("'", "_PRIME").replace("3", "three").replace("x", "X").replace("y", "Y").replace("z", "Z")
+        case = (
+            case.replace("'", "_PRIME")
+            .replace("3", "three")
+            .replace("x", "X")
+            .replace("y", "Y")
+            .replace("z", "Z")
+        )
         print("    case %s:" % case)
 
         for (key, value) in enumerate(self.state[1:]):
@@ -1452,11 +1722,11 @@ class RubiksCube(object):
         """
 
         if self.is_even():
-            max_rows = int(self.size/2)
+            max_rows = int(self.size / 2)
         else:
-            max_rows = int((self.size - 1)/2)
+            max_rows = int((self.size - 1) / 2)
 
-        sides = ['U', 'L', 'F', 'R', 'B', 'D']
+        sides = ["U", "L", "F", "R", "B", "D"]
         count = ((self.size * self.size) * 6) * 10
 
         # uncomment to limit randomness of the scramble
@@ -1483,7 +1753,7 @@ class RubiksCube(object):
                 move += "'"
 
             # I used this move restriction to build the 3k-555-cubes-step500.json test cubes
-            #if move not in ['U', "U'", 'U2', 'L2', 'Lw2', 'F2', 'Fw2', 'R2', 'Rw2', 'B2', 'Bw2', 'D', "D'", 'D2']:
+            # if move not in ['U', "U'", 'U2', 'L2', 'Lw2', 'F2', 'Fw2', 'R2', 'Rw2', 'B2', 'Bw2', 'D', "D'", 'D2']:
             #    continue
 
             self.rotate(move)
@@ -1495,29 +1765,37 @@ class RubiksCube(object):
         for side in list(self.sides.values()):
             if square_index >= side.min_pos and square_index <= side.max_pos:
                 return side
-        raise SolveError("We should not be here, square_index %s" % pformat(square_index))
+        raise SolveError(
+            "We should not be here, square_index %s" % pformat(square_index)
+        )
 
     def get_non_paired_wings(self):
-        return (self.sideU.non_paired_wings(True, True, True, True) +
-                self.sideF.non_paired_wings(False, True, False, True) +
-                self.sideB.non_paired_wings(False, True, False, True) +
-                self.sideD.non_paired_wings(True, True, True, True))
+        return (
+            self.sideU.non_paired_wings(True, True, True, True)
+            + self.sideF.non_paired_wings(False, True, False, True)
+            + self.sideB.non_paired_wings(False, True, False, True)
+            + self.sideD.non_paired_wings(True, True, True, True)
+        )
 
     def get_non_paired_wings_count(self):
         return len(self.get_non_paired_wings())
 
     def get_non_paired_edges(self):
         # north, west, south, east
-        return (self.sideU.non_paired_edges(True, True, True, True) +
-                self.sideF.non_paired_edges(False, True, False, True) +
-                self.sideB.non_paired_edges(False, True, False, True) +
-                self.sideD.non_paired_edges(True, True, True, True))
+        return (
+            self.sideU.non_paired_edges(True, True, True, True)
+            + self.sideF.non_paired_edges(False, True, False, True)
+            + self.sideB.non_paired_edges(False, True, False, True)
+            + self.sideD.non_paired_edges(True, True, True, True)
+        )
 
     def get_non_paired_edges_count(self):
         non_paired_edges = self.get_non_paired_edges()
         result = len(non_paired_edges)
         if result > 12:
-            raise SolveError("Found %d unpaired edges but a cube only has 12 edges" % result)
+            raise SolveError(
+                "Found %d unpaired edges but a cube only has 12 edges" % result
+            )
 
         return result
 
@@ -1531,7 +1809,14 @@ class RubiksCube(object):
 
     def edge_paired(self, wing_index):
 
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+        for side in (
+            self.sideU,
+            self.sideL,
+            self.sideF,
+            self.sideR,
+            self.sideB,
+            self.sideD,
+        ):
             if side.min_pos <= wing_index <= side.max_pos:
 
                 if wing_index in side.edge_north_pos:
@@ -1560,20 +1845,20 @@ class RubiksCube(object):
             pass
 
         elif wing_pos1 in self.sideU.edge_south_pos:
-            for step in ("U2", ):
+            for step in ("U2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_east_pos:
-            for step in ("U'", ):
+            for step in ("U'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_west_pos:
-            for step in ("U", ):
+            for step in ("U",):
                 self.rotate(step)
 
         # Left
         elif wing_pos1 in self.sideL.edge_north_pos:
-            for step in ("U", ):
+            for step in ("U",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
@@ -1585,12 +1870,12 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
-            for step in ("B'", ):
+            for step in ("B'",):
                 self.rotate(step)
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            for step in ("U2", ):
+            for step in ("U2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
@@ -1607,7 +1892,7 @@ class RubiksCube(object):
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
-            for step in ("U'", ):
+            for step in ("U'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
@@ -1615,7 +1900,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
-            for step in ("B", ):
+            for step in ("B",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_west_pos:
@@ -1627,15 +1912,15 @@ class RubiksCube(object):
             pass
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            for step in ("B2", ):
+            for step in ("B2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            for step in ("B'", ):
+            for step in ("B'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            for step in ("B", ):
+            for step in ("B",):
                 self.rotate(step)
 
         # Down
@@ -1644,7 +1929,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_south_pos:
-            for step in ("B2", ):
+            for step in ("B2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_east_pos:
@@ -1667,15 +1952,15 @@ class RubiksCube(object):
 
         # Upper
         if wing_pos1 in self.sideU.edge_north_pos:
-            for step in ("U'", ):
+            for step in ("U'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_south_pos:
-            for step in ("U", ):
+            for step in ("U",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_east_pos:
-            for step in ("U2", ):
+            for step in ("U2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_west_pos:
@@ -1686,7 +1971,7 @@ class RubiksCube(object):
             pass
 
         elif wing_pos1 in self.sideL.edge_south_pos:
-            for step in ("L2", ):
+            for step in ("L2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
@@ -1699,7 +1984,7 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            for step in ("U", ):
+            for step in ("U",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
@@ -1716,7 +2001,7 @@ class RubiksCube(object):
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
-            for step in ("U2", ):
+            for step in ("U2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
@@ -1733,7 +2018,7 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            for step in ("U'", ):
+            for step in ("U'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
@@ -1762,7 +2047,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_west_pos:
-            for step in ("L2", ):
+            for step in ("L2",):
                 self.rotate(step)
 
         else:
@@ -1777,23 +2062,23 @@ class RubiksCube(object):
 
         # Upper
         if wing_pos1 in self.sideU.edge_north_pos:
-            for step in ("U2", ):
+            for step in ("U2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_south_pos:
             pass
 
         elif wing_pos1 in self.sideU.edge_east_pos:
-            for step in ("U", ):
+            for step in ("U",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_west_pos:
-            for step in ("U'", ):
+            for step in ("U'",):
                 self.rotate(step)
 
         # Left
         elif wing_pos1 in self.sideL.edge_north_pos:
-            for step in ("U'", ):
+            for step in ("U'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
@@ -1801,7 +2086,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
-            for step in ("F", ):
+            for step in ("F",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
@@ -1813,20 +2098,20 @@ class RubiksCube(object):
             pass
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            for step in ("F2", ):
+            for step in ("F2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            for step in ("F'", ):
+            for step in ("F'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            for step in ("F", ):
+            for step in ("F",):
                 self.rotate(step)
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
-            for step in ("U", ):
+            for step in ("U",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
@@ -1843,7 +2128,7 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            for step in ("U2", ):
+            for step in ("U2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
@@ -1860,7 +2145,7 @@ class RubiksCube(object):
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
-            for step in ("F2", ):
+            for step in ("F2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_south_pos:
@@ -1887,23 +2172,23 @@ class RubiksCube(object):
 
         # Upper
         if wing_pos1 in self.sideU.edge_north_pos:
-            for step in ("U", ):
+            for step in ("U",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_south_pos:
-            for step in ("U'", ):
+            for step in ("U'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_east_pos:
             pass
 
         elif wing_pos1 in self.sideU.edge_west_pos:
-            for step in ("U2", ):
+            for step in ("U2",):
                 self.rotate(step)
 
         # Left
         elif wing_pos1 in self.sideL.edge_north_pos:
-            for step in ("U2", ):
+            for step in ("U2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
@@ -1920,7 +2205,7 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            for step in ("U'", ):
+            for step in ("U'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
@@ -1940,7 +2225,7 @@ class RubiksCube(object):
             pass
 
         elif wing_pos1 in self.sideR.edge_south_pos:
-            for step in ("R2", ):
+            for step in ("R2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
@@ -1953,7 +2238,7 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            for step in ("U", ):
+            for step in ("U",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
@@ -1978,7 +2263,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_east_pos:
-            for step in ("R2", ):
+            for step in ("R2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_west_pos:
@@ -1997,7 +2282,7 @@ class RubiksCube(object):
 
         # Upper
         if wing_pos1 in self.sideU.edge_north_pos:
-            for step in ("B", ):
+            for step in ("B",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_south_pos:
@@ -2022,7 +2307,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
-            for step in ("L2", ):
+            for step in ("L2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
@@ -2042,7 +2327,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            for step in ("L2", ):
+            for step in ("L2",):
                 self.rotate(step)
 
         # Right
@@ -2055,7 +2340,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
-            for step in ("B2", ):
+            for step in ("B2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_west_pos:
@@ -2064,18 +2349,18 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            for step in ("B", ):
+            for step in ("B",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            for step in ("B'", ):
+            for step in ("B'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
             pass
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            for step in ("B2", ):
+            for step in ("B2",):
                 self.rotate(step)
 
         # Down
@@ -2234,7 +2519,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
-            for step in ("F2", ):
+            for step in ("F2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
@@ -2243,18 +2528,18 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            for step in ("F", ):
+            for step in ("F",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            for step in ("F'", ):
+            for step in ("F'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
             pass
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            for step in ("F2", ):
+            for step in ("F2",):
                 self.rotate(step)
 
         # Right
@@ -2292,7 +2577,7 @@ class RubiksCube(object):
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
-            for step in ("F'", ):
+            for step in ("F'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_south_pos:
@@ -2319,7 +2604,7 @@ class RubiksCube(object):
 
         # Upper
         if wing_pos1 in self.sideU.edge_north_pos:
-            for step in ("B'", ):
+            for step in ("B'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_south_pos:
@@ -2348,7 +2633,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
-            for step in ("B2", ):
+            for step in ("B2",):
                 self.rotate(step)
 
         # Front
@@ -2361,7 +2646,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            for step in ("R2", ):
+            for step in ("R2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
@@ -2381,20 +2666,20 @@ class RubiksCube(object):
             pass
 
         elif wing_pos1 in self.sideR.edge_west_pos:
-            for step in ("R2", ):
+            for step in ("R2",):
                 self.rotate(step)
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            for step in ("B'", ):
+            for step in ("B'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            for step in ("B", ):
+            for step in ("B",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            for step in ("B2", ):
+            for step in ("B2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
@@ -2406,7 +2691,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_south_pos:
-            for step in ("B", ):
+            for step in ("B",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_east_pos:
@@ -2433,7 +2718,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_south_pos:
-            for step in ("F2", ):
+            for step in ("F2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_east_pos:
@@ -2450,11 +2735,11 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
-            for step in ("D", ):
+            for step in ("D",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
-            for step in ("F'", ):
+            for step in ("F'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
@@ -2463,18 +2748,18 @@ class RubiksCube(object):
 
         # Front
         elif wing_pos1 in self.sideF.edge_north_pos:
-            for step in ("F2", ):
+            for step in ("F2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
             pass
 
         elif wing_pos1 in self.sideF.edge_east_pos:
-            for step in ("F", ):
+            for step in ("F",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_west_pos:
-            for step in ("F'", ):
+            for step in ("F'",):
                 self.rotate(step)
 
         # Right
@@ -2483,7 +2768,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
-            for step in ("D'", ):
+            for step in ("D'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
@@ -2500,7 +2785,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            for step in ("D2", ):
+            for step in ("D2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
@@ -2516,15 +2801,15 @@ class RubiksCube(object):
             pass
 
         elif wing_pos1 in self.sideD.edge_south_pos:
-            for step in ("D2", ):
+            for step in ("D2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_east_pos:
-            for step in ("D'", ):
+            for step in ("D'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_west_pos:
-            for step in ("D", ):
+            for step in ("D",):
                 self.rotate(step)
 
         else:
@@ -2551,12 +2836,12 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_west_pos:
-            for step in ("L2", ):
+            for step in ("L2",):
                 self.rotate(step)
 
         # Left
         elif wing_pos1 in self.sideL.edge_north_pos:
-            for step in ("L2", ):
+            for step in ("L2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
@@ -2576,7 +2861,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            for step in ("D'", ):
+            for step in ("D'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
@@ -2593,7 +2878,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
-            for step in ("D2", ):
+            for step in ("D2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
@@ -2610,7 +2895,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            for step in ("D", ):
+            for step in ("D",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
@@ -2623,15 +2908,15 @@ class RubiksCube(object):
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
-            for step in ("D'", ):
+            for step in ("D'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_south_pos:
-            for step in ("D", ):
+            for step in ("D",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_east_pos:
-            for step in ("D2", ):
+            for step in ("D2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_west_pos:
@@ -2649,7 +2934,7 @@ class RubiksCube(object):
 
         # Upper
         if wing_pos1 in self.sideU.edge_north_pos:
-            for step in ("B2", ):
+            for step in ("B2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_south_pos:
@@ -2670,7 +2955,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
-            for step in ("D'", ):
+            for step in ("D'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
@@ -2678,7 +2963,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_west_pos:
-            for step in ("B", ):
+            for step in ("B",):
                 self.rotate(step)
 
         # Front
@@ -2687,7 +2972,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            for step in ("D2", ):
+            for step in ("D2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
@@ -2704,7 +2989,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
-            for step in ("D", ):
+            for step in ("D",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_east_pos:
@@ -2717,34 +3002,34 @@ class RubiksCube(object):
 
         # Back
         elif wing_pos1 in self.sideB.edge_north_pos:
-            for step in ("B2", ):
+            for step in ("B2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
             pass
 
         elif wing_pos1 in self.sideB.edge_east_pos:
-            for step in ("B", ):
+            for step in ("B",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_west_pos:
-            for step in ("B'", ):
+            for step in ("B'",):
                 self.rotate(step)
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
-            for step in ("D2", ):
+            for step in ("D2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_south_pos:
             pass
 
         elif wing_pos1 in self.sideD.edge_east_pos:
-            for step in ("D", ):
+            for step in ("D",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_west_pos:
-            for step in ("D'", ):
+            for step in ("D'",):
                 self.rotate(step)
 
         else:
@@ -2767,7 +3052,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_east_pos:
-            for step in ("R2", ):
+            for step in ("R2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideU.edge_west_pos:
@@ -2780,7 +3065,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_south_pos:
-            for step in ("D2", ):
+            for step in ("D2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideL.edge_east_pos:
@@ -2797,7 +3082,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_south_pos:
-            for step in ("D", ):
+            for step in ("D",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideF.edge_east_pos:
@@ -2810,7 +3095,7 @@ class RubiksCube(object):
 
         # Right
         elif wing_pos1 in self.sideR.edge_north_pos:
-            for step in ("R2", ):
+            for step in ("R2",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideR.edge_south_pos:
@@ -2830,7 +3115,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_south_pos:
-            for step in ("D'", ):
+            for step in ("D'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideB.edge_east_pos:
@@ -2843,18 +3128,18 @@ class RubiksCube(object):
 
         # Down
         elif wing_pos1 in self.sideD.edge_north_pos:
-            for step in ("D", ):
+            for step in ("D",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_south_pos:
-            for step in ("D'", ):
+            for step in ("D'",):
                 self.rotate(step)
 
         elif wing_pos1 in self.sideD.edge_east_pos:
             pass
 
         elif wing_pos1 in self.sideD.edge_west_pos:
-            for step in ("D2", ):
+            for step in ("D2",):
                 self.rotate(step)
 
         else:
@@ -2888,47 +3173,51 @@ class RubiksCube(object):
     def UD_centers_staged(self):
         for side in (self.sideU, self.sideD):
             for pos in side.center_pos:
-                if self.state[pos] not in ('U', 'D'):
-                    #log.info("%s: UD_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
+                if self.state[pos] not in ("U", "D"):
+                    # log.info("%s: UD_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
                     return False
         return True
 
     def LR_centers_staged(self):
         for side in (self.sideL, self.sideR):
             for pos in side.center_pos:
-                if self.state[pos] not in ('L', 'R'):
-                    #log.info("%s: LR_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
+                if self.state[pos] not in ("L", "R"):
+                    # log.info("%s: LR_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
                     return False
         return True
 
     def FB_centers_staged(self):
         for side in (self.sideF, self.sideB):
             for pos in side.center_pos:
-                if self.state[pos] not in ('F', 'B'):
-                    #log.info("%s: FB_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
+                if self.state[pos] not in ("F", "B"):
+                    # log.info("%s: FB_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
                     return False
         return True
 
     def centers_staged(self):
-        if self.UD_centers_staged() and self.LR_centers_staged() and self.FB_centers_staged():
+        if (
+            self.UD_centers_staged()
+            and self.LR_centers_staged()
+            and self.FB_centers_staged()
+        ):
             return True
         return False
 
     def rotate_side_X_to_Y(self, x, y):
-        #assert x in ('U', 'L', 'F', 'R', 'B', 'D'), "Invalid side %s" % x
-        #assert y in ('U', 'L', 'F', 'R', 'B', 'D'), "Invalid side %s" % y
+        # assert x in ('U', 'L', 'F', 'R', 'B', 'D'), "Invalid side %s" % x
+        # assert y in ('U', 'L', 'F', 'R', 'B', 'D'), "Invalid side %s" % y
 
-        if y == 'U':
+        if y == "U":
             side = self.sideU
-        elif y == 'L':
+        elif y == "L":
             side = self.sideL
-        elif y == 'F':
+        elif y == "F":
             side = self.sideF
-        elif y == 'R':
+        elif y == "R":
             side = self.sideR
-        elif y == 'B':
+        elif y == "B":
             side = self.sideB
-        elif y == 'D':
+        elif y == "D":
             side = self.sideD
 
         # odd cube
@@ -2940,7 +3229,7 @@ class RubiksCube(object):
         # even cube
         else:
             # Use the top-right inner x-center
-            offset = int(((self.size/2) * self.size) - (self.size/2))
+            offset = int(((self.size / 2) * self.size) - (self.size / 2))
 
             pos_to_check = side.min_pos + offset
             F_pos_to_check = self.sideF.min_pos + offset
@@ -2949,19 +3238,19 @@ class RubiksCube(object):
         count = 0
 
         while self.state[pos_to_check] != x:
-            #log.info("%s (%s): rotate %s to %s, pos_to_check %s, state at pos_to_check %s" %
+            # log.info("%s (%s): rotate %s to %s, pos_to_check %s, state at pos_to_check %s" %
             #    (side, side.mid_pos, x, y, pos_to_check, self.state[pos_to_check]))
 
-            if self.state[F_pos_to_check] == x and y == 'U':
+            if self.state[F_pos_to_check] == x and y == "U":
                 self.rotate_x()
 
-            elif self.state[F_pos_to_check] == x and y == 'D':
+            elif self.state[F_pos_to_check] == x and y == "D":
                 self.rotate_x_reverse()
 
-            elif self.state[D_pos_to_check] == x and y == 'F':
+            elif self.state[D_pos_to_check] == x and y == "F":
                 self.rotate_x()
 
-            elif self.state[D_pos_to_check] == x and y == 'U':
+            elif self.state[D_pos_to_check] == x and y == "U":
                 self.rotate_x()
                 self.rotate_x()
 
@@ -2971,13 +3260,16 @@ class RubiksCube(object):
             count += 1
 
             if count > 30:
-                raise StuckInALoop("rotate %s to %s, %s, pos_to_check %s, state at pos_to_check %s" % (x, y, side, pos_to_check, self.state[pos_to_check]))
+                raise StuckInALoop(
+                    "rotate %s to %s, %s, pos_to_check %s, state at pos_to_check %s"
+                    % (x, y, side, pos_to_check, self.state[pos_to_check])
+                )
 
     def rotate_U_to_U(self):
-        self.rotate_side_X_to_Y('U', 'U')
+        self.rotate_side_X_to_Y("U", "U")
 
     def rotate_F_to_F(self):
-        self.rotate_side_X_to_Y('F', 'F')
+        self.rotate_side_X_to_Y("F", "F")
 
     def get_kociemba_string(self, all_squares):
         # kociemba uses order U R F D L B
@@ -2985,7 +3277,7 @@ class RubiksCube(object):
 
         if all_squares:
             # This is only used to print cubes for test cases (see --test-build)
-            for side_name in ('U', 'R', 'F', 'D', 'L', 'B'):
+            for side_name in ("U", "R", "F", "D", "L", "B"):
                 side = self.sides[side_name]
 
                 for square_index in range(side.min_pos, side.max_pos + 1):
@@ -2993,7 +3285,7 @@ class RubiksCube(object):
 
         else:
             if self.size == 2:
-                for side_name in ('U', 'R', 'F', 'D', 'L', 'B'):
+                for side_name in ("U", "R", "F", "D", "L", "B"):
                     side = self.sides[side_name]
 
                     # first row
@@ -3005,7 +3297,7 @@ class RubiksCube(object):
                     foo.append(self.state[side.corner_pos[3]])
 
             else:
-                for side_name in ('U', 'R', 'F', 'D', 'L', 'B'):
+                for side_name in ("U", "R", "F", "D", "L", "B"):
                     side = self.sides[side_name]
 
                     # first row
@@ -3019,7 +3311,7 @@ class RubiksCube(object):
                     if side.mid_pos:
                         foo.append(self.state[side.mid_pos])
                     else:
-                        offset = int(((self.size/2) * self.size) - (self.size/2))
+                        offset = int(((self.size / 2) * self.size) - (self.size / 2))
                         pos_to_check = side.min_pos + offset
                         foo.append(self.state[pos_to_check])
 
@@ -3030,8 +3322,8 @@ class RubiksCube(object):
                     foo.append(self.state[side.edge_south_pos[0]])
                     foo.append(self.state[side.corner_pos[3]])
 
-        kociemba_string = ''.join(foo)
-        log.debug('kociemba string: %s' % kociemba_string)
+        kociemba_string = "".join(foo)
+        log.debug("kociemba string: %s" % kociemba_string)
         return kociemba_string
 
     def prevent_OLL(self):
@@ -3053,16 +3345,20 @@ class RubiksCube(object):
             if orbits_with_oll_parity == [0]:
                 steps = "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2"
             else:
-                raise SolveError("prevent_OLL for %sx%sx%s, orbits %s have parity issues" %
-                                    (self.size, self.size, self.size, pformat(orbits_with_oll_parity)))
+                raise SolveError(
+                    "prevent_OLL for %sx%sx%s, orbits %s have parity issues"
+                    % (self.size, self.size, self.size, pformat(orbits_with_oll_parity))
+                )
 
         elif self.size == 6:
             if self.edges_paired():
-                log.info("edges are already paired, cannot prevent OLL without unpairing them")
+                log.info(
+                    "edges are already paired, cannot prevent OLL without unpairing them"
+                )
                 return False
 
             # 10 steps
-            if orbits_with_oll_parity == [0,1]:
+            if orbits_with_oll_parity == [0, 1]:
                 steps = "3Rw U2 3Rw U2 3Rw U2 3Rw U2 3Rw U2"
                 log.info("6x6x6 has OLL on orbits 0 and 1")
 
@@ -3077,10 +3373,12 @@ class RubiksCube(object):
                 log.info("6x6x6 has OLL on orbit 1")
 
             else:
-                raise SolveError("prevent_OLL for %sx%sx%s, orbits %s have parity issues" %
-                                    (self.size, self.size, self.size, pformat(orbits_with_oll_parity)))
+                raise SolveError(
+                    "prevent_OLL for %sx%sx%s, orbits %s have parity issues"
+                    % (self.size, self.size, self.size, pformat(orbits_with_oll_parity))
+                )
 
-        #else:
+        # else:
         #    raise ImplementThis("prevent_OLL for %sx%sx%s, orbits %s have parity issues" %
         #                        (self.size, self.size, self.size, pformat(orbits_with_oll_parity)))
 
@@ -3094,62 +3392,101 @@ class RubiksCube(object):
     def solve_OLL(self):
 
         if self.size in (2, 3):
-            raise SolveError("OLL should never happen on a %dx%dx%d, the cube given to us to solve is invalid" % (self.size, self.size, self.size))
+            raise SolveError(
+                "OLL should never happen on a %dx%dx%d, the cube given to us to solve is invalid"
+                % (self.size, self.size, self.size)
+            )
 
         # Check all 12 edges, rotate the one with OLL to U-south
         while True:
             has_oll = False
 
-            if self.state[self.sideU.corner_pos[2]] == self.state[self.sideF.edge_north_pos[0]]:
+            if (
+                self.state[self.sideU.corner_pos[2]]
+                == self.state[self.sideF.edge_north_pos[0]]
+            ):
                 has_oll = True
 
-            elif self.state[self.sideU.corner_pos[0]] == self.state[self.sideL.edge_north_pos[0]]:
-                has_oll = True
-                self.rotate_y_reverse()
-
-            elif self.state[self.sideU.corner_pos[3]] == self.state[self.sideR.edge_north_pos[0]]:
-                has_oll = True
-                self.rotate_y()
-
-            elif self.state[self.sideU.corner_pos[1]] == self.state[self.sideB.edge_north_pos[0]]:
-                has_oll = True
-                self.rotate_y()
-                self.rotate_y()
-
-            elif self.state[self.sideD.corner_pos[0]] == self.state[self.sideF.edge_south_pos[0]]:
-                has_oll = True
-                self.rotate_x()
-
-            elif self.state[self.sideD.corner_pos[0]] == self.state[self.sideL.edge_south_pos[0]]:
+            elif (
+                self.state[self.sideU.corner_pos[0]]
+                == self.state[self.sideL.edge_north_pos[0]]
+            ):
                 has_oll = True
                 self.rotate_y_reverse()
+
+            elif (
+                self.state[self.sideU.corner_pos[3]]
+                == self.state[self.sideR.edge_north_pos[0]]
+            ):
+                has_oll = True
+                self.rotate_y()
+
+            elif (
+                self.state[self.sideU.corner_pos[1]]
+                == self.state[self.sideB.edge_north_pos[0]]
+            ):
+                has_oll = True
+                self.rotate_y()
+                self.rotate_y()
+
+            elif (
+                self.state[self.sideD.corner_pos[0]]
+                == self.state[self.sideF.edge_south_pos[0]]
+            ):
+                has_oll = True
                 self.rotate_x()
 
-            elif self.state[self.sideD.corner_pos[1]] == self.state[self.sideR.edge_south_pos[0]]:
+            elif (
+                self.state[self.sideD.corner_pos[0]]
+                == self.state[self.sideL.edge_south_pos[0]]
+            ):
+                has_oll = True
+                self.rotate_y_reverse()
+                self.rotate_x()
+
+            elif (
+                self.state[self.sideD.corner_pos[1]]
+                == self.state[self.sideR.edge_south_pos[0]]
+            ):
                 has_oll = True
                 self.rotate_y()
                 self.rotate_x()
 
-            elif self.state[self.sideD.corner_pos[2]] == self.state[self.sideB.edge_south_pos[0]]:
+            elif (
+                self.state[self.sideD.corner_pos[2]]
+                == self.state[self.sideB.edge_south_pos[0]]
+            ):
                 has_oll = True
                 self.rotate_y()
                 self.rotate_y()
                 self.rotate_x()
 
-            elif self.state[self.sideF.corner_pos[0]] == self.state[self.sideL.edge_east_pos[0]]:
+            elif (
+                self.state[self.sideF.corner_pos[0]]
+                == self.state[self.sideL.edge_east_pos[0]]
+            ):
                 has_oll = True
                 self.rotate_z()
 
-            elif self.state[self.sideF.corner_pos[1]] == self.state[self.sideR.edge_west_pos[0]]:
+            elif (
+                self.state[self.sideF.corner_pos[1]]
+                == self.state[self.sideR.edge_west_pos[0]]
+            ):
                 has_oll = True
                 self.rotate_z_reverse()
 
-            elif self.state[self.sideB.corner_pos[0]] == self.state[self.sideR.edge_east_pos[0]]:
+            elif (
+                self.state[self.sideB.corner_pos[0]]
+                == self.state[self.sideR.edge_east_pos[0]]
+            ):
                 has_oll = True
                 self.rotate_y()
                 self.rotate_z_reverse()
 
-            elif self.state[self.sideB.corner_pos[1]] == self.state[self.sideL.edge_west_pos[0]]:
+            elif (
+                self.state[self.sideB.corner_pos[1]]
+                == self.state[self.sideL.edge_west_pos[0]]
+            ):
                 has_oll = True
                 self.rotate_y_reverse()
                 self.rotate_z()
@@ -3157,7 +3494,18 @@ class RubiksCube(object):
             if has_oll:
 
                 # 26 moves :(
-                oll_solution = "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
+                oll_solution = (
+                    "%dRw2 R2 U2 %dRw2 R2 U2 %dRw R' U2 %dRw R' U2 %dRw' R' U2 B2 U %dRw' R U' B2 U %dRw R' U R2"
+                    % (
+                        self.size / 2,
+                        self.size / 2,
+                        self.size / 2,
+                        self.size / 2,
+                        self.size / 2,
+                        self.size / 2,
+                        self.size / 2,
+                    )
+                )
                 oll_solution = oll_solution.split()
                 log.warning("Solving OLL in %d steps" % len(oll_solution))
                 self.print_cube()
@@ -3170,7 +3518,10 @@ class RubiksCube(object):
     def solve_PLL(self):
 
         if self.size in (2, 3):
-            raise SolveError("PLL should never happen on a %dx%dx%d, the cube given to us to solve is invalid" % (self.size, self.size, self.size))
+            raise SolveError(
+                "PLL should never happen on a %dx%dx%d, the cube given to us to solve is invalid"
+                % (self.size, self.size, self.size)
+            )
 
         pll_id = None
 
@@ -3178,116 +3529,185 @@ class RubiksCube(object):
         self.rotate_F_to_F()
 
         # rotate one of the hosed edges to U-south
-        if self.state[self.sideU.edge_south_pos[0]] != 'U':
+        if self.state[self.sideU.edge_south_pos[0]] != "U":
             pass
-        elif self.state[self.sideU.edge_north_pos[0]] != 'U':
+        elif self.state[self.sideU.edge_north_pos[0]] != "U":
             self.rotate_y()
             self.rotate_y()
-        elif self.state[self.sideU.edge_west_pos[0]] != 'U':
+        elif self.state[self.sideU.edge_west_pos[0]] != "U":
             self.rotate_y_reverse()
-        elif self.state[self.sideU.edge_east_pos[0]] != 'U':
+        elif self.state[self.sideU.edge_east_pos[0]] != "U":
             self.rotate_y()
-        elif self.state[self.sideL.edge_north_pos[0]] != 'L':
+        elif self.state[self.sideL.edge_north_pos[0]] != "L":
             raise ImplementThis("pll")
-        elif self.state[self.sideL.edge_south_pos[0]] != 'L':
+        elif self.state[self.sideL.edge_south_pos[0]] != "L":
             self.rotate_x()
             self.rotate_x()
             self.rotate_y_reverse()
-        elif self.state[self.sideL.edge_east_pos[0]] != 'L':
+        elif self.state[self.sideL.edge_east_pos[0]] != "L":
             self.rotate_z()
-        elif self.state[self.sideL.edge_west_pos[0]] != 'L':
+        elif self.state[self.sideL.edge_west_pos[0]] != "L":
             self.rotate_y_reverse()
             self.rotate_z()
-        elif self.state[self.sideF.edge_north_pos[0]] != 'F':
+        elif self.state[self.sideF.edge_north_pos[0]] != "F":
             raise ImplementThis("pll")
-        elif self.state[self.sideF.edge_south_pos[0]] != 'F':
+        elif self.state[self.sideF.edge_south_pos[0]] != "F":
             self.rotate_x()
-        elif self.state[self.sideF.edge_east_pos[0]] != 'F':
+        elif self.state[self.sideF.edge_east_pos[0]] != "F":
             self.rotate_z_reverse()
-        elif self.state[self.sideF.edge_west_pos[0]] != 'F':
+        elif self.state[self.sideF.edge_west_pos[0]] != "F":
             raise ImplementThis("pll")
-        elif self.state[self.sideR.edge_north_pos[0]] != 'R':
+        elif self.state[self.sideR.edge_north_pos[0]] != "R":
             raise ImplementThis("pll")
-        elif self.state[self.sideR.edge_south_pos[0]] != 'R':
+        elif self.state[self.sideR.edge_south_pos[0]] != "R":
             self.rotate_y()
             self.rotate_x()
-        elif self.state[self.sideR.edge_east_pos[0]] != 'R':
+        elif self.state[self.sideR.edge_east_pos[0]] != "R":
             self.rotate_y()
             self.rotate_z_reverse()
-        elif self.state[self.sideR.edge_west_pos[0]] != 'R':
+        elif self.state[self.sideR.edge_west_pos[0]] != "R":
             raise ImplementThis("pll")
-        elif self.state[self.sideB.edge_north_pos[0]] != 'B':
+        elif self.state[self.sideB.edge_north_pos[0]] != "B":
             raise ImplementThis("pll")
-        elif self.state[self.sideB.edge_south_pos[0]] != 'B':
+        elif self.state[self.sideB.edge_south_pos[0]] != "B":
             self.rotate_x()
             self.rotate_x()
-        elif self.state[self.sideB.edge_east_pos[0]] != 'B':
+        elif self.state[self.sideB.edge_east_pos[0]] != "B":
             raise ImplementThis("pll")
-        elif self.state[self.sideB.edge_west_pos[0]] != 'B':
+        elif self.state[self.sideB.edge_west_pos[0]] != "B":
             raise ImplementThis("pll")
-        elif self.state[self.sideD.edge_north_pos[0]] != 'D':
+        elif self.state[self.sideD.edge_north_pos[0]] != "D":
             raise ImplementThis("pll")
-        elif self.state[self.sideD.edge_south_pos[0]] != 'D':
+        elif self.state[self.sideD.edge_south_pos[0]] != "D":
             raise ImplementThis("pll")
-        elif self.state[self.sideD.edge_east_pos[0]] != 'D':
+        elif self.state[self.sideD.edge_east_pos[0]] != "D":
             raise ImplementThis("pll")
-        elif self.state[self.sideD.edge_west_pos[0]] != 'D':
+        elif self.state[self.sideD.edge_west_pos[0]] != "D":
             raise ImplementThis("pll")
         else:
             self.print_cube()
             raise SolveError("we should not be here")
 
-        if self.state[self.sideF.edge_north_pos[0]] == 'F':
+        if self.state[self.sideF.edge_north_pos[0]] == "F":
             raise SolveError("F-north should have PLL edge")
 
         # rotate the other hosed edges to U-west
-        if self.state[self.sideU.edge_south_pos[0]] != self.state[self.sideU.corner_pos[0]]:
+        if (
+            self.state[self.sideU.edge_south_pos[0]]
+            != self.state[self.sideU.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideU.edge_north_pos[0]] != self.state[self.sideU.corner_pos[0]]:
+        elif (
+            self.state[self.sideU.edge_north_pos[0]]
+            != self.state[self.sideU.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideU.edge_west_pos[0]] != self.state[self.sideU.corner_pos[0]]:
+        elif (
+            self.state[self.sideU.edge_west_pos[0]]
+            != self.state[self.sideU.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideU.edge_east_pos[0]] != self.state[self.sideU.corner_pos[0]]:
+        elif (
+            self.state[self.sideU.edge_east_pos[0]]
+            != self.state[self.sideU.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideL.edge_north_pos[0]] != self.state[self.sideL.corner_pos[0]]:
+        elif (
+            self.state[self.sideL.edge_north_pos[0]]
+            != self.state[self.sideL.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideL.edge_south_pos[0]] != self.state[self.sideL.corner_pos[0]]:
+        elif (
+            self.state[self.sideL.edge_south_pos[0]]
+            != self.state[self.sideL.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideL.edge_east_pos[0]] != self.state[self.sideL.corner_pos[0]]:
+        elif (
+            self.state[self.sideL.edge_east_pos[0]]
+            != self.state[self.sideL.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideL.edge_west_pos[0]] != self.state[self.sideL.corner_pos[0]]:
+        elif (
+            self.state[self.sideL.edge_west_pos[0]]
+            != self.state[self.sideL.corner_pos[0]]
+        ):
             self.rotate_y()
             pll_id = 2
-        elif self.state[self.sideF.edge_south_pos[0]] != self.state[self.sideF.corner_pos[0]]:
+        elif (
+            self.state[self.sideF.edge_south_pos[0]]
+            != self.state[self.sideF.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideF.edge_east_pos[0]] != self.state[self.sideF.corner_pos[0]]:
+        elif (
+            self.state[self.sideF.edge_east_pos[0]]
+            != self.state[self.sideF.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideF.edge_west_pos[0]] != self.state[self.sideF.corner_pos[0]]:
+        elif (
+            self.state[self.sideF.edge_west_pos[0]]
+            != self.state[self.sideF.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideR.edge_north_pos[0]] != self.state[self.sideR.corner_pos[0]]:
+        elif (
+            self.state[self.sideR.edge_north_pos[0]]
+            != self.state[self.sideR.corner_pos[0]]
+        ):
             self.rotate_y()
             pll_id = 2
-        elif self.state[self.sideR.edge_south_pos[0]] != self.state[self.sideR.corner_pos[0]]:
+        elif (
+            self.state[self.sideR.edge_south_pos[0]]
+            != self.state[self.sideR.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideR.edge_east_pos[0]] != self.state[self.sideR.corner_pos[0]]:
+        elif (
+            self.state[self.sideR.edge_east_pos[0]]
+            != self.state[self.sideR.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideR.edge_west_pos[0]] != self.state[self.sideR.corner_pos[0]]:
+        elif (
+            self.state[self.sideR.edge_west_pos[0]]
+            != self.state[self.sideR.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideB.edge_north_pos[0]] != self.state[self.sideB.corner_pos[0]]:
+        elif (
+            self.state[self.sideB.edge_north_pos[0]]
+            != self.state[self.sideB.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideB.edge_south_pos[0]] != self.state[self.sideB.corner_pos[0]]:
+        elif (
+            self.state[self.sideB.edge_south_pos[0]]
+            != self.state[self.sideB.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideB.edge_east_pos[0]] != self.state[self.sideB.corner_pos[0]]:
+        elif (
+            self.state[self.sideB.edge_east_pos[0]]
+            != self.state[self.sideB.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideB.edge_west_pos[0]] != self.state[self.sideB.corner_pos[0]]:
+        elif (
+            self.state[self.sideB.edge_west_pos[0]]
+            != self.state[self.sideB.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideD.edge_north_pos[0]] != self.state[self.sideD.corner_pos[0]]:
+        elif (
+            self.state[self.sideD.edge_north_pos[0]]
+            != self.state[self.sideD.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideD.edge_south_pos[0]] != self.state[self.sideD.corner_pos[0]]:
+        elif (
+            self.state[self.sideD.edge_south_pos[0]]
+            != self.state[self.sideD.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideD.edge_east_pos[0]] != self.state[self.sideD.corner_pos[0]]:
+        elif (
+            self.state[self.sideD.edge_east_pos[0]]
+            != self.state[self.sideD.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
-        elif self.state[self.sideD.edge_west_pos[0]] != self.state[self.sideD.corner_pos[0]]:
+        elif (
+            self.state[self.sideD.edge_west_pos[0]]
+            != self.state[self.sideD.corner_pos[0]]
+        ):
             raise ImplementThis("pll")
         else:
             raise Exception("we should not be here")
@@ -3296,7 +3716,13 @@ class RubiksCube(object):
         if pll_id == 2:
 
             # Takes 12 steps
-            pll_solution = "L2 D %dFw2 %dLw2 F2 %dLw2 L2 F2 %dLw2 %dFw2 D' L2" % (self.size/2, self.size/2, self.size/2, self.size/2, self.size/2)
+            pll_solution = "L2 D %dFw2 %dLw2 F2 %dLw2 L2 F2 %dLw2 %dFw2 D' L2" % (
+                self.size / 2,
+                self.size / 2,
+                self.size / 2,
+                self.size / 2,
+                self.size / 2,
+            )
             log.warning("Solving PLL ID %d: %s" % (pll_id, pll_solution))
             self.print_cube()
 
@@ -3314,24 +3740,37 @@ class RubiksCube(object):
         kociemba_string = self.get_kociemba_string(False)
 
         try:
-            steps = subprocess.check_output(['kociemba', kociemba_string]).decode('ascii').splitlines()[-1].strip().split()
+            steps = (
+                subprocess.check_output(["kociemba", kociemba_string])
+                .decode("ascii")
+                .splitlines()[-1]
+                .strip()
+                .split()
+            )
             kociemba_ok = True
         except Exception:
             kociemba_ok = False
 
         if not kociemba_ok:
-            raise SolveError("parity error made kociemba barf,  kociemba %s" % kociemba_string)
+            raise SolveError(
+                "parity error made kociemba barf,  kociemba %s" % kociemba_string
+            )
 
         log.debug("kociemba       : %s" % kociemba_string)
-        log.info("kociemba steps            : %s" % ' '.join(steps))
-        log.info("kociemba steps (reversed) : %s" % ' '.join(reverse_steps(steps)))
+        log.info("kociemba steps            : %s" % " ".join(steps))
+        log.info("kociemba steps (reversed) : %s" % " ".join(reverse_steps(steps)))
         reduce_333_solution_len = len(self.solution)
 
         for step in steps:
             step = str(step)
             self.rotate(step)
 
-        self.solution.append("COMMENT_%d_steps_solve_333" % self.get_solution_len_minus_rotates(self.solution[reduce_333_solution_len:]))
+        self.solution.append(
+            "COMMENT_%d_steps_solve_333"
+            % self.get_solution_len_minus_rotates(
+                self.solution[reduce_333_solution_len:]
+            )
+        )
 
         if not self.solved():
             self.solve_OLL()
@@ -3340,29 +3779,55 @@ class RubiksCube(object):
                 self.solve_PLL()
 
                 if not self.solved():
-                    raise SolveError("We hit either OLL or PLL parity and could not solve it")
+                    raise SolveError(
+                        "We hit either OLL or PLL parity and could not solve it"
+                    )
 
     def get_corner_swap_count(self, debug=False):
 
-        needed_corners = [
-            'BLU',
-            'BRU',
-            'FLU',
-            'FRU',
-            'DFL',
-            'DFR',
-            'BDL',
-            'BDR']
+        needed_corners = ["BLU", "BRU", "FLU", "FRU", "DFL", "DFR", "BDL", "BDR"]
 
         to_check = [
-            (self.sideU.corner_pos[0], self.sideL.corner_pos[0], self.sideB.corner_pos[1]), # ULB
-            (self.sideU.corner_pos[1], self.sideR.corner_pos[1], self.sideB.corner_pos[0]), # URB
-            (self.sideU.corner_pos[2], self.sideL.corner_pos[1], self.sideF.corner_pos[0]), # ULF
-            (self.sideU.corner_pos[3], self.sideF.corner_pos[1], self.sideR.corner_pos[0]), # UFR
-            (self.sideD.corner_pos[0], self.sideL.corner_pos[3], self.sideF.corner_pos[2]), # DLF
-            (self.sideD.corner_pos[1], self.sideF.corner_pos[3], self.sideR.corner_pos[2]), # DFR
-            (self.sideD.corner_pos[2], self.sideL.corner_pos[2], self.sideB.corner_pos[3]), # DLB
-            (self.sideD.corner_pos[3], self.sideR.corner_pos[3], self.sideB.corner_pos[2])  # DRB
+            (
+                self.sideU.corner_pos[0],
+                self.sideL.corner_pos[0],
+                self.sideB.corner_pos[1],
+            ),  # ULB
+            (
+                self.sideU.corner_pos[1],
+                self.sideR.corner_pos[1],
+                self.sideB.corner_pos[0],
+            ),  # URB
+            (
+                self.sideU.corner_pos[2],
+                self.sideL.corner_pos[1],
+                self.sideF.corner_pos[0],
+            ),  # ULF
+            (
+                self.sideU.corner_pos[3],
+                self.sideF.corner_pos[1],
+                self.sideR.corner_pos[0],
+            ),  # UFR
+            (
+                self.sideD.corner_pos[0],
+                self.sideL.corner_pos[3],
+                self.sideF.corner_pos[2],
+            ),  # DLF
+            (
+                self.sideD.corner_pos[1],
+                self.sideF.corner_pos[3],
+                self.sideR.corner_pos[2],
+            ),  # DFR
+            (
+                self.sideD.corner_pos[2],
+                self.sideL.corner_pos[2],
+                self.sideB.corner_pos[3],
+            ),  # DLB
+            (
+                self.sideD.corner_pos[3],
+                self.sideR.corner_pos[3],
+                self.sideB.corner_pos[2],
+            ),  # DRB
         ]
 
         current_corners = []
@@ -3370,18 +3835,18 @@ class RubiksCube(object):
             square1 = self.state[square_index1]
             square2 = self.state[square_index2]
             square3 = self.state[square_index3]
-            corner_str = ''.join(sorted([square1, square2, square3]))
+            corner_str = "".join(sorted([square1, square2, square3]))
             current_corners.append(corner_str)
 
         if debug:
             log.info("to_check:\n%s" % pformat(to_check))
-            to_check_str = ''
+            to_check_str = ""
             for (a, b, c) in to_check:
                 to_check_str += "%4s" % a
 
             log.info("to_check       :%s" % to_check_str)
-            log.info("needed corners : %s" % ' '.join(needed_corners))
-            log.info("currnet corners: %s" % ' '.join(current_corners))
+            log.info("needed corners : %s" % " ".join(needed_corners))
+            log.info("currnet corners: %s" % " ".join(current_corners))
             log.info("")
 
         return get_swap_count(needed_corners, current_corners, debug)
@@ -3406,137 +3871,139 @@ class RubiksCube(object):
 
         edges_per_side = len(self.sideU.edge_north_pos)
 
-        #log.warning("edges_paired %s, orbit %s, edges_per_side %s" % (edges_paired, orbit, edges_per_side))
-        #debug = True
+        # log.warning("edges_paired %s, orbit %s, edges_per_side %s" % (edges_paired, orbit, edges_per_side))
+        # debug = True
 
         # Upper
         for (edge_index, square_index) in enumerate(self.sideU.edge_north_pos):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('UB')
+                needed_edges.append("UB")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('UB%d' % edge_index)
+                    needed_edges.append("UB%d" % edge_index)
 
         for (edge_index, square_index) in enumerate(reversed(self.sideU.edge_west_pos)):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('UL')
+                needed_edges.append("UL")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('UL%d' % edge_index)
+                    needed_edges.append("UL%d" % edge_index)
 
-        for (edge_index, square_index) in enumerate(reversed(self.sideU.edge_south_pos)):
+        for (edge_index, square_index) in enumerate(
+            reversed(self.sideU.edge_south_pos)
+        ):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('UF')
+                needed_edges.append("UF")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('UF%d' % edge_index)
+                    needed_edges.append("UF%d" % edge_index)
 
         for (edge_index, square_index) in enumerate(self.sideU.edge_east_pos):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('UR')
+                needed_edges.append("UR")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('UR%d' % edge_index)
-
+                    needed_edges.append("UR%d" % edge_index)
 
         # Left
         for (edge_index, square_index) in enumerate(reversed(self.sideL.edge_west_pos)):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('LB')
+                needed_edges.append("LB")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('LB%d' % edge_index)
+                    needed_edges.append("LB%d" % edge_index)
 
         for (edge_index, square_index) in enumerate(self.sideL.edge_east_pos):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('LF')
+                needed_edges.append("LF")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('LF%d' % edge_index)
-
+                    needed_edges.append("LF%d" % edge_index)
 
         # Right
         for (edge_index, square_index) in enumerate(reversed(self.sideR.edge_west_pos)):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('RF')
+                needed_edges.append("RF")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('RF%d' % edge_index)
+                    needed_edges.append("RF%d" % edge_index)
 
         for (edge_index, square_index) in enumerate(self.sideR.edge_east_pos):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('RB')
+                needed_edges.append("RB")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('RB%d' % edge_index)
+                    needed_edges.append("RB%d" % edge_index)
 
         # Down
         for (edge_index, square_index) in enumerate(self.sideD.edge_north_pos):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('DF')
+                needed_edges.append("DF")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('DF%d' % edge_index)
+                    needed_edges.append("DF%d" % edge_index)
 
         for (edge_index, square_index) in enumerate(reversed(self.sideD.edge_west_pos)):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('DL')
+                needed_edges.append("DL")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('DL%d' % edge_index)
+                    needed_edges.append("DL%d" % edge_index)
 
-        for (edge_index, square_index) in enumerate(reversed(self.sideD.edge_south_pos)):
+        for (edge_index, square_index) in enumerate(
+            reversed(self.sideD.edge_south_pos)
+        ):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('DB')
+                needed_edges.append("DB")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('DB%d' % edge_index)
+                    needed_edges.append("DB%d" % edge_index)
 
         for (edge_index, square_index) in enumerate(self.sideD.edge_east_pos):
             if edges_paired:
                 to_check.append(square_index)
-                needed_edges.append('DR')
+                needed_edges.append("DR")
                 break
             else:
                 if orbit_matches(edges_per_side, orbit, edge_index):
                     to_check.append(square_index)
-                    needed_edges.append('DR%d' % edge_index)
+                    needed_edges.append("DR%d" % edge_index)
 
         if debug:
-            to_check_str = ''
+            to_check_str = ""
 
             for x in to_check:
                 if edges_paired:
@@ -3545,7 +4012,7 @@ class RubiksCube(object):
                     to_check_str += "%4s" % x
 
             log.info("orbit %d to_check     :%s" % (orbit, to_check_str))
-            log.info("orbit %d needed edges : %s" % (orbit, ' '.join(needed_edges)))
+            log.info("orbit %d needed edges : %s" % (orbit, " ".join(needed_edges)))
 
         current_edges = []
 
@@ -3554,20 +4021,22 @@ class RubiksCube(object):
             partner_index = side.get_wing_partner(square_index)
             square1 = self.state[square_index]
             square2 = self.state[partner_index]
-            #log.info("side %s, (%d, %d) is %s%s" % (side, square_index, partner_index, square1, square2))
+            # log.info("side %s, (%d, %d) is %s%s" % (side, square_index, partner_index, square1, square2))
 
-            if square1 == 'U' or square1 == 'D':
+            if square1 == "U" or square1 == "D":
                 wing_str = square1 + square2
-            elif square2 == 'U' or square2 == 'D':
+            elif square2 == "U" or square2 == "D":
                 wing_str = square2 + square1
-            elif square1 == 'L' or square1 == 'R':
+            elif square1 == "L" or square1 == "R":
                 wing_str = square1 + square2
-            elif square2 == 'L' or square2 == 'R':
+            elif square2 == "L" or square2 == "R":
                 wing_str = square2 + square1
-            elif square1 == 'x' and square2 == 'x':
+            elif square1 == "x" and square2 == "x":
                 continue
             else:
-                raise Exception("Could not determine wing_str for (%s, %s)" % (square1, square2))
+                raise Exception(
+                    "Could not determine wing_str for (%s, %s)" % (square1, square2)
+                )
 
             if not edges_paired:
 
@@ -3577,8 +4046,8 @@ class RubiksCube(object):
                 # - look for the 'x' to determine if this is the '0' vs '1' wing
                 # - restore the original state
 
-                square1_with_x = square1 + 'x'
-                square2_with_x = square2 + 'x'
+                square1_with_x = square1 + "x"
+                square2_with_x = square2 + "x"
 
                 original_state = self.state[:]
                 original_solution = self.solution[:]
@@ -3588,73 +4057,76 @@ class RubiksCube(object):
                 # 'UB0', 'UB1', 'UL0', 'UL1', 'UF0', 'UF1', 'UR0', 'UR1',
                 # 'LB0', 'LB1', 'LF0', 'LF1', 'RF0', 'RF1', 'RB0', 'RB1',
                 # 'DF0', 'DF1', 'DL0', 'DL1', 'DB0', 'DB1', 'DR0', 'DR1
-                if wing_str == 'UB':
+                if wing_str == "UB":
                     self.move_wing_to_U_north(square_index)
                     edge_to_check = self.sideU.edge_north_pos
                     target_side = self.sideU
 
-                elif wing_str == 'UL':
+                elif wing_str == "UL":
                     self.move_wing_to_U_west(square_index)
                     edge_to_check = reversed(self.sideU.edge_west_pos)
                     target_side = self.sideU
 
-                elif wing_str == 'UF':
+                elif wing_str == "UF":
                     self.move_wing_to_U_south(square_index)
                     edge_to_check = reversed(self.sideU.edge_south_pos)
                     target_side = self.sideU
 
-                elif wing_str == 'UR':
+                elif wing_str == "UR":
                     self.move_wing_to_U_east(square_index)
                     edge_to_check = self.sideU.edge_east_pos
                     target_side = self.sideU
 
-                elif wing_str == 'LB':
+                elif wing_str == "LB":
                     self.move_wing_to_L_west(square_index)
                     edge_to_check = reversed(self.sideL.edge_west_pos)
                     target_side = self.sideL
 
-                elif wing_str == 'LF':
+                elif wing_str == "LF":
                     self.move_wing_to_L_east(square_index)
                     edge_to_check = self.sideL.edge_east_pos
                     target_side = self.sideL
 
-                elif wing_str == 'RF':
+                elif wing_str == "RF":
                     self.move_wing_to_R_west(square_index)
                     edge_to_check = reversed(self.sideR.edge_west_pos)
                     target_side = self.sideR
 
-                elif wing_str == 'RB':
+                elif wing_str == "RB":
                     self.move_wing_to_R_east(square_index)
                     edge_to_check = self.sideR.edge_east_pos
                     target_side = self.sideR
 
-                elif wing_str == 'DF':
+                elif wing_str == "DF":
                     self.move_wing_to_D_north(square_index)
                     edge_to_check = self.sideD.edge_north_pos
                     target_side = self.sideD
 
-                elif wing_str == 'DL':
+                elif wing_str == "DL":
                     self.move_wing_to_D_west(square_index)
                     edge_to_check = reversed(self.sideD.edge_west_pos)
                     target_side = self.sideD
 
-                elif wing_str == 'DB':
+                elif wing_str == "DB":
                     self.move_wing_to_D_south(square_index)
                     edge_to_check = reversed(self.sideD.edge_south_pos)
                     target_side = self.sideD
 
-                elif wing_str == 'DR':
+                elif wing_str == "DR":
                     self.move_wing_to_D_east(square_index)
                     edge_to_check = self.sideD.edge_east_pos
                     target_side = self.sideD
 
                 else:
-                    raise SolveError("invalid wing %s at (%d, %d)" % (wing_str, square_index, partner_index))
+                    raise SolveError(
+                        "invalid wing %s at (%d, %d)"
+                        % (wing_str, square_index, partner_index)
+                    )
 
                 for (edge_index, wing_index) in enumerate(edge_to_check):
                     wing_value = self.state[wing_index]
 
-                    if wing_value.endswith('x'):
+                    if wing_value.endswith("x"):
                         if wing_value.startswith(target_side.name):
                             wing_str += str(edge_index)
                         else:
@@ -3663,7 +4135,10 @@ class RubiksCube(object):
 
                         break
                 else:
-                    raise SolveError("Could not find wing %s (%d, %d) among %s" % (wing_str, square_index, partner_index, str(edge_to_check)))
+                    raise SolveError(
+                        "Could not find wing %s (%d, %d) among %s"
+                        % (wing_str, square_index, partner_index, str(edge_to_check))
+                    )
 
                 self.state = original_state[:]
                 self.solution = original_solution[:]
@@ -3671,7 +4146,7 @@ class RubiksCube(object):
             current_edges.append(wing_str)
 
         if debug:
-            log.info("orbit %d current edges: %s" % (orbit, ' '.join(current_edges)))
+            log.info("orbit %d current edges: %s" % (orbit, " ".join(current_edges)))
 
         return get_swap_count(needed_edges, current_edges, debug)
 
@@ -3687,7 +4162,9 @@ class RubiksCube(object):
 
     def edge_solution_leads_to_pll_parity(self, debug=False):
 
-        if self.edge_swaps_even(edges_paired=True, orbit=None, debug=debug) == self.corner_swaps_even(debug):
+        if self.edge_swaps_even(
+            edges_paired=True, orbit=None, debug=debug
+        ) == self.corner_swaps_even(debug):
             if debug:
                 log.info("Predict we are free of PLL parity")
             return False
@@ -3721,7 +4198,7 @@ class RubiksCube(object):
             # http://www.speedcubing.com/chris/4speedsolve3.html
             if self.edge_swaps_odd(False, orbit, debug):
                 orbits_with_oll_parity.append(orbit)
-                #log.info("orbit %d has OLL parity" % orbit)
+                # log.info("orbit %d has OLL parity" % orbit)
 
         if not orbits_with_oll_parity:
             log.debug("Predict we are free of OLL parity")
@@ -3731,11 +4208,18 @@ class RubiksCube(object):
     def get_state_all(self):
         result = []
 
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+        for side in (
+            self.sideU,
+            self.sideL,
+            self.sideF,
+            self.sideR,
+            self.sideB,
+            self.sideD,
+        ):
             for square_index in range(side.min_pos, side.max_pos + 1):
                 result.append(self.state[square_index])
 
-        return ''.join(result)
+        return "".join(result)
 
     def get_staged_centers_count(self, centers):
         staged = 0
@@ -3746,16 +4230,16 @@ class RubiksCube(object):
                 if centers is not None and pos not in centers:
                     continue
 
-                if side.name == 'U' or side.name == 'D':
-                    if self.state[pos] == 'U' or self.state[pos] == 'D':
+                if side.name == "U" or side.name == "D":
+                    if self.state[pos] == "U" or self.state[pos] == "D":
                         staged += 1
 
-                elif side.name == 'L' or side.name == 'R':
-                    if self.state[pos] == 'L' or self.state[pos] == 'R':
+                elif side.name == "L" or side.name == "R":
+                    if self.state[pos] == "L" or self.state[pos] == "R":
                         staged += 1
 
-                elif side.name == 'F' or side.name == 'B':
-                    if self.state[pos] == 'F' or self.state[pos] == 'B':
+                elif side.name == "F" or side.name == "B":
+                    if self.state[pos] == "F" or self.state[pos] == "B":
                         staged += 1
 
         return staged
@@ -3783,8 +4267,8 @@ class RubiksCube(object):
         original_state = self.state[:]
         original_solution = self.solution[:]
 
-        for upper_side_name in ('U', 'D', 'L', 'F', 'R', 'B'):
-            for front_side_name in ('F', 'R', 'B', 'L', 'U', 'D'):
+        for upper_side_name in ("U", "D", "L", "F", "R", "B"):
+            for front_side_name in ("F", "R", "B", "L", "U", "D"):
 
                 if upper_side_name == front_side_name:
                     continue
@@ -3793,106 +4277,106 @@ class RubiksCube(object):
                 self.state = original_state[:]
                 self.solution = original_solution[:]
 
-                if upper_side_name == 'U':
+                if upper_side_name == "U":
 
-                    if front_side_name == 'D':
+                    if front_side_name == "D":
                         continue
 
-                    if front_side_name == 'L':
+                    if front_side_name == "L":
                         self.rotate_y_reverse()
-                    elif front_side_name == 'F':
+                    elif front_side_name == "F":
                         pass
-                    elif front_side_name == 'R':
+                    elif front_side_name == "R":
                         self.rotate_y()
-                    elif front_side_name == 'B':
+                    elif front_side_name == "B":
                         self.rotate_y()
                         self.rotate_y()
 
-                elif upper_side_name == 'D':
+                elif upper_side_name == "D":
 
-                    if front_side_name == 'U':
+                    if front_side_name == "U":
                         continue
 
                     self.rotate_x()
                     self.rotate_x()
 
-                    if front_side_name == 'L':
+                    if front_side_name == "L":
                         self.rotate_y_reverse()
-                    elif front_side_name == 'F':
+                    elif front_side_name == "F":
                         self.rotate_y()
                         self.rotate_y()
-                    elif front_side_name == 'R':
+                    elif front_side_name == "R":
                         self.rotate_y()
-                    elif front_side_name == 'B':
+                    elif front_side_name == "B":
                         pass
 
-                elif upper_side_name == 'L':
+                elif upper_side_name == "L":
 
-                    if front_side_name == 'R':
+                    if front_side_name == "R":
                         continue
 
                     self.rotate_y_reverse()
                     self.rotate_x()
 
-                    if front_side_name == 'U':
+                    if front_side_name == "U":
                         self.rotate_y()
                         self.rotate_y()
-                    elif front_side_name == 'F':
+                    elif front_side_name == "F":
                         self.rotate_y()
-                    elif front_side_name == 'D':
+                    elif front_side_name == "D":
                         pass
-                    elif front_side_name == 'B':
+                    elif front_side_name == "B":
                         self.rotate_y_reverse()
 
-                elif upper_side_name == 'F':
+                elif upper_side_name == "F":
 
-                    if front_side_name == 'B':
+                    if front_side_name == "B":
                         continue
 
                     self.rotate_x()
 
-                    if front_side_name == 'L':
+                    if front_side_name == "L":
                         self.rotate_y_reverse()
-                    elif front_side_name == 'U':
+                    elif front_side_name == "U":
                         self.rotate_y()
                         self.rotate_y()
-                    elif front_side_name == 'R':
+                    elif front_side_name == "R":
                         self.rotate_y()
-                    elif front_side_name == 'D':
+                    elif front_side_name == "D":
                         pass
 
-                elif upper_side_name == 'R':
+                elif upper_side_name == "R":
 
-                    if front_side_name == 'L':
+                    if front_side_name == "L":
                         continue
 
                     self.rotate_y()
                     self.rotate_x()
 
-                    if front_side_name == 'U':
+                    if front_side_name == "U":
                         self.rotate_y()
                         self.rotate_y()
-                    elif front_side_name == 'F':
+                    elif front_side_name == "F":
                         self.rotate_y_reverse()
-                    elif front_side_name == 'D':
+                    elif front_side_name == "D":
                         pass
-                    elif front_side_name == 'B':
+                    elif front_side_name == "B":
                         self.rotate_y()
 
-                elif upper_side_name == 'B':
+                elif upper_side_name == "B":
 
-                    if front_side_name == 'F':
+                    if front_side_name == "F":
                         continue
 
                     self.rotate_x_reverse()
 
-                    if front_side_name == 'L':
+                    if front_side_name == "L":
                         self.rotate_y_reverse()
-                    elif front_side_name == 'U':
+                    elif front_side_name == "U":
                         pass
-                    elif front_side_name == 'R':
+                    elif front_side_name == "R":
                         self.rotate_y()
-                    elif front_side_name == 'D':
+                    elif front_side_name == "D":
                         self.rotate_y()
                         self.rotate_y()
 
@@ -3905,7 +4389,7 @@ class RubiksCube(object):
                     max_best_centers = best_centers
                     max_best_centers_state = self.state[:]
                     max_best_centers_solution = self.solution[:]
-                    #log.info("%s: upper %s, front %s, stages %d centers" % (self, upper_side_name, front_side_name, max_best_centers))
+                    # log.info("%s: upper %s, front %s, stages %d centers" % (self, upper_side_name, front_side_name, max_best_centers))
 
         self.state = max_best_centers_state[:]
         self.solution = max_best_centers_solution[:]
@@ -3930,15 +4414,13 @@ class RubiksCube(object):
         size_str = str(self.size)
 
         for step in solution:
-            if step in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
+            if step in ("CENTERS_SOLVED", "EDGES_GROUPED"):
                 continue
 
-            if step.startswith('COMMENT'):
+            if step.startswith("COMMENT"):
                 continue
 
-            if step in ("x", "x'", "x2",
-                        "y", "y'", "y2",
-                        "z", "z'", "z2"):
+            if step in ("x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"):
                 continue
 
             if step.startswith(size_str):
@@ -3947,7 +4429,9 @@ class RubiksCube(object):
             count += 1
 
             if debug:
-                log.warning("solution %s, step %s, count %d" % (" ".join(solution), step, count))
+                log.warning(
+                    "solution %s, step %s, count %d" % (" ".join(solution), step, count)
+                )
 
         return count
 
@@ -3956,28 +4440,30 @@ class RubiksCube(object):
         solution_string = " " + " ".join(self.solution) + " "
         pass_num = 0
 
-        #log.info("solution_string: %s" % solution_string)
+        # log.info("solution_string: %s" % solution_string)
         while solution_string.count(" CENTERS_SOLVED") > 1:
             solution_string = solution_string.replace(" CENTERS_SOLVED", "", 1)
 
         while solution_string.count(" EDGES_GROUPED") > 1:
             solution_string = solution_string.replace(" EDGES_GROUPED", "", 1)
-        #log.info("solution_string: %s" % solution_string)
+        # log.info("solution_string: %s" % solution_string)
 
         while True:
             original_solution_string = solution_string[:]
             prev_move = None
-            #log.info("pass %d:  init %s" % (pass_num, original_solution_string))
+            # log.info("pass %d:  init %s" % (pass_num, original_solution_string))
 
             for move in moves:
-                if move in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
+                if move in ("CENTERS_SOLVED", "EDGES_GROUPED"):
                     continue
 
-                if move.startswith('COMMENT'):
+                if move.startswith("COMMENT"):
                     continue
 
                 if move.endswith("2'"):
-                    raise Exception('compress_solution does not support move "%s"' % move)
+                    raise Exception(
+                        'compress_solution does not support move "%s"' % move
+                    )
 
                 if move.endswith("'"):
                     reverse_move = move[0:-1]
@@ -3986,26 +4472,40 @@ class RubiksCube(object):
 
                 # If the same half turn is done 2x in a row, remove it
                 if move.endswith("2"):
-                    solution_string = solution_string.replace(" %s %s " % (move, move), " ")
+                    solution_string = solution_string.replace(
+                        " %s %s " % (move, move), " "
+                    )
 
                 else:
                     # If the same quarter turn is done 4x in a row, remove it
-                    solution_string = solution_string.replace(" %s %s %s %s " % (move, move, move, move), " ")
+                    solution_string = solution_string.replace(
+                        " %s %s %s %s " % (move, move, move, move), " "
+                    )
 
                     # If the same quarter turn is done 3x in a row, replace it with one backwards move
-                    solution_string = solution_string.replace(" %s %s %s " % (move, move, move), " %s " % reverse_move)
+                    solution_string = solution_string.replace(
+                        " %s %s %s " % (move, move, move), " %s " % reverse_move
+                    )
 
                     # If the same quarter turn is done 2x in a row, replace it with one half turn
                     # Do not bother doing this with whole cube rotations we will pull those out later
                     if not move.startswith(str(self.size)):
                         if move.endswith("'"):
-                            solution_string = solution_string.replace(" %s %s " % (move, move), " %s2 " % move[0:-1])
+                            solution_string = solution_string.replace(
+                                " %s %s " % (move, move), " %s2 " % move[0:-1]
+                            )
                         else:
-                            solution_string = solution_string.replace(" %s %s " % (move, move), " %s2 " % move)
+                            solution_string = solution_string.replace(
+                                " %s %s " % (move, move), " %s2 " % move
+                            )
 
                 # "F F'" and "F' F" will cancel each other out, remove them
-                solution_string = solution_string.replace(" %s %s " % (move, reverse_move), " ")
-                solution_string = solution_string.replace(" %s %s " % (reverse_move, move), " ")
+                solution_string = solution_string.replace(
+                    " %s %s " % (move, reverse_move), " "
+                )
+                solution_string = solution_string.replace(
+                    " %s %s " % (reverse_move, move), " "
+                )
 
                 # Uw U Uw' -> U
                 # Uw U2 Uw' -> U2
@@ -4053,13 +4553,13 @@ class RubiksCube(object):
 
                 prev_move = move
 
-            #log.info("pass %d: final %s" % (pass_num, solution_string))
+            # log.info("pass %d: final %s" % (pass_num, solution_string))
             if original_solution_string == solution_string:
                 break
             else:
                 pass_num += 1
 
-        #log.info("Compressed solution in %d passes" % pass_num)
+        # log.info("Compressed solution in %d passes" % pass_num)
         solution_string = solution_string.strip()
 
         # We put some markers in the solution to track how many steps
@@ -4072,29 +4572,51 @@ class RubiksCube(object):
         index = 0
         self.solution_with_markers = solution_string.split()
 
-        #log.info("pre compress; %s" % ' '.join(self.solution))
+        # log.info("pre compress; %s" % ' '.join(self.solution))
         for step in self.solution_with_markers:
-            if step.startswith(str(self.size)) or step in ("x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"):
+            if step.startswith(str(self.size)) or step in (
+                "x",
+                "x'",
+                "x2",
+                "y",
+                "y'",
+                "y2",
+                "z",
+                "z'",
+                "z2",
+            ):
                 self.steps_to_rotate_cube += 1
 
-            if step == 'CENTERS_SOLVED':
+            if step == "CENTERS_SOLVED":
                 self.steps_to_solve_centers = index - self.steps_to_rotate_cube
-            elif step == 'EDGES_GROUPED':
-                self.steps_to_group_edges = index - self.steps_to_rotate_cube - self.steps_to_solve_centers
-            elif step.startswith('COMMENT'):
+            elif step == "EDGES_GROUPED":
+                self.steps_to_group_edges = (
+                    index - self.steps_to_rotate_cube - self.steps_to_solve_centers
+                )
+            elif step.startswith("COMMENT"):
                 pass
             else:
                 solution_minus_markers.append(step)
                 index += 1
 
-        self.steps_to_solve_3x3x3 = index - self.steps_to_rotate_cube - self.steps_to_solve_centers - self.steps_to_group_edges
+        self.steps_to_solve_3x3x3 = (
+            index
+            - self.steps_to_rotate_cube
+            - self.steps_to_solve_centers
+            - self.steps_to_group_edges
+        )
         self.solution = solution_minus_markers
 
     def recolor(self):
 
-        if self.use_nuke_corners or self.use_nuke_edges or self.use_nuke_centers or self.recolor_positions:
+        if (
+            self.use_nuke_corners
+            or self.use_nuke_edges
+            or self.use_nuke_centers
+            or self.recolor_positions
+        ):
             log.info("%s: recolor" % self)
-            #self.print_cube()
+            # self.print_cube()
 
             if self.use_nuke_corners:
                 self.nuke_corners()
@@ -4120,13 +4642,13 @@ class RubiksCube(object):
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
-        self.solution.append('CENTERS_SOLVED')
+        self.solution.append("CENTERS_SOLVED")
 
         if self.edges_paired():
             log.info("edges are already paired")
         else:
             self.group_edges()
-        self.solution.append('EDGES_GROUPED')
+        self.solution.append("EDGES_GROUPED")
 
     def reduce_333_slow(self):
         tmp_state = self.state[:]
@@ -4146,28 +4668,30 @@ class RubiksCube(object):
 
             elif (top, bottom) == ("L", "R"):
                 self.recolor_map = {
-                    'U' : 'R',
-                    'L' : 'U',
-                    'F' : 'F',
-                    'R' : 'D',
-                    'B' : 'B',
-                    'D' : 'L',
+                    "U": "R",
+                    "L": "U",
+                    "F": "F",
+                    "R": "D",
+                    "B": "B",
+                    "D": "L",
                 }
                 self.recolor()
 
             elif (top, bottom) == ("F", "B"):
                 self.recolor_map = {
-                    'U' : 'B',
-                    'L' : 'L',
-                    'F' : 'U',
-                    'R' : 'R',
-                    'B' : 'D',
-                    'D' : 'F',
+                    "U": "B",
+                    "L": "L",
+                    "F": "U",
+                    "R": "R",
+                    "B": "D",
+                    "D": "F",
                 }
                 self.recolor()
 
             else:
-                raise Exception("%s: invalid (top, bottom) (%s, %s)" % (self, top, bottom))
+                raise Exception(
+                    "%s: invalid (top, bottom) (%s, %s)" % (self, top, bottom)
+                )
 
             if self.is_odd() or self.centers_solved():
                 self.rotate_U_to_U()
@@ -4177,18 +4701,24 @@ class RubiksCube(object):
             solution_len = self.get_solution_len_minus_rotates(self.solution)
 
             if min_solution_len is None or solution_len <= min_solution_len:
-                log.warning("%s: (%s, %s) solution_len %d (NEW MIN)\n\n\n\n\n\n\n" % (self, top, bottom, solution_len))
+                log.warning(
+                    "%s: (%s, %s) solution_len %d (NEW MIN)\n\n\n\n\n\n\n"
+                    % (self, top, bottom, solution_len)
+                )
                 min_solution_len = solution_len
                 min_solution_state = self.state[:]
                 min_solution = self.solution[:]
             else:
-                log.warning("%s: (%s, %s) solution_len %d\n\n\n\n\n\n\n" % (self, top, bottom, solution_len))
+                log.warning(
+                    "%s: (%s, %s) solution_len %d\n\n\n\n\n\n\n"
+                    % (self, top, bottom, solution_len)
+                )
 
             self.state = tmp_state[:]
             self.solution = tmp_solution[:]
 
         for step in min_solution[original_solution_len:]:
-            if step.startswith('COMMENT'):
+            if step.startswith("COMMENT"):
                 self.solution.append(step)
             else:
                 self.rotate(step)
@@ -4224,7 +4754,12 @@ class RubiksCube(object):
             reduce_333_solution_len = len(self.solution)
             for step in solution333:
                 self.rotate(step)
-            self.solution.append("COMMENT_%d_steps_solve_333" % self.get_solution_len_minus_rotates(self.solution[reduce_333_solution_len:]))
+            self.solution.append(
+                "COMMENT_%d_steps_solve_333"
+                % self.get_solution_len_minus_rotates(
+                    self.solution[reduce_333_solution_len:]
+                )
+            )
         else:
             log.info("solve_333 begin")
             self.solve_333()
@@ -4234,14 +4769,18 @@ class RubiksCube(object):
     def print_solution(self, include_comments):
 
         # Print an alg.cubing.net URL for this setup/solution
-        url = "https://alg.cubing.net/?puzzle=%dx%dx%d&alg=" % (self.size, self.size, self.size)
+        url = "https://alg.cubing.net/?puzzle=%dx%dx%d&alg=" % (
+            self.size,
+            self.size,
+            self.size,
+        )
 
         for x in self.solution_with_markers:
-            if x in ('CENTERS_SOLVED', 'EDGES_GROUPED'):
+            if x in ("CENTERS_SOLVED", "EDGES_GROUPED"):
                 continue
-            elif x.startswith('COMMENT'):
+            elif x.startswith("COMMENT"):
                 if include_comments:
-                    url += r'''%2F%2F''' + x.replace("COMMENT", "") + "%0A%0A"
+                    url += r"""%2F%2F""" + x.replace("COMMENT", "") + "%0A%0A"
             else:
                 url += x + "_"
 
@@ -4291,8 +4830,8 @@ class RubiksCube(object):
                 rotations.append(apply_rotations(self.size, step, rotations))
             else:
                 final_steps.append(apply_rotations(self.size, step, rotations))
-        print("Solution: %s" % ' '.join(final_steps))
-        #log.info(len(final_steps))
+        print("Solution: %s" % " ".join(final_steps))
+        # log.info(len(final_steps))
 
         if self.steps_to_solve_centers:
             log.info("%d steps to solve centers" % self.steps_to_solve_centers)
@@ -4305,25 +4844,25 @@ class RubiksCube(object):
 
         log.info("%d steps total" % self.get_solution_len_minus_rotates(self.solution))
 
-        solution_txt_filename = os.path.join(HTML_DIRECTORY, 'solution.txt')
-        with open(solution_txt_filename, 'w') as fh:
-            fh.write(' '.join(final_steps) + "\n")
+        solution_txt_filename = os.path.join(HTML_DIRECTORY, "solution.txt")
+        with open(solution_txt_filename, "w") as fh:
+            fh.write(" ".join(final_steps) + "\n")
         os.chmod(solution_txt_filename, 0o777)
 
     def nuke_corners(self):
         for side in list(self.sides.values()):
             for square_index in side.corner_pos:
-                self.state[square_index] = '.'
+                self.state[square_index] = "."
 
     def nuke_centers(self):
         for side in list(self.sides.values()):
             for square_index in side.center_pos:
-                self.state[square_index] = '.'
+                self.state[square_index] = "."
 
     def nuke_edges(self):
         for side in list(self.sides.values()):
             for square_index in side.edge_pos:
-                self.state[square_index] = '.'
+                self.state[square_index] = "."
 
     def www_header(self):
         """
@@ -4331,10 +4870,10 @@ class RubiksCube(object):
         """
         side_margin = 10
         square_size = 40
-        size = self.size # 3 for 3x3x3, etc
+        size = self.size  # 3 for 3x3x3, etc
 
-        for filename in ('solution.js', 'Arrow-Next.png', 'Arrow-Prev.png'):
-            www_filename = os.path.join('www', filename)
+        for filename in ("solution.js", "Arrow-Next.png", "Arrow-Prev.png"):
+            www_filename = os.path.join("www", filename)
             tmp_filename = os.path.join(HTML_DIRECTORY, filename)
 
             if not os.path.exists(tmp_filename):
@@ -4344,8 +4883,9 @@ class RubiksCube(object):
         if os.path.exists(HTML_FILENAME):
             os.unlink(HTML_FILENAME)
 
-        with open(HTML_FILENAME, 'w') as fh:
-            fh.write("""<!DOCTYPE html>
+        with open(HTML_FILENAME, "w") as fh:
+            fh.write(
+                """<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -4375,12 +4915,15 @@ a.next_page {
     float: right;
 }
 
-""" % side_margin)
+"""
+                % side_margin
+            )
 
-            for x in range(1, size-1):
+            for x in range(1, size - 1):
                 fh.write("div.col%d,\n" % x)
 
-            fh.write("""div.col%d {
+            fh.write(
+                """div.col%d {
     float: left;
 }
 
@@ -4391,12 +4934,17 @@ div#upper,
 div#down {
     margin-left: %dpx;
 }
-""" % (size-1,
-       size,
-       (size - 1) * square_size,
-       (size * square_size) + (3 * side_margin)))
+"""
+                % (
+                    size - 1,
+                    size,
+                    (size - 1) * square_size,
+                    (size * square_size) + (3 * side_margin),
+                )
+            )
 
-            fh.write("""
+            fh.write(
+                """
 span.square {
     width: %dpx;
     height: %dpx;
@@ -4439,15 +4987,24 @@ div#page_holder {
 </head>
 <body>
 <div id="page_holder">
-""" % (square_size, square_size, square_size, square_size, square_size, square_size,
-       (square_size * size * 4) + square_size + (4 * side_margin)))
+"""
+                % (
+                    square_size,
+                    square_size,
+                    square_size,
+                    square_size,
+                    square_size,
+                    square_size,
+                    (square_size * size * 4) + square_size + (4 * side_margin),
+                )
+            )
         os.chmod(HTML_FILENAME, 0o777)
 
     def www_write_cube(self, desc):
         """
         'cube' is a list of (R,G,B) tuples
         """
-        cube = ['dummy',]
+        cube = ["dummy"]
         for square in self.state[1:]:
             cube.append(self.color_map_html[square])
 
@@ -4455,11 +5012,13 @@ div#page_holder {
         squares_per_side = self.size * self.size
         max_square = squares_per_side * 6
 
-        sides = ('upper', 'left', 'front', 'right', 'back', 'down')
+        sides = ("upper", "left", "front", "right", "back", "down")
         side_index = -1
-        (first_squares, last_squares, last_UBD_squares) = get_important_square_indexes(self.size)
+        (first_squares, last_squares, last_UBD_squares) = get_important_square_indexes(
+            self.size
+        )
 
-        with open(HTML_FILENAME, 'a') as fh:
+        with open(HTML_FILENAME, "a") as fh:
             fh.write("<div class='page' style='display: none;'>\n")
             fh.write("<h1>%s</h1>\n" % desc)
             for index in range(1, max_square + 1):
@@ -4468,11 +5027,10 @@ div#page_holder {
                     fh.write("<div class='side' id='%s'>\n" % sides[side_index])
 
                 (red, green, blue) = cube[index]
-                fh.write("    <div class='square col%d' title='RGB (%d, %d, %d)' style='background-color: #%02x%02x%02x;'><span>%02d</span></div>\n" %
-                    (col,
-                     red, green, blue,
-                     red, green, blue,
-                     index))
+                fh.write(
+                    "    <div class='square col%d' title='RGB (%d, %d, %d)' style='background-color: #%02x%02x%02x;'><span>%02d</span></div>\n"
+                    % (col, red, green, blue, red, green, blue, index)
+                )
 
                 if index in last_squares:
                     fh.write("</div>\n")
@@ -4487,8 +5045,9 @@ div#page_holder {
             fh.write("</div>\n")
 
     def www_footer(self):
-        with open(HTML_FILENAME, 'a') as fh:
-            fh.write("""
+        with open(HTML_FILENAME, "a") as fh:
+            fh.write(
+                """
 <div id="sets-browse-controls">
 <a class="prev_page" style="display: block;"><img src="Arrow-Prev.png" class="clickable" width="128"></a>
 <a class="next_page" style="display: block;"><img src="Arrow-Next.png" class="clickable" width="128"></a>
@@ -4496,243 +5055,286 @@ div#page_holder {
 </div>
 </body>
 </html>
-""")
+"""
+            )
 
     def rotate_to_side(self, upper_side_name, front_side_name):
 
         if upper_side_name == front_side_name:
             return False
 
-        if upper_side_name == 'U':
+        if upper_side_name == "U":
 
-            if front_side_name == 'D':
+            if front_side_name == "D":
                 return False
 
-            if front_side_name == 'L':
+            if front_side_name == "L":
                 self.rotate_y_reverse()
-            elif front_side_name == 'F':
+            elif front_side_name == "F":
                 pass
-            elif front_side_name == 'R':
+            elif front_side_name == "R":
                 self.rotate_y()
-            elif front_side_name == 'B':
+            elif front_side_name == "B":
                 self.rotate_y()
                 self.rotate_y()
 
-        elif upper_side_name == 'D':
+        elif upper_side_name == "D":
 
-            if front_side_name == 'U':
+            if front_side_name == "U":
                 return False
 
             self.rotate_x()
             self.rotate_x()
 
-            if front_side_name == 'L':
+            if front_side_name == "L":
                 self.rotate_y_reverse()
-            elif front_side_name == 'F':
+            elif front_side_name == "F":
                 self.rotate_y()
                 self.rotate_y()
-            elif front_side_name == 'R':
+            elif front_side_name == "R":
                 self.rotate_y()
-            elif front_side_name == 'B':
+            elif front_side_name == "B":
                 pass
 
-        elif upper_side_name == 'L':
+        elif upper_side_name == "L":
 
-            if front_side_name == 'R':
+            if front_side_name == "R":
                 return False
 
             self.rotate_y_reverse()
             self.rotate_x()
 
-            if front_side_name == 'U':
+            if front_side_name == "U":
                 self.rotate_y()
                 self.rotate_y()
-            elif front_side_name == 'F':
+            elif front_side_name == "F":
                 self.rotate_y()
-            elif front_side_name == 'D':
+            elif front_side_name == "D":
                 pass
-            elif front_side_name == 'B':
+            elif front_side_name == "B":
                 self.rotate_y_reverse()
 
-        elif upper_side_name == 'F':
+        elif upper_side_name == "F":
 
-            if front_side_name == 'B':
+            if front_side_name == "B":
                 return False
 
             self.rotate_x()
 
-            if front_side_name == 'L':
+            if front_side_name == "L":
                 self.rotate_y_reverse()
-            elif front_side_name == 'U':
+            elif front_side_name == "U":
                 self.rotate_y()
                 self.rotate_y()
-            elif front_side_name == 'R':
+            elif front_side_name == "R":
                 self.rotate_y()
-            elif front_side_name == 'D':
+            elif front_side_name == "D":
                 pass
 
-        elif upper_side_name == 'R':
+        elif upper_side_name == "R":
 
-            if front_side_name == 'L':
+            if front_side_name == "L":
                 return False
 
             self.rotate_y()
             self.rotate_x()
 
-            if front_side_name == 'U':
+            if front_side_name == "U":
                 self.rotate_y()
                 self.rotate_y()
-            elif front_side_name == 'F':
+            elif front_side_name == "F":
                 self.rotate_y_reverse()
-            elif front_side_name == 'D':
+            elif front_side_name == "D":
                 pass
-            elif front_side_name == 'B':
+            elif front_side_name == "B":
                 self.rotate_y()
 
-        elif upper_side_name == 'B':
+        elif upper_side_name == "B":
 
-            if front_side_name == 'F':
+            if front_side_name == "F":
                 return False
 
             self.rotate_x_reverse()
 
-            if front_side_name == 'L':
+            if front_side_name == "L":
                 self.rotate_y_reverse()
-            elif front_side_name == 'U':
+            elif front_side_name == "U":
                 pass
-            elif front_side_name == 'R':
+            elif front_side_name == "R":
                 self.rotate_y()
-            elif front_side_name == 'D':
+            elif front_side_name == "D":
                 self.rotate_y()
                 self.rotate_y()
 
         return True
 
     def transform_x(self):
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in range(side.min_pos, side.max_pos+1):
-                if self.state[square_index] == 'U':
-                    self.state[square_index] = 'B'
+        for side in (
+            self.sideU,
+            self.sideL,
+            self.sideF,
+            self.sideR,
+            self.sideB,
+            self.sideD,
+        ):
+            for square_index in range(side.min_pos, side.max_pos + 1):
+                if self.state[square_index] == "U":
+                    self.state[square_index] = "B"
 
-                elif self.state[square_index] == 'L':
+                elif self.state[square_index] == "L":
                     pass
 
-                elif self.state[square_index] == 'F':
-                    self.state[square_index] = 'U'
+                elif self.state[square_index] == "F":
+                    self.state[square_index] = "U"
 
-                elif self.state[square_index] == 'R':
+                elif self.state[square_index] == "R":
                     pass
 
-                elif self.state[square_index] == 'B':
-                    self.state[square_index] = 'D'
+                elif self.state[square_index] == "B":
+                    self.state[square_index] = "D"
 
-                elif self.state[square_index] == 'D':
-                    self.state[square_index] = 'F'
+                elif self.state[square_index] == "D":
+                    self.state[square_index] = "F"
 
     def transform_x_prime(self):
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in range(side.min_pos, side.max_pos+1):
-                if self.state[square_index] == 'U':
-                    self.state[square_index] = 'F'
+        for side in (
+            self.sideU,
+            self.sideL,
+            self.sideF,
+            self.sideR,
+            self.sideB,
+            self.sideD,
+        ):
+            for square_index in range(side.min_pos, side.max_pos + 1):
+                if self.state[square_index] == "U":
+                    self.state[square_index] = "F"
 
-                elif self.state[square_index] == 'L':
+                elif self.state[square_index] == "L":
                     pass
 
-                elif self.state[square_index] == 'F':
-                    self.state[square_index] = 'D'
+                elif self.state[square_index] == "F":
+                    self.state[square_index] = "D"
 
-                elif self.state[square_index] == 'R':
+                elif self.state[square_index] == "R":
                     pass
 
-                elif self.state[square_index] == 'B':
-                    self.state[square_index] = 'U'
+                elif self.state[square_index] == "B":
+                    self.state[square_index] = "U"
 
-                elif self.state[square_index] == 'D':
-                    self.state[square_index] = 'B'
+                elif self.state[square_index] == "D":
+                    self.state[square_index] = "B"
 
     def transform_y(self):
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in range(side.min_pos, side.max_pos+1):
-                if self.state[square_index] == 'U':
+        for side in (
+            self.sideU,
+            self.sideL,
+            self.sideF,
+            self.sideR,
+            self.sideB,
+            self.sideD,
+        ):
+            for square_index in range(side.min_pos, side.max_pos + 1):
+                if self.state[square_index] == "U":
                     pass
 
-                elif self.state[square_index] == 'L':
-                    self.state[square_index] = 'B'
+                elif self.state[square_index] == "L":
+                    self.state[square_index] = "B"
 
-                elif self.state[square_index] == 'F':
-                    self.state[square_index] = 'L'
+                elif self.state[square_index] == "F":
+                    self.state[square_index] = "L"
 
-                elif self.state[square_index] == 'R':
-                    self.state[square_index] = 'F'
+                elif self.state[square_index] == "R":
+                    self.state[square_index] = "F"
 
-                elif self.state[square_index] == 'B':
-                    self.state[square_index] = 'R'
+                elif self.state[square_index] == "B":
+                    self.state[square_index] = "R"
 
-                elif self.state[square_index] == 'D':
+                elif self.state[square_index] == "D":
                     pass
 
     def transform_y_prime(self):
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in range(side.min_pos, side.max_pos+1):
-                if self.state[square_index] == 'U':
+        for side in (
+            self.sideU,
+            self.sideL,
+            self.sideF,
+            self.sideR,
+            self.sideB,
+            self.sideD,
+        ):
+            for square_index in range(side.min_pos, side.max_pos + 1):
+                if self.state[square_index] == "U":
                     pass
 
-                elif self.state[square_index] == 'L':
-                    self.state[square_index] = 'F'
+                elif self.state[square_index] == "L":
+                    self.state[square_index] = "F"
 
-                elif self.state[square_index] == 'F':
-                    self.state[square_index] = 'R'
+                elif self.state[square_index] == "F":
+                    self.state[square_index] = "R"
 
-                elif self.state[square_index] == 'R':
-                    self.state[square_index] = 'B'
+                elif self.state[square_index] == "R":
+                    self.state[square_index] = "B"
 
-                elif self.state[square_index] == 'B':
-                    self.state[square_index] = 'L'
+                elif self.state[square_index] == "B":
+                    self.state[square_index] = "L"
 
-                elif self.state[square_index] == 'D':
+                elif self.state[square_index] == "D":
                     pass
 
     def transform_z(self):
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in range(side.min_pos, side.max_pos+1):
-                if self.state[square_index] == 'U':
-                    self.state[square_index] = 'R'
+        for side in (
+            self.sideU,
+            self.sideL,
+            self.sideF,
+            self.sideR,
+            self.sideB,
+            self.sideD,
+        ):
+            for square_index in range(side.min_pos, side.max_pos + 1):
+                if self.state[square_index] == "U":
+                    self.state[square_index] = "R"
 
-                elif self.state[square_index] == 'L':
-                    self.state[square_index] = 'U'
+                elif self.state[square_index] == "L":
+                    self.state[square_index] = "U"
 
-                elif self.state[square_index] == 'F':
+                elif self.state[square_index] == "F":
                     pass
 
-                elif self.state[square_index] == 'R':
-                    self.state[square_index] = 'D'
+                elif self.state[square_index] == "R":
+                    self.state[square_index] = "D"
 
-                elif self.state[square_index] == 'B':
+                elif self.state[square_index] == "B":
                     pass
 
-                elif self.state[square_index] == 'D':
-                    self.state[square_index] = 'L'
+                elif self.state[square_index] == "D":
+                    self.state[square_index] = "L"
 
     def transform_z_prime(self):
-        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
-            for square_index in range(side.min_pos, side.max_pos+1):
-                if self.state[square_index] == 'U':
-                    self.state[square_index] = 'L'
+        for side in (
+            self.sideU,
+            self.sideL,
+            self.sideF,
+            self.sideR,
+            self.sideB,
+            self.sideD,
+        ):
+            for square_index in range(side.min_pos, side.max_pos + 1):
+                if self.state[square_index] == "U":
+                    self.state[square_index] = "L"
 
-                elif self.state[square_index] == 'L':
-                    self.state[square_index] = 'D'
+                elif self.state[square_index] == "L":
+                    self.state[square_index] = "D"
 
-                elif self.state[square_index] == 'F':
+                elif self.state[square_index] == "F":
                     pass
 
-                elif self.state[square_index] == 'R':
-                    self.state[square_index] = 'U'
+                elif self.state[square_index] == "R":
+                    self.state[square_index] = "U"
 
-                elif self.state[square_index] == 'B':
+                elif self.state[square_index] == "B":
                     pass
 
-                elif self.state[square_index] == 'D':
-                    self.state[square_index] = 'R'
+                elif self.state[square_index] == "D":
+                    self.state[square_index] = "R"
 
     def transform(self, target):
         """
@@ -4778,10 +5380,12 @@ div#page_holder {
             raise Exception("Implement target %s" % target)
 
     def x_plane_edges_paired(self):
-        if (self.sideL.west_edge_paired() and
-            self.sideL.east_edge_paired() and
-            self.sideR.west_edge_paired() and
-            self.sideR.east_edge_paired()):
+        if (
+            self.sideL.west_edge_paired()
+            and self.sideL.east_edge_paired()
+            and self.sideR.west_edge_paired()
+            and self.sideR.east_edge_paired()
+        ):
             return True
         return False
 
@@ -4803,10 +5407,12 @@ div#page_holder {
         return result
 
     def y_plane_edges_paired(self):
-        if (self.sideU.north_edge_paired() and
-            self.sideU.south_edge_paired() and
-            self.sideD.north_edge_paired() and
-            self.sideD.south_edge_paired()):
+        if (
+            self.sideU.north_edge_paired()
+            and self.sideU.south_edge_paired()
+            and self.sideD.north_edge_paired()
+            and self.sideD.south_edge_paired()
+        ):
             return True
         return False
 
@@ -4828,10 +5434,12 @@ div#page_holder {
         return result
 
     def z_plane_edges_paired(self):
-        if (self.sideU.west_edge_paired() and
-            self.sideU.east_edge_paired() and
-            self.sideD.west_edge_paired() and
-            self.sideD.east_edge_paired()):
+        if (
+            self.sideU.west_edge_paired()
+            and self.sideU.east_edge_paired()
+            and self.sideD.west_edge_paired()
+            and self.sideD.east_edge_paired()
+        ):
             return True
         return False
 
@@ -4851,4 +5459,3 @@ div#page_holder {
             result += 1
 
         return result
-

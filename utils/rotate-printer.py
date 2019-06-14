@@ -17,25 +17,32 @@ from rubikscubennnsolver.RubiksCube777 import solved_777, moves_777
 import logging
 import sys
 
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(filename)12s %(levelname)8s: %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s"
+)
 log = logging.getLogger(__name__)
 
 # Color the errors and warnings in red
-logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
-logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
+logging.addLevelName(
+    logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR)
+)
+logging.addLevelName(
+    logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING)
+)
 
 build_rotate_xxx_c = False
 
 
 if build_rotate_xxx_c:
-    print("""
+    print(
+        """
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "rotate_xxx.h"
 
-""")
+"""
+    )
 
 for (size, solved_state) in (
     (2, solved_222),
@@ -44,13 +51,13 @@ for (size, solved_state) in (
     (5, solved_555),
     (6, solved_666),
     (7, solved_777),
-    ):
+):
 
-    cube = RubiksCube(solved_state, 'URFDLB')
+    cube = RubiksCube(solved_state, "URFDLB")
     max_square_index = size * size * 6
 
     # Change each value to be equal to its square position
-    for x in range(1, max_square_index+1):
+    for x in range(1, max_square_index + 1):
         cube.state[x] = str(x)
 
     original_state = copy(cube.state)
@@ -97,7 +104,10 @@ for (size, solved_state) in (
 
     if build_rotate_xxx_c:
         print("void")
-        print("rotate_%d%d%d(char *cube, char *cube_tmp, int array_size, move_type move)" % (size, size, size))
+        print(
+            "rotate_%d%d%d(char *cube, char *cube_tmp, int array_size, move_type move)"
+            % (size, size, size)
+        )
         print("{")
         print("    /* This was contructed using utils/rotate-printer.py */")
         print("    memcpy(cube_tmp, cube, sizeof(char) * array_size);")
@@ -110,13 +120,15 @@ for (size, solved_state) in (
             cube.state = copy(original_state)
             first_step = False
 
-        print(r'''
+        print(
+            r"""
     default:
         printf("ERROR: invalid move %d\n", move);
         exit(1);
     }
 }
-''')
+"""
+        )
 
     else:
         rotate_mapper = {}
@@ -134,16 +146,22 @@ for (size, solved_state) in (
         swaps_xxx = "swaps_%d%d%d" % (size, size, size)
         nnn_filename = "rubikscubennnsolver/RubiksCube%d%d%d.py" % (size, size, size)
 
-        with open(nnn_filename, 'r') as fh:
+        with open(nnn_filename, "r") as fh:
             for line in fh:
                 if line.startswith(swaps_xxx):
                     break
 
                 lines_to_keep.append(line)
 
-        with open(nnn_filename, 'w') as fh:
+        with open(nnn_filename, "w") as fh:
             fh.write("".join(lines_to_keep))
-            fh.write("swaps_%d%d%d = %s\n" % (size, size, size, pformat(rotate_mapper, width=2048)))
+            fh.write(
+                "swaps_%d%d%d = %s\n"
+                % (size, size, size, pformat(rotate_mapper, width=2048))
+            )
             fh.write("\ndef rotate_%d%d%d(cube, step):\n" % (size, size, size))
-            fh.write("    return [cube[x] for x in swaps_%d%d%d[step]]\n" % (size, size, size))
+            fh.write(
+                "    return [cube[x] for x in swaps_%d%d%d[step]]\n"
+                % (size, size, size)
+            )
             fh.write("")

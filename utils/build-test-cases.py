@@ -7,19 +7,35 @@ from rubikscubennnsolver.RubiksCube444 import solved_444
 from rubikscubennnsolver.RubiksCube555 import solved_555
 from rubikscubennnsolver.RubiksCube666 import solved_666
 from rubikscubennnsolver.RubiksCube777 import solved_777
-from rubikscubennnsolver.RubiksCubeNNNEven import solved_888, solved_101010, solved_121212, solved_141414
-from rubikscubennnsolver.RubiksCubeNNNOdd import solved_999, solved_111111, solved_131313, solved_151515, solved_171717
+from rubikscubennnsolver.RubiksCubeNNNEven import (
+    solved_888,
+    solved_101010,
+    solved_121212,
+    solved_141414,
+)
+from rubikscubennnsolver.RubiksCubeNNNOdd import (
+    solved_999,
+    solved_111111,
+    solved_131313,
+    solved_151515,
+    solved_171717,
+)
 from collections import OrderedDict
 import json
 import logging
 
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(filename)12s %(levelname)8s: %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s"
+)
 log = logging.getLogger(__name__)
 
 # Color the errors and warnings in red
-logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
-logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
+logging.addLevelName(
+    logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR)
+)
+logging.addLevelName(
+    logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING)
+)
 
 test_cases = OrderedDict()
 test_cases["2x2x2"] = []
@@ -39,21 +55,21 @@ test_cases["15x15x15"] = []
 test_cases["17x17x17"] = []
 
 cubes = OrderedDict()
-#cubes["2x2x2"] = RubiksCube(solved_222, 'URFDLB')
-#cubes["3x3x3"] = RubiksCube(solved_333, 'URFDLB')
-#cubes["4x4x4"] = RubiksCube(solved_444, 'URFDLB')
-#cubes["5x5x5"] = RubiksCube(solved_555, 'URFDLB')
-#cubes["6x6x6"] = RubiksCube(solved_666, 'URFDLB')
-#cubes["7x7x7"] = RubiksCube(solved_777, 'URFDLB')
-cubes["8x8x8"] = RubiksCube(solved_888, 'URFDLB')
-cubes["9x9x9"] = RubiksCube(solved_999, 'URFDLB')
-#cubes["10x10x10"] = RubiksCube(solved_101010, 'URFDLB')
-#cubes["11x11x11"] = RubiksCube(solved_111111, 'URFDLB')
-#cubes["12x12x12"] = RubiksCube(solved_121212, 'URFDLB')
-#cubes["13x13x13"] = RubiksCube(solved_131313, 'URFDLB')
-#cubes["14x14x14"] = RubiksCube(solved_141414, 'URFDLB')
-#cubes["15x15x15"] = RubiksCube(solved_151515, 'URFDLB')
-#cubes["17x17x17"] = RubiksCube(solved_171717, 'URFDLB')
+# cubes["2x2x2"] = RubiksCube(solved_222, 'URFDLB')
+# cubes["3x3x3"] = RubiksCube(solved_333, 'URFDLB')
+# cubes["4x4x4"] = RubiksCube(solved_444, 'URFDLB')
+# cubes["5x5x5"] = RubiksCube(solved_555, 'URFDLB')
+# cubes["6x6x6"] = RubiksCube(solved_666, 'URFDLB')
+# cubes["7x7x7"] = RubiksCube(solved_777, 'URFDLB')
+cubes["8x8x8"] = RubiksCube(solved_888, "URFDLB")
+cubes["9x9x9"] = RubiksCube(solved_999, "URFDLB")
+# cubes["10x10x10"] = RubiksCube(solved_101010, 'URFDLB')
+# cubes["11x11x11"] = RubiksCube(solved_111111, 'URFDLB')
+# cubes["12x12x12"] = RubiksCube(solved_121212, 'URFDLB')
+# cubes["13x13x13"] = RubiksCube(solved_131313, 'URFDLB')
+# cubes["14x14x14"] = RubiksCube(solved_141414, 'URFDLB')
+# cubes["15x15x15"] = RubiksCube(solved_151515, 'URFDLB')
+# cubes["17x17x17"] = RubiksCube(solved_171717, 'URFDLB')
 
 for (size, cube) in cubes.items():
     log.info("size %s has cube %s" % (size, cube))
@@ -68,10 +84,10 @@ print(json.dumps(test_cases, indent=4))
 
 # Build cube in:
 # https://www.speedsolving.com/forum/threads/arnauds-5x5x5-edge-pairing-method-examples.1447/
-'''
+"""
 cube = RubiksCube(solved_555)
 for step in "Rw U Rw' U Rw U2 Rw' F' U Lw' U2 Lw U Lw' U Lw L2 R2 F2 B2 Rw U Rw' U Rw U2 Rw' F' U Lw' U2 Lw U Lw' U Lw L R' F2 D' B2 Rw U Rw' U Rw U2 Rw' F' U Lw' U2 Lw U Lw' U Lw".split():
     cube.rotate(step)
 ks = cube.get_kociemba_string(True)
 print(ks)
-'''
+"""

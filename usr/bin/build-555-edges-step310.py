@@ -15,13 +15,18 @@ from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
 import logging
 import sys
 
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(filename)20s %(levelname)8s: %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(filename)20s %(levelname)8s: %(message)s"
+)
 log = logging.getLogger(__name__)
 
 # Color the errors and warnings in red
-logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
-logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
+logging.addLevelName(
+    logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR)
+)
+logging.addLevelName(
+    logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING)
+)
 
 cube = RubiksCube555ForNNN(solved_555, "URFDLB")
 cube.lt_init()
@@ -57,7 +62,9 @@ with open("results.txt", "w") as fh_results:
             cube.lt_edges_x_plane.only_colors = only_colors
             cube.lt_edges_x_plane.solve()
 
-            fh_results.write("%s:%s\n" % (state, " ".join(cube.solution[scramble_len:])))
+            fh_results.write(
+                "%s:%s\n" % (state, " ".join(cube.solution[scramble_len:]))
+            )
 
             if line_number % 100 == 0:
                 log.warning(line_number)

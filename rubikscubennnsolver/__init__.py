@@ -611,11 +611,11 @@ class RubiksCube(object):
                 continue
 
             if value != expected_count:
+                msg = "side %s %s count is %d (should be %d)" % (desc, side, value, expected_count)
+                log.warning("InvalidCubeReduction %s" % msg)
+                self.enable_print_cube = True
                 self.print_cube()
-                raise InvalidCubeReduction(
-                    "side %s %s count is %d (should be %d)"
-                    % (desc, side, value, expected_count)
-                )
+                raise InvalidCubeReduction(msg)
 
     def re_init(self):
         self.state = self.state_backup[:]
@@ -4781,6 +4781,11 @@ class RubiksCube(object):
         for x in self.solution_with_markers:
             if x in ("CENTERS_SOLVED", "EDGES_GROUPED"):
                 continue
+
+            # do not add the comment line if there were 0 steps for this section
+            elif x.startswith("COMMENT_0_steps"):
+                continue
+
             elif x.startswith("COMMENT"):
                 if include_comments:
                     url += r"""%2F%2F""" + x.replace("COMMENT", "") + "%0A%0A"

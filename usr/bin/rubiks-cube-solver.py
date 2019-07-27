@@ -36,6 +36,7 @@ from rubikscubennnsolver import (
     StuckInALoop,
     NotSolving,
     reverse_steps,
+    InvalidCubeReduction,
 )
 from rubikscubennnsolver.LookupTable import NoSteps, NoPruneTableState
 from math import sqrt
@@ -333,7 +334,7 @@ try:
         raise SolveError("cube should be solved but is not")
 
 
-except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError, NoPruneTableState):
+except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError, NoPruneTableState, InvalidCubeReduction):
     cube.enable_print_cube = True
     cube.print_cube_layout()
     cube.print_cube()

@@ -43,9 +43,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             self.fake_777.re_init()
         return self.fake_777
 
-    def stage_or_solve_inside_777(
-        self, center_orbit_id, max_center_orbits, width, cycle, max_cycle, action
-    ):
+    def stage_or_solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle, action):
         fake_777 = self.get_fake_777()
 
         for index in range(1, 295):
@@ -55,19 +53,14 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         start_NNN = 0
         row0_midpoint = ceil(self.size / 2)
 
-        log.info(
-            "%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
+        log.info("%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
             % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
         )
 
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
 
         for x in range(6):
-            mid_NNN_row1 = (
-                start_NNN
-                + row0_midpoint
-                + (self.size * (max_center_orbits - center_orbit_id + 1))
-            )
+            mid_NNN_row1 = start_NNN + row0_midpoint + (self.size * (max_center_orbits - center_orbit_id + 1))
             start_NNN_row1 = mid_NNN_row1 - (2 + cycle)
             end_NNN_row1 = mid_NNN_row1 + (2 + cycle)
 
@@ -130,9 +123,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             # log.info("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
             # log.info("%d: row5 %d, %d, %d, %d, %d\n\n" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
 
-            if (center_orbit_id == 0 and cycle == 0) or (
-                center_orbit_id == max_center_orbits and cycle == max_cycle
-            ):
+            if (center_orbit_id == 0 and cycle == 0) or (center_orbit_id == max_center_orbits and cycle == max_cycle):
                 fake_777.state[start_777 + 9] = self.state[row1_col1]
                 fake_777.state[start_777 + 10] = self.state[row1_col2]
                 fake_777.state[start_777 + 11] = self.state[row1_col3]

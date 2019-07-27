@@ -410,9 +410,6 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.state = original_state[:]
             self.solution = original_solution[:]
 
-            # log.info("")
-            # log.info("")
-            # log.info("%s: pre_steps %s" % (self, " ".join(pre_steps)))
             for step in pre_steps:
                 self.rotate(step)
 
@@ -424,9 +421,7 @@ class RubiksCube555ForNNN(RubiksCube555):
                 states_to_find.append(self.lt_edges_stage_first_four.state(wing_strs))
 
             log.info("%s: %d states_to_find" % (self, len(states_to_find)))
-            results = self.lt_edges_stage_first_four.binary_search_multiple(
-                states_to_find
-            )
+            results = self.lt_edges_stage_first_four.binary_search_multiple(states_to_find)
             len_results = len(results)
             log.info("%s: %d states found" % (self, len(results)))
 
@@ -603,45 +598,54 @@ class RubiksCube555ForNNN(RubiksCube555):
     def stage_final_four_edges_in_x_plane(self):
         original_state = self.state[:]
         original_solution = self.solution[:]
+        done = False
 
         # Traverse a table of moves that place L4E in one of three planes
         # and then rotate that plane to the x-plane
-        for pre_steps in pre_steps_to_try:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-            steps = None
+        for min_unpaired_count in (0, -1):
+            for pre_steps in pre_steps_to_try:
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+                steps = None
 
-            for step in pre_steps:
-                self.rotate(step)
+                for step in pre_steps:
+                    self.rotate(step)
 
-            if self.x_plane_edges_are_l4e() and self.x_plane_edges_unpaired_count() > 0:
-                # if pre_steps:
-                #    log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
-                # else:
-                #    log.info("%s: L4E group in x-plane" % self)
+                if self.x_plane_edges_are_l4e() and self.x_plane_edges_unpaired_count() > min_unpaired_count:
+                    # if pre_steps:
+                    #    log.info("%s: %s puts L4E group in x-plane" % (self, "".join(pre_steps)))
+                    # else:
+                    #    log.info("%s: L4E group in x-plane" % self)
+                    done = True
+                    break
+
+                elif (self.y_plane_edges_are_l4e() and self.y_plane_edges_unpaired_count() > min_unpaired_count):
+                    # if pre_steps:
+                    #    log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
+                    # else:
+                    #    log.info("%s: L4E group in y-plane, moving to x-plane" % self)
+                    self.rotate("z")
+                    done = True
+                    break
+
+                elif (self.z_plane_edges_are_l4e() and self.z_plane_edges_unpaired_count() > min_unpaired_count):
+                    # if pre_steps:
+                    #    log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
+                    # else:
+                    #    log.info("%s: L4E group in z-plane, moving to x-plane" % self)
+                    self.rotate("x")
+                    done = True
+                    break
+
+            if done:
                 break
 
-            elif (
-                self.y_plane_edges_are_l4e() and self.y_plane_edges_unpaired_count() > 0
-            ):
-                # if pre_steps:
-                #    log.info("%s: %s puts L4E group in y-plane, moving to x-plane" % (self, "".join(pre_steps)))
-                # else:
-                #    log.info("%s: L4E group in y-plane, moving to x-plane" % self)
-                self.rotate("z")
-                break
-
-            elif (
-                self.z_plane_edges_are_l4e() and self.z_plane_edges_unpaired_count() > 0
-            ):
-                # if pre_steps:
-                #    log.info("%s: %s puts L4E group in z-plane" % (self, "".join(pre_steps)))
-                # else:
-                #    log.info("%s: L4E group in z-plane, moving to x-plane" % self)
-                self.rotate("x")
-                break
-        else:
-            raise SolveError("Could not stage L4E in x-plane")
+        if not done:
+            msg = "Could not stage L4E in x-plane"
+            log.warning(msg)
+            self.enable_print_cube = True
+            self.print_cube()
+            raise SolveError(msg)
 
         # log.info("%s: final four edges placed in x-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 

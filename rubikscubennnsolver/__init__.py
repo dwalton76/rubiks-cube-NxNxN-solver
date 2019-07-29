@@ -4438,25 +4438,75 @@ class RubiksCube(object):
 
         return count
 
-    def compress_solution(self):
-        moves = set(self.solution)
+    def _compress_centers_solved_edges_grouped_markers(self):
         solution_string = " " + " ".join(self.solution) + " "
-        pass_num = 0
 
-        # log.info("solution_string: %s" % solution_string)
+        # Remove all but the last CENTERS_SOLVED and EDGES_GROUPED markers
         while solution_string.count(" CENTERS_SOLVED") > 1:
             solution_string = solution_string.replace(" CENTERS_SOLVED", "", 1)
 
         while solution_string.count(" EDGES_GROUPED") > 1:
             solution_string = solution_string.replace(" EDGES_GROUPED", "", 1)
-        # log.info("solution_string: %s" % solution_string)
 
+        self.solution = solution_string.strip().split()
+
+    def _compress_whole_cube_rotations(self):
+        """
+        Remove whole cube rotations by changing all of the steps that follow the cube rotation
+        We do this so robots using the solver do not have to deal with full cube rotations as
+        that would be kinda pointless.
+        """
+        final_steps = []
+        rotations = []
+        tmp_solution = []
+
+        for step in self.solution:
+            if step == "x":
+                tmp_solution.append("%dR" % self.size)
+            elif step == "x'":
+                tmp_solution.append("%dR'" % self.size)
+            elif step == "x2":
+                tmp_solution.append("%dR" % self.size)
+                tmp_solution.append("%dR" % self.size)
+
+            elif step == "y":
+                tmp_solution.append("%dU" % self.size)
+            elif step == "y'":
+                tmp_solution.append("%dU'" % self.size)
+            elif step == "y2":
+                tmp_solution.append("%dU" % self.size)
+                tmp_solution.append("%dU" % self.size)
+
+            elif step == "z":
+                tmp_solution.append("%dF" % self.size)
+            elif step == "z'":
+                tmp_solution.append("%dF'" % self.size)
+            elif step == "z2":
+                tmp_solution.append("%dF" % self.size)
+                tmp_solution.append("%dF" % self.size)
+
+            else:
+                tmp_solution.append(step)
+
+        for step in tmp_solution:
+            if step.startswith(str(self.size)):
+                rotations.append(apply_rotations(self.size, step, rotations))
+            else:
+                final_steps.append(apply_rotations(self.size, step, rotations))
+
+        self.solution = final_steps
+
+    def _compress_redundant_steps(self):
+        moves = set(self.solution)
+        solution_string = " " + " ".join(self.solution) + " "
+
+        # Remove redundant steps..Ex change U U to U2
         while True:
             original_solution_string = solution_string[:]
             prev_move = None
-            # log.info("pass %d:  init %s" % (pass_num, original_solution_string))
 
             for move in moves:
+
                 if move in ("CENTERS_SOLVED", "EDGES_GROUPED"):
                     continue
 
@@ -4464,9 +4514,7 @@ class RubiksCube(object):
                     continue
 
                 if move.endswith("2'"):
-                    raise Exception(
-                        'compress_solution does not support move "%s"' % move
-                    )
+                    raise Exception('compress_solution does not support move "%s"' % move)
 
                 if move.endswith("'"):
                     reverse_move = move[0:-1]
@@ -4475,40 +4523,26 @@ class RubiksCube(object):
 
                 # If the same half turn is done 2x in a row, remove it
                 if move.endswith("2"):
-                    solution_string = solution_string.replace(
-                        " %s %s " % (move, move), " "
-                    )
+                    solution_string = solution_string.replace(" %s %s " % (move, move), " ")
 
                 else:
                     # If the same quarter turn is done 4x in a row, remove it
-                    solution_string = solution_string.replace(
-                        " %s %s %s %s " % (move, move, move, move), " "
-                    )
+                    solution_string = solution_string.replace(" %s %s %s %s " % (move, move, move, move), " ")
 
                     # If the same quarter turn is done 3x in a row, replace it with one backwards move
-                    solution_string = solution_string.replace(
-                        " %s %s %s " % (move, move, move), " %s " % reverse_move
-                    )
+                    solution_string = solution_string.replace(" %s %s %s " % (move, move, move), " %s " % reverse_move)
 
                     # If the same quarter turn is done 2x in a row, replace it with one half turn
                     # Do not bother doing this with whole cube rotations we will pull those out later
                     if not move.startswith(str(self.size)):
                         if move.endswith("'"):
-                            solution_string = solution_string.replace(
-                                " %s %s " % (move, move), " %s2 " % move[0:-1]
-                            )
+                            solution_string = solution_string.replace(" %s %s " % (move, move), " %s2 " % move[0:-1])
                         else:
-                            solution_string = solution_string.replace(
-                                " %s %s " % (move, move), " %s2 " % move
-                            )
+                            solution_string = solution_string.replace(" %s %s " % (move, move), " %s2 " % move)
 
                 # "F F'" and "F' F" will cancel each other out, remove them
-                solution_string = solution_string.replace(
-                    " %s %s " % (move, reverse_move), " "
-                )
-                solution_string = solution_string.replace(
-                    " %s %s " % (reverse_move, move), " "
-                )
+                solution_string = solution_string.replace(" %s %s " % (move, reverse_move), " ")
+                solution_string = solution_string.replace(" %s %s " % (reverse_move, move), " ")
 
                 # Uw U Uw' -> U
                 # Uw U2 Uw' -> U2
@@ -4556,58 +4590,48 @@ class RubiksCube(object):
 
                 prev_move = move
 
-            # log.info("pass %d: final %s" % (pass_num, solution_string))
             if original_solution_string == solution_string:
                 break
-            else:
-                pass_num += 1
 
-        # log.info("Compressed solution in %d passes" % pass_num)
-        solution_string = solution_string.strip()
+        self.solution = solution_string.strip().split()
+
+    def compress_solution(self):
+        self._compress_centers_solved_edges_grouped_markers()
+        self._compress_whole_cube_rotations()
+        self._compress_redundant_steps()
 
         # We put some markers in the solution to track how many steps
         # each stage took...remove those markers
-        solution_minus_markers = []
         self.steps_to_rotate_cube = 0
         self.steps_to_solve_centers = 0
         self.steps_to_group_edges = 0
         self.steps_to_solve_3x3x3 = 0
         index = 0
-        self.solution_with_markers = solution_string.split()
+        solution_minus_markers = []
+        self.solution_with_markers = self.solution[:]
+
+        whole_cube_steps = (
+            "x", "x'", "x2",
+            "y", "y'", "y2",
+            "z", "z'", "z2",
+        )
 
         # log.info("pre compress; %s" % ' '.join(self.solution))
         for step in self.solution_with_markers:
-            if step.startswith(str(self.size)) or step in (
-                "x",
-                "x'",
-                "x2",
-                "y",
-                "y'",
-                "y2",
-                "z",
-                "z'",
-                "z2",
-            ):
+            if step.startswith(str(self.size)) or step in whole_cube_steps:
                 self.steps_to_rotate_cube += 1
 
             if step == "CENTERS_SOLVED":
                 self.steps_to_solve_centers = index - self.steps_to_rotate_cube
             elif step == "EDGES_GROUPED":
-                self.steps_to_group_edges = (
-                    index - self.steps_to_rotate_cube - self.steps_to_solve_centers
-                )
+                self.steps_to_group_edges = index - self.steps_to_rotate_cube - self.steps_to_solve_centers
             elif step.startswith("COMMENT"):
                 pass
             else:
                 solution_minus_markers.append(step)
                 index += 1
 
-        self.steps_to_solve_3x3x3 = (
-            index
-            - self.steps_to_rotate_cube
-            - self.steps_to_solve_centers
-            - self.steps_to_group_edges
-        )
+        self.steps_to_solve_3x3x3 = index - self.steps_to_rotate_cube - self.steps_to_solve_centers - self.steps_to_group_edges
         self.solution = solution_minus_markers
 
     def recolor(self):
@@ -4767,6 +4791,7 @@ class RubiksCube(object):
             log.info("solve_333 begin")
             self.solve_333()
             log.info("solve_333 end")
+
         self.compress_solution()
 
     def print_solution(self, include_comments):
@@ -4798,48 +4823,7 @@ class RubiksCube(object):
         url = url.replace(" ", "_")
         log.info("\nURL     : %s" % url)
 
-        # Remove full cube rotations by changing all of the steps that follow the cube rotation
-        # We do this so robots using the solver do not have to deal with full cube rotations as
-        # that would be kinda pointless.
-        final_steps = []
-        rotations = []
-        tmp_solution = []
-
-        for step in self.solution:
-            if step == "x":
-                tmp_solution.append("%dR" % self.size)
-            elif step == "x'":
-                tmp_solution.append("%dR'" % self.size)
-            elif step == "x2":
-                tmp_solution.append("%dR" % self.size)
-                tmp_solution.append("%dR" % self.size)
-
-            elif step == "y":
-                tmp_solution.append("%dU" % self.size)
-            elif step == "y'":
-                tmp_solution.append("%dU'" % self.size)
-            elif step == "y2":
-                tmp_solution.append("%dU" % self.size)
-                tmp_solution.append("%dU" % self.size)
-
-            elif step == "z":
-                tmp_solution.append("%dF" % self.size)
-            elif step == "z'":
-                tmp_solution.append("%dF'" % self.size)
-            elif step == "z2":
-                tmp_solution.append("%dF" % self.size)
-                tmp_solution.append("%dF" % self.size)
-
-            else:
-                tmp_solution.append(step)
-
-        for step in tmp_solution:
-            if step.startswith(str(self.size)):
-                rotations.append(apply_rotations(self.size, step, rotations))
-            else:
-                final_steps.append(apply_rotations(self.size, step, rotations))
-        print("Solution: %s" % " ".join(final_steps))
-        # log.info(len(final_steps))
+        print("Solution: %s" % " ".join(self.solution))
 
         if self.steps_to_solve_centers:
             log.info("%d steps to solve centers" % self.steps_to_solve_centers)
@@ -4854,7 +4838,7 @@ class RubiksCube(object):
 
         solution_txt_filename = os.path.join(HTML_DIRECTORY, "solution.txt")
         with open(solution_txt_filename, "w") as fh:
-            fh.write(" ".join(final_steps) + "\n")
+            fh.write(" ".join(self.solution) + "\n")
         os.chmod(solution_txt_filename, 0o777)
 
     def nuke_corners(self):

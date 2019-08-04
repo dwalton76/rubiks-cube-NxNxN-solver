@@ -292,7 +292,9 @@ str_replace_for_binary(char *str, char *ones)
     /* Run till end of string */
     while (str[i] != '\0') {
 
-        if (str[i] != '0') {
+        if (str[i] == '.') {
+            // pass
+        } else if (str[i] != '0') {
             j = 0;
             is_a_one = 0;
 
@@ -436,33 +438,8 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         break;
 
     case CENTERS_SOLVE_555:
-        // Remember what the cube looked like so we can restore the edges
-        memcpy(cube_copy, cube, sizeof(char) * array_size);
-
         // Convert to 1s and 0s
         str_replace_for_binary(cube, ones_ULF);
-        unsigned int offset = 0;
-
-        // Restore the edges
-        for (int side_index = 0; side_index < 6; side_index++) {
-            cube[2 + offset] = cube_copy[2 + offset];
-            cube[3 + offset] = cube_copy[3 + offset];
-            cube[4 + offset] = cube_copy[4 + offset];
-
-            cube[6 + offset] = cube_copy[6 + offset];
-            cube[11 + offset] = cube_copy[11 + offset];
-            cube[16 + offset] = cube_copy[16 + offset];
-
-            cube[10 + offset] = cube_copy[10 + offset];
-            cube[15 + offset] = cube_copy[15 + offset];
-            cube[20 + offset] = cube_copy[20 + offset];
-
-            cube[22 + offset] = cube_copy[22 + offset];
-            cube[23 + offset] = cube_copy[23 + offset];
-            cube[24 + offset] = cube_copy[24 + offset];
-            offset += 25;
-        }
-
         print_cube(cube, size);
         break;
 

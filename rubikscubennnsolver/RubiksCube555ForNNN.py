@@ -831,8 +831,6 @@ class RubiksCube555ForNNN(RubiksCube555):
         if not self.centers_staged():
             self.group_centers_stage_LR()
             self.group_centers_stage_FB()
-            sys.exit(0)
-            # dwalton
 
         if not self.centers_solved():
             tmp_solution_len = len(self.solution)

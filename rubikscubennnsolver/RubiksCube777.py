@@ -48,13 +48,47 @@ ULRD_centers_777 = (
 )
 
 
-class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
+class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
 
     oblique_edges_777 = (
         10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
         59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
         108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
         157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
+        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
+        255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
+    )
+
+    def __init__(self, parent):
+
+        LookupTableIDAViaC.__init__(
+            self,
+            parent,
+            # Needed tables and their md5 signatures
+            (),
+            "7x7x7-LR-oblique-edges-stage",  # C_ida_type
+        )
+
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_777:
+            if x in self.oblique_edges_777:
+                if self.parent.state[x] == "L" or self.parent.state[x] == "R":
+                    self.parent.state[x] = "L"
+                else:
+                    self.parent.state[x] = "x"
+            else:
+                self.parent.state[x] = "."
+
+
+class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
+
+    UFBD_oblique_edges_777 = (
+        10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
+        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
         206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
         255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
     )
@@ -75,43 +109,9 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
         self.parent.nuke_edges()
 
         for x in centers_777:
-            if x in self.oblique_edges_777:
+            if x in self.UFBD_oblique_edges_777:
                 if self.parent.state[x] == "U" or self.parent.state[x] == "D":
                     self.parent.state[x] = "U"
-                else:
-                    self.parent.state[x] = "x"
-            else:
-                self.parent.state[x] = "."
-
-
-class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
-
-    LFRB_oblique_edges_777 = (
-        59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
-        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
-        157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
-        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
-    )
-
-    def __init__(self, parent):
-
-        LookupTableIDAViaC.__init__(
-            self,
-            parent,
-            # Needed tables and their md5 signatures
-            (),
-            "7x7x7-LR-oblique-edges-stage",  # C_ida_type
-        )
-
-    def recolor(self):
-        log.info("%s: recolor (custom)" % self)
-        self.parent.nuke_corners()
-        self.parent.nuke_edges()
-
-        for x in centers_777:
-            if x in self.LFRB_oblique_edges_777:
-                if self.parent.state[x] == "L" or self.parent.state[x] == "R":
-                    self.parent.state[x] = "L"
                 else:
                     self.parent.state[x] = "x"
             else:
@@ -759,8 +759,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
         self.lt_init_called = True
 
-        self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
+        self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
 
         self.lt_step40 = LookupTableIDA777Step40(self)
         self.lt_step50 = LookupTableIDA777Step50(self)
@@ -851,7 +851,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
 
         self.create_fake_555_from_inside_centers()
-        self.fake_555.group_centers_stage_UD()
+        self.fake_555.group_centers_stage_FB()
 
         for step in self.fake_555.solution:
 
@@ -928,7 +928,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Stage the UD centers
         self.create_fake_555_from_outside_centers()
-        self.fake_555.group_centers_stage_UD()
+        self.fake_555.group_centers_stage_FB()
 
         for step in self.fake_555.solution:
             if step.startswith("COMMENT"):
@@ -998,7 +998,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         self.print_cube()
         log.info(
-            "%s: centers staged, %d steps in"
+            "%s: LR centers staged, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
         log.info("")
@@ -1123,11 +1123,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def group_centers_guts(self):
         self.lt_init()
 
-        if not self.UD_centers_staged():
-            self.stage_UD_centers()
-
         if not self.LR_centers_staged():
             self.stage_LR_centers()
+
+        if not self.UD_centers_staged():
+            self.stage_UD_centers()
 
         # log.info("kociemba: %s" % self.get_kociemba_string(True))
         self.LR_centers_vertical_bars()

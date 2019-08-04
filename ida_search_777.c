@@ -1,4 +1,3 @@
-
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,7 +8,7 @@
 
 
 // ============================================================================
-// step20 - stage UD oblique edges
+// step20 - stage LR oblique edges
 // ============================================================================
 unsigned int oblique_edges_777[NUM_OBLIQUE_EDGES_777] = {
     10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40, // Upper
@@ -84,7 +83,7 @@ get_unpaired_obliques_count_777 (char *cube)
 
 
 struct ida_heuristic_result
-ida_heuristic_UD_oblique_edges_stage_777 (
+ida_heuristic_LR_oblique_edges_stage_777 (
     char *cube,
     unsigned int max_cost_to_goal)
 {
@@ -104,21 +103,9 @@ ida_heuristic_UD_oblique_edges_stage_777 (
     state >>= 1;
     sprintf(result.lt_state, "%018llx", state);
 
-    // time ./ida_search --kociemba .........Uxx...U...x..U...x..U...x...xUx..................Uxx...U...U..x...x..x...U...xxx..................xUU...x...U..x...x..x...U...xxx..................xUx...x...x..x...x..x...x...xUx..................Uxx...x...x..x...x..x...U...xUU..................UUx...U...x..U...x..x...U...xxx......... --type 7x7x7-UD-oblique-edges-stage
-
-    // 12 moves in 15s
-    //if (unpaired_count > 6) {
-    //    result.cost_to_goal = 3 + (unpaired_count >> 1);
-
     // inadmissable heuristic but fast...kudos to xyzzy for this formula
-    // 12 moves in 1s
     if (unpaired_count > 8) {
         result.cost_to_goal = 4 + (unpaired_count >> 1);
-
-    // 12 moves in 800ms
-    //if (unpaired_count > 10) {
-    //    result.cost_to_goal = 5 + (unpaired_count >> 1);
-
     } else {
         result.cost_to_goal = unpaired_count;
     }
@@ -127,7 +114,7 @@ ida_heuristic_UD_oblique_edges_stage_777 (
 }
 
 int
-ida_search_complete_UD_oblique_edges_stage_777 (char *cube)
+ida_search_complete_LR_oblique_edges_stage_777 (char *cube)
 {
     if (get_unpaired_obliques_count_777(cube) == 0) {
         return 1;
@@ -141,40 +128,37 @@ ida_search_complete_UD_oblique_edges_stage_777 (char *cube)
 // ============================================================================
 // step30 - stage UD oblique edges
 // ============================================================================
-unsigned int LFRB_oblique_edges_777[LFRB_NUM_OBLIQUE_EDGES_777] = {
-    59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89, // Left
+unsigned int UFBD_oblique_edges_777[NUM_OBLIQUE_EDGES_777] = {
+    10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40, // Upper
     108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138, // Front
-    157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187, // Right
     206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, // Back
+    255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285, // Down
 };
 
-
-unsigned int LFRB_left_oblique_edges_777[LFRB_NUM_LEFT_OBLIQUE_EDGES_777] = {
-    59, 79, 69, 89, // Left
+unsigned int UFBD_left_oblique_edges_777[NUM_LEFT_OBLIQUE_EDGES_777] = {
+    10, 30, 20, 40, // Upper
     108, 128, 118, 138, // Front
-    157, 177, 167, 187, // Right
     206, 226, 216, 236, // Back
+    255, 275, 265, 285, // Down
 };
 
-
-unsigned int LFRB_middle_oblique_edges_777[LFRB_NUM_MIDDLE_OBLIQUE_EDGES_777] = {
-    60, 72, 76, 88, // Left
+unsigned int UFBD_middle_oblique_edges_777[NUM_MIDDLE_OBLIQUE_EDGES_777] = {
+    11, 23, 27, 39, // Upper
     109, 121, 125, 137, // Front
-    158, 170, 174, 186, // Right
     207, 219, 223, 235, // Back
+    256, 268, 272, 284, // Down
 };
 
-
-unsigned int LFRB_right_oblique_edges_777[LFRB_NUM_RIGHT_OBLIQUE_EDGES_777] = {
-    61, 65, 83, 87, // Left
+unsigned int UFBD_right_oblique_edges_777[NUM_RIGHT_OBLIQUE_EDGES_777] = {
+    12, 16, 34, 38, // Upper
     110, 114, 132, 136, // Front
-    159, 163, 181, 185, // Right
     208, 212, 230, 234, // Back
+    257, 261, 279, 283, // Down
 };
 
 
 unsigned int
-get_LFRB_unpaired_obliques_count_777 (char *cube)
+get_UFBD_unpaired_obliques_count_777 (char *cube)
 {
     int left_paired_obliques = 0;
     int left_unpaired_obliques = 8;
@@ -185,10 +169,10 @@ get_LFRB_unpaired_obliques_count_777 (char *cube)
     int middle_cube_index = 0;
     int right_cube_index = 0;
 
-    for (int i = 0; i < LFRB_NUM_LEFT_OBLIQUE_EDGES_777; i++) {
-        left_cube_index = LFRB_left_oblique_edges_777[i];
-        middle_cube_index = LFRB_middle_oblique_edges_777[i];
-        right_cube_index = LFRB_right_oblique_edges_777[i];
+    for (int i = 0; i < UFBD_NUM_LEFT_OBLIQUE_EDGES_777; i++) {
+        left_cube_index = UFBD_left_oblique_edges_777[i];
+        middle_cube_index = UFBD_middle_oblique_edges_777[i];
+        right_cube_index = UFBD_right_oblique_edges_777[i];
 
         if (cube[left_cube_index] == '1' && cube[middle_cube_index] == '1') {
             left_paired_obliques += 1;
@@ -206,7 +190,7 @@ get_LFRB_unpaired_obliques_count_777 (char *cube)
 
 
 struct ida_heuristic_result
-ida_heuristic_LR_oblique_edges_stage_777 (
+ida_heuristic_UD_oblique_edges_stage_777 (
     char *cube,
     unsigned int max_cost_to_goal)
 {
@@ -215,8 +199,8 @@ ida_heuristic_LR_oblique_edges_stage_777 (
     unsigned long long state = 0;
 
     // Get the state of the oblique edges
-    for (int i = 0; i < LFRB_NUM_OBLIQUE_EDGES_777; i++) {
-        if (cube[LFRB_oblique_edges_777[i]] == '1') {
+    for (int i = 0; i < UFBD_NUM_OBLIQUE_EDGES_777; i++) {
+        if (cube[UFBD_oblique_edges_777[i]] == '1') {
             state |= 0x1;
         }
         state <<= 1;
@@ -237,9 +221,9 @@ ida_heuristic_LR_oblique_edges_stage_777 (
 }
 
 int
-ida_search_complete_LR_oblique_edges_stage_777 (char *cube)
+ida_search_complete_UD_oblique_edges_stage_777 (char *cube)
 {
-    if (get_LFRB_unpaired_obliques_count_777(cube) == 0) {
+    if (get_UFBD_unpaired_obliques_count_777(cube) == 0) {
         return 1;
     } else {
         return 0;

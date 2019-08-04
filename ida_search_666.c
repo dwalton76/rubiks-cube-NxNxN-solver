@@ -130,6 +130,59 @@ get_unpaired_obliques_count_666 (char *cube)
 // step20
 // ============================================================================
 struct ida_heuristic_result
+ida_heuristic_LR_oblique_edges_stage_666 (
+    char *cube,
+    unsigned int max_cost_to_goal)
+{
+    int unpaired_count = get_unpaired_obliques_count_666(cube);
+    struct ida_heuristic_result result;
+    unsigned long long state = 0;
+
+    // Get the state of the oblique edges
+    for (int i = 0; i < NUM_OBLIQUE_EDGES_666; i++) {
+        if (cube[oblique_edges_666[i]] == '1') {
+            state |= 0x1;
+        }
+        state <<= 1;
+    }
+
+    // 000000033fff is 12 chars
+    state >>= 1;
+    sprintf(result.lt_state, "%012llx", state);
+
+    // The most oblique edges we can pair in single move is 4 so take
+    // the number that are unpaired and divide by 4.
+    //
+    // time ./ida_search --kociemba ........xL...L..x..L..x...xx................Lx...L..L..x..L...xL................xL...x..x..x..x...xL................Lx...L..x..x..x...xx................xx...x..x..L..L...xL................xx...L..x..x..x...xx........ --type 6x6x6-LR-oblique-edges-stage --fast
+    //
+    // 1.5 took 44s, 9 moves
+    // 1.3 took 14s, 9 moves
+    // 1.2 took 5.7s, 9 moves
+    // 1.1 took 4s, 9 moves
+    // 1 took 3s, 9 moves
+    // 0.9 took 4s, 9 moves
+
+    // inadmissable heuristic but fast
+    result.cost_to_goal = (int) ceil((double) unpaired_count / 1.2);
+
+    return result;
+}
+
+int
+ida_search_complete_LR_oblique_edges_stage_666 (char *cube)
+{
+    if (get_unpaired_obliques_count_666(cube) == 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+
+// ============================================================================
+// stepXX
+// ============================================================================
+struct ida_heuristic_result
 ida_heuristic_UD_oblique_edges_stage_666 (
     char *cube,
     unsigned int max_cost_to_goal)
@@ -153,24 +206,14 @@ ida_heuristic_UD_oblique_edges_stage_666 (
     // The most oblique edges we can pair in single move is 4 so take
     // the number that are unpaired and divide by 4.
     //
-    // .ULBU.F.Ux.LRx..xBRx..xFF.xx.L.BRLF..BDLF.F.UU.FBx..xRFx..UDB.Ux.B.BDFD..UUFR.R.UU.RFx..UDFx..xUR.xx.D.FUBL..DLRB.D.xx.DRx..xBRx..ULR.Ux.L.RLDF..UFBU.U.Ux.DFx..xUBU..xDU.xx.D.UDDL..LUBL.D.xx.BUx..URLU..UUR.Ux.R.LLUB.
-    // divide by 4 (admissable) took 53s, 6 moves
-    // divide by 2 took 8s, 7 moves
-    // divide by 1.5 took 4.3s, 6 moves
+    // time ./ida_search --kociemba ........xx...U..U..U..U...xU................xx...x..x..x..x...xx................UU...x..x..x..x...xx................xx...U..U..U..U...xx................xx...x..x..x..x...xx................UU...U..x..x..U...xU........ --type 6x6x6-UD-oblique-edges-stage --fast
+    //
+    // 4 took 1.5s, 6 moves
+    // 2 took 0.9s, 6 moves
+    // 1.5 took 0.4s, 6 moves
 
     // inadmissable heuristic but fast
-    result.cost_to_goal = (int) ceil((double) unpaired_count / 1.5);
-
-    // inadmissable heuristic but fast...kudos to xyzzy for this formula
-    // xyzzy 4/2 took 2s, 7 moves
-    // xyzzy 6/3 took 0.8s, 7 moves
-    /*
-    if (unpaired_count > 4) {
-        result.cost_to_goal = 2 + (unpaired_count >> 1);
-    } else {
-        result.cost_to_goal = unpaired_count;
-    }
-     */
+    result.cost_to_goal = (int) ceil((double) unpaired_count / 2);
 
     return result;
 }
@@ -179,118 +222,6 @@ int
 ida_search_complete_UD_oblique_edges_stage_666 (char *cube)
 {
     if (get_unpaired_obliques_count_666(cube) == 0) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-
-// ============================================================================
-// step30
-// ============================================================================
-struct ida_heuristic_result
-ida_heuristic_LR_inner_x_centers_and_oblique_edges_stage_666 (
-    char *cube,
-    unsigned int max_cost_to_goal,
-    struct key_value_pair **LR_inner_x_centers_and_oblique_edges_stage_666,
-    char *LR_inner_x_centers_cost_666,
-    char *LR_oblique_edges_cost_666)
-{
-    unsigned long long inner_x_centers_state = 0;
-    unsigned long long inner_x_centers_cost = 0;
-    unsigned long long oblique_edges_state = 0;
-    unsigned long long oblique_edges_bucket = 0;
-    unsigned long long oblique_edges_cost = 0;
-    unsigned long long cost_to_goal = 0;
-    char oblique_edges_str[24];
-    int cube_index;
-    struct ida_heuristic_result result;
-    unsigned long long state = 0;
-
-    // good test cube...this took ~3m prior to using the step31 oblique edges pruning table :(
-    // Now it takes ~10s
-    //
-    // time ./ida_search --kociemba .RFLL.F....BB....BD....RF....F.BLUR..UDUR.L.LL.LFLxLxUULLxLBL.Lx.L.BDBD..LBRF.B.xx.UDxLLxRFLLLLLB.xL.D.BURB..RLUU.D....DR....LR....RF....R.RBBB..DDFR.D.Lx.UFxLLxRFLxxLDL.xL.L.UBFF..FDUU.F.Lx.RFxxxxLLxxxLLD.Lx.U.DDUU. --type 6x6x6-LR-inner-x-centers-oblique-edges-stage --orbit1-need-even-w
-
-    // Get the state for the inner x-centers on LFRB
-    for (int i = 0; i < NUM_LFRB_INNER_X_CENTERS_666; i++) {
-        if (cube[LFRB_inner_x_centers_666[i]] == '1') {
-            inner_x_centers_state |= 0x1;
-        }
-        inner_x_centers_state <<= 1;
-    }
-    inner_x_centers_state >>= 1;
-    inner_x_centers_cost = hex_to_int(LR_inner_x_centers_cost_666[inner_x_centers_state]);
-
-    // Get the state for the oblique edges on LFRB
-    for (int i = 0; i < NUM_LFRB_OBLIQUE_EDGES_666; i++) {
-        if (cube[LFRB_oblique_edges_666[i]] == '1') {
-            oblique_edges_state |= 0x1;
-        }
-        oblique_edges_state <<= 1;
-    }
-    oblique_edges_state >>= 1;
-    sprintf(oblique_edges_str, "%08llx", oblique_edges_state);
-    oblique_edges_bucket = XXH32(oblique_edges_str, 8, 0) % 165636907;
-    oblique_edges_cost = hex_to_int(LR_oblique_edges_cost_666[oblique_edges_bucket]);
-
-    // get state of LFRB inner x-centers and oblique edges
-    for (int i = 0; i < NUM_LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_666; i++) {
-        if (cube[LFRB_inner_x_centers_and_oblique_edges_666[i]] == '1') {
-            state |= 0x1;
-        }
-        state <<= 1;
-    }
-
-    // 00019b267fff is 12 chars
-    state >>= 1;
-    sprintf(result.lt_state, "%012llx", state);
-    cost_to_goal = max(oblique_edges_cost, inner_x_centers_cost);
-
-    if (cost_to_goal > 0) {
-        // The step30 table we loaded is 2-deep
-        int MAX_DEPTH = 2;
-
-        struct key_value_pair *hash_entry = NULL;
-        hash_entry = hash_find(LR_inner_x_centers_and_oblique_edges_stage_666, result.lt_state);
-
-        if (hash_entry) {
-            cost_to_goal = hash_entry->value;
-        } else {
-            // Not admissible but much faster
-            cost_to_goal = max((int) cost_to_goal * 1.2, MAX_DEPTH+1);
-        }
-    }
-
-    result.cost_to_goal = cost_to_goal;
-    return result;
-}
-
-int
-ida_search_complete_LR_inner_x_centers_and_oblique_edges_stage (char *cube)
-{
-    if (( // First check if the inner x-centers are staged
-        (cube[51] == '1' &&
-         cube[52] == '1' &&
-         cube[57] == '1' &&
-         cube[58] == '1' &&
-         cube[123] == '1' &&
-         cube[124] == '1' &&
-         cube[129] == '1' &&
-         cube[130] == '1') ||
-
-        (cube[51] == '0' &&
-         cube[52] == '0' &&
-         cube[57] == '0' &&
-         cube[58] == '0' &&
-         cube[123] == '0' &&
-         cube[124] == '0' &&
-         cube[129] == '0' &&
-         cube[130] == '0')) &&
-
-        // Then check if all oblique edges are paired
-        get_unpaired_obliques_count_666(cube) == 0) {
         return 1;
     } else {
         return 0;
@@ -350,10 +281,6 @@ ida_heuristic_LFRB_inner_x_centers_and_oblique_edges_solve_666(
     // 00019b267fff is 12 chars
     sprintf(result.lt_state, "%012llx", state);
     cost_to_goal = max(LR_cost, FB_cost);
-
-    // dwalton
-    // printf("LR_state %llu, LR_cost %llu, FB_state %llu, FB_cost %llu, state %s, cost_to_goal %llu\n", LR_state, LR_cost, FB_state, FB_cost, result.lt_state, cost_to_goal);
-    // exit(0);
 
     if (cost_to_goal > 0) {
         // The step60 table we loaded is 3-deep

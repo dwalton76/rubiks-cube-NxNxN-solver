@@ -627,9 +627,7 @@ class LookupTable(object):
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
         if isinstance(self, LookupTableCostOnly):
-            raise Exception(
-                "%s is a CostOnly table, no need to call preload_cache_dict()" % self
-            )
+            raise Exception("%s is a CostOnly table, no need to call preload_cache_dict()" % self)
 
         if "dummy" in self.filename:
             self.cache = {}
@@ -661,9 +659,7 @@ class LookupTable(object):
         states = []
 
         if isinstance(self, LookupTableCostOnly):
-            raise Exception(
-                "%s is a CostOnly table, no need to call preload_cache_set()" % self
-            )
+            raise Exception("%s is a CostOnly table, no need to call preload_cache_set()" % self)
 
         if "dummy" in self.filename:
             pass
@@ -695,9 +691,7 @@ class LookupTable(object):
         state_len = 0
 
         if isinstance(self, LookupTableCostOnly):
-            raise Exception(
-                "%s is a CostOnly table, no need to call preload_cache_string()" % self
-            )
+            raise Exception("%s is a CostOnly table, no need to call preload_cache_string()" % self)
 
         if "dummy" in self.filename:
             pass
@@ -1007,6 +1001,7 @@ class LookupTable(object):
 
 
 class LookupTableCostOnly(LookupTable):
+
     def __init__(
         self,
         parent,
@@ -1040,9 +1035,7 @@ class LookupTableCostOnly(LookupTable):
         self.filesize = filesize
         self.md5 = md5
 
-        assert self.filename.startswith(
-            "lookup-table"
-        ), "We only support lookup-table*.txt files"
+        assert self.filename.startswith("lookup-table"), "We only support lookup-table*.txt files"
         # assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
 
         if "dummy" not in self.filename:

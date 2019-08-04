@@ -6,7 +6,6 @@ from rubikscubennnsolver.LookupTable import (
     get_characters_common_count,
     steps_on_same_face_and_layer,
     LookupTable,
-    LookupTableCostOnly,
     LookupTableIDA,
     LookupTableHashCostOnly,
     LookupTableIDAViaC,

@@ -13,12 +13,11 @@ from rubikscubennnsolver.RubiksCube555 import (
     wings_for_edges_pattern_555,
     LFRB_centers_555,
     RubiksCube555,
-    LookupTableIDA555UDCentersStage,
     LookupTableIDA555LRCentersStage,
+    LookupTable555FBTCenterStage,
+    LookupTable555FBXCenterStage,
+    LookupTableIDA555FBCentersStage,
     LookupTableIDA555ULFRBDCentersSolve,
-    LookupTable555UDTCenterStage,
-    LookupTable555LRTCenterStageOdd,
-    LookupTable555LRTCenterStageEven,
     LookupTable555TCenterSolve,
     LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge,
 )
@@ -342,21 +341,25 @@ class RubiksCube555ForNNN(RubiksCube555):
             return
         self.lt_init_called = True
 
-        self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
+
+        self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
+        self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
+        self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
+        self.lt_FB_centers_stage.preload_cache_string()
+
         self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
-        self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
-        self.lt_LR_T_centers_stage_odd = LookupTable555LRTCenterStageOdd(self)
-        self.lt_LR_T_centers_stage_even = LookupTable555LRTCenterStageEven(self)
-        self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
+        #self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
+
+        #self.lt_LR_T_centers_stage_odd = LookupTable555LRTCenterStageOdd(self)
+        #self.lt_LR_T_centers_stage_even = LookupTable555LRTCenterStageEven(self)
+        #self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
         # No need to preload these, they use binary_seach_multiple
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
 
-        self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(
-            self
-        )
+        self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(self)
 
     def stage_first_four_edges_555(self):
         """
@@ -826,8 +829,10 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.lt_init()
 
         if not self.centers_staged():
-            self.group_centers_stage_UD()
             self.group_centers_stage_LR()
+            self.group_centers_stage_FB()
+            sys.exit(0)
+            # dwalton
 
         if not self.centers_solved():
             tmp_solution_len = len(self.solution)

@@ -6,8 +6,6 @@ from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
 from rubikscubennnsolver.RubiksCube666Misc import state_targets_step60
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
-    LookupTableCostOnly,
-    LookupTableHashCostOnly,
     LookupTableIDA,
     LookupTableIDAViaC,
 )

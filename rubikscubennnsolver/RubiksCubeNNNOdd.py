@@ -203,10 +203,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             fake_777.stage_UD_centers()
         elif action == "stage_LR_centers":
             fake_777.stage_LR_centers()
-        elif action == "LR_centers_vertical_bars":
-            fake_777.LR_centers_vertical_bars()
-        elif action == "UD_centers_vertical_bars":
-            fake_777.UD_centers_vertical_bars()
         elif action == "solve_centers":
             fake_777.group_centers_guts()
         else:
@@ -232,27 +228,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
         max_center_orbits = int((self.size - 3) / 2) - 2
 
-        # Stage all UD centers
-        for center_orbit_id in range(max_center_orbits + 1):
-            width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-            max_cycle = int((width - 5) / 2)
-
-            for cycle in range(max_cycle + 1):
-                self.stage_or_solve_inside_777(
-                    center_orbit_id,
-                    max_center_orbits,
-                    width,
-                    cycle,
-                    max_cycle,
-                    "stage_UD_centers",
-                )
-
-        self.print_cube()
-        log.warning(
-            "%s: UD centers are staged, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-
         # Stage all LR centers
         for center_orbit_id in range(max_center_orbits + 1):
             width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
@@ -274,20 +249,26 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
-        # I tried this once it didn't work...if it had next step would have
-        # been to do the same for UD (make them vertical bars)
-        """
-        # LR centers to vertical bars
-        for center_orbit_id in range(max_center_orbits+1):
+        # Stage all UD centers
+        for center_orbit_id in range(max_center_orbits + 1):
             width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-            max_cycle = int((width - 5)/2)
+            max_cycle = int((width - 5) / 2)
 
-            for cycle in range(max_cycle+1):
-                self.stage_or_solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle, "LR_centers_vertical_bars")
+            for cycle in range(max_cycle + 1):
+                self.stage_or_solve_inside_777(
+                    center_orbit_id,
+                    max_center_orbits,
+                    width,
+                    cycle,
+                    max_cycle,
+                    "stage_UD_centers",
+                )
 
         self.print_cube()
-        log.warning("%s: LR centers are vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        """
+        log.warning(
+            "%s: UD centers are staged, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
         # Solve all centers
         for center_orbit_id in range(max_center_orbits + 1):

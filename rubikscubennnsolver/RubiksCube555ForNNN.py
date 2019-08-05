@@ -20,6 +20,8 @@ from rubikscubennnsolver.RubiksCube555 import (
     LookupTableIDA555ULFRBDCentersSolve,
     LookupTable555TCenterSolve,
     LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge,
+    LookupTable555LRTCenterStage,
+    LookupTable555FBTCenterStageFull,
 )
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
@@ -341,19 +343,20 @@ class RubiksCube555ForNNN(RubiksCube555):
             return
         self.lt_init_called = True
 
+        self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
 
+        self.lt_FB_t_centers_stage_full = LookupTable555FBTCenterStageFull(self)
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
         self.lt_FB_centers_stage.preload_cache_string()
 
         self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
-        #self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
 
         #self.lt_LR_T_centers_stage_odd = LookupTable555LRTCenterStageOdd(self)
         #self.lt_LR_T_centers_stage_even = LookupTable555LRTCenterStageEven(self)
-        #self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
+        self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
         # No need to preload these, they use binary_seach_multiple
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)

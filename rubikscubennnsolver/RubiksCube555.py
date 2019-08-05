@@ -677,7 +677,7 @@ class LookupTable555LRTCenterStage(LookupTable):
             self,
             parent,
             "lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.txt",
-            "f0000f",
+            "0f0f00",
             linecount=735471,
             max_depth=8,
             filesize=27947898,
@@ -732,6 +732,50 @@ class LookupTableIDA555LRCentersStage(LookupTableIDAViaC):
         self.recolor_map = {"U": "x", "F": "x", "R": "L", "B": "x", "D": "x"}
         self.nuke_corners = True
         self.nuke_edges = True
+
+
+class LookupTable555FBTCenterStageFull(LookupTable):
+    """
+    lookup-table-5x5x5-step21-FB-t-centers-stage.txt
+    ================================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 25 entries (0 percent, 8.33x previous step)
+    3 steps has 210 entries (1 percent, 8.40x previous step)
+    4 steps has 722 entries (5 percent, 3.44x previous step)
+    5 steps has 1,752 entries (13 percent, 2.43x previous step)
+    6 steps has 4,033 entries (31 percent, 2.30x previous step)
+    7 steps has 4,014 entries (31 percent, 1.00x previous step)
+    8 steps has 1,977 entries (15 percent, 0.49x previous step)
+    9 steps has 134 entries (1 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    Average: 6.34 moves
+    """
+
+    UFBD_t_centers_555 = (
+        8, 12, 14, 18,
+        58, 62, 64, 68,
+        108, 112, 114, 118,
+        133, 137, 139, 143,
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step21-FB-t-centers-stage.txt",
+            "0ff0",
+            linecount=12870,
+            max_depth=9,
+            filesize=476190,
+        )
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_t_centers_555])
+        state = self.hex_format % int(state, 2)
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
 
 
 class LookupTable555FBTCenterStage(LookupTableCostOnly):
@@ -3078,7 +3122,6 @@ class RubiksCube555(RubiksCube):
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
-
 
         '''
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)

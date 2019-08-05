@@ -1031,9 +1031,11 @@ class LookupTableCostOnly(LookupTable):
         self.avoid_pll = False
         self.preloaded_cache_dict = False
         self.preloaded_cache_set = False
+        self.preloaded_cache_string = False
         self.ida_all_the_way = False
         self.filesize = filesize
         self.md5 = md5
+        self.printed_disk_io_warning = False
 
         assert self.filename.startswith("lookup-table"), "We only support lookup-table*.txt files"
         # assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"

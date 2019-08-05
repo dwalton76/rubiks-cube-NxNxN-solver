@@ -368,11 +368,9 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaC):
     not need them to be placed on sides UD at this point.
     """
 
-    oblique_edges_666 = (
+    UFBD_oblique_edges_666 = (
         9, 10, 14, 17, 20, 23, 27, 28,
-        45, 46, 50, 53, 56, 59, 63, 64,
         81, 82, 86, 89, 92, 95, 99, 100,
-        117, 118, 122, 125, 128, 131, 135, 136,
         153, 154, 158, 161, 164, 167, 171, 172,
         189, 190, 194, 197, 200, 203, 207, 208,
     )
@@ -393,7 +391,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaC):
         self.parent.nuke_edges()
 
         for x in centers_666:
-            if x in self.oblique_edges_666:
+            if x in self.UFBD_oblique_edges_666:
                 if self.parent.state[x] == "U" or self.parent.state[x] == "D":
                     self.parent.state[x] = "U"
                 else:
@@ -923,6 +921,9 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.populate_fake_444_for_inner_x_centers_stage()
         tmp_solution_len = len(self.solution)
 
+        if oblique_edges_only:
+            fake_444.lt_ULFRBD_centers_stage.avoid_oll = None
+
         fake_444.lt_ULFRBD_centers_stage.solve()
 
         for step in fake_444.solution:
@@ -988,7 +989,12 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # Stage UD centers via 555
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
-        fake_555.group_centers_stage_FB()
+
+        if oblique_edges_only:
+            fake_555.lt_FB_t_centers_stage_full.solve()
+        else:
+            fake_555.group_centers_stage_FB()
+
         tmp_solution_len = len(self.solution)
 
         for step in fake_555.solution:
@@ -1052,7 +1058,12 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # use 555 solver to solve centers
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
-        fake_555.lt_ULFRBD_centers_solve.solve()
+
+        if oblique_edges_only:
+            fake_555.lt_ULFRBD_t_centers_solve.solve()
+        else:
+            fake_555.lt_ULFRBD_centers_solve.solve()
+
         tmp_solution_len = len(self.solution)
 
         for step in fake_555.solution:

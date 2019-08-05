@@ -1272,7 +1272,12 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         case Bw:
         case Bw_PRIME:
 
-        // dwalton can't we also restrict L L' R R' here?
+        case L:
+        case L_PRIME:
+        case L2:
+        case R:
+        case R_PRIME:
+        case R2:
             return 0;
         default:
             return 1;

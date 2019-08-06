@@ -442,7 +442,6 @@ edges_recolor_tuples_555 = (
     ("n", 149, 122),
 )
 
-
 midges_recolor_tuples_555 = (
     ("o", 3, 103),  # upper
     ("p", 11, 28),
@@ -510,6 +509,23 @@ wings_for_recolor_555 = (
     ("l", 145, 99),
     ("m", 147, 124),
     ("n", 149, 122),
+)
+
+MIDGE_TUPLES_555 = (
+    ((3, 103), (103, 3)),
+    ((11, 28), (28, 11)),
+    ((15, 78), (78, 15)),
+    ((23, 53), (53, 23)),
+
+    ((36, 115), (115, 36)),
+    ((40, 61), (61, 40)),
+    ((86, 65), (65, 86)),
+    ((90, 111), (111, 90)),
+
+    ((128, 73), (73, 128)),
+    ((136, 48), (48, 136)),
+    ((140, 98), (98, 140)),
+    ((148, 123), (128, 148)),
 )
 
 
@@ -1014,7 +1030,6 @@ class LookupTableIDA555FBCentersStage(LookupTableIDA):
             else:
                 cost_to_goal = max(cost_to_goal, self.max_depth + 1)
 
-
         return (lt_state, cost_to_goal)
 
 
@@ -1139,1420 +1154,1163 @@ class LookupTable555TCenterSolve(LookupTable):
         return (result, 0)
 
 
-class LookupTable555LRCenterStage432XCentersOnly(LookupTable):
+class LookupTableIDA555EdgeOrientInnerOrbit(LookupTable):
     """
-    lookup-table-5x5x5-step41-LR-centers-stage-432-x-centers-only.txt
-    =================================================================
-    1 steps has 46 entries (0 percent, 0.00x previous step)
-    2 steps has 400 entries (0 percent, 8.70x previous step)
-    3 steps has 3,490 entries (0 percent, 8.72x previous step)
-    4 steps has 22,972 entries (2 percent, 6.58x previous step)
-    5 steps has 119,852 entries (13 percent, 5.22x previous step)
-    6 steps has 403,964 entries (44 percent, 3.37x previous step)
-    7 steps has 345,232 entries (38 percent, 0.85x previous step)
-    8 steps has 4,944 entries (0 percent, 0.01x previous step)
+    lookup-table-5x5x5-step903-EO-inner-orbit.txt
+    =============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 25 entries (1 percent, 12.50x previous step)
+    3 steps has 202 entries (9 percent, 8.08x previous step)
+    4 steps has 620 entries (30 percent, 3.07x previous step)
+    5 steps has 900 entries (43 percent, 1.45x previous step)
+    6 steps has 285 entries (13 percent, 0.32x previous step)
+    7 steps has 13 entries (0 percent, 0.05x previous step)
 
-    Total: 900,900 entries
-    Average: 6.20 moves
-    """
-
-    state_targets = (
-        "LLLLLFFFFFRRRRRFFFFF",
-        "LLLRRFFFFFLLRRRFFFFF",
-        "LLLRRFFFFFRRRLLFFFFF",
-        "LRLLRFFFFFLRRLRFFFFF",
-        "LRLLRFFFFFRLRRLFFFFF",
-        "LRLRLFFFFFRLRLRFFFFF",
-        "RLLLRFFFFFLRRRLFFFFF",
-        "RLLRLFFFFFLRRLRFFFFF",
-        "RLLRLFFFFFRLRRLFFFFF",
-        "RRLLLFFFFFLLRRRFFFFF",
-        "RRLLLFFFFFRRRLLFFFFF",
-        "RRLRRFFFFFLLRLLFFFFF",
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step41-LR-centers-stage-432-x-centers-only.txt",
-            self.state_targets,
-            linecount=900900,
-            max_depth=8,
-            filesize=45945900,
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = "".join(
-            [
-                "F" if parent_state[x] == "B" else parent_state[x]
-                for x in LFRB_x_centers_555
-            ]
-        )
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable555LRCenterStage432TCentersOnly(LookupTable):
-    """
-    lookup-table-5x5x5-step42-LR-centers-stage-432-t-centers-only.txt
-    =================================================================
-    1 steps has 126 entries (0 percent, 0.00x previous step)
-    2 steps has 968 entries (0 percent, 7.68x previous step)
-    3 steps has 8,554 entries (0 percent, 8.84x previous step)
-    4 steps has 38,220 entries (4 percent, 4.47x previous step)
-    5 steps has 108,556 entries (12 percent, 2.84x previous step)
-    6 steps has 270,972 entries (30 percent, 2.50x previous step)
-    7 steps has 294,466 entries (32 percent, 1.09x previous step)
-    8 steps has 164,936 entries (18 percent, 0.56x previous step)
-    9 steps has 14,070 entries (1 percent, 0.09x previous step)
-    10 steps has 32 entries (0 percent, 0.00x previous step)
-
-    Total: 900,900 entries
-    Average: 6.50 moves
+    Total: 2,048 entries
+    Average: 4.61 moves
     """
 
-    state_targets = (
-        "LLLLLFFFFFRRRRRFFFFF",
-        "LLLLRFFFFFLRRRRFFFFF",
-        "LLLLRFFFFFRRRRLFFFFF",
-        "LLLRLFFFFFRLRRRFFFFF",
-        "LLLRLFFFFFRRRLRFFFFF",
-        "LLLRRFFFFFLLRRRFFFFF",
-        "LLLRRFFFFFLRRLRFFFFF",
-        "LLLRRFFFFFRLRRLFFFFF",
-        "LLLRRFFFFFRRRLLFFFFF",
-        "LRLLLFFFFFRLRRRFFFFF",
-        "LRLLLFFFFFRRRLRFFFFF",
-        "LRLLRFFFFFLLRRRFFFFF",
-        "LRLLRFFFFFLRRLRFFFFF",
-        "LRLLRFFFFFRLRRLFFFFF",
-        "LRLLRFFFFFRRRLLFFFFF",
-        "LRLRLFFFFFRLRLRFFFFF",
-        "LRLRRFFFFFLLRLRFFFFF",
-        "LRLRRFFFFFRLRLLFFFFF",
-        "RLLLLFFFFFLRRRRFFFFF",
-        "RLLLLFFFFFRRRRLFFFFF",
-        "RLLLRFFFFFLRRRLFFFFF",
-        "RLLRLFFFFFLLRRRFFFFF",
-        "RLLRLFFFFFLRRLRFFFFF",
-        "RLLRLFFFFFRLRRLFFFFF",
-        "RLLRLFFFFFRRRLLFFFFF",
-        "RLLRRFFFFFLLRRLFFFFF",
-        "RLLRRFFFFFLRRLLFFFFF",
-        "RRLLLFFFFFLLRRRFFFFF",
-        "RRLLLFFFFFLRRLRFFFFF",
-        "RRLLLFFFFFRLRRLFFFFF",
-        "RRLLLFFFFFRRRLLFFFFF",
-        "RRLLRFFFFFLLRRLFFFFF",
-        "RRLLRFFFFFLRRLLFFFFF",
-        "RRLRLFFFFFLLRLRFFFFF",
-        "RRLRLFFFFFRLRLLFFFFF",
-        "RRLRRFFFFFLLRLLFFFFF",
-    )
+    midge_states = {
+        (3, 103): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (11, 28): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (23, 53): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (15, 78): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
 
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step42-LR-centers-stage-432-t-centers-only.txt",
-            self.state_targets,
-            linecount=900900,
-            max_depth=10,
-            filesize=48648600,
-        )
+        (36, 115): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (40, 61): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (86, 65): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (90, 111): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
 
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = "".join(
-            [
-                "F" if parent_state[x] == "B" else parent_state[x]
-                for x in LFRB_t_centers_555
-            ]
-        )
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable555LRCenterStage432PairOneEdge(LookupTable):
-    """
-    lookup-table-5x5x5-step43-LR-centers-stage-432-pair-one-edge.txt
-    ================================================================
-    1 steps has 18 entries (0 percent, 0.00x previous step)
-    2 steps has 84 entries (2 percent, 4.67x previous step)
-    3 steps has 344 entries (9 percent, 4.10x previous step)
-    4 steps has 938 entries (27 percent, 2.73x previous step)
-    5 steps has 1,572 entries (45 percent, 1.68x previous step)
-    6 steps has 500 entries (14 percent, 0.32x previous step)
-
-    Total: 3,456 entries
-    Average: 4.58 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step43-LR-centers-stage-432-pair-one-edge.txt",
-            (
-                "---------Rrr------------------------",
-                "---------rRR------------------------",
-            ),
-            linecount=3456,
-            max_depth=6,
-            filesize=203904,
-        )
-
-    def ida_heuristic(self):
-        assert (
-            self.only_colors and len(self.only_colors) == 1
-        ), "You must specify which 1-edge"
-        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
-        state = "".join([state[index] for index in wings_for_edges_pattern_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTableIDA555LRCenterStage432(LookupTableIDA):
-    """
-    lookup-table-5x5x5-step40-LR-centers-stage-432.txt
-    ==================================================
-    1 steps has 1,692 entries (0 percent, 0.00x previous step)
-    2 steps has 16,832 entries (0 percent, 9.95x previous step)
-    3 steps has 194,000 entries (8 percent, 11.53x previous step)
-    4 steps has 2,138,044 entries (90 percent, 11.02x previous step)
-
-    Total: 2,350,568 entries
-    """
-
-    state_targets = (
-        "LLLLLLLLLFFFFFFFFFRRRRRRRRRFFFFFFFFF",
-        "LLLLLLLRLFFFFFFFFFRLRRRRRRRFFFFFFFFF",
-        "LLLLLLLRLFFFFFFFFFRRRRRRRLRFFFFFFFFF",
-        "LLLLLLRLRFFFFFFFFFLRLRRRRRRFFFFFFFFF",
-        "LLLLLLRLRFFFFFFFFFRRRRRRLRLFFFFFFFFF",
-        "LLLLLLRRRFFFFFFFFFLLLRRRRRRFFFFFFFFF",
-        "LLLLLLRRRFFFFFFFFFLRLRRRRLRFFFFFFFFF",
-        "LLLLLLRRRFFFFFFFFFRLRRRRLRLFFFFFFFFF",
-        "LLLLLLRRRFFFFFFFFFRRRRRRLLLFFFFFFFFF",
-        "LLLLLRLLLFFFFFFFFFRRRLRRRRRFFFFFFFFF",
-        "LLLLLRLLLFFFFFFFFFRRRRRLRRRFFFFFFFFF",
-        "LLLLLRLRLFFFFFFFFFRLRLRRRRRFFFFFFFFF",
-        "LLLLLRLRLFFFFFFFFFRLRRRLRRRFFFFFFFFF",
-        "LLLLLRLRLFFFFFFFFFRRRLRRRLRFFFFFFFFF",
-        "LLLLLRLRLFFFFFFFFFRRRRRLRLRFFFFFFFFF",
-        "LLLLLRRLRFFFFFFFFFLRLLRRRRRFFFFFFFFF",
-        "LLLLLRRLRFFFFFFFFFLRLRRLRRRFFFFFFFFF",
-        "LLLLLRRLRFFFFFFFFFRRRLRRLRLFFFFFFFFF",
-        "LLLLLRRLRFFFFFFFFFRRRRRLLRLFFFFFFFFF",
-        "LLLLLRRRRFFFFFFFFFLLLLRRRRRFFFFFFFFF",
-        "LLLLLRRRRFFFFFFFFFLLLRRLRRRFFFFFFFFF",
-        "LLLLLRRRRFFFFFFFFFLRLLRRRLRFFFFFFFFF",
-        "LLLLLRRRRFFFFFFFFFLRLRRLRLRFFFFFFFFF",
-        "LLLLLRRRRFFFFFFFFFRLRLRRLRLFFFFFFFFF",
-        "LLLLLRRRRFFFFFFFFFRLRRRLLRLFFFFFFFFF",
-        "LLLLLRRRRFFFFFFFFFRRRLRRLLLFFFFFFFFF",
-        "LLLLLRRRRFFFFFFFFFRRRRRLLLLFFFFFFFFF",
-        "LLLRLLLLLFFFFFFFFFRRRLRRRRRFFFFFFFFF",
-        "LLLRLLLLLFFFFFFFFFRRRRRLRRRFFFFFFFFF",
-        "LLLRLLLRLFFFFFFFFFRLRLRRRRRFFFFFFFFF",
-        "LLLRLLLRLFFFFFFFFFRLRRRLRRRFFFFFFFFF",
-        "LLLRLLLRLFFFFFFFFFRRRLRRRLRFFFFFFFFF",
-        "LLLRLLLRLFFFFFFFFFRRRRRLRLRFFFFFFFFF",
-        "LLLRLLRLRFFFFFFFFFLRLLRRRRRFFFFFFFFF",
-        "LLLRLLRLRFFFFFFFFFLRLRRLRRRFFFFFFFFF",
-        "LLLRLLRLRFFFFFFFFFRRRLRRLRLFFFFFFFFF",
-        "LLLRLLRLRFFFFFFFFFRRRRRLLRLFFFFFFFFF",
-        "LLLRLLRRRFFFFFFFFFLLLLRRRRRFFFFFFFFF",
-        "LLLRLLRRRFFFFFFFFFLLLRRLRRRFFFFFFFFF",
-        "LLLRLLRRRFFFFFFFFFLRLLRRRLRFFFFFFFFF",
-        "LLLRLLRRRFFFFFFFFFLRLRRLRLRFFFFFFFFF",
-        "LLLRLLRRRFFFFFFFFFRLRLRRLRLFFFFFFFFF",
-        "LLLRLLRRRFFFFFFFFFRLRRRLLRLFFFFFFFFF",
-        "LLLRLLRRRFFFFFFFFFRRRLRRLLLFFFFFFFFF",
-        "LLLRLLRRRFFFFFFFFFRRRRRLLLLFFFFFFFFF",
-        "LLLRLRLLLFFFFFFFFFRRRLRLRRRFFFFFFFFF",
-        "LLLRLRLRLFFFFFFFFFRLRLRLRRRFFFFFFFFF",
-        "LLLRLRLRLFFFFFFFFFRRRLRLRLRFFFFFFFFF",
-        "LLLRLRRLRFFFFFFFFFLRLLRLRRRFFFFFFFFF",
-        "LLLRLRRLRFFFFFFFFFRRRLRLLRLFFFFFFFFF",
-        "LLLRLRRRRFFFFFFFFFLLLLRLRRRFFFFFFFFF",
-        "LLLRLRRRRFFFFFFFFFLRLLRLRLRFFFFFFFFF",
-        "LLLRLRRRRFFFFFFFFFRLRLRLLRLFFFFFFFFF",
-        "LLLRLRRRRFFFFFFFFFRRRLRLLLLFFFFFFFFF",
-        "LLRLLLLLRFFFFFFFFFLRRRRRLRRFFFFFFFFF",
-        "LLRLLLLLRFFFFFFFFFRRLRRRRRLFFFFFFFFF",
-        "LLRLLLLRRFFFFFFFFFLLRRRRLRRFFFFFFFFF",
-        "LLRLLLLRRFFFFFFFFFLRRRRRLLRFFFFFFFFF",
-        "LLRLLLLRRFFFFFFFFFRLLRRRRRLFFFFFFFFF",
-        "LLRLLLLRRFFFFFFFFFRRLRRRRLLFFFFFFFFF",
-        "LLRLLLRLLFFFFFFFFFRRLRRRLRRFFFFFFFFF",
-        "LLRLLLRRLFFFFFFFFFRLLRRRLRRFFFFFFFFF",
-        "LLRLLLRRLFFFFFFFFFRRLRRRLLRFFFFFFFFF",
-        "LLRLLRLLRFFFFFFFFFLRRLRRLRRFFFFFFFFF",
-        "LLRLLRLLRFFFFFFFFFLRRRRLLRRFFFFFFFFF",
-        "LLRLLRLLRFFFFFFFFFRRLLRRRRLFFFFFFFFF",
-        "LLRLLRLLRFFFFFFFFFRRLRRLRRLFFFFFFFFF",
-        "LLRLLRLRRFFFFFFFFFLLRLRRLRRFFFFFFFFF",
-        "LLRLLRLRRFFFFFFFFFLLRRRLLRRFFFFFFFFF",
-        "LLRLLRLRRFFFFFFFFFLRRLRRLLRFFFFFFFFF",
-        "LLRLLRLRRFFFFFFFFFLRRRRLLLRFFFFFFFFF",
-        "LLRLLRLRRFFFFFFFFFRLLLRRRRLFFFFFFFFF",
-        "LLRLLRLRRFFFFFFFFFRLLRRLRRLFFFFFFFFF",
-        "LLRLLRLRRFFFFFFFFFRRLLRRRLLFFFFFFFFF",
-        "LLRLLRLRRFFFFFFFFFRRLRRLRLLFFFFFFFFF",
-        "LLRLLRRLLFFFFFFFFFRRLLRRLRRFFFFFFFFF",
-        "LLRLLRRLLFFFFFFFFFRRLRRLLRRFFFFFFFFF",
-        "LLRLLRRRLFFFFFFFFFRLLLRRLRRFFFFFFFFF",
-        "LLRLLRRRLFFFFFFFFFRLLRRLLRRFFFFFFFFF",
-        "LLRLLRRRLFFFFFFFFFRRLLRRLLRFFFFFFFFF",
-        "LLRLLRRRLFFFFFFFFFRRLRRLLLRFFFFFFFFF",
-        "LLRRLLLLRFFFFFFFFFLRRLRRLRRFFFFFFFFF",
-        "LLRRLLLLRFFFFFFFFFLRRRRLLRRFFFFFFFFF",
-        "LLRRLLLLRFFFFFFFFFRRLLRRRRLFFFFFFFFF",
-        "LLRRLLLLRFFFFFFFFFRRLRRLRRLFFFFFFFFF",
-        "LLRRLLLRRFFFFFFFFFLLRLRRLRRFFFFFFFFF",
-        "LLRRLLLRRFFFFFFFFFLLRRRLLRRFFFFFFFFF",
-        "LLRRLLLRRFFFFFFFFFLRRLRRLLRFFFFFFFFF",
-        "LLRRLLLRRFFFFFFFFFLRRRRLLLRFFFFFFFFF",
-        "LLRRLLLRRFFFFFFFFFRLLLRRRRLFFFFFFFFF",
-        "LLRRLLLRRFFFFFFFFFRLLRRLRRLFFFFFFFFF",
-        "LLRRLLLRRFFFFFFFFFRRLLRRRLLFFFFFFFFF",
-        "LLRRLLLRRFFFFFFFFFRRLRRLRLLFFFFFFFFF",
-        "LLRRLLRLLFFFFFFFFFRRLLRRLRRFFFFFFFFF",
-        "LLRRLLRLLFFFFFFFFFRRLRRLLRRFFFFFFFFF",
-        "LLRRLLRRLFFFFFFFFFRLLLRRLRRFFFFFFFFF",
-        "LLRRLLRRLFFFFFFFFFRLLRRLLRRFFFFFFFFF",
-        "LLRRLLRRLFFFFFFFFFRRLLRRLLRFFFFFFFFF",
-        "LLRRLLRRLFFFFFFFFFRRLRRLLLRFFFFFFFFF",
-        "LLRRLRLLRFFFFFFFFFLRRLRLLRRFFFFFFFFF",
-        "LLRRLRLLRFFFFFFFFFRRLLRLRRLFFFFFFFFF",
-        "LLRRLRLRRFFFFFFFFFLLRLRLLRRFFFFFFFFF",
-        "LLRRLRLRRFFFFFFFFFLRRLRLLLRFFFFFFFFF",
-        "LLRRLRLRRFFFFFFFFFRLLLRLRRLFFFFFFFFF",
-        "LLRRLRLRRFFFFFFFFFRRLLRLRLLFFFFFFFFF",
-        "LLRRLRRLLFFFFFFFFFRRLLRLLRRFFFFFFFFF",
-        "LLRRLRRRLFFFFFFFFFRLLLRLLRRFFFFFFFFF",
-        "LLRRLRRRLFFFFFFFFFRRLLRLLLRFFFFFFFFF",
-        "LRLLLLLLLFFFFFFFFFRLRRRRRRRFFFFFFFFF",
-        "LRLLLLLLLFFFFFFFFFRRRRRRRLRFFFFFFFFF",
-        "LRLLLLLRLFFFFFFFFFRLRRRRRLRFFFFFFFFF",
-        "LRLLLLRLRFFFFFFFFFLLLRRRRRRFFFFFFFFF",
-        "LRLLLLRLRFFFFFFFFFLRLRRRRLRFFFFFFFFF",
-        "LRLLLLRLRFFFFFFFFFRLRRRRLRLFFFFFFFFF",
-        "LRLLLLRLRFFFFFFFFFRRRRRRLLLFFFFFFFFF",
-        "LRLLLLRRRFFFFFFFFFLLLRRRRLRFFFFFFFFF",
-        "LRLLLLRRRFFFFFFFFFRLRRRRLLLFFFFFFFFF",
-        "LRLLLRLLLFFFFFFFFFRLRLRRRRRFFFFFFFFF",
-        "LRLLLRLLLFFFFFFFFFRLRRRLRRRFFFFFFFFF",
-        "LRLLLRLLLFFFFFFFFFRRRLRRRLRFFFFFFFFF",
-        "LRLLLRLLLFFFFFFFFFRRRRRLRLRFFFFFFFFF",
-        "LRLLLRLRLFFFFFFFFFRLRLRRRLRFFFFFFFFF",
-        "LRLLLRLRLFFFFFFFFFRLRRRLRLRFFFFFFFFF",
-        "LRLLLRRLRFFFFFFFFFLLLLRRRRRFFFFFFFFF",
-        "LRLLLRRLRFFFFFFFFFLLLRRLRRRFFFFFFFFF",
-        "LRLLLRRLRFFFFFFFFFLRLLRRRLRFFFFFFFFF",
-        "LRLLLRRLRFFFFFFFFFLRLRRLRLRFFFFFFFFF",
-        "LRLLLRRLRFFFFFFFFFRLRLRRLRLFFFFFFFFF",
-        "LRLLLRRLRFFFFFFFFFRLRRRLLRLFFFFFFFFF",
-        "LRLLLRRLRFFFFFFFFFRRRLRRLLLFFFFFFFFF",
-        "LRLLLRRLRFFFFFFFFFRRRRRLLLLFFFFFFFFF",
-        "LRLLLRRRRFFFFFFFFFLLLLRRRLRFFFFFFFFF",
-        "LRLLLRRRRFFFFFFFFFLLLRRLRLRFFFFFFFFF",
-        "LRLLLRRRRFFFFFFFFFRLRLRRLLLFFFFFFFFF",
-        "LRLLLRRRRFFFFFFFFFRLRRRLLLLFFFFFFFFF",
-        "LRLRLLLLLFFFFFFFFFRLRLRRRRRFFFFFFFFF",
-        "LRLRLLLLLFFFFFFFFFRLRRRLRRRFFFFFFFFF",
-        "LRLRLLLLLFFFFFFFFFRRRLRRRLRFFFFFFFFF",
-        "LRLRLLLLLFFFFFFFFFRRRRRLRLRFFFFFFFFF",
-        "LRLRLLLRLFFFFFFFFFRLRLRRRLRFFFFFFFFF",
-        "LRLRLLLRLFFFFFFFFFRLRRRLRLRFFFFFFFFF",
-        "LRLRLLRLRFFFFFFFFFLLLLRRRRRFFFFFFFFF",
-        "LRLRLLRLRFFFFFFFFFLLLRRLRRRFFFFFFFFF",
-        "LRLRLLRLRFFFFFFFFFLRLLRRRLRFFFFFFFFF",
-        "LRLRLLRLRFFFFFFFFFLRLRRLRLRFFFFFFFFF",
-        "LRLRLLRLRFFFFFFFFFRLRLRRLRLFFFFFFFFF",
-        "LRLRLLRLRFFFFFFFFFRLRRRLLRLFFFFFFFFF",
-        "LRLRLLRLRFFFFFFFFFRRRLRRLLLFFFFFFFFF",
-        "LRLRLLRLRFFFFFFFFFRRRRRLLLLFFFFFFFFF",
-        "LRLRLLRRRFFFFFFFFFLLLLRRRLRFFFFFFFFF",
-        "LRLRLLRRRFFFFFFFFFLLLRRLRLRFFFFFFFFF",
-        "LRLRLLRRRFFFFFFFFFRLRLRRLLLFFFFFFFFF",
-        "LRLRLLRRRFFFFFFFFFRLRRRLLLLFFFFFFFFF",
-        "LRLRLRLLLFFFFFFFFFRLRLRLRRRFFFFFFFFF",
-        "LRLRLRLLLFFFFFFFFFRRRLRLRLRFFFFFFFFF",
-        "LRLRLRLRLFFFFFFFFFRLRLRLRLRFFFFFFFFF",
-        "LRLRLRRLRFFFFFFFFFLLLLRLRRRFFFFFFFFF",
-        "LRLRLRRLRFFFFFFFFFLRLLRLRLRFFFFFFFFF",
-        "LRLRLRRLRFFFFFFFFFRLRLRLLRLFFFFFFFFF",
-        "LRLRLRRLRFFFFFFFFFRRRLRLLLLFFFFFFFFF",
-        "LRLRLRRRRFFFFFFFFFLLLLRLRLRFFFFFFFFF",
-        "LRLRLRRRRFFFFFFFFFRLRLRLLLLFFFFFFFFF",
-        "LRRLLLLLRFFFFFFFFFLLRRRRLRRFFFFFFFFF",
-        "LRRLLLLLRFFFFFFFFFLRRRRRLLRFFFFFFFFF",
-        "LRRLLLLLRFFFFFFFFFRLLRRRRRLFFFFFFFFF",
-        "LRRLLLLLRFFFFFFFFFRRLRRRRLLFFFFFFFFF",
-        "LRRLLLLRRFFFFFFFFFLLRRRRLLRFFFFFFFFF",
-        "LRRLLLLRRFFFFFFFFFRLLRRRRLLFFFFFFFFF",
-        "LRRLLLRLLFFFFFFFFFRLLRRRLRRFFFFFFFFF",
-        "LRRLLLRLLFFFFFFFFFRRLRRRLLRFFFFFFFFF",
-        "LRRLLLRRLFFFFFFFFFRLLRRRLLRFFFFFFFFF",
-        "LRRLLRLLRFFFFFFFFFLLRLRRLRRFFFFFFFFF",
-        "LRRLLRLLRFFFFFFFFFLLRRRLLRRFFFFFFFFF",
-        "LRRLLRLLRFFFFFFFFFLRRLRRLLRFFFFFFFFF",
-        "LRRLLRLLRFFFFFFFFFLRRRRLLLRFFFFFFFFF",
-        "LRRLLRLLRFFFFFFFFFRLLLRRRRLFFFFFFFFF",
-        "LRRLLRLLRFFFFFFFFFRLLRRLRRLFFFFFFFFF",
-        "LRRLLRLLRFFFFFFFFFRRLLRRRLLFFFFFFFFF",
-        "LRRLLRLLRFFFFFFFFFRRLRRLRLLFFFFFFFFF",
-        "LRRLLRLRRFFFFFFFFFLLRLRRLLRFFFFFFFFF",
-        "LRRLLRLRRFFFFFFFFFLLRRRLLLRFFFFFFFFF",
-        "LRRLLRLRRFFFFFFFFFRLLLRRRLLFFFFFFFFF",
-        "LRRLLRLRRFFFFFFFFFRLLRRLRLLFFFFFFFFF",
-        "LRRLLRRLLFFFFFFFFFRLLLRRLRRFFFFFFFFF",
-        "LRRLLRRLLFFFFFFFFFRLLRRLLRRFFFFFFFFF",
-        "LRRLLRRLLFFFFFFFFFRRLLRRLLRFFFFFFFFF",
-        "LRRLLRRLLFFFFFFFFFRRLRRLLLRFFFFFFFFF",
-        "LRRLLRRRLFFFFFFFFFRLLLRRLLRFFFFFFFFF",
-        "LRRLLRRRLFFFFFFFFFRLLRRLLLRFFFFFFFFF",
-        "LRRRLLLLRFFFFFFFFFLLRLRRLRRFFFFFFFFF",
-        "LRRRLLLLRFFFFFFFFFLLRRRLLRRFFFFFFFFF",
-        "LRRRLLLLRFFFFFFFFFLRRLRRLLRFFFFFFFFF",
-        "LRRRLLLLRFFFFFFFFFLRRRRLLLRFFFFFFFFF",
-        "LRRRLLLLRFFFFFFFFFRLLLRRRRLFFFFFFFFF",
-        "LRRRLLLLRFFFFFFFFFRLLRRLRRLFFFFFFFFF",
-        "LRRRLLLLRFFFFFFFFFRRLLRRRLLFFFFFFFFF",
-        "LRRRLLLLRFFFFFFFFFRRLRRLRLLFFFFFFFFF",
-        "LRRRLLLRRFFFFFFFFFLLRLRRLLRFFFFFFFFF",
-        "LRRRLLLRRFFFFFFFFFLLRRRLLLRFFFFFFFFF",
-        "LRRRLLLRRFFFFFFFFFRLLLRRRLLFFFFFFFFF",
-        "LRRRLLLRRFFFFFFFFFRLLRRLRLLFFFFFFFFF",
-        "LRRRLLRLLFFFFFFFFFRLLLRRLRRFFFFFFFFF",
-        "LRRRLLRLLFFFFFFFFFRLLRRLLRRFFFFFFFFF",
-        "LRRRLLRLLFFFFFFFFFRRLLRRLLRFFFFFFFFF",
-        "LRRRLLRLLFFFFFFFFFRRLRRLLLRFFFFFFFFF",
-        "LRRRLLRRLFFFFFFFFFRLLLRRLLRFFFFFFFFF",
-        "LRRRLLRRLFFFFFFFFFRLLRRLLLRFFFFFFFFF",
-        "LRRRLRLLRFFFFFFFFFLLRLRLLRRFFFFFFFFF",
-        "LRRRLRLLRFFFFFFFFFLRRLRLLLRFFFFFFFFF",
-        "LRRRLRLLRFFFFFFFFFRLLLRLRRLFFFFFFFFF",
-        "LRRRLRLLRFFFFFFFFFRRLLRLRLLFFFFFFFFF",
-        "LRRRLRLRRFFFFFFFFFLLRLRLLLRFFFFFFFFF",
-        "LRRRLRLRRFFFFFFFFFRLLLRLRLLFFFFFFFFF",
-        "LRRRLRRLLFFFFFFFFFRLLLRLLRRFFFFFFFFF",
-        "LRRRLRRLLFFFFFFFFFRRLLRLLLRFFFFFFFFF",
-        "LRRRLRRRLFFFFFFFFFRLLLRLLLRFFFFFFFFF",
-        "RLLLLLLLRFFFFFFFFFLRRRRRRRLFFFFFFFFF",
-        "RLLLLLLRRFFFFFFFFFLLRRRRRRLFFFFFFFFF",
-        "RLLLLLLRRFFFFFFFFFLRRRRRRLLFFFFFFFFF",
-        "RLLLLLRLLFFFFFFFFFLRRRRRLRRFFFFFFFFF",
-        "RLLLLLRLLFFFFFFFFFRRLRRRRRLFFFFFFFFF",
-        "RLLLLLRRLFFFFFFFFFLLRRRRLRRFFFFFFFFF",
-        "RLLLLLRRLFFFFFFFFFLRRRRRLLRFFFFFFFFF",
-        "RLLLLLRRLFFFFFFFFFRLLRRRRRLFFFFFFFFF",
-        "RLLLLLRRLFFFFFFFFFRRLRRRRLLFFFFFFFFF",
-        "RLLLLRLLRFFFFFFFFFLRRLRRRRLFFFFFFFFF",
-        "RLLLLRLLRFFFFFFFFFLRRRRLRRLFFFFFFFFF",
-        "RLLLLRLRRFFFFFFFFFLLRLRRRRLFFFFFFFFF",
-        "RLLLLRLRRFFFFFFFFFLLRRRLRRLFFFFFFFFF",
-        "RLLLLRLRRFFFFFFFFFLRRLRRRLLFFFFFFFFF",
-        "RLLLLRLRRFFFFFFFFFLRRRRLRLLFFFFFFFFF",
-        "RLLLLRRLLFFFFFFFFFLRRLRRLRRFFFFFFFFF",
-        "RLLLLRRLLFFFFFFFFFLRRRRLLRRFFFFFFFFF",
-        "RLLLLRRLLFFFFFFFFFRRLLRRRRLFFFFFFFFF",
-        "RLLLLRRLLFFFFFFFFFRRLRRLRRLFFFFFFFFF",
-        "RLLLLRRRLFFFFFFFFFLLRLRRLRRFFFFFFFFF",
-        "RLLLLRRRLFFFFFFFFFLLRRRLLRRFFFFFFFFF",
-        "RLLLLRRRLFFFFFFFFFLRRLRRLLRFFFFFFFFF",
-        "RLLLLRRRLFFFFFFFFFLRRRRLLLRFFFFFFFFF",
-        "RLLLLRRRLFFFFFFFFFRLLLRRRRLFFFFFFFFF",
-        "RLLLLRRRLFFFFFFFFFRLLRRLRRLFFFFFFFFF",
-        "RLLLLRRRLFFFFFFFFFRRLLRRRLLFFFFFFFFF",
-        "RLLLLRRRLFFFFFFFFFRRLRRLRLLFFFFFFFFF",
-        "RLLRLLLLRFFFFFFFFFLRRLRRRRLFFFFFFFFF",
-        "RLLRLLLLRFFFFFFFFFLRRRRLRRLFFFFFFFFF",
-        "RLLRLLLRRFFFFFFFFFLLRLRRRRLFFFFFFFFF",
-        "RLLRLLLRRFFFFFFFFFLLRRRLRRLFFFFFFFFF",
-        "RLLRLLLRRFFFFFFFFFLRRLRRRLLFFFFFFFFF",
-        "RLLRLLLRRFFFFFFFFFLRRRRLRLLFFFFFFFFF",
-        "RLLRLLRLLFFFFFFFFFLRRLRRLRRFFFFFFFFF",
-        "RLLRLLRLLFFFFFFFFFLRRRRLLRRFFFFFFFFF",
-        "RLLRLLRLLFFFFFFFFFRRLLRRRRLFFFFFFFFF",
-        "RLLRLLRLLFFFFFFFFFRRLRRLRRLFFFFFFFFF",
-        "RLLRLLRRLFFFFFFFFFLLRLRRLRRFFFFFFFFF",
-        "RLLRLLRRLFFFFFFFFFLLRRRLLRRFFFFFFFFF",
-        "RLLRLLRRLFFFFFFFFFLRRLRRLLRFFFFFFFFF",
-        "RLLRLLRRLFFFFFFFFFLRRRRLLLRFFFFFFFFF",
-        "RLLRLLRRLFFFFFFFFFRLLLRRRRLFFFFFFFFF",
-        "RLLRLLRRLFFFFFFFFFRLLRRLRRLFFFFFFFFF",
-        "RLLRLLRRLFFFFFFFFFRRLLRRRLLFFFFFFFFF",
-        "RLLRLLRRLFFFFFFFFFRRLRRLRLLFFFFFFFFF",
-        "RLLRLRLLRFFFFFFFFFLRRLRLRRLFFFFFFFFF",
-        "RLLRLRLRRFFFFFFFFFLLRLRLRRLFFFFFFFFF",
-        "RLLRLRLRRFFFFFFFFFLRRLRLRLLFFFFFFFFF",
-        "RLLRLRRLLFFFFFFFFFLRRLRLLRRFFFFFFFFF",
-        "RLLRLRRLLFFFFFFFFFRRLLRLRRLFFFFFFFFF",
-        "RLLRLRRRLFFFFFFFFFLLRLRLLRRFFFFFFFFF",
-        "RLLRLRRRLFFFFFFFFFLRRLRLLLRFFFFFFFFF",
-        "RLLRLRRRLFFFFFFFFFRLLLRLRRLFFFFFFFFF",
-        "RLLRLRRRLFFFFFFFFFRRLLRLRLLFFFFFFFFF",
-        "RLRLLLLLLFFFFFFFFFLRLRRRRRRFFFFFFFFF",
-        "RLRLLLLLLFFFFFFFFFRRRRRRLRLFFFFFFFFF",
-        "RLRLLLLRLFFFFFFFFFLLLRRRRRRFFFFFFFFF",
-        "RLRLLLLRLFFFFFFFFFLRLRRRRLRFFFFFFFFF",
-        "RLRLLLLRLFFFFFFFFFRLRRRRLRLFFFFFFFFF",
-        "RLRLLLLRLFFFFFFFFFRRRRRRLLLFFFFFFFFF",
-        "RLRLLLRLRFFFFFFFFFLRLRRRLRLFFFFFFFFF",
-        "RLRLLLRRRFFFFFFFFFLLLRRRLRLFFFFFFFFF",
-        "RLRLLLRRRFFFFFFFFFLRLRRRLLLFFFFFFFFF",
-        "RLRLLRLLLFFFFFFFFFLRLLRRRRRFFFFFFFFF",
-        "RLRLLRLLLFFFFFFFFFLRLRRLRRRFFFFFFFFF",
-        "RLRLLRLLLFFFFFFFFFRRRLRRLRLFFFFFFFFF",
-        "RLRLLRLLLFFFFFFFFFRRRRRLLRLFFFFFFFFF",
-        "RLRLLRLRLFFFFFFFFFLLLLRRRRRFFFFFFFFF",
-        "RLRLLRLRLFFFFFFFFFLLLRRLRRRFFFFFFFFF",
-        "RLRLLRLRLFFFFFFFFFLRLLRRRLRFFFFFFFFF",
-        "RLRLLRLRLFFFFFFFFFLRLRRLRLRFFFFFFFFF",
-        "RLRLLRLRLFFFFFFFFFRLRLRRLRLFFFFFFFFF",
-        "RLRLLRLRLFFFFFFFFFRLRRRLLRLFFFFFFFFF",
-        "RLRLLRLRLFFFFFFFFFRRRLRRLLLFFFFFFFFF",
-        "RLRLLRLRLFFFFFFFFFRRRRRLLLLFFFFFFFFF",
-        "RLRLLRRLRFFFFFFFFFLRLLRRLRLFFFFFFFFF",
-        "RLRLLRRLRFFFFFFFFFLRLRRLLRLFFFFFFFFF",
-        "RLRLLRRRRFFFFFFFFFLLLLRRLRLFFFFFFFFF",
-        "RLRLLRRRRFFFFFFFFFLLLRRLLRLFFFFFFFFF",
-        "RLRLLRRRRFFFFFFFFFLRLLRRLLLFFFFFFFFF",
-        "RLRLLRRRRFFFFFFFFFLRLRRLLLLFFFFFFFFF",
-        "RLRRLLLLLFFFFFFFFFLRLLRRRRRFFFFFFFFF",
-        "RLRRLLLLLFFFFFFFFFLRLRRLRRRFFFFFFFFF",
-        "RLRRLLLLLFFFFFFFFFRRRLRRLRLFFFFFFFFF",
-        "RLRRLLLLLFFFFFFFFFRRRRRLLRLFFFFFFFFF",
-        "RLRRLLLRLFFFFFFFFFLLLLRRRRRFFFFFFFFF",
-        "RLRRLLLRLFFFFFFFFFLLLRRLRRRFFFFFFFFF",
-        "RLRRLLLRLFFFFFFFFFLRLLRRRLRFFFFFFFFF",
-        "RLRRLLLRLFFFFFFFFFLRLRRLRLRFFFFFFFFF",
-        "RLRRLLLRLFFFFFFFFFRLRLRRLRLFFFFFFFFF",
-        "RLRRLLLRLFFFFFFFFFRLRRRLLRLFFFFFFFFF",
-        "RLRRLLLRLFFFFFFFFFRRRLRRLLLFFFFFFFFF",
-        "RLRRLLLRLFFFFFFFFFRRRRRLLLLFFFFFFFFF",
-        "RLRRLLRLRFFFFFFFFFLRLLRRLRLFFFFFFFFF",
-        "RLRRLLRLRFFFFFFFFFLRLRRLLRLFFFFFFFFF",
-        "RLRRLLRRRFFFFFFFFFLLLLRRLRLFFFFFFFFF",
-        "RLRRLLRRRFFFFFFFFFLLLRRLLRLFFFFFFFFF",
-        "RLRRLLRRRFFFFFFFFFLRLLRRLLLFFFFFFFFF",
-        "RLRRLLRRRFFFFFFFFFLRLRRLLLLFFFFFFFFF",
-        "RLRRLRLLLFFFFFFFFFLRLLRLRRRFFFFFFFFF",
-        "RLRRLRLLLFFFFFFFFFRRRLRLLRLFFFFFFFFF",
-        "RLRRLRLRLFFFFFFFFFLLLLRLRRRFFFFFFFFF",
-        "RLRRLRLRLFFFFFFFFFLRLLRLRLRFFFFFFFFF",
-        "RLRRLRLRLFFFFFFFFFRLRLRLLRLFFFFFFFFF",
-        "RLRRLRLRLFFFFFFFFFRRRLRLLLLFFFFFFFFF",
-        "RLRRLRRLRFFFFFFFFFLRLLRLLRLFFFFFFFFF",
-        "RLRRLRRRRFFFFFFFFFLLLLRLLRLFFFFFFFFF",
-        "RLRRLRRRRFFFFFFFFFLRLLRLLLLFFFFFFFFF",
-        "RRLLLLLLRFFFFFFFFFLLRRRRRRLFFFFFFFFF",
-        "RRLLLLLLRFFFFFFFFFLRRRRRRLLFFFFFFFFF",
-        "RRLLLLLRRFFFFFFFFFLLRRRRRLLFFFFFFFFF",
-        "RRLLLLRLLFFFFFFFFFLLRRRRLRRFFFFFFFFF",
-        "RRLLLLRLLFFFFFFFFFLRRRRRLLRFFFFFFFFF",
-        "RRLLLLRLLFFFFFFFFFRLLRRRRRLFFFFFFFFF",
-        "RRLLLLRLLFFFFFFFFFRRLRRRRLLFFFFFFFFF",
-        "RRLLLLRRLFFFFFFFFFLLRRRRLLRFFFFFFFFF",
-        "RRLLLLRRLFFFFFFFFFRLLRRRRLLFFFFFFFFF",
-        "RRLLLRLLRFFFFFFFFFLLRLRRRRLFFFFFFFFF",
-        "RRLLLRLLRFFFFFFFFFLLRRRLRRLFFFFFFFFF",
-        "RRLLLRLLRFFFFFFFFFLRRLRRRLLFFFFFFFFF",
-        "RRLLLRLLRFFFFFFFFFLRRRRLRLLFFFFFFFFF",
-        "RRLLLRLRRFFFFFFFFFLLRLRRRLLFFFFFFFFF",
-        "RRLLLRLRRFFFFFFFFFLLRRRLRLLFFFFFFFFF",
-        "RRLLLRRLLFFFFFFFFFLLRLRRLRRFFFFFFFFF",
-        "RRLLLRRLLFFFFFFFFFLLRRRLLRRFFFFFFFFF",
-        "RRLLLRRLLFFFFFFFFFLRRLRRLLRFFFFFFFFF",
-        "RRLLLRRLLFFFFFFFFFLRRRRLLLRFFFFFFFFF",
-        "RRLLLRRLLFFFFFFFFFRLLLRRRRLFFFFFFFFF",
-        "RRLLLRRLLFFFFFFFFFRLLRRLRRLFFFFFFFFF",
-        "RRLLLRRLLFFFFFFFFFRRLLRRRLLFFFFFFFFF",
-        "RRLLLRRLLFFFFFFFFFRRLRRLRLLFFFFFFFFF",
-        "RRLLLRRRLFFFFFFFFFLLRLRRLLRFFFFFFFFF",
-        "RRLLLRRRLFFFFFFFFFLLRRRLLLRFFFFFFFFF",
-        "RRLLLRRRLFFFFFFFFFRLLLRRRLLFFFFFFFFF",
-        "RRLLLRRRLFFFFFFFFFRLLRRLRLLFFFFFFFFF",
-        "RRLRLLLLRFFFFFFFFFLLRLRRRRLFFFFFFFFF",
-        "RRLRLLLLRFFFFFFFFFLLRRRLRRLFFFFFFFFF",
-        "RRLRLLLLRFFFFFFFFFLRRLRRRLLFFFFFFFFF",
-        "RRLRLLLLRFFFFFFFFFLRRRRLRLLFFFFFFFFF",
-        "RRLRLLLRRFFFFFFFFFLLRLRRRLLFFFFFFFFF",
-        "RRLRLLLRRFFFFFFFFFLLRRRLRLLFFFFFFFFF",
-        "RRLRLLRLLFFFFFFFFFLLRLRRLRRFFFFFFFFF",
-        "RRLRLLRLLFFFFFFFFFLLRRRLLRRFFFFFFFFF",
-        "RRLRLLRLLFFFFFFFFFLRRLRRLLRFFFFFFFFF",
-        "RRLRLLRLLFFFFFFFFFLRRRRLLLRFFFFFFFFF",
-        "RRLRLLRLLFFFFFFFFFRLLLRRRRLFFFFFFFFF",
-        "RRLRLLRLLFFFFFFFFFRLLRRLRRLFFFFFFFFF",
-        "RRLRLLRLLFFFFFFFFFRRLLRRRLLFFFFFFFFF",
-        "RRLRLLRLLFFFFFFFFFRRLRRLRLLFFFFFFFFF",
-        "RRLRLLRRLFFFFFFFFFLLRLRRLLRFFFFFFFFF",
-        "RRLRLLRRLFFFFFFFFFLLRRRLLLRFFFFFFFFF",
-        "RRLRLLRRLFFFFFFFFFRLLLRRRLLFFFFFFFFF",
-        "RRLRLLRRLFFFFFFFFFRLLRRLRLLFFFFFFFFF",
-        "RRLRLRLLRFFFFFFFFFLLRLRLRRLFFFFFFFFF",
-        "RRLRLRLLRFFFFFFFFFLRRLRLRLLFFFFFFFFF",
-        "RRLRLRLRRFFFFFFFFFLLRLRLRLLFFFFFFFFF",
-        "RRLRLRRLLFFFFFFFFFLLRLRLLRRFFFFFFFFF",
-        "RRLRLRRLLFFFFFFFFFLRRLRLLLRFFFFFFFFF",
-        "RRLRLRRLLFFFFFFFFFRLLLRLRRLFFFFFFFFF",
-        "RRLRLRRLLFFFFFFFFFRRLLRLRLLFFFFFFFFF",
-        "RRLRLRRRLFFFFFFFFFLLRLRLLLRFFFFFFFFF",
-        "RRLRLRRRLFFFFFFFFFRLLLRLRLLFFFFFFFFF",
-        "RRRLLLLLLFFFFFFFFFLLLRRRRRRFFFFFFFFF",
-        "RRRLLLLLLFFFFFFFFFLRLRRRRLRFFFFFFFFF",
-        "RRRLLLLLLFFFFFFFFFRLRRRRLRLFFFFFFFFF",
-        "RRRLLLLLLFFFFFFFFFRRRRRRLLLFFFFFFFFF",
-        "RRRLLLLRLFFFFFFFFFLLLRRRRLRFFFFFFFFF",
-        "RRRLLLLRLFFFFFFFFFRLRRRRLLLFFFFFFFFF",
-        "RRRLLLRLRFFFFFFFFFLLLRRRLRLFFFFFFFFF",
-        "RRRLLLRLRFFFFFFFFFLRLRRRLLLFFFFFFFFF",
-        "RRRLLLRRRFFFFFFFFFLLLRRRLLLFFFFFFFFF",
-        "RRRLLRLLLFFFFFFFFFLLLLRRRRRFFFFFFFFF",
-        "RRRLLRLLLFFFFFFFFFLLLRRLRRRFFFFFFFFF",
-        "RRRLLRLLLFFFFFFFFFLRLLRRRLRFFFFFFFFF",
-        "RRRLLRLLLFFFFFFFFFLRLRRLRLRFFFFFFFFF",
-        "RRRLLRLLLFFFFFFFFFRLRLRRLRLFFFFFFFFF",
-        "RRRLLRLLLFFFFFFFFFRLRRRLLRLFFFFFFFFF",
-        "RRRLLRLLLFFFFFFFFFRRRLRRLLLFFFFFFFFF",
-        "RRRLLRLLLFFFFFFFFFRRRRRLLLLFFFFFFFFF",
-        "RRRLLRLRLFFFFFFFFFLLLLRRRLRFFFFFFFFF",
-        "RRRLLRLRLFFFFFFFFFLLLRRLRLRFFFFFFFFF",
-        "RRRLLRLRLFFFFFFFFFRLRLRRLLLFFFFFFFFF",
-        "RRRLLRLRLFFFFFFFFFRLRRRLLLLFFFFFFFFF",
-        "RRRLLRRLRFFFFFFFFFLLLLRRLRLFFFFFFFFF",
-        "RRRLLRRLRFFFFFFFFFLLLRRLLRLFFFFFFFFF",
-        "RRRLLRRLRFFFFFFFFFLRLLRRLLLFFFFFFFFF",
-        "RRRLLRRLRFFFFFFFFFLRLRRLLLLFFFFFFFFF",
-        "RRRLLRRRRFFFFFFFFFLLLLRRLLLFFFFFFFFF",
-        "RRRLLRRRRFFFFFFFFFLLLRRLLLLFFFFFFFFF",
-        "RRRRLLLLLFFFFFFFFFLLLLRRRRRFFFFFFFFF",
-        "RRRRLLLLLFFFFFFFFFLLLRRLRRRFFFFFFFFF",
-        "RRRRLLLLLFFFFFFFFFLRLLRRRLRFFFFFFFFF",
-        "RRRRLLLLLFFFFFFFFFLRLRRLRLRFFFFFFFFF",
-        "RRRRLLLLLFFFFFFFFFRLRLRRLRLFFFFFFFFF",
-        "RRRRLLLLLFFFFFFFFFRLRRRLLRLFFFFFFFFF",
-        "RRRRLLLLLFFFFFFFFFRRRLRRLLLFFFFFFFFF",
-        "RRRRLLLLLFFFFFFFFFRRRRRLLLLFFFFFFFFF",
-        "RRRRLLLRLFFFFFFFFFLLLLRRRLRFFFFFFFFF",
-        "RRRRLLLRLFFFFFFFFFLLLRRLRLRFFFFFFFFF",
-        "RRRRLLLRLFFFFFFFFFRLRLRRLLLFFFFFFFFF",
-        "RRRRLLLRLFFFFFFFFFRLRRRLLLLFFFFFFFFF",
-        "RRRRLLRLRFFFFFFFFFLLLLRRLRLFFFFFFFFF",
-        "RRRRLLRLRFFFFFFFFFLLLRRLLRLFFFFFFFFF",
-        "RRRRLLRLRFFFFFFFFFLRLLRRLLLFFFFFFFFF",
-        "RRRRLLRLRFFFFFFFFFLRLRRLLLLFFFFFFFFF",
-        "RRRRLLRRRFFFFFFFFFLLLLRRLLLFFFFFFFFF",
-        "RRRRLLRRRFFFFFFFFFLLLRRLLLLFFFFFFFFF",
-        "RRRRLRLLLFFFFFFFFFLLLLRLRRRFFFFFFFFF",
-        "RRRRLRLLLFFFFFFFFFLRLLRLRLRFFFFFFFFF",
-        "RRRRLRLLLFFFFFFFFFRLRLRLLRLFFFFFFFFF",
-        "RRRRLRLLLFFFFFFFFFRRRLRLLLLFFFFFFFFF",
-        "RRRRLRLRLFFFFFFFFFLLLLRLRLRFFFFFFFFF",
-        "RRRRLRLRLFFFFFFFFFRLRLRLLLLFFFFFFFFF",
-        "RRRRLRRLRFFFFFFFFFLLLLRLLRLFFFFFFFFF",
-        "RRRRLRRLRFFFFFFFFFLRLLRLLLLFFFFFFFFF",
-        "RRRRLRRRRFFFFFFFFFLLLLRLLLLFFFFFFFFF",
-    )
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step40-LR-centers-stage-432.txt",
-            self.state_targets,
-            moves_555,
-            # illegal moves
-            ("Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            linecount=2350568,
-            max_depth=4,
-            filesize=133982376,
-        )
-
-    def search_complete(self, state, steps_to_here):
-        if LookupTableIDA.search_complete(self, state, steps_to_here):
-            pairable_count = len(self.parent.edges_pairable_without_LR())
-
-            # Technically we only need 4-edges to be in high/low groups but that leaves us
-            # zero wiggle room for the next phase, we will HAVE to pair those 4-edges and
-            # if we hit some bad luck they could take a higher number of moves than is typical
-            # to pair.  If we have 6-edges in high/low groups though that leaves us 15 permutations
-            # of 4-edges to choose from..
-            if pairable_count >= MIN_EO_COUNT_FOR_STAGE_LR_432:
-                # log.info("%s: found solution where %d-edges (min %d-edges) are EOed" % (self, pairable_count, MIN_EO_COUNT_FOR_STAGE_LR_432))
-                return True
-            else:
-                # log.info("%s: found solution but only %d-edges are EOed" % (self, pairable_count))
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                return False
-        else:
-            return False
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = "".join(["F" if parent_state[x] == "B" else parent_state[x] for x in LFRB_centers_555])
-
-        (_, LR_stage_cost_to_goal) = self.parent.lt_LR_centers_stage_pt.ida_heuristic()
-        (_, LR_432_x_centers_cost_to_goal,) = self.parent.lt_LR_432_x_centers_only.ida_heuristic()
-        (_, LR_432_t_centers_cost_to_goal,) = self.parent.lt_LR_432_t_centers_only.ida_heuristic()
-
-        cost_to_goal = max(
-            LR_stage_cost_to_goal,
-            LR_432_x_centers_cost_to_goal,
-            LR_432_t_centers_cost_to_goal,
-        )
-
-        if cost_to_goal > 0:
-            steps = self.steps(lt_state)
-
-            if steps:
-                cost_to_goal = len(steps)
-            else:
-                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
-
-        # self.parent.print_cube()
-        # log.info("%s: lt_state %s, cost_to_goal %d, LR_stage_cost_to_goal %d, LR_432_x_centers_cost_to_goal %d, LR_432_t_centers_cost_to_goal %d" %
-        #    (self, lt_state, cost_to_goal,
-        #     LR_stage_cost_to_goal, LR_432_x_centers_cost_to_goal, LR_432_t_centers_cost_to_goal))
-        return (lt_state, cost_to_goal)
-
-
-# class LookupTable555EdgesZPlaneEdgesOnly(LookupTable):
-class LookupTable555EdgesZPlaneEdgesOnly(LookupTableHashCostOnly):
-    """
-    lookup-table-5x5x5-step341-edges-z-plane-edges-only.txt
-    =======================================================
-    1 steps has 20 entries (0 percent, 0.00x previous step)
-    2 steps has 136 entries (0 percent, 6.80x previous step)
-    3 steps has 1,080 entries (0 percent, 7.94x previous step)
-    4 steps has 9,588 entries (0 percent, 8.88x previous step)
-    5 steps has 76,960 entries (0 percent, 8.03x previous step)
-    6 steps has 572,044 entries (0 percent, 7.43x previous step)
-    7 steps has 3,771,232 entries (0 percent, 6.59x previous step)
-    8 steps has 20,862,480 entries (5 percent, 5.53x previous step)
-    9 steps has 83,953,652 entries (21 percent, 4.02x previous step)
-    10 steps has 178,801,180 entries (46 percent, 2.13x previous step)
-    11 steps has 93,704,032 entries (24 percent, 0.52x previous step)
-    12 steps has 1,575,596 entries (0 percent, 0.02x previous step)
-
-    Total: 383,328,000 entries
-    Average: 9.89 moves
-    """
-
-    def __init__(self, parent):
-        """
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step341-edges-z-plane-edges-only.txt',
-            ('---pPPQQq------------------xXX------',
-             '------QQq------------------xXXYYy---',
-             '---pPP---------------------xXXYYy---',
-             '---pPPQQq---------------------YYy---'),
-            linecount=383328000,
-            max_depth=12,
-            filesize=31432896000)
-        """
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step341-edges-z-plane-edges-only.hash-cost-only.txt",
-            "---pPPQQq------------------xXX------",
-            linecount=1,
-            max_depth=12,
-            bucketcount=383328041,
-            filesize=383328042,
-        )
-
-    def ida_heuristic(self):
-        assert (
-            self.only_colors and len(self.only_colors) == 3
-        ), "You must specify which 3-edges"
-        parent_state = self.parent.state
-        state = edges_recolor_pattern_555(parent_state[:], self.only_colors)
-        state = "".join([state[index] for index in wings_for_edges_pattern_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable555EdgesZPlaneCentersOnly(LookupTable):
-    """
-    lookup-table-5x5x5-step342-edges-z-plane-centers-only.txt
-    =========================================================
-    1 steps has 18 entries (4 percent, 0.00x previous step)
-    2 steps has 38 entries (8 percent, 2.11x previous step)
-    3 steps has 74 entries (17 percent, 1.95x previous step)
-    4 steps has 108 entries (25 percent, 1.46x previous step)
-    5 steps has 102 entries (23 percent, 0.94x previous step)
-    6 steps has 52 entries (12 percent, 0.51x previous step)
-    7 steps has 40 entries (9 percent, 0.77x previous step)
-
-    Total: 432 entries
-    Average: 4.28 moves
-    """
-
-    state_targets = (
-        "LLLLLLLLLRRRRRRRRR",
-        "LLLLLLRRRLLLRRRRRR",
-        "LLLLLLRRRRRRRRRLLL",
-        "RRRLLLLLLLLLRRRRRR",
-        "RRRLLLLLLRRRRRRLLL",
-        "RRRLLLRRRLLLRRRLLL",
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step342-edges-z-plane-centers-only.txt",
-            self.state_targets,
-            linecount=432,
-            max_depth=7,
-            filesize=19872,
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = "".join([parent_state[x] for x in LR_centers_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTableIDA555EdgesZPlane(LookupTableIDA):
-    """
-    lookup-table-5x5x5-step340-edges-z-plane.txt
-    ============================================
-    1 steps has 30 entries (0 percent, 0.00x previous step)
-    2 steps has 264 entries (0 percent, 8.80x previous step)
-    3 steps has 2,764 entries (0 percent, 10.47x previous step)
-    4 steps has 29,276 entries (0 percent, 10.59x previous step)
-    5 steps has 319,486 entries (8 percent, 10.91x previous step)
-    6 steps has 3,457,886 entries (90 percent, 10.82x previous step)
-
-    Total: 3,809,706 entries
-    """
-
-    state_targets = (
-        "LLLLLLLLLRRRRRRRRR---pPPQQq------------------xXXYYy---",
-        "LLLLLLRRRLLLRRRRRR---pPPQQq------------------xXXYYy---",
-        "LLLLLLRRRRRRRRRLLL---pPPQQq------------------xXXYYy---",
-        "RRRLLLLLLLLLRRRRRR---pPPQQq------------------xXXYYy---",
-        "RRRLLLLLLRRRRRRLLL---pPPQQq------------------xXXYYy---",
-        "RRRLLLRRRLLLRRRLLL---pPPQQq------------------xXXYYy---",
-    )
-
-    heuristic_stats = {
-        (0, 1): 1,
-        (0, 2): 2,
-        (0, 3): 3,
-        (0, 4): 4,
-        (0, 5): 5,
-        (0, 6): 6,
-        (0, 7): 7,
-        (0, 8): 8,
-        (0, 9): 9,
-        (0, 10): 12,
-        (1, 1): 1,
-        (1, 2): 2,
-        (1, 3): 3,
-        (1, 4): 4,
-        (1, 5): 5,
-        (1, 6): 6,
-        (1, 7): 7,
-        (1, 8): 8,
-        (1, 9): 9,
-        (1, 10): 11,
-        (1, 11): 12,
-        (2, 1): 3,
-        (2, 2): 2,
-        (2, 3): 3,
-        (2, 4): 4,
-        (2, 5): 5,
-        (2, 6): 6,
-        (2, 7): 7,
-        (2, 8): 8,
-        (2, 9): 10,
-        (2, 10): 11,
-        (2, 11): 12,
-        (3, 2): 4,
-        (3, 3): 3,
-        (3, 4): 4,
-        (3, 5): 5,
-        (3, 6): 6,
-        (3, 7): 7,
-        (3, 8): 8,
-        (3, 9): 10,
-        (3, 10): 12,
-        (3, 11): 12,
-        (4, 3): 6,
-        (4, 4): 5,
-        (4, 5): 6,
-        (4, 6): 6,
-        (4, 7): 7,
-        (4, 8): 8,
-        (4, 9): 10,
-        (4, 10): 12,
-        (4, 11): 13,
-        (5, 4): 6,
-        (5, 5): 7,
-        (5, 6): 7,
-        (5, 7): 8,
-        (5, 8): 9,
-        (5, 9): 11,
-        (5, 10): 12,
-        (5, 11): 13,
-        (6, 5): 8,
-        (6, 6): 8,
-        (6, 7): 8,
-        (6, 8): 9,
-        (6, 9): 11,
-        (6, 10): 13,
-        (6, 11): 14,
-        (7, 7): 10,
-        (7, 8): 9,
-        (7, 9): 12,
-        (7, 10): 14,
-        (7, 11): 13,
+        (128, 73): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (136, 48): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (140, 98): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (148, 123): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
     }
 
-    # For cube LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
-    # 2 : 14 moves in 42s
-    # 1 : 14 moves in 8s
-    # 0 : 15 moves in 4s
-
-    # FRFFBLUUFLFFUDLFLUDBRFBLLFUDBRRUULDUDRLBLFBDDUDRRLFDLFDUULUUFRFRLDRBLDDRUBRBFRDBLDBFFUBDDBDFFRFLUDFURBRUUUBDBLBRLLLBRUDBFLFULDUDBDRRRLRDFBLURBFBRBLRBU
-    # 2 : 14 moves in 14s
-    # 1 : 14 moves in 8s
-    # 0 : 14 moves in 800ms
-    heuristic_stats_error = 0
-
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTable.__init__(
             self,
             parent,
-            "lookup-table-5x5x5-step340-edges-z-plane.txt",
-            self.state_targets,
-            moves_555,
-            # illegal moves
-            (
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-            ),
-            linecount=3809706,
-            max_depth=6,
-            filesize=297157068,
-        )
-
-        if self.parent.cpu_mode == "slow":
-            LookupTableIDA555EdgesZPlane.heuristic_stats_error = 1
-        elif self.parent.cpu_mode == "normal":
-            LookupTableIDA555EdgesZPlane.heuristic_stats_error = 0
-        elif self.parent.cpu_mode == "fast":
-            LookupTableIDA555EdgesZPlane.heuristic_stats_error = 0
-
-    def ida_heuristic_tuple(self):
-        assert (
-            self.only_colors and len(self.only_colors) == 4
-        ), "You must specify which 4-edges"
-        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
-        edges_state = "".join([state[index] for index in wings_for_edges_pattern_555])
-        (
-            centers_state,
-            centers_cost_to_goal,
-        ) = self.parent.lt_edges_z_plane_centers_only.ida_heuristic()
-        lt_state = centers_state + edges_state
-
-        three_wing_cost_to_goal = []
-
-        for three_wing_str_combo in itertools.combinations(self.only_colors, 3):
-            self.parent.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
-            (
-                _,
-                tmp_cost_to_goal,
-            ) = self.parent.lt_edges_z_plane_edges_only.ida_heuristic()
-            three_wing_cost_to_goal.append(tmp_cost_to_goal)
-
-        edges_cost_to_goal = max(three_wing_cost_to_goal)
-
-        return (centers_cost_to_goal, edges_cost_to_goal)
-
-    def search_complete(self, state, steps_to_here):
-        if LookupTableIDA.search_complete(self, state, steps_to_here):
-
-            # If we are not finding a solution for a "fewest move challenge" then go ahead
-            # and return True here and do not worry about trying to find a solution that
-            # allows us to skip step350.
-            if not self.parent.cpu_mode == "slow":
-                return True
-
-            # Are the edges in a state in the step351 table?  We must flip the edges around
-            # to their native orientation in order to check.
-            tmp_state = self.parent.state[:]
-            self.parent.edges_flip_to_original_orientation(
-                self.parent.get_y_plane_wing_strs(),
-                self.parent.get_x_plane_z_plane_wing_strs(),
-            )
-            (
-                eo_state,
-                eo_steps,
-            ) = self.parent.lt_x_plane_y_plane_orient_edges_edges_only.ida_heuristic()
-            # log.info("%s: step351 EO state %s, EO steps %s, state_target %s" %
-            #    (self, eo_state, pformat(eo_steps), bool(eo_state in self.lt_x_plane_y_plane_orient_edges_edges_only.state_target)))
-            self.parent.state = tmp_state[:]
-
-            # return True if the EO state for step351 is at one of its state targets. This allows us
-            # to avoid step350 completely.
-            if (
-                eo_state
-                in self.parent.lt_x_plane_y_plane_orient_edges_edges_only.state_target
-            ):
-                log.info("%s: found solution where edges are EOed per step351" % self)
-                return True
-            else:
-                # log.info("%s: found solution but edges are not EOed per step351" % self)
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                return False
-        else:
-            return False
+            'lookup-table-5x5x5-step903-EO-inner-orbit.txt',
+            ("UUUUUUUUUUUUUUUUUUUUUUUU",),
+            linecount=2048,
+            max_depth=7,
+            filesize=92160)
 
     def ida_heuristic(self):
-        assert (
-            self.only_colors and len(self.only_colors) == 4
-        ), "You must specify which 4-edges"
-        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
-        edges_state = "".join([state[index] for index in wings_for_edges_pattern_555])
-        (
-            centers_state,
-            centers_cost_to_goal,
-        ) = self.parent.lt_edges_z_plane_centers_only.ida_heuristic()
+        state = self.parent.state[:]
 
-        three_wing_cost_to_goal = []
+        for edge_position in MIDGE_TUPLES_555:
+            for (e0, e1) in edge_position:
+                edge_str = state[e0] + state[e1]
 
-        for three_wing_str_combo in itertools.combinations(self.only_colors, 3):
-            self.parent.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
-            (
-                _,
-                tmp_cost_to_goal,
-            ) = self.parent.lt_edges_z_plane_edges_only.ida_heuristic()
-            three_wing_cost_to_goal.append(tmp_cost_to_goal)
-
-        edges_cost_to_goal = max(three_wing_cost_to_goal)
-        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
-        lt_state = centers_state + edges_state
-
-        if cost_to_goal > 0:
-            steps = self.steps(lt_state)
-
-            if steps:
-                cost_to_goal = len(steps)
+                if edge_str in self.midge_states.get((e0, e1), ()):
+                    state[e0] = "U"
+                    state[e1] = "U"
+                    break
             else:
-                heuristic_stats_cost = self.heuristic_stats.get(
-                    (centers_cost_to_goal, edges_cost_to_goal), 0
-                )
-                cost_to_goal = max(
-                    centers_cost_to_goal,
-                    edges_cost_to_goal,
-                    self.max_depth + 1,
-                    heuristic_stats_cost - self.heuristic_stats_error,
-                )
+                state[e0] = "D"
+                state[e1] = "D"
 
-            if lt_state in self.state_targets:
-                cost_to_goal = 0
-
-        # log.info("%s: lt_state %s, cost_to_goal %d, centers_cost_to_goal %d, edges_cost_to_goal %d, three_wing_cost_to_goal %s" % (
-        #    self, lt_state, cost_to_goal, centers_cost_to_goal, edges_cost_to_goal, pformat(three_wing_cost_to_goal)))
+        lt_state = "".join([state[x] for x in midge_indexes])
+        cost_to_goal = self.heuristic(lt_state)
         return (lt_state, cost_to_goal)
 
 
-class LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
+class LookupTableIDA555LRCenterStageEOInnerOrbit(LookupTable):
     """
-    starting-states-lookup-table-5x5x5-step351-x-plane-y-plane-edges-orient-edges-only.txt
-    ======================================================================================
-    1 steps has 678,720 entries (75 percent, 0.00x previous step)
-    2 steps has 212,100 entries (23 percent, 0.31x previous step)
-    3 steps has 8,960 entries (0 percent, 0.04x previous step)
-    4 steps has 1,120 entries (0 percent, 0.12x previous step)
+    lookup-table-5x5x5-step901-LR-center-stage-EO-inner-orbit.txt
+    =============================================================
+    0 steps has 78 entries (0 percent, 0.00x previous step)
+    1 steps has 1,218 entries (0 percent, 15.62x previous step)
+    2 steps has 13,968 entries (0 percent, 11.47x previous step)
+    3 steps has 138,784 entries (1 percent, 9.94x previous step)
+    4 steps has 760,136 entries (7 percent, 5.48x previous step)
+    5 steps has 2,581,608 entries (25 percent, 3.40x previous step)
+    6 steps has 4,277,276 entries (42 percent, 1.66x previous step)
+    7 steps has 2,072,720 entries (20 percent, 0.48x previous step)
+    8 steps has 186,780 entries (1 percent, 0.09x previous step)
+    9 steps has 2,632 entries (0 percent, 0.01x previous step)
 
-    Total: 900,900 entries
-    Average: 1.26 moves
-
-    The average is actually 0.87 moves because 343,000 of the 678,720 in "1 step" are
-    state targets so those are "0 step".
+    Total: 10,035,200 entries
+    Average: 5.79 moves
     """
+
+    state_targets = (
+        'UUUUULLLULLLULLLUUUUUURRRURRRURRRUUUUUUUUU',
+        'UUUUULLLULLLULRLUUUUUURLRURRRURRRUUUUUUUUU',
+        'UUUUULLLULLLULRLUUUUUURRRURRRURLRUUUUUUUUU',
+        'UUUUULLLULLLURLRUUUUUULRLURRRURRRUUUUUUUUU',
+        'UUUUULLLULLLURLRUUUUUURRRURRRULRLUUUUUUUUU',
+        'UUUUULLLULLLURRRUUUUUULLLURRRURRRUUUUUUUUU',
+        'UUUUULLLULLLURRRUUUUUULRLURRRURLRUUUUUUUUU',
+        'UUUUULLLULLLURRRUUUUUURLRURRRULRLUUUUUUUUU',
+        'UUUUULLLULLLURRRUUUUUURRRURRRULLLUUUUUUUUU',
+        'UUUUULLLULLRULLLUUUUUURRRULRRURRRUUUUUUUUU',
+        'UUUUULLLULLRULLLUUUUUURRRURRLURRRUUUUUUUUU',
+        'UUUUULLLULLRULRLUUUUUURLRULRRURRRUUUUUUUUU',
+        'UUUUULLLULLRULRLUUUUUURLRURRLURRRUUUUUUUUU',
+        'UUUUULLLULLRULRLUUUUUURRRULRRURLRUUUUUUUUU',
+        'UUUUULLLULLRULRLUUUUUURRRURRLURLRUUUUUUUUU',
+        'UUUUULLLULLRURLRUUUUUULRLULRRURRRUUUUUUUUU',
+        'UUUUULLLULLRURLRUUUUUULRLURRLURRRUUUUUUUUU',
+        'UUUUULLLULLRURLRUUUUUURRRULRRULRLUUUUUUUUU',
+        'UUUUULLLULLRURLRUUUUUURRRURRLULRLUUUUUUUUU',
+        'UUUUULLLULLRURRRUUUUUULLLULRRURRRUUUUUUUUU',
+        'UUUUULLLULLRURRRUUUUUULLLURRLURRRUUUUUUUUU',
+        'UUUUULLLULLRURRRUUUUUULRLULRRURLRUUUUUUUUU',
+        'UUUUULLLULLRURRRUUUUUULRLURRLURLRUUUUUUUUU',
+        'UUUUULLLULLRURRRUUUUUURLRULRRULRLUUUUUUUUU',
+        'UUUUULLLULLRURRRUUUUUURLRURRLULRLUUUUUUUUU',
+        'UUUUULLLULLRURRRUUUUUURRRULRRULLLUUUUUUUUU',
+        'UUUUULLLULLRURRRUUUUUURRRURRLULLLUUUUUUUUU',
+        'UUUUULLLURLLULLLUUUUUURRRULRRURRRUUUUUUUUU',
+        'UUUUULLLURLLULLLUUUUUURRRURRLURRRUUUUUUUUU',
+        'UUUUULLLURLLULRLUUUUUURLRULRRURRRUUUUUUUUU',
+        'UUUUULLLURLLULRLUUUUUURLRURRLURRRUUUUUUUUU',
+        'UUUUULLLURLLULRLUUUUUURRRULRRURLRUUUUUUUUU',
+        'UUUUULLLURLLULRLUUUUUURRRURRLURLRUUUUUUUUU',
+        'UUUUULLLURLLURLRUUUUUULRLULRRURRRUUUUUUUUU',
+        'UUUUULLLURLLURLRUUUUUULRLURRLURRRUUUUUUUUU',
+        'UUUUULLLURLLURLRUUUUUURRRULRRULRLUUUUUUUUU',
+        'UUUUULLLURLLURLRUUUUUURRRURRLULRLUUUUUUUUU',
+        'UUUUULLLURLLURRRUUUUUULLLULRRURRRUUUUUUUUU',
+        'UUUUULLLURLLURRRUUUUUULLLURRLURRRUUUUUUUUU',
+        'UUUUULLLURLLURRRUUUUUULRLULRRURLRUUUUUUUUU',
+        'UUUUULLLURLLURRRUUUUUULRLURRLURLRUUUUUUUUU',
+        'UUUUULLLURLLURRRUUUUUURLRULRRULRLUUUUUUUUU',
+        'UUUUULLLURLLURRRUUUUUURLRURRLULRLUUUUUUUUU',
+        'UUUUULLLURLLURRRUUUUUURRRULRRULLLUUUUUUUUU',
+        'UUUUULLLURLLURRRUUUUUURRRURRLULLLUUUUUUUUU',
+        'UUUUULLLURLRULLLUUUUUURRRULRLURRRUUUUUUUUU',
+        'UUUUULLLURLRULRLUUUUUURLRULRLURRRUUUUUUUUU',
+        'UUUUULLLURLRULRLUUUUUURRRULRLURLRUUUUUUUUU',
+        'UUUUULLLURLRURLRUUUUUULRLULRLURRRUUUUUUUUU',
+        'UUUUULLLURLRURLRUUUUUURRRULRLULRLUUUUUUUUU',
+        'UUUUULLLURLRURRRUUUUUULLLULRLURRRUUUUUUUUU',
+        'UUUUULLLURLRURRRUUUUUULRLULRLURLRUUUUUUUUU',
+        'UUUUULLLURLRURRRUUUUUURLRULRLULRLUUUUUUUUU',
+        'UUUUULLLURLRURRRUUUUUURRRULRLULLLUUUUUUUUU',
+        'UUUUULLRULLLULLRUUUUUULRRURRRULRRUUUUUUUUU',
+        'UUUUULLRULLLULLRUUUUUURRLURRRURRLUUUUUUUUU',
+        'UUUUULLRULLLULRRUUUUUULLRURRRULRRUUUUUUUUU',
+        'UUUUULLRULLLULRRUUUUUULRRURRRULLRUUUUUUUUU',
+        'UUUUULLRULLLULRRUUUUUURLLURRRURRLUUUUUUUUU',
+        'UUUUULLRULLLULRRUUUUUURRLURRRURLLUUUUUUUUU',
+        'UUUUULLRULLLURLLUUUUUURRLURRRULRRUUUUUUUUU',
+        'UUUUULLRULLLURRLUUUUUURLLURRRULRRUUUUUUUUU',
+        'UUUUULLRULLLURRLUUUUUURRLURRRULLRUUUUUUUUU',
+        'UUUUULLRULLRULLRUUUUUULRRULRRULRRUUUUUUUUU',
+        'UUUUULLRULLRULLRUUUUUULRRURRLULRRUUUUUUUUU',
+        'UUUUULLRULLRULLRUUUUUURRLULRRURRLUUUUUUUUU',
+        'UUUUULLRULLRULLRUUUUUURRLURRLURRLUUUUUUUUU',
+        'UUUUULLRULLRULRRUUUUUULLRULRRULRRUUUUUUUUU',
+        'UUUUULLRULLRULRRUUUUUULLRURRLULRRUUUUUUUUU',
+        'UUUUULLRULLRULRRUUUUUULRRULRRULLRUUUUUUUUU',
+        'UUUUULLRULLRULRRUUUUUULRRURRLULLRUUUUUUUUU',
+        'UUUUULLRULLRULRRUUUUUURLLULRRURRLUUUUUUUUU',
+        'UUUUULLRULLRULRRUUUUUURLLURRLURRLUUUUUUUUU',
+        'UUUUULLRULLRULRRUUUUUURRLULRRURLLUUUUUUUUU',
+        'UUUUULLRULLRULRRUUUUUURRLURRLURLLUUUUUUUUU',
+        'UUUUULLRULLRURLLUUUUUURRLULRRULRRUUUUUUUUU',
+        'UUUUULLRULLRURLLUUUUUURRLURRLULRRUUUUUUUUU',
+        'UUUUULLRULLRURRLUUUUUURLLULRRULRRUUUUUUUUU',
+        'UUUUULLRULLRURRLUUUUUURLLURRLULRRUUUUUUUUU',
+        'UUUUULLRULLRURRLUUUUUURRLULRRULLRUUUUUUUUU',
+        'UUUUULLRULLRURRLUUUUUURRLURRLULLRUUUUUUUUU',
+        'UUUUULLRURLLULLRUUUUUULRRULRRULRRUUUUUUUUU',
+        'UUUUULLRURLLULLRUUUUUULRRURRLULRRUUUUUUUUU',
+        'UUUUULLRURLLULLRUUUUUURRLULRRURRLUUUUUUUUU',
+        'UUUUULLRURLLULLRUUUUUURRLURRLURRLUUUUUUUUU',
+        'UUUUULLRURLLULRRUUUUUULLRULRRULRRUUUUUUUUU',
+        'UUUUULLRURLLULRRUUUUUULLRURRLULRRUUUUUUUUU',
+        'UUUUULLRURLLULRRUUUUUULRRULRRULLRUUUUUUUUU',
+        'UUUUULLRURLLULRRUUUUUULRRURRLULLRUUUUUUUUU',
+        'UUUUULLRURLLULRRUUUUUURLLULRRURRLUUUUUUUUU',
+        'UUUUULLRURLLULRRUUUUUURLLURRLURRLUUUUUUUUU',
+        'UUUUULLRURLLULRRUUUUUURRLULRRURLLUUUUUUUUU',
+        'UUUUULLRURLLULRRUUUUUURRLURRLURLLUUUUUUUUU',
+        'UUUUULLRURLLURLLUUUUUURRLULRRULRRUUUUUUUUU',
+        'UUUUULLRURLLURLLUUUUUURRLURRLULRRUUUUUUUUU',
+        'UUUUULLRURLLURRLUUUUUURLLULRRULRRUUUUUUUUU',
+        'UUUUULLRURLLURRLUUUUUURLLURRLULRRUUUUUUUUU',
+        'UUUUULLRURLLURRLUUUUUURRLULRRULLRUUUUUUUUU',
+        'UUUUULLRURLLURRLUUUUUURRLURRLULLRUUUUUUUUU',
+        'UUUUULLRURLRULLRUUUUUULRRULRLULRRUUUUUUUUU',
+        'UUUUULLRURLRULLRUUUUUURRLULRLURRLUUUUUUUUU',
+        'UUUUULLRURLRULRRUUUUUULLRULRLULRRUUUUUUUUU',
+        'UUUUULLRURLRULRRUUUUUULRRULRLULLRUUUUUUUUU',
+        'UUUUULLRURLRULRRUUUUUURLLULRLURRLUUUUUUUUU',
+        'UUUUULLRURLRULRRUUUUUURRLULRLURLLUUUUUUUUU',
+        'UUUUULLRURLRURLLUUUUUURRLULRLULRRUUUUUUUUU',
+        'UUUUULLRURLRURRLUUUUUURLLULRLULRRUUUUUUUUU',
+        'UUUUULLRURLRURRLUUUUUURRLULRLULLRUUUUUUUUU',
+        'UUUUULRLULLLULLLUUUUUURLRURRRURRRUUUUUUUUU',
+        'UUUUULRLULLLULLLUUUUUURRRURRRURLRUUUUUUUUU',
+        'UUUUULRLULLLULRLUUUUUURLRURRRURLRUUUUUUUUU',
+        'UUUUULRLULLLURLRUUUUUULLLURRRURRRUUUUUUUUU',
+        'UUUUULRLULLLURLRUUUUUULRLURRRURLRUUUUUUUUU',
+        'UUUUULRLULLLURLRUUUUUURLRURRRULRLUUUUUUUUU',
+        'UUUUULRLULLLURLRUUUUUURRRURRRULLLUUUUUUUUU',
+        'UUUUULRLULLLURRRUUUUUULLLURRRURLRUUUUUUUUU',
+        'UUUUULRLULLLURRRUUUUUURLRURRRULLLUUUUUUUUU',
+        'UUUUULRLULLRULLLUUUUUURLRULRRURRRUUUUUUUUU',
+        'UUUUULRLULLRULLLUUUUUURLRURRLURRRUUUUUUUUU',
+        'UUUUULRLULLRULLLUUUUUURRRULRRURLRUUUUUUUUU',
+        'UUUUULRLULLRULLLUUUUUURRRURRLURLRUUUUUUUUU',
+        'UUUUULRLULLRULRLUUUUUURLRULRRURLRUUUUUUUUU',
+        'UUUUULRLULLRULRLUUUUUURLRURRLURLRUUUUUUUUU',
+        'UUUUULRLULLRURLRUUUUUULLLULRRURRRUUUUUUUUU',
+        'UUUUULRLULLRURLRUUUUUULLLURRLURRRUUUUUUUUU',
+        'UUUUULRLULLRURLRUUUUUULRLULRRURLRUUUUUUUUU',
+        'UUUUULRLULLRURLRUUUUUULRLURRLURLRUUUUUUUUU',
+        'UUUUULRLULLRURLRUUUUUURLRULRRULRLUUUUUUUUU',
+        'UUUUULRLULLRURLRUUUUUURLRURRLULRLUUUUUUUUU',
+        'UUUUULRLULLRURLRUUUUUURRRULRRULLLUUUUUUUUU',
+        'UUUUULRLULLRURLRUUUUUURRRURRLULLLUUUUUUUUU',
+        'UUUUULRLULLRURRRUUUUUULLLULRRURLRUUUUUUUUU',
+        'UUUUULRLULLRURRRUUUUUULLLURRLURLRUUUUUUUUU',
+        'UUUUULRLULLRURRRUUUUUURLRULRRULLLUUUUUUUUU',
+        'UUUUULRLULLRURRRUUUUUURLRURRLULLLUUUUUUUUU',
+        'UUUUULRLURLLULLLUUUUUURLRULRRURRRUUUUUUUUU',
+        'UUUUULRLURLLULLLUUUUUURLRURRLURRRUUUUUUUUU',
+        'UUUUULRLURLLULLLUUUUUURRRULRRURLRUUUUUUUUU',
+        'UUUUULRLURLLULLLUUUUUURRRURRLURLRUUUUUUUUU',
+        'UUUUULRLURLLULRLUUUUUURLRULRRURLRUUUUUUUUU',
+        'UUUUULRLURLLULRLUUUUUURLRURRLURLRUUUUUUUUU',
+        'UUUUULRLURLLURLRUUUUUULLLULRRURRRUUUUUUUUU',
+        'UUUUULRLURLLURLRUUUUUULLLURRLURRRUUUUUUUUU',
+        'UUUUULRLURLLURLRUUUUUULRLULRRURLRUUUUUUUUU',
+        'UUUUULRLURLLURLRUUUUUULRLURRLURLRUUUUUUUUU',
+        'UUUUULRLURLLURLRUUUUUURLRULRRULRLUUUUUUUUU',
+        'UUUUULRLURLLURLRUUUUUURLRURRLULRLUUUUUUUUU',
+        'UUUUULRLURLLURLRUUUUUURRRULRRULLLUUUUUUUUU',
+        'UUUUULRLURLLURLRUUUUUURRRURRLULLLUUUUUUUUU',
+        'UUUUULRLURLLURRRUUUUUULLLULRRURLRUUUUUUUUU',
+        'UUUUULRLURLLURRRUUUUUULLLURRLURLRUUUUUUUUU',
+        'UUUUULRLURLLURRRUUUUUURLRULRRULLLUUUUUUUUU',
+        'UUUUULRLURLLURRRUUUUUURLRURRLULLLUUUUUUUUU',
+        'UUUUULRLURLRULLLUUUUUURLRULRLURRRUUUUUUUUU',
+        'UUUUULRLURLRULLLUUUUUURRRULRLURLRUUUUUUUUU',
+        'UUUUULRLURLRULRLUUUUUURLRULRLURLRUUUUUUUUU',
+        'UUUUULRLURLRURLRUUUUUULLLULRLURRRUUUUUUUUU',
+        'UUUUULRLURLRURLRUUUUUULRLULRLURLRUUUUUUUUU',
+        'UUUUULRLURLRURLRUUUUUURLRULRLULRLUUUUUUUUU',
+        'UUUUULRLURLRURLRUUUUUURRRULRLULLLUUUUUUUUU',
+        'UUUUULRLURLRURRRUUUUUULLLULRLURLRUUUUUUUUU',
+        'UUUUULRLURLRURRRUUUUUURLRULRLULLLUUUUUUUUU',
+        'UUUUULRRULLLULLRUUUUUULLRURRRULRRUUUUUUUUU',
+        'UUUUULRRULLLULLRUUUUUULRRURRRULLRUUUUUUUUU',
+        'UUUUULRRULLLULLRUUUUUURLLURRRURRLUUUUUUUUU',
+        'UUUUULRRULLLULLRUUUUUURRLURRRURLLUUUUUUUUU',
+        'UUUUULRRULLLULRRUUUUUULLRURRRULLRUUUUUUUUU',
+        'UUUUULRRULLLULRRUUUUUURLLURRRURLLUUUUUUUUU',
+        'UUUUULRRULLLURLLUUUUUURLLURRRULRRUUUUUUUUU',
+        'UUUUULRRULLLURLLUUUUUURRLURRRULLRUUUUUUUUU',
+        'UUUUULRRULLLURRLUUUUUURLLURRRULLRUUUUUUUUU',
+        'UUUUULRRULLRULLRUUUUUULLRULRRULRRUUUUUUUUU',
+        'UUUUULRRULLRULLRUUUUUULLRURRLULRRUUUUUUUUU',
+        'UUUUULRRULLRULLRUUUUUULRRULRRULLRUUUUUUUUU',
+        'UUUUULRRULLRULLRUUUUUULRRURRLULLRUUUUUUUUU',
+        'UUUUULRRULLRULLRUUUUUURLLULRRURRLUUUUUUUUU',
+        'UUUUULRRULLRULLRUUUUUURLLURRLURRLUUUUUUUUU',
+        'UUUUULRRULLRULLRUUUUUURRLULRRURLLUUUUUUUUU',
+        'UUUUULRRULLRULLRUUUUUURRLURRLURLLUUUUUUUUU',
+        'UUUUULRRULLRULRRUUUUUULLRULRRULLRUUUUUUUUU',
+        'UUUUULRRULLRULRRUUUUUULLRURRLULLRUUUUUUUUU',
+        'UUUUULRRULLRULRRUUUUUURLLULRRURLLUUUUUUUUU',
+        'UUUUULRRULLRULRRUUUUUURLLURRLURLLUUUUUUUUU',
+        'UUUUULRRULLRURLLUUUUUURLLULRRULRRUUUUUUUUU',
+        'UUUUULRRULLRURLLUUUUUURLLURRLULRRUUUUUUUUU',
+        'UUUUULRRULLRURLLUUUUUURRLULRRULLRUUUUUUUUU',
+        'UUUUULRRULLRURLLUUUUUURRLURRLULLRUUUUUUUUU',
+        'UUUUULRRULLRURRLUUUUUURLLULRRULLRUUUUUUUUU',
+        'UUUUULRRULLRURRLUUUUUURLLURRLULLRUUUUUUUUU',
+        'UUUUULRRURLLULLRUUUUUULLRULRRULRRUUUUUUUUU',
+        'UUUUULRRURLLULLRUUUUUULLRURRLULRRUUUUUUUUU',
+        'UUUUULRRURLLULLRUUUUUULRRULRRULLRUUUUUUUUU',
+        'UUUUULRRURLLULLRUUUUUULRRURRLULLRUUUUUUUUU',
+        'UUUUULRRURLLULLRUUUUUURLLULRRURRLUUUUUUUUU',
+        'UUUUULRRURLLULLRUUUUUURLLURRLURRLUUUUUUUUU',
+        'UUUUULRRURLLULLRUUUUUURRLULRRURLLUUUUUUUUU',
+        'UUUUULRRURLLULLRUUUUUURRLURRLURLLUUUUUUUUU',
+        'UUUUULRRURLLULRRUUUUUULLRULRRULLRUUUUUUUUU',
+        'UUUUULRRURLLULRRUUUUUULLRURRLULLRUUUUUUUUU',
+        'UUUUULRRURLLULRRUUUUUURLLULRRURLLUUUUUUUUU',
+        'UUUUULRRURLLULRRUUUUUURLLURRLURLLUUUUUUUUU',
+        'UUUUULRRURLLURLLUUUUUURLLULRRULRRUUUUUUUUU',
+        'UUUUULRRURLLURLLUUUUUURLLURRLULRRUUUUUUUUU',
+        'UUUUULRRURLLURLLUUUUUURRLULRRULLRUUUUUUUUU',
+        'UUUUULRRURLLURLLUUUUUURRLURRLULLRUUUUUUUUU',
+        'UUUUULRRURLLURRLUUUUUURLLULRRULLRUUUUUUUUU',
+        'UUUUULRRURLLURRLUUUUUURLLURRLULLRUUUUUUUUU',
+        'UUUUULRRURLRULLRUUUUUULLRULRLULRRUUUUUUUUU',
+        'UUUUULRRURLRULLRUUUUUULRRULRLULLRUUUUUUUUU',
+        'UUUUULRRURLRULLRUUUUUURLLULRLURRLUUUUUUUUU',
+        'UUUUULRRURLRULLRUUUUUURRLULRLURLLUUUUUUUUU',
+        'UUUUULRRURLRULRRUUUUUULLRULRLULLRUUUUUUUUU',
+        'UUUUULRRURLRULRRUUUUUURLLULRLURLLUUUUUUUUU',
+        'UUUUULRRURLRURLLUUUUUURLLULRLULRRUUUUUUUUU',
+        'UUUUULRRURLRURLLUUUUUURRLULRLULLRUUUUUUUUU',
+        'UUUUULRRURLRURRLUUUUUURLLULRLULLRUUUUUUUUU',
+        'UUUUURLLULLLULLRUUUUUULRRURRRURRLUUUUUUUUU',
+        'UUUUURLLULLLULRRUUUUUULLRURRRURRLUUUUUUUUU',
+        'UUUUURLLULLLULRRUUUUUULRRURRRURLLUUUUUUUUU',
+        'UUUUURLLULLLURLLUUUUUULRRURRRULRRUUUUUUUUU',
+        'UUUUURLLULLLURLLUUUUUURRLURRRURRLUUUUUUUUU',
+        'UUUUURLLULLLURRLUUUUUULLRURRRULRRUUUUUUUUU',
+        'UUUUURLLULLLURRLUUUUUULRRURRRULLRUUUUUUUUU',
+        'UUUUURLLULLLURRLUUUUUURLLURRRURRLUUUUUUUUU',
+        'UUUUURLLULLLURRLUUUUUURRLURRRURLLUUUUUUUUU',
+        'UUUUURLLULLRULLRUUUUUULRRULRRURRLUUUUUUUUU',
+        'UUUUURLLULLRULLRUUUUUULRRURRLURRLUUUUUUUUU',
+        'UUUUURLLULLRULRRUUUUUULLRULRRURRLUUUUUUUUU',
+        'UUUUURLLULLRULRRUUUUUULLRURRLURRLUUUUUUUUU',
+        'UUUUURLLULLRULRRUUUUUULRRULRRURLLUUUUUUUUU',
+        'UUUUURLLULLRULRRUUUUUULRRURRLURLLUUUUUUUUU',
+        'UUUUURLLULLRURLLUUUUUULRRULRRULRRUUUUUUUUU',
+        'UUUUURLLULLRURLLUUUUUULRRURRLULRRUUUUUUUUU',
+        'UUUUURLLULLRURLLUUUUUURRLULRRURRLUUUUUUUUU',
+        'UUUUURLLULLRURLLUUUUUURRLURRLURRLUUUUUUUUU',
+        'UUUUURLLULLRURRLUUUUUULLRULRRULRRUUUUUUUUU',
+        'UUUUURLLULLRURRLUUUUUULLRURRLULRRUUUUUUUUU',
+        'UUUUURLLULLRURRLUUUUUULRRULRRULLRUUUUUUUUU',
+        'UUUUURLLULLRURRLUUUUUULRRURRLULLRUUUUUUUUU',
+        'UUUUURLLULLRURRLUUUUUURLLULRRURRLUUUUUUUUU',
+        'UUUUURLLULLRURRLUUUUUURLLURRLURRLUUUUUUUUU',
+        'UUUUURLLULLRURRLUUUUUURRLULRRURLLUUUUUUUUU',
+        'UUUUURLLULLRURRLUUUUUURRLURRLURLLUUUUUUUUU',
+        'UUUUURLLURLLULLRUUUUUULRRULRRURRLUUUUUUUUU',
+        'UUUUURLLURLLULLRUUUUUULRRURRLURRLUUUUUUUUU',
+        'UUUUURLLURLLULRRUUUUUULLRULRRURRLUUUUUUUUU',
+        'UUUUURLLURLLULRRUUUUUULLRURRLURRLUUUUUUUUU',
+        'UUUUURLLURLLULRRUUUUUULRRULRRURLLUUUUUUUUU',
+        'UUUUURLLURLLULRRUUUUUULRRURRLURLLUUUUUUUUU',
+        'UUUUURLLURLLURLLUUUUUULRRULRRULRRUUUUUUUUU',
+        'UUUUURLLURLLURLLUUUUUULRRURRLULRRUUUUUUUUU',
+        'UUUUURLLURLLURLLUUUUUURRLULRRURRLUUUUUUUUU',
+        'UUUUURLLURLLURLLUUUUUURRLURRLURRLUUUUUUUUU',
+        'UUUUURLLURLLURRLUUUUUULLRULRRULRRUUUUUUUUU',
+        'UUUUURLLURLLURRLUUUUUULLRURRLULRRUUUUUUUUU',
+        'UUUUURLLURLLURRLUUUUUULRRULRRULLRUUUUUUUUU',
+        'UUUUURLLURLLURRLUUUUUULRRURRLULLRUUUUUUUUU',
+        'UUUUURLLURLLURRLUUUUUURLLULRRURRLUUUUUUUUU',
+        'UUUUURLLURLLURRLUUUUUURLLURRLURRLUUUUUUUUU',
+        'UUUUURLLURLLURRLUUUUUURRLULRRURLLUUUUUUUUU',
+        'UUUUURLLURLLURRLUUUUUURRLURRLURLLUUUUUUUUU',
+        'UUUUURLLURLRULLRUUUUUULRRULRLURRLUUUUUUUUU',
+        'UUUUURLLURLRULRRUUUUUULLRULRLURRLUUUUUUUUU',
+        'UUUUURLLURLRULRRUUUUUULRRULRLURLLUUUUUUUUU',
+        'UUUUURLLURLRURLLUUUUUULRRULRLULRRUUUUUUUUU',
+        'UUUUURLLURLRURLLUUUUUURRLULRLURRLUUUUUUUUU',
+        'UUUUURLLURLRURRLUUUUUULLRULRLULRRUUUUUUUUU',
+        'UUUUURLLURLRURRLUUUUUULRRULRLULLRUUUUUUUUU',
+        'UUUUURLLURLRURRLUUUUUURLLULRLURRLUUUUUUUUU',
+        'UUUUURLLURLRURRLUUUUUURRLULRLURLLUUUUUUUUU',
+        'UUUUURLRULLLULLLUUUUUULRLURRRURRRUUUUUUUUU',
+        'UUUUURLRULLLULLLUUUUUURRRURRRULRLUUUUUUUUU',
+        'UUUUURLRULLLULRLUUUUUULLLURRRURRRUUUUUUUUU',
+        'UUUUURLRULLLULRLUUUUUULRLURRRURLRUUUUUUUUU',
+        'UUUUURLRULLLULRLUUUUUURLRURRRULRLUUUUUUUUU',
+        'UUUUURLRULLLULRLUUUUUURRRURRRULLLUUUUUUUUU',
+        'UUUUURLRULLLURLRUUUUUULRLURRRULRLUUUUUUUUU',
+        'UUUUURLRULLLURRRUUUUUULLLURRRULRLUUUUUUUUU',
+        'UUUUURLRULLLURRRUUUUUULRLURRRULLLUUUUUUUUU',
+        'UUUUURLRULLRULLLUUUUUULRLULRRURRRUUUUUUUUU',
+        'UUUUURLRULLRULLLUUUUUULRLURRLURRRUUUUUUUUU',
+        'UUUUURLRULLRULLLUUUUUURRRULRRULRLUUUUUUUUU',
+        'UUUUURLRULLRULLLUUUUUURRRURRLULRLUUUUUUUUU',
+        'UUUUURLRULLRULRLUUUUUULLLULRRURRRUUUUUUUUU',
+        'UUUUURLRULLRULRLUUUUUULLLURRLURRRUUUUUUUUU',
+        'UUUUURLRULLRULRLUUUUUULRLULRRURLRUUUUUUUUU',
+        'UUUUURLRULLRULRLUUUUUULRLURRLURLRUUUUUUUUU',
+        'UUUUURLRULLRULRLUUUUUURLRULRRULRLUUUUUUUUU',
+        'UUUUURLRULLRULRLUUUUUURLRURRLULRLUUUUUUUUU',
+        'UUUUURLRULLRULRLUUUUUURRRULRRULLLUUUUUUUUU',
+        'UUUUURLRULLRULRLUUUUUURRRURRLULLLUUUUUUUUU',
+        'UUUUURLRULLRURLRUUUUUULRLULRRULRLUUUUUUUUU',
+        'UUUUURLRULLRURLRUUUUUULRLURRLULRLUUUUUUUUU',
+        'UUUUURLRULLRURRRUUUUUULLLULRRULRLUUUUUUUUU',
+        'UUUUURLRULLRURRRUUUUUULLLURRLULRLUUUUUUUUU',
+        'UUUUURLRULLRURRRUUUUUULRLULRRULLLUUUUUUUUU',
+        'UUUUURLRULLRURRRUUUUUULRLURRLULLLUUUUUUUUU',
+        'UUUUURLRURLLULLLUUUUUULRLULRRURRRUUUUUUUUU',
+        'UUUUURLRURLLULLLUUUUUULRLURRLURRRUUUUUUUUU',
+        'UUUUURLRURLLULLLUUUUUURRRULRRULRLUUUUUUUUU',
+        'UUUUURLRURLLULLLUUUUUURRRURRLULRLUUUUUUUUU',
+        'UUUUURLRURLLULRLUUUUUULLLULRRURRRUUUUUUUUU',
+        'UUUUURLRURLLULRLUUUUUULLLURRLURRRUUUUUUUUU',
+        'UUUUURLRURLLULRLUUUUUULRLULRRURLRUUUUUUUUU',
+        'UUUUURLRURLLULRLUUUUUULRLURRLURLRUUUUUUUUU',
+        'UUUUURLRURLLULRLUUUUUURLRULRRULRLUUUUUUUUU',
+        'UUUUURLRURLLULRLUUUUUURLRURRLULRLUUUUUUUUU',
+        'UUUUURLRURLLULRLUUUUUURRRULRRULLLUUUUUUUUU',
+        'UUUUURLRURLLULRLUUUUUURRRURRLULLLUUUUUUUUU',
+        'UUUUURLRURLLURLRUUUUUULRLULRRULRLUUUUUUUUU',
+        'UUUUURLRURLLURLRUUUUUULRLURRLULRLUUUUUUUUU',
+        'UUUUURLRURLLURRRUUUUUULLLULRRULRLUUUUUUUUU',
+        'UUUUURLRURLLURRRUUUUUULLLURRLULRLUUUUUUUUU',
+        'UUUUURLRURLLURRRUUUUUULRLULRRULLLUUUUUUUUU',
+        'UUUUURLRURLLURRRUUUUUULRLURRLULLLUUUUUUUUU',
+        'UUUUURLRURLRULLLUUUUUULRLULRLURRRUUUUUUUUU',
+        'UUUUURLRURLRULLLUUUUUURRRULRLULRLUUUUUUUUU',
+        'UUUUURLRURLRULRLUUUUUULLLULRLURRRUUUUUUUUU',
+        'UUUUURLRURLRULRLUUUUUULRLULRLURLRUUUUUUUUU',
+        'UUUUURLRURLRULRLUUUUUURLRULRLULRLUUUUUUUUU',
+        'UUUUURLRURLRULRLUUUUUURRRULRLULLLUUUUUUUUU',
+        'UUUUURLRURLRURLRUUUUUULRLULRLULRLUUUUUUUUU',
+        'UUUUURLRURLRURRRUUUUUULLLULRLULRLUUUUUUUUU',
+        'UUUUURLRURLRURRRUUUUUULRLULRLULLLUUUUUUUUU',
+        'UUUUURRLULLLULLRUUUUUULLRURRRURRLUUUUUUUUU',
+        'UUUUURRLULLLULLRUUUUUULRRURRRURLLUUUUUUUUU',
+        'UUUUURRLULLLULRRUUUUUULLRURRRURLLUUUUUUUUU',
+        'UUUUURRLULLLURLLUUUUUULLRURRRULRRUUUUUUUUU',
+        'UUUUURRLULLLURLLUUUUUULRRURRRULLRUUUUUUUUU',
+        'UUUUURRLULLLURLLUUUUUURLLURRRURRLUUUUUUUUU',
+        'UUUUURRLULLLURLLUUUUUURRLURRRURLLUUUUUUUUU',
+        'UUUUURRLULLLURRLUUUUUULLRURRRULLRUUUUUUUUU',
+        'UUUUURRLULLLURRLUUUUUURLLURRRURLLUUUUUUUUU',
+        'UUUUURRLULLRULLRUUUUUULLRULRRURRLUUUUUUUUU',
+        'UUUUURRLULLRULLRUUUUUULLRURRLURRLUUUUUUUUU',
+        'UUUUURRLULLRULLRUUUUUULRRULRRURLLUUUUUUUUU',
+        'UUUUURRLULLRULLRUUUUUULRRURRLURLLUUUUUUUUU',
+        'UUUUURRLULLRULRRUUUUUULLRULRRURLLUUUUUUUUU',
+        'UUUUURRLULLRULRRUUUUUULLRURRLURLLUUUUUUUUU',
+        'UUUUURRLULLRURLLUUUUUULLRULRRULRRUUUUUUUUU',
+        'UUUUURRLULLRURLLUUUUUULLRURRLULRRUUUUUUUUU',
+        'UUUUURRLULLRURLLUUUUUULRRULRRULLRUUUUUUUUU',
+        'UUUUURRLULLRURLLUUUUUULRRURRLULLRUUUUUUUUU',
+        'UUUUURRLULLRURLLUUUUUURLLULRRURRLUUUUUUUUU',
+        'UUUUURRLULLRURLLUUUUUURLLURRLURRLUUUUUUUUU',
+        'UUUUURRLULLRURLLUUUUUURRLULRRURLLUUUUUUUUU',
+        'UUUUURRLULLRURLLUUUUUURRLURRLURLLUUUUUUUUU',
+        'UUUUURRLULLRURRLUUUUUULLRULRRULLRUUUUUUUUU',
+        'UUUUURRLULLRURRLUUUUUULLRURRLULLRUUUUUUUUU',
+        'UUUUURRLULLRURRLUUUUUURLLULRRURLLUUUUUUUUU',
+        'UUUUURRLULLRURRLUUUUUURLLURRLURLLUUUUUUUUU',
+        'UUUUURRLURLLULLRUUUUUULLRULRRURRLUUUUUUUUU',
+        'UUUUURRLURLLULLRUUUUUULLRURRLURRLUUUUUUUUU',
+        'UUUUURRLURLLULLRUUUUUULRRULRRURLLUUUUUUUUU',
+        'UUUUURRLURLLULLRUUUUUULRRURRLURLLUUUUUUUUU',
+        'UUUUURRLURLLULRRUUUUUULLRULRRURLLUUUUUUUUU',
+        'UUUUURRLURLLULRRUUUUUULLRURRLURLLUUUUUUUUU',
+        'UUUUURRLURLLURLLUUUUUULLRULRRULRRUUUUUUUUU',
+        'UUUUURRLURLLURLLUUUUUULLRURRLULRRUUUUUUUUU',
+        'UUUUURRLURLLURLLUUUUUULRRULRRULLRUUUUUUUUU',
+        'UUUUURRLURLLURLLUUUUUULRRURRLULLRUUUUUUUUU',
+        'UUUUURRLURLLURLLUUUUUURLLULRRURRLUUUUUUUUU',
+        'UUUUURRLURLLURLLUUUUUURLLURRLURRLUUUUUUUUU',
+        'UUUUURRLURLLURLLUUUUUURRLULRRURLLUUUUUUUUU',
+        'UUUUURRLURLLURLLUUUUUURRLURRLURLLUUUUUUUUU',
+        'UUUUURRLURLLURRLUUUUUULLRULRRULLRUUUUUUUUU',
+        'UUUUURRLURLLURRLUUUUUULLRURRLULLRUUUUUUUUU',
+        'UUUUURRLURLLURRLUUUUUURLLULRRURLLUUUUUUUUU',
+        'UUUUURRLURLLURRLUUUUUURLLURRLURLLUUUUUUUUU',
+        'UUUUURRLURLRULLRUUUUUULLRULRLURRLUUUUUUUUU',
+        'UUUUURRLURLRULLRUUUUUULRRULRLURLLUUUUUUUUU',
+        'UUUUURRLURLRULRRUUUUUULLRULRLURLLUUUUUUUUU',
+        'UUUUURRLURLRURLLUUUUUULLRULRLULRRUUUUUUUUU',
+        'UUUUURRLURLRURLLUUUUUULRRULRLULLRUUUUUUUUU',
+        'UUUUURRLURLRURLLUUUUUURLLULRLURRLUUUUUUUUU',
+        'UUUUURRLURLRURLLUUUUUURRLULRLURLLUUUUUUUUU',
+        'UUUUURRLURLRURRLUUUUUULLRULRLULLRUUUUUUUUU',
+        'UUUUURRLURLRURRLUUUUUURLLULRLURLLUUUUUUUUU',
+        'UUUUURRRULLLULLLUUUUUULLLURRRURRRUUUUUUUUU',
+        'UUUUURRRULLLULLLUUUUUULRLURRRURLRUUUUUUUUU',
+        'UUUUURRRULLLULLLUUUUUURLRURRRULRLUUUUUUUUU',
+        'UUUUURRRULLLULLLUUUUUURRRURRRULLLUUUUUUUUU',
+        'UUUUURRRULLLULRLUUUUUULLLURRRURLRUUUUUUUUU',
+        'UUUUURRRULLLULRLUUUUUURLRURRRULLLUUUUUUUUU',
+        'UUUUURRRULLLURLRUUUUUULLLURRRULRLUUUUUUUUU',
+        'UUUUURRRULLLURLRUUUUUULRLURRRULLLUUUUUUUUU',
+        'UUUUURRRULLLURRRUUUUUULLLURRRULLLUUUUUUUUU',
+        'UUUUURRRULLRULLLUUUUUULLLULRRURRRUUUUUUUUU',
+        'UUUUURRRULLRULLLUUUUUULLLURRLURRRUUUUUUUUU',
+        'UUUUURRRULLRULLLUUUUUULRLULRRURLRUUUUUUUUU',
+        'UUUUURRRULLRULLLUUUUUULRLURRLURLRUUUUUUUUU',
+        'UUUUURRRULLRULLLUUUUUURLRULRRULRLUUUUUUUUU',
+        'UUUUURRRULLRULLLUUUUUURLRURRLULRLUUUUUUUUU',
+        'UUUUURRRULLRULLLUUUUUURRRULRRULLLUUUUUUUUU',
+        'UUUUURRRULLRULLLUUUUUURRRURRLULLLUUUUUUUUU',
+        'UUUUURRRULLRULRLUUUUUULLLULRRURLRUUUUUUUUU',
+        'UUUUURRRULLRULRLUUUUUULLLURRLURLRUUUUUUUUU',
+        'UUUUURRRULLRULRLUUUUUURLRULRRULLLUUUUUUUUU',
+        'UUUUURRRULLRULRLUUUUUURLRURRLULLLUUUUUUUUU',
+        'UUUUURRRULLRURLRUUUUUULLLULRRULRLUUUUUUUUU',
+        'UUUUURRRULLRURLRUUUUUULLLURRLULRLUUUUUUUUU',
+        'UUUUURRRULLRURLRUUUUUULRLULRRULLLUUUUUUUUU',
+        'UUUUURRRULLRURLRUUUUUULRLURRLULLLUUUUUUUUU',
+        'UUUUURRRULLRURRRUUUUUULLLULRRULLLUUUUUUUUU',
+        'UUUUURRRULLRURRRUUUUUULLLURRLULLLUUUUUUUUU',
+        'UUUUURRRURLLULLLUUUUUULLLULRRURRRUUUUUUUUU',
+        'UUUUURRRURLLULLLUUUUUULLLURRLURRRUUUUUUUUU',
+        'UUUUURRRURLLULLLUUUUUULRLULRRURLRUUUUUUUUU',
+        'UUUUURRRURLLULLLUUUUUULRLURRLURLRUUUUUUUUU',
+        'UUUUURRRURLLULLLUUUUUURLRULRRULRLUUUUUUUUU',
+        'UUUUURRRURLLULLLUUUUUURLRURRLULRLUUUUUUUUU',
+        'UUUUURRRURLLULLLUUUUUURRRULRRULLLUUUUUUUUU',
+        'UUUUURRRURLLULLLUUUUUURRRURRLULLLUUUUUUUUU',
+        'UUUUURRRURLLULRLUUUUUULLLULRRURLRUUUUUUUUU',
+        'UUUUURRRURLLULRLUUUUUULLLURRLURLRUUUUUUUUU',
+        'UUUUURRRURLLULRLUUUUUURLRULRRULLLUUUUUUUUU',
+        'UUUUURRRURLLULRLUUUUUURLRURRLULLLUUUUUUUUU',
+        'UUUUURRRURLLURLRUUUUUULLLULRRULRLUUUUUUUUU',
+        'UUUUURRRURLLURLRUUUUUULLLURRLULRLUUUUUUUUU',
+        'UUUUURRRURLLURLRUUUUUULRLULRRULLLUUUUUUUUU',
+        'UUUUURRRURLLURLRUUUUUULRLURRLULLLUUUUUUUUU',
+        'UUUUURRRURLLURRRUUUUUULLLULRRULLLUUUUUUUUU',
+        'UUUUURRRURLLURRRUUUUUULLLURRLULLLUUUUUUUUU',
+        'UUUUURRRURLRULLLUUUUUULLLULRLURRRUUUUUUUUU',
+        'UUUUURRRURLRULLLUUUUUULRLULRLURLRUUUUUUUUU',
+        'UUUUURRRURLRULLLUUUUUURLRULRLULRLUUUUUUUUU',
+        'UUUUURRRURLRULLLUUUUUURRRULRLULLLUUUUUUUUU',
+        'UUUUURRRURLRULRLUUUUUULLLULRLURLRUUUUUUUUU',
+        'UUUUURRRURLRULRLUUUUUURLRULRLULLLUUUUUUUUU',
+        'UUUUURRRURLRURLRUUUUUULLLULRLULRLUUUUUUUUU',
+        'UUUUURRRURLRURLRUUUUUULRLULRLULLLUUUUUUUUU',
+        'UUUUURRRURLRURRRUUUUUULLLULRLULLLUUUUUUUUU'
+    )
+
+    midge_states = {
+        (3, 103): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (11, 28): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (23, 53): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (15, 78): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+
+        (36, 115): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (40, 61): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (86, 65): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (90, 111): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+
+        (128, 73): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (136, 48): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (140, 98): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+        (148, 123): ['UB', 'UL', 'UR', 'UF', 'LB', 'LF', 'RB', 'RF', 'DB', 'DL', 'DR', 'DF'],
+    }
 
     def __init__(self, parent):
-        from rubikscubennnsolver.RubiksCube555StartingStates import (
-            starting_states_step351,
-        )
-
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-5x5x5-step351-x-plane-y-plane-edges-orient-edges-only.txt",
-            starting_states_step351,
-            linecount=900900,
-            max_depth=4,
-            filesize=79279200,
-        )
-
-    def ida_heuristic(self):
-        state = self.parent.highlow_edges_state()
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(LookupTable):
-    """
-    lookup-table-5x5x5-step352-x-plane-y-plane-edges-orient-centers-only.txt
-    ========================================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 23 entries (0 percent, 7.67x previous step)
-    3 steps has 234 entries (0 percent, 10.17x previous step)
-    4 steps has 1,845 entries (0 percent, 7.88x previous step)
-    5 steps has 13,782 entries (0 percent, 7.47x previous step)
-    6 steps has 98,191 entries (1 percent, 7.12x previous step)
-    7 steps has 559,026 entries (8 percent, 5.69x previous step)
-    8 steps has 1,951,300 entries (30 percent, 3.49x previous step)
-    9 steps has 2,896,714 entries (45 percent, 1.48x previous step)
-    10 steps has 840,858 entries (13 percent, 0.29x previous step)
-    11 steps has 8,674 entries (0 percent, 0.01x previous step)
-
-    Total: 6,370,650 entries
-    Average: 8.60 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step352-x-plane-y-plane-edges-orient-centers-only.txt",
-            "UUUUUUUUUFFFFFFFFFFFFFFFFFFUUUUUUUUU",
-            linecount=6370650,
-            max_depth=11,
-            filesize=509652000,
-        )
+            'lookup-table-5x5x5-step901-LR-center-stage-EO-inner-orbit.txt',
+            self.state_targets,
+            linecount=10035200,
+            max_depth=9,
+            filesize=732569600)
 
     def ida_heuristic(self):
         parent_state = self.parent.state
-        state = "".join(
-            ["U" if parent_state[x] in ("U", "D") else "F" for x in UFBD_centers_555]
-        )
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
+        LR_centers_state = ''.join([parent_state[x] for x in LR_centers_555])
 
+        # EO inner orbit state
+        state = self.parent.state[:]
 
-class LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(LookupTableHashCostOnly):
+        for edge_position in MIDGE_TUPLES_555:
+            for (e0, e1) in edge_position:
+                edge_str = state[e0] + state[e1]
 
-    def __init__(self, parent):
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step352-x-plane-y-plane-edges-orient-centers-only.hash-cost-only.txt",
-            "UUUUUUUUUFFFFFFFFFFFFFFFFFFUUUUUUUUU",
-            linecount=1,
-            max_depth=11,
-            bucketcount=6370667,
-            filesize=6370668,
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = "".join(
-            ["U" if parent_state[x] in ("U", "D") else "F" for x in UFBD_centers_555]
-        )
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(LookupTable):
-    """
-    lookup-table-5x5x5-step353-x-plane-y-plane-edges-orient-pair-one-edge.txt
-    =========================================================================
-    1 steps has 7 entries (1 percent, 0.00x previous step)
-    2 steps has 28 entries (5 percent, 4.00x previous step)
-    3 steps has 90 entries (17 percent, 3.21x previous step)
-    4 steps has 195 entries (38 percent, 2.17x previous step)
-    5 steps has 184 entries (35 percent, 0.94x previous step)
-    6 steps has 8 entries (1 percent, 0.04x previous step)
-
-    Total: 512 entries
-    Average: 4.06 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step353-x-plane-y-plane-edges-orient-pair-one-edge.txt",
-            "---------rRR------------------------",
-            linecount=512,
-            max_depth=6,
-            filesize=29696,
-        )
-
-    def ida_heuristic(self):
-        assert (
-            self.only_colors and len(self.only_colors) == 1
-        ), "You must specify which 1-edge"
-        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
-        state = "".join([state[index] for index in wings_for_edges_pattern_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTableIDA555XPlaneYPlaneEdgesOrient(LookupTableIDA):
-    """
-    lookup-table-5x5x5-step350-x-plane-y-plane-edges-orient.txt
-    ===========================================================
-    1 steps has 1,029,000 entries (11 percent, 0.00x previous step)
-    2 steps has 7,889,000 entries (88 percent, 7.67x previous step)
-
-    Total: 8,918,000 entries
-    """
-
-    def __init__(self, parent):
-        from rubikscubennnsolver.RubiksCube555StartingStates import (
-            starting_states_step350,
-        )
-
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step350-x-plane-y-plane-edges-orient.txt",
-            starting_states_step350,
-            moves_555,
-            # illegal moves
-            (),
-            # linecount=1029000,
-            # max_depth=1,
-            # filesize=120393000,
-            linecount=8918000,
-            max_depth=2,
-            filesize=1043406000,
-            legal_moves=(
-                "F",
-                "F'",
-                "F2",
-                "B",
-                "B'",
-                "B2",
-                "L2",
-                "R2",
-                "U2",
-                "B2",
-                "Uw2",
-                "Dw2",
-                "Lw2",
-                "Rw2",
-                "2U2",
-                "2D2",
-                "2L",
-                "2L'",
-                "2L2",
-                "2R",
-                "2R'",
-                "2R2",
-            ),
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        (
-            edges_state,
-            edges_cost_to_goal,
-        ) = self.parent.lt_x_plane_y_plane_orient_edges_edges_only.ida_heuristic()
-        (
-            centers_state,
-            centers_cost_to_goal,
-        ) = self.parent.lt_x_plane_y_plane_orient_edges_centers_only_ht.ida_heuristic()
-
-        lt_state = centers_state + edges_state
-        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
-
-        if cost_to_goal > 0:
-            steps = self.steps(lt_state)
-
-            if steps:
-                cost_to_goal = len(steps)
+                if edge_str in self.midge_states.get((e0, e1), ()):
+                    state[e0] = "U"
+                    state[e1] = "U"
+                    break
             else:
-                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
+                state[e0] = "D"
+                state[e1] = "D"
 
+        eo_inner_orbit_state = "".join([state[x] for x in midge_indexes])
+
+        lt_state = (eo_inner_orbit_state[0:5] +
+            LR_centers_state[0:3] +
+            eo_inner_orbit_state[5] + LR_centers_state[3:6] + eo_inner_orbit_state[6] +
+            LR_centers_state[6:9] +
+
+            eo_inner_orbit_state[7:13] +
+            LR_centers_state[9:12] +
+            eo_inner_orbit_state[13] + LR_centers_state[12:15] + eo_inner_orbit_state[14] +
+            LR_centers_state[15:18] +
+            eo_inner_orbit_state[15:]
+        )
+
+        cost_to_goal = self.heuristic(lt_state)
         return (lt_state, cost_to_goal)
 
 
-class LookupTable555XPlaneYPlaneEdgesOrientFBCentersEdgesOnly(LookupTable):
+class LookupTableIDA555EdgeOrientOuterOrbit(LookupTable):
     """
-    lookup-table-5x5x5-step361-x-plane-y-plane-edges-orient-fb-centers-edges-only.txt
-    =================================================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 15 entries (0 percent, 5.00x previous step)
-    3 steps has 78 entries (0 percent, 5.20x previous step)
-    4 steps has 414 entries (0 percent, 5.31x previous step)
-    5 steps has 2,206 entries (0 percent, 5.33x previous step)
-    6 steps has 10,506 entries (3 percent, 4.76x previous step)
-    7 steps has 39,298 entries (11 percent, 3.74x previous step)
-    8 steps has 100,432 entries (29 percent, 2.56x previous step)
-    9 steps has 137,320 entries (40 percent, 1.37x previous step)
-    10 steps has 49,592 entries (14 percent, 0.36x previous step)
-    11 steps has 3,136 entries (0 percent, 0.06x previous step)
+    lookup-table-5x5x5-step902-EO-outer-orbit.txt
+    =============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 278 entries (0 percent, 9.59x previous step)
+    4 steps has 1,934 entries (0 percent, 6.96x previous step)
+    5 steps has 15,640 entries (0 percent, 8.09x previous step)
+    6 steps has 124,249 entries (4 percent, 7.94x previous step)
+    7 steps has 609,241 entries (22 percent, 4.90x previous step)
+    8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
+    9 steps has 688,124 entries (25 percent, 0.56x previous step)
+    10 steps has 40,560 entries (1 percent, 0.06x previous step)
 
-    Total: 343,000 entries
-    Average: 8.52 moves
+    Total: 2,704,156 entries
+    Average: 7.95 moves
     """
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-5x5x5-step361-x-plane-y-plane-edges-orient-fb-centers-edges-only.txt",
-            "UUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU",
-            linecount=343000,
-            max_depth=11,
-            filesize=38416000,
-        )
+            "lookup-table-5x5x5-step902-EO-outer-orbit.txt",
+            "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
+            linecount=2704156,
+            max_depth=10,
+            filesize=227149104)
 
     def ida_heuristic(self):
-        state = self.parent.highlow_edges_state()
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
+        eo_state_both_orbits = self.parent.highlow_edges_state()
+        lt_state = (
+            eo_state_both_orbits[0] + eo_state_both_orbits[2] +
+            eo_state_both_orbits[3] + eo_state_both_orbits[4] +
+            eo_state_both_orbits[7] + eo_state_both_orbits[8] +
+            eo_state_both_orbits[9] + eo_state_both_orbits[11] +
+
+            eo_state_both_orbits[12] + eo_state_both_orbits[14] +
+            eo_state_both_orbits[15] + eo_state_both_orbits[16] +
+            eo_state_both_orbits[19] + eo_state_both_orbits[20] +
+            eo_state_both_orbits[21] + eo_state_both_orbits[23] +
+
+            eo_state_both_orbits[24] + eo_state_both_orbits[26] +
+            eo_state_both_orbits[27] + eo_state_both_orbits[28] +
+            eo_state_both_orbits[31] + eo_state_both_orbits[32] +
+            eo_state_both_orbits[33] + eo_state_both_orbits[35] +
+
+            eo_state_both_orbits[36] + eo_state_both_orbits[38] +
+            eo_state_both_orbits[39] + eo_state_both_orbits[40] +
+            eo_state_both_orbits[43] + eo_state_both_orbits[44] +
+            eo_state_both_orbits[45] + eo_state_both_orbits[47] +
+
+            eo_state_both_orbits[48] + eo_state_both_orbits[50] +
+            eo_state_both_orbits[51] + eo_state_both_orbits[52] +
+            eo_state_both_orbits[55] + eo_state_both_orbits[56] +
+            eo_state_both_orbits[57] + eo_state_both_orbits[59] +
+
+            eo_state_both_orbits[60] + eo_state_both_orbits[62] +
+            eo_state_both_orbits[63] + eo_state_both_orbits[64] +
+            eo_state_both_orbits[67] + eo_state_both_orbits[68] +
+            eo_state_both_orbits[69] + eo_state_both_orbits[71]
+        )
+
+        cost_to_goal = self.heuristic(lt_state)
+        return (lt_state, cost_to_goal)
 
 
-class LookupTable555XPlaneYPlaneEdgesOrientFBCentersOnly(LookupTable):
+class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDA):
     """
-    lookup-table-5x5x5-step362-x-plane-y-plane-edges-orient-fb-centers-only.txt
-    ===========================================================================
-    1 steps has 28 entries (0 percent, 0.00x previous step)
-    2 steps has 110 entries (2 percent, 3.93x previous step)
-    3 steps has 396 entries (8 percent, 3.60x previous step)
-    4 steps has 1,196 entries (24 percent, 3.02x previous step)
-    5 steps has 2,102 entries (42 percent, 1.76x previous step)
-    6 steps has 1,016 entries (20 percent, 0.48x previous step)
-    7 steps has 52 entries (1 percent, 0.05x previous step)
+    lookup-table-5x5x5-step900-edge-orient-LR-center-stage.txt
+    ==========================================================
+    0 steps has 78 entries (0 percent, 0.00x previous step)
+    1 steps has 1,218 entries (0 percent, 15.62x previous step)
+    2 steps has 14,256 entries (0 percent, 11.70x previous step)
+    3 steps has 172,288 entries (8 percent, 12.09x previous step)
+    4 steps has 1,948,920 entries (91 percent, 11.31x previous step)
 
-    Total: 4,900 entries
-    Average: 4.73 moves
+    Total: 2,136,760 entries
+    Average: 3.90 moves
     """
 
     state_targets = (
-        "BFBBFBBFBFBFFBFFBF",
-        "BFFBFFBFFBBFBBFBBF",
-        "BFFBFFBFFFBBFBBFBB",
-        "FFBFFBFFBBBFBBFBBF",
-        "FFBFFBFFBFBBFBBFBB",
-        "FFFFFFFFFBBBBBBBBB",
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step362-x-plane-y-plane-edges-orient-fb-centers-only.txt",
-            self.state_targets,
-            linecount=4900,
-            max_depth=7,
-            filesize=220500,
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = "".join([parent_state[x] for x in FB_centers_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(LookupTableIDA):
-    """
-    lookup-table-5x5x5-step360-x-plane-y-plane-edges-orient-fb-centers.txt
-    ======================================================================
-    1 steps has 30 entries (0 percent, 0.00x previous step)
-    2 steps has 176 entries (0 percent, 5.87x previous step)
-    3 steps has 1,182 entries (0 percent, 6.72x previous step)
-    4 steps has 7,684 entries (0 percent, 6.50x previous step)
-    5 steps has 49,668 entries (2 percent, 6.46x previous step)
-    6 steps has 317,818 entries (13 percent, 6.40x previous step)
-    7 steps has 1,982,008 entries (84 percent, 6.24x previous step)
-
-    Total: 2,358,566 entries
-    """
-
-    state_targets = (
-        "BFBBFBBFBFBFFBFFBFUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU",
-        "BFFBFFBFFBBFBBFBBFUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU",
-        "BFFBFFBFFFBBFBBFBBUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU",
-        "FFBFFBFFBBBFBBFBBFUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU",
-        "FFBFFBFFBFBBFBBFBBUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU",
-        "FFFFFFFFFBBBBBBBBBUUDUDDDDUDUUUDDUDDDDUDDUDUUDUDDUDUUDUDDUDDDDUDDUDUUDUDDUDUUDUUDUDDDDUDUU",
+        'UUDDUUUUDDUUDUUDLLLUULLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLLUULRLDUUDDUUUDUUDUUUDDUUDRRRUURRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLLUURLRDUUDDUUUDUUDUUUDDUUDRRRUURRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLLUURRRDUUDDUUUDUUDUUUDDUUDLRLUURRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLLUURRRDUUDDUUUDUUDUUUDDUUDRLRUURRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLLUURRRDUUDDUUUDUUDUUUDDUUDRRRUURRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUULRLDUUDDUUUDUUDUUUDDUUDRRRUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUULRLDUUDDUUUDUUDUUUDDUUDRRRUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURLRDUUDDUUUDUUDUUUDDUUDRRRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURLRDUUDDUUUDUUDUUUDDUUDRRRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURRRDUUDDUUUDUUDUUUDDUUDLRLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURRRDUUDDUUUDUUDUUUDDUUDLRLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURRRDUUDDUUUDUUDUUUDDUUDRLRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURRRDUUDDUUUDUUDUUUDDUUDRLRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURRRDUUDDUUUDUUDUUUDDUUDRRRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUULLRUURRRDUUDDUUUDUUDUUUDDUUDRRRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUULRLDUUDDUUUDUUDUUUDDUUDRRRUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUULRLDUUDDUUUDUUDUUUDDUUDRRRUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURLRDUUDDUUUDUUDUUUDDUUDRRRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURLRDUUDDUUUDUUDUUUDDUUDRRRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURRRDUUDDUUUDUUDUUUDDUUDLRLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURRRDUUDDUUUDUUDUUUDDUUDLRLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURRRDUUDDUUUDUUDUUUDDUUDRLRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURRRDUUDDUUUDUUDUUUDDUUDRLRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURRRDUUDDUUUDUUDUUUDDUUDRRRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLLUURRRDUUDDUUUDUUDUUUDDUUDRRRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLRUULRLDUUDDUUUDUUDUUUDDUUDRRRUULRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLRUURLRDUUDDUUUDUUDUUUDDUUDRRRUULRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLRUURRRDUUDDUUUDUUDUUUDDUUDLRLUULRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLRUURRRDUUDDUUUDUUDUUUDDUUDRLRUULRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLLUURLRUURRRDUUDDUUUDUUDUUUDDUUDRRRUULRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLLUULLRDUUDDUUUDUUDUUUDDUUDRRLUURRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLLUULRRDUUDDUUUDUUDUUUDDUUDLRRUURRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLLUULRRDUUDDUUUDUUDUUUDDUUDRLLUURRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLLUULRRDUUDDUUUDUUDUUUDDUUDRRLUURRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLLUURRLDUUDDUUUDUUDUUUDDUUDRRLUURRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULLRDUUDDUUUDUUDUUUDDUUDRRLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULLRDUUDDUUUDUUDUUUDDUUDRRLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULRRDUUDDUUUDUUDUUUDDUUDLRRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULRRDUUDDUUUDUUDUUUDDUUDLRRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULRRDUUDDUUUDUUDUUUDDUUDRLLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULRRDUUDDUUUDUUDUUUDDUUDRLLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULRRDUUDDUUUDUUDUUUDDUUDRRLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUULRRDUUDDUUUDUUDUUUDDUUDRRLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUURRLDUUDDUUUDUUDUUUDDUUDRRLUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUULLRUURRLDUUDDUUUDUUDUUUDDUUDRRLUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULLRDUUDDUUUDUUDUUUDDUUDRRLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULLRDUUDDUUUDUUDUUUDDUUDRRLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULRRDUUDDUUUDUUDUUUDDUUDLRRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULRRDUUDDUUUDUUDUUUDDUUDLRRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULRRDUUDDUUUDUUDUUUDDUUDRLLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULRRDUUDDUUUDUUDUUUDDUUDRLLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULRRDUUDDUUUDUUDUUUDDUUDRRLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUULRRDUUDDUUUDUUDUUUDDUUDRRLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUURRLDUUDDUUUDUUDUUUDDUUDRRLUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLLUURRLDUUDDUUUDUUDUUUDDUUDRRLUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLRUULLRDUUDDUUUDUUDUUUDDUUDRRLUULRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLRUULRRDUUDDUUUDUUDUUUDDUUDLRRUULRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLRUULRRDUUDDUUUDUUDUUUDDUUDRLLUULRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLRUULRRDUUDDUUUDUUDUUUDDUUDRRLUULRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLLRUURLRUURRLDUUDDUUUDUUDUUUDDUUDRRLUULRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLLUULLLDUUDDUUUDUUDUUUDDUUDRLRUURRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLLUURLRDUUDDUUUDUUDUUUDDUUDLLLUURRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLLUURLRDUUDDUUUDUUDUUUDDUUDRLRUURRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLLUURLRDUUDDUUUDUUDUUUDDUUDRRRUURRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLLUURRRDUUDDUUUDUUDUUUDDUUDRLRUURRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUULLLDUUDDUUUDUUDUUUDDUUDRLRUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUULLLDUUDDUUUDUUDUUUDDUUDRLRUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURLRDUUDDUUUDUUDUUUDDUUDLLLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURLRDUUDDUUUDUUDUUUDDUUDLLLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURLRDUUDDUUUDUUDUUUDDUUDRLRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURLRDUUDDUUUDUUDUUUDDUUDRLRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURLRDUUDDUUUDUUDUUUDDUUDRRRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURLRDUUDDUUUDUUDUUUDDUUDRRRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURRRDUUDDUUUDUUDUUUDDUUDRLRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUULLRUURRRDUUDDUUUDUUDUUUDDUUDRLRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUULLLDUUDDUUUDUUDUUUDDUUDRLRUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUULLLDUUDDUUUDUUDUUUDDUUDRLRUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURLRDUUDDUUUDUUDUUUDDUUDLLLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURLRDUUDDUUUDUUDUUUDDUUDLLLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURLRDUUDDUUUDUUDUUUDDUUDRLRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURLRDUUDDUUUDUUDUUUDDUUDRLRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURLRDUUDDUUUDUUDUUUDDUUDRRRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURLRDUUDDUUUDUUDUUUDDUUDRRRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURRRDUUDDUUUDUUDUUUDDUUDRLRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLLUURRRDUUDDUUUDUUDUUUDDUUDRLRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLRUULLLDUUDDUUUDUUDUUUDDUUDRLRUULRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLRUURLRDUUDDUUUDUUDUUUDDUUDLLLUULRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLRUURLRDUUDDUUUDUUDUUUDDUUDRLRUULRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLRUURLRDUUDDUUUDUUDUUUDDUUDRRRUULRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRLUURLRUURRRDUUDDUUUDUUDUUUDDUUDRLRUULRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLLUULLRDUUDDUUUDUUDUUUDDUUDLLRUURRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLLUULLRDUUDDUUUDUUDUUUDDUUDRLLUURRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLLUULLRDUUDDUUUDUUDUUUDDUUDRRLUURRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLLUULRRDUUDDUUUDUUDUUUDDUUDRLLUURRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLLUURLLDUUDDUUUDUUDUUUDDUUDRLLUURRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULLRDUUDDUUUDUUDUUUDDUUDLLRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULLRDUUDDUUUDUUDUUUDDUUDLLRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULLRDUUDDUUUDUUDUUUDDUUDRLLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULLRDUUDDUUUDUUDUUUDDUUDRLLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULLRDUUDDUUUDUUDUUUDDUUDRRLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULLRDUUDDUUUDUUDUUUDDUUDRRLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULRRDUUDDUUUDUUDUUUDDUUDRLLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUULRRDUUDDUUUDUUDUUUDDUUDRLLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUURLLDUUDDUUUDUUDUUUDDUUDRLLUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUURLLDUUDDUUUDUUDUUUDDUUDRLLUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUULLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULLRDUUDDUUUDUUDUUUDDUUDLLRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULLRDUUDDUUUDUUDUUUDDUUDLLRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULLRDUUDDUUUDUUDUUUDDUUDRLLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULLRDUUDDUUUDUUDUUUDDUUDRLLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULLRDUUDDUUUDUUDUUUDDUUDRRLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULLRDUUDDUUUDUUDUUUDDUUDRRLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULRRDUUDDUUUDUUDUUUDDUUDRLLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUULRRDUUDDUUUDUUDUUUDDUUDRLLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUURLLDUUDDUUUDUUDUUUDDUUDRLLUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUURLLDUUDDUUUDUUDUUUDDUUDRLLUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLRUULLRDUUDDUUUDUUDUUUDDUUDLLRUULRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLRUULLRDUUDDUUUDUUDUUUDDUUDRLLUULRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLRUULLRDUUDDUUUDUUDUUUDDUUDRRLUULRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLRUULRRDUUDDUUUDUUDUUUDDUUDRLLUULRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLRUURLLDUUDDUUUDUUDUUUDDUUDRLLUULRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDLRRUURLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLLUULRRDUUDDUUUDUUDUUUDDUUDLRRUURRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLLUURLLDUUDDUUUDUUDUUUDDUUDLRRUURRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLLUURRLDUUDDUUUDUUDUUUDDUUDLLRUURRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLLUURRLDUUDDUUUDUUDUUUDDUUDLRRUURRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLLUURRLDUUDDUUUDUUDUUUDDUUDRRLUURRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUULRRDUUDDUUUDUUDUUUDDUUDLRRUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUULRRDUUDDUUUDUUDUUUDDUUDLRRUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURLLDUUDDUUUDUUDUUUDDUUDLRRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURLLDUUDDUUUDUUDUUUDDUUDLRRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURRLDUUDDUUUDUUDUUUDDUUDLLRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURRLDUUDDUUUDUUDUUUDDUUDLLRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURRLDUUDDUUUDUUDUUUDDUUDLRRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURRLDUUDDUUUDUUDUUUDDUUDLRRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURRLDUUDDUUUDUUDUUUDDUUDRRLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUULLRUURRLDUUDDUUUDUUDUUUDDUUDRRLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUULRRDUUDDUUUDUUDUUUDDUUDLRRUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUULRRDUUDDUUUDUUDUUUDDUUDLRRUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURLLDUUDDUUUDUUDUUUDDUUDLRRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURLLDUUDDUUUDUUDUUUDDUUDLRRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURRLDUUDDUUUDUUDUUUDDUUDLLRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURRLDUUDDUUUDUUDUUUDDUUDLLRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURRLDUUDDUUUDUUDUUUDDUUDLRRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURRLDUUDDUUUDUUDUUUDDUUDLRRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURRLDUUDDUUUDUUDUUUDDUUDRRLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLLUURRLDUUDDUUUDUUDUUUDDUUDRRLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLRUULRRDUUDDUUUDUUDUUUDDUUDLRRUULRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLRUURLLDUUDDUUUDUUDUUUDDUUDLRRUULRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLRUURRLDUUDDUUUDUUDUUUDDUUDLLRUULRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLRUURRLDUUDDUUUDUUDUUUDDUUDLRRUULRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLLUURLRUURRLDUUDDUUUDUUDUUUDDUUDRRLUULRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLLUULLLDUUDDUUUDUUDUUUDDUUDLRLUURRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLLUULRLDUUDDUUUDUUDUUUDDUUDLLLUURRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLLUULRLDUUDDUUUDUUDUUUDDUUDLRLUURRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLLUULRLDUUDDUUUDUUDUUUDDUUDRRRUURRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLLUURRRDUUDDUUUDUUDUUUDDUUDLRLUURRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULLLDUUDDUUUDUUDUUUDDUUDLRLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULLLDUUDDUUUDUUDUUUDDUUDLRLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULRLDUUDDUUUDUUDUUUDDUUDLLLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULRLDUUDDUUUDUUDUUUDDUUDLLLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULRLDUUDDUUUDUUDUUUDDUUDLRLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULRLDUUDDUUUDUUDUUUDDUUDLRLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULRLDUUDDUUUDUUDUUUDDUUDRRRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUULRLDUUDDUUUDUUDUUUDDUUDRRRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUURRRDUUDDUUUDUUDUUUDDUUDLRLUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUULLRUURRRDUUDDUUUDUUDUUUDDUUDLRLUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULLLDUUDDUUUDUUDUUUDDUUDLRLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULLLDUUDDUUUDUUDUUUDDUUDLRLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULRLDUUDDUUUDUUDUUUDDUUDLLLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULRLDUUDDUUUDUUDUUUDDUUDLLLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULRLDUUDDUUUDUUDUUUDDUUDLRLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULRLDUUDDUUUDUUDUUUDDUUDLRLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULRLDUUDDUUUDUUDUUUDDUUDRRRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUULRLDUUDDUUUDUUDUUUDDUUDRRRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUURRRDUUDDUUUDUUDUUUDDUUDLRLUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLLUURRRDUUDDUUUDUUDUUUDDUUDLRLUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLRUULLLDUUDDUUUDUUDUUUDDUUDLRLUULRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLRUULRLDUUDDUUUDUUDUUUDDUUDLLLUULRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLRUULRLDUUDDUUUDUUDUUUDDUUDLRLUULRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLRUULRLDUUDDUUUDUUDUUUDDUUDRRRUULRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRLRUURLRUURRRDUUDDUUUDUUDUUUDDUUDLRLUULRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLLUULLRDUUDDUUUDUUDUUUDDUUDLLRUURRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLLUURLLDUUDDUUUDUUDUUUDDUUDLLRUURRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLLUURLLDUUDDUUUDUUDUUUDDUUDLRRUURRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLLUURLLDUUDDUUUDUUDUUUDDUUDRLLUURRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLLUURRLDUUDDUUUDUUDUUUDDUUDLLRUURRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUULLRDUUDDUUUDUUDUUUDDUUDLLRUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUULLRDUUDDUUUDUUDUUUDDUUDLLRUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURLLDUUDDUUUDUUDUUUDDUUDLLRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURLLDUUDDUUUDUUDUUUDDUUDLLRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURLLDUUDDUUUDUUDUUUDDUUDLRRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURLLDUUDDUUUDUUDUUUDDUUDLRRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURLLDUUDDUUUDUUDUUUDDUUDRLLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURLLDUUDDUUUDUUDUUUDDUUDRLLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURRLDUUDDUUUDUUDUUUDDUUDLLRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURRLDUUDDUUUDUUDUUUDDUUDLLRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUULLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUULLRDUUDDUUUDUUDUUUDDUUDLLRUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUULLRDUUDDUUUDUUDUUUDDUUDLLRUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUULLRDUUDDUUUDUUDUUUDDUUDLRRUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUULRRDUUDDUUUDUUDUUUDDUUDLLRUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURLLDUUDDUUUDUUDUUUDDUUDLLRUULRRUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURLLDUUDDUUUDUUDUUUDDUUDLLRUURRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURLLDUUDDUUUDUUDUUUDDUUDLRRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURLLDUUDDUUUDUUDUUUDDUUDLRRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURLLDUUDDUUUDUUDUUUDDUUDRLLUULRRUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURLLDUUDDUUUDUUDUUUDDUUDRLLUURRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURLLDUUDDUUUDUUDUUUDDUUDRRLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURRLDUUDDUUUDUUDUUUDDUUDLLRUULRRUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURRLDUUDDUUUDUUDUUUDDUUDLLRUURRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRRUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLLUURRLDUUDDUUUDUUDUUUDDUUDRLLUURRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLRUULLRDUUDDUUUDUUDUUUDDUUDLLRUULRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLRUULLRDUUDDUUUDUUDUUUDDUUDLRRUULRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLRUULRRDUUDDUUUDUUDUUUDDUUDLLRUULRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLRUURLLDUUDDUUUDUUDUUUDDUUDLLRUULRLUULRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLRUURLLDUUDDUUUDUUDUUUDDUUDLRRUULRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLRUURLLDUUDDUUUDUUDUUUDDUUDRLLUULRLUURRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLRUURLLDUUDDUUUDUUDUUUDDUUDRRLUULRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLRUURRLDUUDDUUUDUUDUUUDDUUDLLRUULRLUULLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRLUURLRUURRLDUUDDUUUDUUDUUUDDUUDRLLUULRLUURLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLLUULLLDUUDDUUUDUUDUUUDDUUDLLLUURRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLLUULLLDUUDDUUUDUUDUUUDDUUDLRLUURRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLLUULLLDUUDDUUUDUUDUUUDDUUDRLRUURRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLLUULRLDUUDDUUUDUUDUUUDDUUDLLLUURRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLLUURLRDUUDDUUUDUUDUUUDDUUDLLLUURRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULLLDUUDDUUUDUUDUUUDDUUDLLLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULLLDUUDDUUUDUUDUUUDDUUDLLLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULLLDUUDDUUUDUUDUUUDDUUDLRLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULLLDUUDDUUUDUUDUUUDDUUDLRLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULLLDUUDDUUUDUUDUUUDDUUDRLRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULLLDUUDDUUUDUUDUUUDDUUDRLRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULRLDUUDDUUUDUUDUUUDDUUDLLLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULRLDUUDDUUUDUUDUUUDDUUDLLLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUURLRDUUDDUUUDUUDUUUDDUUDLLLUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUURLRDUUDDUUUDUUDUUUDDUUDLLLUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUULLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULLLDUUDDUUUDUUDUUUDDUUDLLLUULRRUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULLLDUUDDUUUDUUDUUUDDUUDLLLUURRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULLLDUUDDUUUDUUDUUUDDUUDLRLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULLLDUUDDUUUDUUDUUUDDUUDLRLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULLLDUUDDUUUDUUDUUUDDUUDRLRUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULLLDUUDDUUUDUUDUUUDDUUDRLRUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULLLDUUDDUUUDUUDUUUDDUUDRRRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULRLDUUDDUUUDUUDUUUDDUUDLLLUULRRUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULRLDUUDDUUUDUUDUUUDDUUDLLLUURRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUULRLDUUDDUUUDUUDUUUDDUUDRLRUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUURLRDUUDDUUUDUUDUUUDDUUDLLLUULRRUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUURLRDUUDDUUUDUUDUUUDDUUDLLLUURRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUURLRDUUDDUUUDUUDUUUDDUUDLRLUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRRUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLLUURRRDUUDDUUUDUUDUUUDDUUDLLLUURRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLRUULLLDUUDDUUUDUUDUUUDDUUDLLLUULRLUURRRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLRUULLLDUUDDUUUDUUDUUUDDUUDLRLUULRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLRUULLLDUUDDUUUDUUDUUUDDUUDRLRUULRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLRUULLLDUUDDUUUDUUDUUUDDUUDRRRUULRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLRUULRLDUUDDUUUDUUDUUUDDUUDLLLUULRLUURLRDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLRUULRLDUUDDUUUDUUDUUUDDUUDRLRUULRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLRUURLRDUUDDUUUDUUDUUUDDUUDLLLUULRLUULRLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLRUURLRDUUDDUUUDUUDUUUDDUUDLRLUULRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU',
+        'UUDDUUUUDDUUDUUDRRRUURLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU'
     )
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
             parent,
-            "lookup-table-5x5x5-step360-x-plane-y-plane-edges-orient-fb-centers.txt",
+            'lookup-table-5x5x5-step900-edge-orient-LR-center-stage.txt',
             self.state_targets,
             moves_555,
             # illegal moves
-            (),
-            linecount=2358566,
-            max_depth=7,
-            filesize=278310788,
-            legal_moves=(
-                "F",
-                "F'",
-                "F2",
-                "B",
-                "B'",
-                "B2",
-                "L2",
-                "R2",
-                "U2",
-                "B2",
-                "Uw2",
-                "Dw2",
-                "Lw2",
-                "Rw2",
+            ("Uw", "Uw'",
+             "Dw", "Dw'",
+             "Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'",
             ),
+
+            # 4-deep
+            #linecount=2136760,
+            #max_depth=4,
+            #filesize=226496560,
+
+            # 5-deep
+            linecount=26485320,
+            max_depth=5,
+            filesize=2913385200,
         )
 
     def ida_heuristic(self):
+        # dwalton here now
         parent_state = self.parent.state
-        (
-            edges_state,
-            edges_cost_to_goal,
-        ) = (
-            self.parent.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.ida_heuristic()
-        )
-        (
-            centers_state,
-            centers_cost_to_goal,
-        ) = (
-            self.parent.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only.ida_heuristic()
+
+        LR_centers_state = ''.join([parent_state[x] for x in LR_centers_555])
+        eo_state_both_orbits = self.parent.highlow_edges_state()
+        lt_state = (
+            eo_state_both_orbits[0:12] +
+
+            eo_state_both_orbits[12:15] +
+            eo_state_both_orbits[15] + LR_centers_state[0:3] + eo_state_both_orbits[16] +
+            eo_state_both_orbits[17] + LR_centers_state[3:6] + eo_state_both_orbits[18] +
+            eo_state_both_orbits[19] + LR_centers_state[6:9] + eo_state_both_orbits[20] +
+            eo_state_both_orbits[21:24] +
+
+            eo_state_both_orbits[24:36] +
+
+            eo_state_both_orbits[36:39] +
+            eo_state_both_orbits[39] + LR_centers_state[9:12] + eo_state_both_orbits[40] +
+            eo_state_both_orbits[41] + LR_centers_state[12:15] + eo_state_both_orbits[42] +
+            eo_state_both_orbits[43] + LR_centers_state[15:18] + eo_state_both_orbits[44] +
+            eo_state_both_orbits[45:]
         )
 
-        lt_state = centers_state + edges_state
-        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
+        (lr_centers_eo_inner_orbit_state, lr_centers_eo_inner_orbit_cost_to_goal) = self.parent.lt_phase3_lr_center_stage_eo_inner_orbit.ida_heuristic()
+        (eo_outer_orbit_state, eo_outer_orbit_cost_to_goal) = self.parent.lt_phase3_eo_outer_orbit.ida_heuristic()
+
+        cost_to_goal = max(
+            lr_centers_eo_inner_orbit_cost_to_goal,
+            eo_outer_orbit_cost_to_goal,
+        )
 
         if cost_to_goal > 0:
             steps = self.steps(lt_state)
@@ -2822,28 +2580,16 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
             moves_555,
             # illegal moves
             (
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "Uw",
-                "Uw'",
-                "Uw2",
-                "Dw",
-                "Dw'",
-                "Dw2",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "F",
-                "F'",
-                "B",
-                "B'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "Uw", "Uw'", "Uw2",
+                "Dw", "Dw'", "Dw2",
+                "L", "L'",
+                "R", "R'",
+                "F", "F'",
+                "B", "B'",
             ),
             linecount=2527885,
             max_depth=7,
@@ -2858,26 +2604,14 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
             LookupTableIDA555PairLastEightEdges.heuristic_stats_error = 0
 
     def ida_heuristic_tuple(self):
-        (
-            edges_state,
-            edges_cost_to_goal,
-        ) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
-        (
-            centers_state,
-            centers_cost_to_goal,
-        ) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
+        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
         return (centers_cost_to_goal, edges_cost_to_goal)
 
     def ida_heuristic(self):
         parent_state = self.parent.state
-        (
-            edges_state,
-            edges_cost_to_goal,
-        ) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
-        (
-            centers_state,
-            centers_cost_to_goal,
-        ) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
+        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
         cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
         lt_state = centers_state + edges_state
 
@@ -2887,9 +2621,7 @@ class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
             if steps:
                 cost_to_goal = len(steps)
             else:
-                heuristic_stats_cost = self.heuristic_stats.get(
-                    (centers_cost_to_goal, edges_cost_to_goal), 0
-                )
+                heuristic_stats_cost = self.heuristic_stats.get((centers_cost_to_goal, edges_cost_to_goal), 0)
                 cost_to_goal = max(
                     centers_cost_to_goal,
                     edges_cost_to_goal,
@@ -3123,6 +2855,15 @@ class RubiksCube555(RubiksCube):
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
 
+        #self.lt_phase3_eo_inner_orbit = LookupTableIDA555EdgeOrientInnerOrbit(self)
+        self.lt_phase3_lr_center_stage_eo_inner_orbit = LookupTableIDA555LRCenterStageEOInnerOrbit(self)
+        self.lt_phase3_eo_outer_orbit = LookupTableIDA555EdgeOrientOuterOrbit(self)
+        self.lt_phase3 = LookupTableIDA555LRCenterStageEOBothOrbits(self)
+
+        self.lt_phase3_lr_center_stage_eo_inner_orbit.preload_cache_string()
+        self.lt_phase3_eo_outer_orbit.preload_cache_string()
+        self.lt_phase3.preload_cache_string()
+
         '''
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_T_centers_stage_odd = LookupTable555LRTCenterStageOdd(self)
@@ -3133,51 +2874,20 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_T_centers_stage_odd.preload_cache_string()
         self.lt_LR_T_centers_stage_even.preload_cache_string()
 
-        self.lt_LR_432_pair_one_edge = LookupTable555LRCenterStage432PairOneEdge(self)
         self.lt_LR_centers_stage_pt = LookupTable555LRCenterStage(self)
-        self.lt_LR_432_x_centers_only = LookupTable555LRCenterStage432XCentersOnly(self)
-        self.lt_LR_432_t_centers_only = LookupTable555LRCenterStage432TCentersOnly(self)
-        self.lt_LR_432_centers_stage = LookupTableIDA555LRCenterStage432(self)
         self.lt_LR_432_pair_one_edge.preload_cache_dict()
         self.lt_LR_432_x_centers_only.preload_cache_string()
         self.lt_LR_432_t_centers_only.preload_cache_string()
         self.lt_LR_432_centers_stage.preload_cache_string()
 
-        self.lt_edges_z_plane_edges_only = LookupTable555EdgesZPlaneEdgesOnly(self)
-        self.lt_edges_z_plane_centers_only = LookupTable555EdgesZPlaneCentersOnly(self)
-        self.lt_edges_z_plane = LookupTableIDA555EdgesZPlane(self)
         self.lt_edges_z_plane_centers_only.preload_cache_dict()
         self.lt_edges_z_plane.preload_cache_string()
 
-        self.lt_x_plane_y_plane_orient_edges_edges_only = LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_centers_only = LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_centers_only_ht = LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges = LookupTableIDA555XPlaneYPlaneEdgesOrient(
-            self
-        )
         self.lt_x_plane_y_plane_orient_edges_edges_only.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges.preload_cache_string()
         self.lt_x_plane_y_plane_orient_edges_pair_one_edge.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges_centers_only.preload_cache_string()
 
-        self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersEdgesOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_fb_centers = LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(
-            self
-        )
         self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges_fb_centers.preload_cache_string()
@@ -3396,9 +3106,7 @@ class RubiksCube555(RubiksCube):
         #    self, pformat(pairable), len(pairable)))
         return tuple(sorted(pairable))
 
-    def edges_flip_to_original_orientation(
-        self, must_be_uppercase=[], must_be_lowercase=[]
-    ):
+    def edges_flip_to_original_orientation(self, must_be_uppercase=[], must_be_lowercase=[]):
         state = edges_recolor_pattern_555(self.state[:])
         edges_state = "".join([state[index] for index in wings_for_edges_pattern_555])
 
@@ -3723,7 +3431,15 @@ class RubiksCube555(RubiksCube):
         if not self.centers_solved() or not self.edges_paired():
             self.group_centers_stage_LR()
             self.group_centers_stage_FB()
-            # dwalton 
+
+            #self.lt_phase3_eo_inner_orbit.solve()
+            #self.lt_phase3_lr_center_stage_eo_inner_orbit.solve()
+            #self.lt_phase3_eo_outer_orbit.solve()
+            #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            self.lt_phase3.solve()
+            self.highlow_edges_print()
+            self.print_cube()
+            log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             sys.exit(0)
 
             #self.group_centers_stage_LR_to_432()

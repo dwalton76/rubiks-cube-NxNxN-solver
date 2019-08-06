@@ -19,7 +19,6 @@ from rubikscubennnsolver.RubiksCube555 import (
     LookupTableIDA555FBCentersStage,
     LookupTableIDA555ULFRBDCentersSolve,
     LookupTable555TCenterSolve,
-    LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge,
     LookupTable555LRTCenterStage,
     LookupTable555FBTCenterStageFull,
 )

@@ -293,7 +293,9 @@ str_replace_for_binary(char *str, char *ones)
     /* Run till end of string */
     while (str[i] != '\0') {
 
-        if (str[i] != '0') {
+        if (str[i] == '.') {
+            // pass
+        } else if (str[i] != '0') {
             j = 0;
             is_a_one = 0;
 

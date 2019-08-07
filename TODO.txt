@@ -1,0 +1,4 @@
+5x5x5 UD center staging is 735471/735471^2 = 0.000 001
+
+5x5x5 ALL center staging is 735471/(24!/(8!*8!*8!))^2 = 0.000 000 000 000 008
+

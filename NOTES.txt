@@ -1,0 +1,42 @@
+Baseline numbers for 555 UD centers stage
+
+ida_search.c
+============
+[2019-08-07T01:07:32.715] ida_prune_table_preload lookup-table-5x5x5-step10-UD-centers-stage.txt: start
+[2019-08-07T01:07:33.004] ida_prune_table_preload lookup-table-5x5x5-step10-UD-centers-stage.txt: end
+[2019-08-07T01:07:33.004] ida_cost_only_preload: begin lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, 16711681 entries, ptr 0xbfb39010
+[2019-08-07T01:07:33.010] ida_cost_only_preload: end   lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, ptr 0xbfb39010
+[2019-08-07T01:07:33.010] ida_cost_only_preload: begin lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt, 16711681 entries, ptr 0xbeb48010
+[2019-08-07T01:07:33.015] ida_cost_only_preload: end   lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.cost-only.txt, ptr 0xbeb48010
+[2019-08-07T01:07:33.015] min_ida_threshold 6
+[2019-08-07T01:07:33.015] IDA threshold 6, explored 1 branches
+[2019-08-07T01:07:33.015] IDA threshold 7, explored 23 branches
+[2019-08-07T01:07:33.016] IDA threshold 8, explored 351 branches
+[2019-08-07T01:07:33.021] IDA threshold 9, explored 7084 branches
+[2019-08-07T01:07:33.141] IDA threshold 10, explored 163790 branches
+[2019-08-07T01:07:33.799] UD_CENTERS_STAGE_555 solved
+[2019-08-07T01:07:33.799] IDA count 906387, f_cost 10 vs threshold 11 (cost_to_here 10, cost_to_goal 0)
+SOLUTION: Uw' Bw' R Uw2 F' Fw' Lw2 Bw' D2 Lw 
+[2019-08-07T01:07:33.799] IDA threshold 11, explored 906387 branches (1077636 total), found solution
+
+real	0m1.095s
+user	0m1.030s
+sys	0m0.065s
+
+That is 1,374,000 nodes-per-sec (1,077,636 nodes in 784ms)
+
+
+IDA via python
+==============
+2019-08-06 21:37:44,020         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold range 6->99
+2019-08-06 21:37:44,020         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 6, explored 1 nodes in 0ms, 24390 nodes-per-sec
+2019-08-06 21:37:44,021         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 7, explored 23 nodes in 0ms, 37216 nodes-per-sec
+2019-08-06 21:37:44,030         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 8, explored 332 nodes in 8ms, 38359 nodes-per-sec
+2019-08-06 21:37:44,204         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 9, explored 6763 nodes in 173ms, 38947 nodes-per-sec
+2019-08-06 21:37:48,226         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 10, explored 157889 nodes in 0:00:04.022340, 39253 nodes-per-sec
+2019-08-06 21:38:10,985         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: 1/1 states found
+2019-08-06 21:38:10,985         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: 1/1 solution_len 10
+2019-08-06 21:38:10,986         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 11, explored 877671 nodes in 0:00:22.759438 (0:00:26.965245 total)
+2019-08-06 21:38:10,986         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA explored 1042679 nodes in 0:00:26.965245, 38667 nodes-per-sec
+2019-08-06 21:38:10,986         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA found 10 step solution Uw' Bw' R Uw2 F' Fw' Lw2 Bw' D2 Lw'
+

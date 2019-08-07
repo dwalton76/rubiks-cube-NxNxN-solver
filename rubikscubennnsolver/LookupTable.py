@@ -969,7 +969,6 @@ class LookupTable(object):
                 )
                 wing_pair_count -= init_wing_count
 
-                # dwalton
                 if (
                     wing_pair_count > max_wing_pair_count
                     or (
@@ -1004,6 +1003,9 @@ class LookupTable(object):
                     )
 
         return max_line
+
+    def build_ida_graph(self):
+        raise Exception("child class must implement build_ida_graph()")
 
 
 class LookupTableCostOnly(LookupTable):

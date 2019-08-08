@@ -2,3 +2,31 @@
 
 5x5x5 ALL center staging is 735471/(24!/(8!*8!*8!))^2 = 0.000 000 000 000 008
 
+
+- do spacing cleanup in master
+
+- the 666 centers cleanup that I did was significant
+    - use 444 to stage inner x-centers
+    - pair UD oblique edges then stage UD centers via 555
+    - LR and FB centers could be staged in a single phase (no need
+      to pair oblique edges here)
+
+All phases are limited by the speed of the IDA search.  Experiment with:
+- 555 UD centers stage, get a baseline, how many nodes-per-sec can we do and how many nodes do we visit?
+- for each prune table, build a graph where each node is a pt_state, each node will have 36 edges (one
+  for each possible move) that takes you to another node. Each node will also store its cost to goal.
+- IDA* until all pt nodes have a cost of 0.
+- The downside here is there is no longer a "main" prune table...this may drastically increase the
+  number of nodes we have to visit. Maybe we could build a "main" prune table where the key is the
+  tuple of pt states?  At some point a node's edge may point to None though. This could be done as
+  a 2.0 of this little experiment.
+
+- we need to track the pt state tuples to know which nodes we have already visited
+
+- The upsides to this approach are:
+    - applying rotations to the cube, this should be a big CPU savings
+    - looping over the cube state to build the pt states
+
+- I swear I looked into this in the past...see if you can find those notes
+    see email thread with joey.gouly@gmail.com it doesn't have the conclusion though
+

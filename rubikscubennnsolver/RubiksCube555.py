@@ -1104,6 +1104,7 @@ class LookupTable555UDCenterStageTCenterOnlyNew(LookupTable):
             linecount=735471,
             max_depth=8,
             filesize=28683369)
+        self.legal_moves = moves_555
 
     def ida_heuristic(self):
         parent_state = self.parent.state
@@ -1112,53 +1113,14 @@ class LookupTable555UDCenterStageTCenterOnlyNew(LookupTable):
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
 
-    def build_ida_graph(self):
-        parent = self.parent
-        parent_state = self.parent.state
-        legal_moves = moves_555
-        ida_graph = {}
-        index = 0
+    def populate_cube_from_state(self, state, cube):
+        binary_state = bin(int(state, 16))[2:].zfill(24)
 
-        for (state, steps) in self.cache.items():
-            len_steps = len(steps.split())
-            binary_state = bin(int(state, 16))[2:].zfill(24)
-            #log.info("%s: state %s -> %s, cost %d (%s)" % (self, state, binary_state, len_steps, steps))
-            parent.nuke_edges()
-            parent.nuke_corners()
-            parent.nuke_centers()
-
-            for (pos, pos_state) in zip(self.t_centers_555, binary_state):
-                if pos_state == "0":
-                    parent_state[pos] = "x"
-                else:
-                    parent_state[pos] = "U"
-
-            ida_graph[state] = {
-                "cost": len_steps,
-                "edges": {},
-            }
-
-            baseline_state = parent_state[:]
-            #parent.print_cube()
-            #log.info("%s: legal moves %s" % (self, " ".join(legal_moves)))
-
-            for step in legal_moves:
-                parent.rotate(step)
-                (state_for_step, _) = self.ida_heuristic()
-                #log.info("moved %s, new state %s" % (step, state_for_step))
-                ida_graph[state]["edges"][step] = state_for_step
-                parent.state = baseline_state[:]
-
-            index += 1
-
-            if index % 1000 == 0:
-                log.info(index)
-
-            #break
-
-        with open(self.filename.replace(".txt", ".json"), "w") as fh:
-            json.dump(ida_graph, fh)
-            fh.write("\n")
+        for (pos, pos_state) in zip(self.t_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "U"
 
 
 class LookupTable555UDCenterStageXCenterOnlyNew(LookupTable):
@@ -1198,13 +1160,23 @@ class LookupTable555UDCenterStageXCenterOnlyNew(LookupTable):
             max_depth=8,
             filesize=27212427)
 
+        self.legal_moves = moves_555
+
     def ida_heuristic(self):
         parent_state = self.parent.state
         state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
         state = self.hex_format % int(state, 2)
-        #state = "".join(["U" if parent_state[x] in ("U", "D") else "x" for x in self.x_centers_555])
         cost_to_goal = self.heuristic(state)
         return (state, cost_to_goal)
+
+    def populate_cube_from_state(self, state, cube):
+        binary_state = bin(int(state, 16))[2:].zfill(24)
+
+        for (pos, pos_state) in zip(self.x_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "U"
 
 
 class LookupTableIDA555UDCenterStageNew(LookupTableIDA):
@@ -1244,7 +1216,6 @@ class LookupTableIDA555UDCenterStageNew(LookupTableIDA):
         (_, x_centers_cost_to_goal) = self.parent.lt_UD_centers_stage_x_centers.ida_heuristic()
 
         cost_to_goal = max(t_centers_cost_to_goal, x_centers_cost_to_goal)
-        # dwalton
 
         if cost_to_goal > 0:
             steps = self.steps(lt_state)
@@ -3776,8 +3747,8 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_centers_stage = LookupTableIDA555UDCenterStageNew(self)
 
         # dwalton
-        self.lt_UD_centers_stage_t_centers.preload_cache_dict()
-        #self.lt_UD_centers_stage_x_centers.preload_cache_dict()
+        #self.lt_UD_centers_stage_t_centers.preload_cache_dict()
+        self.lt_UD_centers_stage_x_centers.preload_cache_dict()
         #self.lt_UD_centers_stage.preload_cache_dict()
 
         '''

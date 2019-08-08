@@ -8,6 +8,7 @@ from pyhashxx import hashxx
 from subprocess import call
 import gc
 import hashlib
+import json
 import logging
 import os
 import resource
@@ -1005,7 +1006,44 @@ class LookupTable(object):
         return max_line
 
     def build_ida_graph(self):
-        raise Exception("child class must implement build_ida_graph()")
+        parent = self.parent
+        parent_state = self.parent.state
+        legal_moves = self.legal_moves
+        ida_graph = {}
+        index = 0
+
+        for (state, steps) in self.cache.items():
+            len_steps = len(steps.split())
+            #log.info("%s: state %s -> %s, cost %d (%s)" % (self, state, binary_state, len_steps, steps))
+            parent.nuke_edges()
+            parent.nuke_corners()
+            parent.nuke_centers()
+            self.populate_cube_from_state(state, parent_state)
+
+            ida_graph[state] = {
+                "cost": len_steps,
+                "edges": {},
+            }
+
+            baseline_state = parent_state[:]
+            #parent.print_cube()
+            #log.info("%s: legal moves %s" % (self, " ".join(legal_moves)))
+
+            for step in legal_moves:
+                parent.rotate(step)
+                (state_for_step, _) = self.ida_heuristic()
+                #log.info("moved %s, new state %s" % (step, state_for_step))
+                ida_graph[state]["edges"][step] = state_for_step
+                parent.state = baseline_state[:]
+
+            index += 1
+
+            if index % 1000 == 0:
+                log.info(index)
+
+        with open(self.filename.replace(".txt", ".json"), "w") as fh:
+            json.dump(ida_graph, fh)
+            fh.write("\n")
 
 
 class LookupTableCostOnly(LookupTable):

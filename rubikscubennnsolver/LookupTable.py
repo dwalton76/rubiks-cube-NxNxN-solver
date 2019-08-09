@@ -448,6 +448,8 @@ class LookupTable(object):
         self.use_isdigit = False
         self.only_colors = ()
         self.printed_disk_io_warning = False
+        self.ida_graph = {}
+        self.ida_graph_node = None
 
         assert self.filename.startswith(
             "lookup-table"
@@ -1018,14 +1020,14 @@ class LookupTable(object):
             parent.nuke_edges()
             parent.nuke_corners()
             parent.nuke_centers()
-            self.populate_cube_from_state(state, parent_state)
+            self.populate_cube_from_state(state, parent.state)
 
             ida_graph[state] = {
                 "cost": len_steps,
                 "edges": {},
             }
 
-            baseline_state = parent_state[:]
+            baseline_state = parent.state[:]
             #parent.print_cube()
             #log.info("%s: legal moves %s" % (self, " ".join(legal_moves)))
 
@@ -1034,6 +1036,12 @@ class LookupTable(object):
                 (state_for_step, _) = self.ida_heuristic()
                 #log.info("moved %s, new state %s" % (step, state_for_step))
                 ida_graph[state]["edges"][step] = state_for_step
+
+                # dwalton
+                if state_for_step == "000000":
+                    self.print_cube()
+                    raise Exception("%s: invalid state_for_step %s" % (self, step))
+
                 parent.state = baseline_state[:]
 
             index += 1
@@ -1042,8 +1050,19 @@ class LookupTable(object):
                 log.info(index)
 
         with open(self.filename.replace(".txt", ".json"), "w") as fh:
-            json.dump(ida_graph, fh)
+            json.dump(ida_graph, fh, indent=True)
             fh.write("\n")
+
+    def load_ida_graph(self):
+        json_filename = self.filename.replace(".txt", ".json")
+
+        if os.path.exists(json_filename):
+            with open(json_filename, "r") as fh:
+                log.info("%s: load IDA graph begin" % self)
+                self.ida_graph = json.load(fh)
+                log.info("%s: load IDA graph end" % self)
+        else:
+            log.warning("%s: %s does not exist" % (self, json_filename))
 
 
 class LookupTableCostOnly(LookupTable):

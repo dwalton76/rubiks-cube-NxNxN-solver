@@ -8,6 +8,7 @@ from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 # This will consume about 200M when you import it
 from rubikscubennnsolver.RubiksCube555HighLowEdges import highlow_edge_values
 
+from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
@@ -1107,10 +1108,16 @@ class LookupTable555UDCenterStageTCenterOnlyNew(LookupTable):
         self.legal_moves = moves_555
 
     def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
-        state = self.hex_format % int(state, 2)
-        cost_to_goal = self.heuristic(state)
+        if self.ida_graph_node is None:
+            parent_state = self.parent.state
+            state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
+            state = self.hex_format % int(state, 2)
+            cost_to_goal = self.heuristic(state)
+            self.ida_graph_node = state
+        else:
+            state = self.ida_graph_node
+            cost_to_goal = self.ida_graph[self.ida_graph_node]["cost"]
+
         return (state, cost_to_goal)
 
     def populate_cube_from_state(self, state, cube):
@@ -1163,10 +1170,17 @@ class LookupTable555UDCenterStageXCenterOnlyNew(LookupTable):
         self.legal_moves = moves_555
 
     def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
-        state = self.hex_format % int(state, 2)
-        cost_to_goal = self.heuristic(state)
+        # dwalton
+        if self.ida_graph_node is None:
+            parent_state = self.parent.state
+            state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
+            state = self.hex_format % int(state, 2)
+            cost_to_goal = self.heuristic(state)
+            self.ida_graph_node = state
+        else:
+            state = self.ida_graph_node
+            cost_to_goal = self.ida_graph[self.ida_graph_node]["cost"]
+
         return (state, cost_to_goal)
 
     def populate_cube_from_state(self, state, cube):
@@ -1179,7 +1193,7 @@ class LookupTable555UDCenterStageXCenterOnlyNew(LookupTable):
                 cube[pos] = "U"
 
 
-class LookupTableIDA555UDCenterStageNew(LookupTableIDA):
+class LookupTableIDA555UDCenterStageNew(LookupTableIDAViaGraph):
     """
     lookup-table-5x5x5-step10-UD-centers-stage.txt
     ==============================================
@@ -1195,7 +1209,7 @@ class LookupTableIDA555UDCenterStageNew(LookupTableIDA):
     """
 
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTableIDAViaGraph.__init__(
             self,
             parent,
             'lookup-table-5x5x5-step10-UD-centers-stage.txt',
@@ -1205,8 +1219,13 @@ class LookupTableIDA555UDCenterStageNew(LookupTableIDA):
             linecount=868185,
             max_depth=5,
             filesize=30386475,
+            prune_tables=(
+                parent.lt_UD_centers_stage_t_centers,
+                parent.lt_UD_centers_stage_x_centers,
+            )
         )
 
+        '''
     def ida_heuristic(self):
         parent_state = self.parent.state
         lt_state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in centers_555])
@@ -1226,6 +1245,7 @@ class LookupTableIDA555UDCenterStageNew(LookupTableIDA):
                 cost_to_goal = max(cost_to_goal, self.max_depth + 1)
 
         return (lt_state, cost_to_goal)
+        '''
 
 
 
@@ -3748,7 +3768,7 @@ class RubiksCube555(RubiksCube):
 
         # dwalton
         #self.lt_UD_centers_stage_t_centers.preload_cache_dict()
-        self.lt_UD_centers_stage_x_centers.preload_cache_dict()
+        #self.lt_UD_centers_stage_x_centers.preload_cache_dict()
         #self.lt_UD_centers_stage.preload_cache_dict()
 
         '''
@@ -3917,7 +3937,6 @@ class RubiksCube555(RubiksCube):
             "%s: UD centers staged, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        # dwalton
         sys.exit(0)
 
     def group_centers_stage_LR(self):

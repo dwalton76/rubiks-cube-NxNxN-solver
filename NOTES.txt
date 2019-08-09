@@ -40,3 +40,31 @@ IDA via python
 2019-08-06 21:38:10,986         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA explored 1042679 nodes in 0:00:26.965245, 38667 nodes-per-sec
 2019-08-06 21:38:10,986         LookupTable.py     INFO: 5x5x5-step10-UD-centers-stage: IDA found 10 step solution Uw' Bw' R Uw2 F' Fw' Lw2 Bw' D2 Lw'
 
+
+IDA via graph
+=============
+It takes about 12s to json.load the two pt graphs but wow is it fast after that
+2019-08-09 14:38:39,719 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold range 6->99
+2019-08-09 14:38:39,719 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 6, explored 1 nodes in 0ms, 62500 nodes-per-sec
+2019-08-09 14:38:39,719 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 7, explored 37 nodes in 0ms, 186868 nodes-per-sec
+2019-08-09 14:38:39,720 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 8, explored 172 nodes in 0ms, 222509 nodes-per-sec
+2019-08-09 14:38:39,768 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 9, explored 10774 nodes in 47ms, 224908 nodes-per-sec
+2019-08-09 14:38:40,446 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 10, explored 156230 nodes in 677ms, 230676 nodes-per-sec
+2019-08-09 14:38:41,910 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 11, explored 333588 nodes in 1464ms (0:00:02.191088 total)
+2019-08-09 14:38:41,910 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA explored 500802 nodes in 0:00:02.191088, 228563 nodes-per-sec
+2019-08-09 14:38:41,910 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA found 10 step solution U Bw2 Dw' L' Fw' Lw' B' Bw' Uw' Rw
+2019-08-09 14:38:41,912       RubiksCube555.py     INFO: 5x5x5: UD centers staged, 10 steps in
+
+after profiling and some tweaking
+2019-08-09 16:04:42,128 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold range 6->99
+2019-08-09 16:04:42,128 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 6, explored 1 nodes in 0ms, 76923 nodes-per-sec
+2019-08-09 16:04:42,128 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 7, explored 37 nodes in 0ms, 276119 nodes-per-sec
+2019-08-09 16:04:42,129 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 8, explored 172 nodes in 0ms, 356107 nodes-per-sec
+2019-08-09 16:04:42,160 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 9, explored 10774 nodes in 31ms, 342902 nodes-per-sec
+2019-08-09 16:04:42,584 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 10, explored 156230 nodes in 423ms, 368666 nodes-per-sec
+2019-08-09 16:04:43,529 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 11, explored 333588 nodes in 944ms (1401ms total)
+2019-08-09 16:04:43,529 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA explored 500802 nodes in 0:00:01.401254, 357395 nodes-per-sec
+2019-08-09 16:04:43,529 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA found 10 step solution U Bw2 Dw' L' Fw' Lw' B' Bw' Uw' Rw
+2019-08-09 16:04:43,530       RubiksCube555.py     INFO: 5x5x5: UD centers staged, 10 steps in
+
+That is almost a 9.2x improvment!! (vs. 'IDA via python')

@@ -10,6 +10,8 @@ from rubikscubennnsolver.RubiksCube555HighLowEdges import highlow_edge_values
 
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.LookupTable import (
+    binary_search,
+    get_file_vitals,
     steps_on_same_face_and_layer,
     LookupTable,
     LookupTableCostOnly,
@@ -34,42 +36,12 @@ log = logging.getLogger(__name__)
 MIN_EO_COUNT_FOR_STAGE_LR_432 = 5
 
 moves_555 = (
-    "U",
-    "U'",
-    "U2",
-    "Uw",
-    "Uw'",
-    "Uw2",
-    "L",
-    "L'",
-    "L2",
-    "Lw",
-    "Lw'",
-    "Lw2",
-    "F",
-    "F'",
-    "F2",
-    "Fw",
-    "Fw'",
-    "Fw2",
-    "R",
-    "R'",
-    "R2",
-    "Rw",
-    "Rw'",
-    "Rw2",
-    "B",
-    "B'",
-    "B2",
-    "Bw",
-    "Bw'",
-    "Bw2",
-    "D",
-    "D'",
-    "D2",
-    "Dw",
-    "Dw'",
-    "Dw2",
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2",
+    "F", "F'", "F2", "Fw", "Fw'", "Fw2",
+    "R", "R'", "R2", "Rw", "Rw'", "Rw2",
+    "B", "B'", "B2", "Bw", "Bw'", "Bw2",
+    "D", "D'", "D2", "Dw", "Dw'", "Dw2",
     # slices...not used for now
     # "2U", "2U'", "2U2", "2D", "2D'", "2D2",
     # "2L", "2L'", "2L2", "2R", "2R'", "2R2",
@@ -1104,21 +1076,14 @@ class LookupTable555UDCenterStageTCenterOnlyNew(LookupTable):
             "f0000f",
             linecount=735471,
             max_depth=8,
-            filesize=28683369)
-        self.legal_moves = moves_555
+            filesize=28683369,
+            legal_moves=moves_555,
+        )
 
-    def ida_heuristic(self):
-        if self.ida_graph_node is None:
-            parent_state = self.parent.state
-            state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
-            state = self.hex_format % int(state, 2)
-            cost_to_goal = self.heuristic(state)
-            self.ida_graph_node = state
-        else:
-            state = self.ida_graph_node
-            cost_to_goal = self.ida_graph[self.ida_graph_node]["cost"]
-
-        return (state, cost_to_goal)
+    def state(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
+        return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube):
         binary_state = bin(int(state, 16))[2:].zfill(24)
@@ -1165,23 +1130,14 @@ class LookupTable555UDCenterStageXCenterOnlyNew(LookupTable):
             "f0000f",
             linecount=735471,
             max_depth=8,
-            filesize=27212427)
+            filesize=27212427,
+            legal_moves=moves_555,
+        )
 
-        self.legal_moves = moves_555
-
-    def ida_heuristic(self):
-        # dwalton
-        if self.ida_graph_node is None:
-            parent_state = self.parent.state
-            state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
-            state = self.hex_format % int(state, 2)
-            cost_to_goal = self.heuristic(state)
-            self.ida_graph_node = state
-        else:
-            state = self.ida_graph_node
-            cost_to_goal = self.ida_graph[self.ida_graph_node]["cost"]
-
-        return (state, cost_to_goal)
+    def state(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
+        return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube):
         binary_state = bin(int(state, 16))[2:].zfill(24)

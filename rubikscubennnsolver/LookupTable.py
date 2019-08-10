@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import resource
+import struct
 import subprocess
 import sys
 
@@ -33,6 +34,49 @@ class NoIDASolution(Exception):
 
 class NoPruneTableState(Exception):
     pass
+
+
+def binary_search(fh, width, state_width, linecount, state_to_find):
+    first = 0
+    last = linecount - 1
+
+    while first <= last:
+        midpoint = int((first + last)/2)
+        fh.seek(midpoint * width)
+
+        # Only read the 'state' part of the line (for speed)
+        b_state = fh.read(state_width)
+
+        if state_to_find < b_state:
+            last = midpoint - 1
+
+        # If this is the line we are looking for, then read the entire line
+        elif state_to_find == b_state:
+            fh.seek(midpoint * width)
+            line = fh.read(width)
+            (_, value) = line.rstrip().split(':')
+            return value
+
+        else:
+            first = midpoint + 1
+
+    return None
+
+
+def get_file_vitals(filename):
+    """
+    Return the width of each line, the width of the state, and the number of lines in the file
+    """
+    size = os.path.getsize(filename)
+
+    # Find the state_width for the entries in our .txt file
+    with open(filename, 'r') as fh:
+        first_line = next(fh)
+        width = len(first_line)
+        (state, steps) = first_line.split(':')
+        state_width = len(state)
+        linecount = int(size/width)
+        return (width, state_width, linecount)
 
 
 def get_wing_pair_count_555(strA, strB):
@@ -416,6 +460,7 @@ class LookupTable(object):
         max_depth=None,
         filesize=None,
         md5=None,
+        legal_moves=[]
     ):
         self.parent = parent
         self.sides_all = (
@@ -450,6 +495,7 @@ class LookupTable(object):
         self.printed_disk_io_warning = False
         self.ida_graph = {}
         self.ida_graph_node = None
+        self.legal_moves = []
 
         assert self.filename.startswith(
             "lookup-table"
@@ -496,6 +542,10 @@ class LookupTable(object):
             self.fh_txt = None
         else:
             self.fh_txt = open(self.filename, mode="rb")
+
+        COST_LENGTH = 1
+        STATE_INDEX_LENGTH = 4
+        self.ROW_LENGTH = COST_LENGTH + (STATE_INDEX_LENGTH * len(self.legal_moves))
 
     def __str__(self):
         return self.desc
@@ -1036,12 +1086,6 @@ class LookupTable(object):
                 (state_for_step, _) = self.ida_heuristic()
                 #log.info("moved %s, new state %s" % (step, state_for_step))
                 ida_graph[state]["edges"][step] = state_for_step
-
-                # dwalton
-                if state_for_step == "000000":
-                    self.print_cube()
-                    raise Exception("%s: invalid state_for_step %s" % (self, step))
-
                 parent.state = baseline_state[:]
 
             index += 1
@@ -1054,15 +1098,30 @@ class LookupTable(object):
             fh.write("\n")
 
     def load_ida_graph(self):
-        json_filename = self.filename.replace(".txt", ".json")
+        bin_filename = self.filename.replace(".txt", ".bin")
 
-        if os.path.exists(json_filename):
-            with open(json_filename, "r") as fh:
-                log.info("%s: load IDA graph begin" % self)
-                self.ida_graph = json.load(fh)
-                log.info("%s: load IDA graph end" % self)
-        else:
-            log.warning("%s: %s does not exist" % (self, json_filename))
+        with open(bin_filename, "rb") as fh:
+            log.info("%s: load IDA graph begin" % self)
+            self.ida_graph = fh.read()
+            log.info("%s: load IDA graph end" % self)
+
+    def state_index(self):
+        state = self.state()
+        state_index_filename = self.filename.replace(".txt", ".state_index")
+        (width, state_width, linecount) = get_file_vitals(state_index_filename)
+
+        with open(state_index_filename, "r") as fh:
+            state_index = binary_search(fh, width, state_width, linecount, state)
+            return int(state_index)
+
+    def ida_heuristic(self):
+        if self.ida_graph_node is None:
+            self.ida_graph_node = self.state_index()
+
+        state_index = self.ida_graph_node
+        cost_to_goal = self.ida_graph[state_index * self.ROW_LENGTH]
+
+        return (state_index, cost_to_goal)
 
 
 class LookupTableCostOnly(LookupTable):

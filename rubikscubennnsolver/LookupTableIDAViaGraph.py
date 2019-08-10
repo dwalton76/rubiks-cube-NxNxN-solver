@@ -9,6 +9,7 @@ from rubikscubennnsolver.LookupTable import (
 )
 import datetime as dt
 import logging
+import struct
 import sys
 
 
@@ -16,6 +17,7 @@ log = logging.getLogger(__name__)
 
 
 class LookupTableIDAViaGraph(LookupTable):
+
     def __init__(
         self,
         parent,
@@ -51,6 +53,14 @@ class LookupTableIDAViaGraph(LookupTable):
             for x in moves_all:
                 if x not in moves_illegal:
                     self.moves_all.append(x)
+
+        self.step_index = {}
+        for (index, step) in enumerate(self.moves_all):
+            self.step_index[step] = index
+
+        COST_LENGTH = 1
+        STATE_INDEX_LENGTH = 4
+        self.ROW_LENGTH = COST_LENGTH + (STATE_INDEX_LENGTH * len(self.moves_all))
 
         # Cache the results of steps_on_same_face_and_layer() for all
         # combinations of moves we will see while searching.
@@ -140,7 +150,8 @@ class LookupTableIDAViaGraph(LookupTable):
 
         for pt in self.prune_tables:
             lt_state.append(pt.ida_graph_node)
-            pt_cost_to_goal = pt.ida_graph[pt.ida_graph_node]["cost"]
+            offset = pt.ida_graph_node * self.ROW_LENGTH
+            pt_cost_to_goal = pt.ida_graph[offset]
 
             if pt_cost_to_goal > cost_to_goal:
                 cost_to_goal = pt_cost_to_goal
@@ -160,7 +171,9 @@ class LookupTableIDAViaGraph(LookupTable):
 
         for pt in self.prune_tables:
             lt_state.append(pt.ida_graph_node)
-            pt_cost_to_goal = pt.ida_graph[pt.ida_graph_node]["cost"]
+            #pt_cost_to_goal = pt.ida_graph[pt.ida_graph_node]["cost"]
+            offset = pt.ida_graph_node * self.ROW_LENGTH
+            pt_cost_to_goal = pt.ida_graph[offset]
 
             if pt_cost_to_goal > cost_to_goal:
                 cost_to_goal = pt_cost_to_goal
@@ -170,7 +183,6 @@ class LookupTableIDAViaGraph(LookupTable):
         # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
         f_cost = cost_to_here + cost_to_goal
 
-        # dwalton
         #log.info("%s: lt_state %s, cost_to_here %s, cost_to_goal %s, prev_ida_graph_nodes %s" %
         #    (self, ",".join(lt_state), cost_to_here, cost_to_goal, ",".join(prev_ida_graph_nodes)))
 
@@ -196,6 +208,7 @@ class LookupTableIDAViaGraph(LookupTable):
         skip_other_steps_this_face = None
         prune_tables = self.prune_tables
         next_steps = self.steps_not_on_same_face_and_layer[prev_step]
+        step_index = self.step_index
 
         for step in next_steps:
 
@@ -215,7 +228,6 @@ class LookupTableIDAViaGraph(LookupTable):
                 else:
                     skip_other_steps_this_face = None
 
-            # dwalton
             # save a function call
             #self.set_ida_graph_nodes(prev_ida_graph_nodes)
             for (pt, node) in zip(prune_tables, prev_ida_graph_nodes):
@@ -225,7 +237,10 @@ class LookupTableIDAViaGraph(LookupTable):
             # the pt.ida_graph_node for each prune table based on "step".
             curr_ida_graph_nodes = []
             for pt in self.prune_tables:
-                pt.ida_graph_node = pt.ida_graph[pt.ida_graph_node]["edges"][step]
+                start = (pt.ida_graph_node * self.ROW_LENGTH) + 1 + (step_index[step] * 4)
+                end = start + 4
+                pt.ida_graph_node = struct.unpack(">L", pt.ida_graph[start:end])[0]
+
                 curr_ida_graph_nodes.append(pt.ida_graph_node)
 
             (f_cost_tmp, found_solution) = self.ida_search(

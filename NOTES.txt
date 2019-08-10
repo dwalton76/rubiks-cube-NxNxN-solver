@@ -68,3 +68,20 @@ after profiling and some tweaking
 2019-08-09 16:04:43,530       RubiksCube555.py     INFO: 5x5x5: UD centers staged, 10 steps in
 
 That is almost a 9.2x improvment!! (vs. 'IDA via python')
+
+
+
+Instead of storing the graph as a dict I created a binary file, this loads in about 50ms (vs 12000ms before),
+takes much less memory (only ~200M) and runs at ~450k nps. We are up to an 11.5x improvement!
+
+2019-08-10 09:26:39,687 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold range 6->99
+2019-08-10 09:26:39,687 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 6, explored 1 nodes in 0ms, 90909 nodes-per-sec
+2019-08-10 09:26:39,687 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 7, explored 37 nodes in 0ms, 255172 nodes-per-sec
+2019-08-10 09:26:39,688 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 8, explored 172 nodes in 0ms, 319109 nodes-per-sec
+2019-08-10 09:26:39,718 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 9, explored 10774 nodes in 30ms, 353037 nodes-per-sec
+2019-08-10 09:26:40,059 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 10, explored 156230 nodes in 340ms, 459359 nodes-per-sec
+2019-08-10 09:26:40,793 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA threshold 11, explored 333588 nodes in 734ms (1106ms total)
+2019-08-10 09:26:40,793 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA explored 500802 nodes in 0:00:01.106413, 452635 nodes-per-sec
+2019-08-10 09:26:40,793 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA found 10 step solution U Bw2 Dw' L' Fw' Lw' B' Bw' Uw' Rw
+2019-08-10 09:26:40,794       RubiksCube555.py     INFO: 5x5x5: UD centers staged, 10 steps in
+

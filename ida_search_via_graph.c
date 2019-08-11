@@ -336,6 +336,7 @@ struct ida_search_result {
     unsigned int found_solution;
 };
 
+
 unsigned int
 read_state(
     char *pt,
@@ -352,6 +353,7 @@ read_state(
 
     return b0 | b1 | b2 | b3;
 }
+
 
 struct ida_search_result
 ida_search (move_type *legal_moves,
@@ -380,6 +382,7 @@ ida_search (move_type *legal_moves,
     unsigned char pt0_cost = 0;
     unsigned char pt1_cost = 0;
     unsigned char max_cost_to_goal = threshold - cost_to_here;
+    unsigned char lt_state[32];
 
     ida_count++;
     pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
@@ -411,27 +414,25 @@ ida_search (move_type *legal_moves,
         return search_result;
     }
 
-    // TODO fix his
-    /*
-    //memset(&heuristic_result, 0, sizeof(struct ida_heuristic_result));
-    memset(&heuristic_result.lt_state, '\0', 64);
-    memcpy(&heuristic_result.lt_state[0], &prev_pt0_state, 4);
-    memcpy(&heuristic_result.lt_state[4], &prev_pt1_state, 4);
-    //heuristic_result.lt_state[8] = cost_to_here;
-    //heuristic_result.lt_state[8] = f_cost;
+    // dwalton here now
+    memset(&lt_state, '\0', sizeof(char) * 32);
+    snprintf(lt_state, 32, "%u-%u", prev_pt0_state, prev_pt1_state);
 
-    prev_heuristic_result = hash_find(&ida_explored, heuristic_result.lt_state);
+    prev_heuristic_result = hash_find(&ida_explored, lt_state);
 
     if (prev_heuristic_result) {
         if (prev_heuristic_result->value <= cost_to_here) {
+            //LOG("STOP strlen lt_state %d, prev_pt0_state %lu, prev_pt1_state %lu, value %lu, cost_to_here %lu\n",
+            //    strlen(lt_state), prev_pt0_state, prev_pt1_state, prev_heuristic_result->value, cost_to_here);
             return search_result;
         } else {
+            //LOG("CONT strlen lt_state %d, prev_pt0_state %lu, prev_pt1_state %lu, value %lu, cost_to_here %lu\n",
+            //    strlen(lt_state), prev_pt0_state, prev_pt1_state, prev_heuristic_result->value, cost_to_here);
             hash_delete(&ida_explored, prev_heuristic_result);
         }
     }
 
-    hash_add(&ida_explored, heuristic_result.lt_state, cost_to_here);
-     */
+    hash_add(&ida_explored, lt_state, cost_to_here);
 
     for (int i = 0; i < legal_move_count; i++) {
         move = legal_moves[i];
@@ -459,10 +460,9 @@ ida_search (move_type *legal_moves,
         }
 
         // dwalton
+        // This is the equivalent of doing a rotate_xxx().
         pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
         pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
-        // pt0_state = pt0[prev_pt0_state * ROW_LENGTH];
-
         moves_to_here[cost_to_here] = move;
 
         tmp_search_result = ida_search(

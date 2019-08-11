@@ -336,6 +336,26 @@ struct ida_search_result {
     unsigned int found_solution;
 };
 
+unsigned int
+read_state(
+    FILE *fh,
+    unsigned int location)
+{
+    unsigned int swapped_result = 0;
+    unsigned int result = 0;
+    size_t read_count;
+
+    fseek(fh, location, SEEK_SET);
+    read_count = fread(&swapped_result, 4, 1, fh);
+
+    result = (swapped_result & 0xFF) << 24;
+    result |= (swapped_result & 0xFF00) << 8;
+    result |= (swapped_result & 0xFF0000)  >> 8;
+    result |= (swapped_result & 0xFF000000) >> 24;
+
+    return result;
+}
+
 struct ida_search_result
 ida_search (move_type *legal_moves,
             unsigned char legal_move_count,
@@ -353,6 +373,7 @@ ida_search (move_type *legal_moves,
     unsigned char f_cost = 0;
     move_type move, skip_other_steps_this_face;
     struct ida_heuristic_result heuristic_result;
+    struct key_value_pair *prev_heuristic_result = NULL;
     char cost_to_here_str[3];
     skip_other_steps_this_face = MOVE_NONE;
     struct ida_search_result search_result, tmp_search_result;
@@ -376,6 +397,8 @@ ida_search (move_type *legal_moves,
         cost_to_goal = pt1_cost;
     }
 
+    // LOG("prev_pt0_state %lu, pt0_cost %lu, prev_pt1_state %lu, pt1_cost %lu\n", prev_pt0_state, pt0_cost, prev_pt1_state, pt1_cost);
+
     f_cost = cost_to_here + cost_to_goal;
     search_result.f_cost = f_cost;
     search_result.found_solution = 0;
@@ -385,8 +408,6 @@ ida_search (move_type *legal_moves,
         return search_result;
     }
 
-    //printf("unsigned int size %lu\n", sizeof(unsigned int));
-    //printf("unsigned long size %lu\n", sizeof(unsigned long));
     if (cost_to_goal == 0) {
         // We are finished!!
         LOG("IDA count %d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
@@ -396,17 +417,25 @@ ida_search (move_type *legal_moves,
         return search_result;
     }
 
-    // dwalton
-    /* do this
-    sprintf(cost_to_here_str, "%d", cost_to_here);
-    strcat(heuristic_result.lt_state, cost_to_here_str);
+    // dwalton here now
+    //memset(&heuristic_result, 0, sizeof(struct ida_heuristic_result));
+    memset(&heuristic_result.lt_state, '\0', 64);
+    memcpy(&heuristic_result.lt_state[0], &prev_pt0_state, 4);
+    memcpy(&heuristic_result.lt_state[4], &prev_pt1_state, 4);
+    //heuristic_result.lt_state[8] = cost_to_here;
+    //heuristic_result.lt_state[8] = f_cost;
 
-    if (hash_find(&ida_explored, heuristic_result.lt_state)) {
-        return search_result;
+    prev_heuristic_result = hash_find(&ida_explored, heuristic_result.lt_state);
+
+    if (prev_heuristic_result) {
+        if (prev_heuristic_result->value <= cost_to_here) {
+            return search_result;
+        } else {
+            hash_delete(&ida_explored, prev_heuristic_result);
+        }
     }
 
-    hash_add(&ida_explored, heuristic_result.lt_state, 0);
-     */
+    hash_add(&ida_explored, heuristic_result.lt_state, cost_to_here);
 
     for (int i = 0; i < legal_move_count; i++) {
         move = legal_moves[i];
@@ -414,10 +443,6 @@ ida_search (move_type *legal_moves,
         if (steps_on_same_face_and_layer(move, prev_move)) {
             continue;
         }
-
-        //if (!step_allowed_by_ida_search(type, move)) {
-        //    continue;
-        //}
 
         // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
         /*
@@ -429,7 +454,6 @@ ida_search (move_type *legal_moves,
          * this case, we won't try X2 and X'.
          * --cs0x7f
          */
-        /*
         if (skip_other_steps_this_face != MOVE_NONE) {
             if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
                 continue;
@@ -437,18 +461,9 @@ ida_search (move_type *legal_moves,
                 skip_other_steps_this_face = MOVE_NONE;
             }
         }
-         */
 
-        // dwalton here now
-        pt0_state = prev_pt0_state;
-        pt1_state = prev_pt1_state;
-
-        fseek(pt0_fh, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i) , SEEK_SET);
-        read_count = fread(&pt0_state, 4, 1, pt0_fh);
-
-        fseek(pt1_fh, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i) , SEEK_SET);
-        read_count = fread(&pt1_state, 4, 1, pt1_fh);
-
+        pt0_state = read_state(pt0_fh, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+        pt1_state = read_state(pt1_fh, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
         moves_to_here[cost_to_here] = move;
 
         tmp_search_result = ida_search(
@@ -494,7 +509,6 @@ ida_solve (
     unsigned char MAX_SEARCH_DEPTH = 30;
     unsigned char min_ida_threshold = 0;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
-    struct ida_heuristic_result heuristic_result;
     struct ida_search_result search_result;
     size_t read_count;
 
@@ -504,7 +518,6 @@ ida_solve (
     unsigned char pt0_cost = 0;
     unsigned char pt1_cost = 0;
     
-    // dwalton
     memset(moves_to_here, MOVE_NONE, MAX_SEARCH_DEPTH);
     fseek(pt0_fh, pt0_state * ROW_LENGTH, SEEK_SET);
     read_count = fread(&pt0_cost, 1, 1, pt0_fh);

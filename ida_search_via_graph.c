@@ -338,22 +338,19 @@ struct ida_search_result {
 
 unsigned int
 read_state(
-    FILE *fh,
+    char *pt,
     unsigned int location)
 {
-    unsigned int swapped_result = 0;
-    unsigned int result = 0;
-    size_t read_count;
+    unsigned int num = 0;
+    uint32_t b0, b1, b2, b3;
 
-    fseek(fh, location, SEEK_SET);
-    read_count = fread(&swapped_result, 4, 1, fh);
+    memcpy(&num, &pt[location], 4);
+    b0 = (num & 0x000000ff) << 24u;
+    b1 = (num & 0x0000ff00) << 8u;
+    b2 = (num & 0x00ff0000) >> 8u;
+    b3 = (num & 0xff000000) >> 24u;
 
-    result = (swapped_result & 0xFF) << 24;
-    result |= (swapped_result & 0xFF00) << 8;
-    result |= (swapped_result & 0xFF0000)  >> 8;
-    result |= (swapped_result & 0xFF000000) >> 24;
-
-    return result;
+    return b0 | b1 | b2 | b3;
 }
 
 struct ida_search_result
@@ -363,9 +360,9 @@ ida_search (move_type *legal_moves,
             move_type *moves_to_here,
             unsigned char threshold,
             move_type prev_move,
-            FILE *pt0_fh,
+            char *pt0,
             unsigned int prev_pt0_state,
-            FILE *pt1_fh,
+            char *pt1,
             unsigned int prev_pt1_state,
             unsigned int ROW_LENGTH)
 {
@@ -385,11 +382,8 @@ ida_search (move_type *legal_moves,
     unsigned char max_cost_to_goal = threshold - cost_to_here;
 
     ida_count++;
-
-    fseek(pt0_fh, prev_pt0_state * ROW_LENGTH, SEEK_SET);
-    read_count = fread(&pt0_cost, 1, 1, pt0_fh);
-    fseek(pt1_fh, prev_pt1_state * ROW_LENGTH, SEEK_SET);
-    read_count = fread(&pt1_cost, 1, 1, pt1_fh);
+    pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+    pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
 
     if (pt0_cost > pt1_cost) {
         cost_to_goal = pt0_cost;
@@ -417,7 +411,8 @@ ida_search (move_type *legal_moves,
         return search_result;
     }
 
-    // dwalton here now
+    // TODO fix his
+    /*
     //memset(&heuristic_result, 0, sizeof(struct ida_heuristic_result));
     memset(&heuristic_result.lt_state, '\0', 64);
     memcpy(&heuristic_result.lt_state[0], &prev_pt0_state, 4);
@@ -436,6 +431,7 @@ ida_search (move_type *legal_moves,
     }
 
     hash_add(&ida_explored, heuristic_result.lt_state, cost_to_here);
+     */
 
     for (int i = 0; i < legal_move_count; i++) {
         move = legal_moves[i];
@@ -462,8 +458,11 @@ ida_search (move_type *legal_moves,
             }
         }
 
-        pt0_state = read_state(pt0_fh, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
-        pt1_state = read_state(pt1_fh, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
+        // dwalton
+        pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+        pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
+        // pt0_state = pt0[prev_pt0_state * ROW_LENGTH];
+
         moves_to_here[cost_to_here] = move;
 
         tmp_search_result = ida_search(
@@ -473,9 +472,9 @@ ida_search (move_type *legal_moves,
             moves_to_here,
             threshold,
             move,
-            pt0_fh,
+            pt0,
             pt0_state,
-            pt1_fh,
+            pt1,
             pt1_state,
             ROW_LENGTH
         );
@@ -501,9 +500,9 @@ int
 ida_solve (
     move_type *legal_moves,
     unsigned char legal_move_count,
-    FILE *pt0_fh,
+    char *pt0,
     unsigned int pt0_state,
-    FILE *pt1_fh,
+    char *pt1,
     unsigned int pt1_state)
 {
     unsigned char MAX_SEARCH_DEPTH = 30;
@@ -517,12 +516,10 @@ ida_solve (
     unsigned char ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
     unsigned char pt0_cost = 0;
     unsigned char pt1_cost = 0;
-    
+
     memset(moves_to_here, MOVE_NONE, MAX_SEARCH_DEPTH);
-    fseek(pt0_fh, pt0_state * ROW_LENGTH, SEEK_SET);
-    read_count = fread(&pt0_cost, 1, 1, pt0_fh);
-    fseek(pt1_fh, pt1_state * ROW_LENGTH, SEEK_SET);
-    read_count = fread(&pt1_cost, 1, 1, pt1_fh);
+    pt0_cost = pt0[pt0_state * ROW_LENGTH];
+    pt1_cost = pt1[pt1_state * ROW_LENGTH];
 
     if (pt0_cost > pt1_cost) {
         min_ida_threshold = pt0_cost;
@@ -544,9 +541,9 @@ ida_solve (
             moves_to_here,
             threshold,
             MOVE_NONE,
-            pt0_fh,
+            pt0,
             pt0_state,
-            pt1_fh,
+            pt1,
             pt1_state,
             ROW_LENGTH
         );
@@ -566,14 +563,58 @@ ida_solve (
 }
 
 
+char *
+read_file(char *filename)
+{
+    FILE *fh = fopen(filename, "rb");
+    unsigned long bufsize = 0;
+    char *buffer = NULL;
+
+    // Go to the end of the file
+    if (fseek(fh, 0L, SEEK_END) == 0) {
+
+        // Get the size of the file
+        bufsize = ftell(fh);
+        // LOG("%s bufsize is %lu\n", filename, bufsize);
+
+        if (bufsize == -1) {
+            printf("ERROR: no bufsize for %s\n", filename);
+            exit(1);
+        }
+
+        // Allocate our buffer to that size
+        buffer = malloc(sizeof(char) * (bufsize + 1));
+
+        // Go back to the start of the file
+        if (fseek(fh, 0L, SEEK_SET) != 0) {
+            printf("ERROR: could not seek to start of %s\n", filename);
+            exit(1);
+        }
+
+        // Read the entire file into memory
+        size_t new_len = fread(buffer, sizeof(char), bufsize, fh);
+
+        if (ferror(fh) != 0) {
+            printf("ERROR: could not read %s\n", filename);
+            exit(1);
+        } else {
+            buffer[new_len++] = '\0'; // Just to be safe.
+        }
+    }
+
+    fclose(fh);
+    return buffer;
+}
+
+
 int
 main (int argc, char *argv[])
 {
     unsigned char legal_move_count = 0;
     unsigned long prune_table_0_state = 0;
     unsigned long prune_table_1_state = 0;
-    FILE *prune_table_0_fh = NULL;
-    FILE *prune_table_1_fh = NULL;
+    char *prune_table_0 = NULL;
+    char *prune_table_1 = NULL;
     move_type legal_moves[MOVE_MAX];
 
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
@@ -581,7 +622,7 @@ main (int argc, char *argv[])
     for (unsigned char i = 1; i < argc; i++) {
         if (strmatch(argv[i], "--prune-table-0-filename")) {
             i++;
-            prune_table_0_fh = fopen(argv[i], "rb");
+            prune_table_0 = read_file(argv[i]);
 
         } else if (strmatch(argv[i], "--prune-table-0-state")) {
             i++;
@@ -589,7 +630,7 @@ main (int argc, char *argv[])
 
         } else if (strmatch(argv[i], "--prune-table-1-filename")) {
             i++;
-            prune_table_1_fh = fopen(argv[i], "rb");
+            prune_table_1 = read_file(argv[i]);
 
         } else if (strmatch(argv[i], "--prune-table-1-state")) {
             i++;
@@ -730,20 +771,15 @@ main (int argc, char *argv[])
         }
     }
 
-    ida_solve(legal_moves, legal_move_count, prune_table_0_fh, prune_table_0_state, prune_table_1_fh, prune_table_1_state);
+    ida_solve(legal_moves, legal_move_count, prune_table_0, prune_table_0_state, prune_table_1, prune_table_1_state);
 
-    if (prune_table_0_fh) {
-        fclose(prune_table_0_fh);
-        prune_table_0_fh = NULL;
+    if (prune_table_0) {
+        free(prune_table_0);
+        prune_table_0 = NULL;
     }
 
-    if (prune_table_1_fh) {
-        fclose(prune_table_1_fh);
-        prune_table_1_fh = NULL;
+    if (prune_table_1) {
+        free(prune_table_1);
+        prune_table_1 = NULL;
     }
-
-    // Print the maximum resident set size used (in MB).
-    struct rusage r_usage;
-    getrusage(RUSAGE_SELF, &r_usage);
-    printf("Memory usage: %lu MB\n", (unsigned long) r_usage.ru_maxrss / (1024 * 1024));
 }

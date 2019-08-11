@@ -21,6 +21,7 @@ struct ida_heuristic_result {
     unsigned int cost_to_goal;
 };
 
+
 // uthash references
 // http://troydhanson.github.io/uthash/index.html
 // https://cfsa-pmw.warwick.ac.uk/SDF/SDF_C/blob/3cf5bf49856ef9ee4080cf6722cf9058a1e28b01/src/uthash/tests/example.c

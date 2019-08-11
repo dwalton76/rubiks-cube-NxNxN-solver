@@ -54,6 +54,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 if x not in moves_illegal:
                     self.moves_all.append(x)
 
+        log.info("%s: moves_all %s" % (self, ",".join(self.moves_all)))
         self.step_index = {}
         for (index, step) in enumerate(self.moves_all):
             self.step_index[step] = index
@@ -80,58 +81,6 @@ class LookupTableIDAViaGraph(LookupTable):
 
         for pt in self.prune_tables:
             pt.load_ida_graph()
-
-    def search_complete(self, state, steps_to_here):
-
-        if self.ida_all_the_way:
-            if state not in self.state_target:
-                return False
-            steps = []
-
-        else:
-            if state in self.state_target:
-                steps = []
-            else:
-                steps = self.steps(state)
-
-                if not steps:
-                    return False
-
-        # =============================================
-        # If there are steps for a state that means our
-        # search is done...woohoo!!
-        # =============================================
-        # rotate_xxx() is very fast but it does not append the
-        # steps to the solution so put the cube back in original state
-        # and execute the steps via a normal rotate() call
-        self.parent.state = self.original_state[:]
-        self.parent.solution = self.original_solution[:]
-
-        for step in steps_to_here:
-            self.parent.state = self.rotate_xxx(self.parent.state[:], step)
-            self.parent.solution.append(step)
-
-        # The cube is now in a state where it is in the lookup table, we may need
-        # to do several lookups to get to our target state though. Use
-        # LookupTabele's solve() to take us the rest of the way to the target state.
-        LookupTable.solve(self)
-
-        if self.avoid_oll is not None:
-            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
-
-            if self.avoid_oll in orbits_with_oll:
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.debug("%s: IDA found match but it leads to OLL" % self)
-                return False
-
-        if self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-            log.debug("%s: IDA found match but it leads to PLL" % self)
-            return False
-
-        return True
 
     def get_ida_graph_nodes(self):
         return [pt.ida_graph_node for pt in self.prune_tables]
@@ -171,7 +120,6 @@ class LookupTableIDAViaGraph(LookupTable):
 
         for pt in self.prune_tables:
             lt_state.append(pt.ida_graph_node)
-            #pt_cost_to_goal = pt.ida_graph[pt.ida_graph_node]["cost"]
             offset = pt.ida_graph_node * self.ROW_LENGTH
             pt_cost_to_goal = pt.ida_graph[offset]
 
@@ -193,7 +141,6 @@ class LookupTableIDAViaGraph(LookupTable):
             return (f_cost, False)
 
         # Are we done?
-        #if cost_to_goal <= self.max_depth and self.search_complete(lt_state, steps_to_here):
         if cost_to_goal == 0:
             self.ida_nodes[lt_state] = steps_to_here
             return (f_cost, True)
@@ -321,32 +268,6 @@ class LookupTableIDAViaGraph(LookupTable):
     def solve_with_cprofile(self, min_ida_threshold=None, max_ida_threshold=99):
         '''
 
-        if self.parent.size == 2:
-            from rubikscubennnsolver.RubiksCube222 import rotate_222
-
-            self.rotate_xxx = rotate_222
-        elif self.parent.size == 4:
-            from rubikscubennnsolver.RubiksCube444 import rotate_444
-
-            self.rotate_xxx = rotate_444
-        elif self.parent.size == 5:
-            from rubikscubennnsolver.RubiksCube555 import rotate_555
-
-            self.rotate_xxx = rotate_555
-        elif self.parent.size == 6:
-            from rubikscubennnsolver.RubiksCube666 import rotate_666
-
-            self.rotate_xxx = rotate_666
-        elif self.parent.size == 7:
-            from rubikscubennnsolver.RubiksCube777 import rotate_777
-
-            self.rotate_xxx = rotate_777
-        else:
-            raise ImplementThis(
-                "Need rotate_xxx"
-                % (self.parent.size, self.parent.size, self.parent.size)
-            )
-
         # If this is a lookup table that is staging a pair of colors (such as U and D)
         # then recolor the cubies accordingly.
         self.pre_recolor_state = self.parent.state[:]
@@ -377,9 +298,9 @@ class LookupTableIDAViaGraph(LookupTable):
         self.init_ida_graph_nodes()
         (_state, cost_to_goal) = self.ida_heuristic()
 
-        '''
         # The cube is already in the desired state, nothing to do
-        if self.search_complete(state, []):
+        '''
+        if cost_to_goal == 0:
             log.info("%s: cube state %s is in our lookup table" % (self, state))
             tmp_solution = self.parent.solution[:]
             self.parent.state = self.pre_recolor_state[:]

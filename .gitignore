@@ -101,3 +101,4 @@ perf.data
 *.bak
 tmp
 ida_search.dSYM
+ida_search_via_graph

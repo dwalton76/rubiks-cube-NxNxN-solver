@@ -2,6 +2,8 @@ Baseline numbers for 555 UD centers stage
 
 ida_search.c
 ============
+./ida_search --kociemba .LFB.BxUUULxUxBBUUUB.BBL..DUL.LUxxBDxxxDUxUxR.DUF..URF.FxUxBUxxxLLxxUR.FRF..DDL.UxxxRLxUxRDxxxR.DFD..RBU.UxxUUFUxUFRxxxU.LUF..LRD.DUxxRBUxxLBUUxF.RDF. --type 5x5x5-UD-centers-stage --normal
+
 [2019-08-07T01:07:32.715] ida_prune_table_preload lookup-table-5x5x5-step10-UD-centers-stage.txt: start
 [2019-08-07T01:07:33.004] ida_prune_table_preload lookup-table-5x5x5-step10-UD-centers-stage.txt: end
 [2019-08-07T01:07:33.004] ida_cost_only_preload: begin lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.cost-only.txt, 16711681 entries, ptr 0xbfb39010

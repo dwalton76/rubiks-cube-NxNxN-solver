@@ -1585,7 +1585,6 @@ class RubiksCube(object):
         log.info("\n" + get_cube_layout(self.size) + "\n")
 
     def print_cube(self, print_positions=False):
-        return # dwalton
         if not self.enable_print_cube:
             return
         side_names = ("U", "L", "F", "R", "B", "D")

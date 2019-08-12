@@ -1239,7 +1239,7 @@ class LookupTable555UDTCenterStage(LookupTable):
             "f0000f",
             linecount=735471,
             max_depth=8,
-            filesize=27947898,
+            filesize=28683369,
         )
 
     def ida_heuristic(self):
@@ -3722,14 +3722,8 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_centers_stage_x_centers = LookupTable555UDCenterStageXCenterOnlyNew(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCenterStageNew(self)
 
-        # dwalton
-        #self.lt_UD_centers_stage_t_centers.preload_cache_dict()
-        #self.lt_UD_centers_stage_x_centers.preload_cache_dict()
-        #self.lt_UD_centers_stage.preload_cache_dict()
-
-        '''
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
-        self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
+        # self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_T_centers_stage_odd = LookupTable555LRTCenterStageOdd(self)
         self.lt_LR_T_centers_stage_even = LookupTable555LRTCenterStageEven(self)
@@ -3755,50 +3749,29 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_z_plane_centers_only.preload_cache_dict()
         self.lt_edges_z_plane.preload_cache_string()
 
-        self.lt_x_plane_y_plane_orient_edges_edges_only = LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_centers_only = LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_centers_only_ht = LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges = LookupTableIDA555XPlaneYPlaneEdgesOrient(
-            self
-        )
+        self.lt_x_plane_y_plane_orient_edges_edges_only = LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_centers_only = LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_centers_only_ht = LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(self)
+        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(self)
+        self.lt_x_plane_y_plane_orient_edges = LookupTableIDA555XPlaneYPlaneEdgesOrient(self)
         self.lt_x_plane_y_plane_orient_edges_edges_only.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges.preload_cache_string()
         self.lt_x_plane_y_plane_orient_edges_pair_one_edge.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges_centers_only.preload_cache_string()
 
-        self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersEdgesOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_fb_centers = LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(
-            self
-        )
+        self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersEdgesOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_fb_centers = LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(self)
         self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges_fb_centers.preload_cache_string()
 
-        self.lt_pair_last_eight_edges_edges_only = LookupTable555PairLastEightEdgesEdgesOnly(
-            self
-        )
-        self.lt_pair_last_eight_edges_centers_only = LookupTable555PairLastEightEdgesCentersOnly(
-            self
-        )
+        self.lt_pair_last_eight_edges_edges_only = LookupTable555PairLastEightEdgesEdgesOnly(self)
+        self.lt_pair_last_eight_edges_centers_only = LookupTable555PairLastEightEdgesCentersOnly(self)
         self.lt_pair_last_eight_edges = LookupTableIDA555PairLastEightEdges(self)
         self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
         self.lt_pair_last_eight_edges.preload_cache_string()
         # self.lt_pair_last_eight_edges.preload_cache_dict()
-        '''
 
     def highlow_edges_state(self):
         state = self.state
@@ -3880,9 +3853,7 @@ class RubiksCube555(RubiksCube):
 
         if not self.UD_centers_staged():
             tmp_solution_len = len(self.solution)
-            #self.lt_UD_centers_stage_t_centers.solve()
-            #self.lt_UD_centers_stage_x_centers.solve()
-            self.lt_UD_centers_stage.solve()
+            self.lt_UD_centers_stage.solve_via_c()
             self.print_cube()
             self.solution.append(
                 "COMMENT_%d_steps_555_UD_centers_staged"
@@ -3893,7 +3864,6 @@ class RubiksCube555(RubiksCube):
             "%s: UD centers staged, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        sys.exit(0)
 
     def group_centers_stage_LR(self):
         """

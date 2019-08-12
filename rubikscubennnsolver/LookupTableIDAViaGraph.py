@@ -10,6 +10,7 @@ from rubikscubennnsolver.LookupTable import (
 import datetime as dt
 import logging
 import struct
+import subprocess
 import sys
 
 
@@ -79,9 +80,6 @@ class LookupTableIDAViaGraph(LookupTable):
                         self.steps_not_on_same_face_and_layer[step1] = []
                     self.steps_not_on_same_face_and_layer[step1].append(step2)
 
-        for pt in self.prune_tables:
-            pt.load_ida_graph()
-
     def get_ida_graph_nodes(self):
         return [pt.ida_graph_node for pt in self.prune_tables]
 
@@ -91,7 +89,7 @@ class LookupTableIDAViaGraph(LookupTable):
 
     def init_ida_graph_nodes(self):
         for pt in self.prune_tables:
-            pt.ida_heuristic()
+            pt.ida_graph_node = pt.state_index()
 
     def ida_heuristic(self):
         lt_state = []
@@ -268,6 +266,9 @@ class LookupTableIDAViaGraph(LookupTable):
     def solve_with_cprofile(self, min_ida_threshold=None, max_ida_threshold=99):
         '''
 
+        for pt in self.prune_tables:
+            pt.load_ida_graph()
+
         # If this is a lookup table that is staging a pair of colors (such as U and D)
         # then recolor the cubies accordingly.
         self.pre_recolor_state = self.parent.state[:]
@@ -403,3 +404,30 @@ class LookupTableIDAViaGraph(LookupTable):
             "%s FAILED with range %d->%d"
             % (self, min_ida_threshold, max_ida_threshold + 1)
         )
+
+    def solve_via_c(self, min_ida_threshold=None, max_ida_threshold=99):
+        self.init_ida_graph_nodes()
+
+        cmd = ["./ida_search_via_graph",]
+
+        for (index, pt) in enumerate(self.prune_tables):
+            cmd.append("--prune-table-%d-filename" % index)
+            cmd.append(pt.filename.replace(".txt", ".bin"))
+
+            cmd.append("--prune-table-%d-state" % index)
+            cmd.append(str(pt.ida_graph_node))
+
+        cmd.append("--legal-moves")
+        cmd.append(",".join(self.moves_all))
+        log.info("solve_via_c:\n    %s \"%s\"\n" % (" ".join(cmd[0:-1]), cmd[-1]))
+
+        output = subprocess.check_output(cmd).decode("utf-8").splitlines()
+
+        for line in output:
+            if line.startswith("SOLUTION:"):
+                solution = line.strip().split(":")[1].split()
+                for step in solution:
+                    self.parent.rotate(step)
+                return
+
+        raise Exception("Did not find SOLUTION line in\n%s\n" % "\n".join(output))

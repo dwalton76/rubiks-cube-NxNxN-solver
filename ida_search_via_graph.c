@@ -414,7 +414,6 @@ ida_search (move_type *legal_moves,
         return search_result;
     }
 
-    // dwalton here now
     // The act of computing lt_state and looking to see if lt_state is in ida_explored
     // cuts the nodes-per-sec rate in half but it can also drastically reduce the number
     // of nodes we need to visit and result in a net win.
@@ -436,11 +435,13 @@ ida_search (move_type *legal_moves,
     }
 
     hash_add(&ida_explored, lt_state, cost_to_here);
+    int i = 0;
 
-    for (int i = 0; i < legal_move_count; i++) {
+    while (i < legal_move_count) {
         move = legal_moves[i];
 
         if (steps_on_same_face_and_layer(move, prev_move)) {
+            i += 3;
             continue;
         }
 
@@ -456,13 +457,13 @@ ida_search (move_type *legal_moves,
          */
         if (skip_other_steps_this_face != MOVE_NONE) {
             if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                i++;
                 continue;
             } else {
                 skip_other_steps_this_face = MOVE_NONE;
             }
         }
 
-        // dwalton
         // This is the equivalent of doing a rotate_xxx().
         pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
         pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
@@ -493,6 +494,8 @@ ida_search (move_type *legal_moves,
                 skip_other_steps_this_face = MOVE_NONE;
             }
         }
+
+        i++;
     }
 
     return search_result;

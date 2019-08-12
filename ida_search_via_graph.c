@@ -415,6 +415,9 @@ ida_search (move_type *legal_moves,
     }
 
     // dwalton here now
+    // The act of computing lt_state and looking to see if lt_state is in ida_explored
+    // cuts the nodes-per-sec rate in half but it can also drastically reduce the number
+    // of nodes we need to visit and result in a net win.
     memset(&lt_state, '\0', sizeof(char) * 32);
     snprintf(lt_state, 32, "%u-%u", prev_pt0_state, prev_pt1_state);
 
@@ -509,6 +512,7 @@ ida_solve (
     unsigned char min_ida_threshold = 0;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     struct ida_search_result search_result;
+    struct timeval stop, start;
     size_t read_count;
 
     unsigned char COST_LENGTH = 1;
@@ -528,6 +532,7 @@ ida_solve (
     }
 
     LOG("min_ida_threshold %d\n", min_ida_threshold);
+    gettimeofday(&start, NULL);
 
     for (unsigned char threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {
         ida_count = 0;
@@ -550,7 +555,14 @@ ida_solve (
 
         if (search_result.found_solution) {
             ida_count_total += ida_count;
-            LOG("IDA threshold %d, explored %d branches (%d total), found solution\n", threshold, ida_count, ida_count_total);
+
+            gettimeofday(&stop, NULL);
+            float ms = (stop.tv_usec - start.tv_usec) / 1000;
+            float nodes_per_ms = ida_count_total / ms;
+            unsigned int nodes_per_sec = nodes_per_ms * 1000;
+
+            LOG("IDA threshold %d, explored %d branches (%d total), took %.3fs, %u nodes-per-sec, found solution\n",
+                threshold, ida_count, ida_count_total, ms / 1000, nodes_per_sec);
             return 1;
         } else {
             ida_count_total += ida_count;

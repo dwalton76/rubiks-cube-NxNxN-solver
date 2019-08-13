@@ -1085,7 +1085,7 @@ class LookupTable555UDCenterStageTCenterOnlyNew(LookupTable):
         state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
         return self.hex_format % int(state, 2)
 
-    def populate_cube_from_state(self, state, cube):
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(24)
 
         for (pos, pos_state) in zip(self.t_centers_555, binary_state):
@@ -1139,7 +1139,7 @@ class LookupTable555UDCenterStageXCenterOnlyNew(LookupTable):
         state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
         return self.hex_format % int(state, 2)
 
-    def populate_cube_from_state(self, state, cube):
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(24)
 
         for (pos, pos_state) in zip(self.x_centers_555, binary_state):

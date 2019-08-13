@@ -1,7 +1,3 @@
-5x5x5 UD center staging is 735471/735471^2 = 0.000 001
-
-5x5x5 ALL center staging is 735471/(24!/(8!*8!*8!))^2 = 0.000 000 000 000 008
-
 
 - do spacing cleanup in master
 
@@ -30,3 +26,59 @@ All phases are limited by the speed of the IDA search.  Experiment with:
 - I swear I looked into this in the past...see if you can find those notes
     see email thread with joey.gouly@gmail.com it doesn't have the conclusion though
 
+
+update
+------
+python IDA went from ~40k nodes-per-sec to 400k!! C IDA went from 1.4 million nps to 21.5 million nps
+if I disable the "ida_explored" hash table lookup.  That means we explore more nodes though.  When
+I enable ida_explored the rate drops to ~9 million nps. 
+
+5x5x5 UD center staging can now be solved in about 300ms :)
+5x5x5 UD center staging is 735471/735471^2 = 0.000 001
+
+5x5x5 ALL center staging is 735471/(24!/(8!*8!*8!))^2 = 0.000 000 000 000 008
+    but there would be 4 of the 735k prune tables so that would help some but
+    probably not enough to make this feasible.
+
+
+4x4x4 phase1+2 in a single phase? That would be 2.7 million edge states * 9 billion
+but we cannot build the 9 billion entry pt, we could build two 735k prune tables
+though and we can build the 2.7 million entry pt.  So this might be feasible.
+
+Something to think about here is if the edges are EOed to their final orientation
+then it might be feasible to solve 333 optimally since L L' R R' will not be required.
+There would be 239,500,800 edge states and 88,179,840 million corner states.
+
+    lookup-table-3x3x3-step00-ultimate.txt
+    ======================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 14 entries (0 percent, 14.00x previous step)
+    2 steps has 139 entries (0 percent, 9.93x previous step)
+    3 steps has 1,368 entries (0 percent, 9.84x previous step)
+    4 steps has 13,479 entries (0 percent, 9.85x previous step)
+    5 steps has 131,404 entries (9 percent, 9.75x previous step)
+    6 steps has 1,267,664 entries (89 percent, 9.65x previous step)
+    extrapolate from here
+    7 steps has 11,662,508 entries (9.20x previous step)
+    8 steps has 102,630,070 entries (8.80x previous step)
+    9 steps has 862,092,587 entries (8.40x previous step)
+    10 steps has 6,896,740,695 entries (8.00x previous step)
+    11 steps has 52,415,229,281 entries (7.60x previous step)
+    12 steps has 377,389,650,823 entries (7.20x previous step)
+    13 steps has 2,566,249,625,596 entries (6.80x previous step)
+    14 steps has 16,423,997,603,814 entries (6.40x previous step)
+    15 steps has 98,543,985,622,883 entries (6.00x previous step)
+    16 steps has 551,846,319,488,144 entries (5.60x previous step)
+    17 steps has 2,869,600,861,338,346 entries (5.20x previous step)
+    18 steps has 13,774,084,134,424,048 entries (4.80x previous step)
+    19 steps has 3,805,638,996,349,136 entries (0.28x previous step)
+
+    Average: 17.974217274029616
+    Total  : 21,119,142,223,872,000
+
+weird 18 is the normal average for an optimal 333 solver that is surprising I
+would have thought this would be lower. So whether or not to EO the edges to
+their final orientation really depends on if you could get this 333 optimal
+solver to run quickly enough.  There are far too many states for us to use 
+the IDA-graph approach. Both of those prune tables would be pretty deep I
+imagine so that would help.  Who knows this might be feasible.

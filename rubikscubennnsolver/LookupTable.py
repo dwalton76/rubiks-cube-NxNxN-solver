@@ -495,7 +495,7 @@ class LookupTable(object):
         self.printed_disk_io_warning = False
         self.ida_graph = {}
         self.ida_graph_node = None
-        self.legal_moves = []
+        self.legal_moves = legal_moves
 
         assert self.filename.startswith(
             "lookup-table"
@@ -1070,7 +1070,7 @@ class LookupTable(object):
             parent.nuke_edges()
             parent.nuke_corners()
             parent.nuke_centers()
-            self.populate_cube_from_state(state, parent.state)
+            self.populate_cube_from_state(state, parent.state, steps)
 
             ida_graph[state] = {
                 "cost": len_steps,

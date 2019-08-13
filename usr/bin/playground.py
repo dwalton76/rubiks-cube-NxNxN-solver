@@ -32,7 +32,8 @@ logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelNam
 # pprint(tuple(itertools.combinations(wing_strs_all, 2)))
 # pprint(tuple(itertools.combinations(wing_strs_all, 4)))
 
-cube = RubiksCube555(solved_555, "URFDLB")
+cube = RubiksCube444(solved_444, "URFDLB")
+cube.cpu_mode = "normal"
 
 '''
 for step in reverse_steps(
@@ -44,5 +45,9 @@ cube.print_cube()
 '''
 
 cube.lt_init()
-#cube.lt_UD_centers_stage_t_centers.build_ida_graph()
-cube.lt_UD_centers_stage_x_centers.build_ida_graph()
+cube.lt_phase0_edges.build_ida_graph()
+#cube.lt_phase0_UD_centers.build_ida_graph()
+#cube.lt_phase0_FD_centers.build_ida_graph()
+#cube.lt_phase0_L_centers.build_ida_graph()
+#cube.lt_phase0_R_centers.build_ida_graph()
+

@@ -1,5 +1,6 @@
 
 #include <ctype.h>
+#include <locale.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -324,7 +325,9 @@ ida_search (move_type *legal_moves,
             unsigned int prev_pt3_state,
             char *pt4,
             unsigned int prev_pt4_state,
-            unsigned int ROW_LENGTH)
+            unsigned int ROW_LENGTH,
+            struct key_value_pair *main_table,
+            unsigned char main_table_max_depth)
 {
     unsigned char cost_to_goal = 0;
     unsigned char f_cost = 0;
@@ -346,8 +349,9 @@ ida_search (move_type *legal_moves,
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
     unsigned char max_cost_to_goal = threshold - cost_to_here;
-    unsigned char STATE_SIZE = 64;
+    unsigned char STATE_SIZE = 48;
     unsigned char lt_state[STATE_SIZE];
+    struct key_value_pair *main_table_node = NULL;
 
     ida_count++;
 
@@ -364,6 +368,16 @@ ida_search (move_type *legal_moves,
         cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
 
+        if (main_table) {
+            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
+            snprintf(lt_state, STATE_SIZE, "%07u-%07u-%07u-%07u-%07u",
+                prev_pt0_state,
+                prev_pt1_state,
+                prev_pt2_state,
+                prev_pt3_state,
+                prev_pt4_state);
+        }
+
     } else if (pt3 != NULL) {
         pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
         pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
@@ -375,6 +389,15 @@ ida_search (move_type *legal_moves,
         cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
 
+        if (main_table) {
+            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
+            snprintf(lt_state, STATE_SIZE, "%07u-%07u-%07u-%07u",
+                prev_pt0_state,
+                prev_pt1_state,
+                prev_pt2_state,
+                prev_pt3_state);
+        }
+
     } else if (pt2 != NULL) {
         pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
         pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
@@ -384,16 +407,48 @@ ida_search (move_type *legal_moves,
         cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
 
+        if (main_table) {
+            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
+            snprintf(lt_state, STATE_SIZE, "%07u-%07u-%07u",
+                prev_pt0_state,
+                prev_pt1_state,
+                prev_pt2_state);
+        }
+
     } else if (pt1 != NULL) {
         pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
         cost_to_goal = (pt1_cost > pt0_cost) ? pt1_cost : pt0_cost;
 
+        if (main_table) {
+            //memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
+            snprintf(lt_state, STATE_SIZE, "%07u-%07u",
+                prev_pt0_state,
+                prev_pt1_state);
+        }
+
     } else {
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
         cost_to_goal = pt0_cost;
+
+        if (main_table) {
+            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
+            snprintf(lt_state, STATE_SIZE, "%07u", prev_pt0_state);
+        }
+    }
+
+    // dwalton
+    if (main_table) {
+        main_table_node = hash_find(&main_table, lt_state);
+
+        if (main_table_node) {
+            cost_to_goal = main_table_node->value;
+            // LOG("lt_state %s has cost %d, cost_to_here %d\n", lt_state, main_table_node->value, cost_to_here);
+        } else {
+            cost_to_goal = (main_table_max_depth + 1 > cost_to_goal) ? main_table_max_depth + 1 : cost_to_goal;
+        }
     }
 
     // LOG("prev_pt0_state %lu, pt0_cost %lu, prev_pt1_state %lu, pt1_cost %lu\n", prev_pt0_state, pt0_cost, prev_pt1_state, pt1_cost);
@@ -402,17 +457,17 @@ ida_search (move_type *legal_moves,
     search_result.f_cost = f_cost;
     search_result.found_solution = 0;
 
-    // Abort Searching
-    if (f_cost >= threshold) {
-        return search_result;
-    }
-
     if (cost_to_goal == 0) {
         // We are finished!!
-        LOG("IDA count %d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
+        LOG("IDA count %'d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
         search_result.found_solution = 1;
+        return search_result;
+    }
+
+    // Abort Searching
+    if (f_cost >= threshold) {
         return search_result;
     }
 
@@ -521,7 +576,9 @@ ida_search (move_type *legal_moves,
             pt3_state,
             pt4,
             pt4_state,
-            ROW_LENGTH
+            ROW_LENGTH,
+            main_table,
+            main_table_max_depth
         );
 
         if (tmp_search_result.found_solution) {
@@ -556,7 +613,9 @@ ida_solve (
     char *pt3,
     unsigned int pt3_state,
     char *pt4,
-    unsigned int pt4_state)
+    unsigned int pt4_state,
+    struct key_value_pair *main_table,
+    unsigned char main_table_max_depth)
 {
     unsigned char MAX_SEARCH_DEPTH = 30;
     unsigned char min_ida_threshold = 0;
@@ -575,6 +634,9 @@ ida_solve (
     unsigned char pt4_cost = 0;
 
     memset(moves_to_here, MOVE_NONE, MAX_SEARCH_DEPTH);
+
+    // For printing commas via %'d
+    setlocale(LC_NUMERIC, "");
 
     if (pt4 != NULL) {
         pt4_cost = pt4[pt4_state * ROW_LENGTH];
@@ -642,7 +704,9 @@ ida_solve (
             pt3_state,
             pt4,
             pt4_state,
-            ROW_LENGTH
+            ROW_LENGTH,
+            main_table,
+            main_table_max_depth
         );
 
         gettimeofday(&stop, NULL);
@@ -651,13 +715,13 @@ ida_solve (
         float nodes_per_ms = ida_count / ms;
         unsigned int nodes_per_sec = nodes_per_ms * 1000;
 
-        LOG("IDA threshold %d, explored %d nodes, took %.3fs, %u nodes-per-sec\n", threshold, ida_count,  ms / 1000, nodes_per_sec);
+        LOG("IDA threshold %d, explored %'d nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count,  ms / 1000, nodes_per_sec);
 
         if (search_result.found_solution) {
             float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
             float nodes_per_ms = ida_count_total / ms;
             unsigned int nodes_per_sec = nodes_per_ms * 1000;
-            LOG("IDA found solution, explored %d total nodes, took %.3fs, %u nodes-per-sec\n",
+            LOG("IDA found solution, explored %'d total nodes, took %.3fs, %'d nodes-per-sec\n",
                 ida_count_total, ms / 1000, nodes_per_sec);
             return 1;
         }
@@ -712,6 +776,43 @@ read_file(char *filename)
 }
 
 
+void
+ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
+{
+    FILE *fh_read = NULL;
+    int BUFFER_SIZE = 128; 
+    char buffer[BUFFER_SIZE];
+    char token_buffer[BUFFER_SIZE];
+    char moves[BUFFER_SIZE];
+    char *token_ptr = NULL;
+    char state[BUFFER_SIZE];
+    int cost = 0; 
+    struct key_value_pair * pt_entry = NULL;
+
+    // dwalton
+    fh_read = fopen(filename, "r");
+    if (fh_read == NULL) {
+        printf("ERROR: ida_prune_table_preload could not open %s\n", filename);
+        exit(1);
+    }    
+
+    LOG("ida_prune_table_preload %s: start\n", filename);
+
+    while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
+        // 0..14 are the state
+        // 15 is the :
+        // 16 is the move count
+        buffer[15] = '\0';
+        cost = atoi(&buffer[16]);
+        hash_add(hashtable, buffer, cost);
+        // LOG("Add %s with cost %d\n", buffer, cost);
+    }
+
+    fclose(fh_read);
+    LOG("ida_prune_table_preload %s: end\n", filename);
+}
+
+
 int
 main (int argc, char *argv[])
 {
@@ -726,6 +827,8 @@ main (int argc, char *argv[])
     char *prune_table_2 = NULL;
     char *prune_table_3 = NULL;
     char *prune_table_4 = NULL;
+    struct key_value_pair *main_table = NULL;
+    unsigned char main_table_max_depth = 0;
     move_type legal_moves[MOVE_MAX];
 
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
@@ -770,6 +873,14 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--prune-table-4-state")) {
             i++;
             prune_table_4_state = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--main-table")) {
+            i++;
+            ida_prune_table_preload(&main_table, argv[i]);
+
+        } else if (strmatch(argv[i], "--main-table-max-depth")) {
+            i++;
+            main_table_max_depth = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--legal-moves")) {
             i++;
@@ -906,10 +1017,16 @@ main (int argc, char *argv[])
         }
     }
 
+    if ((main_table && !main_table_max_depth) || (!main_table && main_table_max_depth)) {
+        printf("ERROR: must specify BOTH --main-table and --main-table-max-depth\n\n");
+        exit(1);
+    }
+
     ida_solve(legal_moves, legal_move_count,
         prune_table_0, prune_table_0_state,
         prune_table_1, prune_table_1_state,
         prune_table_2, prune_table_2_state,
         prune_table_3, prune_table_3_state,
-        prune_table_4, prune_table_4_state);
+        prune_table_4, prune_table_4_state,
+        main_table, main_table_max_depth);
 }

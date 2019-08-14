@@ -53,8 +53,8 @@ dwalton76@kids[rubiks-cube-NxNxN-solver]# time ./ida_search_via_graph --prune-ta
 [2019-08-14T11:57:32.308] IDA threshold 7, explored 29 nodes, took 0.000s, 0 nodes-per-sec
 [2019-08-14T11:57:32.309] IDA threshold 8, explored 990 nodes, took 0.000s, 0 nodes-per-sec
 [2019-08-14T11:57:32.312] IDA threshold 9, explored 25626 nodes, took 0.003s, 8542000 nodes-per-sec
-[2019-08-14T11:57:32.404] IDA threshold 10, explored 639274 nodes, took 0.092s, 6948630 nodes-per-sec
-[2019-08-14T11:57:34.777] IDA threshold 11, explored 15855799 nodes, took 2.372s, 6684569 nodes-per-sec
+[2019-08-14T11:57:32.404] IDA threshold 10, explored 639274 nodes, took 0.092s, 6,948,630 nodes-per-sec
+[2019-08-14T11:57:34.777] IDA threshold 11, explored 15855799 nodes, took 2.372s, 6,684,569 nodes-per-sec
 ^C
 
 this eventually ran my desktop out of memory and started swapping
@@ -66,9 +66,15 @@ without ida_explored
 [2019-08-14T11:58:07.843] IDA threshold 7, explored 29 nodes, took 0.000s, 0 nodes-per-sec
 [2019-08-14T11:58:07.844] IDA threshold 8, explored 1061 nodes, took 0.000s, 0 nodes-per-sec
 [2019-08-14T11:58:07.847] IDA threshold 9, explored 33188 nodes, took 0.002s, 16594000 nodes-per-sec
-[2019-08-14T11:58:07.935] IDA threshold 10, explored 1052249 nodes, took 0.087s, 12094816 nodes-per-sec
-[2019-08-14T11:58:10.720] IDA threshold 11, explored 33230824 nodes, took 2.786s, 11927790 nodes-per-sec
-[2019-08-14T11:59:43.730] IDA threshold 12, explored 1059442324 nodes, took 93.009s, 11390750 nodes-per-sec
+[2019-08-14T11:58:07.935] IDA threshold 10, explored 1052249 nodes, took 0.087s, 12,094,816 nodes-per-sec
+[2019-08-14T11:58:10.720] IDA threshold 11, explored 33230824 nodes, took 2.786s, 11,927,790 nodes-per-sec
+[2019-08-14T11:59:43.730] IDA threshold 12, explored 1059442324 nodes, took 93.009s, 11,390,750 nodes-per-sec
+
+
+So we are going to need to support loading a main prune table to make this reasonable.
+Once that happens, say we are doing a search and we find a node that is in the main
+prune table.  Say we found this 3 moves deep and the main pt says the cost_to_goal is 6, at
+that point can't we lower the IDA threshold to 9? This is worth exploring.
 
 
 optimal 333 (without L L' R R')

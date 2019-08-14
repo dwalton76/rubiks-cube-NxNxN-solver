@@ -3699,6 +3699,7 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_centers_stage_x_centers = LookupTable555UDCenterStageXCenterOnlyNew(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCenterStageNew(self)
 
+        '''
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
         # self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
@@ -3749,6 +3750,7 @@ class RubiksCube555(RubiksCube):
         self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
         self.lt_pair_last_eight_edges.preload_cache_string()
         # self.lt_pair_last_eight_edges.preload_cache_dict()
+        '''
 
     def highlow_edges_state(self):
         state = self.state

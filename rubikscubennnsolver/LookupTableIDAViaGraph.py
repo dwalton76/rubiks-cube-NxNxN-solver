@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import cProfile as profile
+from rubikscubennnsolver import reverse_steps
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     NoIDASolution,
@@ -404,6 +405,42 @@ class LookupTableIDAViaGraph(LookupTable):
             "%s FAILED with range %d->%d"
             % (self, min_ida_threshold, max_ida_threshold + 1)
         )
+
+    def build_ida_graph(self):
+        pt_state_filename = self.filename.replace(".txt", ".pt_state")
+        parent = self.parent
+        index = 0
+
+        with open(pt_state_filename, "w") as fh_pt_state:
+            with open(self.filename, "r") as fh:
+                for line in fh:
+                    (state, steps_to_solve) = line.rstrip().split(":")
+                    steps_to_solve = steps_to_solve.split()
+                    cost_to_goal = len(steps_to_solve)
+                    steps_to_scramble = reverse_steps(steps_to_solve)
+
+                    # dwalton
+                    parent.re_init()
+                    for step in steps_to_scramble:
+                        parent.rotate(step)
+
+                    self.init_ida_graph_nodes()
+                    pt_ida_graph_nodes = self.get_ida_graph_nodes()
+
+                    lt_state = ""
+
+                    for x in pt_ida_graph_nodes:
+                        assert x <= 9999999
+                        lt_state += f"{x:07d}-"
+
+                    lt_state = lt_state.rstrip("-")
+
+                    fh_pt_state.write(f"{lt_state}:{cost_to_goal}\n")
+                    index += 1
+
+                    if index % 10000 == 0:
+                        log.info("line: %d" % index)
+
 
     def solve_via_c(self, min_ida_threshold=None, max_ida_threshold=99):
         self.init_ida_graph_nodes()

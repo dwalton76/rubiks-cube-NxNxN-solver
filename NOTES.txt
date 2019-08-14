@@ -18,7 +18,7 @@ ida_search.c
 [2019-08-07T01:07:33.141] IDA threshold 10, explored 163790 branches
 [2019-08-07T01:07:33.799] UD_CENTERS_STAGE_555 solved
 [2019-08-07T01:07:33.799] IDA count 906387, f_cost 10 vs threshold 11 (cost_to_here 10, cost_to_goal 0)
-SOLUTION: Uw' Bw' R Uw2 F' Fw' Lw2 Bw' D2 Lw 
+SOLUTION: Uw' Bw' R Uw2 F' Fw' Lw2 Bw' D2 Lw
 [2019-08-07T01:07:33.799] IDA threshold 11, explored 906387 branches (1077636 total), found solution
 
 real	0m1.095s
@@ -86,4 +86,28 @@ takes much less memory (only ~200M) and runs at ~450k nps. We are up to an 11.5x
 2019-08-10 09:26:40,793 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA explored 500802 nodes in 0:00:01.106413, 452635 nodes-per-sec
 2019-08-10 09:26:40,793 LookupTableIDAViaGraph.py     INFO: 5x5x5-step10-UD-centers-stage: IDA found 10 step solution U Bw2 Dw' L' Fw' Lw' B' Bw' Uw' Rw
 2019-08-10 09:26:40,794       RubiksCube555.py     INFO: 5x5x5: UD centers staged, 10 steps in
+
+
+
+
+
+// This is the C version without ida_explored...that ends up chewing through a
+// ton of memory on a long search.  That and it cuts the nodes-per-sec rate in half.
+// Using ida_explored did reduce the number of nodes explored though...probably
+// cuts in in half on average.
+dwalton@laptop:rubiks-cube-NxNxN-solver$ time ./ida_search_via_graph --prune-table-0-filename lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.bin --prune-table-0-state 594026 --prune-table-1-filename lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.bin --prune-table-1-state 484064 --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
+[2019-08-14T19:25:07.299] min_ida_threshold 6
+[2019-08-14T19:25:07.299] IDA threshold 6, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-14T19:25:07.299] IDA threshold 7, explored 37 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-14T19:25:07.299] IDA threshold 8, explored 572 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-14T19:25:07.300] IDA threshold 9, explored 15,505 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-14T19:25:07.326] IDA threshold 10, explored 498,764 nodes, took 0.025s, 19,950,560 nodes-per-sec
+[2019-08-14T19:25:07.509] IDA count 3,803,130, f_cost 10 vs threshold 11 (cost_to_here 10, cost_to_goal 0)
+SOLUTION: Uw' Bw' R Uw2 F' Fw' Lw2 Bw' D2 Lw
+[2019-08-14T19:25:07.509] IDA threshold 11, explored 3,803,130 nodes, took 0.183s, 20,782,130 nodes-per-sec
+[2019-08-14T19:25:07.509] IDA found solution, explored 4,318,009 total nodes, took 0.183s, 23,595,678 nodes-per-sec
+
+real	0m0.312s
+user	0m0.211s
+sys	0m0.100s
 

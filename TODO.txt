@@ -45,6 +45,34 @@ I enable ida_explored the rate drops to ~9 million nps.
 but we cannot build the 9 billion entry pt, we could build two 735k prune tables
 though and we can build the 2.7 million entry pt.  So this might be feasible.
 
+
+with ida_explored
+dwalton76@kids[rubiks-cube-NxNxN-solver]# time ./ida_search_via_graph --prune-table-0-filename lookup-table-4x4x4-step901-highlow-edges.bin --prune-table-0-state 2213330 --prune-table-1-filename lookup-table-4x4x4-step902-UD-centers.bin --prune-table-1-state 8133 --prune-table-2-filename lookup-table-4x4x4-step903-FB-centers.bin --prune-table-2-state 433014 --prune-table-3-filename lookup-table-4x4x4-step904-L-centers.bin --prune-table-3-state 10337 --prune-table-4-filename lookup-table-4x4x4-step905-R-centers.bin --prune-table-4-state 1309 --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
+[2019-08-14T11:57:32.308] min_ida_threshold 6
+[2019-08-14T11:57:32.308] IDA threshold 6, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-14T11:57:32.308] IDA threshold 7, explored 29 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-14T11:57:32.309] IDA threshold 8, explored 990 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-14T11:57:32.312] IDA threshold 9, explored 25626 nodes, took 0.003s, 8542000 nodes-per-sec
+[2019-08-14T11:57:32.404] IDA threshold 10, explored 639274 nodes, took 0.092s, 6948630 nodes-per-sec
+[2019-08-14T11:57:34.777] IDA threshold 11, explored 15855799 nodes, took 2.372s, 6684569 nodes-per-sec
+^C
+
+this eventually ran my desktop out of memory and started swapping
+
+
+without ida_explored
+[2019-08-14T11:58:07.843] min_ida_threshold 6
+[2019-08-14T11:58:07.843] IDA threshold 6, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-14T11:58:07.843] IDA threshold 7, explored 29 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-14T11:58:07.844] IDA threshold 8, explored 1061 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-14T11:58:07.847] IDA threshold 9, explored 33188 nodes, took 0.002s, 16594000 nodes-per-sec
+[2019-08-14T11:58:07.935] IDA threshold 10, explored 1052249 nodes, took 0.087s, 12094816 nodes-per-sec
+[2019-08-14T11:58:10.720] IDA threshold 11, explored 33230824 nodes, took 2.786s, 11927790 nodes-per-sec
+[2019-08-14T11:59:43.730] IDA threshold 12, explored 1059442324 nodes, took 93.009s, 11390750 nodes-per-sec
+
+
+optimal 333 (without L L' R R')
+-------------------------------
 Something to think about here is if the edges are EOed to their final orientation
 then it might be feasible to solve 333 optimally since L L' R R' will not be required.
 There would be 239,500,800 edge states and 88,179,840 million corner states.

@@ -37,54 +37,6 @@ print_moves (move_type *moves, int max_i)
 
 
 int
-moves_cancel_out (move_type move, move_type prev_move)
-{
-    switch (move) {
-    case U:        return (prev_move == U_PRIME);
-    case U_PRIME:  return (prev_move == U);
-    case U2:       return (prev_move == U2);
-    case L:        return (prev_move == L_PRIME);
-    case L_PRIME:  return (prev_move == L);
-    case L2:       return (prev_move == L2);
-    case F:        return (prev_move == F_PRIME);
-    case F_PRIME:  return (prev_move == F);
-    case F2:       return (prev_move == F2);
-    case R:        return (prev_move == R_PRIME);
-    case R_PRIME:  return (prev_move == R);
-    case R2:       return (prev_move == R2);
-    case B:        return (prev_move == B_PRIME);
-    case B_PRIME:  return (prev_move == B);
-    case B2:       return (prev_move == B2);
-    case D:        return (prev_move == D_PRIME);
-    case D_PRIME:  return (prev_move == D);
-    case D2:       return (prev_move == D2);
-    case Uw:       return (prev_move == Uw_PRIME);
-    case Uw_PRIME: return (prev_move == Uw);
-    case Uw2:      return (prev_move == Uw2);
-    case Lw:       return (prev_move == Lw_PRIME);
-    case Lw_PRIME: return (prev_move == Lw);
-    case Lw2:      return (prev_move == Lw2);
-    case Fw:       return (prev_move == Fw_PRIME);
-    case Fw_PRIME: return (prev_move == Fw);
-    case Fw2:      return (prev_move == Fw2);
-    case Rw:       return (prev_move == Rw_PRIME);
-    case Rw_PRIME: return (prev_move == Rw);
-    case Rw2:      return (prev_move == Rw2);
-    case Bw:       return (prev_move == Bw_PRIME);
-    case Bw_PRIME: return (prev_move == Bw);
-    case Bw2:      return (prev_move == Bw2);
-    case Dw:       return (prev_move == Dw_PRIME);
-    case Dw_PRIME: return (prev_move == Dw);
-    case Dw2:      return (prev_move == Dw2);
-    default:
-        printf("ERROR: moves_cancel_out add support for %d\n", move);
-        exit(1);
-    }
-
-    return 0;
-}
-
-int
 steps_on_same_face_and_layer(move_type move, move_type prev_move)
 {
     switch (move) {
@@ -366,6 +318,12 @@ ida_search (move_type *legal_moves,
             unsigned int prev_pt0_state,
             char *pt1,
             unsigned int prev_pt1_state,
+            char *pt2,
+            unsigned int prev_pt2_state,
+            char *pt3,
+            unsigned int prev_pt3_state,
+            char *pt4,
+            unsigned int prev_pt4_state,
             unsigned int ROW_LENGTH)
 {
     unsigned char cost_to_goal = 0;
@@ -377,21 +335,65 @@ ida_search (move_type *legal_moves,
     skip_other_steps_this_face = MOVE_NONE;
     struct ida_search_result search_result, tmp_search_result;
     size_t read_count;
-    unsigned int pt0_state;
-    unsigned int pt1_state;
+    unsigned int pt0_state = 0;
+    unsigned int pt1_state = 0;
+    unsigned int pt2_state = 0;
+    unsigned int pt3_state = 0;
+    unsigned int pt4_state = 0;
     unsigned char pt0_cost = 0;
     unsigned char pt1_cost = 0;
+    unsigned char pt2_cost = 0;
+    unsigned char pt3_cost = 0;
+    unsigned char pt4_cost = 0;
     unsigned char max_cost_to_goal = threshold - cost_to_here;
-    unsigned char lt_state[32];
+    unsigned char STATE_SIZE = 64;
+    unsigned char lt_state[STATE_SIZE];
 
     ida_count++;
-    pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-    pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
 
-    if (pt0_cost > pt1_cost) {
-        cost_to_goal = pt0_cost;
+    if (pt4 != NULL) {
+        pt4_cost = pt4[prev_pt4_state * ROW_LENGTH];
+        pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
+        pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
+        pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+
+        cost_to_goal = pt4_cost;
+        cost_to_goal = (pt3_cost > cost_to_goal) ? pt3_cost : cost_to_goal;
+        cost_to_goal = (pt2_cost > cost_to_goal) ? pt2_cost : cost_to_goal;
+        cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
+        cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
+
+    } else if (pt3 != NULL) {
+        pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
+        pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
+        pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+
+        cost_to_goal = pt3_cost;
+        cost_to_goal = (pt2_cost > cost_to_goal) ? pt2_cost : cost_to_goal;
+        cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
+        cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
+
+    } else if (pt2 != NULL) {
+        pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
+        pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+
+        cost_to_goal = pt2_cost;
+        cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
+        cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
+
+    } else if (pt1 != NULL) {
+        pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+
+        cost_to_goal = (pt1_cost > pt0_cost) ? pt1_cost : pt0_cost;
+
     } else {
-        cost_to_goal = pt1_cost;
+        pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+
+        cost_to_goal = pt0_cost;
     }
 
     // LOG("prev_pt0_state %lu, pt0_cost %lu, prev_pt1_state %lu, pt1_cost %lu\n", prev_pt0_state, pt0_cost, prev_pt1_state, pt1_cost);
@@ -416,9 +418,16 @@ ida_search (move_type *legal_moves,
 
     // The act of computing lt_state and looking to see if lt_state is in ida_explored
     // cuts the nodes-per-sec rate in half but it can also drastically reduce the number
-    // of nodes we need to visit and result in a net win.
-    memset(&lt_state, '\0', sizeof(char) * 32);
-    snprintf(lt_state, 32, "%u-%u", prev_pt0_state, prev_pt1_state);
+    // of nodes we need to visit and result in a net win. This can chew through a LOT of
+    // memory on a big search though.
+    /*
+    memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
+    snprintf(lt_state, STATE_SIZE, "%u-%u-%u-%u-%u",
+        prev_pt4_state,
+        prev_pt3_state,
+        prev_pt2_state,
+        prev_pt1_state,
+        prev_pt0_state);
 
     prev_heuristic_result = hash_find(&ida_explored, lt_state);
 
@@ -435,6 +444,8 @@ ida_search (move_type *legal_moves,
     }
 
     hash_add(&ida_explored, lt_state, cost_to_here);
+    */
+
     int i = 0;
 
     while (i < legal_move_count) {
@@ -465,8 +476,32 @@ ida_search (move_type *legal_moves,
         }
 
         // This is the equivalent of doing a rotate_xxx().
-        pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
-        pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
+        if (pt4 != NULL) {
+            pt4_state = read_state(pt4, (prev_pt4_state * ROW_LENGTH) + 1 + (4 * i));
+            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + 1 + (4 * i));
+            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + 1 + (4 * i));
+            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+
+        } else if (pt3 != NULL) {
+            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + 1 + (4 * i));
+            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + 1 + (4 * i));
+            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+
+        } else if (pt2 != NULL) {
+            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + 1 + (4 * i));
+            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+
+        } else if (pt1 != NULL) {
+            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+
+        } else {
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+        }
+
         moves_to_here[cost_to_here] = move;
 
         tmp_search_result = ida_search(
@@ -480,6 +515,12 @@ ida_search (move_type *legal_moves,
             pt0_state,
             pt1,
             pt1_state,
+            pt2,
+            pt2_state,
+            pt3,
+            pt3_state,
+            pt4,
+            pt4_state,
             ROW_LENGTH
         );
 
@@ -509,13 +550,19 @@ ida_solve (
     char *pt0,
     unsigned int pt0_state,
     char *pt1,
-    unsigned int pt1_state)
+    unsigned int pt1_state,
+    char *pt2,
+    unsigned int pt2_state,
+    char *pt3,
+    unsigned int pt3_state,
+    char *pt4,
+    unsigned int pt4_state)
 {
     unsigned char MAX_SEARCH_DEPTH = 30;
     unsigned char min_ida_threshold = 0;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     struct ida_search_result search_result;
-    struct timeval stop, start;
+    struct timeval stop, start, start_this_threshold;
     size_t read_count;
 
     unsigned char COST_LENGTH = 1;
@@ -523,15 +570,50 @@ ida_solve (
     unsigned char ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
     unsigned char pt0_cost = 0;
     unsigned char pt1_cost = 0;
+    unsigned char pt2_cost = 0;
+    unsigned char pt3_cost = 0;
+    unsigned char pt4_cost = 0;
 
     memset(moves_to_here, MOVE_NONE, MAX_SEARCH_DEPTH);
-    pt0_cost = pt0[pt0_state * ROW_LENGTH];
-    pt1_cost = pt1[pt1_state * ROW_LENGTH];
 
-    if (pt0_cost > pt1_cost) {
-        min_ida_threshold = pt0_cost;
+    if (pt4 != NULL) {
+        pt4_cost = pt4[pt4_state * ROW_LENGTH];
+        pt3_cost = pt3[pt3_state * ROW_LENGTH];
+        pt2_cost = pt2[pt2_state * ROW_LENGTH];
+        pt1_cost = pt1[pt1_state * ROW_LENGTH];
+        pt0_cost = pt0[pt0_state * ROW_LENGTH];
+        min_ida_threshold = pt4_cost;
+        min_ida_threshold = (pt3_cost > min_ida_threshold) ? pt3_cost : min_ida_threshold;
+        min_ida_threshold = (pt2_cost > min_ida_threshold) ? pt2_cost : min_ida_threshold;
+        min_ida_threshold = (pt1_cost > min_ida_threshold) ? pt1_cost : min_ida_threshold;
+        min_ida_threshold = (pt0_cost > min_ida_threshold) ? pt0_cost : min_ida_threshold;
+
+    } else if (pt3 != NULL) {
+        pt3_cost = pt3[pt3_state * ROW_LENGTH];
+        pt2_cost = pt2[pt2_state * ROW_LENGTH];
+        pt1_cost = pt1[pt1_state * ROW_LENGTH];
+        pt0_cost = pt0[pt0_state * ROW_LENGTH];
+        min_ida_threshold = pt3_cost;
+        min_ida_threshold = (pt2_cost > min_ida_threshold) ? pt2_cost : min_ida_threshold;
+        min_ida_threshold = (pt1_cost > min_ida_threshold) ? pt1_cost : min_ida_threshold;
+        min_ida_threshold = (pt0_cost > min_ida_threshold) ? pt0_cost : min_ida_threshold;
+
+    } else if (pt2 != NULL) {
+        pt2_cost = pt2[pt2_state * ROW_LENGTH];
+        pt1_cost = pt1[pt1_state * ROW_LENGTH];
+        pt0_cost = pt0[pt0_state * ROW_LENGTH];
+        min_ida_threshold = pt2_cost;
+        min_ida_threshold = (pt1_cost > min_ida_threshold) ? pt1_cost : min_ida_threshold;
+        min_ida_threshold = (pt0_cost > min_ida_threshold) ? pt0_cost : min_ida_threshold;
+
+    } else if (pt1 != NULL) {
+        pt1_cost = pt1[pt1_state * ROW_LENGTH];
+        pt0_cost = pt0[pt0_state * ROW_LENGTH];
+        min_ida_threshold = (pt1_cost > pt0_cost) ? pt1_cost : pt0_cost;
+
     } else {
-        min_ida_threshold = pt1_cost;
+        pt0_cost = pt0[pt0_state * ROW_LENGTH];
+        min_ida_threshold = pt0_cost;
     }
 
     LOG("min_ida_threshold %d\n", min_ida_threshold);
@@ -539,6 +621,7 @@ ida_solve (
 
     for (unsigned char threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {
         ida_count = 0;
+        gettimeofday(&start_this_threshold, NULL);
         memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_SEARCH_DEPTH);
         hash_delete_all(&ida_explored);
 
@@ -553,23 +636,30 @@ ida_solve (
             pt0_state,
             pt1,
             pt1_state,
+            pt2,
+            pt2_state,
+            pt3,
+            pt3_state,
+            pt4,
+            pt4_state,
             ROW_LENGTH
         );
 
-        if (search_result.found_solution) {
-            ida_count_total += ida_count;
+        gettimeofday(&stop, NULL);
+        ida_count_total += ida_count;
+        float ms = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000) + ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
+        float nodes_per_ms = ida_count / ms;
+        unsigned int nodes_per_sec = nodes_per_ms * 1000;
 
-            gettimeofday(&stop, NULL);
-            float ms = (stop.tv_usec - start.tv_usec) / 1000;
+        LOG("IDA threshold %d, explored %d nodes, took %.3fs, %u nodes-per-sec\n", threshold, ida_count,  ms / 1000, nodes_per_sec);
+
+        if (search_result.found_solution) {
+            float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
             float nodes_per_ms = ida_count_total / ms;
             unsigned int nodes_per_sec = nodes_per_ms * 1000;
-
-            LOG("IDA threshold %d, explored %d branches (%d total), took %.3fs, %u nodes-per-sec, found solution\n",
-                threshold, ida_count, ida_count_total, ms / 1000, nodes_per_sec);
+            LOG("IDA found solution, explored %d total nodes, took %.3fs, %u nodes-per-sec\n",
+                ida_count_total, ms / 1000, nodes_per_sec);
             return 1;
-        } else {
-            ida_count_total += ida_count;
-            LOG("IDA threshold %d, explored %d branches\n", threshold, ida_count);
         }
     }
 
@@ -628,8 +718,14 @@ main (int argc, char *argv[])
     unsigned char legal_move_count = 0;
     unsigned long prune_table_0_state = 0;
     unsigned long prune_table_1_state = 0;
+    unsigned long prune_table_2_state = 0;
+    unsigned long prune_table_3_state = 0;
+    unsigned long prune_table_4_state = 0;
     char *prune_table_0 = NULL;
     char *prune_table_1 = NULL;
+    char *prune_table_2 = NULL;
+    char *prune_table_3 = NULL;
+    char *prune_table_4 = NULL;
     move_type legal_moves[MOVE_MAX];
 
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
@@ -650,6 +746,30 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--prune-table-1-state")) {
             i++;
             prune_table_1_state = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--prune-table-2-filename")) {
+            i++;
+            prune_table_2 = read_file(argv[i]);
+
+        } else if (strmatch(argv[i], "--prune-table-2-state")) {
+            i++;
+            prune_table_2_state = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--prune-table-3-filename")) {
+            i++;
+            prune_table_3 = read_file(argv[i]);
+
+        } else if (strmatch(argv[i], "--prune-table-3-state")) {
+            i++;
+            prune_table_3_state = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--prune-table-4-filename")) {
+            i++;
+            prune_table_4 = read_file(argv[i]);
+
+        } else if (strmatch(argv[i], "--prune-table-4-state")) {
+            i++;
+            prune_table_4_state = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--legal-moves")) {
             i++;
@@ -786,15 +906,10 @@ main (int argc, char *argv[])
         }
     }
 
-    ida_solve(legal_moves, legal_move_count, prune_table_0, prune_table_0_state, prune_table_1, prune_table_1_state);
-
-    if (prune_table_0) {
-        free(prune_table_0);
-        prune_table_0 = NULL;
-    }
-
-    if (prune_table_1) {
-        free(prune_table_1);
-        prune_table_1 = NULL;
-    }
+    ida_solve(legal_moves, legal_move_count,
+        prune_table_0, prune_table_0_state,
+        prune_table_1, prune_table_1_state,
+        prune_table_2, prune_table_2_state,
+        prune_table_3, prune_table_3_state,
+        prune_table_4, prune_table_4_state);
 }

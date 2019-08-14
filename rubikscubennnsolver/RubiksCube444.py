@@ -12,6 +12,7 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableIDAViaC,
     NoSteps,
 )
+from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.RubiksCube444Misc import (
     high_edges_444,
     low_edges_444,
@@ -1394,6 +1395,43 @@ class LookupTable444Phase0RCenters(LookupTable):
             else:
                 cube[pos] = "R" 
 
+# dwalton
+class LookupTable444Phase0(LookupTableIDAViaGraph):
+    """
+    lookup-table-5x5x5-step10-UD-centers-stage.txt
+    ==============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 98 entries (0 percent, 24.50x previous step)
+    3 steps has 2,036 entries (0 percent, 20.78x previous step)
+    4 steps has 41,096 entries (4 percent, 20.18x previous step)
+    5 steps has 824,950 entries (95 percent, 20.07x previous step)
+
+    Total: 868,185 entries
+    Average: 4.95 moves
+    """
+
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step900-dummy.txt',
+            "TBD",
+            moves_444,
+            (), # illegal moves
+            linecount=0,
+            max_depth=0,
+            filesize=0,
+            prune_tables=(
+                parent.lt_phase0_edges,
+                parent.lt_phase0_UD_centers,
+                parent.lt_phase0_FD_centers,
+                parent.lt_phase0_L_centers,
+                parent.lt_phase0_R_centers,
+            )
+        )
+
+
 
 class RubiksCube444(RubiksCube):
 
@@ -1732,8 +1770,9 @@ class RubiksCube444(RubiksCube):
             self.lt_phase0_FD_centers = LookupTable444Phase0FBCenters(self)
             self.lt_phase0_L_centers = LookupTable444Phase0LCenters(self)
             self.lt_phase0_R_centers = LookupTable444Phase0RCenters(self)
+            self.lt_phase0 = LookupTable444Phase0(self)
 
-            self.lt_phase0_edges.preload_cache_dict()
+            #self.lt_phase0_edges.preload_cache_dict()
             #self.lt_phase0_UD_centers.preload_cache_dict()
             #self.lt_phase0_FD_centers.preload_cache_dict()
             #self.lt_phase0_L_centers.preload_cache_dict()
@@ -1891,8 +1930,9 @@ class RubiksCube444(RubiksCube):
         #self.lt_phase0_UD_centers.solve()
         #self.lt_phase0_FD_centers.solve()
         #self.lt_phase0_L_centers.solve()
-        self.lt_phase0_R_centers.solve()
+        #self.lt_phase0_R_centers.solve()
         #self.highlow_edges_print()
+        self.lt_phase0.solve_via_c()
         self.print_cube()
         log.info("%s: End of Phase0, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         sys.exit(0)

@@ -1062,6 +1062,15 @@ class LookupTable(object):
         parent_state = self.parent.state
         legal_moves = self.legal_moves
         ida_graph = {}
+
+        states = sorted(self.cache.keys())
+        state_index_filename = self.filename.replace(".txt", ".state_index")
+
+        with open(state_index_filename, "w") as fh:
+            for (index, state) in enumerate(states):
+                fh.write("%s:%d\n" % (state, index))
+
+        subprocess.call(["./utils/pad-lines.py", state_index_filename])
         index = 0
 
         for (state, steps) in self.cache.items():

@@ -1181,29 +1181,6 @@ class LookupTableIDA555UDCenterStageNew(LookupTableIDAViaGraph):
             )
         )
 
-        '''
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in centers_555])
-        lt_state = self.hex_format % int(lt_state, 2)
-
-        (_, t_centers_cost_to_goal) = self.parent.lt_UD_centers_stage_t_centers.ida_heuristic()
-        (_, x_centers_cost_to_goal) = self.parent.lt_UD_centers_stage_x_centers.ida_heuristic()
-
-        cost_to_goal = max(t_centers_cost_to_goal, x_centers_cost_to_goal)
-
-        if cost_to_goal > 0:
-            steps = self.steps(lt_state)
-
-            if steps:
-                cost_to_goal = len(steps)
-            else:
-                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
-
-        return (lt_state, cost_to_goal)
-        '''
-
-
 
 class LookupTable555UDTCenterStage(LookupTable):
     """

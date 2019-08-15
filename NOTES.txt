@@ -90,24 +90,21 @@ takes much less memory (only ~200M) and runs at ~450k nps. We are up to an 11.5x
 
 
 
+time ./ida_search_via_graph --prune-table-0-filename lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.bin --prune-table-0-state 594026 --prune-table-1-filename lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.bin --prune-table-1-state 484064 --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
 
-// This is the C version without ida_explored...that ends up chewing through a
-// ton of memory on a long search.  That and it cuts the nodes-per-sec rate in half.
-// Using ida_explored did reduce the number of nodes explored though...probably
-// cuts in in half on average.
-dwalton@laptop:rubiks-cube-NxNxN-solver$ time ./ida_search_via_graph --prune-table-0-filename lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.bin --prune-table-0-state 594026 --prune-table-1-filename lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.bin --prune-table-1-state 484064 --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
-[2019-08-14T19:25:07.299] min_ida_threshold 6
-[2019-08-14T19:25:07.299] IDA threshold 6, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-08-14T19:25:07.299] IDA threshold 7, explored 37 nodes, took 0.000s, 0 nodes-per-sec
-[2019-08-14T19:25:07.299] IDA threshold 8, explored 572 nodes, took 0.000s, 0 nodes-per-sec
-[2019-08-14T19:25:07.300] IDA threshold 9, explored 15,505 nodes, took 0.000s, 0 nodes-per-sec
-[2019-08-14T19:25:07.326] IDA threshold 10, explored 498,764 nodes, took 0.025s, 19,950,560 nodes-per-sec
-[2019-08-14T19:25:07.509] IDA count 3,803,130, f_cost 10 vs threshold 11 (cost_to_here 10, cost_to_goal 0)
-SOLUTION: Uw' Bw' R Uw2 F' Fw' Lw2 Bw' D2 Lw
-[2019-08-14T19:25:07.509] IDA threshold 11, explored 3,803,130 nodes, took 0.183s, 20,782,130 nodes-per-sec
-[2019-08-14T19:25:07.509] IDA found solution, explored 4,318,009 total nodes, took 0.183s, 23,595,678 nodes-per-sec
 
-real	0m0.312s
-user	0m0.211s
-sys	0m0.100s
+[2019-08-15T22:30:49.766] min_ida_threshold 6
+[2019-08-15T22:30:49.767] IDA threshold 6, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-15T22:30:49.767] IDA threshold 7, explored 37 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-15T22:30:49.767] IDA threshold 8, explored 572 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-15T22:30:49.767] IDA threshold 9, explored 15,505 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-15T22:30:49.791] IDA threshold 10, explored 498,764 nodes, took 0.023s, 21,685,390 nodes-per-sec
+[2019-08-15T22:30:49.968] IDA count 3,803,130, f_cost 10 vs threshold 11 (cost_to_here 10, cost_to_goal 0)
+SOLUTION: Uw' Bw' R Uw2 F' Fw' Lw2 Bw' D2 Lw 
+[2019-08-15T22:30:49.968] IDA threshold 11, explored 3,803,130 nodes, took 0.177s, 21,486,610 nodes-per-sec
+[2019-08-15T22:30:49.968] IDA found solution, explored 4,318,009 total nodes, took 0.201s, 21,482,632 nodes-per-sec
+
+real	0m0.335s
+user	0m0.203s
+sys	0m0.132s
 

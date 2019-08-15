@@ -380,6 +380,15 @@ ida_search (unsigned char cost_to_here,
                 prev_pt2_state,
                 prev_pt3_state,
                 prev_pt4_state);
+
+            main_table_node = hash_find(&main_table, lt_state);
+
+            if (main_table_node) {
+                cost_to_goal = main_table_node->value;
+                // LOG("lt_state %s has cost %d, cost_to_here %d\n", lt_state, main_table_node->value, cost_to_here);
+            } else {
+                cost_to_goal = (main_table_max_depth + 1 > cost_to_goal) ? main_table_max_depth + 1 : cost_to_goal;
+            }
         }
         break;
 
@@ -401,6 +410,15 @@ ida_search (unsigned char cost_to_here,
                 prev_pt1_state,
                 prev_pt2_state,
                 prev_pt3_state);
+
+            main_table_node = hash_find(&main_table, lt_state);
+
+            if (main_table_node) {
+                cost_to_goal = main_table_node->value;
+                // LOG("lt_state %s has cost %d, cost_to_here %d\n", lt_state, main_table_node->value, cost_to_here);
+            } else {
+                cost_to_goal = (main_table_max_depth + 1 > cost_to_goal) ? main_table_max_depth + 1 : cost_to_goal;
+            }
         }
         break;
 
@@ -419,6 +437,15 @@ ida_search (unsigned char cost_to_here,
                 prev_pt0_state,
                 prev_pt1_state,
                 prev_pt2_state);
+
+            main_table_node = hash_find(&main_table, lt_state);
+
+            if (main_table_node) {
+                cost_to_goal = main_table_node->value;
+                // LOG("lt_state %s has cost %d, cost_to_here %d\n", lt_state, main_table_node->value, cost_to_here);
+            } else {
+                cost_to_goal = (main_table_max_depth + 1 > cost_to_goal) ? main_table_max_depth + 1 : cost_to_goal;
+            }
         }
         break;
 
@@ -433,6 +460,15 @@ ida_search (unsigned char cost_to_here,
             snprintf(lt_state, STATE_SIZE, "%07u-%07u",
                 prev_pt0_state,
                 prev_pt1_state);
+
+            main_table_node = hash_find(&main_table, lt_state);
+
+            if (main_table_node) {
+                cost_to_goal = main_table_node->value;
+                // LOG("lt_state %s has cost %d, cost_to_here %d\n", lt_state, main_table_node->value, cost_to_here);
+            } else {
+                cost_to_goal = (main_table_max_depth + 1 > cost_to_goal) ? main_table_max_depth + 1 : cost_to_goal;
+            }
         }
         break;
 
@@ -444,19 +480,17 @@ ida_search (unsigned char cost_to_here,
         if (main_table) {
             memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
             snprintf(lt_state, STATE_SIZE, "%07u", prev_pt0_state);
+
+            main_table_node = hash_find(&main_table, lt_state);
+
+            if (main_table_node) {
+                cost_to_goal = main_table_node->value;
+                // LOG("lt_state %s has cost %d, cost_to_here %d\n", lt_state, main_table_node->value, cost_to_here);
+            } else {
+                cost_to_goal = (main_table_max_depth + 1 > cost_to_goal) ? main_table_max_depth + 1 : cost_to_goal;
+            }
         }
         break;
-    }
-
-    if (main_table) {
-        main_table_node = hash_find(&main_table, lt_state);
-
-        if (main_table_node) {
-            cost_to_goal = main_table_node->value;
-            // LOG("lt_state %s has cost %d, cost_to_here %d\n", lt_state, main_table_node->value, cost_to_here);
-        } else {
-            cost_to_goal = (main_table_max_depth + 1 > cost_to_goal) ? main_table_max_depth + 1 : cost_to_goal;
-        }
     }
 
     f_cost = cost_to_here + cost_to_goal;

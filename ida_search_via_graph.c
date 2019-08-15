@@ -33,6 +33,7 @@ unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
+move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
 
 
 void
@@ -292,8 +293,16 @@ steps_on_same_face_and_layer (move_type move, move_type prev_move)
         }
         break;
 
+    case X:
+    case X_PRIME:
+    case Y:
+    case Y_PRIME:
+    case Z:
+    case Z_PRIME:
+        return 0;
+
     default:
-        printf("ERROR: steps_on_same_face_and_layer add support for %d\n", move);
+        printf("ERROR: steps_on_same_face_and_layer add support for %d (%s)\n", move, move2str[move]);
         exit(1);
     }
 
@@ -563,7 +572,7 @@ ida_search (unsigned char cost_to_here,
          * --cs0x7f
          */
         if (skip_other_steps_this_face != MOVE_NONE) {
-            if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+            if (same_face_and_layer_matrix[move][skip_other_steps_this_face]) {
                 continue;
             } else {
                 skip_other_steps_this_face = MOVE_NONE;
@@ -834,6 +843,7 @@ main (int argc, char *argv[])
     unsigned long prune_table_4_state = 0;
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
     memset(move_matrix, MOVE_NONE, MOVE_MAX * MOVE_MAX);
+    memset(same_face_and_layer_matrix, 0, MOVE_MAX * MOVE_MAX);
 
     for (unsigned char i = 1; i < argc; i++) {
         if (strmatch(argv[i], "--prune-table-0-filename")) {
@@ -1040,6 +1050,8 @@ main (int argc, char *argv[])
         exit(1);
     }
 
+    // build the move matrix, we do this to avoid tons of
+    // steps_on_same_face_and_layer() during the IDA search
     for (unsigned char i = 0; i < legal_move_count; i++) {
         move_type i_move = legal_moves[i];
 
@@ -1057,6 +1069,18 @@ main (int argc, char *argv[])
     move_type i_move = MOVE_NONE;
     for (unsigned char j = 0; j < legal_move_count; j++) {
         move_matrix[i_move][j] = legal_moves[j];
+    }
+
+    // build the same_face_and_layer_matrix, we do this to avoid tons of
+    // steps_on_same_face_and_layer() during the IDA search
+    for (unsigned char i = 1; i < MOVE_MAX; i++) {
+        for (unsigned char j = 1; j < MOVE_MAX; j++) {
+            if (steps_on_same_face_and_layer(i, j)) {
+                same_face_and_layer_matrix[i][j] = 1;
+            } else {
+                same_face_and_layer_matrix[i][j] = 0;
+            }
+        }
     }
 
     ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);

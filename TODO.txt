@@ -116,3 +116,32 @@ their final orientation really depends on if you could get this 333 optimal
 solver to run quickly enough.  There are far too many states for us to use 
 the IDA-graph approach. Both of those prune tables would be pretty deep I
 imagine so that would help.  Who knows this might be feasible.
+
+
+444 phase0 isn't working yet...things to try/do
+- we need to pass a --main-table-state-length option, right now it is hard coded for 555 centers
+- we can skip Lw Lw' Lw2 Dw Dw' Dw2 Bw Bw' Bw2 and still get to every state. This would drastically cut
+  down on the number of nodes visited. If this works then it would be worth rebuilding the prune
+  tables with these moves restricted.  Note that we restrict these moves today in the normal solver
+  where we stage the centers in the first phase.  I remember experimenting with this a while back
+  and removing these really sped up the IDA but didn't add anything noticable to the move count.
+
+
+
+ida_search_via_graph
+====================
+- currently at ~19.5 million nodes-per-sec
+
+- use a pt_count variable that we can do a switch statement on to avoid the elif tree in ida_search()
+  we can also do a switch at the "equivalent of rotate_xxx" section
+  DONE, this got us to about 20.5 to 21.0 million nodes-per-sec
+
+- build a legal_moves-per-move so we can avoid the steps_on_same_face_and_layer() call
+    As a quick test I commented out this call and that got us to 26.5 million nodes-per-sec. We
+    went from 4.3 million nodes visited to 6.5 million though so we def need the functionality.
+
+    oh wow as a quick experiment I also commented out the skip_other_steps_this_face code
+    and that took us up to ~45 million nodes-per-sec!! We visited 12.2 million nodes though.
+    At least we now know this check is expensive. One option would be to look at the current
+    move and just increment "i" by enough to get us past the other moves of the same face/layer.
+

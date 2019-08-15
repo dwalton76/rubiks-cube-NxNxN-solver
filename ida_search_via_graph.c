@@ -17,6 +17,21 @@
 unsigned long ida_count = 0;
 unsigned long ida_count_total = 0;
 struct key_value_pair *ida_explored = NULL;
+unsigned char legal_move_count = 0;
+unsigned char threshold = 0;
+char *pt0 = NULL;
+char *pt1 = NULL;
+char *pt2 = NULL;
+char *pt3 = NULL;
+char *pt4 = NULL;
+struct key_value_pair *main_table = NULL;
+unsigned char pt_count = 0;
+unsigned char main_table_max_depth = 0;
+unsigned char main_table_state_length = 0;
+unsigned char COST_LENGTH = 1;
+unsigned char STATE_LENGTH = 4;
+unsigned char ROW_LENGTH = 0;
+move_type legal_moves[MOVE_MAX];
 
 
 void
@@ -37,8 +52,8 @@ print_moves (move_type *moves, int max_i)
 }
 
 
-int
-steps_on_same_face_and_layer(move_type move, move_type prev_move)
+unsigned char
+steps_on_same_face_and_layer (move_type move, move_type prev_move)
 {
     switch (move) {
     case U:
@@ -291,9 +306,7 @@ struct ida_search_result {
 
 
 unsigned int
-read_state(
-    char *pt,
-    unsigned int location)
+read_state (char *pt, unsigned int location)
 {
     unsigned int num = 0;
     uint32_t b0, b1, b2, b3;
@@ -309,35 +322,22 @@ read_state(
 
 
 struct ida_search_result
-ida_search (move_type *legal_moves,
-            unsigned char legal_move_count,
-            unsigned char cost_to_here,
+ida_search (unsigned char cost_to_here,
             move_type *moves_to_here,
-            unsigned char threshold,
             move_type prev_move,
-            char *pt0,
             unsigned int prev_pt0_state,
-            char *pt1,
             unsigned int prev_pt1_state,
-            char *pt2,
             unsigned int prev_pt2_state,
-            char *pt3,
             unsigned int prev_pt3_state,
-            char *pt4,
-            unsigned int prev_pt4_state,
-            unsigned int ROW_LENGTH,
-            struct key_value_pair *main_table,
-            unsigned char main_table_max_depth)
+            unsigned int prev_pt4_state)
 {
     unsigned char cost_to_goal = 0;
     unsigned char f_cost = 0;
     move_type move, skip_other_steps_this_face;
-    struct ida_heuristic_result heuristic_result;
-    struct key_value_pair *prev_heuristic_result = NULL;
-    char cost_to_here_str[3];
+    // struct ida_heuristic_result heuristic_result;
+    // struct key_value_pair *prev_heuristic_result = NULL;
     skip_other_steps_this_face = MOVE_NONE;
     struct ida_search_result search_result, tmp_search_result;
-    size_t read_count;
     unsigned int pt0_state = 0;
     unsigned int pt1_state = 0;
     unsigned int pt2_state = 0;
@@ -348,14 +348,14 @@ ida_search (move_type *legal_moves,
     unsigned char pt2_cost = 0;
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
-    unsigned char max_cost_to_goal = threshold - cost_to_here;
     unsigned char STATE_SIZE = 48;
     unsigned char lt_state[STATE_SIZE];
     struct key_value_pair *main_table_node = NULL;
 
     ida_count++;
 
-    if (pt4 != NULL) {
+    switch (pt_count) {
+    case 4:
         pt4_cost = pt4[prev_pt4_state * ROW_LENGTH];
         pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
         pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
@@ -377,8 +377,9 @@ ida_search (move_type *legal_moves,
                 prev_pt3_state,
                 prev_pt4_state);
         }
+        break;
 
-    } else if (pt3 != NULL) {
+    case 3:
         pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
         pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
         pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
@@ -397,8 +398,9 @@ ida_search (move_type *legal_moves,
                 prev_pt2_state,
                 prev_pt3_state);
         }
+        break;
 
-    } else if (pt2 != NULL) {
+    case 2:
         pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
         pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
@@ -414,21 +416,23 @@ ida_search (move_type *legal_moves,
                 prev_pt1_state,
                 prev_pt2_state);
         }
+        break;
 
-    } else if (pt1 != NULL) {
+    case 1:
         pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
         cost_to_goal = (pt1_cost > pt0_cost) ? pt1_cost : pt0_cost;
 
         if (main_table) {
-            //memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
+            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
             snprintf(lt_state, STATE_SIZE, "%07u-%07u",
                 prev_pt0_state,
                 prev_pt1_state);
         }
+        break;
 
-    } else {
+    default:
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
         cost_to_goal = pt0_cost;
@@ -437,9 +441,9 @@ ida_search (move_type *legal_moves,
             memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
             snprintf(lt_state, STATE_SIZE, "%07u", prev_pt0_state);
         }
+        break;
     }
 
-    // dwalton
     if (main_table) {
         main_table_node = hash_find(&main_table, lt_state);
 
@@ -502,6 +506,7 @@ ida_search (move_type *legal_moves,
     */
 
     int i = 0;
+    int offset = 0;
 
     while (i < legal_move_count) {
         move = legal_moves[i];
@@ -530,56 +535,51 @@ ida_search (move_type *legal_moves,
             }
         }
 
-        // This is the equivalent of doing a rotate_xxx().
-        if (pt4 != NULL) {
-            pt4_state = read_state(pt4, (prev_pt4_state * ROW_LENGTH) + 1 + (4 * i));
-            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + 1 + (4 * i));
-            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + 1 + (4 * i));
-            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+        offset = 1 + (4 * i);
 
-        } else if (pt3 != NULL) {
-            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + 1 + (4 * i));
-            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + 1 + (4 * i));
-            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+        switch (pt_count) {
+        case 4:
+            pt4_state = read_state(pt4, (prev_pt4_state * ROW_LENGTH) + offset);
+            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
+            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
+            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
+            break;
 
-        } else if (pt2 != NULL) {
-            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + 1 + (4 * i));
-            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+        case 3:
+            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
+            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
+            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
+            break;
 
-        } else if (pt1 != NULL) {
-            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + 1 + (4 * i));
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+        case 2:
+            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
+            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
+            break;
 
-        } else {
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + 1 + (4 * i));
+        case 1:
+            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
+            break;
+
+        default:
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
+            break;
         }
 
         moves_to_here[cost_to_here] = move;
 
         tmp_search_result = ida_search(
-            legal_moves,
-            legal_move_count,
             cost_to_here + 1,
             moves_to_here,
-            threshold,
             move,
-            pt0,
             pt0_state,
-            pt1,
             pt1_state,
-            pt2,
             pt2_state,
-            pt3,
             pt3_state,
-            pt4,
-            pt4_state,
-            ROW_LENGTH,
-            main_table,
-            main_table_max_depth
-        );
+            pt4_state);
 
         if (tmp_search_result.found_solution) {
             return tmp_search_result;
@@ -602,31 +602,18 @@ ida_search (move_type *legal_moves,
 
 int
 ida_solve (
-    move_type *legal_moves,
-    unsigned char legal_move_count,
-    char *pt0,
     unsigned int pt0_state,
-    char *pt1,
     unsigned int pt1_state,
-    char *pt2,
     unsigned int pt2_state,
-    char *pt3,
     unsigned int pt3_state,
-    char *pt4,
-    unsigned int pt4_state,
-    struct key_value_pair *main_table,
-    unsigned char main_table_max_depth)
+    unsigned int pt4_state)
 {
     unsigned char MAX_SEARCH_DEPTH = 30;
     unsigned char min_ida_threshold = 0;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
-    size_t read_count;
 
-    unsigned char COST_LENGTH = 1;
-    unsigned char STATE_LENGTH = 4;
-    unsigned char ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
     unsigned char pt0_cost = 0;
     unsigned char pt1_cost = 0;
     unsigned char pt2_cost = 0;
@@ -681,33 +668,21 @@ ida_solve (
     LOG("min_ida_threshold %d\n", min_ida_threshold);
     gettimeofday(&start, NULL);
 
-    for (unsigned char threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {
+    for (threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {
         ida_count = 0;
         gettimeofday(&start_this_threshold, NULL);
         memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_SEARCH_DEPTH);
         hash_delete_all(&ida_explored);
 
         search_result = ida_search(
-            legal_moves,
-            legal_move_count,
             0,
             moves_to_here,
-            threshold,
             MOVE_NONE,
-            pt0,
             pt0_state,
-            pt1,
             pt1_state,
-            pt2,
             pt2_state,
-            pt3,
             pt3_state,
-            pt4,
-            pt4_state,
-            ROW_LENGTH,
-            main_table,
-            main_table_max_depth
-        );
+            pt4_state);
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
@@ -718,7 +693,7 @@ ida_solve (
         LOG("IDA threshold %d, explored %'d nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count,  ms / 1000, nodes_per_sec);
 
         if (search_result.found_solution) {
-            float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
+            float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
             float nodes_per_ms = ida_count_total / ms;
             unsigned int nodes_per_sec = nodes_per_ms * 1000;
             LOG("IDA found solution, explored %'d total nodes, took %.3fs, %'d nodes-per-sec\n",
@@ -733,7 +708,7 @@ ida_solve (
 
 
 char *
-read_file(char *filename)
+read_file (char *filename)
 {
     FILE *fh = fopen(filename, "rb");
     unsigned long bufsize = 0;
@@ -780,32 +755,35 @@ void
 ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
 {
     FILE *fh_read = NULL;
-    int BUFFER_SIZE = 128; 
+    int BUFFER_SIZE = 128;
     char buffer[BUFFER_SIZE];
     char token_buffer[BUFFER_SIZE];
     char moves[BUFFER_SIZE];
     char *token_ptr = NULL;
     char state[BUFFER_SIZE];
-    int cost = 0; 
+    int cost = 0;
     struct key_value_pair * pt_entry = NULL;
 
-    // dwalton
     fh_read = fopen(filename, "r");
     if (fh_read == NULL) {
         printf("ERROR: ida_prune_table_preload could not open %s\n", filename);
         exit(1);
-    }    
+    }
+
+    if (!main_table_state_length) {
+        printf("ERROR: --main-table-state-length must be defined before --main-table");
+        exit(1);
+    }
 
     LOG("ida_prune_table_preload %s: start\n", filename);
+    unsigned char cost_index = main_table_state_length + 1;
 
+    // If there are two PTs then main_table_state_length should be 15, 7 for
+    // each state and 1 for the - between them.
     while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
-        // 0..14 are the state
-        // 15 is the :
-        // 16 is the move count
-        buffer[15] = '\0';
-        cost = atoi(&buffer[16]);
+        buffer[main_table_state_length] = '\0';
+        cost = atoi(&buffer[cost_index]);
         hash_add(hashtable, buffer, cost);
-        // LOG("Add %s with cost %d\n", buffer, cost);
     }
 
     fclose(fh_read);
@@ -816,63 +794,63 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
 int
 main (int argc, char *argv[])
 {
-    unsigned char legal_move_count = 0;
     unsigned long prune_table_0_state = 0;
     unsigned long prune_table_1_state = 0;
     unsigned long prune_table_2_state = 0;
     unsigned long prune_table_3_state = 0;
     unsigned long prune_table_4_state = 0;
-    char *prune_table_0 = NULL;
-    char *prune_table_1 = NULL;
-    char *prune_table_2 = NULL;
-    char *prune_table_3 = NULL;
-    char *prune_table_4 = NULL;
-    struct key_value_pair *main_table = NULL;
-    unsigned char main_table_max_depth = 0;
-    move_type legal_moves[MOVE_MAX];
-
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
 
     for (unsigned char i = 1; i < argc; i++) {
         if (strmatch(argv[i], "--prune-table-0-filename")) {
             i++;
-            prune_table_0 = read_file(argv[i]);
+            pt0 = read_file(argv[i]);
+            pt_count = 0;
 
         } else if (strmatch(argv[i], "--prune-table-0-state")) {
             i++;
             prune_table_0_state = atoi(argv[i]);
+            pt_count = 0;
 
         } else if (strmatch(argv[i], "--prune-table-1-filename")) {
             i++;
-            prune_table_1 = read_file(argv[i]);
+            pt1 = read_file(argv[i]);
+            pt_count = 1;
 
         } else if (strmatch(argv[i], "--prune-table-1-state")) {
             i++;
             prune_table_1_state = atoi(argv[i]);
+            pt_count = 1;
 
         } else if (strmatch(argv[i], "--prune-table-2-filename")) {
             i++;
-            prune_table_2 = read_file(argv[i]);
+            pt2 = read_file(argv[i]);
+            pt_count = 2;
 
         } else if (strmatch(argv[i], "--prune-table-2-state")) {
             i++;
             prune_table_2_state = atoi(argv[i]);
+            pt_count = 2;
 
         } else if (strmatch(argv[i], "--prune-table-3-filename")) {
             i++;
-            prune_table_3 = read_file(argv[i]);
+            pt3 = read_file(argv[i]);
+            pt_count = 3;
 
         } else if (strmatch(argv[i], "--prune-table-3-state")) {
             i++;
             prune_table_3_state = atoi(argv[i]);
+            pt_count = 3;
 
         } else if (strmatch(argv[i], "--prune-table-4-filename")) {
             i++;
-            prune_table_4 = read_file(argv[i]);
+            pt4 = read_file(argv[i]);
+            pt_count = 4;
 
         } else if (strmatch(argv[i], "--prune-table-4-state")) {
             i++;
             prune_table_4_state = atoi(argv[i]);
+            pt_count = 4;
 
         } else if (strmatch(argv[i], "--main-table")) {
             i++;
@@ -881,6 +859,10 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--main-table-max-depth")) {
             i++;
             main_table_max_depth = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--main-table-state-length")) {
+            i++;
+            main_table_state_length = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--legal-moves")) {
             i++;
@@ -1017,16 +999,18 @@ main (int argc, char *argv[])
         }
     }
 
-    if ((main_table && !main_table_max_depth) || (!main_table && main_table_max_depth)) {
-        printf("ERROR: must specify BOTH --main-table and --main-table-max-depth\n\n");
+    if ((main_table || main_table_max_depth || main_table_state_length) &&
+        (!main_table || !main_table_max_depth || !main_table_state_length)) {
+
+        printf("ERROR: must specify --main-table-state-length, --main-table and --main-table-max-depth\n\n");
         exit(1);
     }
 
-    ida_solve(legal_moves, legal_move_count,
-        prune_table_0, prune_table_0_state,
-        prune_table_1, prune_table_1_state,
-        prune_table_2, prune_table_2_state,
-        prune_table_3, prune_table_3_state,
-        prune_table_4, prune_table_4_state,
-        main_table, main_table_max_depth);
+    ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
+    ida_solve(
+        prune_table_0_state,
+        prune_table_1_state,
+        prune_table_2_state,
+        prune_table_3_state,
+        prune_table_4_state);
 }

@@ -32,6 +32,7 @@ unsigned char COST_LENGTH = 1;
 unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
 move_type legal_moves[MOVE_MAX];
+move_type move_matrix[MOVE_MAX][MOVE_MAX];
 
 
 void
@@ -309,15 +310,18 @@ unsigned int
 read_state (char *pt, unsigned int location)
 {
     unsigned int num = 0;
-    uint32_t b0, b1, b2, b3;
+    // uint32_t b0, b1, b2, b3;
 
     memcpy(&num, &pt[location], 4);
+    /*
     b0 = (num & 0x000000ff) << 24u;
     b1 = (num & 0x0000ff00) << 8u;
     b2 = (num & 0x00ff0000) >> 8u;
     b3 = (num & 0xff000000) >> 24u;
 
     return b0 | b1 | b2 | b3;
+     */
+    return ((num & 0x000000ff) << 24u) | ((num & 0x0000ff00) << 8u) | ((num & 0x00ff0000) >> 8u) | ((num & 0xff000000) >> 24u);
 }
 
 
@@ -455,8 +459,6 @@ ida_search (unsigned char cost_to_here,
         }
     }
 
-    // LOG("prev_pt0_state %lu, pt0_cost %lu, prev_pt1_state %lu, pt1_cost %lu\n", prev_pt0_state, pt0_cost, prev_pt1_state, pt1_cost);
-
     f_cost = cost_to_here + cost_to_goal;
     search_result.f_cost = f_cost;
     search_result.found_solution = 0;
@@ -505,16 +507,16 @@ ida_search (unsigned char cost_to_here,
     hash_add(&ida_explored, lt_state, cost_to_here);
     */
 
-    int i = 0;
     int offset = 0;
 
-    while (i < legal_move_count) {
-        move = legal_moves[i];
+    for (unsigned char i = 0; i < legal_move_count; i++) {
+        move = move_matrix[prev_move][i];
 
-        if (steps_on_same_face_and_layer(move, prev_move)) {
-            i += 3;
+        // This is the scenario where the move is on the same face and layer as prev_mode
+        if (move == MOVE_NONE) {
             continue;
         }
+
 
         // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
         /*
@@ -528,7 +530,6 @@ ida_search (unsigned char cost_to_here,
          */
         if (skip_other_steps_this_face != MOVE_NONE) {
             if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
-                i++;
                 continue;
             } else {
                 skip_other_steps_this_face = MOVE_NONE;
@@ -592,8 +593,6 @@ ida_search (unsigned char cost_to_here,
                 skip_other_steps_this_face = MOVE_NONE;
             }
         }
-
-        i++;
     }
 
     return search_result;
@@ -800,6 +799,7 @@ main (int argc, char *argv[])
     unsigned long prune_table_3_state = 0;
     unsigned long prune_table_4_state = 0;
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
+    memset(move_matrix, MOVE_NONE, MOVE_MAX * MOVE_MAX);
 
     for (unsigned char i = 1; i < argc; i++) {
         if (strmatch(argv[i], "--prune-table-0-filename")) {
@@ -1004,6 +1004,25 @@ main (int argc, char *argv[])
 
         printf("ERROR: must specify --main-table-state-length, --main-table and --main-table-max-depth\n\n");
         exit(1);
+    }
+
+    for (unsigned char i = 0; i < legal_move_count; i++) {
+        move_type i_move = legal_moves[i];
+
+        for (unsigned char j = 0; j < legal_move_count; j++) {
+            move_type j_move = legal_moves[j];
+
+            if (steps_on_same_face_and_layer(i_move, j_move)) {
+                move_matrix[i_move][j] = MOVE_NONE;
+            } else {
+                move_matrix[i_move][j] = j_move;
+            }
+        }
+    }
+
+    move_type i_move = MOVE_NONE;
+    for (unsigned char j = 0; j < legal_move_count; j++) {
+        move_matrix[i_move][j] = legal_moves[j];
     }
 
     ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);

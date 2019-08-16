@@ -315,7 +315,7 @@ struct ida_search_result {
 };
 
 
-unsigned int
+inline unsigned int
 read_state (char *pt, unsigned int location)
 {
     unsigned int num = 0;
@@ -361,9 +361,6 @@ ida_search (unsigned char cost_to_here,
     unsigned char pt2_cost = 0;
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
-    unsigned char STATE_SIZE = 48;
-    unsigned char lt_state[STATE_SIZE];
-    struct key_value_pair *main_table_node = NULL;
 
     ida_count++;
 
@@ -382,6 +379,9 @@ ida_search (unsigned char cost_to_here,
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
 
         if (main_table) {
+            struct key_value_pair *main_table_node = NULL;
+            unsigned char STATE_SIZE = 48;
+            unsigned char lt_state[STATE_SIZE];
             memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
             snprintf(lt_state, STATE_SIZE, "%07u-%07u-%07u-%07u-%07u",
                 prev_pt0_state,
@@ -413,6 +413,9 @@ ida_search (unsigned char cost_to_here,
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
 
         if (main_table) {
+            struct key_value_pair *main_table_node = NULL;
+            unsigned char STATE_SIZE = 48;
+            unsigned char lt_state[STATE_SIZE];
             memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
             snprintf(lt_state, STATE_SIZE, "%07u-%07u-%07u-%07u",
                 prev_pt0_state,
@@ -441,6 +444,9 @@ ida_search (unsigned char cost_to_here,
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
 
         if (main_table) {
+            struct key_value_pair *main_table_node = NULL;
+            unsigned char STATE_SIZE = 48;
+            unsigned char lt_state[STATE_SIZE];
             memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
             snprintf(lt_state, STATE_SIZE, "%07u-%07u-%07u",
                 prev_pt0_state,
@@ -465,6 +471,9 @@ ida_search (unsigned char cost_to_here,
         cost_to_goal = (pt1_cost > pt0_cost) ? pt1_cost : pt0_cost;
 
         if (main_table) {
+            struct key_value_pair *main_table_node = NULL;
+            unsigned char STATE_SIZE = 48;
+            unsigned char lt_state[STATE_SIZE];
             memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
             snprintf(lt_state, STATE_SIZE, "%07u-%07u",
                 prev_pt0_state,
@@ -487,6 +496,9 @@ ida_search (unsigned char cost_to_here,
         cost_to_goal = pt0_cost;
 
         if (main_table) {
+            struct key_value_pair *main_table_node = NULL;
+            unsigned char STATE_SIZE = 48;
+            unsigned char lt_state[STATE_SIZE];
             memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
             snprintf(lt_state, STATE_SIZE, "%07u", prev_pt0_state);
 
@@ -572,7 +584,7 @@ ida_search (unsigned char cost_to_here,
          * --cs0x7f
          */
         if (skip_other_steps_this_face != MOVE_NONE) {
-            if (same_face_and_layer_matrix[move][skip_other_steps_this_face]) {
+            if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
                 continue;
             } else {
                 skip_other_steps_this_face = MOVE_NONE;

@@ -61,7 +61,11 @@ static const char move2str[MOVE_MAX][MAX_MOVE_STR_SIZE] = {
 
     "D", "D'", "D2",
     "Dw", "Dw'", "Dw2",
-    "3Dw", "3Dw'", "3Dw2"
+    "3Dw", "3Dw'", "3Dw2",
+
+    "X", "X'",
+    "Y", "Y'",
+    "Z", "Z'",
 };
 
 

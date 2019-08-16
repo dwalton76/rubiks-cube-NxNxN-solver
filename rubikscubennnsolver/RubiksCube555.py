@@ -8,7 +8,10 @@ from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 # This will consume about 200M when you import it
 from rubikscubennnsolver.RubiksCube555HighLowEdges import highlow_edge_values
 
+from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.LookupTable import (
+    binary_search,
+    get_file_vitals,
     steps_on_same_face_and_layer,
     LookupTable,
     LookupTableCostOnly,
@@ -21,6 +24,7 @@ from rubikscubennnsolver.LookupTable import (
 )
 from pprint import pformat
 from random import randint
+import json
 import os
 import itertools
 import logging
@@ -32,42 +36,12 @@ log = logging.getLogger(__name__)
 MIN_EO_COUNT_FOR_STAGE_LR_432 = 5
 
 moves_555 = (
-    "U",
-    "U'",
-    "U2",
-    "Uw",
-    "Uw'",
-    "Uw2",
-    "L",
-    "L'",
-    "L2",
-    "Lw",
-    "Lw'",
-    "Lw2",
-    "F",
-    "F'",
-    "F2",
-    "Fw",
-    "Fw'",
-    "Fw2",
-    "R",
-    "R'",
-    "R2",
-    "Rw",
-    "Rw'",
-    "Rw2",
-    "B",
-    "B'",
-    "B2",
-    "Bw",
-    "Bw'",
-    "Bw2",
-    "D",
-    "D'",
-    "D2",
-    "Dw",
-    "Dw'",
-    "Dw2",
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2",
+    "F", "F'", "F2", "Fw", "Fw'", "Fw2",
+    "R", "R'", "R2", "Rw", "Rw'", "Rw2",
+    "B", "B'", "B2", "Bw", "Bw'", "Bw2",
+    "D", "D'", "D2", "Dw", "Dw'", "Dw2",
     # slices...not used for now
     # "2U", "2U'", "2U2", "2D", "2D'", "2D2",
     # "2L", "2L'", "2L2", "2R", "2R'", "2R2",
@@ -134,36 +108,12 @@ centers_555 = (
 )
 
 x_centers_555 = (
-    7,
-    9,
-    13,
-    17,
-    19,  # Upper
-    32,
-    34,
-    38,
-    42,
-    44,  # Left
-    57,
-    59,
-    63,
-    67,
-    69,  # Front
-    82,
-    84,
-    88,
-    92,
-    94,  # Right
-    107,
-    109,
-    113,
-    117,
-    119,  # Back
-    132,
-    134,
-    138,
-    142,
-    144,  # Down
+    7, 9, 13, 17, 19,  # Upper
+    32, 34, 38, 42, 44,  # Left
+    57, 59, 63, 67, 69,  # Front
+    82, 84, 88, 92, 94,  # Right
+    107, 109, 113, 117, 119,  # Back
+    132, 134, 138, 142, 144,  # Down
 )
 
 t_centers_555 = (
@@ -1091,6 +1041,149 @@ class NoEdgeSolution(Exception):
     pass
 
 
+'''
+class LookupTable555UDCenterStageTCenterOnlyNew(LookupTable):
+    """
+    lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
+    ============================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 66 entries (0 percent, 16.50x previous step)
+    3 steps has 900 entries (0 percent, 13.64x previous step)
+    4 steps has 9,626 entries (1 percent, 10.70x previous step)
+    5 steps has 80,202 entries (10 percent, 8.33x previous step)
+    6 steps has 329,202 entries (44 percent, 4.10x previous step)
+    7 steps has 302,146 entries (41 percent, 0.92x previous step)
+    8 steps has 13,324 entries (1 percent, 0.04x previous step)
+
+    Total: 735,471 entries
+    Average: 6.31 moves
+    """
+
+    t_centers_555 = (
+        8, 12, 14, 18,
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118,
+        133, 137, 139, 143,
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
+            "f0000f",
+            linecount=735471,
+            max_depth=8,
+            filesize=28683369,
+            legal_moves=moves_555,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
+        return self.hex_format % int(state, 2)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        binary_state = bin(int(state, 16))[2:].zfill(24)
+
+        for (pos, pos_state) in zip(self.t_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "U"
+
+
+class LookupTable555UDCenterStageXCenterOnlyNew(LookupTable):
+    """
+    lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
+    ============================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
+    """
+
+    x_centers_555 = (
+        7, 9, 17, 19,  # Upper
+        32, 34, 42, 44,  # Left
+        57, 59, 67, 69,  # Front
+        82, 84, 92, 94,  # Right
+        107, 109, 117, 119,  # Back
+        132, 134, 142, 144,  # Down
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
+            "f0000f",
+            linecount=735471,
+            max_depth=8,
+            filesize=27212427,
+            legal_moves=moves_555,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
+        return self.hex_format % int(state, 2)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        binary_state = bin(int(state, 16))[2:].zfill(24)
+
+        for (pos, pos_state) in zip(self.x_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "U"
+
+
+class LookupTableIDA555UDCenterStageNew(LookupTableIDAViaGraph):
+    """
+    lookup-table-5x5x5-step10-UD-centers-stage.txt
+    ==============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 98 entries (0 percent, 24.50x previous step)
+    3 steps has 2,036 entries (0 percent, 20.78x previous step)
+    4 steps has 41,096 entries (4 percent, 20.18x previous step)
+    5 steps has 824,950 entries (95 percent, 20.07x previous step)
+
+    Total: 868,185 entries
+    Average: 4.95 moves
+    """
+
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step10-UD-centers-stage.txt',
+            "3fe000000001ff",
+            moves_555,
+            (), # illegal moves
+            linecount=868185,
+            max_depth=5,
+            filesize=30386475,
+            prune_tables=(
+                parent.lt_UD_centers_stage_t_centers,
+                parent.lt_UD_centers_stage_x_centers,
+            )
+        )
+'''
+
+
 class LookupTable555UDTCenterStage(LookupTable):
     """
     lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
@@ -1109,30 +1202,12 @@ class LookupTable555UDTCenterStage(LookupTable):
     """
 
     t_centers_555 = (
-        8,
-        12,
-        14,
-        18,
-        33,
-        37,
-        39,
-        43,
-        58,
-        62,
-        64,
-        68,
-        83,
-        87,
-        89,
-        93,
-        108,
-        112,
-        114,
-        118,
-        133,
-        137,
-        139,
-        143,
+        8, 12, 14, 18,
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118,
+        133, 137, 139, 143,
     )
 
     def __init__(self, parent):
@@ -1148,9 +1223,7 @@ class LookupTable555UDTCenterStage(LookupTable):
 
     def ida_heuristic(self):
         parent_state = self.parent.state
-        result = "".join(
-            ["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555]
-        )
+        result = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
         return (self.hex_format % int(result, 2), 0)
 
 
@@ -1196,6 +1269,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDAViaC):
         self.recolor_positions = centers_555
         self.recolor_map = {"L": "x", "F": "x", "R": "x", "B": "x", "D": "U"}
         self.nuke_corners = True
+        self.nuke_edges = True
 
 
 class LookupTable555LRTCenterStage(LookupTable):
@@ -2309,14 +2383,8 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
         )
 
         (_, LR_stage_cost_to_goal) = self.parent.lt_LR_centers_stage_pt.ida_heuristic()
-        (
-            _,
-            LR_432_x_centers_cost_to_goal,
-        ) = self.parent.lt_LR_432_x_centers_only.ida_heuristic()
-        (
-            _,
-            LR_432_t_centers_cost_to_goal,
-        ) = self.parent.lt_LR_432_t_centers_only.ida_heuristic()
+        (_, LR_432_x_centers_cost_to_goal) = self.parent.lt_LR_432_x_centers_only.ida_heuristic()
+        (_, LR_432_t_centers_cost_to_goal) = self.parent.lt_LR_432_t_centers_only.ida_heuristic()
 
         cost_to_goal = max(
             LR_stage_cost_to_goal,
@@ -2332,10 +2400,6 @@ class LookupTableIDA555LRCenterStage432(LookupTableIDA):
             else:
                 cost_to_goal = max(cost_to_goal, self.max_depth + 1)
 
-        # self.parent.print_cube()
-        # log.info("%s: lt_state %s, cost_to_goal %d, LR_stage_cost_to_goal %d, LR_432_x_centers_cost_to_goal %d, LR_432_t_centers_cost_to_goal %d" %
-        #    (self, lt_state, cost_to_goal,
-        #     LR_stage_cost_to_goal, LR_432_x_centers_cost_to_goal, LR_432_t_centers_cost_to_goal))
         return (lt_state, cost_to_goal)
 
 
@@ -3633,6 +3697,12 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
+        '''
+        self.lt_UD_centers_stage_t_centers = LookupTable555UDCenterStageTCenterOnlyNew(self)
+        self.lt_UD_centers_stage_x_centers = LookupTable555UDCenterStageXCenterOnlyNew(self)
+        self.lt_UD_centers_stage = LookupTableIDA555UDCenterStageNew(self)
+
+        '''
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
@@ -3660,45 +3730,25 @@ class RubiksCube555(RubiksCube):
         self.lt_edges_z_plane_centers_only.preload_cache_dict()
         self.lt_edges_z_plane.preload_cache_string()
 
-        self.lt_x_plane_y_plane_orient_edges_edges_only = LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_centers_only = LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_centers_only_ht = LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges = LookupTableIDA555XPlaneYPlaneEdgesOrient(
-            self
-        )
+        self.lt_x_plane_y_plane_orient_edges_edges_only = LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_centers_only = LookupTable555XPlaneYPlaneEdgesOrientCentersOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_centers_only_ht = LookupTable555XPlaneYPlaneEdgesOrientCentersOnlyHashTable(self)
+        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(self)
+        self.lt_x_plane_y_plane_orient_edges = LookupTableIDA555XPlaneYPlaneEdgesOrient(self)
         self.lt_x_plane_y_plane_orient_edges_edges_only.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges.preload_cache_string()
         self.lt_x_plane_y_plane_orient_edges_pair_one_edge.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges_centers_only.preload_cache_string()
 
-        self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersEdgesOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersOnly(
-            self
-        )
-        self.lt_x_plane_y_plane_orient_edges_fb_centers = LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(
-            self
-        )
+        self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersEdgesOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only = LookupTable555XPlaneYPlaneEdgesOrientFBCentersOnly(self)
+        self.lt_x_plane_y_plane_orient_edges_fb_centers = LookupTableIDA555XPlaneYPlaneEdgesOrientFBCenters(self)
         self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges_fb_centers_centers_only.preload_cache_dict()
         self.lt_x_plane_y_plane_orient_edges_fb_centers.preload_cache_string()
 
-        self.lt_pair_last_eight_edges_edges_only = LookupTable555PairLastEightEdgesEdgesOnly(
-            self
-        )
-        self.lt_pair_last_eight_edges_centers_only = LookupTable555PairLastEightEdgesCentersOnly(
-            self
-        )
+        self.lt_pair_last_eight_edges_edges_only = LookupTable555PairLastEightEdgesEdgesOnly(self)
+        self.lt_pair_last_eight_edges_centers_only = LookupTable555PairLastEightEdgesCentersOnly(self)
         self.lt_pair_last_eight_edges = LookupTableIDA555PairLastEightEdges(self)
         self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
         self.lt_pair_last_eight_edges.preload_cache_string()

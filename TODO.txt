@@ -1,0 +1,76 @@
+
+- the 666 centers cleanup that I did was significant
+    - use 444 to stage inner x-centers
+    - pair UD oblique edges then stage UD centers via 555
+    - LR and FB centers could be staged in a single phase (no need
+      to pair oblique edges here)
+
+
+optimal 333 (without L L' R R')
+-------------------------------
+Something to think about here is if the edges are EOed to their final orientation
+then it might be feasible to solve 333 optimally since L L' R R' will not be required.
+There would be 239,500,800 edge states and 88,179,840 million corner states.
+
+    lookup-table-3x3x3-step00-ultimate.txt
+    ======================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 14 entries (0 percent, 14.00x previous step)
+    2 steps has 139 entries (0 percent, 9.93x previous step)
+    3 steps has 1,368 entries (0 percent, 9.84x previous step)
+    4 steps has 13,479 entries (0 percent, 9.85x previous step)
+    5 steps has 131,404 entries (9 percent, 9.75x previous step)
+    6 steps has 1,267,664 entries (89 percent, 9.65x previous step)
+    extrapolate from here
+    7 steps has 11,662,508 entries (9.20x previous step)
+    8 steps has 102,630,070 entries (8.80x previous step)
+    9 steps has 862,092,587 entries (8.40x previous step)
+    10 steps has 6,896,740,695 entries (8.00x previous step)
+    11 steps has 52,415,229,281 entries (7.60x previous step)
+    12 steps has 377,389,650,823 entries (7.20x previous step)
+    13 steps has 2,566,249,625,596 entries (6.80x previous step)
+    14 steps has 16,423,997,603,814 entries (6.40x previous step)
+    15 steps has 98,543,985,622,883 entries (6.00x previous step)
+    16 steps has 551,846,319,488,144 entries (5.60x previous step)
+    17 steps has 2,869,600,861,338,346 entries (5.20x previous step)
+    18 steps has 13,774,084,134,424,048 entries (4.80x previous step)
+    19 steps has 3,805,638,996,349,136 entries (0.28x previous step)
+
+    Average: 17.974217274029616
+    Total  : 21,119,142,223,872,000
+
+weird 18 is the normal average for an optimal 333 solver that is surprising I
+would have thought this would be lower. So whether or not to EO the edges to
+their final orientation really depends on if you could get this 333 optimal
+solver to run quickly enough.  There are far too many states for us to use 
+the IDA-graph approach. Both of those prune tables would be pretty deep I
+imagine so that would help.  Who knows this might be feasible.
+
+
+444 phase0 isn't working yet...things to try/do
+- we need to pass a --main-table-state-length option, right now it is hard coded for 555 centers
+- we can skip Lw Lw' Lw2 Dw Dw' Dw2 Bw Bw' Bw2 and still get to every state. This would drastically cut
+  down on the number of nodes visited. If this works then it would be worth rebuilding the prune
+  tables with these moves restricted.  Note that we restrict these moves today in the normal solver
+  where we stage the centers in the first phase.  I remember experimenting with this a while back
+  and removing these really sped up the IDA but didn't add anything noticable to the move count.
+
+
+
+ida_search_via_graph
+====================
+- currently at ~19.5 million nodes-per-sec
+
+- use a pt_count variable that we can do a switch statement on to avoid the elif tree in ida_search()
+  we can also do a switch at the "equivalent of rotate_xxx" section
+  DONE, this got us to about 20.5 to 21.0 million nodes-per-sec
+
+- build a legal_moves-per-move so we can avoid the steps_on_same_face_and_layer() call
+    As a quick test I commented out this call and that got us to 26.5 million nodes-per-sec. We
+    went from 4.3 million nodes visited to 6.5 million though so we def need the functionality.
+
+    oh wow as a quick experiment I also commented out the skip_other_steps_this_face code
+    and that took us up to ~45 million nodes-per-sec!! We visited 12.2 million nodes though.
+    At least we now know this check is expensive. One option would be to look at the current
+    move and just increment "i" by enough to get us past the other moves of the same face/layer.
+

@@ -1041,6 +1041,7 @@ class NoEdgeSolution(Exception):
     pass
 
 
+'''
 class LookupTable555UDCenterStageTCenterOnlyNew(LookupTable):
     """
     lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
@@ -1180,6 +1181,7 @@ class LookupTableIDA555UDCenterStageNew(LookupTableIDAViaGraph):
                 parent.lt_UD_centers_stage_x_centers,
             )
         )
+'''
 
 
 class LookupTable555UDTCenterStage(LookupTable):
@@ -1216,7 +1218,7 @@ class LookupTable555UDTCenterStage(LookupTable):
             "f0000f",
             linecount=735471,
             max_depth=8,
-            filesize=28683369,
+            filesize=27947898,
         )
 
     def ida_heuristic(self):
@@ -3695,13 +3697,14 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
+        '''
         self.lt_UD_centers_stage_t_centers = LookupTable555UDCenterStageTCenterOnlyNew(self)
         self.lt_UD_centers_stage_x_centers = LookupTable555UDCenterStageXCenterOnlyNew(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCenterStageNew(self)
 
         '''
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
-        # self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
+        self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_T_centers_stage_odd = LookupTable555LRTCenterStageOdd(self)
         self.lt_LR_T_centers_stage_even = LookupTable555LRTCenterStageEven(self)
@@ -3750,7 +3753,6 @@ class RubiksCube555(RubiksCube):
         self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
         self.lt_pair_last_eight_edges.preload_cache_string()
         # self.lt_pair_last_eight_edges.preload_cache_dict()
-        '''
 
     def highlow_edges_state(self):
         state = self.state
@@ -3832,7 +3834,7 @@ class RubiksCube555(RubiksCube):
 
         if not self.UD_centers_staged():
             tmp_solution_len = len(self.solution)
-            self.lt_UD_centers_stage.solve_via_c()
+            self.lt_UD_centers_stage.solve()
             self.print_cube()
             self.solution.append(
                 "COMMENT_%d_steps_555_UD_centers_staged"

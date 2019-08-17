@@ -12,14 +12,14 @@ from rubikscubennnsolver.RubiksCube555 import (
     wings_for_edges_pattern_555,
     LFRB_centers_555,
     RubiksCube555,
-    LookupTableIDA555LRCentersStage,
-    LookupTable555FBTCenterStage,
-    LookupTable555FBXCenterStage,
-    LookupTableIDA555FBCentersStage,
-    LookupTableIDA555ULFRBDCentersSolve,
-    LookupTable555TCenterSolve,
-    LookupTable555LRTCenterStage,
-    LookupTable555FBTCenterStageFull,
+    # LookupTableIDA555LRCentersStage,
+    # LookupTable555FBTCenterStage,
+    # LookupTable555FBXCenterStage,
+    # LookupTableIDA555FBCentersStage,
+    # LookupTableIDA555ULFRBDCentersSolve,
+    # LookupTable555TCenterSolve,
+    # LookupTable555LRTCenterStage,
+    # LookupTable555FBTCenterStageFull,
 )
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
@@ -340,6 +340,7 @@ class RubiksCube555ForNNN(RubiksCube555):
             return
         self.lt_init_called = True
 
+        '''
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
 
@@ -360,6 +361,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
 
         self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(self)
+        '''
 
     def stage_first_four_edges_555(self):
         """

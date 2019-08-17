@@ -460,7 +460,9 @@ class LookupTable(object):
         max_depth=None,
         filesize=None,
         md5=None,
-        legal_moves=[]
+        legal_moves=[],
+        all_moves=[],
+        illegal_moves=[],
     ):
         self.parent = parent
         self.sides_all = (
@@ -496,6 +498,11 @@ class LookupTable(object):
         self.ida_graph = {}
         self.ida_graph_node = None
         self.legal_moves = legal_moves
+
+        if all_moves and illegal_moves and not legal_moves:
+            for step in all_moves:
+                if step not in illegal_moves:
+                    self.legal_moves.append(step)
 
         assert self.filename.startswith(
             "lookup-table"
@@ -1056,6 +1063,7 @@ class LookupTable(object):
         parent_state = self.parent.state
         legal_moves = self.legal_moves
         ida_graph = {}
+        self.preload_cache_dict()
 
         states = sorted(self.cache.keys())
         state_index_filename = self.filename.replace(".txt", ".state_index")
@@ -1086,7 +1094,7 @@ class LookupTable(object):
 
             for step in legal_moves:
                 parent.rotate(step)
-                (state_for_step, _) = self.ida_heuristic()
+                state_for_step = self.state()
                 #log.info("moved %s, new state %s" % (step, state_for_step))
                 ida_graph[state]["edges"][step] = state_for_step
                 parent.state = baseline_state[:]
@@ -1120,7 +1128,7 @@ class LookupTable(object):
     def ida_heuristic(self):
         if self.ida_graph_node is None:
             self.ida_graph_node = self.state_index()
-            log.info("%s: init state_idex %s" % (self, self.ida_graph_node))
+            log.info("%s: init state_index %s" % (self, self.ida_graph_node))
 
         state_index = self.ida_graph_node
         cost_to_goal = self.ida_graph[state_index * self.ROW_LENGTH]

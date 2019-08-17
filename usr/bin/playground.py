@@ -45,5 +45,8 @@ cube.cpu_mode = "normal"
 
 
 cube.lt_init()
-cube.lt_UD_centers_stage.build_ida_graph()
+#cube.lt_LR_t_centers_stage.build_ida_graph()
+#cube.lt_LR_x_centers_stage.build_ida_graph()
+#cube.lt_FB_t_centers_stage.build_ida_graph()
+cube.lt_FB_x_centers_stage.build_ida_graph()
 

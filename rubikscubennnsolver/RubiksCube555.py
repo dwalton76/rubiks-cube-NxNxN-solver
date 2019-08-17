@@ -651,149 +651,6 @@ class NoEdgeSolution(Exception):
     pass
 
 
-'''
-class LookupTable555UDCenterStageTCenterOnlyNew(LookupTable):
-    """
-    lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt
-    ============================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 66 entries (0 percent, 16.50x previous step)
-    3 steps has 900 entries (0 percent, 13.64x previous step)
-    4 steps has 9,626 entries (1 percent, 10.70x previous step)
-    5 steps has 80,202 entries (10 percent, 8.33x previous step)
-    6 steps has 329,202 entries (44 percent, 4.10x previous step)
-    7 steps has 302,146 entries (41 percent, 0.92x previous step)
-    8 steps has 13,324 entries (1 percent, 0.04x previous step)
-
-    Total: 735,471 entries
-    Average: 6.31 moves
-    """
-
-    t_centers_555 = (
-        8, 12, 14, 18,
-        33, 37, 39, 43,
-        58, 62, 64, 68,
-        83, 87, 89, 93,
-        108, 112, 114, 118,
-        133, 137, 139, 143,
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step11-UD-centers-stage-t-center-only.txt',
-            "f0000f",
-            linecount=735471,
-            max_depth=8,
-            filesize=28683369,
-            legal_moves=moves_555,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
-        return self.hex_format % int(state, 2)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        binary_state = bin(int(state, 16))[2:].zfill(24)
-
-        for (pos, pos_state) in zip(self.t_centers_555, binary_state):
-            if pos_state == "0":
-                cube[pos] = "x"
-            else:
-                cube[pos] = "U"
-
-
-class LookupTable555UDCenterStageXCenterOnlyNew(LookupTable):
-    """
-    lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt
-    ============================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 82 entries (0 percent, 20.50x previous step)
-    3 steps has 1,206 entries (0 percent, 14.71x previous step)
-    4 steps has 14,116 entries (1 percent, 11.70x previous step)
-    5 steps has 123,404 entries (16 percent, 8.74x previous step)
-    6 steps has 422,508 entries (57 percent, 3.42x previous step)
-    7 steps has 173,254 entries (23 percent, 0.41x previous step)
-    8 steps has 896 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    Average: 6.03 moves
-    """
-
-    x_centers_555 = (
-        7, 9, 17, 19,  # Upper
-        32, 34, 42, 44,  # Left
-        57, 59, 67, 69,  # Front
-        82, 84, 92, 94,  # Right
-        107, 109, 117, 119,  # Back
-        132, 134, 142, 144,  # Down
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step12-UD-centers-stage-x-center-only.txt',
-            "f0000f",
-            linecount=735471,
-            max_depth=8,
-            filesize=27212427,
-            legal_moves=moves_555,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
-        return self.hex_format % int(state, 2)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        binary_state = bin(int(state, 16))[2:].zfill(24)
-
-        for (pos, pos_state) in zip(self.x_centers_555, binary_state):
-            if pos_state == "0":
-                cube[pos] = "x"
-            else:
-                cube[pos] = "U"
-
-
-class LookupTableIDA555UDCenterStageNew(LookupTableIDAViaGraph):
-    """
-    lookup-table-5x5x5-step10-UD-centers-stage.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 98 entries (0 percent, 24.50x previous step)
-    3 steps has 2,036 entries (0 percent, 20.78x previous step)
-    4 steps has 41,096 entries (4 percent, 20.18x previous step)
-    5 steps has 824,950 entries (95 percent, 20.07x previous step)
-
-    Total: 868,185 entries
-    Average: 4.95 moves
-    """
-
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step10-UD-centers-stage.txt',
-            "3fe000000001ff",
-            moves_555,
-            (), # illegal moves
-            linecount=868185,
-            max_depth=5,
-            filesize=30386475,
-            prune_tables=(
-                parent.lt_UD_centers_stage_t_centers,
-                parent.lt_UD_centers_stage_x_centers,
-            )
-        )
-'''
-
-
 class LookupTable555LRTCenterStage(LookupTable):
     """
     lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.txt
@@ -829,15 +686,79 @@ class LookupTable555LRTCenterStage(LookupTable):
             linecount=735471,
             max_depth=8,
             filesize=27947898,
+            legal_moves=moves_555,
         )
 
-    def ida_heuristic(self):
+    def state(self):
         parent_state = self.parent.state
-        result = "".join(["1" if parent_state[x] in ("L", "R") else "0" for x in self.t_centers_555])
-        return (self.hex_format % int(result, 2), 0)
+        state = "".join(["1" if parent_state[x] in ("L", "R") else "0" for x in self.t_centers_555])
+        return self.hex_format % int(state, 2)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        binary_state = bin(int(state, 16))[2:].zfill(24)
+
+        for (pos, pos_state) in zip(self.t_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "L"
 
 
-class LookupTableIDA555LRCentersStage(LookupTableIDAViaC):
+class LookupTable555LRXCenterStage(LookupTable):
+    """
+    lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.txt
+    ============================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
+    """
+
+    x_centers_555 = (
+        7, 9, 17, 19,  # Upper
+        32, 34, 42, 44,  # Left
+        57, 59, 67, 69,  # Front
+        82, 84, 92, 94,  # Right
+        107, 109, 117, 119,  # Back
+        132, 134, 142, 144,  # Down
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.txt",
+            "0f0f00",
+            linecount=735471,
+            max_depth=8,
+            filesize=27212427,
+            legal_moves=moves_555,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("L", "R") else "0" for x in self.x_centers_555])
+        return self.hex_format % int(state, 2)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        binary_state = bin(int(state, 16))[2:].zfill(24)
+
+        for (pos, pos_state) in zip(self.x_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "L"
+
+
+class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
     """
     lookup-table-5x5x5-step10-LR-centers-stage.txt
     ==============================================
@@ -851,123 +772,21 @@ class LookupTableIDA555LRCentersStage(LookupTableIDAViaC):
     """
 
     def __init__(self, parent):
-
-        LookupTableIDAViaC.__init__(
+        LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            # Needed tables and their md5 signatures
-            (
-                (
-                    "lookup-table-5x5x5-step10-LR-centers-stage.txt",
-                    30386475,
-                    "a343d9782088d023d97ad9a5e986f6b4",
-                ),
-                (
-                    "lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.txt",
-                    16711681,
-                    "08fe8bc8ccfccb586210d00f3e6e4a67",
-                ),
-                (
-                    "lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.cost-only.txt",
-                    16711681,
-                    "0d93986a0fe2009ba46b0c83ebdde26f",
-                ),
-            ),
-            "5x5x5-LR-centers-stage",  # C_ida_type
+            'lookup-table-5x5x5-step10-LR-centers-stage.txt',
+            "TBD",
+            moves_555,
+            (), # illegal moves
+            linecount=868185,
+            max_depth=5,
+            filesize=30386475,
+            prune_tables=(
+                parent.lt_LR_t_centers_stage,
+                parent.lt_LR_x_centers_stage,
+            )
         )
-
-        self.recolor_positions = centers_555
-        self.recolor_map = {"U": "x", "F": "x", "R": "L", "B": "x", "D": "x"}
-        self.nuke_corners = True
-        self.nuke_edges = True
-
-
-class LookupTable555FBTCenterStageFull(LookupTable):
-    """
-    lookup-table-5x5x5-step21-FB-t-centers-stage.txt
-    ================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 25 entries (0 percent, 8.33x previous step)
-    3 steps has 210 entries (1 percent, 8.40x previous step)
-    4 steps has 722 entries (5 percent, 3.44x previous step)
-    5 steps has 1,752 entries (13 percent, 2.43x previous step)
-    6 steps has 4,033 entries (31 percent, 2.30x previous step)
-    7 steps has 4,014 entries (31 percent, 1.00x previous step)
-    8 steps has 1,977 entries (15 percent, 0.49x previous step)
-    9 steps has 134 entries (1 percent, 0.07x previous step)
-
-    Total: 12,870 entries
-    Average: 6.34 moves
-    """
-
-    UFBD_t_centers_555 = (
-        8, 12, 14, 18,
-        58, 62, 64, 68,
-        108, 112, 114, 118,
-        133, 137, 139, 143,
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step21-FB-t-centers-stage.txt",
-            "0ff0",
-            linecount=12870,
-            max_depth=9,
-            filesize=476190,
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_t_centers_555])
-        state = self.hex_format % int(state, 2)
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable555FBTCenterStage(LookupTableCostOnly):
-    """
-    lookup-table-5x5x5-step21-FB-t-centers-stage.txt
-    ================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 25 entries (0 percent, 8.33x previous step)
-    3 steps has 210 entries (1 percent, 8.40x previous step)
-    4 steps has 722 entries (5 percent, 3.44x previous step)
-    5 steps has 1,752 entries (13 percent, 2.43x previous step)
-    6 steps has 4,033 entries (31 percent, 2.30x previous step)
-    7 steps has 4,014 entries (31 percent, 1.00x previous step)
-    8 steps has 1,977 entries (15 percent, 0.49x previous step)
-    9 steps has 134 entries (1 percent, 0.07x previous step)
-
-    Total: 12,870 entries
-    Average: 6.34 moves
-    """
-
-    UFBD_t_centers_555 = (
-        8, 12, 14, 18,
-        58, 62, 64, 68,
-        108, 112, 114, 118,
-        133, 137, 139, 143,
-    )
-
-    def __init__(self, parent):
-        LookupTableCostOnly.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step21-FB-t-centers-stage.cost-only.txt",
-            "0ff0",
-            linecount=12870,
-            max_depth=9,
-            filesize=65281,
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_t_centers_555])
-        state = int(state, 2)
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
 
 
 class LookupTable555FBTCenterStageOdd(LookupTable):
@@ -1056,7 +875,65 @@ class LookupTable555FBTCenterStageEven(LookupTable):
         return (self.hex_format % int(result, 2), 0)
 
 
-class LookupTable555FBXCenterStage(LookupTableCostOnly):
+class LookupTable555FBTCenterStage(LookupTable):
+    """
+    lookup-table-5x5x5-step21-FB-t-centers-stage.txt
+    ================================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 25 entries (0 percent, 8.33x previous step)
+    3 steps has 210 entries (1 percent, 8.40x previous step)
+    4 steps has 722 entries (5 percent, 3.44x previous step)
+    5 steps has 1,752 entries (13 percent, 2.43x previous step)
+    6 steps has 4,033 entries (31 percent, 2.30x previous step)
+    7 steps has 4,014 entries (31 percent, 1.00x previous step)
+    8 steps has 1,977 entries (15 percent, 0.49x previous step)
+    9 steps has 134 entries (1 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    Average: 6.34 moves
+    """
+
+    UFBD_t_centers_555 = (
+        8, 12, 14, 18,
+        58, 62, 64, 68,
+        108, 112, 114, 118,
+        133, 137, 139, 143,
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step21-FB-t-centers-stage.txt",
+            "0ff0",
+            linecount=12870,
+            max_depth=9,
+            filesize=476190,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+            ),
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_t_centers_555])
+        return self.hex_format % int(state, 2)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        binary_state = bin(int(state, 16))[2:].zfill(16)
+
+        for (pos, pos_state) in zip(self.UFBD_t_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "F"
+
+
+class LookupTable555FBXCenterStage(LookupTable):
     """
     lookup-table-5x5x5-step22-FB-x-centers-stage.txt
     ================================================
@@ -1081,25 +958,39 @@ class LookupTable555FBXCenterStage(LookupTableCostOnly):
     )
 
     def __init__(self, parent):
-        LookupTableCostOnly.__init__(
+        LookupTable.__init__(
             self,
             parent,
-            "lookup-table-5x5x5-step22-FB-x-centers-stage.cost-only.txt",
+            "lookup-table-5x5x5-step22-FB-x-centers-stage.txt",
             "0ff0",
             linecount=12870,
             max_depth=7,
-            filesize=65281,
+            filesize=411840,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+            ),
         )
 
-    def ida_heuristic(self):
+    def state(self):
         parent_state = self.parent.state
-        state = "".join( ["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_x_centers_555])
-        state = int(state, 2)
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
+        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_x_centers_555])
+        return self.hex_format % int(state, 2)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        binary_state = bin(int(state, 16))[2:].zfill(16)
+
+        for (pos, pos_state) in zip(self.UFBD_x_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "F"
 
 
-class LookupTableIDA555FBCentersStage(LookupTableIDA):
+class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
     """
     lookup-table-5x5x5-step20-FB-centers-stage.txt
     ==============================================
@@ -1129,7 +1020,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDA):
     )
 
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTableIDAViaGraph.__init__(
             self,
             parent,
             "lookup-table-5x5x5-step20-FB-centers-stage.txt",
@@ -1139,30 +1030,11 @@ class LookupTableIDA555FBCentersStage(LookupTableIDA):
             linecount=430859,
             max_depth=6,
             filesize=14649206,
+            prune_tables=(
+                parent.lt_FB_t_centers_stage,
+                parent.lt_FB_x_centers_stage,
+            )
         )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_centers_555])
-        lt_state = self.hex_format % int(lt_state, 2)
-
-        (_, FB_x_centers_cost_to_goal) = self.parent.lt_FB_x_centers_stage.ida_heuristic()
-        (_, FB_t_centers_cost_to_goal) = self.parent.lt_FB_t_centers_stage.ida_heuristic()
-
-        cost_to_goal = max(
-            FB_x_centers_cost_to_goal,
-            FB_t_centers_cost_to_goal,
-        )
-
-        if cost_to_goal > 0:
-            steps = self.steps(lt_state)
-
-            if steps:
-                cost_to_goal = len(steps)
-            else:
-                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
-
-        return (lt_state, cost_to_goal)
 
 
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
@@ -2413,7 +2285,6 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDA):
         )
 
     def ida_heuristic(self):
-        # dwalton here now
         parent_state = self.parent.state
 
         LR_centers_state = ''.join([parent_state[x] for x in LR_centers_555])
@@ -2981,7 +2852,9 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
-        self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
+        self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
+        self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
+        self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
 
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
@@ -2996,6 +2869,7 @@ class RubiksCube555(RubiksCube):
         self.lt_phase3_eo_outer_orbit.preload_cache_string()
         self.lt_phase3.preload_cache_string()
 
+        '''
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
         self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
@@ -3031,6 +2905,7 @@ class RubiksCube555(RubiksCube):
         self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
         self.lt_pair_last_eight_edges.preload_cache_string()
         # self.lt_pair_last_eight_edges.preload_cache_dict()
+        '''
 
     def highlow_edges_state(self):
         state = self.state
@@ -3106,7 +2981,7 @@ class RubiksCube555(RubiksCube):
 
         if not self.LR_centers_staged():
             tmp_solution_len = len(self.solution)
-            self.lt_LR_centers_stage.solve()
+            self.lt_LR_centers_stage.solve_via_c()
             self.print_cube()
             self.solution.append(
                 "COMMENT_%d_steps_555_LR_centers_staged"
@@ -3127,7 +3002,7 @@ class RubiksCube555(RubiksCube):
 
         if not self.FB_centers_staged():
             tmp_solution_len = len(self.solution)
-            self.lt_FB_centers_stage.solve()
+            self.lt_FB_centers_stage.solve_via_c()
             self.print_cube()
             self.solution.append(
                 "COMMENT_%d_steps_555_FB_centers_staged"
@@ -3138,6 +3013,8 @@ class RubiksCube555(RubiksCube):
             "%s: FB centers staged, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
+        # dwalton
+        sys.exit(0)
 
     def group_centers_stage_LR_to_432(self):
         """

@@ -1087,8 +1087,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
                 parent.lt_FB_x_centers_stage,
                 # uncoment if you also want to solve LR centers in this stage
                 # it adds about 2 steps, it takes much longer though (minutes)
-                # dwalton
-                parent.lt_FB_centers_stage_LR_centers_solve,
+                # parent.lt_FB_centers_stage_LR_centers_solve,
             )
         )
 
@@ -1884,7 +1883,7 @@ class LookupTableIDA555EdgeOrientInnerOrbit(LookupTable):
         cube = self.parent.state[:]
 
 
-class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDA):
+class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
     """
     lookup-table-5x5x5-step900-edge-orient-LR-center-stage.txt
     ==========================================================
@@ -2342,9 +2341,8 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDA):
         'UUDDUUUUDDUUDUUDRRRUURLRUURRRDUUDDUUUDUUDUUUDDUUDLLLUULRLUULLLDUUDDUUUDUUDUUUDUUDDUUUUDDUU'
     )
 
-    # dwalton fix this
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTableIDAViaGraph.__init__(
             self,
             parent,
             'lookup-table-5x5x5-step900-edge-orient-LR-center-stage.txt',
@@ -2359,16 +2357,18 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDA):
              "Rw", "Rw'",
             ),
 
-            # 4-deep
-            #linecount=2136760,
-            #max_depth=4,
-            #filesize=226496560,
-
             # 5-deep
             linecount=26485320,
             max_depth=5,
             filesize=2913385200,
+
+            prune_tables=(
+                parent.lt_phase3_lr_center_stage,
+                parent.lt_phase3_eo_outer_orbit,
+                parent.lt_phase3_eo_inner_orbit,
+            )
         )
+
 
     def ida_heuristic(self):
         parent_state = self.parent.state
@@ -3100,7 +3100,6 @@ class RubiksCube555(RubiksCube):
             "%s: FB centers staged, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        sys.exit(0)
 
     def group_centers_stage_LR_to_432(self):
         """
@@ -3527,7 +3526,7 @@ class RubiksCube555(RubiksCube):
             #self.lt_phase3_lr_center_stage_eo_inner_orbit.solve()
             #self.lt_phase3_eo_outer_orbit.solve()
             #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            self.lt_phase3.solve()
+            self.lt_phase3.solve_via_c()
             self.highlow_edges_print()
             self.print_cube()
             log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

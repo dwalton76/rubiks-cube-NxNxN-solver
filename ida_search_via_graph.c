@@ -19,11 +19,11 @@ unsigned long long ida_count_total = 0;
 struct key_value_pair *ida_explored = NULL;
 unsigned char legal_move_count = 0;
 unsigned char threshold = 0;
-char *pt0 = NULL;
-char *pt1 = NULL;
-char *pt2 = NULL;
-char *pt3 = NULL;
-char *pt4 = NULL;
+unsigned char *pt0 = NULL;
+unsigned char *pt1 = NULL;
+unsigned char *pt2 = NULL;
+unsigned char *pt3 = NULL;
+unsigned char *pt4 = NULL;
 struct key_value_pair *main_table = NULL;
 unsigned char pt_count = 0;
 unsigned char main_table_max_depth = 0;
@@ -1122,6 +1122,7 @@ main (int argc, char *argv[])
     }
 
     ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
+    printf("legal_move_count %d, ROW_LENGTH %d\n", legal_move_count, ROW_LENGTH);
     ida_solve(
         prune_table_0_state,
         prune_table_1_state,

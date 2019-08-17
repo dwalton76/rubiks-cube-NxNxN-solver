@@ -460,9 +460,9 @@ class LookupTable(object):
         max_depth=None,
         filesize=None,
         md5=None,
-        legal_moves=[],
-        all_moves=[],
-        illegal_moves=[],
+        legal_moves=None,
+        all_moves=None,
+        illegal_moves=None,
     ):
         self.parent = parent
         self.sides_all = (
@@ -497,12 +497,31 @@ class LookupTable(object):
         self.printed_disk_io_warning = False
         self.ida_graph = {}
         self.ida_graph_node = None
-        self.legal_moves = legal_moves
 
-        if all_moves and illegal_moves and not legal_moves:
+        if all_moves is None:
+            all_moves = []
+
+        if legal_moves is None:
+            legal_moves = []
+
+        if illegal_moves is None:
+            illegal_moves = []
+
+        if all_moves and illegal_moves and legal_moves:
+            raise Exception("all_moves, illegal_moves and legal_moves are all defined")
+
+        if legal_moves:
+            self.legal_moves = legal_moves
+        else:
+            self.legal_moves = []
+
             for step in all_moves:
                 if step not in illegal_moves:
                     self.legal_moves.append(step)
+
+        # log.info("%s: all_moves %s" % (self, pformat(all_moves)))
+        # log.info("%s: illegal_moves %s" % (self, pformat(illegal_moves)))
+        # log.info("%s: legal_moves %s\n" % (self, " ".join(self.legal_moves)))
 
         assert self.filename.startswith(
             "lookup-table"

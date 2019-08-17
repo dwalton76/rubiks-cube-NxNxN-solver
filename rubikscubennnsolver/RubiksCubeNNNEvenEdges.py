@@ -1,8 +1,7 @@
-from rubikscubennnsolver import RubiksCube, ImplementThis
+from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import solved_555
 from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 import logging
 import sys
 

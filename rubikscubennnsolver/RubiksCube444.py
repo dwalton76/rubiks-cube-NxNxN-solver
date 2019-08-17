@@ -1,15 +1,10 @@
-#!/usr/bin/env python3
-
-from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map, wing_strs_all, reverse_steps
-from rubikscubennnsolver.misc import pre_steps_to_try, get_swap_count
+from rubikscubennnsolver import RubiksCube, wing_str_map, wing_strs_all
+from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.LookupTable import (
-    get_characters_common_count,
-    steps_on_same_face_and_layer,
     LookupTable,
     LookupTableIDA,
     LookupTableHashCostOnly,
     LookupTableIDAViaC,
-    NoSteps,
 )
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.RubiksCube444Misc import (
@@ -20,7 +15,6 @@ from rubikscubennnsolver.RubiksCube444Misc import (
     step161_index,
     step162_index,
 )
-from rubikscubennnsolver.RubiksSide import SolveError
 from pprint import pformat
 import itertools
 import logging

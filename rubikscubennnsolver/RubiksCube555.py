@@ -1,34 +1,20 @@
-#!/usr/bin/env python3
-
-from rubikscubennnsolver import RubiksCube, NotSolving, wing_str_map, wing_strs_all
-from rubikscubennnsolver.misc import pre_steps_to_try
-from rubikscubennnsolver.RubiksSide import SolveError
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver import RubiksCube, wing_str_map, wing_strs_all
 
 # This will consume about 200M when you import it
 from rubikscubennnsolver.RubiksCube555HighLowEdges import highlow_edge_values
 
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.LookupTable import (
-    binary_search,
-    get_file_vitals,
-    steps_on_same_face_and_layer,
     LookupTable,
     LookupTableCostOnly,
     LookupTableHashCostOnly,
     LookupTableIDA,
     LookupTableIDAViaC,
-    NoIDASolution,
-    NoPruneTableState,
     NoSteps,
 )
 from pprint import pformat
-from random import randint
-import json
-import os
 import itertools
 import logging
-import subprocess
 import sys
 
 log = logging.getLogger(__name__)

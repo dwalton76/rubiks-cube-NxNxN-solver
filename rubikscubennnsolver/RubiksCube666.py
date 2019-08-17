@@ -1,21 +1,12 @@
-from rubikscubennnsolver import NotSolving
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
-from rubikscubennnsolver.RubiksCube666Misc import state_targets_step60
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
-    LookupTableIDA,
     LookupTableIDAViaC,
 )
-from pprint import pformat
-import json
 import logging
-import math
-import resource
-import os
-import subprocess
 import sys
 
 log = logging.getLogger(__name__)

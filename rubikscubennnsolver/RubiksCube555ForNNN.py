@@ -4,7 +4,6 @@ from rubikscubennnsolver import wing_strs_all, wing_str_map
 from rubikscubennnsolver.RubiksSide import SolveError
 from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.RubiksCube555 import (
-    centers_555,
     edges_555,
     edges_partner_555,
     edges_recolor_pattern_555,
@@ -25,7 +24,6 @@ from rubikscubennnsolver.RubiksCube555 import (
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableIDA,
-    LookupTableHashCostOnly,
 )
 from pprint import pformat
 import itertools

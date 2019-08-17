@@ -47,7 +47,6 @@ typedef enum {
     REDUCE_333_444,
 
     // 5x5x5
-    LR_CENTERS_STAGE_555,
     CENTERS_SOLVE_555,
 
     // 6x6x6
@@ -411,12 +410,6 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     case REDUCE_333_444:
         break;
 
-    case LR_CENTERS_STAGE_555:
-        // Convert to 1s and 0s
-        str_replace_for_binary(cube, ones_LR);
-        print_cube(cube, size);
-        break;
-
     case LR_OBLIQUE_EDGES_STAGE_666:
         // Convert to 1s and 0s
         str_replace_for_binary(cube, ones_LR);
@@ -721,15 +714,6 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             wings_for_recolor_444);
 
     // 5x5x5
-    case LR_CENTERS_STAGE_555:
-        return ida_heuristic_LR_centers_555(
-            cube,
-            max_cost_to_goal,
-            &LR_centers_555,
-            pt_LR_t_centers_cost_only,
-            pt_LR_x_centers_cost_only,
-            cpu_mode);
-
     case CENTERS_SOLVE_555:
         return ida_heuristic_ULFRBD_centers_555(
             cube,
@@ -1062,9 +1046,6 @@ ida_search_complete (
 
 
     // 5x5x5
-    case LR_CENTERS_STAGE_555:
-        return ida_search_complete_LR_centers_555(cube);
-
     case CENTERS_SOLVE_555:
         return ida_search_complete_ULFRBD_centers_555(cube);
 
@@ -1200,9 +1181,6 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         }
 
     // 5x5x5
-    case LR_CENTERS_STAGE_555:
-        return 1;
-
     case CENTERS_SOLVE_555:
         switch (move) {
         case Uw:
@@ -2177,12 +2155,6 @@ ida_solve (
         break;
 
     // 5x5x5
-    case LR_CENTERS_STAGE_555:
-        ida_prune_table_preload(&LR_centers_555, "lookup-table-5x5x5-step10-LR-centers-stage.txt");
-        pt_LR_t_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.txt", 16711681);
-        pt_LR_x_centers_cost_only = ida_cost_only_preload("lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.cost-only.txt", 16711681);
-        break;
-
     case CENTERS_SOLVE_555:
         ida_prune_table_preload(&ULFRBD_centers_555, "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt");
         UL_centers_cost_only_555 = ida_cost_only_preload("lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt", 24010032);
@@ -2296,10 +2268,6 @@ main (int argc, char *argv[])
                 cube_size_type = 4;
 
             // 5x5x5
-            } else if (strmatch(argv[i], "5x5x5-LR-centers-stage")) {
-                type = LR_CENTERS_STAGE_555;
-                cube_size_type = 5;
-
             } else if (strmatch(argv[i], "5x5x5-centers-solve")) {
                 type = CENTERS_SOLVE_555;
                 cube_size_type = 5;

@@ -14,8 +14,8 @@
 #include "rotate_xxx.h"
 
 
-unsigned long ida_count = 0;
-unsigned long ida_count_total = 0;
+unsigned long long ida_count = 0;
+unsigned long long ida_count_total = 0;
 struct key_value_pair *ida_explored = NULL;
 unsigned char legal_move_count = 0;
 unsigned char threshold = 0;
@@ -31,6 +31,7 @@ unsigned char main_table_state_length = 0;
 unsigned char COST_LENGTH = 1;
 unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
+float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
 move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
@@ -378,6 +379,10 @@ ida_search (unsigned char cost_to_here,
         cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
 
+        if (cost_to_goal_multiplier) {
+            cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
+        }
+
         if (main_table) {
             struct key_value_pair *main_table_node = NULL;
             unsigned char STATE_SIZE = 48;
@@ -412,6 +417,10 @@ ida_search (unsigned char cost_to_here,
         cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
 
+        if (cost_to_goal_multiplier) {
+            cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
+        }
+
         if (main_table) {
             struct key_value_pair *main_table_node = NULL;
             unsigned char STATE_SIZE = 48;
@@ -443,6 +452,10 @@ ida_search (unsigned char cost_to_here,
         cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
 
+        if (cost_to_goal_multiplier) {
+            cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
+        }
+
         if (main_table) {
             struct key_value_pair *main_table_node = NULL;
             unsigned char STATE_SIZE = 48;
@@ -470,6 +483,11 @@ ida_search (unsigned char cost_to_here,
 
         cost_to_goal = (pt1_cost > pt0_cost) ? pt1_cost : pt0_cost;
 
+        if (cost_to_goal_multiplier) {
+            cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
+        }
+
+
         if (main_table) {
             struct key_value_pair *main_table_node = NULL;
             unsigned char STATE_SIZE = 48;
@@ -494,6 +512,10 @@ ida_search (unsigned char cost_to_here,
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
         cost_to_goal = pt0_cost;
+
+        if (cost_to_goal_multiplier) {
+            cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
+        }
 
         if (main_table) {
             struct key_value_pair *main_table_node = NULL;
@@ -520,7 +542,7 @@ ida_search (unsigned char cost_to_here,
 
     if (cost_to_goal == 0) {
         // We are finished!!
-        LOG("IDA count %'d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
+        LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
         search_result.found_solution = 1;
@@ -744,13 +766,13 @@ ida_solve (
         float nodes_per_ms = ida_count / ms;
         unsigned int nodes_per_sec = nodes_per_ms * 1000;
 
-        LOG("IDA threshold %d, explored %'d nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count,  ms / 1000, nodes_per_sec);
+        LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count,  ms / 1000, nodes_per_sec);
 
         if (search_result.found_solution) {
             float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
             float nodes_per_ms = ida_count_total / ms;
             unsigned int nodes_per_sec = nodes_per_ms * 1000;
-            LOG("IDA found solution, explored %'d total nodes, took %.3fs, %'d nodes-per-sec\n",
+            LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n",
                 ida_count_total, ms / 1000, nodes_per_sec);
             return 1;
         }
@@ -919,6 +941,10 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--main-table-state-length")) {
             i++;
             main_table_state_length = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--multiplier")) {
+            i++;
+            cost_to_goal_multiplier = atof(argv[i]);
 
         } else if (strmatch(argv[i], "--legal-moves")) {
             i++;

@@ -53,6 +53,6 @@ cube.lt_init()
 #cube.lt_FB_centers_stage_LR_centers_solve.build_ida_graph()
 
 #cube.lt_phase3_lr_center_stage.build_ida_graph()
-cube.lt_phase3_eo_outer_orbit.build_ida_graph()
-#cube.lt_phase3_eo_inner_orbit.build_ida_graph()
+#cube.lt_phase3_eo_outer_orbit.build_ida_graph()
+cube.lt_phase3_eo_inner_orbit.build_ida_graph()
 

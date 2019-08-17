@@ -514,7 +514,7 @@ MIDGE_TUPLES_555 = (
     ((128, 73), (73, 128)),
     ((136, 48), (48, 136)),
     ((140, 98), (98, 140)),
-    ((148, 123), (128, 148)),
+    ((148, 123), (123, 148)),
 )
 
 
@@ -1870,7 +1870,7 @@ class LookupTableIDA555EdgeOrientInnerOrbit(LookupTable):
         steps_to_scramble = reverse_steps(steps_to_solve)
 
         self.parent.state = ['x']
-        self.parent.state.extend(list(solved_555))
+        self.parent.state.extend(list("UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"))
         self.parent.nuke_corners()
         self.parent.nuke_centers()
 

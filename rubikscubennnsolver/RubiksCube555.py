@@ -2506,12 +2506,35 @@ class LookupTable555Phase4EdgesFirstGroup(LookupTable):
             ),
         )
 
-    # dwalton do this
     def state(self):
-        pass
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_555(parent_state[:], ("LF", "RF"))
+        return "".join([state[index] for index in wings_for_edges_pattern_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
-        pass
+        steps_to_solve = steps_to_solve.split()
+        steps_to_scramble = reverse_steps(steps_to_solve)
+
+        self.parent.state = ['x']
+        self.parent.state.extend(list("UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"))
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+        parent_state = self.parent.state
+
+        # nuke edges except LF RF
+        for square_index in wings_for_edges_pattern_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str not in ("LF", "RF"):
+                self.parent.state[square_index] = '-'
+
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
+
+        cube = self.parent.state[:]
 
 
 class LookupTable555Phase4EdgesSecondGroup(LookupTable):
@@ -2556,19 +2579,35 @@ class LookupTable555Phase4EdgesSecondGroup(LookupTable):
             ),
         )
 
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = edges_recolor_pattern_555(parent_state[:])
-        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-    # dwalton do this
     def state(self):
-        pass
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_555(parent_state[:], ("LB", "RB"))
+        return "".join([state[index] for index in wings_for_edges_pattern_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
-        pass
+        steps_to_solve = steps_to_solve.split()
+        steps_to_scramble = reverse_steps(steps_to_solve)
+
+        self.parent.state = ['x']
+        self.parent.state.extend(list("UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"))
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+        parent_state = self.parent.state
+
+        # nuke edges except LB RB
+        for square_index in wings_for_edges_pattern_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str not in ("LB", "RB"):
+                self.parent.state[square_index] = '-'
+
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
+
+        cube = self.parent.state[:]
 
 
 class LookupTableIDA555Phase4(LookupTableIDAViaGraph):
@@ -2594,9 +2633,10 @@ class LookupTableIDA555Phase4(LookupTableIDAViaGraph):
             linecount=0,
             prune_tables=(
                 parent.lt_phase4_centers,
-                #parent.lt_phase4_edges_first_group,
-                #parent.lt_phase4_edges_second_group,
-            )
+                parent.lt_phase4_edges_first_group,
+                parent.lt_phase4_edges_second_group,
+            ),
+            multiplier=1.5,
         )
 
 
@@ -3566,7 +3606,7 @@ class RubiksCube555(RubiksCube):
             self.lt_phase3.solve_via_c()
             self.highlow_edges_print()
             self.print_cube()
-            log.info("%s: end of phsae 3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("%s: end of phase 3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
             self.lt_phase4.solve_via_c()
             self.print_cube()

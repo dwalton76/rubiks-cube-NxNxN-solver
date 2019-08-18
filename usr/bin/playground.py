@@ -54,5 +54,8 @@ cube.lt_init()
 
 #cube.lt_phase3_lr_center_stage.build_ida_graph()
 #cube.lt_phase3_eo_outer_orbit.build_ida_graph()
-cube.lt_phase3_eo_inner_orbit.build_ida_graph()
+#cube.lt_phase3_eo_inner_orbit.build_ida_graph()
 
+#cube.lt_phase4_centers.build_ida_graph()
+#cube.lt_phase4_edges_first_group.build_ida_graph()
+cube.lt_phase4_edges_second_group.build_ida_graph()

@@ -1078,6 +1078,7 @@ class LookupTable(object):
         return max_line
 
     def build_ida_graph(self):
+        assert self.legal_moves, "no legal_moves defined"
         parent = self.parent
         parent_state = self.parent.state
         legal_moves = self.legal_moves

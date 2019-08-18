@@ -32,6 +32,7 @@ class LookupTableIDAViaGraph(LookupTable):
         filesize=None,
         legal_moves=[],
         prune_tables=[],
+        multiplier=None,
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.ida_nodes = {}
@@ -42,6 +43,7 @@ class LookupTableIDAViaGraph(LookupTable):
         self.nuke_centers = False
         self.min_edge_paired_count = 0
         self.prune_tables = prune_tables
+        self.multiplier = multiplier
 
         for x in moves_illegal:
             if x not in moves_all:
@@ -456,6 +458,11 @@ class LookupTableIDAViaGraph(LookupTable):
 
         cmd.append("--legal-moves")
         cmd.append(",".join(self.moves_all))
+
+        if self.multiplier:
+            cmd.append("--multiplier")
+            cmd.append(str(self.multiplier))
+
         log.info("solve_via_c:\n    %s \"%s\"\n" % (" ".join(cmd[0:-1]), cmd[-1]))
 
         output = subprocess.check_output(cmd).decode("utf-8").splitlines()

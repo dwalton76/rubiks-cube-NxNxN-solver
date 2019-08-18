@@ -785,7 +785,8 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             prune_tables=(
                 parent.lt_LR_t_centers_stage,
                 parent.lt_LR_x_centers_stage,
-            )
+            ),
+            multiplier=1.2,
         )
 
 
@@ -2366,7 +2367,8 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
                 parent.lt_phase3_lr_center_stage,
                 parent.lt_phase3_eo_outer_orbit,
                 parent.lt_phase3_eo_inner_orbit,
-            )
+            ),
+            multiplier=1.2,
         )
 
 

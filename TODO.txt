@@ -1,18 +1,17 @@
 
-- get the IDA speed improvement stuff in master
-    - as part of this finish the experiment to combine 444 phase1+2
-      Currently am rebuilding the tables with the Lw, etc "can skip these" moves removed
-      If this fails then just redo phase1 to use the new IDA, assuming that doesn't
-      use too much memory.  The current IDA for this phase is pretty fast already.
-    - can we get rid of the --fast code path...or at least simplify it?
+- can we get rid of the --fast code path...or at least simplify it?
+
+- remove the 444 phase0 experiment
+
+- 444 now that IDA is much faster could we somehow do 444 reduction without tsai method?
+    probably not but is worth thinking about
 
 - IDA should be fast enough for tsai 555 now
-    - merge in the code to stage LR centers first
-    - when we are staging the UD centers go ahead and solve the LR centers? That
-      shouldn't take many more moves and would allow us to do just straight lookups
-      for the EO phase.
+    - when staging FB do so such that LR is 432ed...we should get this almost for free
+      and while the LR centers will be somewhat undone in the next phase it should still
+      make the next phase a little faster.
 
-- 666 UDand FB centers could be staged in a single phase (no need
+- 666 UD and FB centers could be staged in a single phase (no need
       to pair oblique edges here).  This assumes the code to stage
       LR centers first is in.
 

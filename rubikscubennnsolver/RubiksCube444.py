@@ -1,4 +1,4 @@
-from rubikscubennnsolver import RubiksCube, wing_str_map, wing_strs_all
+from rubikscubennnsolver import RubiksCube, wing_str_map, wing_strs_all, reverse_steps
 from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
@@ -1113,7 +1113,6 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
         )
 
 
-'''
 class LookupTable444Phase0HighLowEdges(LookupTable):
     """
     lookup-table-4x4x4-step901-highlow-edges.txt
@@ -1140,7 +1139,12 @@ class LookupTable444Phase0HighLowEdges(LookupTable):
             linecount=2704156,
             max_depth=7,
             filesize=208220012,
-            legal_moves=moves_444,
+            all_moves=moves_444,
+            illegal_moves=(
+                "Lw", "Lw'", "Lw2", # can skip these for 4x4x4 cubes
+                "Bw", "Bw'", "Bw2",
+                "Dw", "Dw'", "Dw2",
+            )
         )
 
     def state(self):
@@ -1192,8 +1196,13 @@ class LookupTable444Phase0UDCenters(LookupTable):
             'f0000f',
             linecount=735471,
             max_depth=8,
-            filesize=27212427,
-            legal_moves=moves_444,
+            filesize=29418840,
+            all_moves=moves_444,
+            illegal_moves=(
+                "Lw", "Lw'", "Lw2", # can skip these for 4x4x4 cubes
+                "Bw", "Bw'", "Bw2",
+                "Dw", "Dw'", "Dw2",
+            )
         )
 
     def state(self):
@@ -1242,8 +1251,13 @@ class LookupTable444Phase0FBCenters(LookupTable):
             '00f0f0',
             linecount=735471,
             max_depth=8,
-            filesize=27212427,
-            legal_moves=moves_444,
+            filesize=28683369,
+            all_moves=moves_444,
+            illegal_moves=(
+                "Lw", "Lw'", "Lw2", # can skip these for 4x4x4 cubes
+                "Bw", "Bw'", "Bw2",
+                "Dw", "Dw'", "Dw2",
+            )
         )
 
     def state(self):
@@ -1304,8 +1318,13 @@ class LookupTable444Phase0LCenters(LookupTable):
             self.state_targets,
             linecount=10626,
             max_depth=5,
-            filesize=276276,
-            legal_moves=moves_444,
+            filesize=308154,
+            all_moves=moves_444,
+            illegal_moves=(
+                "Lw", "Lw'", "Lw2", # can skip these for 4x4x4 cubes
+                "Bw", "Bw'", "Bw2",
+                "Dw", "Dw'", "Dw2",
+            )
         )
 
     def state(self):
@@ -1366,8 +1385,13 @@ class LookupTable444Phase0RCenters(LookupTable):
             self.state_targets,
             linecount=10626,
             max_depth=5,
-            filesize=276276,
-            legal_moves=moves_444,
+            filesize=308154,
+            all_moves=moves_444,
+            illegal_moves=(
+                "Lw", "Lw'", "Lw2", # can skip these for 4x4x4 cubes
+                "Bw", "Bw'", "Bw2",
+                "Dw", "Dw'", "Dw2",
+            )
         )
 
     def state(self):
@@ -1412,7 +1436,10 @@ class LookupTable444Phase0(LookupTableIDAViaGraph):
             'lookup-table-4x4x4-step900-dummy.txt',
             "TBD",
             moves_444,
-            (), # illegal moves
+            ("Lw", "Lw'", "Lw2", # can skip these for 4x4x4 cubes
+             "Bw", "Bw'", "Bw2",
+             "Dw", "Dw'", "Dw2",
+            ),
             linecount=0,
             max_depth=0,
             filesize=0,
@@ -1424,7 +1451,6 @@ class LookupTable444Phase0(LookupTableIDAViaGraph):
                 parent.lt_phase0_R_centers,
             )
         )
-'''
 
 
 class RubiksCube444(RubiksCube):
@@ -1759,7 +1785,6 @@ class RubiksCube444(RubiksCube):
         self.lt_init_called = True
 
         if self.cpu_mode in ("normal", "slow"):
-            '''
             self.lt_phase0_edges = LookupTable444Phase0HighLowEdges(self)
             self.lt_phase0_UD_centers = LookupTable444Phase0UDCenters(self)
             self.lt_phase0_FD_centers = LookupTable444Phase0FBCenters(self)
@@ -1772,7 +1797,6 @@ class RubiksCube444(RubiksCube):
             #self.lt_phase0_FD_centers.preload_cache_dict()
             #self.lt_phase0_L_centers.preload_cache_dict()
             #self.lt_phase0_R_centers.preload_cache_dict()
-            '''
 
             self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
             self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
@@ -1921,7 +1945,6 @@ class RubiksCube444(RubiksCube):
 
     def reduce_333_normal(self):
 
-        '''
         #self.lt_phase0_edges.solve()
         #self.lt_phase0_UD_centers.solve()
         #self.lt_phase0_FD_centers.solve()
@@ -1932,7 +1955,6 @@ class RubiksCube444(RubiksCube):
         self.print_cube()
         log.info("%s: End of Phase0, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         sys.exit(0)
-        '''
 
         log.info(
             "%s: Start of Phase1, %d steps in"

@@ -2372,9 +2372,82 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
         )
 
 
-class LookupTable555Phase4Centers(LookupTable):
+class LookupTable555Phase4(LookupTable):
     """
-    lookup-table-5x5x5-step41-phase4-centers.txt
+    lookup-table-5x5x5-step40-phase4.txt
+    ====================================
+    0 steps has 4,239 entries (0 percent, 0.00x previous step)
+    1 steps has 1,018,011 entries (0 percent, 240.15x previous step)
+    2 steps has 6,276,787 entries (5 percent, 6.17x previous step)
+    3 steps has 25,090,688 entries (20 percent, 4.00x previous step)
+    4 steps has 50,710,890 entries (41 percent, 2.02x previous step)
+    5 steps has 34,813,744 entries (28 percent, 0.69x previous step)
+    6 steps has 3,360,706 entries (2 percent, 0.10x previous step)
+    7 steps has 12,310 entries (0 percent, 0.00x previous step)
+
+    Total: 121,287,375 entries
+    Average: 4.01 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step40-phase4.txt',
+            'TBD',
+            linecount=121287375,
+            max_depth=7,
+            filesize=5457931875,
+        )
+        self.wing_strs = None
+
+    def ida_heuristic(self):
+        assert self.wing_strs
+        original_state = self.parent.state[:]
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+        parent_state = self.parent.state
+
+        for square_index in wings_for_edges_pattern_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+            wing_str = square_value + partner_value
+
+            if not (wing_str == "LL" or wing_str == "xx"):
+                wing_str = wing_str_map[square_value + partner_value]
+
+                if wing_str in self.wing_strs:
+                    self.parent.state[square_index] = 'L'
+                    self.parent.state[partner_index] = 'L'
+                else:
+                    self.parent.state[square_index] = 'x'
+                    self.parent.state[partner_index] = 'x'
+
+        state = ''.join(['1' if parent_state[x] == 'L' else '0' for x in edges_555])
+        state = self.hex_format % int(state, 2)
+        cost_to_goal = self.heuristic(state)
+        self.parent.state = original_state
+        #log.info("%s: state %s, cost_to_goal %s" % (self, state, cost_to_goal))
+        return (state, cost_to_goal)
+
+    def solve(self):
+        """
+        We override the normal solve() so that we do not have to enter all 343,000
+        state_targets for this class.
+        """
+        (state, _cost_to_goal) = self.ida_heuristic()
+        steps = self.steps(state)
+
+        if steps:
+            for step in steps:
+                self.parent.rotate(step)
+
+
+'''
+class LookupTable555Phase5Centers(LookupTable):
+    """
+    lookup-table-5x5x5-step41-phase5-centers.txt
     ============================================
     0 steps has 72 entries (1 percent, 0.00x previous step)
     1 steps has 756 entries (15 percent, 10.50x previous step)
@@ -2826,7 +2899,7 @@ class LookupTable555Phase4Centers(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step41-phase4-centers.txt',
+            'lookup-table-5x5x5-step41-phase5-centers.txt',
             self.state_targets,
             linecount=4900,
             max_depth=5,
@@ -2855,7 +2928,7 @@ class LookupTable555Phase4Centers(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTable555Phase4Wings(LookupTable):
+class LookupTable555Phase5Wings(LookupTable):
     """
     lookup-table-5x5x5-step42-phase4-wings.txt
     ==========================================
@@ -2991,7 +3064,7 @@ class LookupTable555Phase4Wings(LookupTable):
         cube = self.parent.state[:]
 
 
-class LookupTable555Phase4Midges(LookupTable):
+class LookupTable555Phase5Midges(LookupTable):
     """
     lookup-table-5x5x5-step42-phase4-midges.txt
     ===========================================
@@ -3090,10 +3163,9 @@ class LookupTable555Phase4Midges(LookupTable):
         cube = self.parent.state[:]
 
 
-'''
-class LookupTable555Phase4EdgesFirstGroup(LookupTable):
+class LookupTable555Phase5EdgesFirstGroup(LookupTable):
     """
-    lookup-table-5x5x5-step42-phase4-edges.txt
+    lookup-table-5x5x5-step42-phase5-edges.txt
     ==========================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 5 entries (0 percent, 5.00x previous step)
@@ -3115,7 +3187,7 @@ class LookupTable555Phase4EdgesFirstGroup(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step42-phase4-edges.txt',
+            'lookup-table-5x5x5-step42-phase5-edges.txt',
             'TBD',
             linecount=1149984,
             max_depth=10,
@@ -3165,9 +3237,9 @@ class LookupTable555Phase4EdgesFirstGroup(LookupTable):
         cube = self.parent.state[:]
 
 
-class LookupTable555Phase4EdgesSecondGroup(LookupTable):
+class LookupTable555Phase5EdgesSecondGroup(LookupTable):
     """
-    lookup-table-5x5x5-step43-phase4-edges.txt
+    lookup-table-5x5x5-step43-phase5-edges.txt
     ==========================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 5 entries (0 percent, 5.00x previous step)
@@ -3189,7 +3261,7 @@ class LookupTable555Phase4EdgesSecondGroup(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step43-phase4-edges.txt',
+            'lookup-table-5x5x5-step43-phase5-edges.txt',
             'TBD',
             linecount=1149984,
             max_depth=10,
@@ -3237,16 +3309,15 @@ class LookupTable555Phase4EdgesSecondGroup(LookupTable):
             self.parent.rotate(step)
 
         cube = self.parent.state[:]
-'''
 
 
-class LookupTableIDA555Phase4(LookupTableIDAViaGraph):
+class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
 
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step40-phase4-dummytxt',
+            'lookup-table-5x5x5-step40-phase5-dummytxt',
             'TBD',
             moves_555,
             # illegal moves
@@ -3262,12 +3333,13 @@ class LookupTableIDA555Phase4(LookupTableIDAViaGraph):
 
             linecount=0,
             prune_tables=(
-                parent.lt_phase4_centers,
-                parent.lt_phase4_wings,
-                parent.lt_phase4_midges,
+                parent.lt_phase5_centers,
+                parent.lt_phase5_edges_first_group,
+                parent.lt_phase5_edges_second_group,
             ),
             multiplier=1.2,
         )
+'''
 
 
 # class LookupTable555PairLastEightEdgesEdgesOnly(LookupTable):
@@ -3718,10 +3790,14 @@ class RubiksCube555(RubiksCube):
         self.lt_phase3_eo_inner_orbit = LookupTableIDA555EdgeOrientInnerOrbit(self)
         self.lt_phase3 = LookupTableIDA555LRCenterStageEOBothOrbits(self)
 
-        self.lt_phase4_centers = LookupTable555Phase4Centers(self)
-        self.lt_phase4_wings = LookupTable555Phase4Wings(self)
-        self.lt_phase4_midges = LookupTable555Phase4Midges(self)
-        self.lt_phase4 = LookupTableIDA555Phase4(self)
+        self.lt_phase4 = LookupTable555Phase4(self)
+
+        '''
+        self.lt_phase5_centers = LookupTable555Phase5Centers(self)
+        self.lt_phase5_edges_first_group = LookupTable555Phase5EdgesFirstGroup(self)
+        self.lt_phase5_edges_second_group = LookupTable555Phase5EdgesSecondGroup(self)
+        self.lt_phase5 = LookupTableIDA555Phase5(self)
+        '''
 
         '''
         self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
@@ -4226,12 +4302,30 @@ class RubiksCube555(RubiksCube):
         )
 
     def pair_first_four_edges(self):
-        self.lt_phase4.solve_via_c()
+        # In order to make phase5 much faster we need to arrange one group of 4-edges
+        # so that none of them are in the z-plane.  This is the job of phase4.  There
+        # are 12!/(4!*8!) or 495 different 4-edge combinations.  Try them all and see
+        # which one has the lowest phase4 cost.
+        min_cost_to_goal = 99
+        min_wing_str_combo = None
+
+        for wing_str_combo in itertools.combinations(wing_strs_all, 4):
+            wing_str_combo = sorted(wing_str_combo)
+            self.lt_phase4.wing_strs = wing_str_combo
+            (state, cost_to_goal) = self.lt_phase4.ida_heuristic()
+
+            if cost_to_goal < min_cost_to_goal:
+                log.info("%s: cost_to_goal %d, wing_str_combo %s (NEW MIN)" % (self, cost_to_goal, " ".join(wing_str_combo)))
+                min_wing_str_combo = wing_str_combo
+                min_cost_to_goal = cost_to_goal
+            #else:
+            #    log.info("%s: cost_to_goal %d, wing_str_combo %s" % (self, cost_to_goal, " ".join(wing_str_combo)))
+
+        self.lt_phase4.wing_strs = min_wing_str_combo
+        self.lt_phase4.solve()
         self.print_cube()
         log.info("%s: end of phase 4, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         sys.exit(0)
-
-        # Now use the L4E x-plane solver
 
     def reduce_333(self):
         self.lt_init()
@@ -4247,6 +4341,11 @@ class RubiksCube555(RubiksCube):
             log.info("%s: end of phase 3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
             self.pair_first_four_edges()
+
+            self.lt_phase5.solve_via_c()
+            self.print_cube()
+            log.info("%s: end of phase 5, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
             self.pair_last_eight_edges()
 
         self.solution.append("CENTERS_SOLVED")

@@ -863,12 +863,12 @@ class LookupTable(object):
             tbd = False
 
         while True:
-            (state, _) = self.ida_heuristic()
+            (state, cost_to_goal) = self.ida_heuristic()
 
             if tbd:
                 log.info(
-                    "%s: solve() state %s vs state_target %s"
-                    % (self, state, pformat(self.state_target))
+                    "%s: solve() state %s vs state_target %s, cost_to_goal %d"
+                    % (self, state, pformat(self.state_target), cost_to_goal)
                 )
 
             if state in self.state_target:

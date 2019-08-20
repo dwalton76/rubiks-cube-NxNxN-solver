@@ -2376,59 +2376,450 @@ class LookupTable555Phase4Centers(LookupTable):
     """
     lookup-table-5x5x5-step41-phase4-centers.txt
     ============================================
-    0 steps has 7 entries (0 percent, 0.00x previous step)
-    1 steps has 161 entries (0 percent, 23.00x previous step)
-    2 steps has 1,146 entries (0 percent, 7.12x previous step)
-    3 steps has 7,176 entries (0 percent, 6.26x previous step)
-    4 steps has 36,836 entries (1 percent, 5.13x previous step)
-    5 steps has 171,754 entries (8 percent, 4.66x previous step)
-    6 steps has 503,484 entries (23 percent, 2.93x previous step)
-    7 steps has 749,808 entries (35 percent, 1.49x previous step)
-    8 steps has 483,736 entries (22 percent, 0.65x previous step)
-    9 steps has 158,924 entries (7 percent, 0.33x previous step)
-    10 steps has 3,768 entries (0 percent, 0.02x previous step)
+    0 steps has 72 entries (1 percent, 0.00x previous step)
+    1 steps has 756 entries (15 percent, 10.50x previous step)
+    2 steps has 1,064 entries (21 percent, 1.41x previous step)
+    3 steps has 1,692 entries (34 percent, 1.59x previous step)
+    4 steps has 1,220 entries (24 percent, 0.72x previous step)
+    5 steps has 96 entries (1 percent, 0.08x previous step)
 
-    Total: 2,116,800 entries
-    Average: 6.91 moves
+    Total: 4,900 entries
+    Average: 2.72 moves
     """
 
     state_targets = (
-        'LLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBF',
-        'LLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBF',
-        'LLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBB',
-        'LLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBF',
-        'LLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBB',
-        'LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB',
-        'LLRLLRLLRBFBBFBBFBLRRLRRLRRFBFFBFFBF',
-        'LLRLLRLLRBFBBFBBFBRRLRRLRRLFBFFBFFBF',
-        'LLRLLRLLRBFFBFFBFFLRRLRRLRRBBFBBFBBF',
-        'LLRLLRLLRBFFBFFBFFLRRLRRLRRFBBFBBFBB',
-        'LLRLLRLLRBFFBFFBFFRRLRRLRRLBBFBBFBBF',
-        'LLRLLRLLRBFFBFFBFFRRLRRLRRLFBBFBBFBB',
-        'LLRLLRLLRFFBFFBFFBLRRLRRLRRBBFBBFBBF',
-        'LLRLLRLLRFFBFFBFFBLRRLRRLRRFBBFBBFBB',
-        'LLRLLRLLRFFBFFBFFBRRLRRLRRLBBFBBFBBF',
-        'LLRLLRLLRFFBFFBFFBRRLRRLRRLFBBFBBFBB',
-        'LLRLLRLLRFFFFFFFFFLRRLRRLRRBBBBBBBBB',
-        'LLRLLRLLRFFFFFFFFFRRLRRLRRLBBBBBBBBB',
-        'RLLRLLRLLBFBBFBBFBLRRLRRLRRFBFFBFFBF',
-        'RLLRLLRLLBFBBFBBFBRRLRRLRRLFBFFBFFBF',
-        'RLLRLLRLLBFFBFFBFFLRRLRRLRRBBFBBFBBF',
-        'RLLRLLRLLBFFBFFBFFLRRLRRLRRFBBFBBFBB',
-        'RLLRLLRLLBFFBFFBFFRRLRRLRRLBBFBBFBBF',
-        'RLLRLLRLLBFFBFFBFFRRLRRLRRLFBBFBBFBB',
-        'RLLRLLRLLFFBFFBFFBLRRLRRLRRBBFBBFBBF',
-        'RLLRLLRLLFFBFFBFFBLRRLRRLRRFBBFBBFBB',
-        'RLLRLLRLLFFBFFBFFBRRLRRLRRLBBFBBFBBF',
-        'RLLRLLRLLFFBFFBFFBRRLRRLRRLFBBFBBFBB',
-        'RLLRLLRLLFFFFFFFFFLRRLRRLRRBBBBBBBBB',
-        'RLLRLLRLLFFFFFFFFFRRLRRLRRLBBBBBBBBB',
-        'RLRRLRRLRBFBBFBBFBLRLLRLLRLFBFFBFFBF',
-        'RLRRLRRLRBFFBFFBFFLRLLRLLRLBBFBBFBBF',
-        'RLRRLRRLRBFFBFFBFFLRLLRLLRLFBBFBBFBB',
-        'RLRRLRRLRFFBFFBFFBLRLLRLLRLBBFBBFBBF',
-        'RLRRLRRLRFFBFFBFFBLRLLRLLRLFBBFBBFBB',
-        'RLRRLRRLRFFFFFFFFFLRLLRLLRLBBBBBBBBB'
+        'BBBBFBBBBFFFFBFFFF',
+        'BBBBFBBFBFBFFBFFFF',
+        'BBBBFBBFBFFFFBFFBF',
+        'BBBBFBFBFBFBFBFFFF',
+        'BBBBFBFBFFFFFBFBFB',
+        'BBBBFBFFFBBBFBFFFF',
+        'BBBBFBFFFBFBFBFFBF',
+        'BBBBFBFFFFBFFBFBFB',
+        'BBBBFBFFFFFFFBFBBB',
+        'BBBBFFBBBFFFBBFFFF',
+        'BBBBFFBBBFFFFBBFFF',
+        'BBBBFFBFBFBFBBFFFF',
+        'BBBBFFBFBFBFFBBFFF',
+        'BBBBFFBFBFFFBBFFBF',
+        'BBBBFFBFBFFFFBBFBF',
+        'BBBBFFFBFBFBBBFFFF',
+        'BBBBFFFBFBFBFBBFFF',
+        'BBBBFFFBFFFFBBFBFB',
+        'BBBBFFFBFFFFFBBBFB',
+        'BBBBFFFFFBBBBBFFFF',
+        'BBBBFFFFFBBBFBBFFF',
+        'BBBBFFFFFBFBBBFFBF',
+        'BBBBFFFFFBFBFBBFBF',
+        'BBBBFFFFFFBFBBFBFB',
+        'BBBBFFFFFFBFFBBBFB',
+        'BBBBFFFFFFFFBBFBBB',
+        'BBBBFFFFFFFFFBBBBB',
+        'BBBFFBBBBFFFBBFFFF',
+        'BBBFFBBBBFFFFBBFFF',
+        'BBBFFBBFBFBFBBFFFF',
+        'BBBFFBBFBFBFFBBFFF',
+        'BBBFFBBFBFFFBBFFBF',
+        'BBBFFBBFBFFFFBBFBF',
+        'BBBFFBFBFBFBBBFFFF',
+        'BBBFFBFBFBFBFBBFFF',
+        'BBBFFBFBFFFFBBFBFB',
+        'BBBFFBFBFFFFFBBBFB',
+        'BBBFFBFFFBBBBBFFFF',
+        'BBBFFBFFFBBBFBBFFF',
+        'BBBFFBFFFBFBBBFFBF',
+        'BBBFFBFFFBFBFBBFBF',
+        'BBBFFBFFFFBFBBFBFB',
+        'BBBFFBFFFFBFFBBBFB',
+        'BBBFFBFFFFFFBBFBBB',
+        'BBBFFBFFFFFFFBBBBB',
+        'BBBFFFBBBFFFBBBFFF',
+        'BBBFFFBFBFBFBBBFFF',
+        'BBBFFFBFBFFFBBBFBF',
+        'BBBFFFFBFBFBBBBFFF',
+        'BBBFFFFBFFFFBBBBFB',
+        'BBBFFFFFFBBBBBBFFF',
+        'BBBFFFFFFBFBBBBFBF',
+        'BBBFFFFFFFBFBBBBFB',
+        'BBBFFFFFFFFFBBBBBB',
+        'BBFBFBBBFBFFFBFBFF',
+        'BBFBFBBBFFFBFBFFFB',
+        'BBFBFBBFFBBFFBFBFF',
+        'BBFBFBBFFBFFFBFBBF',
+        'BBFBFBBFFFBBFBFFFB',
+        'BBFBFBBFFFFBFBFFBB',
+        'BBFBFBFBBFFBFBFBFF',
+        'BBFBFBFFBFBBFBFBFF',
+        'BBFBFBFFBFFBFBFBBF',
+        'BBFBFFBBFBFFBBFBFF',
+        'BBFBFFBBFBFFFBBBFF',
+        'BBFBFFBBFFFBBBFFFB',
+        'BBFBFFBBFFFBFBBFFB',
+        'BBFBFFBFFBBFBBFBFF',
+        'BBFBFFBFFBBFFBBBFF',
+        'BBFBFFBFFBFFBBFBBF',
+        'BBFBFFBFFBFFFBBBBF',
+        'BBFBFFBFFFBBBBFFFB',
+        'BBFBFFBFFFBBFBBFFB',
+        'BBFBFFBFFFFBBBFFBB',
+        'BBFBFFBFFFFBFBBFBB',
+        'BBFBFFFBBFFBBBFBFF',
+        'BBFBFFFBBFFBFBBBFF',
+        'BBFBFFFFBFBBBBFBFF',
+        'BBFBFFFFBFBBFBBBFF',
+        'BBFBFFFFBFFBBBFBBF',
+        'BBFBFFFFBFFBFBBBBF',
+        'BBFFFBBBFBFFBBFBFF',
+        'BBFFFBBBFBFFFBBBFF',
+        'BBFFFBBBFFFBBBFFFB',
+        'BBFFFBBBFFFBFBBFFB',
+        'BBFFFBBFFBBFBBFBFF',
+        'BBFFFBBFFBBFFBBBFF',
+        'BBFFFBBFFBFFBBFBBF',
+        'BBFFFBBFFBFFFBBBBF',
+        'BBFFFBBFFFBBBBFFFB',
+        'BBFFFBBFFFBBFBBFFB',
+        'BBFFFBBFFFFBBBFFBB',
+        'BBFFFBBFFFFBFBBFBB',
+        'BBFFFBFBBFFBBBFBFF',
+        'BBFFFBFBBFFBFBBBFF',
+        'BBFFFBFFBFBBBBFBFF',
+        'BBFFFBFFBFBBFBBBFF',
+        'BBFFFBFFBFFBBBFBBF',
+        'BBFFFBFFBFFBFBBBBF',
+        'BBFFFFBBFBFFBBBBFF',
+        'BBFFFFBBFFFBBBBFFB',
+        'BBFFFFBFFBBFBBBBFF',
+        'BBFFFFBFFBFFBBBBBF',
+        'BBFFFFBFFFBBBBBFFB',
+        'BBFFFFBFFFFBBBBFBB',
+        'BBFFFFFBBFFBBBBBFF',
+        'BBFFFFFFBFBBBBBBFF',
+        'BBFFFFFFBFFBBBBBBF',
+        'BFBBFBBBBFBFFBFFFF',
+        'BFBBFBBBBFFFFBFFBF',
+        'BFBBFBBFBFBFFBFFBF',
+        'BFBBFBFBFBBBFBFFFF',
+        'BFBBFBFBFBFBFBFFBF',
+        'BFBBFBFBFFBFFBFBFB',
+        'BFBBFBFBFFFFFBFBBB',
+        'BFBBFBFFFBBBFBFFBF',
+        'BFBBFBFFFFBFFBFBBB',
+        'BFBBFFBBBFBFBBFFFF',
+        'BFBBFFBBBFBFFBBFFF',
+        'BFBBFFBBBFFFBBFFBF',
+        'BFBBFFBBBFFFFBBFBF',
+        'BFBBFFBFBFBFBBFFBF',
+        'BFBBFFBFBFBFFBBFBF',
+        'BFBBFFFBFBBBBBFFFF',
+        'BFBBFFFBFBBBFBBFFF',
+        'BFBBFFFBFBFBBBFFBF',
+        'BFBBFFFBFBFBFBBFBF',
+        'BFBBFFFBFFBFBBFBFB',
+        'BFBBFFFBFFBFFBBBFB',
+        'BFBBFFFBFFFFBBFBBB',
+        'BFBBFFFBFFFFFBBBBB',
+        'BFBBFFFFFBBBBBFFBF',
+        'BFBBFFFFFBBBFBBFBF',
+        'BFBBFFFFFFBFBBFBBB',
+        'BFBBFFFFFFBFFBBBBB',
+        'BFBFFBBBBFBFBBFFFF',
+        'BFBFFBBBBFBFFBBFFF',
+        'BFBFFBBBBFFFBBFFBF',
+        'BFBFFBBBBFFFFBBFBF',
+        'BFBFFBBFBFBFBBFFBF',
+        'BFBFFBBFBFBFFBBFBF',
+        'BFBFFBFBFBBBBBFFFF',
+        'BFBFFBFBFBBBFBBFFF',
+        'BFBFFBFBFBFBBBFFBF',
+        'BFBFFBFBFBFBFBBFBF',
+        'BFBFFBFBFFBFBBFBFB',
+        'BFBFFBFBFFBFFBBBFB',
+        'BFBFFBFBFFFFBBFBBB',
+        'BFBFFBFBFFFFFBBBBB',
+        'BFBFFBFFFBBBBBFFBF',
+        'BFBFFBFFFBBBFBBFBF',
+        'BFBFFBFFFFBFBBFBBB',
+        'BFBFFBFFFFBFFBBBBB',
+        'BFBFFFBBBFBFBBBFFF',
+        'BFBFFFBBBFFFBBBFBF',
+        'BFBFFFBFBFBFBBBFBF',
+        'BFBFFFFBFBBBBBBFFF',
+        'BFBFFFFBFBFBBBBFBF',
+        'BFBFFFFBFFBFBBBBFB',
+        'BFBFFFFBFFFFBBBBBB',
+        'BFBFFFFFFBBBBBBFBF',
+        'BFBFFFFFFFBFBBBBBB',
+        'BFFBFBBBFBBFFBFBFF',
+        'BFFBFBBBFBFFFBFBBF',
+        'BFFBFBBBFFBBFBFFFB',
+        'BFFBFBBBFFFBFBFFBB',
+        'BFFBFBBFFBBFFBFBBF',
+        'BFFBFBBFFFBBFBFFBB',
+        'BFFBFBFBBFBBFBFBFF',
+        'BFFBFBFBBFFBFBFBBF',
+        'BFFBFBFFBFBBFBFBBF',
+        'BFFBFFBBFBBFBBFBFF',
+        'BFFBFFBBFBBFFBBBFF',
+        'BFFBFFBBFBFFBBFBBF',
+        'BFFBFFBBFBFFFBBBBF',
+        'BFFBFFBBFFBBBBFFFB',
+        'BFFBFFBBFFBBFBBFFB',
+        'BFFBFFBBFFFBBBFFBB',
+        'BFFBFFBBFFFBFBBFBB',
+        'BFFBFFBFFBBFBBFBBF',
+        'BFFBFFBFFBBFFBBBBF',
+        'BFFBFFBFFFBBBBFFBB',
+        'BFFBFFBFFFBBFBBFBB',
+        'BFFBFFFBBFBBBBFBFF',
+        'BFFBFFFBBFBBFBBBFF',
+        'BFFBFFFBBFFBBBFBBF',
+        'BFFBFFFBBFFBFBBBBF',
+        'BFFBFFFFBFBBBBFBBF',
+        'BFFBFFFFBFBBFBBBBF',
+        'BFFFFBBBFBBFBBFBFF',
+        'BFFFFBBBFBBFFBBBFF',
+        'BFFFFBBBFBFFBBFBBF',
+        'BFFFFBBBFBFFFBBBBF',
+        'BFFFFBBBFFBBBBFFFB',
+        'BFFFFBBBFFBBFBBFFB',
+        'BFFFFBBBFFFBBBFFBB',
+        'BFFFFBBBFFFBFBBFBB',
+        'BFFFFBBFFBBFBBFBBF',
+        'BFFFFBBFFBBFFBBBBF',
+        'BFFFFBBFFFBBBBFFBB',
+        'BFFFFBBFFFBBFBBFBB',
+        'BFFFFBFBBFBBBBFBFF',
+        'BFFFFBFBBFBBFBBBFF',
+        'BFFFFBFBBFFBBBFBBF',
+        'BFFFFBFBBFFBFBBBBF',
+        'BFFFFBFFBFBBBBFBBF',
+        'BFFFFBFFBFBBFBBBBF',
+        'BFFFFFBBFBBFBBBBFF',
+        'BFFFFFBBFBFFBBBBBF',
+        'BFFFFFBBFFBBBBBFFB',
+        'BFFFFFBBFFFBBBBFBB',
+        'BFFFFFBFFBBFBBBBBF',
+        'BFFFFFBFFFBBBBBFBB',
+        'BFFFFFFBBFBBBBBBFF',
+        'BFFFFFFBBFFBBBBBBF',
+        'BFFFFFFFBFBBBBBBBF',
+        'FBBBFBBBFBFFFBFFFB',
+        'FBBBFBBFFBBFFBFFFB',
+        'FBBBFBBFFBFFFBFFBB',
+        'FBBBFBFBBBFFFBFBFF',
+        'FBBBFBFBBFFBFBFFFB',
+        'FBBBFBFFBBBFFBFBFF',
+        'FBBBFBFFBBFFFBFBBF',
+        'FBBBFBFFBFBBFBFFFB',
+        'FBBBFBFFBFFBFBFFBB',
+        'FBBBFFBBFBFFBBFFFB',
+        'FBBBFFBBFBFFFBBFFB',
+        'FBBBFFBFFBBFBBFFFB',
+        'FBBBFFBFFBBFFBBFFB',
+        'FBBBFFBFFBFFBBFFBB',
+        'FBBBFFBFFBFFFBBFBB',
+        'FBBBFFFBBBFFBBFBFF',
+        'FBBBFFFBBBFFFBBBFF',
+        'FBBBFFFBBFFBBBFFFB',
+        'FBBBFFFBBFFBFBBFFB',
+        'FBBBFFFFBBBFBBFBFF',
+        'FBBBFFFFBBBFFBBBFF',
+        'FBBBFFFFBBFFBBFBBF',
+        'FBBBFFFFBBFFFBBBBF',
+        'FBBBFFFFBFBBBBFFFB',
+        'FBBBFFFFBFBBFBBFFB',
+        'FBBBFFFFBFFBBBFFBB',
+        'FBBBFFFFBFFBFBBFBB',
+        'FBBFFBBBFBFFBBFFFB',
+        'FBBFFBBBFBFFFBBFFB',
+        'FBBFFBBFFBBFBBFFFB',
+        'FBBFFBBFFBBFFBBFFB',
+        'FBBFFBBFFBFFBBFFBB',
+        'FBBFFBBFFBFFFBBFBB',
+        'FBBFFBFBBBFFBBFBFF',
+        'FBBFFBFBBBFFFBBBFF',
+        'FBBFFBFBBFFBBBFFFB',
+        'FBBFFBFBBFFBFBBFFB',
+        'FBBFFBFFBBBFBBFBFF',
+        'FBBFFBFFBBBFFBBBFF',
+        'FBBFFBFFBBFFBBFBBF',
+        'FBBFFBFFBBFFFBBBBF',
+        'FBBFFBFFBFBBBBFFFB',
+        'FBBFFBFFBFBBFBBFFB',
+        'FBBFFBFFBFFBBBFFBB',
+        'FBBFFBFFBFFBFBBFBB',
+        'FBBFFFBBFBFFBBBFFB',
+        'FBBFFFBFFBBFBBBFFB',
+        'FBBFFFBFFBFFBBBFBB',
+        'FBBFFFFBBBFFBBBBFF',
+        'FBBFFFFBBFFBBBBFFB',
+        'FBBFFFFFBBBFBBBBFF',
+        'FBBFFFFFBBFFBBBBBF',
+        'FBBFFFFFBFBBBBBFFB',
+        'FBBFFFFFBFFBBBBFBB',
+        'FBFBFBBBBBFBFBFFFF',
+        'FBFBFBBBBFFFFBFBFB',
+        'FBFBFBBFBBBBFBFFFF',
+        'FBFBFBBFBBFBFBFFBF',
+        'FBFBFBBFBFBFFBFBFB',
+        'FBFBFBBFBFFFFBFBBB',
+        'FBFBFBFBFBFBFBFBFB',
+        'FBFBFBFFFBBBFBFBFB',
+        'FBFBFBFFFBFBFBFBBB',
+        'FBFBFFBBBBFBBBFFFF',
+        'FBFBFFBBBBFBFBBFFF',
+        'FBFBFFBBBFFFBBFBFB',
+        'FBFBFFBBBFFFFBBBFB',
+        'FBFBFFBFBBBBBBFFFF',
+        'FBFBFFBFBBBBFBBFFF',
+        'FBFBFFBFBBFBBBFFBF',
+        'FBFBFFBFBBFBFBBFBF',
+        'FBFBFFBFBFBFBBFBFB',
+        'FBFBFFBFBFBFFBBBFB',
+        'FBFBFFBFBFFFBBFBBB',
+        'FBFBFFBFBFFFFBBBBB',
+        'FBFBFFFBFBFBBBFBFB',
+        'FBFBFFFBFBFBFBBBFB',
+        'FBFBFFFFFBBBBBFBFB',
+        'FBFBFFFFFBBBFBBBFB',
+        'FBFBFFFFFBFBBBFBBB',
+        'FBFBFFFFFBFBFBBBBB',
+        'FBFFFBBBBBFBBBFFFF',
+        'FBFFFBBBBBFBFBBFFF',
+        'FBFFFBBBBFFFBBFBFB',
+        'FBFFFBBBBFFFFBBBFB',
+        'FBFFFBBFBBBBBBFFFF',
+        'FBFFFBBFBBBBFBBFFF',
+        'FBFFFBBFBBFBBBFFBF',
+        'FBFFFBBFBBFBFBBFBF',
+        'FBFFFBBFBFBFBBFBFB',
+        'FBFFFBBFBFBFFBBBFB',
+        'FBFFFBBFBFFFBBFBBB',
+        'FBFFFBBFBFFFFBBBBB',
+        'FBFFFBFBFBFBBBFBFB',
+        'FBFFFBFBFBFBFBBBFB',
+        'FBFFFBFFFBBBBBFBFB',
+        'FBFFFBFFFBBBFBBBFB',
+        'FBFFFBFFFBFBBBFBBB',
+        'FBFFFBFFFBFBFBBBBB',
+        'FBFFFFBBBBFBBBBFFF',
+        'FBFFFFBBBFFFBBBBFB',
+        'FBFFFFBFBBBBBBBFFF',
+        'FBFFFFBFBBFBBBBFBF',
+        'FBFFFFBFBFBFBBBBFB',
+        'FBFFFFBFBFFFBBBBBB',
+        'FBFFFFFBFBFBBBBBFB',
+        'FBFFFFFFFBBBBBBBFB',
+        'FBFFFFFFFBFBBBBBBB',
+        'FFBBFBBBFBBFFBFFFB',
+        'FFBBFBBBFBFFFBFFBB',
+        'FFBBFBBFFBBFFBFFBB',
+        'FFBBFBFBBBBFFBFBFF',
+        'FFBBFBFBBBFFFBFBBF',
+        'FFBBFBFBBFBBFBFFFB',
+        'FFBBFBFBBFFBFBFFBB',
+        'FFBBFBFFBBBFFBFBBF',
+        'FFBBFBFFBFBBFBFFBB',
+        'FFBBFFBBFBBFBBFFFB',
+        'FFBBFFBBFBBFFBBFFB',
+        'FFBBFFBBFBFFBBFFBB',
+        'FFBBFFBBFBFFFBBFBB',
+        'FFBBFFBFFBBFBBFFBB',
+        'FFBBFFBFFBBFFBBFBB',
+        'FFBBFFFBBBBFBBFBFF',
+        'FFBBFFFBBBBFFBBBFF',
+        'FFBBFFFBBBFFBBFBBF',
+        'FFBBFFFBBBFFFBBBBF',
+        'FFBBFFFBBFBBBBFFFB',
+        'FFBBFFFBBFBBFBBFFB',
+        'FFBBFFFBBFFBBBFFBB',
+        'FFBBFFFBBFFBFBBFBB',
+        'FFBBFFFFBBBFBBFBBF',
+        'FFBBFFFFBBBFFBBBBF',
+        'FFBBFFFFBFBBBBFFBB',
+        'FFBBFFFFBFBBFBBFBB',
+        'FFBFFBBBFBBFBBFFFB',
+        'FFBFFBBBFBBFFBBFFB',
+        'FFBFFBBBFBFFBBFFBB',
+        'FFBFFBBBFBFFFBBFBB',
+        'FFBFFBBFFBBFBBFFBB',
+        'FFBFFBBFFBBFFBBFBB',
+        'FFBFFBFBBBBFBBFBFF',
+        'FFBFFBFBBBBFFBBBFF',
+        'FFBFFBFBBBFFBBFBBF',
+        'FFBFFBFBBBFFFBBBBF',
+        'FFBFFBFBBFBBBBFFFB',
+        'FFBFFBFBBFBBFBBFFB',
+        'FFBFFBFBBFFBBBFFBB',
+        'FFBFFBFBBFFBFBBFBB',
+        'FFBFFBFFBBBFBBFBBF',
+        'FFBFFBFFBBBFFBBBBF',
+        'FFBFFBFFBFBBBBFFBB',
+        'FFBFFBFFBFBBFBBFBB',
+        'FFBFFFBBFBBFBBBFFB',
+        'FFBFFFBBFBFFBBBFBB',
+        'FFBFFFBFFBBFBBBFBB',
+        'FFBFFFFBBBBFBBBBFF',
+        'FFBFFFFBBBFFBBBBBF',
+        'FFBFFFFBBFBBBBBFFB',
+        'FFBFFFFBBFFBBBBFBB',
+        'FFBFFFFFBBBFBBBBBF',
+        'FFBFFFFFBFBBBBBFBB',
+        'FFFBFBBBBBBBFBFFFF',
+        'FFFBFBBBBBFBFBFFBF',
+        'FFFBFBBBBFBFFBFBFB',
+        'FFFBFBBBBFFFFBFBBB',
+        'FFFBFBBFBBBBFBFFBF',
+        'FFFBFBBFBFBFFBFBBB',
+        'FFFBFBFBFBBBFBFBFB',
+        'FFFBFBFBFBFBFBFBBB',
+        'FFFBFBFFFBBBFBFBBB',
+        'FFFBFFBBBBBBBBFFFF',
+        'FFFBFFBBBBBBFBBFFF',
+        'FFFBFFBBBBFBBBFFBF',
+        'FFFBFFBBBBFBFBBFBF',
+        'FFFBFFBBBFBFBBFBFB',
+        'FFFBFFBBBFBFFBBBFB',
+        'FFFBFFBBBFFFBBFBBB',
+        'FFFBFFBBBFFFFBBBBB',
+        'FFFBFFBFBBBBBBFFBF',
+        'FFFBFFBFBBBBFBBFBF',
+        'FFFBFFBFBFBFBBFBBB',
+        'FFFBFFBFBFBFFBBBBB',
+        'FFFBFFFBFBBBBBFBFB',
+        'FFFBFFFBFBBBFBBBFB',
+        'FFFBFFFBFBFBBBFBBB',
+        'FFFBFFFBFBFBFBBBBB',
+        'FFFBFFFFFBBBBBFBBB',
+        'FFFBFFFFFBBBFBBBBB',
+        'FFFFFBBBBBBBBBFFFF',
+        'FFFFFBBBBBBBFBBFFF',
+        'FFFFFBBBBBFBBBFFBF',
+        'FFFFFBBBBBFBFBBFBF',
+        'FFFFFBBBBFBFBBFBFB',
+        'FFFFFBBBBFBFFBBBFB',
+        'FFFFFBBBBFFFBBFBBB',
+        'FFFFFBBBBFFFFBBBBB',
+        'FFFFFBBFBBBBBBFFBF',
+        'FFFFFBBFBBBBFBBFBF',
+        'FFFFFBBFBFBFBBFBBB',
+        'FFFFFBBFBFBFFBBBBB',
+        'FFFFFBFBFBBBBBFBFB',
+        'FFFFFBFBFBBBFBBBFB',
+        'FFFFFBFBFBFBBBFBBB',
+        'FFFFFBFBFBFBFBBBBB',
+        'FFFFFBFFFBBBBBFBBB',
+        'FFFFFBFFFBBBFBBBBB',
+        'FFFFFFBBBBBBBBBFFF',
+        'FFFFFFBBBBFBBBBFBF',
+        'FFFFFFBBBFBFBBBBFB',
+        'FFFFFFBBBFFFBBBBBB',
+        'FFFFFFBFBBBBBBBFBF',
+        'FFFFFFBFBFBFBBBBBB',
+        'FFFFFFFBFBBBBBBBFB',
+        'FFFFFFFBFBFBBBBBBB',
+        'FFFFFFFFFBBBBBBBBB'
     )
 
     def __init__(self, parent):
@@ -2437,9 +2828,9 @@ class LookupTable555Phase4Centers(LookupTable):
             parent,
             'lookup-table-5x5x5-step41-phase4-centers.txt',
             self.state_targets,
-            linecount=2116800,
-            max_depth=10,
-            filesize=160876800,
+            linecount=4900,
+            max_depth=5,
+            filesize=181300,
             all_moves=moves_555,
             illegal_moves=(
                 "Uw", "Uw'",
@@ -2455,15 +2846,251 @@ class LookupTable555Phase4Centers(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return ''.join([parent_state[x] for x in LFRB_centers_555])
+        return ''.join([parent_state[x] for x in FB_centers_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(LFRB_centers_555, state):
+        for (pos, pos_state) in zip(FB_centers_555, state):
             cube[pos] = pos_state
 
 
+class LookupTable555Phase4Wings(LookupTable):
+    """
+    lookup-table-5x5x5-step42-phase4-wings.txt
+    ==========================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 21 entries (0 percent, 10.50x previous step)
+    3 steps has 152 entries (0 percent, 7.24x previous step)
+    4 steps has 843 entries (0 percent, 5.55x previous step)
+    5 steps has 5,116 entries (2 percent, 6.07x previous step)
+    6 steps has 27,562 entries (11 percent, 5.39x previous step)
+    7 steps has 89,240 entries (36 percent, 3.24x previous step)
+    8 steps has 103,918 entries (42 percent, 1.16x previous step)
+    9 steps has 18,126 entries (7 percent, 0.17x previous step)
+    10 steps has 44 entries (0 percent, 0.00x previous step)
+
+    Total: 245,025 entries
+    Average: 7.41 moves
+    """
+
+    wings_555 = (
+        2, # Upper
+        4,
+        6,
+        16,
+        10,
+        20,
+        22,
+        24,
+
+        31, # Left
+        41,
+        35,
+        45,
+
+        81, # Right
+        91,
+        85,
+        95,
+
+        127, # Down
+        129,
+        131,
+        141,
+        135,
+        145,
+        147,
+        149,
+    )
+
+    edge_orbit_0_555 = tuple(sorted(list(edge_orbit_0_555)))
+    edge_orbit_1_555 = tuple(sorted(list(edge_orbit_1_555)))
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step42-phase4-wings.txt',
+            'TBD',
+            linecount=245025,
+            max_depth=10,
+            filesize=20337075,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
+            ),
+        )
+
+        self.wing_strs = ("LB", "LF", "RF", "RB", "LL")
+
+    def state(self):
+        assert self.wing_strs
+        parent_state = self.parent.state[:]
+
+        for square_index in self.wings_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+            wing_str = square_value + partner_value
+
+            if wing_str not in ("LL", "xx"):
+                wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in self.wing_strs:
+                parent_state[square_index] = "L"
+                parent_state[partner_index] = "L"
+            else:
+                parent_state[square_index] = "x"
+                parent_state[partner_index] = "x"
+
+        return "".join([parent_state[index] for index in self.edge_orbit_0_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        assert self.wing_strs
+        steps_to_solve = steps_to_solve.split()
+        steps_to_scramble = reverse_steps(steps_to_solve)
+
+        self.parent.state = ['x']
+        self.parent.state.extend(list("UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"))
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+        parent_state = self.parent.state
+
+        # nuke the midges
+        for edge_pos in self.edge_orbit_1_555:
+            self.parent.state[edge_pos] = '.'
+
+        for square_index in self.wings_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+            wing_str = square_value + partner_value
+
+            if wing_str not in ("LL", "xx"):
+                wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in self.wing_strs:
+                self.parent.state[square_index] = 'L'
+                self.parent.state[partner_index] = 'L'
+            else:
+                self.parent.state[square_index] = 'x'
+                self.parent.state[partner_index] = 'x'
+
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
+
+        cube = self.parent.state[:]
+
+
+class LookupTable555Phase4Midges(LookupTable):
+    """
+    lookup-table-5x5x5-step42-phase4-midges.txt
+    ===========================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 17 entries (3 percent, 8.50x previous step)
+    3 steps has 104 entries (21 percent, 6.12x previous step)
+    4 steps has 221 entries (44 percent, 2.12x previous step)
+    5 steps has 150 entries (30 percent, 0.68x previous step)
+
+    Total: 495 entries
+    Average: 4.00 moves
+    """
+    edge_orbit_0_555 = tuple(sorted(list(edge_orbit_0_555)))
+    edge_orbit_1_555 = tuple(sorted(list(edge_orbit_1_555)))
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step42-phase4-midges.txt',
+            'TBD',
+            linecount=495,
+            max_depth=5,
+            filesize=19800,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
+            ),
+        )
+        self.wing_strs = ("LB", "LF", "RF", "RB", "LL")
+
+    def state(self):
+        assert self.wing_strs
+        parent_state = self.parent.state[:]
+
+        for square_index in self.edge_orbit_1_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+            wing_str = square_value + partner_value
+
+            if wing_str not in ("LL", "xx"):
+                wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in self.wing_strs:
+                parent_state[square_index] = "L"
+                parent_state[partner_index] = "L"
+            else:
+                parent_state[square_index] = "x"
+                parent_state[partner_index] = "x"
+
+        return "".join([parent_state[index] for index in self.edge_orbit_1_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        assert self.wing_strs
+        steps_to_solve = steps_to_solve.split()
+        steps_to_scramble = reverse_steps(steps_to_solve)
+
+        self.parent.state = ['x']
+        self.parent.state.extend(list("UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"))
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+        parent_state = self.parent.state
+
+        # nuke the wings
+        for square_index in self.edge_orbit_0_555:
+            self.parent.state[square_index] = '.'
+
+        for square_index in self.edge_orbit_1_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = parent_state[square_index]
+            partner_value = parent_state[partner_index]
+            wing_str = square_value + partner_value
+
+            if wing_str not in ("LL", "xx"):
+                wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in self.wing_strs:
+                self.parent.state[square_index] = 'L'
+                self.parent.state[partner_index] = 'L'
+            else:
+                self.parent.state[square_index] = 'x'
+                self.parent.state[partner_index] = 'x'
+
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
+
+        cube = self.parent.state[:]
+
+
+'''
 class LookupTable555Phase4EdgesFirstGroup(LookupTable):
     """
     lookup-table-5x5x5-step42-phase4-edges.txt
@@ -2507,8 +3134,9 @@ class LookupTable555Phase4EdgesFirstGroup(LookupTable):
         )
 
     def state(self):
+        assert self.wing_strs
         parent_state = self.parent.state
-        state = edges_recolor_pattern_555(parent_state[:], ("LF", "RF"))
+        state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
         return "".join([state[index] for index in wings_for_edges_pattern_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -2580,8 +3208,9 @@ class LookupTable555Phase4EdgesSecondGroup(LookupTable):
         )
 
     def state(self):
+        assert self.wing_strs
         parent_state = self.parent.state
-        state = edges_recolor_pattern_555(parent_state[:], ("LB", "RB"))
+        state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
         return "".join([state[index] for index in wings_for_edges_pattern_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -2608,6 +3237,7 @@ class LookupTable555Phase4EdgesSecondGroup(LookupTable):
             self.parent.rotate(step)
 
         cube = self.parent.state[:]
+'''
 
 
 class LookupTableIDA555Phase4(LookupTableIDAViaGraph):
@@ -2633,10 +3263,10 @@ class LookupTableIDA555Phase4(LookupTableIDAViaGraph):
             linecount=0,
             prune_tables=(
                 parent.lt_phase4_centers,
-                parent.lt_phase4_edges_first_group,
-                parent.lt_phase4_edges_second_group,
+                parent.lt_phase4_wings,
+                parent.lt_phase4_midges,
             ),
-            multiplier=1.5,
+            multiplier=1.2,
         )
 
 
@@ -3089,8 +3719,8 @@ class RubiksCube555(RubiksCube):
         self.lt_phase3 = LookupTableIDA555LRCenterStageEOBothOrbits(self)
 
         self.lt_phase4_centers = LookupTable555Phase4Centers(self)
-        self.lt_phase4_edges_first_group = LookupTable555Phase4EdgesFirstGroup(self)
-        self.lt_phase4_edges_second_group = LookupTable555Phase4EdgesSecondGroup(self)
+        self.lt_phase4_wings = LookupTable555Phase4Wings(self)
+        self.lt_phase4_midges = LookupTable555Phase4Midges(self)
         self.lt_phase4 = LookupTableIDA555Phase4(self)
 
         '''
@@ -3595,6 +4225,14 @@ class RubiksCube555(RubiksCube):
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
+    def pair_first_four_edges(self):
+        self.lt_phase4.solve_via_c()
+        self.print_cube()
+        log.info("%s: end of phase 4, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        sys.exit(0)
+
+        # Now use the L4E x-plane solver
+
     def reduce_333(self):
         self.lt_init()
         # log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
@@ -3608,11 +4246,7 @@ class RubiksCube555(RubiksCube):
             self.print_cube()
             log.info("%s: end of phase 3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-            self.lt_phase4.solve_via_c()
-            self.print_cube()
-            log.info("%s: end of phase 4, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-            sys.exit(0)
+            self.pair_first_four_edges()
             self.pair_last_eight_edges()
 
         self.solution.append("CENTERS_SOLVED")

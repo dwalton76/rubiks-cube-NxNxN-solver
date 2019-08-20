@@ -1,61 +1,12 @@
 
-- can we get rid of the --fast code path...or at least simplify it?
-
-- remove the 444 phase0 experiment
-
-- 444 now that IDA is much faster could we somehow do 444 reduction without tsai method?
-    probably not but is worth thinking about
-
 - IDA should be fast enough for tsai 555 now
     - when staging FB do so such that LR is 432ed...we should get this almost for free
       and while the LR centers will be somewhat undone in the next phase it should still
       make the next phase a little faster.
 
 - 666 UD and FB centers could be staged in a single phase (no need
-      to pair oblique edges here).  This assumes the code to stage
-      LR centers first is in.
+      to pair oblique edges here)
 
 - 666 now that IDA is much faster does that change anything?
 
 - 777 now that IDA is much faster does that change anything?
-
-
-optimal 333 (without L L' R R')
--------------------------------
-Something to think about here is if the edges are EOed to their final orientation
-then it might be feasible to solve 333 optimally since L L' R R' will not be required.
-There would be 239,500,800 edge states and 88,179,840 million corner states.
-
-    lookup-table-3x3x3-step00-ultimate.txt
-    ======================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 14 entries (0 percent, 14.00x previous step)
-    2 steps has 139 entries (0 percent, 9.93x previous step)
-    3 steps has 1,368 entries (0 percent, 9.84x previous step)
-    4 steps has 13,479 entries (0 percent, 9.85x previous step)
-    5 steps has 131,404 entries (9 percent, 9.75x previous step)
-    6 steps has 1,267,664 entries (89 percent, 9.65x previous step)
-    extrapolate from here
-    7 steps has 11,662,508 entries (9.20x previous step)
-    8 steps has 102,630,070 entries (8.80x previous step)
-    9 steps has 862,092,587 entries (8.40x previous step)
-    10 steps has 6,896,740,695 entries (8.00x previous step)
-    11 steps has 52,415,229,281 entries (7.60x previous step)
-    12 steps has 377,389,650,823 entries (7.20x previous step)
-    13 steps has 2,566,249,625,596 entries (6.80x previous step)
-    14 steps has 16,423,997,603,814 entries (6.40x previous step)
-    15 steps has 98,543,985,622,883 entries (6.00x previous step)
-    16 steps has 551,846,319,488,144 entries (5.60x previous step)
-    17 steps has 2,869,600,861,338,346 entries (5.20x previous step)
-    18 steps has 13,774,084,134,424,048 entries (4.80x previous step)
-    19 steps has 3,805,638,996,349,136 entries (0.28x previous step)
-
-    Average: 17.974217274029616
-    Total  : 21,119,142,223,872,000
-
-weird 18 is the normal average for an optimal 333 solver that is surprising I
-would have thought this would be lower. So whether or not to EO the edges to
-their final orientation really depends on if you could get this 333 optimal
-solver to run quickly enough.  There are far too many states for us to use 
-the IDA-graph approach. Both of those prune tables would be pretty deep I
-imagine so that would help.  Who knows this might be feasible.

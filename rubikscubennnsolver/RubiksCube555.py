@@ -991,22 +991,19 @@ class LookupTable555FBXCenterStage(LookupTable):
                 cube[pos] = "F"
 
 
-class LookupTable555FBCenterStageLRCenterSolve(LookupTable):
+class LookupTable555FBCenterStageLRCenter432(LookupTable):
     """
-    lookup-table-5x5x5-step23-LR-centers-solve.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 22 entries (0 percent, 5.50x previous step)
-    3 steps has 82 entries (1 percent, 3.73x previous step)
-    4 steps has 292 entries (5 percent, 3.56x previous step)
-    5 steps has 986 entries (20 percent, 3.38x previous step)
-    6 steps has 2,001 entries (40 percent, 2.03x previous step)
-    7 steps has 1,312 entries (26 percent, 0.66x previous step)
-    8 steps has 200 entries (4 percent, 0.15x previous step)
+    lookup-table-5x5x5-step23-LR-centers.txt
+    ========================================
+    0 steps has 72 entries (1 percent, 0.00x previous step)
+    1 steps has 756 entries (15 percent, 10.50x previous step)
+    2 steps has 1,064 entries (21 percent, 1.41x previous step)
+    3 steps has 1,692 entries (34 percent, 1.59x previous step)
+    4 steps has 1,220 entries (24 percent, 0.72x previous step)
+    5 steps has 96 entries (1 percent, 0.08x previous step)
 
     Total: 4,900 entries
-    Average: 5.96 moves
+    Average: 2.72 moves
     """
 
     LR_centers_555 = (
@@ -1018,11 +1015,11 @@ class LookupTable555FBCenterStageLRCenterSolve(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step23-LR-centers-solve.txt',
+            'lookup-table-5x5x5-step23-LR-centers.txt',
             'TBD',
             linecount=4900,
-            max_depth=8,
-            filesize=240100,
+            max_depth=5,
+            filesize=181300,
             all_moves=moves_555,
             illegal_moves=(
                 "Uw", "Uw'",
@@ -1086,9 +1083,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
             prune_tables=(
                 parent.lt_FB_t_centers_stage,
                 parent.lt_FB_x_centers_stage,
-                # uncoment if you also want to solve LR centers in this stage
-                # it adds about 2 steps, it takes much longer though (minutes)
-                # parent.lt_FB_centers_stage_LR_centers_solve,
+                parent.lt_FB_centers_stage_LR_centers_432,
             )
         )
 
@@ -3782,7 +3777,7 @@ class RubiksCube555(RubiksCube):
 
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
-        self.lt_FB_centers_stage_LR_centers_solve = LookupTable555FBCenterStageLRCenterSolve(self)
+        self.lt_FB_centers_stage_LR_centers_432 = LookupTable555FBCenterStageLRCenter432(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
 
         self.lt_phase3_lr_center_stage  = LookupTable555LRCenterStage(self)
@@ -3790,7 +3785,7 @@ class RubiksCube555(RubiksCube):
         self.lt_phase3_eo_inner_orbit = LookupTableIDA555EdgeOrientInnerOrbit(self)
         self.lt_phase3 = LookupTableIDA555LRCenterStageEOBothOrbits(self)
 
-        self.lt_phase4 = LookupTable555Phase4(self)
+        # self.lt_phase4 = LookupTable555Phase4(self)
 
         '''
         self.lt_phase5_centers = LookupTable555Phase5Centers(self)

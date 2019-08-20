@@ -28,17 +28,6 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-cube = RubiksCube444(solved_444, "URFDLB")
-cube.cpu_mode = "normal"
-
-cube.lt_init()
-#cube.lt_phase0_edges.build_ida_graph()
-cube.lt_phase0_UD_centers.build_ida_graph()
-#cube.lt_phase0_FD_centers.build_ida_graph()
-#cube.lt_phase0_L_centers.build_ida_graph()
-#cube.lt_phase0_R_centers.build_ida_graph()
-
-'''
 cube = RubiksCube555(solved_555, "URFDLB")
 cube.cpu_mode = "normal"
 
@@ -48,16 +37,9 @@ cube.lt_init()
 
 #cube.lt_FB_t_centers_stage.build_ida_graph()
 #cube.lt_FB_x_centers_stage.build_ida_graph()
+cube.lt_FB_centers_stage_LR_centers_432.build_ida_graph()
 #cube.lt_FB_centers_stage_LR_centers_solve.build_ida_graph()
 
 #cube.lt_phase3_lr_center_stage.build_ida_graph()
 #cube.lt_phase3_eo_outer_orbit.build_ida_graph()
 #cube.lt_phase3_eo_inner_orbit.build_ida_graph()
-
-cube.lt_phase4_centers.build_ida_graph()
-#cube.lt_phase4_wings.build_ida_graph()
-#cube.lt_phase4_centers.build_ida_graph()
-
-#cube.lt_phase4_edges_first_group.build_ida_graph()
-cube.lt_phase4_edges_second_group.build_ida_graph()
-'''

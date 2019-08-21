@@ -1143,12 +1143,16 @@ class LookupTable(object):
 
         with open(state_index_filename, "r") as fh:
             state_index = binary_search(fh, width, state_width, linecount, state)
-            return int(state_index)
+            try:
+                return int(state_index)
+            except TypeError:
+                log.info("%s: state %s" % (self, state))
+                raise
 
     def ida_heuristic(self):
         if self.ida_graph_node is None:
             self.ida_graph_node = self.state_index()
-            log.info("%s: init state_index %s" % (self, self.ida_graph_node))
+            # log.info("%s: init state_index %s" % (self, self.ida_graph_node))
 
         state_index = self.ida_graph_node
         cost_to_goal = self.ida_graph[state_index * self.ROW_LENGTH]

@@ -3785,7 +3785,7 @@ class RubiksCube555(RubiksCube):
         self.lt_phase3_eo_inner_orbit = LookupTableIDA555EdgeOrientInnerOrbit(self)
         self.lt_phase3 = LookupTableIDA555LRCenterStageEOBothOrbits(self)
 
-        # self.lt_phase4 = LookupTable555Phase4(self)
+        self.lt_phase4 = LookupTable555Phase4(self)
 
         '''
         self.lt_phase5_centers = LookupTable555Phase5Centers(self)
@@ -3839,146 +3839,8 @@ class RubiksCube555(RubiksCube):
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-    def print_eo_state(self):
-        tmp_state = self.state[:]
-        self.edges_flip_to_original_orientation(
-            self.get_y_plane_wing_strs(), self.get_x_plane_z_plane_wing_strs()
-        )
-
-        (eo_state, eo_steps) = self.lt_x_plane_y_plane_orient_edges_edges_only.ida_heuristic()
-        log.info(
-            "%s: step351 EO state %s, EO steps %s, state_target %s"
-            % (
-                self,
-                eo_state,
-                pformat(eo_steps),
-                bool(
-                    eo_state
-                    in self.lt_x_plane_y_plane_orient_edges_edges_only.state_target
-                ),
-            )
-        )
-
-        (eo_state, eo_steps) = self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.ida_heuristic()
-        log.info(
-            "%s: step361 EO state %s, EO steps %s, state_target %s"
-            % (
-                self,
-                eo_state,
-                pformat(eo_steps),
-                bool(
-                    eo_state
-                    in self.lt_x_plane_y_plane_orient_edges_fb_centers_edges_only.state_target
-                ),
-            )
-        )
-
-        self.state = tmp_state[:]
-
-    def group_centers_stage_LR(self):
-        """
-        Stage LR centers
-        """
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-
-        if not self.LR_centers_staged():
-            tmp_solution_len = len(self.solution)
-            self.lt_LR_centers_stage.solve_via_c()
-            self.print_cube()
-            self.solution.append(
-                "COMMENT_%d_steps_555_LR_centers_staged"
-                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-            )
-
-        log.info(
-            "%s: LR centers staged, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-
-    def group_centers_stage_FB(self):
-        """
-        Stage FB centers
-        """
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-
-        if not self.FB_centers_staged():
-            tmp_solution_len = len(self.solution)
-            self.lt_FB_centers_stage.solve_via_c()
-            self.print_cube()
-            self.solution.append(
-                "COMMENT_%d_steps_555_FB_centers_staged"
-                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-            )
-
-        log.info(
-            "%s: FB centers staged, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-
-    def edges_pairable_without_LR(self):
-        """
-        Return the wing_strs that can be paired without L L' R R'
-        """
-        state = self.state
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        pairable = []
-
-        for wing_str in wing_strs_all:
-            self.lt_LR_432_pair_one_edge.only_colors = set([wing_str])
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            try:
-                self.lt_LR_432_pair_one_edge.solve()
-                # log.info("%s: wing_str %s can be paired without L L' R R'" % (self, wing_str))
-                pairable.append(wing_str)
-            except NoSteps:
-                pass
-
-        self.lt_LR_432_pair_one_edge.only_colors = set()
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        # log.info("%s: pairable %s (%d of them)" % (
-        #    self, pformat(pairable), len(pairable)))
-        return tuple(sorted(pairable))
-
-    def edges_pairable_without_LRFB(self):
-        """
-        Return the wing_strs that can be paired without L L' R R' F F' B B'
-        """
-        state = self.state
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        pairable = []
-
-        for wing_str in self.get_y_plane_z_plane_wing_strs():
-            self.lt_x_plane_y_plane_orient_edges_pair_one_edge.only_colors = set(
-                [wing_str]
-            )
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            try:
-                self.lt_x_plane_y_plane_orient_edges_pair_one_edge.solve()
-                # log.info("%s: wing_str %s can be paired without L L' R R' F F' B B'" % (self, wing_str))
-                pairable.append(wing_str)
-            except NoSteps:
-                # log.info("%s: wing_str %s can NOT be paired without L L' R R' F F' B B'" % (self, wing_str))
-                pass
-
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge.only_colors = set()
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        # log.info("%s: pairable %s (%d of them)" % (
-        #    self, pformat(pairable), len(pairable)))
-        return tuple(sorted(pairable))
-
-    def edges_flip_to_original_orientation(self, must_be_uppercase=[], must_be_lowercase=[]):
+    def edges_flip_orientation(self, must_be_uppercase=[], must_be_lowercase=[]):
+        # dwalton
         state = edges_recolor_pattern_555(self.state[:])
         edges_state = "".join([state[index] for index in wings_for_edges_pattern_555])
 
@@ -4001,8 +3863,8 @@ class RubiksCube555(RubiksCube):
             (25, 128, 73),  # DF
             (28, 136, 48),  # DL
             (31, 140, 98),  # DR
-            (34, 148, 123),
-        ):  # DB
+            (34, 148, 123), # DB
+        ):
 
             square_value = self.state[square_index]
             partner_value = self.state[partner_index]
@@ -4011,15 +3873,9 @@ class RubiksCube555(RubiksCube):
             if must_be_uppercase or must_be_lowercase:
                 # log.info("must_be_uppercase %s, must_be_lowercase %s" % (must_be_uppercase, must_be_lowercase))
 
-                if (
-                    wing_str in must_be_uppercase
-                    and edges_state[edge_state_index].islower()
-                ):
+                if (wing_str in must_be_uppercase and edges_state[edge_state_index].islower()):
                     to_flip.append(wing_str)
-                elif (
-                    wing_str in must_be_lowercase
-                    and edges_state[edge_state_index].isupper()
-                ):
+                elif (wing_str in must_be_lowercase and edges_state[edge_state_index].isupper()):
                     to_flip.append(wing_str)
             else:
                 if edges_state[edge_state_index].islower():
@@ -4097,204 +3953,137 @@ class RubiksCube555(RubiksCube):
 
         return set(result)
 
-    def pair_z_plane_edges(self):
+    def group_centers_stage_LR(self):
         """
-        When we staged the LR centers to one of 432 states we did so such that there
-        are at least MIN_EO_COUNT_FOR_STAGE_LR_432 edges that can be paired without
-        L L' R R'. Those will be the "pairable" edges below. Find the combination of
-        4-edges that has the lowest cost_to_goal, pair those edges and place them in
-        the z-plane.  This phase also puts the LR centers into horizontal bars.
+        Stage LR centers
         """
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = len(original_solution)
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
 
-        self.edges_flip_to_original_orientation()
-
-        # paired_edges_count = self.get_paired_edges_count()
-        # log.info("%s: %d-edges are already paired" % (self, paired_edges_count))
-
-        # Are the z-plane edges already paired?
-        if self.z_plane_edges_paired():
-            min_wing_str_combo = self.get_z_plane_wing_strs()
-
-        # TODO what if there are 4-paired edges somewhere?  We should use those
-        else:
-            pairable = self.edges_pairable_without_LR()
-            log.info("%s: z-plane pairable edges %s" % (self, pformat(pairable)))
-
-            min_cost_to_goal = None
-            min_wing_str_combo = None
-
-            # Which combination of 4-edges has the lowest cost_to_goal?
-            for wing_str_combo in itertools.combinations(pairable, 4):
-                wing_str_combo = sorted(wing_str_combo)
-
-                # debug = bool(wing_str_combo == ['LF', 'RB', 'UB', 'UF'])
-                debug = False
-
-                if debug:
-                    log.info("wing_str_combo: %s" % pformat(wing_str_combo))
-                three_wing_cost_to_goal = []
-
-                for three_wing_str_combo in itertools.combinations(wing_str_combo, 3):
-                    self.lt_edges_z_plane_edges_only.only_colors = three_wing_str_combo
-                    (
-                        _,
-                        tmp_cost_to_goal,
-                    ) = self.lt_edges_z_plane_edges_only.ida_heuristic()
-
-                    if debug:
-                        log.info(
-                            "three_wing_str_combo: %s cost_to_goal %d"
-                            % (pformat(three_wing_str_combo), tmp_cost_to_goal)
-                        )
-                    three_wing_cost_to_goal.append(tmp_cost_to_goal)
-
-                cost_to_goal = max(three_wing_cost_to_goal)
-
-                if min_cost_to_goal is None or cost_to_goal < min_cost_to_goal:
-                    min_cost_to_goal = cost_to_goal
-                    min_wing_str_combo = wing_str_combo
-                    log.info(
-                        "z-plane wing_str_combo %s, cost_to_goal %d (NEW MIN)"
-                        % (pformat(wing_str_combo), cost_to_goal)
-                    )
-                # else:
-                #    log.info("z-plane wing_str_combo %s, cost_to_goal %d" % (pformat(wing_str_combo), cost_to_goal))
-
-        self.lt_edges_z_plane.only_colors = min_wing_str_combo
-        self.lt_edges_z_plane.solve()
-        z_plane_edges_solution = self.solution[original_solution_len:]
-
-        # Now put the cube back to the original state before we flipped all of
-        # the edges to their native orientation, then apply the solution we found.
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        tmp_solution_len = len(self.solution)
-
-        for step in z_plane_edges_solution:
-            self.rotate(step)
-
-        self.print_cube()
-        self.print_eo_state()
-        self.solution.append(
-            "COMMENT_%d_steps_555_LR_horizontal_bars_and_z_plane_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        log.info(
-            "%s: LR centers in horizontal bars, z-plane edges paired, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-
-    def pair_last_eight_edges(self):
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = len(original_solution)
-
-        self.edges_flip_to_original_orientation(
-            self.get_y_plane_wing_strs(), self.get_x_plane_z_plane_wing_strs()
-        )
-
-        tmp_solution_len = len(self.solution)
-        # self.lt_x_plane_y_plane_orient_edges_edges_only.solve()
-        # self.lt_x_plane_y_plane_orient_edges_centers_only.solve()
-        # self.lt_x_plane_y_plane_orient_edges.avoid_oll = 0
-
-        self.lt_x_plane_y_plane_orient_edges.solve()
-        # self.print_cube()
-        # self.highlow_edges_print()
-        # log.info("%s: 8-edges EOed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        if len(self.solution) > tmp_solution_len:
+        if not self.LR_centers_staged():
+            tmp_solution_len = len(self.solution)
+            self.lt_LR_centers_stage.solve_via_c()
+            self.print_cube()
             self.solution.append(
-                "COMMENT_%d_steps_555_edges_partially_EOed"
+                "COMMENT_%d_steps_555_LR_centers_staged"
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
 
         log.info(
-            "%s: UD and FB centers staged, edges partially EOed, %d steps in"
+            "%s: LR centers staged, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
-        tmp_solution_len = len(self.solution)
-        self.lt_x_plane_y_plane_orient_edges_fb_centers.solve()
+    def group_centers_stage_FB(self):
+        """
+        Stage FB centers
+        """
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
 
-        tmp_state = self.state[:]
-        tmp_solution = self.solution[:]
-        min_LR_cost = None
-        min_LR_moves = None
-
-        # Of  L,R  L,R'  L',R  L',R'  which sets up better for the next phase?
-        for (L_move, R_move) in (("L", "R"), ("L", "R'"), ("L'", "R"), ("L'", "R'")):
-            self.rotate(L_move)
-            self.rotate(R_move)
-
-            self.lt_pair_last_eight_edges_edges_only.only_colors = (
-                self.get_y_plane_z_plane_wing_strs()
+        if not self.FB_centers_staged():
+            tmp_solution_len = len(self.solution)
+            self.lt_FB_centers_stage.solve_via_c()
+            self.print_cube()
+            self.solution.append(
+                "COMMENT_%d_steps_555_FB_centers_staged"
+                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
-            # (_, last_eight_edges_cost) = self.lt_pair_last_eight_edges_edges_only.ida_heuristic()
-            (_, last_eight_edges_cost) = self.lt_pair_last_eight_edges.ida_heuristic()
 
-            if min_LR_cost is None or last_eight_edges_cost < min_LR_cost:
-                log.info(
-                    "%s: %s %s leads to last-eight-edges cost %d (NEW MIN)"
-                    % (self, L_move, R_move, last_eight_edges_cost)
-                )
-                min_LR_cost = last_eight_edges_cost
-                min_LR_moves = (L_move, R_move)
-            else:
-                log.info(
-                    "%s: %s %s leads to last-eight-edges cost %d"
-                    % (self, L_move, R_move, last_eight_edges_cost)
-                )
-            self.state = tmp_state[:]
-            self.solution = tmp_solution[:]
-
-        for step in min_LR_moves:
-            self.rotate(step)
-
-        pairable_count = len(self.edges_pairable_without_LRFB())
-        self.print_cube()
-        self.highlow_edges_print()
-        self.solution.append(
-            "COMMENT_%d_steps_555_FB_vertical_bars_and_edges_EOed"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
         log.info(
-            "%s: LR and FB vertical bars, x-plane paired, %d-edges EOed, %d steps in"
-            % (self, pairable_count, self.get_solution_len_minus_rotates(self.solution))
+            "%s: FB centers staged, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        assert pairable_count == 8
 
-        tmp_solution_len = len(self.solution)
-        self.lt_pair_last_eight_edges_edges_only.only_colors = (
-            self.get_y_plane_z_plane_wing_strs()
-        )
-        # self.lt_pair_last_eight_edges_edges_only.solve()
-        # self.lt_pair_last_eight_edges_centers_only.solve()
-        self.lt_pair_last_eight_edges.solve()
+    def eo_edges(self):
+        """
+        000 000 000 011 111 111 112 222 222 222 333 333
+        012 345 678 901 234 567 890 123 456 789 012 345
+        OOo pPP QQq rRR sSS TTt uUU VVv WWw xXX YYy zZZ
+         ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^
+         UB  UL  UR  UD  LB  LF  RF  RB  DF  DL  DR  DB
+        """
+        permutations = []
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
 
-        # Now put the cube back to the original state before we flipped all of
-        # the edges to their native orientation, then apply the solution we found.
-        last_eight_edges_solution = self.solution[original_solution_len:]
+        self.lt_phase3_eo_outer_orbit.load_ida_graph()
+
+        # Build a list of the wing strings at each midge
+        wing_strs = []
+
+        for (_, square_index, partner_index) in midges_recolor_tuples_555:
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = square_value + partner_value
+            wing_str = wing_str_map[square_value + partner_value]
+            wing_strs.append(wing_str)
+        log.info(f"wing_strs: {wing_strs}")
+
+        # build a list of all possible EO permutations...an even number
+        # of edges must be high
+        for num in range(4096):
+            num = str(bin(num)).lstrip("0b").zfill(12)
+            if num.count("1") % 2 == 0:
+                permutations.append(list(map(int, num)))
+
+        # Now see which permutation results in the lowest cost to EO the wings
+        min_must_be_uppercase = []
+        min_must_be_lowercase = []
+        min_cost = 99
+
+        for (index, permutation) in enumerate(permutations):
+            must_be_uppercase = []
+            must_be_lowercase = []
+            self.state = original_state[:]
+
+            for (wing_str, uppercase) in zip(wing_strs, permutation):
+                if uppercase:
+                    must_be_uppercase.append(wing_str)
+                else:
+                    must_be_lowercase.append(wing_str)
+
+            #log.info("BEFORE")
+            #self.print_cube()
+            #log.info(f"permutation {permutation}")
+            #log.info(f"must_be_uppercase {must_be_uppercase}")
+            #log.info(f"must_be_lowercase {must_be_lowercase}")
+            self.edges_flip_orientation(must_be_uppercase, must_be_lowercase)
+            #log.info("AFTER")
+            #self.print_cube()
+
+            self.lt_phase3_eo_outer_orbit.ida_graph_node = None
+            (outer_orbit_state, outer_orbit_cost) = self.lt_phase3_eo_outer_orbit.ida_heuristic()
+
+            if outer_orbit_cost < min_cost:
+                log.info("%s: outer orbit cost %d, permutation %s (NEW MIN)" % (self, outer_orbit_cost, "".join(map(str, permutation))))
+                min_cost = outer_orbit_cost
+                min_must_be_uppercase = must_be_uppercase[:]
+                min_must_be_lowercase = must_be_lowercase[:]
+            #else:
+            #    log.info("%s: outer orbit cost %d" % (self, outer_orbit_cost))
+
+        # Now apply that permutation and solve this phase
+        self.state = original_state[:]
+        self.edges_flip_orientation(min_must_be_uppercase, min_must_be_lowercase)
+        self.lt_phase3_eo_outer_orbit.ida_graph_node = None
+        (outer_orbit_state, outer_orbit_cost) = self.lt_phase3_eo_outer_orbit.ida_heuristic()
+        log.info("%s: outer orbit cost %d (FINAL)" % (self, outer_orbit_cost))
+
+        self.lt_phase3.solve_via_c()
+        self.highlow_edges_print()
+        eo_solution = self.solution[original_solution_len:]
+
+        # Now put the cube back the way it was (before we re-oriented the edges) and then apply the solution
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-        for step in last_eight_edges_solution:
-            if step.startswith("COMMENT"):
-                self.solution.append(step)
-            else:
-                self.rotate(step)
+        for step in eo_solution:
+            self.rotate(step)
 
         self.print_cube()
-        self.solution.append(
-            "COMMENT_%d_steps_555_last_eight_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        log.info(
-            "%s: %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        log.info("%s: end of phase 3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def pair_first_four_edges(self):
         # In order to make phase5 much faster we need to arrange one group of 4-edges
@@ -4322,6 +4111,45 @@ class RubiksCube555(RubiksCube):
         log.info("%s: end of phase 4, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         sys.exit(0)
 
+        self.lt_phase5.solve_via_c()
+        self.print_cube()
+        log.info("%s: end of phase 5, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+    def pair_last_eight_edges(self):
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(original_solution)
+
+        self.edges_flip_orientation(self.get_y_plane_wing_strs(), self.get_x_plane_z_plane_wing_strs())
+
+        tmp_solution_len = len(self.solution)
+        self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
+        # self.lt_pair_last_eight_edges_edges_only.solve()
+        # self.lt_pair_last_eight_edges_centers_only.solve()
+        self.lt_pair_last_eight_edges.solve()
+
+        # Now put the cube back to the original state before we flipped all of
+        # the edges to their native orientation, then apply the solution we found.
+        last_eight_edges_solution = self.solution[original_solution_len:]
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for step in last_eight_edges_solution:
+            if step.startswith("COMMENT"):
+                self.solution.append(step)
+            else:
+                self.rotate(step)
+
+        self.print_cube()
+        self.solution.append(
+            "COMMENT_%d_steps_555_last_eight_edges_paired"
+            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
+
+        log.info("%s: %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+
     def reduce_333(self):
         self.lt_init()
         # log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
@@ -4329,18 +4157,8 @@ class RubiksCube555(RubiksCube):
         if not self.centers_solved() or not self.edges_paired():
             self.group_centers_stage_LR()
             self.group_centers_stage_FB()
-
-            self.lt_phase3.solve_via_c()
-            self.highlow_edges_print()
-            self.print_cube()
-            log.info("%s: end of phase 3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
+            self.eo_edges()
             self.pair_first_four_edges()
-
-            self.lt_phase5.solve_via_c()
-            self.print_cube()
-            log.info("%s: end of phase 5, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
             self.pair_last_eight_edges()
 
         self.solution.append("CENTERS_SOLVED")

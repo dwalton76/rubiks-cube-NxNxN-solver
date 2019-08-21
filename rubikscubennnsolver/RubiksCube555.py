@@ -19,8 +19,6 @@ import sys
 
 log = logging.getLogger(__name__)
 
-MIN_EO_COUNT_FOR_STAGE_LR_432 = 5
-
 moves_555 = (
     "U", "U'", "U2", "Uw", "Uw'", "Uw2",
     "L", "L'", "L2", "Lw", "Lw'", "Lw2",
@@ -1083,6 +1081,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
             prune_tables=(
                 parent.lt_FB_t_centers_stage,
                 parent.lt_FB_x_centers_stage,
+                # uncomment to also 432 the LR centers
                 parent.lt_FB_centers_stage_LR_centers_432,
             )
         )
@@ -1877,6 +1876,48 @@ class LookupTableIDA555EdgeOrientInnerOrbit(LookupTable):
             self.parent.rotate(step)
 
         cube = self.parent.state[:]
+
+
+class LookupTable555EdgeOrientBothOrbits(LookupTable):
+    """
+    lookup-table-5x5x5-step904-EO-both-orbits.txt
+    =============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 33 entries (0 percent, 16.50x previous step)
+    3 steps has 382 entries (0 percent, 11.58x previous step)
+    4 steps has 4,040 entries (0 percent, 10.58x previous step)
+    5 steps has 47,502 entries (0 percent, 11.76x previous step)
+    6 steps has 541,439 entries (9 percent, 11.40x previous step)
+    7 steps has 5,353,259 entries (90 percent, 9.89x previous step)
+    Total: 5,946,658 entries
+
+    extrapolate from here
+
+    8 steps has 48,661,124 entries (9.09x previous step)
+    9 steps has 403,400,717 entries (8.29x previous step)
+    10 steps has 3,021,471,370 entries (7.49x previous step)
+    11 steps has 2,058,631,619 entries (0.68x previous step)
+
+    Average: 10.270569142070691
+    Total  : 5,538,111,488
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step904-EO-both-orbits.txt',
+            'TBD',
+            linecount=5946658,
+            max_depth=7,
+            filesize=588719142)
+
+    def ida_heuristic(self):
+        state = self.parent.highlow_edges_state()
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
+
 
 
 class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
@@ -3783,6 +3824,7 @@ class RubiksCube555(RubiksCube):
         self.lt_phase3_lr_center_stage  = LookupTable555LRCenterStage(self)
         self.lt_phase3_eo_outer_orbit = LookupTableIDA555EdgeOrientOuterOrbit(self)
         self.lt_phase3_eo_inner_orbit = LookupTableIDA555EdgeOrientInnerOrbit(self)
+        self.lt_phase3_eo_both_orbits = LookupTable555EdgeOrientBothOrbits(self)
         self.lt_phase3 = LookupTableIDA555LRCenterStageEOBothOrbits(self)
 
         self.lt_phase4 = LookupTable555Phase4(self)
@@ -3840,7 +3882,6 @@ class RubiksCube555(RubiksCube):
         self.solution = original_solution[:]
 
     def edges_flip_orientation(self, must_be_uppercase=[], must_be_lowercase=[]):
-        # dwalton
         state = edges_recolor_pattern_555(self.state[:])
         edges_state = "".join([state[index] for index in wings_for_edges_pattern_555])
 
@@ -3997,6 +4038,13 @@ class RubiksCube555(RubiksCube):
 
     def eo_edges(self):
         """
+        Our goal is to get the edges split into high/low groups but we do not
+        care what the final orienation is of the edges. Each edge can either
+        be in its final orientation or not so there are (2^12)/2 or 2048 possible
+        permutations.  The /2 is because there cannot be an odd number of edges
+        not in their final orientation. 
+
+        # dwalton finish commenting this
         000 000 000 011 111 111 112 222 222 222 333 333
         012 345 678 901 234 567 890 123 456 789 012 345
         OOo pPP QQq rRR sSS TTt uUU VVv WWw xXX YYy zZZ
@@ -4028,48 +4076,60 @@ class RubiksCube555(RubiksCube):
             if num.count("1") % 2 == 0:
                 permutations.append(list(map(int, num)))
 
+        # dwalton
         # Now see which permutation results in the lowest cost to EO the wings
-        min_must_be_uppercase = []
-        min_must_be_lowercase = []
-        min_cost = 99
 
-        for (index, permutation) in enumerate(permutations):
-            must_be_uppercase = []
-            must_be_lowercase = []
-            self.state = original_state[:]
+        for use_both_orbits in (True, False):
+            min_must_be_uppercase = []
+            min_must_be_lowercase = []
+            min_cost = 99
 
-            for (wing_str, uppercase) in zip(wing_strs, permutation):
-                if uppercase:
-                    must_be_uppercase.append(wing_str)
+            if use_both_orbits:
+                desc = "EO both orbits"
+            else:
+                desc = "EO outer orbit"
+
+            for (index, permutation) in enumerate(permutations):
+                must_be_uppercase = []
+                must_be_lowercase = []
+                self.state = original_state[:]
+
+                for (wing_str, uppercase) in zip(wing_strs, permutation):
+                    if uppercase:
+                        must_be_uppercase.append(wing_str)
+                    else:
+                        must_be_lowercase.append(wing_str)
+
+                #log.info("BEFORE")
+                #self.print_cube()
+                #log.info(f"permutation {permutation}")
+                #log.info(f"must_be_uppercase {must_be_uppercase}")
+                #log.info(f"must_be_lowercase {must_be_lowercase}")
+                self.edges_flip_orientation(must_be_uppercase, must_be_lowercase)
+                #log.info("AFTER")
+                #self.print_cube()
+
+                if use_both_orbits:
+                    (outer_orbit_state, cost) = self.lt_phase3_eo_both_orbits.ida_heuristic()
                 else:
-                    must_be_lowercase.append(wing_str)
+                    self.lt_phase3_eo_outer_orbit.ida_graph_node = None
+                    (outer_orbit_state, cost) = self.lt_phase3_eo_outer_orbit.ida_heuristic()
 
-            #log.info("BEFORE")
-            #self.print_cube()
-            #log.info(f"permutation {permutation}")
-            #log.info(f"must_be_uppercase {must_be_uppercase}")
-            #log.info(f"must_be_lowercase {must_be_lowercase}")
-            self.edges_flip_orientation(must_be_uppercase, must_be_lowercase)
-            #log.info("AFTER")
-            #self.print_cube()
+                if cost < min_cost:
+                    log.info("%s: %s %d, permutation %s (NEW MIN)" % (self, desc, cost, "".join(map(str, permutation))))
+                    min_cost = cost
+                    min_must_be_uppercase = must_be_uppercase[:]
+                    min_must_be_lowercase = must_be_lowercase[:]
 
-            self.lt_phase3_eo_outer_orbit.ida_graph_node = None
-            (outer_orbit_state, outer_orbit_cost) = self.lt_phase3_eo_outer_orbit.ida_heuristic()
-
-            if outer_orbit_cost < min_cost:
-                log.info("%s: outer orbit cost %d, permutation %s (NEW MIN)" % (self, outer_orbit_cost, "".join(map(str, permutation))))
-                min_cost = outer_orbit_cost
-                min_must_be_uppercase = must_be_uppercase[:]
-                min_must_be_lowercase = must_be_lowercase[:]
-            #else:
-            #    log.info("%s: outer orbit cost %d" % (self, outer_orbit_cost))
+            if use_both_orbits:
+                if min_cost <= self.lt_phase3_eo_both_orbits.max_depth:
+                    break
 
         # Now apply that permutation and solve this phase
         self.state = original_state[:]
         self.edges_flip_orientation(min_must_be_uppercase, min_must_be_lowercase)
         self.lt_phase3_eo_outer_orbit.ida_graph_node = None
-        (outer_orbit_state, outer_orbit_cost) = self.lt_phase3_eo_outer_orbit.ida_heuristic()
-        log.info("%s: outer orbit cost %d (FINAL)" % (self, outer_orbit_cost))
+        # (outer_orbit_state, outer_orbit_cost) = self.lt_phase3_eo_outer_orbit.ida_heuristic()
 
         self.lt_phase3.solve_via_c()
         self.highlow_edges_print()

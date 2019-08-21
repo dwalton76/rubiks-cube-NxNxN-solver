@@ -1,10 +1,6 @@
 
 - IDA should be fast enough for tsai 555 now
 
-    - for phase3 we need to choose which of 2048 EO mapping to use. We could build
-      the EO table for both orbits (would be about 2 billion entries). We would then pick
-      the EO mapping that had the lowest cost.
-
     - the phase4 table has all 121,287,375 entries.  If we kept only up to depth-3 that would
       cut it to about 30 million and would be plenty deep. Or we start storing everything in
       an s3 bucket and stop worrying about large files. Honestly we could probably only keep

@@ -1121,7 +1121,7 @@ class LookupTable(object):
 
             index += 1
 
-            if index % 1000 == 0:
+            if index % 10000 == 0:
                 log.info(index)
 
         with open(self.filename.replace(".txt", ".json"), "w") as fh:
@@ -1293,7 +1293,7 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
         # This will be very rare but if a state_target and some other random state both hash
         # to the same bucket the cost will be 0.
         if not result:
-            log.debug(
+            log.info(
                 "%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s"
                 % (self, state_to_find, hash_raw, hash_index, result)
             )

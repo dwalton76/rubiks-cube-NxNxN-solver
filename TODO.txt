@@ -11,6 +11,21 @@
       table and a LowWingMidge table, I think each of those will be 8! or 40,320. The centers
       table should be 6 * 6 * 4900 = 176,400 states.
 
+      There is some bug here I cannot figure out.  To troubleshoot it I am rebuilding the
+      821 million entry "pair last eight edges" table.  Once that is done find the solution
+      for the last 8 edges at the end of phase5 and feed that into IDA-via-graph and see
+      what the two pt costs are. There is also something funky happening when I try to use
+      the old way of solving, I see a ton of
+
+state_to_find QOqpPRYQryRP------------WWowXXZYxzZO, hash_raw 3819963987. hash_index 568559111, result is 0
+
+      These should be pretty rare...maybe the hash algorithm has changed? This makes it pretty
+      much impossible to use any HashCostOnly approach I think.
+
+      delete without_LFRB and LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge once you
+      have this figured out.
+
+
 - 666 UD and FB centers could be staged in a single phase (no need
       to pair oblique edges here)
 

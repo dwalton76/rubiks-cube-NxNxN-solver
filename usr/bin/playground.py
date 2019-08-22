@@ -37,9 +37,14 @@ cube.lt_init()
 
 #cube.lt_FB_t_centers_stage.build_ida_graph()
 #cube.lt_FB_x_centers_stage.build_ida_graph()
-cube.lt_FB_centers_stage_LR_centers_432.build_ida_graph()
+#cube.lt_FB_centers_stage_LR_centers_432.build_ida_graph()
 #cube.lt_FB_centers_stage_LR_centers_solve.build_ida_graph()
 
 #cube.lt_phase3_lr_center_stage.build_ida_graph()
 #cube.lt_phase3_eo_outer_orbit.build_ida_graph()
 #cube.lt_phase3_eo_inner_orbit.build_ida_graph()
+
+#cube.lt_phase5_centers.build_ida_graph()
+#cube.lt_phase5_high_edge_midge.build_ida_graph()
+cube.lt_phase5_low_edge_midge.build_ida_graph()
+

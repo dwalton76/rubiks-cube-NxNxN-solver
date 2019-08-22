@@ -487,7 +487,6 @@ ida_search (unsigned char cost_to_here,
             cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
         }
 
-
         if (main_table) {
             struct key_value_pair *main_table_node = NULL;
             unsigned char STATE_SIZE = 48;
@@ -582,7 +581,7 @@ ida_search (unsigned char cost_to_here,
     }
 
     hash_add(&ida_explored, lt_state, cost_to_here);
-    */
+     */
 
     int offset = 0;
 

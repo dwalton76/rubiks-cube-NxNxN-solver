@@ -1,4 +1,8 @@
 
+- 444 centers stage move to IDA-via-graph?
+
+- 444 edges move to IDA-via-graph?
+
 - IDA should be fast enough for tsai 555 now
 
     - the phase4 table has all 121,287,375 entries.  If we kept only up to depth-3 that would
@@ -17,7 +21,7 @@
       what the two pt costs are. There is also something funky happening when I try to use
       the old way of solving, I see a ton of
 
-state_to_find QOqpPRYQryRP------------WWowXXZYxzZO, hash_raw 3819963987. hash_index 568559111, result is 0
+        state_to_find QOqpPRYQryRP------------WWowXXZYxzZO, hash_raw 3819963987. hash_index 568559111, result is 0
 
       These should be pretty rare...maybe the hash algorithm has changed? This makes it pretty
       much impossible to use any HashCostOnly approach I think.
@@ -25,6 +29,7 @@ state_to_find QOqpPRYQryRP------------WWowXXZYxzZO, hash_raw 3819963987. hash_in
       delete without_LFRB and LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge once you
       have this figured out.
 
+    - Move 555 centers solving to IDA-via-C?
 
 - 666 UD and FB centers could be staged in a single phase (no need
       to pair oblique edges here)

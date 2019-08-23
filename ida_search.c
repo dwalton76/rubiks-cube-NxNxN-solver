@@ -12,15 +12,9 @@
 #include "rotate_xxx.h"
 #include "ida_search_core.h"
 #include "ida_search_444.h"
-#include "ida_search_555.h"
 #include "ida_search_666.h"
 #include "ida_search_777.h"
 
-
-// To compile:
-//  gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_444.c ida_search_555.c ida_search_666.c ida_search_777.c -lm
-//
-//  Add -ggdb to build gdb symbols
 
 // scratchpads that we do not want to allocate over and over again
 char *sp_cube_state;
@@ -29,15 +23,6 @@ unsigned long ida_count;
 unsigned long ida_count_total;
 unsigned long seek_calls = 0;
 
-/*
-typedef enum {
-    NONE,
-    CPU_FAST,
-    CPU_NORMAL,
-    CPU_SLOW,
-} cpu_mode_type;
-*/
-
 // Supported IDA searches
 typedef enum {
     NONE,
@@ -45,9 +30,6 @@ typedef enum {
     // 4x4x4
     CENTERS_STAGE_444,
     REDUCE_333_444,
-
-    // 5x5x5
-    CENTERS_SOLVE_555,
 
     // 6x6x6
     LR_OBLIQUE_EDGES_STAGE_666,
@@ -440,12 +422,6 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         print_cube(cube, size);
         break;
 
-    case CENTERS_SOLVE_555:
-        // Convert to 1s and 0s
-        str_replace_for_binary(cube, ones_ULF);
-        print_cube(cube, size);
-        break;
-
     case STEP40_777:
     case STEP50_777:
     case STEP60_777:
@@ -712,16 +688,6 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             reduce_333_edges_only,
             reduce_333_centers_only,
             wings_for_recolor_444);
-
-    // 5x5x5
-    case CENTERS_SOLVE_555:
-        return ida_heuristic_ULFRBD_centers_555(
-            cube,
-            max_cost_to_goal,
-            &ULFRBD_centers_555,
-            UL_centers_cost_only_555,
-            UF_centers_cost_only_555,
-            LF_centers_cost_only_555);
 
     // 6x6x6
     case LR_OBLIQUE_EDGES_STAGE_666:
@@ -1044,11 +1010,6 @@ ida_search_complete (
             return 0;
         }
 
-
-    // 5x5x5
-    case CENTERS_SOLVE_555:
-        return ida_search_complete_ULFRBD_centers_555(cube);
-
     // 6x6x6
     case LR_OBLIQUE_EDGES_STAGE_666:
         return ida_search_complete_LR_oblique_edges_stage_666(cube);
@@ -1175,32 +1136,6 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         case L_PRIME:
         case R:
         case R_PRIME:
-            return 0;
-        default:
-            return 1;
-        }
-
-    // 5x5x5
-    case CENTERS_SOLVE_555:
-        switch (move) {
-        case Uw:
-        case Uw_PRIME:
-        case Lw:
-        case Lw_PRIME:
-        case Fw:
-        case Fw_PRIME:
-        case Rw:
-        case Rw_PRIME:
-        case Bw:
-        case Bw_PRIME:
-        case Dw:
-        case Dw_PRIME:
-
-        // Uncomment if LR are staged to one of 432 states
-        // case L:
-        // case L_PRIME:
-        // case R:
-        // case R_PRIME:
             return 0;
         default:
             return 1;
@@ -2034,85 +1969,6 @@ ida_search (unsigned int cost_to_here,
 }
 
 
-void
-free_prune_tables()
-{
-    if (pt_LR_t_centers_cost_only == NULL) {
-        free(pt_LR_t_centers_cost_only);
-        pt_LR_t_centers_cost_only = NULL;
-    }
-
-    if (pt_LR_x_centers_cost_only == NULL) {
-        free(pt_LR_x_centers_cost_only);
-        pt_LR_x_centers_cost_only = NULL;
-    }
-
-    /*
-    if (pt_LR_t_centers_cost_only == NULL) {
-        free(pt_LR_t_centers_cost_only);
-        pt_LR_t_centers_cost_only = NULL;
-    }
-
-    if (pt_LR_x_centers_cost_only == NULL) {
-        free(pt_LR_x_centers_cost_only);
-        pt_LR_x_centers_cost_only = NULL;
-    }
-    */
-
-    if (UL_centers_cost_only_555 == NULL) {
-        free(UL_centers_cost_only_555);
-        UL_centers_cost_only_555 = NULL;
-    }
-
-    if (UF_centers_cost_only_555 == NULL) {
-        free(UF_centers_cost_only_555);
-        UF_centers_cost_only_555 = NULL;
-    }
-
-    if (LF_centers_cost_only_555 == NULL) {
-        free(LF_centers_cost_only_555);
-        LF_centers_cost_only_555 = NULL;
-    }
-
-    if (LR_inner_x_centers_666 == NULL) {
-        free(LR_inner_x_centers_666);
-        LR_inner_x_centers_666 = NULL;
-    }
-
-    if (LR_oblique_edges_666 == NULL) {
-        free(LR_oblique_edges_666);
-        LR_oblique_edges_666 = NULL;
-    }
-
-
-    if (ida_explored == NULL) {
-        free(ida_explored);
-        ida_explored = NULL;
-    }
-
-
-    if (LR_centers_555 == NULL) {
-        free(LR_centers_555);
-        LR_centers_555 = NULL;
-    }
-
-    if (ULFRBD_centers_555 == NULL) {
-        free(ULFRBD_centers_555);
-        ULFRBD_centers_555 = NULL;
-    }
-
-    if (LR_inner_x_centers_and_oblique_edges_stage_666 == NULL) {
-        free(LR_inner_x_centers_and_oblique_edges_stage_666);
-        LR_inner_x_centers_and_oblique_edges_stage_666 = NULL;
-    }
-
-    if (LFRB_inner_x_centers_and_oblique_edges_solve_666 == NULL) {
-        free(LFRB_inner_x_centers_and_oblique_edges_solve_666);
-        LFRB_inner_x_centers_and_oblique_edges_solve_666 = NULL;
-    }
-}
-
-
 int
 ida_solve (
     char *cube,
@@ -2152,14 +2008,6 @@ ida_solve (
         reduce_333_edges_only = ida_cost_only_preload("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
         reduce_333_centers_only = ida_cost_only_preload("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
         wings_for_recolor_444 = init_wings_for_edges_recolor_pattern_444();
-        break;
-
-    // 5x5x5
-    case CENTERS_SOLVE_555:
-        ida_prune_table_preload(&ULFRBD_centers_555, "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt");
-        UL_centers_cost_only_555 = ida_cost_only_preload("lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt", 24010032);
-        UF_centers_cost_only_555 = ida_cost_only_preload("lookup-table-5x5x5-step32-UF-centers-solve.hash-cost-only.txt", 24010032);
-        LF_centers_cost_only_555 = ida_cost_only_preload("lookup-table-5x5x5-step33-LF-centers-solve.hash-cost-only.txt", 24010032);
         break;
 
     // 6x6x6
@@ -2266,11 +2114,6 @@ main (int argc, char *argv[])
             } else if (strmatch(argv[i], "4x4x4-reduce-333")) {
                 type = REDUCE_333_444;
                 cube_size_type = 4;
-
-            // 5x5x5
-            } else if (strmatch(argv[i], "5x5x5-centers-solve")) {
-                type = CENTERS_SOLVE_555;
-                cube_size_type = 5;
 
             // 6x6x6
             } else if (strmatch(argv[i], "6x6x6-LR-oblique-edges-stage")) {
@@ -2383,8 +2226,6 @@ main (int argc, char *argv[])
 
     // print_cube(cube, cube_size);
     ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
-
-    // free_prune_tables();
 
     // Print the maximum resident set size used (in MB).
     struct rusage r_usage;

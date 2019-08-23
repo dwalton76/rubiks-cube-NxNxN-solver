@@ -1076,80 +1076,177 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
         )
 
 
-class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaC):
+class LookupTable555UDCenterSolve(LookupTable):
     """
-    24,010,000/117,649,000,000 is 0.000 204 so this will be a fast IDA search
-
-    lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
-    ==================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 99 entries (0 percent, 14.14x previous step)
-    3 steps has 1,134 entries (0 percent, 11.45x previous step)
-    4 steps has 12,183 entries (0 percent, 10.74x previous step)
-    5 steps has 128,730 entries (8 percent, 10.57x previous step)
-    6 steps has 1,291,295 entries (90 percent, 10.03x previous step)
-
-    Total: 1,433,448 entries
-
-
-    lookup-table-5x5x5-step31-UL-centers-solve.txt
-    lookup-table-5x5x5-step32-UF-centers-solve.txt
-    lookup-table-5x5x5-step33-LF-centers-solve.txt
+    lookup-table-5x5x5-step34-UD-centers-solve.txt
     ==============================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 71 entries (0 percent, 10.14x previous step)
-    3 steps has 630 entries (0 percent, 8.87x previous step)
-    4 steps has 4,639 entries (0 percent, 7.36x previous step)
-    5 steps has 32,060 entries (0 percent, 6.91x previous step)
-    6 steps has 198,779 entries (0 percent, 6.20x previous step)
-    7 steps has 1,011,284 entries (4 percent, 5.09x previous step)
-    8 steps has 3,826,966 entries (15 percent, 3.78x previous step)
-    9 steps has 8,611,512 entries (35 percent, 2.25x previous step)
-    10 steps has 8,194,244 entries (34 percent, 0.95x previous step)
-    11 steps has 2,062,640 entries (8 percent, 0.25x previous step)
-    12 steps has 67,152 entries (0 percent, 0.03x previous step)
-    13 steps has 16 entries (0 percent, 0.00x previous step)
-
-    Total: 24,010,000 entries
-    Average: 9.25 moves
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 22 entries (0 percent, 5.50x previous step)
+    3 steps has 82 entries (1 percent, 3.73x previous step)
+    4 steps has 292 entries (5 percent, 3.56x previous step)
+    5 steps has 986 entries (20 percent, 3.38x previous step)
+    6 steps has 2,001 entries (40 percent, 2.03x previous step)
+    7 steps has 1,312 entries (26 percent, 0.66x previous step)
+    8 steps has 200 entries (4 percent, 0.15x previous step)
+    
+    Total: 4,900 entries
+    Average: 5.96 moves
     """
 
     def __init__(self, parent):
-
-        LookupTableIDAViaC.__init__(
+        LookupTable.__init__(
             self,
             parent,
-            # Needed tables and their md5 signatures
-            # (('lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt', 24368616, '5a0bad50c3e650dbd2677e29aba17eca'), # 6-deep
-            (
-                (
-                    "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt",
-                    2416601,
-                    "ac39d8406d55e7ddf9f0967a35fddd00",
-                ),  # 5-deep
-                (
-                    "lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt",
-                    24010032,
-                    "b9e47314dbbb37690d4aed370b3b2245",
-                ),
-                (
-                    "lookup-table-5x5x5-step32-UF-centers-solve.hash-cost-only.txt",
-                    24010032,
-                    "966f865fffe4b5c2ce7301767c3f19f7",
-                ),
-                (
-                    "lookup-table-5x5x5-step33-LF-centers-solve.hash-cost-only.txt",
-                    24010032,
-                    "7ea2ddf0e97094cc8f5d9c11df0176fe",
-                ),
+            'lookup-table-5x5x5-step34-UD-centers-solve.txt',
+            'TBD',
+            linecount=4900,
+            max_depth=8,
+            filesize=240100,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
             ),
-            "5x5x5-centers-solve",  # C_ida_type
         )
 
-        self.recolor_positions = centers_555
-        self.recolor_map = {"D": "x", "R": "x", "B": "x"}
-        self.nuke_corners = True
-        self.nuke_edges = True
+    def state(self):
+        parent_state = self.parent.state
+        return ''.join([parent_state[x] for x in UD_centers_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UD_centers_555, state):
+            cube[pos] = pos_state
+
+
+class LookupTable555LRCenterSolve(LookupTable):
+    """
+    lookup-table-5x5x5-step35-LR-centers-solve.txt
+    ==============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 22 entries (0 percent, 5.50x previous step)
+    3 steps has 82 entries (1 percent, 3.73x previous step)
+    4 steps has 292 entries (5 percent, 3.56x previous step)
+    5 steps has 986 entries (20 percent, 3.38x previous step)
+    6 steps has 2,001 entries (40 percent, 2.03x previous step)
+    7 steps has 1,312 entries (26 percent, 0.66x previous step)
+    8 steps has 200 entries (4 percent, 0.15x previous step)
+    
+    Total: 4,900 entries
+    Average: 5.96 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step35-LR-centers-solve.txt',
+            'TBD',
+            linecount=4900,
+            max_depth=8,
+            filesize=240100,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+            ),
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return ''.join([parent_state[x] for x in LR_centers_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(LR_centers_555, state):
+            cube[pos] = pos_state
+
+
+class LookupTable555FBCenterSolve(LookupTable):
+    """
+    lookup-table-5x5x5-step36-FB-centers-solve.txt
+    ==============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 22 entries (0 percent, 5.50x previous step)
+    3 steps has 82 entries (1 percent, 3.73x previous step)
+    4 steps has 292 entries (5 percent, 3.56x previous step)
+    5 steps has 986 entries (20 percent, 3.38x previous step)
+    6 steps has 2,001 entries (40 percent, 2.03x previous step)
+    7 steps has 1,312 entries (26 percent, 0.66x previous step)
+    8 steps has 200 entries (4 percent, 0.15x previous step)
+    
+    Total: 4,900 entries
+    Average: 5.96 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step36-FB-centers-solve.txt',
+            'TBD',
+            linecount=4900,
+            max_depth=8,
+            filesize=240100,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+            ),
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return ''.join([parent_state[x] for x in FB_centers_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(FB_centers_555, state):
+            cube[pos] = pos_state
+
+
+class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
+
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step30-dummy.txt',
+            'TBD',
+            moves_555,
+            # illegal moves
+            ("Uw", "Uw'",
+             "Dw", "Dw'",
+             "Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'",
+            ),
+            linecount=0,
+            prune_tables=(
+                parent.lt_UD_centers_solve,
+                parent.lt_LR_centers_solve,
+                parent.lt_FB_centers_solve,
+            ),
+        )
 
 
 class LookupTable555TCenterSolve(LookupTable):
@@ -2764,7 +2861,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step50-phase5-dummytxt',
+            'lookup-table-5x5x5-step50-phase5-dummy.txt',
             'TBD',
             moves_555,
             # illegal moves
@@ -3000,7 +3097,7 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step60-phase6-dummytxt',
+            'lookup-table-5x5x5-step60-phase6-dummy.txt',
             'TBD',
             moves_555,
             # illegal moves
@@ -3017,7 +3114,6 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
             ),
             linecount=0,
             prune_tables=(
-                # dwalton
                 #parent.lt_phase6_centers,
                 parent.lt_phase6_high_edge_midge,
                 parent.lt_phase6_low_edge_midge,
@@ -3540,6 +3636,9 @@ class RubiksCube555(RubiksCube):
         self.lt_phase6_low_edge_midge = LookupTable555Phase6LowEdgeMidge(self)
         self.lt_phase6 = LookupTableIDA555Phase6(self)
 
+        self.lt_UD_centers_solve = LookupTable555UDCenterSolve(self)
+        self.lt_LR_centers_solve = LookupTable555LRCenterSolve(self)
+        self.lt_FB_centers_solve = LookupTable555FBCenterSolve(self)
         self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
@@ -3751,6 +3850,7 @@ class RubiksCube555(RubiksCube):
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
+        tmp_solution_len = len(self.solution)
 
         self.lt_phase3_eo_outer_orbit.load_ida_graph()
 
@@ -3834,7 +3934,12 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        log.info("%s: end of phase 3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: end of phase 3, edges EOed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        self.solution.append(
+            "COMMENT_%d_steps_555_edges_EOed"
+                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
 
     def pair_first_four_edges(self):
         # In order to make phase5 much faster we need to arrange one group of 4-edges
@@ -3844,6 +3949,7 @@ class RubiksCube555(RubiksCube):
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
+        tmp_solution_len = len(self.solution)
         min_cost = 99
         min_wing_str_combo = None
 
@@ -3896,7 +4002,12 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        log.info("%s: end of phase 5, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: end of phase 5, x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        self.solution.append(
+            "COMMENT_%d_steps_555_x_plane_edges_paired"
+                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
 
     def edges_pairable_without_LRFB(self):
         """
@@ -3905,6 +4016,7 @@ class RubiksCube555(RubiksCube):
         state = self.state
         original_state = self.state[:]
         original_solution = self.solution[:]
+        tmp_solution_len = len(self.solution)
         pairable = []
 
         for wing_str in self.get_y_plane_z_plane_wing_strs():
@@ -3971,7 +4083,7 @@ class RubiksCube555(RubiksCube):
         self.print_cube()
         log.info("%s: end of phase 6, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         '''
-        # dwalton
+
         tmp_solution_len = len(self.solution)
         self.edges_flip_orientation(wing_strs_all, [])
         #self.highlow_edges_print()
@@ -4004,7 +4116,7 @@ class RubiksCube555(RubiksCube):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-        log.info("%s: %d steps in"
+        log.info("%s: reduced to 3x3x3, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 

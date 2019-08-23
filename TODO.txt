@@ -3,6 +3,22 @@
 
 - 444 edges move to IDA-via-graph?
 
+- rm RubiksCube555ForNNN.py
+
+- IDA speed
+    I've noticed that the searches that use smaller PTs tend to run much much
+    faster...I've seen as high as 80 million nodes-per-sec where some searches
+    "only" do about 15 million nps.  I think it has to do with the smaller PT
+    graphs being small enough to hold in the CPUs cache...or at least some
+    significant chunk of them do.
+
+    When we convert json to bin should we do so in a way so that nodes that are
+    "near" each other in terms of moves are also near each other in the bin copy
+    of the graph? This would basically be a matter of how we assign state_indexes.
+
+    This is worth trying. Maybe it would be another significant speed jump that
+    would open some more doors (like staging 555 centers in a single phase).
+
 - IDA should be fast enough for tsai 555 now
 
     - the phase4 table has all 121,287,375 entries.  If we kept only up to depth-3 that would
@@ -31,12 +47,30 @@
 
     - Move 555 centers solving to IDA-via-C?
 
-- 666 UD and FB centers could be staged in a single phase (no need
-      to pair oblique edges here)
+- 666
+    - stage inner x-centers via 444
+    - pair LR obliques
+        - could we skip this phase? This takes ~9 moves. This would be 735741^3 states
+        but we can build all three of those tables. My guess is this would be too slow
+        but it couldn't hurt to try.
+    - stage LR centers via 555
+    - stage UD and FB centers without pairing the obliques.  This should be
+      12870^3, build all three of the 12870 tables. We currently spend ~6 moves
+      pairing the UD oblique edges. Could we also "432" the LR centers in this phase?
+      Couldn't hurt to try.
 
-- 666 now that IDA is much faster does that change anything?
+    - Today we use two phases to reduce the centers to 555 and then solve via 555.
+      Could we instead do
+        - LR and FB centers to vertical bars
+            Each of these is 70^4 or 24,010,000 so this may not be doable unless we built
+            the graph for that entire table...that would be huge though. We could build
+            multiple 70^3 or 343,000 tables though.
+        - solve all centers. Not sure how many vertical bars patterns there are...555 has 6 of them
+          so rough guess at 36 just to overestimate. This phase would be very doable. Heck maybe
+          try to figure out how to EO the inner orbit of edges for 444 too?
 
 - 777 now that IDA is much faster does that change anything?
+    - see how 666 refactors goes first
 
 - IDAViaGraph cleanup
     - drop linecount, filesize and the main table from __init__

@@ -50,5 +50,8 @@ cube.lt_init()
 
 #cube.lt_phase6_centers.build_ida_graph()
 #cube.lt_phase6_high_edge_midge.build_ida_graph()
-cube.lt_phase6_low_edge_midge.build_ida_graph()
+#cube.lt_phase6_low_edge_midge.build_ida_graph()
 
+#cube.lt_UD_centers_solve.build_ida_graph()
+#cube.lt_LR_centers_solve.build_ida_graph()
+cube.lt_FB_centers_solve.build_ida_graph()

@@ -1,7 +1,7 @@
 
 all:
 	sudo python3 setup.py install
-	gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_444.c ida_search_555.c ida_search_666.c ida_search_777.c xxhash.c -lm
+	gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_444.c ida_search_666.c ida_search_777.c xxhash.c -lm
 	gcc -O3 -o ida_search_via_graph ida_search_core.c ida_search_via_graph.c xxhash.c -lm
 
 clean:

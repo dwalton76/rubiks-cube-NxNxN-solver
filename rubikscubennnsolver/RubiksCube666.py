@@ -1,7 +1,6 @@
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
-from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableIDAViaC,
@@ -351,6 +350,131 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
                     self.parent.state[x] = "x"
             else:
                 self.parent.state[x] = "."
+
+
+class LookupTable666UDLeftObliqueStage(LookupTable):
+    """
+    lookup-table-6x6x6-step11-UD-left-oblique-stage.txt
+    ===================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 238 entries (1 percent, 8.21x previous step)
+    4 steps has 742 entries (5 percent, 3.12x previous step)
+    5 steps has 1,836 entries (14 percent, 2.47x previous step)
+    6 steps has 4,405 entries (34 percent, 2.40x previous step)
+    7 steps has 3,774 entries (29 percent, 0.86x previous step)
+    8 steps has 1,721 entries (13 percent, 0.46x previous step)
+    9 steps has 122 entries (0 percent, 0.07x previous step)
+    
+    Total: 12,870 entries
+    Average: 6.27 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step11-UD-left-oblique-stage.txt',
+            'UUUUxxxxxxxxUUUU',
+            linecount=12870,
+            max_depth=9,
+            filesize=656370,
+        )
+
+
+class LookupTable666UDRightObliqueStage(LookupTable):
+    """
+    lookup-table-6x6x6-step12-UD-right-oblique-stage.txt
+    ====================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 238 entries (1 percent, 8.21x previous step)
+    4 steps has 742 entries (5 percent, 3.12x previous step)
+    5 steps has 1,836 entries (14 percent, 2.47x previous step)
+    6 steps has 4,405 entries (34 percent, 2.40x previous step)
+    7 steps has 3,774 entries (29 percent, 0.86x previous step)
+    8 steps has 1,721 entries (13 percent, 0.46x previous step)
+    9 steps has 122 entries (0 percent, 0.07x previous step)
+    
+    Total: 12,870 entries
+    Average: 6.27 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step12-UD-right-oblique-stage.txt',
+            'UUUUxxxxxxxxUUUU',
+            linecount=12870,
+            max_depth=9,
+            filesize=656370,
+        )
+
+
+class LookupTable666UDOuterXCenterStage(LookupTable):
+    """
+    lookup-table-6x6x6-step13-UD-outer-x-centers-stage.txt
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 234 entries (1 percent, 8.07x previous step)
+    4 steps has 1,246 entries (9 percent, 5.32x previous step)
+    5 steps has 4,466 entries (34 percent, 3.58x previous step)
+    6 steps has 6,236 entries (48 percent, 1.40x previous step)
+    7 steps has 656 entries (5 percent, 0.11x previous step)
+    
+    Total: 12,870 entries
+    Average: 5.45 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-6x6x6-step13-UD-outer-x-centers-stage.txt',
+            'UUUUxxxxxxxxUUUU',
+            linecount=12870,
+            max_depth=7,
+            filesize=553410,
+        )
+
+
+# dwalton
+class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
+
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step10-UD-centers-stage-dummy.txt",
+            'TBD',
+            moves_666,
+
+            # illegal moves
+            ("3Uw", "3Uw'",
+             "3Lw", "3Lw'",
+             "3Fw", "3Fw'",
+             "3Rw", "3Rw'",
+             "3Bw", "3Bw'",
+             "3Dw", "3Dw'",
+
+             "Uw", "Uw'",
+             "Dw", "Dw'",
+             "Fw", "Fw'",
+             "Bw", "Bw'",
+            ),
+
+            linecount=0,
+            prune_tables=(
+                parent.lt_UD_left_oblique_stage,
+                parent.lt_UD_right_oblique_stage,
+                parent.lt_UD_outer_x_centers_stage,
+            )
+        )
 
 
 class LookupTable666UDObliquEdgeStage(LookupTableIDAViaC):
@@ -726,15 +850,12 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
     def get_fake_555(self):
         if self.fake_555 is None:
-
-            if self.cpu_mode == "fast":
-                self.fake_555 = RubiksCube555ForNNN(solved_555, "URFDLB")
-            else:
-                self.fake_555 = RubiksCube555(solved_555, "URFDLB")
-
+            self.fake_555 = RubiksCube555(solved_555, "URFDLB")
             self.fake_555.cpu_mode = self.cpu_mode
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
+            self.fake_555.lt_FB_centers_stage.prune_tables.remove(self.fake_555.lt_FB_centers_stage_LR_centers_432)
+
         else:
             self.fake_555.re_init()
         return self.fake_555
@@ -820,12 +941,18 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_init_called = True
 
         self.lt_LR_oblique_edge_stage = LookupTable666LRObliquEdgeStage(self)
-        self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
 
-        # This is the case if a 777 is using 666 to pair its UD oblique edges
+        # This is the case if a 777 is using 666 to pair its LR oblique edges
         if LR_oblique_edge_only:
             return
 
+        # dwalton
+        self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
+
+        self.lt_UD_left_oblique_stage = LookupTable666UDLeftObliqueStage(self)
+        self.lt_UD_right_oblique_stage = LookupTable666UDRightObliqueStage(self)
+        self.lt_UD_outer_x_centers_stage = LookupTable666UDOuterXCenterStage(self)
+        self.lt_UD_centers_stage = LookupTableIDA666UDCentersStage(self)
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
 
@@ -964,6 +1091,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
+        # dwalton change this...today it takes 15 moves to get UD staged
+
         # pair the UD oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_UD_oblique_edge_stage.solve()
@@ -995,20 +1124,15 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                 self.rotate(step)
 
         self.print_cube()
-
         self.solution.append(
             "COMMENT_%d_steps_666_centers_staged"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
-        log.info(
-            #"%s: centers staged, orbits with OLL %s, %d steps in"
-            "%s: centers staged, %d steps in"
-            % (
-                self,
-                #pformat(orbits_with_oll_parity),
-                self.get_solution_len_minus_rotates(self.solution),
-            )
-        )
+
+        log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # 44 steps to centers staged, 72 to centers solved
+        sys.exit(0)
 
 
         # Reduce the centers to 5x5x5 centers
@@ -1053,7 +1177,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         if oblique_edges_only:
             fake_555.lt_ULFRBD_t_centers_solve.solve()
         else:
-            fake_555.lt_ULFRBD_centers_solve.solve()
+            fake_555.lt_ULFRBD_centers_solve.solve_via_c()
 
         tmp_solution_len = len(self.solution)
 

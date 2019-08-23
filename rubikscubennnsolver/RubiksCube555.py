@@ -1063,16 +1063,23 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
             "lookup-table-5x5x5-step20-FB-centers-stage.txt",
             '007fffe00',
             moves_555,
-            ("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"), # illegal moves
+
+            # illegal moves
+            ("Uw", "Uw'",
+             "Dw", "Dw'",
+             "Fw", "Fw'",
+             "Bw", "Bw'",
+            ),
+
             linecount=430859,
             max_depth=6,
             filesize=14649206,
-            prune_tables=(
+            prune_tables=[
                 parent.lt_FB_t_centers_stage,
                 parent.lt_FB_x_centers_stage,
                 # uncomment to also 432 the LR centers
                 parent.lt_FB_centers_stage_LR_centers_432,
-            )
+            ]
         )
 
 

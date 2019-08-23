@@ -45,8 +45,6 @@
       delete without_LFRB and LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge once you
       have this figured out.
 
-    - Move 555 centers solving to IDA-via-C?
-
 - 666
     - stage inner x-centers via 444
     - pair LR obliques

@@ -1121,7 +1121,7 @@ class LookupTable(object):
 
             index += 1
 
-            if index % 10000 == 0:
+            if index % 1000 == 0:
                 log.info(index)
 
         with open(self.filename.replace(".txt", ".json"), "w") as fh:
@@ -1148,6 +1148,13 @@ class LookupTable(object):
             except TypeError:
                 log.info("%s: state %s not found" % (self, state))
                 raise
+
+    def reverse_state_index(self, state_index):
+        state_index_filename = self.filename.replace(".txt", ".state_index")
+        with open(state_index_filename, "r") as fh:
+            for line in fh:
+                if line.rstrip().endswith(f":{state_index}"):
+                    return line.split(":")[0]
 
     def ida_heuristic(self):
         if self.ida_graph_node is None:

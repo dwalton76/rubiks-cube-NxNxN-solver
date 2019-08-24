@@ -102,3 +102,7 @@ perf.data
 tmp
 ida_search.dSYM
 ida_search_via_graph
+*.bin
+*.state_index
+*.json
+*.pt_state

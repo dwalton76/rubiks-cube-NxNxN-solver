@@ -413,6 +413,9 @@ class LookupTableIDAViaGraph(LookupTable):
         parent = self.parent
         index = 0
 
+        for pt in self.prune_tables:
+            pt.load_ida_graph()
+
         with open(pt_state_filename, "w") as fh_pt_state:
             with open(self.filename, "r") as fh:
                 for line in fh:
@@ -421,7 +424,6 @@ class LookupTableIDAViaGraph(LookupTable):
                     cost_to_goal = len(steps_to_solve)
                     steps_to_scramble = reverse_steps(steps_to_solve)
 
-                    # dwalton
                     parent.re_init()
                     for step in steps_to_scramble:
                         parent.rotate(step)
@@ -466,6 +468,7 @@ class LookupTableIDAViaGraph(LookupTable):
         log.info("solve_via_c:\n    %s \"%s\"\n" % (" ".join(cmd[0:-1]), cmd[-1]))
 
         output = subprocess.check_output(cmd).decode("utf-8").splitlines()
+        log.info("\n" + "\n".join(output) + "\n")
 
         for line in output:
             if line.startswith("SOLUTION:"):

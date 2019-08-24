@@ -87,7 +87,7 @@ hash_add (struct key_value_pair **hashtable, char *state_key, unsigned long valu
     HASH_ADD_STR(*hashtable, state, s);
 }
 
-struct key_value_pair *
+inline struct key_value_pair *
 hash_find (struct key_value_pair **hashtable, char *state_key)
 {
     struct key_value_pair *s = NULL;

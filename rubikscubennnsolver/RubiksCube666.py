@@ -5,6 +5,7 @@ from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableIDAViaC,
 )
+from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 import logging
 import sys
 
@@ -65,31 +66,46 @@ UFBD_centers_666 = (
 )
 
 UDFB_left_oblique_edges = (
-    9, 17, 28, 20,
-    189, 197, 208, 200,
-    81, 89, 100, 92,
-    153, 161, 172, 164,
+    9, 17, 28, 20, # Upper
+    189, 197, 208, 200, # Down
+    81, 89, 100, 92, # Front
+    153, 161, 172, 164, # Back
 )
 
 UDFB_right_oblique_edges = (
-    10, 23, 27, 14,
-    190, 203, 207, 194,
-    82, 95, 99, 86,
-    154, 167, 171, 158,
+    10, 23, 27, 14, # Upper
+    190, 203, 207, 194, # Down
+    82, 95, 99, 86, # Front
+    154, 167, 171, 158, # Back
 )
 
 UDFB_outer_x_centers = (
-    8, 11, 26, 29,
-    188, 191, 206, 209,
-    80, 83, 98, 101,
-    152, 155, 170, 173,
+    8, 11, 26, 29, # Upper
+    188, 191, 206, 209, # Down
+    80, 83, 98, 101, # Front
+    152, 155, 170, 173, # Back
 )
 
 UDFB_inner_x_centers = (
-    15, 16, 21, 22,
-    195, 196, 201, 202,
-    87, 88, 93, 94,
-    159, 160, 165, 166,
+    15, 16, 21, 22, # Upper
+    195, 196, 201, 202, # Down
+    87, 88, 93, 94, # Front
+    159, 160, 165, 166, # Back
+)
+
+
+UFBD_outer_x_centers = (
+    8, 11, 26, 29, # Upper
+    80, 83, 98, 101, # Front
+    152, 155, 170, 173, # Back
+    188, 191, 206, 209, # Down
+)
+
+UFBD_inner_x_centers = (
+    15, 16, 21, 22, # Upper
+    87, 88, 93, 94, # Front
+    159, 160, 165, 166, # Back
+    195, 196, 201, 202 # Down
 )
 
 LR_left_oblique_edges = (45, 53, 64, 56, 117, 125, 136, 128)
@@ -366,10 +382,17 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
     7 steps has 3,774 entries (29 percent, 0.86x previous step)
     8 steps has 1,721 entries (13 percent, 0.46x previous step)
     9 steps has 122 entries (0 percent, 0.07x previous step)
-    
+
     Total: 12,870 entries
     Average: 6.27 moves
     """
+
+    UFBD_left_oblique_edges = (
+        9, 17, 20, 28, # Upper
+        81, 89, 92, 100, # Front
+        153, 161, 164, 172, # Back
+        189, 197, 200, 208, # Down
+    )
 
     def __init__(self, parent):
         LookupTable.__init__(
@@ -380,7 +403,38 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
             linecount=12870,
             max_depth=9,
             filesize=656370,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Rw", "3Rw'",
+                "3Bw", "3Bw'",
+                "3Dw", "3Dw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+
+                # we are not manipulating anything on sides L or R
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+
+                # restricting these has minimal impact on move count
+                # but having few moves to explore means a faster IDA
+                "U2", "D2", "F2", "B2",
+            ),
         )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join(["U" if parent_state[x] in ("U", "D") else "x" for x in self.UFBD_left_oblique_edges])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.UFBD_left_oblique_edges, state):
+            cube[pos] = pos_state
 
 
 class LookupTable666UDRightObliqueStage(LookupTable):
@@ -397,10 +451,17 @@ class LookupTable666UDRightObliqueStage(LookupTable):
     7 steps has 3,774 entries (29 percent, 0.86x previous step)
     8 steps has 1,721 entries (13 percent, 0.46x previous step)
     9 steps has 122 entries (0 percent, 0.07x previous step)
-    
+
     Total: 12,870 entries
     Average: 6.27 moves
     """
+
+    UFBD_right_oblique_edges = (
+        10, 14, 23, 27, # Upper
+        82, 86, 95, 99, # Front
+        154, 158, 167, 171, # Back
+        190, 194, 203, 207, # Down
+    )
 
     def __init__(self, parent):
         LookupTable.__init__(
@@ -411,7 +472,38 @@ class LookupTable666UDRightObliqueStage(LookupTable):
             linecount=12870,
             max_depth=9,
             filesize=656370,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Rw", "3Rw'",
+                "3Bw", "3Bw'",
+                "3Dw", "3Dw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+
+                # we are not manipulating anything on sides L or R
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+
+                # restricting these has minimal impact on move count
+                # but having few moves to explore means a faster IDA
+                "U2", "D2", "F2", "B2",
+            ),
         )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join(["U" if parent_state[x] in ("U", "D") else "x" for x in self.UFBD_right_oblique_edges])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.UFBD_right_oblique_edges, state):
+            cube[pos] = pos_state
 
 
 class LookupTable666UDOuterXCenterStage(LookupTable):
@@ -426,7 +518,7 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
     5 steps has 4,466 entries (34 percent, 3.58x previous step)
     6 steps has 6,236 entries (48 percent, 1.40x previous step)
     7 steps has 656 entries (5 percent, 0.11x previous step)
-    
+
     Total: 12,870 entries
     Average: 5.45 moves
     """
@@ -440,18 +532,74 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
             linecount=12870,
             max_depth=7,
             filesize=553410,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Rw", "3Rw'",
+                "3Bw", "3Bw'",
+                "3Dw", "3Dw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+
+                # we are not manipulating anything on sides L or R
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+
+                # restricting these has minimal impact on move count
+                # but having few moves to explore means a faster IDA
+                "U2", "D2", "F2", "B2",
+            ),
         )
 
+    def state(self):
+        parent_state = self.parent.state
+        return "".join(["U" if parent_state[x] in ("U", "D") else "x" for x in UFBD_outer_x_centers])
 
-# dwalton
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UFBD_outer_x_centers, state):
+            cube[pos] = pos_state
+
+
 class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
+    """
+    lookup-table-6x6x6-step10-UD-centers-stage.txt
+    ==============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 356 entries (0 percent, 12.28x previous step)
+    4 steps has 4,391 entries (0 percent, 12.33x previous step)
+    5 steps has 52,871 entries (7 percent, 12.04x previous step)
+    6 steps has 633,025 entries (91 percent, 11.97x previous step)
+
+    Total: 690,675 entries
+
+
+    extrapolate from here
+    7 steps has 7,070,889 entries (11.17x previous step)
+    8 steps has 73,325,118 entries (10.37x previous step)
+    9 steps has 701,721,379 entries (9.57x previous step)
+    10 steps has 6,154,096,493 entries (8.77x previous step)
+    11 steps has 49,048,149,049 entries (7.97x previous step)
+    12 steps has 351,675,228,681 entries (7.17x previous step)
+    13 steps has 1,724,086,620,716 entries (4.90x previous step)
+
+    Average: 12.77883925581901
+    Total  : 2,131,746,903,000
+    """
 
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            "lookup-table-6x6x6-step10-UD-centers-stage-dummy.txt",
-            'TBD',
+            'lookup-table-6x6x6-step10-UD-centers-stage.txt',
+            'UUUUUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUUUUU',
             moves_666,
 
             # illegal moves
@@ -466,14 +614,34 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
              "Dw", "Dw'",
              "Fw", "Fw'",
              "Bw", "Bw'",
+
+                # we are not manipulating anything on sides L or R
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+
+                # restricting these has minimal impact on move count
+                # but having few moves to explore means a faster IDA
+                "U2", "D2", "F2", "B2",
             ),
 
-            linecount=0,
+            linecount=4779,
+            max_depth=4,
+            filesize=320193,
+
+            #linecount=690675,
+            #max_depth=6,
+            #filesize=52491300,
+
+            #linecount=8078515,
+            #max_depth=7,
+            #filesize=654359715,
+
             prune_tables=(
                 parent.lt_UD_left_oblique_stage,
                 parent.lt_UD_right_oblique_stage,
                 parent.lt_UD_outer_x_centers_stage,
-            )
+            ),
+            multiplier=1.2,
         )
 
 
@@ -947,12 +1115,13 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             return
 
         # dwalton
-        self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
+        # self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
 
         self.lt_UD_left_oblique_stage = LookupTable666UDLeftObliqueStage(self)
         self.lt_UD_right_oblique_stage = LookupTable666UDRightObliqueStage(self)
         self.lt_UD_outer_x_centers_stage = LookupTable666UDOuterXCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA666UDCentersStage(self)
+
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
 
@@ -1092,8 +1261,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         )
 
         # dwalton change this...today it takes 15 moves to get UD staged
+        self.lt_UD_centers_stage.solve_via_c()
 
         # pair the UD oblique edges
+        '''
         tmp_solution_len = len(self.solution)
         self.lt_UD_oblique_edge_stage.solve()
         self.print_cube()
@@ -1123,6 +1294,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             else:
                 self.rotate(step)
 
+        '''
         self.print_cube()
         self.solution.append(
             "COMMENT_%d_steps_666_centers_staged"

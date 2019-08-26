@@ -598,7 +598,7 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            'lookup-table-6x6x6-step10-UD-centers-stage.txt',
+            'lookup-table-6x6x6-step10-UD-centers-stage-dummy.txt',
             'UUUUUUUUUUUUxxxxxxxxxxxxxxxxxxxxxxxxUUUUUUUUUUUU',
             moves_666,
 
@@ -624,13 +624,9 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
                 "U2", "D2", "F2", "B2",
             ),
 
-            linecount=4779,
-            max_depth=4,
-            filesize=320193,
-
-            #linecount=690675,
-            #max_depth=6,
-            #filesize=52491300,
+            linecount=690675,
+            max_depth=6,
+            filesize=52491300,
 
             #linecount=8078515,
             #max_depth=7,

@@ -206,7 +206,7 @@ ida_heuristic_UD_oblique_edges_stage_777 (
         state <<= 1;
     }
 
-    // state takes 18 chars in hex
+    // state takes 12 chars in hex
     state >>= 1;
     sprintf(result.lt_state, "%012llx", state);
 

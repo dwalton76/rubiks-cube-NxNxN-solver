@@ -202,17 +202,9 @@ try:
         )
     elif size == 5:
         from rubikscubennnsolver.RubiksCube555 import solved_555
+        from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 
-        if cpu_mode == "fast":
-            from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
-
-            cube = RubiksCube555ForNNN(
-                args.state, args.order, args.colormap, args.debug
-            )
-        else:
-            from rubikscubennnsolver.RubiksCube555 import RubiksCube555
-
-            cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
+        cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
 
     elif size == 6:
         from rubikscubennnsolver.RubiksCube666 import RubiksCube666

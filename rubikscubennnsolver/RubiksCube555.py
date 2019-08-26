@@ -4136,6 +4136,8 @@ class RubiksCube555(RubiksCube):
             self.group_centers_stage_FB()
             self.eo_edges()
             self.pair_first_four_edges()
+            # dwalton
+            sys.exit(0)
             self.pair_last_eight_edges()
 
         self.solution.append("CENTERS_SOLVED")

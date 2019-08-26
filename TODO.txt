@@ -48,27 +48,50 @@
 - 666
     - stage inner x-centers via 444
     - pair LR obliques
-        - could we skip this phase? This takes ~9 moves. This would be 735741^3 states
-        but we can build all three of those tables. My guess is this would be too slow
-        but it couldn't hurt to try.
     - stage LR centers via 555
     - stage UD and FB centers without pairing the obliques.  This should be
       12870^3, build all three of the 12870 tables. We currently spend ~6 moves
       pairing the UD oblique edges. Could we also "432" the LR centers in this phase?
       Couldn't hurt to try.
 
-    - Today we use two phases to reduce the centers to 555 and then solve via 555.
-      Could we instead do
+      ok long story short using three 12870 tables is too slow, the IDA takes
+      about 30s. Am building a 12870^2 or 165,636,900 table of the oblique edges, that
+      should speed it up a lot. It means we cannot use ida-via-graph though.
+
+      This "should" be fast enough to 20736 the LR centers at the same time.
+      Actually we don't care about the LR outer x-centers.  Of the LR inner x-centers
+      and oblique edges there are 1728 states that are solveable without L L' R R'.
+      This should be doable.
+
+    - Today we use three phases to solve the centers (two phases to reduce the
+      centers to 555 and then solve via 555). Could we instead do:
+
+        - UD, LR and FB centers to solve inner x-centers and "daisy" pair the oblique edges.
+          By daisy pair I mean that for sides L and R, we need all the obliques on side
+          L to be either L or R but we cannot have a mix of the two. This is all we need
+          to be able to use the 444 solver later to pair the inner orbit of edges. Once
+          that is done the cube has been reduced to a 555.
+
+          UD and FB will have 343,000 states each. LR will have 1728 states. I think
+          this will be doable as we can build all three of those tables for IDA-via-graph.
+
+        <old idea>
         - LR and FB centers to vertical bars
-            Each of these is 70^4 or 24,010,000 so this may not be doable unless we built
-            the graph for that entire table...that would be huge though. We could build
-            multiple 70^3 or 343,000 tables though.
+            LR will be 20,736 and FB will be 24,010,000.  The 20736 is buildable, for FB
+            we can build multiple 70^3 or 343,000 tables.
+
         - solve all centers. Not sure how many vertical bars patterns there are...555 has 6 of them
           so rough guess at 36 just to overestimate. This phase would be very doable. Heck maybe
           try to figure out how to EO the inner orbit of edges for 444 too?
+        </old idea>
 
-- 777 now that IDA is much faster does that change anything?
-    - see how 666 refactors goes first
+- 777 now that IDA is much faster does that change anything
+    - once LR centers are staged, can we stage the FB centers 555
+    while also pairing the oblique edges? Today we do these in two phases.  The FB
+    centers prune table is 12870^2 or 165,636,900 so this is doable.
+
+    - we shouldn't need to solve all of the centers, should be able to do the 
+      "daisy" thing. That is a big change though, wait to make sure it works on 666.
 
 - IDAViaGraph cleanup
     - drop linecount, filesize and the main table from __init__

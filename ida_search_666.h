@@ -20,13 +20,6 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(
 int ida_search_complete_LR_oblique_edges_stage_666(char *cube);
 
 
-struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_666(
-    char *cube,
-    unsigned int max_cost_to_goal
-);
-int ida_search_complete_UD_oblique_edges_stage_666(char *cube);
-
-
 struct ida_heuristic_result ida_heuristic_LFRB_inner_x_centers_and_oblique_edges_solve_666(
     char *cube,
     unsigned int max_cost_to_goal,

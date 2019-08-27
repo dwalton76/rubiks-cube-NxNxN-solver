@@ -165,61 +165,20 @@ ida_heuristic_LR_oblique_edges_stage_666 (
     // inadmissable heuristic but fast
     result.cost_to_goal = (int) ceil((double) unpaired_count / 1.2);
 
+    // inadmissable heuristic but fast...kudos to xyzzy for this formula
+    /*
+    if (unpaired_count > 8) {
+        result.cost_to_goal = 4 + (unpaired_count >> 1);
+    } else {
+        result.cost_to_goal = unpaired_count;
+    }
+     */
+
     return result;
 }
 
 int
 ida_search_complete_LR_oblique_edges_stage_666 (char *cube)
-{
-    if (get_unpaired_obliques_count_666(cube) == 0) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-
-// ============================================================================
-// stepXX
-// ============================================================================
-struct ida_heuristic_result
-ida_heuristic_UD_oblique_edges_stage_666 (
-    char *cube,
-    unsigned int max_cost_to_goal)
-{
-    int unpaired_count = get_unpaired_obliques_count_666(cube);
-    struct ida_heuristic_result result;
-    unsigned long long state = 0;
-
-    // Get the state of the oblique edges
-    for (int i = 0; i < NUM_OBLIQUE_EDGES_666; i++) {
-        if (cube[oblique_edges_666[i]] == '1') {
-            state |= 0x1;
-        }
-        state <<= 1;
-    }
-
-    // 000000033fff is 12 chars
-    state >>= 1;
-    sprintf(result.lt_state, "%012llx", state);
-
-    // The most oblique edges we can pair in single move is 4 so take
-    // the number that are unpaired and divide by 4.
-    //
-    // time ./ida_search --kociemba ........xx...U..U..U..U...xU................xx...x..x..x..x...xx................UU...x..x..x..x...xx................xx...U..U..U..U...xx................xx...x..x..x..x...xx................UU...U..x..x..U...xU........ --type 6x6x6-UD-oblique-edges-stage --fast
-    //
-    // 4 took 1.5s, 6 moves
-    // 2 took 0.9s, 6 moves
-    // 1.5 took 0.4s, 6 moves
-
-    // inadmissable heuristic but fast
-    result.cost_to_goal = (int) ceil((double) unpaired_count / 2);
-
-    return result;
-}
-
-int
-ida_search_complete_UD_oblique_edges_stage_666 (char *cube)
 {
     if (get_unpaired_obliques_count_666(cube) == 0) {
         return 1;

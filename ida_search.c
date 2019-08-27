@@ -34,7 +34,6 @@ typedef enum {
 
     // 6x6x6
     LR_OBLIQUE_EDGES_STAGE_666,
-    UD_OBLIQUE_EDGES_STAGE_666,
     LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666,
 
     // 7x7x7
@@ -399,12 +398,6 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         print_cube(cube, size);
         break;
 
-    case UD_OBLIQUE_EDGES_STAGE_666:
-        // Convert to 1s and 0s
-        str_replace_for_binary(cube, ones_UD);
-        print_cube(cube, size);
-        break;
-
     case LR_OBLIQUE_EDGES_STAGE_777:
         // Convert to 1s and 0s
         str_replace_for_binary(cube, ones_LR);
@@ -693,12 +686,6 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
     // 6x6x6
     case LR_OBLIQUE_EDGES_STAGE_666:
         return ida_heuristic_LR_oblique_edges_stage_666(
-            cube,
-            max_cost_to_goal
-        );
-
-    case UD_OBLIQUE_EDGES_STAGE_666:
-        return ida_heuristic_UD_oblique_edges_stage_666(
             cube,
             max_cost_to_goal
         );
@@ -1015,9 +1002,6 @@ ida_search_complete (
     case LR_OBLIQUE_EDGES_STAGE_666:
         return ida_search_complete_LR_oblique_edges_stage_666(cube);
 
-    case UD_OBLIQUE_EDGES_STAGE_666:
-        return ida_search_complete_UD_oblique_edges_stage_666(cube);
-
     case LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666:
         return ida_search_complete_LFRB_inner_x_centers_and_oblique_edges_solve(cube);
 
@@ -1157,41 +1141,6 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         case threeFw_PRIME:
         case threeBw:
         case threeBw_PRIME:
-            return 0;
-        default:
-            return 1;
-        }
-
-    case UD_OBLIQUE_EDGES_STAGE_666:
-        switch (move) {
-        case threeUw:
-        case threeUw_PRIME:
-        case threeDw:
-        case threeDw_PRIME:
-        case threeLw:
-        case threeLw_PRIME:
-        case threeRw:
-        case threeRw_PRIME:
-        case threeFw:
-        case threeFw_PRIME:
-        case threeBw:
-        case threeBw_PRIME:
-
-        case Uw:
-        case Uw_PRIME:
-        case Dw:
-        case Dw_PRIME:
-        case Fw:
-        case Fw_PRIME:
-        case Bw:
-        case Bw_PRIME:
-
-        case L:
-        case L_PRIME:
-        case L2:
-        case R:
-        case R_PRIME:
-        case R2:
             return 0;
         default:
             return 1;
@@ -2021,7 +1970,6 @@ ida_solve (
 
     // 6x6x6
     case LR_OBLIQUE_EDGES_STAGE_666:
-    case UD_OBLIQUE_EDGES_STAGE_666:
         break;
 
     case LFRB_INNER_X_CENTERS_AND_OBLIQUE_EDGES_SOLVE_666:
@@ -2137,10 +2085,6 @@ main (int argc, char *argv[])
             // 6x6x6
             } else if (strmatch(argv[i], "6x6x6-LR-oblique-edges-stage")) {
                 type = LR_OBLIQUE_EDGES_STAGE_666;
-                cube_size_type = 6;
-
-            } else if (strmatch(argv[i], "6x6x6-UD-oblique-edges-stage")) {
-                type = UD_OBLIQUE_EDGES_STAGE_666;
                 cube_size_type = 6;
 
             } else if (strmatch(argv[i], "6x6x6-LFRB-solve-inner-x-center-and-oblique-edges")) {

@@ -342,9 +342,12 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
                 "RRRRLLLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
             ),
             moves_444,
-            ("Uw", "Uw'", "Dw", "Dw'",
-              "Fw", "Fw'", "Bw", "Bw'",
-              "Lw", "Lw'", "Rw", "Rw'",
+            ("Uw", "Uw'",
+             "Dw", "Dw'",
+             "Fw", "Fw'",
+             "Bw", "Bw'",
+             "Lw", "Lw'",
+             "Rw", "Rw'",
             ),
             linecount=2304998,
             max_depth=6,
@@ -709,56 +712,30 @@ class LookupTableIDA444FirstFourEdges(LookupTableIDA):
         LookupTableIDA.__init__(
             self,
             parent,
-            "lookup-table-4x4x4-step140.txt",
+            #"lookup-table-4x4x4-step140.txt",
+            "lookup-table-4x4x4-step140-dummy.txt",
             self.state_targets,
             moves_444,
             # illegal moves
-            (
-                "Uw",
-                "Uw'",
-                "Lw",
-                "Lw'",
-                "Fw",
-                "Fw'",
-                "Rw",
-                "Rw'",
-                "Bw",
-                "Bw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
+            ("Uw", "Uw'",
+             "Lw", "Lw'",
+             "Fw", "Fw'",
+             "Rw", "Rw'",
+             "Bw", "Bw'",
+             "Dw", "Dw'",
+             "L", "L'",
+             "R", "R'",
             ),
-            linecount=568476,
-            max_depth=5,
-            filesize=34108560,
-            # linecount=4453748,
-            # max_depth=6,
-            # filesize=280586124,
+            #linecount=568476,
+            #max_depth=5,
+            #filesize=34108560,
         )
 
     def ida_heuristic(self):
-        (
-            edges_state,
-            edges_cost_to_goal,
-        ) = self.parent.lt_pair_first_four_edges_edges_only.ida_heuristic()
-        (
-            centers_state,
-            centers_cost_to_goal,
-        ) = self.parent.lt_pair_first_four_edges_centers_only.ida_heuristic()
+        (edges_state, edges_cost_to_goal,) = self.parent.lt_pair_first_four_edges_edges_only.ida_heuristic()
+        (centers_state, centers_cost_to_goal,) = self.parent.lt_pair_first_four_edges_centers_only.ida_heuristic()
         cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
         lt_state = centers_state + edges_state
-
-        if cost_to_goal > 0:
-            steps = self.steps(lt_state)
-
-            if steps:
-                cost_to_goal = len(steps)
-            else:
-                cost_to_goal = max(cost_to_goal, self.max_depth + 1)
-
         return (lt_state, cost_to_goal)
 
 
@@ -795,14 +772,11 @@ class LookupTable444FirstFourEdges(LookupTable):
         )
 
     def ida_heuristic(self):
+        assert (self.only_colors and len(self.only_colors) == 4), "You must specify which 4-edges"
         parent_state = self.parent.state
-        assert (
-            self.only_colors and len(self.only_colors) == 4
-        ), "You must specify which 4-edges"
         state = edges_recolor_pattern_444(parent_state[:], self.only_colors)
         edges_state = "".join([state[index] for index in wings_444])
         cost_to_goal = self.heuristic(edges_state)
-        # log.info("%s: %s,  %s cost_to_goal %s" % (self, pformat(self.only_colors), edges_state, cost_to_goal))
         return (edges_state, cost_to_goal)
 
 

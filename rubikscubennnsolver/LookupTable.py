@@ -6,7 +6,6 @@ from rubikscubennnsolver.RubiksSide import SolveError
 from pprint import pformat
 from pyhashxx import hashxx
 from subprocess import call
-import gc
 import hashlib
 import json
 import logging
@@ -77,96 +76,6 @@ def get_file_vitals(filename):
         state_width = len(state)
         linecount = int(size/width)
         return (width, state_width, linecount)
-
-
-def get_wing_pair_count_555(strA, strB):
-    wing_count = 0
-    edge_count = 0
-
-    if (
-        strA == "tOVrPPQQWTRRsSSqTvuUUOVXpWwxXoYYyzZZ"
-        and strB == "OOorPPQQWTRRsSSqTtuUUVVvpWwxXXYYyzZZ"
-    ):
-        debug = True
-    else:
-        debug = False
-
-    # 000 000 000 011 111 111 112 222 222 222 333 333
-    # 012 345 678 901 234 567 890 123 456 789 012 345
-
-    # OOO PPP SqQ RrU xss TTT Yuu VVV WWW Xxq yyr ZZZ (14)
-    # OOO PPP QQQ RRR SSS TTT UUU VVV WWW XXX YYY ZZZ (4)
-    # SOY opR zqT urU xsp wTO Zuv tVr VWX sxq yyQ PzW
-    """
-    matching_midges = []
-
-    for midge in (1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34):
-        if strA[midge] == strB[midge]:
-            matching_midges.append(strA[midge].lower())
-    """
-
-    if debug:
-        log.info(" ".join(strA[i : i + 3] for i in range(0, len(strA), 3)))
-        log.info(" ".join(strB[i : i + 3] for i in range(0, len(strB), 3)))
-        # log.info(matching_midges)
-
-    matches = []
-
-    for edge_index in range(12):
-        wing_pre = edge_index * 3
-        midge = wing_pre + 1
-        wing_post = wing_pre + 2
-
-        wing_pre_A = strA[wing_pre]
-        wing_pre_B = strB[wing_pre]
-        midge_A = strA[midge]
-        midge_B = strB[midge]
-        wing_post_A = strA[wing_post]
-        wing_post_B = strB[wing_post]
-
-        if wing_pre_A == wing_pre_B:
-            wing_count += 1
-
-            if debug:
-                log.info("wing_pre_A %s matches" % wing_pre_A)
-
-            if wing_pre_A.lower() in matches:
-                if debug:
-                    log.info("edge %s will pair\n" % wing_pre_A)
-                edge_count += 1
-            else:
-                matches.append(wing_pre_A.lower())
-
-        if wing_post_A == wing_post_B:
-            wing_count += 1
-
-            if debug:
-                log.info("wing_post_A %s matches" % wing_post_A)
-
-            if wing_post_A.lower() in matches:
-                if debug:
-                    log.info("edge %s will pair\n" % wing_post_A)
-                edge_count += 1
-            else:
-                matches.append(wing_post_A.lower())
-
-    if debug:
-        log.info("wing_count: %d" % wing_count)
-        log.info("matches: %s" % pformat(matches))
-        log.info("edge_count: %d" % edge_count)
-
-    return (wing_count, edge_count)
-
-
-def get_characters_common_count(strA, strB, start_index):
-    """
-    This assumes strA and strB are the same length
-    """
-    for (charA, charB) in zip(strA[start_index:], strB[start_index:]):
-        if charA == charB:
-            result += 1
-
-    return result
 
 
 def steps_cancel_out(prev_step, step):
@@ -435,16 +344,6 @@ def binary_search_list(states, b_state_to_find):
     return (False, first)
 
 
-def wide_count_turns(steps):
-    count = 0
-
-    for step in steps:
-        if "w" in step:
-            count += 1
-
-    return count
-
-
 class LookupTable(object):
     heuristic_stats = {}
 
@@ -484,7 +383,6 @@ class LookupTable(object):
         self.preloaded_cache_dict = False
         self.preloaded_cache_set = False
         self.preloaded_cache_string = False
-        self.ida_all_the_way = False
         self.fh_txt_seek_calls = 0
         self.cache = {}
         self.cache_set = set()
@@ -705,9 +603,6 @@ class LookupTable(object):
         # log.info("%s: begin preload cache dict" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
-        if isinstance(self, LookupTableCostOnly):
-            raise Exception("%s is a CostOnly table, no need to call preload_cache_dict()" % self)
-
         if "dummy" in self.filename:
             self.cache = {}
         else:
@@ -737,9 +632,6 @@ class LookupTable(object):
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         states = []
 
-        if isinstance(self, LookupTableCostOnly):
-            raise Exception("%s is a CostOnly table, no need to call preload_cache_set()" % self)
-
         if "dummy" in self.filename:
             pass
         else:
@@ -768,9 +660,6 @@ class LookupTable(object):
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         self.cache_string = None
         state_len = 0
-
-        if isinstance(self, LookupTableCostOnly):
-            raise Exception("%s is a CostOnly table, no need to call preload_cache_string()" % self)
 
         if "dummy" in self.filename:
             pass
@@ -913,169 +802,8 @@ class LookupTable(object):
 
             return result
 
-    def find_edge_entries_with_loose_signature(self, signature_to_find):
-        """
-        Given a signature such as 001001010110, return a list of all of the lines
-        in our lookup-table that will not break up any of the paired edges (a 1
-        represents a paired edge).
-
-        This is only used by the 4x4x4 and 5x5x5 edges tables
-        """
-        result = []
-        signature_to_find = int(signature_to_find, 2)
-
-        with open(self.filename, "r") as fh:
-            for line in fh:
-
-                # If signature_to_find is 0 we will add every line so no
-                # need to bitwise AND the signatures
-                if signature_to_find == 0:
-                    result.append(line.rstrip())
-                else:
-                    signature = line.split("_")[0]
-                    signature = int(signature, 2)
-
-                    if (signature & signature_to_find) == signature_to_find:
-                        result.append(line.rstrip())
-
-        return result
-
-    def find_edge_entries_with_signature(self, signature_to_find):
-        """
-        Given a signature such as 001001010110, return a list of all of the lines
-        in our lookup-table that start with that signature.
-
-        This is only used by 4x4x4 edges tables
-        """
-        self.fh_txt.seek(0)
-        result = []
-
-        first = 0
-        last = self.linecount - 1
-        signature_width = len(signature_to_find)
-        b_signature_to_find = bytearray(signature_to_find, encoding="utf-8")
-
-        fh = self.fh_txt
-
-        # Find an entry with signature_to_find
-        while first <= last:
-            midpoint = int((first + last) / 2)
-            fh.seek(midpoint * self.width)
-
-            # Only read the 'state' part of the line (for speed)
-            b_signature = fh.read(signature_width)
-
-            if b_signature_to_find < b_signature:
-                last = midpoint - 1
-
-            # If this is the line we are looking for
-            elif b_signature_to_find == b_signature:
-                break
-
-            else:
-                first = midpoint + 1
-        else:
-            log.warning("could not find signature %s" % signature_to_find)
-            return result
-
-        line_number_midpoint_signature_to_find = midpoint
-
-        # Go back one line at a time until we are at the first line with signature_to_find
-        while True:
-            fh.seek(midpoint * self.width)
-
-            line = fh.read(self.width)
-            line = line.decode("utf-8").rstrip()
-            (edges_state, steps) = line.split(":")
-            (signature, _) = edges_state.split("_")
-
-            if signature != signature_to_find:
-                break
-
-            result.append(line)
-            midpoint -= 1
-
-            if midpoint < 0:
-                break
-
-        # Go forward one line at a time until we have read all the lines
-        # with signature_to_find
-        midpoint = line_number_midpoint_signature_to_find + 1
-
-        while midpoint <= self.linecount - 1:
-            fh.seek(midpoint * self.width)
-            line = fh.read(self.width)
-            line = line.decode("utf-8").rstrip()
-            (edges_state, steps) = line.split(":")
-            (signature, _) = edges_state.split("_")
-
-            if signature == signature_to_find:
-                result.append(line)
-            else:
-                break
-
-            midpoint += 1
-
-        return result
-
     def state(self):
         raise Exception("child class must implement state()")
-
-    def best_match(self, state_to_find, init_wing_count):
-        max_wing_pair_count = 0
-        max_line = None
-        max_steps_len = 9999
-        max_edges_pair_count = 0
-
-        log.info(
-            "%s: %s is init state, %d wings paired"
-            % (self, state_to_find, init_wing_count)
-        )
-        with open(self.filename, "r") as fh:
-            for line in fh:
-                line = line.rstrip()
-                (state, steps) = line.split(":")
-                steps = steps.split()
-                len_steps = len(steps)
-                (wing_pair_count, edges_pair_count) = get_wing_pair_count_555(
-                    state_to_find, state
-                )
-                wing_pair_count -= init_wing_count
-
-                if (
-                    wing_pair_count > max_wing_pair_count
-                    or (
-                        wing_pair_count == max_wing_pair_count
-                        and len_steps < max_steps_len
-                    )
-                    or (
-                        wing_pair_count == max_wing_pair_count
-                        and len_steps == max_steps_len
-                        and edges_pair_count > max_edges_pair_count
-                    )
-                ):
-                    # if (edges_pair_count > max_edges_pair_count or
-                    #        (edges_pair_count == max_edges_pair_count and wing_pair_count > max_wing_pair_count) or
-                    #        (edges_pair_count == max_edges_pair_count and wing_pair_count > max_wing_pair_count and len_steps < max_steps_len)):
-
-                    max_wing_pair_count = wing_pair_count
-                    max_line = line.strip()
-                    max_steps_len = len_steps
-                    max_edges_pair_count = edges_pair_count
-                    # log.info("%s: %s vs %s will pair %d wings in %d moves" % (self, state_to_find, state, max_wing_pair_count, max_steps_len))
-                    log.info(
-                        "%s: %s will pair %d wings and %d edges in %d moves %s"
-                        % (
-                            self,
-                            state,
-                            max_wing_pair_count,
-                            max_edges_pair_count,
-                            max_steps_len,
-                            " ".join(steps),
-                        )
-                    )
-
-        return max_line
 
     def build_ida_graph(self):
         assert self.legal_moves, "no legal_moves defined"
@@ -1167,7 +895,8 @@ class LookupTable(object):
         return (state_index, cost_to_goal)
 
 
-class LookupTableCostOnly(LookupTable):
+
+class LookupTableHashCostOnly(LookupTable):
 
     def __init__(
         self,
@@ -1176,9 +905,11 @@ class LookupTableCostOnly(LookupTable):
         state_target,
         linecount,
         max_depth=None,
+        bucketcount=None,
         filesize=None,
         md5=None,
     ):
+        # dwalton why is all of this __init__ code duplicated?
         self.parent = parent
         self.sides_all = (
             self.parent.sideU,
@@ -1199,7 +930,6 @@ class LookupTableCostOnly(LookupTable):
         self.preloaded_cache_dict = False
         self.preloaded_cache_set = False
         self.preloaded_cache_string = False
-        self.ida_all_the_way = False
         self.filesize = filesize
         self.md5 = md5
         self.printed_disk_io_warning = False
@@ -1264,27 +994,6 @@ class LookupTableCostOnly(LookupTable):
             )
         )
 
-    def steps_cost(self, state_to_find):
-        # state_to_find is an integer, there is a one byte hex character in the file for each possible state.
-        # This hex character is the number of steps required to solve the corresponding state.
-        return int(chr(self.content[state_to_find]), 16)
-
-
-class LookupTableHashCostOnly(LookupTableCostOnly):
-    def __init__(
-        self,
-        parent,
-        filename,
-        state_target,
-        linecount,
-        max_depth=None,
-        bucketcount=None,
-        filesize=None,
-        md5=None,
-    ):
-        LookupTableCostOnly.__init__(
-            self, parent, filename, state_target, linecount, max_depth, filesize, md5
-        )
         self.bucketcount = bucketcount
 
     def steps_cost(self, state_to_find):
@@ -1300,16 +1009,18 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
         # This will be very rare but if a state_target and some other random state both hash
         # to the same bucket the cost will be 0.
         if not result:
-            log.info(
+            log.debug(
                 "%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s"
                 % (self, state_to_find, hash_raw, hash_index, result)
             )
-            # raise SolveError("%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s" % (self, state_to_find, hash_raw, hash_index, result))
+            # raise SolveError("%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s" %
+            #    (self, state_to_find, hash_raw, hash_index, result))
 
         return result
 
 
 class LookupTableIDA(LookupTable):
+
     def __init__(
         self,
         parent,
@@ -1317,21 +1028,25 @@ class LookupTableIDA(LookupTable):
         state_target,
         moves_all,
         moves_illegal,
-        linecount,
+        linecount=None,
         max_depth=None,
         filesize=None,
         legal_moves=[],
+        multiplier=None,
     ):
         LookupTable.__init__(
             self, parent, filename, state_target, linecount, max_depth, filesize
         )
-        self.ida_nodes = {}
+        # self.ida_nodes = {}
         self.recolor_positions = []
         self.recolor_map = {}
         self.nuke_corners = False
         self.nuke_edges = False
         self.nuke_centers = False
         self.min_edge_paired_count = 0
+        self.multiplier = multiplier
+
+        assert self.multiplier is None or self.multiplier >= 1.0
 
         for x in moves_illegal:
             if x not in moves_all:
@@ -1362,57 +1077,27 @@ class LookupTableIDA(LookupTable):
                         self.steps_not_on_same_face_and_layer[step1] = []
                     self.steps_not_on_same_face_and_layer[step1].append(step2)
 
-    def search_complete(self, state, steps_to_here):
+    def recolor(self):
 
-        if self.ida_all_the_way:
-            if state not in self.state_target:
-                return False
-            steps = []
+        if (self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions):
+            log.info("%s: recolor" % self)
+            # self.parent.print_cube()
 
-        else:
-            if state in self.state_target:
-                steps = []
-            else:
-                steps = self.steps(state)
+            if self.nuke_corners:
+                self.parent.nuke_corners()
 
-                if not steps:
-                    return False
+            if self.nuke_edges:
+                self.parent.nuke_edges()
 
-        # =============================================
-        # If there are steps for a state that means our
-        # search is done...woohoo!!
-        # =============================================
-        # rotate_xxx() is very fast but it does not append the
-        # steps to the solution so put the cube back in original state
-        # and execute the steps via a normal rotate() call
-        self.parent.state = self.original_state[:]
-        self.parent.solution = self.original_solution[:]
+            if self.nuke_centers:
+                self.parent.nuke_centers()
 
-        for step in steps_to_here:
-            self.parent.state = self.rotate_xxx(self.parent.state[:], step)
-            self.parent.solution.append(step)
+            for x in self.recolor_positions:
+                x_color = self.parent.state[x]
+                x_new_color = self.recolor_map.get(x_color)
 
-        # The cube is now in a state where it is in the lookup table, we may need
-        # to do several lookups to get to our target state though. Use
-        # LookupTabele's solve() to take us the rest of the way to the target state.
-        LookupTable.solve(self)
-
-        if self.avoid_oll is not None:
-            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
-
-            if self.avoid_oll in orbits_with_oll:
-                self.parent.state = self.original_state[:]
-                self.parent.solution = self.original_solution[:]
-                log.debug("%s: IDA found match but it leads to OLL" % self)
-                return False
-
-        if self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-            log.debug("%s: IDA found match but it leads to PLL" % self)
-            return False
-
-        return True
+                if x_new_color:
+                    self.parent.state[x] = x_new_color
 
     def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
         """
@@ -1424,29 +1109,29 @@ class LookupTableIDA(LookupTable):
         cost_to_here = len(steps_to_here)
         self.parent.state = prev_state[:]
         (lt_state, cost_to_goal) = self.ida_heuristic()
+
+        if self.multiplier:
+            cost_to_goal = cost_to_goal * self.multiplier
+
         f_cost = cost_to_here + cost_to_goal
 
         # ================
         # Abort Searching?
         # ================
         if f_cost >= threshold:
-            return (f_cost, False)
+            return (f_cost, False, [])
 
         # Are we done?
-        if cost_to_goal <= self.max_depth and self.search_complete(
-            lt_state, steps_to_here
-        ):
-            self.ida_nodes[lt_state] = steps_to_here
-            return (f_cost, True)
+        if cost_to_goal == 0:
+            return (f_cost, True, steps_to_here)
 
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
         explored_cost_to_here = self.explored.get(lt_state, 99)
         if explored_cost_to_here <= cost_to_here:
-            return (f_cost, False)
+            return (f_cost, False, [])
         self.explored[lt_state] = cost_to_here
 
-        # self.ida_nodes[lt_state] = steps_to_here
         skip_other_steps_this_face = None
 
         for step in self.steps_not_on_same_face_and_layer[prev_step]:
@@ -1471,11 +1156,10 @@ class LookupTableIDA(LookupTable):
 
             self.parent.state = self.rotate_xxx(prev_state, step)
 
-            (f_cost_tmp, found_solution) = self.ida_search(
-                steps_to_here + [step], threshold, step, self.parent.state[:]
-            )
+            (f_cost_tmp, found_solution, solution_steps) = self.ida_search(steps_to_here + [step], threshold, step, self.parent.state[:])
+
             if found_solution:
-                return (f_cost_tmp, True)
+                return (f_cost_tmp, True, solution_steps)
             else:
                 if f_cost_tmp > threshold:
                     skip_other_steps_this_face = step
@@ -1483,78 +1167,7 @@ class LookupTableIDA(LookupTable):
                     skip_other_steps_this_face = None
 
         self.parent.state = prev_state[:]
-        return (f_cost, False)
-
-    def recolor(self):
-
-        if (
-            self.nuke_corners
-            or self.nuke_edges
-            or self.nuke_centers
-            or self.recolor_positions
-        ):
-            log.info("%s: recolor" % self)
-            # self.parent.print_cube()
-
-            if self.nuke_corners:
-                self.parent.nuke_corners()
-
-            if self.nuke_edges:
-                self.parent.nuke_edges()
-
-            if self.nuke_centers:
-                self.parent.nuke_centers()
-
-            for x in self.recolor_positions:
-                x_color = self.parent.state[x]
-                x_new_color = self.recolor_map.get(x_color)
-
-                if x_new_color:
-                    self.parent.state[x] = x_new_color
-
-            # self.parent.print_cube()
-            # sys.exit(0)
-
-    def get_best_ida_solution(self, threshold):
-        states_to_find = sorted(self.ida_nodes.keys())
-
-        if states_to_find:
-
-            # Uncomment to write states_to_find to a file so we can perf test via utils/binary-search-lookup.py
-            # with open('states_to_find.txt', 'w') as fh:
-            #    for x in states_to_find:
-            #        fh.write(x + "\n")
-            # log.info("wrote to states_to_find.txt")
-            results = self.binary_search_multiple(states_to_find)
-
-            if results:
-                num_results = len(results.keys())
-                log.info(
-                    "%s: %d/%d states found" % (self, num_results, len(states_to_find))
-                )
-                # log.info("%s: results\n%s" % (self, pformat(results)))
-                original_solution_len = len(self.original_solution)
-
-                for (index, (lt_state, steps)) in enumerate(results.items()):
-                    steps_to_here = self.ida_nodes[lt_state]
-
-                    if self.search_complete(lt_state, steps_to_here):
-                        this_solution = self.parent.solution[original_solution_len:]
-                        this_solution_len = self.parent.get_solution_len_minus_rotates(
-                            this_solution
-                        )
-                        log.info(
-                            "%s: %d/%d solution_len %s"
-                            % (self, index + 1, num_results, this_solution_len)
-                        )
-                        return this_solution
-
-                return None
-            else:
-                log.info("%s: 0/%d states found" % (self, len(states_to_find)))
-                return None
-        else:
-            return None
+        return (f_cost, False, [])
 
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
         """
@@ -1628,7 +1241,7 @@ class LookupTableIDA(LookupTable):
         (state, cost_to_goal) = self.ida_heuristic()
 
         # The cube is already in the desired state, nothing to do
-        if self.search_complete(state, []):
+        if cost_to_goal == 0:
             log.info("%s: cube state %s is in our lookup table" % (self, state))
             tmp_solution = self.parent.solution[:]
             self.parent.state = self.pre_recolor_state[:]
@@ -1640,25 +1253,14 @@ class LookupTableIDA(LookupTable):
             return True
 
         # If we are here (odds are very high we will be) it means that the current
-        # cube state was not in the lookup table.  We must now perform an IDA search
-        # until we find a sequence of moves that takes us to a state that IS in the
-        # lookup table.
+        # cube state is not in the desired state.  We must now perform an IDA search
+        # until we find a sequence of moves that takes us to the desired state.
         if min_ida_threshold is None:
             min_ida_threshold = cost_to_goal
 
-        # If this is the case the range loop below isn't worth running
-        if min_ida_threshold >= max_ida_threshold + 1:
-            raise NoIDASolution(
-                "%s FAILED with range %d->%d"
-                % (self, min_ida_threshold, max_ida_threshold + 1)
-            )
-
         start_time0 = dt.datetime.now()
         # log.info("%s: using moves %s" % (self, pformat(self.moves_all)))
-        log.info(
-            "%s: IDA threshold range %d->%d"
-            % (self, min_ida_threshold, max_ida_threshold)
-        )
+        log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold))
         total_ida_count = 0
 
         for threshold in range(min_ida_threshold, max_ida_threshold + 1):
@@ -1666,91 +1268,29 @@ class LookupTableIDA(LookupTable):
             start_time1 = dt.datetime.now()
             self.ida_count = 0
             self.explored = {}
-            self.ida_nodes = {}
 
-            self.ida_search(steps_to_here, threshold, None, self.original_state[:])
+            (f_cost, found_solution, solution_steps) = self.ida_search(steps_to_here, threshold, None, self.original_state[:])
             total_ida_count += self.ida_count
-            best_solution = self.get_best_ida_solution(threshold)
 
-            if best_solution:
+            end_time1 = dt.datetime.now()
+            delta = end_time1 - start_time1
+            nodes_per_sec = int(self.ida_count / delta.total_seconds())
+            log.info("%s: IDA threshold %d, explored %d nodes in %s, %d nodes-per-sec" %
+                (self, threshold, self.ida_count, pretty_time(delta), nodes_per_sec)
+            )
 
-                if self.collect_stats:
-                    self.parent.state = self.original_state[:]
-                    self.parent.solution = self.original_solution[:]
-                    steps_to_go = len(best_solution)
-
-                    heuristic_tuple = self.ida_heuristic_tuple()
-
-                    if heuristic_tuple not in self.parent.heuristic_stats:
-                        self.parent.heuristic_stats[heuristic_tuple] = []
-                    self.parent.heuristic_stats[heuristic_tuple].append(steps_to_go)
-                    hit_wtf = False
-                    prev_step = None
-                    max_index = len(best_solution) - 1
-
-                    for (index, step) in enumerate(best_solution):
-                        self.parent.rotate(step)
-                        steps_to_go -= 1
-                        heuristic_tuple = self.ida_heuristic_tuple()
-
-                        if heuristic_tuple not in self.parent.heuristic_stats:
-                            self.parent.heuristic_stats[heuristic_tuple] = []
-
-                        # if steps_to_go < max(heuristic_tuple):
-                        #    log.info("%s: index %d, steps_to_go %d, step %s, heuristic_tuple %s, best_solution %s, WTF??" %\
-                        #        (self, index, steps_to_go, step, pformat(heuristic_tuple), pformat(best_solution)))
-                        #    hit_wtf = True
-                        # else:
-                        #    log.info("%s: index %d, steps_to_go %d, step %s, heuristic_tuple %s, best_solution %s" % (self, index, steps_to_go, step, pformat(heuristic_tuple), pformat(best_solution)))
-
-                        # self.parent.print_cube()
-                        self.parent.heuristic_stats[heuristic_tuple].append(steps_to_go)
-
+            if found_solution:
                 self.parent.state = self.pre_recolor_state[:]
                 self.parent.solution = self.pre_recolor_solution[:]
 
-                for step in best_solution:
+                for step in solution_steps:
                     self.parent.rotate(step)
 
-                end_time1 = dt.datetime.now()
-                log.info(
-                    "%s: IDA threshold %d, explored %d nodes in %s (%s total)"
-                    % (
-                        self,
-                        threshold,
-                        self.ida_count,
-                        pretty_time(end_time1 - start_time1),
-                        pretty_time(end_time1 - start_time0),
-                    )
-                )
                 delta = end_time1 - start_time0
                 nodes_per_sec = int(total_ida_count / delta.total_seconds())
                 log.info(
-                    "%s: IDA explored %d nodes in %s, %d nodes-per-sec"
-                    % (self, total_ida_count, delta, nodes_per_sec)
-                )
-                log.info(
-                    "%s: IDA found %d step solution %s"
-                    % (self, len(best_solution), " ".join(best_solution))
-                )
-                self.explored = {}
-                self.ida_nodes = {}
-                gc.collect()
+                    "%s: IDA explored %d nodes in %s, %d nodes-per-sec" % (self, total_ida_count, delta, nodes_per_sec))
                 return True
-            else:
-                end_time1 = dt.datetime.now()
-                delta = end_time1 - start_time1
-                nodes_per_sec = int(self.ida_count / delta.total_seconds())
-                log.info(
-                    "%s: IDA threshold %d, explored %d nodes in %s, %d nodes-per-sec"
-                    % (
-                        self,
-                        threshold,
-                        self.ida_count,
-                        pretty_time(delta),
-                        nodes_per_sec,
-                    )
-                )
 
         log.info(
             "%s: could not find a solution via IDA with max threshold of %d "
@@ -1765,6 +1305,7 @@ class LookupTableIDA(LookupTable):
 
 
 class LookupTableIDAViaC(object):
+
     def __init__(self, parent, files, C_ida_type):
         self.avoid_oll = None
         self.avoid_pll = False
@@ -1788,12 +1329,7 @@ class LookupTableIDAViaC(object):
 
     def recolor(self):
 
-        if (
-            self.nuke_corners
-            or self.nuke_edges
-            or self.nuke_centers
-            or self.recolor_positions
-        ):
+        if (self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions):
             log.info("%s: recolor" % self)
             # self.parent.print_cube()
 
@@ -1896,23 +1432,3 @@ class LookupTableIDAViaC(object):
 
         for step in steps:
             self.parent.rotate(step)
-
-
-if __name__ == "__main__":
-    import doctest
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(filename)16s %(levelname)8s: %(message)s",
-    )
-    log = logging.getLogger(__name__)
-
-    # Color the errors and warnings in red
-    logging.addLevelName(
-        logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR)
-    )
-    logging.addLevelName(
-        logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING)
-    )
-
-    doctest.testmod()

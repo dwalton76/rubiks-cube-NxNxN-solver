@@ -6,7 +6,6 @@ from rubikscubennnsolver.RubiksCube555HighLowEdges import highlow_edge_values
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
-    LookupTableCostOnly,
     LookupTableHashCostOnly,
     LookupTableIDA,
     LookupTableIDAViaC,

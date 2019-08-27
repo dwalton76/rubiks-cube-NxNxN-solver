@@ -677,18 +677,6 @@ ida_search (
     pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
 
     if (cost_to_goal_multiplier) {
-        // dwalton
-        /*
-        if (pt_total_cost >= 18) {
-            cost_to_goal = 13;
-        } else if (pt_total_cost >= 15) {
-            cost_to_goal = 11;
-        } else if (pt_total_cost >= 13) {
-            cost_to_goal = 8;
-        } else {
-            cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
-        }
-         */
         cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
     }
 

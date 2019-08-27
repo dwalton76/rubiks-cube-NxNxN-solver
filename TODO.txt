@@ -1,9 +1,4 @@
 
-
-- revisit ida_all_the_way...this should always be the case
-    - where am I still using the python IDA code path anyway?
-    This could probably use some cleanup.
-
 - 444 centers stage move to IDA-via-graph?
 
 - 444 edges move to IDA-via-graph?
@@ -51,23 +46,6 @@
       have this figured out.
 
 - 666
-    - stage inner x-centers via 444
-    - pair LR obliques
-    - stage LR centers via 555
-    - stage UD and FB centers without pairing the obliques.  This should be
-      12870^3, build all three of the 12870 tables. We currently spend ~6 moves
-      pairing the UD oblique edges. Could we also "432" the LR centers in this phase?
-      Couldn't hurt to try.
-
-      ok long story short using three 12870 tables is too slow, the IDA takes
-      about 30s. Am building a 12870^2 or 165,636,900 table of the oblique edges, that
-      should speed it up a lot. It means we cannot use ida-via-graph though.
-
-      This "should" be fast enough to 20736 the LR centers at the same time.
-      Actually we don't care about the LR outer x-centers.  Of the LR inner x-centers
-      and oblique edges there are 1728 states (out of 343,000) that are solveable without L L' R R'.
-      This should be doable.
-
     - Today we use three phases to solve the centers (two phases to reduce the
       centers to 555 and then solve via 555). Solving the centers is overkill
       though, we only need to "daisy" the centers so we can use the 444 solver

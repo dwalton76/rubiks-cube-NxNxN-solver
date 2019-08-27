@@ -355,7 +355,7 @@ class LookupTable(object):
         parent,
         filename,
         state_target,
-        linecount,
+        linecount=None,
         max_depth=None,
         filesize=None,
         md5=None,
@@ -373,8 +373,8 @@ class LookupTable(object):
             self.parent.sideD,
         )
         self.filename = filename
-        self.filename_gz = filename + ".gz"
-        self.desc = filename.replace("lookup-table-", "").replace(".txt", "")
+        self.filename_gz = filename + ".gz" if filename else None
+        self.desc = filename.replace("lookup-table-", "").replace(".txt", "") if filename else ""
         self.filename_exists = False
         self.linecount = linecount
         self.max_depth = max_depth
@@ -417,24 +417,22 @@ class LookupTable(object):
                 if step not in illegal_moves:
                     self.legal_moves.append(step)
 
+        if filename and "dummy" in self.filename:
+            assert self.linecount is None
+            assert self.max_depth is None
+            assert self.filesize is None
+            assert self.md5 is None
+
         # log.info("%s: all_moves %s" % (self, pformat(all_moves)))
         # log.info("%s: illegal_moves %s" % (self, pformat(illegal_moves)))
         # log.info("%s: legal_moves %s\n" % (self, " ".join(self.legal_moves)))
 
-        assert self.filename.startswith(
-            "lookup-table"
-        ), "We only support lookup-table*.txt files"
-        # assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
-
-        if "dummy" in self.filename:
-            self.width = 0
-            self.state_width = 0
-        else:
+        if self.filename and "dummy" not in self.filename:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
             rm_file_if_mismatch(self.filename, self.filesize, self.md5)
             download_file_if_needed(self.filename, self.parent.size)
 
-            if "perfect-hash" in self.filename:
+            if "perfect-hash" in self.filename or "hash-cost-only" in self.filename:
                 self.width = 0
                 self.state_width = 0
             else:
@@ -448,6 +446,9 @@ class LookupTable(object):
                     if steps.isdigit():
                         self.use_isdigit = True
                         # log.info("%s: use_isdigit is True" % self)
+        else:
+            self.width = 0
+            self.state_width = 0
 
         self.hex_format = "%" + "0%dx" % self.state_width
         self.filename_exists = True
@@ -462,10 +463,10 @@ class LookupTable(object):
             self.state_target = set((state_target,))
 
         # 'rb' mode is about 3x faster than 'r' mode
-        if "dummy" in self.filename:
-            self.fh_txt = None
-        else:
+        if self.filename and os.path.exists(self.filename):
             self.fh_txt = open(self.filename, mode="rb")
+        else:
+            self.fh_txt = None
 
         COST_LENGTH = 1
         STATE_INDEX_LENGTH = 4
@@ -909,66 +910,7 @@ class LookupTableHashCostOnly(LookupTable):
         filesize=None,
         md5=None,
     ):
-        # dwalton why is all of this __init__ code duplicated?
-        self.parent = parent
-        self.sides_all = (
-            self.parent.sideU,
-            self.parent.sideL,
-            self.parent.sideF,
-            self.parent.sideR,
-            self.parent.sideB,
-            self.parent.sideD,
-        )
-        self.filename = filename
-        self.filename_gz = filename + ".gz"
-        self.desc = filename.replace("lookup-table-", "").replace(".txt", "")
-        self.filename_exists = False
-        self.linecount = linecount
-        self.max_depth = max_depth
-        self.avoid_oll = None
-        self.avoid_pll = False
-        self.preloaded_cache_dict = False
-        self.preloaded_cache_set = False
-        self.preloaded_cache_string = False
-        self.filesize = filesize
-        self.md5 = md5
-        self.printed_disk_io_warning = False
-
-        assert self.filename.startswith("lookup-table"), "We only support lookup-table*.txt files"
-        # assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
-
-        if "dummy" not in self.filename:
-            assert self.linecount, "%s linecount is %s" % (self, self.linecount)
-
-        rm_file_if_mismatch(self.filename, self.filesize, self.md5)
-        download_file_if_needed(self.filename, self.parent.size)
-        self.filename_exists = True
-
-        if isinstance(state_target, tuple):
-
-            if isinstance(state_target[0], int):
-                self.state_width = 0
-            else:
-                self.state_width = len(state_target[0])
-
-            self.state_target = set(state_target)
-
-        elif isinstance(state_target, list):
-            self.state_width = len(state_target[0])
-            self.state_target = set(state_target)
-
-        elif isinstance(state_target, int):
-            self.state_width = 0
-            self.state_target = set((state_target,))
-
-        else:
-            self.state_width = len(state_target)
-            self.state_target = set((state_target,))
-
-        self.hex_format = "%" + "0%dx" % self.state_width
-
-        self.fh_txt_seek_calls = 0
-        self.fh_txt = None
+        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize, md5)
 
         # Some cost-only tables are 2^32 characters, we do not want to read a 4G
         # string into memory so for those we will seek()/read() through the file.
@@ -1037,7 +979,6 @@ class LookupTableIDA(LookupTable):
         LookupTable.__init__(
             self, parent, filename, state_target, linecount, max_depth, filesize
         )
-        # self.ida_nodes = {}
         self.recolor_positions = []
         self.recolor_map = {}
         self.nuke_corners = False

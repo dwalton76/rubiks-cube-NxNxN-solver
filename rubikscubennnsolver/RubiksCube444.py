@@ -6,7 +6,6 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableHashCostOnly,
     LookupTableIDAViaC,
 )
-from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.RubiksCube444Misc import (
     high_edges_444,
     low_edges_444,

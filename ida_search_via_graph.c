@@ -557,8 +557,8 @@ ida_search (
     unsigned int prev_pt1_state,
     unsigned int prev_pt2_state,
     unsigned int prev_pt3_state,
-    unsigned int prev_pt4_state,
-    unsigned char prev_pt_total_cost)
+    unsigned int prev_pt4_state)
+    // unsigned char prev_pt_total_cost)
 {
     unsigned char cost_to_goal = 0;
     unsigned char f_cost = 0;
@@ -578,7 +578,7 @@ ida_search (
     unsigned char pt2_cost = 0;
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
-    unsigned char pt_total_cost = 0;
+    // unsigned char pt_total_cost = 0;
     unsigned char STATE_SIZE = 48;
     unsigned char lt_state[STATE_SIZE];
 
@@ -674,7 +674,7 @@ ida_search (
         break;
     }
 
-    pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
+    // pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
 
     if (cost_to_goal_multiplier) {
         cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
@@ -712,8 +712,6 @@ ida_search (
         LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
-        // LOG("pt0_state %07u, cost %d\n", prev_pt0_state, pt0_cost);
-        // LOG("pt1_state %07u, cost %d\n", prev_pt1_state, pt1_cost);
         search_result.found_solution = 1;
         memcpy(search_result.solution, moves_to_here, sizeof(move_type) * cost_to_here);
         return search_result;
@@ -733,7 +731,9 @@ ida_search (
         }
         */
 
-        // dwalton
+        // I used this once to print some output on branches that we explored
+        // but were being pruned
+        /*
         if (0 && threshold == 14) {
             print_ida_summary(
                 init_pt0_state,
@@ -744,12 +744,17 @@ ida_search (
                 moves_to_here,
                 cost_to_here);
         }
+         */
         return search_result;
     }
 
-    if (pt_total_cost > prev_pt_total_cost) {
-        return search_result;
-    }
+    // It feels like about 99% of the time this is a safe way to speed up the IDA
+    // search.  There are times though when the total pt_cost will increase as we
+    // traverse down the branch that is the solution.
+    //
+    //if (pt_total_cost > prev_pt_total_cost) {
+    //    return search_result;
+    //}
 
     // The act of computing lt_state and looking to see if lt_state is in ida_explored
     // cuts the nodes-per-sec rate in half but it can also drastically reduce the number
@@ -845,8 +850,8 @@ ida_search (
             pt1_state,
             pt2_state,
             pt3_state,
-            pt4_state,
-            pt_total_cost);
+            pt4_state);
+            // pt_total_cost);
 
         if (tmp_search_result.found_solution) {
             return tmp_search_result;
@@ -931,7 +936,7 @@ ida_solve (
         }
     }
 
-    unsigned char pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
+    // unsigned char pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
     LOG("min_ida_threshold %d\n", min_ida_threshold);
     gettimeofday(&start, NULL);
 
@@ -949,8 +954,8 @@ ida_solve (
             pt1_state,
             pt2_state,
             pt3_state,
-            pt4_state,
-            pt_total_cost);
+            pt4_state);
+            // pt_total_cost);
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;

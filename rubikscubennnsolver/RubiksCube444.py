@@ -530,6 +530,7 @@ class LookupTable444LRFBCentersSolve(LookupTable):
 
 # These step140 classes/tables were used by utils/build-444-edges-step150.py to
 # IDA all 5.8 million 4-edge cases to build the step150 table
+'''
 class LookupTable444FirstFourEdgesEdgesOnly(LookupTableHashCostOnly):
     """
     lookup-table-4x4x4-step141.txt
@@ -737,7 +738,7 @@ class LookupTableIDA444FirstFourEdges(LookupTableIDA):
         cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
         lt_state = centers_state + edges_state
         return (lt_state, cost_to_goal)
-
+'''
 
 class LookupTable444FirstFourEdges(LookupTable):
     """
@@ -1439,7 +1440,6 @@ class RubiksCube444(RubiksCube):
 
             self.lt_lfrb_centers = LookupTable444LRFBCentersSolve(self)
             self.lt_pair_first_four_edges_non_ida = LookupTable444FirstFourEdges(self)
-            # self.lt_pair_first_four_edges_non_ida.preload_cache_string()
             self.lt_pair_last_eight_edges = LookupTable444LastEightEdges(self)
             self.lt_pair_last_eight_edges.preload_cache_string()
 

@@ -1,5 +1,6 @@
 
 #include <ctype.h>
+#include <locale.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -19,9 +20,9 @@
 // scratchpads that we do not want to allocate over and over again
 char *sp_cube_state;
 unsigned long array_size;
-unsigned long ida_count;
-unsigned long ida_count_total;
-unsigned long seek_calls = 0;
+unsigned long long ida_count;
+unsigned long long ida_count_total;
+unsigned long long seek_calls = 0;
 
 // Supported IDA searches
 typedef enum {
@@ -1736,10 +1737,14 @@ ida_search (unsigned int cost_to_here,
 
     if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, moves_to_here)) {
         // We are finished!!
-        LOG("IDA count %d, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
+        LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
         search_result.found_solution = 1;
+
+        // print the solved cube
+        print_cube(cube, cube_size);
+
         return search_result;
     }
 
@@ -1984,8 +1989,12 @@ ida_solve (
     int min_ida_threshold = 0;
     struct ida_heuristic_result heuristic_result;
     struct ida_search_result search_result;
+    struct timeval stop, start, start_this_threshold;
 
     memset(moves_to_here, MOVE_NONE, MAX_SEARCH_DEPTH);
+
+    // For printing commas via %'d
+    setlocale(LC_NUMERIC, "");
 
     if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, moves_to_here)) {
         LOG("cube already solved\n");
@@ -2059,9 +2068,11 @@ ida_solve (
     heuristic_result = ida_heuristic(cube, type, 99, cpu_mode);
     min_ida_threshold = heuristic_result.cost_to_goal;
     LOG("min_ida_threshold %d\n", min_ida_threshold);
+    gettimeofday(&start, NULL);
 
     for (int threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {
         ida_count = 0;
+        gettimeofday(&start_this_threshold, NULL);
         memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_SEARCH_DEPTH);
         hash_delete_all(&ida_explored);
 
@@ -2069,13 +2080,21 @@ ida_solve (
                                    type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns,
                                    avoid_pll, cpu_mode);
 
+        gettimeofday(&stop, NULL);
+        ida_count_total += ida_count;
+        float ms = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000) + ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
+        float nodes_per_ms = ida_count / ms;
+        unsigned int nodes_per_sec = nodes_per_ms * 1000;
+
+        LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count,  ms / 1000, nodes_per_sec);
+
         if (search_result.found_solution) {
-            ida_count_total += ida_count;
-            LOG("IDA threshold %d, explored %d branches (%d total), found solution\n", threshold, ida_count, ida_count_total);
+            float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
+            float nodes_per_ms = ida_count_total / ms;
+            unsigned int nodes_per_sec = nodes_per_ms * 1000;
+            LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n",
+                ida_count_total, ms / 1000, nodes_per_sec);
             return 1;
-        } else {
-            ida_count_total += ida_count;
-            LOG("IDA threshold %d, explored %d branches\n", threshold, ida_count);
         }
     }
 

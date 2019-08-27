@@ -1,4 +1,9 @@
 
+
+- revisit ida_all_the_way...this should always be the case
+    - where am I still using the python IDA code path anyway?
+    This could probably use some cleanup.
+
 - 444 centers stage move to IDA-via-graph?
 
 - 444 edges move to IDA-via-graph?
@@ -60,38 +65,74 @@
 
       This "should" be fast enough to 20736 the LR centers at the same time.
       Actually we don't care about the LR outer x-centers.  Of the LR inner x-centers
-      and oblique edges there are 1728 states that are solveable without L L' R R'.
+      and oblique edges there are 1728 states (out of 343,000) that are solveable without L L' R R'.
       This should be doable.
 
     - Today we use three phases to solve the centers (two phases to reduce the
-      centers to 555 and then solve via 555). Could we instead do:
+      centers to 555 and then solve via 555). Solving the centers is overkill
+      though, we only need to "daisy" the centers so we can use the 444 solver
+      to pair the inside orbit of edges. Solving the centers here takes ~11 moves,
+      doing the daisy thing will take ~5 moves.
 
+        <option 1>
+        - UD reduce to 555 (we have this today)
+        - LR/FB reduce to 555 (we have this today)
+        - daisy the t-centers (~5 moves)
+        </option 1>
+
+        <option 2>
+        - UD reduce to 555 (we have this today)
+        - LR and FB centers to solve inner x-centers and daisy pair the oblique edges
+          while we are doing this also daisy pair the UD oblique edges.  The UD oblique
+          edges will already be paired we just need to move them into the daisy pattern.
+        </option 2>
+
+        <option 3>
         - UD, LR and FB centers to solve inner x-centers and "daisy" pair the oblique edges.
           By daisy pair I mean that for sides L and R, we need all the obliques on side
           L to be either L or R but we cannot have a mix of the two. This is all we need
           to be able to use the 444 solver later to pair the inner orbit of edges. Once
           that is done the cube has been reduced to a 555.
 
-          UD and FB will have 343,000 states each. LR will have 1728 states. I think
-          this will be doable as we can build all three of those tables for IDA-via-graph.
+          UD and FB will have 343,000 states each. LR will have 1728 states. This is probably
+          not feasible.  The only hope being there are multiple 343,000 tables we can build.
+            - 343000 for inner x-centers of all six sides
+            - 343000 for inner x-centers and oblique edges of UD
+            - 343000 for inner x-centers and oblique edges of FB
+            - 1728 for inner x-centers and oblique edges of LR
+            - 343000 for inner x-centers UD and oblique edges of FB
+            - 343000 for inner x-centers FB and oblique edges of UD
+        </option 3>
 
-        <old idea>
-        - LR and FB centers to vertical bars
-            LR will be 20,736 and FB will be 24,010,000.  The 20736 is buildable, for FB
-            we can build multiple 70^3 or 343,000 tables.
-
-        - solve all centers. Not sure how many vertical bars patterns there are...555 has 6 of them
-          so rough guess at 36 just to overestimate. This phase would be very doable. Heck maybe
-          try to figure out how to EO the inner orbit of edges for 444 too?
-        </old idea>
 
 - 777 now that IDA is much faster does that change anything
     - once LR centers are staged, can we stage the FB centers 555
     while also pairing the oblique edges? Today we do these in two phases.  The FB
     centers prune table is 12870^2 or 165,636,900 so this is doable.
 
-    - we shouldn't need to solve all of the centers, should be able to do the 
-      "daisy" thing. That is a big change though, wait to make sure it works on 666.
+    ok I have been trying but this just doesn't look feasible.  Part of the problem
+    is there is no good way to build an oblique edges prune table.
+
+    <option 1>
+    Brainstorming, say we just FB stage the 555 centers like we do today.  Could
+    we stage the outer x-centers and oblique edges in one phase? (today we pair the
+    oblique edges then move them and the outer x-centers in a 2nd phase). That
+    would be 12870^4 state!! We could build multiple 12870^2 prune tables...I think
+    there could be six of these, that is a lot of ram though. These would have to use
+    the hashtable approach though so no IDA-via-graph here..
+    </option 1>
+
+    <option 2>
+    If we paired the oblique edges while placing them on sides UD that would be 12870^3
+    so is doable with a 12870^2 prune table.  That leaves the outer x-centers unstaged
+    though but this isn't the end of the world because we only need to daisy the centers
+    so we can use the 555 solver to pair the edges. Heck this might save some moves because
+    the 555 solver doesn't expect the centers to be staged.
+    </option 2>
+
+
+   - we shouldn't need to solve all of the centers, should be able to do the 
+     "daisy" thing. That is a big change though, wait to make sure it works on 666.
 
 - IDAViaGraph cleanup
     - drop linecount, filesize and the main table from __init__

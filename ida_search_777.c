@@ -50,19 +50,62 @@ unsigned int right_oblique_edges_777[NUM_RIGHT_OBLIQUE_EDGES_777] = {
 };
 
 
-unsigned int
+unsigned char
+get_unpaired_left_obliques_count_777 (char *cube)
+{
+    unsigned char left_unpaired_obliques = 8;
+    unsigned int left_cube_index = 0;
+    unsigned int middle_cube_index = 0;
+
+    for (unsigned char i = 0; i < NUM_MIDDLE_OBLIQUE_EDGES_777; i++) {
+        left_cube_index = left_oblique_edges_777[i];
+        middle_cube_index = middle_oblique_edges_777[i];
+
+        if (cube[left_cube_index] == '1' && cube[middle_cube_index] == '1') {
+            left_unpaired_obliques -= 1;
+        }
+    }
+
+    return left_unpaired_obliques;
+}
+
+unsigned char
+get_unpaired_right_obliques_count_777 (char *cube)
+{
+    unsigned char right_unpaired_obliques = 8;
+    unsigned int middle_cube_index = 0;
+    unsigned int right_cube_index = 0;
+
+    for (unsigned char i = 0; i < NUM_MIDDLE_OBLIQUE_EDGES_777; i++) {
+        middle_cube_index = middle_oblique_edges_777[i];
+        right_cube_index = right_oblique_edges_777[i];
+
+        if (cube[right_cube_index] == '1' && cube[middle_cube_index] == '1') {
+            if (right_unpaired_obliques == 0) {
+                printf("ERROR: right_unpaired_obliques is already 0, i %d, middle_cube_index %d, right_cube_index %d", i, middle_cube_index, right_cube_index);
+                print_cube(cube, 7);
+                exit(1);
+            }
+            right_unpaired_obliques -= 1;
+        }
+    }
+
+    return right_unpaired_obliques;
+}
+
+unsigned char
 get_unpaired_obliques_count_777 (char *cube)
 {
-    int left_paired_obliques = 0;
-    int left_unpaired_obliques = 8;
-    int right_paired_obliques = 0;
-    int right_unpaired_obliques = 8;
+    unsigned char left_paired_obliques = 0;
+    unsigned char left_unpaired_obliques = 8;
+    unsigned char right_paired_obliques = 0;
+    unsigned char right_unpaired_obliques = 8;
 
-    int left_cube_index = 0;
-    int middle_cube_index = 0;
-    int right_cube_index = 0;
+    unsigned int left_cube_index = 0;
+    unsigned int middle_cube_index = 0;
+    unsigned int right_cube_index = 0;
 
-    for (int i = 0; i < NUM_LEFT_OBLIQUE_EDGES_777; i++) {
+    for (unsigned char i = 0; i < NUM_LEFT_OBLIQUE_EDGES_777; i++) {
         left_cube_index = left_oblique_edges_777[i];
         middle_cube_index = middle_oblique_edges_777[i];
         right_cube_index = right_oblique_edges_777[i];
@@ -194,7 +237,6 @@ ida_heuristic_UD_oblique_edges_stage_777 (
     char *cube,
     unsigned int max_cost_to_goal)
 {
-    int unpaired_count = get_unpaired_obliques_count_777(cube);
     struct ida_heuristic_result result;
     unsigned long long state = 0;
 
@@ -211,11 +253,46 @@ ida_heuristic_UD_oblique_edges_stage_777 (
     sprintf(result.lt_state, "%012llx", state);
 
     // inadmissable heuristic but fast...kudos to xyzzy for this formula
+    int unpaired_count = get_unpaired_obliques_count_777(cube);
     if (unpaired_count > 8) {
         result.cost_to_goal = 4 + (unpaired_count >> 1);
     } else {
         result.cost_to_goal = unpaired_count;
     }
+
+    // Not used...I was experimenting with using the left_oblique count and
+    // right oblique count seperately.  Will leave this hear for a rainy day.
+    /*
+    unsigned char unpaired_left_count = get_unpaired_left_obliques_count_777(cube);
+    unsigned char unpaired_right_count = get_unpaired_right_obliques_count_777(cube);
+    unsigned char unpaired_count = 0;
+
+    if (unpaired_left_count >= unpaired_right_count) {
+        unpaired_count = unpaired_left_count;
+    } else {
+        unpaired_count = unpaired_right_count;
+    }
+
+    if (unpaired_count > 8) {
+        print_cube(cube, 7);
+        printf("unpaired_left_count %d\n", unpaired_left_count);
+        printf("unpaired_right_count %d\n", unpaired_right_count);
+        printf("ERROR: invalid unpaired_count %d\n", unpaired_count);
+        exit(1);
+    }
+
+    // There are at most 8 unpaired left obliques or 8 unpaired right obliques.
+    // Optimally solve a bunch and get some stats that show what total cost is
+    // when considering left and right obliques?
+
+    // The most we can pair at a time is 2 so divide by 2 for an admissable heuristic
+    if (unpaired_count) {
+        // result.cost_to_goal = ceil(unpaired_count / 2);
+        result.cost_to_goal = ceil(unpaired_count / 1.1);
+    } else {
+        result.cost_to_goal = 0;
+    }
+    */
 
     return result;
 }

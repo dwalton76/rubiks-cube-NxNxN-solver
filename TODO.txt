@@ -1,8 +1,4 @@
 
-- 444 HighLowEdges class does it actually do an IDA?
-    I don't think it does I think it is just doing a binary_search_multiple() and then
-    applying the steps found
-
 - 444 first-four edges IDA, convert this to IDA-via-graph
 
 - 444 centers stage move to IDA-via-graph

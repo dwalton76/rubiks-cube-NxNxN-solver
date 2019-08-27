@@ -307,7 +307,7 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
         )
 
 
-class LookupTableIDA444HighLowEdges(LookupTableIDA):
+class LookupTable444HighLowEdges(LookupTable):
     """
     lookup-table-4x4x4-step20-highlow-edges.txt
     ===========================================
@@ -322,7 +322,7 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
     """
 
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTable.__init__(
             self,
             parent,
             "lookup-table-4x4x4-step20-highlow-edges.txt",
@@ -340,13 +340,14 @@ class LookupTableIDA444HighLowEdges(LookupTableIDA):
                 "RRLLRRLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
                 "RRRRLLLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
             ),
-            moves_444,
-            ("Uw", "Uw'",
-             "Dw", "Dw'",
-             "Fw", "Fw'",
-             "Bw", "Bw'",
-             "Lw", "Lw'",
-             "Rw", "Rw'",
+            all_moves=moves_444,
+            legal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
             ),
             linecount=2304998,
             max_depth=6,
@@ -1423,7 +1424,7 @@ class RubiksCube444(RubiksCube):
 
             self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
             self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
-            self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
+            self.lt_highlow_edges = LookupTable444HighLowEdges(self)
 
             self.lt_reduce333 = LookupTableIDA444Reduce333(self)
 
@@ -1434,7 +1435,7 @@ class RubiksCube444(RubiksCube):
 
             self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
             self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
-            self.lt_highlow_edges = LookupTableIDA444HighLowEdges(self)
+            self.lt_highlow_edges = LookupTable444HighLowEdges(self)
 
             self.lt_lfrb_centers = LookupTable444LRFBCentersSolve(self)
             self.lt_pair_first_four_edges_non_ida = LookupTable444FirstFourEdges(self)

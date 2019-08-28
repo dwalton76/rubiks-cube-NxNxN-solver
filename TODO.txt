@@ -1,6 +1,4 @@
 
-- 444 centers stage move to IDA-via-graph
-
 - 444 edges move to IDA-via-graph???
     - not sure how to do this given the size of the edges prune table
 

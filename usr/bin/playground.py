@@ -28,10 +28,18 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-#cube = RubiksCube555(solved_555, "URFDLB")
-cube = RubiksCube666(solved_666, "URFDLB")
-cube.cpu_mode = "normal"
 
+cube = RubiksCube444(solved_444, "URFDLB")
+cube.cpu_mode = "normal"
+cube.lt_init()
+
+cube.lt_UD_centers_stage.build_ida_graph()
+cube.lt_LR_centers_stage.build_ida_graph()
+cube.lt_FB_centers_stage.build_ida_graph()
+
+'''
+cube = RubiksCube555(solved_555, "URFDLB")
+cube.cpu_mode = "normal"
 cube.lt_init()
 #cube.lt_LR_t_centers_stage.build_ida_graph()
 #cube.lt_LR_x_centers_stage.build_ida_graph()
@@ -56,13 +64,18 @@ cube.lt_init()
 #cube.lt_UD_centers_solve.build_ida_graph()
 #cube.lt_LR_centers_solve.build_ida_graph()
 #cube.lt_FB_centers_solve.build_ida_graph()
+'''
 
+'''
+cube = RubiksCube666(solved_666, "URFDLB")
+cube.cpu_mode = "normal"
+cube.lt_init()
 #cube.lt_UD_left_oblique_stage.build_ida_graph()
 #cube.lt_UD_right_oblique_stage.build_ida_graph()
 #cube.lt_UD_outer_x_centers_stage.build_ida_graph()
 #cube.lt_UD_centers_stage.build_ida_graph()
 
-
 #cube.lt_UD_oblique_edges.build_ida_graph()
 #cube.lt_LR_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
-cube.lt_FB_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
+#cube.lt_FB_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
+'''

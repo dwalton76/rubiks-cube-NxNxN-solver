@@ -1012,13 +1012,6 @@ class LookupTable555FBCenterStageLRCenter432(LookupTable):
 
 class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
 
-    UFBD_centers_555 = (
-        7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
-        57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
-        107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
-        132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
-    )
-
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
             self,

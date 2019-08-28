@@ -3459,6 +3459,7 @@ class RubiksCube555(RubiksCube):
             costs.append((cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo))
 
         costs.sort()
+        log.info("Top 5 wing_str_combo (total cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo)\n%s\n" % "\n".join(map(str, costs[0:5])))
         (cost, cost_to_pair_four_edges, cost_to_stage, min_wing_str_combo) = costs[1]
         log.info("%s: cost %d (%d + %d), wing_str_combo %s (MIN)" % (
                     self, cost, cost_to_stage, cost_to_pair_four_edges, " ".join(wing_str_combo)))
@@ -3577,7 +3578,6 @@ class RubiksCube555(RubiksCube):
 
         foo = self.edges_pairable_without_LRFB()
         log.info("%s: phase6 %d edges pairable without LRFB %s" % (self, len(foo), " ".join(foo)))
-        #sys.exit(0)
 
         self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
         # self.lt_pair_last_eight_edges_edges_only.solve()
@@ -3615,8 +3615,6 @@ class RubiksCube555(RubiksCube):
             self.group_centers_stage_FB()
             self.eo_edges()
             self.pair_first_four_edges()
-            # dwalton
-            sys.exit(0)
             self.pair_last_eight_edges()
 
         self.solution.append("CENTERS_SOLVED")

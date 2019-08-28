@@ -4,7 +4,6 @@ from pprint import pformat, pprint
 from rubikscubennnsolver import wing_strs_all, reverse_steps
 from rubikscubennnsolver.LookupTable import steps_on_same_face_and_layer
 from rubikscubennnsolver.misc import parse_ascii_777
-from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import (
     RubiksCube555,
@@ -17,6 +16,7 @@ from rubikscubennnsolver.RubiksCube666 import (
     solved_666,
     rotate_666,
 )
+from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 import itertools
 import logging
 import sys
@@ -29,6 +29,7 @@ logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelNam
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
 
+'''
 cube = RubiksCube444(solved_444, "URFDLB")
 cube.cpu_mode = "normal"
 cube.lt_init()
@@ -36,6 +37,7 @@ cube.lt_init()
 cube.lt_UD_centers_stage.build_ida_graph()
 cube.lt_LR_centers_stage.build_ida_graph()
 cube.lt_FB_centers_stage.build_ida_graph()
+'''
 
 '''
 cube = RubiksCube555(solved_555, "URFDLB")
@@ -79,3 +81,21 @@ cube.lt_init()
 #cube.lt_LR_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
 #cube.lt_FB_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
 '''
+
+cube = RubiksCube777(solved_777, "URFDLB")
+cube.cpu_mode = "normal"
+cube.lt_init()
+
+cube.lt_step41.build_ida_graph()
+cube.lt_step42.build_ida_graph()
+cube.lt_step43.build_ida_graph()
+
+cube.lt_step51.build_ida_graph()
+cube.lt_step52.build_ida_graph()
+cube.lt_step53.build_ida_graph()
+
+cube.lt_step61.build_ida_graph()
+cube.lt_step62.build_ida_graph()
+cube.lt_step63.build_ida_graph()
+cube.lt_step64.build_ida_graph()
+cube.lt_step65.build_ida_graph()

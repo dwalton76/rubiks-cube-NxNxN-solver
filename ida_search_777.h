@@ -28,7 +28,6 @@
 #define NUM_CENTERS_STEP61_777 34
 #define NUM_CENTERS_STEP62_777 34
 #define NUM_CENTERS_STEP63_777 38
-#define NUM_CENTERS_STEP70_777 50
 #define BUCKETSIZE_STEP61_777 24010031
 #define BUCKETSIZE_STEP62_777 24010031
 #define BUCKETSIZE_STEP63_777 6350411
@@ -77,16 +76,5 @@ struct ida_heuristic_result ida_heuristic_step60_777(
     char *step63_777
 );
 int ida_search_complete_step60_777(char *cube);
-
-
-struct ida_heuristic_result ida_heuristic_step70_777(
-    char *cube,
-    unsigned int max_cost_to_goal,
-    struct key_value_pair **step70_777,
-    char *step61_777,
-    char *step62_777
-);
-int ida_search_complete_step70_777(char *cube);
-
 
 #endif /* _IDA_SEARCH_777_H */

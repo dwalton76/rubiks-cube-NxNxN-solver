@@ -41,7 +41,6 @@ typedef enum {
     STEP40_777,
     STEP50_777,
     STEP60_777,
-    STEP70_777,
 
 } lookup_table_type;
 
@@ -387,7 +386,6 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     case STEP40_777:
     case STEP50_777:
     case STEP60_777:
-    case STEP70_777:
         break;
 
     default:
@@ -690,13 +688,6 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
             step62_777,
             step63_777);
 
-    case STEP70_777:
-        return ida_heuristic_step70_777(
-            cube,
-            max_cost_to_goal,
-            &step70_777,
-            step61_777,
-            step62_777);
     default:
         printf("ERROR: ida_heuristic() does not yet support this --type\n");
         exit(1);
@@ -978,9 +969,6 @@ ida_search_complete (
     case STEP60_777:
         return ida_search_complete_step60_777(cube);
 
-    case STEP70_777:
-        return ida_search_complete_step70_777(cube);
-
     default:
         printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
         exit(1);
@@ -1252,7 +1240,6 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
       "U", "U'", "D", "D'"),
      */
     case STEP60_777:
-    case STEP70_777:
         switch (move) {
         case threeFw:
         case threeFw_PRIME:
@@ -1854,13 +1841,6 @@ ida_solve (
         step63_777 = ida_cost_only_preload("lookup-table-7x7x7-step63.hash-cost-only.txt", 6350412);
         break;
 
-    case STEP70_777:
-        ida_prune_table_preload(&step70_777, "lookup-table-7x7x7-step70.txt");
-        step61_777 = ida_cost_only_preload("lookup-table-7x7x7-step61.hash-cost-only.txt", 24010032);
-        step62_777 = ida_cost_only_preload("lookup-table-7x7x7-step62.hash-cost-only.txt", 24010032);
-        step63_777 = ida_cost_only_preload("lookup-table-7x7x7-step63.hash-cost-only.txt", 6350412);
-        break;
-
     default:
         printf("ERROR: ida_solve() does not yet support this --type\n");
         exit(1);
@@ -1959,10 +1939,6 @@ main (int argc, char *argv[])
 
             } else if (strmatch(argv[i], "7x7x7-step60")) {
                 type = STEP60_777;
-                cube_size_type = 7;
-
-            } else if (strmatch(argv[i], "7x7x7-step70")) {
-                type = STEP70_777;
                 cube_size_type = 7;
 
             } else {

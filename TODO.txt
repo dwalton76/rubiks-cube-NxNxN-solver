@@ -1,7 +1,4 @@
 
-- 444 edges move to IDA-via-graph???
-    - not sure how to do this given the size of the edges prune table
-
 - 777 centers classes are solving centers, we only need to daisy the centers.
     This would allow us to conver these to IDA-via-graph. This is a significant
     change though...lots of tables to rebuild. It would be worth it though

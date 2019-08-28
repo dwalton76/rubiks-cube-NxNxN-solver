@@ -3439,6 +3439,7 @@ class RubiksCube555(RubiksCube):
         tmp_solution_len = len(self.solution)
         min_cost = 99
         min_wing_str_combo = None
+        costs = []
 
         for wing_str_combo in itertools.combinations(wing_strs_all, 4):
             self.state = original_state[:]
@@ -3455,14 +3456,12 @@ class RubiksCube555(RubiksCube):
             (_state, cost_to_pair_four_edges) = self.lt_phase5_four_edges.ida_heuristic()
             cost = cost_to_stage + cost_to_pair_four_edges
 
-            if cost < min_cost:
-                log.info("%s: cost %d (%d + %d), wing_str_combo %s (NEW MIN)" % (
+            costs.append((cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo))
+
+        costs.sort()
+        (cost, cost_to_pair_four_edges, cost_to_stage, min_wing_str_combo) = costs[1]
+        log.info("%s: cost %d (%d + %d), wing_str_combo %s (MIN)" % (
                     self, cost, cost_to_stage, cost_to_pair_four_edges, " ".join(wing_str_combo)))
-                min_wing_str_combo = wing_str_combo
-                min_cost = cost
-            #else:
-            #    log.info("%s: cost %d (%d + %d), wing_str_combo %s" % (
-            #        self, cost, cost_to_stage, cost_to_pair_four_edges, " ".join(wing_str_combo)))
 
         self.state = original_state[:]
         self.solution = original_solution[:]

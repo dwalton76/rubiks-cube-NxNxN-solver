@@ -370,9 +370,6 @@ class LookupTable444HighLowEdges(LookupTable):
         return (lt_state, cost_to_goal)
 
 
-# ======================
-# --normal/--slow tables
-# ======================
 class LookupTable444UDCentersStage(LookupTable):
     """
     lookup-table-4x4x4-step11-UD-centers-stage.txt

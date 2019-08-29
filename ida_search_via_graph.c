@@ -11,7 +11,6 @@
 #include <sys/time.h>
 #include "uthash.h"
 #include "ida_search_core.h"
-#include "rotate_xxx.h"
 
 
 unsigned long long ida_count = 0;
@@ -43,279 +42,6 @@ float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
 move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
-
-void
-print_moves (move_type *moves, unsigned char max_i)
-{
-    unsigned char i = 0;
-    printf("SOLUTION: ");
-
-    while (moves[i] != MOVE_NONE) {
-        printf("%s ", move2str[moves[i]]);
-        i++;
-
-        if (i >= max_i) {
-            break;
-        }
-    }
-    printf("\n");
-}
-
-
-unsigned char
-steps_on_same_face_and_layer (move_type move, move_type prev_move)
-{
-    switch (move) {
-    case U:
-    case U_PRIME:
-    case U2:
-        switch (prev_move) {
-        case U:
-        case U_PRIME:
-        case U2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case L:
-    case L_PRIME:
-    case L2:
-        switch (prev_move) {
-        case L:
-        case L_PRIME:
-        case L2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case F:
-    case F_PRIME:
-    case F2:
-        switch (prev_move) {
-        case F:
-        case F_PRIME:
-        case F2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case R:
-    case R_PRIME:
-    case R2:
-        switch (prev_move) {
-        case R:
-        case R_PRIME:
-        case R2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case B:
-    case B_PRIME:
-    case B2:
-        switch (prev_move) {
-        case B:
-        case B_PRIME:
-        case B2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case D:
-    case D_PRIME:
-    case D2:
-        switch (prev_move) {
-        case D:
-        case D_PRIME:
-        case D2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    // 2-layer turns
-    case Uw:
-    case Uw_PRIME:
-    case Uw2:
-        switch (prev_move) {
-        case Uw:
-        case Uw_PRIME:
-        case Uw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case Lw:
-    case Lw_PRIME:
-    case Lw2:
-        switch (prev_move) {
-        case Lw:
-        case Lw_PRIME:
-        case Lw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case Fw:
-    case Fw_PRIME:
-    case Fw2:
-        switch (prev_move) {
-        case Fw:
-        case Fw_PRIME:
-        case Fw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case Rw:
-    case Rw_PRIME:
-    case Rw2:
-        switch (prev_move) {
-        case Rw:
-        case Rw_PRIME:
-        case Rw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case Bw:
-    case Bw_PRIME:
-    case Bw2:
-        switch (prev_move) {
-        case Bw:
-        case Bw_PRIME:
-        case Bw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case Dw:
-    case Dw_PRIME:
-    case Dw2:
-        switch (prev_move) {
-        case Dw:
-        case Dw_PRIME:
-        case Dw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case threeUw:
-    case threeUw_PRIME:
-    case threeUw2:
-        switch (prev_move) {
-        case threeUw:
-        case threeUw_PRIME:
-        case threeUw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case threeLw:
-    case threeLw_PRIME:
-    case threeLw2:
-        switch (prev_move) {
-        case threeLw:
-        case threeLw_PRIME:
-        case threeLw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case threeFw:
-    case threeFw_PRIME:
-    case threeFw2:
-        switch (prev_move) {
-        case threeFw:
-        case threeFw_PRIME:
-        case threeFw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case threeRw:
-    case threeRw_PRIME:
-    case threeRw2:
-        switch (prev_move) {
-        case threeRw:
-        case threeRw_PRIME:
-        case threeRw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case threeBw:
-    case threeBw_PRIME:
-    case threeBw2:
-        switch (prev_move) {
-        case threeBw:
-        case threeBw_PRIME:
-        case threeBw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case threeDw:
-    case threeDw_PRIME:
-    case threeDw2:
-        switch (prev_move) {
-        case threeDw:
-        case threeDw_PRIME:
-        case threeDw2:
-            return 1;
-        default:
-            return 0;
-        }
-        break;
-
-    case X:
-    case X_PRIME:
-    case Y:
-    case Y_PRIME:
-    case Z:
-    case Z_PRIME:
-        return 0;
-
-    default:
-        printf("ERROR: steps_on_same_face_and_layer add support for %d (%s)\n", move, move2str[move]);
-        exit(1);
-    }
-
-    return 0;
-}
 
 struct ida_search_result {
     unsigned int f_cost;
@@ -557,7 +283,9 @@ ida_search (
     unsigned int prev_pt1_state,
     unsigned int prev_pt2_state,
     unsigned int prev_pt3_state,
-    unsigned int prev_pt4_state)
+    unsigned int prev_pt4_state,
+    unsigned char orbit0_wide_quarter_turns,
+    unsigned char orbit1_wide_quarter_turns)
     // unsigned char prev_pt_total_cost)
 {
     unsigned char cost_to_goal = 0;
@@ -850,7 +578,9 @@ ida_search (
             pt1_state,
             pt2_state,
             pt3_state,
-            pt4_state);
+            pt4_state,
+            orbit0_wide_quarter_turns,
+            orbit1_wide_quarter_turns);
             // pt_total_cost);
 
         if (tmp_search_result.found_solution) {
@@ -878,7 +608,9 @@ ida_solve (
     unsigned int pt3_state,
     unsigned int pt4_state,
     unsigned char min_ida_threshold,
-    unsigned char max_ida_threshold)
+    unsigned char max_ida_threshold,
+    unsigned char orbit0_wide_quarter_turns,
+    unsigned char orbit1_wide_quarter_turns)
 {
     move_type moves_to_here[max_ida_threshold];
     struct ida_search_result search_result;
@@ -954,7 +686,9 @@ ida_solve (
             pt1_state,
             pt2_state,
             pt3_state,
-            pt4_state);
+            pt4_state,
+            orbit0_wide_quarter_turns,
+            orbit1_wide_quarter_turns);
             // pt_total_cost);
 
         gettimeofday(&stop, NULL);
@@ -1074,6 +808,8 @@ main (int argc, char *argv[])
     unsigned long prune_table_4_state = 0;
     unsigned char min_ida_threshold = 0;
     unsigned char max_ida_threshold = 30;
+    unsigned char orbit0_wide_quarter_turns = 0;
+    unsigned char orbit1_wide_quarter_turns = 0;
 
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
     memset(move_matrix, MOVE_NONE, MOVE_MAX * MOVE_MAX);
@@ -1156,6 +892,18 @@ main (int argc, char *argv[])
 
         } else if (strmatch(argv[i], "--use-lt-explored")) {
             use_lt_explored = 1;
+
+        } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
+            orbit0_wide_quarter_turns = 1;
+
+        } else if (strmatch(argv[i], "--orbit0-need-even-w")) {
+            orbit0_wide_quarter_turns = 2;
+
+        } else if (strmatch(argv[i], "--orbit1-need-odd-w")) {
+            orbit1_wide_quarter_turns = 1;
+
+        } else if (strmatch(argv[i], "--orbit1-need-even-w")) {
+            orbit1_wide_quarter_turns = 2;
 
         } else if (strmatch(argv[i], "--legal-moves")) {
             i++;
@@ -1347,7 +1095,9 @@ main (int argc, char *argv[])
         prune_table_3_state,
         prune_table_4_state,
         min_ida_threshold,
-        max_ida_threshold);
+        max_ida_threshold,
+        orbit0_wide_quarter_turns,
+        orbit1_wide_quarter_turns);
 
     print_ida_summary(
         prune_table_0_state,

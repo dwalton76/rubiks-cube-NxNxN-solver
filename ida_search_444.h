@@ -9,18 +9,6 @@
 #define NUM_CENTERS_444 24
 #define NUM_EDGES_AND_CENTERS_444 48
 
-struct ida_heuristic_result ida_heuristic_centers_444 (
-    char *cube,
-    unsigned int max_cost_to_goal,
-    struct key_value_pair **centers_cost_444,
-    char *UD_centers_cost_only_444,
-    char *LR_centers_cost_only_444,
-    char *FB_centers_cost_only_444,
-    cpu_mode_type cpu_mode
-);
-int ida_search_complete_centers_444 (char *cube);
-
-
 struct wings_for_edges_recolor_pattern_444 {
     char edge_index[1];
     unsigned int square_index;

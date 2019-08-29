@@ -29,7 +29,6 @@ typedef enum {
     NONE,
 
     // 4x4x4
-    CENTERS_STAGE_444,
     REDUCE_333_444,
 
     // 6x6x6
@@ -38,9 +37,6 @@ typedef enum {
     // 7x7x7
     LR_OBLIQUE_EDGES_STAGE_777,
     UD_OBLIQUE_EDGES_STAGE_777,
-    STEP40_777,
-    STEP50_777,
-    STEP60_777,
 
 } lookup_table_type;
 
@@ -56,23 +52,6 @@ struct key_value_pair *reduce_333_444 = NULL;
 char *reduce_333_edges_only = NULL;
 char *reduce_333_centers_only = NULL;
 struct wings_for_edges_recolor_pattern_444 *wings_for_recolor_444;
-
-// 7x7x7
-struct key_value_pair *step40_777 = NULL;
-char *step41_777 = NULL;
-char *step42_777 = NULL;
-
-struct key_value_pair *step50_777 = NULL;
-char *step51_777 = NULL;
-char *step52_777 = NULL;
-
-struct key_value_pair *step60_777 = NULL;
-char *step61_777 = NULL;
-char *step62_777 = NULL;
-char *step63_777 = NULL;
-
-struct key_value_pair *step70_777 = NULL;
-
 
 /* Remove leading and trailing whitespaces */
 char *
@@ -355,13 +334,6 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     // LOG("cube:\n%s\n\n", cube);
 
     switch (type)  {
-    case CENTERS_STAGE_444:
-        str_replace_list_of_chars(cube, D, U);
-        str_replace_list_of_chars(cube, R, L);
-        str_replace_list_of_chars(cube, B, F);
-        print_cube(cube, size);
-        break;
-
     case REDUCE_333_444:
         break;
 
@@ -381,11 +353,6 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
         // Convert to 1s and 0s
         str_replace_for_binary(cube, ones_UD);
         print_cube(cube, size);
-        break;
-
-    case STEP40_777:
-    case STEP50_777:
-    case STEP60_777:
         break;
 
     default:
@@ -464,115 +431,6 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
             hash_add(hashtable, buffer, cost);
         }
 
-    } else if (strmatch(filename, "lookup-table-5x5x5-step10-LR-centers-stage.txt")) {
-
-        // The hash_add() here is the expensive part but disk IO is a factor.  If I
-        // comment out hash_add():
-        // - fread() the entire file takes 15ms and 14M of memory
-        // - fgets() line by line takes 55ms but 0M of memory
-        //
-        // With hash_add():
-        // - fread() takes 419ms
-        // - fgets() takes 470ms
-
-        /*
-        int size = 14759145;
-        char *ptr = malloc(sizeof(char) * size);
-        char *orig_ptr = ptr;
-        memset(ptr, 0, sizeof(char) * size);
-        int line_length = 17;
-        int line_count = 868185;
-
-        if (fread(ptr, size, 1, fh_read)) {
-            fclose(fh_read);
-
-            for (int i = 0; i < line_count; i++) {
-                ptr[14] = '\0';
-                cost = atoi(&ptr[15]);
-                hash_add(hashtable, ptr, cost);
-                ptr += line_length;
-            }
-            free(orig_ptr);
-            orig_ptr = NULL;
-
-            //LOG("ida_prune_table_preload %s: end\n", filename);
-            //exit(0);
-        } else {
-            printf("ERROR: ida_prune_table_preload read failed %s\n", filename);
-            exit(1);
-        }
-        */
-
-        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
-            // 0..13 are the state
-            // 14 is the :
-            // 15 is the move count
-            buffer[14] = '\0';
-            cost = atoi(&buffer[15]);
-            hash_add(hashtable, buffer, cost);
-        }
-
-    } else if (strmatch(filename, "lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt")) {
-
-        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
-            // 0..13 are the state
-            // 14 is the :
-            // 15 is the move count
-            buffer[14] = '\0';
-            cost = atoi(&buffer[15]);
-            hash_add(hashtable, buffer, cost);
-        }
-
-    } else if (strmatch(filename, "lookup-table-6x6x6-step30-LR-inner-x-centers-oblique-edges-stage.txt") ||
-        strmatch(filename, "lookup-table-6x6x6-step60-LFRB-solve-inner-x-center-and-oblique-edges.txt")) {
-
-        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
-            // 0..11 are the state
-            // 12 is the :
-            // 13 is the move count
-            buffer[12] = '\0';
-            cost = atoi(&buffer[13]);
-            hash_add(hashtable, buffer, cost);
-        }
-
-    } else if (
-        strmatch(filename, "lookup-table-7x7x7-step40.txt") ||
-        strmatch(filename, "lookup-table-7x7x7-step50.txt")) {
-
-        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
-            // 0002001ffefff:3
-            // 0..12 are the state
-            // 13 is the :
-            // 14 is the move count
-            buffer[13] = '\0';
-            cost = atoi(&buffer[14]);
-            hash_add(hashtable, buffer, cost);
-        }
-
-    } else if (strmatch(filename, "lookup-table-7x7x7-step60.txt")) {
-
-        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
-            // 0842108007c000008007fe0fffffdfffbdef7b:6
-            // 0..37 are the state
-            // 38 is the :
-            // 39 is the move count
-            buffer[38] = '\0';
-            cost = atoi(&buffer[39]);
-            hash_add(hashtable, buffer, cost);
-        }
-
-    } else if (strmatch(filename, "lookup-table-7x7x7-step70.txt")) {
-
-        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
-            // 0002001ffefff:4
-            // 0..12 are the state
-            // 13 is the :
-            // 14 is the move count
-            buffer[13] = '\0';
-            cost = atoi(&buffer[14]);
-            hash_add(hashtable, buffer, cost);
-        }
-
     } else {
         printf("ERROR: ida_prune_table_preload add support for %s\n", filename);
         exit(1);
@@ -630,16 +488,6 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
     switch (type)  {
 
     // 4x4x4
-    case CENTERS_STAGE_444:
-        return ida_heuristic_centers_444(
-            cube,
-            max_cost_to_goal,
-            &centers_cost_444,
-            UD_centers_cost_only_444,
-            LR_centers_cost_only_444,
-            FB_centers_cost_only_444,
-            cpu_mode);
-
     case REDUCE_333_444:
         return ida_heuristic_reduce_333_444(
             cube,
@@ -662,31 +510,6 @@ ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal
 
     case UD_OBLIQUE_EDGES_STAGE_777:
         return ida_heuristic_UD_oblique_edges_stage_777(cube, max_cost_to_goal);
-
-    case STEP40_777:
-        return ida_heuristic_step40_777(
-            cube,
-            max_cost_to_goal,
-            &step40_777,
-            step41_777,
-            step42_777);
-
-    case STEP50_777:
-        return ida_heuristic_step50_777(
-            cube,
-            max_cost_to_goal,
-            &step50_777,
-            step51_777,
-            step52_777);
-
-    case STEP60_777:
-        return ida_heuristic_step60_777(
-            cube,
-            max_cost_to_goal,
-            &step60_777,
-            step61_777,
-            step62_777,
-            step63_777);
 
     default:
         printf("ERROR: ida_heuristic() does not yet support this --type\n");
@@ -891,9 +714,6 @@ ida_search_complete (
 
     switch (type)  {
     // 4x4x4
-    case CENTERS_STAGE_444:
-        return ida_search_complete_centers_444(cube);
-
     case REDUCE_333_444:
         result = ida_search_complete_reduce_333_444(cube);
 
@@ -960,15 +780,6 @@ ida_search_complete (
     case UD_OBLIQUE_EDGES_STAGE_777:
         return ida_search_complete_UD_oblique_edges_stage_777(cube);
 
-    case STEP40_777:
-        return ida_search_complete_step40_777(cube);
-
-    case STEP50_777:
-        return ida_search_complete_step50_777(cube);
-
-    case STEP60_777:
-        return ida_search_complete_step60_777(cube);
-
     default:
         printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
         exit(1);
@@ -1032,22 +843,6 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
     switch (type)  {
 
     // 4x4x4
-    case CENTERS_STAGE_444:
-        switch (move) {
-        case Lw:
-        case Lw_PRIME:
-        case Lw2:
-        case Bw:
-        case Bw_PRIME:
-        case Bw2:
-        case Dw:
-        case Dw_PRIME:
-        case Dw2:
-            return 0;
-        default:
-            return 1;
-        }
-
     case REDUCE_333_444:
         switch (move) {
         case Uw:
@@ -1137,146 +932,6 @@ step_allowed_by_ida_search (lookup_table_type type, move_type move)
         case R:
         case R_PRIME:
         case R2:
-            return 0;
-        default:
-            return 1;
-        }
-
-    case STEP40_777:
-        switch (move) {
-        case threeFw:
-        case threeFw_PRIME:
-        case threeBw:
-        case threeBw_PRIME:
-        case threeLw:
-        case threeLw_PRIME:
-        case threeRw:
-        case threeRw_PRIME:
-        case threeUw:
-        case threeUw_PRIME:
-        case threeDw:
-        case threeDw_PRIME:
-        case Fw:
-        case Fw_PRIME:
-        case Bw:
-        case Bw_PRIME:
-        case Lw:
-        case Lw_PRIME:
-        case Rw:
-        case Rw_PRIME:
-        case Uw:
-        case Uw_PRIME:
-        case Dw:
-        case Dw_PRIME:
-            return 0;
-        default:
-            return 1;
-        }
-
-    /*
-      # keep all centers staged
-      ("3Uw", "3Uw'", "Uw", "Uw'",
-       "3Lw", "3Lw'", "Lw", "Lw'",
-       "3Fw", "3Fw'", "Fw", "Fw'",
-       "3Rw", "3Rw'", "Rw", "Rw'",
-       "3Bw", "3Bw'", "Bw", "Bw'",
-       "3Dw", "3Dw'", "Dw", "Dw'",
-
-      # keep LR in vertical stripes
-      "L", "L'", "R", "R'", "3Uw2", "3Dw2", "Uw2", "Dw2"),
-    */
-    case STEP50_777:
-        switch (move) {
-        case threeFw:
-        case threeFw_PRIME:
-        case threeBw:
-        case threeBw_PRIME:
-        case threeLw:
-        case threeLw_PRIME:
-        case threeRw:
-        case threeRw_PRIME:
-        case threeUw:
-        case threeUw_PRIME:
-        case threeDw:
-        case threeDw_PRIME:
-        case Fw:
-        case Fw_PRIME:
-        case Bw:
-        case Bw_PRIME:
-        case Lw:
-        case Lw_PRIME:
-        case Rw:
-        case Rw_PRIME:
-        case Uw:
-        case Uw_PRIME:
-        case Dw:
-        case Dw_PRIME:
-        case L:
-        case L_PRIME:
-        case R:
-        case R_PRIME:
-        case threeUw2:
-        case threeDw2:
-        case Uw2:
-        case Dw2:
-            return 0;
-        default:
-            return 1;
-        }
-
-    /*
-      # keep all centers staged
-      ("3Uw", "3Uw'", "Uw", "Uw'",
-       "3Lw", "3Lw'", "Lw", "Lw'",
-       "3Fw", "3Fw'", "Fw", "Fw'",
-       "3Rw", "3Rw'", "Rw", "Rw'",
-       "3Bw", "3Bw'", "Bw", "Bw'",
-       "3Dw", "3Dw'", "Dw", "Dw'",
-
-      # keep LR in horizontal stripes
-      "L", "L'", "R", "R'", "3Fw2", "3Bw2", "Fw2", "Bw2",
-
-      # keep UD in vertical stripes
-      "U", "U'", "D", "D'"),
-     */
-    case STEP60_777:
-        switch (move) {
-        case threeFw:
-        case threeFw_PRIME:
-        case threeBw:
-        case threeBw_PRIME:
-        case threeLw:
-        case threeLw_PRIME:
-        case threeRw:
-        case threeRw_PRIME:
-        case threeUw:
-        case threeUw_PRIME:
-        case threeDw:
-        case threeDw_PRIME:
-        case Fw:
-        case Fw_PRIME:
-        case Bw:
-        case Bw_PRIME:
-        case Lw:
-        case Lw_PRIME:
-        case Rw:
-        case Rw_PRIME:
-        case Uw:
-        case Uw_PRIME:
-        case Dw:
-        case Dw_PRIME:
-        case L:
-        case L_PRIME:
-        case R:
-        case R_PRIME:
-        case threeFw2:
-        case threeBw2:
-        case Fw2:
-        case Bw2:
-        case U:
-        case U_PRIME:
-        case D:
-        case D_PRIME:
             return 0;
         default:
             return 1;
@@ -1799,13 +1454,6 @@ ida_solve (
     switch (type)  {
 
     // 4x4x4
-    case CENTERS_STAGE_444:
-        ida_prune_table_preload(&centers_cost_444, "lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt");
-        UD_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt", 16711681);
-        LR_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt", 16711681);
-        FB_centers_cost_only_444 = ida_cost_only_preload("lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt", 16711681);
-        break;
-
     case REDUCE_333_444:
         ida_prune_table_preload(&reduce_333_444, "lookup-table-4x4x4-step30-reduce333.txt");
         reduce_333_edges_only = ida_cost_only_preload("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
@@ -1820,25 +1468,6 @@ ida_solve (
     // 7x7x7
     case LR_OBLIQUE_EDGES_STAGE_777:
     case UD_OBLIQUE_EDGES_STAGE_777:
-        break;
-
-    case STEP40_777:
-        ida_prune_table_preload(&step40_777, "lookup-table-7x7x7-step40.txt");
-        step41_777 = ida_cost_only_preload("lookup-table-7x7x7-step41.hash-cost-only.txt", 24010032);
-        step42_777 = ida_cost_only_preload("lookup-table-7x7x7-step42.hash-cost-only.txt", 24010032);
-        break;
-
-    case STEP50_777:
-        ida_prune_table_preload(&step50_777, "lookup-table-7x7x7-step50.txt");
-        step51_777 = ida_cost_only_preload("lookup-table-7x7x7-step51.hash-cost-only.txt", 24010032);
-        step52_777 = ida_cost_only_preload("lookup-table-7x7x7-step52.hash-cost-only.txt", 24010032);
-        break;
-
-    case STEP60_777:
-        ida_prune_table_preload(&step60_777, "lookup-table-7x7x7-step60.txt");
-        step61_777 = ida_cost_only_preload("lookup-table-7x7x7-step61.hash-cost-only.txt", 24010032);
-        step62_777 = ida_cost_only_preload("lookup-table-7x7x7-step62.hash-cost-only.txt", 24010032);
-        step63_777 = ida_cost_only_preload("lookup-table-7x7x7-step63.hash-cost-only.txt", 6350412);
         break;
 
     default:
@@ -1907,11 +1536,7 @@ main (int argc, char *argv[])
             i++;
 
             // 4x4x4
-            if (strmatch(argv[i], "4x4x4-centers-stage")) {
-                type = CENTERS_STAGE_444;
-                cube_size_type = 4;
-
-            } else if (strmatch(argv[i], "4x4x4-reduce-333")) {
+            if (strmatch(argv[i], "4x4x4-reduce-333")) {
                 type = REDUCE_333_444;
                 cube_size_type = 4;
 
@@ -1927,18 +1552,6 @@ main (int argc, char *argv[])
 
             } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-stage")) {
                 type = UD_OBLIQUE_EDGES_STAGE_777;
-                cube_size_type = 7;
-
-            } else if (strmatch(argv[i], "7x7x7-step40")) {
-                type = STEP40_777;
-                cube_size_type = 7;
-
-            } else if (strmatch(argv[i], "7x7x7-step50")) {
-                type = STEP50_777;
-                cube_size_type = 7;
-
-            } else if (strmatch(argv[i], "7x7x7-step60")) {
-                type = STEP60_777;
                 cube_size_type = 7;
 
             } else {

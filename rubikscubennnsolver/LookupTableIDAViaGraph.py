@@ -55,7 +55,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 if x not in illegal_moves:
                     self.all_moves.append(x)
 
-        log.info("%s: all_moves %s" % (self, ",".join(self.all_moves)))
+        log.debug("%s: all_moves %s" % (self, ",".join(self.all_moves)))
         COST_LENGTH = 1
         STATE_INDEX_LENGTH = 4
         self.ROW_LENGTH = COST_LENGTH + (STATE_INDEX_LENGTH * len(self.all_moves))

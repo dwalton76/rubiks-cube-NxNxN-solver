@@ -115,300 +115,23 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
                 self.parent.state[x] = "."
 
 
-class LookupTable777Step41(LookupTable):
-    """
-    lookup-table-7x7x7-step41.txt
-    =============================
-    0 steps has 11 entries (0 percent, 0.00x previous step)
-    1 steps has 391 entries (0 percent, 35.55x previous step)
-    2 steps has 2,112 entries (0 percent, 5.40x previous step)
-    3 steps has 9,622 entries (2 percent, 4.56x previous step)
-    4 steps has 36,446 entries (10 percent, 3.79x previous step)
-    5 steps has 100,194 entries (29 percent, 2.75x previous step)
-    6 steps has 140,424 entries (40 percent, 1.40x previous step)
-    7 steps has 51,736 entries (15 percent, 0.37x previous step)
-    8 steps has 2,056 entries (0 percent, 0.04x previous step)
-    9 steps has 8 entries (0 percent, 0.00x previous step)
-
-    Total: 343,000 entries
-    Average: 5.54 moves
-    """
-
-    LR_inside_centers_and_left_obliques = (
-        # 10, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 40, # Upper
-        59, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 89, # Left
-        # 108, 115, 116, 117, 118, 122, 123, 124, 128, 129, 130, 131, 138, # Front
-        157, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 187, # Right
-        # 206, 213, 214, 215, 216, 220, 221, 222, 226, 227, 228, 229, 236, # Back
-        # 255, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 285, # Down
-    )
-
-    state_targets = (
-        'LLLLLLLLLLLLLRRRRRRRRRRRRR',
-        'LLLLLLLLRLLLLRRRRLRRRRRRRR',
-        'LLLLLLLLRLLLLRRRRRRRRLRRRR',
-        'LLLLRLLLLLLLLRRRRLRRRRRRRR',
-        'LLLLRLLLLLLLLRRRRRRRRLRRRR',
-        'LLLLRLLLRLLLLRRRRLRRRLRRRR',
-        'LLLRLLLRLLLRRLLRRRLRRRLRRR',
-        'LLLRLLLRLLLRRRRRLRRRLRRRLL',
-        'LLLRLLLRRLLRRLLRRLLRRRLRRR',
-        'LLLRLLLRRLLRRLLRRRLRRLLRRR',
-        'LLLRLLLRRLLRRRRRLLRRLRRRLL',
-        'LLLRLLLRRLLRRRRRLRRRLLRRLL',
-        'LLLRRLLRLLLRRLLRRLLRRRLRRR',
-        'LLLRRLLRLLLRRLLRRRLRRLLRRR',
-        'LLLRRLLRLLLRRRRRLLRRLRRRLL',
-        'LLLRRLLRLLLRRRRRLRRRLLRRLL',
-        'LLLRRLLRRLLRRLLRRLLRRLLRRR',
-        'LLLRRLLRRLLRRRRRLLRRLLRRLL',
-        'LRLLLRLLLRLLRLRRLRRRLRRRLR',
-        'LRLLLRLLLRLLRRLRRRLRRRLRRL',
-        'LRLLLRLLRRLLRLRRLLRRLRRRLR',
-        'LRLLLRLLRRLLRLRRLRRRLLRRLR',
-        'LRLLLRLLRRLLRRLRRLLRRRLRRL',
-        'LRLLLRLLRRLLRRLRRRLRRLLRRL',
-        'LRLLRRLLLRLLRLRRLLRRLRRRLR',
-        'LRLLRRLLLRLLRLRRLRRRLLRRLR',
-        'LRLLRRLLLRLLRRLRRLLRRRLRRL',
-        'LRLLRRLLLRLLRRLRRRLRRLLRRL',
-        'LRLLRRLLRRLLRLRRLLRRLLRRLR',
-        'LRLLRRLLRRLLRRLRRLLRRLLRRL',
-        'LRLRLRLRLRLRLRLRLRLRLRLRLR',
-        'LRLRLRLRRRLRLRLRLLLRLRLRLR',
-        'LRLRLRLRRRLRLRLRLRLRLLLRLR',
-        'LRLRRRLRLRLRLRLRLLLRLRLRLR',
-        'LRLRRRLRLRLRLRLRLRLRLLLRLR',
-        'LRLRRRLRRRLRLRLRLLLRLLLRLR',
-        'RLLLLLLLLLLLRLRRRRRRRRRRRL',
-        'RLLLLLLLRLLLRLRRRLRRRRRRRL',
-        'RLLLLLLLRLLLRLRRRRRRRLRRRL',
-        'RLLLRLLLLLLLRLRRRLRRRRRRRL',
-        'RLLLRLLLLLLLRLRRRRRRRLRRRL',
-        'RLLLRLLLRLLLRLRRRLRRRLRRRL',
-        'RLLRLLLRLLLRLLRRLRRRLRRRLR',
-        'RLLRLLLRLLLRLRLRRRLRRRLRRL',
-        'RLLRLLLRRLLRLLRRLLRRLRRRLR',
-        'RLLRLLLRRLLRLLRRLRRRLLRRLR',
-        'RLLRLLLRRLLRLRLRRLLRRRLRRL',
-        'RLLRLLLRRLLRLRLRRRLRRLLRRL',
-        'RLLRRLLRLLLRLLRRLLRRLRRRLR',
-        'RLLRRLLRLLLRLLRRLRRRLLRRLR',
-        'RLLRRLLRLLLRLRLRRLLRRRLRRL',
-        'RLLRRLLRLLLRLRLRRRLRRLLRRL',
-        'RLLRRLLRRLLRLLRRLLRRLLRRLR',
-        'RLLRRLLRRLLRLRLRRLLRRLLRRL',
-        'RRLLLRLLLRLLLLLRRRLRRRLRRR',
-        'RRLLLRLLLRLLLRRRLRRRLRRRLL',
-        'RRLLLRLLRRLLLLLRRLLRRRLRRR',
-        'RRLLLRLLRRLLLLLRRRLRRLLRRR',
-        'RRLLLRLLRRLLLRRRLLRRLRRRLL',
-        'RRLLLRLLRRLLLRRRLRRRLLRRLL',
-        'RRLLRRLLLRLLLLLRRLLRRRLRRR',
-        'RRLLRRLLLRLLLLLRRRLRRLLRRR',
-        'RRLLRRLLLRLLLRRRLLRRLRRRLL',
-        'RRLLRRLLLRLLLRRRLRRRLLRRLL',
-        'RRLLRRLLRRLLLLLRRLLRRLLRRR',
-        'RRLLRRLLRRLLLRRRLLRRLLRRLL',
-        'RRLRLRLRLRLRRLLRLRLRLRLRLL',
-        'RRLRLRLRRRLRRLLRLLLRLRLRLL',
-        'RRLRLRLRRRLRRLLRLRLRLLLRLL',
-        'RRLRRRLRLRLRRLLRLLLRLRLRLL',
-        'RRLRRRLRLRLRRLLRLRLRLLLRLL',
-        'RRLRRRLRRRLRRLLRLLLRLLLRLL'
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step41.txt',
-            self.state_targets,
-            linecount=343000,
-            max_depth=9,
-            filesize=21952000,
-            all_moves=moves_777,
-            illegal_moves=(
-                "3Uw", "3Uw'", "Uw", "Uw'",
-                "3Lw", "3Lw'", "Lw", "Lw'",
-                "3Fw", "3Fw'", "Fw", "Fw'",
-                "3Rw", "3Rw'", "Rw", "Rw'",
-                "3Bw", "3Bw'", "Bw", "Bw'",
-                "3Dw", "3Dw'", "Dw", "Dw'",
-
-                "U", "U'", "U2",
-                "D", "D'", "D2",
-                "F", "F'", "F2",
-                "D", "D'", "D2",
-            ),
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_inside_centers_and_left_obliques])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(self.LR_inside_centers_and_left_obliques, state):
-            cube[pos] = pos_state
-
-
-class LookupTable777Step42(LookupTable):
-    """
-    lookup-table-7x7x7-step42.txt
-    =============================
-    0 steps has 20 entries (0 percent, 0.00x previous step)
-    1 steps has 382 entries (0 percent, 19.10x previous step)
-    2 steps has 2,112 entries (0 percent, 5.53x previous step)
-    3 steps has 9,622 entries (2 percent, 4.56x previous step)
-    4 steps has 36,446 entries (10 percent, 3.79x previous step)
-    5 steps has 100,194 entries (29 percent, 2.75x previous step)
-    6 steps has 140,424 entries (40 percent, 1.40x previous step)
-    7 steps has 51,736 entries (15 percent, 0.37x previous step)
-    8 steps has 2,056 entries (0 percent, 0.04x previous step)
-    9 steps has 8 entries (0 percent, 0.00x previous step)
-
-    Total: 343,000 entries
-    Average: 5.54 moves
-    """
-
-    LR_inside_centers_and_right_obliques = (
-        # 12, 16, 17, 18, 19, 24, 25, 26, 31, 32, 33, 34, 38, # Upper
-        61, 65, 66, 67, 68, 73, 74, 75, 80, 81, 82, 83, 87, # Left
-        # 110, 114, 115, 116, 117, 122, 123, 124, 129, 130, 131, 132, 136, # Front
-        159, 163, 164, 165, 166, 171, 172, 173, 178, 179, 180, 181, 185, # Right
-        # 208, 212, 213, 214, 215, 220, 221, 222, 227, 228, 229, 230, 234, # Back
-        # 257, 261, 262, 263, 264, 269, 270, 271, 276, 277, 278, 279, 283, # Down
-    )
-
-    state_targets = (
-        'LLLLLLLLLLLLLRRRRRRRRRRRRR',
-        'LLLLLLLLLLLRLRLRRRRRRRRRRR',
-        'LLLLLLLLLLLRLRRRRRRRRRRRLR',
-        'LLLLRLLRLLRLRLRLRRLRRLRRRR',
-        'LLLLRLLRLLRLRRRRRLRRLRRLRL',
-        'LLLLRLLRLLRRRLLLRRLRRLRRRR',
-        'LLLLRLLRLLRRRLRLRRLRRLRRLR',
-        'LLLLRLLRLLRRRRLRRLRRLRRLRL',
-        'LLLLRLLRLLRRRRRRRLRRLRRLLL',
-        'LLRLLRLLRLLLRLRRRLRRLRRLRR',
-        'LLRLLRLLRLLLRRRLRRLRRLRRRL',
-        'LLRLLRLLRLLRRLLRRLRRLRRLRR',
-        'LLRLLRLLRLLRRLRRRLRRLRRLLR',
-        'LLRLLRLLRLLRRRLLRRLRRLRRRL',
-        'LLRLLRLLRLLRRRRLRRLRRLRRLL',
-        'LLRLRRLRRLRLLRRLRLLRLLRLRR',
-        'LLRLRRLRRLRRLRLLRLLRLLRLRR',
-        'LLRLRRLRRLRRLRRLRLLRLLRLLR',
-        'LRLLLLLLLLLLLRLRRRRRRRRRRR',
-        'LRLLLLLLLLLLLRRRRRRRRRRRLR',
-        'LRLLLLLLLLLRLRLRRRRRRRRRLR',
-        'LRLLRLLRLLRLRLLLRRLRRLRRRR',
-        'LRLLRLLRLLRLRLRLRRLRRLRRLR',
-        'LRLLRLLRLLRLRRLRRLRRLRRLRL',
-        'LRLLRLLRLLRLRRRRRLRRLRRLLL',
-        'LRLLRLLRLLRRRLLLRRLRRLRRLR',
-        'LRLLRLLRLLRRRRLRRLRRLRRLLL',
-        'LRRLLRLLRLLLRLLRRLRRLRRLRR',
-        'LRRLLRLLRLLLRLRRRLRRLRRLLR',
-        'LRRLLRLLRLLLRRLLRRLRRLRRRL',
-        'LRRLLRLLRLLLRRRLRRLRRLRRLL',
-        'LRRLLRLLRLLRRLLRRLRRLRRLLR',
-        'LRRLLRLLRLLRRRLLRRLRRLRRLL',
-        'LRRLRRLRRLRLLRLLRLLRLLRLRR',
-        'LRRLRRLRRLRLLRRLRLLRLLRLLR',
-        'LRRLRRLRRLRRLRLLRLLRLLRLLR',
-        'RLLLLLLLLLLLRLRRRRRRRRRRRL',
-        'RLLLLLLLLLLRRLLRRRRRRRRRRL',
-        'RLLLLLLLLLLRRLRRRRRRRRRRLL',
-        'RLLLRLLRLLRLLLRRRLRRLRRLRR',
-        'RLLLRLLRLLRLLRRLRRLRRLRRRL',
-        'RLLLRLLRLLRRLLLRRLRRLRRLRR',
-        'RLLLRLLRLLRRLLRRRLRRLRRLLR',
-        'RLLLRLLRLLRRLRLLRRLRRLRRRL',
-        'RLLLRLLRLLRRLRRLRRLRRLRRLL',
-        'RLRLLRLLRLLLLLRLRRLRRLRRRR',
-        'RLRLLRLLRLLLLRRRRLRRLRRLRL',
-        'RLRLLRLLRLLRLLLLRRLRRLRRRR',
-        'RLRLLRLLRLLRLLRLRRLRRLRRLR',
-        'RLRLLRLLRLLRLRLRRLRRLRRLRL',
-        'RLRLLRLLRLLRLRRRRLRRLRRLLL',
-        'RLRLRRLRRLRLRLRLRLLRLLRLRL',
-        'RLRLRRLRRLRRRLLLRLLRLLRLRL',
-        'RLRLRRLRRLRRRLRLRLLRLLRLLL',
-        'RRLLLLLLLLLLRLLRRRRRRRRRRL',
-        'RRLLLLLLLLLLRLRRRRRRRRRRLL',
-        'RRLLLLLLLLLRRLLRRRRRRRRRLL',
-        'RRLLRLLRLLRLLLLRRLRRLRRLRR',
-        'RRLLRLLRLLRLLLRRRLRRLRRLLR',
-        'RRLLRLLRLLRLLRLLRRLRRLRRRL',
-        'RRLLRLLRLLRLLRRLRRLRRLRRLL',
-        'RRLLRLLRLLRRLLLRRLRRLRRLLR',
-        'RRLLRLLRLLRRLRLLRRLRRLRRLL',
-        'RRRLLRLLRLLLLLLLRRLRRLRRRR',
-        'RRRLLRLLRLLLLLRLRRLRRLRRLR',
-        'RRRLLRLLRLLLLRLRRLRRLRRLRL',
-        'RRRLLRLLRLLLLRRRRLRRLRRLLL',
-        'RRRLLRLLRLLRLLLLRRLRRLRRLR',
-        'RRRLLRLLRLLRLRLRRLRRLRRLLL',
-        'RRRLRRLRRLRLRLLLRLLRLLRLRL',
-        'RRRLRRLRRLRLRLRLRLLRLLRLLL',
-        'RRRLRRLRRLRRRLLLRLLRLLRLLL'
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step42.txt',
-            self.state_targets,
-            linecount=343000,
-            max_depth=9,
-            filesize=22638000,
-            all_moves=moves_777,
-            illegal_moves=(
-                "3Uw", "3Uw'", "Uw", "Uw'",
-                "3Lw", "3Lw'", "Lw", "Lw'",
-                "3Fw", "3Fw'", "Fw", "Fw'",
-                "3Rw", "3Rw'", "Rw", "Rw'",
-                "3Bw", "3Bw'", "Bw", "Bw'",
-                "3Dw", "3Dw'", "Dw", "Dw'",
-
-                "U", "U'", "U2",
-                "D", "D'", "D2",
-                "F", "F'", "F2",
-                "D", "D'", "D2",
-            ),
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_inside_centers_and_right_obliques])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(self.LR_inside_centers_and_right_obliques, state):
-            cube[pos] = pos_state
-
-
 class LookupTable777Step43(LookupTable):
     """
     lookup-table-7x7x7-step43.txt
     =============================
-    0 steps has 8 entries (0 percent, 0.00x previous step)
-    1 steps has 418 entries (0 percent, 52.25x previous step)
-    2 steps has 2,200 entries (0 percent, 5.26x previous step)
-    3 steps has 9,670 entries (2 percent, 4.40x previous step)
-    4 steps has 36,862 entries (10 percent, 3.81x previous step)
-    5 steps has 104,622 entries (30 percent, 2.84x previous step)
-    6 steps has 142,100 entries (41 percent, 1.36x previous step)
-    7 steps has 45,608 entries (13 percent, 0.32x previous step)
-    8 steps has 1,512 entries (0 percent, 0.03x previous step)
+    0 steps has 11 entries (0 percent, 0.00x previous step)
+    1 steps has 239 entries (0 percent, 21.73x previous step)
+    2 steps has 1,405 entries (0 percent, 5.88x previous step)
+    3 steps has 6,372 entries (1 percent, 4.54x previous step)
+    4 steps has 25,225 entries (7 percent, 3.96x previous step)
+    5 steps has 77,525 entries (22 percent, 3.07x previous step)
+    6 steps has 135,173 entries (39 percent, 1.74x previous step)
+    7 steps has 85,458 entries (24 percent, 0.63x previous step)
+    8 steps has 11,492 entries (3 percent, 0.13x previous step)
+    9 steps has 100 entries (0 percent, 0.01x previous step)
 
     Total: 343,000 entries
-    Average: 5.51 moves
+    Average: 5.87 moves
     """
 
     LR_inside_centers_and_outer_t_centers = (
@@ -456,43 +179,7 @@ class LookupTable777Step43(LookupTable):
         'LRLRLRLRRRLRLRLRLRLRLLLRLR',
         'LRLRRRLRLRLRLRLRLLLRLRLRLR',
         'LRLRRRLRLRLRLRLRLRLRLLLRLR',
-        'LRLRRRLRRRLRLRLRLLLRLLLRLR',
-        'RLLLLLLLLLLLRLRRRRRRRRRRRL',
-        'RLLLLLLLRLLLRLRRRLRRRRRRRL',
-        'RLLLLLLLRLLLRLRRRRRRRLRRRL',
-        'RLLLRLLLLLLLRLRRRLRRRRRRRL',
-        'RLLLRLLLLLLLRLRRRRRRRLRRRL',
-        'RLLLRLLLRLLLRLRRRLRRRLRRRL',
-        'RLLRLLLRLLLRRLLRRRLRRRLRRL',
-        'RLLRLLLRLLLRRLRRLRRRLRRRLL',
-        'RLLRLLLRRLLRRLLRRLLRRRLRRL',
-        'RLLRLLLRRLLRRLLRRRLRRLLRRL',
-        'RLLRLLLRRLLRRLRRLLRRLRRRLL',
-        'RLLRLLLRRLLRRLRRLRRRLLRRLL',
-        'RLLRRLLRLLLRRLLRRLLRRRLRRL',
-        'RLLRRLLRLLLRRLLRRRLRRLLRRL',
-        'RLLRRLLRLLLRRLRRLLRRLRRRLL',
-        'RLLRRLLRLLLRRLRRLRRRLLRRLL',
-        'RLLRRLLRRLLRRLLRRLLRRLLRRL',
-        'RLLRRLLRRLLRRLRRLLRRLLRRLL',
-        'RRLLLRLLLRLLRLLRRRLRRRLRRL',
-        'RRLLLRLLLRLLRLRRLRRRLRRRLL',
-        'RRLLLRLLRRLLRLLRRLLRRRLRRL',
-        'RRLLLRLLRRLLRLLRRRLRRLLRRL',
-        'RRLLLRLLRRLLRLRRLLRRLRRRLL',
-        'RRLLLRLLRRLLRLRRLRRRLLRRLL',
-        'RRLLRRLLLRLLRLLRRLLRRRLRRL',
-        'RRLLRRLLLRLLRLLRRRLRRLLRRL',
-        'RRLLRRLLLRLLRLRRLLRRLRRRLL',
-        'RRLLRRLLLRLLRLRRLRRRLLRRLL',
-        'RRLLRRLLRRLLRLLRRLLRRLLRRL',
-        'RRLLRRLLRRLLRLRRLLRRLLRRLL',
-        'RRLRLRLRLRLRRLLRLRLRLRLRLL',
-        'RRLRLRLRRRLRRLLRLLLRLRLRLL',
-        'RRLRLRLRRRLRRLLRLRLRLLLRLL',
-        'RRLRRRLRLRLRRLLRLLLRLRLRLL',
-        'RRLRRRLRLRLRRLLRLRLRLLLRLL',
-        'RRLRRRLRRRLRRLLRLLLRLLLRLL'
+        'LRLRRRLRRRLRLRLRLLLRLLLRLR'
     )
 
     def __init__(self, parent):
@@ -503,7 +190,7 @@ class LookupTable777Step43(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=8,
-            filesize=21609000,
+            filesize=22981000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -531,6 +218,109 @@ class LookupTable777Step43(LookupTable):
             cube[pos] = pos_state
 
 
+class LookupTable777Step44(LookupTable):
+    """
+    lookup-table-7x7x7-step44.txt
+    =============================
+    0 steps has 11 entries (0 percent, 0.00x previous step)
+    1 steps has 215 entries (0 percent, 19.55x previous step)
+    2 steps has 1,401 entries (0 percent, 6.52x previous step)
+    3 steps has 7,714 entries (2 percent, 5.51x previous step)
+    4 steps has 34,695 entries (10 percent, 4.50x previous step)
+    5 steps has 102,880 entries (29 percent, 2.97x previous step)
+    6 steps has 144,916 entries (42 percent, 1.41x previous step)
+    7 steps has 48,632 entries (14 percent, 0.34x previous step)
+    8 steps has 2,528 entries (0 percent, 0.05x previous step)
+    9 steps has 8 entries (0 percent, 0.00x previous step)
+
+    Total: 343,000 entries
+    Average: 5.57 moves
+    """
+
+    LR_oblique_edges_and_outer_t_center = (
+        # 10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40, # Upper
+        59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89, # Left
+        # 108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138, # Front
+        157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187, # Right
+        # 206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, # Back
+        # 255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285, # Down
+    )
+
+    state_targets = (
+        'LLLLLLLLLLLLRRRRRRRRRRRR',
+        'LLLLRLRLRLLLRRRLRLRLRRRR',
+        'LLLLRLRLRLLLRRRRLRLRLRRR',
+        'LLLRLRLRLLLLRRRLRLRLRRRR',
+        'LLLRLRLRLLLLRRRRLRLRLRRR',
+        'LLLRRRRRRLLLRRRLLLLLLRRR',
+        'LLRLLLLLLLLRLRRRRRRRRLRR',
+        'LLRLLLLLLLLRRRLRRRRRRRRL',
+        'LLRLRLRLRLLRLRRLRLRLRLRR',
+        'LLRLRLRLRLLRLRRRLRLRLLRR',
+        'LLRLRLRLRLLRRRLLRLRLRRRL',
+        'LLRLRLRLRLLRRRLRLRLRLRRL',
+        'LLRRLRLRLLLRLRRLRLRLRLRR',
+        'LLRRLRLRLLLRLRRRLRLRLLRR',
+        'LLRRLRLRLLLRRRLLRLRLRRRL',
+        'LLRRLRLRLLLRRRLRLRLRLRRL',
+        'LLRRRRRRRLLRLRRLLLLLLLRR',
+        'LLRRRRRRRLLRRRLLLLLLLRRL',
+        'RLLLLLLLLRLLLRRRRRRRRLRR',
+        'RLLLLLLLLRLLRRLRRRRRRRRL',
+        'RLLLRLRLRRLLLRRLRLRLRLRR',
+        'RLLLRLRLRRLLLRRRLRLRLLRR',
+        'RLLLRLRLRRLLRRLLRLRLRRRL',
+        'RLLLRLRLRRLLRRLRLRLRLRRL',
+        'RLLRLRLRLRLLLRRLRLRLRLRR',
+        'RLLRLRLRLRLLLRRRLRLRLLRR',
+        'RLLRLRLRLRLLRRLLRLRLRRRL',
+        'RLLRLRLRLRLLRRLRLRLRLRRL',
+        'RLLRRRRRRRLLLRRLLLLLLLRR',
+        'RLLRRRRRRRLLRRLLLLLLLRRL',
+        'RLRLLLLLLRLRLRLRRRRRRLRL',
+        'RLRLRLRLRRLRLRLLRLRLRLRL',
+        'RLRLRLRLRRLRLRLRLRLRLLRL',
+        'RLRRLRLRLRLRLRLLRLRLRLRL',
+        'RLRRLRLRLRLRLRLRLRLRLLRL',
+        'RLRRRRRRRRLRLRLLLLLLLLRL'
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step44.txt',
+            self.state_targets,
+            linecount=343000,
+            max_depth=8,
+            filesize=21266000,
+            all_moves=moves_777,
+            illegal_moves=(
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+
+                "U", "U'", "U2",
+                "D", "D'", "D2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
+            ),
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in self.LR_oblique_edges_and_outer_t_center])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.LR_oblique_edges_and_outer_t_center, state):
+            cube[pos] = pos_state
+
+
 class LookupTableIDA777Step40(LookupTableIDAViaGraph):
 
     def __init__(self, parent):
@@ -552,257 +342,34 @@ class LookupTableIDA777Step40(LookupTableIDAViaGraph):
                 "D", "D'", "D2",
             ),
             prune_tables=(
-                parent.lt_step41,
-                parent.lt_step42,
                 parent.lt_step43,
-            ),
-            # multiplier=1.2,
-        )
-
-
-class LookupTable777Step51(LookupTable):
-    """
-    lookup-table-7x7x7-step51.txt
-    =============================
-    0 steps has 13 entries (0 percent, 0.00x previous step)
-    1 steps has 389 entries (0 percent, 29.92x previous step)
-    2 steps has 2,112 entries (0 percent, 5.43x previous step)
-    3 steps has 9,622 entries (2 percent, 4.56x previous step)
-    4 steps has 36,446 entries (10 percent, 3.79x previous step)
-    5 steps has 100,194 entries (29 percent, 2.75x previous step)
-    6 steps has 140,424 entries (40 percent, 1.40x previous step)
-    7 steps has 51,736 entries (15 percent, 0.37x previous step)
-    8 steps has 2,056 entries (0 percent, 0.04x previous step)
-    9 steps has 8 entries (0 percent, 0.00x previous step)
-
-    Total: 343,000 entries
-    Average: 5.54 moves
-    """
-
-    UD_inside_centers_and_left_obliques = (
-        10, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 40, # Upper
-        # 59, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 89, # Left
-        # 108, 115, 116, 117, 118, 122, 123, 124, 128, 129, 130, 131, 138, # Front
-        # 157, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 187, # Right
-        # 206, 213, 214, 215, 216, 220, 221, 222, 226, 227, 228, 229, 236, # Back
-        255, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 285, # Down
-    )
-
-    state_targets = (
-        'DDUDDDUDDDUDDUUDUUUDUUUDUU',
-        'DDUDDDUDUDUDDUUDUDUDUUUDUU',
-        'DDUDDDUDUDUDDUUDUUUDUDUDUU',
-        'DDUDUDUDDDUDDUUDUDUDUUUDUU',
-        'DDUDUDUDDDUDDUUDUUUDUDUDUU',
-        'DDUDUDUDUDUDDUUDUDUDUDUDUU',
-        'DDUUDDUUDDUUUDDDUUDDUUDDUU',
-        'DDUUDDUUDDUUUUUDDUUDDUUDDD',
-        'DDUUDDUUUDUUUDDDUDDDUUDDUU',
-        'DDUUDDUUUDUUUDDDUUDDUDDDUU',
-        'DDUUDDUUUDUUUUUDDDUDDUUDDD',
-        'DDUUDDUUUDUUUUUDDUUDDDUDDD',
-        'DDUUUDUUDDUUUDDDUDDDUUDDUU',
-        'DDUUUDUUDDUUUDDDUUDDUDDDUU',
-        'DDUUUDUUDDUUUUUDDDUDDUUDDD',
-        'DDUUUDUUDDUUUUUDDUUDDDUDDD',
-        'DDUUUDUUUDUUUDDDUDDDUDDDUU',
-        'DDUUUDUUUDUUUUUDDDUDDDUDDD',
-        'DUUDDUUDDUUDUDUDDUUDDUUDDU',
-        'DUUDDUUDDUUDUUDDUUDDUUDDUD',
-        'DUUDDUUDUUUDUDUDDDUDDUUDDU',
-        'DUUDDUUDUUUDUDUDDUUDDDUDDU',
-        'DUUDDUUDUUUDUUDDUDDDUUDDUD',
-        'DUUDDUUDUUUDUUDDUUDDUDDDUD',
-        'DUUDUUUDDUUDUDUDDDUDDUUDDU',
-        'DUUDUUUDDUUDUDUDDUUDDDUDDU',
-        'DUUDUUUDDUUDUUDDUDDDUUDDUD',
-        'DUUDUUUDDUUDUUDDUUDDUDDDUD',
-        'DUUDUUUDUUUDUDUDDDUDDDUDDU',
-        'DUUDUUUDUUUDUUDDUDDDUDDDUD',
-        'DUUUDUUUDUUUDUDDDUDDDUDDDU',
-        'DUUUDUUUUUUUDUDDDDDDDUDDDU',
-        'DUUUDUUUUUUUDUDDDUDDDDDDDU',
-        'DUUUUUUUDUUUDUDDDDDDDUDDDU',
-        'DUUUUUUUDUUUDUDDDUDDDDDDDU',
-        'DUUUUUUUUUUUDUDDDDDDDDDDDU',
-        'UDUDDDUDDDUDUDUDUUUDUUUDUD',
-        'UDUDDDUDUDUDUDUDUDUDUUUDUD',
-        'UDUDDDUDUDUDUDUDUUUDUDUDUD',
-        'UDUDUDUDDDUDUDUDUDUDUUUDUD',
-        'UDUDUDUDDDUDUDUDUUUDUDUDUD',
-        'UDUDUDUDUDUDUDUDUDUDUDUDUD',
-        'UDUUDDUUDDUUDDUDDUUDDUUDDU',
-        'UDUUDDUUDDUUDUDDUUDDUUDDUD',
-        'UDUUDDUUUDUUDDUDDDUDDUUDDU',
-        'UDUUDDUUUDUUDDUDDUUDDDUDDU',
-        'UDUUDDUUUDUUDUDDUDDDUUDDUD',
-        'UDUUDDUUUDUUDUDDUUDDUDDDUD',
-        'UDUUUDUUDDUUDDUDDDUDDUUDDU',
-        'UDUUUDUUDDUUDDUDDUUDDDUDDU',
-        'UDUUUDUUDDUUDUDDUDDDUUDDUD',
-        'UDUUUDUUDDUUDUDDUUDDUDDDUD',
-        'UDUUUDUUUDUUDDUDDDUDDDUDDU',
-        'UDUUUDUUUDUUDUDDUDDDUDDDUD',
-        'UUUDDUUDDUUDDDDDUUDDUUDDUU',
-        'UUUDDUUDDUUDDUUDDUUDDUUDDD',
-        'UUUDDUUDUUUDDDDDUDDDUUDDUU',
-        'UUUDDUUDUUUDDDDDUUDDUDDDUU',
-        'UUUDDUUDUUUDDUUDDDUDDUUDDD',
-        'UUUDDUUDUUUDDUUDDUUDDDUDDD',
-        'UUUDUUUDDUUDDDDDUDDDUUDDUU',
-        'UUUDUUUDDUUDDDDDUUDDUDDDUU',
-        'UUUDUUUDDUUDDUUDDDUDDUUDDD',
-        'UUUDUUUDDUUDDUUDDUUDDDUDDD',
-        'UUUDUUUDUUUDDDDDUDDDUDDDUU',
-        'UUUDUUUDUUUDDUUDDDUDDDUDDD',
-        'UUUUDUUUDUUUUDDDDUDDDUDDDD',
-        'UUUUDUUUUUUUUDDDDDDDDUDDDD',
-        'UUUUDUUUUUUUUDDDDUDDDDDDDD',
-        'UUUUUUUUDUUUUDDDDDDDDUDDDD',
-        'UUUUUUUUDUUUUDDDDUDDDDDDDD',
-        'UUUUUUUUUUUUUDDDDDDDDDDDDD'
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step51.txt',
-            self.state_targets,
-            linecount=343000,
-            max_depth=9,
-            filesize=22638000,
-            all_moves=moves_777,
-            illegal_moves=(
-                "3Uw", "3Uw'", "Uw", "Uw'",
-                "3Lw", "3Lw'", "Lw", "Lw'",
-                "3Fw", "3Fw'", "Fw", "Fw'",
-                "3Rw", "3Rw'", "Rw", "Rw'",
-                "3Bw", "3Bw'", "Bw", "Bw'",
-                "3Dw", "3Dw'", "Dw", "Dw'",
-                "L", "L'",
-                "R", "R'",
-                "3Uw2", "3Dw2", "Uw2", "Dw2",
-
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-                "F", "F'", "F2",
-                "D", "D'", "D2",
+                parent.lt_step44,
             ),
         )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_inside_centers_and_left_obliques])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(self.UD_inside_centers_and_left_obliques, state):
-            cube[pos] = pos_state
 
 
 class LookupTable777Step52(LookupTable):
     """
     lookup-table-7x7x7-step52.txt
     =============================
-    0 steps has 13 entries (0 percent, 0.00x previous step)
-    1 steps has 389 entries (0 percent, 29.92x previous step)
-    2 steps has 2,112 entries (0 percent, 5.43x previous step)
-    3 steps has 9,622 entries (2 percent, 4.56x previous step)
-    4 steps has 36,446 entries (10 percent, 3.79x previous step)
-    5 steps has 100,194 entries (29 percent, 2.75x previous step)
-    6 steps has 140,424 entries (40 percent, 1.40x previous step)
-    7 steps has 51,736 entries (15 percent, 0.37x previous step)
-    8 steps has 2,056 entries (0 percent, 0.04x previous step)
-    9 steps has 8 entries (0 percent, 0.00x previous step)
+    0 steps has 2 entries (2 percent, 0.00x previous step)
+    1 steps has 8 entries (11 percent, 4.00x previous step)
+    2 steps has 20 entries (27 percent, 2.50x previous step)
+    3 steps has 24 entries (33 percent, 1.20x previous step)
+    4 steps has 18 entries (25 percent, 0.75x previous step)
 
-    Total: 343,000 entries
-    Average: 5.54 moves
+    Total: 72 entries
+    Average: 2.67 moves
     """
 
-    UD_inside_centers_and_right_obliques = (
-        12, 16, 17, 18, 19, 24, 25, 26, 31, 32, 33, 34, 38, # Upper
-        # 61, 65, 66, 67, 68, 73, 74, 75, 80, 81, 82, 83, 87, # Left
-        # 110, 114, 115, 116, 117, 122, 123, 124, 129, 130, 131, 132, 136, # Front
-        # 159, 163, 164, 165, 166, 171, 172, 173, 178, 179, 180, 181, 185, # Right
-        # 208, 212, 213, 214, 215, 220, 221, 222, 227, 228, 229, 230, 234, # Back
-        257, 261, 262, 263, 264, 269, 270, 271, 276, 277, 278, 279, 283, # Down
+    LR_centers_minus_outside_x_centers_777 = (
+        59, 60, 61, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 87, 88, 89, # Left
+        157, 158, 159, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 185, 186, 187, # Right
     )
 
     state_targets = (
-        'DDDUDDUDDUDDDUUUDUUDUUDUUU',
-        'DDDUDDUDDUDUDUDUDUUDUUDUUU',
-        'DDDUDDUDDUDUDUUUDUUDUUDUDU',
-        'DDDUUDUUDUUDUDUDDUDDUDDUUU',
-        'DDDUUDUUDUUDUUUUDDUDDUDDUD',
-        'DDDUUDUUDUUUUDDDDUDDUDDUUU',
-        'DDDUUDUUDUUUUDUDDUDDUDDUDU',
-        'DDDUUDUUDUUUUUDUDDUDDUDDUD',
-        'DDDUUDUUDUUUUUUUDDUDDUDDDD',
-        'DDUUDUUDUUDDUDUUDDUDDUDDUU',
-        'DDUUDUUDUUDDUUUDDUDDUDDUUD',
-        'DDUUDUUDUUDUUDDUDDUDDUDDUU',
-        'DDUUDUUDUUDUUDUUDDUDDUDDDU',
-        'DDUUDUUDUUDUUUDDDUDDUDDUUD',
-        'DDUUDUUDUUDUUUUDDUDDUDDUDD',
-        'DDUUUUUUUUUDDUUDDDDDDDDDUU',
-        'DDUUUUUUUUUUDUDDDDDDDDDDUU',
-        'DDUUUUUUUUUUDUUDDDDDDDDDDU',
-        'DUDUDDUDDUDDDUDUDUUDUUDUUU',
-        'DUDUDDUDDUDDDUUUDUUDUUDUDU',
-        'DUDUDDUDDUDUDUDUDUUDUUDUDU',
-        'DUDUUDUUDUUDUDDDDUDDUDDUUU',
-        'DUDUUDUUDUUDUDUDDUDDUDDUDU',
-        'DUDUUDUUDUUDUUDUDDUDDUDDUD',
-        'DUDUUDUUDUUDUUUUDDUDDUDDDD',
-        'DUDUUDUUDUUUUDDDDUDDUDDUDU',
-        'DUDUUDUUDUUUUUDUDDUDDUDDDD',
-        'DUUUDUUDUUDDUDDUDDUDDUDDUU',
-        'DUUUDUUDUUDDUDUUDDUDDUDDDU',
-        'DUUUDUUDUUDDUUDDDUDDUDDUUD',
-        'DUUUDUUDUUDDUUUDDUDDUDDUDD',
-        'DUUUDUUDUUDUUDDUDDUDDUDDDU',
-        'DUUUDUUDUUDUUUDDDUDDUDDUDD',
-        'DUUUUUUUUUUDDUDDDDDDDDDDUU',
-        'DUUUUUUUUUUDDUUDDDDDDDDDDU',
-        'DUUUUUUUUUUUDUDDDDDDDDDDDU',
-        'UDDUDDUDDUDDUDUUDUUDUUDUUD',
-        'UDDUDDUDDUDUUDDUDUUDUUDUUD',
-        'UDDUDDUDDUDUUDUUDUUDUUDUDD',
-        'UDDUUDUUDUUDDDUUDDUDDUDDUU',
-        'UDDUUDUUDUUDDUUDDUDDUDDUUD',
-        'UDDUUDUUDUUUDDDUDDUDDUDDUU',
-        'UDDUUDUUDUUUDDUUDDUDDUDDDU',
-        'UDDUUDUUDUUUDUDDDUDDUDDUUD',
-        'UDDUUDUUDUUUDUUDDUDDUDDUDD',
-        'UDUUDUUDUUDDDDUDDUDDUDDUUU',
-        'UDUUDUUDUUDDDUUUDDUDDUDDUD',
-        'UDUUDUUDUUDUDDDDDUDDUDDUUU',
-        'UDUUDUUDUUDUDDUDDUDDUDDUDU',
-        'UDUUDUUDUUDUDUDUDDUDDUDDUD',
-        'UDUUDUUDUUDUDUUUDDUDDUDDDD',
-        'UDUUUUUUUUUDUDUDDDDDDDDDUD',
-        'UDUUUUUUUUUUUDDDDDDDDDDDUD',
-        'UDUUUUUUUUUUUDUDDDDDDDDDDD',
-        'UUDUDDUDDUDDUDDUDUUDUUDUUD',
-        'UUDUDDUDDUDDUDUUDUUDUUDUDD',
-        'UUDUDDUDDUDUUDDUDUUDUUDUDD',
-        'UUDUUDUUDUUDDDDUDDUDDUDDUU',
-        'UUDUUDUUDUUDDDUUDDUDDUDDDU',
-        'UUDUUDUUDUUDDUDDDUDDUDDUUD',
-        'UUDUUDUUDUUDDUUDDUDDUDDUDD',
-        'UUDUUDUUDUUUDDDUDDUDDUDDDU',
-        'UUDUUDUUDUUUDUDDDUDDUDDUDD',
-        'UUUUDUUDUUDDDDDDDUDDUDDUUU',
-        'UUUUDUUDUUDDDDUDDUDDUDDUDU',
-        'UUUUDUUDUUDDDUDUDDUDDUDDUD',
-        'UUUUDUUDUUDDDUUUDDUDDUDDDD',
-        'UUUUDUUDUUDUDDDDDUDDUDDUDU',
-        'UUUUDUUDUUDUDUDUDDUDDUDDDD',
-        'UUUUUUUUUUUDUDDDDDDDDDDDUD',
-        'UUUUUUUUUUUDUDUDDDDDDDDDDD',
-        'UUUUUUUUUUUUUDDDDDDDDDDDDD'
+        "LLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRR",
+        "RRRRLLLRRLLLRRLLLRRRRLLLLRRRLLRRRLLRRRLLLL",
     )
 
     def __init__(self, parent):
@@ -811,9 +378,9 @@ class LookupTable777Step52(LookupTable):
             parent,
             'lookup-table-7x7x7-step52.txt',
             self.state_targets,
-            linecount=343000,
-            max_depth=9,
-            filesize=22295000,
+            linecount=72,
+            max_depth=4,
+            filesize=4392,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -826,8 +393,6 @@ class LookupTable777Step52(LookupTable):
                 "R", "R'",
                 "3Uw2", "3Dw2", "Uw2", "Dw2",
 
-                "L", "L'", "L2",
-                "R", "R'", "R2",
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
@@ -835,12 +400,12 @@ class LookupTable777Step52(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_inside_centers_and_right_obliques])
+        return "".join([parent_state[x] for x in self.LR_centers_minus_outside_x_centers_777])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UD_inside_centers_and_right_obliques, state):
+        for (pos, pos_state) in zip(self.LR_centers_minus_outside_x_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -848,18 +413,20 @@ class LookupTable777Step53(LookupTable):
     """
     lookup-table-7x7x7-step53.txt
     =============================
-    0 steps has 16 entries (0 percent, 0.00x previous step)
-    1 steps has 410 entries (0 percent, 25.62x previous step)
-    2 steps has 2,200 entries (0 percent, 5.37x previous step)
-    3 steps has 9,670 entries (2 percent, 4.40x previous step)
-    4 steps has 36,862 entries (10 percent, 3.81x previous step)
-    5 steps has 104,622 entries (30 percent, 2.84x previous step)
-    6 steps has 142,100 entries (41 percent, 1.36x previous step)
-    7 steps has 45,608 entries (13 percent, 0.32x previous step)
-    8 steps has 1,512 entries (0 percent, 0.03x previous step)
+    0 steps has 21 entries (0 percent, 0.00x previous step)
+    1 steps has 194 entries (0 percent, 9.24x previous step)
+    2 steps has 960 entries (0 percent, 4.95x previous step)
+    3 steps has 4,061 entries (1 percent, 4.23x previous step)
+    4 steps has 16,207 entries (4 percent, 3.99x previous step)
+    5 steps has 54,813 entries (15 percent, 3.38x previous step)
+    6 steps has 122,554 entries (35 percent, 2.24x previous step)
+    7 steps has 116,234 entries (33 percent, 0.95x previous step)
+    8 steps has 27,300 entries (7 percent, 0.23x previous step)
+    9 steps has 654 entries (0 percent, 0.02x previous step)
+    10 steps has 2 entries (0 percent, 0.00x previous step)
 
     Total: 343,000 entries
-    Average: 5.51 moves
+    Average: 6.20 moves
     """
 
     UD_inside_centers_and_outer_t_centers = (
@@ -872,42 +439,6 @@ class LookupTable777Step53(LookupTable):
     )
 
     state_targets = (
-        'DDUDDDUDDDUDDUUDUUUDUUUDUU',
-        'DDUDDDUDUDUDDUUDUDUDUUUDUU',
-        'DDUDDDUDUDUDDUUDUUUDUDUDUU',
-        'DDUDUDUDDDUDDUUDUDUDUUUDUU',
-        'DDUDUDUDDDUDDUUDUUUDUDUDUU',
-        'DDUDUDUDUDUDDUUDUDUDUDUDUU',
-        'DDUUDDUUDDUUDUDDUUDDUUDDUU',
-        'DDUUDDUUDDUUDUUDDUUDDUUDDU',
-        'DDUUDDUUUDUUDUDDUDDDUUDDUU',
-        'DDUUDDUUUDUUDUDDUUDDUDDDUU',
-        'DDUUDDUUUDUUDUUDDDUDDUUDDU',
-        'DDUUDDUUUDUUDUUDDUUDDDUDDU',
-        'DDUUUDUUDDUUDUDDUDDDUUDDUU',
-        'DDUUUDUUDDUUDUDDUUDDUDDDUU',
-        'DDUUUDUUDDUUDUUDDDUDDUUDDU',
-        'DDUUUDUUDDUUDUUDDUUDDDUDDU',
-        'DDUUUDUUUDUUDUDDUDDDUDDDUU',
-        'DDUUUDUUUDUUDUUDDDUDDDUDDU',
-        'DUUDDUUDDUUDDUDDUUDDUUDDUU',
-        'DUUDDUUDDUUDDUUDDUUDDUUDDU',
-        'DUUDDUUDUUUDDUDDUDDDUUDDUU',
-        'DUUDDUUDUUUDDUDDUUDDUDDDUU',
-        'DUUDDUUDUUUDDUUDDDUDDUUDDU',
-        'DUUDDUUDUUUDDUUDDUUDDDUDDU',
-        'DUUDUUUDDUUDDUDDUDDDUUDDUU',
-        'DUUDUUUDDUUDDUDDUUDDUDDDUU',
-        'DUUDUUUDDUUDDUUDDDUDDUUDDU',
-        'DUUDUUUDDUUDDUUDDUUDDDUDDU',
-        'DUUDUUUDUUUDDUDDUDDDUDDDUU',
-        'DUUDUUUDUUUDDUUDDDUDDDUDDU',
-        'DUUUDUUUDUUUDUDDDUDDDUDDDU',
-        'DUUUDUUUUUUUDUDDDDDDDUDDDU',
-        'DUUUDUUUUUUUDUDDDUDDDDDDDU',
-        'DUUUUUUUDUUUDUDDDDDDDUDDDU',
-        'DUUUUUUUDUUUDUDDDUDDDDDDDU',
-        'DUUUUUUUUUUUDUDDDDDDDDDDDU',
         'UDUDDDUDDDUDUDUDUUUDUUUDUD',
         'UDUDDDUDUDUDUDUDUDUDUUUDUD',
         'UDUDDDUDUDUDUDUDUUUDUDUDUD',
@@ -954,7 +485,7 @@ class LookupTable777Step53(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=8,
-            filesize=22295000,
+            filesize=23667000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -967,8 +498,6 @@ class LookupTable777Step53(LookupTable):
                 "R", "R'",
                 "3Uw2", "3Dw2", "Uw2", "Dw2",
 
-                "L", "L'", "L2",
-                "R", "R'", "R2",
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
@@ -982,6 +511,110 @@ class LookupTable777Step53(LookupTable):
         state = list(state)
 
         for (pos, pos_state) in zip(self.UD_inside_centers_and_outer_t_centers, state):
+            cube[pos] = pos_state
+
+
+class LookupTable777Step54(LookupTable):
+    """
+    lookup-table-7x7x7-step54.txt
+    =============================
+    0 steps has 21 entries (0 percent, 0.00x previous step)
+    1 steps has 170 entries (0 percent, 8.10x previous step)
+    2 steps has 952 entries (0 percent, 5.60x previous step)
+    3 steps has 4,679 entries (1 percent, 4.91x previous step)
+    4 steps has 22,446 entries (6 percent, 4.80x previous step)
+    5 steps has 79,246 entries (23 percent, 3.53x previous step)
+    6 steps has 151,618 entries (44 percent, 1.91x previous step)
+    7 steps has 77,952 entries (22 percent, 0.51x previous step)
+    8 steps has 5,864 entries (1 percent, 0.08x previous step)
+    9 steps has 52 entries (0 percent, 0.01x previous step)
+
+    Total: 343,000 entries
+    Average: 5.85 moves
+    """
+
+    UD_oblique_edges_and_outer_t_center = (
+        10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40, # Upper
+        # 59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89, # Left
+        # 108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138, # Front
+        # 157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187, # Right
+        # 206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, # Back
+        255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285, # Down
+    )
+
+    state_targets = (
+        'DUDDDDDDDDUDUDUUUUUUUUDU',
+        'DUDDUDUDUDUDUDUDUDUDUUDU',
+        'DUDDUDUDUDUDUDUUDUDUDUDU',
+        'DUDUDUDUDDUDUDUDUDUDUUDU',
+        'DUDUDUDUDDUDUDUUDUDUDUDU',
+        'DUDUUUUUUDUDUDUDDDDDDUDU',
+        'DUUDDDDDDDUUDDUUUUUUUDDU',
+        'DUUDDDDDDDUUUDDUUUUUUUDD',
+        'DUUDUDUDUDUUDDUDUDUDUDDU',
+        'DUUDUDUDUDUUDDUUDUDUDDDU',
+        'DUUDUDUDUDUUUDDDUDUDUUDD',
+        'DUUDUDUDUDUUUDDUDUDUDUDD',
+        'DUUUDUDUDDUUDDUDUDUDUDDU',
+        'DUUUDUDUDDUUDDUUDUDUDDDU',
+        'DUUUDUDUDDUUUDDDUDUDUUDD',
+        'DUUUDUDUDDUUUDDUDUDUDUDD',
+        'DUUUUUUUUDUUDDUDDDDDDDDU',
+        'DUUUUUUUUDUUUDDDDDDDDUDD',
+        'UUDDDDDDDUUDDDUUUUUUUDDU',
+        'UUDDDDDDDUUDUDDUUUUUUUDD',
+        'UUDDUDUDUUUDDDUDUDUDUDDU',
+        'UUDDUDUDUUUDDDUUDUDUDDDU',
+        'UUDDUDUDUUUDUDDDUDUDUUDD',
+        'UUDDUDUDUUUDUDDUDUDUDUDD',
+        'UUDUDUDUDUUDDDUDUDUDUDDU',
+        'UUDUDUDUDUUDDDUUDUDUDDDU',
+        'UUDUDUDUDUUDUDDDUDUDUUDD',
+        'UUDUDUDUDUUDUDDUDUDUDUDD',
+        'UUDUUUUUUUUDDDUDDDDDDDDU',
+        'UUDUUUUUUUUDUDDDDDDDDUDD',
+        'UUUDDDDDDUUUDDDUUUUUUDDD',
+        'UUUDUDUDUUUUDDDDUDUDUDDD',
+        'UUUDUDUDUUUUDDDUDUDUDDDD',
+        'UUUUDUDUDUUUDDDDUDUDUDDD',
+        'UUUUDUDUDUUUDDDUDUDUDDDD',
+        'UUUUUUUUUUUUDDDDDDDDDDDD'
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step54.txt',
+            self.state_targets,
+            linecount=343000,
+            max_depth=9,
+            filesize=21609000,
+            all_moves=moves_777,
+            illegal_moves=(
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Uw2", "3Dw2", "Uw2", "Dw2",
+
+                "F", "F'", "F2",
+                "D", "D'", "D2",
+            ),
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in self.UD_oblique_edges_and_outer_t_center])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.UD_oblique_edges_and_outer_t_center, state):
             cube[pos] = pos_state
 
 
@@ -1003,17 +636,14 @@ class LookupTableIDA777Step50(LookupTableIDAViaGraph):
                 "R", "R'",
                 "3Uw2", "3Dw2", "Uw2", "Dw2",
 
-                "L", "L'", "L2",
-                "R", "R'", "R2",
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
             prune_tables=(
-                parent.lt_step51,
                 parent.lt_step52,
                 parent.lt_step53,
+                parent.lt_step54,
             ),
-            # multiplier=1.2,
         )
 
 
@@ -1138,146 +768,6 @@ class LookupTable777Step62(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTable777Step63(LookupTable):
-    """
-    lookup-table-7x7x7-step63.txt
-    =============================
-    0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 16 entries (0 percent, 8.00x previous step)
-    2 steps has 106 entries (0 percent, 6.62x previous step)
-    3 steps has 570 entries (0 percent, 5.38x previous step)
-    4 steps has 2,604 entries (0 percent, 4.57x previous step)
-    5 steps has 10,528 entries (3 percent, 4.04x previous step)
-    6 steps has 36,282 entries (10 percent, 3.45x previous step)
-    7 steps has 92,200 entries (26 percent, 2.54x previous step)
-    8 steps has 126,726 entries (36 percent, 1.37x previous step)
-    9 steps has 65,014 entries (18 percent, 0.51x previous step)
-    10 steps has 8,952 entries (2 percent, 0.14x previous step)
-
-    Total: 343,000 entries
-    Average: 7.63 moves
-    """
-
-    state_targets = (
-        "FFFFFFFFFFFFFBBBBBBBBBBBBB",
-        "BFFFBFFFBFFFBFBBBFBBBFBBBF",
-    )
-
-    FB_inside_centers_and_left_obliques = (
-        # 10, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 40, # Upper
-        # 59, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 89, # Left
-        108, 115, 116, 117, 118, 122, 123, 124, 128, 129, 130, 131, 138, # Front
-        # 157, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 187, # Right
-        206, 213, 214, 215, 216, 220, 221, 222, 226, 227, 228, 229, 236, # Back
-        # 255, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 285, # Down
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step63.txt',
-            self.state_targets,
-            linecount=343000,
-            max_depth=10,
-            filesize=24696000,
-            all_moves=moves_777,
-            illegal_moves=(
-                "3Uw", "3Uw'", "Uw", "Uw'",
-                "3Lw", "3Lw'", "Lw", "Lw'",
-                "3Fw", "3Fw'", "Fw", "Fw'",
-                "3Rw", "3Rw'", "Rw", "Rw'",
-                "3Bw", "3Bw'", "Bw", "Bw'",
-                "3Dw", "3Dw'", "Dw", "Dw'",
-                "L", "L'",
-                "R", "R'",
-                "3Fw2", "3Bw2", "Fw2", "Bw2",
-                "U", "U'",
-                "D", "D'"
-            ),
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.FB_inside_centers_and_left_obliques])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(self.FB_inside_centers_and_left_obliques, state):
-            cube[pos] = pos_state
-
-
-class LookupTable777Step64(LookupTable):
-    """
-    lookup-table-7x7x7-step64.txt
-    =============================
-    0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 16 entries (0 percent, 8.00x previous step)
-    2 steps has 106 entries (0 percent, 6.62x previous step)
-    3 steps has 570 entries (0 percent, 5.38x previous step)
-    4 steps has 2,604 entries (0 percent, 4.57x previous step)
-    5 steps has 10,528 entries (3 percent, 4.04x previous step)
-    6 steps has 36,282 entries (10 percent, 3.45x previous step)
-    7 steps has 92,200 entries (26 percent, 2.54x previous step)
-    8 steps has 126,726 entries (36 percent, 1.37x previous step)
-    9 steps has 65,014 entries (18 percent, 0.51x previous step)
-    10 steps has 8,952 entries (2 percent, 0.14x previous step)
-
-    Total: 343,000 entries
-    Average: 7.63 moves
-    """
-
-    FB_inside_centers_and_right_obliques = (
-        # 12, 16, 17, 18, 19, 24, 25, 26, 31, 32, 33, 34, 38, # Upper
-        # 61, 65, 66, 67, 68, 73, 74, 75, 80, 81, 82, 83, 87, # Left
-        110, 114, 115, 116, 117, 122, 123, 124, 129, 130, 131, 132, 136, # Front
-        # 159, 163, 164, 165, 166, 171, 172, 173, 178, 179, 180, 181, 185, # Right
-        208, 212, 213, 214, 215, 220, 221, 222, 227, 228, 229, 230, 234, # Back
-        # 257, 261, 262, 263, 264, 269, 270, 271, 276, 277, 278, 279, 283, # Down
-    )
-
-    state_targets = (
-        "FFFFFFFFFFFFFBBBBBBBBBBBBB",
-        "BBFFFFFFFFFBBFFBBBBBBBBBFF",
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step64.txt',
-            self.state_targets,
-            linecount=343000,
-            max_depth=10,
-            filesize=25039000,
-            all_moves=moves_777,
-            illegal_moves=(
-                "3Uw", "3Uw'", "Uw", "Uw'",
-                "3Lw", "3Lw'", "Lw", "Lw'",
-                "3Fw", "3Fw'", "Fw", "Fw'",
-                "3Rw", "3Rw'", "Rw", "Rw'",
-                "3Bw", "3Bw'", "Bw", "Bw'",
-                "3Dw", "3Dw'", "Dw", "Dw'",
-                "L", "L'",
-                "R", "R'",
-                "3Fw2", "3Bw2", "Fw2", "Bw2",
-                "U", "U'",
-                "D", "D'"
-            ),
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.FB_inside_centers_and_right_obliques])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(self.FB_inside_centers_and_right_obliques, state):
-            cube[pos] = pos_state
-
-
 class LookupTable777Step65(LookupTable):
     """
     lookup-table-7x7x7-step65.txt
@@ -1348,6 +838,76 @@ class LookupTable777Step65(LookupTable):
             cube[pos] = pos_state
 
 
+class LookupTable777Step66(LookupTable):
+    """
+    lookup-table-7x7x7-step66.txt
+    =============================
+    0 steps has 2 entries (0 percent, 0.00x previous step)
+    1 steps has 16 entries (0 percent, 8.00x previous step)
+    2 steps has 82 entries (0 percent, 5.12x previous step)
+    3 steps has 450 entries (0 percent, 5.49x previous step)
+    4 steps has 2,406 entries (0 percent, 5.35x previous step)
+    5 steps has 11,960 entries (3 percent, 4.97x previous step)
+    6 steps has 43,430 entries (12 percent, 3.63x previous step)
+    7 steps has 108,510 entries (31 percent, 2.50x previous step)
+    8 steps has 133,124 entries (38 percent, 1.23x previous step)
+    9 steps has 40,908 entries (11 percent, 0.31x previous step)
+    10 steps has 2,112 entries (0 percent, 0.05x previous step)
+
+    Total: 343,000 entries
+    Average: 7.42 moves
+    """
+
+    FB_oblique_edges_and_outer_t_center = (
+        # 10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40, # Upper
+        # 59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89, # Left
+        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138, # Front
+        # 157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187, # Right
+        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, # Back
+        # 255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285, # Down
+    )
+
+    state_targets = (
+        "BBBBBBBBBBBBFFFFFFFFFFFF",
+        "FFFFFFFFFFFFBBBBBBBBBBBB",
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step66.txt',
+            self.state_targets,
+            linecount=343000,
+            max_depth=10,
+            filesize=23667000,
+            all_moves=moves_777,
+            illegal_moves=(
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "3Bw2", "Fw2", "Bw2",
+                "U", "U'",
+                "D", "D'"
+            ),
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in self.FB_oblique_edges_and_outer_t_center])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.FB_oblique_edges_and_outer_t_center, state):
+            cube[pos] = pos_state
+
+
 class LookupTableIDA777Step60(LookupTableIDAViaGraph):
 
     def __init__(self, parent):
@@ -1371,388 +931,11 @@ class LookupTableIDA777Step60(LookupTableIDAViaGraph):
             prune_tables=(
                 parent.lt_step61,
                 parent.lt_step62,
-                parent.lt_step63,
-                parent.lt_step64,
                 parent.lt_step65,
+                parent.lt_step66,
             ),
             # multiplier=1.2,
         )
-
-
-'''
-class LookupTableIDA777Step40(LookupTableIDAViaC):
-    """
-    lookup-table-7x7x7-step40.txt
-    =============================
-    1 steps has 250 entries (0 percent, 0.00x previous step)
-    2 steps has 1,981 entries (0 percent, 7.92x previous step)
-    3 steps has 15,782 entries (1 percent, 7.97x previous step)
-    4 steps has 123,053 entries (11 percent, 7.80x previous step)
-    5 steps has 931,072 entries (86 percent, 7.57x previous step)
-
-    Total: 1,072,138 entries
-
-
-    lookup-table-7x7x7-step41.txt
-    =============================
-    1 steps has 226 entries (0 percent, 0.00x previous step)
-    2 steps has 1,433 entries (0 percent, 6.34x previous step)
-    3 steps has 8,986 entries (0 percent, 6.27x previous step)
-    4 steps has 54,072 entries (0 percent, 6.02x previous step)
-    5 steps has 290,610 entries (1 percent, 5.37x previous step)
-    6 steps has 1,339,251 entries (5 percent, 4.61x previous step)
-    7 steps has 4,706,248 entries (19 percent, 3.51x previous step)
-    8 steps has 9,659,696 entries (40 percent, 2.05x previous step)
-    9 steps has 7,031,230 entries (29 percent, 0.73x previous step)
-    10 steps has 907,920 entries (3 percent, 0.13x previous step)
-    11 steps has 10,296 entries (0 percent, 0.01x previous step)
-    12 steps has 32 entries (0 percent, 0.00x previous step)
-
-    Total: 24,010,000 entries
-    Average: 8.01 moves
-
-
-    lookup-table-7x7x7-step42.txt
-    =============================
-    1 steps has 250 entries (0 percent, 0.00x previous step)
-    2 steps has 1,845 entries (0 percent, 7.38x previous step)
-    3 steps has 12,756 entries (0 percent, 6.91x previous step)
-    4 steps has 82,273 entries (0 percent, 6.45x previous step)
-    5 steps has 468,727 entries (1 percent, 5.70x previous step)
-    6 steps has 2,158,967 entries (8 percent, 4.61x previous step)
-    7 steps has 6,972,890 entries (29 percent, 3.23x previous step)
-    8 steps has 10,557,164 entries (43 percent, 1.51x previous step)
-    9 steps has 3,640,612 entries (15 percent, 0.34x previous step)
-    10 steps has 114,304 entries (0 percent, 0.03x previous step)
-    11 steps has 212 entries (0 percent, 0.00x previous step)
-
-    Total: 24,010,000 entries
-    Average: 7.62 moves
-    """
-
-    state_targets = (
-        "0842109bdef7b",
-        "0a5294ab5ad6b",
-        "0a5294bad6b5a",
-        "0c6318d39ce73",
-        "0c6318d9ce739",
-        "0e739ce318c63",
-        "0e739ce94a529",
-        "0e739cf294a52",
-        "0e739cf8c6318",
-        "18c631939ce73",
-        "18c63199ce739",
-        "1ad6b5a318c63",
-        "1ad6b5a94a529",
-        "1ad6b5b294a52",
-        "1ad6b5b8c6318",
-        "1ce739d18c631",
-        "1ef7bde108421",
-        "1ef7bdf084210",
-        "294a528b5ad6b",
-        "294a529ad6b5a",
-        "2b5ad6aa5294a",
-        "2d6b5ac318c63",
-        "2d6b5ac94a529",
-        "2d6b5ad294a52",
-        "2d6b5ad8c6318",
-        "2f7bdee210842",
-        "2f7bdee842108",
-        "39ce738318c63",
-        "39ce73894a529",
-        "39ce739294a52",
-        "39ce7398c6318",
-        "3bdef7a210842",
-        "3bdef7a842108",
-        "3def7bc108421",
-        "3def7bd084210",
-        "3fffffe000000",
-    )
-
-    centers_step40_777 = (
-        58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90,  # Left
-        156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188,  # Right
-    )
-
-    centers_step41_777 = (
-        59, 61, 65, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 83, 87, 89,  # Left
-        157, 159, 163, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 181, 185, 187,  # Right
-    )
-
-    centers_step42_777 = (
-        58, 60, 62, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 86, 88, 90,  # Left
-        156, 158, 160, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 184, 186, 188,  # Right
-    )
-
-    set_centers_step41_777 = set(centers_step41_777)
-    set_centers_step42_777 = set(centers_step42_777)
-
-    def __init__(self, parent):
-        LookupTableIDAViaC.__init__(
-            self,
-            parent,
-            # Needed tables and their md5 signatures
-            (
-                (
-                    "lookup-table-7x7x7-step40.txt",
-                    None,
-                    "4862690bafc6dada8dd652047acafe3a",
-                ),
-                (
-                    "lookup-table-7x7x7-step41.hash-cost-only.txt",
-                    None,
-                    "63c848ac2fc2e7e78a2ea6312dd96249",
-                ),
-                (
-                    "lookup-table-7x7x7-step42.hash-cost-only.txt",
-                    None,
-                    "70d5bd7eab4360535a622fc0f7f973ec",
-                ),
-            ),
-            "7x7x7-step40",  # C_ida_type
-        )
-
-
-class LookupTableIDA777Step50(LookupTableIDAViaC):
-    """
-    lookup-table-7x7x7-step50.txt
-    =============================
-    1 steps has 250 entries (0 percent, 0.00x previous step)
-    2 steps has 1,981 entries (0 percent, 7.92x previous step)
-    3 steps has 15,782 entries (1 percent, 7.97x previous step)
-    4 steps has 123,053 entries (11 percent, 7.80x previous step)
-    5 steps has 931,072 entries (86 percent, 7.57x previous step)
-
-    Total: 1,072,138 entries
-
-
-    lookup-table-7x7x7-step51.txt
-    =============================
-    1 steps has 226 entries (0 percent, 0.00x previous step)
-    2 steps has 1,433 entries (0 percent, 6.34x previous step)
-    3 steps has 8,986 entries (0 percent, 6.27x previous step)
-    4 steps has 54,072 entries (0 percent, 6.02x previous step)
-    5 steps has 290,610 entries (1 percent, 5.37x previous step)
-    6 steps has 1,339,251 entries (5 percent, 4.61x previous step)
-    7 steps has 4,706,248 entries (19 percent, 3.51x previous step)
-    8 steps has 9,659,696 entries (40 percent, 2.05x previous step)
-    9 steps has 7,031,230 entries (29 percent, 0.73x previous step)
-    10 steps has 907,920 entries (3 percent, 0.13x previous step)
-    11 steps has 10,296 entries (0 percent, 0.01x previous step)
-    12 steps has 32 entries (0 percent, 0.00x previous step)
-
-    Total: 24,010,000 entries
-    Average: 8.01 moves
-
-
-    lookup-table-7x7x7-step52.txt
-    =============================
-    1 steps has 250 entries (0 percent, 0.00x previous step)
-    2 steps has 1,845 entries (0 percent, 7.38x previous step)
-    3 steps has 12,756 entries (0 percent, 6.91x previous step)
-    4 steps has 82,273 entries (0 percent, 6.45x previous step)
-    5 steps has 468,727 entries (1 percent, 5.70x previous step)
-    6 steps has 2,158,967 entries (8 percent, 4.61x previous step)
-    7 steps has 6,972,890 entries (29 percent, 3.23x previous step)
-    8 steps has 10,557,164 entries (43 percent, 1.51x previous step)
-    9 steps has 3,640,612 entries (15 percent, 0.34x previous step)
-    10 steps has 114,304 entries (0 percent, 0.03x previous step)
-    11 steps has 212 entries (0 percent, 0.00x previous step)
-
-    Total: 24,010,000 entries
-    Average: 7.62 moves
-    """
-
-    state_targets = (
-        "0842109bdef7b",
-        "0a5294ab5ad6b",
-        "0a5294bad6b5a",
-        "0c6318d39ce73",
-        "0c6318d9ce739",
-        "0e739ce318c63",
-        "0e739ce94a529",
-        "0e739cf294a52",
-        "0e739cf8c6318",
-        "18c631939ce73",
-        "18c63199ce739",
-        "1ad6b5a318c63",
-        "1ad6b5a94a529",
-        "1ad6b5b294a52",
-        "1ad6b5b8c6318",
-        "1ce739d18c631",
-        "1ef7bde108421",
-        "1ef7bdf084210",
-        "294a528b5ad6b",
-        "294a529ad6b5a",
-        "2b5ad6aa5294a",
-        "2d6b5ac318c63",
-        "2d6b5ac94a529",
-        "2d6b5ad294a52",
-        "2d6b5ad8c6318",
-        "2f7bdee210842",
-        "2f7bdee842108",
-        "39ce738318c63",
-        "39ce73894a529",
-        "39ce739294a52",
-        "39ce7398c6318",
-        "3bdef7a210842",
-        "3bdef7a842108",
-        "3def7bc108421",
-        "3def7bd084210",
-        "3fffffe000000",
-    )
-
-    centers_step50_777 = (
-        9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41,  # Upper
-        254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286,  # Down
-    )
-
-    centers_step51_777 = (
-        10, 12, 16, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 34, 38, 40,  # Upper
-        255, 257, 261, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 279, 283, 285,  # Down
-    )
-
-    centers_step52_777 = (
-        9, 11, 13, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 37, 39, 41,  # Upper
-        254, 256, 258, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 282, 284, 286,  # Down
-    )
-
-    set_centers_step51_777 = set(centers_step51_777)
-    set_centers_step52_777 = set(centers_step52_777)
-
-    def __init__(self, parent):
-        LookupTableIDAViaC.__init__(
-            self,
-            parent,
-            # Needed tables and their md5 signatures
-            (
-                (
-                    "lookup-table-7x7x7-step50.txt",
-                    None,
-                    "de0c08d06995550c0654ccb3eec588f9",
-                ),
-                (
-                    "lookup-table-7x7x7-step51.hash-cost-only.txt",
-                    None,
-                    "e9b548241f7fc6296cac2d32981efac5",
-                ),
-                (
-                    "lookup-table-7x7x7-step52.hash-cost-only.txt",
-                    None,
-                    "5b6b9c069943e6c87397843b4b888799",
-                ),
-            ),
-            "7x7x7-step50",  # C_ida_type
-        )
-
-
-class LookupTableIDA777Step60(LookupTableIDAViaC):
-    """
-    lookup-table-7x7x7-step60.txt
-    =============================
-    1 steps has 9 entries (0 percent, 0.00x previous step)
-    2 steps has 108 entries (0 percent, 12.00x previous step)
-    3 steps has 1,192 entries (0 percent, 11.04x previous step)
-    4 steps has 12,762 entries (0 percent, 10.71x previous step)
-    5 steps has 133,624 entries (8 percent, 10.47x previous step)
-    6 steps has 1,382,900 entries (90 percent, 10.35x previous step)
-
-    Total: 1,530,595 entries
-
-
-    lookup-table-7x7x7-step61.txt
-    =============================
-    1 steps has 9 entries (0 percent, 0.00x previous step)
-    2 steps has 56 entries (0 percent, 6.22x previous step)
-    3 steps has 340 entries (0 percent, 6.07x previous step)
-    4 steps has 1,965 entries (0 percent, 5.78x previous step)
-    5 steps has 11,406 entries (0 percent, 5.80x previous step)
-    6 steps has 63,151 entries (0 percent, 5.54x previous step)
-    7 steps has 315,410 entries (1 percent, 4.99x previous step)
-    8 steps has 1,351,508 entries (5 percent, 4.28x previous step)
-    9 steps has 4,368,424 entries (18 percent, 3.23x previous step)
-    10 steps has 8,741,185 entries (36 percent, 2.00x previous step)
-    11 steps has 7,463,440 entries (31 percent, 0.85x previous step)
-    12 steps has 1,634,978 entries (6 percent, 0.22x previous step)
-    13 steps has 57,824 entries (0 percent, 0.04x previous step)
-    14 steps has 304 entries (0 percent, 0.01x previous step)
-
-    Total: 24,010,000 entries
-    Average: 10.11 moves
-
-
-    lookup-table-7x7x7-step62.txt
-    =============================
-    1 steps has 9 entries (0 percent, 0.00x previous step)
-    2 steps has 68 entries (0 percent, 7.56x previous step)
-    3 steps has 464 entries (0 percent, 6.82x previous step)
-    4 steps has 3,080 entries (0 percent, 6.64x previous step)
-    5 steps has 19,660 entries (0 percent, 6.38x previous step)
-    6 steps has 113,360 entries (0 percent, 5.77x previous step)
-    7 steps has 580,520 entries (2 percent, 5.12x previous step)
-    8 steps has 2,435,981 entries (10 percent, 4.20x previous step)
-    9 steps has 7,101,166 entries (29 percent, 2.92x previous step)
-    10 steps has 9,808,434 entries (40 percent, 1.38x previous step)
-    11 steps has 3,691,124 entries (15 percent, 0.38x previous step)
-    12 steps has 252,402 entries (1 percent, 0.07x previous step)
-    13 steps has 3,732 entries (0 percent, 0.01x previous step)
-
-    Total: 24,010,000 entries
-    Average: 9.58 moves
-    """
-
-    state_indexes_step60 = (
-        9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41,  # Upper
-        58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90,  # Left
-        107, 108, 109, 110, 111, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 128, 129, 130, 131, 132, 135, 136, 137, 138, 139,  # Front
-        156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188,  # Right
-        205, 206, 207, 208, 209, 212, 213, 214, 215, 216, 219, 220, 221, 222, 223, 226, 227, 228, 229, 230, 233, 234, 235, 236, 237,  # Back
-        254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286,  # Down
-    )
-
-    state_indexes_step61 = (
-        108, 110, 114, 115, 116, 117, 118, 122, 123, 124, 128, 129, 130, 131, 132, 136, 138,  # Front
-        206, 208, 212, 213, 214, 215, 216, 220, 221, 222, 226, 227, 228, 229, 230, 234, 236,  # Back
-    )
-
-    state_indexes_step62 = (
-        107, 109, 111, 115, 116, 117, 121, 122, 123, 124, 125, 129, 130, 131, 135, 137, 139,  # Front
-        205, 207, 209, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 233, 235, 237,  # Back
-    )
-
-    set_state_indexes_step61 = set(state_indexes_step61)
-    set_state_indexes_step62 = set(state_indexes_step62)
-
-    def __init__(self, parent):
-        LookupTableIDAViaC.__init__(
-            self,
-            parent,
-            # Needed tables and their md5 signatures
-            (
-                (
-                    "lookup-table-7x7x7-step60.txt",
-                    None,
-                    "a81708de4b0fca70b048989cc7b51b67",
-                ),
-                (
-                    "lookup-table-7x7x7-step61.hash-cost-only.txt",
-                    None,
-                    "ba9b9e02f603459dac94fef5c637ac40",
-                ),
-                (
-                    "lookup-table-7x7x7-step62.hash-cost-only.txt",
-                    None,
-                    "2ebb594b99f8cf04a2a77a64c67ea0d4",
-                ),
-                (
-                    "lookup-table-7x7x7-step63.hash-cost-only.txt",
-                    None,
-                    "67ec50d946ec204c0dc8fe27b268c64d",
-                ),
-            ),
-            "7x7x7-step60",  # C_ida_type
-        )
-'''
 
 
 class RubiksCube777(RubiksCubeNNNOddEdges):
@@ -1938,21 +1121,19 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
 
-        self.lt_step41 = LookupTable777Step41(self)
-        self.lt_step42 = LookupTable777Step42(self)
         self.lt_step43 = LookupTable777Step43(self)
+        self.lt_step44 = LookupTable777Step44(self)
         self.lt_step40 = LookupTableIDA777Step40(self)
 
-        self.lt_step51 = LookupTable777Step51(self)
         self.lt_step52 = LookupTable777Step52(self)
         self.lt_step53 = LookupTable777Step53(self)
+        self.lt_step54 = LookupTable777Step54(self)
         self.lt_step50 = LookupTableIDA777Step50(self)
 
         self.lt_step61 = LookupTable777Step61(self)
         self.lt_step62 = LookupTable777Step62(self)
-        self.lt_step63 = LookupTable777Step63(self)
-        self.lt_step64 = LookupTable777Step64(self)
         self.lt_step65 = LookupTable777Step65(self)
+        self.lt_step66 = LookupTable777Step66(self)
         self.lt_step60 = LookupTableIDA777Step60(self)
 
     def create_fake_555_from_inside_centers(self):
@@ -2221,8 +1402,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         tmp_solution_len = len(self.solution)
         self.lt_step50.solve_via_c()
-        self.rotate("L")
-        self.rotate("R")
         self.print_cube()
         log.info("kociemba: %s" % self.get_kociemba_string(True))
         self.solution.append(
@@ -2230,7 +1409,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
         log.info(
-            "%s: LR centers horizontal bars, UD centers vertical bars, %d steps in"
+            "%s: LR solved, UD centers vertical bars, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
@@ -2255,13 +1434,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             "%s: centers solved, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-
-        # dwalton - 41 steps for normal, 46 steps for fast
-        # 41 steps for normal
-        # - 11 steps to LR vertical bars
-        # - 24 steps to FB vertical bars
-        # - 41 steps to solved
-        sys.exit(0)
 
     def group_centers_guts(self):
         self.lt_init()

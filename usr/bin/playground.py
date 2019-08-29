@@ -86,16 +86,6 @@ cube = RubiksCube777(solved_777, "URFDLB")
 cube.cpu_mode = "normal"
 cube.lt_init()
 
-cube.lt_step41.build_ida_graph()
-cube.lt_step42.build_ida_graph()
-cube.lt_step43.build_ida_graph()
-
-cube.lt_step51.build_ida_graph()
 cube.lt_step52.build_ida_graph()
 cube.lt_step53.build_ida_graph()
-
-cube.lt_step61.build_ida_graph()
-cube.lt_step62.build_ida_graph()
-cube.lt_step63.build_ida_graph()
-cube.lt_step64.build_ida_graph()
-cube.lt_step65.build_ida_graph()
+cube.lt_step54.build_ida_graph()

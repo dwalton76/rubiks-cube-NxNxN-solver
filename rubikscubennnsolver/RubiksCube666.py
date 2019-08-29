@@ -1221,7 +1221,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         if oblique_edges_only:
             fake_444.lt_ULFRBD_centers_stage.avoid_oll = None
 
-        fake_444.lt_ULFRBD_centers_stage.solve()
+        fake_444.lt_ULFRBD_centers_stage.solve_via_c()
 
         for step in fake_444.solution:
             if step.startswith("COMMENT"):

@@ -1,11 +1,8 @@
 
-- 777 centers classes are solving centers, we only need to daisy the centers.
-    This would allow us to convert these to IDA-via-graph. This is a significant
-    change though...lots of tables to rebuild. It would be worth it though
-    just to delete all of that code in ida_search.c and ida_777.c
 
-    - when we put the FB centers in vertical bars go ahead and solve the LR
-      centers so we can avoid the 2-steps L R to make those horizontal bars
+- clean up any "dummy" references
+
+- 444 --fast could be a mirror of how 555 edge solver works
 
 - IDA should be fast enough for tsai 555 now
 

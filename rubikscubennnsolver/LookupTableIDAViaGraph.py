@@ -145,22 +145,45 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--prune-table-%d-state" % index)
             cmd.append(str(pt.ida_graph_node))
 
-        cmd.append("--legal-moves")
-        cmd.append(",".join(self.all_moves))
-
         if self.multiplier:
             cmd.append("--multiplier")
             cmd.append(str(self.multiplier))
 
-        cmd_string = " ".join(cmd)
+        if self.avoid_oll is not None:
+            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
+
+            if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
+                # Edge parity is currently odd so we need an odd number of w turns in orbit 0
+                if 0 in orbits_with_oll:
+                    cmd.append("--orbit0-need-odd-w")
+
+                # Edge parity is currently even so we need an even number of w turns in orbit 0
+                else:
+                    cmd.append("--orbit0-need-even-w")
+
+            if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
+                # Edge parity is currently odd so we need an odd number of w turns in orbit 1
+                if 1 in orbits_with_oll:
+                    cmd.append("--orbit1-need-odd-w")
+
+                # Edge parity is currently even so we need an even number of w turns in orbit 1
+                else:
+                    cmd.append("--orbit1-need-even-w")
+
+            if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
+                raise Exception(
+                    "avoid_oll is only supported for orbits 0 or 1, not {}".format(
+                        self.avoid_oll
+                    )
+                )
+
+        cmd.append("--legal-moves")
+        cmd.append(",".join(self.all_moves))
 
         # wrap the X,Y,Z part of "--legal-moves X,Y,Z" in double quotes
+        cmd_string = " ".join(cmd)
         cmd_string = cmd_string.replace('--legal-moves ', '--legal-moves "')
-
-        if "--multiplier" in cmd_string:
-            cmd_string = cmd_string.replace('--multiplier', '" --multiplier')
-        else:
-            cmd_string += '"'
+        cmd_string += '"'
 
         log.info("solve_via_c:\n    %s\n" % cmd_string)
 

@@ -274,6 +274,60 @@ invalid_prune(unsigned char cost_to_here, move_type *moves_to_here)
 }
 
 
+unsigned char
+parity_ok (
+    unsigned char orbit0_wide_quarter_turns,
+    unsigned char orbit1_wide_quarter_turns,
+    move_type *moves_to_here)
+{
+    unsigned int orbit0_wide_quarter_turn_count = 0;
+    unsigned int orbit1_wide_quarter_turn_count = 0;
+
+    if (orbit0_wide_quarter_turns) {
+        orbit0_wide_quarter_turn_count = get_orbit0_wide_quarter_turn_count(moves_to_here);
+
+        // orbit0 must have an odd number of wide quarter
+        if (orbit0_wide_quarter_turns == 1) {
+            if (orbit0_wide_quarter_turn_count % 2 == 0) {
+                return 0;
+            }
+
+        // orbit0 must have an even number of wide quarter
+        } else if (orbit0_wide_quarter_turns == 2) {
+            if (orbit0_wide_quarter_turn_count % 2) {
+                return 0;
+            }
+
+        } else {
+            printf("ERROR: orbit0_wide_quarter_turns %d is not supported\n", orbit0_wide_quarter_turns);
+            exit(1);
+        }
+    }
+
+    if (orbit1_wide_quarter_turns) {
+        orbit1_wide_quarter_turn_count = get_orbit1_wide_quarter_turn_count(moves_to_here);
+
+        // orbit1 must have an odd number of wide quarter
+        if (orbit1_wide_quarter_turns == 1) {
+            if (orbit1_wide_quarter_turn_count % 2 == 0) {
+                return 0;
+            }
+
+        // orbit1 must have an even number of wide quarter
+        } else if (orbit1_wide_quarter_turns == 2) {
+            if (orbit1_wide_quarter_turn_count % 2) {
+                return 0;
+            }
+
+        } else {
+            printf("ERROR: orbit1_wide_quarter_turns %d is not supported\n", orbit1_wide_quarter_turns);
+            exit(1);
+        }
+    }
+
+    return 1;
+}
+
 struct ida_search_result
 ida_search (
     unsigned char cost_to_here,
@@ -435,7 +489,7 @@ ida_search (
     search_result.f_cost = f_cost;
     search_result.found_solution = 0;
 
-    if (cost_to_goal == 0) {
+    if (cost_to_goal == 0 && parity_ok(orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, moves_to_here)) {
         // We are finished!!
         LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
             ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
@@ -485,9 +539,10 @@ ida_search (
     //}
 
     // The act of computing lt_state and looking to see if lt_state is in ida_explored
-    // cuts the nodes-per-sec rate in half but it can also drastically reduce the number
+    // cuts the nodes-per-sec rate by about 75% but it can also drastically reduce the number
     // of nodes we need to visit and result in a net win. This can chew through a LOT of
-    // memory on a big search though.
+    // memory on a big search though. This is disabled by default but can be enabled via
+    // the command line.
     if (use_lt_explored) {
         prev_heuristic_result = hash_find(&ida_explored, lt_state);
 

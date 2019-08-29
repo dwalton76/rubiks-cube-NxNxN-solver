@@ -352,18 +352,7 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
     LOG("ida_prune_table_preload %s: start\n", filename);
 
     // 4x4x4
-    if (strmatch(filename, "lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt")) {
-
-        while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
-            // 0..23 are the state
-            // 24 is the :
-            // 25 is the move count
-            buffer[24] = '\0';
-            cost = atoi(&buffer[25]);
-            hash_add(hashtable, buffer, cost);
-        }
-
-    } else if (strmatch(filename, "lookup-table-4x4x4-step30-reduce333.txt")) {
+    if (strmatch(filename, "lookup-table-4x4x4-step30-reduce333.txt")) {
 
         while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
             // DDDDLLLLBBBBRRRRFFFFUUUU10362745a8b9ecfdhgkiljnm:R2 Bw2 D' F2 D Bw2
@@ -472,10 +461,8 @@ ida_search_complete (
     move_type *moves_to_here)
 {
     struct key_value_pair * pt_entry = NULL;
-    unsigned int orbit0_wide_half_turn_count = 0;
     unsigned int orbit0_wide_quarter_turn_count = 0;
     unsigned int orbit1_wide_quarter_turn_count = 0;
-    unsigned int outer_layer_quarter_turn_count = 0;
     int result = 0;
 
     if (orbit0_wide_quarter_turns) {

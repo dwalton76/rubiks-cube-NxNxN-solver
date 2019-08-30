@@ -1959,7 +1959,6 @@ class LookupTable555EdgeOrientBothOrbits(LookupTable):
         return (state, cost_to_goal)
 
 
-
 class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
 
     def __init__(self, parent):
@@ -1981,6 +1980,7 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
                 parent.lt_phase3_eo_inner_orbit,
             ),
             multiplier=1.2,
+            use_pt_total_cost=False,
         )
 
 
@@ -2369,7 +2369,8 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_high_edge_midge,
                 parent.lt_phase5_low_edge_midge,
             ),
-            multiplier=1.4,
+            multiplier=1.2,
+            use_pt_total_cost=True,
         )
 
 
@@ -2502,7 +2503,6 @@ class LookupTable555Phase6HighEdgeMidge(LookupTable):
         cube = self.parent.state[:]
 
 
-
 class LookupTable555Phase6LowEdgeMidge(LookupTable):
     """
     lookup-table-5x5x5-step63-phase6-low-edge-midge.txt
@@ -2581,37 +2581,9 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
 class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
     """
     Pair the last eight edges and solve the centers
-    """
 
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=(
-                "Uw", "Uw'", "Uw2",
-                "Dw", "Dw'", "Dw2",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Lw", "Lw'",
-                "Rw", "Rw'",
-                "L", "L'",
-                "R", "R'",
-                "F", "F'",
-                "B", "B'",
-            ),
-            prune_tables=(
-                #parent.lt_phase6_centers,
-                parent.lt_phase6_high_edge_midge,
-                parent.lt_phase6_low_edge_midge,
-            ),
-            multiplier=1.2,
-        )
+    Just for reference this is the move distribution for the edges only
 
-
-# class LookupTable555PairLastEightEdgesEdgesOnly(LookupTable):
-class LookupTable555PairLastEightEdgesEdgesOnly(LookupTableHashCostOnly):
-    """
     lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt
     ===============================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
@@ -2635,323 +2607,31 @@ class LookupTable555PairLastEightEdgesEdgesOnly(LookupTableHashCostOnly):
     """
 
     def __init__(self, parent):
-        """
-        LookupTable.__init__(
+        LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt',
-            'OOopPPQQqrRR------------WWwxXXYYyzZZ',
-            linecount=812851200,
-            max_depth=15,
-            filesize=73969459200)
-        """
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.hash-cost-only.txt",
-            "OOopPPQQqrRR------------WWwxXXYYyzZZ",
-            linecount=1,
-            max_depth=15,
-            bucketcount=812851219,
-            filesize=812851220,
-        )
-
-    def ida_heuristic(self):
-        assert (
-            self.only_colors and len(self.only_colors) == 8
-        ), "You must specify which 8-edges"
-        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
-        state = "".join([state[index] for index in wings_for_edges_pattern_555])
-        cost_to_goal = self.heuristic(state)
-        # log.info("%s: state %s, cost %d" % (self, state, cost_to_goal))
-        return (state, cost_to_goal)
-
-
-# class LookupTable555PairLastEightEdgesCentersOnly(LookupTableHashCostOnly):
-class LookupTable555PairLastEightEdgesCentersOnly(LookupTable):
-    """
-    lookup-table-5x5x5-step502-pair-last-eight-edges-centers-only.txt
-    =================================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 42 entries (0 percent, 8.40x previous step)
-    3 steps has 280 entries (0 percent, 6.67x previous step)
-    4 steps has 1,691 entries (0 percent, 6.04x previous step)
-    5 steps has 8,806 entries (4 percent, 5.21x previous step)
-    6 steps has 36,264 entries (20 percent, 4.12x previous step)
-    7 steps has 77,966 entries (44 percent, 2.15x previous step)
-    8 steps has 46,518 entries (26 percent, 0.60x previous step)
-    9 steps has 4,828 entries (2 percent, 0.10x previous step)
-
-    Total: 176,400 entries
-    Average: 6.98 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step502-pair-last-eight-edges-centers-only.txt",
-            "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD",
-            linecount=176400,
-            max_depth=9,
-            filesize=15699600,
-        )
-        """
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step502-pair-last-eight-edges-centers-only.hash-cost-only.txt',
-            'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
-            linecount=1,
-            max_depth=9,
-            bucketcount=176401,
-            filesize=176402)
-        """
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        state = "".join([parent_state[x] for x in centers_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTableIDA555PairLastEightEdges(LookupTableIDA):
-    """
-    lookup-table-5x5x5-step500-pair-last-eight-edges.txt
-    ====================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 42 entries (0 percent, 8.40x previous step)
-    3 steps has 380 entries (0 percent, 9.05x previous step)
-    4 steps has 3,425 entries (0 percent, 9.01x previous step)
-    5 steps has 29,807 entries (1 percent, 8.70x previous step)
-    6 steps has 259,083 entries (10 percent, 8.69x previous step)
-    7 steps has 2,235,143 entries (88 percent, 8.63x previous step)
-
-    Total: 2,527,885 entries
-    """
-
-    heuristic_stats = {
-        (0, 0): 0,
-        (1, 1): 1,
-        (1, 2): 7,
-        (1, 3): 8,
-        (1, 4): 5,
-        (1, 5): 5,
-        (1, 6): 6,
-        (2, 1): 4,
-        (2, 2): 2,
-        (2, 3): 3,
-        (2, 4): 4,
-        (2, 5): 6,
-        (2, 6): 7,
-        (2, 7): 7,
-        (2, 9): 14,
-        (2, 12): 17,
-        (3, 0): 5,
-        (3, 1): 3,
-        (3, 2): 3,
-        (3, 3): 3,
-        (3, 4): 4,
-        (3, 5): 6,
-        (3, 6): 7,
-        (3, 7): 8,
-        (3, 8): 12,
-        (3, 9): 13,
-        (3, 10): 14,
-        (3, 11): 14,
-        (3, 13): 15,
-        (4, 0): 4,
-        (4, 1): 5,
-        (4, 2): 4,
-        (4, 3): 5,
-        (4, 4): 4,
-        (4, 5): 6,
-        (4, 6): 7,
-        (4, 7): 9,
-        (4, 8): 11,
-        (4, 9): 12,
-        (4, 10): 14,
-        (4, 11): 15,
-        (4, 12): 15,
-        (4, 13): 18,
-        (5, 1): 5,
-        (5, 2): 6,
-        (5, 3): 5,
-        (5, 4): 6,
-        (5, 5): 7,
-        (5, 6): 8,
-        (5, 7): 9,
-        (5, 8): 11,
-        (5, 9): 12,
-        (5, 10): 14,
-        (5, 11): 15,
-        (5, 12): 16,
-        (5, 13): 18,
-        (6, 2): 6,
-        (6, 3): 7,
-        (6, 4): 6,
-        (6, 5): 8,
-        (6, 6): 9,
-        (6, 7): 9,
-        (6, 8): 11,
-        (6, 9): 12,
-        (6, 10): 14,
-        (6, 11): 15,
-        (6, 12): 16,
-        (6, 13): 17,
-        (6, 14): 16,
-        (7, 3): 7,
-        (7, 4): 8,
-        (7, 5): 8,
-        (7, 6): 9,
-        (7, 7): 10,
-        (7, 8): 11,
-        (7, 9): 12,
-        (7, 10): 14,
-        (7, 11): 15,
-        (7, 12): 16,
-        (7, 13): 17,
-        (7, 14): 17,
-        (8, 6): 11,
-        (8, 7): 12,
-        (8, 8): 12,
-        (8, 9): 13,
-        (8, 10): 14,
-        (8, 11): 15,
-        (8, 12): 16,
-        (8, 13): 17,
-        (8, 14): 17,
-        (9, 7): 12,
-        (9, 8): 13,
-        (9, 9): 12,
-        (9, 10): 14,
-        (9, 11): 15,
-        (9, 12): 16,
-        (9, 13): 16,
-    }
-
-    # The higher this number the less you honor the heuristic_stats
-    # -  0 uses the heuristic_stats exactly as reported
-    # -  1 subtracts 1 from the heuristic_stats value
-    # - 99 disables heuristic_stats
-    #
-    # You want to put this as high as you can but low enough
-    # to still speed up the slow IDA searches.
-    #
-    # LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
-    # 99 : gave up after 5min
-    #  3 : 17 moves in 1m 21s
-    #  2 : 17 moves in 25s
-    #  1 : 17 moves in 4s
-    #  0 : 17 moves in 800ms
-    #
-    # BDBULBULFRDLUFDBBBUBDLRFBRRRDFUBLBBLBRURRFUULDBUDLRFBUUFLBRBFRFFDLLUDURFBULFRLRBFRDBUDDDFRDFFULFDFFDUDFDBDRBLLURLDLBDULBDFBUUULURLRDRRLFDBRLUDLFLFRUFR
-    #  3 : 17 moves in 2m 45s
-    #  2 : 17 moves in 25s
-    #  1 : 17 moves in 3.4s
-    #  0 : 18 moves in 5s
-    #
-    # FRFFBLUUFLFFUDLFLUDBRFBLLFUDBRRUULDUDRLBLFBDDUDRRLFDLFDUULUUFRFRLDRBLDDRUBRBFRDBLDBFFUBDDBDFFRFLUDFURBRUUUBDBLBRLLLBRUDBFLFULDUDBDRRRLRDFBLURBFBRBLRBU
-    #  3 : 16 moves in 5s
-    #  2 : 16 moves in 600ms
-    #  1 : 17 moves in 900ms
-    #  0 : 18 moves in 1200ms
-    heuristic_stats_error = 0
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step500-pair-last-eight-edges.txt",
-            "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDDOOopPPQQqrRR------------WWwxXXYYyzZZ",
-            moves_555,
-            # illegal moves
-            (
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'", "Uw2",
+                "Dw", "Dw'", "Dw2",
                 "Fw", "Fw'",
                 "Bw", "Bw'",
                 "Lw", "Lw'",
                 "Rw", "Rw'",
-                "Uw", "Uw'", "Uw2",
-                "Dw", "Dw'", "Dw2",
                 "L", "L'",
                 "R", "R'",
                 "F", "F'",
                 "B", "B'",
             ),
-            linecount=2527885,
-            max_depth=7,
-            filesize=300818315,
+            prune_tables=(
+                parent.lt_phase6_centers,
+                parent.lt_phase6_high_edge_midge,
+                parent.lt_phase6_low_edge_midge,
+            ),
+            multiplier=1.2,
+            use_pt_total_cost=True,
         )
 
-        if self.parent.cpu_mode == "slow":
-            LookupTableIDA555PairLastEightEdges.heuristic_stats_error = 2
-        elif self.parent.cpu_mode == "normal":
-            LookupTableIDA555PairLastEightEdges.heuristic_stats_error = 1
-        elif self.parent.cpu_mode == "fast":
-            LookupTableIDA555PairLastEightEdges.heuristic_stats_error = 0
-
-    def ida_heuristic_tuple(self):
-        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
-        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
-        return (centers_cost_to_goal, edges_cost_to_goal)
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        (edges_state, edges_cost_to_goal) = self.parent.lt_pair_last_eight_edges_edges_only.ida_heuristic()
-        (centers_state, centers_cost_to_goal) = self.parent.lt_pair_last_eight_edges_centers_only.ida_heuristic()
-        cost_to_goal = max(centers_cost_to_goal, edges_cost_to_goal)
-        lt_state = centers_state + edges_state
-
-        if cost_to_goal > 0:
-            steps = self.steps(lt_state)
-
-            if steps:
-                cost_to_goal = len(steps)
-            else:
-                heuristic_stats_cost = self.heuristic_stats.get((centers_cost_to_goal, edges_cost_to_goal), 0)
-                cost_to_goal = max(
-                    centers_cost_to_goal,
-                    edges_cost_to_goal,
-                    self.max_depth + 1,
-                    heuristic_stats_cost - self.heuristic_stats_error,
-                )
-
-        return (lt_state, cost_to_goal)
-
-
-class LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(LookupTable):
-    """
-    lookup-table-5x5x5-step353-x-plane-y-plane-edges-orient-pair-one-edge.txt
-    =========================================================================
-    1 steps has 7 entries (1 percent, 0.00x previous step)
-    2 steps has 28 entries (5 percent, 4.00x previous step)
-    3 steps has 90 entries (17 percent, 3.21x previous step)
-    4 steps has 195 entries (38 percent, 2.17x previous step)
-    5 steps has 184 entries (35 percent, 0.94x previous step)
-    6 steps has 8 entries (1 percent, 0.04x previous step)
-    Total: 512 entries
-    Average: 4.06 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step353-x-plane-y-plane-edges-orient-pair-one-edge.txt",
-            "---------rRR------------------------",
-            linecount=512,
-            max_depth=6,
-            filesize=29696,
-        )
-
-    def ida_heuristic(self):
-        assert (
-            self.only_colors and len(self.only_colors) == 1
-        ), "You must specify which 1-edge"
-        state = edges_recolor_pattern_555(self.parent.state[:], self.only_colors)
-        state = "".join([state[index] for index in wings_for_edges_pattern_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
 
 class RubiksCube555(RubiksCube):
     """
@@ -3103,6 +2783,7 @@ class RubiksCube555(RubiksCube):
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
         self.lt_FB_centers_stage_LR_centers_432 = LookupTable555FBCenterStageLRCenter432(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
+        self.lt_FB_centers_stage.avoid_oll = 0
 
         self.lt_phase3_lr_center_stage  = LookupTable555LRCenterStage(self)
         self.lt_phase3_eo_outer_orbit = LookupTableIDA555EdgeOrientOuterOrbit(self)
@@ -3128,14 +2809,6 @@ class RubiksCube555(RubiksCube):
         self.lt_FB_centers_solve = LookupTable555FBCenterSolve(self)
         self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
-
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge = LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge(self)
-        self.lt_pair_last_eight_edges_edges_only = LookupTable555PairLastEightEdgesEdgesOnly(self)
-        self.lt_pair_last_eight_edges_centers_only = LookupTable555PairLastEightEdgesCentersOnly(self)
-        self.lt_pair_last_eight_edges = LookupTableIDA555PairLastEightEdges(self)
-        self.lt_pair_last_eight_edges_centers_only.preload_cache_dict()
-        self.lt_pair_last_eight_edges.preload_cache_string()
-        # self.lt_pair_last_eight_edges.preload_cache_dict()
 
     def highlow_edges_state(self):
         state = self.state
@@ -3460,7 +3133,7 @@ class RubiksCube555(RubiksCube):
 
         costs.sort()
         log.info("Top 5 wing_str_combo (total cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo)\n%s\n" % "\n".join(map(str, costs[0:5])))
-        (cost, cost_to_pair_four_edges, cost_to_stage, min_wing_str_combo) = costs[1]
+        (cost, cost_to_pair_four_edges, cost_to_stage, min_wing_str_combo) = costs[0]
         log.info("%s: cost %d (%d + %d), wing_str_combo %s (MIN)" % (
                     self, cost, cost_to_stage, cost_to_pair_four_edges, " ".join(wing_str_combo)))
 
@@ -3469,7 +3142,7 @@ class RubiksCube555(RubiksCube):
         self.lt_phase4.wing_strs = min_wing_str_combo
         self.lt_phase4.solve()
         self.print_cube()
-        log.info("%s: end of phase 4, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("%s: end of phase 4, first four edges in x-plane and y-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         original_state = self.state[:]
         original_solution = self.solution[:]
@@ -3489,6 +3162,7 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
+        log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
         log.info("%s: end of phase 5, x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.solution.append(
@@ -3496,68 +3170,21 @@ class RubiksCube555(RubiksCube):
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-    def edges_pairable_without_LRFB(self):
-        """
-        Return the wing_strs that can be paired without L L' R R' F F' B B'
-        """
-        state = self.state
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
-        pairable = []
-
-        for wing_str in self.get_y_plane_z_plane_wing_strs():
-            self.lt_x_plane_y_plane_orient_edges_pair_one_edge.only_colors = set(
-                [wing_str]
-            )
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            try:
-                self.lt_x_plane_y_plane_orient_edges_pair_one_edge.solve()
-                # log.info("%s: wing_str %s can be paired without L L' R R' F F' B B'" % (self, wing_str))
-                pairable.append(wing_str)
-            except NoSteps:
-                # log.info("%s: wing_str %s can NOT be paired without L L' R R' F F' B B'" % (self, wing_str))
-                pass
-
-        self.lt_x_plane_y_plane_orient_edges_pair_one_edge.only_colors = set()
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        # log.info("%s: pairable %s (%d of them)" % (
-        #    self, pformat(pairable), len(pairable)))
-        return tuple(sorted(pairable))
-
     def pair_last_eight_edges(self):
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(original_solution)
+        tmp_solution_len = len(self.solution)
 
-        '''
-        yz_plane_edges = tuple(list(self.get_y_plane_wing_strs()) + list(self.get_z_plane_wing_strs()))
-        log.info(f"{self}: yz_plane_edges {yz_plane_edges}")
-        #self.edges_flip_orientation(yz_plane_edges, [])
         self.edges_flip_orientation(wing_strs_all, [])
-        self.highlow_edges_print()
-        self.print_cube()
+        #self.highlow_edges_print()
+        #self.print_cube()
 
+        yz_plane_edges = tuple(list(self.get_y_plane_wing_strs()) + list(self.get_z_plane_wing_strs()))
         self.lt_phase6_high_edge_midge.ida_graph_node = None
         self.lt_phase6_low_edge_midge.ida_graph_node = None
         self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
         self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
-
-        high_edge_state = self.lt_phase6_high_edge_midge.state()
-        low_edge_state = self.lt_phase6_low_edge_midge.state()
-
-        log.info("%s: high edge state %s" % (self, high_edge_state))
-        log.info("%s:  low edge state %s" % (self, low_edge_state))
-
-        high_edge_state_index = self.lt_phase6_high_edge_midge.state_index()
-        low_edge_state_index = self.lt_phase6_low_edge_midge.state_index()
-        log.info("%s: high edge state_index %s" % (self, high_edge_state_index))
-        log.info("%s:  low edge state_index %s" % (self, low_edge_state_index))
-
         self.lt_phase6.solve_via_c()
 
         pair_eight_edge_solution = self.solution[original_solution_len:]
@@ -3566,35 +3193,6 @@ class RubiksCube555(RubiksCube):
 
         for step in pair_eight_edge_solution:
             self.rotate(step)
-
-        self.print_cube()
-        log.info("%s: end of phase 6, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        '''
-
-        tmp_solution_len = len(self.solution)
-        self.edges_flip_orientation(wing_strs_all, [])
-        #self.highlow_edges_print()
-        self.print_cube()
-
-        foo = self.edges_pairable_without_LRFB()
-        log.info("%s: phase6 %d edges pairable without LRFB %s" % (self, len(foo), " ".join(foo)))
-
-        self.lt_pair_last_eight_edges_edges_only.only_colors = self.get_y_plane_z_plane_wing_strs()
-        # self.lt_pair_last_eight_edges_edges_only.solve()
-        # self.lt_pair_last_eight_edges_centers_only.solve()
-        self.lt_pair_last_eight_edges.solve()
-
-        # Now put the cube back to the original state before we flipped all of
-        # the edges to their native orientation, then apply the solution we found.
-        last_eight_edges_solution = self.solution[original_solution_len:]
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        for step in last_eight_edges_solution:
-            if step.startswith("COMMENT"):
-                self.solution.append(step)
-            else:
-                self.rotate(step)
 
         self.print_cube()
         self.solution.append(

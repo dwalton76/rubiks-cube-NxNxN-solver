@@ -1,4 +1,10 @@
 
+- 555 pairing the last 8-edges is slooow.  Build an edges prune table 9-deep and see
+  if that speeds it up enough.
+
+./ida_search_via_graph --prune-table-0-filename lookup-table-5x5x5-step61-phase6-centers.bin --prune-table-0-state 175399 --prune-table-1-filename lookup-table-5x5x5-step62-phase6-high-edge-midge.bin --prune-table-1-state 7795 --prune-table-2-filename lookup-table-5x5x5-step63-phase6-low-edge-midge.bin --prune-table-2-state 39627 --multiplier 1.2 --use-pt-total-cost --legal-moves "U,U',U2,L2,Lw2,F2,Fw2,R2,Rw2,B2,Bw2,D,D',D2"
+
+
 
 - clean up any "dummy" references
 

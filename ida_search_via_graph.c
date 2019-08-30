@@ -38,6 +38,7 @@ unsigned char COST_LENGTH = 1;
 unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
 unsigned char use_lt_explored = 0;
+unsigned char use_pt_total_cost = 0;
 float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
@@ -339,8 +340,8 @@ ida_search (
     unsigned int prev_pt3_state,
     unsigned int prev_pt4_state,
     unsigned char orbit0_wide_quarter_turns,
-    unsigned char orbit1_wide_quarter_turns)
-    // unsigned char prev_pt_total_cost)
+    unsigned char orbit1_wide_quarter_turns,
+    unsigned char prev_pt_total_cost)
 {
     unsigned char cost_to_goal = 0;
     unsigned char f_cost = 0;
@@ -360,7 +361,7 @@ ida_search (
     unsigned char pt2_cost = 0;
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
-    // unsigned char pt_total_cost = 0;
+    unsigned char pt_total_cost = 0;
     unsigned char STATE_SIZE = 48;
     unsigned char lt_state[STATE_SIZE];
 
@@ -456,7 +457,7 @@ ida_search (
         break;
     }
 
-    // pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
+    pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
 
     if (cost_to_goal_multiplier) {
         cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
@@ -533,10 +534,9 @@ ida_search (
     // It feels like about 99% of the time this is a safe way to speed up the IDA
     // search.  There are times though when the total pt_cost will increase as we
     // traverse down the branch that is the solution.
-    //
-    //if (pt_total_cost > prev_pt_total_cost) {
-    //    return search_result;
-    //}
+    if (use_pt_total_cost && cost_to_here >= 2 && pt_total_cost > prev_pt_total_cost) {
+        return search_result;
+    }
 
     // The act of computing lt_state and looking to see if lt_state is in ida_explored
     // cuts the nodes-per-sec rate by about 75% but it can also drastically reduce the number
@@ -635,8 +635,8 @@ ida_search (
             pt3_state,
             pt4_state,
             orbit0_wide_quarter_turns,
-            orbit1_wide_quarter_turns);
-            // pt_total_cost);
+            orbit1_wide_quarter_turns,
+            pt_total_cost);
 
         if (tmp_search_result.found_solution) {
             return tmp_search_result;
@@ -723,7 +723,7 @@ ida_solve (
         }
     }
 
-    // unsigned char pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
+    unsigned char pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
     LOG("min_ida_threshold %d\n", min_ida_threshold);
     gettimeofday(&start, NULL);
 
@@ -743,8 +743,8 @@ ida_solve (
             pt3_state,
             pt4_state,
             orbit0_wide_quarter_turns,
-            orbit1_wide_quarter_turns);
-            // pt_total_cost);
+            orbit1_wide_quarter_turns,
+            pt_total_cost);
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
@@ -947,6 +947,9 @@ main (int argc, char *argv[])
 
         } else if (strmatch(argv[i], "--use-lt-explored")) {
             use_lt_explored = 1;
+
+        } else if (strmatch(argv[i], "--use-pt-total-cost")) {
+            use_pt_total_cost = 1;
 
         } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
             orbit0_wide_quarter_turns = 1;

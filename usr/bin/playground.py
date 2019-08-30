@@ -28,6 +28,13 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
+cube = RubiksCube555(solved_555, "URFDLB")
+cube.cpu_mode = "normal"
+cube.print_cube()
+cube.highlow_edges_print()
+orbits_with_oll = cube.center_solution_leads_to_oll_parity()
+log.info(f"orbits_with_oll {orbits_with_oll}")
+
 
 '''
 cube = RubiksCube444(solved_444, "URFDLB")
@@ -82,6 +89,7 @@ cube.lt_init()
 #cube.lt_FB_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
 '''
 
+'''
 cube = RubiksCube777(solved_777, "URFDLB")
 cube.cpu_mode = "normal"
 cube.lt_init()
@@ -89,3 +97,4 @@ cube.lt_init()
 cube.lt_step52.build_ida_graph()
 cube.lt_step53.build_ida_graph()
 cube.lt_step54.build_ida_graph()
+'''

@@ -32,6 +32,7 @@ class LookupTableIDAViaGraph(LookupTable):
         legal_moves=[],
         prune_tables=[],
         multiplier=None,
+        use_pt_total_cost=True,
     ):
         LookupTable.__init__(self, parent, filename, None, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -41,6 +42,7 @@ class LookupTableIDAViaGraph(LookupTable):
         self.nuke_centers = False
         self.prune_tables = prune_tables
         self.multiplier = multiplier
+        self.use_pt_total_cost = use_pt_total_cost
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -148,6 +150,9 @@ class LookupTableIDAViaGraph(LookupTable):
         if self.multiplier:
             cmd.append("--multiplier")
             cmd.append(str(self.multiplier))
+
+        if self.use_pt_total_cost:
+            cmd.append("--use-pt-total-cost")
 
         if self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()

@@ -2369,7 +2369,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_high_edge_midge,
                 parent.lt_phase5_low_edge_midge,
             ),
-            multiplier=1.2,
+            multiplier=1.4,
         )
 
 

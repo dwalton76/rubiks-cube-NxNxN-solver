@@ -24,9 +24,9 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 # takes much longer to run.  For now use the old L4E way it is only
                 # about 1 move longer if the centers are solved but runs 3x faster.
                 self.fake_555 = RubiksCube555(solved_555, "URFDLB")
-                self.fake_555.enable_print_cube = False
                 self.fake_555.cpu_mode = self.cpu_mode
                 self.fake_555.lt_init()
+                self.fake_555.enable_print_cube = False
         else:
             self.fake_555.re_init()
         return self.fake_555
@@ -68,9 +68,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             row3_col1 = start_nnn + (self.size * (half_size - 1)) + 1
             row3_col3 = row3_col1 + self.size - 1
 
-            row4_col1 = (
-                start_nnn + (self.size * self.size) - ((orbit + 2) * self.size) + 1
-            )
+            row4_col1 = start_nnn + (self.size * self.size) - ((orbit + 2) * self.size) + 1
             row4_col3 = row4_col1 + self.size - 1
 
             row5_col1 = row1_col1 + ((self.size - 1) * self.size)
@@ -108,6 +106,41 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             start_nnn += self.size * self.size
             start_555 += 25
 
+        # Fill in the centers
+        if orbit == 0:
+            start_555 = 0
+            start_nnn = 0
+            centers_size = self.size - 2
+            half_centers_size = int(centers_size / 2)
+
+            row1_col1 = self.size + 2
+            row1_col2 = row1_col1 + half_centers_size
+            row1_col3 = row1_col2 + half_centers_size
+
+            row2_col2 = int(ceil((self.size * self.size) / 2))
+            row2_col1 = row2_col2 - half_centers_size
+            row2_col3 = row2_col2 + half_centers_size
+
+            row3_col3 = (self.size * self.size) - self.size - 1
+            row3_col2 = row3_col3 - half_centers_size
+            row3_col1 = row3_col2 - half_centers_size
+
+            for x in range(6):
+                fake_555.state[start_555 + 7] = self.state[start_nnn + row1_col1]
+                fake_555.state[start_555 + 8] = self.state[start_nnn + row1_col2]
+                fake_555.state[start_555 + 9] = self.state[start_nnn + row1_col3]
+
+                fake_555.state[start_555 + 12] = self.state[start_nnn + row2_col1]
+                fake_555.state[start_555 + 13] = self.state[start_nnn + row2_col2]
+                fake_555.state[start_555 + 14] = self.state[start_nnn + row2_col3]
+
+                fake_555.state[start_555 + 17] = self.state[start_nnn + row3_col1]
+                fake_555.state[start_555 + 18] = self.state[start_nnn + row3_col2]
+                fake_555.state[start_555 + 19] = self.state[start_nnn + row3_col3]
+
+                start_nnn += self.size * self.size
+                start_555 += 25
+
         self.print_cube()
         fake_555.enable_print_cube = True
         fake_555.print_cube()
@@ -130,48 +163,21 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                     step = str(self.size) + step[1:]
 
                 elif step in (
-                    "Uw",
-                    "Uw'",
-                    "Uw2",
-                    "Lw",
-                    "Lw'",
-                    "Lw2",
-                    "Fw",
-                    "Fw'",
-                    "Fw2",
-                    "Rw",
-                    "Rw'",
-                    "Rw2",
-                    "Bw",
-                    "Bw'",
-                    "Bw2",
-                    "Dw",
-                    "Dw'",
-                    "Dw2",
-                ):
+                    "Uw", "Uw'", "Uw2",
+                    "Lw", "Lw'", "Lw2",
+                    "Fw", "Fw'", "Fw2",
+                    "Rw", "Rw'", "Rw2",
+                    "Bw", "Bw'", "Bw2",
+                    "Dw", "Dw'", "Dw2"):
                     step = wide_str + step
 
                 elif step in (
-                    "2U",
-                    "2U'",
-                    "2U2",
-                    "2L",
-                    "2L'",
-                    "2L2",
-                    "2F",
-                    "2F'",
-                    "2F2",
-                    "2R",
-                    "2R'",
-                    "2R2",
-                    "2B",
-                    "2B'",
-                    "2B2",
-                    "2D",
-                    "2D'",
-                    "2D2",
-                ):
-
+                    "2U", "2U'", "2U2",
+                    "2L", "2L'", "2L2",
+                    "2F", "2F'", "2F2",
+                    "2R", "2R'", "2R2",
+                    "2B", "2B'", "2B2",
+                    "2D", "2D'", "2D2"):
                     step = wide_str + step[1:]
 
                 # log.info("wide_str %s, orig-step %s -> step %s" % (wide_str, orig_step, step))

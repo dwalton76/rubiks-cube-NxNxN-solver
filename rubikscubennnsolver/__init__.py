@@ -4750,6 +4750,9 @@ class RubiksCube(object):
             else:
                 self.rotate(step)
 
+    def reduced_to_333(self):
+        return bool(self.centers_solved() and self.edges_paired())
+
     def solve(self, solution333=None):
         """
         The RubiksCube222 and RubiksCube333 child classes will override
@@ -4775,6 +4778,9 @@ class RubiksCube(object):
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
+
+        if not self.reduced_to_333():
+            raise SolveError("Should be reduced to 3x3x3 but is not")
 
         if solution333:
             assert isinstance(solution333, list)

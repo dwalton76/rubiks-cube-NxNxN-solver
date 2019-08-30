@@ -3176,7 +3176,24 @@ class RubiksCube555(RubiksCube):
         original_solution_len = len(original_solution)
         tmp_solution_len = len(self.solution)
 
+        # We need the edge swaps to be even for our edges lookup table to work.
+        if self.edge_swaps_odd(False, 0, False):
+            log.warning("%s: edge swaps are odd, running prevent_OLL to correct" % self)
+            self.prevent_OLL()
+            self.print_cube()
+            self.solution.append(
+                "COMMENT_%d_steps_prevent_OLL"
+                % self.get_solution_len_minus_rotates(
+                    self.solution[tmp_solution_len:]
+                )
+            )
+            log.info(
+                "%s: End of prevent_OLL, %d steps in"
+                % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
+
         self.edges_flip_orientation(wing_strs_all, [])
+
         #self.highlow_edges_print()
         #self.print_cube()
 

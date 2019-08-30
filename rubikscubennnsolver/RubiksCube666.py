@@ -1281,14 +1281,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        # dwalton
-        # 44 steps to centers staged, 72 to centers solved
-
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges
         # - solve the LR inner x-centers and pair the LR oblique edges
         # - solve the FB inner x-centers and pair the FB oblique edges
-
 
         # solve the UD inner x-centers and pair the UD oblique edges
         tmp_solution_len = len(self.solution)

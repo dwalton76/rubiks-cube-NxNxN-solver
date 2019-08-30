@@ -1178,29 +1178,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             fake_555.state[18 + offset_555] = self.state[39 + offset_777]
             fake_555.state[19 + offset_555] = self.state[41 + offset_777]
 
-    def create_fake_555_from_outside_centers_for_UD_oblique_edges(self):
-        # This is only used when we are staging the UD outer x-centers and paired
-        # UD outer oblique edges, to sides UD
-        fake_555 = self.get_fake_555()
-        fake_555.nuke_corners()
-        fake_555.nuke_edges()
-        fake_555.nuke_centers()
-
-        for side_index in range(6):
-            offset_555 = side_index * 25
-            offset_777 = side_index * 49
-            fake_555.state[7 + offset_555] = self.state[9 + offset_777]
-            fake_555.state[8 + offset_555] = self.state[10 + offset_777]
-            fake_555.state[9 + offset_555] = self.state[13 + offset_777]
-
-            fake_555.state[12 + offset_555] = self.state[16 + offset_777]
-            fake_555.state[13 + offset_555] = self.state[25 + offset_777]
-            fake_555.state[14 + offset_555] = self.state[20 + offset_777]
-
-            fake_555.state[17 + offset_555] = self.state[37 + offset_777]
-            fake_555.state[18 + offset_555] = self.state[38 + offset_777]
-            fake_555.state[19 + offset_555] = self.state[41 + offset_777]
-
     def UD_inside_centers_staged(self):
         state = self.state
 

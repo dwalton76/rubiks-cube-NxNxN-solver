@@ -2,7 +2,49 @@
 - 555 pairing the last 8-edges is slooow.  Build an edges prune table 9-deep and see
   if that speeds it up enough.
 
-./ida_search_via_graph --prune-table-0-filename lookup-table-5x5x5-step61-phase6-centers.bin --prune-table-0-state 175399 --prune-table-1-filename lookup-table-5x5x5-step62-phase6-high-edge-midge.bin --prune-table-1-state 7795 --prune-table-2-filename lookup-table-5x5x5-step63-phase6-low-edge-midge.bin --prune-table-2-state 39627 --multiplier 1.2 --use-pt-total-cost --legal-moves "U,U',U2,L2,Lw2,F2,Fw2,R2,Rw2,B2,Bw2,D,D',D2"
+    Do the same for LookupTable555Phase5FourEdges
+
+./ida_search_via_graph --prune-table-0-filename lookup-table-5x5x5-step51-phase5-centers.bin --prune-table-0-state 1289928 --prune-table-1-filename lookup-table-5x5x5-step53-phase5-high-edge-and-midge.bin --prune-table-1-state 59432 --prune-table-2-filename lookup-table-5x5x5-step54-phase5-low-edge-and-midge.bin --prune-table-2-state 104905 --multiplier 1.2 --use-pt-total-cost --legal-moves "U2,Uw2,L2,Lw2,F,F',F2,Fw2,R2,Rw2,B,B',B2,Bw2,D2,Dw2"
+
+
+legal_move_count 16, ROW_LENGTH 65
+[2019-08-30T20:49:31.074] min_ida_threshold 7
+[2019-08-30T20:49:31.074] IDA threshold 7, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-30T20:49:31.074] IDA threshold 8, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-30T20:49:31.074] IDA threshold 9, explored 24 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-30T20:49:31.074] IDA threshold 10, explored 244 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-30T20:49:31.074] IDA threshold 11, explored 2,422 nodes, took 0.000s, 0 nodes-per-sec
+[2019-08-30T20:49:31.076] IDA threshold 12, explored 20,396 nodes, took 0.001s, 20,396,000 nodes-per-sec
+[2019-08-30T20:49:31.087] IDA threshold 13, explored 149,096 nodes, took 0.010s, 14,909,600 nodes-per-sec
+[2019-08-30T20:49:31.160] IDA threshold 14, explored 1,057,983 nodes, took 0.073s, 14,492,918 nodes-per-sec
+[2019-08-30T20:49:31.647] IDA threshold 15, explored 7,205,210 nodes, took 0.486s, 14,825,535 nodes-per-sec
+[2019-08-30T20:49:34.780] IDA threshold 16, explored 48,082,686 nodes, took 3.132s, 15,352,071 nodes-per-sec
+[2019-08-30T20:49:55.690] IDA threshold 17, explored 317,393,556 nodes, took 20.911s, 15,178,307 nodes-per-sec
+[2019-08-30T20:50:28.215] IDA count 516,124,854, f_cost 17 vs threshold 18 (cost_to_here 17, cost_to_goal 0)
+SOLUTION: F' R2 Dw2 Fw2 B' Lw2 U2 F2 R2 F Uw2 F' L2 F2 Dw2 R2 Dw2
+[2019-08-30T20:50:28.215] IDA threshold 18, explored 516,124,854 nodes, took 32.525s, 15,868,559 nodes-per-sec
+[2019-08-30T20:50:28.215] IDA found solution, explored 890,036,473 total nodes, took 57.140s, 15,576,417 nodes-per-sec
+
+       PT0  PT1  PT2  PT3  PT4  CTG  TOT  TRU  IDX
+       ===  ===  ===  ===  ===  ===  ===  ===  ===
+         7    6    7    0    0    8   20   17    0
+   F'    7    7    8    0    0    9   22   16    1
+   R2    7    7    8    0    0    9   22   15    2
+  Dw2    7    7    8    0    0    9   22   14    3
+  Fw2    6    7    9    0    0   10   22   13    4
+   B'    7    7    8    0    0    9   22   12    5
+  Lw2    7    7    7    0    0    8   21   11    6
+   U2    7    8    6    0    0    9   21   10    7
+   F2    7    7    6    0    0    8   20    9    8
+   R2    7    6    6    0    0    8   19    8    9
+    F    6    5    5    0    0    7   16    7   10
+  Uw2    5    4    4    0    0    6   13    6   11
+   F'    4    3    3    0    0    4   10    5   12
+   L2    3    3    3    0    0    3    9    4   13
+   F2    3    3    3    0    0    3    9    3   14
+  Dw2    2    2    2    0    0    2    6    2   15
+   R2    1    1    1    0    0    1    3    1   16
+  Dw2    0    0    0    0    0    0    0    0   17
 
 
 

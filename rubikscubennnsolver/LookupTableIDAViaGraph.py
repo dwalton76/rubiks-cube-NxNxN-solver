@@ -33,6 +33,11 @@ class LookupTableIDAViaGraph(LookupTable):
         prune_tables=[],
         multiplier=None,
         use_pt_total_cost=True,
+        main_table_state_length=None,
+        main_table_max_depth=None,
+        main_table_prune_tables=None,
+        main_table_filename=None,
+
     ):
         LookupTable.__init__(self, parent, filename, None, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -43,6 +48,10 @@ class LookupTableIDAViaGraph(LookupTable):
         self.prune_tables = prune_tables
         self.multiplier = multiplier
         self.use_pt_total_cost = use_pt_total_cost
+        self.main_table_state_length = main_table_state_length
+        self.main_table_max_depth = main_table_max_depth
+        self.main_table_prune_tables = main_table_prune_tables
+        self.main_table_filename = main_table_filename
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -181,6 +190,19 @@ class LookupTableIDAViaGraph(LookupTable):
                         self.avoid_oll
                     )
                 )
+
+        if self.main_table_filename:
+            cmd.append("--main-table-state-length")
+            cmd.append(str(self.main_table_state_length))
+
+            cmd.append("--main-table-max-depth")
+            cmd.append(str(self.main_table_max_depth))
+
+            cmd.append("--main-table-prune-tables")
+            cmd.append(",".join(map(str, self.main_table_prune_tables)))
+
+            cmd.append("--main-table")
+            cmd.append(self.main_table_filename)
 
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))

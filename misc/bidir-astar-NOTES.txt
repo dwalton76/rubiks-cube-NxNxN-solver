@@ -5,10 +5,10 @@ staging 4x4x4 centers
 
 baseline (IDA)
 ==============
-dwalton@laptop ~/l/rubiks-cube-NxNxN-solver> ./usr/bin/rubiks-cube-solver.py --cpu-exp --state DRFDFRUFDURDDLLUFLDLLBLULFBUUFRBLBFLLUDDUFRBURBBRBDLLDURFFBBRUFUFDRFURBUDLDBDUFFBUDRRLDRBLFBRRLB 
-2017-12-19 08:41:43,217      __init__.py     INFO: 
-2017-12-19 08:41:43,217      __init__.py     INFO: 
-2017-12-19 08:41:43,217      __init__.py     INFO: 
+dwalton@laptop ~/l/rubiks-cube-NxNxN-solver> ./usr/bin/rubiks-cube-solver.py --cpu-exp --state DRFDFRUFDURDDLLUFLDLLBLULFBUUFRBLBFLLUDDUFRBURBBRBDLLDURFFBBRUFUFDRFURBUDLDBDUFFBUDRRLDRBLFBRRLB
+2017-12-19 08:41:43,217      __init__.py     INFO:
+2017-12-19 08:41:43,217      __init__.py     INFO:
+2017-12-19 08:41:43,217      __init__.py     INFO:
 2017-12-19 08:41:43,222 RubiksCube444.py     INFO: 4x4x4: Start of Phase1
 2017-12-19 08:41:43,231   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold range 6->99
 2017-12-19 08:41:43,328   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 6, explored 37 branches, took 96ms
@@ -20,8 +20,8 @@ dwalton@laptop ~/l/rubiks-cube-NxNxN-solver> ./usr/bin/rubiks-cube-solver.py --c
 2017-12-19 08:41:47,740   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA found match 5 steps in, f_cost 9 (5 + 4)
 2017-12-19 08:41:47,740   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: IDA threshold 8, explored 3508 branches, took 0:00:02.968344 (0:00:04.517612 total)
 2017-12-19 08:41:47,740 RubiksCube444.py     INFO: 4x4x4: End of Phase1, 11 steps in
-2017-12-19 08:41:47,740 RubiksCube444.py     INFO: 
-dwalton@laptop ~/l/rubiks-cube-NxNxN-solver> 
+2017-12-19 08:41:47,740 RubiksCube444.py     INFO:
+dwalton@laptop ~/l/rubiks-cube-NxNxN-solver>
 
 
 test 1
@@ -53,7 +53,7 @@ overlap we have found a solution.
 bidir - take 1
 TIME: 1m 41s
 ==============
-2017-12-19 17:06:41,267      __init__.py     INFO: 
+2017-12-19 17:06:41,267      __init__.py     INFO:
 2017-12-19 17:06:41,268 RubiksCube444.py     INFO: 4x4x4: Start of Phase1
 2017-12-19 17:06:45,507   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countA 1000, workqA depth 25637, f_costA 9, steps_to_hereA Bw R2
 2017-12-19 17:06:45,507   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar countB 1000, workqB depth 18637, f_costB 3, steps_to_hereB Bw U2 Fw2
@@ -72,7 +72,7 @@ TIME: 1m 41s
 2017-12-19 17:08:22,693   LookupTable.py  WARNING: lt_stateA is in exploredB
 2017-12-19 17:08:22,693   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar found match 6 stepsA in, B Bw' U' Lw B2 Dw', lt_stateA FLUUFFLLLUFUFLFLULUFULUF, AStar countA 24317, f_costA 9
 2017-12-19 17:08:22,693   LookupTable.py     INFO: 4x4x4-step10-ULFRBD-centers-stage: AStar found match 4 stepsB in, Dw B2 Uw2 R, lt_stateB UUUULLFFLLLLFLFLFFFFUUUU, AStar countB 24317, f_costB 4
-dwalton@laptop ~/l/rubiks-cube-NxNxN-solver> 
+dwalton@laptop ~/l/rubiks-cube-NxNxN-solver>
 
 
 

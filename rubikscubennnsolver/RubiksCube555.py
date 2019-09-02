@@ -1046,7 +1046,7 @@ class LookupTable555UDCenterSolve(LookupTable):
     6 steps has 2,001 entries (40 percent, 2.03x previous step)
     7 steps has 1,312 entries (26 percent, 0.66x previous step)
     8 steps has 200 entries (4 percent, 0.15x previous step)
-    
+
     Total: 4,900 entries
     Average: 5.96 moves
     """
@@ -1095,7 +1095,7 @@ class LookupTable555LRCenterSolve(LookupTable):
     6 steps has 2,001 entries (40 percent, 2.03x previous step)
     7 steps has 1,312 entries (26 percent, 0.66x previous step)
     8 steps has 200 entries (4 percent, 0.15x previous step)
-    
+
     Total: 4,900 entries
     Average: 5.96 moves
     """
@@ -1144,7 +1144,7 @@ class LookupTable555FBCenterSolve(LookupTable):
     6 steps has 2,001 entries (40 percent, 2.03x previous step)
     7 steps has 1,312 entries (26 percent, 0.66x previous step)
     8 steps has 200 entries (4 percent, 0.15x previous step)
-    
+
     Total: 4,900 entries
     Average: 5.96 moves
     """
@@ -2193,6 +2193,114 @@ class LookupTable555Phase5FourEdges(LookupTable):
         return (state, cost_to_goal)
 
 
+class LookupTable555Phase5FourEdgesTemp(LookupTableIDAViaGraph):
+
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step52-phase5-edges.txt.9-deep',
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
+                "U", "U'",
+                "D", "D'",
+            ),
+            filesize=674978256,
+            max_depth=9,
+            linecount=9374698,
+            prune_tables=(
+                parent.lt_phase5_high_edge_midge,
+                parent.lt_phase5_low_edge_midge,
+            )
+        )
+
+
+class LookupTable555Phase5ThreeEdges(LookupTable):
+    """
+    lookup-table-5x5x5-step55-phase5-three-edges.txt
+    ================================================
+    1 steps has 8 entries (0 percent, 0.00x previous step)
+    2 steps has 49 entries (0 percent, 6.12x previous step)
+    3 steps has 313 entries (0 percent, 6.39x previous step)
+    4 steps has 2,254 entries (0 percent, 7.20x previous step)
+    5 steps has 14,008 entries (0 percent, 6.21x previous step)
+    6 steps has 78,388 entries (1 percent, 5.60x previous step)
+    7 steps has 370,199 entries (5 percent, 4.72x previous step)
+    8 steps has 1,355,851 entries (21 percent, 3.66x previous step)
+    9 steps has 2,846,685 entries (45 percent, 2.10x previous step)
+    10 steps has 1,604,867 entries (25 percent, 0.56x previous step)
+    11 steps has 49,554 entries (0 percent, 0.03x previous step)
+
+    Total: 6,322,176 entries
+    Average: 8.89 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step55-phase5-three-edges.txt',
+            '---------------TTtuUUVVv------------',
+            linecount=6322176,
+            max_depth=11,
+            filesize=493129728,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
+                "U", "U'",
+                "D", "D'"
+            ),
+        )
+        self.wing_strs = ("LF", "RF", "RB")
+
+    def state(self):
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
+
+        result = []
+        for index in wings_for_edges_pattern_555:
+            if state[index] == "." or index not in high_wings_and_midges_555:
+                result.append("-")
+            else:
+                result.append(state[index])
+
+        return "".join(result)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        steps_to_solve = steps_to_solve.split()
+        steps_to_scramble = reverse_steps(steps_to_solve)
+
+        self.parent.state = ['x']
+        self.parent.state.extend(list("UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"))
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+        LB_edges = (31, 36, 41)
+        self.parent.nuke_edges_specific(LB_edges)
+        self.parent.nuke_edges_in_y_plane()
+        self.parent.nuke_edges_in_z_plane()
+        parent_state = self.parent.state
+
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
+
+        cube = self.parent.state[:]
+
+
 class LookupTable555Phase5HighEdgeMidge(LookupTable):
     """
     lookup-table-5x5x5-step53-phase5-high-edge-and-midge.txt
@@ -2371,6 +2479,10 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
             ),
             multiplier=1.2,
             use_pt_total_cost=True,
+            #main_table_state_length=15,
+            #main_table_max_depth=9,
+            #main_table_prune_tables=(1, 2),
+            #main_table_filename="lookup-table-5x5x5-step52-phase5-edges.txt.9-deep.pt_state",
         )
 
 
@@ -2382,6 +2494,8 @@ class LookupTable555Phase6Centers(LookupTable):
     1 steps has 4 entries (0 percent, 4.00x previous step)
     2 steps has 42 entries (0 percent, 10.50x previous step)
     3 steps has 280 entries (0 percent, 6.67x previous step)
+    """
+    """
     4 steps has 1,691 entries (0 percent, 6.04x previous step)
     5 steps has 8,806 entries (4 percent, 5.21x previous step)
     6 steps has 36,264 entries (20 percent, 4.12x previous step)
@@ -2578,11 +2692,10 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
         cube = self.parent.state[:]
 
 
-class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
+class LookupTableIDA555Phase6Edges(LookupTableIDAViaGraph):
     """
-    Pair the last eight edges and solve the centers
-
-    Just for reference this is the move distribution for the edges only
+    Just for reference this is the move distribution for the entire edges only table
+    I only build this 9-deep
 
     lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt
     ===============================================================
@@ -2610,6 +2723,42 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
+            filename='lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt',
+            filesize=634035456,
+            max_depth=9,
+            linecount=8806048,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'", "Uw2",
+                "Dw", "Dw'", "Dw2",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
+                "F", "F'",
+                "B", "B'",
+            ),
+            prune_tables=(
+                parent.lt_phase6_high_edge_midge,
+                parent.lt_phase6_low_edge_midge,
+            ),
+            multiplier=1.2,
+            use_pt_total_cost=True,
+        )
+
+
+
+class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
+    """
+    Pair the last eight edges and solve the centers
+    """
+
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
             all_moves=moves_555,
             illegal_moves=(
                 "Uw", "Uw'", "Uw2",
@@ -2630,6 +2779,10 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
             ),
             multiplier=1.2,
             use_pt_total_cost=True,
+            main_table_state_length=15,
+            main_table_max_depth=9,
+            main_table_prune_tables=(1, 2),
+            main_table_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt_state",
         )
 
 
@@ -2797,11 +2950,14 @@ class RubiksCube555(RubiksCube):
         self.lt_phase5_four_edges = LookupTable555Phase5FourEdges(self)
         self.lt_phase5_high_edge_midge = LookupTable555Phase5HighEdgeMidge(self)
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
+        self.lt_phase5_four_edges_three_edges = LookupTable555Phase5ThreeEdges(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
+        self.lt_phase5_four_edges_temp = LookupTable555Phase5FourEdgesTemp(self)
 
         self.lt_phase6_centers = LookupTable555Phase6Centers(self)
         self.lt_phase6_high_edge_midge = LookupTable555Phase6HighEdgeMidge(self)
         self.lt_phase6_low_edge_midge = LookupTable555Phase6LowEdgeMidge(self)
+        self.lt_phase6_edges = LookupTableIDA555Phase6Edges(self)
         self.lt_phase6 = LookupTableIDA555Phase6(self)
 
         self.lt_UD_centers_solve = LookupTable555UDCenterSolve(self)

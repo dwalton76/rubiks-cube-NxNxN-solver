@@ -34,6 +34,7 @@ struct key_value_pair *main_table = NULL;
 unsigned char pt_count = 0;
 unsigned char main_table_max_depth = 0;
 unsigned char main_table_state_length = 0;
+char main_table_prune_tables[10];
 unsigned char COST_LENGTH = 1;
 unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
@@ -251,23 +252,28 @@ print_ida_summary (
 unsigned char
 invalid_prune(unsigned char cost_to_here, move_type *moves_to_here)
 {
-    move_type move_seq[13];
-    // Uw2 Lw F' Bw2 Rw U' D' Lw' B Rw' U 3Uw2 Lw
-    move_seq[0] = Uw2;
-    move_seq[1] = Lw;
-    move_seq[2] = F_PRIME;
-    move_seq[3] = Bw2;
-    move_seq[4] = Rw;
-    move_seq[5] = U_PRIME;
-    move_seq[6] = D_PRIME;
-    move_seq[7] = Lw_PRIME;
-    move_seq[8] = B;
-    move_seq[9] = Rw_PRIME;
-    move_seq[10] = U;
-    move_seq[11] = threeUw2;
-    move_seq[12] = Lw;
+    // Lw2 U' Fw2 D R2 L2 Lw2 U2 L2 U' Rw2 Bw2 Rw2 U R2 D Rw2
+    move_type move_seq[17];
 
-    if (threshold == 14 && memcmp(moves_to_here, move_seq, sizeof(move_type) * cost_to_here) == 0) {
+    move_seq[0] = Lw2;
+    move_seq[1] = U_PRIME;
+    move_seq[2] = Fw2;
+    move_seq[3] = D;
+    move_seq[4] = R2;
+    move_seq[5] = L2;
+    move_seq[6] = Lw2;
+    move_seq[7] = U2;
+    move_seq[8] = L2;
+    move_seq[9] = U_PRIME;
+    move_seq[10] = Rw2;
+    move_seq[11] = Bw2;
+    move_seq[12] = Rw2;
+    move_seq[13] = U;
+    move_seq[14] = R2;
+    move_seq[15] = D;
+    move_seq[16] = Rw2;
+
+    if (threshold == 18 && memcmp(moves_to_here, move_seq, sizeof(move_type) * cost_to_here) == 0) {
         return 1;
     }
 
@@ -344,6 +350,7 @@ ida_search (
     unsigned char prev_pt_total_cost)
 {
     unsigned char cost_to_goal = 0;
+    unsigned char cost_to_goal_pre_multiplier = 0;
     unsigned char f_cost = 0;
     move_type move, skip_other_steps_this_face;
     struct ida_heuristic_result heuristic_result;
@@ -389,6 +396,8 @@ ida_search (
                 prev_pt2_state,
                 prev_pt3_state,
                 prev_pt4_state);
+            printf("ERROR: add lt_state support for %s\n", main_table_prune_tables);
+            exit(1);
         }
         break;
 
@@ -410,6 +419,8 @@ ida_search (
                 prev_pt1_state,
                 prev_pt2_state,
                 prev_pt3_state);
+            printf("ERROR: add lt_state support for %s\n", main_table_prune_tables);
+            exit(1);
         }
         break;
 
@@ -423,11 +434,24 @@ ida_search (
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
 
         if (main_table || use_lt_explored) {
+            // dwalton
+            /*
             memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
             snprintf(lt_state, STATE_SIZE, "%07u-%07u-%07u",
                 prev_pt0_state,
                 prev_pt1_state,
                 prev_pt2_state);
+             */
+            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
+
+            if (strmatch(main_table_prune_tables, "1,2")) {
+                snprintf(lt_state, STATE_SIZE, "%07u-%07u",
+                    prev_pt1_state,
+                    prev_pt2_state);
+            } else {
+                printf("ERROR: add lt_state support for %s\n", main_table_prune_tables);
+                exit(1);
+            }
         }
         break;
 
@@ -442,6 +466,8 @@ ida_search (
             snprintf(lt_state, STATE_SIZE, "%07u-%07u",
                 prev_pt0_state,
                 prev_pt1_state);
+            printf("ERROR: add lt_state support for %s\n", main_table_prune_tables);
+            exit(1);
         }
         break;
 
@@ -453,11 +479,14 @@ ida_search (
         if (main_table || use_lt_explored) {
             memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
             snprintf(lt_state, STATE_SIZE, "%07u", prev_pt0_state);
+            printf("ERROR: add lt_state support for %s\n", main_table_prune_tables);
+            exit(1);
         }
         break;
     }
 
     pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
+    cost_to_goal_pre_multiplier = cost_to_goal;
 
     if (cost_to_goal_multiplier) {
         cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
@@ -470,17 +499,24 @@ ida_search (
             // LOG("lt_state %s has cost %d (pt cost was %d), cost_to_here %d\n",
             //      lt_state, main_table_node->value, cost_to_goal, cost_to_here);
 
-            if (cost_to_goal > main_table_node->value) {
-                LOG("pt_cost was higher than maintable cost???\n");
+            /*
+            if (cost_to_goal_pre_multiplier > main_table_node->value) {
+                LOG("pt_cost %d was higher than maintable cost %d???\n",
+                    cost_to_goal_pre_multiplier, main_table_node->value);
                 print_moves(moves_to_here, cost_to_here);
                 LOG("pt0_state %07u, cost %d\n", prev_pt0_state, pt0_cost);
                 LOG("pt1_state %07u, cost %d\n", prev_pt1_state, pt1_cost);
                 LOG("pt2_state %07u, cost %d\n", prev_pt2_state, pt2_cost);
                 LOG("pt3_state %07u, cost %d\n", prev_pt3_state, pt3_cost);
                 LOG("pt4_state %07u, cost %d\n", prev_pt4_state, pt4_cost);
+                LOG("lt_state %s, cost %d\n", lt_state, main_table_node->value);
                 exit(1);
             }
-            cost_to_goal = main_table_node->value;
+             */
+
+            if (main_table_node->value > cost_to_goal) {
+                cost_to_goal = main_table_node->value;
+            }
         } else {
             cost_to_goal = (main_table_max_depth + 1 > cost_to_goal) ? main_table_max_depth + 1 : cost_to_goal;
         }
@@ -510,9 +546,10 @@ ida_search (
             LOG("pt0_state %07u, cost %d\n", prev_pt0_state, pt0_cost);
             LOG("pt1_state %07u, cost %d\n", prev_pt1_state, pt1_cost);
             LOG("pt2_state %07u, cost %d\n", prev_pt2_state, pt2_cost);
+            LOG("lt_state %s, cost %d\n", lt_state, main_table_node->value);
             exit(1);
         }
-        */
+         */
 
         // I used this once to print some output on branches that we explored
         // but were being pruned
@@ -932,6 +969,10 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--main-table")) {
             i++;
             ida_prune_table_preload(&main_table, argv[i]);
+
+        } else if (strmatch(argv[i], "--main-table-prune-tables")) {
+            i++;
+            strcpy(main_table_prune_tables, argv[i]);
 
         } else if (strmatch(argv[i], "--main-table-max-depth")) {
             i++;

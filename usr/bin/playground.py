@@ -28,12 +28,15 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
+
+'''
 cube = RubiksCube555(solved_555, "URFDLB")
 cube.cpu_mode = "normal"
 cube.print_cube()
 cube.highlow_edges_print()
 orbits_with_oll = cube.center_solution_leads_to_oll_parity()
 log.info(f"orbits_with_oll {orbits_with_oll}")
+'''
 
 
 '''
@@ -46,7 +49,6 @@ cube.lt_LR_centers_stage.build_ida_graph()
 cube.lt_FB_centers_stage.build_ida_graph()
 '''
 
-'''
 cube = RubiksCube555(solved_555, "URFDLB")
 cube.cpu_mode = "normal"
 cube.lt_init()
@@ -65,6 +67,8 @@ cube.lt_init()
 #cube.lt_phase5_centers.build_ida_graph()
 #cube.lt_phase5_high_edge_midge.build_ida_graph()
 #cube.lt_phase5_low_edge_midge.build_ida_graph()
+#cube.lt_phase5_four_edges_temp.build_ida_graph()
+cube.lt_phase5_four_edges_three_edges.build_ida_graph()
 
 #cube.lt_phase6_centers.build_ida_graph()
 #cube.lt_phase6_high_edge_midge.build_ida_graph()
@@ -73,7 +77,7 @@ cube.lt_init()
 #cube.lt_UD_centers_solve.build_ida_graph()
 #cube.lt_LR_centers_solve.build_ida_graph()
 #cube.lt_FB_centers_solve.build_ida_graph()
-'''
+#cube.lt_phase6_edges.build_ida_graph()
 
 '''
 cube = RubiksCube666(solved_666, "URFDLB")

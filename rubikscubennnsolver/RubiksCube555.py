@@ -1,8 +1,4 @@
 from rubikscubennnsolver import RubiksCube, wing_str_map, wing_strs_all, reverse_steps
-
-# This will consume about 200M when you import it
-from rubikscubennnsolver.RubiksCube555HighLowEdges import highlow_edge_values
-
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
@@ -11,6 +7,7 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableIDAViaC,
     NoSteps,
 )
+from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_555
 from pprint import pformat
 import itertools
 import logging
@@ -573,7 +570,7 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
                 state[partner_index] = "-"
 
             else:
-                high_low = highlow_edge_values[
+                high_low = highlow_edge_values_555[
                     (square_index, partner_index, square_value, partner_value)
                 ]
 
@@ -615,7 +612,7 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
                 state[partner_index] = midges_map[wing_str].upper()
 
             else:
-                high_low = highlow_edge_values[
+                high_low = highlow_edge_values_555[
                     (square_index, partner_index, square_value, partner_value)
                 ]
 
@@ -2972,7 +2969,7 @@ class RubiksCube555(RubiksCube):
 
         for (x, y) in self.reduce333_orient_edges_tuples:
             try:
-                result.append(highlow_edge_values[(x, y, state[x], state[y])])
+                result.append(highlow_edge_values_555[(x, y, state[x], state[y])])
             except KeyError:
                 result.append(".")
 

@@ -2268,7 +2268,7 @@ class LookupTable555Phase5ThreeEdges(LookupTable):
     def state(self):
         parent_state = self.parent.state
         state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
-        return "".join([state[index] for index in wings_for_edges_pattern_555])
+        return "".join([state[index] for index in wings_for_edges_pattern_555]).replace(".", "-")
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         steps_to_solve = steps_to_solve.split()

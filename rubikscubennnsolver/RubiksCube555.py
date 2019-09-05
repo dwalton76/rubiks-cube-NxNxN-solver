@@ -2465,6 +2465,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_centers,
                 parent.lt_phase5_high_edge_midge,
                 parent.lt_phase5_low_edge_midge,
+                parent.lt_phase5_four_edges_three_edges,
             ),
             multiplier=1.2,
             use_pt_total_cost=True,
@@ -3297,6 +3298,7 @@ class RubiksCube555(RubiksCube):
         self.lt_phase5_high_edge_midge.wing_strs = min_wing_str_combo
         self.lt_phase5_low_edge_midge.wing_strs = min_wing_str_combo
         self.lt_phase5_four_edges.wing_strs = min_wing_str_combo
+        self.lt_phase5_four_edges_three_edges.wing_strs = min_wing_str_combo[0:3]
         self.lt_phase5.solve_via_c()
 
         pair_four_edge_solution = self.solution[original_solution_len:]

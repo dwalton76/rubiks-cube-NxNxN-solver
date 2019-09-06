@@ -753,6 +753,7 @@ class LookupTable(object):
             tbd = False
 
         while True:
+            self.ida_graph_node = None
             (state, cost_to_goal) = self.ida_heuristic()
 
             if tbd:
@@ -826,6 +827,10 @@ class LookupTable(object):
 
         for (state, steps) in self.cache.items():
             len_steps = len(steps.split())
+
+            if state in self.state_target:
+                len_steps = 0
+
             #log.info("%s: state %s -> %s, cost %d (%s)" % (self, state, binary_state, len_steps, steps))
             parent.nuke_edges()
             parent.nuke_corners()
@@ -892,9 +897,10 @@ class LookupTable(object):
 
         state_index = self.ida_graph_node
         cost_to_goal = self.ida_graph[state_index * self.ROW_LENGTH]
+        lt_state = self.reverse_state_index(state_index)
 
-        return (state_index, cost_to_goal)
-
+        # log.info(f"{self}: state_index {state_index} -> lt_state {lt_state}")
+        return (lt_state, cost_to_goal)
 
 
 class LookupTableHashCostOnly(LookupTable):

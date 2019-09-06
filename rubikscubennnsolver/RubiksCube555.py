@@ -2484,8 +2484,6 @@ class LookupTable555Phase6Centers(LookupTable):
     1 steps has 4 entries (0 percent, 4.00x previous step)
     2 steps has 42 entries (0 percent, 10.50x previous step)
     3 steps has 280 entries (0 percent, 6.67x previous step)
-    """
-    """
     4 steps has 1,691 entries (0 percent, 6.04x previous step)
     5 steps has 8,806 entries (4 percent, 5.21x previous step)
     6 steps has 36,264 entries (20 percent, 4.12x previous step)
@@ -2739,7 +2737,6 @@ class LookupTableIDA555Phase6Edges(LookupTableIDAViaGraph):
         )
 
 
-
 class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
     """
     Pair the last eight edges and solve the centers
@@ -2769,10 +2766,10 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
             ),
             multiplier=1.2,
             use_pt_total_cost=True,
-            main_table_state_length=15,
-            main_table_max_depth=9,
-            main_table_prune_tables=(1, 2),
-            main_table_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt_state",
+            #main_table_state_length=15,
+            #main_table_max_depth=9,
+            #main_table_prune_tables=(1, 2),
+            #main_table_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt_state",
         )
 
 
@@ -2837,6 +2834,10 @@ class RubiksCube555(RubiksCube):
                 self._phase = "Solve 3x3x3"
 
         return self._phase
+
+    def nuke_centers_specific(self, centers):
+        for square_index in centers:
+            self.state[square_index] = "."
 
     def nuke_edges_specific(self, edges):
         for square_index in edges:
@@ -3349,6 +3350,14 @@ class RubiksCube555(RubiksCube):
         self.lt_phase6_low_edge_midge.ida_graph_node = None
         self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
         self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
+
+        # Test the prune tables
+        #self.lt_phase6_high_edge_midge.load_ida_graph()
+        #self.lt_phase6_high_edge_midge.solve()
+        #self.lt_phase6_low_edge_midge.load_ida_graph()
+        #self.lt_phase6_low_edge_midge.solve()
+        #self.print_cube()
+        #sys.exit(0)
         self.lt_phase6.solve_via_c()
 
         pair_eight_edge_solution = self.solution[original_solution_len:]

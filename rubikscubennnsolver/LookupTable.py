@@ -395,6 +395,7 @@ class LookupTable(object):
         self.printed_disk_io_warning = False
         self.ida_graph = {}
         self.ida_graph_node = None
+        self.state_index_cache = {}
 
         if all_moves is None:
             all_moves = []
@@ -870,8 +871,21 @@ class LookupTable(object):
             self.ida_graph = fh.read()
             log.info("%s: load IDA graph end" % self)
 
+    def load_state_index_cache(self):
+        self.state_index_cache = {}
+        state_index_filename = self.filename.replace(".txt", ".state_index")
+
+        with open(state_index_filename, "r") as fh:
+            for line in fh:
+                (state, state_index) = line.rstrip().split(":")
+                self.state_index_cache[state] = int(state_index)
+
     def state_index(self):
         state = self.state()
+
+        if self.state_index_cache:
+            return self.state_index_cache.get(state)
+
         state_index_filename = self.filename.replace(".txt", ".state_index")
         (width, state_width, linecount) = get_file_vitals(state_index_filename)
 

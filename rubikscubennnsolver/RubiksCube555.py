@@ -2711,6 +2711,7 @@ class LookupTableIDA555Phase6Edges(LookupTableIDAViaGraph):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
+            state_target='OOopPPQQqrRR------------WWwxXXYYyzZZ',
             filename='lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt',
             filesize=634035456,
             max_depth=9,

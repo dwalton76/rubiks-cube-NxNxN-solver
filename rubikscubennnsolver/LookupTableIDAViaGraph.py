@@ -26,6 +26,7 @@ class LookupTableIDAViaGraph(LookupTable):
         filename=None,
         all_moves=[],
         illegal_moves=[],
+        state_target=None,
         linecount=None,
         max_depth=None,
         filesize=None,
@@ -39,7 +40,7 @@ class LookupTableIDAViaGraph(LookupTable):
         main_table_filename=None,
 
     ):
-        LookupTable.__init__(self, parent, filename, None, linecount, max_depth, filesize)
+        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.recolor_positions = []
         self.recolor_map = {}
         self.nuke_corners = False
@@ -78,6 +79,10 @@ class LookupTableIDAViaGraph(LookupTable):
         for (pt, node) in zip(self.prune_tables, ida_graph_nodes):
             pt.ida_graph_node = node
 
+    def init_state_index_caches(self):
+        for pt in self.prune_tables:
+            pt.load_state_index_cache()
+
     def init_ida_graph_nodes(self):
         for pt in self.prune_tables:
             pt.ida_graph_node = pt.state_index()
@@ -115,12 +120,20 @@ class LookupTableIDAViaGraph(LookupTable):
         for pt in self.prune_tables:
             pt.load_ida_graph()
 
+        to_write = []
+        self.init_state_index_caches()
+
         with open(pt_state_filename, "w") as fh_pt_state:
             with open(self.filename, "r") as fh:
                 for line in fh:
                     (state, steps_to_solve) = line.rstrip().split(":")
                     steps_to_solve = steps_to_solve.split()
-                    cost_to_goal = len(steps_to_solve)
+
+                    if state in self.state_target:
+                        cost_to_goal = 0
+                    else:
+                        cost_to_goal = len(steps_to_solve)
+
                     steps_to_scramble = reverse_steps(steps_to_solve)
 
                     parent.re_init()
@@ -138,11 +151,20 @@ class LookupTableIDAViaGraph(LookupTable):
 
                     lt_state = lt_state.rstrip("-")
 
-                    fh_pt_state.write(f"{lt_state}:{cost_to_goal}\n")
+                    to_write.append(f"{lt_state}:{cost_to_goal}")
                     index += 1
 
-                    if index % 10000 == 0:
-                        log.info("line: %d" % index)
+                    if index % 100000 == 0:
+                        fh_pt_state.write("\n".join(to_write) + "\n")
+                        to_write = []
+                        log.info(f"line: {index:,}")
+
+                        #if index == 30000:
+                        #    break
+
+            if to_write:
+                fh_pt_state.write("\n".join(to_write) + "\n")
+                to_write = []
 
     def solve_via_c(self, min_ida_threshold=None, max_ida_threshold=99):
         self.init_ida_graph_nodes()

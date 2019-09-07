@@ -112,10 +112,13 @@ class LookupTableIDAViaGraph(LookupTable):
             # self.parent.print_cube()
             # sys.exit(0)
 
-    def build_ida_graph(self):
+    def build_ida_graph(self, start=None, end=None):
         pt_state_filename = self.filename.replace(".txt", ".pt_state")
+
+        if start is not None:
+            pt_state_filename += f"-{start}-{end}"
+
         parent = self.parent
-        index = 0
 
         for pt in self.prune_tables:
             pt.load_ida_graph()
@@ -125,7 +128,14 @@ class LookupTableIDAViaGraph(LookupTable):
 
         with open(pt_state_filename, "w") as fh_pt_state:
             with open(self.filename, "r") as fh:
-                for line in fh:
+                for (line_number, line) in enumerate(fh):
+
+                    if start is not None and line_number < start:
+                        continue
+
+                    if end is not None and line_number > end:
+                        break
+
                     (state, steps_to_solve) = line.rstrip().split(":")
                     steps_to_solve = steps_to_solve.split()
 
@@ -152,12 +162,11 @@ class LookupTableIDAViaGraph(LookupTable):
                     lt_state = lt_state.rstrip("-")
 
                     to_write.append(f"{lt_state}:{cost_to_goal}")
-                    index += 1
 
-                    if index % 100000 == 0:
+                    if line_number % 100000 == 0:
                         fh_pt_state.write("\n".join(to_write) + "\n")
                         to_write = []
-                        log.info(f"line: {index:,}")
+                        log.info(f"{start:,}->{end:,} line {line_number:,}")
 
                         #if index == 30000:
                         #    break

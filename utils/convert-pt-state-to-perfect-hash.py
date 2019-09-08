@@ -45,7 +45,7 @@ with open(pt_state_filename, "r") as fh_read:
         result[index] = cost
 
         if line_number % 1000000 == 0:
-            log.info(line_number)
+            log.info(f"{line_number:,}")
 
 with open(perfect_hash_filename, "w") as fh:
     fh.write("".join(result))

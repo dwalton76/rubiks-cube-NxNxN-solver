@@ -754,6 +754,7 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
                 parent.lt_LR_x_centers_stage,
             ),
             multiplier=1.2,
+            use_pt_total_cost=False,
         )
 
 
@@ -1013,7 +1014,6 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            filename='lookup-table-5x5x5-step20-FB-centers-stage.txt',
             all_moves=moves_555,
             illegal_moves=(
                 "Uw", "Uw'",
@@ -1022,18 +1022,14 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
                 "Bw", "Bw'",
             ),
 
-            state_target='007fffe00',
-            linecount=165636900,
-            max_depth=12,
-            filesize=9110029500,
-
-            # dwalton
             prune_tables=[
+                parent.lt_FB_centers_stage_LR_centers_432,
                 parent.lt_FB_t_centers_stage,
                 parent.lt_FB_x_centers_stage,
-                # uncomment to also 432 the LR centers
-                # parent.lt_FB_centers_stage_LR_centers_432,
-            ]
+            ],
+            use_pt_total_cost=False,
+            perfect_hash_filename="lookup-table-5x5x5-step20-FB-centers-stage.pt-state-perfect-hash",
+            pt1_state_max=12870,
         )
 
 
@@ -1758,6 +1754,15 @@ class LookupTableIDA555EdgeOrientOuterOrbit(LookupTable):
     Average: 7.95 moves
     """
 
+    outer_orbit_indexes = (
+        0, 2, 3, 4, 7, 8, 9, 11,
+        12, 14, 15, 16, 19, 20, 21, 23,
+        24, 26, 27, 28, 31, 32, 33, 35,
+        36, 38, 39, 40, 43, 44, 45, 47,
+        48, 50, 51, 52, 55, 56, 57, 59,
+        60, 62, 63, 64, 67, 68, 69, 71,
+    )
+
     def __init__(self, parent):
         LookupTable.__init__(
             self,
@@ -1780,38 +1785,7 @@ class LookupTableIDA555EdgeOrientOuterOrbit(LookupTable):
 
     def state(self):
         eo_state_both_orbits = self.parent.highlow_edges_state()
-        lt_state = (
-            eo_state_both_orbits[0] + eo_state_both_orbits[2] +
-            eo_state_both_orbits[3] + eo_state_both_orbits[4] +
-            eo_state_both_orbits[7] + eo_state_both_orbits[8] +
-            eo_state_both_orbits[9] + eo_state_both_orbits[11] +
-
-            eo_state_both_orbits[12] + eo_state_both_orbits[14] +
-            eo_state_both_orbits[15] + eo_state_both_orbits[16] +
-            eo_state_both_orbits[19] + eo_state_both_orbits[20] +
-            eo_state_both_orbits[21] + eo_state_both_orbits[23] +
-
-            eo_state_both_orbits[24] + eo_state_both_orbits[26] +
-            eo_state_both_orbits[27] + eo_state_both_orbits[28] +
-            eo_state_both_orbits[31] + eo_state_both_orbits[32] +
-            eo_state_both_orbits[33] + eo_state_both_orbits[35] +
-
-            eo_state_both_orbits[36] + eo_state_both_orbits[38] +
-            eo_state_both_orbits[39] + eo_state_both_orbits[40] +
-            eo_state_both_orbits[43] + eo_state_both_orbits[44] +
-            eo_state_both_orbits[45] + eo_state_both_orbits[47] +
-
-            eo_state_both_orbits[48] + eo_state_both_orbits[50] +
-            eo_state_both_orbits[51] + eo_state_both_orbits[52] +
-            eo_state_both_orbits[55] + eo_state_both_orbits[56] +
-            eo_state_both_orbits[57] + eo_state_both_orbits[59] +
-
-            eo_state_both_orbits[60] + eo_state_both_orbits[62] +
-            eo_state_both_orbits[63] + eo_state_both_orbits[64] +
-            eo_state_both_orbits[67] + eo_state_both_orbits[68] +
-            eo_state_both_orbits[69] + eo_state_both_orbits[71]
-        )
-        return lt_state
+        return "".join([eo_state_both_orbits[x] for x in self.outer_orbit_indexes])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         steps_to_solve = steps_to_solve.split()
@@ -1830,6 +1804,11 @@ class LookupTableIDA555EdgeOrientOuterOrbit(LookupTable):
             self.parent.rotate(step)
 
         cube = self.parent.state[:]
+
+    def ida_heuristic(self):
+        state = self.state()
+        cost_to_goal = self.heuristic(state)
+        return (state, cost_to_goal)
 
 
 class LookupTableIDA555EdgeOrientInnerOrbit(LookupTable):
@@ -1956,6 +1935,9 @@ class LookupTable555EdgeOrientBothOrbits(LookupTable):
             linecount=5946658,
             max_depth=7,
             filesize=588719142)
+
+    def state(self):
+        return self.parent.highlow_edges_state()
 
     def ida_heuristic(self):
         state = self.parent.highlow_edges_state()
@@ -2475,11 +2457,6 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_four_edges_three_edges,
             ),
             multiplier=1.2,
-            use_pt_total_cost=True,
-            #main_table_state_length=15,
-            #main_table_max_depth=9,
-            #main_table_prune_tables=(1, 2),
-            #main_table_filename="lookup-table-5x5x5-step52-phase5-edges.txt.9-deep.pt_state",
         )
 
 
@@ -2687,6 +2664,7 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
         cube = self.parent.state[:]
 
 
+'''
 class LookupTableIDA555Phase6Edges(LookupTableIDAViaGraph):
     """
     Just for reference this is the move distribution for the entire edges only table
@@ -2741,8 +2719,8 @@ class LookupTableIDA555Phase6Edges(LookupTableIDAViaGraph):
                 parent.lt_phase6_low_edge_midge,
             ),
             multiplier=1.2,
-            use_pt_total_cost=True,
         )
+'''
 
 
 class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
@@ -2772,12 +2750,10 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
                 parent.lt_phase6_high_edge_midge,
                 parent.lt_phase6_low_edge_midge,
             ),
+            use_pt_total_cost=False,
             multiplier=1.2,
-            use_pt_total_cost=True,
-            #main_table_state_length=15,
-            #main_table_max_depth=9,
-            #main_table_prune_tables=(1, 2),
-            #main_table_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt_state",
+            perfect_hash_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash",
+            pt1_state_max=40320,
         )
 
 
@@ -2956,7 +2932,7 @@ class RubiksCube555(RubiksCube):
         self.lt_phase6_centers = LookupTable555Phase6Centers(self)
         self.lt_phase6_high_edge_midge = LookupTable555Phase6HighEdgeMidge(self)
         self.lt_phase6_low_edge_midge = LookupTable555Phase6LowEdgeMidge(self)
-        self.lt_phase6_edges = LookupTableIDA555Phase6Edges(self)
+        # self.lt_phase6_edges = LookupTableIDA555Phase6Edges(self)
         self.lt_phase6 = LookupTableIDA555Phase6(self)
 
         self.lt_UD_centers_solve = LookupTable555UDCenterSolve(self)
@@ -3152,8 +3128,6 @@ class RubiksCube555(RubiksCube):
             "%s: FB centers staged, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        # dwalton
-        sys.exit(0)
 
     def eo_edges(self):
         """
@@ -3219,16 +3193,19 @@ class RubiksCube555(RubiksCube):
                 self.edges_flip_orientation(must_be_uppercase, must_be_lowercase)
 
                 if use_both_orbits:
+                    self.lt_phase3_eo_both_orbits.ida_graph_node = None
                     (outer_orbit_state, cost) = self.lt_phase3_eo_both_orbits.ida_heuristic()
                 else:
                     self.lt_phase3_eo_outer_orbit.ida_graph_node = None
                     (outer_orbit_state, cost) = self.lt_phase3_eo_outer_orbit.ida_heuristic()
 
                 if cost < min_cost:
-                    log.info("%s: %s %d, permutation %s (NEW MIN)" % (self, desc, cost, "".join(map(str, permutation))))
+                    log.info("%s: %s cost %d, permutation %s (NEW MIN)" % (self, desc, cost, "".join(map(str, permutation))))
                     min_cost = cost
                     min_must_be_uppercase = must_be_uppercase[:]
                     min_must_be_lowercase = must_be_lowercase[:]
+                #else:
+                #    log.info("%s: %s cost %d, permutation %s" % (self, desc, cost, "".join(map(str, permutation))))
 
             if use_both_orbits:
                 if min_cost <= self.lt_phase3_eo_both_orbits.max_depth:
@@ -3237,6 +3214,7 @@ class RubiksCube555(RubiksCube):
         # Now apply the min_cost permutation and solve this phase
         self.state = original_state[:]
         self.edges_flip_orientation(min_must_be_uppercase, min_must_be_lowercase)
+        self.lt_phase3_eo_both_orbits.ida_graph_node = None
         self.lt_phase3_eo_outer_orbit.ida_graph_node = None
         self.lt_phase3.solve_via_c()
         self.highlow_edges_print()

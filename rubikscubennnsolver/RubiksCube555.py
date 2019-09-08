@@ -2179,36 +2179,6 @@ class LookupTable555Phase5FourEdges(LookupTable):
         return (state, cost_to_goal)
 
 
-class LookupTable555Phase5FourEdgesTemp(LookupTableIDAViaGraph):
-
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step52-phase5-edges.txt.9-deep',
-            all_moves=moves_555,
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Lw", "Lw'",
-                "Rw", "Rw'",
-                "L", "L'",
-                "R", "R'",
-                "U", "U'",
-                "D", "D'",
-            ),
-            filesize=674978256,
-            max_depth=9,
-            linecount=9374698,
-            prune_tables=(
-                parent.lt_phase5_high_edge_midge,
-                parent.lt_phase5_low_edge_midge,
-            )
-        )
-
-
 class LookupTable555Phase5ThreeEdges(LookupTable):
     """
     lookup-table-5x5x5-step55-phase5-three-edges.txt
@@ -2927,7 +2897,6 @@ class RubiksCube555(RubiksCube):
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
         self.lt_phase5_four_edges_three_edges = LookupTable555Phase5ThreeEdges(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
-        self.lt_phase5_four_edges_temp = LookupTable555Phase5FourEdgesTemp(self)
 
         self.lt_phase6_centers = LookupTable555Phase6Centers(self)
         self.lt_phase6_high_edge_midge = LookupTable555Phase6HighEdgeMidge(self)

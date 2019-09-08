@@ -1013,6 +1013,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
+            filename='lookup-table-5x5x5-step20-FB-centers-stage.txt',
             all_moves=moves_555,
             illegal_moves=(
                 "Uw", "Uw'",
@@ -1021,11 +1022,17 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
                 "Bw", "Bw'",
             ),
 
+            state_target='007fffe00',
+            linecount=165636900,
+            max_depth=12,
+            filesize=9110029500,
+
+            # dwalton
             prune_tables=[
                 parent.lt_FB_t_centers_stage,
                 parent.lt_FB_x_centers_stage,
                 # uncomment to also 432 the LR centers
-                parent.lt_FB_centers_stage_LR_centers_432,
+                # parent.lt_FB_centers_stage_LR_centers_432,
             ]
         )
 
@@ -3145,6 +3152,8 @@ class RubiksCube555(RubiksCube):
             "%s: FB centers staged, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
+        # dwalton
+        sys.exit(0)
 
     def eo_edges(self):
         """

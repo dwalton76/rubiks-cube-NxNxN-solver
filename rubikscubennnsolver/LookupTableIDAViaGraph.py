@@ -163,13 +163,14 @@ class LookupTableIDAViaGraph(LookupTable):
 
                     to_write.append(f"{lt_state}:{cost_to_goal}")
 
-                    if line_number % 100000 == 0:
+                    if line_number and line_number % 100000 == 0:
                         fh_pt_state.write("\n".join(to_write) + "\n")
                         to_write = []
-                        log.info(f"{start:,}->{end:,} line {line_number:,}")
 
-                        #if index == 30000:
-                        #    break
+                        if start is not None:
+                            log.info(f"{start:,}->{end:,} line {line_number:,}")
+                        else:
+                            log.info(f"line {line_number:,}")
 
             if to_write:
                 fh_pt_state.write("\n".join(to_write) + "\n")

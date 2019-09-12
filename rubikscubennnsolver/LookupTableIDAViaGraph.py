@@ -57,6 +57,7 @@ class LookupTableIDAViaGraph(LookupTable):
         self.main_table_filename = main_table_filename
         self.perfect_hash_filename = perfect_hash_filename
         self.pt1_state_max = pt1_state_max
+        self.max_ida_threshold = None
 
         if self.perfect_hash_filename or self.pt1_state_max:
             assert self.perfect_hash_filename and self.pt1_state_max, "both perfect_hash_filename and pt1_state_max must be specified"
@@ -183,7 +184,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 fh_pt_state.write("\n".join(to_write) + "\n")
                 to_write = []
 
-    def solve_via_c(self, min_ida_threshold=None, max_ida_threshold=99):
+    def solve_via_c(self, max_ida_threshold=None, pt_states=[]):
         self.init_ida_graph_nodes()
 
         cmd = ["./ida_search_via_graph",]
@@ -192,8 +193,16 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--prune-table-%d-filename" % index)
             cmd.append(pt.filename.replace(".txt", ".bin"))
 
-            cmd.append("--prune-table-%d-state" % index)
-            cmd.append(str(pt.ida_graph_node))
+            if not pt_states:
+                cmd.append("--prune-table-%d-state" % index)
+                cmd.append(str(pt.ida_graph_node))
+
+        if pt_states:
+            with open("my-pt-states.txt", "w") as fh:
+                for x in pt_states:
+                    fh.write(",".join(map(str, x)) + "\n")
+            cmd.append("--prune-table-states")
+            cmd.append("my-pt-states.txt")
 
         if self.multiplier:
             cmd.append("--multiplier")
@@ -249,6 +258,10 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--pt1-state-max")
             cmd.append(str(self.pt1_state_max))
 
+        if max_ida_threshold:
+            cmd.append("--max-ida")
+            cmd.append(str(max_ida_threshold))
+
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))
 
@@ -260,13 +273,17 @@ class LookupTableIDAViaGraph(LookupTable):
         log.info("solve_via_c:\n    %s\n" % cmd_string)
 
         output = subprocess.check_output(cmd).decode("utf-8").splitlines()
-        log.info("\n" + "\n".join(output) + "\n")
+        last_solution = None
 
         for line in output:
             if line.startswith("SOLUTION:"):
-                solution = line.strip().split(":")[1].split()
-                for step in solution:
-                    self.parent.rotate(step)
-                return
+                last_solution = line
 
-        raise Exception("Did not find SOLUTION line in\n%s\n" % "\n".join(output))
+        if last_solution:
+            log.info("\n" + "\n".join(output) + "\n")
+            solution = last_solution.strip().split(":")[1].split()
+            for step in solution:
+                self.parent.rotate(step)
+            return
+
+        raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % "\n".join(output))

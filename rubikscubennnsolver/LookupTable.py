@@ -284,10 +284,7 @@ def rm_file_if_mismatch(filename, filesize, md5target):
     if os.path.exists(filename):
         if filesize is not None:
             if os.path.getsize(filename) != filesize:
-                log.info(
-                    "%s: filesize %s does not equal target filesize %s"
-                    % (filename, os.path.getsize(filename), filesize)
-                )
+                log.info(f"{filename}: filesize {os.path.getsize(filename):,} does not equal target filesize {filesize:,}")
                 os.remove(filename)
 
                 if os.path.exists(filename_gz):
@@ -819,11 +816,15 @@ class LookupTable(object):
         states = sorted(self.cache.keys())
         state_index_filename = self.filename.replace(".txt", ".state_index")
 
+        log.info("%s: state_index begin" % self)
         with open(state_index_filename, "w") as fh:
             for (index, state) in enumerate(states):
                 fh.write("%s:%d\n" % (state, index))
 
         subprocess.call(["./utils/pad-lines.py", state_index_filename])
+        log.info("%s: state_index end" % self)
+
+        log.info("%s: json begin" % self)
         index = 0
 
         for (state, steps) in self.cache.items():
@@ -844,8 +845,6 @@ class LookupTable(object):
             }
 
             baseline_state = parent.state[:]
-            #parent.print_cube()
-            #log.info("%s: legal moves %s" % (self, " ".join(legal_moves)))
 
             for step in legal_moves:
                 parent.rotate(step)
@@ -856,12 +855,23 @@ class LookupTable(object):
 
             index += 1
 
-            if index % 1000 == 0:
-                log.info(index)
+            if index % 10000 == 0:
+                log.info(f"{index:,}")
 
+                # avoid running out of memory
+                '''
+                if index % 1000000 == 0:
+                    with open(self.filename.replace(".txt", ".json") + f"-{index}", "w") as fh:
+                        json.dump(ida_graph, fh, indent=True)
+                        fh.write("\n")
+                        ida_graph = {}
+                '''
+
+        # with open(self.filename.replace(".txt", ".json") + f"-{index}", "w") as fh:
         with open(self.filename.replace(".txt", ".json"), "w") as fh:
             json.dump(ida_graph, fh, indent=True)
             fh.write("\n")
+        log.info("%s: json end" % self)
 
     def load_ida_graph(self):
         bin_filename = self.filename.replace(".txt", ".bin")
@@ -1148,24 +1158,24 @@ class LookupTableIDA(LookupTable):
 
         if self.parent.size == 2:
             from rubikscubennnsolver.RubiksCube222 import rotate_222
-
             self.rotate_xxx = rotate_222
+
         elif self.parent.size == 4:
             from rubikscubennnsolver.RubiksCube444 import rotate_444
-
             self.rotate_xxx = rotate_444
+
         elif self.parent.size == 5:
             from rubikscubennnsolver.RubiksCube555 import rotate_555
-
             self.rotate_xxx = rotate_555
+
         elif self.parent.size == 6:
             from rubikscubennnsolver.RubiksCube666 import rotate_666
-
             self.rotate_xxx = rotate_666
+
         elif self.parent.size == 7:
             from rubikscubennnsolver.RubiksCube777 import rotate_777
-
             self.rotate_xxx = rotate_777
+
         else:
             raise ImplementThis(
                 "Need rotate_xxx"

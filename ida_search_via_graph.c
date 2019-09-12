@@ -742,7 +742,11 @@ ida_solve (
     pt4_cost = ctg.pt4_cost;
     unsigned char pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
 
-    LOG("min_ida_threshold %d\n", min_ida_threshold);
+    // LOG("min_ida_threshold %d\n", min_ida_threshold);
+    if (min_ida_threshold >= max_ida_threshold) {
+        return search_result;
+    }
+
     gettimeofday(&start, NULL);
 
     for (threshold = min_ida_threshold; threshold <= max_ida_threshold; threshold++) {
@@ -782,8 +786,8 @@ ida_solve (
         }
     }
 
-    LOG("IDA failed with range %d->%d\n", min_ida_threshold, max_ida_threshold);
-    exit(1);
+    LOG("IDA failed with range %d->%d\n\n", min_ida_threshold, max_ida_threshold);
+    return search_result;
 }
 
 
@@ -882,6 +886,7 @@ main (int argc, char *argv[])
     unsigned char max_ida_threshold = 30;
     unsigned char orbit0_wide_quarter_turns = 0;
     unsigned char orbit1_wide_quarter_turns = 0;
+    char *prune_table_states_filename = NULL;
 
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
     memset(move_matrix, MOVE_NONE, MOVE_MAX * MOVE_MAX);
@@ -945,6 +950,10 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--pt1-state-max")) {
             i++;
             pt1_state_max = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--prune-table-states")) {
+            i++;
+            prune_table_states_filename = argv[i];
 
         } else if (strmatch(argv[i], "--max-ida")) {
             i++;
@@ -1171,22 +1180,91 @@ main (int argc, char *argv[])
 
     ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
     printf("legal_move_count %d, ROW_LENGTH %d\n", legal_move_count, ROW_LENGTH);
-    struct ida_search_result search_result = ida_solve(
-        prune_table_0_state,
-        prune_table_1_state,
-        prune_table_2_state,
-        prune_table_3_state,
-        prune_table_4_state,
-        max_ida_threshold,
-        orbit0_wide_quarter_turns,
-        orbit1_wide_quarter_turns);
+    struct ida_search_result search_result;
 
-    print_ida_summary(
-        prune_table_0_state,
-        prune_table_1_state,
-        prune_table_2_state,
-        prune_table_3_state,
-        prune_table_4_state,
-        search_result.solution,
-        search_result.f_cost);
+    if (prune_table_states_filename) {
+        FILE *fh_read = NULL;
+        char *line = NULL;
+        size_t len = 0;
+        ssize_t read = 0;
+        unsigned int line_number = 0;
+        struct ida_search_result min_search_result;
+        min_search_result.f_cost = 99;
+
+        fh_read = fopen(prune_table_states_filename, "r");
+        while ((read = getline(&line, &len, fh_read)) != -1) {
+            // printf("%s", line);
+            unsigned char pt_index = 0;
+            char *pt;
+            pt = strtok (line, ",");
+            while (pt != NULL) {
+                int a = atoi(pt);
+                pt = strtok (NULL, ",");
+
+                if (pt_index == 0) {
+                    prune_table_0_state = a;
+                } else if (pt_index == 1) {
+                    prune_table_1_state = a;
+                } else if (pt_index == 2) {
+                    prune_table_2_state = a;
+                } else if (pt_index == 3) {
+                    prune_table_3_state = a;
+                } else if (pt_index == 4) {
+                    prune_table_4_state = a;
+                }
+                pt_index++;
+            }
+
+            search_result = ida_solve(
+                prune_table_0_state,
+                prune_table_1_state,
+                prune_table_2_state,
+                prune_table_3_state,
+                prune_table_4_state,
+                max_ida_threshold,
+                orbit0_wide_quarter_turns,
+                orbit1_wide_quarter_turns);
+
+            if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
+                LOG("NEW MIN %d\n\n", search_result.f_cost);
+                min_search_result = search_result;
+                max_ida_threshold = search_result.f_cost;
+            }
+
+            line_number++;
+        }
+
+        fclose(fh_read);
+
+        if (line) {
+            free(line);
+        }
+        search_result = min_search_result;
+
+    } else {
+        search_result = ida_solve(
+            prune_table_0_state,
+            prune_table_1_state,
+            prune_table_2_state,
+            prune_table_3_state,
+            prune_table_4_state,
+            max_ida_threshold,
+            orbit0_wide_quarter_turns,
+            orbit1_wide_quarter_turns);
+
+        if (search_result.found_solution) {
+            print_ida_summary(
+                prune_table_0_state,
+                prune_table_1_state,
+                prune_table_2_state,
+                prune_table_3_state,
+                prune_table_4_state,
+                search_result.solution,
+                search_result.f_cost);
+        }
+    }
+
+    if (!search_result.found_solution) {
+        exit(1);
+    }
 }

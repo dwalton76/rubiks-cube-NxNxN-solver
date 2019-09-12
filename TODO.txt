@@ -1,108 +1,24 @@
 
-555 last eight edges perfect hash
-=================================
-
-BEFORE
-dwalton@laptop:rubiks-cube-NxNxN-solver$ time ./ida_search_via_graph --prune-table-0-filename lookup-table-5x5x5-step61-phase6-centers.bin --prune-table-0-state 22670 --prune-table-1-filename lookup-table-5x5x5-step62-phase6-high-edge-midge.bin --prune-table-1-state 28196 --prune-table-2-filename lookup-table-5x5x5-step63-phase6-low-edge-midge.bin --prune-table-2-state 38787 --multiplier 1.2 --use-pt-total-cost --legal-moves "U,U',U2,L2,Lw2,F2,Fw2,R2,Rw2,B2,Bw2,D,D',D2"
-legal_move_count 14, ROW_LENGTH 57
-[2019-09-08T14:28:46.622] min_ida_threshold 9
-[2019-09-08T14:28:46.622] IDA threshold 9, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-08T14:28:46.622] IDA threshold 10, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-08T14:28:46.622] IDA threshold 11, explored 96 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-08T14:28:46.623] IDA threshold 12, explored 1,062 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-08T14:28:46.625] IDA threshold 13, explored 10,508 nodes, took 0.002s, 5,254,000 nodes-per-sec
-[2019-09-08T14:28:46.638] IDA threshold 14, explored 84,679 nodes, took 0.012s, 7,056,583 nodes-per-sec
-[2019-09-08T14:28:46.696] IDA threshold 15, explored 658,963 nodes, took 0.058s, 11,361,431 nodes-per-sec
-[2019-09-08T14:28:47.029] IDA threshold 16, explored 4,759,544 nodes, took 0.333s, 14,292,925 nodes-per-sec
-[2019-09-08T14:28:49.408] IDA threshold 17, explored 33,889,227 nodes, took 2.379s, 14,245,157 nodes-per-sec
-[2019-09-08T14:29:05.077] IDA threshold 18, explored 232,452,960 nodes, took 15.670s, 14,834,267 nodes-per-sec
-[2019-09-08T14:30:38.787] IDA threshold 19, explored 1,561,396,099 nodes, took 93.710s, 16,662,000 nodes-per-sec
-[2019-09-08T14:37:16.073] IDA count 6,983,414,767, f_cost 19 vs threshold 20 (cost_to_here 19, cost_to_goal 0)
-SOLUTION: Bw2 L2 D' L2 B2 U Lw2 Rw2 B2 R2 Fw2 F2 U' Bw2 U' R2 U' Rw2 Fw2 
-[2019-09-08T14:37:16.073] IDA threshold 20, explored 6,983,414,767 nodes, took 397.286s, 17,577,802 nodes-per-sec
-[2019-09-08T14:37:16.073] IDA found solution, explored 8,816,667,907 total nodes, took 509.451s, 17,306,212 nodes-per-sec
-
-       PT0  PT1  PT2  PT3  PT4  CTG  TOT  TRU  IDX
-       ===  ===  ===  ===  ===  ===  ===  ===  ===
-         6    6    9    0    0   10   21   19    0
-  Bw2    7    6    8    0    0    9   21   18    1
-   L2    7    6    8    0    0    9   21   17    2
-   D'    8    6    7    0    0    9   21   16    3
-   L2    8    6    7    0    0    9   21   15    4
-   B2    7    5    8    0    0    9   20   14    5
-    U    7    6    7    0    0    8   20   13    6
-  Lw2    6    6    6    0    0    7   18   12    7
-  Rw2    5    6    5    0    0    7   16   11    8
-   B2    4    7    5    0    0    8   16   10    9
-   R2    5    6    5    0    0    7   16    9   10
-  Fw2    6    5    5    0    0    7   16    8   11
-   F2    6    5    5    0    0    7   16    7   12
-   U'    5    4    5    0    0    6   14    6   13
-  Bw2    4    3    4    0    0    4   11    5   14
-   U'    4    3    3    0    0    4   10    4   15
-   R2    3    3    3    0    0    3    9    3   16
-   U'    2    2    2    0    0    2    6    2   17
-  Rw2    1    1    1    0    0    1    3    1   18
-  Fw2    0    0    0    0    0    0    0    0   19
-
-
-real	8m29.482s
-user	8m29.204s
-sys	0m0.252s
-
-
-
-AFTER
-dwalton@laptop:rubiks-cube-NxNxN-solver$ time ./ida_search_via_graph --prune-table-0-filename lookup-table-5x5x5-step61-phase6-centers.bin --prune-table-0-state 22670 --prune-table-1-filename lookup-table-5x5x5-step62-phase6-high-edge-midge.bin --prune-table-1-state 28196 --prune-table-2-filename lookup-table-5x5x5-step63-phase6-low-edge-midge.bin --prune-table-2-state 38787 --legal-moves "U,U',U2,L2,Lw2,F2,Fw2,R2,Rw2,B2,Bw2,D,D',D2"
-legal_move_count 14, ROW_LENGTH 57
-[2019-09-08T15:36:02.891] min_ida_threshold 9
-[2019-09-08T15:36:02.891] IDA threshold 9, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-08T15:36:02.891] IDA threshold 10, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-08T15:36:02.891] IDA threshold 11, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-08T15:36:02.891] IDA threshold 12, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-08T15:36:02.891] IDA threshold 13, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-08T15:36:02.891] IDA threshold 14, explored 355 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-08T15:36:02.894] IDA threshold 15, explored 26,997 nodes, took 0.003s, 8,999,000 nodes-per-sec
-[2019-09-08T15:36:02.954] IDA threshold 16, explored 481,858 nodes, took 0.059s, 8,167,085 nodes-per-sec
-[2019-09-08T15:36:03.884] IDA threshold 17, explored 8,820,962 nodes, took 0.931s, 9,474,718 nodes-per-sec
-[2019-09-08T15:36:06.594] IDA count 25,964,547, f_cost 17 vs threshold 18 (cost_to_here 17, cost_to_goal 0)
-SOLUTION: F2 Lw2 F2 B2 D Fw2 U Lw2 R2 Fw2 B2 Lw2 D' Bw2 Rw2 Fw2 Lw2 
-[2019-09-08T15:36:06.594] IDA threshold 18, explored 25,964,547 nodes, took 2.710s, 9,581,014 nodes-per-sec
-[2019-09-08T15:36:06.594] IDA found solution, explored 35,294,724 total nodes, took 3.703s, 9,531,387 nodes-per-sec
-
-       PT0  PT1  PT2  PT3  PT4  CTG  TOT  TRU  IDX
-       ===  ===  ===  ===  ===  ===  ===  ===  ===
-         6    6    9    0    0    9   21   17    0
-   F2    6    7    9    0    0    9   22   16    1
-  Lw2    6    8    8    0    0    8   22   15    2
-   F2    7    9    9    0    0    9   25   14    3
-   B2    7    9    9    0    0    9   25   13    4
-    D    6    8    8    0    0    8   22   12    5
-  Fw2    7    9    9    0    0    9   25   11    6
-    U    7    9    9    0    0    9   25   10    7
-  Lw2    7    8    8    0    0    8   23    9    8
-   R2    7    7    7    0    0    7   21    8    9
-  Fw2    6    7    7    0    0    7   20    7   10
-   B2    6    6    6    0    0    6   18    6   11
-  Lw2    5    5    5    0    0    5   15    5   12
-   D'    4    4    4    0    0    4   12    4   13
-  Bw2    3    3    3    0    0    3    9    3   14
-  Rw2    2    2    2    0    0    2    6    2   15
-  Fw2    1    1    1    0    0    1    3    1   16
-  Lw2    0    0    0    0    0    0    0    0   17
-
-
-real	0m4.433s
-user	0m3.704s
-sys	0m0.728s
-
-
-
+misc
+====
 - clean up any "dummy" references
 
-- 444 --fast could be a mirror of how 555 edge solver works
 
-- IDA should be fast enough for tsai 555 now
+444
+===
+    --fast could be a mirror of how 555 edge solver works
+
+555
+===
+    - phase3 is "slow" (takes about 3s). Am currently building the LR centers + midges table
+      that should speed it up. Will it then be fast enough for us to solve all 2048 EO permutations?
+      If so that might reduce the move count for phase3 (currently takes ~12 moves). If it is
+      too slow for that one extreme option would be to use a perfect-hash to build the full EO
+      table.  That would be 2,704,156 * 2,048 = 5,538,111,488 entries though, that might take
+      months to build.  Or maybe we just IDA all of them? Even if you could do 100 of them per-sec
+      it would take 640 days!!
+
+      See how fast phase3 is after the LR centers + midges table then re-evaluate.
 
     - the phase4 table has all 121,287,375 entries.  If we kept only up to depth-3 that would
       cut it to about 30 million and would be plenty deep. Or we start storing everything in
@@ -110,9 +26,52 @@ sys	0m0.728s
       up to depth-2 and that would be enough. Figure this out after the phase5 edges table
       has finished building.
 
-- 666
+    - phase4 could be much faster via perfect hash of FB-centers + high midges and FB-center + low midges.
+      Each of these would be 117,600 * 4,900 = 576,240,000.  The first of these is building now
+      on LJ's machine. This should allow us to drop the ThreeEdges hack.
+
+    - rm RubiksCube555ForNNN.py
+
+666
+===
     - The phase where we stage the UD centers (LR centers have already been done) should
       be moved to ida_search.c.
 
-- rm RubiksCube555ForNNN.py
+    baseline (before perfect hash)
+
+    ./ida_search_via_graph --prune-table-0-filename lookup-table-6x6x6-step13-UD-outer-x-centers-stage.bin --prune-table-0-state 7060 --prune-table-1-filename lookup-table-6x6x6-step11-UD-left-oblique-stage.bin --prune-table-1-state 5981 --prune-table-2-filename lookup-table-6x6x6-step12-UD-right-oblique-stage.bin --prune-table-2-state 11802 --use-pt-total-cost --legal-moves "U,U',Uw2,3Uw2,Lw,Lw',Lw2,3Lw2,F,F',Fw2,3Fw2,Rw,Rw',Rw2,3Rw2,B,B',Bw2,3Bw2,D,D',Dw2,3Dw2"
+
+2019-09-11 08:29:29,782 LookupTableIDAViaGraph.py     INFO: 
+legal_move_count 24, ROW_LENGTH 97
+[2019-09-11T12:29:07.518] min_ida_threshold 8
+[2019-09-11T12:29:07.518] IDA threshold 8, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2019-09-11T12:29:07.518] IDA threshold 9, explored 814 nodes, took 0.000s, 0 nodes-per-sec
+[2019-09-11T12:29:07.520] IDA threshold 10, explored 29,617 nodes, took 0.001s, 29,617,000 nodes-per-sec
+[2019-09-11T12:29:07.550] IDA threshold 11, explored 650,145 nodes, took 0.030s, 21,671,500 nodes-per-sec
+[2019-09-11T12:29:08.064] IDA threshold 12, explored 12,291,655 nodes, took 0.514s, 23,913,726 nodes-per-sec
+[2019-09-11T12:29:16.950] IDA threshold 13, explored 211,634,266 nodes, took 8.886s, 23,816,596 nodes-per-sec
+[2019-09-11T12:29:29.782] IDA count 290,111,975, f_cost 13 vs threshold 14 (cost_to_here 13, cost_to_goal 0)
+SOLUTION: Uw2 Lw Bw2 F' Rw U' D' Lw' B Rw' U 3Uw2 Lw 
+[2019-09-11T12:29:29.782] IDA threshold 14, explored 290,111,975 nodes, took 12.832s, 22,608,476 nodes-per-sec
+[2019-09-11T12:29:29.782] IDA found solution, explored 514,718,473 total nodes, took 22.263s, 23,119,906 nodes-per-sec
+
+       PT0  PT1  PT2  PT3  PT4  PER  CTG  TOT  TRU  IDX
+       ===  ===  ===  ===  ===  ===  ===  ===  ===  ===
+         5    7    8    0    0    0    8   20   13    0
+  Uw2    6    7    8    0    0    0    8   21   12    1
+   Lw    5    6    7    0    0    0    7   18   11    2
+  Bw2    5    6    7    0    0    0    7   18   10    3
+   F'    6    6    6    0    0    0    6   18    9    4
+   Rw    6    6    6    0    0    0    6   18    8    5
+   U'    7    6    5    0    0    0    7   18    7    6
+   D'    6    5    5    0    0    0    6   16    6    7
+  Lw'    5    5    5    0    0    0    5   15    5    8
+    B    4    4    4    0    0    0    4   12    4    9
+  Rw'    3    3    3    0    0    0    3    9    3   10
+    U    2    2    2    0    0    0    2    6    2   11
+ 3Uw2    1    1    1    0    0    0    1    3    1   12
+   Lw    0    0    0    0    0    0    0    0    0   13
+
+
+
 

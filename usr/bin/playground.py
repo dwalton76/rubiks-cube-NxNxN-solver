@@ -43,5 +43,7 @@ cube.lt_init()
 #cube.lt_UD_left_oblique_edges_stage.build_ida_graph()
 #cube.lt_UD_right_oblique_edges_stage.build_ida_graph()
 #cube.lt_UD_outer_x_centers_stage.build_ida_graph()
-cube.lt_UD_oblique_edges_stage.build_ida_graph()
+#cube.lt_UD_oblique_edges_stage.build_ida_graph()
 
+cube.lt_LR_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
+#cube.lt_FB_solve_inner_x_centers_and_oblique_edges.build_ida_graph()

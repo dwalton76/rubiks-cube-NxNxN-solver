@@ -18,6 +18,24 @@ import sys
 log = logging.getLogger(__name__)
 
 
+def remove_failed_ida_output(lines):
+    result = []
+    ida_output = []
+
+    for line in lines:
+        if line:
+            ida_output.append(line)
+        else:
+            ida_output.append(line)
+
+            if "IDA failed with range" not in "".join(ida_output):
+                result.extend(ida_output)
+
+            ida_output = []
+
+    return result
+
+
 class LookupTableIDAViaGraph(LookupTable):
 
     def __init__(
@@ -33,7 +51,7 @@ class LookupTableIDAViaGraph(LookupTable):
         legal_moves=[],
         prune_tables=[],
         multiplier=None,
-        use_pt_total_cost=True,
+        use_pt_total_cost=False,
         main_table_state_length=None,
         main_table_max_depth=None,
         main_table_prune_tables=None,
@@ -280,7 +298,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 last_solution = line
 
         if last_solution:
-            log.info("\n" + "\n".join(output) + "\n")
+            log.info("\n" + "\n".join(remove_failed_ida_output(output)) + "\n")
             solution = last_solution.strip().split(":")[1].split()
             for step in solution:
                 self.parent.rotate(step)

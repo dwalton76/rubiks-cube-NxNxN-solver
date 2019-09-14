@@ -10,15 +10,7 @@ misc
 
 555
 ===
-    - phase3 is "slow" (takes about 3s). Am currently building the LR centers + midges table
-      that should speed it up. Will it then be fast enough for us to solve all 2048 EO permutations?
-      If so that might reduce the move count for phase3 (currently takes ~12 moves). If it is
-      too slow for that one extreme option would be to use a perfect-hash to build the full EO
-      table.  That would be 2,704,156 * 2,048 = 5,538,111,488 entries though, that might take
-      months to build.  Or maybe we just IDA all of them? Even if you could do 100 of them per-sec
-      it would take 640 days!!
-
-      See how fast phase3 is after the LR centers + midges table then re-evaluate.
+    - do the new EO stuff avoid OLL?  The last 8 edges are not pairing I bet I broke OLL.
 
     - the phase4 table has all 121,287,375 entries.  If we kept only up to depth-3 that would
       cut it to about 30 million and would be plenty deep. Or we start storing everything in
@@ -34,44 +26,3 @@ misc
 
 666
 ===
-    - The phase where we stage the UD centers (LR centers have already been done) should
-      be moved to ida_search.c.
-
-    baseline (before perfect hash)
-
-    ./ida_search_via_graph --prune-table-0-filename lookup-table-6x6x6-step13-UD-outer-x-centers-stage.bin --prune-table-0-state 7060 --prune-table-1-filename lookup-table-6x6x6-step11-UD-left-oblique-stage.bin --prune-table-1-state 5981 --prune-table-2-filename lookup-table-6x6x6-step12-UD-right-oblique-stage.bin --prune-table-2-state 11802 --use-pt-total-cost --legal-moves "U,U',Uw2,3Uw2,Lw,Lw',Lw2,3Lw2,F,F',Fw2,3Fw2,Rw,Rw',Rw2,3Rw2,B,B',Bw2,3Bw2,D,D',Dw2,3Dw2"
-
-2019-09-11 08:29:29,782 LookupTableIDAViaGraph.py     INFO: 
-legal_move_count 24, ROW_LENGTH 97
-[2019-09-11T12:29:07.518] min_ida_threshold 8
-[2019-09-11T12:29:07.518] IDA threshold 8, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-11T12:29:07.518] IDA threshold 9, explored 814 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-11T12:29:07.520] IDA threshold 10, explored 29,617 nodes, took 0.001s, 29,617,000 nodes-per-sec
-[2019-09-11T12:29:07.550] IDA threshold 11, explored 650,145 nodes, took 0.030s, 21,671,500 nodes-per-sec
-[2019-09-11T12:29:08.064] IDA threshold 12, explored 12,291,655 nodes, took 0.514s, 23,913,726 nodes-per-sec
-[2019-09-11T12:29:16.950] IDA threshold 13, explored 211,634,266 nodes, took 8.886s, 23,816,596 nodes-per-sec
-[2019-09-11T12:29:29.782] IDA count 290,111,975, f_cost 13 vs threshold 14 (cost_to_here 13, cost_to_goal 0)
-SOLUTION: Uw2 Lw Bw2 F' Rw U' D' Lw' B Rw' U 3Uw2 Lw 
-[2019-09-11T12:29:29.782] IDA threshold 14, explored 290,111,975 nodes, took 12.832s, 22,608,476 nodes-per-sec
-[2019-09-11T12:29:29.782] IDA found solution, explored 514,718,473 total nodes, took 22.263s, 23,119,906 nodes-per-sec
-
-       PT0  PT1  PT2  PT3  PT4  PER  CTG  TOT  TRU  IDX
-       ===  ===  ===  ===  ===  ===  ===  ===  ===  ===
-         5    7    8    0    0    0    8   20   13    0
-  Uw2    6    7    8    0    0    0    8   21   12    1
-   Lw    5    6    7    0    0    0    7   18   11    2
-  Bw2    5    6    7    0    0    0    7   18   10    3
-   F'    6    6    6    0    0    0    6   18    9    4
-   Rw    6    6    6    0    0    0    6   18    8    5
-   U'    7    6    5    0    0    0    7   18    7    6
-   D'    6    5    5    0    0    0    6   16    6    7
-  Lw'    5    5    5    0    0    0    5   15    5    8
-    B    4    4    4    0    0    0    4   12    4    9
-  Rw'    3    3    3    0    0    0    3    9    3   10
-    U    2    2    2    0    0    0    2    6    2   11
- 3Uw2    1    1    1    0    0    0    1    3    1   12
-   Lw    0    0    0    0    0    0    0    0    0   13
-
-
-
-

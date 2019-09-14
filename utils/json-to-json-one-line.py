@@ -11,15 +11,14 @@ import sys
 log = logging.getLogger(__name__)
 
 
-def convert_json_to_json_one_line(filename: str, state_is_hex: bool) -> None:
+def convert_json_to_json_one_line(filename: str, entry_length: int, state_is_hex: bool) -> None:
 
     if not os.path.exists(filename):
         print(f"ERROR: {filename} does not exist")
         sys.exit(1)
 
     # You must define this!! This is how many lines long an entry is in the .json file you are converting
-    ENTRY_LENGTH = 29
-    assert ENTRY_LENGTH is not None
+    assert entry_length > 1
 
     one_line_filename = filename.replace(".json", ".json-one-line")
     with open(one_line_filename, "w") as fh_one_line:
@@ -32,7 +31,7 @@ def convert_json_to_json_one_line(filename: str, state_is_hex: bool) -> None:
                 data_str = ""
 
                 try:
-                    for x in range(ENTRY_LENGTH):
+                    for x in range(entry_length):
                         data_str += next(fh).rstrip()
                 except StopIteration:
                     break
@@ -53,4 +52,5 @@ if __name__ == "__main__":
     log = logging.getLogger(__name__)
 
     filename = sys.argv[1]
-    convert_json_to_json_one_line(filename, True)
+    entry_length = int(sys.argv[2])
+    convert_json_to_json_one_line(filename, entry_length, True)

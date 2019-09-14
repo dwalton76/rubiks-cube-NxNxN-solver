@@ -756,7 +756,6 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
                 parent.lt_LR_x_centers_stage,
             ),
             multiplier=1.2,
-            use_pt_total_cost=False,
         )
 
 
@@ -2423,8 +2422,6 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
                 parent.lt_phase3_lr_center_stage_eo_inner_orbit,
                 parent.lt_phase3_eo_outer_orbit,
             ),
-            # multiplier=1.2,
-            use_pt_total_cost=False,
         )
 
 
@@ -2884,10 +2881,9 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_centers,
                 parent.lt_phase5_high_edge_midge,
                 parent.lt_phase5_low_edge_midge,
-                parent.lt_phase5_four_edges_three_edges,
+                # parent.lt_phase5_four_edges_three_edges,
             ),
-            # multiplier=1.2,
-            use_pt_total_cost=False,
+            multiplier=1.2,
         )
 
 
@@ -3098,8 +3094,8 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
 '''
 class LookupTableIDA555Phase6Edges(LookupTableIDAViaGraph):
     """
-    Just for reference this is the move distribution for the entire edges only table
-    I only build this 9-deep
+    This was used to build lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state
+    which was then converted to lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash
 
     lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt
     ===============================================================
@@ -3149,7 +3145,6 @@ class LookupTableIDA555Phase6Edges(LookupTableIDAViaGraph):
                 parent.lt_phase6_high_edge_midge,
                 parent.lt_phase6_low_edge_midge,
             ),
-            multiplier=1.2,
         )
 '''
 
@@ -3181,7 +3176,6 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
                 parent.lt_phase6_high_edge_midge,
                 parent.lt_phase6_low_edge_midge,
             ),
-            use_pt_total_cost=False,
             multiplier=1.2,
             perfect_hash_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash",
             pt1_state_max=40320,
@@ -3362,7 +3356,6 @@ class RubiksCube555(RubiksCube):
         self.lt_phase6_centers = LookupTable555Phase6Centers(self)
         self.lt_phase6_high_edge_midge = LookupTable555Phase6HighEdgeMidge(self)
         self.lt_phase6_low_edge_midge = LookupTable555Phase6LowEdgeMidge(self)
-        # self.lt_phase6_edges = LookupTableIDA555Phase6Edges(self)
         self.lt_phase6 = LookupTableIDA555Phase6(self)
 
         self.lt_UD_centers_solve = LookupTable555UDCenterSolve(self)
@@ -3567,15 +3560,9 @@ class RubiksCube555(RubiksCube):
         permutations.  The /2 is because there cannot be an odd number of edges
         not in their final orientation.
         """
-        self.lt_phase3_eo_outer_orbit.load_ida_graph()
-        self.lt_phase3_lr_center_stage_eo_inner_orbit.load_ida_graph()
-        # self.lt_phase3_eo_outer_orbit.ida_graph_node = None
-        # self.lt_phase3_lr_center_stage_eo_inner_orbit.ida_graph_node = None
-
         permutations = []
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = len(self.solution)
         tmp_solution_len = len(self.solution)
 
         # Build a list of the wing strings at each midge
@@ -3618,17 +3605,24 @@ class RubiksCube555(RubiksCube):
                 self.lt_phase3_eo_outer_orbit.state_index()
             ))
 
-        # log.info(f"costs_per_permutation\n{costs_per_permutation}\n")
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-        for x in range(7, 30):
+        for x in range(9, 30):
             try:
                 self.lt_phase3.solve_via_c(max_ida_threshold=x, pt_states=pt_states)
                 break
             except NoIDASolution:
                 pass
 
+        # re-color the cube so that the edges are oriented correctly so we can
+        # pair 4-edges then 8-edges. After all edge pairing is done we will uncolor
+        # the cube and re-apply the solution.
+        self.post_eo_state = self.state[:]
+        self.post_eo_solution = self.solution[:]
+        self.edges_flip_orientation(wing_strs, [])
+
+        self.highlow_edges_print()
         self.print_cube()
         log.info("%s: end of phase 3, edges EOed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
@@ -3665,11 +3659,16 @@ class RubiksCube555(RubiksCube):
             (_state, cost_to_pair_four_edges) = self.lt_phase5_four_edges.ida_heuristic()
             cost = cost_to_stage + cost_to_pair_four_edges
 
-            costs.append((cost, cost_to_stage, cost_to_pair_four_edges, wing_str_combo))
+            costs.append((cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo))
+
+            # dwalton stopped here...solve all 495 and see what happens
+            #    parent.lt_phase5_centers,
+            #    parent.lt_phase5_high_edge_midge,
+            #    parent.lt_phase5_low_edge_midge,
 
         costs.sort()
-        log.info("Top 5 wing_str_combo (total cost, cost_to_stage, cost_to_pair_four_edges, wing_str_combo)\n%s\n" % "\n".join(map(str, costs[0:5])))
-        (cost, cost_to_stage, cost_to_pair_four_edges, min_wing_str_combo) = costs[0]
+        log.info("Top 5 wing_str_combo (total cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo)\n%s\n" % "\n".join(map(str, costs[0:5])))
+        (cost, cost_to_pair_four_edges, cost_to_stage, min_wing_str_combo) = costs[0]
         log.info("%s: cost %d (%d + %d), wing_str_combo %s (MIN)" % (
                     self, cost, cost_to_stage, cost_to_pair_four_edges, " ".join(wing_str_combo)))
 
@@ -3776,6 +3775,16 @@ class RubiksCube555(RubiksCube):
             self.eo_edges()
             self.pair_first_four_edges()
             self.pair_last_eight_edges()
+
+            edges_solution = self.solution[len(self.post_eo_solution):]
+            self.state = self.post_eo_state
+            self.solution = self.post_eo_solution[:len(self.post_eo_solution)]
+
+            for step in edges_solution:
+                if step.startswith("COMMENT"):
+                    self.solution.append(step)
+                else:
+                    self.rotate(step)
 
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")

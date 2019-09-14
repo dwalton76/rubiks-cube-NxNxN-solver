@@ -859,16 +859,14 @@ class LookupTable(object):
                 log.info(f"{index:,}")
 
                 # avoid running out of memory
-                '''
                 if index % 1000000 == 0:
                     with open(self.filename.replace(".txt", ".json") + f"-{index}", "w") as fh:
                         json.dump(ida_graph, fh, indent=True)
                         fh.write("\n")
                         ida_graph = {}
-                '''
 
-        # with open(self.filename.replace(".txt", ".json") + f"-{index}", "w") as fh:
-        with open(self.filename.replace(".txt", ".json"), "w") as fh:
+        # with open(self.filename.replace(".txt", ".json"), "w") as fh:
+        with open(self.filename.replace(".txt", ".json") + f"-{index}", "w") as fh:
             json.dump(ida_graph, fh, indent=True)
             fh.write("\n")
         log.info("%s: json end" % self)

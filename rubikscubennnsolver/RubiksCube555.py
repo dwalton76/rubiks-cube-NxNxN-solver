@@ -2782,6 +2782,128 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
         cube = self.parent.state[:]
 
 
+class LookupTable555Phase5FBCentersHighEdgeMidge(LookupTableIDAViaGraph):
+    """
+    Only used to create a perfect hash file
+    lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.txt
+    ===================================================================
+    1 steps has 30 entries (0 percent, 0.00x previous step)
+    2 steps has 216 entries (0 percent, 7.20x previous step)
+    3 steps has 1,622 entries (0 percent, 7.51x previous step)
+    4 steps has 11,198 entries (0 percent, 6.90x previous step)
+    5 steps has 75,990 entries (0 percent, 6.79x previous step)
+    6 steps has 498,774 entries (0 percent, 6.56x previous step)
+    7 steps has 3,105,912 entries (0 percent, 6.23x previous step)
+    8 steps has 17,585,391 entries (3 percent, 5.66x previous step)
+    9 steps has 81,079,954 entries (14 percent, 4.61x previous step)
+    10 steps has 230,361,431 entries (39 percent, 2.84x previous step)
+    11 steps has 220,472,982 entries (38 percent, 0.96x previous step)
+    12 steps has 23,022,104 entries (3 percent, 0.10x previous step)
+    13 steps has 24,396 entries (0 percent, 0.00x previous step)
+
+    Total: 576,240,000 entries
+    Average: 10.24 moves
+    """
+
+    state_targets = (
+        "BFBBFBBFBFBFFBFFBF-------------SSTT--UUVV-------------",
+        "BFFBFFBFFBBFBBFBBF-------------SSTT--UUVV-------------",
+        "BFFBFFBFFFBBFBBFBB-------------SSTT--UUVV-------------",
+        "FFBFFBFFBBBFBBFBBF-------------SSTT--UUVV-------------",
+        "FFBFFBFFBFBBFBBFBB-------------SSTT--UUVV-------------",
+        "FFFFFFFFFBBBBBBBBB-------------SSTT--UUVV-------------",
+    )
+
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            filename='lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.txt',
+            state_target=self.state_targets,
+            linecount=576240000,
+            max_depth=13,
+            filesize=59928960000,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
+                "U", "U'",
+                "D", "D'",
+            ),
+            prune_tables=(
+                parent.lt_phase5_high_edge_midge,
+                parent.lt_phase5_fb_centers,
+            ),
+        )
+
+
+class LookupTable555Phase5FBCenters(LookupTable):
+    """
+    lookup-table-5x5x5-step56-phase5-fb-centers.txt
+    ===============================================
+    0 steps has 4 entries (0 percent, 0.00x previous step)
+    1 steps has 24 entries (0 percent, 6.00x previous step)
+    2 steps has 110 entries (2 percent, 4.58x previous step)
+    3 steps has 396 entries (8 percent, 3.60x previous step)
+    4 steps has 1,196 entries (24 percent, 3.02x previous step)
+    5 steps has 2,102 entries (42 percent, 1.76x previous step)
+    6 steps has 1,016 entries (20 percent, 0.48x previous step)
+    7 steps has 52 entries (1 percent, 0.05x previous step)
+
+    Total: 4,900 entries
+    Average: 4.73 moves
+    """
+
+    state_targets = (
+        "BFBBFBBFBFBFFBFFBF",
+        "BFFBFFBFFBBFBBFBBF",
+        "BFFBFFBFFFBBFBBFBB",
+        "FFBFFBFFBBBFBBFBBF",
+        "FFBFFBFFBFBBFBBFBB",
+        "FFFFFFFFFBBBBBBBBB",
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step56-phase5-fb-centers.txt',
+            self.state_targets,
+            linecount=4900,
+            max_depth=7,
+            filesize=220500,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
+                "U", "U'",
+                "D", "D'",
+            ),
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in FB_centers_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(FB_centers_555, state):
+            cube[pos] = pos_state
+
+
 class LookupTable555Phase5LowEdgeMidge(LookupTable):
     """
     lookup-table-5x5x5-step54-phase5-low-edge-and-midge.txt
@@ -3351,6 +3473,8 @@ class RubiksCube555(RubiksCube):
         self.lt_phase5_high_edge_midge = LookupTable555Phase5HighEdgeMidge(self)
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
         self.lt_phase5_four_edges_three_edges = LookupTable555Phase5ThreeEdges(self)
+        self.lt_phase5_fb_centers = LookupTable555Phase5FBCenters(self)
+        self.lt_phase5_fb_centers_high_edge_midge = LookupTable555Phase5FBCentersHighEdgeMidge(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
 
         self.lt_phase6_centers = LookupTable555Phase6Centers(self)
@@ -3582,7 +3706,7 @@ class RubiksCube555(RubiksCube):
             if num.count("1") % 2 == 0:
                 permutations.append(list(map(int, num)))
 
-        # Put all 2048 starting states in a file and point ida-via-graph 
+        # Put all 2048 starting states in a file and point ida-via-graph
         # at the file so it can solve all of them and apply the one that is the shortest.
         pt_states = []
 

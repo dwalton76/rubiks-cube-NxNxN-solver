@@ -2806,12 +2806,12 @@ class LookupTable555Phase5FBCentersHighEdgeMidge(LookupTableIDAViaGraph):
     """
 
     state_targets = (
-        "BFBBFBBFBFBFFBFFBF-------------SSTT--UUVV-------------",
-        "BFFBFFBFFBBFBBFBBF-------------SSTT--UUVV-------------",
-        "BFFBFFBFFFBBFBBFBB-------------SSTT--UUVV-------------",
-        "FFBFFBFFBBBFBBFBBF-------------SSTT--UUVV-------------",
-        "FFBFFBFFBFBBFBBFBB-------------SSTT--UUVV-------------",
-        "FFFFFFFFFBBBBBBBBB-------------SSTT--UUVV-------------",
+        "-------------SSTT--UUVV-------------BFBBFBBFBFBFFBFFBF",
+        "-------------SSTT--UUVV-------------BFFBFFBFFBBFBBFBBF",
+        "-------------SSTT--UUVV-------------BFFBFFBFFFBBFBBFBB",
+        "-------------SSTT--UUVV-------------FFBFFBFFBBBFBBFBBF",
+        "-------------SSTT--UUVV-------------FFBFFBFFBFBBFBBFBB",
+        "-------------SSTT--UUVV-------------FFFFFFFFFBBBBBBBBB",
     )
 
     def __init__(self, parent):
@@ -2837,8 +2837,8 @@ class LookupTable555Phase5FBCentersHighEdgeMidge(LookupTableIDAViaGraph):
                 "D", "D'",
             ),
             prune_tables=(
-                parent.lt_phase5_high_edge_midge,
                 parent.lt_phase5_fb_centers,
+                parent.lt_phase5_high_edge_midge,
             ),
         )
 
@@ -3003,8 +3003,9 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_centers,
                 parent.lt_phase5_high_edge_midge,
                 parent.lt_phase5_low_edge_midge,
-                # parent.lt_phase5_four_edges_three_edges,
+                parent.lt_phase5_four_edges_three_edges,
             ),
+            use_pt_total_cost=True,
             multiplier=1.2,
         )
 
@@ -3764,11 +3765,12 @@ class RubiksCube555(RubiksCube):
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
         tmp_solution_len = len(self.solution)
-        min_cost = 99
+        min_solution = []
+        min_solution_len = 99
         min_wing_str_combo = None
         costs = []
 
-        for wing_str_combo in itertools.combinations(wing_strs_all, 4):
+        for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
             self.state = original_state[:]
             self.solution = original_solution[:]
 
@@ -3776,25 +3778,62 @@ class RubiksCube555(RubiksCube):
             self.lt_phase4.wing_strs = wing_str_combo
             (_state, cost_to_stage) = self.lt_phase4.ida_heuristic()
             self.lt_phase4.solve()
+            phase4_solution_len = len(self.solution[original_solution_len:])
 
             # cost to pair those 4-edges?
             self.edges_flip_orientation(wing_str_combo, [])
             self.lt_phase5_four_edges.wing_strs = wing_str_combo
+
+            self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
+            self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
+            self.lt_phase5_four_edges.wing_strs = wing_str_combo
+            self.lt_phase5_four_edges_three_edges.wing_strs = wing_str_combo[0:3]
+
+            # dwalton
+            try:
+                PHASE6_MIN = 12
+                max_ida = min_solution_len - phase4_solution_len - PHASE6_MIN
+                self.lt_phase5.solve_via_c(max_ida)
+                phase45_solution = self.solution[original_solution_len:]
+                phase45_solution_len = self.get_solution_len_minus_rotates(phase45_solution)
+                phase5_solution_len = phase45_solution_len - phase4_solution_len
+
+                try:
+                    max_ida = min_solution_len - phase45_solution_len
+                    self.pair_last_eight_edges(max_ida)
+                    phase456_solution = self.solution[original_solution_len:]
+                    phase456_solution_len = self.get_solution_len_minus_rotates(phase456_solution)
+                    phase6_solution_len = phase456_solution_len - phase45_solution_len
+                except subprocess.CalledProcessError:
+                    phase6_solution_len = 99
+                    phase456_solution_len = 99
+
+            except subprocess.CalledProcessError:
+                phase5_solution_len = 99
+                phase6_solution_len = 99
+                phase456_solution_len = 99
+
+            if phase456_solution_len < min_solution_len:
+                min_solution = phase456_solution[:]
+                min_solution_len = phase456_solution_len
+                min_wing_str_combo = wing_str_combo
+                log.info("%s: wing_strs %d/495 %s solved in %d steps (%d + %d + %d) (NEW MIN)\n\n" % (self, wing_str_index+1, " ".join(wing_str_combo),
+                    min_solution_len, phase4_solution_len, phase5_solution_len, phase6_solution_len))
+            else:
+                log.info("%s: wing_strs %d/495 %s solved in %d steps (%d + %d + %d) (curr min %d)\n\n" % (self, wing_str_index+1, " ".join(wing_str_combo),
+                    phase456_solution_len, phase4_solution_len, phase5_solution_len, phase6_solution_len, min_solution_len))
+
+            '''
             (_state, cost_to_pair_four_edges) = self.lt_phase5_four_edges.ida_heuristic()
             cost = cost_to_stage + cost_to_pair_four_edges
-
             costs.append((cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo))
-
-            # dwalton stopped here...solve all 495 and see what happens
-            #    parent.lt_phase5_centers,
-            #    parent.lt_phase5_high_edge_midge,
-            #    parent.lt_phase5_low_edge_midge,
 
         costs.sort()
         log.info("Top 5 wing_str_combo (total cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo)\n%s\n" % "\n".join(map(str, costs[0:5])))
         (cost, cost_to_pair_four_edges, cost_to_stage, min_wing_str_combo) = costs[0]
         log.info("%s: cost %d (%d + %d), wing_str_combo %s (MIN)" % (
                     self, cost, cost_to_stage, cost_to_pair_four_edges, " ".join(wing_str_combo)))
+            '''
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -3830,7 +3869,7 @@ class RubiksCube555(RubiksCube):
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-    def pair_last_eight_edges(self):
+    def pair_last_eight_edges(self, max_ida=99):
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(original_solution)
@@ -3870,7 +3909,7 @@ class RubiksCube555(RubiksCube):
         #self.lt_phase6_low_edge_midge.solve()
         #self.print_cube()
         #sys.exit(0)
-        self.lt_phase6.solve_via_c()
+        self.lt_phase6.solve_via_c(max_ida)
 
         pair_eight_edge_solution = self.solution[original_solution_len:]
         self.state = original_state[:]

@@ -187,6 +187,9 @@ class LookupTableIDAViaGraph(LookupTable):
 
                     lt_state = lt_state.rstrip("-")
 
+                    if lt_state == "0000000-0000000":
+                        log.info(f"{start:,}->{end:,} line {line_number:,} lt_state {lt_state} line {line}")
+
                     to_write.append(f"{lt_state}:{cost_to_goal}")
 
                     if line_number and line_number % 100000 == 0:

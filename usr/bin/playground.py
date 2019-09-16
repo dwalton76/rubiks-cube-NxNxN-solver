@@ -28,15 +28,21 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
+start = int(sys.argv[1])
+end = int(sys.argv[2])
 
-'''
 cube = RubiksCube555(solved_555, "URFDLB")
 cube.cpu_mode = "normal"
 cube.lt_init()
-cube.lt_phase3_lr_center_stage_eo_inner_orbit.build_ida_graph()
+# cube.lt_phase3_lr_center_stage_eo_inner_orbit.build_ida_graph()
+#cube.lt_phase5_high_edge_midge.build_ida_graph()
+#cube.lt_phase5_fb_centers.build_ida_graph()
+
+cube.lt_phase5_fb_centers_high_edge_midge.build_ida_graph(start, end)
+
+# print(cube.highlow_edges_state())
+
 '''
-
-
 cube = RubiksCube666(solved_666, "URFDLB")
 cube.cpu_mode = "normal"
 cube.lt_init()
@@ -45,5 +51,6 @@ cube.lt_init()
 #cube.lt_UD_outer_x_centers_stage.build_ida_graph()
 #cube.lt_UD_oblique_edges_stage.build_ida_graph()
 
-cube.lt_LR_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
-#cube.lt_FB_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
+#cube.lt_LR_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
+cube.lt_FB_solve_inner_x_centers_and_oblique_edges.build_ida_graph()
+'''

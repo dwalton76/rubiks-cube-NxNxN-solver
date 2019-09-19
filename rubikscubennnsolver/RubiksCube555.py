@@ -2806,12 +2806,12 @@ class LookupTable555Phase5FBCentersHighEdgeMidge(LookupTableIDAViaGraph):
     """
 
     state_targets = (
-        "-------------SSTT--UUVV-------------BFBBFBBFBFBFFBFFBF",
-        "-------------SSTT--UUVV-------------BFFBFFBFFBBFBBFBBF",
-        "-------------SSTT--UUVV-------------BFFBFFBFFFBBFBBFBB",
-        "-------------SSTT--UUVV-------------FFBFFBFFBBBFBBFBBF",
-        "-------------SSTT--UUVV-------------FFBFFBFFBFBBFBBFBB",
-        "-------------SSTT--UUVV-------------FFFFFFFFFBBBBBBBBB",
+        "BFBBFBBFBFBFFBFFBF-------------SSTT--UUVV-------------",
+        "BFFBFFBFFBBFBBFBBF-------------SSTT--UUVV-------------",
+        "BFFBFFBFFFBBFBBFBB-------------SSTT--UUVV-------------",
+        "FFBFFBFFBBBFBBFBBF-------------SSTT--UUVV-------------",
+        "FFBFFBFFBFBBFBBFBB-------------SSTT--UUVV-------------",
+        "FFFFFFFFFBBBBBBBBB-------------SSTT--UUVV-------------",
     )
 
     def __init__(self, parent):

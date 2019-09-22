@@ -10,8 +10,8 @@ pt_state_filename = sys.argv[1]
 perfect_hash_filename = pt_state_filename.replace("pt_state", "pt-state-perfect-hash")
 
 # You have to tweak this depending on the table you are converting
-pt0_max = 4900
-pt1_max = 117600
+pt0_max = int(sys.argv[2])
+pt1_max = int(sys.argv[3])
 
 assert pt0_max
 assert pt1_max

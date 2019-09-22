@@ -2,7 +2,6 @@ from rubikscubennnsolver import RubiksCube, wing_str_map, wing_strs_all, reverse
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
-    LookupTableHashCostOnly,
     LookupTableIDA,
     LookupTableIDAViaC,
     NoIDASolution,
@@ -2843,6 +2842,68 @@ class LookupTable555Phase5FBCentersHighEdgeMidge(LookupTableIDAViaGraph):
         )
 
 
+class LookupTable555Phase5FBCentersLowEdgeMidge(LookupTableIDAViaGraph):
+    """
+    Only used to create a perfect hash file
+
+    lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.txt
+    ==================================================================
+    1 steps has 30 entries (0 percent, 0.00x previous step)
+    2 steps has 216 entries (0 percent, 7.20x previous step)
+    3 steps has 1,622 entries (0 percent, 7.51x previous step)
+    4 steps has 11,198 entries (0 percent, 6.90x previous step)
+    5 steps has 75,990 entries (0 percent, 6.79x previous step)
+    6 steps has 498,774 entries (0 percent, 6.56x previous step)
+    7 steps has 3,105,912 entries (0 percent, 6.23x previous step)
+    8 steps has 17,585,391 entries (3 percent, 5.66x previous step)
+    9 steps has 81,079,954 entries (14 percent, 4.61x previous step)
+    10 steps has 230,361,431 entries (39 percent, 2.84x previous step)
+    11 steps has 220,472,982 entries (38 percent, 0.96x previous step)
+    12 steps has 23,022,104 entries (3 percent, 0.10x previous step)
+    13 steps has 24,396 entries (0 percent, 0.00x previous step)
+
+    Total: 576,240,000 entries
+    Average: 10.24 moves
+    """
+
+    state_targets = (
+        "BFBBFBBFBFBFFBFFBF------------sS--TtuU--Vv------------",
+        "BFFBFFBFFBBFBBFBBF------------sS--TtuU--Vv------------",
+        "BFFBFFBFFFBBFBBFBB------------sS--TtuU--Vv------------",
+        "FFBFFBFFBBBFBBFBBF------------sS--TtuU--Vv------------",
+        "FFBFFBFFBFBBFBBFBB------------sS--TtuU--Vv------------",
+        "FFFFFFFFFBBBBBBBBB------------sS--TtuU--Vv------------",
+    )
+
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            filename='lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.txt',
+            state_target=self.state_targets,
+            linecount=576240000,
+            max_depth=13,
+            filesize=59928960000,
+            all_moves=moves_555,
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
+                "U", "U'",
+                "D", "D'",
+            ),
+            prune_tables=(
+                parent.lt_phase5_fb_centers,
+                parent.lt_phase5_low_edge_midge,
+            ),
+        )
+
+
 class LookupTable555Phase5FBCenters(LookupTable):
     """
     lookup-table-5x5x5-step56-phase5-fb-centers.txt
@@ -3003,7 +3064,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_centers,
                 parent.lt_phase5_high_edge_midge,
                 parent.lt_phase5_low_edge_midge,
-                parent.lt_phase5_four_edges_three_edges,
+                #parent.lt_phase5_four_edges_three_edges,
             ),
             use_pt_total_cost=True,
             multiplier=1.2,
@@ -3451,6 +3512,7 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
+        '''
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
@@ -3468,16 +3530,19 @@ class RubiksCube555(RubiksCube):
         self.lt_phase3 = LookupTableIDA555LRCenterStageEOBothOrbits(self)
 
         self.lt_phase4 = LookupTable555Phase4(self)
+        '''
 
         self.lt_phase5_centers = LookupTable555Phase5Centers(self)
-        self.lt_phase5_four_edges = LookupTable555Phase5FourEdges(self)
+        #self.lt_phase5_four_edges = LookupTable555Phase5FourEdges(self)
         self.lt_phase5_high_edge_midge = LookupTable555Phase5HighEdgeMidge(self)
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
-        self.lt_phase5_four_edges_three_edges = LookupTable555Phase5ThreeEdges(self)
+        #self.lt_phase5_four_edges_three_edges = LookupTable555Phase5ThreeEdges(self)
         self.lt_phase5_fb_centers = LookupTable555Phase5FBCenters(self)
-        self.lt_phase5_fb_centers_high_edge_midge = LookupTable555Phase5FBCentersHighEdgeMidge(self)
+        #self.lt_phase5_fb_centers_high_edge_midge = LookupTable555Phase5FBCentersHighEdgeMidge(self)
+        self.lt_phase5_fb_centers_low_edge_midge = LookupTable555Phase5FBCentersLowEdgeMidge(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
 
+        '''
         self.lt_phase6_centers = LookupTable555Phase6Centers(self)
         self.lt_phase6_high_edge_midge = LookupTable555Phase6HighEdgeMidge(self)
         self.lt_phase6_low_edge_midge = LookupTable555Phase6LowEdgeMidge(self)
@@ -3488,6 +3553,7 @@ class RubiksCube555(RubiksCube):
         self.lt_FB_centers_solve = LookupTable555FBCenterSolve(self)
         self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
+        '''
 
     def highlow_edges_state(self):
         state = self.state

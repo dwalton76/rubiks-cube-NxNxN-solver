@@ -4,7 +4,6 @@ import cProfile as profile
 import datetime as dt
 from rubikscubennnsolver.RubiksSide import SolveError
 from pprint import pformat
-from pyhashxx import hashxx
 from subprocess import call
 import hashlib
 import json
@@ -796,9 +795,7 @@ class LookupTable(object):
                     )
                 # self.parent.enable_print_cube = True
                 # raise NoPruneTableState("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
-
-                if not isinstance(self, LookupTableHashCostOnly):
-                    result = self.max_depth + 1
+                result = self.max_depth + 1
 
             return result
 
@@ -923,70 +920,6 @@ class LookupTable(object):
 
         # log.info(f"{self}: state_index {state_index} -> lt_state {lt_state}")
         return (lt_state, cost_to_goal)
-
-
-class LookupTableHashCostOnly(LookupTable):
-
-    def __init__(
-        self,
-        parent,
-        filename,
-        state_target,
-        linecount,
-        max_depth=None,
-        bucketcount=None,
-        filesize=None,
-        md5=None,
-    ):
-        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize, md5)
-
-        # Some cost-only tables are 2^32 characters, we do not want to read a 4G
-        # string into memory so for those we will seek()/read() through the file.
-        # We do not have to binary_search() though so that cuts way down on the
-        # number of reads.
-        # log.info("%s: begin preload cost-only" % self)
-        memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-
-        # There is a CPU/memory tradeoff to be made here with 'r' vs 'rb'. 'rb' takes
-        # 1/2 the memory of 'r' but requires steps_cost() to call chr() everytime. This
-        # is not super expensive though and a lot of the tables we load here are 165 million
-        # entries so we are talking about using 165M vs 330M for each of those. We are
-        # memory bound on raspberry Pi3 so use 'rb' and take the minor CPU hit.
-        with open(self.filename, "rb") as fh:
-            self.content = fh.read()
-        self.fh_txt_seek_calls += 1
-
-        memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        memory_delta = memory_post - memory_pre
-        log.info(
-            "{}: end preload cost-only ({:,} bytes delta, {:,} bytes total)".format(
-                self, memory_delta, memory_post
-            )
-        )
-
-        self.bucketcount = bucketcount
-
-    def steps_cost(self, state_to_find):
-
-        # compute the hash_index for state_to_find, look that many bytes into the
-        # file/self.content and retrieve a single hex character. This hex character
-        # is the number of steps required to solve the corresponding state.
-        hash_raw = hashxx(state_to_find.encode("utf-8"))
-        hash_index = int(hash_raw % self.bucketcount)
-
-        result = int(chr(self.content[hash_index]), 16)
-
-        # This will be very rare but if a state_target and some other random state both hash
-        # to the same bucket the cost will be 0.
-        if not result:
-            log.debug(
-                "%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s"
-                % (self, state_to_find, hash_raw, hash_index, result)
-            )
-            # raise SolveError("%s: state_to_find %s, hash_raw %s. hash_index %s, result is %s" %
-            #    (self, state_to_find, hash_raw, hash_index, result))
-
-        return result
 
 
 class LookupTableIDA(LookupTable):

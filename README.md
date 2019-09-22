@@ -77,7 +77,6 @@ $ sudo make install
 
 ### Install the rubikscubennnsolver python module
 ```
-$ sudo pip3 install pyhashxx
 $ cd
 $ git clone https://github.com/dwalton76/rubiks-cube-NxNxN-solver.git
 $ cd rubiks-cube-NxNxN-solver

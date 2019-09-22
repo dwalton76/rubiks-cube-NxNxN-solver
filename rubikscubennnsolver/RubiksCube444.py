@@ -3,7 +3,6 @@ from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableIDA,
-    LookupTableHashCostOnly,
     LookupTableIDAViaC,
 )
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph

@@ -28,9 +28,6 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-start = int(sys.argv[1])
-end = int(sys.argv[2])
-
 cube = RubiksCube555(solved_555, "URFDLB")
 cube.cpu_mode = "normal"
 cube.lt_init()
@@ -38,7 +35,7 @@ cube.lt_init()
 #cube.lt_phase5_high_edge_midge.build_ida_graph()
 #cube.lt_phase5_fb_centers.build_ida_graph()
 
-cube.lt_phase5_fb_centers_high_edge_midge.build_ida_graph(start, end)
+cube.lt_phase5_fb_centers_low_edge_midge.build_ida_graph()
 
 # print(cube.highlow_edges_state())
 

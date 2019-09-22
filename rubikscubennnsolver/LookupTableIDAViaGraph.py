@@ -138,12 +138,8 @@ class LookupTableIDAViaGraph(LookupTable):
             # self.parent.print_cube()
             # sys.exit(0)
 
-    def build_ida_graph(self, start=None, end=None):
+    def build_ida_graph(self):
         pt_state_filename = self.filename.replace(".txt", ".pt_state")
-
-        if start is not None:
-            pt_state_filename += f"-{start}-{end}"
-
         parent = self.parent
 
         for pt in self.prune_tables:
@@ -155,13 +151,6 @@ class LookupTableIDAViaGraph(LookupTable):
         with open(pt_state_filename, "w") as fh_pt_state:
             with open(self.filename, "r") as fh:
                 for (line_number, line) in enumerate(fh):
-
-                    if start is not None and line_number < start:
-                        continue
-
-                    if end is not None and line_number > end:
-                        break
-
                     (state, steps_to_solve) = line.rstrip().split(":")
                     steps_to_solve = steps_to_solve.split()
 
@@ -186,20 +175,12 @@ class LookupTableIDAViaGraph(LookupTable):
                         lt_state += f"{x:07d}-"
 
                     lt_state = lt_state.rstrip("-")
-
-                    if lt_state == "0000000-0000000":
-                        log.info(f"{start:,}->{end:,} line {line_number:,} lt_state {lt_state} line {line}")
-
                     to_write.append(f"{lt_state}:{cost_to_goal}")
 
                     if line_number and line_number % 100000 == 0:
                         fh_pt_state.write("\n".join(to_write) + "\n")
                         to_write = []
-
-                        if start is not None:
-                            log.info(f"{start:,}->{end:,} line {line_number:,}")
-                        else:
-                            log.info(f"line {line_number:,}")
+                        log.info(f"line {line_number:,}")
 
             if to_write:
                 fh_pt_state.write("\n".join(to_write) + "\n")

@@ -32,11 +32,7 @@ unsigned int init_pt2_state = 0;
 unsigned int init_pt3_state = 0;
 unsigned int init_pt4_state = 0;
 
-struct key_value_pair *main_table = NULL;
 unsigned char pt_count = 0;
-unsigned char main_table_max_depth = 0;
-unsigned char main_table_state_length = 0;
-char main_table_prune_tables[10];
 unsigned char COST_LENGTH = 1;
 unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
@@ -422,7 +418,6 @@ ida_search (
     struct key_value_pair *prev_heuristic_result = NULL;
     skip_other_steps_this_face = MOVE_NONE;
     struct ida_search_result search_result, tmp_search_result;
-    struct key_value_pair *main_table_node = NULL;
     unsigned int pt0_state = 0;
     unsigned int pt1_state = 0;
     unsigned int pt2_state = 0;
@@ -450,21 +445,6 @@ ida_search (
         cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
     }
 
-    if (main_table) {
-        main_table_node = hash_find(&main_table, lt_state);
-
-        if (main_table_node) {
-            // LOG("lt_state %s has cost %d (pt cost was %d), cost_to_here %d\n",
-            //      lt_state, main_table_node->value, cost_to_goal, cost_to_here);
-
-            if (main_table_node->value > cost_to_goal) {
-                cost_to_goal = main_table_node->value;
-            }
-        } else {
-            cost_to_goal = (main_table_max_depth + 1 > cost_to_goal) ? main_table_max_depth + 1 : cost_to_goal;
-        }
-    }
-
     f_cost = cost_to_here + cost_to_goal;
     search_result.f_cost = f_cost;
     search_result.found_solution = 0;
@@ -490,7 +470,6 @@ ida_search (
             LOG("pt0_state %07u, cost %d\n", prev_pt0_state, pt0_cost);
             LOG("pt1_state %07u, cost %d\n", prev_pt1_state, pt1_cost);
             LOG("pt2_state %07u, cost %d\n", prev_pt2_state, pt2_cost);
-            LOG("lt_state %s, cost %d\n", lt_state, main_table_node->value);
             exit(1);
         }
          */
@@ -732,46 +711,6 @@ read_file (char *filename)
 }
 
 
-void
-ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
-{
-    FILE *fh_read = NULL;
-    int BUFFER_SIZE = 128;
-    char buffer[BUFFER_SIZE];
-    char token_buffer[BUFFER_SIZE];
-    char moves[BUFFER_SIZE];
-    char *token_ptr = NULL;
-    char state[BUFFER_SIZE];
-    int cost = 0;
-    struct key_value_pair * pt_entry = NULL;
-
-    fh_read = fopen(filename, "r");
-    if (fh_read == NULL) {
-        printf("ERROR: ida_prune_table_preload could not open %s\n", filename);
-        exit(1);
-    }
-
-    if (!main_table_state_length) {
-        printf("ERROR: --main-table-state-length must be defined before --main-table");
-        exit(1);
-    }
-
-    LOG("ida_prune_table_preload %s: start\n", filename);
-    unsigned char cost_index = main_table_state_length + 1;
-
-    // If there are two PTs then main_table_state_length should be 15, 7 for
-    // each state and 1 for the - between them.
-    while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
-        buffer[main_table_state_length] = '\0';
-        cost = atoi(&buffer[cost_index]);
-        hash_add(hashtable, buffer, cost);
-    }
-
-    fclose(fh_read);
-    LOG("ida_prune_table_preload %s: end\n", filename);
-}
-
-
 int
 main (int argc, char *argv[])
 {
@@ -855,22 +794,6 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--max-ida")) {
             i++;
             max_ida_threshold = atoi(argv[i]);
-
-        } else if (strmatch(argv[i], "--main-table")) {
-            i++;
-            ida_prune_table_preload(&main_table, argv[i]);
-
-        } else if (strmatch(argv[i], "--main-table-prune-tables")) {
-            i++;
-            strcpy(main_table_prune_tables, argv[i]);
-
-        } else if (strmatch(argv[i], "--main-table-max-depth")) {
-            i++;
-            main_table_max_depth = atoi(argv[i]);
-
-        } else if (strmatch(argv[i], "--main-table-state-length")) {
-            i++;
-            main_table_state_length = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--multiplier")) {
             i++;
@@ -1021,13 +944,6 @@ main (int argc, char *argv[])
             printf("ERROR: %s is an invalid arg\n\n", argv[i]);
             exit(1);
         }
-    }
-
-    if ((main_table || main_table_max_depth || main_table_state_length) &&
-        (!main_table || !main_table_max_depth || !main_table_state_length)) {
-
-        printf("ERROR: must specify --main-table-state-length, --main-table and --main-table-max-depth\n\n");
-        exit(1);
     }
 
     // build the move matrix, we do this to avoid tons of

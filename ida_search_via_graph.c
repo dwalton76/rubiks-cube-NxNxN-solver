@@ -40,8 +40,6 @@ char main_table_prune_tables[10];
 unsigned char COST_LENGTH = 1;
 unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
-unsigned char use_lt_explored = 0;
-unsigned char use_pt_total_cost = 0;
 float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
@@ -140,6 +138,7 @@ get_cost_to_goal (
             exit(1);
         };
     }
+    cost_to_goal = perfect_hash_cost;
 
     switch (pt_count) {
     case 4:
@@ -149,25 +148,11 @@ get_cost_to_goal (
         pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
-        cost_to_goal = pt4_cost;
+        cost_to_goal = (pt4_cost > cost_to_goal) ? pt4_cost : cost_to_goal;
         cost_to_goal = (pt3_cost > cost_to_goal) ? pt3_cost : cost_to_goal;
         cost_to_goal = (pt2_cost > cost_to_goal) ? pt2_cost : cost_to_goal;
         cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
-
-        /*
-        if (main_table || use_lt_explored) {
-            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
-            snprintf(lt_state, STATE_SIZE, "%07u-%07u-%07u-%07u-%07u",
-                prev_pt0_state,
-                prev_pt1_state,
-                prev_pt2_state,
-                prev_pt3_state,
-                prev_pt4_state);
-            printf("ERROR: add lt_state support for %s\n", main_table_prune_tables);
-            exit(1);
-        }
-         */
         break;
 
     case 3:
@@ -176,23 +161,10 @@ get_cost_to_goal (
         pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
-        cost_to_goal = pt3_cost;
+        cost_to_goal = (pt3_cost > cost_to_goal) ? pt3_cost : cost_to_goal;
         cost_to_goal = (pt2_cost > cost_to_goal) ? pt2_cost : cost_to_goal;
         cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
-
-        /*
-        if (main_table || use_lt_explored) {
-            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
-            snprintf(lt_state, STATE_SIZE, "%07u-%07u-%07u-%07u",
-                prev_pt0_state,
-                prev_pt1_state,
-                prev_pt2_state,
-                prev_pt3_state);
-            printf("ERROR: add lt_state support for %s\n", main_table_prune_tables);
-            exit(1);
-        }
-        */
         break;
 
     case 2:
@@ -200,58 +172,23 @@ get_cost_to_goal (
         pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
-        cost_to_goal = perfect_hash_cost;
         cost_to_goal = (pt2_cost > cost_to_goal) ? pt2_cost : cost_to_goal;
         cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
         cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
-
-        /*
-        if (main_table || use_lt_explored) {
-            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
-
-            if (strmatch(main_table_prune_tables, "1,2")) {
-                snprintf(lt_state, STATE_SIZE, "%07u-%07u",
-                    prev_pt1_state,
-                    prev_pt2_state);
-            } else {
-                printf("ERROR: add lt_state support for %s\n", main_table_prune_tables);
-                exit(1);
-            }
-        }
-        */
         break;
 
     case 1:
         pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
-        cost_to_goal = (pt1_cost > pt0_cost) ? pt1_cost : pt0_cost;
-
-        /*
-        if (main_table || use_lt_explored) {
-            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
-            snprintf(lt_state, STATE_SIZE, "%07u-%07u",
-                prev_pt0_state,
-                prev_pt1_state);
-            printf("ERROR: add lt_state support for %s\n", main_table_prune_tables);
-            exit(1);
-        }
-        */
+        cost_to_goal = (pt1_cost > cost_to_goal) ? pt1_cost : cost_to_goal;
+        cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
         break;
 
     default:
         pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
-        cost_to_goal = pt0_cost;
-
-        /*
-        if (main_table || use_lt_explored) {
-            memset(lt_state, '\0', sizeof(char) * STATE_SIZE);
-            snprintf(lt_state, STATE_SIZE, "%07u", prev_pt0_state);
-            printf("ERROR: add lt_state support for %s\n", main_table_prune_tables);
-            exit(1);
-        }
-        */
+        cost_to_goal = (pt0_cost > cost_to_goal) ? pt0_cost : cost_to_goal;
         break;
     }
 
@@ -304,7 +241,6 @@ print_ida_summary (
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
     unsigned char steps_to_solved = solution_len;
-    unsigned char total = 0;
 
     ctg = get_cost_to_goal(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
     cost_to_goal = ctg.cost_to_goal;
@@ -313,13 +249,12 @@ print_ida_summary (
     pt2_cost = ctg.pt2_cost;
     pt3_cost = ctg.pt3_cost;
     pt4_cost = ctg.pt4_cost;
-    total = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
 
     printf("\n");
-    printf("       PT0  PT1  PT2  PT3  PT4  PER  CTG  TOT  TRU  IDX\n");
-    printf("       ===  ===  ===  ===  ===  ===  ===  ===  ===  ===\n");
-    printf("       %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d\n",
-        pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, ctg.perfect_hash_cost, cost_to_goal, total, steps_to_solved, 0);
+    printf("       PT0  PT1  PT2  PT3  PT4  PER  CTG  TRU  IDX\n");
+    printf("       ===  ===  ===  ===  ===  ===  ===  ===  ===\n");
+    printf("       %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d\n",
+        pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, ctg.perfect_hash_cost, cost_to_goal, steps_to_solved, 0);
 
     for (unsigned char i = 0; i < solution_len; i++) {
         unsigned char j = 0;
@@ -371,12 +306,10 @@ print_ida_summary (
         pt2_cost = ctg.pt2_cost;
         pt3_cost = ctg.pt3_cost;
         pt4_cost = ctg.pt4_cost;
-        total = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
         steps_to_solved--;
-        printf("%5s  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d\n",
-            move2str[solution[i]], pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, ctg.perfect_hash_cost, cost_to_goal, total, steps_to_solved,
-            i+1);
-
+        printf("%5s  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d\n",
+            move2str[solution[i]], pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost,
+            ctg.perfect_hash_cost, cost_to_goal, steps_to_solved, i+1);
     }
     printf("\n");
 }
@@ -479,8 +412,7 @@ ida_search (
     unsigned int prev_pt3_state,
     unsigned int prev_pt4_state,
     unsigned char orbit0_wide_quarter_turns,
-    unsigned char orbit1_wide_quarter_turns,
-    unsigned char prev_pt_total_cost)
+    unsigned char orbit1_wide_quarter_turns)
 {
     struct cost_to_goal_result ctg;
     unsigned char cost_to_goal = 0;
@@ -501,7 +433,6 @@ ida_search (
     unsigned char pt2_cost = 0;
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
-    unsigned char pt_total_cost = 0;
     unsigned char STATE_SIZE = 48;
     unsigned char lt_state[STATE_SIZE];
 
@@ -514,7 +445,6 @@ ida_search (
     pt2_cost = ctg.pt2_cost;
     pt3_cost = ctg.pt3_cost;
     pt4_cost = ctg.pt4_cost;
-    pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
 
     if (cost_to_goal_multiplier) {
         cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
@@ -580,36 +510,6 @@ ida_search (
         }
          */
         return search_result;
-    }
-
-    // It feels like about 99% of the time this is a safe way to speed up the IDA
-    // search.  There are times though when the total pt_cost will increase as we
-    // traverse down the branch that is the solution.
-    if (use_pt_total_cost && cost_to_here >= 2 && pt_total_cost > prev_pt_total_cost) {
-        return search_result;
-    }
-
-    // The act of computing lt_state and looking to see if lt_state is in ida_explored
-    // cuts the nodes-per-sec rate by about 75% but it can also drastically reduce the number
-    // of nodes we need to visit and result in a net win. This can chew through a LOT of
-    // memory on a big search though. This is disabled by default but can be enabled via
-    // the command line.
-    if (use_lt_explored) {
-        prev_heuristic_result = hash_find(&ida_explored, lt_state);
-
-        if (prev_heuristic_result) {
-            if (prev_heuristic_result->value <= cost_to_here) {
-                //LOG("STOP strlen lt_state %d, prev_pt0_state %lu, prev_pt1_state %lu, value %lu, cost_to_here %lu\n",
-                //    strlen(lt_state), prev_pt0_state, prev_pt1_state, prev_heuristic_result->value, cost_to_here);
-                return search_result;
-            } else {
-                //LOG("CONT strlen lt_state %d, prev_pt0_state %lu, prev_pt1_state %lu, value %lu, cost_to_here %lu\n",
-                //    strlen(lt_state), prev_pt0_state, prev_pt1_state, prev_heuristic_result->value, cost_to_here);
-                hash_delete(&ida_explored, prev_heuristic_result);
-            }
-        }
-
-        hash_add(&ida_explored, lt_state, cost_to_here);
     }
 
     unsigned int offset = 0;
@@ -686,8 +586,7 @@ ida_search (
             pt3_state,
             pt4_state,
             orbit0_wide_quarter_turns,
-            orbit1_wide_quarter_turns,
-            pt_total_cost);
+            orbit1_wide_quarter_turns);
 
         if (tmp_search_result.found_solution) {
             return tmp_search_result;
@@ -740,7 +639,6 @@ ida_solve (
     pt2_cost = ctg.pt2_cost;
     pt3_cost = ctg.pt3_cost;
     pt4_cost = ctg.pt4_cost;
-    unsigned char pt_total_cost = pt0_cost + pt1_cost + pt2_cost + pt3_cost + pt4_cost;
 
     // LOG("min_ida_threshold %d\n", min_ida_threshold);
     if (min_ida_threshold >= max_ida_threshold) {
@@ -765,8 +663,7 @@ ida_solve (
             pt3_state,
             pt4_state,
             orbit0_wide_quarter_turns,
-            orbit1_wide_quarter_turns,
-            pt_total_cost);
+            orbit1_wide_quarter_turns);
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
@@ -978,12 +875,6 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--multiplier")) {
             i++;
             cost_to_goal_multiplier = atof(argv[i]);
-
-        } else if (strmatch(argv[i], "--use-lt-explored")) {
-            use_lt_explored = 1;
-
-        } else if (strmatch(argv[i], "--use-pt-total-cost")) {
-            use_pt_total_cost = 1;
 
         } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
             orbit0_wide_quarter_turns = 1;

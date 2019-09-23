@@ -51,7 +51,6 @@ class LookupTableIDAViaGraph(LookupTable):
         legal_moves=[],
         prune_tables=[],
         multiplier=None,
-        use_pt_total_cost=False,
         main_table_state_length=None,
         main_table_max_depth=None,
         main_table_prune_tables=None,
@@ -68,7 +67,6 @@ class LookupTableIDAViaGraph(LookupTable):
         self.nuke_centers = False
         self.prune_tables = prune_tables
         self.multiplier = multiplier
-        self.use_pt_total_cost = use_pt_total_cost
         self.main_table_state_length = main_table_state_length
         self.main_table_max_depth = main_table_max_depth
         self.main_table_prune_tables = main_table_prune_tables
@@ -138,8 +136,19 @@ class LookupTableIDAViaGraph(LookupTable):
             # self.parent.print_cube()
             # sys.exit(0)
 
-    def build_ida_graph(self):
+    def build_ida_graph_set_cube_state(self, state, steps_to_scramble):
+        # If the table we are building is one with multiple goal states then the
+        # child class must override this method.
+        self.parent.re_init()
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
+
+    def build_ida_graph(self, start=None, end=None):
         pt_state_filename = self.filename.replace(".txt", ".pt_state")
+
+        if start is not None:
+            pt_state_filename += f"-{start}-{end}"
+
         parent = self.parent
 
         for pt in self.prune_tables:
@@ -151,6 +160,13 @@ class LookupTableIDAViaGraph(LookupTable):
         with open(pt_state_filename, "w") as fh_pt_state:
             with open(self.filename, "r") as fh:
                 for (line_number, line) in enumerate(fh):
+
+                    if start is not None and line_number < start:
+                        continue
+
+                    if end is not None and line_number > end:
+                        break
+
                     (state, steps_to_solve) = line.rstrip().split(":")
                     steps_to_solve = steps_to_solve.split()
 
@@ -160,11 +176,7 @@ class LookupTableIDAViaGraph(LookupTable):
                         cost_to_goal = len(steps_to_solve)
 
                     steps_to_scramble = reverse_steps(steps_to_solve)
-
-                    parent.re_init()
-                    for step in steps_to_scramble:
-                        parent.rotate(step)
-
+                    self.build_ida_graph_set_cube_state(state, steps_to_scramble)
                     self.init_ida_graph_nodes()
                     pt_ida_graph_nodes = self.get_ida_graph_nodes()
 
@@ -180,7 +192,11 @@ class LookupTableIDAViaGraph(LookupTable):
                     if line_number and line_number % 100000 == 0:
                         fh_pt_state.write("\n".join(to_write) + "\n")
                         to_write = []
-                        log.info(f"line {line_number:,}")
+
+                        if start is not None:
+                            log.info(f"{start:,}->{end:,} line {line_number:,}")
+                        else:
+                            log.info(f"line {line_number:,}")
 
             if to_write:
                 fh_pt_state.write("\n".join(to_write) + "\n")
@@ -209,9 +225,6 @@ class LookupTableIDAViaGraph(LookupTable):
         if self.multiplier:
             cmd.append("--multiplier")
             cmd.append(str(self.multiplier))
-
-        if self.use_pt_total_cost:
-            cmd.append("--use-pt-total-cost")
 
         if self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()

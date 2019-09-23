@@ -407,7 +407,6 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
                 parent.lt_LR_centers_stage,
                 parent.lt_FB_centers_stage,
             ],
-            use_pt_total_cost=False,
         )
 
 

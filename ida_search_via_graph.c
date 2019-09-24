@@ -586,6 +586,7 @@ ida_search (
 
 struct ida_search_result
 ida_solve (
+    unsigned char cost_to_here,
     unsigned int pt0_state,
     unsigned int pt1_state,
     unsigned int pt2_state,
@@ -633,7 +634,7 @@ ida_solve (
         hash_delete_all(&ida_explored);
 
         search_result = ida_search(
-            0,
+            cost_to_here,
             moves_to_here,
             MOVE_NONE,
             pt0_state,
@@ -994,35 +995,40 @@ main (int argc, char *argv[])
         char *line = NULL;
         size_t len = 0;
         ssize_t read = 0;
-        unsigned int line_number = 0;
+        unsigned int line_index = 0;
         struct ida_search_result min_search_result;
         min_search_result.f_cost = 99;
 
         fh_read = fopen(prune_table_states_filename, "r");
         while ((read = getline(&line, &len, fh_read)) != -1) {
             // printf("%s", line);
-            unsigned char pt_index = 0;
+            unsigned char token_index = 0;
+            unsigned char pre_steps_cost = 0;
+
             char *pt;
             pt = strtok (line, ",");
             while (pt != NULL) {
                 int a = atoi(pt);
                 pt = strtok (NULL, ",");
 
-                if (pt_index == 0) {
+                if (token_index == 0) {
+                    pre_steps_cost = a;
+                } else if (token_index == 1) {
                     prune_table_0_state = a;
-                } else if (pt_index == 1) {
+                } else if (token_index == 2) {
                     prune_table_1_state = a;
-                } else if (pt_index == 2) {
+                } else if (token_index == 3) {
                     prune_table_2_state = a;
-                } else if (pt_index == 3) {
+                } else if (token_index == 4) {
                     prune_table_3_state = a;
-                } else if (pt_index == 4) {
+                } else if (token_index == 5) {
                     prune_table_4_state = a;
                 }
-                pt_index++;
+                token_index++;
             }
 
             search_result = ida_solve(
+                pre_steps_cost,
                 prune_table_0_state,
                 prune_table_1_state,
                 prune_table_2_state,
@@ -1033,13 +1039,14 @@ main (int argc, char *argv[])
                 orbit1_wide_quarter_turns);
 
             if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
+                printf("LINE INDEX %d\n", line_index);
                 LOG("NEW MIN %d\n\n", search_result.f_cost);
                 min_search_result = search_result;
                 max_ida_threshold = search_result.f_cost;
                 break;
             }
 
-            line_number++;
+            line_index++;
         }
 
         fclose(fh_read);
@@ -1051,6 +1058,7 @@ main (int argc, char *argv[])
 
     } else {
         search_result = ida_solve(
+            0,
             prune_table_0_state,
             prune_table_1_state,
             prune_table_2_state,

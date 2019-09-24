@@ -200,7 +200,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 fh_pt_state.write("\n".join(to_write) + "\n")
                 to_write = []
 
-    def solve_via_c(self, max_ida_threshold=None, pt_states=[]):
+    def solve_via_c(self, max_ida_threshold=None, pt_states=[], line_index_pre_steps={}):
         cmd = ["./ida_search_via_graph",]
 
         if pt_states:
@@ -278,16 +278,23 @@ class LookupTableIDAViaGraph(LookupTable):
 
         output = subprocess.check_output(cmd).decode("utf-8").splitlines()
         last_solution = None
+        last_solution_line_index = None
 
         for line in output:
             if line.startswith("SOLUTION:"):
                 last_solution = line
+            elif line.startswith("LINE INDEX"):
+                last_solution_line_index = int(line.strip().split()[-1])
 
         if last_solution:
             log.info("\n" + "\n".join(remove_failed_ida_output(output)) + "\n")
+
+            for step in line_index_pre_steps.get(last_solution_line_index, []):
+                self.parent.rotate(step)
+
             solution = last_solution.strip().split(":")[1].split()
             for step in solution:
                 self.parent.rotate(step)
-            return
+            return last_solution_line_index
 
         raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % "\n".join(output))

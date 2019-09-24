@@ -2591,119 +2591,6 @@ class LookupTable555Phase5Centers(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTable555Phase5FourEdges(LookupTable):
-    """
-    lookup-table-5x5x5-step52-phase5-edges.txt
-    ==========================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 30 entries (0 percent, 6.00x previous step)
-    3 steps has 200 entries (0 percent, 6.67x previous step)
-    4 steps has 1,296 entries (0 percent, 6.48x previous step)
-    5 steps has 8,187 entries (0 percent, 6.32x previous step)
-    6 steps has 49,334 entries (0 percent, 6.03x previous step)
-    7 steps has 283,026 entries (0 percent, 5.74x previous step)
-    8 steps has 1,528,102 entries (0 percent, 5.40x previous step)
-    9 steps has 7,504,518 entries (3 percent, 4.91x previous step)
-    10 steps has 30,068,326 entries (15 percent, 4.01x previous step)
-    11 steps has 76,791,716 entries (38 percent, 2.55x previous step)
-    12 steps has 72,115,012 entries (36 percent, 0.94x previous step)
-    13 steps has 9,182,472 entries (4 percent, 0.13x previous step)
-    14 steps has 35,776 entries (0 percent, 0.00x previous step)
-
-    Total: 197,568,000 entries
-    Average: 11.20 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step52-phase5-edges-count-only.txt',
-            'TBD',
-            linecount=197568000,
-            max_depth=14,
-            filesize=7902720000,
-        )
-        self.wing_strs = None
-
-    def ida_heuristic(self):
-        assert self.wing_strs and len(self.wing_strs) == 4, "You must specify which 4-edges"
-        state = edges_recolor_pattern_555(self.parent.state[:], self.wing_strs)
-        state = "".join([state[index] for index in wings_for_edges_pattern_555])
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
-class LookupTable555Phase5ThreeEdges(LookupTable):
-    """
-    lookup-table-5x5x5-step55-phase5-three-edges.txt
-    ================================================
-    1 steps has 8 entries (0 percent, 0.00x previous step)
-    2 steps has 49 entries (0 percent, 6.12x previous step)
-    3 steps has 313 entries (0 percent, 6.39x previous step)
-    4 steps has 2,254 entries (0 percent, 7.20x previous step)
-    5 steps has 14,008 entries (0 percent, 6.21x previous step)
-    6 steps has 78,388 entries (1 percent, 5.60x previous step)
-    7 steps has 370,199 entries (5 percent, 4.72x previous step)
-    8 steps has 1,355,851 entries (21 percent, 3.66x previous step)
-    9 steps has 2,846,685 entries (45 percent, 2.10x previous step)
-    10 steps has 1,604,867 entries (25 percent, 0.56x previous step)
-    11 steps has 49,554 entries (0 percent, 0.03x previous step)
-
-    Total: 6,322,176 entries
-    Average: 8.89 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step55-phase5-three-edges.txt',
-            '---------------TTtuUUVVv------------',
-            linecount=6322176,
-            max_depth=11,
-            filesize=493129728,
-            all_moves=moves_555,
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Lw", "Lw'",
-                "Rw", "Rw'",
-                "L", "L'",
-                "R", "R'",
-                "U", "U'",
-                "D", "D'"
-            ),
-        )
-        self.wing_strs = ("LF", "RF", "RB")
-
-    def state(self):
-        parent_state = self.parent.state
-        state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
-        return "".join([state[index] for index in wings_for_edges_pattern_555]).replace(".", "-")
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        steps_to_solve = steps_to_solve.split()
-        steps_to_scramble = reverse_steps(steps_to_solve)
-
-        self.parent.state = ['x']
-        self.parent.state.extend(list("UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"))
-        self.parent.nuke_corners()
-        self.parent.nuke_centers()
-        LB_edges = (31, 36, 41)
-        self.parent.nuke_edges_specific(LB_edges)
-        self.parent.nuke_edges_in_y_plane()
-        self.parent.nuke_edges_in_z_plane()
-        parent_state = self.parent.state
-
-        for step in steps_to_scramble:
-            self.parent.rotate(step)
-
-        cube = self.parent.state[:]
-
-
 class LookupTable555Phase5HighEdgeMidge(LookupTable):
     """
     lookup-table-5x5x5-step53-phase5-high-edge-and-midge.txt
@@ -2923,6 +2810,7 @@ class LookupTable555Phase5FBCentersLowEdgeMidge(LookupTableIDAViaGraph):
         FB_state = state[0:18]
         for (pos, x) in zip(FB_centers_555, FB_state):
             self.parent.state[pos] = x
+
 
 class LookupTable555Phase5FBCenters(LookupTable):
     """
@@ -3551,10 +3439,8 @@ class RubiksCube555(RubiksCube):
         self.lt_phase4 = LookupTable555Phase4(self)
 
         self.lt_phase5_centers = LookupTable555Phase5Centers(self)
-        self.lt_phase5_four_edges = LookupTable555Phase5FourEdges(self)
         self.lt_phase5_high_edge_midge = LookupTable555Phase5HighEdgeMidge(self)
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
-        #self.lt_phase5_four_edges_three_edges = LookupTable555Phase5ThreeEdges(self)
         self.lt_phase5_fb_centers = LookupTable555Phase5FBCenters(self)
         #self.lt_phase5_fb_centers_high_edge_midge = LookupTable555Phase5FBCentersHighEdgeMidge(self)
         #self.lt_phase5_fb_centers_low_edge_midge = LookupTable555Phase5FBCentersLowEdgeMidge(self)
@@ -3808,6 +3694,7 @@ class RubiksCube555(RubiksCube):
             self.edges_flip_orientation(must_be_uppercase, must_be_lowercase)
 
             pt_states.append((
+                0,
                 self.lt_phase3_lr_center_stage_eo_inner_orbit.state_index(),
                 self.lt_phase3_eo_outer_orbit.state_index()
             ))
@@ -3815,7 +3702,6 @@ class RubiksCube555(RubiksCube):
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-        # dwalton reference for passing pt_states to solve_via_c
         for x in range(9, 30):
             try:
                 self.lt_phase3.solve_via_c(max_ida_threshold=x, pt_states=pt_states)
@@ -3857,6 +3743,7 @@ class RubiksCube555(RubiksCube):
         # Put all 495 wing_str states in a file and point ida-via-graph
         # at the file so it can solve all of them and apply the one that is the shortest.
         pt_states = []
+        line_index_pre_steps = {}
 
         for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
             self.state = original_state[:]
@@ -3866,82 +3753,34 @@ class RubiksCube555(RubiksCube):
             self.lt_phase4.wing_strs = wing_str_combo
             (_state, cost_to_stage) = self.lt_phase4.ida_heuristic()
             self.lt_phase4.solve()
-            phase4_solution_len = len(self.solution[original_solution_len:])
+            phase4_solution = self.solution[original_solution_len:]
+            phase4_solution_len = len(phase4_solution)
+            line_index_pre_steps[wing_str_index] = phase4_solution
 
             self.edges_flip_orientation(wing_str_combo, [])
 
-            self.lt_phase5_four_edges.wing_strs = wing_str_combo
             self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
             self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
-            self.lt_phase5_four_edges.wing_strs = wing_str_combo
-            # self.lt_phase5_four_edges_three_edges.wing_strs = wing_str_combo[0:3]
 
-            # dwalton
             pt_states.append((
+                phase4_solution_len,
                 self.lt_phase5_centers.state_index(),
                 self.lt_phase5_fb_centers.state_index(),
                 self.lt_phase5_high_edge_midge.state_index(),
                 self.lt_phase5_low_edge_midge.state_index(),
             ))
 
-            #(_state, cost_to_pair_four_edges) = self.lt_phase5_four_edges.ida_heuristic()
-            #costs.append((cost_to_pair_four_edges, wing_str_combo))
-
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-        for x in range(9, 30):
+        for x in range(12, 30):
             try:
-                self.lt_phase5.solve_via_c(max_ida_threshold=x, pt_states=pt_states)
+                min_wing_str_combo_index = self.lt_phase5.solve_via_c(max_ida_threshold=x, pt_states=pt_states, line_index_pre_steps=line_index_pre_steps)
                 break
             except NoIDASolution:
                 pass
 
-        sys.exit(0)
-
-        costs.sort()
-        # log.info("Top 50 wing_str_combo (total cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo)\n%s\n" % "\n".join(map(str, costs[0:50])))
-
-        for (wing_str_index, (cost_to_pair_four_edges, wing_str_combo)) in enumerate(costs):
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-            self.lt_phase4.wing_strs = wing_str_combo
-            (_state, cost_to_stage) = self.lt_phase4.ida_heuristic()
-            self.lt_phase4.solve()
-            phase4_solution_len = len(self.solution[original_solution_len:])
-
-            # cost to pair those 4-edges?
-            self.edges_flip_orientation(wing_str_combo, [])
-            self.lt_phase5_four_edges.wing_strs = wing_str_combo
-            self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
-            self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
-            self.lt_phase5_four_edges.wing_strs = wing_str_combo
-            # self.lt_phase5_four_edges_three_edges.wing_strs = wing_str_combo[0:3]
-            max_ida = min_solution_len - phase4_solution_len
-
-            try:
-                log.info("%s: wing_strs %d/495 %s phase4_solution_len %d, max_ida %d (curr min %d)", self, wing_str_index+1, " ".join(wing_str_combo), phase4_solution_len, max_ida, min_solution_len)
-
-                self.lt_phase5.solve_via_c(max_ida)
-                phase45_solution = self.solution[original_solution_len:]
-                phase45_solution_len = self.get_solution_len_minus_rotates(phase45_solution)
-                phase5_solution_len = phase45_solution_len - phase4_solution_len
-
-                if phase45_solution_len < min_solution_len:
-                    min_solution = phase45_solution[:]
-                    min_solution_len = phase45_solution_len
-                    min_wing_str_combo = wing_str_combo
-                    log.info("%s: wing_strs %d/495 %s solved in %d steps (%d + %d) (NEW MIN)\n\n" % (self, wing_str_index+1, " ".join(wing_str_combo),
-                        min_solution_len, phase4_solution_len, phase5_solution_len))
-                else:
-                    log.info("%s: wing_strs %d/495 %s solved in %d steps (%d + %d) (curr min %d)\n\n" % (self, wing_str_index+1, " ".join(wing_str_combo),
-                        phase45_solution_len, phase4_solution_len, phase5_solution_len, min_solution_len))
-
-            except subprocess.CalledProcessError:
-                phase5_solution_len = 99
-                log.info("%s: wing_strs %d/495 %s solved in %d steps (%d + %d) (curr min %d)\n\n" % (self, wing_str_index+1, " ".join(wing_str_combo),
-                    phase45_solution_len, phase4_solution_len, phase5_solution_len, min_solution_len))
-
+        min_wing_str_combo = list(itertools.combinations(wing_strs_all, 4))[min_wing_str_combo_index]
         self.state = original_state[:]
         self.solution = original_solution[:]
         self.lt_phase4.wing_strs = min_wing_str_combo
@@ -3956,8 +3795,6 @@ class RubiksCube555(RubiksCube):
         self.edges_flip_orientation(min_wing_str_combo, [])
         self.lt_phase5_high_edge_midge.wing_strs = min_wing_str_combo
         self.lt_phase5_low_edge_midge.wing_strs = min_wing_str_combo
-        self.lt_phase5_four_edges.wing_strs = min_wing_str_combo
-        self.lt_phase5_four_edges_three_edges.wing_strs = min_wing_str_combo[0:3]
         self.lt_phase5.solve_via_c()
 
         pair_four_edge_solution = self.solution[original_solution_len:]

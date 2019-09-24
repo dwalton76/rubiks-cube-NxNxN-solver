@@ -35,7 +35,10 @@ cube.lt_init()
 #cube.lt_phase5_high_edge_midge.build_ida_graph()
 #cube.lt_phase5_fb_centers.build_ida_graph()
 
-cube.lt_phase5_fb_centers_low_edge_midge.build_ida_graph()
+start = int(sys.argv[1])
+end = int(sys.argv[2])
+cube.lt_phase5_fb_centers_high_edge_midge.build_ida_graph(start, end)
+#cube.lt_phase5_fb_centers_low_edge_midge.build_ida_graph()
 
 # print(cube.highlow_edges_state())
 

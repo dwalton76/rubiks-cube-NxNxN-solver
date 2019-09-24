@@ -18,6 +18,7 @@ unsigned long long ida_count_total = 0;
 struct key_value_pair *ida_explored = NULL;
 unsigned char legal_move_count = 0;
 unsigned char threshold = 0;
+unsigned char find_multiple_solutions = 0;
 unsigned char *pt0 = NULL;
 unsigned char *pt1 = NULL;
 unsigned char *pt2 = NULL;
@@ -237,6 +238,10 @@ print_ida_summary (
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
     unsigned char steps_to_solved = solution_len;
+
+    if (find_multiple_solutions) {
+        return;
+    }
 
     ctg = get_cost_to_goal(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
     cost_to_goal = ctg.cost_to_goal;
@@ -568,7 +573,11 @@ ida_search (
             orbit1_wide_quarter_turns);
 
         if (tmp_search_result.found_solution) {
-            return tmp_search_result;
+            if (find_multiple_solutions) {
+                search_result.found_solution = 1;
+            } else {
+                return tmp_search_result;
+            }
         } else {
             moves_to_here[cost_to_here] = MOVE_NONE;
 
@@ -592,12 +601,12 @@ ida_solve (
     unsigned int pt2_state,
     unsigned int pt3_state,
     unsigned int pt4_state,
+    unsigned char min_ida_threshold,
     unsigned char max_ida_threshold,
     unsigned char orbit0_wide_quarter_turns,
     unsigned char orbit1_wide_quarter_turns)
 {
     struct cost_to_goal_result ctg;
-    unsigned char min_ida_threshold = 0;
     move_type moves_to_here[max_ida_threshold];
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
@@ -613,12 +622,15 @@ ida_solve (
     setlocale(LC_NUMERIC, "");
 
     ctg = get_cost_to_goal(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
-    min_ida_threshold = ctg.cost_to_goal;
     pt0_cost = ctg.pt0_cost;
     pt1_cost = ctg.pt1_cost;
     pt2_cost = ctg.pt2_cost;
     pt3_cost = ctg.pt3_cost;
     pt4_cost = ctg.pt4_cost;
+
+    if (!min_ida_threshold) {
+        min_ida_threshold = ctg.cost_to_goal;
+    }
 
     // LOG("min_ida_threshold %d\n", min_ida_threshold);
     if (min_ida_threshold >= max_ida_threshold) {
@@ -720,6 +732,7 @@ main (int argc, char *argv[])
     unsigned long prune_table_2_state = 0;
     unsigned long prune_table_3_state = 0;
     unsigned long prune_table_4_state = 0;
+    unsigned char min_ida_threshold = 0;
     unsigned char max_ida_threshold = 30;
     unsigned char orbit0_wide_quarter_turns = 0;
     unsigned char orbit1_wide_quarter_turns = 0;
@@ -792,6 +805,10 @@ main (int argc, char *argv[])
             i++;
             prune_table_states_filename = argv[i];
 
+        } else if (strmatch(argv[i], "--min-ida")) {
+            i++;
+            min_ida_threshold = atoi(argv[i]);
+
         } else if (strmatch(argv[i], "--max-ida")) {
             i++;
             max_ida_threshold = atoi(argv[i]);
@@ -799,6 +816,9 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--multiplier")) {
             i++;
             cost_to_goal_multiplier = atof(argv[i]);
+
+        } else if (strmatch(argv[i], "--multiple-solutions")) {
+            find_multiple_solutions = 1;
 
         } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
             orbit0_wide_quarter_turns = 1;
@@ -1034,6 +1054,7 @@ main (int argc, char *argv[])
                 prune_table_2_state,
                 prune_table_3_state,
                 prune_table_4_state,
+                min_ida_threshold,
                 max_ida_threshold,
                 orbit0_wide_quarter_turns,
                 orbit1_wide_quarter_turns);
@@ -1064,6 +1085,7 @@ main (int argc, char *argv[])
             prune_table_2_state,
             prune_table_3_state,
             prune_table_4_state,
+            min_ida_threshold,
             max_ida_threshold,
             orbit0_wide_quarter_turns,
             orbit1_wide_quarter_turns);

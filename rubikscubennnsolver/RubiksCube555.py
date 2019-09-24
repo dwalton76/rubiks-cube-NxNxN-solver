@@ -1028,7 +1028,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
                 parent.lt_FB_x_centers_stage,
             ],
             perfect_hash_filename="lookup-table-5x5x5-step20-FB-centers-stage.pt-state-perfect-hash",
-            pt1_state_max=12870,
+            pt2_state_max=12870,
         )
 
 
@@ -3087,7 +3087,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_low_edge_midge,
             ),
             perfect_hash_filename="lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.pt-state-perfect-hash",
-            pt1_state_max=4900,
+            pt2_state_max=117600,
         )
 
 
@@ -3382,7 +3382,7 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
             ),
             multiplier=1.2,
             perfect_hash_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash",
-            pt1_state_max=40320,
+            pt2_state_max=40320,
         )
 
 
@@ -3556,8 +3556,8 @@ class RubiksCube555(RubiksCube):
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
         #self.lt_phase5_four_edges_three_edges = LookupTable555Phase5ThreeEdges(self)
         self.lt_phase5_fb_centers = LookupTable555Phase5FBCenters(self)
-        self.lt_phase5_fb_centers_high_edge_midge = LookupTable555Phase5FBCentersHighEdgeMidge(self)
-        self.lt_phase5_fb_centers_low_edge_midge = LookupTable555Phase5FBCentersLowEdgeMidge(self)
+        #self.lt_phase5_fb_centers_high_edge_midge = LookupTable555Phase5FBCentersHighEdgeMidge(self)
+        #self.lt_phase5_fb_centers_low_edge_midge = LookupTable555Phase5FBCentersLowEdgeMidge(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
 
         self.lt_phase6_centers = LookupTable555Phase6Centers(self)
@@ -3815,6 +3815,7 @@ class RubiksCube555(RubiksCube):
         self.state = original_state[:]
         self.solution = original_solution[:]
 
+        # dwalton reference for passing pt_states to solve_via_c
         for x in range(9, 30):
             try:
                 self.lt_phase3.solve_via_c(max_ida_threshold=x, pt_states=pt_states)
@@ -3853,7 +3854,10 @@ class RubiksCube555(RubiksCube):
         min_wing_str_combo = None
         costs = []
 
-        # dwalton
+        # Put all 495 wing_str states in a file and point ida-via-graph
+        # at the file so it can solve all of them and apply the one that is the shortest.
+        pt_states = []
+
         for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
             self.state = original_state[:]
             self.solution = original_solution[:]
@@ -3864,55 +3868,36 @@ class RubiksCube555(RubiksCube):
             self.lt_phase4.solve()
             phase4_solution_len = len(self.solution[original_solution_len:])
 
-            # cost to pair those 4-edges?
             self.edges_flip_orientation(wing_str_combo, [])
-            self.lt_phase5_four_edges.wing_strs = wing_str_combo
 
+            self.lt_phase5_four_edges.wing_strs = wing_str_combo
             self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
             self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
             self.lt_phase5_four_edges.wing_strs = wing_str_combo
             # self.lt_phase5_four_edges_three_edges.wing_strs = wing_str_combo[0:3]
 
-            '''
             # dwalton
+            pt_states.append((
+                self.lt_phase5_centers.state_index(),
+                self.lt_phase5_fb_centers.state_index(),
+                self.lt_phase5_high_edge_midge.state_index(),
+                self.lt_phase5_low_edge_midge.state_index(),
+            ))
+
+            #(_state, cost_to_pair_four_edges) = self.lt_phase5_four_edges.ida_heuristic()
+            #costs.append((cost_to_pair_four_edges, wing_str_combo))
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for x in range(9, 30):
             try:
-                PHASE6_MIN = 12
-                max_ida = min_solution_len - phase4_solution_len - PHASE6_MIN
-                self.lt_phase5.solve_via_c(max_ida)
-                phase45_solution = self.solution[original_solution_len:]
-                phase45_solution_len = self.get_solution_len_minus_rotates(phase45_solution)
-                phase5_solution_len = phase45_solution_len - phase4_solution_len
+                self.lt_phase5.solve_via_c(max_ida_threshold=x, pt_states=pt_states)
+                break
+            except NoIDASolution:
+                pass
 
-                try:
-                    max_ida = min_solution_len - phase45_solution_len
-                    self.pair_last_eight_edges(max_ida)
-                    phase456_solution = self.solution[original_solution_len:]
-                    phase456_solution_len = self.get_solution_len_minus_rotates(phase456_solution)
-                    phase6_solution_len = phase456_solution_len - phase45_solution_len
-                except subprocess.CalledProcessError:
-                    phase6_solution_len = 99
-                    phase456_solution_len = 99
-
-            except subprocess.CalledProcessError:
-                phase5_solution_len = 99
-                phase6_solution_len = 99
-                phase456_solution_len = 99
-
-            if phase456_solution_len < min_solution_len:
-                min_solution = phase456_solution[:]
-                min_solution_len = phase456_solution_len
-                min_wing_str_combo = wing_str_combo
-                log.info("%s: wing_strs %d/495 %s solved in %d steps (%d + %d + %d) (NEW MIN)\n\n" % (self, wing_str_index+1, " ".join(wing_str_combo),
-                    min_solution_len, phase4_solution_len, phase5_solution_len, phase6_solution_len))
-            else:
-                log.info("%s: wing_strs %d/495 %s solved in %d steps (%d + %d + %d) (curr min %d)\n\n" % (self, wing_str_index+1, " ".join(wing_str_combo),
-                    phase456_solution_len, phase4_solution_len, phase5_solution_len, phase6_solution_len, min_solution_len))
-
-            '''
-            (_state, cost_to_pair_four_edges) = self.lt_phase5_four_edges.ida_heuristic()
-            cost = cost_to_stage + cost_to_pair_four_edges
-            #costs.append((cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo))
-            costs.append((cost_to_pair_four_edges, wing_str_combo))
+        sys.exit(0)
 
         costs.sort()
         # log.info("Top 50 wing_str_combo (total cost, cost_to_pair_four_edges, cost_to_stage, wing_str_combo)\n%s\n" % "\n".join(map(str, costs[0:50])))

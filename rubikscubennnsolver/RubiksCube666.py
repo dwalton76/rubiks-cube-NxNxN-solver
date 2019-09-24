@@ -677,7 +677,7 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
                 parent.lt_UD_right_oblique_edges_stage,
             ),
             perfect_hash_filename="lookup-table-6x6x6-step14-UD-oblique-stage.pt-state-perfect-hash",
-            pt1_state_max=12870,
+            pt2_state_max=12870,
         )
 
 

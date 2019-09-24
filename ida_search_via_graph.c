@@ -24,7 +24,7 @@ unsigned char *pt2 = NULL;
 unsigned char *pt3 = NULL;
 unsigned char *pt4 = NULL;
 unsigned char *pt_perfect_hash = NULL;
-unsigned int pt1_state_max = 0;
+unsigned int pt2_state_max = 0;
 
 unsigned int init_pt0_state = 0;
 unsigned int init_pt1_state = 0;
@@ -77,7 +77,7 @@ get_cost_to_goal (
 
     if (pt_perfect_hash) {
         // currently the only tables that use a perfect hash do so via pt1 and pt2
-        perfect_hash_index = (prev_pt1_state * pt1_state_max) + prev_pt2_state;
+        perfect_hash_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
         perfect_hash_cost = pt_perfect_hash[perfect_hash_index];
 
         switch (perfect_hash_cost) {
@@ -783,9 +783,9 @@ main (int argc, char *argv[])
             i++;
             pt_perfect_hash = read_file(argv[i]);
 
-        } else if (strmatch(argv[i], "--pt1-state-max")) {
+        } else if (strmatch(argv[i], "--pt2-state-max")) {
             i++;
-            pt1_state_max = atoi(argv[i]);
+            pt2_state_max = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--prune-table-states")) {
             i++;
@@ -1036,6 +1036,7 @@ main (int argc, char *argv[])
                 LOG("NEW MIN %d\n\n", search_result.f_cost);
                 min_search_result = search_result;
                 max_ida_threshold = search_result.f_cost;
+                break;
             }
 
             line_number++;

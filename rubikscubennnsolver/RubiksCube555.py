@@ -3725,7 +3725,7 @@ class RubiksCube555(RubiksCube):
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-    def pair_first_four_edges(self):
+    def find_first_four_edges_to_pair(self):
 
         # In order to make phase5 much faster we need to arrange one group of 4-edges
         # so that none of them are in the z-plane.  This is the job of phase4.  There
@@ -3734,10 +3734,6 @@ class RubiksCube555(RubiksCube):
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
-        tmp_solution_len = len(self.solution)
-        min_solution = []
-        min_solution_len = 99
-        min_wing_str_combo = None
         costs = []
 
         # Put all 495 wing_str states in a file and point ida-via-graph
@@ -3783,10 +3779,24 @@ class RubiksCube555(RubiksCube):
         min_wing_str_combo = list(itertools.combinations(wing_strs_all, 4))[min_wing_str_combo_index]
         self.state = original_state[:]
         self.solution = original_solution[:]
+        return min_wing_str_combo
+
+    def pair_first_four_edges(self):
+        min_wing_str_combo = self.find_first_four_edges_to_pair()
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
         self.lt_phase4.wing_strs = min_wing_str_combo
         self.lt_phase4.solve(True)
         self.print_cube()
         log.info("%s: end of phase 4, first four edges in x-plane and y-plane, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.solution.append(
+            "COMMENT_%d_steps_555_first_four_edges_staged"
+                % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
+        )
 
         original_state = self.state[:]
         original_solution = self.solution[:]
@@ -3809,8 +3819,8 @@ class RubiksCube555(RubiksCube):
         log.info("%s: end of phase 5, x-plane edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         self.solution.append(
-            "COMMENT_%d_steps_555_x_plane_edges_paired"
-                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+            "COMMENT_%d_steps_555_first_four_edges_paired"
+                % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
         )
 
     def pair_last_eight_edges(self, max_ida=99):

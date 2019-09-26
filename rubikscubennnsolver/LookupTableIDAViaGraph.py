@@ -56,6 +56,7 @@ class LookupTableIDAViaGraph(LookupTable):
         main_table_prune_tables=None,
         perfect_hash_filename=None,
         pt2_state_max=None,
+        multiple_solutions=False,
 
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
@@ -72,6 +73,7 @@ class LookupTableIDAViaGraph(LookupTable):
         self.perfect_hash_filename = perfect_hash_filename
         self.pt2_state_max = pt2_state_max
         self.max_ida_threshold = None
+        self.multiple_solutions = multiple_solutions
 
         if self.perfect_hash_filename or self.pt2_state_max:
             assert self.perfect_hash_filename and self.pt2_state_max, "both perfect_hash_filename and pt2_state_max must be specified"
@@ -265,6 +267,9 @@ class LookupTableIDAViaGraph(LookupTable):
         if max_ida_threshold:
             cmd.append("--max-ida")
             cmd.append(str(max_ida_threshold))
+
+        if self.multiple_solutions:
+            cmd.append("--multiple-solutions")
 
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))

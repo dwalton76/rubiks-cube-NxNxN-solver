@@ -4037,6 +4037,8 @@ class RubiksCube(object):
             elif square1 == "x" and square2 == "x":
                 continue
             else:
+                self.enable_print_cube = True
+                self.print_cube()
                 raise Exception(
                     "Could not determine wing_str for (%s, %s)" % (square1, square2)
                 )
@@ -4121,6 +4123,8 @@ class RubiksCube(object):
                     target_side = self.sideD
 
                 else:
+                    self.enable_print_cube = True
+                    self.print_cube()
                     raise SolveError(
                         "invalid wing %s at (%d, %d)"
                         % (wing_str, square_index, partner_index)
@@ -4138,6 +4142,8 @@ class RubiksCube(object):
 
                         break
                 else:
+                    self.enable_print_cube = True
+                    self.print_cube()
                     raise SolveError(
                         "Could not find wing %s (%d, %d) among %s"
                         % (wing_str, square_index, partner_index, str(edge_to_check))

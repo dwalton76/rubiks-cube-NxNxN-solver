@@ -51,14 +51,17 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         start_777 = 0
         start_NNN = 0
         row0_midpoint = ceil(self.size / 2)
+        row6_midpoint = (self.size * self.size) - row0_midpoint + 1
 
         log.info("%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
             % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
         )
 
+        log.info("%s: row0_midpoint %s, row6_midpoint %s" % (self, row0_midpoint, row6_midpoint))
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
 
         for x in range(6):
+            # centers
             mid_NNN_row1 = start_NNN + row0_midpoint + (self.size * (max_center_orbits - center_orbit_id + 1))
             start_NNN_row1 = mid_NNN_row1 - (2 + cycle)
             end_NNN_row1 = mid_NNN_row1 + (2 + cycle)
@@ -188,6 +191,64 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                 # fake_777.state[start_777+41] = self.state[row5_col5]
                 fake_777.state[start_777 + 41] = side_name[x]
 
+            # edges
+            edge_row0_col1 = start_NNN + (row0_midpoint - (2 + cycle))
+            edge_row0_col2 = start_NNN + (row0_midpoint - (1 + cycle))
+            edge_row0_col3 = start_NNN + (row0_midpoint)
+            edge_row0_col4 = start_NNN + (row0_midpoint + (1 + cycle))
+            edge_row0_col5 = start_NNN + (row0_midpoint + (2 + cycle))
+
+            edge_row3_col1 = start_NNN + (((row0_midpoint - 1) * self.size) + 1)
+            edge_row1_col1 = edge_row3_col1 - ((2 + cycle) * self.size)
+            edge_row2_col1 = edge_row3_col1 - ((1 + cycle) * self.size)
+            edge_row4_col1 = edge_row3_col1 + ((1 + cycle) * self.size)
+            edge_row5_col1 = edge_row3_col1 + ((2 + cycle) * self.size)
+
+            edge_row1_col2 = edge_row1_col1 + self.size - 1
+            edge_row2_col2 = edge_row2_col1 + self.size - 1
+            edge_row3_col2 = edge_row3_col1 + self.size - 1
+            edge_row4_col2 = edge_row4_col1 + self.size - 1
+            edge_row5_col2 = edge_row5_col1 + self.size - 1
+
+            edge_row6_col1 = start_NNN + (row6_midpoint - (2 + cycle))
+            edge_row6_col2 = start_NNN + (row6_midpoint - (1 + cycle))
+            edge_row6_col3 = start_NNN + (row6_midpoint)
+            edge_row6_col4 = start_NNN + (row6_midpoint + (1 + cycle))
+            edge_row6_col5 = start_NNN + (row6_midpoint + (2 + cycle))
+
+            # log.info("%d: edges row0 %d, %d, %d, %d, %d" % (x, edge_row0_col1, edge_row0_col2, edge_row0_col3, edge_row0_col4, edge_row0_col5))
+            # log.info("%d: edges row1 %d, %d" % (x, edge_row1_col1, edge_row1_col2))
+            # log.info("%d: edges row2 %d, %d" % (x, edge_row2_col1, edge_row2_col2))
+            # log.info("%d: edges row3 %d, %d" % (x, edge_row3_col1, edge_row3_col2))
+            # log.info("%d: edges row4 %d, %d" % (x, edge_row4_col1, edge_row4_col2))
+            # log.info("%d: edges row5 %d, %d" % (x, edge_row5_col1, edge_row5_col2))
+            # log.info("%d: edges row6 %d, %d, %d, %d, %d" % (x, edge_row6_col1, edge_row6_col2, edge_row6_col3, edge_row6_col4, edge_row6_col5))
+            # log.info("\n")
+
+            fake_777.state[start_777 + 2] = self.state[edge_row0_col1]
+            fake_777.state[start_777 + 3] = self.state[edge_row0_col2]
+            fake_777.state[start_777 + 4] = self.state[edge_row0_col3]
+            fake_777.state[start_777 + 5] = self.state[edge_row0_col4]
+            fake_777.state[start_777 + 6] = self.state[edge_row0_col5]
+
+            fake_777.state[start_777 + 8] = self.state[edge_row1_col1]
+            fake_777.state[start_777 + 15] = self.state[edge_row2_col1]
+            fake_777.state[start_777 + 22] = self.state[edge_row3_col1]
+            fake_777.state[start_777 + 29] = self.state[edge_row4_col1]
+            fake_777.state[start_777 + 36] = self.state[edge_row5_col1]
+
+            fake_777.state[start_777 + 14] = self.state[edge_row1_col2]
+            fake_777.state[start_777 + 21] = self.state[edge_row2_col2]
+            fake_777.state[start_777 + 28] = self.state[edge_row3_col2]
+            fake_777.state[start_777 + 35] = self.state[edge_row4_col2]
+            fake_777.state[start_777 + 42] = self.state[edge_row5_col2]
+
+            fake_777.state[start_777 + 44] = self.state[edge_row6_col1]
+            fake_777.state[start_777 + 45] = self.state[edge_row6_col2]
+            fake_777.state[start_777 + 46] = self.state[edge_row6_col3]
+            fake_777.state[start_777 + 47] = self.state[edge_row6_col4]
+            fake_777.state[start_777 + 48] = self.state[edge_row6_col5]
+
             start_777 += 49
             start_NNN += self.size * self.size
 
@@ -203,6 +264,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         elif action == "stage_LR_centers":
             fake_777.stage_LR_centers()
         elif action == "solve_centers":
+            # Something with the vertical bars is hosing us
             fake_777.group_centers_guts()
         else:
             raise Exception("Invalid action %s" % action)

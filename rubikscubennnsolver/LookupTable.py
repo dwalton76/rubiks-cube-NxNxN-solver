@@ -899,6 +899,8 @@ class LookupTable(object):
             try:
                 return int(state_index)
             except TypeError:
+                self.parent.enable_print_cube = True
+                self.parent.print_cube()
                 log.info("%s: state %s not found" % (self, state))
                 raise
 

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-foo = sorted([
-11, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 39,
-])
+foo = [17, 18, 19, 24, 25, 26, 31, 32, 33,  12, 34, 38, 16]
+foo.sort()
 
 offset = 0
 side_name = {0: "Upper", 1: "Left", 2: "Front", 3: "Right", 4: "Back", 5: "Down"}

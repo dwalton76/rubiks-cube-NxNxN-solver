@@ -261,11 +261,16 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
         if action == "stage_UD_centers":
             fake_777.stage_UD_centers()
+
         elif action == "stage_LR_centers":
             fake_777.stage_LR_centers()
+
+        elif action == "solve_t_centers":
+            fake_777.solve_t_centers()
+
         elif action == "solve_centers":
-            # Something with the vertical bars is hosing us
-            fake_777.group_centers_guts()
+            fake_777.solve_centers()
+
         else:
             raise Exception("Invalid action %s" % action)
 
@@ -331,7 +336,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
-        # Solve all centers
+        # Solve all t-centers
         for center_orbit_id in range(max_center_orbits + 1):
             width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
             max_cycle = int((width - 5) / 2)
@@ -343,8 +348,29 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                     width,
                     cycle,
                     max_cycle,
-                    "solve_centers",
+                    "solve_t_centers",
                 )
+
+        self.print_cube()
+        log.info(
+            "%s: t-centers are solved, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+
+        # Solve all centers
+        center_orbit_id = max_center_orbits
+        width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
+        max_cycle = int((width - 5) / 2)
+
+        cycle = max_cycle
+        self.stage_or_solve_inside_777(
+            center_orbit_id,
+            max_center_orbits,
+            width,
+            cycle,
+            max_cycle,
+            "solve_centers",
+        )
 
         self.print_cube()
         log.info(

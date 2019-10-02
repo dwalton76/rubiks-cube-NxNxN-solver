@@ -10,8 +10,6 @@ misc
 
 555
 ===
-    - do the new EO stuff avoid OLL?  The last 8 edges are not pairing I bet I broke OLL.
-
     - the phase4 table has all 121,287,375 entries.  If we kept only up to depth-3 that would
       cut it to about 30 million and would be plenty deep. Or we start storing everything in
       an s3 bucket and stop worrying about large files. Honestly we could probably only keep
@@ -28,54 +26,14 @@ misc
 ===
 
 
-
-without perfect-hash
---------------------
-dwalton76@kids[rubiks-cube-NxNxN-solver]# ./ida_search_via_graph --prune-table-0-filename lookup-table-5x5x5-step51-phase5-centers.bin --prune-table-0-state 978345 --prune-table-1-filename lookup-table-5x5x5-step56-phase5-fb-centers.bin --prune-table-1-state 3250 --prune-table-2-filename lookup-table-5x5x5-step53-phase5-high-edge-and-midge.bin --prune-table-2-state 111047 --prune-table-3-filename lookup-table-5x5x5-step54-phase5-low-edge-and-midge.bin --prune-table-3-state 57367  --legal-moves "U2,Uw2,L2,Lw2,F,F',F2,Fw2,R2,Rw2,B,B',B2,Bw2,D2,Dw2"
-legal_move_count 16, ROW_LENGTH 65
-[2019-09-23T11:30:50.246] IDA threshold 7, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-23T11:30:50.246] IDA threshold 8, explored 17 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-23T11:30:50.246] IDA threshold 9, explored 108 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-23T11:30:50.246] IDA threshold 10, explored 1,183 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-23T11:30:50.248] IDA threshold 11, explored 13,220 nodes, took 0.001s, 13,220,000 nodes-per-sec
-[2019-09-23T11:30:50.265] IDA threshold 12, explored 204,309 nodes, took 0.016s, 12,769,312 nodes-per-sec
-[2019-09-23T11:30:50.476] IDA threshold 13, explored 2,936,861 nodes, took 0.211s, 13,918,772 nodes-per-sec
-[2019-09-23T11:30:50.499] IDA count 321,874, f_cost 13 vs threshold 14 (cost_to_here 13, cost_to_goal 0)
-SOLUTION: U2 Uw2 B Rw2 D2 B2 Dw2 F' D2 Lw2 F' Uw2 B 
-[2019-09-23T11:30:50.499] IDA threshold 14, explored 321,874 nodes, took 0.022s, 14,630,637 nodes-per-sec
-[2019-09-23T11:30:50.499] IDA found solution, explored 3,477,573 total nodes, took 0.252s, 13,799,893 nodes-per-sec
-
-       PT0  PT1  PT2  PT3  PT4  PER  CTG  TRU  IDX
-       ===  ===  ===  ===  ===  ===  ===  ===  ===
-         7    5    7    7    0    0    7   13    0
-   U2    7    5    7    8    0    0    8   12    1
-  Uw2    6    5    7    7    0    0    7   11    2
-    B    6    5    6    6    0    0    6   10    3
-  Rw2    7    5    5    5    0    0    7    9    4
-   D2    7    5    5    6    0    0    7    8    5
-   B2    6    5    5    6    0    0    6    7    6
-  Dw2    5    5    5    6    0    0    6    6    7
-   F'    4    4    5    5    0    0    5    5    8
-   D2    4    4    4    4    0    0    4    4    9
-  Lw2    3    3    3    3    0    0    3    3   10
-   F'    2    2    2    2    0    0    2    2   11
-  Uw2    1    1    1    1    0    0    1    1   12
-    B    0    0    0    0    0    0    0    0   13
-
-dwalton76@kids[rubiks-cube-NxNxN-solver]# 
+777
+===
+We can currently only get the daisy pattern on FB. LR we could certain do but then to
+do UD and FB at once would be a 70^10 search space which would be HUGE.
 
 
+999
+===
+FB centers are failing, I bet it has something to do with the 777 FB centers
+being using the daisy pattern instead of solving.
 
-with (broken) perfect-hash
---------------------------
-dwalton76@kids[rubiks-cube-NxNxN-solver]# ./ida_search_via_graph --prune-table-0-filename lookup-table-5x5x5-step51-phase5-centers.bin --prune-table-0-state 978345 --prune-table-1-filename lookup-table-5x5x5-step56-phase5-fb-centers.bin --prune-table-1-state 3250 --prune-table-2-filename lookup-table-5x5x5-step53-phase5-high-edge-and-midge.bin --prune-table-2-state 111047 --prune-table-3-filename lookup-table-5x5x5-step54-phase5-low-edge-and-midge.bin --prune-table-3-state 57367 --prune-table-perfect-hash lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.pt-state-perfect-hash --pt1-state-max 4900 --legal-moves "U2,Uw2,L2,Lw2,F,F',F2,Fw2,R2,Rw2,B,B',B2,Bw2,D2,Dw2"
-legal_move_count 16, ROW_LENGTH 65
-[2019-09-23T11:30:36.361] IDA threshold 10, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-23T11:30:36.361] IDA threshold 11, explored 15 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-23T11:30:36.361] IDA threshold 12, explored 164 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-23T11:30:36.362] IDA threshold 13, explored 2,506 nodes, took 0.000s, 0 nodes-per-sec
-[2019-09-23T11:30:36.366] IDA threshold 14, explored 35,709 nodes, took 0.003s, 11,903,000 nodes-per-sec
-[2019-09-23T11:30:36.414] IDA threshold 15, explored 508,253 nodes, took 0.048s, 10,588,604 nodes-per-sec
-[2019-09-23T11:30:37.042] IDA threshold 16, explored 7,175,758 nodes, took 0.628s, 11,426,366 nodes-per-sec
-^C
-dwalton76@kids[rubiks-cube-NxNxN-solver]# 

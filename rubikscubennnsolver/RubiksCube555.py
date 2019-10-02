@@ -7,6 +7,7 @@ from rubikscubennnsolver.LookupTable import (
     NoIDASolution,
     NoSteps,
 )
+from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_555
 from pprint import pformat
 import itertools

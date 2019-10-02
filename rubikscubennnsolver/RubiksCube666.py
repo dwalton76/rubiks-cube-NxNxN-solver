@@ -1014,6 +1014,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
                 parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
                 parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
             ),
+            multiplier=1.2,
         )
 
 
@@ -1378,11 +1379,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
         tmp_solution_len = len(self.solution)
-
-        if oblique_edges_only:
-            fake_555.lt_LR_T_centers_stage.solve()
-        else:
-            fake_555.group_centers_stage_LR()
+        fake_555.group_centers_stage_LR()
 
         for step in fake_555.solution:
             if step.startswith("COMMENT"):

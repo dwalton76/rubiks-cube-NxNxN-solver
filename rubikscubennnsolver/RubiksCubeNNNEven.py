@@ -86,6 +86,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         method.
         """
         center_orbit_count = int((self.size - 4) / 2)
+        side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
 
         # Make a big "plus" sign on each side, this will allow us to reduce the
         # centers to a series of 7x7x7 centers
@@ -111,9 +112,11 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 start_NNN_row4 = start_NNN_row3 + self.size
 
                 # fake_666.state[start_666+8] = self.state[start_NNN_row1 - (center_orbit_id * self.size)]
+                fake_666.state[start_666 + 8] = side_name[x]
                 fake_666.state[start_666 + 9] = self.state[start_NNN_row1 + 1 - (center_orbit_id * self.size)]
                 fake_666.state[start_666 + 10] = self.state[start_NNN_row1 + 2 - (center_orbit_id * self.size)]
                 # fake_666.state[start_666+11] = self.state[start_NNN_row1+3 - (center_orbit_id * self.size)]
+                fake_666.state[start_666 + 11] = side_name[x]
 
                 fake_666.state[start_666 + 14] = self.state[start_NNN_row2 - center_orbit_id]
                 fake_666.state[start_666 + 15] = self.state[start_NNN_row2 + 1]
@@ -126,9 +129,11 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 fake_666.state[start_666 + 23] = self.state[start_NNN_row3 + 3 + center_orbit_id]
 
                 # fake_666.state[start_666+26] = self.state[start_NNN_row4 + (center_orbit_id * self.size)]
+                fake_666.state[start_666 + 26] = side_name[x]
                 fake_666.state[start_666 + 27] = self.state[start_NNN_row4 + 1 + (center_orbit_id * self.size)]
                 fake_666.state[start_666 + 28] = self.state[start_NNN_row4 + 2 + (center_orbit_id * self.size)]
                 # fake_666.state[start_666+29] = self.state[start_NNN_row4+3 + (center_orbit_id * self.size)]
+                fake_666.state[start_666 + 29] = side_name[x]
                 start_666 += 36
                 start_NNN += self.size * self.size
 
@@ -323,6 +328,8 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         wide_size = str(ceil(self.size / 2) - 2 - center_orbit_id)
 
         if action == "stage_UD_centers":
+            fake_777.create_fake_555_from_inside_centers()
+            fake_777.fake_555.lt_FB_centers_stage.avoid_oll = None
             fake_777.stage_UD_centers()
         elif action == "stage_LR_centers":
             fake_777.stage_LR_centers()

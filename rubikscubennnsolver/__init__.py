@@ -3333,11 +3333,6 @@ class RubiksCube(object):
         """
         Solving OLL at the end takes 26 moves, preventing it takes 10
         """
-
-        # OLL only applies for even cubes
-        if self.is_odd():
-            return False
-
         orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
         steps = None
 
@@ -3346,6 +3341,15 @@ class RubiksCube(object):
 
         if self.size == 4:
             if orbits_with_oll_parity == [0]:
+                steps = "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2"
+            else:
+                raise SolveError(
+                    "prevent_OLL for %sx%sx%s, orbits %s have parity issues"
+                    % (self.size, self.size, self.size, pformat(orbits_with_oll_parity))
+                )
+
+        elif self.size == 5:
+            if orbits_with_oll_parity == [0] or orbits_with_oll_parity == [0, 1]:
                 steps = "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2"
             else:
                 raise SolveError(

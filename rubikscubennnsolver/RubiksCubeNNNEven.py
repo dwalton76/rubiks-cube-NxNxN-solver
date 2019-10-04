@@ -1,3 +1,4 @@
+from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
@@ -331,14 +332,16 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             fake_777.create_fake_555_from_inside_centers()
             fake_777.fake_555.lt_FB_centers_stage.avoid_oll = None
             fake_777.stage_UD_centers()
+
         elif action == "stage_LR_centers":
             fake_777.stage_LR_centers()
-        elif action == "LR_centers_vertical_bars":
-            fake_777.LR_centers_vertical_bars()
-        elif action == "UD_centers_vertical_bars":
-            fake_777.UD_centers_vertical_bars()
+
+        elif action == "solve_t_centers":
+            fake_777.solve_t_centers()
+
         elif action == "solve_centers":
-            fake_777.group_centers_guts()
+            fake_777.solve_centers()
+
         else:
             raise Exception("Invalid action %s" % action)
 
@@ -405,7 +408,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
-        # Solve all centers
+        # Solve all t-centers
         for center_orbit_id in range(max_center_orbits + 1):
             width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
             max_cycle = int((width - 5) / 2)
@@ -417,8 +420,23 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                     width,
                     cycle,
                     max_cycle,
-                    "solve_centers",
+                    "solve_t_centers",
                 )
+
+        # Solve all centers
+        center_orbit_id = max_center_orbits
+        width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
+        max_cycle = int((width - 5) / 2)
+
+        for cycle in range(max_cycle + 1):
+            self.stage_or_solve_inside_777(
+                center_orbit_id,
+                max_center_orbits,
+                width,
+                cycle,
+                max_cycle,
+                "solve_centers",
+            )
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -427,3 +445,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             "%s: centers are solved, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
+
+        if not self.centers_solved():
+            raise SolveError("centers should be solved")

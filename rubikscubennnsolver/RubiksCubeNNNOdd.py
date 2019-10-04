@@ -1,3 +1,4 @@
+from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 from math import ceil
@@ -377,3 +378,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             "%s: centers are solved, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
+
+        if not self.centers_solved():
+            raise SolveError("centers should be solved")

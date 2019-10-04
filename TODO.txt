@@ -22,18 +22,8 @@ misc
 
     - rm RubiksCube555ForNNN.py
 
-666
-===
-
 
 777
 ===
-We can currently only get the daisy pattern on FB. LR we could certain do but then to
+- We can currently only get the daisy pattern on FB. LR we could certain do but then to
 do UD and FB at once would be a 70^10 search space which would be HUGE.
-
-
-999
-===
-FB centers are failing, I bet it has something to do with the 777 FB centers
-being using the daisy pattern instead of solving.
-

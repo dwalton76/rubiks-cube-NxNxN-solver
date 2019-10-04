@@ -1200,6 +1200,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
                 parent.lt_LR_centers_solve,
                 parent.lt_FB_centers_solve,
             ),
+            multiplier=1.2,
         )
 
 
@@ -3632,6 +3633,7 @@ class RubiksCube555(RubiksCube):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
+        # dwalton
         if not self.FB_centers_staged():
             tmp_solution_len = len(self.solution)
             self.lt_FB_centers_stage.solve_via_c()
@@ -3640,6 +3642,14 @@ class RubiksCube555(RubiksCube):
                 "COMMENT_%d_steps_555_FB_centers_staged"
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
+        else:
+            try:
+                if self.edge_swaps_odd(False, 0, False):
+                    self.prevent_OLL()
+            # This can happen when large NxNxN cubes are using us but they have not
+            # populated the edges on their fake_555 object
+            except ValueError:
+                pass
 
         log.info(
             "%s: FB centers staged, %d steps in"

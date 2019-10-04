@@ -16,13 +16,6 @@ misc
       up to depth-2 and that would be enough. Figure this out after the phase5 edges table
       has finished building.
 
-    - phase4 could be much faster via perfect hash of FB-centers + high midges and FB-center + low midges.
-      Each of these would be 117,600 * 4,900 = 576,240,000.  The first of these is building now
-      on LJ's machine. This should allow us to drop the ThreeEdges hack.
-
-    - rm RubiksCube555ForNNN.py
-
-
 777
 ===
 - We can currently only get the daisy pattern on FB. LR we could certain do but then to

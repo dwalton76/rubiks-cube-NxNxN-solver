@@ -106,3 +106,4 @@ ida_search_via_graph
 *.state_index
 *.json
 *.pt_state
+*.pt-state-perfect-hash

@@ -1,8 +1,6 @@
-from rubikscubennnsolver import RubiksCube, ImplementThis
+from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-from rubikscubennnsolver.RubiksCube555 import solved_555
-from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555
+from rubikscubennnsolver.RubiksCube555 import solved_555, RubiksCube555
 import logging
 import sys
 
@@ -26,7 +24,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
     def get_fake_555(self):
         if self.fake_555 is None:
-            self.fake_555 = RubiksCube555ForNNN(solved_555, "URFDLB")
+            self.fake_555 = RubiksCube555(solved_555, "URFDLB")
             self.fake_555.cpu_mode = self.cpu_mode
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
@@ -99,24 +97,12 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
                     step = str(self.size) + step[1:]
 
                 elif step in (
-                    "Uw",
-                    "Uw'",
-                    "Uw2",
-                    "Lw",
-                    "Lw'",
-                    "Lw2",
-                    "Fw",
-                    "Fw'",
-                    "Fw2",
-                    "Rw",
-                    "Rw'",
-                    "Rw2",
-                    "Bw",
-                    "Bw'",
-                    "Bw2",
-                    "Dw",
-                    "Dw'",
-                    "Dw2",
+                    "Uw", "Uw'", "Uw2",
+                    "Lw", "Lw'", "Lw2",
+                    "Fw", "Fw'", "Fw2",
+                    "Rw", "Rw'", "Rw2",
+                    "Bw", "Bw'", "Bw2",
+                    "Dw", "Dw'", "Dw2",
                 ):
                     step = half_size_str + step
 
@@ -133,6 +119,8 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
     def pair_edge_orbit_via_555(self, orbit):
         log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
         fake_555 = self.get_fake_555()
+        half_size = int(self.size / 2)
+        max_orbit = int((self.size - 2) / 2) - 1
 
         # Fill in the corners so we can avoid certain types of parity
         start_555 = 0
@@ -153,19 +141,20 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         # Fill in the centers
         start_555 = 0
         start_nnn = 0
+        log.info(f"orbit {orbit}, max_orbit {max_orbit}")
 
         for x in range(6):
-            row1_col1 = start_nnn + self.size + 2
-            row1_col3 = row1_col1 + self.size - 3
-            row1_col2 = int((row1_col1 + row1_col3) / 2)
+            row1_col2 = start_nnn + half_size + self.size
+            row1_col1 = row1_col2 - (max_orbit - orbit)
+            row1_col3 = row1_col2 + (max_orbit - orbit) + 1
 
-            row2_col1 = row1_col1 + self.size
-            row2_col2 = row1_col2 + self.size
-            row2_col3 = row1_col3 + self.size
+            row2_col1 = start_nnn + int((self.size * self.size) / 2) + 2
+            row2_col2 = row2_col1 + half_size - 1
+            row2_col3 = row2_col1 + self.size - 3
 
-            row3_col3 = start_nnn + (self.size * self.size) - self.size - 1
-            row3_col1 = row3_col3 - self.size + 3
-            row3_col2 = int((row3_col1 + row3_col3) / 2)
+            row3_col2 = start_nnn + (self.size * self.size) - half_size - self.size
+            row3_col1 = row3_col2 - (max_orbit - orbit)
+            row3_col3 = row3_col2 + (max_orbit - orbit) + 1
 
             # log.info("row1_col1 %d, row1_col2 %d, row1_col3 %d" % (row1_col1, row1_col2, row1_col3))
             # log.info("row2_col1 %d, row2_col2 %d, row2_col3 %d" % (row2_col1, row2_col2, row2_col3))
@@ -189,8 +178,6 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         # Fill in the edges
         start_555 = 0
         start_nnn = 0
-        half_size = int(self.size / 2)
-        max_orbit = int((self.size - 2) / 2) - 1
 
         for x in range(6):
             row1_col2 = start_nnn + half_size
@@ -251,6 +238,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         fake_555.reduce_333()
         fake_555.print_cube()
 
+
         wide_str = str(orbit + 2)
         for step in fake_555.solution:
 
@@ -264,46 +252,22 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
                     step = str(self.size) + step[1:]
 
                 elif step in (
-                    "Uw",
-                    "Uw'",
-                    "Uw2",
-                    "Lw",
-                    "Lw'",
-                    "Lw2",
-                    "Fw",
-                    "Fw'",
-                    "Fw2",
-                    "Rw",
-                    "Rw'",
-                    "Rw2",
-                    "Bw",
-                    "Bw'",
-                    "Bw2",
-                    "Dw",
-                    "Dw'",
-                    "Dw2",
+                    "Uw", "Uw'", "Uw2",
+                    "Lw", "Lw'", "Lw2",
+                    "Fw", "Fw'", "Fw2",
+                    "Rw", "Rw'", "Rw2",
+                    "Bw", "Bw'", "Bw2",
+                    "Dw", "Dw'", "Dw2",
                 ):
                     step = wide_str + step
 
                 elif step in (
-                    "2U",
-                    "2U'",
-                    "2U2",
-                    "2L",
-                    "2L'",
-                    "2L2",
-                    "2F",
-                    "2F'",
-                    "2F2",
-                    "2R",
-                    "2R'",
-                    "2R2",
-                    "2B",
-                    "2B'",
-                    "2B2",
-                    "2D",
-                    "2D'",
-                    "2D2",
+                    "2U", "2U'", "2U2",
+                    "2L", "2L'", "2L2",
+                    "2F", "2F'", "2F2",
+                    "2R", "2R'", "2R2",
+                    "2B", "2B'", "2B2",
+                    "2D", "2D'", "2D2",
                 ):
                     step = wide_str + step[1:]
 

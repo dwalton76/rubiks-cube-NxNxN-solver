@@ -1,5 +1,4 @@
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
@@ -19,171 +18,21 @@ solved_121212 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU
 solved_141414 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
 moves_8x8x8 = (
-    "U",
-    "U'",
-    "U2",
-    "Uw",
-    "Uw'",
-    "Uw2",
-    "3Uw",
-    "3Uw'",
-    "3Uw2",
-    "4Uw",
-    "4Uw'",
-    "4Uw2",
-    "L",
-    "L'",
-    "L2",
-    "Lw",
-    "Lw'",
-    "Lw2",
-    "3Lw",
-    "3Lw'",
-    "3Lw2",
-    "4Lw",
-    "4Lw'",
-    "4Lw2",
-    "F",
-    "F'",
-    "F2",
-    "Fw",
-    "Fw'",
-    "Fw2",
-    "3Fw",
-    "3Fw'",
-    "3Fw2",
-    "4Fw",
-    "4Fw'",
-    "4Fw2",
-    "R",
-    "R'",
-    "R2",
-    "Rw",
-    "Rw'",
-    "Rw2",
-    "3Rw",
-    "3Rw'",
-    "3Rw2",
-    "4Rw",
-    "4Rw'",
-    "4Rw2",
-    "B",
-    "B'",
-    "B2",
-    "Bw",
-    "Bw'",
-    "Bw2",
-    "3Bw",
-    "3Bw'",
-    "3Bw2",
-    "4Bw",
-    "4Bw'",
-    "4Bw2",
-    "D",
-    "D'",
-    "D2",
-    "Dw",
-    "Dw'",
-    "Dw2",
-    "3Dw",
-    "3Dw'",
-    "3Dw2",
-    "4Dw",
-    "4Dw'",
-    "4Dw2",
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2", "4Uw", "4Uw'", "4Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2", "4Lw", "4Lw'", "4Lw2",
+    "F", "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2", "4Fw", "4Fw'", "4Fw2",
+    "R", "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2", "4Rw", "4Rw'", "4Rw2",
+    "B", "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2", "4Bw", "4Bw'", "4Bw2",
+    "D", "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2", "4Dw", "4Dw'", "4Dw2",
 )
 
 moves_10x10x10 = (
-    "U",
-    "U'",
-    "U2",
-    "Uw",
-    "Uw'",
-    "Uw2",
-    "3Uw",
-    "3Uw'",
-    "3Uw2",
-    "4Uw",
-    "4Uw'",
-    "4Uw2",
-    "5Uw",
-    "5Uw'",
-    "5Uw2",
-    "L",
-    "L'",
-    "L2",
-    "Lw",
-    "Lw'",
-    "Lw2",
-    "3Lw",
-    "3Lw'",
-    "3Lw2",
-    "4Lw",
-    "4Lw'",
-    "4Lw2",
-    "5Lw",
-    "5Lw'",
-    "5Lw2",
-    "F",
-    "F'",
-    "F2",
-    "Fw",
-    "Fw'",
-    "Fw2",
-    "3Fw",
-    "3Fw'",
-    "3Fw2",
-    "4Fw",
-    "4Fw'",
-    "4Fw2",
-    "5Fw",
-    "5Fw'",
-    "5Fw2",
-    "R",
-    "R'",
-    "R2",
-    "Rw",
-    "Rw'",
-    "Rw2",
-    "3Rw",
-    "3Rw'",
-    "3Rw2",
-    "4Rw",
-    "4Rw'",
-    "4Rw2",
-    "5Rw",
-    "5Rw'",
-    "5Rw2",
-    "B",
-    "B'",
-    "B2",
-    "Bw",
-    "Bw'",
-    "Bw2",
-    "3Bw",
-    "3Bw'",
-    "3Bw2",
-    "4Bw",
-    "4Bw'",
-    "4Bw2",
-    "5Bw",
-    "5Bw'",
-    "5Bw2",
-    "D",
-    "D'",
-    "D2",
-    "Dw",
-    "Dw'",
-    "Dw2",
-    "3Dw",
-    "3Dw'",
-    "3Dw2",
-    "4Dw",
-    "4Dw'",
-    "4Dw2",
-    "5Dw",
-    "5Dw'",
-    "5Dw2",
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2", "4Uw", "4Uw'", "4Uw2", "5Uw", "5Uw'", "5Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2", "4Lw", "4Lw'", "4Lw2", "5Lw", "5Lw'", "5Lw2",
+    "F", "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2", "4Fw", "4Fw'", "4Fw2", "5Fw", "5Fw'", "5Fw2",
+    "R", "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2", "4Rw", "4Rw'", "4Rw2", "5Rw", "5Rw'", "5Rw2",
+    "B", "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2", "4Bw", "4Bw'", "4Bw2", "5Bw", "5Bw'", "5Bw2",
+    "D", "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2", "4Dw", "4Dw'", "4Dw2", "5Dw", "5Dw'", "5Dw2",
 )
 
 
@@ -238,13 +87,13 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         method.
         """
         center_orbit_count = int((self.size - 4) / 2)
+        side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
 
         # Make a big "plus" sign on each side, this will allow us to reduce the
         # centers to a series of 7x7x7 centers
         for center_orbit_id in range(center_orbit_count):
 
-            # Group UD centers
-            # - create a fake 6x6x6 to solve the inside 4x4 block
+            # create a fake 6x6x6 to solve the inside 4x4 block
             fake_666 = self.get_fake_666()
 
             for index in range(1, 217):
@@ -264,40 +113,28 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 start_NNN_row4 = start_NNN_row3 + self.size
 
                 # fake_666.state[start_666+8] = self.state[start_NNN_row1 - (center_orbit_id * self.size)]
-                fake_666.state[start_666 + 9] = self.state[
-                    start_NNN_row1 + 1 - (center_orbit_id * self.size)
-                ]
-                fake_666.state[start_666 + 10] = self.state[
-                    start_NNN_row1 + 2 - (center_orbit_id * self.size)
-                ]
+                fake_666.state[start_666 + 8] = side_name[x]
+                fake_666.state[start_666 + 9] = self.state[start_NNN_row1 + 1 - (center_orbit_id * self.size)]
+                fake_666.state[start_666 + 10] = self.state[start_NNN_row1 + 2 - (center_orbit_id * self.size)]
                 # fake_666.state[start_666+11] = self.state[start_NNN_row1+3 - (center_orbit_id * self.size)]
+                fake_666.state[start_666 + 11] = side_name[x]
 
-                fake_666.state[start_666 + 14] = self.state[
-                    start_NNN_row2 - center_orbit_id
-                ]
+                fake_666.state[start_666 + 14] = self.state[start_NNN_row2 - center_orbit_id]
                 fake_666.state[start_666 + 15] = self.state[start_NNN_row2 + 1]
                 fake_666.state[start_666 + 16] = self.state[start_NNN_row2 + 2]
-                fake_666.state[start_666 + 17] = self.state[
-                    start_NNN_row2 + 3 + center_orbit_id
-                ]
+                fake_666.state[start_666 + 17] = self.state[start_NNN_row2 + 3 + center_orbit_id]
 
-                fake_666.state[start_666 + 20] = self.state[
-                    start_NNN_row3 - center_orbit_id
-                ]
+                fake_666.state[start_666 + 20] = self.state[start_NNN_row3 - center_orbit_id]
                 fake_666.state[start_666 + 21] = self.state[start_NNN_row3 + 1]
                 fake_666.state[start_666 + 22] = self.state[start_NNN_row3 + 2]
-                fake_666.state[start_666 + 23] = self.state[
-                    start_NNN_row3 + 3 + center_orbit_id
-                ]
+                fake_666.state[start_666 + 23] = self.state[start_NNN_row3 + 3 + center_orbit_id]
 
                 # fake_666.state[start_666+26] = self.state[start_NNN_row4 + (center_orbit_id * self.size)]
-                fake_666.state[start_666 + 27] = self.state[
-                    start_NNN_row4 + 1 + (center_orbit_id * self.size)
-                ]
-                fake_666.state[start_666 + 28] = self.state[
-                    start_NNN_row4 + 2 + (center_orbit_id * self.size)
-                ]
+                fake_666.state[start_666 + 26] = side_name[x]
+                fake_666.state[start_666 + 27] = self.state[start_NNN_row4 + 1 + (center_orbit_id * self.size)]
+                fake_666.state[start_666 + 28] = self.state[start_NNN_row4 + 2 + (center_orbit_id * self.size)]
                 # fake_666.state[start_666+29] = self.state[start_NNN_row4+3 + (center_orbit_id * self.size)]
+                fake_666.state[start_666 + 29] = side_name[x]
                 start_666 += 36
                 start_NNN += self.size * self.size
 
@@ -305,7 +142,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             # Group LR centers (in turn groups FB)
             fake_666.print_cube()
-            fake_666.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = None
             fake_666.group_centers_guts(oblique_edges_only=True)
             fake_666.print_cube()
 
@@ -331,9 +167,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         )
         self.print_cube()
 
-    def stage_or_solve_inside_777(
-        self, center_orbit_id, max_center_orbits, width, cycle, max_cycle, action
-    ):
+    def stage_or_solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle, action):
         fake_777 = self.get_fake_777()
 
         for index in range(1, 295):
@@ -418,9 +252,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             # log.info("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
             # log.info("%d: row5 %d, %d, %d, %d, %d\n\n" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
 
-            if (center_orbit_id == 0 and cycle == 0) or (
-                center_orbit_id == max_center_orbits and cycle == max_cycle
-            ):
+            if (center_orbit_id == 0 and cycle == 0) or (center_orbit_id == max_center_orbits and cycle == max_cycle):
                 fake_777.state[start_777 + 9] = self.state[row1_col1]
                 fake_777.state[start_777 + 10] = self.state[row1_col2]
                 fake_777.state[start_777 + 11] = self.state[row1_col3]
@@ -497,15 +329,19 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         wide_size = str(ceil(self.size / 2) - 2 - center_orbit_id)
 
         if action == "stage_UD_centers":
+            fake_777.create_fake_555_from_inside_centers()
+            fake_777.fake_555.lt_FB_centers_stage.avoid_oll = None
             fake_777.stage_UD_centers()
+
         elif action == "stage_LR_centers":
             fake_777.stage_LR_centers()
-        elif action == "LR_centers_vertical_bars":
-            fake_777.LR_centers_vertical_bars()
-        elif action == "UD_centers_vertical_bars":
-            fake_777.UD_centers_vertical_bars()
+
+        elif action == "solve_t_centers":
+            fake_777.solve_t_centers()
+
         elif action == "solve_centers":
-            fake_777.group_centers_guts()
+            fake_777.solve_centers()
+
         else:
             raise Exception("Invalid action %s" % action)
 
@@ -530,27 +366,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
         max_center_orbits = int((self.size - 3) / 2) - 2
 
-        # Stage all UD centers
-        for center_orbit_id in range(max_center_orbits + 1):
-            width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-            max_cycle = int((width - 5) / 2)
-
-            for cycle in range(max_cycle + 1):
-                self.stage_or_solve_inside_777(
-                    center_orbit_id,
-                    max_center_orbits,
-                    width,
-                    cycle,
-                    max_cycle,
-                    "stage_UD_centers",
-                )
-
-        self.print_cube()
-        log.warning(
-            "%s: UD centers are staged, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-
         # Stage all LR centers
         for center_orbit_id in range(max_center_orbits + 1):
             width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
@@ -572,7 +387,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
-        # Solve all centers
+        # Stage all UD centers
         for center_orbit_id in range(max_center_orbits + 1):
             width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
             max_cycle = int((width - 5) / 2)
@@ -584,8 +399,44 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                     width,
                     cycle,
                     max_cycle,
-                    "solve_centers",
+                    "stage_UD_centers",
                 )
+
+        self.print_cube()
+        log.warning(
+            "%s: UD centers are staged, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+
+        # Solve all t-centers
+        for center_orbit_id in range(max_center_orbits + 1):
+            width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
+            max_cycle = int((width - 5) / 2)
+
+            for cycle in range(max_cycle + 1):
+                self.stage_or_solve_inside_777(
+                    center_orbit_id,
+                    max_center_orbits,
+                    width,
+                    cycle,
+                    max_cycle,
+                    "solve_t_centers",
+                )
+
+        # Solve all centers
+        center_orbit_id = max_center_orbits
+        width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
+        max_cycle = int((width - 5) / 2)
+
+        for cycle in range(max_cycle + 1):
+            self.stage_or_solve_inside_777(
+                center_orbit_id,
+                max_center_orbits,
+                width,
+                cycle,
+                max_cycle,
+                "solve_centers",
+            )
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -594,3 +445,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             "%s: centers are solved, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
+
+        if not self.centers_solved():
+            raise SolveError("centers should be solved")

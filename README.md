@@ -3,7 +3,7 @@
 ## Overview
 This is a rubiks cube solver that can solve any size cube, I have tested
 up to 17x17x17. The following tables show the reduction in move counts
-as the solver has evolved. The --normal table starts in July 2018, the earlier
+as the solver has evolved. The table starts in July 2018, the earlier
 releases of the solver had drastically higher move counts, I think it was
 over 400 moves the first time I solved a 5x5x5.
 
@@ -11,31 +11,11 @@ Solving a 2x2x2 takes around 9 moves while solving a 3x3x3 takes around 20 moves
 but I am not working on those solvers so I did not include them in the tables
 below.
 
-### --fast mode
-
-#### Move Counts
+### Move Counts
 
 | Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| 2/07/2018 | baseline | 63 | 106 | 180 | 235 | 357 | 468 | 637 |
-
-#### Memory Requirements
-
-| Size | Memory |
-| ------ | ------ |
-| 4x4x4 | 75M |
-| 5x5x5 | 175M |
-| 6x6x6 | 400M |
-| 7x7x7 | 400M |
-| NxNxN | 400M |
-
-
-### --normal mode
-
-#### Move Counts
-
-| Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
-| ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| 10/5/2019 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | **79** | **145** | **202** | 353 | **406** | 618 |
 | 10/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | 88 | 156 | 218 | 344 | **430** | **601** |
 | 09/24/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | **88** | **156** | **218** | **344** | 454 | 630 |
 | 09/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | 103 | **160** | **221** | 346 | **444** | **614** |
@@ -51,38 +31,32 @@ below.
 | 07/07/2018 | [e876493](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/e87649306139adebdc86ba1880b1e0c0e9265c5a) | 60 | 107 | **181** | **272** | 408 | 556 | 768 |
 | 07/04/2018 | | 60 | 107 | 200 | 278 | 408 | 556 | 768 |
 
-#### Memory Requirements
-
-| Size | Memory |
-| ------ | ------ |
-| 4x4x4 | 500M |
-| 5x5x5 | 4.0G |
-| 6x6x6 | 4.0G |
-| 7x7x7 | 4.0G |
-| NxNxN | 4.0G |
-
-
 ## Install
+
+### Install the rubikscubennnsolver python module
+```bash
+$ cd ~/
+$ git clone https://github.com/dwalton76/rubiks-cube-NxNxN-solver.git
+$ cd rubiks-cube-NxNxN-solver
+$ sudo make all
+```
 
 ### Install 3x3x3 solver
 The kociemba solver is required to solve the larger cubes that have been
 reduced to 3x3x3.
 
-```
+```bash
 $ git clone https://github.com/dwalton76/kociemba.git
 $ cd ~/kociemba/kociemba/ckociemba/
 $ make
 $ sudo make install
 ```
 
-### Install the rubikscubennnsolver python module
-```
-$ sudo pip3 install pyhashxx
-$ cd
-$ git clone https://github.com/dwalton76/rubiks-cube-NxNxN-solver.git
-$ cd rubiks-cube-NxNxN-solver
-$ sudo make all
-```
+### Download lookup tables from Amazon S3 bucket
+A few hundred hours of CPU time were used to build the "lookup tables" used by this cube solver.
+These lookup table are stored in an Amazon S3 bucket and will be downloaded as needed (different
+size cubes will download different lookup tables). Once downloaded they will not need to be
+downloaded again.
 
 ## Usage
 Run rubiks-cube-solver.py where --state is your cube state in kociemba
@@ -90,20 +64,26 @@ order (URFDLB). You must run rubiks-cube-solver.py from the directory that
 holds your lookup-table\*.txt files
 
 Example:
-```
+```bash
 $ cd ~/rubiks-cube-NxNxN-solver
 $ ./usr/bin/rubiks-cube-solver.py --state LFBDUFLDBUBBFDFBLDLFRDFRRURFDFDLULUDLBLUUDRDUDUBBFFRBDFRRRRRRRLFBLLRDLDFBUBLFBLRLURUUBLBDUFUUFBD
 ```
 
 ## History
-One of my hobbies is building Lego Mindstorms robots that can solve rubiks cubes. I was able to find solvers for 2x2x2, 3x3x3, 4x4x4 and 5x5x5 but I couldn't find a solver for anything larger than that :( The solvers that I did find for 4x4x4 and 5x5x5 took quite a bit of RAM (several gigs) but I wanted to be able to run the solver on a Lego Mindstorms EV3 which is 300Mhz and 64M of RAM. So I decided to write my own solver and here we are :)
+One of my hobbies is building Lego Mindstorms robots that can solve rubiks cubes.
+I was able to find solvers for 2x2x2, 3x3x3, 4x4x4 and 5x5x5 but I couldn't find
+a solver for anything larger than that :( The solvers that I did find for 4x4x4
+and 5x5x5 took quite a bit of RAM (several gigs) but I wanted to be able to run
+the solver on a Lego Mindstorms EV3 which is 300Mhz and 64M of RAM. So I decided
+to write my own solver and here we are :)
 
-Here is the thread on speedsolving.com where I first posted looking for solvers. I ended up posting updates to this thread as my solver evolved:
+Here is the thread on speedsolving.com where I first posted looking for solvers.
+I ended up posting updates to this thread as my solver evolved:
 https://www.speedsolving.com/forum/threads/5x5x5-6x6x6-7x7x7-or-nxnxn-solvers.63592/
 
 
 ## Examples
-```
+```bash
 2x2x2
 =====
 reset; ./usr/bin/rubiks-cube-solver.py --state DLRRFULLDUBFDURDBFBRBLFU

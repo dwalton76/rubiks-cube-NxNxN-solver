@@ -3333,11 +3333,6 @@ class RubiksCube(object):
         """
         Solving OLL at the end takes 26 moves, preventing it takes 10
         """
-
-        # OLL only applies for even cubes
-        if self.is_odd():
-            return False
-
         orbits_with_oll_parity = self.center_solution_leads_to_oll_parity()
         steps = None
 
@@ -3346,6 +3341,15 @@ class RubiksCube(object):
 
         if self.size == 4:
             if orbits_with_oll_parity == [0]:
+                steps = "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2"
+            else:
+                raise SolveError(
+                    "prevent_OLL for %sx%sx%s, orbits %s have parity issues"
+                    % (self.size, self.size, self.size, pformat(orbits_with_oll_parity))
+                )
+
+        elif self.size == 5:
+            if orbits_with_oll_parity == [0] or orbits_with_oll_parity == [0, 1]:
                 steps = "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2"
             else:
                 raise SolveError(
@@ -4037,6 +4041,8 @@ class RubiksCube(object):
             elif square1 == "x" and square2 == "x":
                 continue
             else:
+                self.enable_print_cube = True
+                self.print_cube()
                 raise Exception(
                     "Could not determine wing_str for (%s, %s)" % (square1, square2)
                 )
@@ -4121,6 +4127,8 @@ class RubiksCube(object):
                     target_side = self.sideD
 
                 else:
+                    self.enable_print_cube = True
+                    self.print_cube()
                     raise SolveError(
                         "invalid wing %s at (%d, %d)"
                         % (wing_str, square_index, partner_index)
@@ -4138,6 +4146,8 @@ class RubiksCube(object):
 
                         break
                 else:
+                    self.enable_print_cube = True
+                    self.print_cube()
                     raise SolveError(
                         "Could not find wing %s (%d, %d) among %s"
                         % (wing_str, square_index, partner_index, str(edge_to_check))
@@ -4750,6 +4760,9 @@ class RubiksCube(object):
             else:
                 self.rotate(step)
 
+    def reduced_to_333(self):
+        return bool(self.centers_solved() and self.edges_paired())
+
     def solve(self, solution333=None):
         """
         The RubiksCube222 and RubiksCube333 child classes will override
@@ -4775,6 +4788,9 @@ class RubiksCube(object):
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
+
+        if not self.reduced_to_333():
+            raise SolveError("Should be reduced to 3x3x3 but is not")
 
         if solution333:
             assert isinstance(solution333, list)

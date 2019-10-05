@@ -87,7 +87,7 @@ hash_add (struct key_value_pair **hashtable, char *state_key, unsigned long valu
     HASH_ADD_STR(*hashtable, state, s);
 }
 
-struct key_value_pair *
+inline struct key_value_pair *
 hash_find (struct key_value_pair **hashtable, char *state_key)
 {
     struct key_value_pair *s = NULL;
@@ -228,5 +228,497 @@ strmatch (char *str1, char *str2)
     if (strcmp(str1, str2) == 0) {
         return 1;
     }
+    return 0;
+}
+
+void
+print_moves (move_type *moves, int max_i)
+{
+    int i = 0;
+    printf("SOLUTION: ");
+
+    while (moves[i] != MOVE_NONE) {
+        printf("%s ", move2str[moves[i]]);
+        i++;
+
+        if (i >= max_i) {
+            break;
+        }
+    }
+    printf("\n");
+}
+
+unsigned int
+wide_turn_count(move_type *moves)
+{
+    int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case Uw:
+        case Uw_PRIME:
+        case Uw2:
+        case Lw:
+        case Lw_PRIME:
+        case Lw2:
+        case Fw:
+        case Fw_PRIME:
+        case Fw2:
+        case Rw:
+        case Rw_PRIME:
+        case Rw2:
+        case Bw:
+        case Bw_PRIME:
+        case Bw2:
+        case Dw:
+        case Dw_PRIME:
+        case Dw2:
+            count += 1;
+            break;
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
+unsigned int
+get_orbit0_wide_half_turn_count (move_type *moves)
+{
+    unsigned int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case Uw2:
+        case Lw2:
+        case Fw2:
+        case Rw2:
+        case Bw2:
+        case Dw2:
+            count += 1;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
+
+unsigned int
+get_orbit0_wide_quarter_turn_count (move_type *moves)
+{
+    unsigned int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case Uw:
+        case Uw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+            count += 1;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
+unsigned int
+get_orbit1_wide_quarter_turn_count (move_type *moves)
+{
+    unsigned int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case threeUw:
+        case threeUw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeFw:
+        case threeFw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+            count += 1;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
+unsigned int
+get_outer_layer_quarter_turn_count(move_type *moves)
+{
+    unsigned int i = 0;
+    unsigned int count = 0;
+
+    while (moves[i] != MOVE_NONE) {
+        switch (moves[i]) {
+        case U:
+        case U_PRIME:
+        case L:
+        case L_PRIME:
+        case F:
+        case F_PRIME:
+        case R:
+        case R_PRIME:
+        case B:
+        case B_PRIME:
+        case D:
+        case D_PRIME:
+        case Uw:
+        case Uw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+            count += 1;
+            break;
+
+        default:
+            break;
+        }
+        i++;
+    }
+
+    return count;
+}
+
+int
+moves_cancel_out (move_type move, move_type prev_move)
+{
+    switch (move) {
+    case U:        return (prev_move == U_PRIME);
+    case U_PRIME:  return (prev_move == U);
+    case U2:       return (prev_move == U2);
+    case L:        return (prev_move == L_PRIME);
+    case L_PRIME:  return (prev_move == L);
+    case L2:       return (prev_move == L2);
+    case F:        return (prev_move == F_PRIME);
+    case F_PRIME:  return (prev_move == F);
+    case F2:       return (prev_move == F2);
+    case R:        return (prev_move == R_PRIME);
+    case R_PRIME:  return (prev_move == R);
+    case R2:       return (prev_move == R2);
+    case B:        return (prev_move == B_PRIME);
+    case B_PRIME:  return (prev_move == B);
+    case B2:       return (prev_move == B2);
+    case D:        return (prev_move == D_PRIME);
+    case D_PRIME:  return (prev_move == D);
+    case D2:       return (prev_move == D2);
+    case Uw:       return (prev_move == Uw_PRIME);
+    case Uw_PRIME: return (prev_move == Uw);
+    case Uw2:      return (prev_move == Uw2);
+    case Lw:       return (prev_move == Lw_PRIME);
+    case Lw_PRIME: return (prev_move == Lw);
+    case Lw2:      return (prev_move == Lw2);
+    case Fw:       return (prev_move == Fw_PRIME);
+    case Fw_PRIME: return (prev_move == Fw);
+    case Fw2:      return (prev_move == Fw2);
+    case Rw:       return (prev_move == Rw_PRIME);
+    case Rw_PRIME: return (prev_move == Rw);
+    case Rw2:      return (prev_move == Rw2);
+    case Bw:       return (prev_move == Bw_PRIME);
+    case Bw_PRIME: return (prev_move == Bw);
+    case Bw2:      return (prev_move == Bw2);
+    case Dw:       return (prev_move == Dw_PRIME);
+    case Dw_PRIME: return (prev_move == Dw);
+    case Dw2:      return (prev_move == Dw2);
+    default:
+        printf("ERROR: moves_cancel_out add support for %d\n", move);
+        exit(1);
+    }
+
+    return 0;
+}
+
+int
+steps_on_same_face_and_layer(move_type move, move_type prev_move)
+{
+    switch (move) {
+    case U:
+    case U_PRIME:
+    case U2:
+        switch (prev_move) {
+        case U:
+        case U_PRIME:
+        case U2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case L:
+    case L_PRIME:
+    case L2:
+        switch (prev_move) {
+        case L:
+        case L_PRIME:
+        case L2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case F:
+    case F_PRIME:
+    case F2:
+        switch (prev_move) {
+        case F:
+        case F_PRIME:
+        case F2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case R:
+    case R_PRIME:
+    case R2:
+        switch (prev_move) {
+        case R:
+        case R_PRIME:
+        case R2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case B:
+    case B_PRIME:
+    case B2:
+        switch (prev_move) {
+        case B:
+        case B_PRIME:
+        case B2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case D:
+    case D_PRIME:
+    case D2:
+        switch (prev_move) {
+        case D:
+        case D_PRIME:
+        case D2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    // 2-layer turns
+    case Uw:
+    case Uw_PRIME:
+    case Uw2:
+        switch (prev_move) {
+        case Uw:
+        case Uw_PRIME:
+        case Uw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case Lw:
+    case Lw_PRIME:
+    case Lw2:
+        switch (prev_move) {
+        case Lw:
+        case Lw_PRIME:
+        case Lw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case Fw:
+    case Fw_PRIME:
+    case Fw2:
+        switch (prev_move) {
+        case Fw:
+        case Fw_PRIME:
+        case Fw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case Rw:
+    case Rw_PRIME:
+    case Rw2:
+        switch (prev_move) {
+        case Rw:
+        case Rw_PRIME:
+        case Rw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case Bw:
+    case Bw_PRIME:
+    case Bw2:
+        switch (prev_move) {
+        case Bw:
+        case Bw_PRIME:
+        case Bw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case Dw:
+    case Dw_PRIME:
+    case Dw2:
+        switch (prev_move) {
+        case Dw:
+        case Dw_PRIME:
+        case Dw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeUw:
+    case threeUw_PRIME:
+    case threeUw2:
+        switch (prev_move) {
+        case threeUw:
+        case threeUw_PRIME:
+        case threeUw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeLw:
+    case threeLw_PRIME:
+    case threeLw2:
+        switch (prev_move) {
+        case threeLw:
+        case threeLw_PRIME:
+        case threeLw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeFw:
+    case threeFw_PRIME:
+    case threeFw2:
+        switch (prev_move) {
+        case threeFw:
+        case threeFw_PRIME:
+        case threeFw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeRw:
+    case threeRw_PRIME:
+    case threeRw2:
+        switch (prev_move) {
+        case threeRw:
+        case threeRw_PRIME:
+        case threeRw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeBw:
+    case threeBw_PRIME:
+    case threeBw2:
+        switch (prev_move) {
+        case threeBw:
+        case threeBw_PRIME:
+        case threeBw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case threeDw:
+    case threeDw_PRIME:
+    case threeDw2:
+        switch (prev_move) {
+        case threeDw:
+        case threeDw_PRIME:
+        case threeDw2:
+            return 1;
+        default:
+            return 0;
+        }
+        break;
+
+    case X:
+    case X_PRIME:
+    case Y:
+    case Y_PRIME:
+    case Z:
+    case Z_PRIME:
+        return 0;
+
+    default:
+        printf("ERROR: steps_on_same_face_and_layer add support for %d\n", move);
+        exit(1);
+    }
+
     return 0;
 }

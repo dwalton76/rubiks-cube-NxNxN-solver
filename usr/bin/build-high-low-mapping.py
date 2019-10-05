@@ -4,7 +4,7 @@ from rubikscubennnsolver.RubiksCube333 import solved_333
 from rubikscubennnsolver.RubiksCube444 import solved_444
 from rubikscubennnsolver.RubiksCube555 import solved_555
 from rubikscubennnsolver.RubiksCube666 import solved_666
-from rubikscubennnsolver.RubiksCubeBuildHighLowMapping import (
+from rubikscubennnsolver.RubiksCubeHighLowBuilder import (
     RubiksCubeHighLow333,
     RubiksCubeHighLow444,
     RubiksCubeHighLow555,

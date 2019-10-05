@@ -33,10 +33,10 @@ def get_swap_count(listA, listB, debug):
     if A_length != B_length:
         log.info("listA %s" % " ".join(listA))
         log.info("listB %s" % " ".join(listB))
-        assert False, "listA (len %d) and listB (len %d) must be the same length" % (
+        raise ValueError("listA (len %d) and listB (len %d) must be the same length" % (
             A_length,
             B_length,
-        )
+        ))
 
     if debug:
         log.info("INIT")

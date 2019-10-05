@@ -188,47 +188,27 @@ try:
 
     if size == 2:
         from rubikscubennnsolver.RubiksCube222 import RubiksCube222
-
         cube = RubiksCube222(args.state, args.order, args.colormap, args.debug)
     elif size == 3:
         from rubikscubennnsolver.RubiksCube333 import RubiksCube333
-
         cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
     elif size == 4:
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-
-        cube = RubiksCube444(
-            args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug
-        )
+        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
-        from rubikscubennnsolver.RubiksCube555 import solved_555
-
-        if cpu_mode == "fast":
-            from rubikscubennnsolver.RubiksCube555ForNNN import RubiksCube555ForNNN
-
-            cube = RubiksCube555ForNNN(
-                args.state, args.order, args.colormap, args.debug
-            )
-        else:
-            from rubikscubennnsolver.RubiksCube555 import RubiksCube555
-
-            cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
-
+        from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+        cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
     elif size == 6:
         from rubikscubennnsolver.RubiksCube666 import RubiksCube666
-
         cube = RubiksCube666(args.state, args.order, args.colormap, args.debug)
     elif size == 7:
         from rubikscubennnsolver.RubiksCube777 import RubiksCube777
-
         cube = RubiksCube777(args.state, args.order, args.colormap, args.debug)
     elif size % 2 == 0:
         from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven
-
         cube = RubiksCubeNNNEven(args.state, args.order, args.colormap, args.debug)
     else:
         from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
-
         cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
 
     if args.openwith:

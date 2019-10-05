@@ -307,10 +307,7 @@ def download_file_if_needed(filename, cube_size):
         filename_gz = filename + ".gz"
 
         if not os.path.exists(filename_gz):
-            url = (
-                "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s"
-                % (cube_size, cube_size, cube_size, filename_gz)
-            )
+            url = f"https://rubiks-cube-lookup-tables.s3.amazonaws.com/{filename_gz}"
             log.info("Downloading table via 'wget %s'" % url)
             call(["wget", url])
 
@@ -358,6 +355,7 @@ class LookupTable(object):
         legal_moves=None,
         all_moves=None,
         illegal_moves=None,
+        use_state_index=False,
     ):
         self.parent = parent
         self.sides_all = (
@@ -392,6 +390,8 @@ class LookupTable(object):
         self.ida_graph = {}
         self.ida_graph_node = None
         self.state_index_cache = {}
+        self.width = 0
+        self.state_width = 0
 
         if all_moves is None:
             all_moves = []
@@ -413,42 +413,9 @@ class LookupTable(object):
             for step in all_moves:
                 if step not in illegal_moves:
                     self.legal_moves.append(step)
-
-        if filename and "dummy" in self.filename:
-            assert self.linecount is None
-            assert self.max_depth is None
-            assert self.filesize is None
-            assert self.md5 is None
-
         # log.info("%s: all_moves %s" % (self, pformat(all_moves)))
         # log.info("%s: illegal_moves %s" % (self, pformat(illegal_moves)))
         # log.info("%s: legal_moves %s\n" % (self, " ".join(self.legal_moves)))
-
-        if self.filename and "dummy" not in self.filename:
-            assert self.linecount, "%s linecount is %s" % (self, self.linecount)
-            rm_file_if_mismatch(self.filename, self.filesize, self.md5)
-            download_file_if_needed(self.filename, self.parent.size)
-
-            if "perfect-hash" in self.filename or "hash-cost-only" in self.filename:
-                self.width = 0
-                self.state_width = 0
-            else:
-                # Find the state_width for the entries in our .txt file
-                with open(self.filename, "r") as fh:
-                    first_line = next(fh)
-                    self.width = len(first_line)
-                    (state, steps) = first_line.strip().split(":")
-                    self.state_width = len(state)
-
-                    if steps.isdigit():
-                        self.use_isdigit = True
-                        # log.info("%s: use_isdigit is True" % self)
-        else:
-            self.width = 0
-            self.state_width = 0
-
-        self.hex_format = "%" + "0%dx" % self.state_width
-        self.filename_exists = True
 
         if isinstance(state_target, tuple):
             self.state_target = set(state_target)
@@ -458,6 +425,36 @@ class LookupTable(object):
             self.state_target = state_target
         else:
             self.state_target = set((state_target,))
+
+        if self.filename:
+            assert self.linecount, "%s linecount is %s" % (self, self.linecount)
+
+            if use_state_index:
+                download_file_if_needed(self.filename.replace(".txt", ".state_index"), self.parent.size)
+                download_file_if_needed(self.filename.replace(".txt", ".bin"), self.parent.size)
+                self.state_width = len(list(self.state_target)[0])
+
+                if os.path.exists(self.filename):
+                    os.remove(filename)
+
+            else:
+                rm_file_if_mismatch(self.filename, self.filesize, self.md5)
+                download_file_if_needed(self.filename, self.parent.size)
+
+                if "perfect-hash" not in self.filename and "hash-cost-only" not in self.filename:
+                    # Find the state_width for the entries in our .txt file
+                    with open(self.filename, "r") as fh:
+                        first_line = next(fh)
+                        self.width = len(first_line)
+                        (state, steps) = first_line.strip().split(":")
+                        self.state_width = len(state)
+
+                        if steps.isdigit():
+                            self.use_isdigit = True
+                            # log.info("%s: use_isdigit is True" % self)
+
+        self.hex_format = "%" + "0%dx" % self.state_width
+        self.filename_exists = True
 
         # 'rb' mode is about 3x faster than 'r' mode
         if self.filename and os.path.exists(self.filename):
@@ -899,10 +896,9 @@ class LookupTable(object):
             try:
                 return int(state_index)
             except TypeError:
-                self.parent.enable_print_cube = True
-                self.parent.print_cube()
-                log.info("%s: state %s not found" % (self, state))
-                raise
+                # self.parent.enable_print_cube = True
+                # self.parent.print_cube()
+                raise TypeError("%s: state %s not found" % (self, state))
 
     def reverse_state_index(self, state_index):
         state_index_filename = self.filename.replace(".txt", ".state_index")

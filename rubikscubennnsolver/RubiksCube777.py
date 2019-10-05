@@ -241,6 +241,7 @@ class LookupTable777Step41(LookupTable):
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -344,6 +345,7 @@ class LookupTable777Step42(LookupTable):
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -447,6 +449,7 @@ class LookupTable777Step43(LookupTable):
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -550,6 +553,7 @@ class LookupTable777Step44(LookupTable):
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -719,6 +723,7 @@ class LookupTable777Step51(LookupTable):
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -824,6 +829,7 @@ class LookupTable777Step52(LookupTable):
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -929,6 +935,7 @@ class LookupTable777Step53(LookupTable):
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1034,6 +1041,7 @@ class LookupTable777Step54(LookupTable):
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1095,6 +1103,7 @@ class LookupTable777Step55(LookupTable):
                 "F", "F'", "F2",
                 "D", "D'", "D2",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1187,6 +1196,7 @@ class LookupTable777Step61(LookupTable):
                 "U", "U'",
                 "D", "D'"
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1247,6 +1257,7 @@ class LookupTable777Step62(LookupTable):
                 "U", "U'",
                 "D", "D'"
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1317,6 +1328,7 @@ class LookupTable777Step65(LookupTable):
                 "U", "U'",
                 "D", "D'"
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1387,6 +1399,7 @@ class LookupTable777Step66(LookupTable):
                 "U", "U'",
                 "D", "D'"
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1476,6 +1489,7 @@ class LookupTable777Step71(LookupTable):
                 "U", "U'",
                 "D", "D'"
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1535,6 +1549,7 @@ class LookupTable777Step72(LookupTable):
                 "U", "U'",
                 "D", "D'"
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1606,6 +1621,7 @@ class LookupTable777Step75(LookupTable):
                 "U", "U'",
                 "D", "D'"
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1676,6 +1692,7 @@ class LookupTable777Step76(LookupTable):
                 "U", "U'",
                 "D", "D'"
             ),
+            use_state_index=True,
         )
 
     def state(self):

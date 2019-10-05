@@ -5,6 +5,7 @@ from rubikscubennnsolver import reverse_steps
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     NoIDASolution,
+    download_file_if_needed,
     pretty_time,
     steps_on_same_face_and_layer,
 )
@@ -77,6 +78,7 @@ class LookupTableIDAViaGraph(LookupTable):
 
         if self.perfect_hash_filename or self.pt2_state_max:
             assert self.perfect_hash_filename and self.pt2_state_max, "both perfect_hash_filename and pt2_state_max must be specified"
+            download_file_if_needed(self.perfect_hash_filename, self.parent.size)
 
         if legal_moves:
             self.all_moves = list(legal_moves)

@@ -672,6 +672,7 @@ class LookupTable555LRTCenterStage(LookupTable):
             max_depth=8,
             filesize=27947898,
             legal_moves=moves_555,
+            use_state_index=True,
         )
 
     def state(self):
@@ -726,6 +727,7 @@ class LookupTable555LRXCenterStage(LookupTable):
             max_depth=8,
             filesize=27212427,
             legal_moves=moves_555,
+            use_state_index=True,
         )
 
     def state(self):
@@ -757,92 +759,6 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             ),
             multiplier=1.2,
         )
-
-
-class LookupTable555FBTCenterStageOdd(LookupTable):
-    """
-    lookup-table-5x5x5-step21-FB-t-centers-stage-odd.txt
-    ====================================================
-    1 steps has 2 entries (0 percent, 0.00x previous step)
-    2 steps has 24 entries (0 percent, 12.00x previous step)
-    3 steps has 142 entries (1 percent, 5.92x previous step)
-    4 steps has 412 entries (3 percent, 2.90x previous step)
-    5 steps has 946 entries (7 percent, 2.30x previous step)
-    6 steps has 3,412 entries (26 percent, 3.61x previous step)
-    7 steps has 4,957 Entries (38 percent, 1.45x previous step)
-    8 steps has 2,692 entries (20 percent, 0.54x previous step)
-    9 steps has 275 entries (2 percent, 0.10x previous step)
-    10 steps has 8 entries (0 percent, 0.03x previous step)
-
-    Total: 12,870 entries
-    Average: 6.69 moves
-    """
-
-    UFBD_t_centers_555 = (
-        8, 12, 14, 18,
-        58, 62, 64, 68,
-        108, 112, 114, 118,
-        133, 137, 139, 143,
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step21-FB-t-centers-stage-odd.txt",
-            "f0f0",
-            linecount=12870,
-            max_depth=10,
-            filesize=514800,
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        result = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_t_centers_555])
-        return (self.hex_format % int(result, 2), 0)
-
-
-class LookupTable555FBTCenterStageEven(LookupTable):
-    """
-    lookup-table-5x5x5-step21-FB-t-centers-stage-even.txt
-    =====================================================
-    1 steps has 1 entries (0 percent, 0.00x previous step)
-    2 steps has 1 entries (0 percent, 1.00x previous step)
-    3 steps has 68 entries (0 percent, 68.00x previous step)
-    4 steps has 512 entries (3 percent, 7.53x previous step)
-    5 steps has 1,968 entries (15 percent, 3.84x previous step)
-    6 steps has 3,771 entries (29 percent, 1.92x previous step)
-    7 steps has 3,396 entries (26 percent, 0.90x previous step)
-    8 steps has 2,619 entries (20 percent, 0.77x previous step)
-    9 steps has 532 entries (4 percent, 0.20x previous step)
-    10 steps has 2 entries (0 percent, 0.00x previous step)
-
-    Total: 12,870 entries
-    Average: 6.55 moves
-    """
-
-    UFBD_t_centers_555 = (
-        8, 12, 14, 18,
-        58, 62, 64, 68,
-        108, 112, 114, 118,
-        133, 137, 139, 143,
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step21-FB-t-centers-stage-even.txt",
-            "f0f0",
-            linecount=12870,
-            max_depth=10,
-            filesize=501930,
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        result = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_t_centers_555])
-        return (self.hex_format % int(result, 2), 0)
 
 
 class LookupTable555FBTCenterStage(LookupTable):
@@ -886,6 +802,7 @@ class LookupTable555FBTCenterStage(LookupTable):
                 "Fw", "Fw'",
                 "Bw", "Bw'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -943,6 +860,7 @@ class LookupTable555FBXCenterStage(LookupTable):
                 "Fw", "Fw'",
                 "Bw", "Bw'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -996,6 +914,7 @@ class LookupTable555FBCenterStageLRCenter432(LookupTable):
                 "Fw", "Fw'",
                 "Bw", "Bw'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1069,6 +988,7 @@ class LookupTable555UDCenterSolve(LookupTable):
                 "Lw", "Lw'",
                 "Rw", "Rw'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1118,6 +1038,7 @@ class LookupTable555LRCenterSolve(LookupTable):
                 "Lw", "Lw'",
                 "Rw", "Rw'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1167,6 +1088,7 @@ class LookupTable555FBCenterSolve(LookupTable):
                 "Lw", "Lw'",
                 "Rw", "Rw'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -1247,491 +1169,6 @@ class LookupTable555TCenterSolve(LookupTable):
         parent_state = self.parent.state
         result = "".join([parent_state[x] for x in self.t_centers_555])
         return (result, 0)
-
-
-class LookupTable555LRCenterStage(LookupTable):
-    """
-    lookup-table-5x5x5-step901-LR-center-stage.txt
-    ==============================================
-    0 steps has 72 entries (1 percent, 0.00x previous step)
-    1 steps has 756 entries (15 percent, 10.50x previous step)
-    2 steps has 1,064 entries (21 percent, 1.41x previous step)
-    3 steps has 1,692 entries (34 percent, 1.59x previous step)
-    4 steps has 1,220 entries (24 percent, 0.72x previous step)
-    5 steps has 96 entries (1 percent, 0.08x previous step)
-
-    Total: 4,900 entries
-    Average: 2.72 moves
-    """
-
-    state_targets = (
-        'LLLLLLLLLRRRRRRRRR',
-        'LLLLLLLRLRLRRRRRRR',
-        'LLLLLLLRLRRRRRRRLR',
-        'LLLLLLRLRLRLRRRRRR',
-        'LLLLLLRLRRRRRRRLRL',
-        'LLLLLLRRRLLLRRRRRR',
-        'LLLLLLRRRLRLRRRRLR',
-        'LLLLLLRRRRLRRRRLRL',
-        'LLLLLLRRRRRRRRRLLL',
-        'LLLLLRLLLRRRLRRRRR',
-        'LLLLLRLLLRRRRRLRRR',
-        'LLLLLRLRLRLRLRRRRR',
-        'LLLLLRLRLRLRRRLRRR',
-        'LLLLLRLRLRRRLRRRLR',
-        'LLLLLRLRLRRRRRLRLR',
-        'LLLLLRRLRLRLLRRRRR',
-        'LLLLLRRLRLRLRRLRRR',
-        'LLLLLRRLRRRRLRRLRL',
-        'LLLLLRRLRRRRRRLLRL',
-        'LLLLLRRRRLLLLRRRRR',
-        'LLLLLRRRRLLLRRLRRR',
-        'LLLLLRRRRLRLLRRRLR',
-        'LLLLLRRRRLRLRRLRLR',
-        'LLLLLRRRRRLRLRRLRL',
-        'LLLLLRRRRRLRRRLLRL',
-        'LLLLLRRRRRRRLRRLLL',
-        'LLLLLRRRRRRRRRLLLL',
-        'LLLRLLLLLRRRLRRRRR',
-        'LLLRLLLLLRRRRRLRRR',
-        'LLLRLLLRLRLRLRRRRR',
-        'LLLRLLLRLRLRRRLRRR',
-        'LLLRLLLRLRRRLRRRLR',
-        'LLLRLLLRLRRRRRLRLR',
-        'LLLRLLRLRLRLLRRRRR',
-        'LLLRLLRLRLRLRRLRRR',
-        'LLLRLLRLRRRRLRRLRL',
-        'LLLRLLRLRRRRRRLLRL',
-        'LLLRLLRRRLLLLRRRRR',
-        'LLLRLLRRRLLLRRLRRR',
-        'LLLRLLRRRLRLLRRRLR',
-        'LLLRLLRRRLRLRRLRLR',
-        'LLLRLLRRRRLRLRRLRL',
-        'LLLRLLRRRRLRRRLLRL',
-        'LLLRLLRRRRRRLRRLLL',
-        'LLLRLLRRRRRRRRLLLL',
-        'LLLRLRLLLRRRLRLRRR',
-        'LLLRLRLRLRLRLRLRRR',
-        'LLLRLRLRLRRRLRLRLR',
-        'LLLRLRRLRLRLLRLRRR',
-        'LLLRLRRLRRRRLRLLRL',
-        'LLLRLRRRRLLLLRLRRR',
-        'LLLRLRRRRLRLLRLRLR',
-        'LLLRLRRRRRLRLRLLRL',
-        'LLLRLRRRRRRRLRLLLL',
-        'LLRLLLLLRLRRRRRLRR',
-        'LLRLLLLLRRRLRRRRRL',
-        'LLRLLLLRRLLRRRRLRR',
-        'LLRLLLLRRLRRRRRLLR',
-        'LLRLLLLRRRLLRRRRRL',
-        'LLRLLLLRRRRLRRRRLL',
-        'LLRLLLRLLRRLRRRLRR',
-        'LLRLLLRRLRLLRRRLRR',
-        'LLRLLLRRLRRLRRRLLR',
-        'LLRLLRLLRLRRLRRLRR',
-        'LLRLLRLLRLRRRRLLRR',
-        'LLRLLRLLRRRLLRRRRL',
-        'LLRLLRLLRRRLRRLRRL',
-        'LLRLLRLRRLLRLRRLRR',
-        'LLRLLRLRRLLRRRLLRR',
-        'LLRLLRLRRLRRLRRLLR',
-        'LLRLLRLRRLRRRRLLLR',
-        'LLRLLRLRRRLLLRRRRL',
-        'LLRLLRLRRRLLRRLRRL',
-        'LLRLLRLRRRRLLRRRLL',
-        'LLRLLRLRRRRLRRLRLL',
-        'LLRLLRRLLRRLLRRLRR',
-        'LLRLLRRLLRRLRRLLRR',
-        'LLRLLRRRLRLLLRRLRR',
-        'LLRLLRRRLRLLRRLLRR',
-        'LLRLLRRRLRRLLRRLLR',
-        'LLRLLRRRLRRLRRLLLR',
-        'LLRRLLLLRLRRLRRLRR',
-        'LLRRLLLLRLRRRRLLRR',
-        'LLRRLLLLRRRLLRRRRL',
-        'LLRRLLLLRRRLRRLRRL',
-        'LLRRLLLRRLLRLRRLRR',
-        'LLRRLLLRRLLRRRLLRR',
-        'LLRRLLLRRLRRLRRLLR',
-        'LLRRLLLRRLRRRRLLLR',
-        'LLRRLLLRRRLLLRRRRL',
-        'LLRRLLLRRRLLRRLRRL',
-        'LLRRLLLRRRRLLRRRLL',
-        'LLRRLLLRRRRLRRLRLL',
-        'LLRRLLRLLRRLLRRLRR',
-        'LLRRLLRLLRRLRRLLRR',
-        'LLRRLLRRLRLLLRRLRR',
-        'LLRRLLRRLRLLRRLLRR',
-        'LLRRLLRRLRRLLRRLLR',
-        'LLRRLLRRLRRLRRLLLR',
-        'LLRRLRLLRLRRLRLLRR',
-        'LLRRLRLLRRRLLRLRRL',
-        'LLRRLRLRRLLRLRLLRR',
-        'LLRRLRLRRLRRLRLLLR',
-        'LLRRLRLRRRLLLRLRRL',
-        'LLRRLRLRRRRLLRLRLL',
-        'LLRRLRRLLRRLLRLLRR',
-        'LLRRLRRRLRLLLRLLRR',
-        'LLRRLRRRLRRLLRLLLR',
-        'LRLLLLLLLRLRRRRRRR',
-        'LRLLLLLLLRRRRRRRLR',
-        'LRLLLLLRLRLRRRRRLR',
-        'LRLLLLRLRLLLRRRRRR',
-        'LRLLLLRLRLRLRRRRLR',
-        'LRLLLLRLRRLRRRRLRL',
-        'LRLLLLRLRRRRRRRLLL',
-        'LRLLLLRRRLLLRRRRLR',
-        'LRLLLLRRRRLRRRRLLL',
-        'LRLLLRLLLRLRLRRRRR',
-        'LRLLLRLLLRLRRRLRRR',
-        'LRLLLRLLLRRRLRRRLR',
-        'LRLLLRLLLRRRRRLRLR',
-        'LRLLLRLRLRLRLRRRLR',
-        'LRLLLRLRLRLRRRLRLR',
-        'LRLLLRRLRLLLLRRRRR',
-        'LRLLLRRLRLLLRRLRRR',
-        'LRLLLRRLRLRLLRRRLR',
-        'LRLLLRRLRLRLRRLRLR',
-        'LRLLLRRLRRLRLRRLRL',
-        'LRLLLRRLRRLRRRLLRL',
-        'LRLLLRRLRRRRLRRLLL',
-        'LRLLLRRLRRRRRRLLLL',
-        'LRLLLRRRRLLLLRRRLR',
-        'LRLLLRRRRLLLRRLRLR',
-        'LRLLLRRRRRLRLRRLLL',
-        'LRLLLRRRRRLRRRLLLL',
-        'LRLRLLLLLRLRLRRRRR',
-        'LRLRLLLLLRLRRRLRRR',
-        'LRLRLLLLLRRRLRRRLR',
-        'LRLRLLLLLRRRRRLRLR',
-        'LRLRLLLRLRLRLRRRLR',
-        'LRLRLLLRLRLRRRLRLR',
-        'LRLRLLRLRLLLLRRRRR',
-        'LRLRLLRLRLLLRRLRRR',
-        'LRLRLLRLRLRLLRRRLR',
-        'LRLRLLRLRLRLRRLRLR',
-        'LRLRLLRLRRLRLRRLRL',
-        'LRLRLLRLRRLRRRLLRL',
-        'LRLRLLRLRRRRLRRLLL',
-        'LRLRLLRLRRRRRRLLLL',
-        'LRLRLLRRRLLLLRRRLR',
-        'LRLRLLRRRLLLRRLRLR',
-        'LRLRLLRRRRLRLRRLLL',
-        'LRLRLLRRRRLRRRLLLL',
-        'LRLRLRLLLRLRLRLRRR',
-        'LRLRLRLLLRRRLRLRLR',
-        'LRLRLRLRLRLRLRLRLR',
-        'LRLRLRRLRLLLLRLRRR',
-        'LRLRLRRLRLRLLRLRLR',
-        'LRLRLRRLRRLRLRLLRL',
-        'LRLRLRRLRRRRLRLLLL',
-        'LRLRLRRRRLLLLRLRLR',
-        'LRLRLRRRRRLRLRLLLL',
-        'LRRLLLLLRLLRRRRLRR',
-        'LRRLLLLLRLRRRRRLLR',
-        'LRRLLLLLRRLLRRRRRL',
-        'LRRLLLLLRRRLRRRRLL',
-        'LRRLLLLRRLLRRRRLLR',
-        'LRRLLLLRRRLLRRRRLL',
-        'LRRLLLRLLRLLRRRLRR',
-        'LRRLLLRLLRRLRRRLLR',
-        'LRRLLLRRLRLLRRRLLR',
-        'LRRLLRLLRLLRLRRLRR',
-        'LRRLLRLLRLLRRRLLRR',
-        'LRRLLRLLRLRRLRRLLR',
-        'LRRLLRLLRLRRRRLLLR',
-        'LRRLLRLLRRLLLRRRRL',
-        'LRRLLRLLRRLLRRLRRL',
-        'LRRLLRLLRRRLLRRRLL',
-        'LRRLLRLLRRRLRRLRLL',
-        'LRRLLRLRRLLRLRRLLR',
-        'LRRLLRLRRLLRRRLLLR',
-        'LRRLLRLRRRLLLRRRLL',
-        'LRRLLRLRRRLLRRLRLL',
-        'LRRLLRRLLRLLLRRLRR',
-        'LRRLLRRLLRLLRRLLRR',
-        'LRRLLRRLLRRLLRRLLR',
-        'LRRLLRRLLRRLRRLLLR',
-        'LRRLLRRRLRLLLRRLLR',
-        'LRRLLRRRLRLLRRLLLR',
-        'LRRRLLLLRLLRLRRLRR',
-        'LRRRLLLLRLLRRRLLRR',
-        'LRRRLLLLRLRRLRRLLR',
-        'LRRRLLLLRLRRRRLLLR',
-        'LRRRLLLLRRLLLRRRRL',
-        'LRRRLLLLRRLLRRLRRL',
-        'LRRRLLLLRRRLLRRRLL',
-        'LRRRLLLLRRRLRRLRLL',
-        'LRRRLLLRRLLRLRRLLR',
-        'LRRRLLLRRLLRRRLLLR',
-        'LRRRLLLRRRLLLRRRLL',
-        'LRRRLLLRRRLLRRLRLL',
-        'LRRRLLRLLRLLLRRLRR',
-        'LRRRLLRLLRLLRRLLRR',
-        'LRRRLLRLLRRLLRRLLR',
-        'LRRRLLRLLRRLRRLLLR',
-        'LRRRLLRRLRLLLRRLLR',
-        'LRRRLLRRLRLLRRLLLR',
-        'LRRRLRLLRLLRLRLLRR',
-        'LRRRLRLLRLRRLRLLLR',
-        'LRRRLRLLRRLLLRLRRL',
-        'LRRRLRLLRRRLLRLRLL',
-        'LRRRLRLRRLLRLRLLLR',
-        'LRRRLRLRRRLLLRLRLL',
-        'LRRRLRRLLRLLLRLLRR',
-        'LRRRLRRLLRRLLRLLLR',
-        'LRRRLRRRLRLLLRLLLR',
-        'RLLLLLLLRLRRRRRRRL',
-        'RLLLLLLRRLLRRRRRRL',
-        'RLLLLLLRRLRRRRRRLL',
-        'RLLLLLRLLLRRRRRLRR',
-        'RLLLLLRLLRRLRRRRRL',
-        'RLLLLLRRLLLRRRRLRR',
-        'RLLLLLRRLLRRRRRLLR',
-        'RLLLLLRRLRLLRRRRRL',
-        'RLLLLLRRLRRLRRRRLL',
-        'RLLLLRLLRLRRLRRRRL',
-        'RLLLLRLLRLRRRRLRRL',
-        'RLLLLRLRRLLRLRRRRL',
-        'RLLLLRLRRLLRRRLRRL',
-        'RLLLLRLRRLRRLRRRLL',
-        'RLLLLRLRRLRRRRLRLL',
-        'RLLLLRRLLLRRLRRLRR',
-        'RLLLLRRLLLRRRRLLRR',
-        'RLLLLRRLLRRLLRRRRL',
-        'RLLLLRRLLRRLRRLRRL',
-        'RLLLLRRRLLLRLRRLRR',
-        'RLLLLRRRLLLRRRLLRR',
-        'RLLLLRRRLLRRLRRLLR',
-        'RLLLLRRRLLRRRRLLLR',
-        'RLLLLRRRLRLLLRRRRL',
-        'RLLLLRRRLRLLRRLRRL',
-        'RLLLLRRRLRRLLRRRLL',
-        'RLLLLRRRLRRLRRLRLL',
-        'RLLRLLLLRLRRLRRRRL',
-        'RLLRLLLLRLRRRRLRRL',
-        'RLLRLLLRRLLRLRRRRL',
-        'RLLRLLLRRLLRRRLRRL',
-        'RLLRLLLRRLRRLRRRLL',
-        'RLLRLLLRRLRRRRLRLL',
-        'RLLRLLRLLLRRLRRLRR',
-        'RLLRLLRLLLRRRRLLRR',
-        'RLLRLLRLLRRLLRRRRL',
-        'RLLRLLRLLRRLRRLRRL',
-        'RLLRLLRRLLLRLRRLRR',
-        'RLLRLLRRLLLRRRLLRR',
-        'RLLRLLRRLLRRLRRLLR',
-        'RLLRLLRRLLRRRRLLLR',
-        'RLLRLLRRLRLLLRRRRL',
-        'RLLRLLRRLRLLRRLRRL',
-        'RLLRLLRRLRRLLRRRLL',
-        'RLLRLLRRLRRLRRLRLL',
-        'RLLRLRLLRLRRLRLRRL',
-        'RLLRLRLRRLLRLRLRRL',
-        'RLLRLRLRRLRRLRLRLL',
-        'RLLRLRRLLLRRLRLLRR',
-        'RLLRLRRLLRRLLRLRRL',
-        'RLLRLRRRLLLRLRLLRR',
-        'RLLRLRRRLLRRLRLLLR',
-        'RLLRLRRRLRLLLRLRRL',
-        'RLLRLRRRLRRLLRLRLL',
-        'RLRLLLLLLLRLRRRRRR',
-        'RLRLLLLLLRRRRRRLRL',
-        'RLRLLLLRLLLLRRRRRR',
-        'RLRLLLLRLLRLRRRRLR',
-        'RLRLLLLRLRLRRRRLRL',
-        'RLRLLLLRLRRRRRRLLL',
-        'RLRLLLRLRLRLRRRLRL',
-        'RLRLLLRRRLLLRRRLRL',
-        'RLRLLLRRRLRLRRRLLL',
-        'RLRLLRLLLLRLLRRRRR',
-        'RLRLLRLLLLRLRRLRRR',
-        'RLRLLRLLLRRRLRRLRL',
-        'RLRLLRLLLRRRRRLLRL',
-        'RLRLLRLRLLLLLRRRRR',
-        'RLRLLRLRLLLLRRLRRR',
-        'RLRLLRLRLLRLLRRRLR',
-        'RLRLLRLRLLRLRRLRLR',
-        'RLRLLRLRLRLRLRRLRL',
-        'RLRLLRLRLRLRRRLLRL',
-        'RLRLLRLRLRRRLRRLLL',
-        'RLRLLRLRLRRRRRLLLL',
-        'RLRLLRRLRLRLLRRLRL',
-        'RLRLLRRLRLRLRRLLRL',
-        'RLRLLRRRRLLLLRRLRL',
-        'RLRLLRRRRLLLRRLLRL',
-        'RLRLLRRRRLRLLRRLLL',
-        'RLRLLRRRRLRLRRLLLL',
-        'RLRRLLLLLLRLLRRRRR',
-        'RLRRLLLLLLRLRRLRRR',
-        'RLRRLLLLLRRRLRRLRL',
-        'RLRRLLLLLRRRRRLLRL',
-        'RLRRLLLRLLLLLRRRRR',
-        'RLRRLLLRLLLLRRLRRR',
-        'RLRRLLLRLLRLLRRRLR',
-        'RLRRLLLRLLRLRRLRLR',
-        'RLRRLLLRLRLRLRRLRL',
-        'RLRRLLLRLRLRRRLLRL',
-        'RLRRLLLRLRRRLRRLLL',
-        'RLRRLLLRLRRRRRLLLL',
-        'RLRRLLRLRLRLLRRLRL',
-        'RLRRLLRLRLRLRRLLRL',
-        'RLRRLLRRRLLLLRRLRL',
-        'RLRRLLRRRLLLRRLLRL',
-        'RLRRLLRRRLRLLRRLLL',
-        'RLRRLLRRRLRLRRLLLL',
-        'RLRRLRLLLLRLLRLRRR',
-        'RLRRLRLLLRRRLRLLRL',
-        'RLRRLRLRLLLLLRLRRR',
-        'RLRRLRLRLLRLLRLRLR',
-        'RLRRLRLRLRLRLRLLRL',
-        'RLRRLRLRLRRRLRLLLL',
-        'RLRRLRRLRLRLLRLLRL',
-        'RLRRLRRRRLLLLRLLRL',
-        'RLRRLRRRRLRLLRLLLL',
-        'RRLLLLLLRLLRRRRRRL',
-        'RRLLLLLLRLRRRRRRLL',
-        'RRLLLLLRRLLRRRRRLL',
-        'RRLLLLRLLLLRRRRLRR',
-        'RRLLLLRLLLRRRRRLLR',
-        'RRLLLLRLLRLLRRRRRL',
-        'RRLLLLRLLRRLRRRRLL',
-        'RRLLLLRRLLLRRRRLLR',
-        'RRLLLLRRLRLLRRRRLL',
-        'RRLLLRLLRLLRLRRRRL',
-        'RRLLLRLLRLLRRRLRRL',
-        'RRLLLRLLRLRRLRRRLL',
-        'RRLLLRLLRLRRRRLRLL',
-        'RRLLLRLRRLLRLRRRLL',
-        'RRLLLRLRRLLRRRLRLL',
-        'RRLLLRRLLLLRLRRLRR',
-        'RRLLLRRLLLLRRRLLRR',
-        'RRLLLRRLLLRRLRRLLR',
-        'RRLLLRRLLLRRRRLLLR',
-        'RRLLLRRLLRLLLRRRRL',
-        'RRLLLRRLLRLLRRLRRL',
-        'RRLLLRRLLRRLLRRRLL',
-        'RRLLLRRLLRRLRRLRLL',
-        'RRLLLRRRLLLRLRRLLR',
-        'RRLLLRRRLLLRRRLLLR',
-        'RRLLLRRRLRLLLRRRLL',
-        'RRLLLRRRLRLLRRLRLL',
-        'RRLRLLLLRLLRLRRRRL',
-        'RRLRLLLLRLLRRRLRRL',
-        'RRLRLLLLRLRRLRRRLL',
-        'RRLRLLLLRLRRRRLRLL',
-        'RRLRLLLRRLLRLRRRLL',
-        'RRLRLLLRRLLRRRLRLL',
-        'RRLRLLRLLLLRLRRLRR',
-        'RRLRLLRLLLLRRRLLRR',
-        'RRLRLLRLLLRRLRRLLR',
-        'RRLRLLRLLLRRRRLLLR',
-        'RRLRLLRLLRLLLRRRRL',
-        'RRLRLLRLLRLLRRLRRL',
-        'RRLRLLRLLRRLLRRRLL',
-        'RRLRLLRLLRRLRRLRLL',
-        'RRLRLLRRLLLRLRRLLR',
-        'RRLRLLRRLLLRRRLLLR',
-        'RRLRLLRRLRLLLRRRLL',
-        'RRLRLLRRLRLLRRLRLL',
-        'RRLRLRLLRLLRLRLRRL',
-        'RRLRLRLLRLRRLRLRLL',
-        'RRLRLRLRRLLRLRLRLL',
-        'RRLRLRRLLLLRLRLLRR',
-        'RRLRLRRLLLRRLRLLLR',
-        'RRLRLRRLLRLLLRLRRL',
-        'RRLRLRRLLRRLLRLRLL',
-        'RRLRLRRRLLLRLRLLLR',
-        'RRLRLRRRLRLLLRLRLL',
-        'RRRLLLLLLLLLRRRRRR',
-        'RRRLLLLLLLRLRRRRLR',
-        'RRRLLLLLLRLRRRRLRL',
-        'RRRLLLLLLRRRRRRLLL',
-        'RRRLLLLRLLLLRRRRLR',
-        'RRRLLLLRLRLRRRRLLL',
-        'RRRLLLRLRLLLRRRLRL',
-        'RRRLLLRLRLRLRRRLLL',
-        'RRRLLLRRRLLLRRRLLL',
-        'RRRLLRLLLLLLLRRRRR',
-        'RRRLLRLLLLLLRRLRRR',
-        'RRRLLRLLLLRLLRRRLR',
-        'RRRLLRLLLLRLRRLRLR',
-        'RRRLLRLLLRLRLRRLRL',
-        'RRRLLRLLLRLRRRLLRL',
-        'RRRLLRLLLRRRLRRLLL',
-        'RRRLLRLLLRRRRRLLLL',
-        'RRRLLRLRLLLLLRRRLR',
-        'RRRLLRLRLLLLRRLRLR',
-        'RRRLLRLRLRLRLRRLLL',
-        'RRRLLRLRLRLRRRLLLL',
-        'RRRLLRRLRLLLLRRLRL',
-        'RRRLLRRLRLLLRRLLRL',
-        'RRRLLRRLRLRLLRRLLL',
-        'RRRLLRRLRLRLRRLLLL',
-        'RRRLLRRRRLLLLRRLLL',
-        'RRRLLRRRRLLLRRLLLL',
-        'RRRRLLLLLLLLLRRRRR',
-        'RRRRLLLLLLLLRRLRRR',
-        'RRRRLLLLLLRLLRRRLR',
-        'RRRRLLLLLLRLRRLRLR',
-        'RRRRLLLLLRLRLRRLRL',
-        'RRRRLLLLLRLRRRLLRL',
-        'RRRRLLLLLRRRLRRLLL',
-        'RRRRLLLLLRRRRRLLLL',
-        'RRRRLLLRLLLLLRRRLR',
-        'RRRRLLLRLLLLRRLRLR',
-        'RRRRLLLRLRLRLRRLLL',
-        'RRRRLLLRLRLRRRLLLL',
-        'RRRRLLRLRLLLLRRLRL',
-        'RRRRLLRLRLLLRRLLRL',
-        'RRRRLLRLRLRLLRRLLL',
-        'RRRRLLRLRLRLRRLLLL',
-        'RRRRLLRRRLLLLRRLLL',
-        'RRRRLLRRRLLLRRLLLL',
-        'RRRRLRLLLLLLLRLRRR',
-        'RRRRLRLLLLRLLRLRLR',
-        'RRRRLRLLLRLRLRLLRL',
-        'RRRRLRLLLRRRLRLLLL',
-        'RRRRLRLRLLLLLRLRLR',
-        'RRRRLRLRLRLRLRLLLL',
-        'RRRRLRRLRLLLLRLLRL',
-        'RRRRLRRLRLRLLRLLLL',
-        'RRRRLRRRRLLLLRLLLL'
-    )
-
-    LR_centers_555 = (
-        32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
-        82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-5x5x5-step901-LR-center-stage.txt',
-            self.state_targets,
-            linecount=4900,
-            max_depth=5,
-            filesize=181300,
-            all_moves=moves_555,
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Lw", "Lw'",
-                "Rw", "Rw'",
-            ),
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return ''.join([parent_state[x] for x in self.LR_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-        for (pos, pos_state) in zip(self.LR_centers_555, state):
-            cube[pos] = pos_state
 
 
 class LookupTable555LRCenterStageEOInnerOrbit(LookupTable):
@@ -2234,6 +1671,7 @@ class LookupTable555LRCenterStageEOInnerOrbit(LookupTable):
                 "Lw", "Lw'",
                 "Rw", "Rw'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -2329,6 +1767,7 @@ class LookupTableIDA555EdgeOrientOuterOrbit(LookupTable):
                 "Lw", "Lw'",
                 "Rw", "Rw'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -2433,6 +1872,10 @@ class LookupTable555Phase4(LookupTable):
     1 steps has 1,018,011 entries (0 percent, 240.15x previous step)
     2 steps has 6,276,787 entries (5 percent, 6.17x previous step)
     3 steps has 25,090,688 entries (20 percent, 4.00x previous step)
+
+    The full table was 5.1G and I didn't need to keep that deep so I kept
+    up to 3-deep. Here are the remaining distributions.
+
     4 steps has 50,710,890 entries (41 percent, 2.02x previous step)
     5 steps has 34,813,744 entries (28 percent, 0.69x previous step)
     6 steps has 3,360,706 entries (2 percent, 0.10x previous step)
@@ -2448,9 +1891,9 @@ class LookupTable555Phase4(LookupTable):
             parent,
             'lookup-table-5x5x5-step40-phase4.txt',
             'TBD',
-            linecount=121287375,
-            max_depth=7,
-            filesize=5457931875,
+            linecount=32389725,
+            max_depth=3,
+            filesize=971691750,
         )
         self.wing_strs = None
 
@@ -2580,6 +2023,7 @@ class LookupTable555Phase5Centers(LookupTable):
                 "U", "U'",
                 "D", "D'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -2634,6 +2078,7 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
                 "U", "U'",
                 "D", "D'",
             ),
+            use_state_index=True,
         )
         self.wing_strs = ("LB", "LF", "RB", "RF")
 
@@ -2669,9 +2114,10 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
         cube = self.parent.state[:]
 
 
+# Only used to create a perfect hash file
+'''
 class LookupTable555Phase5FBCentersHighEdgeMidge(LookupTableIDAViaGraph):
     """
-    Only used to create a perfect hash file
     lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.txt
     ===================================================================
     1 steps has 30 entries (0 percent, 0.00x previous step)
@@ -2743,8 +2189,6 @@ class LookupTable555Phase5FBCentersHighEdgeMidge(LookupTableIDAViaGraph):
 
 class LookupTable555Phase5FBCentersLowEdgeMidge(LookupTableIDAViaGraph):
     """
-    Only used to create a perfect hash file
-
     lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.txt
     ==================================================================
     1 steps has 30 entries (0 percent, 0.00x previous step)
@@ -2812,7 +2256,7 @@ class LookupTable555Phase5FBCentersLowEdgeMidge(LookupTableIDAViaGraph):
         FB_state = state[0:18]
         for (pos, x) in zip(FB_centers_555, FB_state):
             self.parent.state[pos] = x
-
+'''
 
 class LookupTable555Phase5FBCenters(LookupTable):
     """
@@ -2862,6 +2306,7 @@ class LookupTable555Phase5FBCenters(LookupTable):
                 "U", "U'",
                 "D", "D'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -2916,6 +2361,7 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
                 "U", "U'",
                 "D", "D'",
             ),
+            use_state_index=True,
         )
         self.wing_strs = ("LB", "LF", "RB", "RF")
 
@@ -3022,6 +2468,7 @@ class LookupTable555Phase6Centers(LookupTable):
                 "F", "F'",
                 "B", "B'",
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -3076,6 +2523,7 @@ class LookupTable555Phase6HighEdgeMidge(LookupTable):
                 "F", "F'",
                 "B", "B'",
             ),
+            use_state_index=True,
         )
         self.wing_strs = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
 
@@ -3151,6 +2599,7 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
                 "F", "F'",
                 "B", "B'",
             ),
+            use_state_index=True,
         )
         self.wing_strs = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
 
@@ -3432,7 +2881,6 @@ class RubiksCube555(RubiksCube):
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
         self.lt_FB_centers_stage.avoid_oll = 0
 
-        # self.lt_phase3_lr_center_stage = LookupTable555LRCenterStage(self)
         self.lt_phase3_lr_center_stage_eo_inner_orbit = LookupTable555LRCenterStageEOInnerOrbit(self)
         self.lt_phase3_eo_outer_orbit = LookupTableIDA555EdgeOrientOuterOrbit(self)
         self.lt_phase3_eo_both_orbits = LookupTable555EdgeOrientBothOrbits(self)
@@ -3444,8 +2892,6 @@ class RubiksCube555(RubiksCube):
         self.lt_phase5_high_edge_midge = LookupTable555Phase5HighEdgeMidge(self)
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
         self.lt_phase5_fb_centers = LookupTable555Phase5FBCenters(self)
-        #self.lt_phase5_fb_centers_high_edge_midge = LookupTable555Phase5FBCentersHighEdgeMidge(self)
-        #self.lt_phase5_fb_centers_low_edge_midge = LookupTable555Phase5FBCentersLowEdgeMidge(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
 
         self.lt_phase6_centers = LookupTable555Phase6Centers(self)
@@ -3633,7 +3079,6 @@ class RubiksCube555(RubiksCube):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-        # dwalton
         if not self.FB_centers_staged():
             tmp_solution_len = len(self.solution)
             self.lt_FB_centers_stage.solve_via_c()
@@ -3769,13 +3214,16 @@ class RubiksCube555(RubiksCube):
             self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
             self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
 
-            pt_states.append((
-                phase4_solution_len,
-                self.lt_phase5_centers.state_index(),
-                self.lt_phase5_fb_centers.state_index(),
-                self.lt_phase5_high_edge_midge.state_index(),
-                self.lt_phase5_low_edge_midge.state_index(),
-            ))
+            try:
+                pt_states.append((
+                    phase4_solution_len,
+                    self.lt_phase5_centers.state_index(),
+                    self.lt_phase5_fb_centers.state_index(),
+                    self.lt_phase5_high_edge_midge.state_index(),
+                    self.lt_phase5_low_edge_midge.state_index(),
+                ))
+            except TypeError:
+                pt_states.append((99, 0, 0, 0, 0))
 
         self.state = original_state[:]
         self.solution = original_solution[:]

@@ -272,6 +272,7 @@ class LookupTable444UDCentersStage(LookupTable):
                 "Bw", "Bw'", "Bw2",
                 "Dw", "Dw'", "Dw2"
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -324,6 +325,7 @@ class LookupTable444LRCentersStage(LookupTable):
                 "Bw", "Bw'", "Bw2",
                 "Dw", "Dw'", "Dw2"
             ),
+            use_state_index=True,
         )
 
     def state(self):
@@ -376,6 +378,7 @@ class LookupTable444FBCentersStage(LookupTable):
                 "Bw", "Bw'", "Bw2",
                 "Dw", "Dw'", "Dw2"
             ),
+            use_state_index=True,
         )
 
     def state(self):

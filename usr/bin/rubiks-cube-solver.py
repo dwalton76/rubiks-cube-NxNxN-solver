@@ -8,12 +8,24 @@ Solve any size rubiks cube:
 This is a work in progress
 """
 
+# standard libraries
+import argparse
+import datetime as dt
+import logging
+import os
+import resource
 import sys
+from math import sqrt
+from pprint import pformat
+from statistics import median
+
+# rubiks cube libraries
+from rubikscubennnsolver import ImplementThis, InvalidCubeReduction, NotSolving, SolveError, StuckInALoop, reverse_steps
+from rubikscubennnsolver.LookupTable import NoPruneTableState, NoSteps
 
 if sys.version_info < (3, 4):
     raise SystemError("Must be using Python 3.4 or higher")
 
-import logging
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(filename)22s %(levelname)8s: %(message)s"
@@ -30,23 +42,6 @@ logging.addLevelName(
 log.info("rubiks-cube-solver.py begin")
 
 
-from rubikscubennnsolver import (
-    ImplementThis,
-    SolveError,
-    StuckInALoop,
-    NotSolving,
-    reverse_steps,
-    InvalidCubeReduction,
-)
-from rubikscubennnsolver.LookupTable import NoSteps, NoPruneTableState
-from math import sqrt
-from pprint import pformat
-from statistics import median
-import argparse
-import datetime as dt
-import logging
-import os
-import resource
 
 start_time = dt.datetime.now()
 

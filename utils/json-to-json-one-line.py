@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
+# standard libraries
 import json
 import logging
 import os
-import subprocess
 import struct
+import subprocess
 import sys
-
 
 log = logging.getLogger(__name__)
 

@@ -1,9 +1,11 @@
-from rubikscubennnsolver import RubiksCube
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-from rubikscubennnsolver.RubiksCube555 import solved_555, RubiksCube555
+# standard libraries
 import logging
 import sys
 
+# rubiks cube libraries
+from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 
 log = logging.getLogger(__name__)
 

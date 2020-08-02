@@ -1,7 +1,10 @@
+# standard libraries
+import logging
+
+# rubiks cube libraries
 from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.RubiksCube222 import moves_222
-import logging
 
 log = logging.getLogger(__name__)
 

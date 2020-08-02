@@ -1,0 +1,8 @@
+# building wheels, etc
+pip==20.2
+setuptools==49.2.0
+wheel==0.34.2
+
+# make format/lint
+isort==4.3.2
+

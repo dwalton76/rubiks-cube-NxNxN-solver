@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
+# standard libraries
 import cProfile as profile
 import datetime as dt
-from rubikscubennnsolver.RubiksSide import SolveError
-from pprint import pformat
-from subprocess import call
 import hashlib
 import json
 import logging
@@ -13,7 +11,11 @@ import resource
 import struct
 import subprocess
 import sys
+from pprint import pformat
+from subprocess import call
 
+# rubiks cube libraries
+from rubikscubennnsolver.RubiksSide import SolveError
 
 log = logging.getLogger(__name__)
 

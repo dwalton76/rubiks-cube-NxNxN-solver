@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# standard libraries
+import logging
+
+# rubiks cube libraries
 from rubikscubennnsolver.RubiksCube333 import solved_333
 from rubikscubennnsolver.RubiksCube444 import solved_444
 from rubikscubennnsolver.RubiksCube555 import solved_555
@@ -10,7 +14,6 @@ from rubikscubennnsolver.RubiksCubeHighLowBuilder import (
     RubiksCubeHighLow555,
     RubiksCubeHighLow666,
 )
-import logging
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(filename)20s %(levelname)8s: %(message)s"

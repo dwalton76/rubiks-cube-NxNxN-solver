@@ -1,13 +1,13 @@
-from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
-from rubikscubennnsolver.LookupTable import (
-    LookupTable,
-    LookupTableIDAViaC,
-)
-from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+# standard libraries
 import logging
 import sys
+
+# rubiks cube libraries
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDAViaC
+from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 
 log = logging.getLogger(__name__)
 

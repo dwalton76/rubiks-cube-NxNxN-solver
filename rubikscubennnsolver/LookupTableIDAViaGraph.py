@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 
+# standard libraries
 import cProfile as profile
+import datetime as dt
+import logging
+import struct
+import subprocess
+import sys
+
+# rubiks cube libraries
 from rubikscubennnsolver import reverse_steps
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
@@ -9,12 +17,6 @@ from rubikscubennnsolver.LookupTable import (
     pretty_time,
     steps_on_same_face_and_layer,
 )
-import datetime as dt
-import logging
-import struct
-import subprocess
-import sys
-
 
 log = logging.getLogger(__name__)
 

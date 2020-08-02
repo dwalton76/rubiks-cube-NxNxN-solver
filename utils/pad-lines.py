@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import sys
+# standard libraries
 import shutil
+import sys
 
 filename = sys.argv[1]
 filename_pad = filename + '.pad'

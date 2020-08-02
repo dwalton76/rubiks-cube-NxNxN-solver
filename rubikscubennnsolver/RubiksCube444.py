@@ -1,21 +1,16 @@
-from rubikscubennnsolver import RubiksCube, wing_str_map, wing_strs_all, reverse_steps
-from rubikscubennnsolver.misc import pre_steps_to_try
-from rubikscubennnsolver.LookupTable import (
-    LookupTable,
-    LookupTableIDA,
-    LookupTableIDAViaC,
-)
-from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
-from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_444
-from rubikscubennnsolver.RubiksCube444Misc import (
-    high_edges_444,
-    low_edges_444,
-    highlow_edge_mapping_combinations,
-)
-from pprint import pformat
+# standard libraries
 import itertools
 import logging
 import sys
+from pprint import pformat
+
+# rubiks cube libraries
+from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, LookupTableIDAViaC
+from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+from rubikscubennnsolver.misc import pre_steps_to_try
+from rubikscubennnsolver.RubiksCube444Misc import high_edges_444, highlow_edge_mapping_combinations, low_edges_444
+from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_444
 
 log = logging.getLogger(__name__)
 

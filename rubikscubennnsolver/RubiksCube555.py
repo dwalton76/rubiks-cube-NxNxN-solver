@@ -1,19 +1,16 @@
-from rubikscubennnsolver import RubiksCube, wing_str_map, wing_strs_all, reverse_steps
-from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
-from rubikscubennnsolver.LookupTable import (
-    LookupTable,
-    LookupTableIDA,
-    LookupTableIDAViaC,
-    NoIDASolution,
-    NoSteps,
-)
-from rubikscubennnsolver.misc import SolveError
-from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_555
-from pprint import pformat
+# standard libraries
 import itertools
 import logging
-import sys
 import subprocess
+import sys
+from pprint import pformat
+
+# rubiks cube libraries
+from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
+from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, LookupTableIDAViaC, NoIDASolution, NoSteps
+from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+from rubikscubennnsolver.misc import SolveError
+from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_555
 
 log = logging.getLogger(__name__)
 

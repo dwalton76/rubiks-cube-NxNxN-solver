@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+# standard libraries
+import json
+import logging
+from collections import OrderedDict
+
+# rubiks cube libraries
 from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.RubiksCube222 import solved_222
 from rubikscubennnsolver.RubiksCube333 import solved_333
@@ -7,22 +13,8 @@ from rubikscubennnsolver.RubiksCube444 import solved_444
 from rubikscubennnsolver.RubiksCube555 import solved_555
 from rubikscubennnsolver.RubiksCube666 import solved_666
 from rubikscubennnsolver.RubiksCube777 import solved_777
-from rubikscubennnsolver.RubiksCubeNNNEven import (
-    solved_888,
-    solved_101010,
-    solved_121212,
-    solved_141414,
-)
-from rubikscubennnsolver.RubiksCubeNNNOdd import (
-    solved_999,
-    solved_111111,
-    solved_131313,
-    solved_151515,
-    solved_171717,
-)
-from collections import OrderedDict
-import json
-import logging
+from rubikscubennnsolver.RubiksCubeNNNEven import solved_888, solved_101010, solved_121212, solved_141414
+from rubikscubennnsolver.RubiksCubeNNNOdd import solved_999, solved_111111, solved_131313, solved_151515, solved_171717
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s"

@@ -1,10 +1,16 @@
 
-init:
-	gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_444.c ida_search_666.c ida_search_777.c xxhash.c -lm
-	gcc -O3 -o ida_search_via_graph ida_search_core.c ida_search_via_graph.c -lm
-
 clean:
-	rm -rf build dist rubikscubennnsolver.egg-info ida_search cache
+	rm -rf build dist venv rubikscubennnsolver.egg-info cache ida_search ida_search_via_graph
+
+init:
+	gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c rubikscubennnsolver/xxhash.c -lm
+	gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search_via_graph.c -lm
+	python3 -m venv venv
+	@./venv/bin/python3 -m pip install -U pip==20.2
+	@./venv/bin/python3 -m pip install -r requirements.txt
+
+format:
+	isort -rc rubikscubennnsolver usr utils
 
 test:
 	./usr/bin/rubiks-cube-solver.py --state DLRRFULLDUBFDURDBFBRBLFU

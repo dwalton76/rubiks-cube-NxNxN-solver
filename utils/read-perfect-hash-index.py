@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# standard libraries
 import sys
 
 filename = sys.argv[1]

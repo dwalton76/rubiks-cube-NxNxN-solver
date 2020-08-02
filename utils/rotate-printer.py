@@ -5,17 +5,20 @@ Used to print the logic that is in rotate_444() and rotate_555() in
 https://github.com/dwalton76/rubiks-cube-lookup-tables/blob/master/rotate.c
 """
 
-from copy import copy
-from pprint import pformat
-from rubikscubennnsolver import RubiksCube
-from rubikscubennnsolver.RubiksCube222 import solved_222, moves_222
-from rubikscubennnsolver.RubiksCube333 import solved_333, moves_333
-from rubikscubennnsolver.RubiksCube444 import solved_444, moves_444
-from rubikscubennnsolver.RubiksCube555 import solved_555, moves_555
-from rubikscubennnsolver.RubiksCube666 import solved_666, moves_666
-from rubikscubennnsolver.RubiksCube777 import solved_777, moves_777
+# standard libraries
 import logging
 import sys
+from copy import copy
+from pprint import pformat
+
+# rubiks cube libraries
+from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver.RubiksCube222 import moves_222, solved_222
+from rubikscubennnsolver.RubiksCube333 import moves_333, solved_333
+from rubikscubennnsolver.RubiksCube444 import moves_444, solved_444
+from rubikscubennnsolver.RubiksCube555 import moves_555, solved_555
+from rubikscubennnsolver.RubiksCube666 import moves_666, solved_666
+from rubikscubennnsolver.RubiksCube777 import moves_777, solved_777
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s"

@@ -1,5 +1,8 @@
-from rubikscubennnsolver import RubiksCube, SolveError
+# standard libraries
 import logging
+
+# rubiks cube libraries
+from rubikscubennnsolver import RubiksCube, SolveError
 
 log = logging.getLogger(__name__)
 

@@ -1,9 +1,0 @@
-
-444
-===
-    --fast could be a mirror of how 555 edge solver works
-
-777
-===
-- We can currently only get the daisy pattern on FB. LR we could certain do but then to
-do UD and FB at once would be a 70^10 search space which would be HUGE.

@@ -1,5 +1,6 @@
-from pprint import pformat
+# standard libraries
 import logging
+from pprint import pformat
 
 log = logging.getLogger(__name__)
 

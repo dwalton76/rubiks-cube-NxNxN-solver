@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 
-from rubikscubennnsolver import ImplementThis, SolveError, StuckInALoop, NotSolving
+# standard libraries
+import argparse
+import json
+import logging
+import os
+import sys
+from pprint import pformat
+from statistics import median
+
+# rubiks cube libraries
+from rubikscubennnsolver import ImplementThis, NotSolving, SolveError, StuckInALoop
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222, solved_222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
@@ -21,13 +31,6 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import (
     solved_131313,
     solved_151515,
 )
-from pprint import pformat
-from statistics import median
-import argparse
-import json
-import logging
-import os
-import sys
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s"

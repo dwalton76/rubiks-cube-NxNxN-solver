@@ -1,15 +1,18 @@
+# standard libraries
 import logging
 import random
 import sys
+from pprint import pformat
+
+# rubiks cube libraries
 from rubikscubennnsolver import wing_str_map
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333, moves_333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, moves_555
-from rubikscubennnsolver.RubiksCube666 import RubiksCube666, moves_666
+from rubikscubennnsolver.RubiksCube666 import RubiksCube666
 from rubikscubennnsolver.RubiksCube666 import edge_orbit_0 as edge_orbit_0_666
 from rubikscubennnsolver.RubiksCube666 import edge_orbit_1 as edge_orbit_1_666
-from pprint import pformat
-
+from rubikscubennnsolver.RubiksCube666 import moves_666
 
 log = logging.getLogger(__name__)
 random.seed(1234)

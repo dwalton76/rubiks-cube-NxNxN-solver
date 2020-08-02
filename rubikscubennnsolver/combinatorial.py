@@ -4,8 +4,9 @@
 https://en.wikipedia.org/wiki/Combinatorial_number_system
 """
 
-import math
+# standard libraries
 import logging
+import math
 
 log = logging.getLogger(__name__)
 

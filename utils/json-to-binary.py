@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
+# standard libraries
 import json
 import logging
 import os
 import struct
 import sys
-
 
 log = logging.getLogger(__name__)
 moves_777 = (

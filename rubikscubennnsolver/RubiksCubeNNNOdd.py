@@ -1,9 +1,12 @@
+# standard libraries
+import logging
+import sys
+from math import ceil
+
+# rubiks cube libraries
 from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
-from math import ceil
-import logging
-import sys
 
 log = logging.getLogger(__name__)
 

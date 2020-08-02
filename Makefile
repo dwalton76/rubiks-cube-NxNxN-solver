@@ -13,6 +13,9 @@ init:
 format:
 	isort -rc rubikscubennnsolver usr utils
 
+wheel:
+	@./venv/bin/python3 setup.py bdist_wheel
+
 test:
 	./usr/bin/rubiks-cube-solver.py --state DLRRFULLDUBFDURDBFBRBLFU
 	./usr/bin/rubiks-cube-solver.py --state RRBBUFBFBRLRRRFRDDURUBFBBRFLUDUDFLLFFLLLLDFBDDDUUBDLUU

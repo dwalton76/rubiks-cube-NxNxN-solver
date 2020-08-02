@@ -119,23 +119,8 @@ def reverse_steps(steps):
     """
     Reverse the order of all steps and the direction of each individual step
     """
-    assert isinstance(steps, list)
-    results = []
+    return [step if step[-1] == "2" else step[0:-1] if step[-1] == "'" else step + "'" for step in reversed(steps)]
 
-    for step in reversed(steps):
-
-        if step.endswith("2"):
-            reverse_step = step
-
-        elif step.endswith("'"):
-            reverse_step = step[0:-1]
-
-        else:
-            reverse_step = step + "'"
-
-        results.append(reverse_step)
-
-    return results
 
 
 def get_cube_layout(size):

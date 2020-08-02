@@ -218,7 +218,7 @@ class LookupTable777Step41(LookupTable):
         # 255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285, # Down
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -242,6 +242,7 @@ class LookupTable777Step41(LookupTable):
                 "D", "D'", "D2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -322,7 +323,7 @@ class LookupTable777Step42(LookupTable):
         # 255, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 285, # Down
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -346,6 +347,7 @@ class LookupTable777Step42(LookupTable):
                 "D", "D'", "D2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -426,7 +428,7 @@ class LookupTable777Step43(LookupTable):
         'LRLRRRLRRRLRLRLRLLLRLLLRLR'
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -450,6 +452,7 @@ class LookupTable777Step43(LookupTable):
                 "D", "D'", "D2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -530,7 +533,7 @@ class LookupTable777Step44(LookupTable):
         # 257, 261, 262, 263, 264, 269, 270, 271, 276, 277, 278, 279, 283, # Down
     ]
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -554,6 +557,7 @@ class LookupTable777Step44(LookupTable):
                 "D", "D'", "D2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -699,7 +703,7 @@ class LookupTable777Step51(LookupTable):
         255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285, # Down
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -724,6 +728,7 @@ class LookupTable777Step51(LookupTable):
                 "D", "D'", "D2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -805,7 +810,7 @@ class LookupTable777Step52(LookupTable):
         255, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 285, # Down
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -830,6 +835,7 @@ class LookupTable777Step52(LookupTable):
                 "D", "D'", "D2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -911,7 +917,7 @@ class LookupTable777Step53(LookupTable):
         256, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 284, # Down
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -936,6 +942,7 @@ class LookupTable777Step53(LookupTable):
                 "D", "D'", "D2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -1017,7 +1024,7 @@ class LookupTable777Step54(LookupTable):
         257, 261, 262, 263, 264, 269, 270, 271, 276, 277, 278, 279, 283, # Down
     ]
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -1042,6 +1049,7 @@ class LookupTable777Step54(LookupTable):
                 "D", "D'", "D2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -1079,7 +1087,7 @@ class LookupTable777Step55(LookupTable):
         "RRRRLLLRRLLLRRLLLRRRRLLLLRRRLLRRRLLRRRLLLL",
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -1104,6 +1112,7 @@ class LookupTable777Step55(LookupTable):
                 "D", "D'", "D2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -1173,7 +1182,7 @@ class LookupTable777Step61(LookupTable):
         "DDDDUUUDDUUUDDUUUDDDDUUUUDDDUUDDDUUDDDUUUU",
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -1197,6 +1206,7 @@ class LookupTable777Step61(LookupTable):
                 "D", "D'"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -1234,7 +1244,7 @@ class LookupTable777Step62(LookupTable):
         "RRRRLLLRRLLLRRLLLRRRRLLLLRRRLLRRRLLRRRLLLL",
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -1258,6 +1268,7 @@ class LookupTable777Step62(LookupTable):
                 "D", "D'"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -1305,7 +1316,7 @@ class LookupTable777Step65(LookupTable):
         "BFFFBFFFBFFFBFBBBFBBBFBBBF",
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -1329,6 +1340,7 @@ class LookupTable777Step65(LookupTable):
                 "D", "D'"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -1376,7 +1388,7 @@ class LookupTable777Step66(LookupTable):
         "FFFFFFFFFFFFBBBBBBBBBBBB",
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -1400,6 +1412,7 @@ class LookupTable777Step66(LookupTable):
                 "D", "D'"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -1466,7 +1479,7 @@ class LookupTable777Step71(LookupTable):
         "UUUUUUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDDDDDD",
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -1490,6 +1503,7 @@ class LookupTable777Step71(LookupTable):
                 "D", "D'"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -1526,7 +1540,7 @@ class LookupTable777Step72(LookupTable):
         "LLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRR",
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -1550,6 +1564,7 @@ class LookupTable777Step72(LookupTable):
                 "D", "D'"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -1598,7 +1613,7 @@ class LookupTable777Step75(LookupTable):
         "FFFFFFFFFFFFFBBBBBBBBBBBBB",
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -1622,6 +1637,7 @@ class LookupTable777Step75(LookupTable):
                 "D", "D'"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -1669,7 +1685,7 @@ class LookupTable777Step76(LookupTable):
         "FFFFFFFFFFFFBBBBBBBBBBBB",
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -1693,6 +1709,7 @@ class LookupTable777Step76(LookupTable):
                 "D", "D'"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):

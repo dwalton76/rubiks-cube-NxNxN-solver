@@ -404,7 +404,7 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
         'UUUUxxxxxxxxUUUU',
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -435,6 +435,7 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
                 "U2", "D2", "F2", "B2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -471,7 +472,7 @@ class LookupTable666UDRightObliqueStage(LookupTable):
         'UUUUxxxxxxxxUUUU',
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -502,6 +503,7 @@ class LookupTable666UDRightObliqueStage(LookupTable):
                 "U2", "D2", "F2", "B2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -532,7 +534,7 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
     Average: 5.45 moves
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -563,6 +565,7 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
                 "U2", "D2", "F2", "B2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -794,7 +797,7 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
         189, 190, 194, 197, 200, 203, 207, 208, # Down
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -824,6 +827,7 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
                 "3Bw", "3Bw'", "3Bw2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -869,7 +873,7 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
         153, 154, 158, 159, 160, 161, 164, 165, 166, 167, 171, 172, # Back
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -899,6 +903,7 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
                 "3Bw", "3Bw'", "3Bw2",
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 
 from pprint import pformat, pprint
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444

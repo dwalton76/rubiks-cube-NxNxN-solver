@@ -38,7 +38,7 @@ below.
 $ cd ~/
 $ git clone https://github.com/dwalton76/rubiks-cube-NxNxN-solver.git
 $ cd rubiks-cube-NxNxN-solver
-$ sudo make all
+$ make init
 ```
 
 ### Install 3x3x3 solver

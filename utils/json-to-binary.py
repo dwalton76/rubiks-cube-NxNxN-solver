@@ -44,8 +44,6 @@ def convert_json_to_binary(filename: str, state_is_hex: bool) -> None:
             cost = node["cost"]
             edges = node["edges"]
 
-            # write the state...do we need to do this?
-
             # write the cost_to_goal (1 byte)
             fh.write(struct.pack(">B", cost))
 

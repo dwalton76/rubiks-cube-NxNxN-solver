@@ -257,7 +257,7 @@ class LookupTable444UDCentersStage(LookupTable):
         'xxxxxxxxUUUUxxxxUUUUxxxx'
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -273,6 +273,7 @@ class LookupTable444UDCentersStage(LookupTable):
                 "Dw", "Dw'", "Dw2"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -310,7 +311,7 @@ class LookupTable444LRCentersStage(LookupTable):
         'xxxxxxxxLLLLxxxxLLLLxxxx'
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -326,6 +327,7 @@ class LookupTable444LRCentersStage(LookupTable):
                 "Dw", "Dw'", "Dw2"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -363,7 +365,7 @@ class LookupTable444FBCentersStage(LookupTable):
         'xxxxxxxxFFFFxxxxFFFFxxxx'
     )
 
-    def __init__(self, parent):
+    def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
@@ -379,6 +381,7 @@ class LookupTable444FBCentersStage(LookupTable):
                 "Dw", "Dw'", "Dw2"
             ),
             use_state_index=True,
+            build_state_index=build_state_index,
         )
 
     def state(self):
@@ -408,7 +411,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
             prune_tables=[
                 parent.lt_UD_centers_stage,
                 parent.lt_LR_centers_stage,
-                parent.lt_FB_centers_stage,
+                # parent.lt_FB_centers_stage,
             ],
         )
 

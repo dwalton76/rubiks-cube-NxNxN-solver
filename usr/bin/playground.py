@@ -28,10 +28,8 @@ log = logging.getLogger(__name__)
 logging.addLevelName(logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING))
 
-cube = RubiksCube777(solved_777, "URFDLB")
+cube = RubiksCube555(solved_555, "URFDLB")
 cube.cpu_mode = "normal"
 cube.lt_init()
-#cube.lt_step71.build_ida_graph()
-#cube.lt_step72.build_ida_graph()
-#cube.lt_step75.build_ida_graph()
-cube.lt_step76.build_ida_graph()
+#cube.lt_foo_UD_t_centers_stage.build_ida_graph()
+cube.lt_foo_UD_x_centers_stage.build_ida_graph()

@@ -356,6 +356,7 @@ class LookupTable(object):
         all_moves=None,
         illegal_moves=None,
         use_state_index=False,
+        build_state_index=False,
     ):
         self.parent = parent
         self.sides_all = (
@@ -430,12 +431,10 @@ class LookupTable(object):
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
 
             if use_state_index:
-                download_file_if_needed(self.filename.replace(".txt", ".state_index"), self.parent.size)
-                download_file_if_needed(self.filename.replace(".txt", ".bin"), self.parent.size)
+                if not build_state_index:
+                    download_file_if_needed(self.filename.replace(".txt", ".state_index"), self.parent.size)
+                    download_file_if_needed(self.filename.replace(".txt", ".bin"), self.parent.size)
                 self.state_width = len(list(self.state_target)[0])
-
-                if os.path.exists(self.filename):
-                    os.remove(filename)
 
             else:
                 rm_file_if_mismatch(self.filename, self.filesize, self.md5)
@@ -859,8 +858,7 @@ class LookupTable(object):
                         fh.write("\n")
                         ida_graph = {}
 
-        # with open(self.filename.replace(".txt", ".json"), "w") as fh:
-        with open(self.filename.replace(".txt", ".json") + f"-{index}", "w") as fh:
+        with open(self.filename.replace(".txt", ".json"), "w") as fh:
             json.dump(ida_graph, fh, indent=True)
             fh.write("\n")
         log.info("%s: json end" % self)

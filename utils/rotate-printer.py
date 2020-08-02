@@ -5,7 +5,6 @@ https://github.com/dwalton76/rubiks-cube-lookup-tables/blob/master/rotate.c
 
 # standard libraries
 import logging
-import sys
 from copy import copy
 from pprint import pformat
 
@@ -23,16 +22,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-# Color the errors and warnings in red
-logging.addLevelName(
-    logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR)
-)
-logging.addLevelName(
-    logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING)
-)
-
 build_rotate_xxx_c = False
-
 
 if build_rotate_xxx_c:
     print(

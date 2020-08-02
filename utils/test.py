@@ -2,7 +2,6 @@
 import argparse
 import json
 import logging
-import os
 import sys
 from pprint import pformat
 from statistics import median
@@ -34,14 +33,6 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s"
 )
 log = logging.getLogger(__name__)
-
-# Color the errors and warnings in red
-logging.addLevelName(
-    logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR)
-)
-logging.addLevelName(
-    logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING)
-)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--size", type=str, default="4x4x4")

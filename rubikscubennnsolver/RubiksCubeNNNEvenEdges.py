@@ -1,6 +1,5 @@
 # standard libraries
 import logging
-import sys
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube
@@ -239,7 +238,6 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         fake_555.avoid_pll = False
         fake_555.reduce_333()
         fake_555.print_cube()
-
 
         wide_str = str(orbit + 2)
         for step in fake_555.solution:

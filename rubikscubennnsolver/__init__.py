@@ -1,4 +1,3 @@
-from copy import copy
 from collections import OrderedDict
 from pprint import pformat
 from rubikscubennnsolver.RubiksSide import (
@@ -6,10 +5,8 @@ from rubikscubennnsolver.RubiksSide import (
     SolveError,
     StuckInALoop,
     ImplementThis,
-    NotSolving,
 )
 from rubikscubennnsolver.misc import get_swap_count
-import itertools
 import json
 import logging
 import math
@@ -120,7 +117,6 @@ def reverse_steps(steps):
     Reverse the order of all steps and the direction of each individual step
     """
     return [step if step[-1] == "2" else step[0:-1] if step[-1] == "'" else step + "'" for step in reversed(steps)]
-
 
 
 def get_cube_layout(size):
@@ -761,7 +757,6 @@ class RubiksCube(object):
 
         side = self.sides[side_name]
         min_pos = side.min_pos
-        max_pos = side.max_pos
 
         # rotate the face...this is the same for all sides
         for turn in range(quarter_turns):
@@ -4583,8 +4578,6 @@ class RubiksCube(object):
                 solution_string = solution_string.replace(" Dw' D' Dw ", " D' ")
                 solution_string = solution_string.replace(" Dw' D2 Dw ", " D2 ")
 
-                prev_move = move
-
             if original_solution_string == solution_string:
                 break
 
@@ -4678,7 +4671,6 @@ class RubiksCube(object):
         original_solution_len = len(self.solution)
 
         min_solution_len = None
-        min_solution_state = None
         min_solution = None
 
         self.recolor_positions = list(range((self.size * self.size * 6) + 1))
@@ -4728,7 +4720,6 @@ class RubiksCube(object):
                     % (self, top, bottom, solution_len)
                 )
                 min_solution_len = solution_len
-                min_solution_state = self.state[:]
                 min_solution = self.solution[:]
             else:
                 log.warning(

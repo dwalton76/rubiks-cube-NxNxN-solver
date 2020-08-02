@@ -2,10 +2,9 @@
 
 # standard libraries
 import sys
-from pprint import pformat, pprint
 
 # rubiks cube libraries
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 
 # This is only called by ida_search.c, it uses ULFRBD order
 cube = RubiksCube444(sys.argv[1], "ULFRBD")

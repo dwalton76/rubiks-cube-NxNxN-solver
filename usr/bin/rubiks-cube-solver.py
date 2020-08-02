@@ -12,7 +12,6 @@ This is a work in progress
 import argparse
 import datetime as dt
 import logging
-import os
 import resource
 import sys
 from math import sqrt
@@ -20,31 +19,21 @@ from pprint import pformat
 from statistics import median
 
 # rubiks cube libraries
-from rubikscubennnsolver import ImplementThis, InvalidCubeReduction, NotSolving, SolveError, StuckInALoop, reverse_steps
+from rubikscubennnsolver import ImplementThis, InvalidCubeReduction, SolveError, StuckInALoop, reverse_steps
 from rubikscubennnsolver.LookupTable import NoPruneTableState, NoSteps
+from rubikscubennnsolver.RubiksSide import NotSolving
 
 if sys.version_info < (3, 4):
     raise SystemError("Must be using Python 3.4 or higher")
-
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(filename)22s %(levelname)8s: %(message)s"
 )
 log = logging.getLogger(__name__)
 
-# Color the errors and warnings in red
-logging.addLevelName(
-    logging.ERROR, "\033[91m   %s\033[0m" % logging.getLevelName(logging.ERROR)
-)
-logging.addLevelName(
-    logging.WARNING, "\033[91m %s\033[0m" % logging.getLevelName(logging.WARNING)
-)
 log.info("rubiks-cube-solver.py begin")
 
-
-
 start_time = dt.datetime.now()
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -188,10 +177,10 @@ try:
         from rubikscubennnsolver.RubiksCube333 import RubiksCube333
         cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
     elif size == 4:
-        from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+        from rubikscubennnsolver.RubiksCube444 import RubiksCube444
         cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
-        from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+        from rubikscubennnsolver.RubiksCube555 import RubiksCube555
         cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
     elif size == 6:
         from rubikscubennnsolver.RubiksCube666 import RubiksCube666

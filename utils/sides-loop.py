@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
-
+"""
+Used to generate misc list of squares for each side
+"""
 foo = [17, 18, 19, 24, 25, 26, 31, 32, 33,  12, 34, 38, 16]
 foo.sort()
 

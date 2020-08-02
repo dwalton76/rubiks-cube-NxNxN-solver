@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 https://en.wikipedia.org/wiki/Combinatorial_number_system
 """

@@ -3,7 +3,7 @@ clean:
 	rm -rf build dist venv rubikscubennnsolver.egg-info cache ida_search ida_search_via_graph
 	find . -name __pycache__ | xargs rm -rf
 
-init:
+init: clean
 	gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c rubikscubennnsolver/xxhash.c -lm
 	gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search_via_graph.c -lm
 	python3 -m venv venv

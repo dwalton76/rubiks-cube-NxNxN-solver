@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Used to print the logic that is in rotate_444() and rotate_555() in
 https://github.com/dwalton76/rubiks-cube-lookup-tables/blob/master/rotate.c

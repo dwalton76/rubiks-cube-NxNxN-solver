@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # standard libraries
 import cProfile as profile
 import datetime as dt

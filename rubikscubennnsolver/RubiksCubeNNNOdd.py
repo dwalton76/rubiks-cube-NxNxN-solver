@@ -56,9 +56,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         row0_midpoint = ceil(self.size / 2)
         row6_midpoint = (self.size * self.size) - row0_midpoint + 1
 
-        log.info("%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
-            % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
-        )
+        log.info("%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle))
 
         log.info("%s: row0_midpoint %s, row6_midpoint %s" % (self, row0_midpoint, row6_midpoint))
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}

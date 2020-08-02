@@ -1,20 +1,10 @@
 # standard libraries
-import cProfile as profile
-import datetime as dt
 import logging
-import struct
 import subprocess
-import sys
 
 # rubiks cube libraries
 from rubikscubennnsolver import reverse_steps
-from rubikscubennnsolver.LookupTable import (
-    LookupTable,
-    NoIDASolution,
-    download_file_if_needed,
-    pretty_time,
-    steps_on_same_face_and_layer,
-)
+from rubikscubennnsolver.LookupTable import LookupTable, NoIDASolution, download_file_if_needed
 
 log = logging.getLogger(__name__)
 
@@ -156,8 +146,6 @@ class LookupTableIDAViaGraph(LookupTable):
         if start is not None:
             pt_state_filename += f"-{start}-{end}"
 
-        parent = self.parent
-
         for pt in self.prune_tables:
             pt.load_ida_graph()
 
@@ -210,7 +198,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 to_write = []
 
     def solve_via_c(self, max_ida_threshold=None, pt_states=[], line_index_pre_steps={}):
-        cmd = ["./ida_search_via_graph",]
+        cmd = ["./ida_search_via_graph", ]
 
         if pt_states:
             for (index, pt) in enumerate(self.prune_tables):

@@ -1,14 +1,11 @@
 # standard libraries
-import cProfile as profile
 import datetime as dt
 import hashlib
 import json
 import logging
 import os
 import resource
-import struct
 import subprocess
-import sys
 from pprint import pformat
 from subprocess import call
 
@@ -39,7 +36,7 @@ def binary_search(fh, width, state_width, linecount, state_to_find):
     last = linecount - 1
 
     while first <= last:
-        midpoint = int((first + last)/2)
+        midpoint = int((first + last) / 2)
         fh.seek(midpoint * width)
 
         # Only read the 'state' part of the line (for speed)
@@ -73,7 +70,7 @@ def get_file_vitals(filename):
         width = len(first_line)
         (state, steps) = first_line.split(':')
         state_width = len(state)
-        linecount = int(size/width)
+        linecount = int(size / width)
         return (width, state_width, linecount)
 
 
@@ -658,7 +655,6 @@ class LookupTable(object):
         # log.info("%s: begin preload cache string" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         self.cache_string = None
-        state_len = 0
 
         if "dummy" in self.filename:
             pass
@@ -806,7 +802,6 @@ class LookupTable(object):
     def build_ida_graph(self):
         assert self.legal_moves, "no legal_moves defined"
         parent = self.parent
-        parent_state = self.parent.state
         legal_moves = self.legal_moves
         ida_graph = {}
         self.preload_cache_dict()
@@ -831,7 +826,7 @@ class LookupTable(object):
             if state in self.state_target:
                 len_steps = 0
 
-            #log.info("%s: state %s -> %s, cost %d (%s)" % (self, state, binary_state, len_steps, steps))
+            # log.info("%s: state %s -> %s, cost %d (%s)" % (self, state, binary_state, len_steps, steps))
             parent.nuke_edges()
             parent.nuke_corners()
             parent.nuke_centers()
@@ -847,7 +842,7 @@ class LookupTable(object):
             for step in legal_moves:
                 parent.rotate(step)
                 state_for_step = self.state()
-                #log.info("moved %s, new state %s" % (step, state_for_step))
+                # log.info("moved %s, new state %s" % (step, state_for_step))
                 ida_graph[state]["edges"][step] = state_for_step
                 parent.state = baseline_state[:]
 
@@ -1082,6 +1077,7 @@ class LookupTableIDA(LookupTable):
         """
         pass
 
+    import cProfile as profile
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
             profile.runctx('self.solve_with_cprofile()', globals(), locals())
 
@@ -1089,22 +1085,27 @@ class LookupTableIDA(LookupTable):
         """
 
         if self.parent.size == 2:
+            # rubiks cube libraries
             from rubikscubennnsolver.RubiksCube222 import rotate_222
             self.rotate_xxx = rotate_222
 
         elif self.parent.size == 4:
+            # rubiks cube libraries
             from rubikscubennnsolver.RubiksCube444 import rotate_444
             self.rotate_xxx = rotate_444
 
         elif self.parent.size == 5:
+            # rubiks cube libraries
             from rubikscubennnsolver.RubiksCube555 import rotate_555
             self.rotate_xxx = rotate_555
 
         elif self.parent.size == 6:
+            # rubiks cube libraries
             from rubikscubennnsolver.RubiksCube666 import rotate_666
             self.rotate_xxx = rotate_666
 
         elif self.parent.size == 7:
+            # rubiks cube libraries
             from rubikscubennnsolver.RubiksCube777 import rotate_777
             self.rotate_xxx = rotate_777
 
@@ -1178,9 +1179,7 @@ class LookupTableIDA(LookupTable):
             end_time1 = dt.datetime.now()
             delta = end_time1 - start_time1
             nodes_per_sec = int(self.ida_count / delta.total_seconds())
-            log.info("%s: IDA threshold %d, explored %d nodes in %s, %d nodes-per-sec" %
-                (self, threshold, self.ida_count, pretty_time(delta), nodes_per_sec)
-            )
+            log.info("%s: IDA threshold %d, explored %d nodes in %s, %d nodes-per-sec" % (self, threshold, self.ida_count, pretty_time(delta), nodes_per_sec))
 
             if found_solution:
                 self.parent.state = self.pre_recolor_state[:]

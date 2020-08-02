@@ -1,6 +1,5 @@
 # standard libraries
 import logging
-import sys
 from math import ceil
 
 # rubiks cube libraries
@@ -154,8 +153,6 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         wide_str = str(orbit + 2)
 
         for step in fake_555.solution:
-            orig_step = step
-
             if step in ("CENTERS_SOLVED", "EDGES_GROUPED"):
                 continue
             elif step.startswith("COMMENT"):
@@ -171,7 +168,8 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                     "Fw", "Fw'", "Fw2",
                     "Rw", "Rw'", "Rw2",
                     "Bw", "Bw'", "Bw2",
-                    "Dw", "Dw'", "Dw2"):
+                    "Dw", "Dw'", "Dw2",
+                ):
                     step = wide_str + step
 
                 elif step in (
@@ -180,7 +178,8 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                     "2F", "2F'", "2F2",
                     "2R", "2R'", "2R2",
                     "2B", "2B'", "2B2",
-                    "2D", "2D'", "2D2"):
+                    "2D", "2D'", "2D2",
+                ):
                     step = wide_str + step[1:]
 
                 # log.info("wide_str %s, orig-step %s -> step %s" % (wide_str, orig_step, step))

@@ -1,5 +1,6 @@
 # standard libraries
 import logging
+import sys
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, SolveError

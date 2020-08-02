@@ -1,7 +1,6 @@
 # standard libraries
 import gc
 import logging
-import sys
 from math import ceil
 
 # rubiks cube libraries

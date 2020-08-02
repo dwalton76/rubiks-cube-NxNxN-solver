@@ -11,7 +11,8 @@ init: clean
 	@./venv/bin/python3 -m pip install -r requirements.dev.txt
 
 format:
-	isort -rc rubikscubennnsolver usr utils
+	isort rubikscubennnsolver usr utils
+	@./venv/bin/python3 -m flake8 --config=.flake8
 
 wheel:
 	@./venv/bin/python3 setup.py bdist_wheel

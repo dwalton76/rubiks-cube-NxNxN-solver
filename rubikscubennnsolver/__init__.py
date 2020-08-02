@@ -1,20 +1,18 @@
-from collections import OrderedDict
-from pprint import pformat
-from rubikscubennnsolver.RubiksSide import (
-    Side,
-    SolveError,
-    StuckInALoop,
-    ImplementThis,
-)
-from rubikscubennnsolver.misc import get_swap_count
+# standard libraries
 import json
 import logging
 import math
-import random
 import os
+import random
 import shutil
 import subprocess
 import sys
+from collections import OrderedDict
+from pprint import pformat
+
+# rubiks cube libraries
+from rubikscubennnsolver.misc import get_swap_count
+from rubikscubennnsolver.RubiksSide import ImplementThis, Side, SolveError, StuckInALoop
 
 if sys.version_info < (3, 4):
     raise SystemError("Must be using Python 3.4 or higher")
@@ -4493,7 +4491,6 @@ class RubiksCube(object):
         # Remove redundant steps..Ex change U U to U2
         while True:
             original_solution_string = solution_string[:]
-            prev_move = None
 
             for move in moves:
 

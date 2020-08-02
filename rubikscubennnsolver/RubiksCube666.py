@@ -713,8 +713,8 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     """
 
     UD_inner_x_centers_and_oblique_edges = (
-        9, 10, 14, 15, 16, 17, 20, 21, 22, 23, 27, 28, # Upper
-        189, 190, 194, 195, 196, 197, 200, 201, 202, 203, 207, 208, # Down
+        9, 10, 14, 15, 16, 17, 20, 21, 22, 23, 27, 28,  # Upper
+        189, 190, 194, 195, 196, 197, 200, 201, 202, 203, 207, 208,  # Down
     )
 
     def __init__(self, parent):
@@ -739,8 +739,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
              "fb8223", "fb8264", "fb8c03", "fb8c44",
              "fb8e20", "fbb003", "fbb044", "fbb220",
              "fbbc00", "ffc003", "ffc044", "ffc220",
-             "ffcc00", "fff000",
-            ),
+             "ffcc00", "fff000",),
             linecount=343000,
             max_depth=8,
             filesize=15092000,
@@ -778,7 +777,7 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
     11 steps has 2,876,024 entries (11 percent, 0.37x previous step)
     12 steps has 117,084 entries (0 percent, 0.04x previous step)
     13 steps has 544 entries (0 percent, 0.00x previous step)
-    
+
     Total: 24,010,000 entries
     Average: 9.27 moves
     """
@@ -792,9 +791,9 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
 
     ULRD_inner_x_centers_oblique_edges = (
         9, 10, 14, 17, 20, 23, 27, 28,  # Upper
-        45, 46, 50, 51, 52, 53, 56, 57, 58, 59, 63, 64, # Left
-        117, 118, 122, 123, 124, 125, 128, 129, 130, 131, 135, 136, # Right
-        189, 190, 194, 197, 200, 203, 207, 208, # Down
+        45, 46, 50, 51, 52, 53, 56, 57, 58, 59, 63, 64,  # Left
+        117, 118, 122, 123, 124, 125, 128, 129, 130, 131, 135, 136,  # Right
+        189, 190, 194, 197, 200, 203, 207, 208,  # Down
     )
 
     def __init__(self, parent, build_state_index=False):
@@ -858,7 +857,7 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
     10 steps has 45,352 entries (13 percent, 0.38x previous step)
     11 steps has 1,410 entries (0 percent, 0.03x previous step)
     12 steps has 16 entries (0 percent, 0.01x previous step)
-    
+
     Total: 343,000 entries
     Average: 8.34 moves
     """
@@ -869,8 +868,8 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
     )
 
     FB_inner_x_centers_oblique_edges = (
-        81, 82, 86, 87, 88, 89, 92, 93, 94, 95, 99, 100, # Front
-        153, 154, 158, 159, 160, 161, 164, 165, 166, 167, 171, 172, # Back
+        81, 82, 86, 87, 88, 89, 92, 93, 94, 95, 99, 100,  # Front
+        153, 154, 158, 159, 160, 161, 164, 165, 166, 167, 171, 172,  # Back
     )
 
     def __init__(self, parent, build_state_index=False):
@@ -1201,12 +1200,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_444.nuke_corners()
         fake_444.nuke_edges()
         fake_444.nuke_centers()
-        side_names = ("U", "L", "F", "R", "B", "D")
 
         for side_index in range(6):
             offset_444 = side_index * 16
             offset_666 = side_index * 36
-            side_name = side_names[side_index]
 
             # Centers
             fake_444.state[6 + offset_444] = self.state[15 + offset_666]
@@ -1356,7 +1353,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
         # log.info("kociemba: %s" % self.get_kociemba_string(True))
-
 
         # solve the LR inner x-centers and pair the LR oblique edges
         # solve the FB inner x-centers and pair the FB oblique edges

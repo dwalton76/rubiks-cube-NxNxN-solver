@@ -8,7 +8,7 @@ from pprint import pformat
 from rubikscubennnsolver import wing_str_map
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333, moves_333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, moves_444
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, moves_555
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, midge_indexes, moves_555
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666
 from rubikscubennnsolver.RubiksCube666 import edge_orbit_0 as edge_orbit_0_666
 from rubikscubennnsolver.RubiksCube666 import edge_orbit_1 as edge_orbit_1_666
@@ -211,7 +211,6 @@ class RubiksCubeHighLow333(RubiksCube333):
         return result
 
     def build_highlow_edge_values(self):
-        state = self.state
         new_highlow_edge_values = {}
 
         for x in range(1000000):
@@ -452,7 +451,6 @@ class RubiksCubeHighLow444(RubiksCube444):
         return result
 
     def build_highlow_edge_values(self):
-        state = self.state
         new_highlow_edge_values = {}
 
         for x in range(100000):
@@ -851,7 +849,6 @@ class RubiksCubeHighLow555(RubiksCube555):
         return result
 
     def build_highlow_edge_values(self):
-        state = self.state
         new_highlow_edge_values = {}
 
         for x in range(1000000):
@@ -1168,7 +1165,6 @@ class RubiksCubeHighLow666(RubiksCube666):
         return result
 
     def build_highlow_edge_values(self):
-        state = self.state
         new_highlow_edge_values = {}
 
         for x in range(100000):

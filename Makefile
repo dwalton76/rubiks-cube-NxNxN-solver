@@ -8,7 +8,9 @@ init: clean
 	gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search_via_graph.c -lm
 	python3 -m venv venv
 	@./venv/bin/python3 -m pip install -U pip==20.2
-	@./venv/bin/python3 -m pip install -r requirements.dev.txt
+	@./venv/bin/python3 -m pip install --use-feature=2020-resolver -r requirements.dev.txt
+	@./venv/bin/python3 -m pre_commit install --install-hooks --overwrite
+	@./venv/bin/python3 -m pip check
 
 format:
 	isort rubikscubennnsolver usr utils

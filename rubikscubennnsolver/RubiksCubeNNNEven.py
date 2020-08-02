@@ -20,21 +20,171 @@ solved_121212 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU
 solved_141414 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
 moves_8x8x8 = (
-    "U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2", "4Uw", "4Uw'", "4Uw2",
-    "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2", "4Lw", "4Lw'", "4Lw2",
-    "F", "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2", "4Fw", "4Fw'", "4Fw2",
-    "R", "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2", "4Rw", "4Rw'", "4Rw2",
-    "B", "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2", "4Bw", "4Bw'", "4Bw2",
-    "D", "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2", "4Dw", "4Dw'", "4Dw2",
+    "U",
+    "U'",
+    "U2",
+    "Uw",
+    "Uw'",
+    "Uw2",
+    "3Uw",
+    "3Uw'",
+    "3Uw2",
+    "4Uw",
+    "4Uw'",
+    "4Uw2",
+    "L",
+    "L'",
+    "L2",
+    "Lw",
+    "Lw'",
+    "Lw2",
+    "3Lw",
+    "3Lw'",
+    "3Lw2",
+    "4Lw",
+    "4Lw'",
+    "4Lw2",
+    "F",
+    "F'",
+    "F2",
+    "Fw",
+    "Fw'",
+    "Fw2",
+    "3Fw",
+    "3Fw'",
+    "3Fw2",
+    "4Fw",
+    "4Fw'",
+    "4Fw2",
+    "R",
+    "R'",
+    "R2",
+    "Rw",
+    "Rw'",
+    "Rw2",
+    "3Rw",
+    "3Rw'",
+    "3Rw2",
+    "4Rw",
+    "4Rw'",
+    "4Rw2",
+    "B",
+    "B'",
+    "B2",
+    "Bw",
+    "Bw'",
+    "Bw2",
+    "3Bw",
+    "3Bw'",
+    "3Bw2",
+    "4Bw",
+    "4Bw'",
+    "4Bw2",
+    "D",
+    "D'",
+    "D2",
+    "Dw",
+    "Dw'",
+    "Dw2",
+    "3Dw",
+    "3Dw'",
+    "3Dw2",
+    "4Dw",
+    "4Dw'",
+    "4Dw2",
 )
 
 moves_10x10x10 = (
-    "U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2", "4Uw", "4Uw'", "4Uw2", "5Uw", "5Uw'", "5Uw2",
-    "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2", "4Lw", "4Lw'", "4Lw2", "5Lw", "5Lw'", "5Lw2",
-    "F", "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2", "4Fw", "4Fw'", "4Fw2", "5Fw", "5Fw'", "5Fw2",
-    "R", "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2", "4Rw", "4Rw'", "4Rw2", "5Rw", "5Rw'", "5Rw2",
-    "B", "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2", "4Bw", "4Bw'", "4Bw2", "5Bw", "5Bw'", "5Bw2",
-    "D", "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2", "4Dw", "4Dw'", "4Dw2", "5Dw", "5Dw'", "5Dw2",
+    "U",
+    "U'",
+    "U2",
+    "Uw",
+    "Uw'",
+    "Uw2",
+    "3Uw",
+    "3Uw'",
+    "3Uw2",
+    "4Uw",
+    "4Uw'",
+    "4Uw2",
+    "5Uw",
+    "5Uw'",
+    "5Uw2",
+    "L",
+    "L'",
+    "L2",
+    "Lw",
+    "Lw'",
+    "Lw2",
+    "3Lw",
+    "3Lw'",
+    "3Lw2",
+    "4Lw",
+    "4Lw'",
+    "4Lw2",
+    "5Lw",
+    "5Lw'",
+    "5Lw2",
+    "F",
+    "F'",
+    "F2",
+    "Fw",
+    "Fw'",
+    "Fw2",
+    "3Fw",
+    "3Fw'",
+    "3Fw2",
+    "4Fw",
+    "4Fw'",
+    "4Fw2",
+    "5Fw",
+    "5Fw'",
+    "5Fw2",
+    "R",
+    "R'",
+    "R2",
+    "Rw",
+    "Rw'",
+    "Rw2",
+    "3Rw",
+    "3Rw'",
+    "3Rw2",
+    "4Rw",
+    "4Rw'",
+    "4Rw2",
+    "5Rw",
+    "5Rw'",
+    "5Rw2",
+    "B",
+    "B'",
+    "B2",
+    "Bw",
+    "Bw'",
+    "Bw2",
+    "3Bw",
+    "3Bw'",
+    "3Bw2",
+    "4Bw",
+    "4Bw'",
+    "4Bw2",
+    "5Bw",
+    "5Bw'",
+    "5Bw2",
+    "D",
+    "D'",
+    "D2",
+    "Dw",
+    "Dw'",
+    "Dw2",
+    "3Dw",
+    "3Dw'",
+    "3Dw2",
+    "4Dw",
+    "4Dw'",
+    "4Dw2",
+    "5Dw",
+    "5Dw'",
+    "5Dw2",
 )
 
 
@@ -105,11 +255,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             start_NNN = 0
 
             for x in range(6):
-                start_NNN_row1 = int(
-                    start_NNN
-                    + (((self.size / 2) - 2) * self.size)
-                    + ((self.size / 2) - 1)
-                )
+                start_NNN_row1 = int(start_NNN + (((self.size / 2) - 2) * self.size) + ((self.size / 2) - 1))
                 start_NNN_row2 = start_NNN_row1 + self.size
                 start_NNN_row3 = start_NNN_row2 + self.size
                 start_NNN_row4 = start_NNN_row3 + self.size
@@ -163,10 +309,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
         fake_666 = None
         gc.collect()
-        log.info(
-            "%s: Big plus sign formed, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        log.info("%s: Big plus sign formed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.print_cube()
 
     def stage_or_solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle, action):
@@ -187,11 +330,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
 
         for x in range(6):
-            mid_NNN_row1 = (
-                start_NNN
-                + row0_midpoint
-                + (self.size * (max_center_orbits - center_orbit_id + 1))
-            )
+            mid_NNN_row1 = start_NNN + row0_midpoint + (self.size * (max_center_orbits - center_orbit_id + 1))
             start_NNN_row1 = mid_NNN_row1 - (2 + cycle)
             end_NNN_row1 = mid_NNN_row1 + (2 + cycle) + 1
 
@@ -375,18 +514,12 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             for cycle in range(max_cycle + 1):
                 self.stage_or_solve_inside_777(
-                    center_orbit_id,
-                    max_center_orbits,
-                    width,
-                    cycle,
-                    max_cycle,
-                    "stage_LR_centers",
+                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_LR_centers"
                 )
 
         self.print_cube()
         log.warning(
-            "%s: LR centers are staged, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: LR centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
         # Stage all UD centers
@@ -396,18 +529,12 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             for cycle in range(max_cycle + 1):
                 self.stage_or_solve_inside_777(
-                    center_orbit_id,
-                    max_center_orbits,
-                    width,
-                    cycle,
-                    max_cycle,
-                    "stage_UD_centers",
+                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_UD_centers"
                 )
 
         self.print_cube()
         log.warning(
-            "%s: UD centers are staged, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: UD centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
         # Solve all t-centers
@@ -417,12 +544,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             for cycle in range(max_cycle + 1):
                 self.stage_or_solve_inside_777(
-                    center_orbit_id,
-                    max_center_orbits,
-                    width,
-                    cycle,
-                    max_cycle,
-                    "solve_t_centers",
+                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_t_centers"
                 )
 
         # Solve all centers
@@ -431,22 +553,12 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         max_cycle = int((width - 5) / 2)
 
         for cycle in range(max_cycle + 1):
-            self.stage_or_solve_inside_777(
-                center_orbit_id,
-                max_center_orbits,
-                width,
-                cycle,
-                max_cycle,
-                "solve_centers",
-            )
+            self.stage_or_solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_centers")
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.print_cube()
-        log.info(
-            "%s: centers are solved, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        log.info("%s: centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         if not self.centers_solved():
             raise SolveError("centers should be solved")

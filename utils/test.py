@@ -29,9 +29,7 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import (
     solved_151515,
 )
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s")
 log = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
@@ -40,21 +38,9 @@ parser.add_argument("--test-cubes", type=str, default="./utils/test-cubes.json")
 parser.add_argument("--start", type=int, default=0)
 
 # cpu_mode
-parser.add_argument(
-    "--fast", default=True, action="store_true", help="Find a solution quickly"
-)
-parser.add_argument(
-    "--normal",
-    default=False,
-    action="store_true",
-    help="Find a shorter solution but takes longer",
-)
-parser.add_argument(
-    "--slow",
-    default=False,
-    action="store_true",
-    help="Find shortest solution we can, takes a while",
-)
+parser.add_argument("--fast", default=True, action="store_true", help="Find a solution quickly")
+parser.add_argument("--normal", default=False, action="store_true", help="Find a shorter solution but takes longer")
+parser.add_argument("--slow", default=False, action="store_true", help="Find shortest solution we can, takes a while")
 args = parser.parse_args()
 
 if args.slow:
@@ -152,10 +138,7 @@ try:
                 continue
 
             # os.system('clear')
-            log.warning(
-                "Test %d/%d %s cube: %s"
-                % (index, num_test_cases, size, kociemba_string)
-            )
+            log.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
             num_test_cases_executed += 1
             kociemba_string = str(kociemba_string)
             cube.solution = []
@@ -174,18 +157,12 @@ try:
                     for (key, value) in cube.heuristic_stats.items():
                         tmp_heuristic_stats[key] = int(median(value))
 
-                    log.info(
-                        "%s: heuristic_stats median\n%s\n\n"
-                        % (size, pformat(tmp_heuristic_stats))
-                    )
+                    log.info("%s: heuristic_stats median\n%s\n\n" % (size, pformat(tmp_heuristic_stats)))
 
                 continue
 
             except Exception as e:
-                results.append(
-                    "\033[91m%s FAIL (exception) \033[0m: %s\n%s\n"
-                    % (size, kociemba_string, str(e))
-                )
+                results.append("\033[91m%s FAIL (exception) \033[0m: %s\n%s\n" % (size, kociemba_string, str(e)))
                 continue
 
             # Now put the cube back in its initial state and verify the solution solves it
@@ -198,9 +175,7 @@ try:
                 results.append("\033[92m%s PASS\033[0m: %s" % (size, kociemba_string))
                 # cube.print_solution()
             else:
-                results.append(
-                    "\033[91m%s FAIL (not solved)\033[0m: %s" % (size, kociemba_string)
-                )
+                results.append("\033[91m%s FAIL (not solved)\033[0m: %s" % (size, kociemba_string))
                 cube.print_cube()
                 cube.print_solution()
                 """
@@ -225,39 +200,20 @@ try:
                 max_solution_kociemba_string = kociemba_string
 
         if cube.heuristic_stats:
-            results.append(
-                "%s: FINAL heuristic_stats raw\n%s\n\n"
-                % (size, pformat(cube.heuristic_stats))
-            )
+            results.append("%s: FINAL heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
 
             for (key, value) in cube.heuristic_stats.items():
                 cube.heuristic_stats[key] = int(median(value))
 
-            results.append(
-                "%s: FINAL heuristic_stats median\n%s\n\n"
-                % (size, pformat(cube.heuristic_stats))
-            )
+            results.append("%s: FINAL heuristic_stats median\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
 
         results.append(
-            "%s avg centers solution %s steps"
-            % (size, float(centers_solution_total / num_test_cases_executed))
+            "%s avg centers solution %s steps" % (size, float(centers_solution_total / num_test_cases_executed))
         )
-        results.append(
-            "%s avg edges solution %s steps"
-            % (size, float(edges_solution_total / num_test_cases_executed))
-        )
-        results.append(
-            "%s avg solution %s steps"
-            % (size, float(solution_total / num_test_cases_executed))
-        )
-        results.append(
-            "%s min solution %s steps (%s)"
-            % (size, min_solution, min_solution_kociemba_string)
-        )
-        results.append(
-            "%s max solution %s steps (%s)"
-            % (size, max_solution, max_solution_kociemba_string)
-        )
+        results.append("%s avg edges solution %s steps" % (size, float(edges_solution_total / num_test_cases_executed)))
+        results.append("%s avg solution %s steps" % (size, float(solution_total / num_test_cases_executed)))
+        results.append("%s min solution %s steps (%s)" % (size, min_solution, min_solution_kociemba_string))
+        results.append("%s max solution %s steps (%s)" % (size, max_solution, max_solution_kociemba_string))
         results.append("")
 
     for result in results:

@@ -34,10 +34,7 @@ def get_swap_count(listA, listB, debug):
     if A_length != B_length:
         log.info("listA %s" % " ".join(listA))
         log.info("listB %s" % " ".join(listB))
-        raise ValueError("listA (len %d) and listB (len %d) must be the same length" % (
-            A_length,
-            B_length,
-        ))
+        raise ValueError("listA (len %d) and listB (len %d) must be the same length" % (A_length, B_length))
 
     if debug:
         log.info("INIT")
@@ -48,9 +45,7 @@ def get_swap_count(listA, listB, debug):
     while listA != listB:
         if listA[index] != listB[index]:
             listA_value = listA[index]
-            listB_index_with_A_value = find_index_for_value(
-                listB, listA_value, index + 1
-            )
+            listB_index_with_A_value = find_index_for_value(listB, listA_value, index + 1)
             tmp = listB[index]
             listB[index] = listB[listB_index_with_A_value]
             listB[listB_index_with_A_value] = tmp
@@ -416,7 +411,7 @@ pre_steps_to_try = (
     ("D2", "B'"),
     ("D2", "B2"),
 )
-'''
+"""
  ('U', 'L', 'U'),
  ('U', 'L', "U'"),
  ('U', 'L', 'U2'),
@@ -4468,7 +4463,7 @@ pre_steps_to_try = (
  ('D2', 'B2', "D'"),
  ('D2', 'B2', 'D2')
 )
-'''
+"""
 
 wing_str_combos_two = (
     ("UB", "UL"),

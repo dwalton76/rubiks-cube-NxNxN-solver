@@ -26,9 +26,7 @@ from rubikscubennnsolver.RubiksSide import NotSolving
 if sys.version_info < (3, 4):
     raise SystemError("Must be using Python 3.4 or higher")
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(filename)22s %(levelname)8s: %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s %(levelname)8s: %(message)s")
 log = logging.getLogger(__name__)
 
 log.info("rubiks-cube-solver.py begin")
@@ -36,21 +34,9 @@ log.info("rubiks-cube-solver.py begin")
 start_time = dt.datetime.now()
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--print-steps",
-    default=False,
-    action="store_true",
-    help="Display animated step-by-step solution",
-)
-parser.add_argument(
-    "--debug", default=False, action="store_true", help="set loglevel to DEBUG"
-)
-parser.add_argument(
-    "--no-comments",
-    default=False,
-    action="store_true",
-    help="No comments in alg.cubing.net url",
-)
+parser.add_argument("--print-steps", default=False, action="store_true", help="Display animated step-by-step solution")
+parser.add_argument("--debug", default=False, action="store_true", help="set loglevel to DEBUG")
+parser.add_argument("--no-comments", default=False, action="store_true", help="No comments in alg.cubing.net url")
 
 # CPU mode
 parser.add_argument(
@@ -59,42 +45,16 @@ parser.add_argument(
     action="store_true",
     help="Load smaller tables to use less memory...takes longer to run",
 )
-parser.add_argument(
-    "--fast", default=True, action="store_true", help="Find a solution quickly"
-)
-parser.add_argument(
-    "--normal",
-    default=False,
-    action="store_true",
-    help="Find a shorter solution but takes longer",
-)
-parser.add_argument(
-    "--slow",
-    default=False,
-    action="store_true",
-    help="Find shortest solution we can, takes a while",
-)
+parser.add_argument("--fast", default=True, action="store_true", help="Find a solution quickly")
+parser.add_argument("--normal", default=False, action="store_true", help="Find a shorter solution but takes longer")
+parser.add_argument("--slow", default=False, action="store_true", help="Find shortest solution we can, takes a while")
 
 
 action = parser.add_mutually_exclusive_group(required=False)
-parser.add_argument(
-    "--openwith", default=None, type=str, help="Colors for sides U, L, etc"
-)
-parser.add_argument(
-    "--colormap", default=None, type=str, help="Colors for sides U, L, etc"
-)
-parser.add_argument(
-    "--order",
-    type=str,
-    default="URFDLB",
-    help="order of sides in --state, default kociemba URFDLB",
-)
-parser.add_argument(
-    "--solution333",
-    type=str,
-    default=None,
-    help="cube explorer optimal steps for solving 3x3x3",
-)
+parser.add_argument("--openwith", default=None, type=str, help="Colors for sides U, L, etc")
+parser.add_argument("--colormap", default=None, type=str, help="Colors for sides U, L, etc")
+parser.add_argument("--order", type=str, default="URFDLB", help="order of sides in --state, default kociemba URFDLB")
+parser.add_argument("--solution333", type=str, default=None, help="cube explorer optimal steps for solving 3x3x3")
 parser.add_argument(
     "--state",
     type=str,
@@ -173,34 +133,42 @@ try:
     if size == 2:
         # rubiks cube libraries
         from rubikscubennnsolver.RubiksCube222 import RubiksCube222
+
         cube = RubiksCube222(args.state, args.order, args.colormap, args.debug)
     elif size == 3:
         # rubiks cube libraries
         from rubikscubennnsolver.RubiksCube333 import RubiksCube333
+
         cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
     elif size == 4:
         # rubiks cube libraries
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444
+
         cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
         # rubiks cube libraries
         from rubikscubennnsolver.RubiksCube555 import RubiksCube555
+
         cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
     elif size == 6:
         # rubiks cube libraries
         from rubikscubennnsolver.RubiksCube666 import RubiksCube666
+
         cube = RubiksCube666(args.state, args.order, args.colormap, args.debug)
     elif size == 7:
         # rubiks cube libraries
         from rubikscubennnsolver.RubiksCube777 import RubiksCube777
+
         cube = RubiksCube777(args.state, args.order, args.colormap, args.debug)
     elif size % 2 == 0:
         # rubiks cube libraries
         from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven
+
         cube = RubiksCubeNNNEven(args.state, args.order, args.colormap, args.debug)
     else:
         # rubiks cube libraries
         from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
+
         cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
 
     if args.openwith:
@@ -223,18 +191,12 @@ try:
         cube.solve(solution333)
     except NotSolving:
         if cube.heuristic_stats:
-            log.info(
-                "%s: heuristic_stats raw\n%s\n\n"
-                % (cube, pformat(cube.heuristic_stats))
-            )
+            log.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
 
             for (key, value) in cube.heuristic_stats.items():
                 cube.heuristic_stats[key] = int(median(value))
 
-            log.info(
-                "%s: heuristic_stats median\n%s\n\n"
-                % (cube, pformat(cube.heuristic_stats))
-            )
+            log.info("%s: heuristic_stats median\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
             sys.exit(0)
         else:
             raise
@@ -244,15 +206,9 @@ try:
     cube.print_cube()
     cube.print_solution(not args.no_comments)
 
-    log.info(
-        "*********************************************************************************"
-    )
-    log.info(
-        "See /tmp/rubiks-cube-NxNxN-solver/index.html for more detailed solve instructions"
-    )
-    log.info(
-        "*********************************************************************************\n"
-    )
+    log.info("*********************************************************************************")
+    log.info("See /tmp/rubiks-cube-NxNxN-solver/index.html for more detailed solve instructions")
+    log.info("*********************************************************************************\n")
 
     # Now put the cube back in its initial state and verify the solution solves it
     solution = cube.solution
@@ -267,12 +223,7 @@ try:
 
         cube.rotate(step)
 
-        www_desc = "Phase: %s<br>\nCube After Move %d/%d: %s<br>\n" % (
-            cube.phase(),
-            i + 1,
-            len_steps,
-            step,
-        )
+        www_desc = "Phase: %s<br>\nCube After Move %d/%d: %s<br>\n" % (cube.phase(), i + 1, len_steps, step)
         cube.www_write_cube(www_desc)
 
         if args.print_steps:
@@ -290,9 +241,7 @@ try:
         print("****************************************\n\n")
 
     log.info("rubiks-cube-solver.py end")
-    log.info(
-        "Memory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-    )
+    log.info("Memory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
     log.info("Time   : %s" % (end_time - start_time))
     log.info("")
 

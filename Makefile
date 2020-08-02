@@ -12,6 +12,7 @@ init: clean
 
 format:
 	isort rubikscubennnsolver usr utils
+	@./venv/bin/python3 -m black --config=pyproject.toml .
 	@./venv/bin/python3 -m flake8 --config=.flake8
 
 wheel:

@@ -56,7 +56,10 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         row0_midpoint = ceil(self.size / 2)
         row6_midpoint = (self.size * self.size) - row0_midpoint + 1
 
-        log.info("%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle))
+        log.info(
+            "%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
+            % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
+        )
 
         log.info("%s: row0_midpoint %s, row6_midpoint %s" % (self, row0_midpoint, row6_midpoint))
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
@@ -302,18 +305,12 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
             for cycle in range(max_cycle + 1):
                 self.stage_or_solve_inside_777(
-                    center_orbit_id,
-                    max_center_orbits,
-                    width,
-                    cycle,
-                    max_cycle,
-                    "stage_LR_centers",
+                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_LR_centers"
                 )
 
         self.print_cube()
         log.warning(
-            "%s: LR centers are staged, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: LR centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
         # Stage all UD centers
@@ -323,18 +320,12 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
             for cycle in range(max_cycle + 1):
                 self.stage_or_solve_inside_777(
-                    center_orbit_id,
-                    max_center_orbits,
-                    width,
-                    cycle,
-                    max_cycle,
-                    "stage_UD_centers",
+                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_UD_centers"
                 )
 
         self.print_cube()
         log.warning(
-            "%s: UD centers are staged, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: UD centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
         # Solve all t-centers
@@ -344,19 +335,11 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
             for cycle in range(max_cycle + 1):
                 self.stage_or_solve_inside_777(
-                    center_orbit_id,
-                    max_center_orbits,
-                    width,
-                    cycle,
-                    max_cycle,
-                    "solve_t_centers",
+                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_t_centers"
                 )
 
         self.print_cube()
-        log.info(
-            "%s: t-centers are solved, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        log.info("%s: t-centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Solve all centers
         center_orbit_id = max_center_orbits
@@ -364,20 +347,10 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         max_cycle = int((width - 5) / 2)
 
         cycle = max_cycle
-        self.stage_or_solve_inside_777(
-            center_orbit_id,
-            max_center_orbits,
-            width,
-            cycle,
-            max_cycle,
-            "solve_centers",
-        )
+        self.stage_or_solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_centers")
 
         self.print_cube()
-        log.info(
-            "%s: centers are solved, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        log.info("%s: centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         if not self.centers_solved():
             raise SolveError("centers should be solved")

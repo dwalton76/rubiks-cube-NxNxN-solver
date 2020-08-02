@@ -44,12 +44,8 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         for x in range(6):
             fake_555.state[start_555 + 1] = self.state[start_nnn + 1]
             fake_555.state[start_555 + 5] = self.state[start_nnn + self.size]
-            fake_555.state[start_555 + 21] = self.state[
-                start_nnn + (self.size * self.size) - self.size + 1
-            ]
-            fake_555.state[start_555 + 25] = self.state[
-                start_nnn + (self.size * self.size)
-            ]
+            fake_555.state[start_555 + 21] = self.state[start_nnn + (self.size * self.size) - self.size + 1]
+            fake_555.state[start_555 + 25] = self.state[start_nnn + (self.size * self.size)]
             start_nnn += self.size * self.size
             start_555 += 25
 
@@ -163,22 +159,46 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                     step = str(self.size) + step[1:]
 
                 elif step in (
-                    "Uw", "Uw'", "Uw2",
-                    "Lw", "Lw'", "Lw2",
-                    "Fw", "Fw'", "Fw2",
-                    "Rw", "Rw'", "Rw2",
-                    "Bw", "Bw'", "Bw2",
-                    "Dw", "Dw'", "Dw2",
+                    "Uw",
+                    "Uw'",
+                    "Uw2",
+                    "Lw",
+                    "Lw'",
+                    "Lw2",
+                    "Fw",
+                    "Fw'",
+                    "Fw2",
+                    "Rw",
+                    "Rw'",
+                    "Rw2",
+                    "Bw",
+                    "Bw'",
+                    "Bw2",
+                    "Dw",
+                    "Dw'",
+                    "Dw2",
                 ):
                     step = wide_str + step
 
                 elif step in (
-                    "2U", "2U'", "2U2",
-                    "2L", "2L'", "2L2",
-                    "2F", "2F'", "2F2",
-                    "2R", "2R'", "2R2",
-                    "2B", "2B'", "2B2",
-                    "2D", "2D'", "2D2",
+                    "2U",
+                    "2U'",
+                    "2U2",
+                    "2L",
+                    "2L'",
+                    "2L2",
+                    "2F",
+                    "2F'",
+                    "2F2",
+                    "2R",
+                    "2R'",
+                    "2R2",
+                    "2B",
+                    "2B'",
+                    "2B2",
+                    "2D",
+                    "2D'",
+                    "2D2",
                 ):
                     step = wide_str + step[1:]
 
@@ -195,7 +215,4 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             self.pair_edge_orbit_via_555(orbit)
 
         self.print_cube()
-        log.info(
-            "%s: Edges are paired, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

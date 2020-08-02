@@ -2092,7 +2092,5 @@ highlow_edge_mapping_combinations = {
         set(("UL", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF")),
         set(("UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF")),
     ),
-    12: (
-        set(("UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF")),
-    ),
+    12: (set(("UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF")),),
 }

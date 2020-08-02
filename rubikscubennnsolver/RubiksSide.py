@@ -74,12 +74,7 @@ class Side(object):
             self.mid_pos = int((self.min_pos + self.max_pos) / 2)
 
         # Corners
-        self.corner_pos = (
-            self.min_pos,
-            self.min_pos + self.size - 1,
-            self.max_pos - self.size + 1,
-            self.max_pos,
-        )
+        self.corner_pos = (self.min_pos, self.min_pos + self.size - 1, self.max_pos - self.size + 1, self.max_pos)
 
         # Edges
         self.edge_pos = []
@@ -158,10 +153,7 @@ class Side(object):
         Used by RubiksCube rotate()
         """
         return build_2d_list(
-            [
-                self.parent.state[square_index]
-                for square_index in range(self.min_pos, self.max_pos + 1)
-            ]
+            [self.parent.state[square_index] for square_index in range(self.min_pos, self.max_pos + 1)]
         )
 
     def get_wing_partner(self, wing_index):

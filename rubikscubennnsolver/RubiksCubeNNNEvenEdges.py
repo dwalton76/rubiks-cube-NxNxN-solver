@@ -43,12 +43,8 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         for x in range(6):
             fake_444.state[start_444 + 1] = self.state[start_nnn + 1]
             fake_444.state[start_444 + 4] = self.state[start_nnn + self.size]
-            fake_444.state[start_444 + 13] = self.state[
-                start_nnn + (self.size * self.size) - self.size + 1
-            ]
-            fake_444.state[start_444 + 16] = self.state[
-                start_nnn + (self.size * self.size)
-            ]
+            fake_444.state[start_444 + 13] = self.state[start_nnn + (self.size * self.size) - self.size + 1]
+            fake_444.state[start_444 + 16] = self.state[start_nnn + (self.size * self.size)]
             start_nnn += self.size * self.size
             start_444 += 16
 
@@ -61,24 +57,12 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
             fake_444.state[start_444 + 2] = self.state[start_nnn + half_size]
             fake_444.state[start_444 + 3] = self.state[start_nnn + half_size + 1]
-            fake_444.state[start_444 + 5] = self.state[
-                start_nnn + (self.size * (half_size - 1)) + 1
-            ]
-            fake_444.state[start_444 + 8] = self.state[
-                start_nnn + (self.size * half_size)
-            ]
-            fake_444.state[start_444 + 9] = self.state[
-                start_nnn + (self.size * half_size) + 1
-            ]
-            fake_444.state[start_444 + 12] = self.state[
-                start_nnn + (self.size * (half_size + 1))
-            ]
-            fake_444.state[start_444 + 14] = self.state[
-                start_nnn + (self.size * self.size) - half_size
-            ]
-            fake_444.state[start_444 + 15] = self.state[
-                start_nnn + (self.size * self.size) - half_size + 1
-            ]
+            fake_444.state[start_444 + 5] = self.state[start_nnn + (self.size * (half_size - 1)) + 1]
+            fake_444.state[start_444 + 8] = self.state[start_nnn + (self.size * half_size)]
+            fake_444.state[start_444 + 9] = self.state[start_nnn + (self.size * half_size) + 1]
+            fake_444.state[start_444 + 12] = self.state[start_nnn + (self.size * (half_size + 1))]
+            fake_444.state[start_444 + 14] = self.state[start_nnn + (self.size * self.size) - half_size]
+            fake_444.state[start_444 + 15] = self.state[start_nnn + (self.size * self.size) - half_size + 1]
             start_nnn += self.size * self.size
             start_444 += 16
 
@@ -98,12 +82,24 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
                     step = str(self.size) + step[1:]
 
                 elif step in (
-                    "Uw", "Uw'", "Uw2",
-                    "Lw", "Lw'", "Lw2",
-                    "Fw", "Fw'", "Fw2",
-                    "Rw", "Rw'", "Rw2",
-                    "Bw", "Bw'", "Bw2",
-                    "Dw", "Dw'", "Dw2",
+                    "Uw",
+                    "Uw'",
+                    "Uw2",
+                    "Lw",
+                    "Lw'",
+                    "Lw2",
+                    "Fw",
+                    "Fw'",
+                    "Fw2",
+                    "Rw",
+                    "Rw'",
+                    "Rw2",
+                    "Bw",
+                    "Bw'",
+                    "Bw2",
+                    "Dw",
+                    "Dw'",
+                    "Dw2",
                 ):
                     step = half_size_str + step
 
@@ -113,8 +109,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         self.rotate_F_to_F()
         self.print_cube()
         log.info(
-            "%s: Inside edges are paired, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: Inside edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
     def pair_edge_orbit_via_555(self, orbit):
@@ -130,12 +125,8 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         for x in range(6):
             fake_555.state[start_555 + 1] = self.state[start_nnn + 1]
             fake_555.state[start_555 + 5] = self.state[start_nnn + self.size]
-            fake_555.state[start_555 + 21] = self.state[
-                start_nnn + (self.size * self.size) - self.size + 1
-            ]
-            fake_555.state[start_555 + 25] = self.state[
-                start_nnn + (self.size * self.size)
-            ]
+            fake_555.state[start_555 + 21] = self.state[start_nnn + (self.size * self.size) - self.size + 1]
+            fake_555.state[start_555 + 25] = self.state[start_nnn + (self.size * self.size)]
             start_nnn += self.size * self.size
             start_555 += 25
 
@@ -191,9 +182,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             row3_col1 = start_nnn + (self.size * (half_size - 1)) + 1
             row3_col3 = row3_col1 + self.size - 1
 
-            row4_col1 = (
-                start_nnn + (self.size * self.size) - ((orbit + 2) * self.size) + 1
-            )
+            row4_col1 = start_nnn + (self.size * self.size) - ((orbit + 2) * self.size) + 1
             row4_col3 = row4_col1 + self.size - 1
 
             row5_col1 = row1_col1 + ((self.size - 1) * self.size)
@@ -252,22 +241,46 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
                     step = str(self.size) + step[1:]
 
                 elif step in (
-                    "Uw", "Uw'", "Uw2",
-                    "Lw", "Lw'", "Lw2",
-                    "Fw", "Fw'", "Fw2",
-                    "Rw", "Rw'", "Rw2",
-                    "Bw", "Bw'", "Bw2",
-                    "Dw", "Dw'", "Dw2",
+                    "Uw",
+                    "Uw'",
+                    "Uw2",
+                    "Lw",
+                    "Lw'",
+                    "Lw2",
+                    "Fw",
+                    "Fw'",
+                    "Fw2",
+                    "Rw",
+                    "Rw'",
+                    "Rw2",
+                    "Bw",
+                    "Bw'",
+                    "Bw2",
+                    "Dw",
+                    "Dw'",
+                    "Dw2",
                 ):
                     step = wide_str + step
 
                 elif step in (
-                    "2U", "2U'", "2U2",
-                    "2L", "2L'", "2L2",
-                    "2F", "2F'", "2F2",
-                    "2R", "2R'", "2R2",
-                    "2B", "2B'", "2B2",
-                    "2D", "2D'", "2D2",
+                    "2U",
+                    "2U'",
+                    "2U2",
+                    "2L",
+                    "2L'",
+                    "2L2",
+                    "2F",
+                    "2F'",
+                    "2F2",
+                    "2R",
+                    "2R'",
+                    "2R2",
+                    "2B",
+                    "2B'",
+                    "2B2",
+                    "2D",
+                    "2D'",
+                    "2D2",
                 ):
                     step = wide_str + step[1:]
 
@@ -287,7 +300,4 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             self.pair_edge_orbit_via_555(orbit)
 
         self.print_cube()
-        log.info(
-            "%s: Edges are paired, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

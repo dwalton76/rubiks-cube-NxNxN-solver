@@ -17,9 +17,7 @@ from rubikscubennnsolver.RubiksCube555 import moves_555, solved_555
 from rubikscubennnsolver.RubiksCube666 import moves_666, solved_666
 from rubikscubennnsolver.RubiksCube777 import moves_777, solved_777
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s")
 log = logging.getLogger(__name__)
 
 build_rotate_xxx_c = False
@@ -95,10 +93,7 @@ for (size, solved_state) in (
 
     if build_rotate_xxx_c:
         print("void")
-        print(
-            "rotate_%d%d%d(char *cube, char *cube_tmp, int array_size, move_type move)"
-            % (size, size, size)
-        )
+        print("rotate_%d%d%d(char *cube, char *cube_tmp, int array_size, move_type move)" % (size, size, size))
         print("{")
         print("    /* This was contructed using utils/rotate-printer.py */")
         print("    memcpy(cube_tmp, cube, sizeof(char) * array_size);")
@@ -146,13 +141,7 @@ for (size, solved_state) in (
 
         with open(nnn_filename, "w") as fh:
             fh.write("".join(lines_to_keep))
-            fh.write(
-                "swaps_%d%d%d = %s\n"
-                % (size, size, size, pformat(rotate_mapper, width=2048))
-            )
+            fh.write("swaps_%d%d%d = %s\n" % (size, size, size, pformat(rotate_mapper, width=2048)))
             fh.write("\ndef rotate_%d%d%d(cube, step):\n" % (size, size, size))
-            fh.write(
-                "    return [cube[x] for x in swaps_%d%d%d[step]]\n"
-                % (size, size, size)
-            )
+            fh.write("    return [cube[x] for x in swaps_%d%d%d[step]]\n" % (size, size, size))
             fh.write("")

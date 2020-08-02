@@ -230,14 +230,10 @@ class RubiksCubeHighLow333(RubiksCube333):
                 wing_tuple = (x, y, state_x, state_y)
 
                 if wing_tuple not in new_highlow_edge_values:
-                    new_highlow_edge_values[wing_tuple] = self.high_low_state(
-                        x, y, state_x, state_y, wing_str
-                    )
+                    new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
-        log.info(
-            "new_highlow_edge_values has %d entries" % len(new_highlow_edge_values)
-        )
+        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
         sys.exit(0)
 
 
@@ -466,14 +462,10 @@ class RubiksCubeHighLow444(RubiksCube444):
                 wing_tuple = (x, y, state_x, state_y)
 
                 if wing_tuple not in new_highlow_edge_values:
-                    new_highlow_edge_values[wing_tuple] = self.high_low_state(
-                        x, y, state_x, state_y, wing_str
-                    )
+                    new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
-        log.info(
-            "new_highlow_edge_values has %d entries" % len(new_highlow_edge_values)
-        )
+        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
         sys.exit(0)
 
 
@@ -868,14 +860,10 @@ class RubiksCubeHighLow555(RubiksCube555):
                 wing_tuple = (x, y, state_x, state_y)
 
                 if wing_tuple not in new_highlow_edge_values:
-                    new_highlow_edge_values[wing_tuple] = self.high_low_state(
-                        x, y, state_x, state_y, wing_str
-                    )
+                    new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
-        log.info(
-            "new_highlow_edge_values has %d entries" % len(new_highlow_edge_values)
-        )
+        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
         sys.exit(0)
 
 
@@ -1144,19 +1132,11 @@ class RubiksCubeHighLow666(RubiksCube666):
             raise Exception("invalid wing_str %s" % wing_str)
 
         if orbit == 0:
-            assert (
-                high_edge_index in edge_orbit_0_666
-            ), f"{high_edge_index} is not in edge_orbit_0_666"
-            assert (
-                low_edge_index in edge_orbit_0_666
-            ), f"{low_edge_index} is not in edge_orbit_0_666"
+            assert high_edge_index in edge_orbit_0_666, f"{high_edge_index} is not in edge_orbit_0_666"
+            assert low_edge_index in edge_orbit_0_666, f"{low_edge_index} is not in edge_orbit_0_666"
         elif orbit == 1:
-            assert (
-                high_edge_index in edge_orbit_1_666
-            ), f"{high_edge_index} is not in edge_orbit_1_666"
-            assert (
-                low_edge_index in edge_orbit_1_666
-            ), f"{low_edge_index} is not in edge_orbit_1_666"
+            assert high_edge_index in edge_orbit_1_666, f"{high_edge_index} is not in edge_orbit_1_666"
+            assert low_edge_index in edge_orbit_1_666, f"{low_edge_index} is not in edge_orbit_1_666"
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -1187,11 +1167,7 @@ class RubiksCubeHighLow666(RubiksCube666):
                     raise Exception(f"What orbit for ({x}, {y})?")
 
                 if wing_tuple not in new_highlow_edge_values:
-                    new_highlow_edge_values[wing_tuple] = self.high_low_state(
-                        x, y, state_x, state_y, wing_str, orbit
-                    )
+                    new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str, orbit)
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
-        log.info(
-            "new_highlow_edge_values has %d entries" % len(new_highlow_edge_values)
-        )
+        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))

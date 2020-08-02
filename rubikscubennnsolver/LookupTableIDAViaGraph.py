@@ -28,7 +28,6 @@ def remove_failed_ida_output(lines):
 
 
 class LookupTableIDAViaGraph(LookupTable):
-
     def __init__(
         self,
         parent,
@@ -48,7 +47,6 @@ class LookupTableIDAViaGraph(LookupTable):
         perfect_hash_filename=None,
         pt2_state_max=None,
         multiple_solutions=False,
-
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -72,7 +70,9 @@ class LookupTableIDAViaGraph(LookupTable):
         self.multiple_solutions = multiple_solutions
 
         if self.perfect_hash_filename or self.pt2_state_max:
-            assert self.perfect_hash_filename and self.pt2_state_max, "both perfect_hash_filename and pt2_state_max must be specified"
+            assert (
+                self.perfect_hash_filename and self.pt2_state_max
+            ), "both perfect_hash_filename and pt2_state_max must be specified"
             download_file_if_needed(self.perfect_hash_filename, self.parent.size)
 
         if legal_moves:
@@ -110,7 +110,7 @@ class LookupTableIDAViaGraph(LookupTable):
 
     def recolor(self):
 
-        if (self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions):
+        if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
             log.info("%s: recolor" % self)
             # self.parent.print_cube()
 
@@ -198,7 +198,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 to_write = []
 
     def solve_via_c(self, max_ida_threshold=None, pt_states=[], line_index_pre_steps={}):
-        cmd = ["./ida_search_via_graph", ]
+        cmd = ["./ida_search_via_graph"]
 
         if pt_states:
             for (index, pt) in enumerate(self.prune_tables):
@@ -247,11 +247,7 @@ class LookupTableIDAViaGraph(LookupTable):
                     cmd.append("--orbit1-need-even-w")
 
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
-                raise Exception(
-                    "avoid_oll is only supported for orbits 0 or 1, not {}".format(
-                        self.avoid_oll
-                    )
-                )
+                raise Exception("avoid_oll is only supported for orbits 0 or 1, not {}".format(self.avoid_oll))
 
         if self.perfect_hash_filename:
             cmd.append("--prune-table-perfect-hash")
@@ -271,7 +267,7 @@ class LookupTableIDAViaGraph(LookupTable):
 
         # wrap the X,Y,Z part of "--legal-moves X,Y,Z" in double quotes
         cmd_string = " ".join(cmd)
-        cmd_string = cmd_string.replace('--legal-moves ', '--legal-moves "')
+        cmd_string = cmd_string.replace("--legal-moves ", '--legal-moves "')
         cmd_string += '"'
 
         log.info("solve_via_c:\n    %s\n" % cmd_string)

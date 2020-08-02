@@ -71,7 +71,12 @@ class LookupTableIDAViaGraph(LookupTable):
         self.main_table_state_length = main_table_state_length
         self.main_table_max_depth = main_table_max_depth
         self.main_table_prune_tables = main_table_prune_tables
-        self.perfect_hash_filename = perfect_hash_filename
+
+        if perfect_hash_filename:
+            self.perfect_hash_filename = "lookup-tables/" + perfect_hash_filename
+        else:
+            self.perfect_hash_filename = perfect_hash_filename
+
         self.pt2_state_max = pt2_state_max
         self.max_ida_threshold = None
         self.multiple_solutions = multiple_solutions

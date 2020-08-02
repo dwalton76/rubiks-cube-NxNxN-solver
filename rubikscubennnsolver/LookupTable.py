@@ -367,7 +367,12 @@ class LookupTable(object):
             self.parent.sideB,
             self.parent.sideD,
         )
-        self.filename = filename
+
+        if filename:
+            self.filename = "lookup-tables/" + filename
+        else:
+            self.filename = filename
+
         self.filename_gz = filename + ".gz" if filename else None
         self.desc = filename.replace("lookup-table-", "").replace(".txt", "") if filename else ""
         self.filename_exists = False
@@ -1215,6 +1220,7 @@ class LookupTableIDAViaC(object):
         self.C_ida_type = C_ida_type
 
         for (filename, filesize, md5target) in files:
+            filename = "lookup-tables/" + filename
             # log.info("%s: rm_file_if_mismatch %s begin" % (self, filename))
             rm_file_if_mismatch(filename, filesize, md5target)
             # log.info("%s: rm_file_if_mismatch %s end" % (self, filename))

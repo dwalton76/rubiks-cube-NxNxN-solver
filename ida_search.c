@@ -352,7 +352,7 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
     LOG("ida_prune_table_preload %s: start\n", filename);
 
     // 4x4x4
-    if (strmatch(filename, "lookup-table-4x4x4-step30-reduce333.txt")) {
+    if (strmatch(filename, "lookup-tables/lookup-table-4x4x4-step30-reduce333.txt")) {
 
         while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
             // DDDDLLLLBBBBRRRRFFFFUUUU10362745a8b9ecfdhgkiljnm:R2 Bw2 D' F2 D Bw2
@@ -955,9 +955,9 @@ ida_solve (
 
     // 4x4x4
     case REDUCE_333_444:
-        ida_prune_table_preload(&reduce_333_444, "lookup-table-4x4x4-step30-reduce333.txt");
-        reduce_333_edges_only = ida_cost_only_preload("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
-        reduce_333_centers_only = ida_cost_only_preload("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
+        ida_prune_table_preload(&reduce_333_444, "lookup-tables/lookup-table-4x4x4-step30-reduce333.txt");
+        reduce_333_edges_only = ida_cost_only_preload("lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
+        reduce_333_centers_only = ida_cost_only_preload("lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
         wings_for_recolor_444 = init_wings_for_edges_recolor_pattern_444();
         break;
 

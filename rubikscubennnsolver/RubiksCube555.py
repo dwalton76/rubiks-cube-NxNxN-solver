@@ -1361,49 +1361,6 @@ class LookupTable555FBXCenterStage(LookupTable):
                 cube[pos] = "F"
 
 
-class LookupTable555FBCenterStageLRCenter432(LookupTable):
-    """
-    lookup-table-5x5x5-step23-LR-centers.txt
-    ========================================
-    0 steps has 72 entries (1 percent, 0.00x previous step)
-    1 steps has 756 entries (15 percent, 10.50x previous step)
-    2 steps has 1,064 entries (21 percent, 1.41x previous step)
-    3 steps has 1,692 entries (34 percent, 1.59x previous step)
-    4 steps has 1,220 entries (24 percent, 0.72x previous step)
-    5 steps has 96 entries (1 percent, 0.08x previous step)
-
-    Total: 4,900 entries
-    Average: 2.72 moves
-    """
-
-    LR_centers_555 = (32, 33, 34, 37, 38, 39, 42, 43, 44, 82, 83, 84, 87, 88, 89, 92, 93, 94)  # Left  # Right
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step23-LR-centers.txt",
-            "TBD",
-            linecount=4900,
-            max_depth=5,
-            filesize=181300,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(self.LR_centers_555, state):
-            cube[pos] = pos_state
-
-
 class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
@@ -1411,13 +1368,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
             parent,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
-            prune_tables=[
-                parent.lt_FB_centers_stage_LR_centers_432,
-                parent.lt_FB_t_centers_stage,
-                parent.lt_FB_x_centers_stage,
-            ],
-            perfect_hash_filename="lookup-table-5x5x5-step20-FB-centers-stage.pt-state-perfect-hash",
-            pt2_state_max=12870,
+            prune_tables=[parent.lt_FB_t_centers_stage, parent.lt_FB_x_centers_stage],
         )
 
 
@@ -1567,8 +1518,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
 
 class LookupTable555TCenterSolve(LookupTable):
     """
-    This is only used when a cube larger than 7x7x7 is being solved. This is a non-hex
-    build of the step32 table.
+    This is only used when a cube larger than 7x7x7 is being solved
 
     lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt
     ====================================================
@@ -3567,7 +3517,6 @@ class RubiksCube555(RubiksCube):
 
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
-        self.lt_FB_centers_stage_LR_centers_432 = LookupTable555FBCenterStageLRCenter432(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
         self.lt_FB_centers_stage.avoid_oll = 0
 
@@ -3787,12 +3736,11 @@ class RubiksCube555(RubiksCube):
 
     def eo_edges(self):
         """
-        Our goal is to get the edges split into high/low groups but we do not
-        care what the final orienation is of the edges. Each edge can either
-        be in its final orientation or not so there are (2^12)/2 or 2048 possible
-        permutations.  The /2 is because there cannot be an odd number of edges
+        Our goal is to get the edges split into high/low groups but we do not care what the final orienation is of the edges. Each edge can either
+        be in its final orientation or not so there are (2^12)/2 or 2048 possible permutations.  The /2 is because there cannot be an odd number of edges
         not in their final orientation.
         """
+        # dwalton about 1/2 of our time is spent here
         permutations = []
         original_state = self.state[:]
         original_solution = self.solution[:]

@@ -4,7 +4,7 @@ import logging
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
-from rubikscubennnsolver.LookupTable import LookupTable, NoIDASolution
+from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_555
@@ -3740,7 +3740,6 @@ class RubiksCube555(RubiksCube):
         be in its final orientation or not so there are (2^12)/2 or 2048 possible permutations.  The /2 is because there cannot be an odd number of edges
         not in their final orientation.
         """
-        # dwalton about 1/2 of our time is spent here
         permutations = []
         original_state = self.state[:]
         original_solution = self.solution[:]
@@ -3755,7 +3754,6 @@ class RubiksCube555(RubiksCube):
             wing_str = square_value + partner_value
             wing_str = wing_str_map[square_value + partner_value]
             wing_strs.append(wing_str)
-        log.info(f"wing_strs: {wing_strs}")
 
         # build a list of all possible EO permutations...an even number of edges must be high
         for num in range(4096):
@@ -3783,7 +3781,6 @@ class RubiksCube555(RubiksCube):
 
             pt_states.append(
                 (
-                    0,
                     self.lt_phase3_lr_center_stage_eo_inner_orbit.state_index(),
                     self.lt_phase3_eo_outer_orbit.state_index(),
                 )
@@ -3792,12 +3789,9 @@ class RubiksCube555(RubiksCube):
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-        for x in range(1, 30):
-            try:
-                self.lt_phase3.solve_via_c(max_ida_threshold=x, pt_states=pt_states)
-                break
-            except NoIDASolution:
-                pass
+        # When solve_via_c is passed pt_states (2048 lines of states in this case), it will try all 2048 of them
+        # to find the state that has the shortest solution.
+        self.lt_phase3.solve_via_c(pt_states=pt_states)
 
         # re-color the cube so that the edges are oriented correctly so we can
         # pair 4-edges then 8-edges. After all edge pairing is done we will uncolor
@@ -3849,6 +3843,11 @@ class RubiksCube555(RubiksCube):
                     # If we found a wing_str_combo that already satisfies phase-4 then there is no need to look further
                     if min_phase4_solution_len == 0:
                         break
+
+                elif phase4_solution_len == min_phase4_solution_len:
+                    log.info(
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len} (TIE)"
+                    )
                 else:
                     log.debug(
                         f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}"
@@ -3902,7 +3901,7 @@ class RubiksCube555(RubiksCube):
             % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
         )
 
-    def pair_last_eight_edges(self, max_ida=99):
+    def pair_last_eight_edges(self):
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(original_solution)
@@ -3929,7 +3928,7 @@ class RubiksCube555(RubiksCube):
         # self.lt_phase6_low_edge_midge.solve()
         # self.print_cube()
         # sys.exit(0)
-        self.lt_phase6.solve_via_c(max_ida)
+        self.lt_phase6.solve_via_c()
 
         pair_eight_edge_solution = self.solution[original_solution_len:]
         self.state = original_state[:]

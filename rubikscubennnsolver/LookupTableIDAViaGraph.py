@@ -66,7 +66,6 @@ class LookupTableIDAViaGraph(LookupTable):
             self.perfect_hash_filename = perfect_hash_filename
 
         self.pt2_state_max = pt2_state_max
-        self.max_ida_threshold = None
         self.multiple_solutions = multiple_solutions
 
         if self.perfect_hash_filename or self.pt2_state_max:
@@ -197,7 +196,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 fh_pt_state.write("\n".join(to_write) + "\n")
                 to_write = []
 
-    def solve_via_c(self, max_ida_threshold=None, pt_states=[], line_index_pre_steps={}):
+    def solve_via_c(self, pt_states=[], line_index_pre_steps={}):
         cmd = ["./ida_search_via_graph"]
 
         if pt_states:
@@ -220,10 +219,6 @@ class LookupTableIDAViaGraph(LookupTable):
                 if not pt_states:
                     cmd.append("--prune-table-%d-state" % index)
                     cmd.append(str(pt.ida_graph_node))
-
-        if self.multiplier:
-            cmd.append("--multiplier")
-            cmd.append(str(self.multiplier))
 
         if self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
@@ -255,10 +250,6 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--pt2-state-max")
             cmd.append(str(self.pt2_state_max))
 
-        if max_ida_threshold:
-            cmd.append("--max-ida")
-            cmd.append(str(max_ida_threshold))
-
         if self.multiple_solutions:
             cmd.append("--multiple-solutions")
 
@@ -269,6 +260,11 @@ class LookupTableIDAViaGraph(LookupTable):
         cmd_string = " ".join(cmd)
         cmd_string = cmd_string.replace("--legal-moves ", '--legal-moves "')
         cmd_string += '"'
+
+        if self.multiplier:
+            cmd_string += f" --multiplier {self.multiplier}"
+            cmd.append("--multiplier")
+            cmd.append(str(self.multiplier))
 
         log.info("solve_via_c:\n    %s\n" % cmd_string)
 

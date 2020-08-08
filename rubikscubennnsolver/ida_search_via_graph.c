@@ -27,12 +27,6 @@ unsigned char *pt4 = NULL;
 unsigned char *pt_perfect_hash = NULL;
 unsigned int pt2_state_max = 0;
 
-unsigned int init_pt0_state = 0;
-unsigned int init_pt1_state = 0;
-unsigned int init_pt2_state = 0;
-unsigned int init_pt3_state = 0;
-unsigned int init_pt4_state = 0;
-
 unsigned char pt_count = 0;
 unsigned char COST_LENGTH = 1;
 unsigned char STATE_LENGTH = 4;
@@ -478,21 +472,6 @@ ida_search (
             exit(1);
         }
          */
-
-        // I used this once to print some output on branches that we explored
-        // but were being pruned
-        /*
-        if (0 && threshold == 14) {
-            print_ida_summary(
-                init_pt0_state,
-                init_pt1_state,
-                init_pt2_state,
-                init_pt3_state,
-                init_pt4_state,
-                moves_to_here,
-                cost_to_here);
-        }
-         */
         return search_result;
     }
 
@@ -601,7 +580,6 @@ ida_solve (
     unsigned int pt2_state,
     unsigned int pt3_state,
     unsigned int pt4_state,
-    unsigned char min_ida_threshold,
     unsigned char max_ida_threshold,
     unsigned char orbit0_wide_quarter_turns,
     unsigned char orbit1_wide_quarter_turns)
@@ -615,6 +593,7 @@ ida_solve (
     unsigned char pt2_cost = 0;
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
+    unsigned char min_ida_threshold = 0;
 
     memset(moves_to_here, MOVE_NONE, max_ida_threshold);
 
@@ -627,10 +606,8 @@ ida_solve (
     pt2_cost = ctg.pt2_cost;
     pt3_cost = ctg.pt3_cost;
     pt4_cost = ctg.pt4_cost;
-
-    if (!min_ida_threshold) {
-        min_ida_threshold = ctg.cost_to_goal;
-    }
+    min_ida_threshold = ctg.cost_to_goal;
+    search_result.found_solution = 0;
 
     // LOG("min_ida_threshold %d\n", min_ida_threshold);
     if (min_ida_threshold >= max_ida_threshold) {
@@ -717,6 +694,7 @@ read_file (char *filename)
         } else {
             buffer[new_len++] = '\0'; // Just to be safe.
         }
+        LOG("%s is %dM\n", filename, bufsize / (1024 * 1024));
     }
 
     fclose(fh);
@@ -732,7 +710,6 @@ main (int argc, char *argv[])
     unsigned long prune_table_2_state = 0;
     unsigned long prune_table_3_state = 0;
     unsigned long prune_table_4_state = 0;
-    unsigned char min_ida_threshold = 0;
     unsigned char max_ida_threshold = 30;
     unsigned char orbit0_wide_quarter_turns = 0;
     unsigned char orbit1_wide_quarter_turns = 0;
@@ -804,14 +781,6 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--prune-table-states")) {
             i++;
             prune_table_states_filename = argv[i];
-
-        } else if (strmatch(argv[i], "--min-ida")) {
-            i++;
-            min_ida_threshold = atoi(argv[i]);
-
-        } else if (strmatch(argv[i], "--max-ida")) {
-            i++;
-            max_ida_threshold = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--multiplier")) {
             i++;
@@ -1000,15 +969,11 @@ main (int argc, char *argv[])
         }
     }
 
-    init_pt0_state = prune_table_0_state;
-    init_pt1_state = prune_table_1_state;
-    init_pt2_state = prune_table_2_state;
-    init_pt3_state = prune_table_3_state;
-    init_pt4_state = prune_table_4_state;
-
     ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
-    printf("legal_move_count %d, ROW_LENGTH %d\n", legal_move_count, ROW_LENGTH);
+    // printf("legal_move_count %d, ROW_LENGTH %d\n", legal_move_count, ROW_LENGTH);
     struct ida_search_result search_result;
+    search_result.found_solution = 0;
+    search_result.f_cost = 99;
 
     if (prune_table_states_filename) {
         FILE *fh_read = NULL;
@@ -1017,65 +982,68 @@ main (int argc, char *argv[])
         ssize_t read = 0;
         unsigned int line_index = 0;
         struct ida_search_result min_search_result;
+        min_search_result.found_solution = 0;
         min_search_result.f_cost = 99;
 
-        fh_read = fopen(prune_table_states_filename, "r");
-        while ((read = getline(&line, &len, fh_read)) != -1) {
-            // printf("%s", line);
-            unsigned char token_index = 0;
-            unsigned char pre_steps_cost = 0;
+        for (unsigned char i_max_ida_threshold = 0; i_max_ida_threshold <= max_ida_threshold; i_max_ida_threshold++) {
+            LOG("loop %d\n", i_max_ida_threshold);
 
-            char *pt;
-            pt = strtok (line, ",");
-            while (pt != NULL) {
-                int a = atoi(pt);
-                pt = strtok (NULL, ",");
+            fh_read = fopen(prune_table_states_filename, "r");
+            while ((read = getline(&line, &len, fh_read)) != -1) {
+                // printf("%s", line);
+                unsigned char token_index = 0;
+                char *pt;
+                pt = strtok (line, ",");
 
-                if (token_index == 0) {
-                    pre_steps_cost = a;
-                } else if (token_index == 1) {
-                    prune_table_0_state = a;
-                } else if (token_index == 2) {
-                    prune_table_1_state = a;
-                } else if (token_index == 3) {
-                    prune_table_2_state = a;
-                } else if (token_index == 4) {
-                    prune_table_3_state = a;
-                } else if (token_index == 5) {
-                    prune_table_4_state = a;
+                while (pt != NULL) {
+                    unsigned int token_value = atoi(pt);
+                    pt = strtok (NULL, ",");
+
+                    if (token_index == 0) {
+                        prune_table_0_state = token_value;
+                    } else if (token_index == 1) {
+                        prune_table_1_state = token_value;
+                    } else if (token_index == 2) {
+                        prune_table_2_state = token_value;
+                    } else if (token_index == 3) {
+                        prune_table_3_state = token_value;
+                    } else if (token_index == 4) {
+                        prune_table_4_state = token_value;
+                    }
+                    token_index++;
                 }
-                token_index++;
+
+                search_result = ida_solve(
+                    0,
+                    prune_table_0_state,
+                    prune_table_1_state,
+                    prune_table_2_state,
+                    prune_table_3_state,
+                    prune_table_4_state,
+                    i_max_ida_threshold,
+                    orbit0_wide_quarter_turns,
+                    orbit1_wide_quarter_turns);
+
+                if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
+                    min_search_result = search_result;
+                    max_ida_threshold = search_result.f_cost;
+                    break;
+                }
+
+                line_index++;
             }
+            fclose(fh_read);
 
-            search_result = ida_solve(
-                pre_steps_cost,
-                prune_table_0_state,
-                prune_table_1_state,
-                prune_table_2_state,
-                prune_table_3_state,
-                prune_table_4_state,
-                min_ida_threshold,
-                max_ida_threshold,
-                orbit0_wide_quarter_turns,
-                orbit1_wide_quarter_turns);
+            search_result = min_search_result;
 
-            if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
-                printf("LINE INDEX %d\n", line_index);
-                LOG("NEW MIN %d\n\n", search_result.f_cost);
-                min_search_result = search_result;
-                max_ida_threshold = search_result.f_cost;
+            if (search_result.found_solution) {
                 break;
             }
-
-            line_index++;
         }
-
-        fclose(fh_read);
 
         if (line) {
             free(line);
         }
-        search_result = min_search_result;
 
     } else {
         search_result = ida_solve(
@@ -1085,7 +1053,6 @@ main (int argc, char *argv[])
             prune_table_2_state,
             prune_table_3_state,
             prune_table_4_state,
-            min_ida_threshold,
             max_ida_threshold,
             orbit0_wide_quarter_turns,
             orbit1_wide_quarter_turns);

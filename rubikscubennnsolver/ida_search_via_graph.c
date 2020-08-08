@@ -189,6 +189,10 @@ get_cost_to_goal (
         break;
     }
 
+    if (cost_to_goal_multiplier) {
+        cost_to_goal = (unsigned char) round(cost_to_goal * cost_to_goal_multiplier);
+    }
+
     result.cost_to_goal = cost_to_goal;
     result.pt0_cost = pt0_cost;
     result.pt1_cost = pt1_cost;
@@ -445,10 +449,6 @@ ida_search (
     pt2_cost = ctg.pt2_cost;
     pt3_cost = ctg.pt3_cost;
     pt4_cost = ctg.pt4_cost;
-
-    if (cost_to_goal_multiplier) {
-        cost_to_goal = (unsigned char) cost_to_goal * cost_to_goal_multiplier;
-    }
 
     f_cost = cost_to_here + cost_to_goal;
     search_result.f_cost = f_cost;

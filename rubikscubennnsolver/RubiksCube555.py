@@ -1241,7 +1241,7 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=(),
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
-            multiplier=1.2,
+            multiplier=1.1,
         )
 
 
@@ -2442,7 +2442,7 @@ class LookupTable555Phase4(LookupTable):
         # log.info("%s: state %s, cost_to_goal %s" % (self, state, cost_to_goal))
         return (state, cost_to_goal)
 
-    def solve(self, print_steps=False):
+    def solve(self, print_steps=False) -> bool:
         """
         We override the normal solve() so that we do not have to enter all 343,000
         state_targets for this class.
@@ -2455,6 +2455,9 @@ class LookupTable555Phase4(LookupTable):
                 self.parent.rotate(step)
                 if print_steps:
                     log.info("%s: step %s" % (self, step))
+            return True
+        else:
+            return False
 
 
 class LookupTable555Phase5Centers(LookupTable):
@@ -2995,6 +2998,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
             ),
             perfect_hash_filename="lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.pt-state-perfect-hash",
             pt2_state_max=117600,
+            multiplier=1.2,
         )
 
 
@@ -3840,7 +3844,7 @@ class RubiksCube555(RubiksCube):
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-        for x in range(9, 30):
+        for x in range(1, 30):
             try:
                 self.lt_phase3.solve_via_c(max_ida_threshold=x, pt_states=pt_states)
                 break
@@ -3864,76 +3868,54 @@ class RubiksCube555(RubiksCube):
         )
 
     def find_first_four_edges_to_pair(self):
-
-        # In order to make phase5 much faster we need to arrange one group of 4-edges
-        # so that none of them are in the z-plane.  This is the job of phase4.  There
-        # are 12!/(4!*8!) or 495 different 4-edge combinations.  Try them all and see
-        # which one has the lowest phase4 cost.
+        """
+        phase-5 requires a 4-edge combo where none of the edges are in the z-plane.
+        phase-4 will put a 4-edge combo into that state. There are 12!/(4!*8!) or 495
+        different 4-edge combinations.  Try them all and see which one has the lowest
+        phase-4 cost.
+        """
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
 
-        # Put all 495 wing_str states in a file and point ida-via-graph
-        # at the file so it can solve all of them and apply the one that is the shortest.
-        pt_states = []
-        line_index_pre_steps = {}
+        min_phase4_solution_len = 99
+        min_phase4_wing_str_combo = None
 
         for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
+            wing_str_combo = sorted(wing_str_combo)
             self.state = original_state[:]
             self.solution = original_solution[:]
-
-            wing_str_combo = sorted(wing_str_combo)
             self.lt_phase4.wing_strs = wing_str_combo
-            (_state, cost_to_stage) = self.lt_phase4.ida_heuristic()
-            self.lt_phase4.solve()
-            phase4_solution = self.solution[original_solution_len:]
-            phase4_solution_len = len(phase4_solution)
-            line_index_pre_steps[wing_str_index] = phase4_solution
 
-            self.edges_flip_orientation(wing_str_combo, [])
+            if self.lt_phase4.solve():
+                phase4_solution = self.solution[original_solution_len:]
+                phase4_solution_len = len(phase4_solution)
 
-            self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
-            self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
-
-            try:
-                pt_states.append(
-                    (
-                        phase4_solution_len,
-                        self.lt_phase5_centers.state_index(),
-                        self.lt_phase5_fb_centers.state_index(),
-                        self.lt_phase5_high_edge_midge.state_index(),
-                        self.lt_phase5_low_edge_midge.state_index(),
+                if phase4_solution_len < min_phase4_solution_len:
+                    min_phase4_solution_len = phase4_solution_len
+                    min_phase4_wing_str_combo = wing_str_combo
+                    log.info(
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len} (NEW MIN)"
                     )
-                )
-            except TypeError:
-                pt_states.append((99, 0, 0, 0, 0))
+
+                    # If we found a wing_str_combo that already satisfies phase-4 then there is no need to look further
+                    if min_phase4_solution_len == 0:
+                        break
+                else:
+                    log.debug(
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}"
+                    )
+            else:
+                log.debug(f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is >= 4 ")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-
-        for x in range(12, 30):
-            try:
-                min_wing_str_combo_index = self.lt_phase5.solve_via_c(
-                    max_ida_threshold=x, pt_states=pt_states, line_index_pre_steps=line_index_pre_steps
-                )
-                break
-            except NoIDASolution:
-                pass
-
-        min_wing_str_combo = list(itertools.combinations(wing_strs_all, 4))[min_wing_str_combo_index]
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        return min_wing_str_combo
+        return min_phase4_wing_str_combo
 
     def pair_first_four_edges(self):
-        min_wing_str_combo = self.find_first_four_edges_to_pair()
-        original_state = self.state[:]
-        original_solution = self.solution[:]
         original_solution_len = len(self.solution)
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        self.lt_phase4.wing_strs = min_wing_str_combo
+        phase4_wing_str_combo = self.find_first_four_edges_to_pair()
+        self.lt_phase4.wing_strs = phase4_wing_str_combo
         self.lt_phase4.solve(True)
         self.print_cube()
         log.info(
@@ -3949,9 +3931,9 @@ class RubiksCube555(RubiksCube):
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
 
-        self.edges_flip_orientation(min_wing_str_combo, [])
-        self.lt_phase5_high_edge_midge.wing_strs = min_wing_str_combo
-        self.lt_phase5_low_edge_midge.wing_strs = min_wing_str_combo
+        self.edges_flip_orientation(phase4_wing_str_combo, [])
+        self.lt_phase5_high_edge_midge.wing_strs = phase4_wing_str_combo
+        self.lt_phase5_low_edge_midge.wing_strs = phase4_wing_str_combo
         self.lt_phase5.solve_via_c()
 
         pair_four_edge_solution = self.solution[original_solution_len:]

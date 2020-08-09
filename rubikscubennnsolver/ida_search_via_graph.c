@@ -252,7 +252,7 @@ print_ida_summary (
     printf("\n");
     printf("       PT0  PT1  PT2  PT3  PT4  PER  CTG  TRU  IDX\n");
     printf("       ===  ===  ===  ===  ===  ===  ===  ===  ===\n");
-    printf("       %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d\n",
+    printf("  INIT %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d\n",
         pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, ctg.perfect_hash_cost, cost_to_goal, steps_to_solved, 0);
 
     for (unsigned char i = 0; i < solution_len; i++) {

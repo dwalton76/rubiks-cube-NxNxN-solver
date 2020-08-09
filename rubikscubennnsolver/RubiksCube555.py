@@ -12,6 +12,14 @@ from rubikscubennnsolver.swaps import swaps_555
 
 log = logging.getLogger(__name__)
 
+"""
+TODO rm these from S3 buckets
+rm lookup-table-5x5x5-step13-UD-centers-stage-t-center-only.bin lookup-table-5x5x5-step14-UD-centers-stage-x-center-only.bin
+rm lookup-table-5x5x5-step23-LR-centers.bin
+how to build the 904
+
+"""
+
 moves_555 = (
     "U",
     "U'",
@@ -1086,6 +1094,7 @@ class NoEdgeSolution(Exception):
     pass
 
 
+# phase 1
 class LookupTable555LRTCenterStage(LookupTable):
     """
     lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.txt
@@ -1245,6 +1254,7 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
         )
 
 
+# phase 2
 class LookupTable555FBTCenterStage(LookupTable):
     """
     lookup-table-5x5x5-step21-FB-t-centers-stage.txt
@@ -1372,212 +1382,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
         )
 
 
-class LookupTable555UDCenterSolve(LookupTable):
-    """
-    lookup-table-5x5x5-step34-UD-centers-solve.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 22 entries (0 percent, 5.50x previous step)
-    3 steps has 82 entries (1 percent, 3.73x previous step)
-    4 steps has 292 entries (5 percent, 3.56x previous step)
-    5 steps has 986 entries (20 percent, 3.38x previous step)
-    6 steps has 2,001 entries (40 percent, 2.03x previous step)
-    7 steps has 1,312 entries (26 percent, 0.66x previous step)
-    8 steps has 200 entries (4 percent, 0.15x previous step)
-
-    Total: 4,900 entries
-    Average: 5.96 moves
-    """
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step34-UD-centers-solve.txt",
-            "TBD",
-            linecount=4900,
-            max_depth=8,
-            filesize=240100,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in UD_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(UD_centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTable555LRCenterSolve(LookupTable):
-    """
-    lookup-table-5x5x5-step35-LR-centers-solve.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 22 entries (0 percent, 5.50x previous step)
-    3 steps has 82 entries (1 percent, 3.73x previous step)
-    4 steps has 292 entries (5 percent, 3.56x previous step)
-    5 steps has 986 entries (20 percent, 3.38x previous step)
-    6 steps has 2,001 entries (40 percent, 2.03x previous step)
-    7 steps has 1,312 entries (26 percent, 0.66x previous step)
-    8 steps has 200 entries (4 percent, 0.15x previous step)
-
-    Total: 4,900 entries
-    Average: 5.96 moves
-    """
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step35-LR-centers-solve.txt",
-            "TBD",
-            linecount=4900,
-            max_depth=8,
-            filesize=240100,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in LR_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(LR_centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTable555FBCenterSolve(LookupTable):
-    """
-    lookup-table-5x5x5-step36-FB-centers-solve.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 22 entries (0 percent, 5.50x previous step)
-    3 steps has 82 entries (1 percent, 3.73x previous step)
-    4 steps has 292 entries (5 percent, 3.56x previous step)
-    5 steps has 986 entries (20 percent, 3.38x previous step)
-    6 steps has 2,001 entries (40 percent, 2.03x previous step)
-    7 steps has 1,312 entries (26 percent, 0.66x previous step)
-    8 steps has 200 entries (4 percent, 0.15x previous step)
-
-    Total: 4,900 entries
-    Average: 5.96 moves
-    """
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step36-FB-centers-solve.txt",
-            "TBD",
-            linecount=4900,
-            max_depth=8,
-            filesize=240100,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in FB_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(FB_centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            prune_tables=(parent.lt_UD_centers_solve, parent.lt_LR_centers_solve, parent.lt_FB_centers_solve),
-            multiplier=1.2,
-        )
-
-
-class LookupTable555TCenterSolve(LookupTable):
-    """
-    This is only used when a cube larger than 7x7x7 is being solved
-
-    lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt
-    ====================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 99 entries (0 percent, 14.14x previous step)
-    3 steps has 1,038 entries (0 percent, 10.48x previous step)
-    4 steps has 8,463 entries (2 percent, 8.15x previous step)
-    5 steps has 47,986 entries (13 percent, 5.67x previous step)
-    6 steps has 146,658 entries (42 percent, 3.06x previous step)
-    7 steps has 128,914 entries (37 percent, 0.88x previous step)
-    8 steps has 9,835 entries (2 percent, 0.08x previous step)
-
-    Total: 343,000 entries
-    Average: 6.23 moves
-    """
-
-    t_centers_555 = (
-        8,
-        12,
-        14,
-        18,
-        33,
-        37,
-        39,
-        43,
-        58,
-        62,
-        64,
-        68,
-        83,
-        87,
-        89,
-        93,
-        108,
-        112,
-        114,
-        118,
-        133,
-        137,
-        139,
-        143,
-    )
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt",
-            "UUUULLLLFFFFRRRRBBBBDDDD",
-            linecount=343000,
-            filesize=19551000,
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        result = "".join([parent_state[x] for x in self.t_centers_555])
-        return (result, 0)
-
-
+# phase 3
 class LookupTable555LRCenterStageEOInnerOrbit(LookupTable):
     """
     LR centers 4900 x EO inner-orbit 2048 = 10,035,200 states
@@ -2157,7 +1962,7 @@ class LookupTable555LRCenterStageEOInnerOrbit(LookupTable):
                 self.parent.state[pos] = pos_state
 
 
-class LookupTableIDA555EdgeOrientOuterOrbit(LookupTable):
+class LookupTable555EdgeOrientOuterOrbit(LookupTable):
     """
     lookup-table-5x5x5-step902-EO-outer-orbit.txt
     =============================================
@@ -2273,51 +2078,6 @@ class LookupTableIDA555EdgeOrientOuterOrbit(LookupTable):
         return (state, cost_to_goal)
 
 
-class LookupTable555EdgeOrientBothOrbits(LookupTable):
-    """
-    lookup-table-5x5x5-step904-EO-both-orbits.txt
-    =============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 2 entries (0 percent, 2.00x previous step)
-    2 steps has 33 entries (0 percent, 16.50x previous step)
-    3 steps has 382 entries (0 percent, 11.58x previous step)
-    4 steps has 4,040 entries (0 percent, 10.58x previous step)
-    5 steps has 47,502 entries (0 percent, 11.76x previous step)
-    6 steps has 541,439 entries (9 percent, 11.40x previous step)
-    7 steps has 5,353,259 entries (90 percent, 9.89x previous step)
-    Total: 5,946,658 entries
-
-    extrapolate from here
-
-    8 steps has 48,661,124 entries (9.09x previous step)
-    9 steps has 403,400,717 entries (8.29x previous step)
-    10 steps has 3,021,471,370 entries (7.49x previous step)
-    11 steps has 2,058,631,619 entries (0.68x previous step)
-
-    Average: 10.270569142070691
-    Total  : 5,538,111,488
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step904-EO-both-orbits.txt",
-            "TBD",
-            linecount=5946658,
-            max_depth=7,
-            filesize=588719142,
-        )
-
-    def state(self):
-        return self.parent.highlow_edges_state()
-
-    def ida_heuristic(self):
-        state = self.parent.highlow_edges_state()
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
-
-
 class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
@@ -2329,6 +2089,7 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
         )
 
 
+# phase 4
 class LookupTable555Phase4(LookupTable):
     """
     lookup-table-5x5x5-step40-phase4.txt
@@ -2410,6 +2171,7 @@ class LookupTable555Phase4(LookupTable):
             return False
 
 
+# phase 5
 class LookupTable555Phase5Centers(LookupTable):
     """
     lookup-table-5x5x5-step51-phase5-centers.txt
@@ -2952,6 +2714,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
         )
 
 
+# phase 6
 class LookupTable555Phase6Centers(LookupTable):
     """
     lookup-table-5x5x5-step61-phase6-centers.txt
@@ -3299,6 +3062,212 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
         )
 
 
+class LookupTable555UDCenterSolve(LookupTable):
+    """
+    lookup-table-5x5x5-step34-UD-centers-solve.txt
+    ==============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 22 entries (0 percent, 5.50x previous step)
+    3 steps has 82 entries (1 percent, 3.73x previous step)
+    4 steps has 292 entries (5 percent, 3.56x previous step)
+    5 steps has 986 entries (20 percent, 3.38x previous step)
+    6 steps has 2,001 entries (40 percent, 2.03x previous step)
+    7 steps has 1,312 entries (26 percent, 0.66x previous step)
+    8 steps has 200 entries (4 percent, 0.15x previous step)
+
+    Total: 4,900 entries
+    Average: 5.96 moves
+    """
+
+    def __init__(self, parent, build_state_index=False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step34-UD-centers-solve.txt",
+            "TBD",
+            linecount=4900,
+            max_depth=8,
+            filesize=240100,
+            all_moves=moves_555,
+            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in UD_centers_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UD_centers_555, state):
+            cube[pos] = pos_state
+
+
+class LookupTable555LRCenterSolve(LookupTable):
+    """
+    lookup-table-5x5x5-step35-LR-centers-solve.txt
+    ==============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 22 entries (0 percent, 5.50x previous step)
+    3 steps has 82 entries (1 percent, 3.73x previous step)
+    4 steps has 292 entries (5 percent, 3.56x previous step)
+    5 steps has 986 entries (20 percent, 3.38x previous step)
+    6 steps has 2,001 entries (40 percent, 2.03x previous step)
+    7 steps has 1,312 entries (26 percent, 0.66x previous step)
+    8 steps has 200 entries (4 percent, 0.15x previous step)
+
+    Total: 4,900 entries
+    Average: 5.96 moves
+    """
+
+    def __init__(self, parent, build_state_index=False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step35-LR-centers-solve.txt",
+            "TBD",
+            linecount=4900,
+            max_depth=8,
+            filesize=240100,
+            all_moves=moves_555,
+            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in LR_centers_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(LR_centers_555, state):
+            cube[pos] = pos_state
+
+
+class LookupTable555FBCenterSolve(LookupTable):
+    """
+    lookup-table-5x5x5-step36-FB-centers-solve.txt
+    ==============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 22 entries (0 percent, 5.50x previous step)
+    3 steps has 82 entries (1 percent, 3.73x previous step)
+    4 steps has 292 entries (5 percent, 3.56x previous step)
+    5 steps has 986 entries (20 percent, 3.38x previous step)
+    6 steps has 2,001 entries (40 percent, 2.03x previous step)
+    7 steps has 1,312 entries (26 percent, 0.66x previous step)
+    8 steps has 200 entries (4 percent, 0.15x previous step)
+
+    Total: 4,900 entries
+    Average: 5.96 moves
+    """
+
+    def __init__(self, parent, build_state_index=False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step36-FB-centers-solve.txt",
+            "TBD",
+            linecount=4900,
+            max_depth=8,
+            filesize=240100,
+            all_moves=moves_555,
+            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in FB_centers_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(FB_centers_555, state):
+            cube[pos] = pos_state
+
+
+class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_555,
+            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            prune_tables=(parent.lt_UD_centers_solve, parent.lt_LR_centers_solve, parent.lt_FB_centers_solve),
+            multiplier=1.2,
+        )
+
+
+class LookupTable555TCenterSolve(LookupTable):
+    """
+    This is only used when a cube larger than 7x7x7 is being solved
+
+    lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt
+    ====================================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 99 entries (0 percent, 14.14x previous step)
+    3 steps has 1,038 entries (0 percent, 10.48x previous step)
+    4 steps has 8,463 entries (2 percent, 8.15x previous step)
+    5 steps has 47,986 entries (13 percent, 5.67x previous step)
+    6 steps has 146,658 entries (42 percent, 3.06x previous step)
+    7 steps has 128,914 entries (37 percent, 0.88x previous step)
+    8 steps has 9,835 entries (2 percent, 0.08x previous step)
+
+    Total: 343,000 entries
+    Average: 6.23 moves
+    """
+
+    t_centers_555 = (
+        8,
+        12,
+        14,
+        18,
+        33,
+        37,
+        39,
+        43,
+        58,
+        62,
+        64,
+        68,
+        83,
+        87,
+        89,
+        93,
+        108,
+        112,
+        114,
+        118,
+        133,
+        137,
+        139,
+        143,
+    )
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt",
+            "UUUULLLLFFFFRRRRBBBBDDDD",
+            linecount=343000,
+            filesize=19551000,
+        )
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        result = "".join([parent_state[x] for x in self.t_centers_555])
+        return (result, 0)
+
+
 class RubiksCube555(RubiksCube):
     """
     5x5x5 strategy
@@ -3511,33 +3480,39 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
+        # phase 1
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
 
+        # phase 2
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
         self.lt_FB_centers_stage.avoid_oll = 0
 
+        # phase 3
         self.lt_phase3_lr_center_stage_eo_inner_orbit = LookupTable555LRCenterStageEOInnerOrbit(self)
-        self.lt_phase3_eo_outer_orbit = LookupTableIDA555EdgeOrientOuterOrbit(self)
-        self.lt_phase3_eo_both_orbits = LookupTable555EdgeOrientBothOrbits(self)
+        self.lt_phase3_eo_outer_orbit = LookupTable555EdgeOrientOuterOrbit(self)
         self.lt_phase3 = LookupTableIDA555LRCenterStageEOBothOrbits(self)
 
+        # phase 4
         self.lt_phase4 = LookupTable555Phase4(self)
 
+        # phase 5
         self.lt_phase5_centers = LookupTable555Phase5Centers(self)
         self.lt_phase5_high_edge_midge = LookupTable555Phase5HighEdgeMidge(self)
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
         self.lt_phase5_fb_centers = LookupTable555Phase5FBCenters(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
 
+        # phase 6
         self.lt_phase6_centers = LookupTable555Phase6Centers(self)
         self.lt_phase6_high_edge_midge = LookupTable555Phase6HighEdgeMidge(self)
         self.lt_phase6_low_edge_midge = LookupTable555Phase6LowEdgeMidge(self)
         self.lt_phase6 = LookupTableIDA555Phase6(self)
 
+        # for larger cubes that have reduced to 555
         self.lt_UD_centers_solve = LookupTable555UDCenterSolve(self)
         self.lt_LR_centers_solve = LookupTable555LRCenterSolve(self)
         self.lt_FB_centers_solve = LookupTable555FBCenterSolve(self)
@@ -3819,9 +3794,9 @@ class RubiksCube555(RubiksCube):
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
+        results = []
 
         min_phase4_solution_len = 99
-        min_phase4_wing_str_combo = None
 
         for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
             wing_str_combo = sorted(wing_str_combo)
@@ -3832,17 +3807,13 @@ class RubiksCube555(RubiksCube):
             if self.lt_phase4.solve():
                 phase4_solution = self.solution[original_solution_len:]
                 phase4_solution_len = len(phase4_solution)
+                results.append((phase4_solution_len, wing_str_combo))
 
                 if phase4_solution_len < min_phase4_solution_len:
                     min_phase4_solution_len = phase4_solution_len
-                    min_phase4_wing_str_combo = wing_str_combo
                     log.info(
                         f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len} (NEW MIN)"
                     )
-
-                    # If we found a wing_str_combo that already satisfies phase-4 then there is no need to look further
-                    if min_phase4_solution_len == 0:
-                        break
 
                 elif phase4_solution_len == min_phase4_solution_len:
                     log.info(
@@ -3857,11 +3828,14 @@ class RubiksCube555(RubiksCube):
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        return min_phase4_wing_str_combo
+        results.sort()
 
-    def pair_first_four_edges(self):
+        # dwalton
+        results = [x[1] for x in results[0:20]]
+        return results
+
+    def pair_first_four_edges(self, phase4_wing_str_combo):
         original_solution_len = len(self.solution)
-        phase4_wing_str_combo = self.find_first_four_edges_to_pair()
         self.lt_phase4.wing_strs = phase4_wing_str_combo
         self.lt_phase4.solve(True)
         self.print_cube()
@@ -3950,11 +3924,59 @@ class RubiksCube555(RubiksCube):
         # log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
 
         if not self.centers_solved() or not self.edges_paired():
+            # phase 1
             self.group_centers_stage_LR()
+
+            # phase 2
             self.group_centers_stage_FB()
+
+            # phase 3
             self.eo_edges()
-            self.pair_first_four_edges()
-            self.pair_last_eight_edges()
+
+            # phase 4
+            # phase 5
+            # phase 6
+            original_state = self.state[:]
+            original_solution = self.solution[:]
+            original_solution_len = len(self.solution)
+
+            min_phase456_solution_len = 99
+            min_phase456_solution = []
+            min_phase456_state = []
+            edge_messages = []
+
+            for (index, wing_str_combo) in enumerate(self.find_first_four_edges_to_pair()):
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+                self.pair_first_four_edges(wing_str_combo)
+                self.pair_last_eight_edges()
+
+                phase456_solution = self.solution[original_solution_len:]
+                phase456_solution_len = self.get_solution_len_minus_rotates(phase456_solution)
+
+                if phase456_solution_len < min_phase456_solution_len:
+                    min_phase456_solution_len = phase456_solution_len
+                    min_phase456_state = self.state[:]
+                    min_phase456_solution = self.solution[:]
+                    msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps (NEW MIN)"
+                else:
+                    msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps"
+
+                log.info(msg)
+                edge_messages.append(msg)
+
+                # If you are doing a FMC comment this out and we will evaluate 20 different first four wing_str_combos
+                # This saves a move or two but takes a while.
+                break
+
+            if len(edge_messages) > 1:
+                log.info("")
+                log.info("first 4-edges summary")
+                for msg in edge_messages:
+                    log.info(msg)
+
+            self.state = min_phase456_state
+            self.solution = min_phase456_solution
 
             edges_solution = self.solution[len(self.post_eo_solution) :]
             self.state = self.post_eo_state

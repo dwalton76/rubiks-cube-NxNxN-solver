@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import resource
+import shutil
 import subprocess
 from pprint import pformat
 from subprocess import call
@@ -301,11 +302,17 @@ def download_file_if_needed(filename, cube_size):
 
     if not os.path.exists(filename):
         filename_gz = filename + ".gz"
+        filename_gz_no_dir = filename_gz.split("/")[-1]
 
         if not os.path.exists(filename_gz):
-            url = f"https://rubiks-cube-lookup-tables.s3.amazonaws.com/{filename_gz}"
+            url = f"https://rubiks-cube-lookup-tables.s3.amazonaws.com/{filename_gz_no_dir}"
             log.info("Downloading table via 'wget %s'" % url)
             call(["wget", url])
+
+            if not os.path.exists(filename_gz_no_dir):
+                raise Exception(f"failed to download {filename_gz} via {url}")
+
+            shutil.move(filename_gz_no_dir, filename_gz)
 
         log.info("gunzip %s" % filename_gz)
         call(["gunzip", filename_gz])

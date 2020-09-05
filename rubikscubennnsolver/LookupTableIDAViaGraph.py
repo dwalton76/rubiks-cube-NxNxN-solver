@@ -44,8 +44,8 @@ class LookupTableIDAViaGraph(LookupTable):
         main_table_state_length=None,
         main_table_max_depth=None,
         main_table_prune_tables=None,
-        perfect_hash_filename=None,
-        pt2_state_max=None,
+        perfect_hash01_filename=None,
+        pt1_state_max=None,
         multiple_solutions=False,
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
@@ -60,19 +60,19 @@ class LookupTableIDAViaGraph(LookupTable):
         self.main_table_max_depth = main_table_max_depth
         self.main_table_prune_tables = main_table_prune_tables
 
-        if perfect_hash_filename:
-            self.perfect_hash_filename = "lookup-tables/" + perfect_hash_filename
+        if perfect_hash01_filename:
+            self.perfect_hash01_filename = "lookup-tables/" + perfect_hash01_filename
         else:
-            self.perfect_hash_filename = perfect_hash_filename
+            self.perfect_hash01_filename = perfect_hash01_filename
 
-        self.pt2_state_max = pt2_state_max
+        self.pt1_state_max = pt1_state_max
         self.multiple_solutions = multiple_solutions
 
-        if self.perfect_hash_filename or self.pt2_state_max:
+        if self.perfect_hash01_filename or self.pt1_state_max:
             assert (
-                self.perfect_hash_filename and self.pt2_state_max
-            ), "both perfect_hash_filename and pt2_state_max must be specified"
-            download_file_if_needed(self.perfect_hash_filename, self.parent.size)
+                self.perfect_hash01_filename and self.pt1_state_max
+            ), "both perfect_hash01_filename and pt1_state_max must be specified"
+            download_file_if_needed(self.perfect_hash01_filename, self.parent.size)
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -244,11 +244,12 @@ class LookupTableIDAViaGraph(LookupTable):
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
                 raise Exception("avoid_oll is only supported for orbits 0 or 1, not {}".format(self.avoid_oll))
 
-        if self.perfect_hash_filename:
-            cmd.append("--prune-table-perfect-hash")
-            cmd.append(self.perfect_hash_filename)
-            cmd.append("--pt2-state-max")
-            cmd.append(str(self.pt2_state_max))
+        if self.perfect_hash01_filename:
+            # dwalton
+            cmd.append("--prune-table-perfect-hash01")
+            cmd.append(self.perfect_hash01_filename)
+            cmd.append("--pt1-state-max")
+            cmd.append(str(self.pt1_state_max))
 
         if self.multiple_solutions:
             cmd.append("--multiple-solutions")

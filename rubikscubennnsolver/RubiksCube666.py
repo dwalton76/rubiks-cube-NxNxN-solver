@@ -1327,12 +1327,12 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
                 "B2",
             ),
             prune_tables=(
-                parent.lt_UD_outer_x_centers_stage,
                 parent.lt_UD_left_oblique_edges_stage,
                 parent.lt_UD_right_oblique_edges_stage,
+                parent.lt_UD_outer_x_centers_stage,
             ),
-            perfect_hash_filename="lookup-table-6x6x6-step14-UD-oblique-stage.pt-state-perfect-hash",
-            pt2_state_max=12870,
+            perfect_hash01_filename="lookup-table-6x6x6-step14-UD-oblique-stage.pt-state-perfect-hash",
+            pt1_state_max=12870,
         )
 
 
@@ -1925,7 +1925,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.fake_555.cpu_mode = self.cpu_mode
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
-            self.fake_555.lt_FB_centers_stage.prune_tables.remove(self.fake_555.lt_FB_centers_stage_LR_centers_432)
 
         else:
             self.fake_555.re_init()

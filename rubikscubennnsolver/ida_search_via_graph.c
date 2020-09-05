@@ -24,8 +24,8 @@ unsigned char *pt1 = NULL;
 unsigned char *pt2 = NULL;
 unsigned char *pt3 = NULL;
 unsigned char *pt4 = NULL;
-unsigned char *pt_perfect_hash = NULL;
-unsigned int pt2_state_max = 0;
+unsigned char *pt_perfect_hash01 = NULL;
+unsigned int pt1_state_max = 0;
 
 unsigned char pt_count = 0;
 unsigned char COST_LENGTH = 1;
@@ -70,10 +70,10 @@ get_cost_to_goal (
     unsigned char perfect_hash_cost = 0;
     unsigned int perfect_hash_index = 0;
 
-    if (pt_perfect_hash) {
-        // currently the only tables that use a perfect hash do so via pt1 and pt2
-        perfect_hash_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
-        perfect_hash_cost = pt_perfect_hash[perfect_hash_index];
+    if (pt_perfect_hash01) {
+        // currently the only tables that use a perfect hash do so via pt0 and pt1
+        perfect_hash_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
+        perfect_hash_cost = pt_perfect_hash01[perfect_hash_index];
 
         switch (perfect_hash_cost) {
         case '0':
@@ -770,13 +770,13 @@ main (int argc, char *argv[])
             prune_table_4_state = atoi(argv[i]);
             pt_count = 4;
 
-        } else if (strmatch(argv[i], "--prune-table-perfect-hash")) {
+        } else if (strmatch(argv[i], "--prune-table-perfect-hash01")) {
             i++;
-            pt_perfect_hash = read_file(argv[i]);
+            pt_perfect_hash01 = read_file(argv[i]);
 
-        } else if (strmatch(argv[i], "--pt2-state-max")) {
+        } else if (strmatch(argv[i], "--pt1-state-max")) {
             i++;
-            pt2_state_max = atoi(argv[i]);
+            pt1_state_max = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--prune-table-states")) {
             i++;

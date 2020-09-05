@@ -2675,6 +2675,11 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
 
 
 class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
+    # There could be 4 perfect hashes for this phase
+    # - LR centers x high-edge-and-midge
+    # - LR centers x low-edge-and-midge
+    # - FB centers x high-edge-and-midge (DONE)
+    # - FB centers x low-edge-and-midge
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
             self,
@@ -2703,13 +2708,15 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 "D'",
             ),
             prune_tables=(
-                parent.lt_phase5_centers,
                 parent.lt_phase5_fb_centers,
                 parent.lt_phase5_high_edge_midge,
                 parent.lt_phase5_low_edge_midge,
+                parent.lt_phase5_centers,
             ),
-            perfect_hash_filename="lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.pt-state-perfect-hash",
-            pt2_state_max=117600,
+            # parent.lt_phase5_fb_centers and parent.lt_phase5_high_edge_midge are used to
+            # compute the lookup index in the perfect hash file
+            perfect_hash01_filename="lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.pt-state-perfect-hash",
+            pt1_state_max=117600,
             multiplier=1.2,
         )
 
@@ -3055,10 +3062,12 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
                 "B",
                 "B'",
             ),
-            prune_tables=(parent.lt_phase6_centers, parent.lt_phase6_high_edge_midge, parent.lt_phase6_low_edge_midge),
+            prune_tables=(parent.lt_phase6_high_edge_midge, parent.lt_phase6_low_edge_midge, parent.lt_phase6_centers),
+            # parent.lt_phase6_high_edge_midge and parent.lt_phase6_low_edge_midge are used to
+            # compute the lookup index in the perfect hash file
+            perfect_hash01_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash",
+            pt1_state_max=40320,
             multiplier=1.2,
-            perfect_hash_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash",
-            pt2_state_max=40320,
         )
 
 
@@ -3830,7 +3839,6 @@ class RubiksCube555(RubiksCube):
         self.solution = original_solution[:]
         results.sort()
 
-        # dwalton
         results = [x[1] for x in results[0:20]]
         return results
 

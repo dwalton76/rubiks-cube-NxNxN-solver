@@ -12,14 +12,6 @@ from rubikscubennnsolver.swaps import swaps_555
 
 log = logging.getLogger(__name__)
 
-"""
-TODO rm these from S3 buckets
-rm lookup-table-5x5x5-step13-UD-centers-stage-t-center-only.bin lookup-table-5x5x5-step14-UD-centers-stage-x-center-only.bin
-rm lookup-table-5x5x5-step23-LR-centers.bin
-how to build the 904
-
-"""
-
 moves_555 = (
     "U",
     "U'",
@@ -2676,10 +2668,10 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
 
 class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
     # There could be 4 perfect hashes for this phase
-    # - LR centers x high-edge-and-midge
-    # - LR centers x low-edge-and-midge
+    # - LR centers x high-edge-and-midge - this would be small as there are only 432 LR center states
+    # - LR centers x low-edge-and-midge - this would be small as there are only 432 LR center states
     # - FB centers x high-edge-and-midge (DONE)
-    # - FB centers x low-edge-and-midge
+    # - FB centers x low-edge-and-midge (building on ljserver)
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
             self,

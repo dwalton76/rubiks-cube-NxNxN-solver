@@ -892,6 +892,7 @@ edges_partner_666 = {
 }
 
 
+# phase 2
 class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
     """
     All we care about is getting the LR oblique edges paired, we do
@@ -974,6 +975,7 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
                 self.parent.state[x] = "."
 
 
+# phase 4
 class LookupTable666UDLeftObliqueStage(LookupTable):
     """
     lookup-table-6x6x6-step11-UD-left-oblique-stage.txt
@@ -1336,6 +1338,7 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
         )
 
 
+# phase 5
 class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     """
     This will solve the UD inner x-centers and pair the UD oblique edges.
@@ -1482,6 +1485,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
         return (lt_state, 0)
 
 
+# phase 6
 class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
     """
     lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
@@ -2098,19 +2102,23 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             return
         self.lt_init_called = True
 
+        # phase 2
         self.lt_LR_oblique_edge_stage = LookupTable666LRObliquEdgeStage(self)
 
         # This is the case if a 777 is using 666 to pair its LR oblique edges
         if LR_oblique_edge_only:
             return
 
+        # phase 4
         self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueStage(self)
         self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueStage(self)
         self.lt_UD_outer_x_centers_stage = LookupTable666UDOuterXCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA666UDCentersStage(self)
 
+        # phase 5
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
 
+        # phase 6
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
         self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
@@ -2191,6 +2199,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     def group_centers_guts(self, oblique_edges_only=False):
         self.lt_init()
 
+        # phase 1
         # stage the inner-x centers via 444 solver
         fake_444 = self.get_fake_444()
         self.populate_fake_444_for_inner_x_centers_stage()
@@ -2212,6 +2221,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
 
+        # phase 2
         # pair the LR oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_LR_oblique_edge_stage.solve()
@@ -2225,6 +2235,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
+        # phase 3
         # Stage LR centers via 555
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
@@ -2241,6 +2252,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.print_cube()
         log.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        # phase 4
         # pair the UD oblique edges and outer x-centers to finish staging centers
         self.lt_UD_centers_stage.solve_via_c()
 
@@ -2257,6 +2269,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # - solve the LR inner x-centers and pair the LR oblique edges
         # - solve the FB inner x-centers and pair the FB oblique edges
 
+        # phase 5
         # solve the UD inner x-centers and pair the UD oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
@@ -2271,6 +2284,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         )
         # log.info("kociemba: %s" % self.get_kociemba_string(True))
 
+        # phase 6
         # solve the LR inner x-centers and pair the LR oblique edges
         # solve the FB inner x-centers and pair the FB oblique edges
         tmp_solution_len = len(self.solution)

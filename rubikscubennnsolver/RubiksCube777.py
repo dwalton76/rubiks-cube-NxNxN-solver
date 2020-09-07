@@ -334,6 +334,9 @@ ULRD_centers_777 = (
 )
 
 
+# ===============================
+# phase 2 - pair LR oblique edges
+# ===============================
 class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
 
     oblique_edges_777 = (
@@ -436,6 +439,9 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
                 self.parent.state[x] = "."
 
 
+# ===================================
+# phase 5 - pair the oblique UD edges
+# ===================================
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
 
     UFBD_oblique_edges_777 = (
@@ -514,6 +520,9 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
                 self.parent.state[x] = "."
 
 
+# =====================================
+# phase 7 - LR centers to vertical bars
+# =====================================
 class LookupTable777Step41(LookupTable):
     """
     lookup-table-7x7x7-step41.txt
@@ -1211,6 +1220,9 @@ class LookupTableIDA777Step40(LookupTableIDAViaGraph):
         )
 
 
+# =====================================
+# phase 8 - UD centers to vertical bars
+# =====================================
 class LookupTable777Step51(LookupTable):
     """
     lookup-table-7x7x7-step51.txt
@@ -2048,6 +2060,9 @@ class LookupTableIDA777Step50(LookupTableIDAViaGraph):
         )
 
 
+# =============================
+# phase 9 - centers daisy solve
+# =============================
 class LookupTable777Step61(LookupTable):
     """
     lookup-table-7x7x7-step61.txt
@@ -2578,6 +2593,9 @@ class LookupTableIDA777Step60(LookupTableIDAViaGraph):
         )
 
 
+# =================================================
+# phase solve t-centers (for cubes larger than 777)
+# =================================================
 class LookupTable777Step71(LookupTable):
     """
     lookup-table-7x7x7-step71.txt
@@ -3520,15 +3538,20 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
         self.lt_init_called = True
 
+        # phase 2 - pair LR oblique edges
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
+
+        # phase 5 - pair the oblique UD edges
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
 
+        # phase 7 - LR centers to vertical bars
         self.lt_step41 = LookupTable777Step41(self)
         self.lt_step42 = LookupTable777Step42(self)
         self.lt_step43 = LookupTable777Step43(self)
         self.lt_step44 = LookupTable777Step44(self)
         self.lt_step40 = LookupTableIDA777Step40(self)
 
+        # phase 8 - UD centers to vertical bars
         self.lt_step51 = LookupTable777Step51(self)
         self.lt_step52 = LookupTable777Step52(self)
         self.lt_step53 = LookupTable777Step53(self)
@@ -3536,12 +3559,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_step55 = LookupTable777Step55(self)
         self.lt_step50 = LookupTableIDA777Step50(self)
 
+        # phase 9 - centers daisy solve
         self.lt_step61 = LookupTable777Step61(self)
         self.lt_step62 = LookupTable777Step62(self)
         self.lt_step65 = LookupTable777Step65(self)
         self.lt_step66 = LookupTable777Step66(self)
         self.lt_step60 = LookupTableIDA777Step60(self)
 
+        # phase solve t-centers (for cubes larger than 777)
         self.lt_step71 = LookupTable777Step71(self)
         self.lt_step72 = LookupTable777Step72(self)
         self.lt_step75 = LookupTable777Step75(self)
@@ -3685,6 +3710,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                 self.rotate(step)
 
     def stage_UD_centers(self):
+        # phase 4 - use 5x5x5 solver to stage the UD inner centers
         self.group_inside_UD_centers()
         self.print_cube()
         log.info(
@@ -3695,7 +3721,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         log.info("")
         log.info("")
 
-        # Pair the oblique UD edges
+        # phase 5 - pair the oblique UD edges
         tmp_solution_len = len(self.solution)
         self.lt_UD_oblique_edge_pairing.solve()
         self.print_cube()
@@ -3712,7 +3738,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         log.info("")
         log.info("")
 
-        # Stage the UD centers
+        # phase 6 - use 5x5x5 to stage the UD centers
         self.create_fake_555_from_outside_centers()
         self.fake_555.group_centers_stage_FB()
 
@@ -3735,11 +3761,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         log.info("")
 
     def stage_LR_centers(self):
-        # Uses 5x5x5 solver to stage the inner x-centers
+        # phase 1 - use 5x5x5 solver to stage the LR inner centers
         self.group_inside_LR_centers()
         self.print_cube()
         log.info(
-            "%s: LR inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: LR inner centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
         log.info("")
         log.info("")
@@ -3752,6 +3778,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # self.print_cube()
         # log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        # phase 2 - pair LR oblique edges
         # log.info("kociemba: %s" % self.get_kociemba_string(True))
         tmp_solution_len = len(self.solution)
         self.lt_LR_oblique_edge_pairing.solve()
@@ -3764,7 +3791,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             "%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
-        # Stage the LR centers
+        # phase 3 - use 5x5x5 solver to stage the LR centers
         self.create_fake_555_from_outside_centers()
         self.fake_555.group_centers_stage_LR()
 
@@ -3793,6 +3820,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # self.print_cube()
         # log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        # phase 7 - LR centers to vertical bars
         tmp_solution_len = len(self.solution)
         self.lt_step40.solve_via_c()
         self.print_cube()
@@ -3813,6 +3841,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # self.print_cube()
         # log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+        # phase 8 - UD centers to vertical bars
         tmp_solution_len = len(self.solution)
         self.lt_step50.solve_via_c()
         # log.info("kociemba: %s" % self.get_kociemba_string(True))
@@ -3826,6 +3855,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         )
 
     def centers_daisy_solve(self):
+        # phase 9 - centers daisy solve
         tmp_solution_len = len(self.solution)
         self.lt_step60.solve_via_c()
         self.solution.append(
@@ -3858,6 +3888,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.LR_centers_vertical_bars()
         self.UD_centers_vertical_bars()
 
+        # phase solve t-centers (for cubes larger than 777)
         tmp_solution_len = len(self.solution)
         self.lt_step70.solve_via_c()
         self.solution.append(

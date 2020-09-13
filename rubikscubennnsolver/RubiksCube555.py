@@ -1242,7 +1242,7 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=(),
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
-            multiplier=1.1,
+            # multiplier=1.1,
         )
 
 
@@ -2709,7 +2709,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
             # compute the lookup index in the perfect hash file
             perfect_hash01_filename="lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.pt-state-perfect-hash",
             pt1_state_max=117600,
-            multiplier=1.2,
+            # multiplier=1.2,
         )
 
 
@@ -3059,7 +3059,7 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
             # compute the lookup index in the perfect hash file
             perfect_hash01_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash",
             pt1_state_max=40320,
-            multiplier=1.2,
+            # multiplier=1.2,
         )
 
 
@@ -3785,6 +3785,57 @@ class RubiksCube555(RubiksCube):
             "COMMENT_%d_steps_555_edges_EOed" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
+    def high_edge_midge_pair_count(self, target_wing_str=[]):
+        count = 0
+        it = iter(high_wings_and_midges_555)
+
+        for index1 in it:
+            index2 = next(it)
+            index1_value = self.state[index1]
+            index2_value = self.state[index2]
+            index1_partner = edges_partner_555[index1]
+            index2_partner = edges_partner_555[index2]
+            index1_partner_value = self.state[index1_partner]
+            index2_partner_value = self.state[index2_partner]
+
+            if index1_value == index2_value and index1_partner_value == index2_partner_value:
+
+                if target_wing_str:
+                    index1_wing_str = wing_str_map[index1_value + index1_partner_value]
+                    # index2_wing_str = wing_str_map[index2_value + index2_partner_value]
+
+                    if index1_wing_str in target_wing_str:
+                        count += 1
+                else:
+                    count += 1
+
+        return count
+
+    def low_edge_midge_pair_count(self, target_wing_str=[]):
+        count = 0
+        it = iter(low_wings_and_midges_555)
+
+        for index1 in it:
+            index2 = next(it)
+            index1_value = self.state[index1]
+            index2_value = self.state[index2]
+            index1_partner = edges_partner_555[index1]
+            index2_partner = edges_partner_555[index2]
+            index1_partner_value = self.state[index1_partner]
+            index2_partner_value = self.state[index2_partner]
+
+            if index1_value == index2_value and index1_partner_value == index2_partner_value:
+                if target_wing_str:
+                    index1_wing_str = wing_str_map[index1_value + index1_partner_value]
+                    # index2_wing_str = wing_str_map[index2_value + index2_partner_value]
+
+                    if index1_wing_str in target_wing_str:
+                        count += 1
+                else:
+                    count += 1
+
+        return count
+
     def find_first_four_edges_to_pair(self):
         """
         phase-5 requires a 4-edge combo where none of the edges are in the z-plane.
@@ -3798,6 +3849,7 @@ class RubiksCube555(RubiksCube):
         results = []
 
         min_phase4_solution_len = 99
+        min_phase4_high_low_count = 0
 
         for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
             wing_str_combo = sorted(wing_str_combo)
@@ -3808,30 +3860,41 @@ class RubiksCube555(RubiksCube):
             if self.lt_phase4.solve():
                 phase4_solution = self.solution[original_solution_len:]
                 phase4_solution_len = len(phase4_solution)
-                results.append((phase4_solution_len, wing_str_combo))
+                high_edge_count = self.high_edge_midge_pair_count(self.lt_phase4.wing_strs)
+                low_edge_count = self.low_edge_midge_pair_count(self.lt_phase4.wing_strs)
+                high_low_count = high_edge_count + low_edge_count
+                results.append((phase4_solution_len, high_low_count, wing_str_combo))
 
                 if phase4_solution_len < min_phase4_solution_len:
                     min_phase4_solution_len = phase4_solution_len
+                    min_phase4_high_low_count = high_low_count
                     log.info(
-                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len} (NEW MIN)"
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (NEW MIN)"
                     )
 
                 elif phase4_solution_len == min_phase4_solution_len:
-                    log.info(
-                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len} (TIE)"
-                    )
+                    if high_low_count > min_phase4_high_low_count:
+                        min_phase4_high_low_count = high_low_count
+                        log.info(
+                            f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (NEW MIN)"
+                        )
+                    else:
+                        log.info(
+                            f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (TIE)"
+                        )
                 else:
                     log.debug(
-                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}"
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count}"
                     )
             else:
                 log.debug(f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is >= 4 ")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        results.sort()
+        results = sorted(results, key=lambda x: (x[0], -x[1]))
 
-        results = [x[1] for x in results[0:20]]
+        # log.info("\n" + "\n".join(map(str, results[0:20])))
+        results = [x[2] for x in results[0:20]]
         return results
 
     def pair_first_four_edges(self, phase4_wing_str_combo):

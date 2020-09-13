@@ -25,7 +25,9 @@ unsigned char *pt2 = NULL;
 unsigned char *pt3 = NULL;
 unsigned char *pt4 = NULL;
 unsigned char *pt_perfect_hash01 = NULL;
+unsigned char *pt_perfect_hash02 = NULL;
 unsigned int pt1_state_max = 0;
+unsigned int pt2_state_max = 0;
 
 unsigned char pt_count = 0;
 unsigned char COST_LENGTH = 1;
@@ -49,8 +51,52 @@ struct cost_to_goal_result {
     unsigned char pt2_cost;
     unsigned char pt3_cost;
     unsigned char pt4_cost;
-    unsigned char perfect_hash_cost;
+    unsigned char perfect_hash01_cost;
+    unsigned char perfect_hash02_cost;
 };
+
+
+unsigned char
+hash_cost_to_cost(unsigned char perfect_hash_cost)
+{
+    switch (perfect_hash_cost) {
+    case '0':
+        return 0;
+    case '1':
+        return 1;
+    case '2':
+        return 2;
+    case '3':
+        return 3;
+    case '4':
+        return 4;
+    case '5':
+        return 5;
+    case '6':
+        return 6;
+    case '7':
+        return 7;
+    case '8':
+        return 8;
+    case '9':
+        return 9;
+    case 'a':
+        return 10;
+    case 'b':
+        return 11;
+    case 'c':
+        return 12;
+    case 'd':
+        return 13;
+    case 'e':
+        return 14;
+    case 'f':
+        return 15;
+    default:
+        printf("ERROR: invalid perfect_hash01_cost %d\n", perfect_hash_cost);
+        exit(1);
+    };
+}
 
 struct cost_to_goal_result
 get_cost_to_goal (
@@ -67,69 +113,29 @@ get_cost_to_goal (
     unsigned char pt2_cost = 0;
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
-    unsigned char perfect_hash_cost = 0;
-    unsigned int perfect_hash_index = 0;
+    unsigned char perfect_hash01_cost = 0;
+    unsigned char perfect_hash02_cost = 0;
+    unsigned int perfect_hash01_index = 0;
+    unsigned int perfect_hash02_index = 0;
 
+    // dwalton
     if (pt_perfect_hash01) {
-        // currently the only tables that use a perfect hash do so via pt0 and pt1
-        perfect_hash_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
-        perfect_hash_cost = pt_perfect_hash01[perfect_hash_index];
+        perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
+        perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
 
-        switch (perfect_hash_cost) {
-        case '0':
-            perfect_hash_cost = 0;
-            break;
-        case '1':
-            perfect_hash_cost = 1;
-            break;
-        case '2':
-            perfect_hash_cost = 2;
-            break;
-        case '3':
-            perfect_hash_cost = 3;
-            break;
-        case '4':
-            perfect_hash_cost = 4;
-            break;
-        case '5':
-            perfect_hash_cost = 5;
-            break;
-        case '6':
-            perfect_hash_cost = 6;
-            break;
-        case '7':
-            perfect_hash_cost = 7;
-            break;
-        case '8':
-            perfect_hash_cost = 8;
-            break;
-        case '9':
-            perfect_hash_cost = 9;
-            break;
-        case 'a':
-            perfect_hash_cost = 10;
-            break;
-        case 'b':
-            perfect_hash_cost = 11;
-            break;
-        case 'c':
-            perfect_hash_cost = 12;
-            break;
-        case 'd':
-            perfect_hash_cost = 13;
-            break;
-        case 'e':
-            perfect_hash_cost = 14;
-            break;
-        case 'f':
-            perfect_hash_cost = 15;
-            break;
-        default:
-            printf("ERROR: invalid perfect_hash_cost %d\n", perfect_hash_cost);
-            exit(1);
-        };
+        if (perfect_hash01_cost > cost_to_goal) {
+            cost_to_goal = perfect_hash01_cost;
+        }
     }
-    cost_to_goal = perfect_hash_cost;
+
+    if (pt_perfect_hash02) {
+        perfect_hash02_index = (prev_pt0_state * pt2_state_max) + prev_pt2_state;
+        perfect_hash02_cost = hash_cost_to_cost(pt_perfect_hash02[perfect_hash02_index]);
+
+        if (perfect_hash02_cost > cost_to_goal) {
+            cost_to_goal = perfect_hash02_cost;
+        }
+    }
 
     switch (pt_count) {
     case 4:
@@ -193,7 +199,8 @@ get_cost_to_goal (
     result.pt2_cost = pt2_cost;
     result.pt3_cost = pt3_cost;
     result.pt4_cost = pt4_cost;
-    result.perfect_hash_cost = perfect_hash_cost;
+    result.perfect_hash01_cost = perfect_hash01_cost;
+    result.perfect_hash02_cost = perfect_hash02_cost;
 
     return result;
 }
@@ -250,10 +257,10 @@ print_ida_summary (
     pt4_cost = ctg.pt4_cost;
 
     printf("\n");
-    printf("       PT0  PT1  PT2  PT3  PT4  PER  CTG  TRU  IDX\n");
-    printf("       ===  ===  ===  ===  ===  ===  ===  ===  ===\n");
-    printf("  INIT %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d\n",
-        pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, ctg.perfect_hash_cost, cost_to_goal, steps_to_solved, 0);
+    printf("       PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX\n");
+    printf("       ===  ===  ===  ===  ===  =====  =====  ===  ===  ===\n");
+    printf("  INIT %3d  %3d  %3d  %3d  %3d    %3d    %3d  %3d  %3d  %3d\n",
+        pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, ctg.perfect_hash01_cost, ctg.perfect_hash02_cost, cost_to_goal, steps_to_solved, 0);
 
     for (unsigned char i = 0; i < solution_len; i++) {
         unsigned char j = 0;
@@ -306,9 +313,9 @@ print_ida_summary (
         pt3_cost = ctg.pt3_cost;
         pt4_cost = ctg.pt4_cost;
         steps_to_solved--;
-        printf("%5s  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d  %3d\n",
+        printf("%5s  %3d  %3d  %3d  %3d  %3d  %5d  %5d  %3d  %3d  %3d\n",
             move2str[solution[i]], pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost,
-            ctg.perfect_hash_cost, cost_to_goal, steps_to_solved, i+1);
+            ctg.perfect_hash01_cost, ctg.perfect_hash02_cost, cost_to_goal, steps_to_solved, i+1);
     }
     printf("\n");
 }
@@ -774,9 +781,17 @@ main (int argc, char *argv[])
             i++;
             pt_perfect_hash01 = read_file(argv[i]);
 
+        } else if (strmatch(argv[i], "--prune-table-perfect-hash02")) {
+            i++;
+            pt_perfect_hash02 = read_file(argv[i]);
+
         } else if (strmatch(argv[i], "--pt1-state-max")) {
             i++;
             pt1_state_max = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--pt2-state-max")) {
+            i++;
+            pt2_state_max = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--prune-table-states")) {
             i++;

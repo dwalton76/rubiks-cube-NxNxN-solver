@@ -1242,7 +1242,7 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=(),
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
-            # multiplier=1.1,
+            multiplier=1.09,
         )
 
 
@@ -2671,7 +2671,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
     # - LR centers x high-edge-and-midge - this would be small as there are only 432 LR center states
     # - LR centers x low-edge-and-midge - this would be small as there are only 432 LR center states
     # - FB centers x high-edge-and-midge (DONE)
-    # - FB centers x low-edge-and-midge (building on ljserver)
+    # - FB centers x low-edge-and-midge (DONE)
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
             self,
@@ -2706,10 +2706,15 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_centers,
             ),
             # parent.lt_phase5_fb_centers and parent.lt_phase5_high_edge_midge are used to
-            # compute the lookup index in the perfect hash file
+            # compute the lookup index in the step55 perfect hash file
+            #
+            # parent.lt_phase5_fb_centers and parent.lt_phase5_low_edge_midge are used to
+            # compute the lookup index in the step57 perfect hash file
             perfect_hash01_filename="lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.pt-state-perfect-hash",
+            perfect_hash02_filename="lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.pt-state-perfect-hash",
             pt1_state_max=117600,
-            # multiplier=1.2,
+            pt2_state_max=117600,
+            multiplier=1.12,
         )
 
 
@@ -3059,7 +3064,7 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
             # compute the lookup index in the perfect hash file
             perfect_hash01_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash",
             pt1_state_max=40320,
-            # multiplier=1.2,
+            multiplier=1.07,
         )
 
 

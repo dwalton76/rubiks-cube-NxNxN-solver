@@ -474,7 +474,9 @@ class LookupTable(object):
         self.ROW_LENGTH = COST_LENGTH + (STATE_INDEX_LENGTH * len(self.legal_moves))
 
     def __str__(self):
-        return self.desc
+        if self.desc:
+            return self.desc
+        return self.__class__.__name__
 
     def binary_search_multiple(self, states_to_find):
         states_to_find.sort()
@@ -791,7 +793,7 @@ class LookupTable(object):
             return result
 
     def state(self):
-        raise Exception("child class must implement state()")
+        raise Exception(f"{self} must implement state()")
 
     def build_ida_graph(self):
         assert self.legal_moves, "no legal_moves defined"

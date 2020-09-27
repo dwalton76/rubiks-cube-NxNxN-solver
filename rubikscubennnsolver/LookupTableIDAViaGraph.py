@@ -299,7 +299,8 @@ class LookupTableIDAViaGraph(LookupTable):
                 last_solution_line_index = int(line.strip().split()[-1])
 
         if last_solution:
-            log.info("\n" + "\n".join(remove_failed_ida_output(output)) + "\n")
+            self.parent.solve_via_c_output = "\n" + "\n".join(remove_failed_ida_output(output)) + "\n"
+            log.info(self.parent.solve_via_c_output)
 
             for step in line_index_pre_steps.get(last_solution_line_index, []):
                 self.parent.rotate(step)

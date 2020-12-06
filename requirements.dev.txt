@@ -1,5 +1,5 @@
 # building wheels, etc
-pip==20.2
+pip==20.3.1
 setuptools==49.2.0
 wheel==0.34.2
 pre-commit==1.15.2

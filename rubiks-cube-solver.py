@@ -26,7 +26,7 @@ from rubikscubennnsolver.RubiksSide import NotSolving
 if sys.version_info < (3, 4):
     raise SystemError("Must be using Python 3.4 or higher")
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s %(levelname)8s: %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
 log = logging.getLogger(__name__)
 
 log.info("rubiks-cube-solver.py begin")

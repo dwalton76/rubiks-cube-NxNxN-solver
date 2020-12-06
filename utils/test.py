@@ -29,7 +29,7 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import (
     solved_151515,
 )
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
 log = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()

@@ -136,7 +136,7 @@ def state_to_rank(state):
 
 if __name__ == "__main__":
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)20s %(levelname)8s: %(message)s")
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
     log = logging.getLogger(__name__)
 
     # standard libraries

@@ -17,7 +17,7 @@ from rubikscubennnsolver.RubiksCube555 import moves_555, solved_555
 from rubikscubennnsolver.RubiksCube666 import moves_666, solved_666
 from rubikscubennnsolver.RubiksCube777 import moves_777, solved_777
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
 log = logging.getLogger(__name__)
 
 build_rotate_xxx_c = False

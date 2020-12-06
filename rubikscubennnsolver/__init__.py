@@ -1480,7 +1480,7 @@ class RubiksCube(object):
 
         return tuple(numbers)
 
-    def randomize(self):
+    def randomize(self, count: int = None):
         """
         Perform a bunch of random moves to scramble a cube. This was used to generate test cases.
         """
@@ -1491,10 +1491,9 @@ class RubiksCube(object):
             max_rows = int((self.size - 1) / 2)
 
         sides = ["U", "L", "F", "R", "B", "D"]
-        count = ((self.size * self.size) * 6) * 10
 
-        # uncomment to limit randomness of the scramble
-        # count = 12
+        if count is None:
+            count = ((self.size * self.size) * 6) * 10
 
         for x in range(count):
             rows = random.randint(1, max_rows)

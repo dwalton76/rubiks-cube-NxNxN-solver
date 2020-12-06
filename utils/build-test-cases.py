@@ -15,7 +15,7 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import solved_999
 # from rubikscubennnsolver.RubiksCube666 import solved_666
 # from rubikscubennnsolver.RubiksCube777 import solved_777
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
 log = logging.getLogger(__name__)
 
 test_cases = OrderedDict()

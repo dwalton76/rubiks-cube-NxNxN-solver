@@ -6,7 +6,7 @@ import subprocess
 from rubikscubennnsolver import reverse_steps
 from rubikscubennnsolver.LookupTable import LookupTable, NoIDASolution, download_file_if_needed
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def remove_failed_ida_output(lines):
@@ -101,7 +101,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 if x not in illegal_moves:
                     self.all_moves.append(x)
 
-        log.debug("%s: all_moves %s" % (self, ",".join(self.all_moves)))
+        logger.debug("%s: all_moves %s" % (self, ",".join(self.all_moves)))
         COST_LENGTH = 1
         STATE_INDEX_LENGTH = 4
         self.ROW_LENGTH = COST_LENGTH + (STATE_INDEX_LENGTH * len(self.all_moves))
@@ -124,7 +124,7 @@ class LookupTableIDAViaGraph(LookupTable):
     def recolor(self):
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
-            log.info("%s: recolor" % self)
+            logger.info("%s: recolor" % self)
             # self.parent.print_cube()
 
             if self.nuke_corners:
@@ -202,9 +202,9 @@ class LookupTableIDAViaGraph(LookupTable):
                         to_write = []
 
                         if start is not None:
-                            log.info(f"{start:,}->{end:,} line {line_number:,}")
+                            logger.info(f"{start:,}->{end:,} line {line_number:,}")
                         else:
-                            log.info(f"line {line_number:,}")
+                            logger.info(f"line {line_number:,}")
 
             if to_write:
                 fh_pt_state.write("\n".join(to_write) + "\n")
@@ -286,7 +286,7 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--multiplier")
             cmd.append(str(self.multiplier))
 
-        log.info("solve_via_c:\n    %s\n" % cmd_string)
+        logger.info("solve_via_c:\n    %s\n" % cmd_string)
 
         output = subprocess.check_output(cmd).decode("utf-8").splitlines()
         last_solution = None
@@ -300,7 +300,7 @@ class LookupTableIDAViaGraph(LookupTable):
 
         if last_solution:
             self.parent.solve_via_c_output = "\n" + "\n".join(remove_failed_ida_output(output)) + "\n"
-            log.info(self.parent.solve_via_c_output)
+            logger.info(self.parent.solve_via_c_output)
 
             for step in line_index_pre_steps.get(last_solution_line_index, []):
                 self.parent.rotate(step)

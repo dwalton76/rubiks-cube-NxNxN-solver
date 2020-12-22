@@ -13,7 +13,7 @@ from rubikscubennnsolver.RubiksCube666 import edge_orbit_0 as edge_orbit_0_666
 from rubikscubennnsolver.RubiksCube666 import edge_orbit_1 as edge_orbit_1_666
 from rubikscubennnsolver.RubiksCube666 import moves_666
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 random.seed(1234)
 
 
@@ -232,7 +232,7 @@ class RubiksCubeHighLow333(RubiksCube333):
                     new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
-        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
+        logger.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
 
 
 class RubiksCubeHighLow444(RubiksCube444):
@@ -463,7 +463,7 @@ class RubiksCubeHighLow444(RubiksCube444):
                     new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
-        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
+        logger.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
 
 
 class RubiksCubeHighLow555(RubiksCube555):
@@ -860,7 +860,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                     new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
-        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
+        logger.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
 
 
 class RubiksCubeHighLow666(RubiksCube666):
@@ -1166,4 +1166,4 @@ class RubiksCubeHighLow666(RubiksCube666):
                     new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str, orbit)
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
-        log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
+        logger.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))

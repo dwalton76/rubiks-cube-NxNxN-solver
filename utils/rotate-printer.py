@@ -20,7 +20,7 @@ from rubikscubennnsolver.RubiksCube555 import moves_555, solved_555
 from rubikscubennnsolver.RubiksCube666 import moves_666, solved_666
 from rubikscubennnsolver.RubiksCube777 import moves_777, solved_777
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @click.group()

@@ -6,7 +6,7 @@ from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class RubiksCubeNNNEvenEdges(RubiksCube):
@@ -108,12 +108,12 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.print_cube()
-        log.info(
+        logger.info(
             "%s: Inside edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
     def pair_edge_orbit_via_555(self, orbit):
-        log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
+        logger.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
         fake_555 = self.get_fake_555()
         half_size = int(self.size / 2)
         max_orbit = int((self.size - 2) / 2) - 1
@@ -133,7 +133,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         # Fill in the centers
         start_555 = 0
         start_nnn = 0
-        log.info(f"orbit {orbit}, max_orbit {max_orbit}")
+        logger.info(f"orbit {orbit}, max_orbit {max_orbit}")
 
         for x in range(6):
             row1_col2 = start_nnn + half_size + self.size
@@ -148,9 +148,9 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             row3_col1 = row3_col2 - (max_orbit - orbit)
             row3_col3 = row3_col2 + (max_orbit - orbit) + 1
 
-            # log.info("row1_col1 %d, row1_col2 %d, row1_col3 %d" % (row1_col1, row1_col2, row1_col3))
-            # log.info("row2_col1 %d, row2_col2 %d, row2_col3 %d" % (row2_col1, row2_col2, row2_col3))
-            # log.info("row3_col1 %d, row3_col2 %d, row3_col3 %d" % (row3_col1, row3_col2, row3_col3))
+            # logger.info("row1_col1 %d, row1_col2 %d, row1_col3 %d" % (row1_col1, row1_col2, row1_col3))
+            # logger.info("row2_col1 %d, row2_col2 %d, row2_col3 %d" % (row2_col1, row2_col2, row2_col3))
+            # logger.info("row3_col1 %d, row3_col2 %d, row3_col3 %d" % (row3_col1, row3_col2, row3_col3))
 
             fake_555.state[start_555 + 7] = self.state[row1_col1]
             fake_555.state[start_555 + 8] = self.state[row1_col2]
@@ -189,11 +189,11 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             row5_col2 = row1_col2 + ((self.size - 1) * self.size)
             row5_col3 = row1_col3 + ((self.size - 1) * self.size)
 
-            # log.info("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
-            # log.info("%d row2: %s, %s" % (x, row2_col1, row2_col3))
-            # log.info("%d row3: %s, %s" % (x, row3_col1, row3_col3))
-            # log.info("%d row4: %s, %s" % (x, row4_col1, row4_col3))
-            # log.info("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
+            # logger.info("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
+            # logger.info("%d row2: %s, %s" % (x, row2_col1, row2_col3))
+            # logger.info("%d row3: %s, %s" % (x, row3_col1, row3_col3))
+            # logger.info("%d row4: %s, %s" % (x, row4_col1, row4_col3))
+            # logger.info("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
 
             # row1
             fake_555.state[start_555 + 2] = self.state[row1_col1]
@@ -300,4 +300,4 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             self.pair_edge_orbit_via_555(orbit)
 
         self.print_cube()
-        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

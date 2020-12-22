@@ -34,9 +34,9 @@ if sys.version_info < (3, 6):
     raise SystemError("Must be using Python 3.6 or higher")
 
 configure_logging()
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-log.info("rubiks-cube-solver.py begin")
+logger.info("rubiks-cube-solver.py begin")
 
 start_time = dt.datetime.now()
 
@@ -123,7 +123,7 @@ if "G" in args.state:
     args.state = args.state.replace("W", "U")
 
 if args.debug:
-    log.setLevel(logging.DEBUG)
+    logger.setLevel(logging.DEBUG)
 
 try:
     size = int(sqrt((len(args.state) / 6)))
@@ -184,7 +184,7 @@ try:
             cube.rotate(step)
 
     cube.cpu_mode = cpu_mode
-    log.info("CPU mode %s" % cube.cpu_mode)
+    logger.info("CPU mode %s" % cube.cpu_mode)
     cube.sanity_check()
     cube.print_cube()
     cube.www_header()
@@ -198,24 +198,24 @@ try:
         cube.solve(solution333)
     except NotSolving:
         if cube.heuristic_stats:
-            log.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
+            logger.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
 
             for (key, value) in cube.heuristic_stats.items():
                 cube.heuristic_stats[key] = int(median(value))
 
-            log.info("%s: heuristic_stats median\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
+            logger.info("%s: heuristic_stats median\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
             sys.exit(0)
         else:
             raise
 
     end_time = dt.datetime.now()
-    log.info("Final Cube")
+    logger.info("Final Cube")
     cube.print_cube()
     cube.print_solution(not args.no_comments)
 
-    log.info("*********************************************************************************")
-    log.info("See /tmp/rubiks-cube-NxNxN-solver/index.html for more detailed solve instructions")
-    log.info("*********************************************************************************\n")
+    logger.info("*********************************************************************************")
+    logger.info("See /tmp/rubiks-cube-NxNxN-solver/index.html for more detailed solve instructions")
+    logger.info("*********************************************************************************\n")
 
     # Now put the cube back in its initial state and verify the solution solves it
     solution = cube.solution
@@ -247,10 +247,10 @@ try:
         print("--min-memory has been replaced by --fast")
         print("****************************************\n\n")
 
-    log.info("rubiks-cube-solver.py end")
-    log.info("Memory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
-    log.info("Time   : %s" % (end_time - start_time))
-    log.info("")
+    logger.info("rubiks-cube-solver.py end")
+    logger.info("Memory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    logger.info("Time   : %s" % (end_time - start_time))
+    logger.info("")
 
     if not cube.solved():
         kociemba_string = cube.get_kociemba_string(False)
@@ -268,5 +268,5 @@ except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError, NoPruneTable
     cube.print_cube()
     cube.print_solution(False)
     print((cube.get_kociemba_string(True)))
-    log.info("rubiks-cube-solver.py end")
+    logger.info("rubiks-cube-solver.py end")
     raise

@@ -7,7 +7,7 @@ from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.RubiksCube222 import moves_222
 from rubikscubennnsolver.swaps import swaps_333
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 moves_333 = moves_222
 solved_333 = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"

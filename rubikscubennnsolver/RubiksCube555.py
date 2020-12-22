@@ -10,7 +10,7 @@ from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_555
 from rubikscubennnsolver.swaps import swaps_555
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 moves_555 = (
     "U",
@@ -2142,7 +2142,7 @@ class LookupTable555Phase4(LookupTable):
         state = self.hex_format % int(state, 2)
         cost_to_goal = self.heuristic(state)
         self.parent.state = original_state
-        # log.info("%s: state %s, cost_to_goal %s" % (self, state, cost_to_goal))
+        # logger.info("%s: state %s, cost_to_goal %s" % (self, state, cost_to_goal))
         return (state, cost_to_goal)
 
     def solve(self, print_steps=False) -> bool:
@@ -2157,7 +2157,7 @@ class LookupTable555Phase4(LookupTable):
             for step in steps:
                 self.parent.rotate(step)
                 if print_steps:
-                    log.info("%s: step %s" % (self, step))
+                    logger.info("%s: step %s" % (self, step))
             return True
         else:
             return False
@@ -3370,13 +3370,13 @@ class RubiksCube555(RubiksCube):
 
         if RubiksCube555.instantiated:
             # raise Exception("Another 5x5x5 instance is being created")
-            # log.warning("Another 5x5x5 instance is being created")
+            # logger.warning("Another 5x5x5 instance is being created")
             pass
         else:
             RubiksCube555.instantiated = True
 
         if debug:
-            log.setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
 
     def phase(self):
         if self._phase is None:
@@ -3589,7 +3589,7 @@ class RubiksCube555(RubiksCube):
             wing_str = wing_str_map[square_value + partner_value]
 
             if must_be_uppercase or must_be_lowercase:
-                # log.info("must_be_uppercase %s, must_be_lowercase %s" % (must_be_uppercase, must_be_lowercase))
+                # logger.info("must_be_uppercase %s, must_be_lowercase %s" % (must_be_uppercase, must_be_lowercase))
 
                 if wing_str in must_be_uppercase and edges_state[edge_state_index].islower():
                     to_flip.append(wing_str)
@@ -3687,7 +3687,7 @@ class RubiksCube555(RubiksCube):
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
 
-        log.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_stage_FB(self):
         """
@@ -3713,7 +3713,7 @@ class RubiksCube555(RubiksCube):
             except ValueError:
                 pass
 
-        log.info("%s: FB centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: FB centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def eo_edges(self):
         """
@@ -3757,7 +3757,7 @@ class RubiksCube555(RubiksCube):
                 else:
                     must_be_lowercase.append(wing_str)
 
-            # log.info("%s: %s permutation %s" % (self, index, "".join(map(str, permutation))))
+            # logger.info("%s: %s permutation %s" % (self, index, "".join(map(str, permutation))))
             self.edges_flip_orientation(must_be_uppercase, must_be_lowercase)
 
             pt_states.append(
@@ -3783,7 +3783,7 @@ class RubiksCube555(RubiksCube):
 
         self.highlow_edges_print()
         self.print_cube()
-        log.info(
+        logger.info(
             "%s: end of phase 3, edges EOed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
         self.solution.append(
@@ -3873,32 +3873,32 @@ class RubiksCube555(RubiksCube):
                 if phase4_solution_len < min_phase4_solution_len:
                     min_phase4_solution_len = phase4_solution_len
                     min_phase4_high_low_count = high_low_count
-                    log.info(
+                    logger.info(
                         f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (NEW MIN)"
                     )
 
                 elif phase4_solution_len == min_phase4_solution_len:
                     if high_low_count > min_phase4_high_low_count:
                         min_phase4_high_low_count = high_low_count
-                        log.info(
+                        logger.info(
                             f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (NEW MIN)"
                         )
                     else:
-                        log.info(
+                        logger.info(
                             f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (TIE)"
                         )
                 else:
-                    log.debug(
+                    logger.debug(
                         f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count}"
                     )
             else:
-                log.debug(f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is >= 4 ")
+                logger.debug(f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is >= 4 ")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
         results = sorted(results, key=lambda x: (x[0], -x[1]))
 
-        # log.info("\n" + "\n".join(map(str, results[0:20])))
+        # logger.info("\n" + "\n".join(map(str, results[0:20])))
         results = [x[2] for x in results[0:20]]
         return results
 
@@ -3907,7 +3907,7 @@ class RubiksCube555(RubiksCube):
         self.lt_phase4.wing_strs = phase4_wing_str_combo
         self.lt_phase4.solve(True)
         self.print_cube()
-        log.info(
+        logger.info(
             "%s: end of phase 4, first four edges in x-plane and y-plane, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
@@ -3933,8 +3933,8 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
-        log.info(
+        logger.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
+        logger.info(
             "%s: end of phase 5, x-plane edges paired, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
@@ -3985,11 +3985,11 @@ class RubiksCube555(RubiksCube):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-        log.info("%s: reduced to 3x3x3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: reduced to 3x3x3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def reduce_333(self):
         self.lt_init()
-        # log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
+        # logger.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
 
         if not self.centers_solved() or not self.edges_paired():
             # phase 1
@@ -4030,7 +4030,7 @@ class RubiksCube555(RubiksCube):
                 else:
                     msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps"
 
-                log.info(msg)
+                logger.info(msg)
                 edge_messages.append(msg)
 
                 # If you are doing a FMC comment this out and we will evaluate 20 different first four wing_str_combos
@@ -4038,10 +4038,10 @@ class RubiksCube555(RubiksCube):
                 break
 
             if len(edge_messages) > 1:
-                log.info("")
-                log.info("first 4-edges summary")
+                logger.info("")
+                logger.info("first 4-edges summary")
                 for msg in edge_messages:
-                    log.info(msg)
+                    logger.info(msg)
 
             self.state = min_phase456_state
             self.solution = min_phase456_solution

@@ -10,7 +10,7 @@ from rubikscubennnsolver.RubiksCube444Misc import highlow_edge_mapping_combinati
 from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_444
 from rubikscubennnsolver.swaps import swaps_444
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 # fmt: off
 moves_444 = (
@@ -640,12 +640,12 @@ class RubiksCube444(RubiksCube):
 
         if RubiksCube444.instantiated:
             # raise Exception("Another 4x4x4 instance is being created")
-            log.warning("Another 4x4x4 instance is being created")
+            logger.warning("Another 4x4x4 instance is being created")
         else:
             RubiksCube444.instantiated = True
 
         if debug:
-            log.setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
 
     def phase(self):
         if self._phase is None:
@@ -800,7 +800,7 @@ class RubiksCube444(RubiksCube):
         original_state = self.state[:]
         original_solution = self.solution[:]
         phase1_solution_len = len(self.solution)
-        log.info("%s: Start of find best edge_mapping" % self)
+        logger.info("%s: Start of find best edge_mapping" % self)
 
         for pre_steps in pre_steps_to_try:
             self.state = original_state[:]
@@ -837,12 +837,12 @@ class RubiksCube444(RubiksCube):
                     if self.cpu_mode == "fast" and count >= 512:
                         break
 
-            log.info(
+            logger.info(
                 "%s: edge_mapping binary_search_multiple %d high_low_states_to_find begin"
                 % (self, len(high_low_states_to_find))
             )
             high_low_states = self.lt_highlow_edges.binary_search_multiple(high_low_states_to_find)
-            log.info(
+            logger.info(
                 "%s: edge_mapping binary_search_multiple %d high_low_states_to_find end"
                 % (self, len(high_low_states_to_find))
             )
@@ -860,16 +860,16 @@ class RubiksCube444(RubiksCube):
                     min_phase2_cost = phase2_cost
                     min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
                     min_phase2_steps = list(pre_steps) + phase2_steps[:]
-                    log.info("%s: using edge_mapping %s, phase2 cost %s" % (self, min_edge_mapping, phase2_cost))
+                    logger.info("%s: using edge_mapping %s, phase2 cost %s" % (self, min_edge_mapping, phase2_cost))
 
             if min_edge_mapping:
                 if pre_steps:
-                    log.info("pre-steps %s required to find a hit" % " ".join(pre_steps))
+                    logger.info("pre-steps %s required to find a hit" % " ".join(pre_steps))
                 break
         else:
             assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
 
-        log.info("%s: End of find best edge_mapping" % self)
+        logger.info("%s: End of find best edge_mapping" % self)
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -882,7 +882,7 @@ class RubiksCube444(RubiksCube):
         # self.highlow_edges_print()
         # sys.exit(0)
 
-        log.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         # self.lt_highlow_edges.solve()
         for step in min_phase2_steps:
             self.rotate(step)
@@ -891,7 +891,7 @@ class RubiksCube444(RubiksCube):
         )
         self.print_cube()
         self.highlow_edges_print()
-        log.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def reduce_333(self):
 
@@ -899,7 +899,7 @@ class RubiksCube444(RubiksCube):
         self.original_state = self.state[:]
         self.original_solution = self.solution[:]
 
-        log.info("%s: Start of Phase1" % self)
+        logger.info("%s: Start of Phase1" % self)
 
         if not self.centers_staged():
             self.print_cube()
@@ -911,19 +911,21 @@ class RubiksCube444(RubiksCube):
 
         phase1_solution_len = len(self.solution)
         self.solution.append("COMMENT_%d_steps_444_phase1" % self.get_solution_len_minus_rotates(self.solution))
-        log.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
         # We need the edge swaps to be even for our edges lookup table to work.
         if self.edge_swaps_odd(False, 0, False):
-            log.warning("%s: edge swaps are odd, running prevent_OLL to correct" % self)
+            logger.warning("%s: edge swaps are odd, running prevent_OLL to correct" % self)
             self.prevent_OLL()
             self.print_cube()
             self.solution.append(
                 "COMMENT_%d_steps_prevent_OLL"
                 % self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])
             )
-            log.info("%s: End of prevent_OLL, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            logger.info(
+                "%s: End of prevent_OLL, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
 
         self.tsai_phase2()
 
@@ -934,11 +936,11 @@ class RubiksCube444(RubiksCube):
         # self.lt_reduce333_edges_solve.solve()
         # self.lt_reduce333_centers_solve.solve()
         # self.print_cube()
-        # log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # logger.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         # sys.exit(0)
 
-        # log.info("kociemba: %s" % self.get_kociemba_string(True))
-        log.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
+        logger.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_reduce333.avoid_pll = True
         self.lt_reduce333.solve()
 
@@ -950,10 +952,10 @@ class RubiksCube444(RubiksCube):
         self.solution.append(
             "COMMENT_%d_steps_444_phase3" % self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:])
         )
-        log.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
+        logger.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("")
 
-        # log.info("kociemba: %s" % self.get_kociemba_string(True))
+        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")
 

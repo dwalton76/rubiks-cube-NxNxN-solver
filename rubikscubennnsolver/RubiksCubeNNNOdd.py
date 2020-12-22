@@ -7,7 +7,7 @@ from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 solved_999 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
@@ -56,12 +56,12 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         row0_midpoint = ceil(self.size / 2)
         row6_midpoint = (self.size * self.size) - row0_midpoint + 1
 
-        log.info(
+        logger.info(
             "%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
             % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
         )
 
-        log.info("%s: row0_midpoint %s, row6_midpoint %s" % (self, row0_midpoint, row6_midpoint))
+        logger.info("%s: row0_midpoint %s, row6_midpoint %s" % (self, row0_midpoint, row6_midpoint))
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
 
         for x in range(6):
@@ -117,17 +117,17 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             row5_col4 = end_NNN_row5 - 1
             row5_col5 = end_NNN_row5
 
-            # log.info("%d: start_NNN_row1 %d, mid_NNN_row1 %d, end_NNN_row1 %d" % (x, start_NNN_row1, mid_NNN_row1, end_NNN_row1))
-            # log.info("%d: start_NNN_row2 %d, mid_NNN_row2 %d, end_NNN_row2 %d" % (x, start_NNN_row2, mid_NNN_row2, end_NNN_row2))
-            # log.info("%d: start_NNN_row3 %d, mid_NNN_row3 %d, end_NNN_row3 %d" % (x, start_NNN_row3, mid_NNN_row3, end_NNN_row3))
-            # log.info("%d: start_NNN_row4 %d, mid_NNN_row4 %d, end_NNN_row4 %d" % (x, start_NNN_row4, mid_NNN_row4, end_NNN_row4))
-            # log.info("%d: start_NNN_row5 %d, mid_NNN_row5 %d, end_NNN_row5 %d" % (x, start_NNN_row5, mid_NNN_row5, end_NNN_row5))
+            # logger.info("%d: start_NNN_row1 %d, mid_NNN_row1 %d, end_NNN_row1 %d" % (x, start_NNN_row1, mid_NNN_row1, end_NNN_row1))
+            # logger.info("%d: start_NNN_row2 %d, mid_NNN_row2 %d, end_NNN_row2 %d" % (x, start_NNN_row2, mid_NNN_row2, end_NNN_row2))
+            # logger.info("%d: start_NNN_row3 %d, mid_NNN_row3 %d, end_NNN_row3 %d" % (x, start_NNN_row3, mid_NNN_row3, end_NNN_row3))
+            # logger.info("%d: start_NNN_row4 %d, mid_NNN_row4 %d, end_NNN_row4 %d" % (x, start_NNN_row4, mid_NNN_row4, end_NNN_row4))
+            # logger.info("%d: start_NNN_row5 %d, mid_NNN_row5 %d, end_NNN_row5 %d" % (x, start_NNN_row5, mid_NNN_row5, end_NNN_row5))
 
-            # log.info("%d: row1 %d, %d, %d, %d, %d" % (x, row1_col1, row1_col2, row1_col3, row1_col4, row1_col5))
-            # log.info("%d: row2 %d, %d, %d, %d, %d" % (x, row2_col1, row2_col2, row2_col3, row2_col4, row2_col5))
-            # log.info("%d: row3 %d, %d, %d, %d, %d" % (x, row3_col1, row3_col2, row3_col3, row3_col4, row3_col5))
-            # log.info("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
-            # log.info("%d: row5 %d, %d, %d, %d, %d\n\n" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
+            # logger.info("%d: row1 %d, %d, %d, %d, %d" % (x, row1_col1, row1_col2, row1_col3, row1_col4, row1_col5))
+            # logger.info("%d: row2 %d, %d, %d, %d, %d" % (x, row2_col1, row2_col2, row2_col3, row2_col4, row2_col5))
+            # logger.info("%d: row3 %d, %d, %d, %d, %d" % (x, row3_col1, row3_col2, row3_col3, row3_col4, row3_col5))
+            # logger.info("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
+            # logger.info("%d: row5 %d, %d, %d, %d, %d\n\n" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
 
             if (center_orbit_id == 0 and cycle == 0) or (center_orbit_id == max_center_orbits and cycle == max_cycle):
                 fake_777.state[start_777 + 9] = self.state[row1_col1]
@@ -220,14 +220,14 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             edge_row6_col4 = start_NNN + (row6_midpoint + (1 + cycle))
             edge_row6_col5 = start_NNN + (row6_midpoint + (2 + cycle))
 
-            # log.info("%d: edges row0 %d, %d, %d, %d, %d" % (x, edge_row0_col1, edge_row0_col2, edge_row0_col3, edge_row0_col4, edge_row0_col5))
-            # log.info("%d: edges row1 %d, %d" % (x, edge_row1_col1, edge_row1_col2))
-            # log.info("%d: edges row2 %d, %d" % (x, edge_row2_col1, edge_row2_col2))
-            # log.info("%d: edges row3 %d, %d" % (x, edge_row3_col1, edge_row3_col2))
-            # log.info("%d: edges row4 %d, %d" % (x, edge_row4_col1, edge_row4_col2))
-            # log.info("%d: edges row5 %d, %d" % (x, edge_row5_col1, edge_row5_col2))
-            # log.info("%d: edges row6 %d, %d, %d, %d, %d" % (x, edge_row6_col1, edge_row6_col2, edge_row6_col3, edge_row6_col4, edge_row6_col5))
-            # log.info("\n")
+            # logger.info("%d: edges row0 %d, %d, %d, %d, %d" % (x, edge_row0_col1, edge_row0_col2, edge_row0_col3, edge_row0_col4, edge_row0_col5))
+            # logger.info("%d: edges row1 %d, %d" % (x, edge_row1_col1, edge_row1_col2))
+            # logger.info("%d: edges row2 %d, %d" % (x, edge_row2_col1, edge_row2_col2))
+            # logger.info("%d: edges row3 %d, %d" % (x, edge_row3_col1, edge_row3_col2))
+            # logger.info("%d: edges row4 %d, %d" % (x, edge_row4_col1, edge_row4_col2))
+            # logger.info("%d: edges row5 %d, %d" % (x, edge_row5_col1, edge_row5_col2))
+            # logger.info("%d: edges row6 %d, %d, %d, %d, %d" % (x, edge_row6_col1, edge_row6_col2, edge_row6_col3, edge_row6_col4, edge_row6_col5))
+            # logger.info("\n")
 
             fake_777.state[start_777 + 2] = self.state[edge_row0_col1]
             fake_777.state[start_777 + 3] = self.state[edge_row0_col2]
@@ -289,7 +289,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                 self.rotate(step)
 
         self.print_cube()
-        log.info(
+        logger.info(
             "%s: End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
             % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
         )
@@ -309,7 +309,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                 )
 
         self.print_cube()
-        log.warning(
+        logger.warning(
             "%s: LR centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
@@ -324,7 +324,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                 )
 
         self.print_cube()
-        log.warning(
+        logger.warning(
             "%s: UD centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
@@ -339,7 +339,9 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                 )
 
         self.print_cube()
-        log.info("%s: t-centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info(
+            "%s: t-centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
         # Solve all centers
         center_orbit_id = max_center_orbits
@@ -350,7 +352,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         self.stage_or_solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_centers")
 
         self.print_cube()
-        log.info("%s: centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         if not self.centers_solved():
             raise SolveError("centers should be solved")

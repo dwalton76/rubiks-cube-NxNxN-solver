@@ -16,7 +16,7 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import solved_999
 # from rubikscubennnsolver.RubiksCube777 import solved_777
 
 configure_logging()
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 test_cases = OrderedDict()
 test_cases["2x2x2"] = []
@@ -53,7 +53,7 @@ cubes["9x9x9"] = RubiksCube(solved_999, "URFDLB")
 # cubes["17x17x17"] = RubiksCube(solved_171717, 'URFDLB')
 
 for (size, cube) in cubes.items():
-    log.info("size %s has cube %s" % (size, cube))
+    logger.info("size %s has cube %s" % (size, cube))
     for x in range(10):
         cube.re_init()
         cube.randomize()

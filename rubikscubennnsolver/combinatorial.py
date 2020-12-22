@@ -29,7 +29,7 @@ def choose(a, b):
     >>> choose(7, -1)
     0
     """
-    # log.info("a %s, b %s" % (a, b))
+    # logger.info("a %s, b %s" % (a, b))
     if b < 0:
         return 0
     elif b == a:
@@ -55,7 +55,7 @@ def encode(perm):
 
     while i < perm_len:
         result = choose(perm[i], k)
-        # log.info("choose(%d, %d) returned %d" % (perm[i], k, result))
+        # logger.info("choose(%d, %d) returned %d" % (perm[i], k, result))
         total += result
         k -= 1
         i += 1
@@ -75,16 +75,16 @@ def decode(n, k, start):
 
     for c in reversed(range(start)):
         result_choose = choose(c, k)
-        # log.info("choose(%d, %d) returned %d (n is %d)" % (c, k, result_choose, n))
+        # logger.info("choose(%d, %d) returned %d (n is %d)" % (c, k, result_choose, n))
 
         if result_choose <= n:
             n -= result_choose
             k -= 1
             result.append(c)
-            # log.info("update: n %d, k %d, c %d, result %s" % (n, k, c, ' '.join(map(str, result))))
+            # logger.info("update: n %d, k %d, c %d, result %s" % (n, k, c, ' '.join(map(str, result))))
 
-        # log.info("")
-        # log.info("")
+        # logger.info("")
+        # logger.info("")
     return result
 
 

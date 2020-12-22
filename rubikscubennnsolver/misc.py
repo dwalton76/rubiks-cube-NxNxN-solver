@@ -2,7 +2,7 @@
 import logging
 from pprint import pformat
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class SolveError(Exception):
@@ -32,15 +32,15 @@ def get_swap_count(listA, listB, debug):
     index = 0
 
     if A_length != B_length:
-        log.info("listA %s" % " ".join(listA))
-        log.info("listB %s" % " ".join(listB))
+        logger.info("listA %s" % " ".join(listA))
+        logger.info("listB %s" % " ".join(listB))
         raise ValueError("listA (len %d) and listB (len %d) must be the same length" % (A_length, B_length))
 
     if debug:
-        log.info("INIT")
-        log.info("listA: %s" % " ".join(listA))
-        log.info("listB: %s" % " ".join(listB))
-        log.info("")
+        logger.info("INIT")
+        logger.info("listA: %s" % " ".join(listA))
+        logger.info("listB: %s" % " ".join(listB))
+        logger.info("")
 
     while listA != listB:
         if listA[index] != listB[index]:
@@ -52,15 +52,15 @@ def get_swap_count(listA, listB, debug):
             swaps += 1
 
             if debug:
-                log.info("index %d, swaps %d" % (index, swaps))
-                log.info("listA: %s" % " ".join(listA))
-                log.info("listB: %s" % " ".join(listB))
-                log.info("")
+                logger.info("index %d, swaps %d" % (index, swaps))
+                logger.info("listA: %s" % " ".join(listA))
+                logger.info("listB: %s" % " ".join(listB))
+                logger.info("")
         index += 1
 
     if debug:
-        log.info("swaps: %d" % swaps)
-        log.info("")
+        logger.info("swaps: %d" % swaps)
+        logger.info("")
     return swaps
 
 

@@ -30,7 +30,7 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import (
 )
 
 configure_logging()
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--size", type=str, default="4x4x4")
@@ -138,7 +138,7 @@ try:
                 continue
 
             # os.system('clear')
-            log.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
+            logger.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
             num_test_cases_executed += 1
             kociemba_string = str(kociemba_string)
             cube.solution = []
@@ -151,13 +151,13 @@ try:
             except NotSolving:
 
                 if num_test_cases_executed % 100 == 0:
-                    # log.info("%s: heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
+                    # logger.info("%s: heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
                     tmp_heuristic_stats = {}
 
                     for (key, value) in cube.heuristic_stats.items():
                         tmp_heuristic_stats[key] = int(median(value))
 
-                    log.info("%s: heuristic_stats median\n%s\n\n" % (size, pformat(tmp_heuristic_stats)))
+                    logger.info("%s: heuristic_stats median\n%s\n\n" % (size, pformat(tmp_heuristic_stats)))
 
                 continue
 

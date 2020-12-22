@@ -18,11 +18,12 @@ from rubikscubennnsolver.RubiksSide import ImplementThis, Side, SolveError, Stuc
 if sys.version_info < (3, 6):
     raise SystemError("Must be using Python 3.6 or higher")
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 HTML_DIRECTORY = "/tmp/rubiks-cube-NxNxN-solver/"
 HTML_FILENAME = os.path.join(HTML_DIRECTORY, "index.html")
 
+# standardize wing string naming convention
 wing_str_map = {
     "UB": "UB",
     "BU": "UB",
@@ -51,10 +52,11 @@ wing_str_map = {
     "--": "--",
 }
 
-
+# all wing string names using our naming convention
 wing_strs_all = ("UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF")
 
 
+# no longer used but these are the 48 symmetries for a cube
 symmetry_48 = (
     (),
     ("x",),
@@ -121,13 +123,29 @@ def configure_logging() -> None:
 def reverse_steps(steps: List[str]) -> List[str]:
     """
     Reverse the order of all steps and the direction of each individual step
+
+    Args:
+        steps: a list of steps to reverse
+
+    Returns:
+        the reversed steps
     """
     return [step if step[-1] == "2" else step[0:-1] if step[-1] == "'" else step + "'" for step in reversed(steps)]
 
 
-def get_cube_layout(size):
+def get_cube_layout(size: int) -> str:
     """
-    Example: size is 3, return the following string:
+    Return a string that shows the cube layout
+
+    Args:
+        size: the size of the cube
+
+    Returns:
+        a string that shows the cube layout
+
+    Example:
+
+    .. code-block:: rst
 
               01 02 03
               04 05 06
@@ -476,7 +494,7 @@ class RubiksCube(object):
                     self.color_map[side_name] = 93
                     self.color_map_html[side_name] = (210, 208, 2)
 
-            # log.warning("color_map:\n%s\n" % pformat(self.color_map))
+            # logger.warning("color_map:\n%s\n" % pformat(self.color_map))
 
         else:
             # Match the colors on alg.cubing.net to make life easier
@@ -493,7 +511,7 @@ class RubiksCube(object):
             }
 
         if debug:
-            log.setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
 
         self.load_state(state_string, order)
         self.state_backup = self.state[:]
@@ -584,7 +602,7 @@ class RubiksCube(object):
 
             if value != expected_count:
                 msg = "side %s %s count is %d (should be %d)" % (desc, side, value, expected_count)
-                log.warning("InvalidCubeReduction %s" % msg)
+                logger.warning("InvalidCubeReduction %s" % msg)
                 self.enable_print_cube = True
                 self.print_cube()
                 raise InvalidCubeReduction(msg)
@@ -657,7 +675,7 @@ class RubiksCube(object):
         """
         self.solution.append(action)
         result = self.state[:]
-        # log.info("move %s" % action)
+        # logger.info("move %s" % action)
 
         if action[-1] in ("'", "`"):
             reverse = True
@@ -778,10 +796,10 @@ class RubiksCube(object):
                     back_first_square = (self.squares_per_side * 4) + 1 + (row * self.size)
                     back_last_square = back_first_square + self.size - 1
 
-                    # log.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    # log.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    # log.info("right first %d, last %d" % (right_first_square, right_last_square))
-                    # log.info("back first %d, last %d" % (back_first_square, back_last_square))
+                    # logger.info("left first %d, last %d" % (left_first_square, left_last_square))
+                    # logger.info("front first %d, last %d" % (front_first_square, front_last_square))
+                    # logger.info("right first %d, last %d" % (right_first_square, right_last_square))
+                    # logger.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     if reverse:
                         for square_index in range(left_first_square, left_last_square + 1):
@@ -830,10 +848,10 @@ class RubiksCube(object):
                     back_first_square = (self.squares_per_side * 4) + self.size - row
                     back_last_square = back_first_square + ((self.size - 1) * self.size)
 
-                    # log.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    # log.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    # log.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    # log.info("back first %d, last %d" % (back_first_square, back_last_square))
+                    # logger.info("top first %d, last %d" % (top_first_square, top_last_square))
+                    # logger.info("front first %d, last %d" % (front_first_square, front_last_square))
+                    # logger.info("down first %d, last %d" % (down_first_square, down_last_square))
+                    # logger.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     top_squares = []
                     for square_index in range(top_first_square, top_last_square + 1, self.size):
@@ -912,10 +930,10 @@ class RubiksCube(object):
                     right_first_square = (self.squares_per_side * 3) + 1 + row
                     right_last_square = right_first_square + ((self.size - 1) * self.size)
 
-                    # log.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    # log.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    # log.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    # log.info("right first %d, last %d" % (right_first_square, right_last_square))
+                    # logger.info("top first %d, last %d" % (top_first_square, top_last_square))
+                    # logger.info("left first %d, last %d" % (left_first_square, left_last_square))
+                    # logger.info("down first %d, last %d" % (down_first_square, down_last_square))
+                    # logger.info("right first %d, last %d" % (right_first_square, right_last_square))
 
                     top_squares = []
                     for square_index in range(top_first_square, top_last_square + 1):
@@ -992,10 +1010,10 @@ class RubiksCube(object):
                     back_first_square = (self.squares_per_side * 4) + 1 + row
                     back_last_square = back_first_square + ((self.size - 1) * self.size)
 
-                    # log.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    # log.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    # log.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    # log.info("back first %d, last %d" % (back_first_square, back_last_square))
+                    # logger.info("top first %d, last %d" % (top_first_square, top_last_square))
+                    # logger.info("front first %d, last %d" % (front_first_square, front_last_square))
+                    # logger.info("down first %d, last %d" % (down_first_square, down_last_square))
+                    # logger.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     top_squares = []
                     for square_index in range(top_first_square, top_last_square + 1, self.size):
@@ -1075,10 +1093,10 @@ class RubiksCube(object):
                     right_first_square = (self.squares_per_side * 3) + self.size - row
                     right_last_square = right_first_square + ((self.size - 1) * self.size)
 
-                    # log.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    # log.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    # log.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    # log.info("right first %d, last %d" % (right_first_square, right_last_square))
+                    # logger.info("top first %d, last %d" % (top_first_square, top_last_square))
+                    # logger.info("left first %d, last %d" % (left_first_square, left_last_square))
+                    # logger.info("down first %d, last %d" % (down_first_square, down_last_square))
+                    # logger.info("right first %d, last %d" % (right_first_square, right_last_square))
 
                     top_squares = []
                     for square_index in range(top_first_square, top_last_square + 1):
@@ -1154,10 +1172,10 @@ class RubiksCube(object):
                     back_first_square = (self.squares_per_side * 5) - self.size + 1 - (row * self.size)
                     back_last_square = back_first_square + self.size - 1
 
-                    # log.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    # log.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    # log.info("right first %d, last %d" % (right_first_square, right_last_square))
-                    # log.info("back first %d, last %d" % (back_first_square, back_last_square))
+                    # logger.info("left first %d, last %d" % (left_first_square, left_last_square))
+                    # logger.info("front first %d, last %d" % (front_first_square, front_last_square))
+                    # logger.info("right first %d, last %d" % (right_first_square, right_last_square))
+                    # logger.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     if reverse:
                         for square_index in range(left_first_square, left_last_square + 1):
@@ -1373,7 +1391,7 @@ class RubiksCube(object):
     def print_cube_layout(self):
         if not self.enable_print_cube:
             return
-        log.info("\n" + get_cube_layout(self.size) + "\n")
+        logger.info("\n" + get_cube_layout(self.size) + "\n")
 
     def print_cube(self, print_positions=False):
         if not self.enable_print_cube:
@@ -1445,16 +1463,16 @@ class RubiksCube(object):
         for (row_index, row) in enumerate(rows):
             if row_index < self.size or row_index >= (self.size * 2):
                 if all_digits:
-                    log.info(" " * (self.size * 3) + " ".join(row))
+                    logger.info(" " * (self.size * 3) + " ".join(row))
                 else:
-                    log.info(" " * (self.size + self.size + 1) + " ".join(row))
+                    logger.info(" " * (self.size + self.size + 1) + " ".join(row))
             else:
-                log.info((" ".join(row)))
+                logger.info((" ".join(row)))
 
             if ((row_index + 1) % self.size) == 0:
-                log.info("")
+                logger.info("")
 
-        log.info("")
+        logger.info("")
 
     def print_case_statement_C(self, case, first_step):
         """
@@ -2934,7 +2952,7 @@ class RubiksCube(object):
         for side in (self.sideU, self.sideD):
             for pos in side.center_pos:
                 if self.state[pos] not in ("U", "D"):
-                    # log.info("%s: UD_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
+                    # logger.info("%s: UD_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
                     return False
         return True
 
@@ -2942,7 +2960,7 @@ class RubiksCube(object):
         for side in (self.sideL, self.sideR):
             for pos in side.center_pos:
                 if self.state[pos] not in ("L", "R"):
-                    # log.info("%s: LR_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
+                    # logger.info("%s: LR_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
                     return False
         return True
 
@@ -2950,7 +2968,7 @@ class RubiksCube(object):
         for side in (self.sideF, self.sideB):
             for pos in side.center_pos:
                 if self.state[pos] not in ("F", "B"):
-                    # log.info("%s: FB_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
+                    # logger.info("%s: FB_centers_staged pos %d is %s" % (self, pos, self.state[pos]))
                     return False
         return True
 
@@ -2994,7 +3012,7 @@ class RubiksCube(object):
         count = 0
 
         while self.state[pos_to_check] != x:
-            # log.info("%s (%s): rotate %s to %s, pos_to_check %s, state at pos_to_check %s" %
+            # logger.info("%s (%s): rotate %s to %s, pos_to_check %s, state at pos_to_check %s" %
             #    (side, side.mid_pos, x, y, pos_to_check, self.state[pos_to_check]))
 
             if self.state[F_pos_to_check] == x and y == "U":
@@ -3079,7 +3097,7 @@ class RubiksCube(object):
                     foo.append(self.state[side.corner_pos[3]])
 
         kociemba_string = "".join(foo)
-        log.debug("kociemba string: %s" % kociemba_string)
+        logger.debug("kociemba string: %s" % kociemba_string)
         return kociemba_string
 
     def prevent_OLL(self):
@@ -3112,23 +3130,23 @@ class RubiksCube(object):
 
         elif self.size == 6:
             if self.edges_paired():
-                log.info("edges are already paired, cannot prevent OLL without unpairing them")
+                logger.info("edges are already paired, cannot prevent OLL without unpairing them")
                 return False
 
             # 10 steps
             if orbits_with_oll_parity == [0, 1]:
                 steps = "3Rw U2 3Rw U2 3Rw U2 3Rw U2 3Rw U2"
-                log.info("6x6x6 has OLL on orbits 0 and 1")
+                logger.info("6x6x6 has OLL on orbits 0 and 1")
 
             # 10 steps
             elif orbits_with_oll_parity == [0]:
                 steps = "Rw U2 Rw U2 Rw U2 Rw U2 Rw U2"
-                log.info("6x6x6 has OLL on orbit 0")
+                logger.info("6x6x6 has OLL on orbit 0")
 
             # 15 steps for an inside orbit
             elif orbits_with_oll_parity == [1]:
                 steps = "3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2 3Rw Rw' U2"
-                log.info("6x6x6 has OLL on orbit 1")
+                logger.info("6x6x6 has OLL on orbit 1")
 
             else:
                 raise SolveError(
@@ -3229,7 +3247,7 @@ class RubiksCube(object):
                     )
                 )
                 oll_solution = oll_solution.split()
-                log.warning("Solving OLL in %d steps" % len(oll_solution))
+                logger.warning("Solving OLL in %d steps" % len(oll_solution))
                 self.print_cube()
 
                 for step in oll_solution:
@@ -3376,7 +3394,7 @@ class RubiksCube(object):
                 self.size / 2,
                 self.size / 2,
             )
-            log.warning("Solving PLL ID %d: %s" % (pll_id, pll_solution))
+            logger.warning("Solving PLL ID %d: %s" % (pll_id, pll_solution))
             self.print_cube()
 
             for step in pll_solution.split():
@@ -3403,9 +3421,9 @@ class RubiksCube(object):
         if not kociemba_ok:
             raise SolveError("parity error made kociemba barf,  kociemba %s" % kociemba_string)
 
-        log.debug("kociemba       : %s" % kociemba_string)
-        log.info("kociemba steps            : %s" % " ".join(steps))
-        log.info("kociemba steps (reversed) : %s" % " ".join(reverse_steps(steps)))
+        logger.debug("kociemba       : %s" % kociemba_string)
+        logger.info("kociemba steps            : %s" % " ".join(steps))
+        logger.info("kociemba steps (reversed) : %s" % " ".join(reverse_steps(steps)))
         reduce_333_solution_len = len(self.solution)
 
         for step in steps:
@@ -3449,15 +3467,15 @@ class RubiksCube(object):
             current_corners.append(corner_str)
 
         if debug:
-            log.info("to_check:\n%s" % pformat(to_check))
+            logger.info("to_check:\n%s" % pformat(to_check))
             to_check_str = ""
             for (a, b, c) in to_check:
                 to_check_str += "%4s" % a
 
-            log.info("to_check       :%s" % to_check_str)
-            log.info("needed corners : %s" % " ".join(needed_corners))
-            log.info("currnet corners: %s" % " ".join(current_corners))
-            log.info("")
+            logger.info("to_check       :%s" % to_check_str)
+            logger.info("needed corners : %s" % " ".join(needed_corners))
+            logger.info("currnet corners: %s" % " ".join(current_corners))
+            logger.info("")
 
         return get_swap_count(needed_corners, current_corners, debug)
 
@@ -3481,7 +3499,7 @@ class RubiksCube(object):
 
         edges_per_side = len(self.sideU.edge_north_pos)
 
-        # log.warning("edges_paired %s, orbit %s, edges_per_side %s" % (edges_paired, orbit, edges_per_side))
+        # logger.warning("edges_paired %s, orbit %s, edges_per_side %s" % (edges_paired, orbit, edges_per_side))
         # debug = True
 
         # Upper
@@ -3617,8 +3635,8 @@ class RubiksCube(object):
                 else:
                     to_check_str += "%4s" % x
 
-            log.info("orbit %d to_check     :%s" % (orbit, to_check_str))
-            log.info("orbit %d needed edges : %s" % (orbit, " ".join(needed_edges)))
+            logger.info("orbit %d to_check     :%s" % (orbit, to_check_str))
+            logger.info("orbit %d needed edges : %s" % (orbit, " ".join(needed_edges)))
 
         current_edges = []
 
@@ -3627,7 +3645,7 @@ class RubiksCube(object):
             partner_index = side.get_wing_partner(square_index)
             square1 = self.state[square_index]
             square2 = self.state[partner_index]
-            # log.info("side %s, (%d, %d) is %s%s" % (side, square_index, partner_index, square1, square2))
+            # logger.info("side %s, (%d, %d) is %s%s" % (side, square_index, partner_index, square1, square2))
 
             if square1 == "U" or square1 == "D":
                 wing_str = square1 + square2
@@ -3753,7 +3771,7 @@ class RubiksCube(object):
             current_edges.append(wing_str)
 
         if debug:
-            log.info("orbit %d current edges: %s" % (orbit, " ".join(current_edges)))
+            logger.info("orbit %d current edges: %s" % (orbit, " ".join(current_edges)))
 
         return get_swap_count(needed_edges, current_edges, debug)
 
@@ -3771,11 +3789,11 @@ class RubiksCube(object):
 
         if self.edge_swaps_even(edges_paired=True, orbit=None, debug=debug) == self.corner_swaps_even(debug):
             if debug:
-                log.info("Predict we are free of PLL parity")
+                logger.info("Predict we are free of PLL parity")
             return False
 
         if debug:
-            log.info("Predict we have PLL parity")
+            logger.info("Predict we have PLL parity")
         return True
 
     def center_solution_leads_to_oll_parity(self, debug=False):
@@ -3803,10 +3821,10 @@ class RubiksCube(object):
             # http://www.speedcubing.com/chris/4speedsolve3.html
             if self.edge_swaps_odd(False, orbit, debug):
                 orbits_with_oll_parity.append(orbit)
-                # log.info("orbit %d has OLL parity" % orbit)
+                # logger.info("orbit %d has OLL parity" % orbit)
 
         if not orbits_with_oll_parity:
-            log.debug("Predict we are free of OLL parity")
+            logger.debug("Predict we are free of OLL parity")
 
         return orbits_with_oll_parity
 
@@ -3987,7 +4005,7 @@ class RubiksCube(object):
                     max_best_centers = best_centers
                     max_best_centers_state = self.state[:]
                     max_best_centers_solution = self.solution[:]
-                    # log.info("%s: upper %s, front %s, stages %d centers" % (self, upper_side_name, front_side_name, max_best_centers))
+                    # logger.info("%s: upper %s, front %s, stages %d centers" % (self, upper_side_name, front_side_name, max_best_centers))
 
         self.state = max_best_centers_state[:]
         self.solution = max_best_centers_solution[:]
@@ -4027,7 +4045,7 @@ class RubiksCube(object):
             count += 1
 
             if debug:
-                log.warning("solution %s, step %s, count %d" % (" ".join(solution), step, count))
+                logger.warning("solution %s, step %s, count %d" % (" ".join(solution), step, count))
 
         return count
 
@@ -4202,7 +4220,7 @@ class RubiksCube(object):
 
         whole_cube_steps = ("x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2")
 
-        # log.info("pre compress; %s" % ' '.join(self.solution))
+        # logger.info("pre compress; %s" % ' '.join(self.solution))
         for step in self.solution_with_markers:
             if step.startswith(str(self.size)) or step in whole_cube_steps:
                 self.steps_to_rotate_cube += 1
@@ -4225,7 +4243,7 @@ class RubiksCube(object):
     def recolor(self):
 
         if self.use_nuke_corners or self.use_nuke_edges or self.use_nuke_centers or self.recolor_positions:
-            log.info("%s: recolor" % self)
+            logger.info("%s: recolor" % self)
             # self.print_cube()
 
             if self.use_nuke_corners:
@@ -4246,7 +4264,7 @@ class RubiksCube(object):
 
     def reduce_333(self):
         if self.centers_solved():
-            log.info("centers are already solved")
+            logger.info("centers are already solved")
         else:
             self.group_centers_guts()
 
@@ -4255,7 +4273,7 @@ class RubiksCube(object):
         self.solution.append("CENTERS_SOLVED")
 
         if self.edges_paired():
-            log.info("edges are already paired")
+            logger.info("edges are already paired")
         else:
             self.group_edges()
         self.solution.append("EDGES_GROUPED")
@@ -4294,11 +4312,13 @@ class RubiksCube(object):
             solution_len = self.get_solution_len_minus_rotates(self.solution)
 
             if min_solution_len is None or solution_len <= min_solution_len:
-                log.warning("%s: (%s, %s) solution_len %d (NEW MIN)\n\n\n\n\n\n\n" % (self, top, bottom, solution_len))
+                logger.warning(
+                    "%s: (%s, %s) solution_len %d (NEW MIN)\n\n\n\n\n\n\n" % (self, top, bottom, solution_len)
+                )
                 min_solution_len = solution_len
                 min_solution = self.solution[:]
             else:
-                log.warning("%s: (%s, %s) solution_len %d\n\n\n\n\n\n\n" % (self, top, bottom, solution_len))
+                logger.warning("%s: (%s, %s) solution_len %d\n\n\n\n\n\n\n" % (self, top, bottom, solution_len))
 
             self.state = tmp_state[:]
             self.solution = tmp_solution[:]
@@ -4320,9 +4340,9 @@ class RubiksCube(object):
         if self.solved():
             return
 
-        log.info("lt_init begin")
+        logger.info("lt_init begin")
         self.lt_init()
-        log.info("lt_init end")
+        logger.info("lt_init end")
 
         if self.is_odd() or self.centers_solved():
             self.rotate_U_to_U()
@@ -4331,9 +4351,9 @@ class RubiksCube(object):
         if self.cpu_mode == "slow":
             self.reduce_333_slow()
         else:
-            log.info("reduce_333 begin")
+            logger.info("reduce_333 begin")
             self.reduce_333()
-            log.info("reduce_333 end")
+            logger.info("reduce_333 end")
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -4351,9 +4371,9 @@ class RubiksCube(object):
                 % self.get_solution_len_minus_rotates(self.solution[reduce_333_solution_len:])
             )
         else:
-            log.info("solve_333 begin")
+            logger.info("solve_333 begin")
             self.solve_333()
-            log.info("solve_333 end")
+            logger.info("solve_333 end")
 
         self.compress_solution()
 
@@ -4380,20 +4400,20 @@ class RubiksCube(object):
         url += "&title=dwalton76"
         url = url.replace("'", "-")
         url = url.replace(" ", "_")
-        log.info("\nURL     : %s" % url)
+        logger.info("\nURL     : %s" % url)
 
         print("Solution: %s" % " ".join(self.solution))
 
         if self.steps_to_solve_centers:
-            log.info("%d steps to solve centers" % self.steps_to_solve_centers)
+            logger.info("%d steps to solve centers" % self.steps_to_solve_centers)
 
         if self.steps_to_group_edges:
-            log.info("%d steps to group edges" % self.steps_to_group_edges)
+            logger.info("%d steps to group edges" % self.steps_to_group_edges)
 
         if self.steps_to_solve_3x3x3:
-            log.info("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3)
+            logger.info("%d steps to solve 3x3x3" % self.steps_to_solve_3x3x3)
 
-        log.info("%d steps total" % self.get_solution_len_minus_rotates(self.solution))
+        logger.info("%d steps total" % self.get_solution_len_minus_rotates(self.solution))
 
         solution_txt_filename = os.path.join(HTML_DIRECTORY, "solution.txt")
         with open(solution_txt_filename, "w") as fh:

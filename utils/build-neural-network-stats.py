@@ -8,7 +8,7 @@ import click
 from rubikscubennnsolver import configure_logging
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -67,7 +67,7 @@ def lr_centers_555() -> None:
             cube.solution = []
 
             cube.lt_LR_centers_stage.solve_via_c()
-            log.info(cube.solve_via_c_output)
+            logger.info(cube.solve_via_c_output)
             in_table = False
 
             for line in cube.solve_via_c_output.splitlines():

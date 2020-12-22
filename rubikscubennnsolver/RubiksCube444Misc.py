@@ -1,7 +1,10 @@
+# standard libraries
+from typing import Dict, Set, Tuple
+
 # 12-23 are high edges, make these U (1)
 # 0-11 are low edges, make these D (6)
 # https://github.com/cs0x7f/TPR-4x4x4-Solver/blob/master/src/FullCube.java
-high_edges_444 = (
+high_edges_444: Tuple[Tuple[int, int, int]] = (
     (14, 2, 67),  # upper
     (13, 9, 19),
     (15, 8, 51),
@@ -17,7 +20,7 @@ high_edges_444 = (
 )
 
 
-low_edges_444 = (
+low_edges_444: Tuple[Tuple[int, int, int]] = (
     (2, 3, 66),  # upper
     (1, 5, 18),
     (3, 12, 50),
@@ -34,7 +37,7 @@ low_edges_444 = (
 
 
 # These apply to 4x4x4 and 5x5x5
-highlow_edge_mapping_combinations = {
+highlow_edge_mapping_combinations: Dict[int, Tuple[Set[Tuple[str]]]] = {
     0: (set()),
     2: (
         set(("UB", "UL")),

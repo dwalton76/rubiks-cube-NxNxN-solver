@@ -9,6 +9,7 @@ import shutil
 import subprocess
 from pprint import pformat
 from subprocess import call
+from typing import Dict, List, TextIO, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver.RubiksSide import SolveError
@@ -28,7 +29,18 @@ class NoPruneTableState(Exception):
     pass
 
 
-def binary_search(fh, width, state_width, linecount, state_to_find):
+def binary_search(fh: TextIO, width: int, state_width: int, linecount: int, state_to_find: str) -> str:
+    """
+    Args:
+        fh: the file to search
+        width: the width of a line in the file
+        state_width: the width of the state portion of the line
+        linecount: the number of lines in the file
+        state_to_find: the state we are looking for
+
+    Returns:
+        the value for state_to_find
+    """
     first = 0
     last = linecount - 1
 
@@ -55,9 +67,15 @@ def binary_search(fh, width, state_width, linecount, state_to_find):
     return None
 
 
-def get_file_vitals(filename):
+def get_file_vitals(filename: str) -> Tuple[int, int, int]:
     """
-    Return the width of each line, the width of the state, and the number of lines in the file
+    Args:
+        filename: the file to examine
+
+    Returns:
+        the width of each line
+        the width of the state
+        the number of lines in the file
     """
     size = os.path.getsize(filename)
 
@@ -71,7 +89,7 @@ def get_file_vitals(filename):
         return (width, state_width, linecount)
 
 
-def steps_cancel_out(prev_step, step):
+def steps_cancel_out(prev_step: str, step: str) -> bool:
     """
     >>> steps_cancel_out(None, "U")
     False
@@ -87,6 +105,9 @@ def steps_cancel_out(prev_step, step):
 
     >>> steps_cancel_out("U", "U")
     False
+
+    Returns:
+        True if the steps cancel each other out
     """
     if prev_step is None:
         return False
@@ -106,7 +127,7 @@ def steps_cancel_out(prev_step, step):
     return False
 
 
-def steps_on_same_face_and_layer(prev_step, step):
+def steps_on_same_face_and_layer(prev_step: str, step: str) -> bool:
     """
     >>> steps_on_same_face_and_layer(None, "U")
     False
@@ -155,6 +176,9 @@ def steps_on_same_face_and_layer(prev_step, step):
 
     >>> steps_on_same_face_and_layer("2-3Lw", "3Lw")
     False
+
+    Returns:
+        True if the steps are on the same face and layer
     """
     if prev_step is None:
         return False
@@ -206,7 +230,14 @@ def steps_on_same_face_and_layer(prev_step, step):
     return False
 
 
-def pretty_time(delta):
+def pretty_time(delta: dt.timedelta) -> str:
+    """
+    Args:
+        delta: a delta between two dt.datetime objects
+
+    Returns:
+        a pretty string of the time delta
+    """
     delta = str(delta)
 
     if delta.startswith("0:00:00."):
@@ -227,7 +258,23 @@ def pretty_time(delta):
         return "\033[91m%s\033[0m" % delta
 
 
-def find_first_last(linecount, cache, b_state_to_find):
+def find_first_last(
+    linecount: int, cache: List[Tuple[int, str]], b_state_to_find: str
+) -> Tuple[List[Tuple[int, str]], int, int]:
+    """
+    Speed up a binary search by using a cache of what states we have seen where in the file. Use this
+    cache to return a narrowed down first and last line numbers to search.
+
+    Args:
+        linecount: the number of lines in the file
+        cache: a list of (offset, state) tuples in the file
+        b_state_to_find: binary form of the state to find
+
+    Returns:
+        an updated cache list
+        the first line number to search
+        the last line number to search
+    """
     cache.sort()
     first = 0
     last = linecount - 1
@@ -261,7 +308,14 @@ def find_first_last(linecount, cache, b_state_to_find):
     return (cache, first, last)
 
 
-def md5signature(filename):
+def md5signature(filename: str) -> str:
+    """
+    Args:
+        filename: the file to examine
+
+    Returns:
+        the md5 signature of the file
+    """
     hasher = hashlib.md5()
     with open(filename, "rb") as fh:
         buf = fh.read()
@@ -269,7 +323,15 @@ def md5signature(filename):
     return hasher.hexdigest()
 
 
-def rm_file_if_mismatch(filename, filesize, md5target):
+def rm_file_if_mismatch(filename: str, filesize: int, md5target: str) -> None:
+    """
+    Delete a file if its filesize or md5 signature do not match
+
+    Args:
+        filename: the file to examine
+        filesize: the size of the file in bytes
+        md5target: the md5 signature to look for
+    """
     filename_gz = filename + ".gz"
 
     # This only happens if a new copy of the lookup table has been checked in...we need to delete
@@ -294,7 +356,12 @@ def rm_file_if_mismatch(filename, filesize, md5target):
                     os.remove(filename_gz)
 
 
-def download_file_if_needed(filename, cube_size):
+def download_file_if_needed(filename: str, cube_size: int) -> None:
+    """
+    Args:
+        filename: the file to download
+        cube_size: the size of the cube this file applies to
+    """
 
     if not os.path.exists(filename):
         filename_gz = filename + ".gz"
@@ -314,7 +381,16 @@ def download_file_if_needed(filename, cube_size):
         call(["gunzip", filename_gz])
 
 
-def binary_search_list(states, b_state_to_find):
+def binary_search_list(states: List[str], b_state_to_find: str) -> Tuple[bool, int]:
+    """
+    Args:
+        states: a list of strings to search
+        b_state_to_find: the state to look for
+
+    Returns
+        True if we found ``b_state_to_find``
+        the line number for ``b_state_to_find``
+    """
     first = 0
     linecount = len(states)
     last = linecount - 1
@@ -337,6 +413,10 @@ def binary_search_list(states, b_state_to_find):
 
 
 class LookupTable(object):
+    """
+    A base class for all lookup table classes
+    """
+
     heuristic_stats = {}
 
     # This is for tweaking the valeus in heuristic_stats
@@ -345,17 +425,17 @@ class LookupTable(object):
     def __init__(
         self,
         parent,
-        filename,
-        state_target,
-        linecount=None,
-        max_depth=None,
-        filesize=None,
-        md5=None,
-        legal_moves=None,
-        all_moves=None,
-        illegal_moves=None,
-        use_state_index=False,
-        build_state_index=False,
+        filename: str,
+        state_target: str,
+        linecount: int = None,
+        max_depth: int = None,
+        filesize: int = None,
+        md5: str = None,
+        legal_moves: List[str] = None,
+        all_moves: List[str] = None,
+        illegal_moves: List[str] = None,
+        use_state_index: bool = False,
+        build_state_index: bool = False,
     ):
         self.parent = parent
         self.sides_all = (
@@ -469,12 +549,19 @@ class LookupTable(object):
         STATE_INDEX_LENGTH = 4
         self.ROW_LENGTH = COST_LENGTH + (STATE_INDEX_LENGTH * len(self.legal_moves))
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.desc:
             return self.desc
         return self.__class__.__name__
 
-    def binary_search_multiple(self, states_to_find):
+    def binary_search_multiple(self, states_to_find: List[str]) -> Dict[str, str]:
+        """
+        Args:
+            states_to_find: a list of states to search for
+
+        Returns:
+            a dictionary where the state is the key and the value is a move sequence or move count
+        """
         states_to_find.sort()
         cache = []
         results = {}
@@ -541,7 +628,14 @@ class LookupTable(object):
 
         return results
 
-    def binary_search(self, state_to_find):
+    def binary_search(self, state_to_find: str) -> str:
+        """
+        Args:
+            state_to_find: the state to search for
+
+        Returns:
+            a move sequence or move count
+        """
         first = 0
         last = self.linecount - 1
         state_to_find = bytes(state_to_find, encoding="utf-8")
@@ -568,7 +662,14 @@ class LookupTable(object):
 
         return None
 
-    def binary_search_cache_string(self, state_to_find):
+    def binary_search_cache_string(self, state_to_find: str) -> str:
+        """
+        Args:
+            state_to_find: the state to search for
+
+        Returns:
+            a move sequence or move count
+        """
         first = 0
         last = self.linecount - 1
 
@@ -597,7 +698,10 @@ class LookupTable(object):
 
         return None
 
-    def preload_cache_dict(self):
+    def preload_cache_dict(self) -> None:
+        """
+        Load a lookup table into a dictionary
+        """
         # logger.info("%s: begin preload cache dict" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
@@ -623,7 +727,10 @@ class LookupTable(object):
             "{}: end preload cache dict ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post)
         )
 
-    def preload_cache_set(self):
+    def preload_cache_set(self) -> None:
+        """
+        Load a lookup table into a set
+        """
         # logger.info("%s: begin preload cache set" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         states = []
@@ -649,7 +756,10 @@ class LookupTable(object):
             "{}: end preload cache set ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post)
         )
 
-    def preload_cache_string(self):
+    def preload_cache_string(self) -> None:
+        """
+        Load a lookup table into a string
+        """
         # logger.info("%s: begin preload cache string" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         self.cache_string = None
@@ -671,9 +781,13 @@ class LookupTable(object):
             )
         )
 
-    def steps(self, state_to_find=None):
+    def steps(self, state_to_find: str = None) -> List[str]:
         """
-        Return a list of the steps found in the lookup table for the current cube state
+        Args:
+            state_to_find: the state to search for
+
+        Returns:
+            a list of the steps found in the lookup table for ``state_to_find``
         """
         assert state_to_find
 
@@ -721,7 +835,14 @@ class LookupTable(object):
 
         return None
 
-    def steps_cost(self, state_to_find):
+    def steps_cost(self, state_to_find: str) -> int:
+        """
+        Args:
+            state_to_find: the state to search for
+
+        Returns:
+            the number of steps to solve ``state_to_find``
+        """
         steps = self.steps(state_to_find)
 
         if steps is None:

@@ -1,3 +1,7 @@
+"""
+Used for doing misc testing
+"""
+
 # rubiks cube libraries
 from rubikscubennnsolver import configure_logging
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555

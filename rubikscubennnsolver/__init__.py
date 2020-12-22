@@ -110,6 +110,10 @@ class InvalidCubeReduction(Exception):
     pass
 
 
+def configure_logging():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
+
+
 def reverse_steps(steps):
     """
     Reverse the order of all steps and the direction of each individual step

@@ -1,8 +1,11 @@
 # standard libraries
 import logging
 
-# rubiks cube libraries
+# third party libraries
 import click
+
+# rubiks cube libraries
+from rubikscubennnsolver import configure_logging
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 
 log = logging.getLogger(__name__)
@@ -10,9 +13,6 @@ log = logging.getLogger(__name__)
 
 @click.group()
 def cli():
-    """
-    Extract text from PDFs using deep neural networks.
-    """
     pass
 
 
@@ -103,5 +103,5 @@ def lr_centers_555() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
+    configure_logging()
     cli()

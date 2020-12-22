@@ -855,7 +855,7 @@ class LookupTable(object):
                 # logger.info("%s: steps_cost %d for %s (%s)" % (self, len(steps), state_to_find, ' '.join(steps)))
                 return len(steps)
 
-    def solve(self):
+    def solve(self) -> None:
 
         if not self.filename_exists:
             raise SolveError("%s does not exist" % self.filename)
@@ -887,7 +887,14 @@ class LookupTable(object):
                 # self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
 
-    def heuristic(self, pt_state):
+    def heuristic(self, pt_state: str) -> int:
+        """
+        Args:
+            pt_state: the prune table state
+
+        Returns:
+            the cost to solve ``pt_state``
+        """
         if pt_state in self.state_target:
             return 0
         else:
@@ -912,7 +919,10 @@ class LookupTable(object):
     def state(self):
         raise Exception(f"{self} must implement state()")
 
-    def build_ida_graph(self):
+    def build_ida_graph(self) -> None:
+        """
+        Build a JSON file that contains all of the nodes in our graph and their transitions to other nodes
+        """
         assert self.legal_moves, "no legal_moves defined"
         parent = self.parent
         legal_moves = self.legal_moves
@@ -973,7 +983,10 @@ class LookupTable(object):
             fh.write("\n")
         logger.info("%s: json end" % self)
 
-    def load_ida_graph(self):
+    def load_ida_graph(self) -> None:
+        """
+        Load our IDA graph into memory
+        """
         bin_filename = self.filename.replace(".txt", ".bin")
 
         with open(bin_filename, "rb") as fh:
@@ -981,7 +994,10 @@ class LookupTable(object):
             self.ida_graph = fh.read()
             logger.info("%s: load IDA graph end" % self)
 
-    def load_state_index_cache(self):
+    def load_state_index_cache(self) -> None:
+        """
+        Load our state index cached into memory
+        """
         self.state_index_cache = {}
         state_index_filename = self.filename.replace(".txt", ".state_index")
 
@@ -990,7 +1006,11 @@ class LookupTable(object):
                 (state, state_index) = line.rstrip().split(":")
                 self.state_index_cache[state] = int(state_index)
 
-    def state_index(self):
+    def state_index(self) -> int:
+        """
+        Returns:
+            the index of the current state
+        """
         state = self.state()
 
         if self.state_index_cache:
@@ -1004,18 +1024,28 @@ class LookupTable(object):
             try:
                 return int(state_index)
             except TypeError:
-                # self.parent.enable_print_cube = True
-                # self.parent.print_cube()
-                raise TypeError("%s: state %s not found" % (self, state))
+                raise TypeError(f"{self}: state {state} not found")
 
-    def reverse_state_index(self, state_index):
+    def reverse_state_index(self, state_index: int) -> str:
+        """
+        Args:
+            state_index: the index of the state to return
+
+        Returns:
+            the state for ``state_index``
+        """
         state_index_filename = self.filename.replace(".txt", ".state_index")
         with open(state_index_filename, "r") as fh:
             for line in fh:
                 if line.rstrip().endswith(f":{state_index}"):
                     return line.split(":")[0]
 
-    def ida_heuristic(self):
+    def ida_heuristic(self) -> Tuple[str, int]:
+        """
+        Returns:
+            the lookup table state
+            the cost to goal
+        """
         if self.ida_graph_node is None:
             self.ida_graph_node = self.state_index()
             # logger.info("%s: init state_index %s" % (self, self.ida_graph_node))
@@ -1029,18 +1059,22 @@ class LookupTable(object):
 
 
 class LookupTableIDA(LookupTable):
+    """
+    A base class for IDA* lookup tables
+    """
+
     def __init__(
         self,
         parent,
-        filename,
-        state_target,
-        moves_all,
-        moves_illegal,
-        linecount=None,
-        max_depth=None,
-        filesize=None,
-        legal_moves=[],
-        multiplier=None,
+        filename: str,
+        state_target: str,
+        moves_all: List[str],
+        moves_illegal: List[str],
+        linecount: int = None,
+        max_depth: int = None,
+        filesize: int = None,
+        legal_moves: List = None,
+        multiplier: float = None,
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -1082,7 +1116,10 @@ class LookupTableIDA(LookupTable):
                         self.steps_not_on_same_face_and_layer[step1] = []
                     self.steps_not_on_same_face_and_layer[step1].append(step2)
 
-    def recolor(self):
+    def recolor(self) -> None:
+        """
+        re-color the cube per use_nuke_edges, etd and recolor_positions
+        """
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
             logger.info("%s: recolor" % self)
@@ -1104,9 +1141,22 @@ class LookupTableIDA(LookupTable):
                 if x_new_color:
                     self.parent.state[x] = x_new_color
 
-    def ida_search(self, steps_to_here, threshold, prev_step, prev_state):
+    def ida_search(
+        self, steps_to_here: List[str], threshold: int, prev_step: str, prev_state: str
+    ) -> Tuple[int, bool, List[str]]:
         """
         https://algorithmsinsight.wordpress.com/graph-theory-2/ida-star-algorithm-in-general/
+
+        Args:
+            steps_to_here: a list of the steps to get here
+            threshold: if f_cost is above this number, stop searching
+            prev_step: the last step we took to get here
+            prev_state: the state of the cube after prev_step was applied
+
+        Returns:
+            the f_cost which is the cost_to_here plus the estimated cost to the goal
+            True if we found a solution
+            a list of the steps to get here
         """
         self.ida_count += 1
 
@@ -1174,10 +1224,16 @@ class LookupTableIDA(LookupTable):
         self.parent.state = prev_state[:]
         return (f_cost, False, [])
 
-    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
+    def solve(self, min_ida_threshold: int = None, max_ida_threshold: int = 99) -> bool:
         """
-        The goal is to find a sequence of moves that will put the cube in a state that is
-        in our lookup table
+        The goal is to find a sequence of moves that will put the cube in a state that is one of our state_targets
+
+        Args:
+            min_ida_threshold: the starting IDA threshold
+            max_ida_threshold: the final IDA threshold
+
+        Returns:
+            True if we found a solution
         """
 
         # uncomment to cProfile solve()
@@ -1316,7 +1372,11 @@ class LookupTableIDA(LookupTable):
 
 
 class LookupTableIDAViaC(object):
-    def __init__(self, parent, files, C_ida_type):
+    """
+    A base class for IDA* lookup tables but using C to do the heavy lifting
+    """
+
+    def __init__(self, parent, files: List[Tuple[str, int, str]], C_ida_type: str):
         self.avoid_oll = None
         self.avoid_pll = False
         self.nuke_corners = False
@@ -1328,17 +1388,20 @@ class LookupTableIDAViaC(object):
 
         for (filename, filesize, md5target) in files:
             filename = "lookup-tables/" + filename
-            # logger.info("%s: rm_file_if_mismatch %s begin" % (self, filename))
             rm_file_if_mismatch(filename, filesize, md5target)
-            # logger.info("%s: rm_file_if_mismatch %s end" % (self, filename))
-            # logger.info("%s: download_file_if_needed %s begin" % (self, filename))
             download_file_if_needed(filename, self.parent.size)
-            # logger.info("%s: download_file_if_needed %s end\n" % (self, filename))
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Returns:
+            the class name
+        """
         return self.__class__.__name__
 
-    def recolor(self):
+    def recolor(self) -> None:
+        """
+        re-color the cube per use_nuke_edges, etd and recolor_positions
+        """
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
             logger.info("%s: recolor" % self)
@@ -1360,10 +1423,10 @@ class LookupTableIDAViaC(object):
                 if x_new_color:
                     self.parent.state[x] = x_new_color
 
-            # self.parent.print_cube()
-            # sys.exit(0)
-
-    def solve(self):
+    def solve(self) -> None:
+        """
+        The goal is to find a sequence of moves that will put the cube in a state that is one of our state_targets
+        """
 
         # If this is a lookup table that is staging a pair of colors (such as U and D)
         # then recolor the cubies accordingly.

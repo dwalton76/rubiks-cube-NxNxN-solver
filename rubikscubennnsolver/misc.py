@@ -1,6 +1,7 @@
 # standard libraries
 import logging
 from pprint import pformat
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ def find_index_for_value(list_foo, target, min_index):
     raise SolveError("Did not find %s in list %s" % (target, pformat(sorted(list_foo))))
 
 
-def get_swap_count(listA, listB, debug):
+def get_swap_count(listA: List[int], listB: List[int], debug) -> int:
     """
     How many swaps do we have to make in listB for it to match listA
     Example:

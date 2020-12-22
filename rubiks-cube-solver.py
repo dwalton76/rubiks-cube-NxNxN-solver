@@ -246,12 +246,6 @@ try:
     logger.info("")
 
     if not cube.solved():
-        kociemba_string = cube.get_kociemba_string(False)
-        # edge_swap_count = cube.get_edge_swap_count(edges_paired=True, orbit=None, debug=True)
-        # corner_swap_count = cube.get_corner_swap_count(debug=True)
-
-        # raise SolveError("cube should be solved but is not, edge parity %d, corner parity %d, kociemba %s" %
-        #    (edge_swap_count, corner_swap_count, kociemba_string))
         raise SolveError("cube should be solved but is not")
 
 

@@ -3933,7 +3933,6 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        logger.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
         logger.info(
             "%s: end of phase 5, x-plane edges paired, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
@@ -3989,7 +3988,6 @@ class RubiksCube555(RubiksCube):
 
     def reduce_333(self):
         self.lt_init()
-        # logger.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
 
         if not self.centers_solved() or not self.edges_paired():
             # phase 1

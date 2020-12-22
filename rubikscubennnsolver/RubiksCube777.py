@@ -3753,7 +3753,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                 self.rotate(step)
 
         self.print_cube()
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         logger.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         logger.info("")
         logger.info("")
@@ -3779,7 +3778,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # logger.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # phase 2 - pair LR oblique edges
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         tmp_solution_len = len(self.solution)
         self.lt_LR_oblique_edge_pairing.solve()
         self.print_cube()
@@ -3824,7 +3822,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         tmp_solution_len = len(self.solution)
         self.lt_step40.solve_via_c()
         self.print_cube()
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         self.solution.append(
             "COMMENT_%d_steps_777_LR_centers_vertical_bars"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
@@ -3844,7 +3841,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # phase 8 - UD centers to vertical bars
         tmp_solution_len = len(self.solution)
         self.lt_step50.solve_via_c()
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         self.solution.append(
             "COMMENT_%d_steps_777_UD_centers_vertical_bars"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
@@ -3864,7 +3860,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         )
 
         self.print_cube()
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         logger.info(
             "%s: centers daisy solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
@@ -3878,7 +3873,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         if not self.UD_centers_staged():
             self.stage_UD_centers()
 
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         self.LR_centers_vertical_bars()
         self.UD_centers_vertical_bars()
         self.centers_daisy_solve()
@@ -3899,7 +3893,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         )
 
         self.print_cube()
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         logger.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def solve_centers(self):
@@ -3924,7 +3917,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         )
 
         self.print_cube()
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         logger.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         if not self.centers_solved():

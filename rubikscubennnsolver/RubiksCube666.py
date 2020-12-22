@@ -2282,7 +2282,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             "%s: UD inner x-center solved and oblique edges paired, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
 
         # phase 6
         # solve the LR inner x-centers and pair the LR oblique edges

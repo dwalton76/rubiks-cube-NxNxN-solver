@@ -939,7 +939,6 @@ class RubiksCube444(RubiksCube):
         # logger.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         # sys.exit(0)
 
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         logger.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_reduce333.avoid_pll = True
         self.lt_reduce333.solve()
@@ -955,7 +954,6 @@ class RubiksCube444(RubiksCube):
         logger.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         logger.info("")
 
-        # logger.info("kociemba: %s" % self.get_kociemba_string(True))
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")
 

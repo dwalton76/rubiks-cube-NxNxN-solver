@@ -114,12 +114,14 @@ class RubiksCube333(RubiksCube):
         return "Solve 3x3x3"
 
     def solve(self, solution333=None):
+
+        if self.solved():
+            return
+
         self.rotate_U_to_U()
         self.rotate_F_to_F()
-
-        if self.get_state_all() != "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD":
-            self.solve_333()
-            self.compress_solution()
+        self.solve_333()
+        self.compress_solution()
 
     def lt_init(self):
         if self.lt_init_called:

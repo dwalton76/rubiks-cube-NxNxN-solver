@@ -19,14 +19,21 @@ from pprint import pformat
 from statistics import median
 
 # rubiks cube libraries
-from rubikscubennnsolver import ImplementThis, InvalidCubeReduction, SolveError, StuckInALoop, reverse_steps
+from rubikscubennnsolver import (
+    ImplementThis,
+    InvalidCubeReduction,
+    SolveError,
+    StuckInALoop,
+    configure_logging,
+    reverse_steps,
+)
 from rubikscubennnsolver.LookupTable import NoPruneTableState, NoSteps
 from rubikscubennnsolver.RubiksSide import NotSolving
 
 if sys.version_info < (3, 4):
     raise SystemError("Must be using Python 3.4 or higher")
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
+configure_logging()
 log = logging.getLogger(__name__)
 
 log.info("rubiks-cube-solver.py begin")

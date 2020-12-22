@@ -1,12 +1,8 @@
-# standard libraries
-import logging
-
 # rubiks cube libraries
+from rubikscubennnsolver import configure_logging
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
-log = logging.getLogger(__name__)
-
+configure_logging()
 cube = RubiksCube555(solved_555, "URFDLB")
 cube.cpu_mode = "normal"
 cube.lt_init()

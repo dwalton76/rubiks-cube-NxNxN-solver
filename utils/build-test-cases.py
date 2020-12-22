@@ -4,7 +4,7 @@ import logging
 from collections import OrderedDict
 
 # rubiks cube libraries
-from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver import RubiksCube, configure_logging
 from rubikscubennnsolver.RubiksCubeNNNEven import solved_888
 from rubikscubennnsolver.RubiksCubeNNNOdd import solved_999
 
@@ -15,7 +15,7 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import solved_999
 # from rubikscubennnsolver.RubiksCube666 import solved_666
 # from rubikscubennnsolver.RubiksCube777 import solved_777
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
+configure_logging()
 log = logging.getLogger(__name__)
 
 test_cases = OrderedDict()

@@ -9,13 +9,14 @@ import subprocess
 import sys
 from collections import OrderedDict
 from pprint import pformat
+from typing import List
 
 # rubiks cube libraries
 from rubikscubennnsolver.misc import get_swap_count
 from rubikscubennnsolver.RubiksSide import ImplementThis, Side, SolveError, StuckInALoop
 
-if sys.version_info < (3, 4):
-    raise SystemError("Must be using Python 3.4 or higher")
+if sys.version_info < (3, 6):
+    raise SystemError("Must be using Python 3.6 or higher")
 
 log = logging.getLogger(__name__)
 
@@ -110,11 +111,14 @@ class InvalidCubeReduction(Exception):
     pass
 
 
-def configure_logging():
+def configure_logging() -> None:
+    """
+    Set the logging format
+    """
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
 
 
-def reverse_steps(steps):
+def reverse_steps(steps: List[str]) -> List[str]:
     """
     Reverse the order of all steps and the direction of each individual step
     """

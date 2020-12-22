@@ -1,7 +1,6 @@
 # standard libraries
 import logging
 import random
-import sys
 from pprint import pformat
 
 # rubiks cube libraries
@@ -234,7 +233,6 @@ class RubiksCubeHighLow333(RubiksCube333):
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
         log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
-        sys.exit(0)
 
 
 class RubiksCubeHighLow444(RubiksCube444):
@@ -466,7 +464,6 @@ class RubiksCubeHighLow444(RubiksCube444):
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
         log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
-        sys.exit(0)
 
 
 class RubiksCubeHighLow555(RubiksCube555):
@@ -864,7 +861,6 @@ class RubiksCubeHighLow555(RubiksCube555):
 
         print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
         log.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
-        sys.exit(0)
 
 
 class RubiksCubeHighLow666(RubiksCube666):

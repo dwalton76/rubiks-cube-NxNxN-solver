@@ -30,8 +30,8 @@ from rubikscubennnsolver import (
 from rubikscubennnsolver.LookupTable import NoPruneTableState, NoSteps
 from rubikscubennnsolver.RubiksSide import NotSolving
 
-if sys.version_info < (3, 4):
-    raise SystemError("Must be using Python 3.4 or higher")
+if sys.version_info < (3, 6):
+    raise SystemError("Must be using Python 3.6 or higher")
 
 configure_logging()
 log = logging.getLogger(__name__)

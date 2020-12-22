@@ -1,3 +1,6 @@
+"""
+Run once for 333, 444, 555 and 666 cubes to generate
+"""
 # rubiks cube libraries
 from rubikscubennnsolver import configure_logging
 from rubikscubennnsolver.RubiksCube333 import solved_333

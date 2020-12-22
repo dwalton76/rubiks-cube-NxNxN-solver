@@ -9,7 +9,7 @@ import subprocess
 import sys
 from collections import OrderedDict
 from pprint import pformat
-from typing import List
+from typing import List, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver.misc import get_swap_count
@@ -216,36 +216,75 @@ def get_cube_layout(size: int) -> str:
     return "\n".join(result)
 
 
-def rotate_2d_list(squares_list):
+def rotate_2d_list(squares_list: List[List[int]]) -> List[List[int]]:
     """
+    Rotate (clockwise) a 2d list of ints
+
+    Args:
+        squares_list: the 2d list to rotate
+
+    Returns:
+        a rotated copy of the 2d list
+
     http://stackoverflow.com/questions/8421337/rotating-a-two-dimensional-array-in-python
     """
     return [x for x in zip(*squares_list[::-1])]
 
 
-def rotate_clockwise(squares_list):
+def rotate_clockwise(squares_list: List[List[int]]) -> List[List[int]]:
+    """
+    Rotate (clockwise) a 2d list of ints
+
+    Args:
+        squares_list: the 2d list to rotate
+
+    Returns:
+        a rotated copy of the 2d list
+    """
     return rotate_2d_list(squares_list)
 
 
-def rotate_counter_clockwise(squares_list):
+def rotate_counter_clockwise(squares_list: List[List[int]]) -> List[List[int]]:
+    """
+    Rotate (counter clockwise) a 2d list of ints
+
+    Args:
+        squares_list: the 2d list to rotate
+
+    Returns:
+        a rotated copy of the 2d list
+    """
     squares_list = rotate_2d_list(squares_list)
     squares_list = rotate_2d_list(squares_list)
     squares_list = rotate_2d_list(squares_list)
     return squares_list
 
 
-def compress_2d_list(squares_list):
+def compress_2d_list(squares_list: List[List[int]]) -> List[int]:
     """
-    Convert 2d list to a 1d list
+    Convert a 2d list to a 1d list
+
+    Args:
+        squares_list: the 2d list to compress
+
+    Returns:
+        a 1d list
     """
     return [col for row in squares_list for col in row]
 
 
-def apply_rotations(size, step, rotations):
+def apply_rotations(size: int, step: str, rotations: List[str]) -> str:
     """
-    Apply the "rotations" to step and return the step. This is used by
-    compress_solution() to remove all of the whole cube rotations from
-    the solution.
+    Apply ``rotations`` to ``step`` and return ``step``. This is used by compress_solution() to remove all of the
+    whole cube rotations from the solution.
+
+    Args:
+        size: the size of the cube
+        step: the step to modify
+        rotations: a list of rotations to apply to step
+
+    Returns:
+        the updated step
     """
 
     if step in ("CENTERS_SOLVED", "EDGES_GROUPED"):
@@ -351,12 +390,21 @@ def apply_rotations(size, step, rotations):
                 step = step.replace("D", "F")
 
         else:
-            raise Exception("%s is an invalid rotation" % rotation)
+            raise ValueError(f"{rotation} is an invalid rotation")
 
     return step
 
 
-def orbit_matches(edges_per_side, orbit, edge_index):
+def orbit_matches(edges_per_side: int, orbit: int, edge_index: int) -> bool:
+    """
+    Args:
+        edges_per_side: the number of edges on a single face of the cube
+        orbit: the edge orbit number (a 444 has one orbit, a 555 has two orbits, etc)
+        edge_index: the index of the edge piece to examine
+
+    Returns:
+        True if the piece at ``edge_index`` is in ``orbit``
+    """
 
     if orbit is None:
         return True
@@ -365,9 +413,13 @@ def orbit_matches(edges_per_side, orbit, edge_index):
     if edges_per_side % 2 == 0:
 
         if edges_per_side == 2:
-            assert edge_index in (0, 1), "Invalid edge_index %d" % edge_index
+            if edge_index not in (0, 1):
+                raise ValueError(f"Invalid edge_index {edge_index}")
+
         elif edges_per_side == 4:
-            assert edge_index in (0, 1, 2, 3), "Invalid edge_index %d" % edge_index
+            if edge_index not in (0, 1, 2, 3):
+                raise ValueError(f"Invalid edge_index {edge_index}")
+
         else:
             assert False, "Only 4x4x4 and 6x6x6 supported"
 
@@ -382,15 +434,15 @@ def orbit_matches(edges_per_side, orbit, edge_index):
             return False
 
         else:
-            raise Exception("Invalid oribit %d" % orbit)
-
-        # if edge_index == orbit or edge_index == (edges_per_side - 1 - orbit):
-        #    return True
+            raise ValueError(f"Invalid oribit {orbit}")
 
     # Odd cube
     else:
-        assert edges_per_side == 3, "Only 5x5x5 supported here"
-        assert edge_index in (0, 1, 2), "Invalid edge_index %d" % edge_index
+        if edges_per_side != 3:
+            raise ValueError("Only 5x5x5 supported here")
+
+        if edge_index not in (0, 1, 2):
+            raise ValueError(f"Invalid edge_index {edge_index}")
 
         if orbit == 0:
             if edge_index == 0 or edge_index == 2:
@@ -403,14 +455,20 @@ def orbit_matches(edges_per_side, orbit, edge_index):
             return False
 
         else:
-            raise Exception("Invalid oribit %d" % orbit)
+            raise ValueError(f"Invalid oribit {orbit}")
 
     return False
 
 
-def get_important_square_indexes(size):
+def _www_square_indexes(size: int) -> Tuple[List[int], List[int], List[int]]:
     """
-    Used for writing www pages
+    Args:
+        size: the size of the cube
+
+    Returns:
+        a list of the first square on each side
+        a list of the last square on each side
+        a list of the last square on sides U, B and D
     """
     squares_per_side = size * size
     max_square = squares_per_side * 6
@@ -423,19 +481,31 @@ def get_important_square_indexes(size):
         elif index % squares_per_side == 0:
             last_squares.append(index)
 
-    last_UBD_squares = (last_squares[0], last_squares[4], last_squares[5])
+    last_UBD_squares = [last_squares[0], last_squares[4], last_squares[5]]
     return (first_squares, last_squares, last_UBD_squares)
 
 
 class RubiksCube(object):
-    def __init__(self, state_string, order, colormap=None, debug=False):
+    """
+    A base class for rubiks cubes of all sizes
+    """
+
+    def __init__(self, state_string: str, order: str, colormap: dict = None, debug: bool = False):
+        """
+        Args:
+            state_string: the state of the cube
+            order: the side order of ``state_string``
+            colormap: a dict to control what colors are used for each side
+            debug: if True display more output
+        """
         init_state = ["dummy"]
         init_state.extend(list(state_string))
         self.squares_per_side = int((len(init_state) - 1) / 6)
         self.size = math.sqrt(self.squares_per_side)
-        assert str(self.size).endswith(".0"), (
-            "Cube has %d squares per side which is not possible" % self.squares_per_side
-        )
+
+        if not str(self.size).endswith(".0"):
+            raise ValueError(f"Cube has {self.squares_per_side} squares per side which is not possible")
+
         self.size = int(self.size)
         self.solution = []
         self.steps_to_rotate_cube = 0
@@ -457,6 +527,8 @@ class RubiksCube(object):
         self.use_nuke_centers = False
         self.cpu_mode = None
         self.solution_with_markers = []
+        self.color_map = {}
+        self.color_map_html = {}
 
         if not os.path.exists(HTML_DIRECTORY):
             os.makedirs(HTML_DIRECTORY)
@@ -464,8 +536,6 @@ class RubiksCube(object):
 
         if colormap:
             colormap = json.loads(colormap)
-            self.color_map = {}
-            self.color_map_html = {}
 
             for (side_name, color) in list(colormap.items()):
                 side_name = str(side_name)
@@ -494,7 +564,8 @@ class RubiksCube(object):
                     self.color_map[side_name] = 93
                     self.color_map_html[side_name] = (210, 208, 2)
 
-            # logger.warning("color_map:\n%s\n" % pformat(self.color_map))
+                else:
+                    raise ValueError(color)
 
         else:
             # Match the colors on alg.cubing.net to make life easier
@@ -587,10 +658,17 @@ class RubiksCube(object):
             for x in range(side.min_pos, side.max_pos + 1):
                 self.index_to_side[x] = side
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Returns:
+            a string represenation of the cube
+        """
         return "%dx%dx%d" % (self.size, self.size, self.size)
 
-    def _sanity_check(self, desc, indexes, expected_count):
+    def _sanity_check(self, desc: str, indexes: List[int], expected_count: int) -> None:
+        """
+        Verify that we have ``expected_count`` of each color square at ``indexes``
+        """
         count = {"U": 0, "L": 0, "F": 0, "R": 0, "B": 0, "D": 0, "x": 0}
 
         for x in indexes:
@@ -601,26 +679,33 @@ class RubiksCube(object):
                 continue
 
             if value != expected_count:
-                msg = "side %s %s count is %d (should be %d)" % (desc, side, value, expected_count)
-                logger.warning("InvalidCubeReduction %s" % msg)
+                msg = f"side {desc} {side} count is {value} (should be {expected_count})"
+                logger.warning(f"InvalidCubeReduction {msg}")
                 self.enable_print_cube = True
                 self.print_cube()
                 raise InvalidCubeReduction(msg)
 
-    def re_init(self):
+    def re_init(self) -> None:
+        """
+        re-initialize the cube state
+        """
         self.state = self.state_backup[:]
         self.solution = []
         self.original_state = self.state_backup[:]
         self.original_solution = []
 
-    def sanity_check(self):
+    def sanity_check(self) -> None:
         """
-        Implemented by the various child classes to verify that
-        the 'state' content makes sense
+        Implemented by the various child classes to verify that the 'state' content makes sense
         """
         pass
 
-    def load_state(self, state_string, order):
+    def load_state(self, state_string: str, order: str) -> None:
+        """
+        Args:
+            state_string: the state of the cube
+            order: the side order of ``state_string``
+        """
 
         # kociemba_string is in URFDLB order so split this apart and re-arrange it to
         # be ULFRBD so that is is sequential with the normal square numbering scheme
@@ -643,39 +728,50 @@ class RubiksCube(object):
             foo.extend(init_state[(self.squares_per_side * 4) + 1 : (self.squares_per_side * 5) + 1])  # B
             foo.extend(init_state[(self.squares_per_side * 5) + 1 : (self.squares_per_side * 6) + 1])  # D
         else:
-            raise Exception("Add support for order %s" % order)
+            raise ValueError(f"Add support for order {order}")
 
         self.state = ["x"]
         for (square_index, side_name) in enumerate(foo):
             self.state.append(side_name)
 
-    def is_even(self):
+    def is_even(self) -> bool:
+        """
+        Returns:
+            True if this is an even cube
+        """
         if self.size % 2 == 0:
             return True
         return False
 
-    def is_odd(self):
+    def is_odd(self) -> bool:
+        """
+        Returns:
+            True if this is an odd cube
+        """
         if self.size % 2 == 0:
             return False
         return True
 
-    def solved(self):
+    def solved(self) -> bool:
         """
-        Return True if the cube is solved
+        Returns:
+            True if the cube is solved
         """
         for side in list(self.sides.values()):
             if not side.solved():
                 return False
         return True
 
-    def rotate_guts(self, action):
+    def rotate_guts(self, action: str) -> None:
         """
-        self.state is a dictionary where the key is the square_index and the
-        value is that square side name (U, F, etc)
+        self.state is a dictionary where the key is the square_index and the value is that square side name
+        (U, F, etc). Apply the ``action`` step to the cube by updating self.state.
+
+        Args:
+            action: the step to apply to the cube
         """
         self.solution.append(action)
         result = self.state[:]
-        # logger.info("move %s" % action)
 
         if action[-1] in ("'", "`"):
             reverse = True
@@ -796,11 +892,6 @@ class RubiksCube(object):
                     back_first_square = (self.squares_per_side * 4) + 1 + (row * self.size)
                     back_last_square = back_first_square + self.size - 1
 
-                    # logger.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    # logger.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    # logger.info("right first %d, last %d" % (right_first_square, right_last_square))
-                    # logger.info("back first %d, last %d" % (back_first_square, back_last_square))
-
                     if reverse:
                         for square_index in range(left_first_square, left_last_square + 1):
                             result[square_index] = self.state[square_index + (3 * self.squares_per_side)]
@@ -847,11 +938,6 @@ class RubiksCube(object):
 
                     back_first_square = (self.squares_per_side * 4) + self.size - row
                     back_last_square = back_first_square + ((self.size - 1) * self.size)
-
-                    # logger.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    # logger.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    # logger.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    # logger.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     top_squares = []
                     for square_index in range(top_first_square, top_last_square + 1, self.size):
@@ -930,11 +1016,6 @@ class RubiksCube(object):
                     right_first_square = (self.squares_per_side * 3) + 1 + row
                     right_last_square = right_first_square + ((self.size - 1) * self.size)
 
-                    # logger.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    # logger.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    # logger.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    # logger.info("right first %d, last %d" % (right_first_square, right_last_square))
-
                     top_squares = []
                     for square_index in range(top_first_square, top_last_square + 1):
                         top_squares.append(self.state[square_index])
@@ -1009,11 +1090,6 @@ class RubiksCube(object):
 
                     back_first_square = (self.squares_per_side * 4) + 1 + row
                     back_last_square = back_first_square + ((self.size - 1) * self.size)
-
-                    # logger.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    # logger.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    # logger.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    # logger.info("back first %d, last %d" % (back_first_square, back_last_square))
 
                     top_squares = []
                     for square_index in range(top_first_square, top_last_square + 1, self.size):
@@ -1093,11 +1169,6 @@ class RubiksCube(object):
                     right_first_square = (self.squares_per_side * 3) + self.size - row
                     right_last_square = right_first_square + ((self.size - 1) * self.size)
 
-                    # logger.info("top first %d, last %d" % (top_first_square, top_last_square))
-                    # logger.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    # logger.info("down first %d, last %d" % (down_first_square, down_last_square))
-                    # logger.info("right first %d, last %d" % (right_first_square, right_last_square))
-
                     top_squares = []
                     for square_index in range(top_first_square, top_last_square + 1):
                         top_squares.append(self.state[square_index])
@@ -1172,11 +1243,6 @@ class RubiksCube(object):
                     back_first_square = (self.squares_per_side * 5) - self.size + 1 - (row * self.size)
                     back_last_square = back_first_square + self.size - 1
 
-                    # logger.info("left first %d, last %d" % (left_first_square, left_last_square))
-                    # logger.info("front first %d, last %d" % (front_first_square, front_last_square))
-                    # logger.info("right first %d, last %d" % (right_first_square, right_last_square))
-                    # logger.info("back first %d, last %d" % (back_first_square, back_last_square))
-
                     if reverse:
                         for square_index in range(left_first_square, left_last_square + 1):
                             result[square_index] = self.state[square_index + self.squares_per_side]
@@ -1208,52 +1274,37 @@ class RubiksCube(object):
         else:
             raise Exception("Unsupported action %s" % action)
 
-    def rotate(self, action):
+    def rotate(self, action: str) -> None:
+        """
+        self.state is a dictionary where the key is the square_index and the value is that square side name
+        (U, F, etc). Apply the ``action`` step to the cube by updating self.state.
+
+        Args:
+            action: the step to apply to the cube
+        """
 
         if action.startswith("COMMENT"):
             self.solution.append(action)
 
+        # fmt: off
         elif action in (
             "x2",
             "y2",
             "z2",
-            "2U",
-            "2U'",
-            "2U2",
-            "2L",
-            "2L'",
-            "2L2",
-            "2F",
-            "2F'",
-            "2F2",
-            "2R",
-            "2R'",
-            "2R2",
-            "2B",
-            "2B'",
-            "2B2",
-            "2D",
-            "2D'",
-            "2D2",
-            "3U",
-            "3U'",
-            "3U2",
-            "3L",
-            "3L'",
-            "3L2",
-            "3F",
-            "3F'",
-            "3F2",
-            "3R",
-            "3R'",
-            "3R2",
-            "3B",
-            "3B'",
-            "3B2",
-            "3D",
-            "3D'",
-            "3D2",
+            "2U", "2U'", "2U2",
+            "2L", "2L'", "2L2",
+            "2F", "2F'", "2F2",
+            "2R", "2R'", "2R2",
+            "2B", "2B'", "2B2",
+            "2D", "2D'", "2D2",
+            "3U", "3U'", "3U2",
+            "3L", "3L'", "3L2",
+            "3F", "3F'", "3F2",
+            "3R", "3R'", "3R2",
+            "3B", "3B'", "3B2",
+            "3D", "3D'", "3D2",
         ):
+            # fmt: on
 
             if action == "x2":
                 self.rotate_guts("x")
@@ -1379,7 +1430,7 @@ class RubiksCube(object):
                 self.rotate_guts("3Bw2")
                 self.rotate_guts("Bw2")
             else:
-                raise Exception("Unsupported action %s" % action)
+                raise ValueError(f"Unsupported action {action}")
 
             self.solution.pop()
             self.solution.pop()
@@ -1388,14 +1439,20 @@ class RubiksCube(object):
         else:
             self.rotate_guts(action)
 
-    def print_cube_layout(self):
-        if not self.enable_print_cube:
-            return
-        logger.info("\n" + get_cube_layout(self.size) + "\n")
+    def print_cube_layout(self) -> None:
+        """
+        log the cube layout
+        """
+        if self.enable_print_cube:
+            logger.info("\n" + get_cube_layout(self.size) + "\n")
 
-    def print_cube(self, print_positions=False):
+    def print_cube(self, print_positions: bool = False) -> None:
+        """
+        log the cube state
+        """
         if not self.enable_print_cube:
             return
+
         side_names = ("U", "L", "F", "R", "B", "D")
         side_name_index = 0
         rows = []
@@ -1474,10 +1531,13 @@ class RubiksCube(object):
 
         logger.info("")
 
-    def print_case_statement_C(self, case, first_step):
+    def print_case_statement_C(self, case: str, first_step: bool) -> None:
         """
-        This is called via --rotate-printer, it is used to print the
-        case statements used by lookup-table-builder.c
+        This is called via utils/rotate-printer.py. It prints the case statements for lookup-table-builder.c
+
+        Args:
+            case: the case to print a statement for
+            first_step: True if this is the first case in the switch statement
         """
 
         if first_step:
@@ -1494,11 +1554,11 @@ class RubiksCube(object):
         print("        break;")
         print("")
 
-    def print_case_statement_python(self, function_name, case):
+    def print_case_statement_python(self, function_name, case) -> Tuple[int]:
         """
-        This is called via utils/rotate-printer.py, it is used to print the
-        contents of rotate_xxx.py
+        This is called via utils/rotate-printer.py. It prints the contents of rotate_xxx.py
         """
+        # dwalton here
         numbers = []
         numbers.append(0)
         for (key, value) in enumerate(self.state[1:]):
@@ -4580,7 +4640,7 @@ div#page_holder {
 
         sides = ("upper", "left", "front", "right", "back", "down")
         side_index = -1
-        (first_squares, last_squares, last_UBD_squares) = get_important_square_indexes(self.size)
+        (first_squares, last_squares, last_UBD_squares) = _www_square_indexes(self.size)
 
         with open(HTML_FILENAME, "a") as fh:
             fh.write("<div class='page' style='display: none;'>\n")

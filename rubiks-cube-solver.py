@@ -19,14 +19,7 @@ from pprint import pformat
 from statistics import median
 
 # rubiks cube libraries
-from rubikscubennnsolver import (
-    ImplementThis,
-    InvalidCubeReduction,
-    SolveError,
-    StuckInALoop,
-    configure_logging,
-    reverse_steps,
-)
+from rubikscubennnsolver import InvalidCubeReduction, SolveError, StuckInALoop, configure_logging, reverse_steps
 from rubikscubennnsolver.LookupTable import NoPruneTableState, NoSteps
 from rubikscubennnsolver.RubiksSide import NotSolving
 
@@ -262,7 +255,7 @@ try:
         raise SolveError("cube should be solved but is not")
 
 
-except (ImplementThis, SolveError, StuckInALoop, NoSteps, KeyError, NoPruneTableState, InvalidCubeReduction):
+except (NotImplementedError, SolveError, StuckInALoop, NoSteps, KeyError, NoPruneTableState, InvalidCubeReduction):
     cube.enable_print_cube = True
     cube.print_cube_layout()
     cube.print_cube()

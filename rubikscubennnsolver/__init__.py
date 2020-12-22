@@ -9,11 +9,11 @@ import subprocess
 import sys
 from collections import OrderedDict
 from pprint import pformat
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 # rubiks cube libraries
 from rubikscubennnsolver.misc import get_swap_count
-from rubikscubennnsolver.RubiksSide import ImplementThis, Side, SolveError, StuckInALoop
+from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop
 
 if sys.version_info < (3, 6):
     raise SystemError("Must be using Python 3.6 or higher")
@@ -1554,11 +1554,10 @@ class RubiksCube(object):
         print("        break;")
         print("")
 
-    def print_case_statement_python(self, function_name, case) -> Tuple[int]:
+    def print_case_statement_python(self) -> Tuple[int]:
         """
-        This is called via utils/rotate-printer.py. It prints the contents of rotate_xxx.py
+        This is called via utils/rotate-printer.py which creates the swaps.py file
         """
-        # dwalton here
         numbers = []
         numbers.append(0)
         for (key, value) in enumerate(self.state[1:]):
@@ -1566,9 +1565,13 @@ class RubiksCube(object):
 
         return tuple(numbers)
 
-    def randomize(self, count: int = None):
+    def randomize(self, count: int = None) -> None:
         """
-        Perform a bunch of random moves to scramble a cube. This was used to generate test cases.
+        Perform a bunch of random moves to scramble a cube
+
+        Args:
+            count: the number of random moves to apply. If None a sufficient number of moves will be
+                applied to scramble the cube.
         """
 
         if self.is_even():
@@ -1607,16 +1610,26 @@ class RubiksCube(object):
 
             self.rotate(move)
 
-    def get_side_for_index(self, square_index):
+    def get_side_for_index(self, square_index: int) -> Side:
         """
         Return the Side object that owns square_index
+
+        Args:
+            square_index: the square to look for
+
+        Returns:
+            the Side object that owns ``square_index``
         """
         for side in list(self.sides.values()):
             if square_index >= side.min_pos and square_index <= side.max_pos:
                 return side
         raise SolveError("We should not be here, square_index %s" % pformat(square_index))
 
-    def get_non_paired_wings(self):
+    def get_non_paired_wings(self) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
+        """
+        Returns:
+            a list of tuples of non-paired wings
+        """
         return (
             self.sideU.non_paired_wings(True, True, True, True)
             + self.sideF.non_paired_wings(False, True, False, True)
@@ -1624,11 +1637,18 @@ class RubiksCube(object):
             + self.sideD.non_paired_wings(True, True, True, True)
         )
 
-    def get_non_paired_wings_count(self):
+    def get_non_paired_wings_count(self) -> int:
+        """
+        Returns:
+            the number of non-paired wings
+        """
         return len(self.get_non_paired_wings())
 
-    def get_non_paired_edges(self):
-        # north, west, south, east
+    def get_non_paired_edges(self) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
+        """
+        Returns:
+            a list of tuples of non-paired edges
+        """
         return (
             self.sideU.non_paired_edges(True, True, True, True)
             + self.sideF.non_paired_edges(False, True, False, True)
@@ -1636,7 +1656,11 @@ class RubiksCube(object):
             + self.sideD.non_paired_edges(True, True, True, True)
         )
 
-    def get_non_paired_edges_count(self):
+    def get_non_paired_edges_count(self) -> int:
+        """
+        Returns:
+            the number of non-paired edges
+        """
         non_paired_edges = self.get_non_paired_edges()
         result = len(non_paired_edges)
         if result > 12:
@@ -1644,15 +1668,27 @@ class RubiksCube(object):
 
         return result
 
-    def get_paired_edges_count(self):
+    def get_paired_edges_count(self) -> int:
+        """
+        Returns:
+            the number of paired edges
+        """
         return 12 - self.get_non_paired_edges_count()
 
-    def edges_paired(self):
+    def edges_paired(self) -> bool:
+        """
+        Returns:
+            True if all edges are paired
+        """
         if self.get_non_paired_edges_count() == 0:
             return True
         return False
 
-    def edge_paired(self, wing_index):
+    def edge_paired(self, wing_index: int) -> bool:
+        """
+        Returns:
+            True if edge for ``wing_index`` is paired
+        """
 
         for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
             if side.min_pos <= wing_index <= side.max_pos:
@@ -1669,9 +1705,10 @@ class RubiksCube(object):
                 elif wing_index in side.edge_east_pos:
                     return side.east_edge_paired()
 
-        raise Exception("Invalid wing_index %s" % wing_index)
+        raise ValueError(f"Invalid wing_index {wing_index}")
 
-    def move_wing_to_U_north(self, wing):
+    def move_wing_to_U_north(self, wing: Union[Tuple[int], List[int], int]) -> None:
+        # dwalton
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -1779,9 +1816,9 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to U north" % str(wing))
+            raise NotImplementedError("implement wing %s to U north" % str(wing))
 
-    def move_wing_to_U_west(self, wing):
+    def move_wing_to_U_west(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -1889,9 +1926,9 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to U west" % str(wing))
+            raise NotImplementedError("implement wing %s to U west" % str(wing))
 
-    def move_wing_to_U_south(self, wing):
+    def move_wing_to_U_south(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -1999,9 +2036,9 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to U south" % str(wing))
+            raise NotImplementedError("implement wing %s to U south" % str(wing))
 
-    def move_wing_to_U_east(self, wing):
+    def move_wing_to_U_east(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -2109,9 +2146,9 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to U east" % str(wing))
+            raise NotImplementedError("implement wing %s to U east" % str(wing))
 
-    def move_wing_to_L_west(self, wing):
+    def move_wing_to_L_west(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -2219,9 +2256,9 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to L west" % str(wing))
+            raise NotImplementedError("implement wing %s to L west" % str(wing))
 
-    def move_wing_to_L_east(self, wing):
+    def move_wing_to_L_east(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -2321,9 +2358,9 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to L east" % str(wing))
+            raise NotImplementedError("implement wing %s to L east" % str(wing))
 
-    def move_wing_to_R_west(self, wing):
+    def move_wing_to_R_west(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -2431,9 +2468,9 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to R west" % str(wing))
+            raise NotImplementedError("implement wing %s to R west" % str(wing))
 
-    def move_wing_to_R_east(self, wing):
+    def move_wing_to_R_east(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -2541,9 +2578,9 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to R east" % str(wing))
+            raise NotImplementedError("implement wing %s to R east" % str(wing))
 
-    def move_wing_to_D_north(self, wing):
+    def move_wing_to_D_north(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -2651,9 +2688,9 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to D north" % str(wing))
+            raise NotImplementedError("implement wing %s to D north" % str(wing))
 
-    def move_wing_to_D_west(self, wing):
+    def move_wing_to_D_west(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -2761,9 +2798,9 @@ class RubiksCube(object):
             pass
 
         else:
-            raise ImplementThis("implement wing %s to D west" % str(wing))
+            raise NotImplementedError("implement wing %s to D west" % str(wing))
 
-    def move_wing_to_D_south(self, wing):
+    def move_wing_to_D_south(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -2871,9 +2908,9 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to D south" % str(wing))
+            raise NotImplementedError("implement wing %s to D south" % str(wing))
 
-    def move_wing_to_D_east(self, wing):
+    def move_wing_to_D_east(self, wing: Union[Tuple[int], List[int], int]) -> None:
 
         if isinstance(wing, tuple) or isinstance(wing, list):
             wing_pos1 = wing[0]
@@ -2981,7 +3018,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("implement wing %s to D east" % str(wing))
+            raise NotImplementedError("implement wing %s to D east" % str(wing))
 
     def rotate_x(self):
         self.rotate("x")
@@ -3215,7 +3252,7 @@ class RubiksCube(object):
                 )
 
         # else:
-        #    raise ImplementThis("prevent_OLL for %sx%sx%s, orbits %s have parity issues" %
+        #    raise NotImplementedError("prevent_OLL for %sx%sx%s, orbits %s have parity issues" %
         #                        (self.size, self.size, self.size, pformat(orbits_with_oll_parity)))
 
         if steps:
@@ -3339,7 +3376,7 @@ class RubiksCube(object):
         elif self.state[self.sideU.edge_east_pos[0]] != "U":
             self.rotate_y()
         elif self.state[self.sideL.edge_north_pos[0]] != "L":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideL.edge_south_pos[0]] != "L":
             self.rotate_x()
             self.rotate_x()
@@ -3350,15 +3387,15 @@ class RubiksCube(object):
             self.rotate_y_reverse()
             self.rotate_z()
         elif self.state[self.sideF.edge_north_pos[0]] != "F":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideF.edge_south_pos[0]] != "F":
             self.rotate_x()
         elif self.state[self.sideF.edge_east_pos[0]] != "F":
             self.rotate_z_reverse()
         elif self.state[self.sideF.edge_west_pos[0]] != "F":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideR.edge_north_pos[0]] != "R":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideR.edge_south_pos[0]] != "R":
             self.rotate_y()
             self.rotate_x()
@@ -3366,24 +3403,24 @@ class RubiksCube(object):
             self.rotate_y()
             self.rotate_z_reverse()
         elif self.state[self.sideR.edge_west_pos[0]] != "R":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideB.edge_north_pos[0]] != "B":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideB.edge_south_pos[0]] != "B":
             self.rotate_x()
             self.rotate_x()
         elif self.state[self.sideB.edge_east_pos[0]] != "B":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideB.edge_west_pos[0]] != "B":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideD.edge_north_pos[0]] != "D":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideD.edge_south_pos[0]] != "D":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideD.edge_east_pos[0]] != "D":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideD.edge_west_pos[0]] != "D":
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         else:
             self.print_cube()
             raise SolveError("we should not be here")
@@ -3393,53 +3430,53 @@ class RubiksCube(object):
 
         # rotate the other hosed edges to U-west
         if self.state[self.sideU.edge_south_pos[0]] != self.state[self.sideU.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideU.edge_north_pos[0]] != self.state[self.sideU.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideU.edge_west_pos[0]] != self.state[self.sideU.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideU.edge_east_pos[0]] != self.state[self.sideU.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideL.edge_north_pos[0]] != self.state[self.sideL.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideL.edge_south_pos[0]] != self.state[self.sideL.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideL.edge_east_pos[0]] != self.state[self.sideL.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideL.edge_west_pos[0]] != self.state[self.sideL.corner_pos[0]]:
             self.rotate_y()
             pll_id = 2
         elif self.state[self.sideF.edge_south_pos[0]] != self.state[self.sideF.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideF.edge_east_pos[0]] != self.state[self.sideF.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideF.edge_west_pos[0]] != self.state[self.sideF.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideR.edge_north_pos[0]] != self.state[self.sideR.corner_pos[0]]:
             self.rotate_y()
             pll_id = 2
         elif self.state[self.sideR.edge_south_pos[0]] != self.state[self.sideR.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideR.edge_east_pos[0]] != self.state[self.sideR.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideR.edge_west_pos[0]] != self.state[self.sideR.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideB.edge_north_pos[0]] != self.state[self.sideB.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideB.edge_south_pos[0]] != self.state[self.sideB.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideB.edge_east_pos[0]] != self.state[self.sideB.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideB.edge_west_pos[0]] != self.state[self.sideB.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideD.edge_north_pos[0]] != self.state[self.sideD.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideD.edge_south_pos[0]] != self.state[self.sideD.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideD.edge_east_pos[0]] != self.state[self.sideD.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         elif self.state[self.sideD.edge_west_pos[0]] != self.state[self.sideD.corner_pos[0]]:
-            raise ImplementThis("pll")
+            raise NotImplementedError("pll")
         else:
             raise Exception("we should not be here")
 
@@ -3461,7 +3498,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
         else:
-            raise ImplementThis("pll_id %s" % pll_id)
+            raise NotImplementedError("pll_id %s" % pll_id)
 
     def solve_333(self):
 
@@ -4083,7 +4120,7 @@ class RubiksCube(object):
         return self.rotate_for_best_centers(False, centers)
 
     def group_centers_guts(self):
-        raise ImplementThis("Child class must implement group_centers_guts")
+        raise NotImplementedError("Child class must implement group_centers_guts")
 
     def get_solution_len_minus_rotates(self, solution, debug=False):
         count = 0

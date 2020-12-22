@@ -16,10 +16,6 @@ from rubikscubennnsolver.RubiksSide import SolveError
 logger = logging.getLogger(__name__)
 
 
-class ImplementThis(Exception):
-    pass
-
-
 class NoSteps(Exception):
     pass
 
@@ -1105,7 +1101,7 @@ class LookupTableIDA(LookupTable):
             self.rotate_xxx = rotate_777
 
         else:
-            raise ImplementThis("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+            raise NotImplementedError("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
 
         # If this is a lookup table that is staging a pair of colors (such as U and D)
         # then recolor the cubies accordingly.

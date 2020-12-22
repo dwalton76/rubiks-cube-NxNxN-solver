@@ -1,6 +1,5 @@
 """
-Used to print the logic that is in rotate_444() and rotate_555() in
-https://github.com/dwalton76/rubiks-cube-lookup-tables/blob/master/rotate.c
+Used to print cube rotate logic
 """
 
 # standard libraries
@@ -23,15 +22,11 @@ from rubikscubennnsolver.RubiksCube777 import moves_777, solved_777
 logger = logging.getLogger(__name__)
 
 
-@click.group()
-def cli() -> None:
-    pass
-
-
-@cli.command()
+@click.command()
 @click.option("--c/--no-c", type=bool, default=False, show_default=True, help="build for C, else python3")
-def rotate_printer(c: bool) -> None:
+def main(c: bool) -> None:
     build_rotate_xxx_c = c
+    swaps_py = "rubikscubennnsolver/swaps.py"
 
     if build_rotate_xxx_c:
         print(
@@ -43,6 +38,10 @@ def rotate_printer(c: bool) -> None:
 
     """
         )
+
+    else:
+        with open(swaps_py, "w") as fh:
+            fh.write("# fmt: off\n")
 
     for (size, solved_state) in (
         (2, solved_222),
@@ -127,37 +126,31 @@ def rotate_printer(c: bool) -> None:
     """
             )
 
+        # build python swaps.py
         else:
             rotate_mapper = {}
 
             for step in steps:
-                step_pretty = step.replace("'", "_prime")
-                function_name = "rotate_%d%d%d_%s" % (size, size, size, step_pretty)
-                rotate_mapper[step] = function_name
                 cube.rotate(step)
-
-                rotate_mapper[step] = cube.print_case_statement_python(function_name, step)
+                rotate_mapper[step] = cube.print_case_statement_python()
                 cube.state = copy(original_state)
 
-            lines_to_keep = []
-            swaps_xxx = "swaps_%d%d%d" % (size, size, size)
-            nnn_filename = "rubikscubennnsolver/RubiksCube%d%d%d.py" % (size, size, size)
+            with open(swaps_py, "a") as fh:
+                swaps = pformat(rotate_mapper, width=2048)
+                swaps = swaps.replace("{", "{\n ")
+                swaps = swaps.replace("}", "\n}\n")
+                swaps = swaps.replace(" '", ' "')
+                swaps = swaps.replace("':", '":')
+                swaps = swaps.replace(' "', '    "')
 
-            with open(nnn_filename, "r") as fh:
-                for line in fh:
-                    if line.startswith(swaps_xxx):
-                        break
+                # fh.write("swaps_%d%d%d = %s\n" % (size, size, size, pformat(rotate_mapper, width=2048)))
+                fh.write("swaps_%d%d%d = %s\n" % (size, size, size, swaps))
 
-                    lines_to_keep.append(line)
-
-            with open(nnn_filename, "w") as fh:
-                fh.write("".join(lines_to_keep))
-                fh.write("swaps_%d%d%d = %s\n" % (size, size, size, pformat(rotate_mapper, width=2048)))
-                fh.write("\ndef rotate_%d%d%d(cube, step):\n" % (size, size, size))
-                fh.write("    return [cube[x] for x in swaps_%d%d%d[step]]\n" % (size, size, size))
-                fh.write("")
+    if not build_rotate_xxx_c:
+        with open(swaps_py, "a") as fh:
+            fh.write("# fmt: on\n")
 
 
 if __name__ == "__main__":
     configure_logging()
-    cli()
+    main()

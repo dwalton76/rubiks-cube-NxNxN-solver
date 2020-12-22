@@ -2,6 +2,7 @@
 import logging
 import math
 from pprint import pformat
+from typing import List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +37,6 @@ class NotSolving(Exception):
 
 
 class StuckInALoop(Exception):
-    pass
-
-
-class ImplementThis(Exception):
     pass
 
 
@@ -163,7 +160,9 @@ class Side(object):
             logger.info("wing_partner\n%s\n" % pformat(self.wing_partner))
             raise
 
-    def non_paired_wings(self, check_north, check_west, check_south, check_east):
+    def non_paired_wings(
+        self, check_north: bool, check_west: bool, check_south: bool, check_east: bool
+    ) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
         non_paired_wings = []
 
         # north edge
@@ -232,7 +231,9 @@ class Side(object):
 
         return non_paired_wings
 
-    def non_paired_edges(self, check_north, check_west, check_south, check_east):
+    def non_paired_edges(
+        self, check_north, check_west, check_south, check_east
+    ) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
         non_paired_edges = []
 
         # north edge

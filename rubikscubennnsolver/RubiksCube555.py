@@ -12,43 +12,14 @@ from rubikscubennnsolver.swaps import swaps_555
 
 logger = logging.getLogger(__name__)
 
+# fmt: off
 moves_555 = (
-    "U",
-    "U'",
-    "U2",
-    "Uw",
-    "Uw'",
-    "Uw2",
-    "L",
-    "L'",
-    "L2",
-    "Lw",
-    "Lw'",
-    "Lw2",
-    "F",
-    "F'",
-    "F2",
-    "Fw",
-    "Fw'",
-    "Fw2",
-    "R",
-    "R'",
-    "R2",
-    "Rw",
-    "Rw'",
-    "Rw2",
-    "B",
-    "B'",
-    "B2",
-    "Bw",
-    "Bw'",
-    "Bw2",
-    "D",
-    "D'",
-    "D2",
-    "Dw",
-    "Dw'",
-    "Dw2",
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2",
+    "F", "F'", "F2", "Fw", "Fw'", "Fw2",
+    "R", "R'", "R2", "Rw", "Rw'", "Rw2",
+    "B", "B'", "B2", "Bw", "Bw'", "Bw2",
+    "D", "D'", "D2", "Dw", "Dw'", "Dw2",
     # slices...not used for now
     # "2U", "2U'", "2U2", "2D", "2D'", "2D2",
     # "2L", "2L'", "2L2", "2R", "2R'", "2R2",
@@ -56,297 +27,95 @@ moves_555 = (
 )
 solved_555 = "UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB"
 
-
 centers_555 = (
-    7,
-    8,
-    9,
-    12,
-    13,
-    14,
-    17,
-    18,
-    19,  # Upper
-    32,
-    33,
-    34,
-    37,
-    38,
-    39,
-    42,
-    43,
-    44,  # Left
-    57,
-    58,
-    59,
-    62,
-    63,
-    64,
-    67,
-    68,
-    69,  # Front
-    82,
-    83,
-    84,
-    87,
-    88,
-    89,
-    92,
-    93,
-    94,  # Right
-    107,
-    108,
-    109,
-    112,
-    113,
-    114,
-    117,
-    118,
-    119,  # Back
-    132,
-    133,
-    134,
-    137,
-    138,
-    139,
-    142,
-    143,
-    144,  # Down
+    7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
+    32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
+    57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
+    82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
+    107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
+    132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
 )
 
 x_centers_555 = (
-    7,
-    9,
-    13,
-    17,
-    19,  # Upper
-    32,
-    34,
-    38,
-    42,
-    44,  # Left
-    57,
-    59,
-    63,
-    67,
-    69,  # Front
-    82,
-    84,
-    88,
-    92,
-    94,  # Right
-    107,
-    109,
-    113,
-    117,
-    119,  # Back
-    132,
-    134,
-    138,
-    142,
-    144,  # Down
+    7, 9, 13, 17, 19,  # Upper
+    32, 34, 38, 42, 44,  # Left
+    57, 59, 63, 67, 69,  # Front
+    82, 84, 88, 92, 94,  # Right
+    107, 109, 113, 117, 119,  # Back
+    132, 134, 138, 142, 144,  # Down
 )
 
 t_centers_555 = (
-    8,
-    12,
-    13,
-    14,
-    18,  # Upper
-    33,
-    37,
-    38,
-    39,
-    43,  # Left
-    58,
-    62,
-    63,
-    64,
-    68,  # Front
-    83,
-    87,
-    88,
-    89,
-    93,  # Right
-    108,
-    112,
-    113,
-    114,
-    118,  # Back
-    133,
-    137,
-    138,
-    139,
-    143,  # Down
+    8, 12, 13, 14, 18,  # Upper
+    33, 37, 38, 39, 43,  # Left
+    58, 62, 63, 64, 68,  # Front
+    83, 87, 88, 89, 93,  # Right
+    108, 112, 113, 114, 118,  # Back
+    133, 137, 138, 139, 143,  # Down
 )
 
-UD_centers_555 = (7, 8, 9, 12, 13, 14, 17, 18, 19, 132, 133, 134, 137, 138, 139, 142, 143, 144)  # Upper  # Down
+UFBD_t_centers_555 = (
+    8, 12, 14, 18,  # Upper
+    58, 62, 64, 68,  # Front
+    108, 112, 114, 118,  # Back
+    133, 137, 139, 143,  # Down
+)
 
-LR_centers_555 = (32, 33, 34, 37, 38, 39, 42, 43, 44, 82, 83, 84, 87, 88, 89, 92, 93, 94)  # Left  # Right
+UFBD_x_centers_555 = (
+    7, 9, 17, 19,  # Upper
+    57, 59, 67, 69,  # Front
+    107, 109, 117, 119,  # Back
+    132, 134, 142, 144,  # Down
+)
 
-FB_centers_555 = (57, 58, 59, 62, 63, 64, 67, 68, 69, 107, 108, 109, 112, 113, 114, 117, 118, 119)  # Front  # Back
+UD_centers_555 = (
+    7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
+    132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
+)
+
+LR_centers_555 = (
+    32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
+    82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
+)
+
+FB_centers_555 = (
+    57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
+    107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
+)
 
 UFBD_centers_555 = (
-    7,
-    8,
-    9,
-    12,
-    13,
-    14,
-    17,
-    18,
-    19,  # Upper
-    57,
-    58,
-    59,
-    62,
-    63,
-    64,
-    67,
-    68,
-    69,  # Front
-    107,
-    108,
-    109,
-    112,
-    113,
-    114,
-    117,
-    118,
-    119,  # Back
-    132,
-    133,
-    134,
-    137,
-    138,
-    139,
-    142,
-    143,
-    144,  # Down
+    7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
+    57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
+    107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
+    132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
 )
 
 ULRD_centers_555 = (
-    7,
-    8,
-    9,
-    12,
-    13,
-    14,
-    17,
-    18,
-    19,  # Upper
-    32,
-    33,
-    34,
-    37,
-    38,
-    39,
-    42,
-    43,
-    44,  # Left
-    82,
-    83,
-    84,
-    87,
-    88,
-    89,
-    92,
-    93,
-    94,  # Right
-    132,
-    133,
-    134,
-    137,
-    138,
-    139,
-    142,
-    143,
-    144,  # Down
+    7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
+    32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
+    82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
+    132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
 )
 
 LFRB_centers_555 = (
-    32,
-    33,
-    34,
-    37,
-    38,
-    39,
-    42,
-    43,
-    44,  # Left
-    57,
-    58,
-    59,
-    62,
-    63,
-    64,
-    67,
-    68,
-    69,  # Front
-    82,
-    83,
-    84,
-    87,
-    88,
-    89,
-    92,
-    93,
-    94,  # Right
-    107,
-    108,
-    109,
-    112,
-    113,
-    114,
-    117,
-    118,
-    119,  # Back
+    32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
+    57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
+    82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
+    107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
 )
 
 LFRB_x_centers_555 = (
-    32,
-    34,
-    38,
-    42,
-    44,  # Left
-    57,
-    59,
-    63,
-    67,
-    69,  # Front
-    82,
-    84,
-    88,
-    92,
-    94,  # Right
-    107,
-    109,
-    113,
-    117,
-    119,  # Back
+    32, 34, 38, 42, 44,  # Left
+    57, 59, 63, 67, 69,  # Front
+    82, 84, 88, 92, 94,  # Right
+    107, 109, 113, 117, 119,  # Back
 )
 
 LFRB_t_centers_555 = (
-    33,
-    37,
-    38,
-    39,
-    43,  # Left
-    58,
-    62,
-    63,
-    64,
-    68,  # Front
-    83,
-    87,
-    88,
-    89,
-    93,  # Right
-    108,
-    112,
-    113,
-    114,
-    118,  # Back
+    33, 37, 38, 39, 43,  # Left
+    58, 62, 63, 64, 68,  # Front
+    83, 87, 88, 89, 93,  # Right
+    108, 112, 113, 114, 118,  # Back
 )
 
 
@@ -358,379 +127,103 @@ OOo pPP QQq rRR sSS TTt uUU VVv WWw xXX YYy zZZ
  UB  UL  UR  UD  LB  LF  RF  RB  DF  DL  DR  DB
 """
 edge_orbit_0_555 = (
-    2,
-    4,
-    10,
-    20,
-    24,
-    22,
-    16,
-    6,
-    27,
-    29,
-    35,
-    45,
-    49,
-    47,
-    41,
-    31,
-    52,
-    54,
-    60,
-    70,
-    74,
-    72,
-    66,
-    56,
-    77,
-    79,
-    85,
-    95,
-    99,
-    97,
-    91,
-    81,
-    102,
-    104,
-    110,
-    120,
-    124,
-    122,
-    116,
-    106,
-    127,
-    129,
-    135,
-    145,
-    149,
-    147,
-    141,
-    131,
+    2, 4, 10, 20, 24, 22, 16, 6,  # Upper
+    27, 29, 35, 45, 49, 47, 41, 31,  # Left
+    52, 54, 60, 70, 74, 72, 66, 56,  # Front
+    77, 79, 85, 95, 99, 97, 91, 81,  # Right
+    102, 104, 110, 120, 124, 122, 116, 106,  # Back
+    127, 129, 135, 145, 149, 147, 141, 131,  # Down
 )
 
 edge_orbit_1_555 = (
-    3,
-    15,
-    23,
-    11,
-    28,
-    40,
-    48,
-    36,
-    53,
-    65,
-    73,
-    61,
-    78,
-    90,
-    98,
-    86,
-    103,
-    115,
-    123,
-    111,
-    128,
-    140,
-    148,
-    136,
+    3, 15, 23, 11,  # Upper
+    28, 40, 48, 36,  # Left
+    53, 65, 73, 61,  # Front
+    78, 90, 98, 86,  # Right
+    103, 115, 123, 111,  # Back
+    128, 140, 148, 136,  # Down
 )
 
-corners_555 = (1, 5, 21, 25, 26, 30, 46, 50, 51, 55, 71, 75, 76, 80, 96, 100, 101, 105, 121, 125, 126, 130, 146, 150)
+corners_555 = (
+    1, 5, 21, 25,  # Upper
+    26, 30, 46, 50,  # Left
+    51, 55, 71, 75,  # Front
+    76, 80, 96, 100,  # Right
+    101, 105, 121, 125,  # Back
+    126, 130, 146, 150,  # Down
+)
 
 edges_555 = (
-    2,
-    3,
-    4,
-    6,
-    10,
-    11,
-    15,
-    16,
-    20,
-    22,
-    23,
-    24,
-    27,
-    28,
-    29,
-    31,
-    35,
-    36,
-    40,
-    41,
-    45,
-    47,
-    48,
-    49,
-    52,
-    53,
-    54,
-    56,
-    60,
-    61,
-    65,
-    66,
-    70,
-    72,
-    73,
-    74,
-    77,
-    78,
-    79,
-    81,
-    85,
-    86,
-    90,
-    91,
-    95,
-    97,
-    98,
-    99,
-    102,
-    103,
-    104,
-    106,
-    110,
-    111,
-    115,
-    116,
-    120,
-    122,
-    123,
-    124,
-    127,
-    128,
-    129,
-    131,
-    135,
-    136,
-    140,
-    141,
-    145,
-    147,
-    148,
-    149,
+    2, 3, 4, 6, 10, 11, 15, 16, 20, 22, 23, 24,  # Upper
+    27, 28, 29, 31, 35, 36, 40, 41, 45, 47, 48, 49,  # Left
+    52, 53, 54, 56, 60, 61, 65, 66, 70, 72, 73, 74,  # Front
+    77, 78, 79, 81, 85, 86, 90, 91, 95, 97, 98, 99,  # Right
+    102, 103, 104, 106, 110, 111, 115, 116, 120, 122, 123, 124,  # Back
+    127, 128, 129, 131, 135, 136, 140, 141, 145, 147, 148, 149,  # Down
 )
 
 set_edges_555 = set(edges_555)
 
 wings_555 = (
-    # Upper
-    2,
-    3,
-    4,
-    6,
-    11,
-    16,
-    10,
-    15,
-    20,
-    22,
-    23,
-    24,
-    # Left
-    31,
-    36,
-    41,
-    35,
-    40,
-    45,
-    # Right
-    81,
-    86,
-    91,
-    85,
-    90,
-    95,
-    # Down
-    127,
-    128,
-    129,
-    131,
-    136,
-    141,
-    135,
-    140,
-    145,
-    147,
-    148,
-    149,
+    2, 3, 4, 6, 11, 16, 10, 15, 20, 22, 23, 24,  # Upper
+    31, 36, 41, 35, 40, 45,  # Left
+    81, 86, 91, 85, 90, 95,  # Right
+    127, 128, 129, 131, 136, 141, 135, 140, 145, 147, 148, 149,  # Down
 )
 
 l4e_wings_555 = (
-    # Upper
-    2,
-    3,
-    4,
-    6,
-    11,
-    16,
-    10,
-    15,
-    20,
-    22,
-    23,
-    24,
-    # Left
-    31,
-    36,
-    41,
-    35,
-    40,
-    45,
-    # Right
-    81,
-    86,
-    91,
-    85,
-    90,
-    95,
-    # Down
-    127,
-    128,
-    129,
-    131,
-    136,
-    141,
-    135,
-    140,
-    145,
-    147,
-    148,
-    149,
+    2, 3, 4, 6, 11, 16, 10, 15, 20, 22, 23, 24,  # Upper
+    31, 36, 41, 35, 40, 45,  # Left
+    81, 86, 91, 85, 90, 95,  # Right
+    127, 128, 129, 131, 136, 141, 135, 140, 145, 147, 148, 149,  # Down
 )
 
-
 wings_for_edges_pattern_555 = (
-    # Upper
-    2,
-    3,
-    4,
-    6,
-    11,
-    16,
-    10,
-    15,
-    20,
-    22,
-    23,
-    24,
-    # Left
-    31,
-    36,
-    41,
-    35,
-    40,
-    45,
-    # Right
-    81,
-    86,
-    91,
-    85,
-    90,
-    95,
-    # Down
-    127,
-    128,
-    129,
-    131,
-    136,
-    141,
-    135,
-    140,
-    145,
-    147,
-    148,
-    149,
+    2, 3, 4, 6, 11, 16, 10, 15, 20, 22, 23, 24,  # Upper
+    31, 36, 41, 35, 40, 45,  # Left
+    81, 86, 91, 85, 90, 95,  # Right
+    127, 128, 129, 131, 136, 141, 135, 140, 145, 147, 148, 149,  # Down
 )
 
 high_wings_and_midges_555 = (
-    # Upper
-    2,
-    3,
-    11,
-    16,
-    10,
-    15,
-    23,
-    24,
-    # Left
-    36,
-    41,
-    35,
-    40,
-    # Right
-    86,
-    91,
-    85,
-    90,
-    # Down
-    127,
-    128,
-    136,
-    141,
-    135,
-    140,
-    148,
-    149,
+    2, 3, 11, 16, 10, 15, 23, 24,  # Upper
+    36, 41, 35, 40,  # Left
+    86, 91, 85, 90,  # Right
+    127, 128, 136, 141, 135, 140, 148, 149,  # Down
 )
 
 low_wings_and_midges_555 = (
-    # Upper
-    3,
-    4,
-    6,
-    11,
-    15,
-    20,
-    22,
-    23,
-    # Left
-    31,
-    36,
-    40,
-    45,
-    # Right
-    81,
-    86,
-    90,
-    95,
-    # Down
-    128,
-    129,
-    131,
-    136,
-    140,
-    145,
-    147,
-    148,
+    3, 4, 6, 11, 15, 20, 22, 23,  # Upper
+    31, 36, 40, 45,  # Left
+    81, 86, 90, 95,  # Right
+    128, 129, 131, 136, 140, 145, 147, 148,  # Down
 )
 
 high_edges_555 = (
-    (2, 104),
+    (2, 104),  # Upper
     (10, 79),
     (24, 54),
     (16, 29),
-    (35, 56),
+    (35, 56),  # Left
     (41, 120),
-    (85, 106),
+    (85, 106),  # Right
     (91, 70),
-    (127, 72),
+    (127, 72),  # Down
     (135, 97),
     (149, 122),
     (141, 47),
 )
 
 low_edges_555 = (
-    (4, 102),
+    (4, 102),  # Upper
     (20, 77),
     (22, 52),
     (6, 27),
-    (31, 110),
+    (31, 110),  # Left
     (45, 66),
-    (81, 60),
+    (81, 60),  # Right
     (95, 116),
-    (129, 74),
+    (129, 74),  # Down
     (145, 99),
     (147, 124),
     (131, 49),
@@ -738,7 +231,7 @@ low_edges_555 = (
 
 
 edges_partner_555 = {
-    2: 104,
+    2: 104,  # Upper
     3: 103,
     4: 102,
     6: 27,
@@ -750,7 +243,7 @@ edges_partner_555 = {
     22: 52,
     23: 53,
     24: 54,
-    27: 6,
+    27: 6,  # Left
     28: 11,
     29: 16,
     31: 110,
@@ -762,7 +255,7 @@ edges_partner_555 = {
     47: 141,
     48: 136,
     49: 131,
-    52: 22,
+    52: 22,  # Front
     53: 23,
     54: 24,
     56: 35,
@@ -774,7 +267,7 @@ edges_partner_555 = {
     72: 127,
     73: 128,
     74: 129,
-    77: 20,
+    77: 20,  # Right
     78: 15,
     79: 10,
     81: 60,
@@ -786,7 +279,7 @@ edges_partner_555 = {
     97: 135,
     98: 140,
     99: 145,
-    102: 4,
+    102: 4,  # Back
     103: 3,
     104: 2,
     106: 85,
@@ -798,7 +291,7 @@ edges_partner_555 = {
     122: 149,
     123: 148,
     124: 147,
-    127: 72,
+    127: 72,  # Down
     128: 73,
     129: 74,
     131: 49,
@@ -813,36 +306,8 @@ edges_partner_555 = {
 }
 
 
-rotations_24 = (
-    (),
-    ("y",),
-    ("y'",),
-    ("y", "y"),
-    ("x", "x"),
-    ("x", "x", "y"),
-    ("x", "x", "y'"),
-    ("x", "x", "y", "y"),
-    ("y'", "x"),
-    ("y'", "x", "y"),
-    ("y'", "x", "y'"),
-    ("y'", "x", "y", "y"),
-    ("x",),
-    ("x", "y"),
-    ("x", "y'"),
-    ("x", "y", "y"),
-    ("y", "x"),
-    ("y", "x", "y"),
-    ("y", "x", "y'"),
-    ("y", "x", "y", "y"),
-    ("x'",),
-    ("x'", "y"),
-    ("x'", "y'"),
-    ("x'", "y", "y"),
-)
-
-
 edges_recolor_tuples_555 = (
-    ("0", 2, 104),  # upper
+    ("0", 2, 104),  # Upper
     ("1", 4, 102),
     ("2", 6, 27),
     ("3", 10, 79),
@@ -850,15 +315,15 @@ edges_recolor_tuples_555 = (
     ("5", 20, 77),
     ("6", 22, 52),
     ("7", 24, 54),
-    ("8", 31, 110),  # left
+    ("8", 31, 110),  # Left
     ("9", 35, 56),
     ("a", 41, 120),
     ("b", 45, 66),
-    ("c", 81, 60),  # right
+    ("c", 81, 60),  # Right
     ("d", 85, 106),
     ("e", 91, 70),
     ("f", 95, 116),
-    ("g", 127, 72),  # down
+    ("g", 127, 72),  # Down
     ("h", 129, 74),
     ("i", 131, 49),
     ("j", 135, 97),
@@ -869,49 +334,31 @@ edges_recolor_tuples_555 = (
 )
 
 midges_recolor_tuples_555 = (
-    ("o", 3, 103),  # upper
+    ("o", 3, 103),  # Upper
     ("p", 11, 28),
     ("q", 15, 78),
     ("r", 23, 53),
-    ("s", 36, 115),  # left
+    ("s", 36, 115),  # Left
     ("t", 40, 61),
-    ("u", 86, 65),  # right
+    ("u", 86, 65),  # Right
     ("v", 90, 111),
-    ("w", 128, 73),  # down
+    ("w", 128, 73),  # Down
     ("x", 136, 48),
     ("y", 140, 98),
     ("z", 148, 123),
 )
 
 midge_indexes = (
-    3,
-    11,
-    15,
-    23,  # Upper
-    28,
-    36,
-    40,
-    48,  # Left
-    53,
-    61,
-    65,
-    73,  # Front
-    78,
-    86,
-    90,
-    98,  # Right
-    103,
-    111,
-    115,
-    123,  # Back
-    128,
-    136,
-    140,
-    148,  # Down
+    3, 11, 15, 23,  # Upper
+    28, 36, 40, 48,  # Left
+    53, 61, 65, 73,  # Front
+    78, 86, 90, 98,  # Right
+    103, 111, 115, 123,  # Back
+    128, 136, 140, 148,  # Down
 )
 
 wings_for_recolor_555 = (
-    ("0", 2, 104),  # upper
+    ("0", 2, 104),  # Upper
     ("1", 4, 102),
     ("2", 6, 27),
     ("3", 10, 79),
@@ -919,15 +366,15 @@ wings_for_recolor_555 = (
     ("5", 20, 77),
     ("6", 22, 52),
     ("7", 24, 54),
-    ("8", 31, 110),  # left
+    ("8", 31, 110),  # Left
     ("9", 35, 56),
     ("a", 41, 120),
     ("b", 45, 66),
-    ("c", 81, 60),  # right
+    ("c", 81, 60),  # Right
     ("d", 85, 106),
     ("e", 91, 70),
     ("f", 95, 116),
-    ("g", 127, 72),  # down
+    ("g", 127, 72),  # Down
     ("h", 129, 74),
     ("i", 131, 49),
     ("j", 135, 97),
@@ -938,19 +385,29 @@ wings_for_recolor_555 = (
 )
 
 MIDGE_TUPLES_555 = (
-    ((3, 103), (103, 3)),
+    ((3, 103), (103, 3)),  # Upper
     ((11, 28), (28, 11)),
     ((15, 78), (78, 15)),
     ((23, 53), (53, 23)),
-    ((36, 115), (115, 36)),
+    ((36, 115), (115, 36)),  # Left
     ((40, 61), (61, 40)),
-    ((86, 65), (65, 86)),
+    ((86, 65), (65, 86)),  # Right
     ((90, 111), (111, 90)),
-    ((128, 73), (73, 128)),
+    ((128, 73), (73, 128)),  # Down
     ((136, 48), (48, 136)),
     ((140, 98), (98, 140)),
     ((148, 123), (123, 148)),
 )
+
+LR_centers_and_midges_555 = (
+    3, 11, 15, 23,  # Upper
+    28, 32, 33, 34, 36, 37, 38, 39, 40, 42, 43, 44, 48,  # Left
+    53, 61, 65, 73,  # Front
+    78, 82, 83, 84, 86, 87, 88, 89, 90, 92, 93, 94, 98,  # Right
+    103, 111, 115, 123,  # Back
+    128, 136, 140, 148,  # Down
+)
+# fmt: on
 
 
 def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=False):
@@ -1104,32 +561,16 @@ class LookupTable555LRTCenterStage(LookupTable):
     Average: 6.31 moves
     """
 
+    # fmt: off
     t_centers_555 = (
-        8,
-        12,
-        14,
-        18,
-        33,
-        37,
-        39,
-        43,
-        58,
-        62,
-        64,
-        68,
-        83,
-        87,
-        89,
-        93,
-        108,
-        112,
-        114,
-        118,
-        133,
-        137,
-        139,
-        143,
+        8, 12, 14, 18,  # Upper
+        33, 37, 39, 43,  # Left
+        58, 62, 64, 68,  # Front
+        83, 87, 89, 93,  # Right
+        108, 112, 114, 118,  # Back
+        133, 137, 139, 143,  # Down
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
@@ -1178,32 +619,16 @@ class LookupTable555LRXCenterStage(LookupTable):
     Average: 6.03 moves
     """
 
+    # fmt: off
     x_centers_555 = (
-        7,
-        9,
-        17,
-        19,  # Upper
-        32,
-        34,
-        42,
-        44,  # Left
-        57,
-        59,
-        67,
-        69,  # Front
-        82,
-        84,
-        92,
-        94,  # Right
-        107,
-        109,
-        117,
-        119,  # Back
-        132,
-        134,
-        142,
-        144,  # Down
+        7, 9, 17, 19,  # Upper
+        32, 34, 42, 44,  # Left
+        57, 59, 67, 69,  # Front
+        82, 84, 92, 94,  # Right
+        107, 109, 117, 119,  # Back
+        132, 134, 142, 144,  # Down
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
@@ -1265,8 +690,6 @@ class LookupTable555FBTCenterStage(LookupTable):
     Average: 6.34 moves
     """
 
-    UFBD_t_centers_555 = (8, 12, 14, 18, 58, 62, 64, 68, 108, 112, 114, 118, 133, 137, 139, 143)
-
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
@@ -1284,13 +707,13 @@ class LookupTable555FBTCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_t_centers_555])
+        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in UFBD_t_centers_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(16)
 
-        for (pos, pos_state) in zip(self.UFBD_t_centers_555, binary_state):
+        for (pos, pos_state) in zip(UFBD_t_centers_555, binary_state):
             if pos_state == "0":
                 cube[pos] = "x"
             else:
@@ -1314,25 +737,6 @@ class LookupTable555FBXCenterStage(LookupTable):
     Average: 5.45 moves
     """
 
-    UFBD_x_centers_555 = (
-        7,
-        9,
-        17,
-        19,  # Upper
-        57,
-        59,
-        67,
-        69,  # Front
-        107,
-        109,
-        117,
-        119,  # Back
-        132,
-        134,
-        142,
-        144,  # Down
-    )
-
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
@@ -1350,13 +754,13 @@ class LookupTable555FBXCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in self.UFBD_x_centers_555])
+        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in UFBD_x_centers_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(16)
 
-        for (pos, pos_state) in zip(self.UFBD_x_centers_555, binary_state):
+        for (pos, pos_state) in zip(UFBD_x_centers_555, binary_state):
             if pos_state == "0":
                 cube[pos] = "x"
             else:
@@ -1832,64 +1236,19 @@ class LookupTable555LRCenterStageEOInnerOrbit(LookupTable):
     )
 
     midge_states = {
-        (3, 103): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
+        (3, 103): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],  # Upper
         (11, 28): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (23, 53): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (15, 78): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
-        (36, 115): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
+        (36, 115): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],  # Left
         (40, 61): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
-        (86, 65): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
+        (86, 65): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],  # Right
         (90, 111): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
-        (128, 73): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
+        (128, 73): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],  # Down
         (136, 48): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (140, 98): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (148, 123): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
     }
-
-    LR_centers_and_midges_555 = (
-        3,
-        11,
-        15,
-        23,
-        28,
-        32,
-        33,
-        34,
-        36,
-        37,
-        38,
-        39,
-        40,
-        42,
-        43,
-        44,
-        48,
-        53,
-        61,
-        65,
-        73,
-        78,
-        82,
-        83,
-        84,
-        86,
-        87,
-        88,
-        89,
-        90,
-        92,
-        93,
-        94,
-        98,
-        103,
-        111,
-        115,
-        123,
-        128,
-        136,
-        140,
-        148,
-    )
 
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
@@ -1921,7 +1280,7 @@ class LookupTable555LRCenterStageEOInnerOrbit(LookupTable):
                 lt_state[e0] = "D"
                 lt_state[e1] = "D"
 
-        return "".join([lt_state[x] for x in self.LR_centers_and_midges_555])
+        return "".join([lt_state[x] for x in LR_centers_and_midges_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
 
@@ -1949,7 +1308,7 @@ class LookupTable555LRCenterStageEOInnerOrbit(LookupTable):
         # populate the LR centers
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_centers_and_midges_555, state):
+        for (pos, pos_state) in zip(LR_centers_and_midges_555, state):
             if pos in LR_centers_555:
                 self.parent.state[pos] = pos_state
 
@@ -1974,56 +1333,17 @@ class LookupTable555EdgeOrientOuterOrbit(LookupTable):
     Average: 7.95 moves
     """
 
+    # fmt: off
     outer_orbit_indexes = (
-        0,
-        2,
-        3,
-        4,
-        7,
-        8,
-        9,
-        11,
-        12,
-        14,
-        15,
-        16,
-        19,
-        20,
-        21,
-        23,
-        24,
-        26,
-        27,
-        28,
-        31,
-        32,
-        33,
-        35,
-        36,
-        38,
-        39,
-        40,
-        43,
-        44,
-        45,
-        47,
-        48,
-        50,
-        51,
-        52,
-        55,
-        56,
-        57,
-        59,
-        60,
-        62,
-        63,
-        64,
-        67,
-        68,
-        69,
-        71,
+        0, 2, 3, 4, 7, 8, 9,
+        11, 12, 14, 15, 16, 19, 20,
+        21, 23, 24, 26, 27, 28, 31,
+        32, 33, 35, 36, 38, 39, 40,
+        43, 44, 45, 47, 48, 50, 51,
+        52, 55, 56, 57, 59, 60, 62,
+        63, 64, 67, 68, 69, 71,
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
@@ -2233,28 +1553,15 @@ class LookupTable555Phase5Centers(LookupTable):
             max_depth=10,
             filesize=160876800,
             all_moves=moves_555,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "Uw", "Uw'", "Dw", "Dw'",
+                "Fw", "Fw'", "Bw", "Bw'",
+                "Lw", "Lw'", "Rw", "Rw'",
+                "L", "L'", "R", "R'",
+                "U", "U'", "D", "D'",
             ),
+            # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2299,28 +1606,15 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
             max_depth=10,
             filesize=8820000,
             all_moves=moves_555,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "Uw", "Uw'", "Dw", "Dw'",
+                "Fw", "Fw'", "Bw", "Bw'",
+                "Lw", "Lw'", "Rw", "Rw'",
+                "L", "L'", "R", "R'",
+                "U", "U'", "D", "D'",
             ),
+            # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2540,28 +1834,15 @@ class LookupTable555Phase5FBCenters(LookupTable):
             max_depth=7,
             filesize=220500,
             all_moves=moves_555,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "Uw", "Uw'", "Dw", "Dw'",
+                "Fw", "Fw'", "Bw", "Bw'",
+                "Lw", "Lw'", "Rw", "Rw'",
+                "L", "L'", "R", "R'",
+                "U", "U'", "D", "D'",
             ),
+            # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2606,28 +1887,15 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
             max_depth=10,
             filesize=8702400,
             all_moves=moves_555,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "Uw", "Uw'", "Dw", "Dw'",
+                "Fw", "Fw'", "Bw", "Bw'",
+                "Lw", "Lw'", "Rw", "Rw'",
+                "L", "L'", "R", "R'",
+                "U", "U'", "D", "D'",
             ),
+            # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2677,28 +1945,15 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_555,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "Uw", "Uw'", "Dw", "Dw'",
+                "Fw", "Fw'", "Bw", "Bw'",
+                "Lw", "Lw'", "Rw", "Rw'",
+                "L", "L'", "R", "R'",
+                "U", "U'", "D", "D'",
             ),
+            # fmt: on
             prune_tables=(
                 parent.lt_phase5_fb_centers,
                 parent.lt_phase5_high_edge_midge,
@@ -2748,30 +2003,15 @@ class LookupTable555Phase6Centers(LookupTable):
             max_depth=9,
             filesize=15699600,
             all_moves=moves_555,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Uw2",
-                "Dw",
-                "Dw'",
-                "Dw2",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "F",
-                "F'",
-                "B",
-                "B'",
+                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
+                "Fw", "Fw'", "Bw", "Bw'",
+                "Lw", "Lw'", "Rw", "Rw'",
+                "L", "L'", "R", "R'",
+                "F", "F'", "B", "B'",
             ),
+            # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2816,30 +2056,15 @@ class LookupTable555Phase6HighEdgeMidge(LookupTable):
             max_depth=10,
             filesize=2983680,
             all_moves=moves_555,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Uw2",
-                "Dw",
-                "Dw'",
-                "Dw2",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "F",
-                "F'",
-                "B",
-                "B'",
+                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
+                "Fw", "Fw'", "Bw", "Bw'",
+                "Lw", "Lw'", "Rw", "Rw'",
+                "L", "L'", "R", "R'",
+                "F", "F'", "B", "B'",
             ),
+            # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2906,30 +2131,15 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
             max_depth=10,
             filesize=2983680,
             all_moves=moves_555,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Uw2",
-                "Dw",
-                "Dw'",
-                "Dw2",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "F",
-                "F'",
-                "B",
-                "B'",
+                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
+                "Fw", "Fw'", "Bw", "Bw'",
+                "Lw", "Lw'", "Rw", "Rw'",
+                "L", "L'", "R", "R'",
+                "F", "F'", "B", "B'",
             ),
+            # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -3035,30 +2245,15 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_555,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Uw2",
-                "Dw",
-                "Dw'",
-                "Dw2",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Lw",
-                "Lw'",
-                "Rw",
-                "Rw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "F",
-                "F'",
-                "B",
-                "B'",
+                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
+                "Fw", "Fw'", "Bw", "Bw'",
+                "Lw", "Lw'", "Rw", "Rw'",
+                "L", "L'", "R", "R'",
+                "F", "F'", "B", "B'",
             ),
+            # fmt: on
             prune_tables=(parent.lt_phase6_high_edge_midge, parent.lt_phase6_low_edge_midge, parent.lt_phase6_centers),
             # parent.lt_phase6_high_edge_midge and parent.lt_phase6_low_edge_midge are used to
             # compute the lookup index in the perfect hash file

@@ -520,17 +520,21 @@ class LookupTable(object):
                 rm_file_if_mismatch(self.filename, self.filesize, self.md5)
                 download_file_if_needed(self.filename, self.parent.size)
 
-                if "perfect-hash" not in self.filename and "hash-cost-only" not in self.filename:
-                    # Find the state_width for the entries in our .txt file
-                    with open(self.filename, "r") as fh:
-                        first_line = next(fh)
-                        self.width = len(first_line)
-                        (state, steps) = first_line.strip().split(":")
-                        self.state_width = len(state)
+            if (
+                "perfect-hash" not in self.filename
+                and "hash-cost-only" not in self.filename
+                and os.path.exists(self.filename)
+            ):
+                # Find the state_width for the entries in our .txt file
+                with open(self.filename, "r") as fh:
+                    first_line = next(fh)
+                    self.width = len(first_line)
+                    (state, steps) = first_line.strip().split(":")
+                    self.state_width = len(state)
 
-                        if steps.isdigit():
-                            self.use_isdigit = True
-                            # logger.info("%s: use_isdigit is True" % self)
+                    if steps.isdigit():
+                        self.use_isdigit = True
+                        # logger.info("%s: use_isdigit is True" % self)
 
         self.hex_format = "%" + "0%dx" % self.state_width
         self.filename_exists = True
@@ -632,6 +636,7 @@ class LookupTable(object):
         Returns:
             a move sequence or move count
         """
+        assert self.width
         first = 0
         last = self.linecount - 1
         state_to_find = bytes(state_to_find, encoding="utf-8")

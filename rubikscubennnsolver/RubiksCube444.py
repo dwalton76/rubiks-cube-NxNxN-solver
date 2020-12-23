@@ -1,5 +1,6 @@
 # standard libraries
 import logging
+from typing import Dict, List, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, wing_str_map
@@ -13,7 +14,7 @@ from rubikscubennnsolver.swaps import swaps_444
 logger = logging.getLogger(__name__)
 
 # fmt: off
-moves_444 = (
+moves_444: Tuple[str] = (
     "U", "U'", "U2", "Uw", "Uw'", "Uw2",
     "L", "L'", "L2", "Lw", "Lw'", "Lw2",
     "F", "F'", "F2", "Fw", "Fw'", "Fw2",
@@ -26,9 +27,9 @@ moves_444 = (
     # "2F", "2F'", "2F2", "2B", "2B'", "2B2"
 )
 
-solved_444 = "UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB"
+solved_444: str = "UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB"
 
-centers_444 = (
+centers_444: Tuple[int] = (
     6, 7, 10, 11,  # Upper
     22, 23, 26, 27,  # Left
     38, 39, 42, 43,  # Front
@@ -37,19 +38,19 @@ centers_444 = (
     86, 87, 90, 91,  # Down
 )
 
-LFRB_centers_444 = (
+LFRB_centers_444: Tuple[int] = (
     22, 23, 26, 27,  # Left
     38, 39, 42, 43,  # Front
     54, 55, 58, 59,  # Right
     70, 71, 74, 75,  # Back
 )
 
-LR_centers_444 = (
+LR_centers_444: Tuple[int] = (
     22, 23, 26, 27,  # Left
     54, 55, 58, 59,  # Right
 )
 
-corners_444 = (
+corners_444: Tuple[int] = (
     1, 4, 13, 16,  # Upper
     17, 20, 29, 32,  # Left
     33, 36, 45, 48,  # Front
@@ -58,7 +59,7 @@ corners_444 = (
     81, 84, 93, 96,  # Down
 )
 
-edges_444 = (
+edges_444: Tuple[int] = (
     2, 3, 5, 8, 9, 12, 14, 15,  # Upper
     18, 19, 21, 24, 25, 28, 30, 31,  # Left
     34, 35, 37, 40, 41, 44, 46, 47,  # Front
@@ -67,67 +68,24 @@ edges_444 = (
     82, 83, 85, 88, 89, 92, 94, 95,  # Down
 )
 
-wings_444 = (
+edge_orbit_0_444: Tuple[int] = (
+    2, 3, 8, 12, 15, 14, 9, 5,  # Upper
+    18, 19, 24, 28, 31, 30, 25, 21,  # Left
+    34, 35, 40, 44, 47, 46, 41, 37,  # Front
+    50, 51, 56, 60, 62, 63, 57, 53,  # Right
+    66, 67, 72, 76, 79, 78, 73, 69,  # Back
+    82, 83, 88, 92, 95, 94, 89, 85,  # Down
+)
+
+wings_444: Tuple[int] = (
     2, 3, 5, 9, 8, 12, 14, 15,  # Upper
     21, 25, 24, 28,  # Left
     53, 57, 56, 60,  # Right
     82, 83, 85, 89, 88, 92, 94, 95,  # Back
 )
-# fmt: on
 
-edges_partner_444 = {
-    2: 67,
-    3: 66,
-    5: 18,
-    8: 51,
-    9: 19,
-    12: 50,
-    14: 34,
-    15: 35,
-    18: 5,
-    19: 9,
-    21: 72,
-    24: 37,
-    25: 76,
-    28: 41,
-    30: 89,
-    31: 85,
-    34: 14,
-    35: 15,
-    37: 24,
-    40: 53,
-    41: 28,
-    44: 57,
-    46: 82,
-    47: 83,
-    50: 12,
-    51: 8,
-    53: 40,
-    56: 69,
-    57: 44,
-    60: 73,
-    62: 88,
-    63: 92,
-    66: 3,
-    67: 2,
-    69: 56,
-    72: 21,
-    73: 60,
-    76: 25,
-    78: 95,
-    79: 94,
-    82: 46,
-    83: 47,
-    85: 31,
-    88: 62,
-    89: 30,
-    92: 63,
-    94: 79,
-    95: 78,
-}
-
-wings_for_edges_recolor_pattern_444 = (
-    ("0", 2, 67),  # upper
+wings_for_edges_recolor_pattern_444: Tuple[Tuple[str, int, int]] = (
+    ("0", 2, 67),  # Upper
     ("1", 3, 66),
     ("2", 5, 18),
     ("3", 8, 51),
@@ -135,15 +93,15 @@ wings_for_edges_recolor_pattern_444 = (
     ("5", 12, 50),
     ("6", 14, 34),
     ("7", 15, 35),
-    ("8", 21, 72),  # left
+    ("8", 21, 72),  # Left
     ("9", 24, 37),
     ("a", 25, 76),
     ("b", 28, 41),
-    ("c", 53, 40),  # right
+    ("c", 53, 40),  # Right
     ("d", 56, 69),
     ("e", 57, 44),
     ("f", 60, 73),
-    ("g", 82, 46),  # down
+    ("g", 82, 46),  # Down
     ("h", 83, 47),
     ("i", 85, 31),
     ("j", 88, 62),
@@ -152,28 +110,18 @@ wings_for_edges_recolor_pattern_444 = (
     ("m", 94, 79),
     ("n", 95, 78),
 )
-
-symmetry_rotations_tsai_phase3_444 = (
-    (),
-    ("x",),
-    ("x'",),
-    ("x", "x"),
-    ("y", "y"),
-    ("z", "z"),
-    ("x", "y", "y"),
-    ("x", "z", "z"),
-    ("reflect-x",),
-    ("reflect-x", "x"),
-    ("reflect-x", "x'"),
-    ("reflect-x", "x", "x"),
-    ("reflect-x", "y", "y"),
-    ("reflect-x", "z", "z"),
-    ("reflect-x", "x", "y", "y"),
-    ("reflect-x", "x", "z", "z"),
-)
+# fmt: on
 
 
-def edges_recolor_pattern_444(state, only_colors=[]):
+def edges_recolor_pattern_444(state: List[int], only_colors: List[str] = None) -> str:
+    """
+    Args:
+        state: the cube state
+        only_colors: only re-color this subset of wings
+
+    Returns:
+        the re-colored cube
+    """
 
     edge_map = {
         "UB": [],
@@ -241,9 +189,9 @@ class LookupTable444UDCentersStage(LookupTable):
     Average: 6.02 moves
     """
 
-    state_targets = ("UUUUxxxxxxxxxxxxxxxxUUUU", "xxxxUUUUxxxxUUUUxxxxxxxx", "xxxxxxxxUUUUxxxxUUUUxxxx")
+    state_targets: Tuple[str] = ("UUUUxxxxxxxxxxxxxxxxUUUU", "xxxxUUUUxxxxUUUUxxxxxxxx", "xxxxxxxxUUUUxxxxUUUUxxxx")
 
-    def __init__(self, parent, build_state_index=False):
+    def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
             parent,
@@ -258,11 +206,23 @@ class LookupTable444UDCentersStage(LookupTable):
             build_state_index=build_state_index,
         )
 
-    def state(self):
+    def state(self) -> str:
+        """
+        Returns:
+            the state of the cube per this lookup table
+        """
         parent_state = self.parent.state
         return "".join(["U" if parent_state[x] in ("U", "D") else "x" for x in centers_444])
 
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
+    def populate_cube_from_state(self, state: str, cube: List[str], steps_to_solve: List[str]) -> None:
+        """
+        Given a state string, populate the cube to match that state string
+
+        Args:
+            state: the target state
+            cube: the cube to manipulate
+            steps_to_solve: N/A for this table
+        """
         state = list(state)
 
         for (pos, pos_state) in zip(centers_444, state):
@@ -287,9 +247,9 @@ class LookupTable444LRCentersStage(LookupTable):
     Average: 6.02 moves
     """
 
-    state_targets = ("LLLLxxxxxxxxxxxxxxxxLLLL", "xxxxLLLLxxxxLLLLxxxxxxxx", "xxxxxxxxLLLLxxxxLLLLxxxx")
+    state_targets: Tuple[str] = ("LLLLxxxxxxxxxxxxxxxxLLLL", "xxxxLLLLxxxxLLLLxxxxxxxx", "xxxxxxxxLLLLxxxxLLLLxxxx")
 
-    def __init__(self, parent, build_state_index=False):
+    def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
             parent,
@@ -304,11 +264,23 @@ class LookupTable444LRCentersStage(LookupTable):
             build_state_index=build_state_index,
         )
 
-    def state(self):
+    def state(self) -> str:
+        """
+        Returns:
+            the state of the cube per this lookup table
+        """
         parent_state = self.parent.state
         return "".join(["L" if parent_state[x] in ("L", "R") else "x" for x in centers_444])
 
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
+    def populate_cube_from_state(self, state: str, cube: List[str], steps_to_solve: List[str]) -> None:
+        """
+        Given a state string, populate the cube to match that state string
+
+        Args:
+            state: the target state
+            cube: the cube to manipulate
+            steps_to_solve: N/A for this table
+        """
         state = list(state)
 
         for (pos, pos_state) in zip(centers_444, state):
@@ -335,7 +307,7 @@ class LookupTable444FBCentersStage(LookupTable):
 
     state_targets = ("FFFFxxxxxxxxxxxxxxxxFFFF", "xxxxFFFFxxxxFFFFxxxxxxxx", "xxxxxxxxFFFFxxxxFFFFxxxx")
 
-    def __init__(self, parent, build_state_index=False):
+    def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
             parent,
@@ -350,11 +322,23 @@ class LookupTable444FBCentersStage(LookupTable):
             build_state_index=build_state_index,
         )
 
-    def state(self):
+    def state(self) -> str:
+        """
+        Returns:
+            the state of the cube per this lookup table
+        """
         parent_state = self.parent.state
         return "".join(["F" if parent_state[x] in ("F", "B") else "x" for x in centers_444])
 
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
+    def populate_cube_from_state(self, state: str, cube: List[str], steps_to_solve: List[str]) -> None:
+        """
+        Given a state string, populate the cube to match that state string
+
+        Args:
+            state: the target state
+            cube: the cube to manipulate
+            steps_to_solve: N/A for this table
+        """
         state = list(state)
 
         for (pos, pos_state) in zip(centers_444, state):
@@ -485,13 +469,22 @@ class LookupTable444HighLowEdges(LookupTable):
             filesize=182094842,
         )
 
-    def state(self):
+    def state(self) -> str:
+        """
+        Returns:
+            the state of the cube per this lookup table
+        """
         parent_state = self.parent.state
         LR_centers = "".join([parent_state[x] for x in LR_centers_444])
         edges = self.parent.highlow_edges_state(self.parent.edge_mapping)
         return LR_centers + edges
 
-    def ida_heuristic(self):
+    def ida_heuristic(self) -> Tuple[str, int]:
+        """
+        Returns:
+            the lookup table state
+            the cost to goal
+        """
         parent_state = self.parent.state
         LR_centers = "".join([parent_state[x] for x in LR_centers_444])
         edges_state = self.parent.highlow_edges_state(self.parent.edge_mapping)
@@ -561,19 +554,13 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
             self,
             parent,
             # Needed tables and their md5 signatures
+            # fmt: off
             (
                 ("lookup-table-4x4x4-step30-reduce333.txt", 73437552, "82fbc3414d07e53448d0746d96e25ebd"),  # 6-deep
-                (
-                    "lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt",
-                    239500848,
-                    "20ac2ed7ca369c3b5183f836f5d99262",
-                ),
-                (
-                    "lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt",
-                    None,
-                    "3f990fc1fb6bf506d81ba65f03ad74f6",
-                ),
+                ("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848, "20ac2ed7ca369c3b5183f836f5d99262"),
+                ("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", None, "3f990fc1fb6bf506d81ba65f03ad74f6"),
             ),
+            # fmt: on
             "4x4x4-reduce-333",  # C_ida_type
         )
 
@@ -582,8 +569,8 @@ class RubiksCube444(RubiksCube):
 
     instantiated = False
 
-    reduce333_orient_edges_tuples = (
-        (2, 67),
+    reduce333_orient_edges_tuples: Tuple[Tuple[int, int]] = (
+        (2, 67),  # Upper
         (3, 66),
         (5, 18),
         (8, 51),
@@ -591,7 +578,7 @@ class RubiksCube444(RubiksCube):
         (12, 50),
         (14, 34),
         (15, 35),
-        (18, 5),
+        (18, 5),  # Left
         (19, 9),
         (21, 72),
         (24, 37),
@@ -599,7 +586,7 @@ class RubiksCube444(RubiksCube):
         (28, 41),
         (30, 89),
         (31, 85),
-        (34, 14),
+        (34, 14),  # Front
         (35, 15),
         (37, 24),
         (40, 53),
@@ -607,7 +594,7 @@ class RubiksCube444(RubiksCube):
         (44, 57),
         (46, 82),
         (47, 83),
-        (50, 12),
+        (50, 12),  # Right
         (51, 8),
         (53, 40),
         (56, 69),
@@ -615,7 +602,7 @@ class RubiksCube444(RubiksCube):
         (60, 73),
         (62, 88),
         (63, 92),
-        (66, 3),
+        (66, 3),  # Back
         (67, 2),
         (69, 56),
         (72, 21),
@@ -623,7 +610,7 @@ class RubiksCube444(RubiksCube):
         (76, 25),
         (78, 95),
         (79, 94),
-        (82, 46),
+        (82, 46),  # Down
         (83, 47),
         (85, 31),
         (88, 62),
@@ -633,13 +620,12 @@ class RubiksCube444(RubiksCube):
         (95, 78),
     )
 
-    def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
+    def __init__(self, state: str, order: str, colormap: Dict = None, avoid_pll: bool = True, debug: bool = False):
         RubiksCube.__init__(self, state, order, colormap, debug)
         self.avoid_pll = avoid_pll
         self.edge_mapping = {}
 
         if RubiksCube444.instantiated:
-            # raise Exception("Another 4x4x4 instance is being created")
             logger.warning("Another 4x4x4 instance is being created")
         else:
             RubiksCube444.instantiated = True
@@ -647,7 +633,11 @@ class RubiksCube444(RubiksCube):
         if debug:
             logger.setLevel(logging.DEBUG)
 
-    def phase(self):
+    def phase(self) -> str:
+        """
+        Returns:
+            a description of the current phase of the solver
+        """
         if self._phase is None:
             self._phase = "Stage UD centers"
             return self._phase
@@ -671,63 +661,22 @@ class RubiksCube444(RubiksCube):
 
         return self._phase
 
-    def sanity_check(self):
-        edge_orbit_0 = (
-            2,
-            3,
-            8,
-            12,
-            15,
-            14,
-            9,
-            5,
-            18,
-            19,
-            24,
-            28,
-            31,
-            30,
-            25,
-            21,
-            34,
-            35,
-            40,
-            44,
-            47,
-            46,
-            41,
-            37,
-            50,
-            51,
-            56,
-            60,
-            62,
-            63,
-            57,
-            53,
-            66,
-            67,
-            72,
-            76,
-            79,
-            78,
-            73,
-            69,
-            82,
-            83,
-            88,
-            92,
-            95,
-            94,
-            89,
-            85,
-        )
-
+    def sanity_check(self) -> None:
+        """
+        Verify the cube is valid
+        """
         self._sanity_check("corners", corners_444, 4)
         self._sanity_check("centers", centers_444, 4)
-        self._sanity_check("edge-orbit-0", edge_orbit_0, 8)
+        self._sanity_check("edge-orbit-0", edge_orbit_0_444, 8)
 
-    def highlow_edges_state(self, edges_to_flip):
+    def highlow_edges_state(self, edges_to_flip: List[str]) -> str:
+        """
+        Args:
+            edges_to_flip: a list of wings to flip
+
+        Returns:
+            the high/low state of the cube
+        """
         state = self.state
 
         if edges_to_flip:
@@ -753,7 +702,10 @@ class RubiksCube444(RubiksCube):
         result = "".join(result)
         return result
 
-    def highlow_edges_print(self):
+    def highlow_edges_print(self) -> None:
+        """
+        Print the high/low state of the cube
+        """
 
         # save cube state
         original_state = self.state[:]
@@ -773,7 +725,10 @@ class RubiksCube444(RubiksCube):
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-    def lt_init(self):
+    def lt_init(self) -> None:
+        """
+        Initialize all lookup tables
+        """
         if self.lt_init_called:
             return
         self.lt_init_called = True
@@ -791,7 +746,7 @@ class RubiksCube444(RubiksCube):
 
         self.lt_reduce333 = LookupTableIDA444Reduce333(self)
 
-    def tsai_phase2(self):
+    def tsai_phase2(self) -> None:
         # Pick the best edge_mapping
         # - an edge_mapping that gives us a hit in the phase2 table is ideal
         #     - pick the best among those
@@ -800,7 +755,7 @@ class RubiksCube444(RubiksCube):
         original_state = self.state[:]
         original_solution = self.solution[:]
         phase1_solution_len = len(self.solution)
-        logger.info("%s: Start of find best edge_mapping" % self)
+        logger.info(f"{self}: Start of find best edge_mapping")
 
         for pre_steps in pre_steps_to_try:
             self.state = original_state[:]
@@ -838,13 +793,11 @@ class RubiksCube444(RubiksCube):
                         break
 
             logger.info(
-                "%s: edge_mapping binary_search_multiple %d high_low_states_to_find begin"
-                % (self, len(high_low_states_to_find))
+                f"{self}: edge_mapping binary_search_multiple {len(high_low_states_to_find)} high_low_states_to_find begin"
             )
             high_low_states = self.lt_highlow_edges.binary_search_multiple(high_low_states_to_find)
             logger.info(
-                "%s: edge_mapping binary_search_multiple %d high_low_states_to_find end"
-                % (self, len(high_low_states_to_find))
+                f"{self}: edge_mapping binary_search_multiple {len(high_low_states_to_find)} high_low_states_to_find end"
             )
             min_edge_mapping = None
             min_phase2_cost = None
@@ -860,16 +813,16 @@ class RubiksCube444(RubiksCube):
                     min_phase2_cost = phase2_cost
                     min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
                     min_phase2_steps = list(pre_steps) + phase2_steps[:]
-                    logger.info("%s: using edge_mapping %s, phase2 cost %s" % (self, min_edge_mapping, phase2_cost))
+                    logger.info(f"{self}: using edge_mapping {min_edge_mapping}, phase2 cost {phase2_cost}")
 
             if min_edge_mapping:
                 if pre_steps:
-                    logger.info("pre-steps %s required to find a hit" % " ".join(pre_steps))
+                    logger.info(f"pre-steps {pre_steps} required to find a hit")
                 break
         else:
             assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
 
-        logger.info("%s: End of find best edge_mapping" % self)
+        logger.info(f"{self}: End of find best edge_mapping")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -882,24 +835,25 @@ class RubiksCube444(RubiksCube):
         # self.highlow_edges_print()
         # sys.exit(0)
 
-        logger.info("%s: Start of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        # self.lt_highlow_edges.solve()
+        logger.info(f"{self}: Start of Phase2, {self.get_solution_len_minus_rotates(self.solution)} steps in")
+
         for step in min_phase2_steps:
             self.rotate(step)
+
         self.solution.append(
-            "COMMENT_%d_steps_444_phase2" % self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_444_phase2"
         )
         self.print_cube()
         self.highlow_edges_print()
-        logger.info("%s: End of Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info(f"{self}: End of Phase2, {self.get_solution_len_minus_rotates(self.solution)} steps in")
 
-    def reduce_333(self):
+    def reduce_333(self) -> None:
 
         # save cube state
         self.original_state = self.state[:]
         self.original_solution = self.solution[:]
 
-        logger.info("%s: Start of Phase1" % self)
+        logger.info(f"{self}: Start of Phase1")
 
         if not self.centers_staged():
             self.print_cube()
@@ -910,22 +864,19 @@ class RubiksCube444(RubiksCube):
             self.print_cube()
 
         phase1_solution_len = len(self.solution)
-        self.solution.append("COMMENT_%d_steps_444_phase1" % self.get_solution_len_minus_rotates(self.solution))
-        logger.info("%s: End of Phase1, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
+        logger.info(f"{self}: End of Phase1, {self.get_solution_len_minus_rotates(self.solution)} steps in")
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
         # We need the edge swaps to be even for our edges lookup table to work.
         if self.edge_swaps_odd(False, 0, False):
-            logger.warning("%s: edge swaps are odd, running prevent_OLL to correct" % self)
+            logger.warning(f"{self}: edge swaps are odd, running prevent_OLL to correct")
             self.prevent_OLL()
             self.print_cube()
             self.solution.append(
-                "COMMENT_%d_steps_prevent_OLL"
-                % self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])
+                f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_prevent_OLL"
             )
-            logger.info(
-                "%s: End of prevent_OLL, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
-            )
+            logger.info(f"{self}: End of prevent_OLL, {self.get_solution_len_minus_rotates(self.solution)} steps in")
 
         self.tsai_phase2()
 
@@ -939,7 +890,7 @@ class RubiksCube444(RubiksCube):
         # logger.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         # sys.exit(0)
 
-        logger.info("%s: Start of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info(f"{self}: Start of Phase3, {self.get_solution_len_minus_rotates(self.solution)} steps in")
         self.lt_reduce333.avoid_pll = True
         self.lt_reduce333.solve()
 
@@ -949,14 +900,22 @@ class RubiksCube444(RubiksCube):
 
         self.print_cube()
         self.solution.append(
-            "COMMENT_%d_steps_444_phase3" % self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:])
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:])}_steps_444_phase3"
         )
-        logger.info("%s: End of Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info(f"{self}: End of Phase3, {self.get_solution_len_minus_rotates(self.solution)} steps in")
         logger.info("")
 
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")
 
 
-def rotate_444(cube, step):
+def rotate_444(cube: List[str], step: str) -> List[str]:
+    """
+    Args:
+        cube: the cube to manipulate
+        step: the move to apply to the cube
+
+    Returns:
+        the cube state after applying ``step``
+    """
     return [cube[x] for x in swaps_444[step]]

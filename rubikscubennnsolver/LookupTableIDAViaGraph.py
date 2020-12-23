@@ -1,6 +1,7 @@
 # standard libraries
 import logging
 import subprocess
+from typing import List
 
 # rubiks cube libraries
 from rubikscubennnsolver import reverse_steps
@@ -9,7 +10,14 @@ from rubikscubennnsolver.LookupTable import LookupTable, NoIDASolution, download
 logger = logging.getLogger(__name__)
 
 
-def remove_failed_ida_output(lines):
+def remove_failed_ida_output(lines: List[str]) -> List[str]:
+    """
+    Args:
+        lines: log output from IDA
+
+    Returns:
+        the log output but with failed IDA output removed
+    """
     result = []
     ida_output = []
 
@@ -31,24 +39,24 @@ class LookupTableIDAViaGraph(LookupTable):
     def __init__(
         self,
         parent,
-        filename=None,
-        all_moves=[],
-        illegal_moves=[],
-        state_target=None,
-        linecount=None,
-        max_depth=None,
-        filesize=None,
-        legal_moves=[],
+        filename: str = None,
+        all_moves: List[str] = [],
+        illegal_moves: List[str] = [],
+        state_target: str = None,
+        linecount: int = None,
+        max_depth: int = None,
+        filesize: int = None,
+        legal_moves: List[str] = [],
         prune_tables=[],
-        multiplier=None,
-        main_table_state_length=None,
-        main_table_max_depth=None,
+        multiplier: float = None,
+        main_table_state_length: int = None,
+        main_table_max_depth: int = None,
         main_table_prune_tables=None,
-        perfect_hash01_filename=None,
-        perfect_hash02_filename=None,
-        pt1_state_max=None,
-        pt2_state_max=None,
-        multiple_solutions=False,
+        perfect_hash01_filename: str = None,
+        perfect_hash02_filename: str = None,
+        pt1_state_max: int = None,
+        pt2_state_max: int = None,
+        multiple_solutions: bool = False,
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -109,19 +117,22 @@ class LookupTableIDAViaGraph(LookupTable):
     def get_ida_graph_nodes(self):
         return [pt.ida_graph_node for pt in self.prune_tables]
 
-    def set_ida_graph_nodes(self, ida_graph_nodes):
+    def set_ida_graph_nodes(self, ida_graph_nodes) -> None:
         for (pt, node) in zip(self.prune_tables, ida_graph_nodes):
             pt.ida_graph_node = node
 
-    def init_state_index_caches(self):
+    def init_state_index_caches(self) -> None:
         for pt in self.prune_tables:
             pt.load_state_index_cache()
 
-    def init_ida_graph_nodes(self):
+    def init_ida_graph_nodes(self) -> None:
         for pt in self.prune_tables:
             pt.ida_graph_node = pt.state_index()
 
     def recolor(self):
+        """
+        re-color the cube per use_nuke_edges, etd and recolor_positions
+        """
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
             logger.info("%s: recolor" % self)
@@ -146,7 +157,7 @@ class LookupTableIDAViaGraph(LookupTable):
             # self.parent.print_cube()
             # sys.exit(0)
 
-    def build_ida_graph_set_cube_state(self, state, steps_to_scramble):
+    def build_ida_graph_set_cube_state(self, state, steps_to_scramble) -> None:
         # If the table we are building is one with multiple goal states then the
         # child class must override this method.
         self.parent.re_init()

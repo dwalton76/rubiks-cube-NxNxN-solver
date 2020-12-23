@@ -1,5 +1,5 @@
 # standard libraries
-import logging
+from typing import List, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube
@@ -7,15 +7,34 @@ from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.RubiksCube222 import moves_222
 from rubikscubennnsolver.swaps import swaps_333
 
-logger = logging.getLogger(__name__)
-
+# fmt: off
 moves_333 = moves_222
-solved_333 = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
-centers_333 = (5, 14, 23, 32, 41, 50)
-
-edges_333 = (2, 4, 6, 8, 11, 13, 15, 17, 20, 22, 24, 26, 29, 31, 33, 35, 38, 40, 42, 44, 47, 49, 51, 53)
-
-corners_333 = (1, 3, 7, 9, 10, 12, 16, 18, 19, 21, 25, 27, 28, 30, 34, 36, 37, 39, 43, 45, 46, 48, 52, 54)
+solved_333: str = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
+centers_333: Tuple[int] = (
+    5,  # Upper
+    14,  # Left
+    23,  # Front
+    32,  # Right
+    41,  # Back
+    50,  # Down
+)
+edges_333: Tuple[int] = (
+    2, 4, 6, 8,  # Upper
+    11, 13, 15, 17,  # Left
+    20, 22, 24, 26,  # Front
+    29, 31, 33, 35,  # Right
+    38, 40, 42, 44,  # Back
+    47, 49, 51, 53,  # Down
+)
+corners_333: Tuple[int] = (
+    1, 3, 7, 9,  # Upper
+    10, 12, 16, 18,  # Left
+    19, 21, 25, 27,  # Front
+    28, 30, 34, 36,  # Right
+    37, 39, 43, 45,  # Back
+    46, 48, 52, 54,  # Down
+)
+# fmt: on
 
 
 class LookupTable333Phase2Edges(LookupTable):
@@ -49,7 +68,11 @@ class LookupTable333Phase2Edges(LookupTable):
             max_depth=12,
         )
 
-    def state(self):
+    def state(self) -> str:
+        """
+        Returns:
+            the state of the cube per this lookup table
+        """
         parent_state = self.parent.state
         result = "".join([parent_state[x] for x in edges_333])
         return result
@@ -87,7 +110,11 @@ class LookupTable333Phase2Corners(LookupTable):
             max_depth=13,
         )
 
-    def state(self):
+    def state(self) -> str:
+        """
+        Returns:
+            the state of the cube per this lookup table
+        """
         parent_state = self.parent.state
         result = "".join([parent_state[x] for x in corners_333])
         return result
@@ -96,24 +123,31 @@ class LookupTable333Phase2Corners(LookupTable):
 class RubiksCube333(RubiksCube):
 
     reduce333_orient_edges_tuples = (
-        (2, 38),
+        (2, 38),  # Upper
         (4, 11),
         (6, 29),
         (8, 20),
-        (13, 42),
+        (13, 42),  # Left
         (15, 22),
-        (24, 31),
+        (24, 31),  # Right
         (33, 40),
-        (47, 26),
+        (47, 26),  # Down
         (49, 17),
         (51, 35),
         (53, 44),
     )
 
-    def phase(self):
+    def phase(self) -> str:
+        """
+        Returns:
+            a description of the current phase of the solver
+        """
         return "Solve 3x3x3"
 
-    def solve(self, solution333=None):
+    def solve(self, solution333: List[str] = None) -> None:
+        """
+        Solve the cube
+        """
 
         if self.solved():
             return
@@ -123,14 +157,25 @@ class RubiksCube333(RubiksCube):
         self.solve_333()
         self.compress_solution()
 
-    def lt_init(self):
+    def lt_init(self) -> None:
+        """
+        Initialize all lookup tables
+        """
         if self.lt_init_called:
             return
-        self.lt_init_called = True
 
+        self.lt_init_called = True
         self.lt_phase2_edges = LookupTable333Phase2Edges(self)
         self.lt_phase2_corners = LookupTable333Phase2Corners(self)
 
 
-def rotate_333(cube, step):
+def rotate_333(cube: List[str], step: str) -> List[str]:
+    """
+    Args:
+        cube: the cube to manipulate
+        step: the move to apply to the cube
+
+    Returns:
+        the cube state after applying ``step``
+    """
     return [cube[x] for x in swaps_333[step]]

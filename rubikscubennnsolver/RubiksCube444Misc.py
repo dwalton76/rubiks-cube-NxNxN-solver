@@ -5,15 +5,15 @@ from typing import Dict, Set, Tuple
 # 0-11 are low edges, make these D (6)
 # https://github.com/cs0x7f/TPR-4x4x4-Solver/blob/master/src/FullCube.java
 high_edges_444: Tuple[Tuple[int, int, int]] = (
-    (14, 2, 67),  # upper
+    (14, 2, 67),  # Upper
     (13, 9, 19),
     (15, 8, 51),
     (12, 15, 35),
-    (21, 25, 76),  # left
+    (21, 25, 76),  # Left
     (20, 24, 37),
-    (23, 57, 44),  # right
+    (23, 57, 44),  # Right
     (22, 56, 69),
-    (18, 82, 46),  # down
+    (18, 82, 46),  # Down
     (17, 89, 30),
     (19, 88, 62),
     (16, 95, 78),
@@ -21,15 +21,15 @@ high_edges_444: Tuple[Tuple[int, int, int]] = (
 
 
 low_edges_444: Tuple[Tuple[int, int, int]] = (
-    (2, 3, 66),  # upper
+    (2, 3, 66),  # Upper
     (1, 5, 18),
     (3, 12, 50),
     (0, 14, 34),
-    (9, 21, 72),  # left
+    (9, 21, 72),  # Left
     (8, 28, 41),
-    (11, 53, 40),  # right
+    (11, 53, 40),  # Right
     (10, 60, 73),
-    (6, 83, 47),  # down
+    (6, 83, 47),  # Down
     (5, 85, 31),
     (7, 92, 63),
     (4, 94, 79),

@@ -7,7 +7,6 @@ import os
 import resource
 import shutil
 import subprocess
-from pprint import pformat
 from subprocess import call
 from typing import Dict, List, TextIO, Tuple
 
@@ -245,17 +244,17 @@ def pretty_time(delta: dt.timedelta) -> str:
         delta_ms = int(delta_us / 1000)
 
         if delta_ms >= 500:
-            return "\033[91m%sms\033[0m" % delta_ms
+            return f"\033[91m{delta_ms}ms\033[0m"
         else:
-            return "%sms" % delta_ms
+            return f"{delta_ms}ms"
 
     elif delta.startswith("0:00:01."):
         delta_us = int(delta.split(".")[1])
         delta_ms = 1000 + int(delta_us / 1000)
-        return "\033[91m%sms\033[0m" % delta_ms
+        return f"\033[91m{delta_ms}ms\033[0m"
 
     else:
-        return "\033[91m%s\033[0m" % delta
+        return f"\033[91m{delta_ms}\033[0m"
 
 
 def find_first_last(
@@ -349,7 +348,7 @@ def rm_file_if_mismatch(filename: str, filesize: int, md5target: str) -> None:
 
         elif md5target is not None:
             if md5signature(filename) != md5target:
-                logger.info("%s: md5 signature %s is not %s" % (filename, md5signature(filename), md5target))
+                logger.info(f"{filename}: md5 signature {md5signature(filename)} is not {md5target}")
                 os.remove(filename)
 
                 if os.path.exists(filename_gz):
@@ -369,7 +368,7 @@ def download_file_if_needed(filename: str, cube_size: int) -> None:
 
         if not os.path.exists(filename_gz):
             url = f"https://rubiks-cube-lookup-tables.s3.amazonaws.com/{filename_gz_no_dir}"
-            logger.info("Downloading table via 'wget %s'" % url)
+            logger.info(f"Downloading table via 'wget {url}'")
             call(["wget", url])
 
             if not os.path.exists(filename_gz_no_dir):
@@ -377,7 +376,7 @@ def download_file_if_needed(filename: str, cube_size: int) -> None:
 
             shutil.move(filename_gz_no_dir, filename_gz)
 
-        logger.info("gunzip %s" % filename_gz)
+        logger.info(f"gunzip {filename_gz}")
         call(["gunzip", filename_gz])
 
 
@@ -498,9 +497,6 @@ class LookupTable(object):
             for step in all_moves:
                 if step not in illegal_moves:
                     self.legal_moves.append(step)
-        # logger.info("%s: all_moves %s" % (self, pformat(all_moves)))
-        # logger.info("%s: illegal_moves %s" % (self, pformat(illegal_moves)))
-        # logger.info("%s: legal_moves %s\n" % (self, " ".join(self.legal_moves)))
 
         if isinstance(state_target, tuple):
             self.state_target = set(state_target)
@@ -512,7 +508,7 @@ class LookupTable(object):
             self.state_target = set((state_target,))
 
         if self.filename:
-            assert self.linecount, "%s linecount is %s" % (self, self.linecount)
+            assert self.linecount, f"{self} linecount is {self.linecount}"
 
             if use_state_index:
                 if not build_state_index:
@@ -716,6 +712,7 @@ class LookupTable(object):
                 # The bottleneck is the building of the dictionary, moreso that reading from disk.
                 for line in fh:
                     (state, steps) = line.rstrip().split(":")
+
                     # Store this as a string, not a list.  It takes more than 2x the memory to store steps.split()
                     # For solving a 7x7x7 this is the difference in requiring 3G of RAM vs 7G!!.
                     self.cache[state] = steps
@@ -723,9 +720,7 @@ class LookupTable(object):
         self.preloaded_cache_dict = True
         memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         memory_delta = memory_post - memory_pre
-        logger.info(
-            "{}: end preload cache dict ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post)
-        )
+        logger.info(f"{self}: end preload cache dict ({memory_delta} bytes delta, {memory_post} bytes total)")
 
     def preload_cache_set(self) -> None:
         """
@@ -752,9 +747,7 @@ class LookupTable(object):
         self.preloaded_cache_set = True
         memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         memory_delta = memory_post - memory_pre
-        logger.info(
-            "{}: end preload cache set ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post)
-        )
+        logger.info(f"{self}: end preload cache set ({memory_delta} bytes delta, {memory_post} bytes total)")
 
     def preload_cache_string(self) -> None:
         """
@@ -774,11 +767,8 @@ class LookupTable(object):
         self.preloaded_cache_string = True
         memory_post = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         memory_delta = memory_post - memory_pre
-        # logger.info("{}: {:,} characters in cache".format(self, len(self.cache_string)))
         logger.info(
-            "{}: end preload cache string ({:,} bytes delta, {:,} bytes total, {:,} characters)".format(
-                self, memory_delta, memory_post, len(self.cache_string)
-            )
+            f"{self}: end preload cache string ({memory_delta} bytes delta, {memory_post} bytes total, {len(self.cache_string)} characters)"
         )
 
     def steps(self, state_to_find: str = None) -> List[str]:
@@ -807,7 +797,6 @@ class LookupTable(object):
             if state_to_find in self.cache_set:
                 # Binary search the file to get the value
                 line = self.binary_search(state_to_find)
-                # logger.info("%s: %s is in cache_set, line %s" % (self, state_to_find, line))
                 (state, steps) = line.strip().split(":")
                 steps_list = steps.split()
                 return steps_list
@@ -816,7 +805,6 @@ class LookupTable(object):
             line = self.binary_search_cache_string(state_to_find)
 
             if line:
-                # logger.info("%s: %s is in cache_string, line %s" % (self, state_to_find, line))
                 (state, steps) = line.strip().split(":")
                 steps_list = steps.split()
                 return steps_list
@@ -824,7 +812,7 @@ class LookupTable(object):
         # Binary search the file to get the value
         else:
             if not self.printed_disk_io_warning:
-                logger.info("%s: is binary searching the disk" % self)
+                logger.info(f"{self}: is binary searching the disk")
                 self.printed_disk_io_warning = True
 
             line = self.binary_search(state_to_find)
@@ -846,19 +834,17 @@ class LookupTable(object):
         steps = self.steps(state_to_find)
 
         if steps is None:
-            # logger.info("%s: steps_cost None for %s (stage_target)" % (self, state_to_find))
             return 0
         else:
             if self.use_isdigit:
                 return int(steps[0])
             else:
-                # logger.info("%s: steps_cost %d for %s (%s)" % (self, len(steps), state_to_find, ' '.join(steps)))
                 return len(steps)
 
     def solve(self) -> None:
 
         if not self.filename_exists:
-            raise SolveError("%s does not exist" % self.filename)
+            raise SolveError(f"{self.filename} does not exist")
 
         if "TBD" in self.state_target:
             tbd = True
@@ -871,8 +857,7 @@ class LookupTable(object):
 
             if tbd:
                 logger.info(
-                    "%s: solve() state %s vs state_target %s, cost_to_goal %d"
-                    % (self, state, pformat(self.state_target), cost_to_goal)
+                    f"{self}: solve() state {state} vs state_target {self.state_target}, cost_to_goal {cost_to_goal}"
                 )
 
             if state in self.state_target:
@@ -884,8 +869,7 @@ class LookupTable(object):
                 for step in steps:
                     self.parent.rotate(step)
             else:
-                # self.parent.print_cube()
-                raise NoSteps("%s: state %s does not have steps" % (self, state))
+                raise NoSteps(f"{self}: state {state} does not have steps")
 
     def heuristic(self, pt_state: str) -> int:
         """
@@ -907,11 +891,10 @@ class LookupTable(object):
                 # Make sure we know it if we are missing a ton of them for 5x5x5-step500-pair-last-eight-edges.
                 # Sometimes we get the edges in an unsolvable state.
                 if str(self) == "5x5x5-step500-pair-last-eight-edges":
-                    logger.info("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
+                    logger.info(f"{self}: pt_state {pt_state} cost is 0 but this is not a state_target")
                 else:
-                    logger.debug("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
-                # self.parent.enable_print_cube = True
-                # raise NoPruneTableState("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
+                    logger.debug(f"{self}: pt_state {pt_state} cost is 0 but this is not a state_target")
+
                 result = self.max_depth + 1
 
             return result
@@ -932,15 +915,15 @@ class LookupTable(object):
         states = sorted(self.cache.keys())
         state_index_filename = self.filename.replace(".txt", ".state_index")
 
-        logger.info("%s: state_index begin" % self)
+        logger.info(f"{self}: state_index begin")
         with open(state_index_filename, "w") as fh:
             for (index, state) in enumerate(states):
                 fh.write("%s:%d\n" % (state, index))
 
         subprocess.call(["./utils/pad-lines.py", state_index_filename])
-        logger.info("%s: state_index end" % self)
+        logger.info(f"{self}: state_index end")
 
-        logger.info("%s: json begin" % self)
+        logger.info(f"{self}: json begin")
         index = 0
 
         for (state, steps) in self.cache.items():
@@ -949,7 +932,6 @@ class LookupTable(object):
             if state in self.state_target:
                 len_steps = 0
 
-            # logger.info("%s: state %s -> %s, cost %d (%s)" % (self, state, binary_state, len_steps, steps))
             parent.nuke_edges()
             parent.nuke_corners()
             parent.nuke_centers()
@@ -962,7 +944,6 @@ class LookupTable(object):
             for step in legal_moves:
                 parent.rotate(step)
                 state_for_step = self.state()
-                # logger.info("moved %s, new state %s" % (step, state_for_step))
                 ida_graph[state]["edges"][step] = state_for_step
                 parent.state = baseline_state[:]
 
@@ -981,7 +962,8 @@ class LookupTable(object):
         with open(self.filename.replace(".txt", ".json"), "w") as fh:
             json.dump(ida_graph, fh, indent=True)
             fh.write("\n")
-        logger.info("%s: json end" % self)
+
+        logger.info(f"{self}: json end")
 
     def load_ida_graph(self) -> None:
         """
@@ -990,9 +972,9 @@ class LookupTable(object):
         bin_filename = self.filename.replace(".txt", ".bin")
 
         with open(bin_filename, "rb") as fh:
-            logger.info("%s: load IDA graph begin" % self)
+            logger.info(f"{self}: load IDA graph begin")
             self.ida_graph = fh.read()
-            logger.info("%s: load IDA graph end" % self)
+            logger.info(f"{self}: load IDA graph end")
 
     def load_state_index_cache(self) -> None:
         """
@@ -1048,13 +1030,11 @@ class LookupTable(object):
         """
         if self.ida_graph_node is None:
             self.ida_graph_node = self.state_index()
-            # logger.info("%s: init state_index %s" % (self, self.ida_graph_node))
 
         state_index = self.ida_graph_node
         cost_to_goal = self.ida_graph[state_index * self.ROW_LENGTH]
         lt_state = self.reverse_state_index(state_index)
 
-        # logger.info(f"{self}: state_index {state_index} -> lt_state {lt_state}")
         return (lt_state, cost_to_goal)
 
 
@@ -1089,7 +1069,7 @@ class LookupTableIDA(LookupTable):
 
         for x in moves_illegal:
             if x not in moves_all:
-                raise Exception("illegal move %s is not in the list of legal moves" % x)
+                raise ValueError(f"illegal move {x} is not in the list of legal moves")
 
         if legal_moves:
             self.moves_all = list(legal_moves)
@@ -1123,7 +1103,6 @@ class LookupTableIDA(LookupTable):
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
             logger.info("%s: recolor" % self)
-            # self.parent.print_cube()
 
             if self.nuke_corners:
                 self.parent.nuke_corners()
@@ -1235,18 +1214,6 @@ class LookupTableIDA(LookupTable):
         Returns:
             True if we found a solution
         """
-
-        # uncomment to cProfile solve()
-        """
-        pass
-
-    import cProfile as profile
-    def solve(self, min_ida_threshold=None, max_ida_threshold=99):
-            profile.runctx('self.solve_with_cprofile()', globals(), locals())
-
-    def solve_with_cprofile(self, min_ida_threshold=None, max_ida_threshold=99):
-        """
-
         if self.parent.size == 2:
             # rubiks cube libraries
             from rubikscubennnsolver.RubiksCube222 import rotate_222
@@ -1278,7 +1245,7 @@ class LookupTableIDA(LookupTable):
             self.rotate_xxx = rotate_777
 
         else:
-            raise NotImplementedError("Need rotate_xxx" % (self.parent.size, self.parent.size, self.parent.size))
+            raise NotImplementedError(f"Need rotate_{self.parent.size}{self.parent.size}{self.parent.size}")
 
         # If this is a lookup table that is staging a pair of colors (such as U and D)
         # then recolor the cubies accordingly.
@@ -1298,12 +1265,11 @@ class LookupTableIDA(LookupTable):
             # logger.info("%s: verify we can avoid OLL via moves %s" % (self, " ".join(self.moves_all)))
             for step in self.moves_all:
                 if "w" in step and not step.endswith("2"):
-                    logger.info("%s: has avoid_oll %s" % (self, pformat(self.avoid_oll)))
+                    logger.info(f"{self}: has avoid_oll {self.avoid_oll}")
                     break
             else:
                 raise Exception(
-                    "%s: has avoid_oll %s but there are no quarter wide turns among moves_all %s"
-                    % (self, pformat(self.avoid_oll), " ".join(self.moves_all))
+                    f"{self}: has avoid_oll {self.avoid_oll} but there are no quarter wide turns among moves_all {self.moves_all}"
                 )
 
         # Get the intial cube state and cost_to_goal
@@ -1311,7 +1277,7 @@ class LookupTableIDA(LookupTable):
 
         # The cube is already in the desired state, nothing to do
         if cost_to_goal == 0:
-            logger.info("%s: cube state %s is in our lookup table" % (self, state))
+            logger.info(f"{self}: cube state {state} is in our lookup table")
             tmp_solution = self.parent.solution[:]
             self.parent.state = self.pre_recolor_state[:]
             self.parent.solution = self.pre_recolor_solution[:]
@@ -1328,8 +1294,7 @@ class LookupTableIDA(LookupTable):
             min_ida_threshold = cost_to_goal
 
         start_time0 = dt.datetime.now()
-        # logger.info("%s: using moves %s" % (self, pformat(self.moves_all)))
-        logger.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold))
+        logger.info(f"{self}: IDA threshold range {min_ida_threshold}->{max_ida_threshold}")
         total_ida_count = 0
 
         for threshold in range(min_ida_threshold, max_ida_threshold + 1):
@@ -1347,8 +1312,7 @@ class LookupTableIDA(LookupTable):
             delta = end_time1 - start_time1
             nodes_per_sec = int(self.ida_count / delta.total_seconds())
             logger.info(
-                "%s: IDA threshold %d, explored %d nodes in %s, %d nodes-per-sec"
-                % (self, threshold, self.ida_count, pretty_time(delta), nodes_per_sec)
+                f"{self}: IDA threshold {threshold}, explored {self.ida_count} nodes in {pretty_time(delta)}, {nodes_per_sec} nodes-per-sec"
             )
 
             if found_solution:
@@ -1360,15 +1324,13 @@ class LookupTableIDA(LookupTable):
 
                 delta = end_time1 - start_time0
                 nodes_per_sec = int(total_ida_count / delta.total_seconds())
-                logger.info(
-                    "%s: IDA explored %d nodes in %s, %d nodes-per-sec" % (self, total_ida_count, delta, nodes_per_sec)
-                )
+                logger.info(f"{self}: IDA explored {total_ida_count} nodes in {delta}, {nodes_per_sec} nodes-per-sec")
                 return True
 
-        logger.info("%s: could not find a solution via IDA with max threshold of %d " % (self, max_ida_threshold))
+        logger.info(f"{self}: could not find a solution via IDA with max threshold of {max_ida_threshold}")
         self.parent.state = self.original_state[:]
         self.parent.solution = self.original_solution[:]
-        raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold + 1))
+        raise NoIDASolution(f"{self} FAILED with range {min_ida_threshold}->{max_ida_threshold + 1}")
 
 
 class LookupTableIDAViaC(object):
@@ -1405,7 +1367,6 @@ class LookupTableIDAViaC(object):
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
             logger.info("%s: recolor" % self)
-            # self.parent.print_cube()
 
             if self.nuke_corners:
                 self.parent.nuke_corners()
@@ -1428,8 +1389,7 @@ class LookupTableIDAViaC(object):
         The goal is to find a sequence of moves that will put the cube in a state that is one of our state_targets
         """
 
-        # If this is a lookup table that is staging a pair of colors (such as U and D)
-        # then recolor the cubies accordingly.
+        # If this is a lookup table that is staging a pair of colors (such as U and D) then recolor the cubies accordingly.
         self.pre_recolor_state = self.parent.state[:]
         self.pre_recolor_solution = self.parent.solution[:]
         self.recolor()
@@ -1465,7 +1425,7 @@ class LookupTableIDAViaC(object):
                     cmd.append("--orbit1-need-even-w")
 
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
-                raise Exception("avoid_oll is only supported for orbits 0 or 1, not {}".format(self.avoid_oll))
+                raise ValueError(f"avoid_oll is only supported for orbits 0 or 1, not {self.avoid_oll}")
 
         if self.parent.cpu_mode == "fast":
             cmd.append("--fast")

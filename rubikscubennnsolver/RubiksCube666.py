@@ -10,7 +10,7 @@ from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.swaps import swaps_666
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 moves_666 = (
@@ -961,7 +961,7 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
         )
 
     def recolor(self):
-        log.info("%s: recolor (custom)" % self)
+        logger.info("%s: recolor (custom)" % self)
         self.parent.nuke_corners()
         self.parent.nuke_edges()
 
@@ -1909,7 +1909,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         if RubiksCube666.instantiated:
             # raise Exception("Another 6x6x6 instance is being created")
-            log.warning("Another 6x6x6 instance is being created")
+            logger.warning("Another 6x6x6 instance is being created")
         else:
             RubiksCube666.instantiated = True
 
@@ -2230,7 +2230,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             "COMMENT_%d_steps_666_LR_oblique_edges_staged"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
-        log.info(
+        logger.info(
             "%s: LR oblique edges paired (not staged), %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
@@ -2250,7 +2250,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube()
-        log.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # phase 4
         # pair the UD oblique edges and outer x-centers to finish staging centers
@@ -2262,7 +2262,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-        log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges
@@ -2278,11 +2278,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             "COMMENT_%d_steps_666_UD_reduced_to_555"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
-        log.info(
+        logger.info(
             "%s: UD inner x-center solved and oblique edges paired, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        # log.info("kociemba: %s" % self.get_kociemba_string(True))
 
         # phase 6
         # solve the LR inner x-centers and pair the LR oblique edges
@@ -2294,7 +2293,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             "COMMENT_%d_steps_666_LR_FB_reduced_to_555"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
-        log.info(
+        logger.info(
             "%s: LFRB inner x-center and oblique edges paired, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )

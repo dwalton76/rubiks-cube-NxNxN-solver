@@ -1,23 +1,33 @@
 # standard libraries
-import logging
 import sys
+from typing import List, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, SolveError
 from rubikscubennnsolver.swaps import swaps_222
 
-log = logging.getLogger(__name__)
-
-
-moves_222 = ("U", "U'", "U2", "L", "L'", "L2", "F", "F'", "F2", "R", "R'", "R2", "B", "B'", "B2", "D", "D'", "D2")
-solved_222 = "UUUURRRRFFFFDDDDLLLLBBBB"
+# fmt: off
+moves_222: Tuple[str] = (
+    "U", "U'", "U2",
+    "L", "L'", "L2",
+    "F", "F'", "F2",
+    "R", "R'", "R2",
+    "B", "B'", "B2",
+    "D", "D'", "D2",
+)
+solved_222: str = "UUUURRRRFFFFDDDDLLLLBBBB"
+# fmt: on
 
 
 class RubiksCube222(RubiksCube):
-    def phase(self):
+    def phase(self) -> str:
+        """
+        Returns:
+            a description of the current phase of the solver
+        """
         return "Solve 2x2x2"
 
-    def solve_non_table(self):
+    def solve_non_table(self) -> None:
         """
         100% of the credit for this 2x2x2 solver goes to
         http://codegolf.stackexchange.com/questions/35002/solve-the-rubiks-pocket-cube
@@ -48,8 +58,7 @@ class RubiksCube222(RubiksCube):
         """
 
         # 'normal' must be in U, R, F, D, L, B order
-        # This is the order used by the kociemba 3x3x3 solver so
-        # the rubiks-color-resolver uses this order
+        # This is the order used by the kociemba 3x3x3 solver so the rubiks-color-resolver uses this order
         normal = self.get_kociemba_string(False)
         upper = normal[0:4]
         right = normal[4:8]
@@ -122,7 +131,7 @@ class RubiksCube222(RubiksCube):
 
         raise SolveError("Could not find a solution")
 
-    def solve(self, solution333=None):
+    def solve(self, solution333: List[str] = None) -> None:
         self.solve_non_table()
         self.compress_solution()
 
@@ -131,5 +140,13 @@ class RubiksCube222(RubiksCube):
         # self.rotate_F_to_F()
 
 
-def rotate_222(cube, step):
+def rotate_222(cube: List[str], step: str) -> List[str]:
+    """
+    Args:
+        cube: the cube to manipulate
+        step: the move to apply to the cube
+
+    Returns:
+        the cube state after applying ``step``
+    """
     return [cube[x] for x in swaps_222[step]]

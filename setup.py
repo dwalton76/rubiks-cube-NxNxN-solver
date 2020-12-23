@@ -1,3 +1,4 @@
+# third party libraries
 from setuptools import setup
 
 with open("README.md") as fh:
@@ -16,6 +17,5 @@ setup(
     author="Daniel Walton",
     author_email="dwalton76@gmail.com",
     license=license_text,
-    scripts=["usr/bin/rubiks-cube-solver.py"],
     packages=["rubikscubennnsolver"],
 )

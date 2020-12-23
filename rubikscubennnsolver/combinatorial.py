@@ -1,15 +1,15 @@
 """
 https://en.wikipedia.org/wiki/Combinatorial_number_system
+
+The code below is no longer used but am saving it for a rainy day
 """
 
 # standard libraries
-import logging
 import math
+from typing import List
 
-log = logging.getLogger(__name__)
 
-
-def choose(a, b):
+def choose(a: int, b: int) -> int:
     """
     >>> choose(23, 8)
     490314
@@ -32,7 +32,6 @@ def choose(a, b):
     >>> choose(7, -1)
     0
     """
-    # log.info("a %s, b %s" % (a, b))
     if b < 0:
         return 0
     elif b == a:
@@ -43,7 +42,7 @@ def choose(a, b):
     return int(math.factorial(a) / (math.factorial(b) * math.factorial(a - b)))
 
 
-def encode(perm):
+def encode(perm: List[int]) -> int:
     """
     >>> encode([11, 10, 9, 8, 3, 2, 1, 0])
     425
@@ -58,7 +57,6 @@ def encode(perm):
 
     while i < perm_len:
         result = choose(perm[i], k)
-        # log.info("choose(%d, %d) returned %d" % (perm[i], k, result))
         total += result
         k -= 1
         i += 1
@@ -66,7 +64,7 @@ def encode(perm):
     return total
 
 
-def decode(n, k, start):
+def decode(n: int, k: int, start: int) -> List[int]:
     """
     >>> decode(0, 8, 24)
     [7, 6, 5, 4, 3, 2, 1, 0]
@@ -78,20 +76,16 @@ def decode(n, k, start):
 
     for c in reversed(range(start)):
         result_choose = choose(c, k)
-        # log.info("choose(%d, %d) returned %d (n is %d)" % (c, k, result_choose, n))
 
         if result_choose <= n:
             n -= result_choose
             k -= 1
             result.append(c)
-            # log.info("update: n %d, k %d, c %d, result %s" % (n, k, c, ' '.join(map(str, result))))
 
-        # log.info("")
-        # log.info("")
     return result
 
 
-def state_to_list(state):
+def state_to_list(state: str) -> List[int]:
     """
     >>> state_to_list('xxLL')
     [3, 2]
@@ -115,7 +109,7 @@ def state_to_list(state):
     return result
 
 
-def state_to_rank(state):
+def state_to_rank(state: str) -> int:
     """
     >>> state_to_rank('xxLL')
     5
@@ -135,9 +129,6 @@ def state_to_rank(state):
 
 
 if __name__ == "__main__":
-
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)20s %(levelname)8s: %(message)s")
-    log = logging.getLogger(__name__)
 
     # standard libraries
     import doctest

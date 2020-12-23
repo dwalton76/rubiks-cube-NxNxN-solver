@@ -2,8 +2,9 @@
 import logging
 import math
 from pprint import pformat
+from typing import List, Tuple
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def build_2d_list(squares_list):
@@ -36,10 +37,6 @@ class NotSolving(Exception):
 
 
 class StuckInALoop(Exception):
-    pass
-
-
-class ImplementThis(Exception):
     pass
 
 
@@ -131,7 +128,7 @@ class Side(object):
         else:
             self.center_edge_pos = []
 
-        log.debug(
+        logger.debug(
             "\nSide %s\n\tmin/max %d/%d\n\tedges %s\n\tcorners %s\n\tcenters %s\n\tcenter corners %s\n\tcenter edges %s\n"
             % (
                 self.name,
@@ -160,10 +157,12 @@ class Side(object):
         try:
             return self.wing_partner[wing_index]
         except KeyError:
-            log.info("wing_partner\n%s\n" % pformat(self.wing_partner))
+            logger.info("wing_partner\n%s\n" % pformat(self.wing_partner))
             raise
 
-    def non_paired_wings(self, check_north, check_west, check_south, check_east):
+    def non_paired_wings(
+        self, check_north: bool, check_west: bool, check_south: bool, check_east: bool
+    ) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
         non_paired_wings = []
 
         # north edge
@@ -232,7 +231,9 @@ class Side(object):
 
         return non_paired_wings
 
-    def non_paired_edges(self, check_north, check_west, check_south, check_east):
+    def non_paired_edges(
+        self, check_north, check_west, check_south, check_east
+    ) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
         non_paired_edges = []
 
         # north edge
@@ -303,7 +304,7 @@ class Side(object):
                 prev_pos1 = pos1
                 prev_pos2 = pos2
 
-        # log.info("%s; non_paired_edges %s for check_north %s, check_west %s, check_south %s, check_east %s" %
+        # logger.info("%s; non_paired_edges %s for check_north %s, check_west %s, check_south %s, check_east %s" %
         #    (self, check_north, check_west, check_south, check_east, non_paired_edges))
         return non_paired_edges
 

@@ -7,7 +7,7 @@ from pprint import pformat
 from statistics import median
 
 # rubiks cube libraries
-from rubikscubennnsolver import ImplementThis, NotSolving, SolveError, StuckInALoop
+from rubikscubennnsolver import NotSolving, SolveError, StuckInALoop, configure_logging
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222, solved_222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
@@ -29,8 +29,8 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import (
     solved_151515,
 )
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s")
-log = logging.getLogger(__name__)
+configure_logging()
+logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--size", type=str, default="4x4x4")
@@ -138,7 +138,7 @@ try:
                 continue
 
             # os.system('clear')
-            log.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
+            logger.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
             num_test_cases_executed += 1
             kociemba_string = str(kociemba_string)
             cube.solution = []
@@ -151,13 +151,13 @@ try:
             except NotSolving:
 
                 if num_test_cases_executed % 100 == 0:
-                    # log.info("%s: heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
+                    # logger.info("%s: heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
                     tmp_heuristic_stats = {}
 
                     for (key, value) in cube.heuristic_stats.items():
                         tmp_heuristic_stats[key] = int(median(value))
 
-                    log.info("%s: heuristic_stats median\n%s\n\n" % (size, pformat(tmp_heuristic_stats)))
+                    logger.info("%s: heuristic_stats median\n%s\n\n" % (size, pformat(tmp_heuristic_stats)))
 
                 continue
 
@@ -219,16 +219,7 @@ try:
     for result in results:
         print(result)
 
-except ImplementThis:
-    cube.print_cube_layout()
-    raise
-
-except SolveError:
-    cube.print_cube_layout()
-    cube.print_cube()
-    raise
-
-except StuckInALoop:
+except (NotImplementedError, SolveError, StuckInALoop):
     cube.print_cube_layout()
     cube.print_cube()
     raise

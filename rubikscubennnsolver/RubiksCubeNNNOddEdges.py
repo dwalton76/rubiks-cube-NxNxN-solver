@@ -6,7 +6,7 @@ from math import ceil
 from rubikscubennnsolver import RubiksCube
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class RubiksCubeNNNOddEdges(RubiksCube):
@@ -34,7 +34,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         return self.fake_555
 
     def pair_edge_orbit_via_555(self, orbit):
-        log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
+        logger.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
         fake_555 = self.get_fake_555()
 
         # Fill in the corners so we can avoid certain types of parity
@@ -73,11 +73,11 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             row5_col2 = row1_col2 + ((self.size - 1) * self.size)
             row5_col3 = row1_col3 + ((self.size - 1) * self.size)
 
-            log.debug("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
-            log.debug("%d row2: %s, %s" % (x, row2_col1, row2_col3))
-            log.debug("%d row3: %s, %s" % (x, row3_col1, row3_col3))
-            log.debug("%d row4: %s, %s" % (x, row4_col1, row4_col3))
-            log.debug("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
+            logger.debug("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
+            logger.debug("%d row2: %s, %s" % (x, row2_col1, row2_col3))
+            logger.debug("%d row3: %s, %s" % (x, row3_col1, row3_col3))
+            logger.debug("%d row4: %s, %s" % (x, row4_col1, row4_col3))
+            logger.debug("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
 
             # row1
             fake_555.state[start_555 + 2] = self.state[row1_col1]
@@ -202,7 +202,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 ):
                     step = wide_str + step[1:]
 
-                # log.info("wide_str %s, orig-step %s -> step %s" % (wide_str, orig_step, step))
+                # logger.info("wide_str %s, orig-step %s -> step %s" % (wide_str, orig_step, step))
                 self.rotate(step)
 
     def group_edges(self):
@@ -215,4 +215,4 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             self.pair_edge_orbit_via_555(orbit)
 
         self.print_cube()
-        log.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))

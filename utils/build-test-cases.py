@@ -1,10 +1,13 @@
+"""
+Used to generate the test cubes in utils/10k-444-cubes.json, etc
+"""
 # standard libraries
 import json
 import logging
 from collections import OrderedDict
 
 # rubiks cube libraries
-from rubikscubennnsolver import RubiksCube
+from rubikscubennnsolver import RubiksCube, configure_logging
 from rubikscubennnsolver.RubiksCubeNNNEven import solved_888
 from rubikscubennnsolver.RubiksCubeNNNOdd import solved_999
 
@@ -15,8 +18,8 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import solved_999
 # from rubikscubennnsolver.RubiksCube666 import solved_666
 # from rubikscubennnsolver.RubiksCube777 import solved_777
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)12s %(levelname)8s: %(message)s")
-log = logging.getLogger(__name__)
+configure_logging()
+logger = logging.getLogger(__name__)
 
 test_cases = OrderedDict()
 test_cases["2x2x2"] = []
@@ -53,7 +56,7 @@ cubes["9x9x9"] = RubiksCube(solved_999, "URFDLB")
 # cubes["17x17x17"] = RubiksCube(solved_171717, 'URFDLB')
 
 for (size, cube) in cubes.items():
-    log.info("size %s has cube %s" % (size, cube))
+    logger.info("size %s has cube %s" % (size, cube))
     for x in range(10):
         cube.re_init()
         cube.randomize()
@@ -61,13 +64,3 @@ for (size, cube) in cubes.items():
         test_cases[size].append(ks)
 
 print(json.dumps(test_cases, indent=4))
-
-# Build cube in:
-# https://www.speedsolving.com/forum/threads/arnauds-5x5x5-edge-pairing-method-examples.1447/
-"""
-cube = RubiksCube(solved_555)
-for step in "Rw U Rw' U Rw U2 Rw' F' U Lw' U2 Lw U Lw' U Lw L2 R2 F2 B2 Rw U Rw' U Rw U2 Rw' F' U Lw' U2 Lw U Lw' U Lw L R' F2 D' B2 Rw U Rw' U Rw U2 Rw' F' U Lw' U2 Lw U Lw' U Lw".split():
-    cube.rotate(step)
-ks = cube.get_kociemba_string(True)
-print(ks)
-"""

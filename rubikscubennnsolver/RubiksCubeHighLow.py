@@ -1,4 +1,7 @@
-highlow_edge_values_333 = {
+# standard libraries
+from typing import Dict, Tuple
+
+highlow_edge_values_333: Dict[Tuple[int, int, str, str], str] = {
     (2, 38, "B", "D"): "D",
     (2, 38, "B", "L"): "D",
     (2, 38, "B", "R"): "D",
@@ -289,7 +292,7 @@ highlow_edge_values_333 = {
     (53, 44, "U", "R"): "U",
 }
 
-highlow_edge_values_444 = {
+highlow_edge_values_444: Dict[Tuple[int, int, str, str], str] = {
     (2, 67, "B", "D"): "D",
     (2, 67, "B", "L"): "D",
     (2, 67, "B", "R"): "D",
@@ -1445,7 +1448,7 @@ highlow_edge_values_444 = {
 }
 
 
-highlow_edge_values_555 = {
+highlow_edge_values_555: Dict[Tuple[int, int, str, str], str] = {
     (2, 104, "B", "D"): "D",
     (2, 104, "B", "L"): "D",
     (2, 104, "B", "R"): "D",
@@ -3176,7 +3179,7 @@ highlow_edge_values_555 = {
     (149, 122, "U", "R"): "U",
 }
 
-highlow_edge_values_666 = {
+highlow_edge_values_666: Dict[Tuple[int, int, str, str], str] = {
     (2, 149, "B", "D"): "D",
     (2, 149, "B", "L"): "D",
     (2, 149, "B", "R"): "D",

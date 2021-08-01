@@ -7,6 +7,7 @@ import os
 import resource
 import shutil
 import subprocess
+from pathlib import Path
 from subprocess import call
 from typing import Dict, List, TextIO, Tuple
 
@@ -447,7 +448,9 @@ class LookupTable(object):
         )
 
         if filename:
-            self.filename = "lookup-tables/" + filename
+            LOOKUP_TABLES = "lookup-tables/"
+            Path(LOOKUP_TABLES).mkdir(parents=True, exist_ok=True)
+            self.filename = LOOKUP_TABLES + filename
         else:
             self.filename = filename
 

@@ -671,164 +671,6 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
         )
 
 
-class LookupTable555UDCenterStageTCenter(LookupTable):
-    """
-    lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.txt
-    ============================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 66 entries (0 percent, 16.50x previous step)
-    3 steps has 900 entries (0 percent, 13.64x previous step)
-    4 steps has 9,626 entries (1 percent, 10.70x previous step)
-    5 steps has 80,202 entries (10 percent, 8.33x previous step)
-    6 steps has 329,202 entries (44 percent, 4.10x previous step)
-    7 steps has 302,146 entries (41 percent, 0.92x previous step)
-    8 steps has 13,324 entries (1 percent, 0.04x previous step)
-
-    Total: 735,471 entries
-    Average: 6.31 moves
-    """
-
-    # fmt: off
-    t_centers_555 = (
-        8, 12, 14, 18,  # Upper
-        33, 37, 39, 43,  # Left
-        58, 62, 64, 68,  # Front
-        83, 87, 89, 93,  # Right
-        108, 112, 114, 118,  # Back
-        133, 137, 139, 143,  # Down
-    )
-    # fmt: on
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.txt",
-            "f0000f",
-            linecount=735471,
-            max_depth=8,
-            filesize=28683369,
-            legal_moves=moves_555,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
-        return self.hex_format % int(state, 2)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        binary_state = bin(int(state, 16))[2:].zfill(24)
-
-        for (pos, pos_state) in zip(self.t_centers_555, binary_state):
-            if pos_state == "0":
-                cube[pos] = "x"
-            else:
-                cube[pos] = "U"
-
-
-class LookupTable555UDCenterStageXCenter(LookupTable):
-    """
-    lookup-table-5x5x5-step18-UD-centers-stage-x-center-only.txt
-    ============================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 82 entries (0 percent, 20.50x previous step)
-    3 steps has 1,206 entries (0 percent, 14.71x previous step)
-    4 steps has 14,116 entries (1 percent, 11.70x previous step)
-    5 steps has 123,404 entries (16 percent, 8.74x previous step)
-    6 steps has 422,508 entries (57 percent, 3.42x previous step)
-    7 steps has 173,254 entries (23 percent, 0.41x previous step)
-    8 steps has 896 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    Average: 6.03 moves
-    """
-
-    # fmt: off
-    x_centers_555 = (
-        7, 9, 17, 19,  # Upper
-        32, 34, 42, 44,  # Left
-        57, 59, 67, 69,  # Front
-        82, 84, 92, 94,  # Right
-        107, 109, 117, 119,  # Back
-        132, 134, 142, 144,  # Down
-    )
-    # fmt: on
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step18-UD-centers-stage-x-center-only.txt",
-            "f0000f",
-            linecount=735471,
-            max_depth=8,
-            filesize=27212427,
-            legal_moves=moves_555,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
-        return self.hex_format % int(state, 2)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        binary_state = bin(int(state, 16))[2:].zfill(24)
-
-        for (pos, pos_state) in zip(self.x_centers_555, binary_state):
-            if pos_state == "0":
-                cube[pos] = "x"
-            else:
-                cube[pos] = "U"
-
-
-class LookupTable555CenterStageOnePhase(LookupTableIDAViaGraph):
-    """
-    lookup-table-5x5x5-step14-centers-stage.txt
-    ===========================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 147 entries (0 percent, 21.00x previous step)
-    3 steps has 3,054 entries (0 percent, 20.78x previous step)
-    4 steps has 65,520 entries (0 percent, 21.45x previous step)
-    5 steps has 1,467,630 entries (4 percent, 22.40x previous step)
-
-    extrapolate frome here
-    6 steps has 33,349,612 entries (22.72x previous step)
-    7 steps has 731,023,495 entries (21.92x previous step)
-    8 steps has 15,439,216,214 entries (21.12x previous step)
-    9 steps has 313,724,873,468 entries (20.32x previous step)
-    10 steps has 6,123,909,530,095 entries (19.52x previous step)
-    11 steps has 114,639,586,403,378 entries (18.72x previous step)
-    12 steps has 2,054,341,388,348,533 entries (17.92x previous step)
-    13 steps has 35,170,324,568,526,872 entries (17.12x previous step)
-    14 steps has 573,979,696,958,358,336 entries (16.32x previous step)
-    15 steps has 8,908,164,896,793,716,736 entries (15.52x previous step)
-    16 steps has 80,076,422,714,873,649,803 entries (8.99x previous step)
-
-    Average: 15.886485169358519
-    Total  : 89,595,913,068,008,532,900
-    """
-
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=(),
-            prune_tables=[
-                parent.lt_LR_t_centers_stage,
-                parent.lt_LR_x_centers_stage,
-                parent.lt_UD_t_centers_stage,
-                parent.lt_UD_x_centers_stage,
-            ],
-        )
-
-
 # phase 2
 class LookupTable555FBTCenterStage(LookupTable):
     """
@@ -2842,10 +2684,7 @@ class RubiksCube555(RubiksCube):
         # phase 1
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
-        self.lt_UD_t_centers_stage = LookupTable555UDCenterStageTCenter(self)
-        self.lt_UD_x_centers_stage = LookupTable555UDCenterStageXCenter(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
-        self.lt_centers_stage_experiment = LookupTable555CenterStageOnePhase(self)
 
         # phase 2
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
@@ -3347,15 +3186,7 @@ class RubiksCube555(RubiksCube):
 
         if not self.centers_solved() or not self.edges_paired():
             # phase 1
-            # dwalton
-            # self.group_centers_stage_LR()
-            self.lt_centers_stage_experiment.solve_via_c()
-            self.print_cube()
-            self.solution.append(
-                "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
-            )
-            logger.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            raise Exception("DONE")
+            self.group_centers_stage_LR()
 
             # phase 2
             self.group_centers_stage_FB()

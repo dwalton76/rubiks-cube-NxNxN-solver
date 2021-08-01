@@ -639,7 +639,6 @@ class LookupTable(object):
         Returns:
             a move sequence or move count
         """
-        assert self.width
         first = 0
         last = self.linecount - 1
         state_to_find = bytes(state_to_find, encoding="utf-8")

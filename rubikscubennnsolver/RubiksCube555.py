@@ -2259,7 +2259,7 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
             # compute the lookup index in the perfect hash file
             perfect_hash01_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash",
             pt1_state_max=40320,
-            multiplier=1.07,
+            multiplier=1.04,
         )
 
 

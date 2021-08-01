@@ -100,7 +100,6 @@ def parse_csv(filename: str) -> None:
         data[pt_cost] = sorted(data[pt_cost])
         max_cost = max(max_cost, *pt_cost)
 
-    # dwalton
     shape = [max_cost + 1] * len(pt_cost)
     c_array = np.zeros(shape, dtype=int)
 

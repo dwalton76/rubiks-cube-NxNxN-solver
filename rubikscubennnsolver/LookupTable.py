@@ -7,6 +7,7 @@ import os
 import resource
 import shutil
 import subprocess
+from pathlib import Path
 from subprocess import call
 from typing import Dict, List, TextIO, Tuple
 
@@ -447,7 +448,9 @@ class LookupTable(object):
         )
 
         if filename:
-            self.filename = "lookup-tables/" + filename
+            LOOKUP_TABLES = "lookup-tables/"
+            Path(LOOKUP_TABLES).mkdir(parents=True, exist_ok=True)
+            self.filename = LOOKUP_TABLES + filename
         else:
             self.filename = filename
 
@@ -520,17 +523,21 @@ class LookupTable(object):
                 rm_file_if_mismatch(self.filename, self.filesize, self.md5)
                 download_file_if_needed(self.filename, self.parent.size)
 
-                if "perfect-hash" not in self.filename and "hash-cost-only" not in self.filename:
-                    # Find the state_width for the entries in our .txt file
-                    with open(self.filename, "r") as fh:
-                        first_line = next(fh)
-                        self.width = len(first_line)
-                        (state, steps) = first_line.strip().split(":")
-                        self.state_width = len(state)
+            if (
+                "perfect-hash" not in self.filename
+                and "hash-cost-only" not in self.filename
+                and os.path.exists(self.filename)
+            ):
+                # Find the state_width for the entries in our .txt file
+                with open(self.filename, "r") as fh:
+                    first_line = next(fh)
+                    self.width = len(first_line)
+                    (state, steps) = first_line.strip().split(":")
+                    self.state_width = len(state)
 
-                        if steps.isdigit():
-                            self.use_isdigit = True
-                            # logger.info("%s: use_isdigit is True" % self)
+                    if steps.isdigit():
+                        self.use_isdigit = True
+                        # logger.info("%s: use_isdigit is True" % self)
 
         self.hex_format = "%" + "0%dx" % self.state_width
         self.filename_exists = True

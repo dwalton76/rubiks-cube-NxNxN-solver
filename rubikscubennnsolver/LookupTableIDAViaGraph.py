@@ -1,5 +1,6 @@
 # standard libraries
 import logging
+import os
 import subprocess
 from typing import List
 
@@ -223,17 +224,18 @@ class LookupTableIDAViaGraph(LookupTable):
 
     def solve_via_c(self, pt_states=[], line_index_pre_steps={}):
         cmd = ["./ida_search_via_graph"]
+        my_pt_state_filename = "my-pt-states.txt"
 
         if pt_states:
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
                 cmd.append(pt.filename.replace(".txt", ".bin"))
 
-            with open("my-pt-states.txt", "w") as fh:
+            with open(my_pt_state_filename, "w") as fh:
                 for x in pt_states:
                     fh.write(",".join(map(str, x)) + "\n")
             cmd.append("--prune-table-states")
-            cmd.append("my-pt-states.txt")
+            cmd.append(my_pt_state_filename)
         else:
             self.init_ida_graph_nodes()
 
@@ -302,6 +304,9 @@ class LookupTableIDAViaGraph(LookupTable):
         output = subprocess.check_output(cmd).decode("utf-8").splitlines()
         last_solution = None
         last_solution_line_index = None
+
+        if os.path.exists(my_pt_state_filename):
+            os.unlink(my_pt_state_filename)
 
         for line in output:
             if line.startswith("SOLUTION:"):

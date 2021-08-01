@@ -529,6 +529,8 @@ class RubiksCube(object):
         self.solution_with_markers = []
         self.color_map = {}
         self.color_map_html = {}
+        self.recolor_positions = []
+        self.recolor_map = {}
 
         if not os.path.exists(HTML_DIRECTORY):
             os.makedirs(HTML_DIRECTORY)
@@ -1565,7 +1567,7 @@ class RubiksCube(object):
 
         return tuple(numbers)
 
-    def randomize(self, count: int = None) -> None:
+    def randomize(self, count: int = None, moves: List = None) -> None:
         """
         Perform a bunch of random moves to scramble a cube
 
@@ -1580,11 +1582,12 @@ class RubiksCube(object):
             max_rows = int((self.size - 1) / 2)
 
         sides = ["U", "L", "F", "R", "B", "D"]
+        move_count = 0
 
         if count is None:
             count = ((self.size * self.size) * 6) * 10
 
-        for x in range(count):
+        while move_count < count:
             rows = random.randint(1, max_rows)
             side_index = random.randint(0, 5)
             side = sides[side_index]
@@ -1604,11 +1607,11 @@ class RubiksCube(object):
             if not clockwise:
                 move += "'"
 
-            # I used this move restriction to build the 3k-555-cubes-step500.json test cubes
-            # if move not in ['U', "U'", 'U2', 'L2', 'Lw2', 'F2', 'Fw2', 'R2', 'Rw2', 'B2', 'Bw2', 'D', "D'", 'D2']:
-            #    continue
+            if moves is not None and move not in moves:
+                continue
 
             self.rotate(move)
+            move_count += 1
 
     def get_side_for_index(self, square_index: int) -> Side:
         """

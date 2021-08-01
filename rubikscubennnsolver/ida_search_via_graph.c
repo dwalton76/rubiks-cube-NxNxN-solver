@@ -198,14 +198,19 @@ get_cost_to_goal (
 }
 
 
-inline unsigned int
+unsigned int
 read_state (char *pt, unsigned int location)
 {
-    unsigned int num = 0;
-    // uint32_t b0, b1, b2, b3;
+    return (
+        ((pt[location] & 0x000000ff) << 24u) |
+        ((pt[location + 1] & 0x000000ff) << 16u) |
+        ((pt[location + 2] & 0x000000ff) << 8u) |
+        (pt[location + 3] & 0x000000ff)
+    );
 
-    memcpy(&num, &pt[location], 4);
     /*
+    uint32_t b0, b1, b2, b3;
+
     b0 = (num & 0x000000ff) << 24u;
     b1 = (num & 0x0000ff00) << 8u;
     b2 = (num & 0x00ff0000) >> 8u;
@@ -213,7 +218,6 @@ read_state (char *pt, unsigned int location)
 
     return b0 | b1 | b2 | b3;
      */
-    return ((num & 0x000000ff) << 24u) | ((num & 0x0000ff00) << 8u) | ((num & 0x00ff0000) >> 8u) | ((num & 0xff000000) >> 24u);
 }
 
 

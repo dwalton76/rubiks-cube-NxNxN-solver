@@ -335,7 +335,7 @@ get_cost_to_goal (
 }
 
 
-unsigned int
+inline unsigned int
 read_state (char *pt, unsigned int location)
 {
     return (
@@ -618,31 +618,25 @@ ida_search (
         }
 
         offset = 1 + (4 * i);
+        pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
 
         if (pt_max == 1) {
             pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
 
         } else if (pt_max == 2) {
-            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
+            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
 
         } else if (pt_max == 3) {
-            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
-            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
+            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
+            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
 
         } else if (pt_max == 4) {
-            pt4_state = read_state(pt4, (prev_pt4_state * ROW_LENGTH) + offset);
-            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
-            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
-
-        } else {
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
+            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
+            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
+            pt4_state = read_state(pt4, (prev_pt4_state * ROW_LENGTH) + offset);
         }
 
         moves_to_here[cost_to_here] = move;

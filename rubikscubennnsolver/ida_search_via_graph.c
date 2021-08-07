@@ -100,6 +100,110 @@ hash_cost_to_cost(unsigned char perfect_hash_cost)
     };
 }
 
+unsigned char
+get_cost_to_goal_simple (
+    unsigned int prev_pt0_state,
+    unsigned int prev_pt1_state,
+    unsigned int prev_pt2_state,
+    unsigned int prev_pt3_state,
+    unsigned int prev_pt4_state)
+{
+    unsigned char cost_to_goal = pt0[prev_pt0_state * ROW_LENGTH];
+    unsigned char pt1_cost = 0;
+    unsigned char pt2_cost = 0;
+    unsigned char pt3_cost = 0;
+    unsigned char pt4_cost = 0;
+
+    if (pt_max == 1) {
+        pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+
+        if (pt1_cost > cost_to_goal) {
+            cost_to_goal = pt1_cost;
+        }
+
+    } else if (pt_max == 2) {
+        pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
+
+        if (pt1_cost > cost_to_goal) {
+            cost_to_goal = pt1_cost;
+        }
+
+        if (pt2_cost > cost_to_goal) {
+            cost_to_goal = pt2_cost;
+        }
+
+    } else if (pt_max == 3) {
+        pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
+        pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
+
+        if (pt1_cost > cost_to_goal) {
+            cost_to_goal = pt1_cost;
+        }
+
+        if (pt2_cost > cost_to_goal) {
+            cost_to_goal = pt2_cost;
+        }
+
+        if (pt3_cost > cost_to_goal) {
+            cost_to_goal = pt3_cost;
+        }
+
+    } else if (pt_max == 4) {
+        pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
+        pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
+        pt4_cost = pt4[prev_pt4_state * ROW_LENGTH];
+
+        if (pt1_cost > cost_to_goal) {
+            cost_to_goal = pt1_cost;
+        }
+
+        if (pt2_cost > cost_to_goal) {
+            cost_to_goal = pt2_cost;
+        }
+
+        if (pt3_cost > cost_to_goal) {
+            cost_to_goal = pt3_cost;
+        }
+
+        if (pt4_cost > cost_to_goal) {
+            cost_to_goal = pt4_cost;
+        }
+    }
+
+    if (pt_perfect_hash01) {
+        unsigned char perfect_hash01_cost = 0;
+        unsigned int perfect_hash01_index = 0;
+
+        perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
+        perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
+
+        if (perfect_hash01_cost > cost_to_goal) {
+            cost_to_goal = perfect_hash01_cost;
+        }
+    }
+
+    if (pt_perfect_hash02) {
+        unsigned char perfect_hash02_cost = 0;
+        unsigned int perfect_hash02_index = 0;
+
+        perfect_hash02_index = (prev_pt0_state * pt2_state_max) + prev_pt2_state;
+        perfect_hash02_cost = hash_cost_to_cost(pt_perfect_hash02[perfect_hash02_index]);
+
+        if (perfect_hash02_cost > cost_to_goal) {
+            cost_to_goal = perfect_hash02_cost;
+        }
+    }
+
+    if (cost_to_goal_multiplier) {
+        cost_to_goal = (unsigned char) round(cost_to_goal * cost_to_goal_multiplier);
+    }
+
+    return cost_to_goal;
+}
+
 struct cost_to_goal_result
 get_cost_to_goal (
     unsigned int prev_pt0_state,
@@ -109,7 +213,87 @@ get_cost_to_goal (
     unsigned int prev_pt4_state)
 {
     struct cost_to_goal_result result;
-    memset(&result, 0, sizeof(struct cost_to_goal_result));
+
+    if (pt_max == 1) {
+        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+        result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        result.pt2_cost = 0;
+        result.pt3_cost = 0;
+        result.pt4_cost = 0;
+        result.cost_to_goal = result.pt0_cost;
+
+        if (result.pt1_cost > result.cost_to_goal) {
+            result.cost_to_goal = result.pt1_cost;
+        }
+
+    } else if (pt_max == 2) {
+        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+        result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
+        result.pt3_cost = 0;
+        result.pt4_cost = 0;
+        result.cost_to_goal = result.pt0_cost;
+
+        if (result.pt1_cost > result.cost_to_goal) {
+            result.cost_to_goal = result.pt1_cost;
+        }
+
+        if (result.pt2_cost > result.cost_to_goal) {
+            result.cost_to_goal = result.pt2_cost;
+        }
+
+    } else if (pt_max == 3) {
+        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+        result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
+        result.pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
+        result.pt4_cost = 0;
+        result.cost_to_goal = result.pt0_cost;
+
+        if (result.pt1_cost > result.cost_to_goal) {
+            result.cost_to_goal = result.pt1_cost;
+        }
+
+        if (result.pt2_cost > result.cost_to_goal) {
+            result.cost_to_goal = result.pt2_cost;
+        }
+
+        if (result.pt3_cost > result.cost_to_goal) {
+            result.cost_to_goal = result.pt3_cost;
+        }
+
+    } else if (pt_max == 4) {
+        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+        result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
+        result.pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
+        result.pt4_cost = pt4[prev_pt4_state * ROW_LENGTH];
+        result.cost_to_goal = result.pt0_cost;
+
+        if (result.pt1_cost > result.cost_to_goal) {
+            result.cost_to_goal = result.pt1_cost;
+        }
+
+        if (result.pt2_cost > result.cost_to_goal) {
+            result.cost_to_goal = result.pt2_cost;
+        }
+
+        if (result.pt3_cost > result.cost_to_goal) {
+            result.cost_to_goal = result.pt3_cost;
+        }
+
+        if (result.pt4_cost > result.cost_to_goal) {
+            result.cost_to_goal = result.pt4_cost;
+        }
+
+    } else {
+        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+        result.pt1_cost = 0;
+        result.pt2_cost = 0;
+        result.pt3_cost = 0;
+        result.pt4_cost = 0;
+        result.cost_to_goal = result.pt0_cost;
+    }
 
     if (pt_perfect_hash01) {
         unsigned char perfect_hash01_cost = 0;
@@ -123,6 +307,8 @@ get_cost_to_goal (
         }
 
         result.perfect_hash01_cost = perfect_hash01_cost;
+    } else {
+        result.perfect_hash01_cost = 0;
     }
 
     if (pt_perfect_hash02) {
@@ -137,57 +323,8 @@ get_cost_to_goal (
         }
 
         result.perfect_hash02_cost = perfect_hash02_cost;
-    }
-
-    switch (pt_max) {
-    case 1:
-        result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-
-        result.cost_to_goal = (result.pt1_cost > result.cost_to_goal) ? result.pt1_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt0_cost > result.cost_to_goal) ? result.pt0_cost : result.cost_to_goal;
-        break;
-
-    case 2:
-        result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
-        result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-
-        result.cost_to_goal = (result.pt2_cost > result.cost_to_goal) ? result.pt2_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt1_cost > result.cost_to_goal) ? result.pt1_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt0_cost > result.cost_to_goal) ? result.pt0_cost : result.cost_to_goal;
-        break;
-
-    case 3:
-        result.pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
-        result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
-        result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-
-        result.cost_to_goal = (result.pt3_cost > result.cost_to_goal) ? result.pt3_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt2_cost > result.cost_to_goal) ? result.pt2_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt1_cost > result.cost_to_goal) ? result.pt1_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt0_cost > result.cost_to_goal) ? result.pt0_cost : result.cost_to_goal;
-        break;
-
-    case 4:
-        result.pt4_cost = pt4[prev_pt4_state * ROW_LENGTH];
-        result.pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
-        result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
-        result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-
-        result.cost_to_goal = (result.pt4_cost > result.cost_to_goal) ? result.pt4_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt3_cost > result.cost_to_goal) ? result.pt3_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt2_cost > result.cost_to_goal) ? result.pt2_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt1_cost > result.cost_to_goal) ? result.pt1_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt0_cost > result.cost_to_goal) ? result.pt0_cost : result.cost_to_goal;
-        break;
-
-    default:
-        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-        result.cost_to_goal = (result.pt0_cost > result.cost_to_goal) ? result.pt0_cost : result.cost_to_goal;
-        break;
+    } else {
+        result.perfect_hash02_cost = 0;
     }
 
     if (cost_to_goal_multiplier) {
@@ -245,7 +382,6 @@ print_ida_summary (
     }
 
     ctg = get_cost_to_goal(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
-    cost_to_goal = ctg.cost_to_goal;
     pt0_cost = ctg.pt0_cost;
     pt1_cost = ctg.pt1_cost;
     pt2_cost = ctg.pt2_cost;
@@ -269,36 +405,30 @@ print_ida_summary (
         }
         unsigned int offset = 1 + (4 * j);
 
-        switch (pt_max) {
-        case 1:
+        if (pt_max == 1) {
             pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-            break;
 
-        case 2:
+        } else if (pt_max == 2) {
             pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-            break;
 
-        case 3:
+        } else if (pt_max == 3) {
             pt3_state = read_state(pt3, (pt3_state * ROW_LENGTH) + offset);
             pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-            break;
 
-        case 4:
+        } else if (pt_max == 4) {
             pt4_state = read_state(pt4, (pt4_state * ROW_LENGTH) + offset);
             pt3_state = read_state(pt3, (pt3_state * ROW_LENGTH) + offset);
             pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-            break;
 
-        default:
+        } else {
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-            break;
         }
 
         ctg = get_cost_to_goal(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
@@ -411,31 +541,23 @@ ida_search (
     unsigned int prev_pt3_state,
     unsigned int prev_pt4_state)
 {
-    struct cost_to_goal_result ctg;
-    unsigned char cost_to_goal = 0;
-    unsigned char f_cost = 0;
-    move_type move, skip_other_steps_this_face;
-    skip_other_steps_this_face = MOVE_NONE;
-    struct ida_search_result search_result, tmp_search_result;
-    unsigned int pt0_state = 0;
-    unsigned int pt1_state = 0;
-    unsigned int pt2_state = 0;
-    unsigned int pt3_state = 0;
-    unsigned int pt4_state = 0;
+    struct ida_search_result search_result;
+    unsigned char cost_to_goal = get_cost_to_goal_simple(
+        prev_pt0_state,
+        prev_pt1_state,
+        prev_pt2_state,
+        prev_pt3_state,
+        prev_pt4_state
+    );
 
     ida_count++;
-
-    ctg = get_cost_to_goal(prev_pt0_state, prev_pt1_state, prev_pt2_state, prev_pt3_state, prev_pt4_state);
-    cost_to_goal = ctg.cost_to_goal;
-
-    f_cost = cost_to_here + cost_to_goal;
-    search_result.f_cost = f_cost;
+    search_result.f_cost = cost_to_here + cost_to_goal;
     search_result.found_solution = 0;
 
     if (cost_to_goal == 0 && parity_ok(moves_to_here)) {
         // We are finished!!
         LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
-            ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
+            ida_count, search_result.f_cost, threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
         search_result.found_solution = 1;
         memcpy(search_result.solution, moves_to_here, sizeof(move_type) * cost_to_here);
@@ -443,7 +565,7 @@ ida_search (
     }
 
     // Abort Searching
-    if (f_cost >= threshold) {
+    if (search_result.f_cost >= threshold) {
         // uncomment this to troubleshoot when the correct solution is incorrectly pruned
         /*
         if (invalid_prune(cost_to_here, moves_to_here)) {
@@ -460,6 +582,14 @@ ida_search (
     }
 
     unsigned int offset = 0;
+    unsigned int pt0_state = 0;
+    unsigned int pt1_state = 0;
+    unsigned int pt2_state = 0;
+    unsigned int pt3_state = 0;
+    unsigned int pt4_state = 0;
+    struct ida_search_result tmp_search_result;
+    move_type move, skip_other_steps_this_face;
+    skip_other_steps_this_face = MOVE_NONE;
 
     for (unsigned char i = 0; i < legal_move_count; i++) {
         move = move_matrix[prev_move][i];
@@ -489,36 +619,30 @@ ida_search (
 
         offset = 1 + (4 * i);
 
-        switch (pt_max) {
-        case 1:
+        if (pt_max == 1) {
             pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
-            break;
 
-        case 2:
+        } else if (pt_max == 2) {
             pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
-            break;
 
-        case 3:
+        } else if (pt_max == 3) {
             pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
             pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
-            break;
 
-        case 4:
+        } else if (pt_max == 4) {
             pt4_state = read_state(pt4, (prev_pt4_state * ROW_LENGTH) + offset);
             pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
             pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
-            break;
 
-        default:
+        } else {
             pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
-            break;
         }
 
         moves_to_here[cost_to_here] = move;

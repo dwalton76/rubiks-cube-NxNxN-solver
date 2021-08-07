@@ -140,15 +140,19 @@ get_cost_to_goal (
     }
 
     switch (pt_max) {
-    case 4:
-        result.pt4_cost = pt4[prev_pt4_state * ROW_LENGTH];
-        result.pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
+    case 1:
+        result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
+
+        result.cost_to_goal = (result.pt1_cost > result.cost_to_goal) ? result.pt1_cost : result.cost_to_goal;
+        result.cost_to_goal = (result.pt0_cost > result.cost_to_goal) ? result.pt0_cost : result.cost_to_goal;
+        break;
+
+    case 2:
         result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
         result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
         result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
-        result.cost_to_goal = (result.pt4_cost > result.cost_to_goal) ? result.pt4_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt3_cost > result.cost_to_goal) ? result.pt3_cost : result.cost_to_goal;
         result.cost_to_goal = (result.pt2_cost > result.cost_to_goal) ? result.pt2_cost : result.cost_to_goal;
         result.cost_to_goal = (result.pt1_cost > result.cost_to_goal) ? result.pt1_cost : result.cost_to_goal;
         result.cost_to_goal = (result.pt0_cost > result.cost_to_goal) ? result.pt0_cost : result.cost_to_goal;
@@ -166,20 +170,16 @@ get_cost_to_goal (
         result.cost_to_goal = (result.pt0_cost > result.cost_to_goal) ? result.pt0_cost : result.cost_to_goal;
         break;
 
-    case 2:
+    case 4:
+        result.pt4_cost = pt4[prev_pt4_state * ROW_LENGTH];
+        result.pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
         result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
         result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
         result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
 
+        result.cost_to_goal = (result.pt4_cost > result.cost_to_goal) ? result.pt4_cost : result.cost_to_goal;
+        result.cost_to_goal = (result.pt3_cost > result.cost_to_goal) ? result.pt3_cost : result.cost_to_goal;
         result.cost_to_goal = (result.pt2_cost > result.cost_to_goal) ? result.pt2_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt1_cost > result.cost_to_goal) ? result.pt1_cost : result.cost_to_goal;
-        result.cost_to_goal = (result.pt0_cost > result.cost_to_goal) ? result.pt0_cost : result.cost_to_goal;
-        break;
-
-    case 1:
-        result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-        result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-
         result.cost_to_goal = (result.pt1_cost > result.cost_to_goal) ? result.pt1_cost : result.cost_to_goal;
         result.cost_to_goal = (result.pt0_cost > result.cost_to_goal) ? result.pt0_cost : result.cost_to_goal;
         break;
@@ -270,9 +270,12 @@ print_ida_summary (
         unsigned int offset = 1 + (4 * j);
 
         switch (pt_max) {
-        case 4:
-            pt4_state = read_state(pt4, (pt4_state * ROW_LENGTH) + offset);
-            pt3_state = read_state(pt3, (pt3_state * ROW_LENGTH) + offset);
+        case 1:
+            pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
+            pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
+            break;
+
+        case 2:
             pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
@@ -285,13 +288,10 @@ print_ida_summary (
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
             break;
 
-        case 2:
+        case 4:
+            pt4_state = read_state(pt4, (pt4_state * ROW_LENGTH) + offset);
+            pt3_state = read_state(pt3, (pt3_state * ROW_LENGTH) + offset);
             pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
-            pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
-            pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-            break;
-
-        case 1:
             pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
             break;
@@ -490,9 +490,12 @@ ida_search (
         offset = 1 + (4 * i);
 
         switch (pt_max) {
-        case 4:
-            pt4_state = read_state(pt4, (prev_pt4_state * ROW_LENGTH) + offset);
-            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
+        case 1:
+            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
+            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
+            break;
+
+        case 2:
             pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
             pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
@@ -505,13 +508,10 @@ ida_search (
             pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
             break;
 
-        case 2:
+        case 4:
+            pt4_state = read_state(pt4, (prev_pt4_state * ROW_LENGTH) + offset);
+            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
             pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
-            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
-            pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
-            break;
-
-        case 1:
             pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
             pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
             break;

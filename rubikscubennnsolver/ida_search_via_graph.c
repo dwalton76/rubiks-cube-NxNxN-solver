@@ -1,5 +1,6 @@
 
 #include <ctype.h>
+#include <limits.h>
 #include <locale.h>
 #include <math.h>
 #include <stdarg.h>
@@ -9,7 +10,6 @@
 #include <time.h>
 #include <sys/resource.h>
 #include <sys/time.h>
-#include "uthash.h"
 #include "ida_search_core.h"
 
 
@@ -29,6 +29,7 @@ unsigned char *pt_perfect_hash02 = NULL;
 unsigned int pt1_state_max = 0;
 unsigned int pt2_state_max = 0;
 
+#define MAX_IDA_THRESHOLD 20
 unsigned char pt_max = 0;
 unsigned char COST_LENGTH = 1;
 unsigned char STATE_LENGTH = 4;
@@ -98,6 +99,76 @@ hash_cost_to_cost(unsigned char perfect_hash_cost)
         printf("ERROR: invalid perfect_hash01_cost %d\n", perfect_hash_cost);
         exit(1);
     };
+}
+
+// A structure to represent a stack
+// dwalton
+struct StackNode {
+    unsigned char cost_to_here;
+    move_type moves_to_here[MAX_IDA_THRESHOLD];
+    move_type prev_move;
+    unsigned int pt0_state;
+    unsigned int pt1_state;
+    unsigned int pt2_state;
+    unsigned int pt3_state;
+    unsigned int pt4_state;
+	struct StackNode* next;
+};
+
+struct StackNode* newNode(
+    unsigned char cost_to_here,
+    move_type *moves_to_here,
+    move_type prev_move,
+    unsigned int pt0_state,
+    unsigned int pt1_state,
+    unsigned int pt2_state,
+    unsigned int pt3_state,
+    unsigned int pt4_state)
+{
+	struct StackNode* stackNode = (struct StackNode*) malloc(sizeof(struct StackNode));
+	stackNode->cost_to_here = cost_to_here;
+// dwalton
+	// stackNode->moves_to_here = moves_to_here;
+    memcpy(stackNode->moves_to_here, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+	stackNode->prev_move = prev_move;
+	stackNode->pt0_state = pt0_state;
+	stackNode->pt1_state = pt1_state;
+	stackNode->pt2_state = pt2_state;
+	stackNode->pt3_state = pt3_state;
+	stackNode->pt4_state = pt4_state;
+	stackNode->next = NULL;
+	return stackNode;
+}
+
+int isEmpty(struct StackNode* root)
+{
+	return !root;
+}
+
+void push(struct StackNode** root,
+    unsigned char cost_to_here,
+    move_type *moves_to_here,
+    move_type prev_move,
+    unsigned int pt0_state,
+    unsigned int pt1_state,
+    unsigned int pt2_state,
+    unsigned int pt3_state,
+    unsigned int pt4_state)
+{
+	struct StackNode* node = newNode(cost_to_here, moves_to_here, prev_move, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+	node->next = *root;
+	*root = node;
+    //printf("push node with cost_to_here %d, prev_move 0x%x, pt0_state 0x%x, pt1_state 0x%x\n",
+    //    node->cost_to_here, node->prev_move, node->pt0_state, node->pt1_state);
+}
+
+struct StackNode* pop(struct StackNode** root)
+{
+	if (isEmpty(*root))
+		return NULL;
+	struct StackNode* temp = *root;
+	*root = (*root)->next;
+    return temp;
 }
 
 unsigned char
@@ -532,149 +603,151 @@ parity_ok (move_type *moves_to_here)
 
 struct ida_search_result
 ida_search (
-    unsigned char cost_to_here,
-    move_type *moves_to_here,
-    move_type prev_move,
-    unsigned int prev_pt0_state,
-    unsigned int prev_pt1_state,
-    unsigned int prev_pt2_state,
-    unsigned int prev_pt3_state,
-    unsigned int prev_pt4_state)
+    unsigned int init_pt0_state,
+    unsigned int init_pt1_state,
+    unsigned int init_pt2_state,
+    unsigned int init_pt3_state,
+    unsigned int init_pt4_state)
 {
     struct ida_search_result search_result;
-    unsigned char cost_to_goal = get_cost_to_goal_simple(
-        prev_pt0_state,
-        prev_pt1_state,
-        prev_pt2_state,
-        prev_pt3_state,
-        prev_pt4_state
-    );
-
-    ida_count++;
-    search_result.f_cost = cost_to_here + cost_to_goal;
-    search_result.found_solution = 0;
-
-    if (cost_to_goal == 0 && parity_ok(moves_to_here)) {
-        // We are finished!!
-        LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
-            ida_count, search_result.f_cost, threshold, cost_to_here, cost_to_goal);
-        print_moves(moves_to_here, cost_to_here);
-        search_result.found_solution = 1;
-        memcpy(search_result.solution, moves_to_here, sizeof(move_type) * cost_to_here);
-        return search_result;
-    }
-
-    // Abort Searching
-    if (search_result.f_cost >= threshold) {
-        // uncomment this to troubleshoot when the correct solution is incorrectly pruned
-        /*
-        if (invalid_prune(cost_to_here, moves_to_here)) {
-            LOG("IDA invalid prune, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
-                f_cost, threshold, cost_to_here, cost_to_goal);
-            print_moves(moves_to_here, cost_to_here);
-            LOG("pt0_state %07u, cost %d\n", prev_pt0_state, pt0_cost);
-            LOG("pt1_state %07u, cost %d\n", prev_pt1_state, pt1_cost);
-            LOG("pt2_state %07u, cost %d\n", prev_pt2_state, pt2_cost);
-            exit(1);
-        }
-         */
-        return search_result;
-    }
-
+    unsigned char cost_to_goal = 0;
+    unsigned char f_cost = 0;
     unsigned int offset = 0;
     unsigned int pt0_state = 0;
     unsigned int pt1_state = 0;
     unsigned int pt2_state = 0;
     unsigned int pt3_state = 0;
     unsigned int pt4_state = 0;
-    struct ida_search_result tmp_search_result;
     move_type move, skip_other_steps_this_face;
     skip_other_steps_this_face = MOVE_NONE;
 
-    for (unsigned char i = 0; i < legal_move_count; i++) {
-        move = move_matrix[prev_move][i];
+    // dwalton here now
+    move_type moves_to_here[MAX_IDA_THRESHOLD];
+    memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
+    search_result.found_solution = 0;
 
-        // This is the scenario where the move is on the same face and layer as prev_move
-        if (move == MOVE_NONE) {
+    struct StackNode* root = NULL;
+    struct StackNode* node = NULL;
+    push(&root, 0, moves_to_here, MOVE_NONE,
+        init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
+
+    while (!isEmpty(root)) {
+        node = pop(&root);
+        // printf("pop node with prev_move 0x%x, pt0_state 0x%x, pt1_state 0x%x\n", node->prev_move, node->pt0_state, node->pt1_state);
+        memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+        ida_count++;
+
+        cost_to_goal = get_cost_to_goal_simple(
+            node->pt0_state,
+            node->pt1_state,
+            node->pt2_state,
+            node->pt3_state,
+            node->pt4_state
+        );
+        f_cost = node->cost_to_here + cost_to_goal;
+
+        if (cost_to_goal == 0 && parity_ok(node->moves_to_here)) {
+            // We are finished!!
+            LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
+                ida_count, search_result.f_cost, threshold, node->cost_to_here, cost_to_goal);
+            print_moves(node->moves_to_here, node->cost_to_here);
+            
+            search_result.f_cost = f_cost;
+            search_result.found_solution = 1;
+            memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * node->cost_to_here);
+            return search_result;
+        }
+
+        // Stop searching down this path
+        if (f_cost >= threshold) {
+            // uncomment this to troubleshoot when the correct solution is incorrectly pruned
+            /*
+            if (invalid_prune(cost_to_here, moves_to_here)) {
+                LOG("IDA invalid prune, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
+                    f_cost, threshold, cost_to_here, cost_to_goal);
+                print_moves(moves_to_here, cost_to_here);
+                LOG("pt0_state %07u, cost %d\n", pt0_state, pt0_cost);
+                LOG("pt1_state %07u, cost %d\n", pt1_state, pt1_cost);
+                LOG("pt2_state %07u, cost %d\n", pt2_state, pt2_cost);
+                exit(1);
+            }
+             */
+            free(node);
             continue;
         }
 
-        // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
-        /*
-         * Well, it's a simple technique to reduce the number of nodes accessed.
-         * For example, we start at a position S whose pruning value is no more
-         * than maxl, otherwise, S will be pruned in previous searching.  After
-         * a move X, we obtain position S', whose pruning value is larger than
-         * maxl, which means that X makes S farther from the solved state.  In
-         * this case, we won't try X2 and X'.
-         * --cs0x7f
-         */
-        if (skip_other_steps_this_face != MOVE_NONE) {
-            if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
+        // printf("prev_move 0x%x\n", node->prev_move);
+        // printf("prev_move %s\n", move2str[node->prev_move]);
+        for (unsigned char i = 0; i < legal_move_count; i++) {
+            move = move_matrix[node->prev_move][i];
+
+            // This is the scenario where the move is on the same face and layer as prev_move
+            if (move == MOVE_NONE) {
                 continue;
-            } else {
-                skip_other_steps_this_face = MOVE_NONE;
             }
-        }
 
-        offset = 1 + (4 * i);
-        pt0_state = read_state(pt0, (prev_pt0_state * ROW_LENGTH) + offset);
-
-        if (pt_max == 1) {
-            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
-
-        } else if (pt_max == 2) {
-            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
-            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
-
-        } else if (pt_max == 3) {
-            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
-            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
-            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
-
-        } else if (pt_max == 4) {
-            pt1_state = read_state(pt1, (prev_pt1_state * ROW_LENGTH) + offset);
-            pt2_state = read_state(pt2, (prev_pt2_state * ROW_LENGTH) + offset);
-            pt3_state = read_state(pt3, (prev_pt3_state * ROW_LENGTH) + offset);
-            pt4_state = read_state(pt4, (prev_pt4_state * ROW_LENGTH) + offset);
-        }
-
-        moves_to_here[cost_to_here] = move;
-
-        tmp_search_result = ida_search(
-            cost_to_here + 1,
-            moves_to_here,
-            move,
-            pt0_state,
-            pt1_state,
-            pt2_state,
-            pt3_state,
-            pt4_state);
-
-        if (tmp_search_result.found_solution) {
-            if (find_multiple_solutions) {
-                search_result.found_solution = 1;
-            } else {
-                return tmp_search_result;
+            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+            /*
+             * Well, it's a simple technique to reduce the number of nodes accessed.
+             * For example, we start at a position S whose pruning value is no more
+             * than maxl, otherwise, S will be pruned in previous searching.  After
+             * a move X, we obtain position S', whose pruning value is larger than
+             * maxl, which means that X makes S farther from the solved state.  In
+             * this case, we won't try X2 and X'.
+             * --cs0x7f
+            if (skip_other_steps_this_face != MOVE_NONE) {
+                if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
+                    continue;
+                } else {
+                    skip_other_steps_this_face = MOVE_NONE;
+                }
             }
-        } else {
-            moves_to_here[cost_to_here] = MOVE_NONE;
+             */
 
-            if (tmp_search_result.f_cost > threshold) {
-                skip_other_steps_this_face = move;
-            } else {
-                skip_other_steps_this_face = MOVE_NONE;
+            offset = 1 + (4 * i);
+            pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset);
+
+            if (pt_max == 1) {
+                pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
+
+            } else if (pt_max == 2) {
+                pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
+                pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset);
+
+            } else if (pt_max == 3) {
+                pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
+                pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset);
+                pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset);
+
+            } else if (pt_max == 4) {
+                pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
+                pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset);
+                pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset);
+                pt4_state = read_state(pt4, (node->pt4_state * ROW_LENGTH) + offset);
             }
+
+            // dwalton
+            // moves_to_here = malloc(sizeof(move_type) * MAX_IDA_THRESHOLD);
+            // memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * node->cost_to_here);
+            // memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+            moves_to_here[node->cost_to_here] = move;
+
+            // printf("push move 0x%x %s, pt0_state 0x%x, pt1_state 0x%x\n", move, move2str[move], pt0_state, pt1_state);
+            // printf("move 0x%x %s\n", move, move2str[move]);
+            push(&root, node->cost_to_here+1, moves_to_here, move,
+                pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
         }
+        free(node);
+        // printf("\n");
     }
 
+    search_result.found_solution = 0;
     return search_result;
 }
 
 
 struct ida_search_result
 ida_solve (
-    unsigned char cost_to_here,
     unsigned int pt0_state,
     unsigned int pt1_state,
     unsigned int pt2_state,
@@ -683,28 +756,14 @@ ida_solve (
     unsigned char max_ida_threshold)
 {
     struct cost_to_goal_result ctg;
-    move_type moves_to_here[max_ida_threshold];
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
-    unsigned char pt0_cost = 0;
-    unsigned char pt1_cost = 0;
-    unsigned char pt2_cost = 0;
-    unsigned char pt3_cost = 0;
-    unsigned char pt4_cost = 0;
     unsigned char min_ida_threshold = 0;
-
-    memset(moves_to_here, MOVE_NONE, max_ida_threshold);
 
     // For printing commas via %'d
     setlocale(LC_NUMERIC, "");
 
-    ctg = get_cost_to_goal(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
-    pt0_cost = ctg.pt0_cost;
-    pt1_cost = ctg.pt1_cost;
-    pt2_cost = ctg.pt2_cost;
-    pt3_cost = ctg.pt3_cost;
-    pt4_cost = ctg.pt4_cost;
-    min_ida_threshold = ctg.cost_to_goal;
+    min_ida_threshold = get_cost_to_goal_simple(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
     search_result.found_solution = 0;
 
     // LOG("min_ida_threshold %d\n", min_ida_threshold);
@@ -714,16 +773,13 @@ ida_solve (
 
     gettimeofday(&start, NULL);
 
+    // dwalton
     for (threshold = min_ida_threshold; threshold <= max_ida_threshold; threshold++) {
         ida_count = 0;
         gettimeofday(&start_this_threshold, NULL);
-        memset(moves_to_here, MOVE_NONE, sizeof(move_type) * max_ida_threshold);
         hash_delete_all(&ida_explored);
 
         search_result = ida_search(
-            cost_to_here,
-            moves_to_here,
-            MOVE_NONE,
             pt0_state,
             pt1_state,
             pt2_state,
@@ -790,7 +846,7 @@ read_file (char *filename)
         } else {
             buffer[new_len++] = '\0'; // Just to be safe.
         }
-        LOG("%s is %dM\n", filename, bufsize / (1024 * 1024));
+        // LOG("%s is %dM\n", filename, bufsize / (1024 * 1024));
     }
 
     fclose(fh);
@@ -1116,7 +1172,6 @@ main (int argc, char *argv[])
                 }
 
                 search_result = ida_solve(
-                    0,
                     prune_table_0_state,
                     prune_table_1_state,
                     prune_table_2_state,
@@ -1147,7 +1202,6 @@ main (int argc, char *argv[])
 
     } else {
         search_result = ida_solve(
-            0,
             prune_table_0_state,
             prune_table_1_state,
             prune_table_2_state,

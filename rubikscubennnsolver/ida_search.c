@@ -642,7 +642,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
     move_type move, skip_other_steps_this_face;
     struct ida_heuristic_result heuristic_result;
     char cube_tmp[array_size];
-    char cost_to_here_str[3];
+    char cost_to_here_str[4];
     skip_other_steps_this_face = MOVE_NONE;
     struct ida_search_result search_result, tmp_search_result;
 

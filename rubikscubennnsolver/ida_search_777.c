@@ -143,6 +143,26 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube,
     }
 
     return result;
+
+    // Not used...I was experimenting with using the left_oblique count and
+    // right oblique count seperately.  Will leave this hear for a rainy day.
+    /*
+    unsigned char unpaired_left_count = get_unpaired_left_obliques_count_777(cube);
+    unsigned char unpaired_right_count = get_unpaired_right_obliques_count_777(cube);
+
+    if (unpaired_left_count > 8 || unpaired_right_count > 8) {
+        print_cube(cube, 7);
+        printf("unpaired_left_count %d\n", unpaired_left_count);
+        printf("unpaired_right_count %d\n", unpaired_right_count);
+        printf("ERROR: invalid unpaired_count %d\n", unpaired_count);
+        exit(1);
+    }
+
+    // There are at most 8 unpaired left obliques or 8 unpaired right obliques.
+    // Optimally solve a bunch and get some stats that show what total cost is
+    // when considering left and right obliques?
+    return result;
+     */
 }
 
 int ida_search_complete_LR_oblique_edges_stage_777(char *cube) {
@@ -239,40 +259,6 @@ struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube,
     } else {
         result.cost_to_goal = unpaired_count;
     }
-
-    // Not used...I was experimenting with using the left_oblique count and
-    // right oblique count seperately.  Will leave this hear for a rainy day.
-    /*
-    unsigned char unpaired_left_count = get_unpaired_left_obliques_count_777(cube);
-    unsigned char unpaired_right_count = get_unpaired_right_obliques_count_777(cube);
-    unsigned char unpaired_count = 0;
-
-    if (unpaired_left_count >= unpaired_right_count) {
-        unpaired_count = unpaired_left_count;
-    } else {
-        unpaired_count = unpaired_right_count;
-    }
-
-    if (unpaired_count > 8) {
-        print_cube(cube, 7);
-        printf("unpaired_left_count %d\n", unpaired_left_count);
-        printf("unpaired_right_count %d\n", unpaired_right_count);
-        printf("ERROR: invalid unpaired_count %d\n", unpaired_count);
-        exit(1);
-    }
-
-    // There are at most 8 unpaired left obliques or 8 unpaired right obliques.
-    // Optimally solve a bunch and get some stats that show what total cost is
-    // when considering left and right obliques?
-
-    // The most we can pair at a time is 2 so divide by 2 for an admissable heuristic
-    if (unpaired_count) {
-        // result.cost_to_goal = ceil(unpaired_count / 2);
-        result.cost_to_goal = ceil(unpaired_count / 1.1);
-    } else {
-        result.cost_to_goal = 0;
-    }
-    */
 
     return result;
 }

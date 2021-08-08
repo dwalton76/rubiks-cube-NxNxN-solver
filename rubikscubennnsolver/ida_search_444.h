@@ -2,6 +2,7 @@
 #ifndef _IDA_SEARCH_444_H
 #define _IDA_SEARCH_444_H
 
+#include "ida_search_core.h"
 #define BUCKETSIZE_EDGES_444 239500847
 #define BUCKETSIZE_CENTERS_444 58831
 

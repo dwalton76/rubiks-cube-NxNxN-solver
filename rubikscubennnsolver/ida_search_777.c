@@ -106,16 +106,19 @@ get_unpaired_obliques_count_777 (char *cube)
     unsigned int right_cube_index = 0;
 
     for (unsigned char i = 0; i < NUM_LEFT_OBLIQUE_EDGES_777; i++) {
-        left_cube_index = left_oblique_edges_777[i];
         middle_cube_index = middle_oblique_edges_777[i];
-        right_cube_index = right_oblique_edges_777[i];
 
-        if (cube[left_cube_index] == '1' && cube[middle_cube_index] == '1') {
-            left_paired_obliques += 1;
-        }
+        if (cube[middle_cube_index] == '1') {
+            left_cube_index = left_oblique_edges_777[i];
+            right_cube_index = right_oblique_edges_777[i];
 
-        if (cube[right_cube_index] == '1' && cube[middle_cube_index] == '1') {
-            right_paired_obliques += 1;
+            if (cube[left_cube_index] == '1') {
+                left_paired_obliques += 1;
+            }
+
+            if (cube[right_cube_index] == '1') {
+                right_paired_obliques += 1;
+            }
         }
     }
 
@@ -213,16 +216,19 @@ get_UFBD_unpaired_obliques_count_777 (char *cube)
     int right_cube_index = 0;
 
     for (int i = 0; i < UFBD_NUM_LEFT_OBLIQUE_EDGES_777; i++) {
-        left_cube_index = UFBD_left_oblique_edges_777[i];
         middle_cube_index = UFBD_middle_oblique_edges_777[i];
-        right_cube_index = UFBD_right_oblique_edges_777[i];
 
-        if (cube[left_cube_index] == '1' && cube[middle_cube_index] == '1') {
-            left_paired_obliques += 1;
-        }
+        if (cube[middle_cube_index] == '1') {
+            left_cube_index = UFBD_left_oblique_edges_777[i];
+            right_cube_index = UFBD_right_oblique_edges_777[i];
 
-        if (cube[right_cube_index] == '1' && cube[middle_cube_index] == '1') {
-            right_paired_obliques += 1;
+            if (cube[left_cube_index] == '1') {
+                left_paired_obliques += 1;
+            }
+
+            if (cube[right_cube_index] == '1') {
+                right_paired_obliques += 1;
+            }
         }
     }
 

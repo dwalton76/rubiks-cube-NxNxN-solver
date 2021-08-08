@@ -104,6 +104,7 @@ hash_cost_to_cost(unsigned char perfect_hash_cost)
 // A structure to represent a stack
 struct StackNode {
     unsigned char cost_to_here;
+    unsigned char cost_to_goal;
     move_type moves_to_here[MAX_IDA_THRESHOLD];
     move_type prev_move;
     unsigned int pt0_state;
@@ -122,6 +123,7 @@ int isEmpty(struct StackNode* root)
 
 void push(struct StackNode** root,
     unsigned char cost_to_here,
+    unsigned char cost_to_goal,
     move_type *moves_to_here,
     move_type prev_move,
     unsigned int pt0_state,
@@ -132,6 +134,7 @@ void push(struct StackNode** root,
 {
     struct StackNode* node = (struct StackNode*) malloc(sizeof(struct StackNode));
     node->cost_to_here = cost_to_here;
+    node->cost_to_goal= cost_to_goal;
     memcpy(node->moves_to_here, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
     node->prev_move = prev_move;
     node->pt0_state = pt0_state;
@@ -150,7 +153,7 @@ struct StackNode* pop(struct StackNode** root)
     return temp;
 }
 
-unsigned char
+inline unsigned char
 get_cost_to_goal_simple (
     unsigned int prev_pt0_state,
     unsigned int prev_pt1_state,
@@ -604,28 +607,26 @@ ida_search (
 
     struct StackNode* root = NULL;
     struct StackNode* node = NULL;
-    push(&root, 0, moves_to_here, MOVE_NONE,
+    cost_to_goal = get_cost_to_goal_simple(
+        init_pt0_state,
+        init_pt1_state,
+        init_pt2_state,
+        init_pt3_state,
+        init_pt4_state
+    );
+    push(&root, 0, cost_to_goal, moves_to_here, MOVE_NONE,
         init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
 
     // dwalton here now
     while (root) {
         node = pop(&root);
-        ida_count++;
+        f_cost = node->cost_to_here + node->cost_to_goal;
 
-        cost_to_goal = get_cost_to_goal_simple(
-            node->pt0_state,
-            node->pt1_state,
-            node->pt2_state,
-            node->pt3_state,
-            node->pt4_state
-        );
-        f_cost = node->cost_to_here + cost_to_goal;
-
-        if (cost_to_goal == 0 && parity_ok(node->moves_to_here)) {
+        if (node->cost_to_goal == 0 && parity_ok(node->moves_to_here)) {
             // We are finished!!
             search_result.f_cost = f_cost;
             search_result.found_solution = 1;
-            memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * node->cost_to_here);
+            memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
 
             LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
                 ida_count, search_result.f_cost, threshold, node->cost_to_here, cost_to_goal);
@@ -652,14 +653,10 @@ ida_search (
         }
 
         memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+        skip_other_steps_this_face = MOVE_NONE;
 
         for (unsigned char i = 0; i < legal_move_count; i++) {
             move = move_matrix[node->prev_move][i];
-
-            // This is the scenario where the move is on the same face and layer as prev_move
-            if (move == MOVE_NONE) {
-                continue;
-            }
 
             // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
             /*
@@ -670,6 +667,7 @@ ida_search (
              * maxl, which means that X makes S farther from the solved state.  In
              * this case, we won't try X2 and X'.
              * --cs0x7f
+             */
             if (skip_other_steps_this_face != MOVE_NONE) {
                 if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
                     continue;
@@ -677,7 +675,11 @@ ida_search (
                     skip_other_steps_this_face = MOVE_NONE;
                 }
             }
-             */
+
+            // This is the scenario where the move is on the same face and layer as prev_move
+            if (move == MOVE_NONE) {
+                continue;
+            }
 
             offset = 1 + (4 * i);
             pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset);
@@ -703,8 +705,22 @@ ida_search (
 
             moves_to_here[node->cost_to_here] = move;
 
-            push(&root, node->cost_to_here+1, moves_to_here, move,
-                pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+            cost_to_goal = get_cost_to_goal_simple(
+                pt0_state,
+                pt1_state,
+                pt2_state,
+                pt3_state,
+                pt4_state
+            );
+            ida_count++;
+
+            if ((node->cost_to_here + 1 + cost_to_goal) > threshold) {
+                skip_other_steps_this_face = move;
+            } else {
+                skip_other_steps_this_face = MOVE_NONE;
+                push(&root, node->cost_to_here+1, cost_to_goal, moves_to_here, move,
+                    pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+            }
         }
         free(node);
     }

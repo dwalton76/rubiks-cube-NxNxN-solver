@@ -15,10 +15,8 @@
 
 unsigned long long ida_count = 0;
 unsigned long long ida_count_total = 0;
-struct key_value_pair *ida_explored = NULL;
 unsigned char legal_move_count = 0;
 unsigned char threshold = 0;
-unsigned char find_multiple_solutions = 0;
 unsigned char *pt0 = NULL;
 unsigned char *pt1 = NULL;
 unsigned char *pt2 = NULL;
@@ -425,10 +423,6 @@ print_ida_summary (
     unsigned char pt4_cost = 0;
     unsigned char steps_to_solved = solution_len;
 
-    if (find_multiple_solutions) {
-        return;
-    }
-
     ctg = get_cost_to_goal(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
     pt0_cost = ctg.pt0_cost;
     pt1_cost = ctg.pt1_cost;
@@ -755,7 +749,6 @@ ida_solve (
     for (threshold = min_ida_threshold; threshold <= max_ida_threshold; threshold++) {
         ida_count = 0;
         gettimeofday(&start_this_threshold, NULL);
-        hash_delete_all(&ida_explored);
 
         search_result = ida_search(
             pt0_state,
@@ -921,9 +914,6 @@ main (int argc, char *argv[])
         } else if (strmatch(argv[i], "--multiplier")) {
             i++;
             cost_to_goal_multiplier = atof(argv[i]);
-
-        } else if (strmatch(argv[i], "--multiple-solutions")) {
-            find_multiple_solutions = 1;
 
         } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
             orbit0_wide_quarter_turns = 1;

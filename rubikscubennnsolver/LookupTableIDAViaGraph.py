@@ -57,7 +57,6 @@ class LookupTableIDAViaGraph(LookupTable):
         perfect_hash02_filename: str = None,
         pt1_state_max: int = None,
         pt2_state_max: int = None,
-        multiple_solutions: bool = False,
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -83,7 +82,6 @@ class LookupTableIDAViaGraph(LookupTable):
 
         self.pt1_state_max = pt1_state_max
         self.pt2_state_max = pt2_state_max
-        self.multiple_solutions = multiple_solutions
 
         if self.perfect_hash01_filename or self.pt1_state_max:
             assert (
@@ -282,9 +280,6 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append(self.perfect_hash02_filename)
             cmd.append("--pt2-state-max")
             cmd.append(str(self.pt2_state_max))
-
-        if self.multiple_solutions:
-            cmd.append("--multiple-solutions")
 
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))

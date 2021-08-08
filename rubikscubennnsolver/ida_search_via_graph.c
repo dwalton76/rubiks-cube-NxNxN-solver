@@ -116,11 +116,6 @@ struct StackNode {
 };
 
 
-int isEmpty(struct StackNode* root)
-{
-    return !root;
-}
-
 void push(struct StackNode** root,
     unsigned char cost_to_here,
     unsigned char cost_to_goal,
@@ -388,7 +383,7 @@ get_cost_to_goal (
 }
 
 
-inline unsigned int
+unsigned int
 read_state (char *pt, unsigned int location)
 {
     return (
@@ -629,7 +624,7 @@ ida_search (
             memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
 
             LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
-                ida_count, search_result.f_cost, threshold, node->cost_to_here, cost_to_goal);
+                ida_count, search_result.f_cost, threshold, node->cost_to_here, node->cost_to_goal);
             print_moves(node->moves_to_here, node->cost_to_here);
             return search_result;
         }
@@ -703,8 +698,6 @@ ida_search (
                 pt4_state = read_state(pt4, (node->pt4_state * ROW_LENGTH) + offset);
             }
 
-            moves_to_here[node->cost_to_here] = move;
-
             cost_to_goal = get_cost_to_goal_simple(
                 pt0_state,
                 pt1_state,
@@ -718,6 +711,8 @@ ida_search (
                 skip_other_steps_this_face = move;
             } else {
                 skip_other_steps_this_face = MOVE_NONE;
+                moves_to_here[node->cost_to_here] = move;
+
                 push(&root, node->cost_to_here+1, cost_to_goal, moves_to_here, move,
                     pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
             }

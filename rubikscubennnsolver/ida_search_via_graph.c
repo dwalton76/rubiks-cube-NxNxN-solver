@@ -4,14 +4,14 @@
 #include <locale.h>
 #include <math.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <sys/resource.h>
 #include <sys/time.h>
-#include "ida_search_core.h"
+#include <time.h>
 
+#include "ida_search_core.h"
 
 unsigned long long ida_count = 0;
 unsigned long long ida_count_total = 0;
@@ -56,46 +56,43 @@ struct cost_to_goal_result {
     unsigned char perfect_hash02_cost;
 };
 
-
-unsigned char
-hash_cost_to_cost(unsigned char perfect_hash_cost)
-{
+unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
     switch (perfect_hash_cost) {
-    case '0':
-        return 0;
-    case '1':
-        return 1;
-    case '2':
-        return 2;
-    case '3':
-        return 3;
-    case '4':
-        return 4;
-    case '5':
-        return 5;
-    case '6':
-        return 6;
-    case '7':
-        return 7;
-    case '8':
-        return 8;
-    case '9':
-        return 9;
-    case 'a':
-        return 10;
-    case 'b':
-        return 11;
-    case 'c':
-        return 12;
-    case 'd':
-        return 13;
-    case 'e':
-        return 14;
-    case 'f':
-        return 15;
-    default:
-        printf("ERROR: invalid perfect_hash01_cost %d\n", perfect_hash_cost);
-        exit(1);
+        case '0':
+            return 0;
+        case '1':
+            return 1;
+        case '2':
+            return 2;
+        case '3':
+            return 3;
+        case '4':
+            return 4;
+        case '5':
+            return 5;
+        case '6':
+            return 6;
+        case '7':
+            return 7;
+        case '8':
+            return 8;
+        case '9':
+            return 9;
+        case 'a':
+            return 10;
+        case 'b':
+            return 11;
+        case 'c':
+            return 12;
+        case 'd':
+            return 13;
+        case 'e':
+            return 14;
+        case 'f':
+            return 15;
+        default:
+            printf("ERROR: invalid perfect_hash01_cost %d\n", perfect_hash_cost);
+            exit(1);
     };
 }
 
@@ -110,24 +107,15 @@ struct StackNode {
     unsigned int pt2_state;
     unsigned int pt3_state;
     unsigned int pt4_state;
-    struct StackNode* next;
+    struct StackNode *next;
 };
 
-
-void push(struct StackNode** root,
-    unsigned char cost_to_here,
-    unsigned char cost_to_goal,
-    move_type *moves_to_here,
-    move_type prev_move,
-    unsigned int pt0_state,
-    unsigned int pt1_state,
-    unsigned int pt2_state,
-    unsigned int pt3_state,
-    unsigned int pt4_state)
-{
-    struct StackNode* node = (struct StackNode*) malloc(sizeof(struct StackNode));
+void push(struct StackNode **root, unsigned char cost_to_here, unsigned char cost_to_goal, move_type *moves_to_here,
+          move_type prev_move, unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state,
+          unsigned int pt3_state, unsigned int pt4_state) {
+    struct StackNode *node = (struct StackNode *)malloc(sizeof(struct StackNode));
     node->cost_to_here = cost_to_here;
-    node->cost_to_goal= cost_to_goal;
+    node->cost_to_goal = cost_to_goal;
     memcpy(node->moves_to_here, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
     node->prev_move = prev_move;
     node->pt0_state = pt0_state;
@@ -139,21 +127,15 @@ void push(struct StackNode** root,
     *root = node;
 }
 
-struct StackNode* pop(struct StackNode** root)
-{
-    struct StackNode* temp = *root;
+struct StackNode *pop(struct StackNode **root) {
+    struct StackNode *temp = *root;
     *root = (*root)->next;
     return temp;
 }
 
-inline unsigned char
-get_cost_to_goal_simple (
-    unsigned int prev_pt0_state,
-    unsigned int prev_pt1_state,
-    unsigned int prev_pt2_state,
-    unsigned int prev_pt3_state,
-    unsigned int prev_pt4_state)
-{
+inline unsigned char get_cost_to_goal_simple(unsigned int prev_pt0_state, unsigned int prev_pt1_state,
+                                             unsigned int prev_pt2_state, unsigned int prev_pt3_state,
+                                             unsigned int prev_pt4_state) {
     unsigned char cost_to_goal = pt0[prev_pt0_state * ROW_LENGTH];
     unsigned char pt1_cost = 0;
     unsigned char pt2_cost = 0;
@@ -244,20 +226,15 @@ get_cost_to_goal_simple (
     }
 
     if (cost_to_goal_multiplier) {
-        cost_to_goal = (unsigned char) round(cost_to_goal * cost_to_goal_multiplier);
+        cost_to_goal = (unsigned char)round(cost_to_goal * cost_to_goal_multiplier);
     }
 
     return cost_to_goal;
 }
 
-struct cost_to_goal_result
-get_cost_to_goal (
-    unsigned int prev_pt0_state,
-    unsigned int prev_pt1_state,
-    unsigned int prev_pt2_state,
-    unsigned int prev_pt3_state,
-    unsigned int prev_pt4_state)
-{
+struct cost_to_goal_result get_cost_to_goal(unsigned int prev_pt0_state, unsigned int prev_pt1_state,
+                                            unsigned int prev_pt2_state, unsigned int prev_pt3_state,
+                                            unsigned int prev_pt4_state) {
     struct cost_to_goal_result result;
 
     if (pt_max == 1) {
@@ -374,22 +351,15 @@ get_cost_to_goal (
     }
 
     if (cost_to_goal_multiplier) {
-        result.cost_to_goal = (unsigned char) round(result.cost_to_goal * cost_to_goal_multiplier);
+        result.cost_to_goal = (unsigned char)round(result.cost_to_goal * cost_to_goal_multiplier);
     }
 
     return result;
 }
 
-
-unsigned int
-read_state (char *pt, unsigned int location)
-{
-    return (
-        ((pt[location] & 0x000000ff) << 24u) |
-        ((pt[location + 1] & 0x000000ff) << 16u) |
-        ((pt[location + 2] & 0x000000ff) << 8u) |
-        (pt[location + 3] & 0x000000ff)
-    );
+unsigned int read_state(char *pt, unsigned int location) {
+    return (((pt[location] & 0x000000ff) << 24u) | ((pt[location + 1] & 0x000000ff) << 16u) |
+            ((pt[location + 2] & 0x000000ff) << 8u) | (pt[location + 3] & 0x000000ff));
 
     /*
     uint32_t b0, b1, b2, b3;
@@ -403,17 +373,8 @@ read_state (char *pt, unsigned int location)
      */
 }
 
-
-void
-print_ida_summary (
-    unsigned int pt0_state,
-    unsigned int pt1_state,
-    unsigned int pt2_state,
-    unsigned int pt3_state,
-    unsigned int pt4_state,
-    move_type *solution,
-    unsigned char solution_len)
-{
+void print_ida_summary(unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state, unsigned int pt3_state,
+                       unsigned int pt4_state, move_type *solution, unsigned char solution_len) {
     struct cost_to_goal_result ctg;
     unsigned char cost_to_goal = 0;
     unsigned char pt0_cost = 0;
@@ -433,8 +394,8 @@ print_ida_summary (
     printf("\n");
     printf("       PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX\n");
     printf("       ===  ===  ===  ===  ===  =====  =====  ===  ===  ===\n");
-    printf("  INIT %3d  %3d  %3d  %3d  %3d    %3d    %3d  %3d  %3d  %3d\n",
-        pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, ctg.perfect_hash01_cost, ctg.perfect_hash02_cost, cost_to_goal, steps_to_solved, 0);
+    printf("  INIT %3d  %3d  %3d  %3d  %3d    %3d    %3d  %3d  %3d  %3d\n", pt0_cost, pt1_cost, pt2_cost, pt3_cost,
+           pt4_cost, ctg.perfect_hash01_cost, ctg.perfect_hash02_cost, cost_to_goal, steps_to_solved, 0);
 
     for (unsigned char i = 0; i < solution_len; i++) {
         unsigned char j = 0;
@@ -481,17 +442,14 @@ print_ida_summary (
         pt3_cost = ctg.pt3_cost;
         pt4_cost = ctg.pt4_cost;
         steps_to_solved--;
-        printf("%5s  %3d  %3d  %3d  %3d  %3d  %5d  %5d  %3d  %3d  %3d\n",
-            move2str[solution[i]], pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost,
-            ctg.perfect_hash01_cost, ctg.perfect_hash02_cost, cost_to_goal, steps_to_solved, i+1);
+        printf("%5s  %3d  %3d  %3d  %3d  %3d  %5d  %5d  %3d  %3d  %3d\n", move2str[solution[i]], pt0_cost, pt1_cost,
+               pt2_cost, pt3_cost, pt4_cost, ctg.perfect_hash01_cost, ctg.perfect_hash02_cost, cost_to_goal,
+               steps_to_solved, i + 1);
     }
     printf("\n");
 }
 
-
-unsigned char
-invalid_prune(unsigned char cost_to_here, move_type *moves_to_here)
-{
+unsigned char invalid_prune(unsigned char cost_to_here, move_type *moves_to_here) {
     // Lw2 U' Fw2 D R2 L2 Lw2 U2 L2 U' Rw2 Bw2 Rw2 U R2 D Rw2
     move_type move_seq[17];
 
@@ -520,10 +478,7 @@ invalid_prune(unsigned char cost_to_here, move_type *moves_to_here)
     return 0;
 }
 
-
-unsigned char
-parity_ok (move_type *moves_to_here)
-{
+unsigned char parity_ok(move_type *moves_to_here) {
     unsigned int orbit0_wide_quarter_turn_count = 0;
     unsigned int orbit1_wide_quarter_turn_count = 0;
 
@@ -536,7 +491,7 @@ parity_ok (move_type *moves_to_here)
                 return 0;
             }
 
-        // orbit0 must have an even number of wide quarter
+            // orbit0 must have an even number of wide quarter
         } else if (orbit0_wide_quarter_turns == 2) {
             if (orbit0_wide_quarter_turn_count % 2) {
                 return 0;
@@ -557,7 +512,7 @@ parity_ok (move_type *moves_to_here)
                 return 0;
             }
 
-        // orbit1 must have an even number of wide quarter
+            // orbit1 must have an even number of wide quarter
         } else if (orbit1_wide_quarter_turns == 2) {
             if (orbit1_wide_quarter_turn_count % 2) {
                 return 0;
@@ -572,14 +527,9 @@ parity_ok (move_type *moves_to_here)
     return 1;
 }
 
-struct ida_search_result
-ida_search (
-    unsigned int init_pt0_state,
-    unsigned int init_pt1_state,
-    unsigned int init_pt2_state,
-    unsigned int init_pt3_state,
-    unsigned int init_pt4_state)
-{
+struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int init_pt1_state,
+                                    unsigned int init_pt2_state, unsigned int init_pt3_state,
+                                    unsigned int init_pt4_state) {
     struct ida_search_result search_result;
     unsigned char cost_to_goal = 0;
     unsigned char f_cost = 0;
@@ -594,17 +544,12 @@ ida_search (
     memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
     search_result.found_solution = 0;
 
-    struct StackNode* root = NULL;
-    struct StackNode* node = NULL;
-    cost_to_goal = get_cost_to_goal_simple(
-        init_pt0_state,
-        init_pt1_state,
-        init_pt2_state,
-        init_pt3_state,
-        init_pt4_state
-    );
-    push(&root, 0, cost_to_goal, moves_to_here, MOVE_NONE,
-        init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
+    struct StackNode *root = NULL;
+    struct StackNode *node = NULL;
+    cost_to_goal =
+        get_cost_to_goal_simple(init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
+    push(&root, 0, cost_to_goal, moves_to_here, MOVE_NONE, init_pt0_state, init_pt1_state, init_pt2_state,
+         init_pt3_state, init_pt4_state);
 
     // dwalton here now
     while (root) {
@@ -617,8 +562,8 @@ ida_search (
             search_result.found_solution = 1;
             memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
 
-            LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
-                ida_count, search_result.f_cost, threshold, node->cost_to_here, node->cost_to_goal);
+            LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n", ida_count,
+                search_result.f_cost, threshold, node->cost_to_here, node->cost_to_goal);
             print_moves(node->moves_to_here, node->cost_to_here);
             return search_result;
         }
@@ -692,13 +637,7 @@ ida_search (
                 pt4_state = read_state(pt4, (node->pt4_state * ROW_LENGTH) + offset);
             }
 
-            cost_to_goal = get_cost_to_goal_simple(
-                pt0_state,
-                pt1_state,
-                pt2_state,
-                pt3_state,
-                pt4_state
-            );
+            cost_to_goal = get_cost_to_goal_simple(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
             ida_count++;
 
             if ((node->cost_to_here + 1 + cost_to_goal) > threshold) {
@@ -707,8 +646,8 @@ ida_search (
                 skip_other_steps_this_face = MOVE_NONE;
                 moves_to_here[node->cost_to_here] = move;
 
-                push(&root, node->cost_to_here+1, cost_to_goal, moves_to_here, move,
-                    pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+                push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,
+                     pt3_state, pt4_state);
             }
         }
         free(node);
@@ -718,16 +657,8 @@ ida_search (
     return search_result;
 }
 
-
-struct ida_search_result
-ida_solve (
-    unsigned int pt0_state,
-    unsigned int pt1_state,
-    unsigned int pt2_state,
-    unsigned int pt3_state,
-    unsigned int pt4_state,
-    unsigned char max_ida_threshold)
-{
+struct ida_search_result ida_solve(unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state,
+                                   unsigned int pt3_state, unsigned int pt4_state, unsigned char max_ida_threshold) {
     struct cost_to_goal_result ctg;
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
@@ -750,27 +681,24 @@ ida_solve (
         ida_count = 0;
         gettimeofday(&start_this_threshold, NULL);
 
-        search_result = ida_search(
-            pt0_state,
-            pt1_state,
-            pt2_state,
-            pt3_state,
-            pt4_state);
+        search_result = ida_search(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
-        float ms = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000) + ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
+        float ms = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000) +
+                   ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
         float nodes_per_ms = ida_count / ms;
         unsigned int nodes_per_sec = nodes_per_ms * 1000;
 
-        LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count,  ms / 1000, nodes_per_sec);
+        LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count, ms / 1000,
+            nodes_per_sec);
 
         if (search_result.found_solution) {
             float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
             float nodes_per_ms = ida_count_total / ms;
             unsigned int nodes_per_sec = nodes_per_ms * 1000;
-            LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n",
-                ida_count_total, ms / 1000, nodes_per_sec);
+            LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n", ida_count_total,
+                ms / 1000, nodes_per_sec);
             return search_result;
         }
     }
@@ -779,17 +707,13 @@ ida_solve (
     return search_result;
 }
 
-
-char *
-read_file (char *filename)
-{
+char *read_file(char *filename) {
     FILE *fh = fopen(filename, "rb");
     unsigned long bufsize = 0;
     char *buffer = NULL;
 
     // Go to the end of the file
     if (fseek(fh, 0L, SEEK_END) == 0) {
-
         // Get the size of the file
         bufsize = ftell(fh);
         // LOG("%s bufsize is %lu\n", filename, bufsize);
@@ -815,7 +739,7 @@ read_file (char *filename)
             printf("ERROR: could not read %s\n", filename);
             exit(1);
         } else {
-            buffer[new_len++] = '\0'; // Just to be safe.
+            buffer[new_len++] = '\0';  // Just to be safe.
         }
         // LOG("%s is %dM\n", filename, bufsize / (1024 * 1024));
     }
@@ -824,10 +748,7 @@ read_file (char *filename)
     return buffer;
 }
 
-
-int
-main (int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     unsigned long prune_table_0_state = 0;
     unsigned long prune_table_1_state = 0;
     unsigned long prune_table_2_state = 0;
@@ -932,7 +853,6 @@ main (int argc, char *argv[])
             char *p = strtok(argv[i], ",");
 
             while (p != NULL) {
-
                 if (strmatch(p, "U")) {
                     legal_moves[legal_move_count] = U;
                 } else if (strmatch(p, "U'")) {
@@ -1048,7 +968,7 @@ main (int argc, char *argv[])
                     legal_moves[legal_move_count] = threeDw2;
                 }
 
-                p = strtok (NULL, ",");
+                p = strtok(NULL, ",");
                 legal_move_count++;
             }
 
@@ -1119,11 +1039,11 @@ main (int argc, char *argv[])
                 // printf("%s", line);
                 unsigned char token_index = 0;
                 char *pt;
-                pt = strtok (line, ",");
+                pt = strtok(line, ",");
 
                 while (pt != NULL) {
                     unsigned int token_value = atoi(pt);
-                    pt = strtok (NULL, ",");
+                    pt = strtok(NULL, ",");
 
                     if (token_index == 0) {
                         prune_table_0_state = token_value;
@@ -1139,13 +1059,8 @@ main (int argc, char *argv[])
                     token_index++;
                 }
 
-                search_result = ida_solve(
-                    prune_table_0_state,
-                    prune_table_1_state,
-                    prune_table_2_state,
-                    prune_table_3_state,
-                    prune_table_4_state,
-                    i_max_ida_threshold);
+                search_result = ida_solve(prune_table_0_state, prune_table_1_state, prune_table_2_state,
+                                          prune_table_3_state, prune_table_4_state, i_max_ida_threshold);
 
                 if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
                     min_search_result = search_result;
@@ -1169,23 +1084,12 @@ main (int argc, char *argv[])
         }
 
     } else {
-        search_result = ida_solve(
-            prune_table_0_state,
-            prune_table_1_state,
-            prune_table_2_state,
-            prune_table_3_state,
-            prune_table_4_state,
-            max_ida_threshold);
+        search_result = ida_solve(prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state,
+                                  prune_table_4_state, max_ida_threshold);
 
         if (search_result.found_solution) {
-            print_ida_summary(
-                prune_table_0_state,
-                prune_table_1_state,
-                prune_table_2_state,
-                prune_table_3_state,
-                prune_table_4_state,
-                search_result.solution,
-                search_result.f_cost);
+            print_ida_summary(prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state,
+                              prune_table_4_state, search_result.solution, search_result.f_cost);
         }
     }
 

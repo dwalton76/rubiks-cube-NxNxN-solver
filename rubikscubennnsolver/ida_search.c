@@ -3,18 +3,18 @@
 #include <locale.h>
 #include <math.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <sys/resource.h>
 #include <sys/time.h>
-#include "uthash.h"
-#include "ida_search_core.h"
+#include <time.h>
+
 #include "ida_search_444.h"
 #include "ida_search_666.h"
 #include "ida_search_777.h"
-
+#include "ida_search_core.h"
+#include "uthash.h"
 
 // scratchpads that we do not want to allocate over and over again
 char *sp_cube_state;
@@ -53,36 +53,30 @@ char *reduce_333_centers_only = NULL;
 struct wings_for_edges_recolor_pattern_444 *wings_for_recolor_444;
 
 /* Remove leading and trailing whitespaces */
-char *
-strstrip (char *s)
-{
+char *strstrip(char *s) {
     size_t size;
     char *end;
 
     size = strlen(s);
 
-    if (!size)
-        return s;
+    if (!size) return s;
 
     // Removing trailing whitespaces
     end = s + size - 1;
-    while (end >= s && isspace(*end))
-        end--;
+    while (end >= s && isspace(*end)) end--;
     *(end + 1) = '\0';
 
     // Remove leading whitespaces
     // The lookup table files do not have any leading whitespaces so commenting this out to save a few CPU cycles
-    //while (*s && isspace(*s))
+    // while (*s && isspace(*s))
     //    s++;
 
     return s;
 }
 
-
 /* The file must be sorted and all lines must be the same width */
-unsigned long
-file_binary_search (char *filename, char *state_to_find, int statewidth, unsigned long linecount, int linewidth)
-{
+unsigned long file_binary_search(char *filename, char *state_to_find, int statewidth, unsigned long linecount,
+                                 int linewidth) {
     FILE *fh_read = NULL;
     unsigned long first = 0;
     unsigned long midpoint = 0;
@@ -99,7 +93,7 @@ file_binary_search (char *filename, char *state_to_find, int statewidth, unsigne
     }
 
     while (first <= last) {
-        midpoint = (unsigned long) ((first + last)/2);
+        midpoint = (unsigned long)((first + last) / 2);
         fseek(fh_read, midpoint * linewidth, SEEK_SET);
 
         if (fread(line, statewidth, 1, fh_read)) {
@@ -108,7 +102,6 @@ file_binary_search (char *filename, char *state_to_find, int statewidth, unsigne
             str_cmp_result = strncmp(state_to_find, line, statewidth);
 
             if (str_cmp_result == 0) {
-
                 // read the entire line, not just the state
                 fseek(fh_read, midpoint * linewidth, SEEK_SET);
 
@@ -137,18 +130,14 @@ file_binary_search (char *filename, char *state_to_find, int statewidth, unsigne
     return 0;
 }
 
-
 /*
  * Replace all occurrences of 'old' with 'new'
  */
-void
-streplace (char *str, char old, char new)
-{
+void streplace(char *str, char old, char new) {
     int i = 0;
 
     /* Run till end of string */
     while (str[i] != '\0') {
-
         /* If occurrence of character is found */
         if (str[i] == old) {
             str[i] = new;
@@ -158,17 +147,13 @@ streplace (char *str, char old, char new)
     }
 }
 
-
-void
-str_replace_for_binary(char *str, char *ones)
-{
+void str_replace_for_binary(char *str, char *ones) {
     int i = 0;
     int j;
     int is_a_one = 0;
 
     /* Run till end of string */
     while (str[i] != '\0') {
-
         if (str[i] == '.') {
             // pass
         } else if (str[i] != '0') {
@@ -176,7 +161,6 @@ str_replace_for_binary(char *str, char *ones)
             is_a_one = 0;
 
             while (ones[j] != 0) {
-
                 /* If occurrence of character is found */
                 if (str[i] == ones[j]) {
                     is_a_one = 1;
@@ -196,19 +180,15 @@ str_replace_for_binary(char *str, char *ones)
     }
 }
 
-void
-str_replace_list_of_chars (char *str, char *old, char *new)
-{
+void str_replace_list_of_chars(char *str, char *old, char *new) {
     int i = 0;
     int j;
 
     /* Run till end of string */
     while (str[i] != '\0') {
-
         j = 0;
 
         while (old[j] != '\0') {
-
             /* If occurrence of character is found */
             if (str[i] == old[j]) {
                 str[i] = new[0];
@@ -221,10 +201,7 @@ str_replace_list_of_chars (char *str, char *old, char *new)
     }
 }
 
-
-void
-init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
-{
+void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
     int squares_per_side = size * size;
     int square_count = squares_per_side * 6;
     int U_start = 1;
@@ -268,7 +245,7 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     char D[2] = {'D', 0};
 
     memset(cube, 0, sizeof(char) * (square_count + 2));
-    cube[0] = 'x'; // placeholder
+    cube[0] = 'x';  // placeholder
     memcpy(&cube[U_start], &kociemba[U_start_kociemba], squares_per_side);
     memcpy(&cube[L_start], &kociemba[L_start_kociemba], squares_per_side);
     memcpy(&cube[F_start], &kociemba[F_start_kociemba], squares_per_side);
@@ -277,38 +254,35 @@ init_cube(char *cube, int size, lookup_table_type type, char *kociemba)
     memcpy(&cube[D_start], &kociemba[D_start_kociemba], squares_per_side);
     // LOG("cube:\n%s\n\n", cube);
 
-    switch (type)  {
-    case REDUCE_333_444:
-        break;
+    switch (type) {
+        case REDUCE_333_444:
+            break;
 
-    case LR_OBLIQUE_EDGES_STAGE_666:
-        // Convert to 1s and 0s
-        str_replace_for_binary(cube, ones_LR);
-        print_cube(cube, size);
-        break;
+        case LR_OBLIQUE_EDGES_STAGE_666:
+            // Convert to 1s and 0s
+            str_replace_for_binary(cube, ones_LR);
+            print_cube(cube, size);
+            break;
 
-    case LR_OBLIQUE_EDGES_STAGE_777:
-        // Convert to 1s and 0s
-        str_replace_for_binary(cube, ones_LR);
-        print_cube(cube, size);
-        break;
+        case LR_OBLIQUE_EDGES_STAGE_777:
+            // Convert to 1s and 0s
+            str_replace_for_binary(cube, ones_LR);
+            print_cube(cube, size);
+            break;
 
-    case UD_OBLIQUE_EDGES_STAGE_777:
-        // Convert to 1s and 0s
-        str_replace_for_binary(cube, ones_UD);
-        print_cube(cube, size);
-        break;
+        case UD_OBLIQUE_EDGES_STAGE_777:
+            // Convert to 1s and 0s
+            str_replace_for_binary(cube, ones_UD);
+            print_cube(cube, size);
+            break;
 
-    default:
-        printf("ERROR: init_cube() does not yet support this --type\n");
-        exit(1);
+        default:
+            printf("ERROR: init_cube() does not yet support this --type\n");
+            exit(1);
     }
 }
 
-
-int
-moves_cost (char *moves)
-{
+int moves_cost(char *moves) {
     int cost = 0;
     int i = 0;
 
@@ -316,7 +290,6 @@ moves_cost (char *moves)
         cost++;
 
         while (moves[i] != '\0') {
-
             // Moves are separated by whitespace
             if (moves[i] == ' ') {
                 cost++;
@@ -329,10 +302,7 @@ moves_cost (char *moves)
     return cost;
 }
 
-
-void
-ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
-{
+void ida_prune_table_preload(struct key_value_pair **hashtable, char *filename) {
     FILE *fh_read = NULL;
     int BUFFER_SIZE = 128;
     char buffer[BUFFER_SIZE];
@@ -341,7 +311,7 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
     char *token_ptr = NULL;
     char state[BUFFER_SIZE];
     int cost = 0;
-    struct key_value_pair * pt_entry = NULL;
+    struct key_value_pair *pt_entry = NULL;
 
     fh_read = fopen(filename, "r");
     if (fh_read == NULL) {
@@ -353,7 +323,6 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
 
     // 4x4x4
     if (strmatch(filename, "lookup-tables/lookup-table-4x4x4-step30-reduce333.txt")) {
-
         while (fgets(buffer, BUFFER_SIZE, fh_read) != NULL) {
             // DDDDLLLLBBBBRRRRFFFFUUUU10362745a8b9ecfdhgkiljnm:R2 Bw2 D' F2 D Bw2
             // 0..47 are the state
@@ -373,10 +342,7 @@ ida_prune_table_preload (struct key_value_pair **hashtable, char *filename)
     LOG("ida_prune_table_preload %s: end\n", filename);
 }
 
-
-char *
-ida_cost_only_preload (char *filename, unsigned long size)
-{
+char *ida_cost_only_preload(char *filename, unsigned long size) {
     FILE *fh_read = NULL;
     char *ptr = malloc(sizeof(char) * size);
     memset(ptr, 0, sizeof(char) * size);
@@ -398,12 +364,9 @@ ida_cost_only_preload (char *filename, unsigned long size)
     }
 }
 
-
-int
-ida_prune_table_cost (struct key_value_pair *hashtable, char *state_to_find)
-{
+int ida_prune_table_cost(struct key_value_pair *hashtable, char *state_to_find) {
     int cost = 0;
-    struct key_value_pair * pt_entry = NULL;
+    struct key_value_pair *pt_entry = NULL;
 
     pt_entry = hash_find(&hashtable, state_to_find);
 
@@ -414,53 +377,34 @@ ida_prune_table_cost (struct key_value_pair *hashtable, char *state_to_find)
     return cost;
 }
 
+struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, unsigned int max_cost_to_goal,
+                                          cpu_mode_type cpu_mode) {
+    switch (type) {
+        // 4x4x4
+        case REDUCE_333_444:
+            return ida_heuristic_reduce_333_444(cube, max_cost_to_goal, &reduce_333_444, reduce_333_edges_only,
+                                                reduce_333_centers_only, wings_for_recolor_444);
 
-struct ida_heuristic_result
-ida_heuristic (char *cube, lookup_table_type type, unsigned int max_cost_to_goal, cpu_mode_type cpu_mode)
-{
-    switch (type)  {
+        // 6x6x6
+        case LR_OBLIQUE_EDGES_STAGE_666:
+            return ida_heuristic_LR_oblique_edges_stage_666(cube, max_cost_to_goal);
 
-    // 4x4x4
-    case REDUCE_333_444:
-        return ida_heuristic_reduce_333_444(
-            cube,
-            max_cost_to_goal,
-            &reduce_333_444,
-            reduce_333_edges_only,
-            reduce_333_centers_only,
-            wings_for_recolor_444);
+        // 7x7x7
+        case LR_OBLIQUE_EDGES_STAGE_777:
+            return ida_heuristic_LR_oblique_edges_stage_777(cube, max_cost_to_goal);
 
-    // 6x6x6
-    case LR_OBLIQUE_EDGES_STAGE_666:
-        return ida_heuristic_LR_oblique_edges_stage_666(
-            cube,
-            max_cost_to_goal
-        );
+        case UD_OBLIQUE_EDGES_STAGE_777:
+            return ida_heuristic_UD_oblique_edges_stage_777(cube, max_cost_to_goal);
 
-    // 7x7x7
-    case LR_OBLIQUE_EDGES_STAGE_777:
-        return ida_heuristic_LR_oblique_edges_stage_777(cube, max_cost_to_goal);
-
-    case UD_OBLIQUE_EDGES_STAGE_777:
-        return ida_heuristic_UD_oblique_edges_stage_777(cube, max_cost_to_goal);
-
-    default:
-        printf("ERROR: ida_heuristic() does not yet support this --type\n");
-        exit(1);
+        default:
+            printf("ERROR: ida_heuristic() does not yet support this --type\n");
+            exit(1);
     }
 }
 
-
-int
-ida_search_complete (
-    char *cube,
-    lookup_table_type type,
-    unsigned int orbit0_wide_quarter_turns,
-    unsigned int orbit1_wide_quarter_turns,
-    unsigned int avoid_pll,
-    move_type *moves_to_here)
-{
-    struct key_value_pair * pt_entry = NULL;
+int ida_search_complete(char *cube, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
+                        unsigned int orbit1_wide_quarter_turns, unsigned int avoid_pll, move_type *moves_to_here) {
+    struct key_value_pair *pt_entry = NULL;
     unsigned int orbit0_wide_quarter_turn_count = 0;
     unsigned int orbit1_wide_quarter_turn_count = 0;
     int result = 0;
@@ -474,7 +418,7 @@ ida_search_complete (
                 return 0;
             }
 
-        // orbit0 must have an even number of wide quarter
+            // orbit0 must have an even number of wide quarter
         } else if (orbit0_wide_quarter_turns == 2) {
             if (orbit0_wide_quarter_turn_count % 2) {
                 return 0;
@@ -495,7 +439,7 @@ ida_search_complete (
                 return 0;
             }
 
-        // orbit1 must have an even number of wide quarter
+            // orbit1 must have an even number of wide quarter
         } else if (orbit1_wide_quarter_turns == 2) {
             if (orbit1_wide_quarter_turn_count % 2) {
                 return 0;
@@ -507,208 +451,193 @@ ida_search_complete (
         }
     }
 
-    switch (type)  {
-    // 4x4x4
-    case REDUCE_333_444:
-        result = ida_search_complete_reduce_333_444(cube);
+    switch (type) {
+        // 4x4x4
+        case REDUCE_333_444:
+            result = ida_search_complete_reduce_333_444(cube);
 
-        if (result) {
+            if (result) {
+                // This will only be true when solving 4x4x4 phase3 where we must avoid PLL. To avoid
+                // PLL the edge parity and corner parity must match (both odd or both even).
+                if (avoid_pll) {
+                    FILE *fp;
+                    char path[64];
+                    char command[256];
 
-            // This will only be true when solving 4x4x4 phase3 where we must avoid PLL. To avoid
-            // PLL the edge parity and corner parity must match (both odd or both even).
-            if (avoid_pll) {
-                FILE *fp;
-                char path[64];
-                char command[256];
+                    memset(command, '\0', 256);
+                    strcpy(command, "usr/bin/has_pll.py ");
+                    unsigned int command_i = strlen(command);
 
-                memset(command, '\0', 256);
-                strcpy(command, "usr/bin/has_pll.py ");
-                unsigned int command_i = strlen(command);
+                    for (unsigned int i = 1; i <= 96; i++) {
+                        command[command_i] = cube[i];
+                        command_i++;
+                    }
 
-                for (unsigned int i = 1; i <= 96; i++) {
-                    command[command_i] = cube[i];
-                    command_i++;
-                }
-
-                /* Open the command for reading. */
-                fp = popen(command, "r");
-                if (fp == NULL) {
-                    printf("Failed to run command\n" );
-                    exit(1);
-                }
-
-                /* Read the output a line at a time - output it. */
-                while (fgets(path, sizeof(path)-1, fp) != NULL) {
-                    if (strmatch(path, "True\n")) {
-                        //LOG("Found solution but it has PLL\n");
-                        result = 0;
-                        break;
-                    } else if (strmatch(path, "False\n")) {
-                        LOG("Found solution without PLL\n");
-                        result = 1;
-                        break;
-                    } else {
-                        printf("ERROR: invalid has_pll.py output %s\n", path);
+                    /* Open the command for reading. */
+                    fp = popen(command, "r");
+                    if (fp == NULL) {
+                        printf("Failed to run command\n");
                         exit(1);
                     }
+
+                    /* Read the output a line at a time - output it. */
+                    while (fgets(path, sizeof(path) - 1, fp) != NULL) {
+                        if (strmatch(path, "True\n")) {
+                            // LOG("Found solution but it has PLL\n");
+                            result = 0;
+                            break;
+                        } else if (strmatch(path, "False\n")) {
+                            LOG("Found solution without PLL\n");
+                            result = 1;
+                            break;
+                        } else {
+                            printf("ERROR: invalid has_pll.py output %s\n", path);
+                            exit(1);
+                        }
+                    }
+
+                    /* close */
+                    pclose(fp);
+
+                    return result;
                 }
+                return 1;
 
-                /* close */
-                pclose(fp);
-
-                return result;
+            } else {
+                return 0;
             }
-            return 1;
 
-        } else {
-            return 0;
-        }
+        // 6x6x6
+        case LR_OBLIQUE_EDGES_STAGE_666:
+            return ida_search_complete_LR_oblique_edges_stage_666(cube);
 
-    // 6x6x6
-    case LR_OBLIQUE_EDGES_STAGE_666:
-        return ida_search_complete_LR_oblique_edges_stage_666(cube);
+        // 7x7x7
+        case LR_OBLIQUE_EDGES_STAGE_777:
+            return ida_search_complete_LR_oblique_edges_stage_777(cube);
 
-    // 7x7x7
-    case LR_OBLIQUE_EDGES_STAGE_777:
-        return ida_search_complete_LR_oblique_edges_stage_777(cube);
+        case UD_OBLIQUE_EDGES_STAGE_777:
+            return ida_search_complete_UD_oblique_edges_stage_777(cube);
 
-    case UD_OBLIQUE_EDGES_STAGE_777:
-        return ida_search_complete_UD_oblique_edges_stage_777(cube);
-
-    default:
-        printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
-        exit(1);
+        default:
+            printf("ERROR: ida_search_complete() does not yet support type %d\n", type);
+            exit(1);
     }
 
     return 0;
 }
 
+int step_allowed_by_ida_search(lookup_table_type type, move_type move) {
+    switch (type) {
+        // 4x4x4
+        case REDUCE_333_444:
+            switch (move) {
+                case Uw:
+                case Uw_PRIME:
+                case Lw:
+                case Lw_PRIME:
+                case Fw:
+                case Fw_PRIME:
+                case Rw:
+                case Rw_PRIME:
+                case Bw:
+                case Bw_PRIME:
+                case Dw:
+                case Dw_PRIME:
+                case L:
+                case L_PRIME:
+                case R:
+                case R_PRIME:
+                    return 0;
+                default:
+                    return 1;
+            }
 
-int
-step_allowed_by_ida_search (lookup_table_type type, move_type move)
-{
-    switch (type)  {
+        // 6x6x6
+        case LR_OBLIQUE_EDGES_STAGE_666:
+            switch (move) {
+                case threeUw:
+                case threeUw_PRIME:
+                case threeDw:
+                case threeDw_PRIME:
+                case threeLw:
+                case threeLw_PRIME:
+                case threeRw:
+                case threeRw_PRIME:
+                case threeFw:
+                case threeFw_PRIME:
+                case threeBw:
+                case threeBw_PRIME:
+                    return 0;
+                default:
+                    return 1;
+            }
 
-    // 4x4x4
-    case REDUCE_333_444:
-        switch (move) {
-        case Uw:
-        case Uw_PRIME:
-        case Lw:
-        case Lw_PRIME:
-        case Fw:
-        case Fw_PRIME:
-        case Rw:
-        case Rw_PRIME:
-        case Bw:
-        case Bw_PRIME:
-        case Dw:
-        case Dw_PRIME:
-        case L:
-        case L_PRIME:
-        case R:
-        case R_PRIME:
-            return 0;
+        // 7x7x7
+        case LR_OBLIQUE_EDGES_STAGE_777:
+            switch (move) {
+                case threeUw:
+                case threeUw_PRIME:
+                case threeDw:
+                case threeDw_PRIME:
+                case threeFw:
+                case threeFw_PRIME:
+                case threeBw:
+                case threeBw_PRIME:
+                    return 0;
+                default:
+                    return 1;
+            }
+
+        case UD_OBLIQUE_EDGES_STAGE_777:
+            switch (move) {
+                case threeUw:
+                case threeUw_PRIME:
+                case threeDw:
+                case threeDw_PRIME:
+                case threeLw:
+                case threeLw_PRIME:
+                case threeRw:
+                case threeRw_PRIME:
+                case threeFw:
+                case threeFw_PRIME:
+                case threeBw:
+                case threeBw_PRIME:
+
+                case Uw:
+                case Uw_PRIME:
+                case Dw:
+                case Dw_PRIME:
+                case Fw:
+                case Fw_PRIME:
+                case Bw:
+                case Bw_PRIME:
+
+                case L:
+                case L_PRIME:
+                case L2:
+                case R:
+                case R_PRIME:
+                case R2:
+                    return 0;
+                default:
+                    return 1;
+            }
+
         default:
-            return 1;
-        }
-
-    // 6x6x6
-    case LR_OBLIQUE_EDGES_STAGE_666:
-        switch (move) {
-        case threeUw:
-        case threeUw_PRIME:
-        case threeDw:
-        case threeDw_PRIME:
-        case threeLw:
-        case threeLw_PRIME:
-        case threeRw:
-        case threeRw_PRIME:
-        case threeFw:
-        case threeFw_PRIME:
-        case threeBw:
-        case threeBw_PRIME:
-            return 0;
-        default:
-            return 1;
-        }
-
-    // 7x7x7
-    case LR_OBLIQUE_EDGES_STAGE_777:
-        switch (move) {
-        case threeUw:
-        case threeUw_PRIME:
-        case threeDw:
-        case threeDw_PRIME:
-        case threeFw:
-        case threeFw_PRIME:
-        case threeBw:
-        case threeBw_PRIME:
-            return 0;
-        default:
-            return 1;
-        }
-
-    case UD_OBLIQUE_EDGES_STAGE_777:
-        switch (move) {
-        case threeUw:
-        case threeUw_PRIME:
-        case threeDw:
-        case threeDw_PRIME:
-        case threeLw:
-        case threeLw_PRIME:
-        case threeRw:
-        case threeRw_PRIME:
-        case threeFw:
-        case threeFw_PRIME:
-        case threeBw:
-        case threeBw_PRIME:
-
-        case Uw:
-        case Uw_PRIME:
-        case Dw:
-        case Dw_PRIME:
-        case Fw:
-        case Fw_PRIME:
-        case Bw:
-        case Bw_PRIME:
-
-        case L:
-        case L_PRIME:
-        case L2:
-        case R:
-        case R_PRIME:
-        case R2:
-            return 0;
-        default:
-            return 1;
-        }
-
-    default:
-        printf("ERROR: step_allowed_by_ida_search add support for this type\n");
-        exit(1);
+            printf("ERROR: step_allowed_by_ida_search add support for this type\n");
+            exit(1);
     }
 }
-
 
 struct ida_search_result {
     unsigned int f_cost;
     unsigned int found_solution;
 };
 
-struct ida_search_result
-ida_search (unsigned int cost_to_here,
-            move_type *moves_to_here,
-            unsigned int threshold,
-            move_type prev_move,
-            char *cube,
-            unsigned int cube_size,
-            lookup_table_type type,
-            unsigned int orbit0_wide_quarter_turns,
-            unsigned int orbit1_wide_quarter_turns,
-            unsigned int avoid_pll,
-            cpu_mode_type cpu_mode)
-{
+struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_to_here, unsigned int threshold,
+                                    move_type prev_move, char *cube, unsigned int cube_size, lookup_table_type type,
+                                    unsigned int orbit0_wide_quarter_turns, unsigned int orbit1_wide_quarter_turns,
+                                    unsigned int avoid_pll, cpu_mode_type cpu_mode) {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
     move_type move, skip_other_steps_this_face;
@@ -728,7 +657,7 @@ ida_search (unsigned int cost_to_here,
 
     // Abort Searching
     if (f_cost >= threshold) {
-        //if (debug) {
+        // if (debug) {
         //    LOG("IDA prune f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
         //        f_cost, threshold, cost_to_here, cost_to_goal);
         //    LOG("\n");
@@ -736,10 +665,11 @@ ida_search (unsigned int cost_to_here,
         return search_result;
     }
 
-    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, moves_to_here)) {
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll,
+                            moves_to_here)) {
         // We are finished!!
-        LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
-            ida_count, f_cost, threshold, cost_to_here, cost_to_goal);
+        LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n", ida_count, f_cost,
+            threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
         search_result.found_solution = 1;
 
@@ -759,7 +689,6 @@ ida_search (unsigned int cost_to_here,
     hash_add(&ida_explored, heuristic_result.lt_state, 0);
 
     if (cube_size == 4) {
-
         for (int i = 0; i < MOVE_COUNT_444; i++) {
             move = moves_444[i];
 
@@ -794,8 +723,8 @@ ida_search (unsigned int cost_to_here,
             rotate_444(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
+                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -811,7 +740,6 @@ ida_search (unsigned int cost_to_here,
         }
 
     } else if (cube_size == 6) {
-
         for (int i = 0; i < MOVE_COUNT_666; i++) {
             move = moves_666[i];
 
@@ -846,8 +774,8 @@ ida_search (unsigned int cost_to_here,
             rotate_666(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
+                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -863,7 +791,6 @@ ida_search (unsigned int cost_to_here,
         }
 
     } else if (cube_size == 7) {
-
         for (int i = 0; i < MOVE_COUNT_777; i++) {
             move = moves_777[i];
 
@@ -898,8 +825,8 @@ ida_search (unsigned int cost_to_here,
             rotate_777(cube_copy, cube_tmp, array_size, move);
             moves_to_here[cost_to_here] = move;
 
-            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size,
-                                           type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
+            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
+                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -922,17 +849,8 @@ ida_search (unsigned int cost_to_here,
     return search_result;
 }
 
-
-int
-ida_solve (
-    char *cube,
-    unsigned int cube_size,
-    lookup_table_type type,
-    unsigned int orbit0_wide_quarter_turns,
-    unsigned int orbit1_wide_quarter_turns,
-    unsigned int avoid_pll,
-    cpu_mode_type cpu_mode)
-{
+int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
+              unsigned int orbit1_wide_quarter_turns, unsigned int avoid_pll, cpu_mode_type cpu_mode) {
     int MAX_SEARCH_DEPTH = 30;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
@@ -945,34 +863,36 @@ ida_solve (
     // For printing commas via %'d
     setlocale(LC_NUMERIC, "");
 
-    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, moves_to_here)) {
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll,
+                            moves_to_here)) {
         LOG("cube already solved\n");
         printf("SOLUTION:\n");
         return 1;
     }
 
-    switch (type)  {
+    switch (type) {
+        // 4x4x4
+        case REDUCE_333_444:
+            ida_prune_table_preload(&reduce_333_444, "lookup-tables/lookup-table-4x4x4-step30-reduce333.txt");
+            reduce_333_edges_only = ida_cost_only_preload(
+                "lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
+            reduce_333_centers_only = ida_cost_only_preload(
+                "lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
+            wings_for_recolor_444 = init_wings_for_edges_recolor_pattern_444();
+            break;
 
-    // 4x4x4
-    case REDUCE_333_444:
-        ida_prune_table_preload(&reduce_333_444, "lookup-tables/lookup-table-4x4x4-step30-reduce333.txt");
-        reduce_333_edges_only = ida_cost_only_preload("lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
-        reduce_333_centers_only = ida_cost_only_preload("lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
-        wings_for_recolor_444 = init_wings_for_edges_recolor_pattern_444();
-        break;
+        // 6x6x6
+        case LR_OBLIQUE_EDGES_STAGE_666:
+            break;
 
-    // 6x6x6
-    case LR_OBLIQUE_EDGES_STAGE_666:
-        break;
+        // 7x7x7
+        case LR_OBLIQUE_EDGES_STAGE_777:
+        case UD_OBLIQUE_EDGES_STAGE_777:
+            break;
 
-    // 7x7x7
-    case LR_OBLIQUE_EDGES_STAGE_777:
-    case UD_OBLIQUE_EDGES_STAGE_777:
-        break;
-
-    default:
-        printf("ERROR: ida_solve() does not yet support this --type\n");
-        exit(1);
+        default:
+            printf("ERROR: ida_solve() does not yet support this --type\n");
+            exit(1);
     }
 
     heuristic_result = ida_heuristic(cube, type, 99, cpu_mode);
@@ -986,24 +906,25 @@ ida_solve (
         memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_SEARCH_DEPTH);
         hash_delete_all(&ida_explored);
 
-        search_result = ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size,
-                                   type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns,
-                                   avoid_pll, cpu_mode);
+        search_result = ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size, type,
+                                   orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
-        float ms = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000) + ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
+        float ms = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000) +
+                   ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
         float nodes_per_ms = ida_count / ms;
         unsigned int nodes_per_sec = nodes_per_ms * 1000;
 
-        LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count,  ms / 1000, nodes_per_sec);
+        LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count, ms / 1000,
+            nodes_per_sec);
 
         if (search_result.found_solution) {
             float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
             float nodes_per_ms = ida_count_total / ms;
             unsigned int nodes_per_sec = nodes_per_ms * 1000;
-            LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n",
-                ida_count_total, ms / 1000, nodes_per_sec);
+            LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n", ida_count_total,
+                ms / 1000, nodes_per_sec);
             return 1;
         }
     }
@@ -1012,10 +933,7 @@ ida_solve (
     return 0;
 }
 
-
-int
-main (int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     lookup_table_type type = NONE;
     unsigned int cube_size_type = 0;
     unsigned int cube_size_kociemba = 0;
@@ -1030,7 +948,7 @@ main (int argc, char *argv[])
         if (strmatch(argv[i], "-k") || strmatch(argv[i], "--kociemba")) {
             i++;
             strcpy(kociemba, argv[i]);
-            cube_size_kociemba = (unsigned int) sqrt(strlen(kociemba) / 6);
+            cube_size_kociemba = (unsigned int)sqrt(strlen(kociemba) / 6);
 
         } else if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
             i++;
@@ -1040,12 +958,12 @@ main (int argc, char *argv[])
                 type = REDUCE_333_444;
                 cube_size_type = 4;
 
-            // 6x6x6
+                // 6x6x6
             } else if (strmatch(argv[i], "6x6x6-LR-oblique-edges-stage")) {
                 type = LR_OBLIQUE_EDGES_STAGE_666;
                 cube_size_type = 6;
 
-            // 7x7x7
+                // 7x7x7
             } else if (strmatch(argv[i], "7x7x7-LR-oblique-edges-stage")) {
                 type = LR_OBLIQUE_EDGES_STAGE_777;
                 cube_size_type = 7;
@@ -1107,7 +1025,8 @@ main (int argc, char *argv[])
     }
 
     if (cube_size_kociemba < 2 || cube_size_kociemba > 7) {
-        printf("ERROR: only 2x2x2 through 7x7x7 cubes are supported, yours is %dx%dx%d\n", cube_size_kociemba, cube_size_kociemba, cube_size_kociemba);
+        printf("ERROR: only 2x2x2 through 7x7x7 cubes are supported, yours is %dx%dx%d\n", cube_size_kociemba,
+               cube_size_kociemba, cube_size_kociemba);
         exit(1);
     }
 
@@ -1131,5 +1050,5 @@ main (int argc, char *argv[])
     // Print the maximum resident set size used (in MB).
     struct rusage r_usage;
     getrusage(RUSAGE_SELF, &r_usage);
-    printf("Memory usage: %lu MB\n", (unsigned long) r_usage.ru_maxrss / (1024 * 1024));
+    printf("Memory usage: %lu MB\n", (unsigned long)r_usage.ru_maxrss / (1024 * 1024));
 }

@@ -102,7 +102,6 @@ hash_cost_to_cost(unsigned char perfect_hash_cost)
 }
 
 // A structure to represent a stack
-// dwalton
 struct StackNode {
     unsigned char cost_to_here;
     move_type moves_to_here[MAX_IDA_THRESHOLD];
@@ -112,37 +111,13 @@ struct StackNode {
     unsigned int pt2_state;
     unsigned int pt3_state;
     unsigned int pt4_state;
-	struct StackNode* next;
+    struct StackNode* next;
 };
 
-struct StackNode* newNode(
-    unsigned char cost_to_here,
-    move_type *moves_to_here,
-    move_type prev_move,
-    unsigned int pt0_state,
-    unsigned int pt1_state,
-    unsigned int pt2_state,
-    unsigned int pt3_state,
-    unsigned int pt4_state)
-{
-	struct StackNode* stackNode = (struct StackNode*) malloc(sizeof(struct StackNode));
-	stackNode->cost_to_here = cost_to_here;
-// dwalton
-	// stackNode->moves_to_here = moves_to_here;
-    memcpy(stackNode->moves_to_here, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
-	stackNode->prev_move = prev_move;
-	stackNode->pt0_state = pt0_state;
-	stackNode->pt1_state = pt1_state;
-	stackNode->pt2_state = pt2_state;
-	stackNode->pt3_state = pt3_state;
-	stackNode->pt4_state = pt4_state;
-	stackNode->next = NULL;
-	return stackNode;
-}
 
 int isEmpty(struct StackNode* root)
 {
-	return !root;
+    return !root;
 }
 
 void push(struct StackNode** root,
@@ -155,19 +130,23 @@ void push(struct StackNode** root,
     unsigned int pt3_state,
     unsigned int pt4_state)
 {
-	struct StackNode* node = newNode(cost_to_here, moves_to_here, prev_move, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
-	node->next = *root;
-	*root = node;
-    //printf("push node with cost_to_here %d, prev_move 0x%x, pt0_state 0x%x, pt1_state 0x%x\n",
-    //    node->cost_to_here, node->prev_move, node->pt0_state, node->pt1_state);
+    struct StackNode* node = (struct StackNode*) malloc(sizeof(struct StackNode));
+    node->cost_to_here = cost_to_here;
+    memcpy(node->moves_to_here, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+    node->prev_move = prev_move;
+    node->pt0_state = pt0_state;
+    node->pt1_state = pt1_state;
+    node->pt2_state = pt2_state;
+    node->pt3_state = pt3_state;
+    node->pt4_state = pt4_state;
+    node->next = *root;
+    *root = node;
 }
 
 struct StackNode* pop(struct StackNode** root)
 {
-	if (isEmpty(*root))
-		return NULL;
-	struct StackNode* temp = *root;
-	*root = (*root)->next;
+    struct StackNode* temp = *root;
+    *root = (*root)->next;
     return temp;
 }
 
@@ -618,11 +597,8 @@ ida_search (
     unsigned int pt2_state = 0;
     unsigned int pt3_state = 0;
     unsigned int pt4_state = 0;
-    move_type move, skip_other_steps_this_face;
+    move_type move, skip_other_steps_this_face, moves_to_here[MAX_IDA_THRESHOLD];
     skip_other_steps_this_face = MOVE_NONE;
-
-    // dwalton here now
-    move_type moves_to_here[MAX_IDA_THRESHOLD];
     memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
     search_result.found_solution = 0;
 
@@ -631,10 +607,9 @@ ida_search (
     push(&root, 0, moves_to_here, MOVE_NONE,
         init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
 
-    while (!isEmpty(root)) {
+    // dwalton here now
+    while (root) {
         node = pop(&root);
-        // printf("pop node with prev_move 0x%x, pt0_state 0x%x, pt1_state 0x%x\n", node->prev_move, node->pt0_state, node->pt1_state);
-        memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
         ida_count++;
 
         cost_to_goal = get_cost_to_goal_simple(
@@ -648,13 +623,13 @@ ida_search (
 
         if (cost_to_goal == 0 && parity_ok(node->moves_to_here)) {
             // We are finished!!
-            LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
-                ida_count, search_result.f_cost, threshold, node->cost_to_here, cost_to_goal);
-            print_moves(node->moves_to_here, node->cost_to_here);
-            
             search_result.f_cost = f_cost;
             search_result.found_solution = 1;
             memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * node->cost_to_here);
+
+            LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
+                ida_count, search_result.f_cost, threshold, node->cost_to_here, cost_to_goal);
+            print_moves(node->moves_to_here, node->cost_to_here);
             return search_result;
         }
 
@@ -676,8 +651,8 @@ ida_search (
             continue;
         }
 
-        // printf("prev_move 0x%x\n", node->prev_move);
-        // printf("prev_move %s\n", move2str[node->prev_move]);
+        memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+
         for (unsigned char i = 0; i < legal_move_count; i++) {
             move = move_matrix[node->prev_move][i];
 
@@ -726,19 +701,12 @@ ida_search (
                 pt4_state = read_state(pt4, (node->pt4_state * ROW_LENGTH) + offset);
             }
 
-            // dwalton
-            // moves_to_here = malloc(sizeof(move_type) * MAX_IDA_THRESHOLD);
-            // memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * node->cost_to_here);
-            // memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
             moves_to_here[node->cost_to_here] = move;
 
-            // printf("push move 0x%x %s, pt0_state 0x%x, pt1_state 0x%x\n", move, move2str[move], pt0_state, pt1_state);
-            // printf("move 0x%x %s\n", move, move2str[move]);
             push(&root, node->cost_to_here+1, moves_to_here, move,
                 pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
         }
         free(node);
-        // printf("\n");
     }
 
     search_result.found_solution = 0;
@@ -773,7 +741,6 @@ ida_solve (
 
     gettimeofday(&start, NULL);
 
-    // dwalton
     for (threshold = min_ida_threshold; threshold <= max_ida_threshold; threshold++) {
         ida_count = 0;
         gettimeofday(&start_this_threshold, NULL);

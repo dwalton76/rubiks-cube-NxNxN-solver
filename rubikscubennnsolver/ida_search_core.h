@@ -5,13 +5,6 @@
 #include "uthash.h"
 
 typedef enum {
-    CPU_NONE,
-    CPU_FAST,
-    CPU_NORMAL,
-    CPU_SLOW,
-} cpu_mode_type;
-
-typedef enum {
     MOVE_NONE,
 
     U,

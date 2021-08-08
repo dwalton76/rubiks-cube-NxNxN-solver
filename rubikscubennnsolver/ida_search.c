@@ -377,8 +377,7 @@ int ida_prune_table_cost(struct key_value_pair *hashtable, char *state_to_find) 
     return cost;
 }
 
-struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, unsigned int max_cost_to_goal,
-                                          cpu_mode_type cpu_mode) {
+struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, unsigned int max_cost_to_goal) {
     switch (type) {
         // 4x4x4
         case REDUCE_333_444:
@@ -637,7 +636,7 @@ struct ida_search_result {
 struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_to_here, unsigned int threshold,
                                     move_type prev_move, char *cube, unsigned int cube_size, lookup_table_type type,
                                     unsigned int orbit0_wide_quarter_turns, unsigned int orbit1_wide_quarter_turns,
-                                    unsigned int avoid_pll, cpu_mode_type cpu_mode) {
+                                    unsigned int avoid_pll) {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
     move_type move, skip_other_steps_this_face;
@@ -649,7 +648,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
 
     ida_count++;
     unsigned int max_cost_to_goal = threshold - cost_to_here;
-    heuristic_result = ida_heuristic(cube, type, max_cost_to_goal, cpu_mode);
+    heuristic_result = ida_heuristic(cube, type, max_cost_to_goal);
     cost_to_goal = heuristic_result.cost_to_goal;
     f_cost = cost_to_here + cost_to_goal;
     search_result.f_cost = f_cost;
@@ -724,7 +723,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
-                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
+                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -775,7 +774,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
-                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
+                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -826,7 +825,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
             moves_to_here[cost_to_here] = move;
 
             tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
-                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
+                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
 
             if (tmp_search_result.found_solution) {
                 return tmp_search_result;
@@ -850,7 +849,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
 }
 
 int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
-              unsigned int orbit1_wide_quarter_turns, unsigned int avoid_pll, cpu_mode_type cpu_mode) {
+              unsigned int orbit1_wide_quarter_turns, unsigned int avoid_pll) {
     int MAX_SEARCH_DEPTH = 30;
     move_type moves_to_here[MAX_SEARCH_DEPTH];
     int min_ida_threshold = 0;
@@ -895,7 +894,7 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
             exit(1);
     }
 
-    heuristic_result = ida_heuristic(cube, type, 99, cpu_mode);
+    heuristic_result = ida_heuristic(cube, type, 99);
     min_ida_threshold = heuristic_result.cost_to_goal;
     LOG("min_ida_threshold %d\n", min_ida_threshold);
     gettimeofday(&start, NULL);
@@ -907,7 +906,7 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
         hash_delete_all(&ida_explored);
 
         search_result = ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size, type,
-                                   orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
+                                   orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
@@ -942,7 +941,6 @@ int main(int argc, char *argv[]) {
     unsigned int avoid_pll = 0;
     char kociemba[300];
     memset(kociemba, 0, sizeof(char) * 300);
-    cpu_mode_type cpu_mode = CPU_FAST;
 
     for (int i = 1; i < argc; i++) {
         if (strmatch(argv[i], "-k") || strmatch(argv[i], "--kociemba")) {
@@ -992,15 +990,6 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "--avoid-pll")) {
             avoid_pll = 1;
 
-        } else if (strmatch(argv[i], "--fast")) {
-            cpu_mode = CPU_FAST;
-
-        } else if (strmatch(argv[i], "--normal")) {
-            cpu_mode = CPU_NORMAL;
-
-        } else if (strmatch(argv[i], "--slow")) {
-            cpu_mode = CPU_SLOW;
-
         } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
             printf("\nida_search --kociemba KOCIEMBA_STRING --type 5x5x5-LR-centers-stage\n\n");
             exit(0);
@@ -1045,7 +1034,7 @@ int main(int argc, char *argv[]) {
     init_cube(cube, cube_size, type, kociemba);
 
     // print_cube(cube, cube_size);
-    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll, cpu_mode);
+    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
 
     // Print the maximum resident set size used (in MB).
     struct rusage r_usage;

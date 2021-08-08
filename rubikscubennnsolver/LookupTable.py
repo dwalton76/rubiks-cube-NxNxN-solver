@@ -1434,15 +1434,6 @@ class LookupTableIDAViaC(object):
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
                 raise ValueError(f"avoid_oll is only supported for orbits 0 or 1, not {self.avoid_oll}")
 
-        if self.parent.cpu_mode == "fast":
-            cmd.append("--fast")
-        elif self.parent.cpu_mode == "normal":
-            cmd.append("--normal")
-        elif self.parent.cpu_mode == "slow":
-            cmd.append("--slow")
-        else:
-            raise Exception("%s: What CPU mode for %s?" % (self, self.parent))
-
         if self.avoid_pll:
             # To avoid PLL the odd/even of edge swaps and corner swaps must agree...they
             # must both be odd or both be even. In order to avoid OLL though (which we

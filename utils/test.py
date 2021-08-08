@@ -37,20 +37,7 @@ parser.add_argument("--size", type=str, default="4x4x4")
 parser.add_argument("--test-cubes", type=str, default="./utils/test-cubes.json")
 parser.add_argument("--start", type=int, default=0)
 
-# cpu_mode
-parser.add_argument("--fast", default=True, action="store_true", help="Find a solution quickly")
-parser.add_argument("--normal", default=False, action="store_true", help="Find a shorter solution but takes longer")
-parser.add_argument("--slow", default=False, action="store_true", help="Find shortest solution we can, takes a while")
 args = parser.parse_args()
-
-if args.slow:
-    cpu_mode = "slow"
-elif args.normal:
-    cpu_mode = "normal"
-elif args.fast:
-    cpu_mode = "fast"
-else:
-    raise Exception("What CPU mode to use?")
 
 try:
 
@@ -143,7 +130,6 @@ try:
             kociemba_string = str(kociemba_string)
             cube.solution = []
             cube.load_state(kociemba_string, order)
-            cube.cpu_mode = cpu_mode
 
             try:
                 cube.solve()

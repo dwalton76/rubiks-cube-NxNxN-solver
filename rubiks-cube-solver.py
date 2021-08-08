@@ -45,10 +45,6 @@ parser.add_argument(
     action="store_true",
     help="Load smaller tables to use less memory...takes longer to run",
 )
-parser.add_argument("--fast", default=True, action="store_true", help="Find a solution quickly")
-parser.add_argument("--normal", default=False, action="store_true", help="Find a shorter solution but takes longer")
-parser.add_argument("--slow", default=False, action="store_true", help="Find shortest solution we can, takes a while")
-
 
 action = parser.add_mutually_exclusive_group(required=False)
 parser.add_argument("--openwith", default=None, type=str, help="Colors for sides U, L, etc")
@@ -121,15 +117,6 @@ if args.debug:
 try:
     size = int(sqrt((len(args.state) / 6)))
 
-    if args.slow:
-        cpu_mode = "slow"
-    elif args.normal:
-        cpu_mode = "normal"
-    elif args.fast:
-        cpu_mode = "fast"
-    else:
-        raise Exception("What CPU mode to use?")
-
     if size == 2:
         # rubiks cube libraries
         from rubikscubennnsolver.RubiksCube222 import RubiksCube222
@@ -176,8 +163,6 @@ try:
         for step in args.openwith.split():
             cube.rotate(step)
 
-    cube.cpu_mode = cpu_mode
-    logger.info("CPU mode %s" % cube.cpu_mode)
     cube.sanity_check()
     cube.print_cube()
     cube.www_header()

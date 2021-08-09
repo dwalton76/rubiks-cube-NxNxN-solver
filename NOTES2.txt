@@ -1,0 +1,162 @@
+dwalton76@ubuntu-desktop:~/rubiks-cube-NxNxN-solver$ ./ida_search --kociemba .........xxx...U...x..x...U..x...U...UUU...................................................................UUU...x...x..x...U..x...x...UUU..................xxx...x...x..x...x..U...U...xUU...................................................................UUU...x...U..U...x..U...U...xxx......... --type 7x7x7-UD-oblique-edges-stage
+
+              . . . . . . . 
+              . . 0 0 0 . . 
+              . 1 . . . 0 . 
+              . 0 . . . 1 . 
+              . 0 . . . 1 . 
+              . . 1 1 1 . . 
+              . . . . . . . 
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . 1 1 1 . . . . . . . . . . . 1 1 1 . . 
+. . . . . . . . 0 . . . 0 . . . . . . . . . 0 . . . 1 . 
+. . . . . . . . 0 . . . 1 . . . . . . . . . 1 . . . 0 . 
+. . . . . . . . 0 . . . 0 . . . . . . . . . 1 . . . 1 . 
+. . . . . . . . . 1 1 1 . . . . . . . . . . . 0 0 0 . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+
+              . . . . . . . 
+              . . 0 0 0 . . 
+              . 0 . . . 0 . 
+              . 0 . . . 0 . 
+              . 1 . . . 1 . 
+              . . 0 1 1 . . 
+              . . . . . . . 
+
+[2021-08-09T10:26:24.635] min_ida_threshold 5
+[2021-08-09T10:26:24.635] IDA threshold 5, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-09T10:26:24.635] IDA threshold 6, explored 83 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-09T10:26:24.638] IDA threshold 7, explored 3,649 nodes, took 0.003s, 1,216,333 nodes-per-sec
+[2021-08-09T10:26:24.679] IDA threshold 8, explored 89,675 nodes, took 0.040s, 2,241,875 nodes-per-sec
+[2021-08-09T10:26:24.800] IDA count 287,253, f_cost 8 vs threshold 9 (cost_to_here 8, cost_to_goal 0)
+SOLUTION: 3Uw2 B2 Lw 3Bw2 3Dw2 Rw2 U' 3Bw2 
+
+              . . . . . . . 
+              . . 0 0 0 . . 
+              . 1 . . . 0 . 
+              . 1 . . . 0 . 
+              . 1 . . . 0 . 
+              . . 1 1 1 . . 
+              . . . . . . . 
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . 1 1 1 . . . . . . . . . . . 1 1 1 . . 
+. . . . . . . . 1 . . . 0 . . . . . . . . . 0 . . . 1 . 
+. . . . . . . . 1 . . . 0 . . . . . . . . . 0 . . . 1 . 
+. . . . . . . . 1 . . . 0 . . . . . . . . . 0 . . . 1 . 
+. . . . . . . . . 0 0 0 . . . . . . . . . . . 1 1 1 . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+
+              . . . . . . . 
+              . . 1 1 1 . . 
+              . 0 . . . 0 . 
+              . 0 . . . 0 . 
+              . 0 . . . 0 . 
+              . . 0 0 0 . . 
+              . . . . . . . 
+
+[2021-08-09T10:26:24.800] IDA threshold 9, explored 287,253 nodes, took 0.120s, 2,393,775 nodes-per-sec
+[2021-08-09T10:26:24.800] IDA found solution, explored 380,661 total nodes, took 0.165s, 2,307,036 nodes-per-sec
+Memory usage: 0 MB
+dwalton76@ubuntu-desktop:~/rubiks-cube-NxNxN-solver$ 
+
+
+
+
+
+
+dwalton76@ubuntu-desktop:~/rubiks-cube-NxNxN-solver$ ./ida_search --kociemba ........xL...L..x..x..L...xL................Lx...L..L..x..L...xL................Lx...x..x..x..x...Lx................xx...x..L..x..x...xx................xx...x..x..L..L...xL................xx...L..x..x..x...xx........ --type 6x6x6-LR-oblique-edges-stage
+
+            . . . . . . 
+            . . 0 1 . . 
+            . 1 . . 0 . 
+            . 0 . . 1 . 
+            . . 0 1 . . 
+            . . . . . . 
+
+. . . . . . . . . . . . . . . . . . . . . . . . 
+. . 0 0 . . . . 1 0 . . . . 1 0 . . . . 0 0 . . 
+. 0 . . 0 . . 0 . . 0 . . 1 . . 1 . . 1 . . 0 . 
+. 1 . . 1 . . 0 . . 0 . . 0 . . 1 . . 0 . . 0 . 
+. . 0 1 . . . . 1 0 . . . . 0 1 . . . . 0 0 . . 
+. . . . . . . . . . . . . . . . . . . . . . . . 
+
+            . . . . . . 
+            . . 0 0 . . 
+            . 0 . . 1 . 
+            . 0 . . 0 . 
+            . . 0 0 . . 
+            . . . . . . 
+
+[2021-08-09T10:27:18.014] min_ida_threshold 6
+[2021-08-09T10:27:18.014] IDA threshold 6, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-09T10:27:18.014] IDA threshold 7, explored 207 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-09T10:27:18.020] IDA threshold 8, explored 13,125 nodes, took 0.006s, 2,187,500 nodes-per-sec
+[2021-08-09T10:27:18.390] IDA threshold 9, explored 857,782 nodes, took 0.369s, 2,324,612 nodes-per-sec
+[2021-08-09T10:27:21.566] IDA count 7,958,316, f_cost 9 vs threshold 10 (cost_to_here 9, cost_to_goal 0)
+SOLUTION: 3Uw2 Fw R 3Fw2 Dw F 3Lw2 R 3Uw2 
+
+            . . . . . . 
+            . . 0 0 . . 
+            . 0 . . 0 . 
+            . 0 . . 0 . 
+            . . 0 0 . . 
+            . . . . . . 
+
+. . . . . . . . . . . . . . . . . . . . . . . . 
+. . 0 0 . . . . 1 1 . . . . 0 0 . . . . 0 0 . . 
+. 1 . . 1 . . 0 . . 0 . . 0 . . 1 . . 0 . . 0 . 
+. 1 . . 1 . . 0 . . 0 . . 0 . . 1 . . 0 . . 0 . 
+. . 1 1 . . . . 0 0 . . . . 0 0 . . . . 0 0 . . 
+. . . . . . . . . . . . . . . . . . . . . . . . 
+
+            . . . . . . 
+            . . 1 1 . . 
+            . 1 . . 1 . 
+            . 1 . . 1 . 
+            . . 0 0 . . 
+            . . . . . . 
+
+[2021-08-09T10:27:21.567] IDA threshold 10, explored 7,958,316 nodes, took 3.176s, 2,505,767 nodes-per-sec
+[2021-08-09T10:27:21.567] IDA found solution, explored 8,829,431 total nodes, took 3.552s, 2,485,763 nodes-per-sec
+Memory usage: 0 MB
+dwalton76@ubuntu-desktop:~/rubiks-cube-NxNxN-solver$ 
+
+
+
+(venv) dwalton76@ubuntu-desktop:~/rubiks-cube-NxNxN-solver$ ./ida_search --kociemba DUDFDDUDLDUUDLULDLRUDRLDFRLURFBFLFRBFFBBUBFUBBFBUURULDULDDULBURRFFDFRRLRLRLFRFDLLRLRBFBBBBFBUBRD --type 4x4x4-reduce-333 --avoid-pll
+[2021-08-09T10:28:28.717] ida_prune_table_preload lookup-tables/lookup-table-4x4x4-step30-reduce333.txt: start
+[2021-08-09T10:28:29.325] ida_prune_table_preload lookup-tables/lookup-table-4x4x4-step30-reduce333.txt: end
+[2021-08-09T10:28:29.325] ida_cost_only_preload: begin lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt, 239500848 entries, ptr 0x84f5a010
+[2021-08-09T10:28:29.406] ida_cost_only_preload: end   lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt, ptr 0x84f5a010
+[2021-08-09T10:28:29.406] ida_cost_only_preload: begin lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt, 58832 entries, ptr 0xbfa921e0
+[2021-08-09T10:28:29.406] ida_cost_only_preload: end   lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt, ptr 0xbfa921e0
+[2021-08-09T10:28:29.406] min_ida_threshold 12
+[2021-08-09T10:28:29.406] IDA threshold 12, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-09T10:28:29.408] IDA threshold 13, explored 1,417 nodes, took 0.002s, 708,500 nodes-per-sec
+[2021-08-09T10:28:29.465] Found solution without PLL
+[2021-08-09T10:28:29.472] IDA count 6,508, f_cost 13 vs threshold 14 (cost_to_here 13, cost_to_goal 0)
+SOLUTION: R2 F Uw2 B' U R2 U' Fw2 U2 F D2 Lw2 Uw2 
+
+        B R R U 
+        L U U L 
+        L U U L 
+        R U U D 
+
+U B B D B B B F L F F F R F F L 
+U L L U R F F R D R R R B B B L 
+U L L U R F F R D R R R B B B L 
+D D D F L B B B L F F U B U U R 
+
+        U D D D 
+        L D D D 
+        L D D D 
+        F F F R 
+
+[2021-08-09T10:28:29.472] IDA threshold 14, explored 6,508 nodes, took 0.064s, 101,687 nodes-per-sec
+[2021-08-09T10:28:29.472] IDA found solution, explored 7,926 total nodes, took 0.066s, 120,090 nodes-per-sec
+Memory usage: 0 MB
+(venv) dwalton76@ubuntu-desktop:~/rubiks-cube-NxNxN-solver$ 
+
+

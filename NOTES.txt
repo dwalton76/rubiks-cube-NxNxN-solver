@@ -1,4 +1,5 @@
-gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c rubikscubennnsolver/xxhash.c -lm -pg; ./ida_search --kociemba .........xxx...x...x..x...x..x...L...xxL..................LLx...L...x..L...L..x...x...LLx..................Lxx...x...L..x...x..x...L...LxL..................xxL...x...x..x...x..x...x...xxx..................xLx...x...x..L...L..x...x...LLL..................LxL...x...x..x...x..x...x...xxL......... --type 7x7x7-LR-oblique-edges-stage; gprof ida_search gmon.out > prof_output; head -n 20 prof_output
+gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c rubikscubennnsolver/xxhash.c -lm -pg; time ./ida_search --kociemba .........xxx...x...x..x...x..x...L...xxL..................LLx...L...x..L...L..x...x...LLx..................Lxx...x...L..x...x..x...L...LxL..................xxL...x...x..x...x..x...x...xxx..................xLx...x...x..L...L..x...x...LLL..................LxL...x...x..x...x..x...x...xxL......... --type 7x7x7-LR-oblique-edges-stage; gprof ida_search gmon.out > prof_output; head -n 20 prof_output 
+
 
               . . . . . . . 
               . . 0 0 0 . . 
@@ -24,13 +25,13 @@ gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/
               . . 0 0 0 . . 
               . . . . . . . 
 
-[2021-08-08T11:47:53.842] min_ida_threshold 9
-[2021-08-08T11:47:53.842] IDA threshold 9, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-08T11:47:53.842] IDA threshold 10, explored 47 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-08T11:47:53.844] IDA threshold 11, explored 2,285 nodes, took 0.001s, 2,285,000 nodes-per-sec
-[2021-08-08T11:47:53.901] IDA threshold 12, explored 94,865 nodes, took 0.057s, 1,664,298 nodes-per-sec
-[2021-08-08T11:47:56.077] IDA threshold 13, explored 3,826,782 nodes, took 2.176s, 1,758,631 nodes-per-sec
-[2021-08-08T11:48:48.638] IDA count 85,040,760, f_cost 13 vs threshold 14 (cost_to_here 13, cost_to_goal 0)
+[2021-08-10T19:23:42.618] min_ida_threshold 9
+[2021-08-10T19:23:42.618] IDA threshold 9, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-10T19:23:42.618] IDA threshold 10, explored 47 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-10T19:23:42.620] IDA threshold 11, explored 2,285 nodes, took 0.001s, 2,285,000 nodes-per-sec
+[2021-08-10T19:23:42.672] IDA threshold 12, explored 94,865 nodes, took 0.052s, 1,824,326 nodes-per-sec
+[2021-08-10T19:23:44.507] IDA threshold 13, explored 3,826,782 nodes, took 1.836s, 2,084,304 nodes-per-sec
+[2021-08-10T19:24:27.717] IDA count 85,040,760, f_cost 13 vs threshold 14 (cost_to_here 13, cost_to_goal 0)
 SOLUTION: Fw' 3Uw2 3Lw' Dw Bw D2 3Rw F' 3Fw2 Bw' U 3Lw 3Rw 
 
               . . . . . . . 
@@ -57,27 +58,31 @@ SOLUTION: Fw' 3Uw2 3Lw' Dw Bw D2 3Rw F' 3Fw2 Bw' U 3Lw 3Rw
               . . 1 1 1 . . 
               . . . . . . . 
 
-[2021-08-08T11:48:48.639] IDA threshold 14, explored 85,040,760 nodes, took 52.561s, 1,617,944 nodes-per-sec
-[2021-08-08T11:48:48.639] IDA found solution, explored 88,964,740 total nodes, took 54.797s, 1,623,533 nodes-per-sec
+[2021-08-10T19:24:27.717] IDA threshold 14, explored 85,040,760 nodes, took 43.209s, 1,968,126 nodes-per-sec
+[2021-08-10T19:24:27.717] IDA found solution, explored 88,964,740 total nodes, took 45.098s, 1,972,698 nodes-per-sec
 Memory usage: 0 MB
+
+real    0m45.116s
+user    0m44.649s
+sys     0m0.413s
 Flat profile:
 
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
  time   seconds   seconds    calls   s/call   s/call  name    
- 73.74     24.42    24.42 88964741     0.00     0.00  ida_heuristic_LR_oblique_edges_stage_777
- 14.67     29.28     4.86 88964734     0.00     0.00  rotate_777
-  5.75     31.19     1.91        6     0.32     5.52  ida_search
-  2.23     31.93     0.74  2927594     0.00     0.00  hash_find
-  1.00     32.26     0.33  2156368     0.00     0.00  hash_add
-  0.88     32.55     0.29 125440189     0.00     0.00  steps_on_same_face_and_layer
-  0.59     32.74     0.20 88964741     0.00     0.00  ida_heuristic
-  0.54     32.92     0.18  2927596     0.00     0.00  ida_search_complete_LR_oblique_edges_stage_777
-  0.42     33.06     0.14 109974455     0.00     0.00  step_allowed_by_ida_search
-  0.14     33.11     0.05  2927596     0.00     0.00  ida_search_complete
-  0.05     33.12     0.02                             ida_prune_table_cost
-  0.00     33.12     0.00        9     0.00     0.00  LOG
-  0.00     33.12     0.00        6     0.00     0.00  hash_delete_all
-  0.00     33.12     0.00        1     0.00     0.00  print_cube
-  0.00     33.12     0.00        1     0.00     0.00  print_moves
-
+ 70.76     19.29    19.29 88964741     0.00     0.00  ida_heuristic_LR_oblique_edges_stage_777
+ 12.88     22.80     3.51 88964734     0.00     0.00  rotate_777
+  5.26     24.24     1.44        6     0.24     4.54  ida_search
+  4.99     25.60     1.36  2927594     0.00     0.00  hash_find
+  2.46     26.27     0.67  2156368     0.00     0.00  hash_add
+  1.52     26.68     0.42 125440189     0.00     0.00  steps_on_same_face_and_layer
+  0.70     26.87     0.19  2927596     0.00     0.00  ida_search_complete_LR_oblique_edges_stage_777
+  0.57     27.03     0.16 109974455     0.00     0.00  step_allowed_by_ida_search
+  0.57     27.18     0.16 88964741     0.00     0.00  ida_heuristic
+  0.15     27.22     0.04  2927596     0.00     0.00  ida_search_complete
+  0.06     27.24     0.02                             ida_prune_table_cost
+  0.06     27.25     0.02                             moves_cancel_out
+  0.04     27.26     0.01        6     0.00     0.00  hash_delete_all
+  0.00     27.26     0.00        9     0.00     0.00  LOG
+  0.00     27.26     0.00        1     0.00     0.00  print_cube
+  

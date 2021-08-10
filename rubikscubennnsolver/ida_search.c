@@ -22,6 +22,7 @@ unsigned long array_size;
 unsigned long long ida_count;
 unsigned long long ida_count_total;
 unsigned long long seek_calls = 0;
+#define MAX_IDA_THRESHOLD 20
 
 // Supported IDA searches
 typedef enum {
@@ -850,17 +851,16 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
 
 int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
               unsigned int orbit1_wide_quarter_turns, unsigned int avoid_pll) {
-    int MAX_SEARCH_DEPTH = 30;
-    move_type moves_to_here[MAX_SEARCH_DEPTH];
+    move_type moves_to_here[MAX_IDA_THRESHOLD];
     int min_ida_threshold = 0;
     struct ida_heuristic_result heuristic_result;
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
 
-    memset(moves_to_here, MOVE_NONE, MAX_SEARCH_DEPTH);
-
     // For printing commas via %'d
     setlocale(LC_NUMERIC, "");
+
+    memset(moves_to_here, MOVE_NONE, MAX_IDA_THRESHOLD);
 
     if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll,
                             moves_to_here)) {
@@ -869,29 +869,14 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
         return 1;
     }
 
-    switch (type) {
-        // 4x4x4
-        case REDUCE_333_444:
-            ida_prune_table_preload(&reduce_333_444, "lookup-tables/lookup-table-4x4x4-step30-reduce333.txt");
-            reduce_333_edges_only = ida_cost_only_preload(
-                "lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
-            reduce_333_centers_only = ida_cost_only_preload(
-                "lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
-            wings_for_recolor_444 = init_wings_for_edges_recolor_pattern_444();
-            break;
+    if (type == REDUCE_333_444) {
+        ida_prune_table_preload(&reduce_333_444, "lookup-tables/lookup-table-4x4x4-step30-reduce333.txt");
+        reduce_333_edges_only = ida_cost_only_preload(
+            "lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
+        reduce_333_centers_only = ida_cost_only_preload(
+            "lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
+        wings_for_recolor_444 = init_wings_for_edges_recolor_pattern_444();
 
-        // 6x6x6
-        case LR_OBLIQUE_EDGES_STAGE_666:
-            break;
-
-        // 7x7x7
-        case LR_OBLIQUE_EDGES_STAGE_777:
-        case UD_OBLIQUE_EDGES_STAGE_777:
-            break;
-
-        default:
-            printf("ERROR: ida_solve() does not yet support this --type\n");
-            exit(1);
     }
 
     heuristic_result = ida_heuristic(cube, type, 99);
@@ -899,10 +884,10 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
     LOG("min_ida_threshold %d\n", min_ida_threshold);
     gettimeofday(&start, NULL);
 
-    for (int threshold = min_ida_threshold; threshold <= MAX_SEARCH_DEPTH; threshold++) {
+    for (int threshold = min_ida_threshold; threshold <= MAX_IDA_THRESHOLD; threshold++) {
         ida_count = 0;
         gettimeofday(&start_this_threshold, NULL);
-        memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_SEARCH_DEPTH);
+        memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
         hash_delete_all(&ida_explored);
 
         search_result = ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size, type,
@@ -928,7 +913,7 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
         }
     }
 
-    LOG("IDA failed with range %d->%d\n", min_ida_threshold, MAX_SEARCH_DEPTH);
+    LOG("IDA failed with range %d->%d\n", min_ida_threshold, MAX_IDA_THRESHOLD);
     return 0;
 }
 

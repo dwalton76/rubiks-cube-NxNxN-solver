@@ -551,7 +551,6 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
     push(&root, 0, cost_to_goal, moves_to_here, MOVE_NONE, init_pt0_state, init_pt1_state, init_pt2_state,
          init_pt3_state, init_pt4_state);
 
-    // dwalton here now
     while (root) {
         node = pop(&root);
         f_cost = node->cost_to_here + node->cost_to_goal;

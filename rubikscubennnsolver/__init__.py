@@ -113,11 +113,11 @@ class InvalidCubeReduction(Exception):
     pass
 
 
-def configure_logging() -> None:
+def configure_logging(level=logging.INFO) -> None:
     """
     Set the logging format
     """
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
+    logging.basicConfig(level=level, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
 
 
 def reverse_steps(steps: List[str]) -> List[str]:

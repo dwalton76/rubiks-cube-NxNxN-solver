@@ -63,12 +63,11 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube,
     state >>= 1;
     sprintf(result.lt_state, "%012llx", state);
 
-    // The most oblique edges we can pair in single move is 4 so take
-    // the number that are unpaired and divide by 4.
+    // The most oblique edges we can pair in single move is 4 so take the number that are unpaired and divide by 4.
     //
     // time ./ida_search --kociemba
     // ........xL...L..x..L..x...xx................Lx...L..L..x..L...xL................xL...x..x..x..x...xL................Lx...L..x..x..x...xx................xx...x..x..L..L...xL................xx...L..x..x..x...xx........
-    // --type 6x6x6-LR-oblique-edges-stage --fast
+    // --type 6x6x6-LR-oblique-edges-stage
     //
     // 1.5 took 44s, 9 moves
     // 1.3 took 14s, 9 moves
@@ -76,18 +75,12 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube,
     // 1.1 took 4s, 9 moves
     // 1 took 3s, 9 moves
     // 0.9 took 4s, 9 moves
+    //
+    // result.cost_to_goal = (int)ceil((double)unpaired_count / 1.2);
 
-    // inadmissable heuristic but fast
-    result.cost_to_goal = (int)ceil((double)unpaired_count / 1.2);
-
-    // inadmissable heuristic but fast...kudos to xyzzy for this formula
-    /*
-    if (unpaired_count > 8) {
-        result.cost_to_goal = 4 + (unpaired_count >> 1);
-    } else {
-        result.cost_to_goal = unpaired_count;
-    }
-     */
+    // The math works out that it just basically takes about 1 mpve per unpaired oblique edge
+    // so save some cycles and just use the unpaired_count as the heuristic.
+    result.cost_to_goal = unpaired_count;
 
     return result;
 }

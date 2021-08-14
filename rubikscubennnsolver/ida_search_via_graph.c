@@ -835,6 +835,10 @@ int main(int argc, char *argv[]) {
             i++;
             cost_to_goal_multiplier = atof(argv[i]);
 
+        } else if (strmatch(argv[i], "--max-ida-threshold")) {
+            i++;
+            max_ida_threshold = atoi(argv[i]);
+
         } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
             orbit0_wide_quarter_turns = 1;
 

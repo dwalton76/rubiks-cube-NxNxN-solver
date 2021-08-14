@@ -1283,6 +1283,8 @@ class RubiksCube(object):
         Args:
             action: the step to apply to the cube
         """
+        if action is None:
+            return
 
         if action.startswith("COMMENT"):
             self.solution.append(action)

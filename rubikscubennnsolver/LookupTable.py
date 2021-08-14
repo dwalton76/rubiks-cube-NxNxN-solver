@@ -255,7 +255,7 @@ def pretty_time(delta: dt.timedelta) -> str:
         return f"\033[91m{delta_ms}ms\033[0m"
 
     else:
-        return f"\033[91m{delta_ms}\033[0m"
+        return f"\033[91m{delta}\033[0m"
 
 
 def find_first_last(

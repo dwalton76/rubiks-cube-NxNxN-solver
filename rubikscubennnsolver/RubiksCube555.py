@@ -1,6 +1,7 @@
 # standard libraries
 import itertools
 import logging
+import subprocess
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
@@ -588,7 +589,8 @@ class LookupTable555LRTCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("L", "R") else "0" for x in self.t_centers_555])
+        LR_colors = (parent_state[38], parent_state[88])
+        state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in self.t_centers_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -646,7 +648,8 @@ class LookupTable555LRXCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("L", "R") else "0" for x in self.x_centers_555])
+        LR_colors = (parent_state[38], parent_state[88])
+        state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in self.x_centers_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -667,7 +670,6 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=(),
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
-            multiplier=1.09,
         )
 
 
@@ -707,7 +709,8 @@ class LookupTable555FBTCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in UFBD_t_centers_555])
+        FB_colors = (parent_state[63], parent_state[113])
+        state = "".join(["1" if parent_state[x] in FB_colors else "0" for x in UFBD_t_centers_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -754,7 +757,8 @@ class LookupTable555FBXCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in UFBD_x_centers_555])
+        FB_colors = (parent_state[63], parent_state[113])
+        state = "".join(["1" if parent_state[x] in FB_colors else "0" for x in UFBD_x_centers_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -2870,33 +2874,29 @@ class RubiksCube555(RubiksCube):
         """
         Stage LR centers
         """
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
 
         if not self.LR_centers_staged():
             tmp_solution_len = len(self.solution)
             self.lt_LR_centers_stage.solve_via_c()
             self.print_cube()
             self.solution.append(
-                "COMMENT_%d_steps_555_LR_centers_staged"
+                "COMMENT_%d_steps_555_two_centers_staged"
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
 
         logger.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def group_centers_stage_FB(self):
+    def group_centers_stage_FB(self, max_ida_threshold: int = None):
         """
         Stage FB centers
         """
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
 
         if not self.FB_centers_staged():
             tmp_solution_len = len(self.solution)
-            self.lt_FB_centers_stage.solve_via_c()
+            self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
             self.print_cube()
             self.solution.append(
-                "COMMENT_%d_steps_555_FB_centers_staged"
+                "COMMENT_%d_steps_555_centers_staged"
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
         else:
@@ -2912,9 +2912,10 @@ class RubiksCube555(RubiksCube):
 
     def eo_edges(self):
         """
-        Our goal is to get the edges split into high/low groups but we do not care what the final orienation is of the edges. Each edge can either
-        be in its final orientation or not so there are (2^12)/2 or 2048 possible permutations.  The /2 is because there cannot be an odd number of edges
-        not in their final orientation.
+        Our goal is to get the edges split into high/low groups but we do not care what
+        the final orienation is of the edges. Each edge can either be in its final
+        orientation or not so there are (2^12)/2 or 2048 possible permutations.  The /2
+        is because there cannot be an odd number of edges not in their final orientation.
         """
         permutations = []
         original_state = self.state[:]
@@ -3181,15 +3182,82 @@ class RubiksCube555(RubiksCube):
 
         logger.info("%s: reduced to 3x3x3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+    def group_centers_phase1_and_2(self) -> None:
+        """
+        phase1 stages the centers on sides L and R
+        phase2 stages the centers on sides F and B
+
+        There are three different combinations of colors we can put on sides LR (colors LR, UD or FB).
+        Try all three combinations and see which leads to the shortest phase1 + phase2 solution length.
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        min_phase1_2_len = None
+        min_phase1_2_pre_step = None
+
+        # disable INFO messages as we try all three combinations
+        logging.getLogger().setLevel(logging.WARNING)
+
+        # z will move LR to UD and vice versa
+        # y will move LR to FB and vice versa
+        for pre_step in (None, "z", "y"):
+            self.rotate(pre_step)
+            self.group_centers_stage_LR()
+
+            # If we already have a candidate solution for phase1_2 then we can put a cap on how deep
+            # into phase2 should look. This can save some cycles by aborting a phase2 once we know
+            # the phase1_2 solution will not be shorter than our current min_phase1_2_len.
+            if min_phase1_2_len is not None:
+                phase1_len = self.get_solution_len_minus_rotates(self.solution)
+                max_ida_threshold = min_phase1_2_len - phase1_len
+            else:
+                max_ida_threshold = None
+
+            try:
+                self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
+                found_phase2_solution = True
+            except subprocess.CalledProcessError:
+                logger.warning(
+                    f"pre_step {pre_step}, phase1 len {phase1_len}, max_ida_threshold {max_ida_threshold} (NO SOLUTION)"
+                )
+                found_phase2_solution = False
+
+            if found_phase2_solution:
+                phase1_2_solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+                if min_phase1_2_len is None or phase1_2_solution_len < min_phase1_2_len:
+                    logger.warning(f"pre_step {pre_step}, phase1_2 len {phase1_2_solution_len} (NEW MIN)")
+                    min_phase1_2_len = phase1_2_solution_len
+                    min_phase1_2_pre_step = pre_step
+                else:
+                    logger.warning(f"pre_step {pre_step}, phase1_2 len {phase1_2_solution_len}")
+
+            self.solution = original_solution[:]
+            self.state = original_state[:]
+
+        logging.getLogger().setLevel(logging.INFO)
+        self.rotate(min_phase1_2_pre_step)
+        self.group_centers_stage_LR()
+        self.group_centers_stage_FB()
+
+        # rotate cube so sides U and F are where they should be
+        pre_rotate_state = self.state[:]
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+
+        if self.state != pre_rotate_state:
+            self.print_cube()
+            logger.info("rotated cube so sides U and F are where they should be")
+
     def reduce_333(self):
         self.lt_init()
 
         if not self.centers_solved() or not self.edges_paired():
-            # phase 1
-            self.group_centers_stage_LR()
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
 
-            # phase 2
-            self.group_centers_stage_FB()
+            # phase 1 and phase 2 - stages all centers
+            self.group_centers_phase1_and_2()
 
             # phase 3
             self.eo_edges()

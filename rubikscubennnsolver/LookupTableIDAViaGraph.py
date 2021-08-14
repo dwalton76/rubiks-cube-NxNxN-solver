@@ -220,7 +220,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 fh_pt_state.write("\n".join(to_write) + "\n")
                 to_write = []
 
-    def solve_via_c(self, pt_states=[], line_index_pre_steps={}):
+    def solve_via_c(self, pt_states=[], line_index_pre_steps={}, max_ida_threshold: int = None):
         cmd = ["./ida_search_via_graph"]
         my_pt_state_filename = "my-pt-states.txt"
 
@@ -280,6 +280,10 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append(self.perfect_hash02_filename)
             cmd.append("--pt2-state-max")
             cmd.append(str(self.pt2_state_max))
+
+        if max_ida_threshold is not None:
+            cmd.append("--max-ida-threshold")
+            cmd.append(str(max_ida_threshold))
 
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))

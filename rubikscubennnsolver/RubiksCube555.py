@@ -3256,8 +3256,14 @@ class RubiksCube555(RubiksCube):
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
+            # phase 1
+            self.group_centers_stage_LR()
+
+            # phase 2
+            self.group_centers_stage_FB()
+
             # phase 1 and phase 2 - stages all centers
-            self.group_centers_phase1_and_2()
+            # self.group_centers_phase1_and_2()
 
             # phase 3
             self.eo_edges()

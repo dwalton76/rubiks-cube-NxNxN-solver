@@ -1,0 +1,6 @@
+ gcc -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search_via_graph.c -lm -ggdb
+ gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search_via_graph.c -lm -ggdb
+
+ # These core dump
+./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step901-LR-center-stage-EO-inner-orbit.bin --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step902-EO-outer-orbit.bin --prune-table-states my-pt-states.txt --legal-moves "U,U',U2,Uw2,L,L',L2,Lw2,F,F',F2,Fw2,R,R',R2,Rw2,B,B',B2,Bw2,D,D',D2,Dw2"
+./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step21-FB-t-centers-stage.bin --prune-table-0-state 12038 --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step22-FB-x-centers-stage.bin --prune-table-1-state 3794  --legal-moves "U,U',U2,Uw2,L,L',L2,Lw,Lw',Lw2,F,F',,B,B',B2,Bw2,D,D',D2,Dw2" 

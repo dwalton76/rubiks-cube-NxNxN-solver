@@ -79,7 +79,7 @@ unsigned char get_unpaired_obliques_count_777(char *cube) {
 }
 
 struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube, unsigned int max_cost_to_goal) {
-    int unpaired_count = get_unpaired_obliques_count_777(cube);
+    unsigned char unpaired_count = get_unpaired_obliques_count_777(cube);
     struct ida_heuristic_result result;
     unsigned long long state = 0;
 
@@ -111,8 +111,6 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube,
     switch (unpaired_count) {
         case 0:
         case 1:
-            result.cost_to_goal = unpaired_count;
-            break;
         case 9:
         case 10:
         case 11:
@@ -217,6 +215,7 @@ unsigned int get_UFBD_unpaired_obliques_count_777(char *cube) {
 }
 
 struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube, unsigned int max_cost_to_goal) {
+    unsigned char unpaired_count = get_unpaired_obliques_count_777(cube);
     struct ida_heuristic_result result;
     unsigned long long state = 0;
 
@@ -233,7 +232,6 @@ struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube,
     sprintf(result.lt_state, "%012llx", state);
 
     // inadmissable heuristic but fast...kudos to xyzzy for this formula
-    int unpaired_count = get_unpaired_obliques_count_777(cube);
     if (unpaired_count > 8) {
         result.cost_to_goal = 4 + (unpaired_count >> 1);
     } else {

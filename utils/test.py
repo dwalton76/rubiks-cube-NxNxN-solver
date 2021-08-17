@@ -7,7 +7,7 @@ from pprint import pformat
 from statistics import median
 
 # rubiks cube libraries
-from rubikscubennnsolver import NotSolving, SolveError, StuckInALoop, configure_logging
+from rubikscubennnsolver import SolveError, StuckInALoop, configure_logging
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222, solved_222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
@@ -28,6 +28,7 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import (
     solved_131313,
     solved_151515,
 )
+from rubikscubennnsolver.RubiksSide import NotSolving
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -124,7 +125,6 @@ try:
             if args.size == "all" and index > 0:
                 continue
 
-            # os.system('clear')
             logger.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
             num_test_cases_executed += 1
             kociemba_string = str(kociemba_string)

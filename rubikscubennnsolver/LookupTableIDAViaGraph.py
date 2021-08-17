@@ -1,6 +1,5 @@
 # standard libraries
 import logging
-import os
 import subprocess
 from typing import List
 
@@ -303,9 +302,6 @@ class LookupTableIDAViaGraph(LookupTable):
         output = subprocess.check_output(cmd).decode("utf-8").splitlines()
         last_solution = None
         last_solution_line_index = None
-
-        if os.path.exists(my_pt_state_filename):
-            os.unlink(my_pt_state_filename)
 
         for line in output:
             if line.startswith("SOLUTION:"):

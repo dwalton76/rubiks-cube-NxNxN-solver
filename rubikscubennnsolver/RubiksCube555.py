@@ -3061,6 +3061,8 @@ class RubiksCube555(RubiksCube):
             if self.lt_phase4.solve():
                 phase4_solution = self.solution[original_solution_len:]
                 phase4_solution_len = len(phase4_solution)
+
+                # dwalton could we get the phase-5 heuristics instead and use that as a tie breaker?
                 high_edge_count = self.high_edge_midge_pair_count(self.lt_phase4.wing_strs)
                 low_edge_count = self.low_edge_midge_pair_count(self.lt_phase4.wing_strs)
                 high_low_count = high_edge_count + low_edge_count
@@ -3257,13 +3259,14 @@ class RubiksCube555(RubiksCube):
             self.rotate_F_to_F()
 
             # phase 1
-            self.group_centers_stage_LR()
+            # self.group_centers_stage_LR()
 
             # phase 2
-            self.group_centers_stage_FB()
+            # self.group_centers_stage_FB()
 
+            # dwalton
             # phase 1 and phase 2 - stages all centers
-            # self.group_centers_phase1_and_2()
+            self.group_centers_phase1_and_2()
 
             # phase 3
             self.eo_edges()

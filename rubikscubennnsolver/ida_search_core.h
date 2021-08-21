@@ -166,5 +166,7 @@ unsigned int get_orbit1_wide_quarter_turn_count(move_type *moves);
 unsigned int get_outer_layer_quarter_turn_count(move_type *moves);
 int moves_cancel_out(move_type move, move_type prev_move);
 int steps_on_same_face_and_layer(move_type move, move_type prev_move);
+int outer_layer_move(move_type move);
+int outer_layer_moves_in_order(move_type move, move_type prev_move);
 
 #endif /* _IDA_SEARCH_CORE_H */

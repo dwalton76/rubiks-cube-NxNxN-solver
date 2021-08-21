@@ -464,6 +464,123 @@ int moves_cancel_out(move_type move, move_type prev_move) {
     return 0;
 }
 
+int outer_layer_move(move_type move) {
+    switch (move) {
+        case U:
+        case U_PRIME:
+        case U2:
+        case L:
+        case L_PRIME:
+        case L2:
+        case F:
+        case F_PRIME:
+        case F2:
+        case R:
+        case R_PRIME:
+        case R2:
+        case B:
+        case B_PRIME:
+        case B2:
+        case D:
+        case D_PRIME:
+        case D2:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+int outer_layer_moves_in_order(move_type move, move_type prev_move) {
+    if (!outer_layer_move(prev_move)) {
+        return 1;
+    }
+
+    if (!outer_layer_move(move)) {
+        return 1;
+    }
+
+    switch (prev_move) {
+        case U:
+        case U_PRIME:
+        case U2:
+            return 1;
+
+        case L:
+        case L_PRIME:
+        case L2:
+            switch (move) {
+                case F:
+                case F_PRIME:
+                case F2:
+                case R:
+                case R_PRIME:
+                case R2:
+                case B:
+                case B_PRIME:
+                case B2:
+                case D:
+                case D_PRIME:
+                case D2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case F:
+        case F_PRIME:
+        case F2:
+            switch (move) {
+                case R:
+                case R_PRIME:
+                case R2:
+                case B:
+                case B_PRIME:
+                case B2:
+                case D:
+                case D_PRIME:
+                case D2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case R:
+        case R_PRIME:
+        case R2:
+            switch (move) {
+                case B:
+                case B_PRIME:
+                case B2:
+                case D:
+                case D_PRIME:
+                case D2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case B:
+        case B_PRIME:
+        case B2:
+            switch (move) {
+                case D:
+                case D_PRIME:
+                case D2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case D:
+        case D_PRIME:
+        case D2:
+            return 0;
+        default:
+            return 1;
+    }
+}
+
+
 int steps_on_same_face_and_layer(move_type move, move_type prev_move) {
     switch (move) {
         case U:

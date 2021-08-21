@@ -34,6 +34,7 @@ unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
 unsigned char orbit0_wide_quarter_turns = 0;
 unsigned char orbit1_wide_quarter_turns = 0;
+unsigned char min_solution_count = 1;
 float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
@@ -534,6 +535,7 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
     unsigned char cost_to_goal = 0;
     unsigned char f_cost = 0;
     unsigned int offset = 0;
+    unsigned int solution_count = 0;
     unsigned int pt0_state = 0;
     unsigned int pt1_state = 0;
     unsigned int pt2_state = 0;
@@ -555,16 +557,21 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
         node = pop(&root);
         f_cost = node->cost_to_here + node->cost_to_goal;
 
-        if (node->cost_to_goal == 0 && parity_ok(node->moves_to_here)) {
-            // We are finished!!
+        if (node->cost_to_goal == 0 && (!search_result.found_solution || f_cost == search_result.f_cost) && parity_ok(node->moves_to_here)) {
+            // We found a solution!!
             search_result.f_cost = f_cost;
             search_result.found_solution = 1;
             memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+            solution_count++;
 
             LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n", ida_count,
                 search_result.f_cost, threshold, node->cost_to_here, node->cost_to_goal);
             print_moves(node->moves_to_here, node->cost_to_here);
-            return search_result;
+
+            if (solution_count >= min_solution_count) {
+                // We are finished
+                return search_result;
+            }
         }
 
         // Stop searching down this path
@@ -652,7 +659,6 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
         free(node);
     }
 
-    search_result.found_solution = 0;
     return search_result;
 }
 
@@ -835,6 +841,10 @@ int main(int argc, char *argv[]) {
             i++;
             cost_to_goal_multiplier = atof(argv[i]);
 
+        } else if (strmatch(argv[i], "--solution-count")) {
+            i++;
+            min_solution_count = atoi(argv[i]);
+
         } else if (strmatch(argv[i], "--max-ida-threshold")) {
             i++;
             max_ida_threshold = atoi(argv[i]);
@@ -995,6 +1005,7 @@ int main(int argc, char *argv[]) {
 
             if (steps_on_same_face_and_layer(i_move, j_move)) {
                 move_matrix[i_move][j] = MOVE_NONE;
+
             } else {
                 move_matrix[i_move][j] = j_move;
             }

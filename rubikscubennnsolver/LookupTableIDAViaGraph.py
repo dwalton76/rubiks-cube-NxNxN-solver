@@ -36,6 +36,20 @@ def remove_failed_ida_output(lines: List[str]) -> List[str]:
 
 
 class LookupTableIDAViaGraph(LookupTable):
+    """
+    multipliers
+        1.04 will round 13 to 14, 14 to 15, etc
+        1.05 will round 10 to 11, etc
+        1.06 will round 9 to 10, etc
+        1.07 will round 8 to 9, etc
+        1.08 will round 7 to 8, etc
+        1.09 will round 6 to 7, etc
+        1.10 will round 5 to 6, etc
+        1.11 will round 5 to 6, etc
+        1.12 will round 5 to 6, etc
+        1.13 will round 4 to 5, etc
+    """
+
     def __init__(
         self,
         parent,

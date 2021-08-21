@@ -670,6 +670,7 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=(),
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
+            multiplier=1.09,
         )
 
 
@@ -1973,7 +1974,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
             perfect_hash02_filename="lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.pt-state-perfect-hash",
             pt1_state_max=117600,
             pt2_state_max=117600,
-            multiplier=1.12,
+            multiplier=1.05,
         )
 
 
@@ -2407,7 +2408,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             prune_tables=(parent.lt_UD_centers_solve, parent.lt_LR_centers_solve, parent.lt_FB_centers_solve),
-            multiplier=1.2,
+            multiplier=1.09,
         )
 
 
@@ -3048,9 +3049,7 @@ class RubiksCube555(RubiksCube):
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
         results = []
-
-        min_phase4_solution_len = 99
-        min_phase4_high_low_count = 0
+        min_phase4_solution_len = None
 
         for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
             wing_str_combo = sorted(wing_str_combo)
@@ -3061,43 +3060,30 @@ class RubiksCube555(RubiksCube):
             if self.lt_phase4.solve():
                 phase4_solution = self.solution[original_solution_len:]
                 phase4_solution_len = len(phase4_solution)
+                results.append((phase4_solution_len, wing_str_combo))
 
-                # dwalton could we get the phase-5 heuristics instead and use that as a tie breaker?
-                high_edge_count = self.high_edge_midge_pair_count(self.lt_phase4.wing_strs)
-                low_edge_count = self.low_edge_midge_pair_count(self.lt_phase4.wing_strs)
-                high_low_count = high_edge_count + low_edge_count
-                results.append((phase4_solution_len, high_low_count, wing_str_combo))
-
-                if phase4_solution_len < min_phase4_solution_len:
+                if min_phase4_solution_len is None or phase4_solution_len < min_phase4_solution_len:
                     min_phase4_solution_len = phase4_solution_len
-                    min_phase4_high_low_count = high_low_count
                     logger.info(
-                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (NEW MIN)"
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len} (NEW MIN)"
                     )
 
                 elif phase4_solution_len == min_phase4_solution_len:
-                    if high_low_count > min_phase4_high_low_count:
-                        min_phase4_high_low_count = high_low_count
-                        logger.info(
-                            f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (NEW MIN)"
-                        )
-                    else:
-                        logger.info(
-                            f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (TIE)"
-                        )
+                    logger.info(
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len} (TIE)"
+                    )
                 else:
                     logger.debug(
-                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count}"
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}"
                     )
             else:
                 logger.debug(f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is >= 4 ")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        results = sorted(results, key=lambda x: (x[0], -x[1]))
-
-        # logger.info("\n" + "\n".join(map(str, results[0:20])))
-        results = [x[2] for x in results[0:20]]
+        results.sort()
+        # logger.info("\n" + "\n".join(map(str, results)))
+        results = [x[1] for x in results]
         return results
 
     def pair_first_four_edges(self, phase4_wing_str_combo):
@@ -3259,14 +3245,13 @@ class RubiksCube555(RubiksCube):
             self.rotate_F_to_F()
 
             # phase 1
-            # self.group_centers_stage_LR()
+            self.group_centers_stage_LR()
 
             # phase 2
-            # self.group_centers_stage_FB()
+            self.group_centers_stage_FB()
 
-            # dwalton
             # phase 1 and phase 2 - stages all centers
-            self.group_centers_phase1_and_2()
+            # self.group_centers_phase1_and_2()
 
             # phase 3
             self.eo_edges()
@@ -3278,10 +3263,14 @@ class RubiksCube555(RubiksCube):
             original_solution = self.solution[:]
             original_solution_len = len(self.solution)
 
-            min_phase456_solution_len = 99
+            min_phase456_solution_len = None
             min_phase456_solution = []
             min_phase456_state = []
             edge_messages = []
+
+            # controls how many first four wing_str combos we evaluate.  Make this number 495 to evaluate all of them, you
+            # would only do so for a FMC as this will take a long time.
+            MAX_INDEX = 0
 
             for (index, wing_str_combo) in enumerate(self.find_first_four_edges_to_pair()):
                 self.state = original_state[:]
@@ -3292,20 +3281,21 @@ class RubiksCube555(RubiksCube):
                 phase456_solution = self.solution[original_solution_len:]
                 phase456_solution_len = self.get_solution_len_minus_rotates(phase456_solution)
 
-                if phase456_solution_len < min_phase456_solution_len:
+                if min_phase456_solution_len is None or phase456_solution_len < min_phase456_solution_len:
                     min_phase456_solution_len = phase456_solution_len
                     min_phase456_state = self.state[:]
                     min_phase456_solution = self.solution[:]
                     msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps (NEW MIN)"
+                elif phase456_solution_len == min_phase456_solution_len:
+                    msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps (TIE)"
                 else:
                     msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps"
 
                 logger.info(msg)
                 edge_messages.append(msg)
 
-                # If you are doing a FMC comment this out and we will evaluate 20 different first four wing_str_combos
-                # This saves a move or two but takes a while.
-                break
+                if index >= MAX_INDEX:
+                    break
 
             if len(edge_messages) > 1:
                 logger.info("")

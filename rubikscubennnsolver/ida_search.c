@@ -441,153 +441,61 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
 
     hash_add(&ida_explored, heuristic_result.lt_state, 0);
 
-    if (cube_size == 4) {
-        for (unsigned char i = 0; i < legal_move_count; i++) {
-            move = move_matrix[prev_move][i];
+    for (unsigned char i = 0; i < legal_move_count; i++) {
+        move = move_matrix[prev_move][i];
 
-            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
-            /*
-             * Well, it's a simple technique to reduce the number of nodes accessed.
-             * For example, we start at a position S whose pruning value is no more
-             * than maxl, otherwise, S will be pruned in previous searching.  After
-             * a move X, we obtain position S', whose pruning value is larger than
-             * maxl, which means that X makes S farther from the solved state.  In
-             * this case, we won't try X2 and X'.
-             * --cs0x7f
-             */
-            if (skip_other_steps_this_face != MOVE_NONE) {
-                if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
-                    continue;
-                } else {
-                    skip_other_steps_this_face = MOVE_NONE;
-                }
-            }
-
-            // This is the scenario where the move is on the same face and layer as prev_move
-            if (move == MOVE_NONE) {
+        // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
+        /*
+         * Well, it's a simple technique to reduce the number of nodes accessed.
+         * For example, we start at a position S whose pruning value is no more
+         * than maxl, otherwise, S will be pruned in previous searching.  After
+         * a move X, we obtain position S', whose pruning value is larger than
+         * maxl, which means that X makes S farther from the solved state.  In
+         * this case, we won't try X2 and X'.
+         * --cs0x7f
+         */
+        if (skip_other_steps_this_face != MOVE_NONE) {
+            if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
                 continue;
+            } else {
+                skip_other_steps_this_face = MOVE_NONE;
             }
+        }
 
-            char cube_copy[array_size];
-            memcpy(cube_copy, cube, sizeof(char) * array_size);
+        // This is the scenario where the move is on the same face and layer as prev_move
+        if (move == MOVE_NONE) {
+            continue;
+        }
+
+        char cube_copy[array_size];
+        memcpy(cube_copy, cube, sizeof(char) * array_size);
+
+        if (cube_size == 4) {
             rotate_444(cube_copy, cube_tmp, array_size, move);
-            moves_to_here[cost_to_here] = move;
-
-            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
-                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
-
-            if (tmp_search_result.found_solution) {
-                return tmp_search_result;
-            } else {
-                moves_to_here[cost_to_here] = MOVE_NONE;
-
-                if (tmp_search_result.f_cost > threshold) {
-                    skip_other_steps_this_face = move;
-                } else {
-                    skip_other_steps_this_face = MOVE_NONE;
-                }
-            }
-        }
-
-    } else if (cube_size == 6) {
-        for (unsigned char i = 0; i < legal_move_count; i++) {
-            move = move_matrix[prev_move][i];
-
-            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
-            /*
-             * Well, it's a simple technique to reduce the number of nodes accessed.
-             * For example, we start at a position S whose pruning value is no more
-             * than maxl, otherwise, S will be pruned in previous searching.  After
-             * a move X, we obtain position S', whose pruning value is larger than
-             * maxl, which means that X makes S farther from the solved state.  In
-             * this case, we won't try X2 and X'.
-             * --cs0x7f
-             */
-            if (skip_other_steps_this_face != MOVE_NONE) {
-                if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
-                    continue;
-                } else {
-                    skip_other_steps_this_face = MOVE_NONE;
-                }
-            }
-
-            // This is the scenario where the move is on the same face and layer as prev_move
-            if (move == MOVE_NONE) {
-                continue;
-            }
-
-            char cube_copy[array_size];
-            memcpy(cube_copy, cube, sizeof(char) * array_size);
+        } else if (cube_size == 6){
             rotate_666(cube_copy, cube_tmp, array_size, move);
-            moves_to_here[cost_to_here] = move;
-
-            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
-                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
-
-            if (tmp_search_result.found_solution) {
-                return tmp_search_result;
-            } else {
-                moves_to_here[cost_to_here] = MOVE_NONE;
-
-                if (tmp_search_result.f_cost > threshold) {
-                    skip_other_steps_this_face = move;
-                } else {
-                    skip_other_steps_this_face = MOVE_NONE;
-                }
-            }
-        }
-
-    } else if (cube_size == 7) {
-        for (unsigned char i = 0; i < legal_move_count; i++) {
-            move = move_matrix[prev_move][i];
-
-            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
-            /*
-             * Well, it's a simple technique to reduce the number of nodes accessed.
-             * For example, we start at a position S whose pruning value is no more
-             * than maxl, otherwise, S will be pruned in previous searching.  After
-             * a move X, we obtain position S', whose pruning value is larger than
-             * maxl, which means that X makes S farther from the solved state.  In
-             * this case, we won't try X2 and X'.
-             * --cs0x7f
-             */
-            if (skip_other_steps_this_face != MOVE_NONE) {
-                if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
-                    continue;
-                } else {
-                    skip_other_steps_this_face = MOVE_NONE;
-                }
-            }
-
-            // This is the scenario where the move is on the same face and layer as prev_move
-            if (move == MOVE_NONE) {
-                continue;
-            }
-
-            char cube_copy[array_size];
-            memcpy(cube_copy, cube, sizeof(char) * array_size);
+        } else if (cube_size == 7){
             rotate_777(cube_copy, cube_tmp, array_size, move);
-            moves_to_here[cost_to_here] = move;
+        } else {
+            printf("ERROR: ida_search() does not have rotate_xxx() for this cube size\n");
+            exit(1);
+        }
+        moves_to_here[cost_to_here] = move;
 
-            tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
-                                           orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+        tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
+                                       orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
 
-            if (tmp_search_result.found_solution) {
-                return tmp_search_result;
+        if (tmp_search_result.found_solution) {
+            return tmp_search_result;
+        } else {
+            moves_to_here[cost_to_here] = MOVE_NONE;
+
+            if (tmp_search_result.f_cost > threshold) {
+                skip_other_steps_this_face = move;
             } else {
-                moves_to_here[cost_to_here] = MOVE_NONE;
-
-                if (tmp_search_result.f_cost > threshold) {
-                    skip_other_steps_this_face = move;
-                } else {
-                    skip_other_steps_this_face = MOVE_NONE;
-                }
+                skip_other_steps_this_face = MOVE_NONE;
             }
         }
-
-    } else {
-        printf("ERROR: ida_search() does not have rotate_xxx() for this cube size\n");
-        exit(1);
     }
 
     return search_result;

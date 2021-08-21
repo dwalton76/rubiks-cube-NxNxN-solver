@@ -34,7 +34,7 @@ unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
 unsigned char orbit0_wide_quarter_turns = 0;
 unsigned char orbit1_wide_quarter_turns = 0;
-unsigned char min_solution_count = 1;
+unsigned int min_solution_count = 1;
 float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
@@ -557,15 +557,19 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
         node = pop(&root);
         f_cost = node->cost_to_here + node->cost_to_goal;
 
-        if (node->cost_to_goal == 0 && (!search_result.found_solution || f_cost == search_result.f_cost) && parity_ok(node->moves_to_here)) {
+        if (node->cost_to_goal == 0 && parity_ok(node->moves_to_here)) {
+
             // We found a solution!!
-            search_result.f_cost = f_cost;
-            search_result.found_solution = 1;
-            memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
             solution_count++;
 
-            LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n", ida_count,
-                search_result.f_cost, threshold, node->cost_to_here, node->cost_to_goal);
+            if (!search_result.found_solution) {
+                search_result.f_cost = f_cost;
+                search_result.found_solution = 1;
+                memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+
+                LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n", ida_count,
+                    search_result.f_cost, threshold, node->cost_to_here, node->cost_to_goal);
+            }
             print_moves(node->moves_to_here, node->cost_to_here);
 
             if (solution_count >= min_solution_count) {
@@ -575,7 +579,7 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
         }
 
         // Stop searching down this path
-        if (f_cost >= threshold) {
+        if (f_cost >= threshold || (search_result.found_solution && node->cost_to_here >= search_result.f_cost)) {
             // uncomment this to troubleshoot when the correct solution is incorrectly pruned
             /*
             if (invalid_prune(cost_to_here, moves_to_here)) {
